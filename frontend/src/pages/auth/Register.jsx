@@ -1,0 +1,216 @@
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { FiUser, FiMail, FiLock, FiPhone, FiEye, FiEyeOff } from 'react-icons/fi'
+import useAuthStore from '../../store/authStore'
+
+function Register() {
+  const navigate = useNavigate()
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
+  const { register: registerUser, isLoading } = useAuthStore()
+
+  const { register, handleSubmit, formState: { errors }, watch } = useForm()
+  const userType = watch('user_type', 'particular')
+
+  const onSubmit = async (data) => {
+    setError('')
+    const result = await registerUser(data)
+
+    if (result.success) {
+      navigate('/dashboard')
+    } else {
+      setError(result.error)
+    }
+  }
+
+  return (
+    <div className="min-h-[calc(100vh-200px)] flex items-center justify-center py-12 px-4">
+      <div className="max-w-md w-full">
+        <div className="text-center mb-8">
+          <h1 className="font-display text-2xl font-bold text-gray-900">
+            Créer un compte
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Rejoignez Semsar et accédez à toutes les fonctionnalités
+          </p>
+        </div>
+
+        <div className="card p-8">
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* User Type */}
+            <div>
+              <label className="label">Type de compte</label>
+              <div className="grid grid-cols-2 gap-4">
+                <label className={`flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                  userType === 'particular' ? 'border-primary-600 bg-primary-50' : 'border-gray-200'
+                }`}>
+                  <input
+                    type="radio"
+                    value="particular"
+                    {...register('user_type')}
+                    className="sr-only"
+                  />
+                  <span className={userType === 'particular' ? 'text-primary-600' : 'text-gray-600'}>
+                    Particulier
+                  </span>
+                </label>
+                <label className={`flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                  userType === 'professional' ? 'border-primary-600 bg-primary-50' : 'border-gray-200'
+                }`}>
+                  <input
+                    type="radio"
+                    value="professional"
+                    {...register('user_type')}
+                    className="sr-only"
+                  />
+                  <span className={userType === 'professional' ? 'text-primary-600' : 'text-gray-600'}>
+                    Professionnel
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Name */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="label">Prénom</label>
+                <div className="relative">
+                  <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    {...register('first_name', { required: 'Prénom requis' })}
+                    className="input pl-10"
+                    placeholder="Prénom"
+                  />
+                </div>
+                {errors.first_name && (
+                  <p className="text-red-500 text-sm mt-1">{errors.first_name.message}</p>
+                )}
+              </div>
+              <div>
+                <label className="label">Nom</label>
+                <input
+                  {...register('last_name', { required: 'Nom requis' })}
+                  className="input"
+                  placeholder="Nom"
+                />
+                {errors.last_name && (
+                  <p className="text-red-500 text-sm mt-1">{errors.last_name.message}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="label">Email</label>
+              <div className="relative">
+                <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="email"
+                  {...register('email', {
+                    required: 'Email requis',
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: 'Email invalide'
+                    }
+                  })}
+                  className="input pl-10"
+                  placeholder="votre@email.com"
+                />
+              </div>
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+              )}
+            </div>
+
+            {/* Phone */}
+            <div>
+              <label className="label">Téléphone</label>
+              <div className="relative">
+                <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  {...register('phone')}
+                  className="input pl-10"
+                  placeholder="+212 6XX XXX XXX"
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="label">Mot de passe</label>
+              <div className="relative">
+                <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  {...register('password', {
+                    required: 'Mot de passe requis',
+                    minLength: {
+                      value: 8,
+                      message: 'Minimum 8 caractères'
+                    }
+                  })}
+                  className="input pl-10 pr-10"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
+              )}
+            </div>
+
+            {/* Terms */}
+            <div>
+              <label className="flex items-start">
+                <input
+                  type="checkbox"
+                  {...register('terms', { required: 'Vous devez accepter les conditions' })}
+                  className="mt-1 rounded border-gray-300 text-primary-600 mr-2"
+                />
+                <span className="text-sm text-gray-600">
+                  J'accepte les{' '}
+                  <a href="#" className="text-primary-600">conditions d'utilisation</a>
+                  {' '}et la{' '}
+                  <a href="#" className="text-primary-600">politique de confidentialité</a>
+                </span>
+              </label>
+              {errors.terms && (
+                <p className="text-red-500 text-sm mt-1">{errors.terms.message}</p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="btn-primary w-full"
+            >
+              {isLoading ? 'Inscription...' : 'Créer mon compte'}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center text-sm text-gray-600">
+            Déjà un compte ?{' '}
+            <Link to="/connexion" className="text-primary-600 hover:text-primary-700 font-medium">
+              Connectez-vous
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default Register
