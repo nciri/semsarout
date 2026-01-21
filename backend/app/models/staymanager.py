@@ -1,0 +1,300 @@
+"""
+StayManager Integration Models
+
+These models support the integration between SemsarOut and StayManager.ma
+for vacation rental property management.
+"""
+
+from datetime import datetime
+from app import db
+
+
+class StayManagerIntegration(db.Model):
+    """StayManager account connection for agencies."""
+    __tablename__ = 'staymanager_integrations'
+
+    id = db.Column(db.Integer, primary_key=True)
+    agency_id = db.Column(db.Integer, db.ForeignKey('agencies.id'), nullable=False, unique=True)
+
+    # StayManager connection identifiers
+    staymanager_user_id = db.Column(db.String(100))  # StayManager firebase_uid
+    staymanager_email = db.Column(db.String(255))
+
+    # API credentials (encrypted in production)
+    api_key_encrypted = db.Column(db.Text)
+
+    # Connection status: 'pending', 'connected', 'disconnected', 'error'
+    status = db.Column(db.String(20), default='pending')
+    last_sync_at = db.Column(db.DateTime)
+    sync_error = db.Column(db.Text)
+
+    # Sync settings
+    auto_sync_enabled = db.Column(db.Boolean, default=True)
+    sync_frequency_hours = db.Column(db.Integer, default=6)
+
+    # Webhook configuration
+    webhook_secret = db.Column(db.String(100))
+    webhook_url = db.Column(db.String(500))
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    agency = db.relationship('Agency', backref=db.backref('staymanager_integration', uselist=False))
+    property_links = db.relationship('StayManagerPropertyLink', back_populates='integration', cascade='all, delete-orphan')
+
+    def to_dict(self, include_sensitive=False):
+        """Serialize integration to dictionary."""
+        data = {
+            'id': self.id,
+            'agency_id': self.agency_id,
+            'staymanager_email': self.staymanager_email,
+            'status': self.status,
+            'last_sync_at': self.last_sync_at.isoformat() if self.last_sync_at else None,
+            'sync_error': self.sync_error,
+            'auto_sync_enabled': self.auto_sync_enabled,
+            'sync_frequency_hours': self.sync_frequency_hours,
+            'linked_properties_count': len(self.property_links) if self.property_links else 0,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+        if include_sensitive:
+            data['webhook_url'] = self.webhook_url
+            data['has_api_key'] = bool(self.api_key_encrypted)
+        return data
+
+    def __repr__(self):
+        return f'<StayManagerIntegration agency_id={self.agency_id} status={self.status}>'
+
+
+class StayManagerPropertyLink(db.Model):
+    """Links SemsarOut properties to StayManager properties."""
+    __tablename__ = 'staymanager_property_links'
+
+    id = db.Column(db.Integer, primary_key=True)
+    integration_id = db.Column(db.Integer, db.ForeignKey('staymanager_integrations.id'), nullable=False)
+
+    # SemsarOut property
+    property_id = db.Column(db.Integer, db.ForeignKey('properties.id'), nullable=False)
+
+    # StayManager property identifiers
+    staymanager_property_id = db.Column(db.String(100), nullable=False)  # UUID from StayManager
+    staymanager_property_name = db.Column(db.String(255))
+
+    # Sync settings for this specific link
+    sync_reservations = db.Column(db.Boolean, default=True)
+    sync_availability = db.Column(db.Boolean, default=True)
+    sync_guests = db.Column(db.Boolean, default=True)
+
+    # Sync status
+    last_reservation_sync = db.Column(db.DateTime)
+    last_availability_sync = db.Column(db.DateTime)
+    sync_status = db.Column(db.String(20), default='pending')  # pending, syncing, synced, error
+    sync_error = db.Column(db.Text)
+
+    # iCal URL for availability calendar (from StayManager)
+    ical_url = db.Column(db.String(500))
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    integration = db.relationship('StayManagerIntegration', back_populates='property_links')
+    property = db.relationship('Property', backref=db.backref('staymanager_link', uselist=False))
+    reservations = db.relationship('StayManagerReservation', back_populates='property_link', cascade='all, delete-orphan')
+
+    def to_dict(self):
+        """Serialize property link to dictionary."""
+        return {
+            'id': self.id,
+            'integration_id': self.integration_id,
+            'property_id': self.property_id,
+            'property': {
+                'id': self.property.id,
+                'title': self.property.title,
+                'reference': self.property.reference
+            } if self.property else None,
+            'staymanager_property_id': self.staymanager_property_id,
+            'staymanager_property_name': self.staymanager_property_name,
+            'sync_reservations': self.sync_reservations,
+            'sync_availability': self.sync_availability,
+            'sync_guests': self.sync_guests,
+            'last_reservation_sync': self.last_reservation_sync.isoformat() if self.last_reservation_sync else None,
+            'last_availability_sync': self.last_availability_sync.isoformat() if self.last_availability_sync else None,
+            'sync_status': self.sync_status,
+            'sync_error': self.sync_error,
+            'ical_url': self.ical_url,
+            'reservations_count': len(self.reservations) if self.reservations else 0,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+    def __repr__(self):
+        return f'<StayManagerPropertyLink property_id={self.property_id} staymanager_id={self.staymanager_property_id}>'
+
+
+class StayManagerReservation(db.Model):
+    """Cached reservations from StayManager."""
+    __tablename__ = 'staymanager_reservations'
+
+    id = db.Column(db.Integer, primary_key=True)
+    property_link_id = db.Column(db.Integer, db.ForeignKey('staymanager_property_links.id'), nullable=False)
+
+    # StayManager reservation identifiers
+    staymanager_reservation_id = db.Column(db.String(100), nullable=False, unique=True, index=True)
+    external_id = db.Column(db.String(100))  # Airbnb/Booking.com reservation ID
+    platform = db.Column(db.String(50))  # airbnb, booking, vrbo, direct
+
+    # Dates
+    check_in = db.Column(db.DateTime, nullable=False, index=True)
+    check_out = db.Column(db.DateTime, nullable=False, index=True)
+    nights = db.Column(db.Integer)
+
+    # Guest information (basic, cached from StayManager)
+    guest_name = db.Column(db.String(255))
+    guest_phone = db.Column(db.String(50))
+    guest_email = db.Column(db.String(255))
+    guest_count = db.Column(db.Integer)
+    staymanager_guest_id = db.Column(db.String(100))  # Reference to full guest in StayManager
+
+    # Reservation status: confirmed, cancelled, blocked, pending
+    status = db.Column(db.String(20), default='confirmed', index=True)
+
+    # Guest verification (from StayManager's KYC system)
+    guest_verified = db.Column(db.Boolean, default=False)
+    verification_status = db.Column(db.String(20))  # pending, verified, failed, not_required
+
+    # Smart lock access
+    has_access_code = db.Column(db.Boolean, default=False)
+    access_code_masked = db.Column(db.String(20))  # Last 4 digits only for security
+
+    # Contract status
+    contract_status = db.Column(db.String(20))  # none, generated, sent, signed
+
+    # Pricing
+    total_price = db.Column(db.Numeric(12, 2))
+    currency = db.Column(db.String(3), default='MAD')
+
+    # Notes and special requests
+    guest_notes = db.Column(db.Text)
+    special_requests = db.Column(db.Text)
+
+    # Raw data cache from StayManager (for debugging/sync)
+    raw_data = db.Column(db.JSON)
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    synced_at = db.Column(db.DateTime)
+
+    # Relationships
+    property_link = db.relationship('StayManagerPropertyLink', back_populates='reservations')
+
+    def to_dict(self, include_raw=False):
+        """Serialize reservation to dictionary."""
+        data = {
+            'id': self.id,
+            'property_link_id': self.property_link_id,
+            'staymanager_reservation_id': self.staymanager_reservation_id,
+            'external_id': self.external_id,
+            'platform': self.platform,
+            'check_in': self.check_in.isoformat() if self.check_in else None,
+            'check_out': self.check_out.isoformat() if self.check_out else None,
+            'nights': self.nights,
+            'guest': {
+                'name': self.guest_name,
+                'phone': self.guest_phone,
+                'email': self.guest_email,
+                'count': self.guest_count,
+                'verified': self.guest_verified,
+                'verification_status': self.verification_status
+            },
+            'status': self.status,
+            'has_access_code': self.has_access_code,
+            'access_code_masked': self.access_code_masked,
+            'contract_status': self.contract_status,
+            'total_price': float(self.total_price) if self.total_price else None,
+            'currency': self.currency,
+            'guest_notes': self.guest_notes,
+            'special_requests': self.special_requests,
+            'synced_at': self.synced_at.isoformat() if self.synced_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+        if include_raw:
+            data['raw_data'] = self.raw_data
+        return data
+
+    @property
+    def is_upcoming(self):
+        """Check if reservation is in the future."""
+        return self.check_in > datetime.utcnow()
+
+    @property
+    def is_current(self):
+        """Check if reservation is currently active."""
+        now = datetime.utcnow()
+        return self.check_in <= now <= self.check_out
+
+    @property
+    def is_past(self):
+        """Check if reservation has ended."""
+        return self.check_out < datetime.utcnow()
+
+    def __repr__(self):
+        return f'<StayManagerReservation {self.staymanager_reservation_id} {self.check_in.date() if self.check_in else ""}>'
+
+
+class StayManagerSyncLog(db.Model):
+    """Log of sync operations for debugging and monitoring."""
+    __tablename__ = 'staymanager_sync_logs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    integration_id = db.Column(db.Integer, db.ForeignKey('staymanager_integrations.id'), nullable=False)
+    property_link_id = db.Column(db.Integer, db.ForeignKey('staymanager_property_links.id'), nullable=True)
+
+    # Sync type: full, reservations, availability, properties
+    sync_type = db.Column(db.String(50), nullable=False)
+
+    # Status: started, completed, failed
+    status = db.Column(db.String(20), nullable=False)
+
+    # Results
+    items_synced = db.Column(db.Integer, default=0)
+    items_created = db.Column(db.Integer, default=0)
+    items_updated = db.Column(db.Integer, default=0)
+    items_deleted = db.Column(db.Integer, default=0)
+
+    # Error details
+    error_message = db.Column(db.Text)
+    error_details = db.Column(db.JSON)
+
+    # Timing
+    started_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime)
+    duration_seconds = db.Column(db.Integer)
+
+    # Trigger: manual, scheduled, webhook
+    trigger = db.Column(db.String(20), default='manual')
+
+    def to_dict(self):
+        """Serialize sync log to dictionary."""
+        return {
+            'id': self.id,
+            'integration_id': self.integration_id,
+            'property_link_id': self.property_link_id,
+            'sync_type': self.sync_type,
+            'status': self.status,
+            'items_synced': self.items_synced,
+            'items_created': self.items_created,
+            'items_updated': self.items_updated,
+            'items_deleted': self.items_deleted,
+            'error_message': self.error_message,
+            'started_at': self.started_at.isoformat() if self.started_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'duration_seconds': self.duration_seconds,
+            'trigger': self.trigger
+        }
+
+    def __repr__(self):
+        return f'<StayManagerSyncLog {self.id} {self.sync_type} {self.status}>'

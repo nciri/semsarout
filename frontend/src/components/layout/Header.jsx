@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiSettings, FiCreditCard } from 'react-icons/fi'
+import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiSettings, FiCreditCard, FiLayers, FiLink } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
 
 function Header() {
@@ -65,6 +65,12 @@ function Header() {
 
             {/* Secondary nav - Agences (different color) */}
             <div className="flex items-center space-x-6">
+              <Link
+                to="/programmes"
+                className="text-terracotta-600 hover:text-terracotta-700 font-medium transition-colors"
+              >
+                Programmes neufs
+              </Link>
               <Link
                 to="/agences"
                 className="text-terracotta-600 hover:text-terracotta-700 font-medium transition-colors"
@@ -136,6 +142,22 @@ function Header() {
                         >
                           <FiFileText className="w-4 h-4 mr-3 text-gray-400" />
                           Mes annonces
+                        </Link>
+                        <Link
+                          to="/dashboard/programmes"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        >
+                          <FiLayers className="w-4 h-4 mr-3 text-gray-400" />
+                          Programmes
+                        </Link>
+                        <Link
+                          to="/dashboard/integrations/staymanager"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        >
+                          <FiLink className="w-4 h-4 mr-3 text-gray-400" />
+                          StayManager
                         </Link>
                         <Link
                           to="/dashboard/abonnement"
@@ -258,6 +280,13 @@ function Header() {
               </Link>
               <div className="h-px bg-gray-200 my-2"></div>
               <Link
+                to="/programmes"
+                className="py-2 text-terracotta-600 font-medium"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Programmes neufs
+              </Link>
+              <Link
                 to="/agences"
                 className="py-2 text-terracotta-600 font-medium"
                 onClick={() => setIsMenuOpen(false)}
@@ -287,6 +316,13 @@ function Header() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Mes annonces
+                  </Link>
+                  <Link
+                    to="/dashboard/programmes"
+                    className="py-2 text-gray-600"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Mes programmes
                   </Link>
                   <Link
                     to="/dashboard/abonnement"
