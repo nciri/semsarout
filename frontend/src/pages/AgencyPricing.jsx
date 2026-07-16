@@ -40,7 +40,7 @@ function AgencyPricing() {
       max_urgent: 5,
       has_api_access: true,
       has_csv_import: true,
-      has_staymanager_sync: false,
+      has_staymanager_sync: true,
       has_lead_contact: true,
       has_analytics: true,
       has_priority_support: false,

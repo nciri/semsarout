@@ -153,7 +153,7 @@ def seed_plans():
             'max_urgent': 5,
             'has_api_access': True,
             'has_csv_import': True,
-            'has_staymanager_sync': False,
+            'has_staymanager_sync': True,
             'has_lead_contact': True,
             'has_analytics': True,
             'has_priority_support': False,
