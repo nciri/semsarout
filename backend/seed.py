@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from sqlalchemy import text
 from app import create_app, db
 from app.models import User, Agency, Property, PropertyImage, SubscriptionPlan, Subscription, Lead, PaymentMethod, Invoice
 
@@ -104,16 +105,21 @@ PROPERTY_TITLES = {
 def clear_data():
     """Clear existing data."""
     print("Clearing existing data...")
-    Invoice.query.delete()
-    PaymentMethod.query.delete()
-    Lead.query.delete()
-    PropertyImage.query.delete()
-    Property.query.delete()
-    Subscription.query.delete()
-    User.query.delete()
-    Agency.query.delete()
-    SubscriptionPlan.query.delete()
-    db.session.commit()
+    # Delete in correct order to respect foreign key constraints
+    try:
+        db.session.execute(text('DELETE FROM invoice'))
+        db.session.execute(text('DELETE FROM payment_method'))
+        db.session.execute(text('DELETE FROM lead'))
+        db.session.execute(text('DELETE FROM property_image'))
+        db.session.execute(text('DELETE FROM property'))
+        db.session.execute(text('DELETE FROM subscription'))
+        db.session.execute(text('DELETE FROM "user"'))
+        db.session.execute(text('DELETE FROM agency'))
+        db.session.execute(text('DELETE FROM subscription_plan'))
+        db.session.commit()
+    except Exception as e:
+        print(f"Warning: {e}")
+        db.session.rollback()
     print("Data cleared.")
 
 
@@ -134,6 +140,7 @@ def seed_plans():
             'has_lead_contact': True,
             'has_analytics': False,
             'has_priority_support': False,
+            'has_dedicated_account_manager': False,
             'price_monthly': 299,
             'price_yearly': 2990
         },
@@ -150,6 +157,7 @@ def seed_plans():
             'has_lead_contact': True,
             'has_analytics': True,
             'has_priority_support': False,
+            'has_dedicated_account_manager': False,
             'price_monthly': 799,
             'price_yearly': 7990
         },
@@ -166,6 +174,7 @@ def seed_plans():
             'has_lead_contact': True,
             'has_analytics': True,
             'has_priority_support': True,
+            'has_dedicated_account_manager': True,
             'price_monthly': 1999,
             'price_yearly': 19990
         }
