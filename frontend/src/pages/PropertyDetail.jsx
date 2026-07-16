@@ -176,9 +176,9 @@ function PropertyDetail() {
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold text-primary-600">
+                <div className="font-display text-[28px] font-extrabold text-midnight">
                   {formatPrice(property.price)}
-                  {property.transaction_type === 'rent' && <span className="text-sm font-normal">/mois</span>}
+                  {property.transaction_type === 'rent' && <span className="text-sm font-semibold text-slate-500">/mois</span>}
                 </div>
                 {property.price_per_sqm && (
                   <div className="text-sm text-gray-500">
@@ -198,7 +198,7 @@ function PropertyDetail() {
                 <div className="text-sm text-gray-500">Surface</div>
               </div>
             )}
-            {property.rooms && (
+            {property.rooms != null && (
               <div className="bg-gray-50 rounded-lg p-4 text-center">
                 <div className="w-6 h-6 mx-auto text-gray-400 mb-2">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -210,14 +210,14 @@ function PropertyDetail() {
                 <div className="text-sm text-gray-500">Pièces</div>
               </div>
             )}
-            {property.bedrooms && (
+            {property.bedrooms != null && (
               <div className="bg-gray-50 rounded-lg p-4 text-center">
                 <IoBedOutline className="w-6 h-6 mx-auto text-gray-400 mb-2" />
                 <div className="font-semibold">{property.bedrooms}</div>
                 <div className="text-sm text-gray-500">Chambres</div>
               </div>
             )}
-            {property.bathrooms && (
+            {property.bathrooms != null && (
               <div className="bg-gray-50 rounded-lg p-4 text-center">
                 <IoWaterOutline className="w-6 h-6 mx-auto text-gray-400 mb-2" />
                 <div className="font-semibold">{property.bathrooms}</div>
