@@ -159,9 +159,21 @@ function PropertyDetail() {
           <div className="mb-6">
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="font-display text-2xl font-bold text-gray-900 mb-2">
-                  {property.title}
-                </h1>
+                <div className="flex items-center gap-2 mb-2">
+                  <h1 className="font-display text-2xl font-bold text-gray-900">
+                    {property.title}
+                  </h1>
+                  {property.is_premium && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-semibold">
+                      ⭐ Premium
+                    </span>
+                  )}
+                  {property.is_urgent && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold">
+                      🔥 Urgent
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-4 text-gray-600">
                   <div className="flex items-center">
                     <FiMapPin className="w-4 h-4 mr-1" />
@@ -261,7 +273,7 @@ function PropertyDetail() {
                 <span className="text-gray-500">Transaction</span>
                 <span className="font-medium">{property.transaction_type === 'sale' ? 'Vente' : 'Location'}</span>
               </div>
-              {property.floor && (
+              {property.floor != null && (
                 <div className="flex justify-between py-2 border-b">
                   <span className="text-gray-500">Étage</span>
                   <span className="font-medium">{property.floor}{property.total_floors && ` / ${property.total_floors}`}</span>
