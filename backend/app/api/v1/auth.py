@@ -144,6 +144,9 @@ def change_password():
     current_user_id = int(get_jwt_identity()) if get_jwt_identity() else None
     user = User.query.get(current_user_id)
 
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
     data = request.get_json()
 
     if not data.get('current_password') or not data.get('new_password'):

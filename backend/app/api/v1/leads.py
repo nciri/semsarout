@@ -86,6 +86,9 @@ def my_leads():
     current_user_id = int(get_jwt_identity()) if get_jwt_identity() else None
     user = User.query.get(current_user_id)
 
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
 
@@ -117,6 +120,9 @@ def get_lead(lead_id):
     """Get lead details."""
     current_user_id = int(get_jwt_identity()) if get_jwt_identity() else None
     user = User.query.get(current_user_id)
+
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
 
     lead = Lead.query.get_or_404(lead_id)
 
