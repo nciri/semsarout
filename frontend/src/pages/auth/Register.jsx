@@ -19,10 +19,11 @@ function Register() {
   const redirectTo = redirectParam && redirectParam.startsWith('/') ? redirectParam : '/dashboard'
 
   const { register, handleSubmit, formState: { errors }, watch } = useForm({
-    defaultValues: { interest: serviceContext || '' }
+    defaultValues: { interest: serviceContext || '', account_role: 'buyer' }
   })
   const userType = watch('user_type', 'particular')
   const interest = watch('interest', serviceContext || '')
+  const accountRole = watch('account_role', 'buyer')
 
   const onSubmit = async (data) => {
     setError('')
@@ -104,6 +105,45 @@ function Register() {
                   <span className={userType === 'professional' ? 'text-primary-600' : 'text-gray-600'}>
                     Professionnel
                   </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Account Role */}
+            <div>
+              <label className="label">Vous êtes plutôt...</label>
+              <div className="grid grid-cols-2 gap-4">
+                <label className={`flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                  accountRole === 'buyer' ? 'border-primary-600 bg-primary-50' : 'border-gray-200'
+                }`}>
+                  <input
+                    type="radio"
+                    value="buyer"
+                    {...register('account_role')}
+                    className="sr-only"
+                  />
+                  <div className="text-center">
+                    <div className={accountRole === 'buyer' ? 'text-primary-600 font-semibold' : 'text-gray-600'}>
+                      🔍 Acheteur/Chercheur
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">Je recherche une propriété</div>
+                  </div>
+                </label>
+                <label className={`flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                  accountRole === 'agent' ? 'border-primary-600 bg-primary-50' : 'border-gray-200'
+                }`}>
+                  <input
+                    type="radio"
+                    value="agent"
+                    {...register('account_role')}
+                    className="sr-only"
+                  />
+                  <div className="text-center">
+                    <div className={accountRole === 'agent' ? 'text-primary-600 font-semibold' : 'text-gray-600'}>
+                      🏢 Agent/Vendeur
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">Je vends des propriétés</div>
+                  </div>
                 </label>
               </div>
             </div>
