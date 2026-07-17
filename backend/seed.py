@@ -12,7 +12,7 @@ from sqlalchemy import text
 from app import create_app, db
 from app.models import (
     User, Agency, Property, PropertyImage, SubscriptionPlan, Subscription,
-    Lead, PaymentMethod, Invoice, Program, ProgramUnit, ProgramImage,
+    Lead, PaymentMethod, Invoice, Program, ProgramUnit, ProgramImage, ProgramUnitImage,
 )
 
 app = create_app('development')
@@ -698,8 +698,31 @@ def seed_programs(users, agencies, skip_existing=False):
         db.session.add(program)
         db.session.flush()
 
-        for unit in units:
-            db.session.add(ProgramUnit(program_id=program.id, **unit))
+        program_units = []
+        for unit_data in units:
+            unit = ProgramUnit(program_id=program.id, **unit_data)
+            db.session.add(unit)
+            db.session.flush()  # Get unit ID
+            program_units.append(unit)
+
+            # Add images for this unit type
+            image_types = {
+                'floor_plan': 'Plan d\'étage',
+                'bedroom': 'Chambre',
+                'living_room': 'Séjour',
+                'kitchen': 'Cuisine',
+                'bathroom': 'Salle de bains',
+            }
+            for idx, (img_type, caption) in enumerate(image_types.items()):
+                db.session.add(ProgramUnitImage(
+                    unit_id=unit.id,
+                    url=f'https://picsum.photos/seed/{program.slug}-{unit.id}-{img_type}/800/600',
+                    caption=caption,
+                    image_type=img_type,
+                    position=idx,
+                ))
+
+        # Add program images
         for position, (caption, image_type) in enumerate([
             ('Vue extérieure', 'exterior'), ('Espaces de vie', 'interior'), ('Prestations de la résidence', 'amenity'),
         ]):

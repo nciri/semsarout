@@ -135,12 +135,17 @@ class ProgramUnit(db.Model):
     features = db.Column(db.JSON)
     floor_plan_url = db.Column(db.String(500))
 
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
     # Relationships
     program = db.relationship('Program', back_populates='units')
+    images = db.relationship('ProgramUnitImage', back_populates='unit', cascade='all, delete-orphan')
 
-    def to_dict(self):
+    def to_dict(self, include_images=False):
         """Serialize unit to dictionary."""
-        return {
+        data = {
             'id': self.id,
             'program_id': self.program_id,
             'name': self.name,
@@ -155,8 +160,15 @@ class ProgramUnit(db.Model):
             'total_count': self.total_count,
             'available_count': self.available_count,
             'features': self.features,
-            'floor_plan_url': self.floor_plan_url
+            'floor_plan_url': self.floor_plan_url,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
+
+        if include_images:
+            data['images'] = [img.to_dict() for img in self.images]
+
+        return data
 
     def __repr__(self):
         return f'<ProgramUnit {self.name}>'
@@ -189,3 +201,34 @@ class ProgramImage(db.Model):
 
     def __repr__(self):
         return f'<ProgramImage {self.id}>'
+
+
+class ProgramUnitImage(db.Model):
+    """Images for a specific unit type within a program."""
+    __tablename__ = 'program_unit_images'
+
+    id = db.Column(db.Integer, primary_key=True)
+    unit_id = db.Column(db.Integer, db.ForeignKey('program_units.id'), nullable=False)
+    url = db.Column(db.String(500), nullable=False)
+    caption = db.Column(db.String(255))
+    image_type = db.Column(db.String(50))  # floor_plan, bedroom, living_room, kitchen, bathroom, exterior, amenity
+    position = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    unit = db.relationship('ProgramUnit', back_populates='images')
+
+    def to_dict(self):
+        """Serialize unit image to dictionary."""
+        return {
+            'id': self.id,
+            'unit_id': self.unit_id,
+            'url': self.url,
+            'caption': self.caption,
+            'image_type': self.image_type,
+            'position': self.position,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+    def __repr__(self):
+        return f'<ProgramUnitImage {self.id}>'

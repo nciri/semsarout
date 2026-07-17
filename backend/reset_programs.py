@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from seed import app, seed_programs
-from app.models import Agency, User, Program, ProgramUnit, ProgramImage
+from app.models import Agency, User, Program, ProgramUnit, ProgramImage, ProgramUnitImage
 from app import db
 
 
@@ -17,10 +17,11 @@ def main():
         # Delete existing programs
         print("Resetting programs...")
         ProgramImage.query.delete()
+        ProgramUnitImage.query.delete()
         ProgramUnit.query.delete()
         Program.query.delete()
         db.session.commit()
-        print("  Deleted all existing programs")
+        print("  Deleted all existing programs, units and images")
 
         # Reload programs
         agencies = Agency.query.filter(

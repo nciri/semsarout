@@ -7,7 +7,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from slugify import slugify
 from app import db
 from app.api.v1 import api_v1_bp
-from app.models import Program, ProgramUnit, ProgramImage, User, Subscription
+from app.models import Program, ProgramUnit, ProgramImage, ProgramUnitImage, User, Subscription
 
 
 def require_programs_feature(f):
@@ -575,3 +575,130 @@ def reorder_program_images(program_id):
     db.session.commit()
 
     return jsonify({'message': 'Images réordonnées'})
+
+
+# ============================================
+# UNIT IMAGE ENDPOINTS
+# ============================================
+
+@api_v1_bp.route('/programs/<int:program_id>/units/<int:unit_id>/images', methods=['GET'])
+def get_unit_images(program_id, unit_id):
+    """Get images for a specific unit type (public)."""
+    program = Program.query.filter_by(id=program_id, status='active').first()
+    if not program:
+        return jsonify({'error': 'Programme non trouvé'}), 404
+
+    unit = ProgramUnit.query.filter_by(id=unit_id, program_id=program_id).first()
+    if not unit:
+        return jsonify({'error': 'Type de bien non trouvé'}), 404
+
+    images = ProgramUnitImage.query.filter_by(unit_id=unit_id).order_by(ProgramUnitImage.position).all()
+
+    return jsonify({
+        'unit': unit.to_dict(),
+        'images': [img.to_dict() for img in images],
+        'total': len(images)
+    })
+
+
+@api_v1_bp.route('/programs/<int:program_id>/units/<int:unit_id>/images', methods=['POST'])
+@jwt_required()
+def add_unit_image(program_id, unit_id):
+    """Add an image to a unit type."""
+    current_user_id = int(get_jwt_identity())
+    user = User.query.get(current_user_id)
+
+    if not user or not user.agency_id:
+        return jsonify({'error': 'Agence requise'}), 403
+
+    program = Program.query.filter_by(id=program_id, agency_id=user.agency_id).first()
+    if not program:
+        return jsonify({'error': 'Programme non trouvé'}), 404
+
+    unit = ProgramUnit.query.filter_by(id=unit_id, program_id=program_id).first()
+    if not unit:
+        return jsonify({'error': 'Type de bien non trouvé'}), 404
+
+    data = request.get_json()
+
+    if not data.get('url'):
+        return jsonify({'error': 'URL de l\'image requise'}), 400
+
+    # Get next position
+    max_position = db.session.query(db.func.max(ProgramUnitImage.position)).filter_by(unit_id=unit_id).scalar()
+    next_position = (max_position or -1) + 1
+
+    image = ProgramUnitImage(
+        unit_id=unit_id,
+        url=data['url'],
+        caption=data.get('caption'),
+        image_type=data.get('image_type'),
+        position=data.get('position', next_position)
+    )
+
+    db.session.add(image)
+    db.session.commit()
+
+    return jsonify({
+        'image': image.to_dict(),
+        'message': 'Image ajoutée au type de bien'
+    }), 201
+
+
+@api_v1_bp.route('/programs/<int:program_id>/units/<int:unit_id>/images/<int:image_id>', methods=['DELETE'])
+@jwt_required()
+def delete_unit_image(program_id, unit_id, image_id):
+    """Delete an image from a unit type."""
+    current_user_id = int(get_jwt_identity())
+    user = User.query.get(current_user_id)
+
+    if not user or not user.agency_id:
+        return jsonify({'error': 'Agence requise'}), 403
+
+    program = Program.query.filter_by(id=program_id, agency_id=user.agency_id).first()
+    if not program:
+        return jsonify({'error': 'Programme non trouvé'}), 404
+
+    unit = ProgramUnit.query.filter_by(id=unit_id, program_id=program_id).first()
+    if not unit:
+        return jsonify({'error': 'Type de bien non trouvé'}), 404
+
+    image = ProgramUnitImage.query.filter_by(id=image_id, unit_id=unit_id).first()
+    if not image:
+        return jsonify({'error': 'Image non trouvée'}), 404
+
+    db.session.delete(image)
+    db.session.commit()
+
+    return jsonify({'message': 'Image supprimée'})
+
+
+@api_v1_bp.route('/programs/<int:program_id>/units/<int:unit_id>/images/reorder', methods=['POST'])
+@jwt_required()
+def reorder_unit_images(program_id, unit_id):
+    """Reorder images for a unit type."""
+    current_user_id = int(get_jwt_identity())
+    user = User.query.get(current_user_id)
+
+    if not user or not user.agency_id:
+        return jsonify({'error': 'Agence requise'}), 403
+
+    program = Program.query.filter_by(id=program_id, agency_id=user.agency_id).first()
+    if not program:
+        return jsonify({'error': 'Programme non trouvé'}), 404
+
+    unit = ProgramUnit.query.filter_by(id=unit_id, program_id=program_id).first()
+    if not unit:
+        return jsonify({'error': 'Type de bien non trouvé'}), 404
+
+    data = request.get_json()
+    image_ids = data.get('image_ids', [])
+
+    for position, image_id in enumerate(image_ids):
+        image = ProgramUnitImage.query.filter_by(id=image_id, unit_id=unit_id).first()
+        if image:
+            image.position = position
+
+    db.session.commit()
+
+    return jsonify({'message': 'Images du type de bien réordonnées'})

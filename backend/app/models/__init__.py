@@ -7,7 +7,7 @@ from app.models.role import Role, Permission, ActivityLog, user_roles, role_perm
 from app.models.client import Client, ClientInteraction
 from app.models.visit import Visit, CalendarEvent
 from app.models.transaction import Transaction, Offer, TransactionDocument, SALE_STAGES, RENT_STAGES
-from app.models.program import Program, ProgramUnit, ProgramImage
+from app.models.program import Program, ProgramUnit, ProgramImage, ProgramUnitImage
 from app.models.staymanager import (
     StayManagerIntegration,
     StayManagerPropertyLink,
@@ -43,6 +43,7 @@ __all__ = [
     'Program',
     'ProgramUnit',
     'ProgramImage',
+    'ProgramUnitImage',
     'StayManagerIntegration',
     'StayManagerPropertyLink',
     'StayManagerReservation',
