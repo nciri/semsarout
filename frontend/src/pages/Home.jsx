@@ -326,7 +326,7 @@ function Home() {
                   Tableau de bord analytics
                 </li>
               </ul>
-              <Link to="/agences/inscription" className="btn bg-white text-midnight hover:bg-slate-50 border-[1.5px] border-transparent">
+              <Link to="/dashboard/agence" className="btn bg-white text-midnight hover:bg-slate-50 border-[1.5px] border-transparent">
                 Créer mon espace agence
                 <FiArrowRight className="w-4 h-4 ml-2" />
               </Link>

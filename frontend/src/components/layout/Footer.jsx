@@ -19,21 +19,21 @@ function Footer() {
               à tarif fixe, sans commission, avec un accompagnement professionnel.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="hover:text-white transition-colors" aria-label="Facebook">
+              <span className="text-ivory/30 cursor-not-allowed" aria-label="Facebook (bientôt disponible)" title="Bientôt disponible">
                 <FiFacebook className="w-5 h-5" />
-              </a>
-              <a href="#" className="hover:text-white transition-colors" aria-label="Instagram">
+              </span>
+              <span className="text-ivory/30 cursor-not-allowed" aria-label="Instagram (bientôt disponible)" title="Bientôt disponible">
                 <FiInstagram className="w-5 h-5" />
-              </a>
-              <a href="#" className="hover:text-white transition-colors" aria-label="LinkedIn">
+              </span>
+              <span className="text-ivory/30 cursor-not-allowed" aria-label="LinkedIn (bientôt disponible)" title="Bientôt disponible">
                 <FiLinkedin className="w-5 h-5" />
-              </a>
-              <a href="#" className="hover:text-white transition-colors" aria-label="Twitter">
+              </span>
+              <span className="text-ivory/30 cursor-not-allowed" aria-label="Twitter (bientôt disponible)" title="Bientôt disponible">
                 <FiTwitter className="w-5 h-5" />
-              </a>
-              <a href="#" className="hover:text-white transition-colors" aria-label="YouTube">
+              </span>
+              <span className="text-ivory/30 cursor-not-allowed" aria-label="YouTube (bientôt disponible)" title="Bientôt disponible">
                 <FiYoutube className="w-5 h-5" />
-              </a>
+              </span>
             </div>
           </div>
 
@@ -69,7 +69,7 @@ function Footer() {
             <h4 className="font-semibold text-white mb-4">Professionnels</h4>
             <ul className="space-y-2 text-sm mb-6">
               <li><Link to="/agences" className="hover:text-white transition-colors">Agences partenaires</Link></li>
-              <li><Link to="/agences/inscription" className="hover:text-white transition-colors">Devenir partenaire</Link></li>
+              <li><Link to="/dashboard/agence" className="hover:text-white transition-colors">Devenir partenaire</Link></li>
               <li><Link to="/agences/tarifs" className="hover:text-white transition-colors">Tarifs agences</Link></li>
             </ul>
 
@@ -99,10 +99,10 @@ function Footer() {
               © {new Date().getFullYear()} SemsarOut. Tous droits réservés.
             </p>
             <div className="flex flex-wrap justify-center gap-4 text-sm">
-              <a href="#" className="hover:text-white transition-colors">Mentions légales</a>
-              <a href="#" className="hover:text-white transition-colors">CGU</a>
-              <a href="#" className="hover:text-white transition-colors">Politique de confidentialité</a>
-              <a href="#" className="hover:text-white transition-colors">Cookies</a>
+              <Link to="/mentions-legales" className="hover:text-white transition-colors">Mentions légales</Link>
+              <Link to="/cgu" className="hover:text-white transition-colors">CGU</Link>
+              <Link to="/politique-de-confidentialite" className="hover:text-white transition-colors">Politique de confidentialité</Link>
+              <Link to="/cookies" className="hover:text-white transition-colors">Cookies</Link>
             </div>
           </div>
         </div>

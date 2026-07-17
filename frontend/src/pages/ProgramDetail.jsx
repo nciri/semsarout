@@ -238,11 +238,29 @@ function ContactForm({ program }) {
     message: `Je suis intéressé(e) par le programme "${program?.name}".`
   })
   const [submitted, setSubmitted] = useState(false)
+  const [isSending, setIsSending] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // TODO: Implement contact form submission
-    setSubmitted(true)
+    setSubmitError('')
+    setIsSending(true)
+    try {
+      const response = await fetch(`/api/v1/programs/${program.id}/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      })
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Erreur lors de l\'envoi')
+      }
+      setSubmitted(true)
+    } catch (error) {
+      setSubmitError(error.message)
+    } finally {
+      setIsSending(false)
+    }
   }
 
   if (submitted) {
@@ -259,6 +277,11 @@ function ContactForm({ program }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {submitError && (
+        <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+          {submitError}
+        </div>
+      )}
       <div>
         <input
           type="text"
@@ -299,9 +322,10 @@ function ContactForm({ program }) {
       </div>
       <button
         type="submit"
-        className="w-full py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
+        disabled={isSending}
+        className="w-full py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50"
       >
-        Envoyer ma demande
+        {isSending ? 'Envoi...' : 'Envoyer ma demande'}
       </button>
     </form>
   )
@@ -511,14 +535,35 @@ export default function ProgramDetail() {
 
               <div className="mt-6 pt-6 border-t border-gray-100">
                 <div className="flex items-center gap-3">
-                  <a
-                    href="tel:+212600000000"
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                  {program.agency_phone && (
+                    <a
+                      href={`tel:${program.agency_phone}`}
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      <FiPhone className="w-4 h-4" />
+                      Appeler
+                    </a>
+                  )}
+                  <button
+                    onClick={async () => {
+                      const shareData = {
+                        title: program.name,
+                        text: `Découvrez le programme immobilier "${program.name}" sur SemsarOut`,
+                        url: window.location.href
+                      }
+                      if (navigator.share) {
+                        try {
+                          await navigator.share(shareData)
+                        } catch {
+                          // User cancelled share, ignore
+                        }
+                      } else {
+                        await navigator.clipboard.writeText(window.location.href)
+                      }
+                    }}
+                    className="p-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                    title="Partager"
                   >
-                    <FiPhone className="w-4 h-4" />
-                    Appeler
-                  </a>
-                  <button className="p-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
                     <FiShare2 className="w-5 h-5" />
                   </button>
                 </div>

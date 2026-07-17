@@ -152,12 +152,13 @@ function MyProperties() {
                         >
                           <FiEye className="w-4 h-4" />
                         </Link>
-                        <button
+                        <Link
+                          to={`/dashboard/annonces/${property.id}/modifier`}
                           className="p-2 text-gray-400 hover:text-gray-600"
                           title="Modifier"
                         >
                           <FiEdit2 className="w-4 h-4" />
-                        </button>
+                        </Link>
                         <button
                           onClick={() => setDeleteId(property.id)}
                           className="p-2 text-gray-400 hover:text-red-600"

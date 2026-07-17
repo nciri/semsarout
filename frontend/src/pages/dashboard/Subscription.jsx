@@ -8,10 +8,11 @@ import {
 } from 'react-icons/fi'
 import { jsPDF } from 'jspdf'
 import axios from 'axios'
+import { toast } from 'react-toastify'
 import useAuthStore from '../../store/authStore'
 import { formatPrice } from '../../utils/currency'
 
-const API_URL = 'http://localhost:7000/api/v1'
+const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
 
 // Generate invoice PDF
 const generateInvoicePDF = (invoice, user) => {
@@ -655,6 +656,33 @@ export default function Subscription() {
   const paymentMethods = paymentMethodsData || []
   const invoices = invoicesData || []
   const currentPlan = subscriptionData?.current_plan || (isAgency ? 'starter' : 'free')
+  const activeSubscription = subscriptionData?.subscription
+  const [showManageMenu, setShowManageMenu] = useState(false)
+
+  const cancelMutation = useMutation(
+    async () => {
+      const { data } = await axios.post(`${API_URL}/cancel-subscription`, null, {
+        headers: getAuthHeaders()
+      })
+      return data
+    },
+    {
+      onSuccess: () => {
+        toast.success('Abonnement annulé')
+        refetchSubscription()
+        setShowManageMenu(false)
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.error || 'Erreur lors de l\'annulation')
+      }
+    }
+  )
+
+  const handleCancelSubscription = () => {
+    if (window.confirm('Êtes-vous sûr de vouloir annuler votre abonnement ?')) {
+      cancelMutation.mutate()
+    }
+  }
 
   // Add payment method mutation
   const addPaymentMutation = useMutation(
@@ -897,13 +925,37 @@ export default function Subscription() {
                   <p className="text-2xl font-bold">
                     {formatPrice(currentPlanData.price)}<span className="text-lg font-normal opacity-80">/mois</span>
                   </p>
-                  <p className="opacity-80 text-sm mt-1">
-                    Prochain paiement le 1er février 2026
-                  </p>
+                  {activeSubscription?.end_date && (
+                    <p className="opacity-80 text-sm mt-1">
+                      Prochain paiement le {new Date(activeSubscription.end_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                  )}
                 </div>
-                <button className="px-6 py-3 bg-white text-primary-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-                  Gérer l'abonnement
-                </button>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowManageMenu(!showManageMenu)}
+                    className="px-6 py-3 bg-white text-primary-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+                  >
+                    Gérer l'abonnement
+                  </button>
+                  {showManageMenu && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10 text-gray-900">
+                      <button
+                        onClick={() => { setActiveTab('billing'); setShowManageMenu(false) }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                      >
+                        Voir la facturation
+                      </button>
+                      <button
+                        onClick={handleCancelSubscription}
+                        disabled={cancelMutation.isLoading}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                      >
+                        {cancelMutation.isLoading ? 'Annulation...' : 'Annuler l\'abonnement'}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}

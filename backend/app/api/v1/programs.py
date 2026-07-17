@@ -7,7 +7,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from slugify import slugify
 from app import db
 from app.api.v1 import api_v1_bp
-from app.models import Program, ProgramUnit, ProgramImage, ProgramUnitImage, User, Subscription
+from app.models import Program, ProgramUnit, ProgramImage, ProgramUnitImage, User, Subscription, Lead
 
 
 def require_programs_feature(f):
@@ -115,6 +115,35 @@ def list_programs():
         'pages': pagination.pages,
         'current_page': page
     })
+
+
+@api_v1_bp.route('/programs/<int:program_id>/contact', methods=['POST'])
+def contact_program(program_id):
+    """Create a lead/contact request for a real-estate program."""
+    program = Program.query.filter_by(id=program_id, status='active').first_or_404()
+
+    data = request.get_json()
+
+    if not data.get('name') or not data.get('phone'):
+        return jsonify({'error': 'Nom et téléphone requis'}), 400
+
+    lead = Lead(
+        name=data['name'],
+        email=data.get('email') or 'non-renseigne@semsarout.ma',
+        phone=data.get('phone'),
+        message=f"[Programme: {program.name}] {data.get('message', '')}".strip(),
+        source='contact_form',
+        agency_id=program.agency_id,
+        ip_address=request.remote_addr,
+        user_agent=request.user_agent.string[:255] if request.user_agent else None
+    )
+
+    program.contacts_count = (program.contacts_count or 0) + 1
+
+    db.session.add(lead)
+    db.session.commit()
+
+    return jsonify({'message': 'Demande envoyée avec succès'}), 201
 
 
 @api_v1_bp.route('/programs/<slug>', methods=['GET'])

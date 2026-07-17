@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { useMutation } from 'react-query'
+import { useMutation, useQuery } from 'react-query'
 import { toast } from 'react-toastify'
 import { FiSave, FiEye } from 'react-icons/fi'
 import { propertyService } from '../../services/propertyService'
@@ -24,9 +24,11 @@ const FEATURES = [
 
 function CreateProperty() {
   const navigate = useNavigate()
+  const { id } = useParams()
+  const isEditMode = Boolean(id)
   const [selectedFeatures, setSelectedFeatures] = useState([])
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm({
     defaultValues: {
       transaction_type: 'sale',
       property_type: 'apartment'
@@ -35,15 +37,55 @@ function CreateProperty() {
 
   const transactionType = watch('transaction_type')
 
+  const { data: existingProperty, isLoading: isLoadingProperty } = useQuery(
+    ['property', id],
+    () => propertyService.getProperty(id),
+    { enabled: isEditMode }
+  )
+
+  useEffect(() => {
+    if (existingProperty) {
+      reset({
+        title: existingProperty.title,
+        transaction_type: existingProperty.transaction_type,
+        property_type: existingProperty.property_type,
+        description: existingProperty.description,
+        price: existingProperty.price,
+        surface: existingProperty.surface,
+        rooms: existingProperty.rooms,
+        bedrooms: existingProperty.bedrooms,
+        bathrooms: existingProperty.bathrooms,
+        floor: existingProperty.floor,
+        city: existingProperty.city,
+        neighborhood: existingProperty.neighborhood,
+        address: existingProperty.address
+      })
+      setSelectedFeatures(existingProperty.features || [])
+    }
+  }, [existingProperty, reset])
+
   const createMutation = useMutation(
     (data) => propertyService.createProperty(data),
     {
-      onSuccess: (response) => {
+      onSuccess: () => {
         toast.success('Annonce créée avec succès')
         navigate('/dashboard/annonces')
       },
       onError: (error) => {
         toast.error(error.response?.data?.error || 'Erreur lors de la création')
+      }
+    }
+  )
+
+  const updateMutation = useMutation(
+    (data) => propertyService.updateProperty(id, data),
+    {
+      onSuccess: () => {
+        toast.success('Annonce mise à jour avec succès')
+        navigate('/dashboard/annonces')
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour')
       }
     }
   )
@@ -57,7 +99,7 @@ function CreateProperty() {
   }
 
   const onSubmit = (data) => {
-    createMutation.mutate({
+    const payload = {
       ...data,
       features: selectedFeatures,
       price: parseFloat(data.price),
@@ -65,14 +107,33 @@ function CreateProperty() {
       rooms: data.rooms ? parseInt(data.rooms) : null,
       bedrooms: data.bedrooms ? parseInt(data.bedrooms) : null,
       bathrooms: data.bathrooms ? parseInt(data.bathrooms) : null
-    })
+    }
+
+    if (isEditMode) {
+      updateMutation.mutate(payload)
+    } else {
+      createMutation.mutate(payload)
+    }
+  }
+
+  const isSaving = createMutation.isLoading || updateMutation.isLoading
+
+  if (isEditMode && isLoadingProperty) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-64 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="font-display text-2xl font-bold text-gray-900">
-          Créer une annonce
+          {isEditMode ? "Modifier l'annonce" : 'Créer une annonce'}
         </h1>
         <p className="text-gray-600">
           Remplissez les informations de votre bien immobilier
@@ -284,11 +345,11 @@ function CreateProperty() {
             </button>
             <button
               type="submit"
-              disabled={createMutation.isLoading}
+              disabled={isSaving}
               className="btn-primary"
             >
               <FiSave className="w-4 h-4 mr-2" />
-              {createMutation.isLoading ? 'Enregistrement...' : 'Enregistrer'}
+              {isSaving ? 'Enregistrement...' : 'Enregistrer'}
             </button>
           </div>
         </div>

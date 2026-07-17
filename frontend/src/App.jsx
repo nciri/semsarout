@@ -11,6 +11,12 @@ import Contact from './pages/Contact'
 import SellProperty from './pages/SellProperty'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
+import ForgotPassword from './pages/auth/ForgotPassword'
+import ResetPassword from './pages/auth/ResetPassword'
+import About from './pages/About'
+import LegalPage from './pages/LegalPage'
+import CheckoutConfirmation from './pages/CheckoutConfirmation'
+import PaymentGateway from './pages/PaymentGateway'
 import Dashboard from './pages/dashboard/Dashboard'
 import MyProperties from './pages/dashboard/MyProperties'
 import CreateProperty from './pages/dashboard/CreateProperty'
@@ -64,12 +70,20 @@ function App() {
         <Route path="vendre" element={<SellProperty />} />
         <Route path="connexion" element={<Login />} />
         <Route path="inscription" element={<Register />} />
+        <Route path="mot-de-passe-oublie" element={<ForgotPassword />} />
+        <Route path="reinitialiser-mot-de-passe" element={<ResetPassword />} />
+        <Route path="a-propos" element={<About />} />
+        <Route path="mentions-legales" element={<LegalPage type="mentions" />} />
+        <Route path="cgu" element={<LegalPage type="cgu" />} />
+        <Route path="politique-de-confidentialite" element={<LegalPage type="confidentialite" />} />
+        <Route path="cookies" element={<LegalPage type="cookies" />} />
 
         {/* Protected routes */}
         <Route path="dashboard" element={<PrivateRoute />}>
           <Route index element={<Dashboard />} />
           <Route path="annonces" element={<MyProperties />} />
           <Route path="annonces/nouvelle" element={<CreateProperty />} />
+          <Route path="annonces/:id/modifier" element={<CreateProperty />} />
           <Route path="programmes" element={<DashboardPrograms />} />
           <Route path="programmes/nouveau" element={<DashboardProgramForm />} />
           <Route path="programmes/:id" element={<DashboardProgramForm />} />
@@ -85,6 +99,10 @@ function App() {
         {/* Checkout (protected) */}
         <Route path="checkout" element={<PrivateRoute />}>
           <Route index element={<Checkout />} />
+          <Route path="confirmation" element={<CheckoutConfirmation />} />
+        </Route>
+        <Route path="payment-gateway" element={<PrivateRoute />}>
+          <Route index element={<PaymentGateway />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />

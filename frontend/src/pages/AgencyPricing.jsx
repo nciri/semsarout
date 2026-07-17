@@ -176,7 +176,7 @@ function AgencyPricing() {
                   </div>
 
                   <Link
-                    to={`/agences/inscription?plan=${plan.slug}`}
+                    to={`/dashboard/agence?plan=${plan.slug}`}
                     className={`btn w-full justify-center mb-8 ${
                       plan.popular
                         ? 'bg-primary-600 text-white hover:bg-primary-700'

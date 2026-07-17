@@ -86,6 +86,8 @@ class Program(db.Model):
             'video_url': self.video_url,
             'status': self.status,
             'agency_id': self.agency_id,
+            'agency_name': self.agency.name if self.agency else None,
+            'agency_phone': self.agency.phone if self.agency else None,
             'created_by_id': self.created_by_id,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,

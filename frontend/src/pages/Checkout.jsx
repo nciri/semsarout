@@ -42,6 +42,7 @@ function Checkout() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState('card')
   const [step, setStep] = useState(1)
+  const [paymentError, setPaymentError] = useState('')
 
   const serviceId = searchParams.get('service')
   const planId = searchParams.get('plan')
@@ -74,6 +75,7 @@ function Checkout() {
 
   const onSubmit = async (data) => {
     setIsProcessing(true)
+    setPaymentError('')
 
     try {
       // Create payment intent on backend
@@ -99,10 +101,14 @@ function Checkout() {
         navigate('/checkout/confirmation', {
           state: { paymentId: response.data.payment_id, method: 'transfer' }
         })
+      } else {
+        navigate('/checkout/confirmation', {
+          state: { paymentId: response.data.payment_id, method: 'card' }
+        })
       }
     } catch (error) {
       console.error('Payment error:', error)
-      alert('Une erreur est survenue. Veuillez réessayer.')
+      setPaymentError(error.response?.data?.error || 'Une erreur est survenue. Veuillez réessayer.')
     } finally {
       setIsProcessing(false)
     }
@@ -131,6 +137,12 @@ function Checkout() {
               <h1 className="font-display text-2xl font-bold text-gray-900 mb-8">
                 Finaliser votre commande
               </h1>
+
+              {paymentError && (
+                <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg text-sm">
+                  {paymentError}
+                </div>
+              )}
 
               {/* Steps */}
               <div className="flex items-center mb-8">
@@ -321,9 +333,9 @@ function Checkout() {
                       />
                       <span className="text-sm text-gray-600">
                         J'accepte les{' '}
-                        <a href="#" className="text-primary-600 underline">conditions générales de vente</a>
+                        <Link to="/cgu" target="_blank" className="text-primary-600 underline">conditions générales de vente</Link>
                         {' '}et la{' '}
-                        <a href="#" className="text-primary-600 underline">politique de confidentialité</a>
+                        <Link to="/politique-de-confidentialite" target="_blank" className="text-primary-600 underline">politique de confidentialité</Link>
                       </span>
                     </div>
 

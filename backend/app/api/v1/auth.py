@@ -1,5 +1,5 @@
-from datetime import datetime
-from flask import request, jsonify
+from datetime import datetime, timedelta
+from flask import request, jsonify, current_app
 from flask_jwt_extended import (
     create_access_token, create_refresh_token,
     jwt_required, get_jwt_identity
@@ -131,10 +131,34 @@ def update_current_user():
         user.last_name = data['last_name']
     if 'phone' in data:
         user.phone = data['phone']
+    if 'avatar_url' in data:
+        user.avatar_url = data['avatar_url']
 
     db.session.commit()
 
     return jsonify({'user': user.to_dict()})
+
+
+@api_v1_bp.route('/auth/me', methods=['DELETE'])
+@jwt_required()
+def delete_current_user():
+    """Delete (deactivate) the current user's account."""
+    current_user_id = int(get_jwt_identity()) if get_jwt_identity() else None
+    user = User.query.get(current_user_id)
+
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    data = request.get_json(silent=True) or {}
+    if not data.get('password') or not user.check_password(data['password']):
+        return jsonify({'error': 'Mot de passe requis pour confirmer la suppression'}), 401
+
+    # Soft delete: deactivate rather than hard-delete to preserve referential integrity
+    user.is_active = False
+    user.email = f'deleted-{user.id}-{user.email}'
+    db.session.commit()
+
+    return jsonify({'message': 'Compte supprimé'})
 
 
 @api_v1_bp.route('/auth/change-password', methods=['POST'])
@@ -159,3 +183,59 @@ def change_password():
     db.session.commit()
 
     return jsonify({'message': 'Password changed successfully'})
+
+
+@api_v1_bp.route('/auth/forgot-password', methods=['POST'])
+def forgot_password():
+    """Request a password reset token."""
+    import secrets
+
+    data = request.get_json() or {}
+    email = data.get('email', '').strip().lower()
+
+    generic_response = {'message': 'Si un compte existe avec cet email, un lien de réinitialisation a été envoyé.'}
+
+    if not email:
+        return jsonify({'error': 'Email requis'}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        # Do not reveal whether the account exists
+        return jsonify(generic_response)
+
+    token = secrets.token_urlsafe(32)
+    user.reset_token = token
+    user.reset_token_expires = datetime.utcnow() + timedelta(hours=1)
+    db.session.commit()
+
+    # No email provider configured yet: log the reset link for local/dev use.
+    reset_link = f'/reinitialiser-mot-de-passe?token={token}'
+    current_app.logger.info(f'Password reset requested for {email}. Link: {reset_link}')
+
+    return jsonify(generic_response)
+
+
+@api_v1_bp.route('/auth/reset-password', methods=['POST'])
+def reset_password():
+    """Reset password using a valid reset token."""
+    data = request.get_json() or {}
+    token = data.get('token')
+    new_password = data.get('new_password')
+
+    if not token or not new_password:
+        return jsonify({'error': 'Token et nouveau mot de passe requis'}), 400
+
+    if len(new_password) < 8:
+        return jsonify({'error': 'Le mot de passe doit contenir au moins 8 caractères'}), 400
+
+    user = User.query.filter_by(reset_token=token).first()
+
+    if not user or not user.reset_token_expires or user.reset_token_expires < datetime.utcnow():
+        return jsonify({'error': 'Lien de réinitialisation invalide ou expiré'}), 400
+
+    user.set_password(new_password)
+    user.reset_token = None
+    user.reset_token_expires = None
+    db.session.commit()
+
+    return jsonify({'message': 'Mot de passe réinitialisé avec succès'})

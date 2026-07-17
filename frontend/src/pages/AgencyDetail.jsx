@@ -5,7 +5,7 @@ import { FiMapPin, FiPhone, FiMail, FiGlobe, FiArrowRight, FiSend } from 'react-
 import PropertyCard from '../components/common/PropertyCard'
 import { agencyService } from '../services/agencyService'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'
+const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
 
 function AgencyDetail() {
   const { slug } = useParams()

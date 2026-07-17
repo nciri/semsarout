@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { useQuery } from 'react-query'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useQuery, useQueryClient } from 'react-query'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import {
@@ -9,20 +9,92 @@ import {
 } from 'react-icons/fi'
 import { IoBedOutline, IoWaterOutline } from 'react-icons/io5'
 import { propertyService } from '../services/propertyService'
+import { buyerService } from '../services/buyerService'
 import { formatPrice } from '../utils/currency'
 import PhotoLightbox from '../components/common/PhotoLightbox'
+import useAuthStore from '../store/authStore'
 
 function PropertyDetail() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const { user, isAuthenticated } = useAuthStore()
   const [currentImage, setCurrentImage] = useState(0)
   const [showContact, setShowContact] = useState(false)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [timeRemaining, setTimeRemaining] = useState(null)
+  const [revealedPhone, setRevealedPhone] = useState(null)
+  const [isRevealingPhone, setIsRevealingPhone] = useState(false)
 
   const { data: property, isLoading } = useQuery(
     ['property', id],
     () => propertyService.getProperty(id)
   )
+
+  const isBuyer = !isAuthenticated || user?.account_role === 'buyer'
+
+  const { data: favoritesData } = useQuery(
+    ['favorites'],
+    () => buyerService.getFavorites({ per_page: 100 }),
+    { enabled: isAuthenticated && isBuyer }
+  )
+
+  const existingFavorite = favoritesData?.favorites?.find(
+    (f) => f.property_id === Number(id)
+  )
+
+  const handleToggleFavorite = async () => {
+    if (!isAuthenticated) {
+      navigate(`/connexion?redirect=/annonces/${id}`)
+      return
+    }
+    try {
+      if (existingFavorite) {
+        await buyerService.removeFavorite(existingFavorite.id)
+        toast.success('Retiré des favoris')
+      } else {
+        await buyerService.addFavorite(id)
+        toast.success('Ajouté aux favoris')
+      }
+      queryClient.invalidateQueries(['favorites'])
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Une erreur est survenue')
+    }
+  }
+
+  const handleShare = async () => {
+    const shareData = {
+      title: property?.title,
+      text: `Découvrez ce bien sur SemsarOut : ${property?.title}`,
+      url: window.location.href
+    }
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch {
+        // User cancelled share, ignore
+      }
+    } else {
+      await navigator.clipboard.writeText(window.location.href)
+      toast.success('Lien copié dans le presse-papier')
+    }
+  }
+
+  const handleRevealPhone = async () => {
+    if (revealedPhone) return
+    setIsRevealingPhone(true)
+    try {
+      const data = await propertyService.revealPhone(id, {
+        name: user ? `${user.first_name} ${user.last_name}` : undefined,
+        email: user?.email
+      })
+      setRevealedPhone(data.phone)
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Numéro indisponible pour ce bien')
+    } finally {
+      setIsRevealingPhone(false)
+    }
+  }
 
   // Calculate time remaining for urgent listing
   useEffect(() => {
@@ -406,21 +478,37 @@ function PropertyDetail() {
                     <FiMail className="w-4 h-4 mr-2" />
                     Envoyer un message
                   </button>
-                  <button className="btn-outline w-full">
-                    <FiPhone className="w-4 h-4 mr-2" />
-                    Nous appeler
-                  </button>
+                  {revealedPhone ? (
+                    <a href={`tel:${revealedPhone}`} className="btn-outline w-full">
+                      <FiPhone className="w-4 h-4 mr-2" />
+                      {revealedPhone}
+                    </a>
+                  ) : (
+                    <button
+                      onClick={handleRevealPhone}
+                      disabled={isRevealingPhone}
+                      className="btn-outline w-full"
+                    >
+                      <FiPhone className="w-4 h-4 mr-2" />
+                      {isRevealingPhone ? 'Chargement...' : 'Nous appeler'}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
 
             {/* Actions */}
             <div className="flex gap-3">
-              <button className="btn-secondary flex-1">
-                <FiHeart className="w-4 h-4 mr-2" />
-                Favoris
-              </button>
-              <button className="btn-secondary flex-1">
+              {isBuyer && (
+                <button
+                  onClick={handleToggleFavorite}
+                  className={`btn-secondary flex-1 ${existingFavorite ? 'text-red-600 border-red-200' : ''}`}
+                >
+                  <FiHeart className={`w-4 h-4 mr-2 ${existingFavorite ? 'fill-current' : ''}`} />
+                  {existingFavorite ? 'Retiré' : 'Favoris'}
+                </button>
+              )}
+              <button onClick={handleShare} className="btn-secondary flex-1">
                 <FiShare2 className="w-4 h-4 mr-2" />
                 Partager
               </button>

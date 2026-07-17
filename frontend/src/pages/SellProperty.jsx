@@ -849,7 +849,7 @@ function SellProperty() {
                   />
                   <span className="text-sm text-gray-600">
                     Je certifie être propriétaire de ce bien (ou mandaté pour sa vente) et j'accepte
-                    les <a href="#" className="text-primary-600 underline">conditions du Forfait Vente</a>.
+                    les <Link to="/cgu" target="_blank" className="text-primary-600 underline">conditions du Forfait Vente</Link>.
                     Le forfait de {formatPrice(4900)} n'est facturé qu'après validation du dossier avec votre expert.
                   </span>
                 </label>

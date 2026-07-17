@@ -281,9 +281,9 @@ function Register() {
                 />
                 <span className="text-sm text-gray-600">
                   J'accepte les{' '}
-                  <a href="#" className="text-primary-600">conditions d'utilisation</a>
+                  <Link to="/cgu" target="_blank" className="text-primary-600">conditions d'utilisation</Link>
                   {' '}et la{' '}
-                  <a href="#" className="text-primary-600">politique de confidentialité</a>
+                  <Link to="/politique-de-confidentialite" target="_blank" className="text-primary-600">politique de confidentialité</Link>
                 </span>
               </label>
               {errors.terms && (
