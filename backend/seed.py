@@ -10,7 +10,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from sqlalchemy import text
 from app import create_app, db
-from app.models import User, Agency, Property, PropertyImage, SubscriptionPlan, Subscription, Lead, PaymentMethod, Invoice
+from app.models import (
+    User, Agency, Property, PropertyImage, SubscriptionPlan, Subscription,
+    Lead, PaymentMethod, Invoice, Program, ProgramUnit, ProgramImage,
+)
 
 app = create_app('development')
 
@@ -107,6 +110,9 @@ def clear_data():
     print("Clearing existing data...")
     # Delete in correct order to respect foreign key constraints
     try:
+        db.session.execute(text('DELETE FROM program_images'))
+        db.session.execute(text('DELETE FROM program_units'))
+        db.session.execute(text('DELETE FROM programs'))
         db.session.execute(text('DELETE FROM invoice'))
         db.session.execute(text('DELETE FROM payment_method'))
         db.session.execute(text('DELETE FROM lead'))
@@ -141,6 +147,8 @@ def seed_plans():
             'has_analytics': False,
             'has_priority_support': False,
             'has_dedicated_account_manager': False,
+            'has_programs': False,
+            'max_programs': 0,
             'price_monthly': 299,
             'price_yearly': 2990
         },
@@ -158,6 +166,8 @@ def seed_plans():
             'has_analytics': True,
             'has_priority_support': False,
             'has_dedicated_account_manager': False,
+            'has_programs': True,
+            'max_programs': 10,
             'price_monthly': 799,
             'price_yearly': 7990
         },
@@ -175,6 +185,8 @@ def seed_plans():
             'has_analytics': True,
             'has_priority_support': True,
             'has_dedicated_account_manager': True,
+            'has_programs': True,
+            'max_programs': -1,
             'price_monthly': 1999,
             'price_yearly': 19990
         }
@@ -572,6 +584,139 @@ def seed_properties(users, agencies):
     return properties
 
 
+def seed_programs(users, agencies, skip_existing=False):
+    """Create published new-build programs with their available unit types."""
+    print("Creating real estate programs...")
+    agency_by_city = {agency.city: agency for agency in agencies}
+    user_by_agency = {user.agency_id: user for user in users if user.user_type == 'professional'}
+
+    programs_data = [
+        {
+            'reference': 'PRG-CAS-001', 'name': 'Résidence Azure Anfa',
+            'description': 'Une résidence contemporaine à Anfa, pensée pour une vie urbaine élégante avec des espaces communs soignés et une sécurité 24h/24.',
+            'program_type': 'residential', 'address': '18 Boulevard de l\'Océan',
+            'city': 'Casablanca', 'neighborhood': 'Anfa', 'latitude': 33.5932, 'longitude': -7.6474,
+            'delivery_date': datetime(2027, 6, 30).date(), 'construction_status': 'under_construction',
+            'amenities': ['Piscine', 'Salle de sport', 'Parking sous-sol', 'Sécurité 24h/24', 'Jardin paysager'],
+            'cover_image_url': 'https://picsum.photos/seed/residence-azure-anfa/1200/800', 'views_count': 1840, 'contacts_count': 46,
+            'units': [
+                {'name': 'Studio', 'unit_type': 'apartment', 'surface_min': 35, 'surface_max': 42, 'rooms': 1, 'bedrooms': 0, 'bathrooms': 1, 'price_from': 850000, 'price_to': 950000, 'total_count': 12, 'available_count': 6, 'features': ['Kitchenette', 'Climatisation', 'Balcon']},
+                {'name': 'Appartement T2 Compact', 'unit_type': 'apartment', 'surface_min': 52, 'surface_max': 62, 'rooms': 2, 'bedrooms': 1, 'bathrooms': 1, 'price_from': 1150000, 'price_to': 1350000, 'total_count': 18, 'available_count': 10, 'features': ['Terrasse', 'Cuisine équipée', 'Climatisation']},
+                {'name': 'Appartement T2 Spacieux', 'unit_type': 'apartment', 'surface_min': 68, 'surface_max': 78, 'rooms': 2, 'bedrooms': 1, 'bathrooms': 1, 'price_from': 1400000, 'price_to': 1650000, 'total_count': 16, 'available_count': 8, 'features': ['Grande terrasse', 'Suite parentale', 'Double vitrage']},
+                {'name': 'Appartement T3 Standard', 'unit_type': 'apartment', 'surface_min': 85, 'surface_max': 98, 'rooms': 3, 'bedrooms': 2, 'bathrooms': 1, 'price_from': 1750000, 'price_to': 2050000, 'total_count': 24, 'available_count': 14, 'features': ['Balcon', 'Suite parentale', 'Cuisine équipée']},
+                {'name': 'Appartement T3 Premium', 'unit_type': 'apartment', 'surface_min': 102, 'surface_max': 118, 'rooms': 3, 'bedrooms': 2, 'bathrooms': 2, 'price_from': 2150000, 'price_to': 2550000, 'total_count': 20, 'available_count': 10, 'features': ['Terrasse', 'Suite parentale', 'Deux SDB', 'Double vitrage']},
+                {'name': 'Appartement T4 Duplex', 'unit_type': 'duplex', 'surface_min': 155, 'surface_max': 175, 'rooms': 4, 'bedrooms': 3, 'bathrooms': 2, 'price_from': 3850000, 'price_to': 4450000, 'total_count': 8, 'available_count': 4, 'features': ['Grande terrasse', 'Mezzanine', 'Trois SDB', 'Parking']},
+                {'name': 'Penthouse T4', 'unit_type': 'duplex', 'surface_min': 188, 'surface_max': 210, 'rooms': 4, 'bedrooms': 3, 'bathrooms': 3, 'price_from': 4850000, 'price_to': 5650000, 'total_count': 4, 'available_count': 2, 'features': ['Grande terrasse', 'Vue mer', 'Deux places de parking', 'Climatisation']},
+            ],
+        },
+        {
+            'reference': 'PRG-RAB-001', 'name': 'Les Jardins de Hay Riad',
+            'description': 'Un programme résidentiel familial au cœur de Hay Riad, à proximité des écoles, commerces et grands axes de Rabat.',
+            'program_type': 'residential', 'address': 'Avenue Annakhil',
+            'city': 'Rabat', 'neighborhood': 'Hay Riad', 'latitude': 33.9663, 'longitude': -6.8668,
+            'delivery_date': datetime(2026, 12, 31).date(), 'construction_status': 'under_construction',
+            'amenities': ['Jardins', 'Aire de jeux', 'Conciergerie', 'Parking', 'Bornes de recharge'],
+            'cover_image_url': 'https://picsum.photos/seed/jardins-hay-riad/1200/800', 'views_count': 1275, 'contacts_count': 38,
+            'units': [
+                {'name': 'Appartement T2', 'unit_type': 'apartment', 'surface_min': 62, 'surface_max': 72, 'rooms': 2, 'bedrooms': 1, 'bathrooms': 1, 'price_from': 1450000, 'price_to': 1650000, 'total_count': 16, 'available_count': 8, 'features': ['Balcon', 'Cuisine équipée', 'Climatisation']},
+                {'name': 'Appartement T3 Standard', 'unit_type': 'apartment', 'surface_min': 88, 'surface_max': 102, 'rooms': 3, 'bedrooms': 2, 'bathrooms': 1, 'price_from': 1800000, 'price_to': 2050000, 'total_count': 28, 'available_count': 15, 'features': ['Balcon', 'Suite parentale', 'Cellier']},
+                {'name': 'Appartement T3 Premium', 'unit_type': 'apartment', 'surface_min': 108, 'surface_max': 122, 'rooms': 3, 'bedrooms': 2, 'bathrooms': 2, 'price_from': 2300000, 'price_to': 2650000, 'total_count': 18, 'available_count': 10, 'features': ['Terrasse', 'Suite parentale', 'Deux SDB', 'Parking']},
+                {'name': 'Appartement T4', 'unit_type': 'apartment', 'surface_min': 128, 'surface_max': 155, 'rooms': 4, 'bedrooms': 3, 'bathrooms': 2, 'price_from': 2750000, 'price_to': 3250000, 'total_count': 16, 'available_count': 7, 'features': ['Double exposition', 'Terrasse', 'Parking titré', 'Climatisation']},
+            ],
+        },
+        {
+            'reference': 'PRG-MAR-001', 'name': 'Palmeraie Signature Villas',
+            'description': 'Collection exclusive de villas contemporaines dans la Palmeraie, avec jardins privatifs, piscine et finitions haut de gamme.',
+            'program_type': 'residential', 'address': 'Circuit de la Palmeraie',
+            'city': 'Marrakech', 'neighborhood': 'Palmeraie', 'latitude': 31.6719, 'longitude': -7.9617,
+            'delivery_date': datetime(2027, 9, 30).date(), 'construction_status': 'planning',
+            'amenities': ['Piscine privée', 'Jardin privatif', 'Résidence sécurisée', 'Club house', 'Service de gestion locative'],
+            'cover_image_url': 'https://picsum.photos/seed/palmeraie-signature/1200/800', 'views_count': 960, 'contacts_count': 27,
+            'units': [
+                {'name': 'Villa Atlas', 'unit_type': 'villa', 'surface_min': 210, 'surface_max': 210, 'rooms': 5, 'bedrooms': 4, 'bathrooms': 4, 'price_from': 4850000, 'price_to': 4850000, 'total_count': 12, 'available_count': 8, 'features': ['Piscine', 'Terrain de 500 m²', 'Rooftop']},
+                {'name': 'Villa Ocre', 'unit_type': 'villa', 'surface_min': 285, 'surface_max': 310, 'rooms': 6, 'bedrooms': 5, 'bathrooms': 5, 'price_from': 6800000, 'price_to': 7900000, 'total_count': 8, 'available_count': 5, 'features': ['Piscine chauffée', 'Hammam', 'Maison de gardien']},
+            ],
+        },
+        {
+            'reference': 'PRG-CAS-002', 'name': 'Nexus Sidi Maârouf',
+            'description': 'Un projet mixte réunissant bureaux modulables, commerces de proximité et services au sein du nouveau pôle d’affaires de Sidi Maârouf.',
+            'program_type': 'mixed', 'address': 'Boulevard Al Qods',
+            'city': 'Casablanca', 'neighborhood': 'Sidi Maarouf', 'latitude': 33.5394, 'longitude': -7.6320,
+            'delivery_date': datetime(2026, 10, 31).date(), 'construction_status': 'under_construction',
+            'amenities': ['Accueil', 'Parking visiteurs', 'Fibre optique', 'Sécurité', 'Espaces de restauration'],
+            'cover_image_url': 'https://picsum.photos/seed/nexus-sidi-maarouf/1200/800', 'views_count': 710, 'contacts_count': 19,
+            'units': [
+                {'name': 'Bureau modulable', 'unit_type': 'office', 'surface_min': 54, 'surface_max': 118, 'rooms': 2, 'bedrooms': 0, 'bathrooms': 1, 'price_from': 980000, 'price_to': 2180000, 'total_count': 36, 'available_count': 20, 'features': ['Faux plafond', 'Climatisation centralisée', 'Fibre']},
+                {'name': 'Local commercial', 'unit_type': 'commercial', 'surface_min': 72, 'surface_max': 145, 'rooms': 1, 'bedrooms': 0, 'bathrooms': 1, 'price_from': 1650000, 'price_to': 3400000, 'total_count': 10, 'available_count': 4, 'features': ['Vitrine', 'Hauteur sous plafond', 'Terrasse possible']},
+            ],
+        },
+        {
+            'reference': 'PRG-TAN-001', 'name': 'Cap Malabata',
+            'description': 'Résidence livrée à quelques minutes de la corniche de Tanger, offrant des appartements lumineux avec vues dégagées et prestations prêtes à vivre.',
+            'program_type': 'residential', 'address': 'Route de Malabata',
+            'city': 'Tanger', 'neighborhood': 'Malabata', 'latitude': 35.7703, 'longitude': -5.7761,
+            'delivery_date': datetime(2026, 3, 31).date(), 'construction_status': 'delivered',
+            'amenities': ['Piscine', 'Ascenseur', 'Parking titré', 'Gardiennage', 'Proche plage'],
+            'cover_image_url': 'https://picsum.photos/seed/cap-malabata/1200/800', 'views_count': 1540, 'contacts_count': 52,
+            'units': [
+                {'name': 'Studio Mer', 'unit_type': 'apartment', 'surface_min': 40, 'surface_max': 48, 'rooms': 1, 'bedrooms': 0, 'bathrooms': 1, 'price_from': 720000, 'price_to': 850000, 'total_count': 10, 'available_count': 3, 'features': ['Balcon', 'Vue mer', 'Kitchenette']},
+                {'name': 'Appartement T2 Vue Partielle', 'unit_type': 'apartment', 'surface_min': 58, 'surface_max': 70, 'rooms': 2, 'bedrooms': 1, 'bathrooms': 1, 'price_from': 920000, 'price_to': 1180000, 'total_count': 14, 'available_count': 4, 'features': ['Balcon', 'Vue mer partielle', 'Cuisine équipée']},
+                {'name': 'Appartement T2 Vue Mer', 'unit_type': 'apartment', 'surface_min': 72, 'surface_max': 85, 'rooms': 2, 'bedrooms': 1, 'bathrooms': 1, 'price_from': 1150000, 'price_to': 1420000, 'total_count': 10, 'available_count': 2, 'features': ['Balcon', 'Vue mer', 'Suite parentale', 'Climatisation']},
+                {'name': 'Appartement T3 Standard', 'unit_type': 'apartment', 'surface_min': 92, 'surface_max': 108, 'rooms': 3, 'bedrooms': 2, 'bathrooms': 1, 'price_from': 1480000, 'price_to': 1750000, 'total_count': 16, 'available_count': 5, 'features': ['Balcon', 'Suite parentale', 'Parking titré']},
+                {'name': 'Appartement T3 Vue Mer', 'unit_type': 'apartment', 'surface_min': 108, 'surface_max': 132, 'rooms': 3, 'bedrooms': 2, 'bathrooms': 2, 'price_from': 1820000, 'price_to': 2350000, 'total_count': 12, 'available_count': 3, 'features': ['Terrasse', 'Suite parentale', 'Vue mer', 'Parking titré']},
+            ],
+        },
+    ]
+
+    programs = []
+    for data in programs_data:
+        existing_program = Program.query.filter_by(reference=data['reference']).first()
+        if existing_program:
+            if skip_existing:
+                print(f"  Skipped existing program: {existing_program.name}")
+                continue
+            raise ValueError(f"A program with reference {data['reference']} already exists")
+
+        units = data.pop('units')
+        agency = agency_by_city.get(data['city'])
+        if not agency:
+            print(f"  Skipped {data['name']}: no agency found in {data['city']}")
+            continue
+        created_by = user_by_agency.get(agency.id)
+        program = Program(
+            **data,
+            slug=data['name'].lower().replace(' ', '-').replace('â', 'a').replace('é', 'e'),
+            agency_id=agency.id,
+            created_by_id=created_by.id if created_by else None,
+            status='active',
+            published_at=datetime.utcnow() - timedelta(days=random.randint(7, 90)),
+        )
+        program.total_units = sum(unit['total_count'] for unit in units)
+        program.available_units = sum(unit['available_count'] for unit in units)
+        program.min_price = min(unit['price_from'] for unit in units)
+        program.max_price = max(unit['price_to'] for unit in units)
+        db.session.add(program)
+        db.session.flush()
+
+        for unit in units:
+            db.session.add(ProgramUnit(program_id=program.id, **unit))
+        for position, (caption, image_type) in enumerate([
+            ('Vue extérieure', 'exterior'), ('Espaces de vie', 'interior'), ('Prestations de la résidence', 'amenity'),
+        ]):
+            db.session.add(ProgramImage(
+                program_id=program.id,
+                url=f'https://picsum.photos/seed/{program.slug}-{position}/1200/800',
+                caption=caption,
+                image_type=image_type,
+                position=position,
+            ))
+        programs.append(program)
+
+    db.session.commit()
+    print(f"  Created {len(programs)} programs with their units and images")
+    return programs
+
+
 def generate_description(prop_type, trans_type, surface, land_surface, rooms, bedrooms, neighborhood, city, features):
     """Generate a realistic property description."""
     action = 'À vendre' if trans_type == 'sale' else 'À louer'
@@ -763,7 +908,7 @@ def seed_billing(agencies, users):
     return payment_methods, invoices
 
 
-def print_summary(plans, agencies, users, properties, leads):
+def print_summary(plans, agencies, users, properties, programs, leads):
     """Print a summary of created data."""
     print("\n" + "=" * 60)
     print("SEED DATA SUMMARY")
@@ -805,6 +950,10 @@ def print_summary(plans, agencies, users, properties, leads):
     for status, count in sorted(by_status.items(), key=lambda x: -x[1]):
         print(f"    - {status}: {count}")
 
+    print(f"\nPrograms: {len(programs)}")
+    for program in programs:
+        print(f"  - {program.name} ({program.city}): {program.available_units}/{program.total_units} units available")
+
     print(f"\nLeads: {len(leads)}")
     lead_statuses = {}
     for lead in leads:
@@ -844,10 +993,11 @@ def main():
         agencies = seed_agencies(plans)
         users = seed_users(agencies)
         properties = seed_properties(users, agencies)
+        programs = seed_programs(users, agencies)
         leads = seed_leads(properties, users)
         billing = seed_billing(agencies, users)
 
-        print_summary(plans, agencies, users, properties, leads)
+        print_summary(plans, agencies, users, properties, programs, leads)
 
         print("\nDone! Database seeded successfully.")
 
