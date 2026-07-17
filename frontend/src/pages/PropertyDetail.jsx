@@ -136,7 +136,7 @@ function PropertyDetail() {
                 {/* Urgent Badge - Diagonal banner */}
                 {property.is_urgent && (
                   <div className="absolute top-0 right-0 w-32 h-32 overflow-hidden">
-                    <div className="absolute top-2 right-(-10) w-40 h-12 bg-red-600 text-white font-bold text-center rotate-45 flex items-center justify-center shadow-lg">
+                    <div className="absolute top-2 -right-10 w-40 h-12 bg-red-600 text-white font-bold text-center rotate-45 flex items-center justify-center shadow-lg">
                       URGENT
                     </div>
                   </div>
