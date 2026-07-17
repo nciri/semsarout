@@ -1,21 +1,18 @@
 import { Link } from 'react-router-dom'
 import { FiFacebook, FiInstagram, FiLinkedin, FiTwitter, FiYoutube } from 'react-icons/fi'
+import { formatPrice } from '../../utils/currency'
+import StayManagerWordmark from '../common/StayManagerWordmark'
+import Wordmark from '../common/Wordmark'
 
 function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-300">
+    <footer className="bg-midnight text-ivory/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <Link to="/" className="flex items-center space-x-2 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-terracotta-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">S</span>
-              </div>
-              <div className="flex items-baseline">
-                <span className="font-display font-bold text-xl text-white">Semsar</span>
-                <span className="font-display font-bold text-xl text-primary-400">Out</span>
-              </div>
+            <Link to="/" className="inline-flex mb-4">
+              <Wordmark dark />
             </Link>
             <p className="text-sm mb-4 max-w-xs">
               L'immobilier sans les intermédiaires douteux. Vendez, louez et gérez votre bien
@@ -44,7 +41,7 @@ function Footer() {
           <div>
             <h4 className="font-semibold text-white mb-4">Vente</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/nos-services" className="hover:text-white transition-colors">Forfait Vente (4 900 Đ)</Link></li>
+              <li><Link to="/nos-services" className="hover:text-white transition-colors">Forfait Vente ({formatPrice(4900)})</Link></li>
               <li><Link to="/nos-services" className="hover:text-white transition-colors">Photos Professionnelles</Link></li>
               <li><Link to="/nos-services" className="hover:text-white transition-colors">Estimation Gratuite</Link></li>
               <li><Link to="/annonces?transaction_type=sale" className="hover:text-white transition-colors">Acheter un bien</Link></li>
@@ -60,7 +57,7 @@ function Footer() {
               <li>
                 <Link to="/nos-services" className="hover:text-white transition-colors">
                   Location Courte Durée
-                  <span className="ml-1 text-xs text-purple-400">StayManager</span>
+                  <span className="ml-1 text-xs text-[#AFCFBC]">StayManager</span>
                 </Link>
               </li>
               <li><Link to="/annonces?transaction_type=rent" className="hover:text-white transition-colors">Louer un bien</Link></li>
@@ -87,7 +84,7 @@ function Footer() {
                   rel="noopener noreferrer"
                   className="hover:text-white transition-colors"
                 >
-                  StayManager.ma
+                  <StayManagerWordmark light className="text-sm" />
                   <span className="ml-1 text-xs">↗</span>
                 </a>
               </li>

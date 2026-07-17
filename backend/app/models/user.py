@@ -17,6 +17,10 @@ class User(db.Model):
 
     # User type: 'particular', 'professional', 'admin'
     user_type = db.Column(db.String(20), default='particular')
+
+    # Declared interest at signup: 'vente', 'mise-en-location', 'gestion-locative',
+    # 'courte-duree', 'estimation', 'autre'
+    interest = db.Column(db.String(30), nullable=True)
     is_active = db.Column(db.Boolean, default=True)
     is_verified = db.Column(db.Boolean, default=False)
 
@@ -45,6 +49,14 @@ class User(db.Model):
 
     def to_dict(self):
         """Serialize user to dictionary."""
+        # Get primary role (highest level)
+        primary_role = None
+        if hasattr(self, 'roles') and self.roles:
+            roles_list = list(self.roles)
+            if roles_list:
+                # Get role with highest level (admin has level 100)
+                primary_role = max(roles_list, key=lambda r: r.level)
+
         return {
             'id': self.id,
             'email': self.email,
@@ -54,8 +66,11 @@ class User(db.Model):
             'phone': self.phone,
             'avatar_url': self.avatar_url,
             'user_type': self.user_type,
+            'interest': self.interest,
             'is_verified': self.is_verified,
             'agency_id': self.agency_id,
+            'role': primary_role.slug if primary_role else None,
+            'role_name': primary_role.name if primary_role else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 

@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import {
   FiArrowLeft,
   FiLink,
-  FiUnlink,
   FiRefreshCw,
   FiCheck,
   FiX,
@@ -15,7 +14,7 @@ import {
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:7000/api/v1'
 
 export default function StayManagerProperties() {
   const { token } = useAuthStore()
@@ -420,7 +419,7 @@ export default function StayManagerProperties() {
                     onClick={() => handleUnlink(link.property_id)}
                     className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-auto"
                   >
-                    <FiUnlink className="w-4 h-4" />
+                    <FiX className="w-4 h-4" />
                     Supprimer le lien
                   </button>
                 </div>

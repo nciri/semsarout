@@ -1,84 +1,92 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FiMapPin, FiMaximize, FiHome } from 'react-icons/fi'
+import { FiMapPin, FiMaximize, FiHome, FiHeart } from 'react-icons/fi'
 import { IoBedOutline } from 'react-icons/io5'
-import { formatPrice } from '../../utils/currency'
+import { formatPrice, DIRHAM_SYMBOL } from '../../utils/currency'
 
 function PropertyCard({ property }) {
-
+  const [fav, setFav] = useState(false)
   const primaryImage = property.images?.find(img => img.is_primary) || property.images?.[0]
 
   return (
-    <Link to={`/annonces/${property.id}`} className="card group">
+    <Link
+      to={`/annonces/${property.id}`}
+      className="block w-full bg-white rounded-ds-lg overflow-hidden border border-slate-200 shadow-ds-md hover:shadow-ds-lg hover:-translate-y-[3px] transition-all duration-200"
+    >
       {/* Image */}
-      <div className="relative h-48 bg-gray-200 overflow-hidden">
+      <div className="relative h-[190px] bg-gradient-to-br from-slate-200 to-slate-300 overflow-hidden">
         {primaryImage ? (
           <img
             src={primaryImage.url}
             alt={property.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
-            <FiHome className="w-12 h-12" />
+          <div className="w-full h-full flex items-center justify-center text-slate-500">
+            <FiHome className="w-10 h-10" strokeWidth={1.5} />
           </div>
         )}
 
-        {/* Badges */}
-        <div className="absolute top-2 left-2 flex gap-2">
+        {/* Badges — pills pleines (design system) */}
+        <div className="absolute top-3 left-3 flex gap-2">
           {property.is_urgent && (
-            <span className="badge-urgent">Urgent</span>
+            <span className="text-[11px] font-bold px-[10px] py-[5px] rounded-full bg-redcard-500 text-white">Urgent</span>
           )}
           {property.is_premium && (
-            <span className="badge bg-gold-400 text-gold-900">Premium</span>
+            <span className="text-[11px] font-bold px-[10px] py-[5px] rounded-full bg-primary-400 text-midnight">Premium</span>
+          )}
+          {!property.is_urgent && !property.is_premium && (
+            <span className="text-[11px] font-bold px-[10px] py-[5px] rounded-full bg-midnight text-ivory">
+              {property.transaction_type === 'sale' ? 'Vente' : 'Location'}
+            </span>
           )}
         </div>
 
-        {/* Transaction type */}
-        <div className="absolute bottom-2 left-2">
-          <span className="badge bg-white/90 text-gray-800">
-            {property.transaction_type === 'sale' ? 'Vente' : 'Location'}
-          </span>
-        </div>
+        {/* Favori */}
+        <button
+          aria-label="Favori"
+          onClick={(e) => { e.preventDefault(); setFav(!fav) }}
+          className="absolute top-2.5 right-2.5 w-[34px] h-[34px] rounded-full bg-white/[.92] shadow-ds-sm flex items-center justify-center"
+        >
+          <FiHeart
+            className={`w-[18px] h-[18px] ${fav ? 'text-redcard-500 fill-redcard-500' : 'text-slate-600'}`}
+            strokeWidth={1.8}
+          />
+        </button>
       </div>
 
       {/* Content */}
-      <div className="p-4">
-        {/* Price */}
-        <div className="text-xl font-bold text-primary-600 mb-1">
-          {formatPrice(property.price)}
-          {property.transaction_type === 'rent' && <span className="text-sm font-normal text-gray-500">/mois</span>}
-        </div>
-
-        {/* Title */}
-        <h3 className="font-medium text-gray-900 mb-2 line-clamp-1">
+      <div className="p-4 flex flex-col gap-2">
+        <h3 className="font-display font-bold text-[17px] text-midnight tracking-[-.01em] line-clamp-1 m-0">
           {property.title}
         </h3>
 
-        {/* Location */}
-        <div className="flex items-center text-gray-500 text-sm mb-3">
-          <FiMapPin className="w-4 h-4 mr-1" />
-          <span className="truncate">{property.city}{property.neighborhood && `, ${property.neighborhood}`}</span>
+        <div className="flex items-center gap-[5px] text-slate-500 text-[13px]">
+          <FiMapPin className="w-3.5 h-3.5 flex-shrink-0" />
+          <span className="truncate">{property.city}{property.neighborhood && ` — ${property.neighborhood}`}</span>
         </div>
 
-        {/* Features */}
-        <div className="flex items-center gap-4 text-sm text-gray-600">
+        <div className="flex items-center gap-3.5 pt-1 text-[13px] font-medium text-slate-500">
           {property.surface && (
-            <div className="flex items-center">
-              <FiMaximize className="w-4 h-4 mr-1" />
-              <span>{property.surface} m²</span>
-            </div>
+            <span className="inline-flex items-center gap-[5px]">
+              <FiMaximize className="w-[15px] h-[15px]" strokeWidth={1.8} />
+              {property.surface} m²
+            </span>
           )}
           {property.bedrooms && (
-            <div className="flex items-center">
-              <IoBedOutline className="w-4 h-4 mr-1" />
-              <span>{property.bedrooms} ch.</span>
-            </div>
+            <span className="inline-flex items-center gap-[5px]">
+              <IoBedOutline className="w-[15px] h-[15px]" />
+              {property.bedrooms}
+            </span>
           )}
-          {property.rooms && (
-            <div className="flex items-center">
-              <span>{property.rooms} pièces</span>
-            </div>
-          )}
+          {property.rooms && <span>{property.rooms} pièces</span>}
+        </div>
+
+        <div className="mt-1.5 font-display font-extrabold text-[20px] text-midnight">
+          {formatPrice(property.price, { suffix: false })}
+          <span className="text-[13px] font-semibold text-slate-500 ml-1">
+            {property.transaction_type === 'rent' ? `${DIRHAM_SYMBOL}/mois` : DIRHAM_SYMBOL}
+          </span>
         </div>
       </div>
     </Link>

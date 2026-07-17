@@ -1,0 +1,457 @@
+- generic [ref=f14e3]:
+  - banner [ref=f14e4]:
+    - generic [ref=f14e6]:
+      - link "Semsar Out" [ref=f14e7] [cursor=pointer]:
+        - /url: /
+        - generic [ref=f14e8]:
+          - generic [ref=f14e9]: Semsar
+          - generic [ref=f14e10]: Out
+      - navigation [ref=f14e11]:
+        - generic [ref=f14e12]:
+          - link "Acheter" [ref=f14e13] [cursor=pointer]:
+            - /url: /annonces?transaction_type=sale
+          - link "Louer" [ref=f14e14] [cursor=pointer]:
+            - /url: /annonces?transaction_type=rent
+        - link "Programmes neufs" [ref=f14e16] [cursor=pointer]:
+          - /url: /programmes
+        - generic [ref=f14e18]:
+          - link "Agences" [ref=f14e19] [cursor=pointer]:
+            - /url: /agences
+          - link "Nos Services" [ref=f14e20] [cursor=pointer]:
+            - /url: /nos-services
+      - button "Menu utilisateur" [ref=f14e23] [cursor=pointer]
+  - main [ref=f14e27]:
+    - generic [ref=f14e28]:
+      - generic [ref=f14e30]:
+        - generic [ref=f14e31]:
+          - generic [ref=f14e32]: La nouvelle ère de l'immobilier au Maroc
+          - heading "L'immobilier, enfin sans intermédiaire." [level=1] [ref=f14e36]: L'immobilier,enfin sans intermédiaire.
+          - paragraph [ref=f14e37]: SemsarOut élimine l'intermédiaire pour une expérience plus simple, plus transparente et plus juste. Tarif fixe, zéro commission cachée.
+          - generic [ref=f14e38]:
+            - generic [ref=f14e39]: Tarif fixe, pas de commission
+            - generic [ref=f14e44]: Photos professionnelles incluses
+            - generic [ref=f14e49]: Accompagnement personnalisé
+        - generic [ref=f14e55]:
+          - generic [ref=f14e56]:
+            - generic [ref=f14e57]:
+              - generic [ref=f14e60]: Recherche IA
+              - generic [ref=f14e61]: Bientôt disponible
+            - generic [ref=f14e62]:
+              - 'textbox "Ex: Appartement 3 chambres avec terrasse à Casablanca, proche des écoles, budget max 1.5M Đh..." [ref=f14e63]'
+              - button [ref=f14e64] [cursor=pointer]
+          - generic [ref=f14e68]:
+            - generic [ref=f14e70]:
+              - button "Acheter" [ref=f14e71] [cursor=pointer]
+              - button "Louer" [ref=f14e72] [cursor=pointer]
+            - generic [ref=f14e73]:
+              - generic [ref=f14e74]:
+                - generic [ref=f14e75]: Localisation
+                - combobox "Ville ou quartier" [ref=f14e79]
+              - generic [ref=f14e80]:
+                - generic [ref=f14e81]: Type de bien
+                - combobox [ref=f14e85]:
+                  - option "Tous les types" [selected]
+                  - option "Appartement"
+                  - option "Maison"
+                  - option "Villa"
+                  - option "Riad"
+                  - option "Terrain"
+                  - option "Local commercial"
+                  - option "Bureau"
+                  - option "Garage/Parking"
+              - generic [ref=f14e86]:
+                - generic [ref=f14e87]: Budget
+                - generic [ref=f14e90]:
+                  - spinbutton "Min" [ref=f14e91]
+                  - spinbutton "Max" [ref=f14e92]
+              - generic [ref=f14e93]:
+                - generic [ref=f14e94]: Chambres
+                - combobox [ref=f14e99]:
+                  - option "Peu importe" [selected]
+                  - option "1+"
+                  - option "2+"
+                  - option "3+"
+                  - option "4+"
+                  - option "5+"
+            - button "Filtres avancés" [active] [ref=f14e100] [cursor=pointer]
+            - generic [ref=f14e562]:
+              - generic [ref=f14e563]:
+                - generic [ref=f14e564]: Surface (m²)
+                - generic [ref=f14e567]:
+                  - spinbutton "Min" [ref=f14e568]
+                  - spinbutton "Max" [ref=f14e569]
+              - generic [ref=f14e570]:
+                - generic [ref=f14e571]:
+                  - generic [ref=f14e572]: Pièces min
+                  - combobox [ref=f14e573]:
+                    - option "-" [selected]
+                    - option "1+"
+                    - option "2+"
+                    - option "3+"
+                    - option "4+"
+                    - option "5+"
+                    - option "6+"
+                    - option "7+"
+                    - option "8+"
+                - generic [ref=f14e574]:
+                  - generic [ref=f14e575]: Pièces max
+                  - combobox [ref=f14e576]:
+                    - option "-" [selected]
+                    - option "1"
+                    - option "2"
+                    - option "3"
+                    - option "4"
+                    - option "5"
+                    - option "6"
+                    - option "7"
+                    - option "8"
+                    - option "9"
+                    - option "10"
+                - generic [ref=f14e577]:
+                  - generic [ref=f14e578]: Sdb min
+                  - combobox [ref=f14e581]:
+                    - option "-" [selected]
+                    - option "1+"
+                    - option "2+"
+                    - option "3+"
+                    - option "4+"
+                - generic [ref=f14e582]:
+                  - generic [ref=f14e583]: Année construction
+                  - spinbutton "Après..." [ref=f14e584]
+              - generic [ref=f14e585]:
+                - generic [ref=f14e586]: Étage
+                - generic [ref=f14e587]:
+                  - generic [ref=f14e588] [cursor=pointer]:
+                    - checkbox "Rez-de-chaussée" [ref=f14e589]
+                    - generic [ref=f14e590]: Rez-de-chaussée
+                  - generic [ref=f14e591] [cursor=pointer]:
+                    - checkbox "Dernier étage" [ref=f14e592]
+                    - generic [ref=f14e593]: Dernier étage
+              - generic [ref=f14e594]:
+                - generic [ref=f14e595]: Équipements & caractéristiques
+                - generic [ref=f14e598]:
+                  - button "Parking" [ref=f14e599] [cursor=pointer]
+                  - button "Garage" [ref=f14e600] [cursor=pointer]
+                  - button "Jardin" [ref=f14e601] [cursor=pointer]
+                  - button "Terrasse" [ref=f14e602] [cursor=pointer]
+                  - button "Balcon" [ref=f14e603] [cursor=pointer]
+                  - button "Piscine" [ref=f14e604] [cursor=pointer]
+                  - button "Ascenseur" [ref=f14e605] [cursor=pointer]
+                  - button "Gardien" [ref=f14e606] [cursor=pointer]
+                  - button "Climatisation" [ref=f14e607] [cursor=pointer]
+                  - button "Chauffage" [ref=f14e608] [cursor=pointer]
+                  - button "Meublé" [ref=f14e609] [cursor=pointer]
+                  - button "Cuisine équipée" [ref=f14e610] [cursor=pointer]
+                  - button "Cave" [ref=f14e611] [cursor=pointer]
+                  - button "Vue mer" [ref=f14e612] [cursor=pointer]
+                  - button "Vue montagne" [ref=f14e613] [cursor=pointer]
+                  - button "Duplex" [ref=f14e614] [cursor=pointer]
+              - generic [ref=f14e615]:
+                - generic [ref=f14e616]:
+                  - generic [ref=f14e617]: Type de vendeur
+                  - combobox [ref=f14e618]:
+                    - option "Tous" [selected]
+                    - option "Particuliers uniquement"
+                    - option "Agences uniquement"
+                - generic [ref=f14e620] [cursor=pointer]:
+                  - checkbox "Avec photos uniquement" [ref=f14e621]
+                  - generic [ref=f14e622]: Avec photos uniquement
+                - generic [ref=f14e624] [cursor=pointer]:
+                  - checkbox "Annonces à la une" [ref=f14e625]
+                  - generic [ref=f14e626]: Annonces à la une
+            - generic [ref=f14e105]:
+              - button "Réinitialiser" [ref=f14e106] [cursor=pointer]
+              - button "Rechercher" [ref=f14e111] [cursor=pointer]
+        - generic [ref=f14e116]:
+          - generic [ref=f14e117]:
+            - generic [ref=f14e118]: 0%
+            - generic [ref=f14e119]: Commission
+          - generic [ref=f14e120]:
+            - generic [ref=f14e121]: 4.900 Đh
+            - generic [ref=f14e122]: Forfait fixe
+          - generic [ref=f14e123]:
+            - generic [ref=f14e124]: 100%
+            - generic [ref=f14e125]: Transparent
+          - generic [ref=f14e126]:
+            - generic [ref=f14e127]: 24h
+            - generic [ref=f14e128]: Publication
+      - generic [ref=f14e130]:
+        - generic [ref=f14e131]:
+          - heading "Pourquoi nous court-circuitons les intermédiaires traditionnels ?" [level=2] [ref=f14e132]
+          - paragraph [ref=f14e133]: Le marché immobilier marocain mérite mieux que des pratiques opaques et des commissions exorbitantes. Nous rendons l'immobilier accessible à tous, avec des prix justes et une transparence totale.
+        - generic [ref=f14e134]:
+          - generic [ref=f14e135]:
+            - heading "Commissions abusives" [level=3] [ref=f14e140]
+            - paragraph [ref=f14e141]: Les agences traditionnelles prélèvent 2,5% à 5% du prix de vente. Sur un bien à 2M Đh, c'est jusqu'à 100.000 Đh !
+            - generic [ref=f14e142]: Forfait fixe de 4.900 Đh
+          - generic [ref=f14e145]:
+            - heading "Manque de transparence" [level=3] [ref=f14e150]
+            - paragraph [ref=f14e151]: Annonces gonflées, informations cachées, négociations opaques… Difficile de faire confiance.
+            - generic [ref=f14e152]: Tout est visible et vérifié
+          - generic [ref=f14e155]:
+            - heading "Photos amateur" [level=3] [ref=f14e160]
+            - paragraph [ref=f14e161]: Des photos floues prises au téléphone qui ne mettent pas votre bien en valeur.
+            - generic [ref=f14e162]: Shooting professionnel inclus
+      - generic [ref=f14e166]:
+        - generic [ref=f14e167]:
+          - heading "Nos services d'agence en ligne" [level=2] [ref=f14e168]
+          - paragraph [ref=f14e169]: Un accompagnement professionnel à tarif fixe, sans surprise
+        - generic [ref=f14e170]:
+          - generic [ref=f14e171]:
+            - generic [ref=f14e172]:
+              - generic [ref=f14e173]:
+                - generic [ref=f14e174]: Vente de bien
+                - heading "Forfait Vente" [level=3] [ref=f14e175]
+              - generic [ref=f14e176]:
+                - generic [ref=f14e177]: 4.900 Đh
+                - generic [ref=f14e178]: tarif fixe TTC
+            - list [ref=f14e179]:
+              - listitem [ref=f14e180]:
+                - generic [ref=f14e183]: Shooting photo professionnel (15-20 photos HD)
+              - listitem [ref=f14e184]:
+                - generic [ref=f14e187]: Estimation gratuite de votre bien
+              - listitem [ref=f14e188]:
+                - generic [ref=f14e191]: Annonce premium diffusée sur SemsarOut
+              - listitem [ref=f14e192]:
+                - generic [ref=f14e195]: Gestion des contacts et visites
+              - listitem [ref=f14e196]:
+                - generic [ref=f14e199]: Accompagnement jusqu'à la vente
+            - link "Vendre mon bien" [ref=f14e200] [cursor=pointer]:
+              - /url: /nos-services/vente
+          - generic [ref=f14e203]:
+            - generic [ref=f14e204]:
+              - generic [ref=f14e205]:
+                - generic [ref=f14e206]: Location longue durée
+                - heading "Gestion Locative Complète" [level=3] [ref=f14e207]
+              - generic [ref=f14e208]:
+                - generic [ref=f14e209]: À partir de 5%
+                - generic [ref=f14e210]: du loyer mensuel
+            - list [ref=f14e211]:
+              - listitem [ref=f14e212]:
+                - generic [ref=f14e215]: Recherche et sélection rigoureuse des locataires
+              - listitem [ref=f14e216]:
+                - generic [ref=f14e219]: Vérification des dossiers et garants
+              - listitem [ref=f14e220]:
+                - generic [ref=f14e223]: Encaissement et suivi des loyers
+              - listitem [ref=f14e224]:
+                - generic [ref=f14e227]: Gestion des charges et travaux
+              - listitem [ref=f14e228]:
+                - generic [ref=f14e231]: Médiation et gestion des litiges
+            - link "Gérer mon bien" [ref=f14e232] [cursor=pointer]:
+              - /url: /nos-services/gestion-locative
+        - generic [ref=f14e235]:
+          - heading "Comparez et économisez" [level=3] [ref=f14e236]
+          - generic [ref=f14e237]:
+            - generic [ref=f14e238]:
+              - generic [ref=f14e239]: سمسار
+              - generic [ref=f14e240]: 30.000 Đh
+              - generic [ref=f14e241]: Négociation, heures perdues, services incomplets
+            - generic [ref=f14e242]:
+              - generic [ref=f14e244]:
+                - generic [ref=f14e245]: Semsar
+                - generic [ref=f14e246]: Out
+              - generic [ref=f14e247]: 4.900 Đh
+              - generic [ref=f14e248]: Forfait fixe, tout compris
+            - generic [ref=f14e249]:
+              - generic [ref=f14e250]: Vous économisez
+              - generic [ref=f14e251]: 25.100 Đh
+              - generic [ref=f14e252]: Plus d'efficacité, moins de stress
+      - generic [ref=f14e253]:
+        - generic [ref=f14e254]:
+          - generic [ref=f14e255]:
+            - heading "Dernières annonces" [level=2] [ref=f14e256]
+            - paragraph [ref=f14e257]: Découvrez les biens récemment ajoutés
+          - link "Voir tout" [ref=f14e258] [cursor=pointer]:
+            - /url: /annonces
+        - generic [ref=f14e391]:
+          - link "Vente Favori Villa de luxe avec piscine - Charaf Agadir — Charaf 334 m² 1 3 pièces 5.790.000Đh" [ref=f14e392] [cursor=pointer]:
+            - /url: /annonces/180
+            - generic [ref=f14e393]:
+              - generic [ref=f14e398]: Vente
+              - button "Favori" [ref=f14e400]
+            - generic [ref=f14e403]:
+              - heading "Villa de luxe avec piscine - Charaf" [level=3] [ref=f14e404]
+              - generic [ref=f14e405]: Agadir — Charaf
+              - generic [ref=f14e410]:
+                - generic [ref=f14e411]: 334 m²
+                - generic [ref=f14e414]: "1"
+                - generic [ref=f14e418]: 3 pièces
+              - generic [ref=f14e419]: 5.790.000Đh
+          - link "Vente Favori Villa de luxe avec piscine - Bir Rami Kénitra — Bir Rami 232 m² 5 8 pièces 5.570.000Đh" [ref=f14e420] [cursor=pointer]:
+            - /url: /annonces/174
+            - generic [ref=f14e421]:
+              - generic [ref=f14e426]: Vente
+              - button "Favori" [ref=f14e428]
+            - generic [ref=f14e431]:
+              - heading "Villa de luxe avec piscine - Bir Rami" [level=3] [ref=f14e432]
+              - generic [ref=f14e433]: Kénitra — Bir Rami
+              - generic [ref=f14e438]:
+                - generic [ref=f14e439]: 232 m²
+                - generic [ref=f14e442]: "5"
+                - generic [ref=f14e446]: 8 pièces
+              - generic [ref=f14e447]: 5.570.000Đh
+          - link "Vente Favori Riad authentique dans la médina - Iberia Tanger — Iberia 198 m² 2 6 pièces 4.630.000Đh" [ref=f14e448] [cursor=pointer]:
+            - /url: /annonces/177
+            - generic [ref=f14e449]:
+              - generic [ref=f14e454]: Vente
+              - button "Favori" [ref=f14e456]
+            - generic [ref=f14e459]:
+              - heading "Riad authentique dans la médina - Iberia" [level=3] [ref=f14e460]
+              - generic [ref=f14e461]: Tanger — Iberia
+              - generic [ref=f14e466]:
+                - generic [ref=f14e467]: 198 m²
+                - generic [ref=f14e470]: "2"
+                - generic [ref=f14e474]: 6 pièces
+              - generic [ref=f14e475]: 4.630.000Đh
+          - link "Vente Favori Villa de luxe avec piscine - Ville Nouvelle Meknès — Ville Nouvelle 196 m² 4 5 pièces 840.000Đh" [ref=f14e476] [cursor=pointer]:
+            - /url: /annonces/176
+            - generic [ref=f14e477]:
+              - generic [ref=f14e482]: Vente
+              - button "Favori" [ref=f14e484]
+            - generic [ref=f14e487]:
+              - heading "Villa de luxe avec piscine - Ville Nouvelle" [level=3] [ref=f14e488]
+              - generic [ref=f14e489]: Meknès — Ville Nouvelle
+              - generic [ref=f14e494]:
+                - generic [ref=f14e495]: 196 m²
+                - generic [ref=f14e498]: "4"
+                - generic [ref=f14e502]: 5 pièces
+              - generic [ref=f14e503]: 840.000Đh
+          - link "Vente Favori Loft industriel rénové - Cap Spartel Tanger — Cap Spartel 79 m² 2 3 pièces 6.080.000Đh" [ref=f14e504] [cursor=pointer]:
+            - /url: /annonces/169
+            - generic [ref=f14e505]:
+              - generic [ref=f14e510]: Vente
+              - button "Favori" [ref=f14e512]
+            - generic [ref=f14e515]:
+              - heading "Loft industriel rénové - Cap Spartel" [level=3] [ref=f14e516]
+              - generic [ref=f14e517]: Tanger — Cap Spartel
+              - generic [ref=f14e522]:
+                - generic [ref=f14e523]: 79 m²
+                - generic [ref=f14e526]: "2"
+                - generic [ref=f14e530]: 3 pièces
+              - generic [ref=f14e531]: 6.080.000Đh
+          - link "Vente Favori Studio meublé proche commodités - Mimosas Kénitra — Mimosas 144 m² 3 3 pièces 1.370.000Đh" [ref=f14e532] [cursor=pointer]:
+            - /url: /annonces/181
+            - generic [ref=f14e533]:
+              - generic [ref=f14e538]: Vente
+              - button "Favori" [ref=f14e540]
+            - generic [ref=f14e543]:
+              - heading "Studio meublé proche commodités - Mimosas" [level=3] [ref=f14e544]
+              - generic [ref=f14e545]: Kénitra — Mimosas
+              - generic [ref=f14e550]:
+                - generic [ref=f14e551]: 144 m²
+                - generic [ref=f14e554]: "3"
+                - generic [ref=f14e558]: 3 pièces
+              - generic [ref=f14e559]: 1.370.000Đh
+      - generic [ref=f14e262]:
+        - heading "Pourquoi choisir SemsarOut ?" [level=2] [ref=f14e263]
+        - generic [ref=f14e264]:
+          - generic [ref=f14e265]:
+            - heading "Tarif fixe" [level=3] [ref=f14e269]
+            - paragraph [ref=f14e270]: Pas de commission, un prix clair et définitif.
+          - generic [ref=f14e271]:
+            - heading "Transparence" [level=3] [ref=f14e275]
+            - paragraph [ref=f14e276]: Toutes les informations sont vérifiées et accessibles.
+          - generic [ref=f14e277]:
+            - heading "Efficacité" [level=3] [ref=f14e282]
+            - paragraph [ref=f14e283]: Publication en 24h, accompagnement personnalisé.
+          - generic [ref=f14e284]:
+            - heading "Accessibilité" [level=3] [ref=f14e291]
+            - paragraph [ref=f14e292]: L'immobilier pour tous, sans barrière.
+      - generic [ref=f14e295]:
+        - generic [ref=f14e296]:
+          - heading "Vous êtes une agence immobilière ?" [level=2] [ref=f14e297]
+          - paragraph [ref=f14e298]: "Rejoignez SemsarOut et bénéficiez d'outils puissants pour gérer vos annonces : intégration API, import CSV, synchronisation avec vos logiciels métiers."
+          - list [ref=f14e299]:
+            - listitem [ref=f14e300]: Plans d'abonnement flexibles
+            - listitem [ref=f14e303]: API REST pour synchronisation
+            - listitem [ref=f14e306]: Tableau de bord analytics
+          - link "Créer mon espace agence" [ref=f14e309] [cursor=pointer]:
+            - /url: /agences/inscription
+        - img "Dashboard agence" [ref=f14e313]
+  - contentinfo [ref=f14e314]:
+    - generic [ref=f14e315]:
+      - generic [ref=f14e316]:
+        - generic [ref=f14e317]:
+          - link "Semsar Out" [ref=f14e318] [cursor=pointer]:
+            - /url: /
+            - generic [ref=f14e319]:
+              - generic [ref=f14e320]: Semsar
+              - generic [ref=f14e321]: Out
+          - paragraph [ref=f14e322]: L'immobilier sans les intermédiaires douteux. Vendez, louez et gérez votre bien à tarif fixe, sans commission, avec un accompagnement professionnel.
+          - generic [ref=f14e323]:
+            - link "Facebook" [ref=f14e324] [cursor=pointer]:
+              - /url: "#"
+            - link "Instagram" [ref=f14e327] [cursor=pointer]:
+              - /url: "#"
+            - link "LinkedIn" [ref=f14e331] [cursor=pointer]:
+              - /url: "#"
+            - link "Twitter" [ref=f14e336] [cursor=pointer]:
+              - /url: "#"
+            - link "YouTube" [ref=f14e339] [cursor=pointer]:
+              - /url: "#"
+        - generic [ref=f14e343]:
+          - heading "Vente" [level=4] [ref=f14e344]
+          - list [ref=f14e345]:
+            - listitem [ref=f14e346]:
+              - link "Forfait Vente (4.900 Đh)" [ref=f14e347] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f14e348]:
+              - link "Photos Professionnelles" [ref=f14e349] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f14e350]:
+              - link "Estimation Gratuite" [ref=f14e351] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f14e352]:
+              - link "Acheter un bien" [ref=f14e353] [cursor=pointer]:
+                - /url: /annonces?transaction_type=sale
+        - generic [ref=f14e354]:
+          - heading "Location" [level=4] [ref=f14e355]
+          - list [ref=f14e356]:
+            - listitem [ref=f14e357]:
+              - link "Mise en Location" [ref=f14e358] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f14e359]:
+              - link "Gestion Locative Complète" [ref=f14e360] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f14e361]:
+              - link "Location Courte DuréeStayManager" [ref=f14e362] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f14e363]:
+              - link "Louer un bien" [ref=f14e364] [cursor=pointer]:
+                - /url: /annonces?transaction_type=rent
+        - generic [ref=f14e365]:
+          - heading "Professionnels" [level=4] [ref=f14e366]
+          - list [ref=f14e367]:
+            - listitem [ref=f14e368]:
+              - link "Agences partenaires" [ref=f14e369] [cursor=pointer]:
+                - /url: /agences
+            - listitem [ref=f14e370]:
+              - link "Devenir partenaire" [ref=f14e371] [cursor=pointer]:
+                - /url: /agences/inscription
+            - listitem [ref=f14e372]:
+              - link "Tarifs agences" [ref=f14e373] [cursor=pointer]:
+                - /url: /agences/tarifs
+          - heading "À propos" [level=4] [ref=f14e374]
+          - list [ref=f14e375]:
+            - listitem [ref=f14e376]:
+              - link "Qui sommes-nous" [ref=f14e377] [cursor=pointer]:
+                - /url: /a-propos
+            - listitem [ref=f14e378]:
+              - link "Nous contacter" [ref=f14e379] [cursor=pointer]:
+                - /url: /contact
+            - listitem [ref=f14e380]:
+              - link "StayManager.ma↗" [ref=f14e381] [cursor=pointer]:
+                - /url: https://www.staymanager.ma
+                - generic [ref=f14e382]: StayManager.ma
+                - text: ↗
+      - generic [ref=f14e384]:
+        - paragraph [ref=f14e385]: © 2026 SemsarOut. Tous droits réservés.
+        - generic [ref=f14e386]:
+          - link "Mentions légales" [ref=f14e387] [cursor=pointer]:
+            - /url: "#"
+          - link "CGU" [ref=f14e388] [cursor=pointer]:
+            - /url: "#"
+          - link "Politique de confidentialité" [ref=f14e389] [cursor=pointer]:
+            - /url: "#"
+          - link "Cookies" [ref=f14e390] [cursor=pointer]:
+            - /url: "#"

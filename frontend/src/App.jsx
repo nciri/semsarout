@@ -7,6 +7,8 @@ import AgencyList from './pages/AgencyList'
 import AgencyDetail from './pages/AgencyDetail'
 import AgencyPricing from './pages/AgencyPricing'
 import Services from './pages/Services'
+import Contact from './pages/Contact'
+import SellProperty from './pages/SellProperty'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import Dashboard from './pages/dashboard/Dashboard'
@@ -58,6 +60,8 @@ function App() {
         <Route path="agences/:slug" element={<AgencyDetail />} />
         <Route path="nos-services" element={<Services />} />
         <Route path="nos-services/:service" element={<Services />} />
+        <Route path="contact" element={<Contact />} />
+        <Route path="vendre" element={<SellProperty />} />
         <Route path="connexion" element={<Login />} />
         <Route path="inscription" element={<Register />} />
 

@@ -1,6 +1,6 @@
 from app.models.user import User
 from app.models.agency import Agency
-from app.models.property import Property, PropertyImage
+from app.models.property import Property, PropertyImage, PropertyDocument
 from app.models.subscription import Subscription, SubscriptionPlan, PaymentMethod, Invoice
 from app.models.lead import Lead
 from app.models.role import Role, Permission, ActivityLog, user_roles, role_permissions
@@ -20,6 +20,7 @@ __all__ = [
     'Agency',
     'Property',
     'PropertyImage',
+    'PropertyDocument',
     'Subscription',
     'SubscriptionPlan',
     'PaymentMethod',

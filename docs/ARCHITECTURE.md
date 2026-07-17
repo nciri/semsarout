@@ -1,5 +1,8 @@
 # Architecture Technique - Semsar
 
+> Mis à jour le 15 juillet 2026. Pour une vue d'ensemble orientée refonte
+> (parcours produits, dette technique, contraintes), voir [SYSTEM_DESIGN.md](SYSTEM_DESIGN.md).
+
 ## Vue d'ensemble
 
 Semsar est une plateforme immobilière marocaine construite avec une architecture modulaire séparant clairement le frontend public, le backoffice et le backend API.
@@ -51,7 +54,7 @@ Semsar est une plateforme immobilière marocaine construite avec une architectur
 | **Tailwind CSS 3** | Styling |
 | **Zustand** | State management |
 | **React Query** | Data fetching & cache |
-| **React Router 7** | Routing |
+| **React Router 6** | Routing |
 | **React Hook Form** | Formulaires |
 | **React Icons** | Iconographie |
 
@@ -65,11 +68,17 @@ backend/
 │   │   ├── __init__.py
 │   │   └── v1/                  # API versionnée
 │   │       ├── __init__.py      # Blueprint principal
-│   │       ├── auth.py          # Authentification
+│   │       ├── auth.py          # Authentification (register accepte `interest`)
 │   │       ├── properties.py    # Annonces publiques
+│   │       ├── selling.py       # Vente en ligne : uploads, estimation, dossiers
 │   │       ├── agencies.py      # Agences publiques
-│   │       ├── leads.py         # Contacts publics
+│   │       ├── leads.py         # Contacts publics + demandes de service (/contact)
+│   │       ├── programs.py      # Programmes neufs (promoteurs)
 │   │       ├── subscriptions.py # Abonnements
+│   │       ├── payments.py      # Paiements (gateway CMI en TODO, simulé)
+│   │       ├── billing.py       # Factures
+│   │       ├── users.py         # Profils publics
+│   │       ├── integrations/    # Intégration StayManager.ma
 │   │       └── backoffice/      # API Backoffice
 │   │           ├── __init__.py
 │   │           ├── dashboard.py # Tableau de bord
@@ -84,12 +93,14 @@ backend/
 │   │   ├── __init__.py
 │   │   ├── user.py
 │   │   ├── agency.py
-│   │   ├── property.py
-│   │   ├── subscription.py
+│   │   ├── property.py         # Property, PropertyImage, PropertyDocument
+│   │   ├── program.py          # Program, ProgramUnit, ProgramImage
+│   │   ├── subscription.py     # Plan, Subscription, PaymentMethod, Invoice
 │   │   ├── lead.py
 │   │   ├── client.py           # CRM Client
 │   │   ├── visit.py            # Visites
 │   │   ├── transaction.py      # Transactions/Pipeline
+│   │   ├── staymanager.py      # Intégration, liens, réservations, sync logs
 │   │   └── role.py             # Rôles & permissions
 │   ├── services/               # Logique métier
 │   │   ├── csv_import.py
@@ -119,21 +130,34 @@ frontend/
 │   │   ├── properties/
 │   │   ├── agencies/
 │   │   └── auth/               # PrivateRoute
+│   ├── constants/
+│   │   ├── services.js         # Référentiel des 6 services (contact/intention)
+│   │   └── property.js         # Types de biens, caractéristiques, villes, documents
 │   ├── pages/
 │   │   ├── Home.jsx
 │   │   ├── PropertyList.jsx
 │   │   ├── PropertyDetail.jsx
+│   │   ├── ProgramList.jsx     # Programmes neufs
+│   │   ├── ProgramDetail.jsx
 │   │   ├── AgencyList.jsx
 │   │   ├── AgencyDetail.jsx
+│   │   ├── AgencyPricing.jsx   # Plans agences
+│   │   ├── Services.jsx        # Page services à onglets
+│   │   ├── Contact.jsx         # Demande de service → lead (?service=)
+│   │   ├── SellProperty.jsx    # Wizard vente 100% en ligne (/vendre)
+│   │   ├── Checkout.jsx
 │   │   ├── auth/
-│   │   │   ├── Login.jsx
-│   │   │   └── Register.jsx
+│   │   │   ├── Login.jsx       # honore ?redirect=
+│   │   │   └── Register.jsx    # honore ?service= & ?redirect=, question d'intention
 │   │   ├── dashboard/          # Espace utilisateur
-│   │   │   ├── Dashboard.jsx
+│   │   │   ├── Dashboard.jsx   # Onboarding personnalisé par user.interest
 │   │   │   ├── MyProperties.jsx
 │   │   │   ├── CreateProperty.jsx
 │   │   │   ├── MyLeads.jsx
-│   │   │   └── MyAgency.jsx
+│   │   │   ├── MyAgency.jsx
+│   │   │   ├── Programs.jsx / ProgramForm.jsx
+│   │   │   ├── Subscription.jsx / Settings.jsx
+│   │   │   └── integrations/   # StayManager (connexion, biens, réservations)
 │   │   └── backoffice/         # Backoffice agence
 │   │       ├── components/
 │   │       │   └── BackofficeLayout.jsx
@@ -174,6 +198,8 @@ frontend/
 - id, email, password_hash
 - first_name, last_name, phone
 - user_type (particular, professional, admin)
+- interest (intention déclarée : vente, mise-en-location, gestion-locative,
+  courte-duree, estimation, autre) — pilote l'onboarding du dashboard
 - agency_id (FK)
 - is_active, is_verified
 - created_at, updated_at, last_login
@@ -209,6 +235,22 @@ frontend/
 - views_count, contacts_count, favorites_count
 - owner_id (FK), agency_id (FK)
 - created_at, updated_at, published_at
+```
+
+### PropertyImage
+```
+- id, property_id (FK)
+- url (public : /uploads/photos/<uuid>), thumbnail_url
+- caption, position, is_primary
+```
+
+### PropertyDocument (dossier de vente en ligne)
+```
+- id, property_id (FK)
+- doc_type (titre_foncier, cin, plan, reglement_copropriete, diagnostic, autre)
+- file_url (nom de fichier stocké opaque — JAMAIS servi publiquement)
+- original_name
+- Accès : GET /api/v1/documents/<id> uniquement (propriétaire du bien ou admin)
 ```
 
 ### Client (CRM)
@@ -247,7 +289,10 @@ frontend/
 ```
 - id, name, email, phone, message
 - notes
-- source (contact_form, phone_reveal, callback_request, website, manual)
+- source (contact_form, phone_reveal, callback_request, website, manual,
+  service_request)
+- service (pour service_request : vente, mise-en-location, gestion-locative,
+  courte-duree, estimation, autre)
 - status (new, contacted, qualified, converted, lost)
 - lost_reason
 - property_id (FK), agency_id (FK), owner_id (FK)
@@ -411,6 +456,27 @@ contact → visit → application → verification → lease → move_in
 - `users` - Utilisateurs
 - `roles` - Rôles
 
+## Vente 100% en ligne (parcours /vendre)
+
+Wizard 5 étapes côté front (`SellProperty.jsx`, état persisté en localStorage) :
+descriptif structuré → estimation instantanée → photos → documents → récapitulatif.
+
+Côté backend (`selling.py`) :
+- `POST /estimate` (public) : médiane du prix/m² des annonces actives comparables
+  (ville+type → ville → type, ≥3 comparables), fourchette ±10%.
+- `POST /uploads` (JWT, multipart, `kind=photo|document`).
+- `POST /sale-requests` (JWT) : crée l'annonce en statut `pending` + images +
+  documents + un lead `service_request/vente` pour l'équipe.
+
+## Fichiers uploadés — modèle de sécurité
+
+- **Photos** : `uploads/photos/`, servies publiquement via
+  `GET /uploads/photos/<filename>` (converter `<string>`, pas de traversée de chemin).
+- **Documents** (CIN, titres fonciers — PII sensibles) : `uploads/documents/`,
+  aucune URL publique. Upload → `file_id` opaque ; téléchargement via
+  `GET /api/v1/documents/<id>` avec contrôle propriétaire/admin. Les sérialisations
+  exposent `download_url` (endpoint authentifié), jamais le nom de fichier stocké.
+
 ## Sécurité
 
 - Mots de passe hashés avec Werkzeug (PBKDF2)
@@ -420,12 +486,17 @@ contact → visit → application → verification → lease → move_in
 - Rate limiting prévu via Redis
 - Logs d'activité pour audit
 - Contrôle d'accès par agence (multi-tenant)
+- Documents de dossiers de vente derrière auth + ownership (voir section ci-dessus)
 
 ## Intégrations
 
 ### StayManager.ma
-- Synchronisation bidirectionnelle des annonces
-- Import des réservations (location courte durée)
+- Partenaire SaaS de gestion courte durée (plans dès 179 Đh/bien/mois, inscription
+  en libre-service sur https://staymanager.ma/register)
+- Connexion par clé API par compte (`/integrations/staymanager/*`)
+- Liaison bien local ↔ bien StayManager, synchronisation, réservations, sync logs, webhook
+- Charte graphique partenaire respectée côté front : vert #1F3D34/#2E5E4E,
+  beige #F5F0E6, or #C9A24B, wordmark Kaushan Script (composant StayManagerWordmark)
 
 ### Import CSV
 - Upload de fichier CSV

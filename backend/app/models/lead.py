@@ -15,8 +15,13 @@ class Lead(db.Model):
     message = db.Column(db.Text)
     notes = db.Column(db.Text)
 
-    # Source: 'contact_form', 'phone_reveal', 'callback_request', 'website', 'manual'
+    # Source: 'contact_form', 'phone_reveal', 'callback_request', 'website', 'manual',
+    # 'service_request'
     source = db.Column(db.String(30), default='contact_form')
+
+    # Requested service for service_request leads: 'vente', 'mise-en-location',
+    # 'gestion-locative', 'courte-duree', 'estimation', 'autre'
+    service = db.Column(db.String(30), nullable=True)
 
     # Status: 'new', 'contacted', 'qualified', 'converted', 'lost'
     status = db.Column(db.String(20), default='new')
@@ -64,6 +69,7 @@ class Lead(db.Model):
             'message': self.message,
             'notes': self.notes,
             'source': self.source,
+            'service': self.service,
             'status': self.status,
             'lost_reason': self.lost_reason,
             'property_id': self.property_id,

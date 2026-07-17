@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   FiLink,
-  FiUnlink,
   FiRefreshCw,
   FiCheck,
   FiX,
@@ -19,7 +18,15 @@ import {
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:7000/api/v1'
+
+// StayManager.ma brand colors
+const SM_COLORS = {
+  primary: '#1e3a5f',      // Dark blue
+  primaryLight: '#2d4a6f', // Lighter blue for hover
+  secondary: '#f5a623',    // Orange/gold
+  secondaryLight: '#f7b84d' // Lighter orange for hover
+}
 
 export default function StayManager() {
   const { token } = useAuthStore()
@@ -258,13 +265,26 @@ export default function StayManager() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+          <div
+            className="w-14 h-14 rounded-xl flex items-center justify-center"
+            style={{ backgroundColor: SM_COLORS.primary }}
+          >
             <span className="text-white font-bold text-xl">SM</span>
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">StayManager</h1>
             <p className="text-gray-600">Integration avec StayManager.ma</p>
           </div>
+          <a
+            href="https://staymanager.ma"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-auto flex items-center gap-2 text-sm hover:underline"
+            style={{ color: SM_COLORS.primary }}
+          >
+            <FiExternalLink className="w-4 h-4" />
+            staymanager.ma
+          </a>
         </div>
       </div>
 
@@ -332,7 +352,7 @@ export default function StayManager() {
                 onClick={handleDisconnect}
                 className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               >
-                <FiUnlink className="w-4 h-4" />
+                <FiX className="w-4 h-4" />
                 Deconnecter
               </button>
             </div>
@@ -374,7 +394,10 @@ export default function StayManager() {
                   <button
                     type="submit"
                     disabled={connecting}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-2 px-6 py-2.5 text-white rounded-lg disabled:opacity-50 transition-colors"
+                    style={{ backgroundColor: SM_COLORS.secondary }}
+                    onMouseEnter={e => e.target.style.backgroundColor = SM_COLORS.secondaryLight}
+                    onMouseLeave={e => e.target.style.backgroundColor = SM_COLORS.secondary}
                   >
                     {connecting ? (
                       <>
@@ -404,7 +427,10 @@ export default function StayManager() {
                 </p>
                 <button
                   onClick={() => setShowConnectForm(true)}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                  className="inline-flex items-center gap-2 px-6 py-3 text-white rounded-lg transition-colors"
+                  style={{ backgroundColor: SM_COLORS.secondary }}
+                  onMouseEnter={e => e.target.style.backgroundColor = SM_COLORS.secondaryLight}
+                  onMouseLeave={e => e.target.style.backgroundColor = SM_COLORS.secondary}
                 >
                   <FiLink className="w-5 h-5" />
                   Connecter StayManager
@@ -436,7 +462,10 @@ export default function StayManager() {
                   onChange={e => setSettings({ ...settings, auto_sync_enabled: e.target.checked })}
                   className="sr-only"
                 />
-                <div className={`w-11 h-6 rounded-full transition-colors ${settings.auto_sync_enabled ? 'bg-primary-600' : 'bg-gray-300'}`}>
+                <div
+                  className="w-11 h-6 rounded-full transition-colors"
+                  style={{ backgroundColor: settings.auto_sync_enabled ? SM_COLORS.secondary : '#d1d5db' }}
+                >
                   <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${settings.auto_sync_enabled ? 'translate-x-5' : 'translate-x-0.5'} mt-0.5`}></div>
                 </div>
               </div>
@@ -482,7 +511,8 @@ export default function StayManager() {
             </h2>
             <Link
               to="/dashboard/integrations/staymanager/properties"
-              className="flex items-center gap-2 px-4 py-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors"
+              style={{ color: SM_COLORS.primary }}
             >
               Gerer les liens
               <FiChevronRight className="w-4 h-4" />
@@ -495,7 +525,8 @@ export default function StayManager() {
               <p className="text-gray-600 mb-4">Aucun bien lie pour le moment</p>
               <Link
                 to="/dashboard/integrations/staymanager/properties"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors"
+                style={{ backgroundColor: SM_COLORS.secondary }}
               >
                 <FiLink className="w-4 h-4" />
                 Lier un bien
@@ -506,8 +537,11 @@ export default function StayManager() {
               {propertyLinks.slice(0, 5).map(link => (
                 <div key={link.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                      <FiHome className="w-5 h-5 text-primary-600" />
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: `${SM_COLORS.primary}20` }}
+                    >
+                      <FiHome className="w-5 h-5" style={{ color: SM_COLORS.primary }} />
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">{link.property?.title || `Bien #${link.property_id}`}</p>
@@ -532,10 +566,11 @@ export default function StayManager() {
                     <button
                       onClick={() => handleSyncProperty(link.property_id)}
                       disabled={syncing}
-                      className="p-2 text-gray-500 hover:text-primary-600 hover:bg-white rounded-lg transition-colors"
+                      className="p-2 text-gray-500 hover:bg-white rounded-lg transition-colors"
+                      style={{ '--hover-color': SM_COLORS.secondary }}
                       title="Synchroniser"
                     >
-                      <FiRefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                      <FiRefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} style={{ color: syncing ? SM_COLORS.secondary : undefined }} />
                     </button>
                   </div>
                 </div>
@@ -544,7 +579,8 @@ export default function StayManager() {
               {propertyLinks.length > 5 && (
                 <Link
                   to="/dashboard/integrations/staymanager/properties"
-                  className="block text-center py-3 text-primary-600 hover:text-primary-700 font-medium"
+                  className="block text-center py-3 font-medium hover:underline"
+                  style={{ color: SM_COLORS.primary }}
                 >
                   Voir tous les biens ({propertyLinks.length})
                 </Link>
@@ -558,8 +594,11 @@ export default function StayManager() {
       {integration?.status !== 'connected' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
-              <FiCalendar className="w-6 h-6 text-blue-600" />
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+              style={{ backgroundColor: `${SM_COLORS.primary}15` }}
+            >
+              <FiCalendar className="w-6 h-6" style={{ color: SM_COLORS.primary }} />
             </div>
             <h3 className="font-semibold text-gray-900 mb-2">Calendrier synchronise</h3>
             <p className="text-sm text-gray-600">
@@ -568,8 +607,11 @@ export default function StayManager() {
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
-              <FiUsers className="w-6 h-6 text-green-600" />
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+              style={{ backgroundColor: `${SM_COLORS.secondary}20` }}
+            >
+              <FiUsers className="w-6 h-6" style={{ color: SM_COLORS.secondary }} />
             </div>
             <h3 className="font-semibold text-gray-900 mb-2">Verification des clients</h3>
             <p className="text-sm text-gray-600">
@@ -578,8 +620,11 @@ export default function StayManager() {
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
-              <FiKey className="w-6 h-6 text-purple-600" />
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+              style={{ backgroundColor: `${SM_COLORS.primary}15` }}
+            >
+              <FiKey className="w-6 h-6" style={{ color: SM_COLORS.primary }} />
             </div>
             <h3 className="font-semibold text-gray-900 mb-2">Serrures connectees</h3>
             <p className="text-sm text-gray-600">

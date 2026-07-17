@@ -1,0 +1,290 @@
+- generic [ref=f3e3]:
+  - banner [ref=f3e4]:
+    - generic [ref=f3e6]:
+      - link "Semsar Out" [ref=f3e7] [cursor=pointer]:
+        - /url: /
+        - generic [ref=f3e8]:
+          - generic [ref=f3e9]: Semsar
+          - generic [ref=f3e10]: Out
+      - navigation [ref=f3e11]:
+        - generic [ref=f3e12]:
+          - link "Acheter" [ref=f3e13] [cursor=pointer]:
+            - /url: /annonces?transaction_type=sale
+          - link "Louer" [ref=f3e14] [cursor=pointer]:
+            - /url: /annonces?transaction_type=rent
+        - link "Programmes neufs" [ref=f3e16] [cursor=pointer]:
+          - /url: /programmes
+        - generic [ref=f3e18]:
+          - link "Agences" [ref=f3e19] [cursor=pointer]:
+            - /url: /agences
+          - link "Nos Services" [ref=f3e20] [cursor=pointer]:
+            - /url: /nos-services
+      - button "Menu utilisateur" [ref=f3e23] [cursor=pointer]
+  - main [ref=f3e27]:
+    - generic [ref=f3e28]:
+      - generic [ref=f3e30]:
+        - generic [ref=f3e31]:
+          - generic [ref=f3e32]: La nouvelle ère de l'immobilier au Maroc
+          - heading "L'immobilier, enfin sans intermédiaire." [level=1] [ref=f3e36]: L'immobilier,enfin sans intermédiaire.
+          - paragraph [ref=f3e37]: SemsarOut élimine l'intermédiaire pour une expérience plus simple, plus transparente et plus juste. Tarif fixe, zéro commission cachée.
+          - generic [ref=f3e38]:
+            - generic [ref=f3e39]: Tarif fixe, pas de commission
+            - generic [ref=f3e44]: Photos professionnelles incluses
+            - generic [ref=f3e49]: Accompagnement personnalisé
+        - generic [ref=f3e55]:
+          - generic [ref=f3e56]:
+            - generic [ref=f3e57]:
+              - generic [ref=f3e60]: Recherche IA
+              - generic [ref=f3e61]: Bientôt disponible
+            - generic [ref=f3e62]:
+              - 'textbox "Ex: Appartement 3 chambres avec terrasse à Casablanca, proche des écoles, budget max 1.5M Đh..." [ref=f3e63]'
+              - button [ref=f3e64] [cursor=pointer]
+          - generic [ref=f3e68]:
+            - generic [ref=f3e70]:
+              - button "Acheter" [ref=f3e71] [cursor=pointer]
+              - button "Louer" [ref=f3e72] [cursor=pointer]
+            - generic [ref=f3e73]:
+              - generic [ref=f3e74]:
+                - generic [ref=f3e75]: Localisation
+                - combobox "Ville ou quartier" [ref=f3e79]
+              - generic [ref=f3e80]:
+                - generic [ref=f3e81]: Type de bien
+                - combobox [ref=f3e85]:
+                  - option "Tous les types" [selected]
+                  - option "Appartement"
+                  - option "Maison"
+                  - option "Villa"
+                  - option "Riad"
+                  - option "Terrain"
+                  - option "Local commercial"
+                  - option "Bureau"
+                  - option "Garage/Parking"
+              - generic [ref=f3e86]:
+                - generic [ref=f3e87]: Budget
+                - generic [ref=f3e90]:
+                  - spinbutton "Min" [ref=f3e91]
+                  - spinbutton "Max" [ref=f3e92]
+              - generic [ref=f3e93]:
+                - generic [ref=f3e94]: Chambres
+                - combobox [ref=f3e99]:
+                  - option "Peu importe" [selected]
+                  - option "1+"
+                  - option "2+"
+                  - option "3+"
+                  - option "4+"
+                  - option "5+"
+            - button "Filtres avancés" [ref=f3e100] [cursor=pointer]
+            - generic [ref=f3e105]:
+              - button "Réinitialiser" [ref=f3e106] [cursor=pointer]
+              - button "Rechercher" [ref=f3e111] [cursor=pointer]
+        - generic [ref=f3e116]:
+          - generic [ref=f3e117]:
+            - generic [ref=f3e118]: 0%
+            - generic [ref=f3e119]: Commission
+          - generic [ref=f3e120]:
+            - generic [ref=f3e121]: 4.900 Đh
+            - generic [ref=f3e122]: Forfait fixe
+          - generic [ref=f3e123]:
+            - generic [ref=f3e124]: 100%
+            - generic [ref=f3e125]: Transparent
+          - generic [ref=f3e126]:
+            - generic [ref=f3e127]: 24h
+            - generic [ref=f3e128]: Publication
+      - generic [ref=f3e130]:
+        - generic [ref=f3e131]:
+          - heading "Pourquoi nous court-circuitons les intermédiaires traditionnels ?" [level=2] [ref=f3e132]
+          - paragraph [ref=f3e133]: Le marché immobilier marocain mérite mieux que des pratiques opaques et des commissions exorbitantes. Nous rendons l'immobilier accessible à tous, avec des prix justes et une transparence totale.
+        - generic [ref=f3e134]:
+          - generic [ref=f3e135]:
+            - heading "Commissions abusives" [level=3] [ref=f3e140]
+            - paragraph [ref=f3e141]: Les agences traditionnelles prélèvent 2,5% à 5% du prix de vente. Sur un bien à 2M Đh, c'est jusqu'à 100.000 Đh !
+            - generic [ref=f3e142]: Forfait fixe de 4.900 Đh
+          - generic [ref=f3e145]:
+            - heading "Manque de transparence" [level=3] [ref=f3e150]
+            - paragraph [ref=f3e151]: Annonces gonflées, informations cachées, négociations opaques… Difficile de faire confiance.
+            - generic [ref=f3e152]: Tout est visible et vérifié
+          - generic [ref=f3e155]:
+            - heading "Photos amateur" [level=3] [ref=f3e160]
+            - paragraph [ref=f3e161]: Des photos floues prises au téléphone qui ne mettent pas votre bien en valeur.
+            - generic [ref=f3e162]: Shooting professionnel inclus
+      - generic [ref=f3e166]:
+        - generic [ref=f3e167]:
+          - heading "Nos services d'agence en ligne" [level=2] [ref=f3e168]
+          - paragraph [ref=f3e169]: Un accompagnement professionnel à tarif fixe, sans surprise
+        - generic [ref=f3e170]:
+          - generic [ref=f3e171]:
+            - generic [ref=f3e172]:
+              - generic [ref=f3e173]:
+                - generic [ref=f3e174]: Vente de bien
+                - heading "Forfait Vente" [level=3] [ref=f3e175]
+              - generic [ref=f3e176]:
+                - generic [ref=f3e177]: 4.900 Đh
+                - generic [ref=f3e178]: tarif fixe TTC
+            - list [ref=f3e179]:
+              - listitem [ref=f3e180]:
+                - generic [ref=f3e183]: Shooting photo professionnel (15-20 photos HD)
+              - listitem [ref=f3e184]:
+                - generic [ref=f3e187]: Estimation gratuite de votre bien
+              - listitem [ref=f3e188]:
+                - generic [ref=f3e191]: Annonce premium diffusée sur SemsarOut
+              - listitem [ref=f3e192]:
+                - generic [ref=f3e195]: Gestion des contacts et visites
+              - listitem [ref=f3e196]:
+                - generic [ref=f3e199]: Accompagnement jusqu'à la vente
+            - link "Vendre mon bien" [ref=f3e200] [cursor=pointer]:
+              - /url: /nos-services/vente
+          - generic [ref=f3e203]:
+            - generic [ref=f3e204]:
+              - generic [ref=f3e205]:
+                - generic [ref=f3e206]: Service Photo
+                - heading "Photos Professionnelles" [level=3] [ref=f3e207]
+              - generic [ref=f3e208]:
+                - generic [ref=f3e209]: 990 Đh
+                - generic [ref=f3e210]: à partir de
+            - list [ref=f3e211]:
+              - listitem [ref=f3e212]:
+                - generic [ref=f3e216]: Photographe professionnel à domicile
+              - listitem [ref=f3e217]:
+                - generic [ref=f3e221]: 10-20 photos HD retouchées
+              - listitem [ref=f3e222]:
+                - generic [ref=f3e226]: Visite virtuelle 360° (option)
+              - listitem [ref=f3e227]:
+                - generic [ref=f3e231]: Prises de vue drone (option)
+              - listitem [ref=f3e232]:
+                - generic [ref=f3e236]: Livraison sous 48h
+            - link "Réserver un shooting" [ref=f3e237] [cursor=pointer]:
+              - /url: /nos-services/photos
+        - generic [ref=f3e240]:
+          - heading "Comparez et économisez" [level=3] [ref=f3e241]
+          - generic [ref=f3e242]:
+            - generic [ref=f3e243]:
+              - generic [ref=f3e244]: Agence traditionnelle
+              - generic [ref=f3e245]: 50.000 Đh
+              - generic [ref=f3e246]: 2,5% sur un bien à 2M Đh
+            - generic [ref=f3e247]:
+              - generic [ref=f3e248]: SemsarOut
+              - generic [ref=f3e249]: 4.900 Đh
+              - generic [ref=f3e250]: Forfait fixe, tout compris
+            - generic [ref=f3e251]:
+              - generic [ref=f3e252]: Vous économisez
+              - generic [ref=f3e253]: 45.100 Đh
+              - generic [ref=f3e254]: 90% d'économie !
+      - generic [ref=f3e256]:
+        - generic [ref=f3e257]:
+          - heading "Dernières annonces" [level=2] [ref=f3e258]
+          - paragraph [ref=f3e259]: Découvrez les biens récemment ajoutés
+        - link "Voir tout" [ref=f3e260] [cursor=pointer]:
+          - /url: /annonces
+      - generic [ref=f3e264]:
+        - heading "Pourquoi choisir SemsarOut ?" [level=2] [ref=f3e265]
+        - generic [ref=f3e266]:
+          - generic [ref=f3e267]:
+            - heading "Tarif fixe" [level=3] [ref=f3e271]
+            - paragraph [ref=f3e272]: Pas de commission, un prix clair et définitif.
+          - generic [ref=f3e273]:
+            - heading "Transparence" [level=3] [ref=f3e277]
+            - paragraph [ref=f3e278]: Toutes les informations sont vérifiées et accessibles.
+          - generic [ref=f3e279]:
+            - heading "Efficacité" [level=3] [ref=f3e284]
+            - paragraph [ref=f3e285]: Publication en 24h, accompagnement personnalisé.
+          - generic [ref=f3e286]:
+            - heading "Accessibilité" [level=3] [ref=f3e293]
+            - paragraph [ref=f3e294]: L'immobilier pour tous, sans barrière.
+      - generic [ref=f3e297]:
+        - generic [ref=f3e298]:
+          - heading "Vous êtes une agence immobilière ?" [level=2] [ref=f3e299]
+          - paragraph [ref=f3e300]: "Rejoignez SemsarOut et bénéficiez d'outils puissants pour gérer vos annonces : intégration API, import CSV, synchronisation avec vos logiciels métiers."
+          - list [ref=f3e301]:
+            - listitem [ref=f3e302]: Plans d'abonnement flexibles
+            - listitem [ref=f3e305]: API REST pour synchronisation
+            - listitem [ref=f3e308]: Tableau de bord analytics
+          - link "Créer mon espace agence" [ref=f3e311] [cursor=pointer]:
+            - /url: /agences/inscription
+        - img "Dashboard agence" [ref=f3e315]
+  - contentinfo [ref=f3e316]:
+    - generic [ref=f3e317]:
+      - generic [ref=f3e318]:
+        - generic [ref=f3e319]:
+          - link "Semsar Out" [ref=f3e320] [cursor=pointer]:
+            - /url: /
+            - generic [ref=f3e321]:
+              - generic [ref=f3e322]: Semsar
+              - generic [ref=f3e323]: Out
+          - paragraph [ref=f3e324]: L'immobilier sans les intermédiaires douteux. Vendez, louez et gérez votre bien à tarif fixe, sans commission, avec un accompagnement professionnel.
+          - generic [ref=f3e325]:
+            - link "Facebook" [ref=f3e326] [cursor=pointer]:
+              - /url: "#"
+            - link "Instagram" [ref=f3e329] [cursor=pointer]:
+              - /url: "#"
+            - link "LinkedIn" [ref=f3e333] [cursor=pointer]:
+              - /url: "#"
+            - link "Twitter" [ref=f3e338] [cursor=pointer]:
+              - /url: "#"
+            - link "YouTube" [ref=f3e341] [cursor=pointer]:
+              - /url: "#"
+        - generic [ref=f3e345]:
+          - heading "Vente" [level=4] [ref=f3e346]
+          - list [ref=f3e347]:
+            - listitem [ref=f3e348]:
+              - link "Forfait Vente (4.900 Đh)" [ref=f3e349] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f3e350]:
+              - link "Photos Professionnelles" [ref=f3e351] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f3e352]:
+              - link "Estimation Gratuite" [ref=f3e353] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f3e354]:
+              - link "Acheter un bien" [ref=f3e355] [cursor=pointer]:
+                - /url: /annonces?transaction_type=sale
+        - generic [ref=f3e356]:
+          - heading "Location" [level=4] [ref=f3e357]
+          - list [ref=f3e358]:
+            - listitem [ref=f3e359]:
+              - link "Mise en Location" [ref=f3e360] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f3e361]:
+              - link "Gestion Locative Complète" [ref=f3e362] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f3e363]:
+              - link "Location Courte DuréeStayManager" [ref=f3e364] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f3e365]:
+              - link "Louer un bien" [ref=f3e366] [cursor=pointer]:
+                - /url: /annonces?transaction_type=rent
+        - generic [ref=f3e367]:
+          - heading "Professionnels" [level=4] [ref=f3e368]
+          - list [ref=f3e369]:
+            - listitem [ref=f3e370]:
+              - link "Agences partenaires" [ref=f3e371] [cursor=pointer]:
+                - /url: /agences
+            - listitem [ref=f3e372]:
+              - link "Devenir partenaire" [ref=f3e373] [cursor=pointer]:
+                - /url: /agences/inscription
+            - listitem [ref=f3e374]:
+              - link "Tarifs agences" [ref=f3e375] [cursor=pointer]:
+                - /url: /agences/tarifs
+          - heading "À propos" [level=4] [ref=f3e376]
+          - list [ref=f3e377]:
+            - listitem [ref=f3e378]:
+              - link "Qui sommes-nous" [ref=f3e379] [cursor=pointer]:
+                - /url: /a-propos
+            - listitem [ref=f3e380]:
+              - link "Nous contacter" [ref=f3e381] [cursor=pointer]:
+                - /url: /contact
+            - listitem [ref=f3e382]:
+              - link "StayManager.ma↗" [ref=f3e383] [cursor=pointer]:
+                - /url: https://www.staymanager.ma
+                - generic [ref=f3e384]: StayManager.ma
+                - text: ↗
+      - generic [ref=f3e386]:
+        - paragraph [ref=f3e387]: © 2026 SemsarOut. Tous droits réservés.
+        - generic [ref=f3e388]:
+          - link "Mentions légales" [ref=f3e389] [cursor=pointer]:
+            - /url: "#"
+          - link "CGU" [ref=f3e390] [cursor=pointer]:
+            - /url: "#"
+          - link "Politique de confidentialité" [ref=f3e391] [cursor=pointer]:
+            - /url: "#"
+          - link "Cookies" [ref=f3e392] [cursor=pointer]:
+            - /url: "#"

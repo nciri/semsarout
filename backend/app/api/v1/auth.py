@@ -24,13 +24,23 @@ def register():
     if User.query.filter_by(email=data['email']).first():
         return jsonify({'error': 'Email already registered'}), 409
 
+    # Declared interest is optional and must match the known service keys
+    valid_interests = {
+        'vente', 'mise-en-location', 'gestion-locative',
+        'courte-duree', 'estimation', 'autre'
+    }
+    interest = data.get('interest')
+    if interest not in valid_interests:
+        interest = None
+
     # Create user
     user = User(
         email=data['email'],
         first_name=data['first_name'],
         last_name=data['last_name'],
         phone=data.get('phone'),
-        user_type=data.get('user_type', 'particular')
+        user_type=data.get('user_type', 'particular'),
+        interest=interest
     )
     user.set_password(data['password'])
 

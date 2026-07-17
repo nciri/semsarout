@@ -91,10 +91,28 @@ npm run dev
 
 L'application sera accessible sur : http://localhost:3000
 
-## Compte de démo
+## Comptes de test
 
-- Email : `demo@semsar.ma`
+### Pour tester en tant que particulier (via site public)
+- Email : `demo@semsarout.ma`
 - Mot de passe : `demo1234`
+
+### Pour tester en tant qu'administrateur
+- Email : `admin@semsarout.ma`
+- Mot de passe : `admin123`
+
+### Pour tester en tant qu'agent immobilier (agences)
+Plusieurs agents disponibles :
+- `agent1@immo-casa-premium.ma` (Immo Casa Premium)
+- `agent2@rabat-immobilier.ma` (Rabat Immobilier)
+- `agent3@marrakech-properties.ma` (Marrakech Properties)
+- `agent4@tanger-bay-realty.ma` (Tanger Bay Realty)
+- `agent5@agadir-sun-immo.ma` (Agadir Sun Immo)
+- Mot de passe : `password123`
+
+### Autres utilisateurs particuliers
+Emails : `karim.benjelloun@gmail.com`, `nadia.chraibi@outlook.com`, etc.
+- Mot de passe : `user1234`
 
 ## Endpoints API principaux
 

@@ -34,4 +34,19 @@ def create_app(config_name='default'):
     def health_check():
         return {'status': 'healthy', 'service': 'semsar-api'}
 
+    # Serve listing photos only. Sensitive documents (title deeds, ID cards)
+    # live in uploads/documents/ and are served exclusively through the
+    # authenticated /api/v1/documents/<id> endpoint with an ownership check.
+    # The <string> converter rejects slashes, preventing subpath escapes.
+    @app.route('/uploads/photos/<string:filename>')
+    def uploaded_photo(filename):
+        import os
+        from flask import send_from_directory
+        uploads = app.config.get(
+            'UPLOAD_FOLDER', os.path.join(app.root_path, '..', 'uploads')
+        )
+        return send_from_directory(
+            os.path.abspath(os.path.join(uploads, 'photos')), filename
+        )
+
     return app

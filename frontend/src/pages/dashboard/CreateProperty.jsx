@@ -5,6 +5,7 @@ import { useMutation } from 'react-query'
 import { toast } from 'react-toastify'
 import { FiSave, FiEye } from 'react-icons/fi'
 import { propertyService } from '../../services/propertyService'
+import { DIRHAM_SYMBOL } from '../../utils/currency'
 
 const PROPERTY_TYPES = [
   { value: 'apartment', label: 'Appartement' },
@@ -154,7 +155,7 @@ function CreateProperty() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="label">
-                  Prix (Đ) * {transactionType === 'rent' && <span className="text-gray-400">/ mois</span>}
+                  Prix ({DIRHAM_SYMBOL}) * {transactionType === 'rent' && <span className="text-gray-400">/ mois</span>}
                 </label>
                 <input
                   type="number"

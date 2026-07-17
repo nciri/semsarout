@@ -5,13 +5,15 @@ import {
   FiMail, FiStar, FiClock, FiDollarSign, FiKey,
   FiUsers, FiShield, FiCalendar, FiFileText, FiTool
 } from 'react-icons/fi'
+import { DIRHAM_SYMBOL } from '../utils/currency'
+import StayManagerWordmark from '../components/common/StayManagerWordmark'
 
 const SERVICES = {
   vente: {
     title: 'Forfait Vente',
     subtitle: 'Service d\'agence en ligne',
     price: '4 900',
-    priceNote: 'DH TTC - Tarif fixe',
+    priceNote: `${DIRHAM_SYMBOL} TTC - Tarif fixe`,
     description: 'Un accompagnement complet pour vendre votre bien au meilleur prix, sans les commissions exorbitantes des agences traditionnelles.',
     features: [
       'Estimation gratuite de votre bien par un expert',
@@ -31,15 +33,16 @@ const SERVICES = {
         'Livraison sous 48h'
       ],
       options: [
-        { name: 'Visite virtuelle 360°', price: '+500 Đ' },
-        { name: 'Prises de vue drone', price: '+800 Đ' },
-        { name: 'Vidéo de présentation', price: '+1 200 Đ' }
+        { name: 'Visite virtuelle 360°', price: `+500 ${DIRHAM_SYMBOL}` },
+        { name: 'Prises de vue drone', price: `+800 ${DIRHAM_SYMBOL}` },
+        { name: 'Vidéo de présentation', price: `+1 200 ${DIRHAM_SYMBOL}` }
       ]
     },
     notIncluded: [
       'Frais de notaire (à la charge de l\'acheteur)',
       'Diagnostics immobiliers obligatoires'
     ],
+    cta: { label: 'Démarrer ma vente en ligne', to: '/vendre' },
     icon: FiHome,
     color: 'primary'
   },
@@ -47,8 +50,9 @@ const SERVICES = {
     title: 'Gestion Locative Complète',
     subtitle: 'Location longue durée - Sérénité totale',
     price: '5%',
-    priceNote: 'du loyer mensuel',
-    description: 'Déléguez entièrement la gestion de votre bien locatif. De la recherche du locataire idéal jusqu\'à son départ, nous gérons tout pour vous.',
+    pricePrefix: 'À partir de',
+    priceNote: 'du loyer mensuel (tarif minimum 500 Đh/mois)',
+    description: 'Déléguez entièrement la gestion de votre bien locatif. De la recherche du locataire idéal jusqu\'à son départ, nous gérons tout pour vous. Plusieurs formules adaptées à vos besoins.',
     features: [
       'Recherche et sélection rigoureuse des locataires',
       'Vérification approfondie des dossiers (revenus, garants)',
@@ -62,6 +66,12 @@ const SERVICES = {
       'Médiation et gestion des litiges',
       'État des lieux de sortie',
       'Restitution du dépôt de garantie'
+    ],
+    optionsTitle: 'Nos formules de gestion locative',
+    options: [
+      { name: 'Gestion Essentielle', price: '3% du loyer / min. 300 Đh' },
+      { name: 'Gestion Complète', price: '5% du loyer / min. 500 Đh' },
+      { name: 'Gestion Premium', price: '7% du loyer / min. 700 Đh' }
     ],
     phases: [
       {
@@ -110,8 +120,8 @@ const SERVICES = {
         'Livraison sous 48h'
       ],
       options: [
-        { name: 'Visite virtuelle 360°', price: '+500 Đ' },
-        { name: 'Vidéo de présentation', price: '+1 200 Đ' }
+        { name: 'Visite virtuelle 360°', price: `+500 ${DIRHAM_SYMBOL}` },
+        { name: 'Vidéo de présentation', price: `+1 200 ${DIRHAM_SYMBOL}` }
       ]
     },
     notIncluded: [
@@ -124,25 +134,33 @@ const SERVICES = {
   'courte-duree': {
     title: 'Location Courte Durée',
     subtitle: 'En partenariat avec StayManager.ma',
-    price: '15%',
-    priceNote: 'du CA généré',
-    description: 'Maximisez les revenus de votre bien en location saisonnière. Notre partenaire StayManager.ma gère tout : annonces, réservations, accueil des voyageurs, ménage.',
+    price: '179',
+    pricePrefix: 'À partir de',
+    priceNote: 'par bien / mois - Essai gratuit de 14 jours',
+    description: 'Sécurisez et automatisez vos locations saisonnières avec la plateforme StayManager.ma : vérification d\'identité des voyageurs, serrures connectées, réservations et messagerie automatisée. Tout votre workflow d\'hôte en un seul outil.',
     features: [
-      'Création d\'annonces sur Airbnb, Booking, etc.',
-      'Photos professionnelles et descriptifs optimisés',
-      'Gestion dynamique des tarifs',
-      'Synchronisation des calendriers',
-      'Communication avec les voyageurs 24/7',
-      'Check-in / check-out flexible',
-      'Ménage et changement de linge',
-      'Maintenance et petites réparations',
-      'Gestion des avis et notation',
-      'Reporting mensuel détaillé'
+      'Vérification d\'identité automatisée des voyageurs',
+      'OCR des pièces d\'identité',
+      'Serrures connectées : accès automatique pour les voyageurs vérifiés',
+      'Synchronisation des calendriers (iCal) avec Airbnb, Booking, etc.',
+      'Gestion centralisée des réservations',
+      'Automatisation des messages aux voyageurs',
+      'Contrats de location et signature digitale',
+      'Gestion d\'équipe : ménage, maintenance, co-hôtes',
+      'Notifications en temps réel : arrivées, vérifications, accès',
+      'Conformité réglementaire (identification des voyageurs)'
+    ],
+    optionsTitle: 'Formules StayManager.ma',
+    options: [
+      { name: 'Manage', price: `179 ${DIRHAM_SYMBOL}/bien/mois` },
+      { name: 'Automate', price: `299 ${DIRHAM_SYMBOL}/bien/mois` },
+      { name: 'Optimize', price: `449 ${DIRHAM_SYMBOL}/bien/mois` }
     ],
     partnership: {
       name: 'StayManager.ma',
-      logo: '/staymanager-logo.svg',
-      description: 'Leader de la gestion locative courte durée au Maroc'
+      logo: '/staymanager-logo.png',
+      registerUrl: 'https://staymanager.ma/register',
+      description: 'La plateforme de gestion et de sécurisation des locations courte durée au Maroc'
     },
     icon: FiCalendar,
     color: 'staymanager'
@@ -179,7 +197,7 @@ const SERVICE_CATEGORIES = [
 ]
 
 function Services() {
-  const [activeService, setActiveService] = useState('vente')
+  const [activeService, setActiveService] = useState('gestion-locative')
   const service = SERVICES[activeService]
   const Icon = service.icon
 
@@ -224,14 +242,15 @@ function Services() {
       border: 'border-purple-600',
       hover: 'hover:bg-purple-700'
     },
+    // Couleurs officielles staymanager.ma : vert #2E5E4E / #1F3D34, beige #F5F0E6, or #C9A24B
     staymanager: {
-      bg: 'bg-[#E4007C]',
-      bgLight: 'bg-pink-50',
-      bgGradient: 'bg-gradient-to-r from-[#E4007C] via-[#B8206C] to-[#7C2483]',
-      text: 'text-[#E4007C]',
-      textLight: 'text-[#B8206C]',
-      border: 'border-[#E4007C]',
-      hover: 'hover:from-[#D10070] hover:via-[#A81B60] hover:to-[#6E1F75]'
+      bg: 'bg-[#2E5E4E]',
+      bgLight: 'bg-[#F5F0E6]',
+      bgGradient: 'bg-gradient-to-r from-[#1F3D34] via-[#2E5E4E] to-[#2E5E4E]',
+      text: 'text-[#2E5E4E]',
+      textLight: 'text-[#1F3D34]',
+      border: 'border-[#2E5E4E]',
+      hover: 'hover:from-[#152D26] hover:via-[#1F3D34] hover:to-[#1F3D34]'
     },
     yellow: {
       bg: 'bg-yellow-500',
@@ -252,7 +271,7 @@ function Services() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             <h1 className="font-display text-4xl lg:text-5xl font-bold mb-6">
-              Nos Services
+              <span style={{ color: 'rgb(198, 146, 63)' }}>Nos Services</span>
             </h1>
             <p className="text-xl text-gray-300 mb-8">
               Une agence immobilière en ligne complète : vente, location longue durée et gestion locative.
@@ -315,7 +334,12 @@ function Services() {
               <div className="mb-8">
                 <div className={`inline-flex items-center px-3 py-1 ${colors.bgLight} ${colors.textLight} rounded-full text-sm font-medium mb-4`}>
                   <Icon className="w-4 h-4 mr-2" />
-                  {service.subtitle}
+                  {service.partnership ? (
+                    <>
+                      En partenariat avec
+                      <img src={service.partnership.logo} alt={service.partnership.name} className="h-5 ml-1.5" />
+                    </>
+                  ) : service.subtitle}
                 </div>
                 <h2 className="font-display text-3xl font-bold text-gray-900 mb-4">
                   {service.title}
@@ -327,18 +351,21 @@ function Services() {
 
               {/* Partnership badge for StayManager */}
               {service.partnership && (
-                <div className="mb-8 p-6 bg-gradient-to-r from-pink-50 via-fuchsia-50 to-purple-50 rounded-xl border border-pink-100">
+                <div className="mb-8 p-6 bg-gradient-to-r from-[#F5F0E6] via-[#FAF7F2] to-[#ECF4EF] rounded-xl border border-[#E5DFD3]">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <div className="text-sm text-[#E4007C] font-medium mb-1">En partenariat avec</div>
-                      <div className="text-xl font-bold bg-gradient-to-r from-[#E4007C] via-[#B8206C] to-[#7C2483] bg-clip-text text-transparent">{service.partnership.name}</div>
+                      <div className="text-sm text-[#C9A24B] font-medium mb-1">En partenariat avec</div>
+                      <div className="flex items-center gap-2">
+                        <img src={service.partnership.logo} alt={service.partnership.name} className="h-8" />
+                        <StayManagerWordmark className="text-xl" />
+                      </div>
                       <div className="text-sm text-gray-600">{service.partnership.description}</div>
                     </div>
                     <a
                       href="https://www.staymanager.ma"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn bg-gradient-to-r from-[#E4007C] via-[#B8206C] to-[#7C2483] text-white hover:opacity-90 transition-opacity"
+                      className="btn bg-gradient-to-r from-[#1F3D34] via-[#2E5E4E] to-[#2E5E4E] text-white hover:opacity-90 transition-opacity"
                     >
                       En savoir plus
                       <FiArrowRight className="w-4 h-4 ml-2" />
@@ -439,7 +466,7 @@ function Services() {
               {/* Options */}
               {service.options && (
                 <div className="mb-8">
-                  <h3 className="font-semibold text-lg mb-4">Options disponibles</h3>
+                  <h3 className="font-semibold text-lg mb-4">{service.optionsTitle || 'Options disponibles'}</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {service.options.map((option, idx) => (
                       <div key={idx} className="bg-gray-50 rounded-lg p-4">
@@ -504,25 +531,56 @@ function Services() {
                   <div className={`${colors.bgGradient || colors.bg} text-white p-6`}>
                     <div className="flex items-center mb-2">
                       <Icon className="w-6 h-6 mr-2" />
-                      <span className="text-sm opacity-90">{service.subtitle}</span>
+                      {service.partnership ? (
+                        <span className="text-sm opacity-90 flex items-center">
+                          En partenariat avec
+                          <img src={service.partnership.logo} alt={service.partnership.name} className="h-5 ml-1.5" />
+                          <StayManagerWordmark light className="ml-1.5 text-base" />
+                        </span>
+                      ) : (
+                        <span className="text-sm opacity-90">{service.subtitle}</span>
+                      )}
                     </div>
+                    {service.pricePrefix && (
+                      <div className="text-sm opacity-90">{service.pricePrefix}</div>
+                    )}
                     <div className="flex items-baseline">
                       <span className="text-4xl font-bold">{service.price}</span>
-                      {service.price !== 'Gratuit' && !service.price.includes('%') && (
-                        <span className="ml-2 text-lg">DH</span>
+                      {service.price !== 'Gratuit' && !service.price.includes('%') && !service.price.includes('mois') && (
+                        <span className="ml-2 text-lg">{DIRHAM_SYMBOL}</span>
                       )}
                     </div>
                     <div className="text-sm opacity-90 mt-1">{service.priceNote}</div>
                   </div>
 
                   <div className="p-6">
-                    <Link
-                      to={`/contact?service=${activeService}`}
-                      className={`btn ${colors.bgGradient || colors.bg} text-white ${colors.bgGradient ? 'hover:opacity-90' : colors.hover} w-full justify-center mb-4`}
-                    >
-                      {service.price === 'Gratuit' ? 'Demander une estimation' : 'Demander un devis'}
-                      <FiArrowRight className="w-4 h-4 ml-2" />
-                    </Link>
+                    {service.cta ? (
+                      <Link
+                        to={service.cta.to}
+                        className={`btn ${colors.bgGradient || colors.bg} text-white ${colors.bgGradient ? 'hover:opacity-90' : colors.hover} w-full justify-center mb-4`}
+                      >
+                        {service.cta.label}
+                        <FiArrowRight className="w-4 h-4 ml-2" />
+                      </Link>
+                    ) : service.partnership?.registerUrl ? (
+                      <a
+                        href={service.partnership.registerUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`btn ${colors.bgGradient || colors.bg} text-white hover:opacity-90 w-full justify-center mb-4`}
+                      >
+                        Créer votre compte StayManager
+                        <FiArrowRight className="w-4 h-4 ml-2" />
+                      </a>
+                    ) : (
+                      <Link
+                        to={`/contact?service=${activeService}`}
+                        className={`btn ${colors.bgGradient || colors.bg} text-white ${colors.bgGradient ? 'hover:opacity-90' : colors.hover} w-full justify-center mb-4`}
+                      >
+                        {service.price === 'Gratuit' ? 'Demander une estimation' : 'Demander un devis'}
+                        <FiArrowRight className="w-4 h-4 ml-2" />
+                      </Link>
+                    )}
 
                     <div className="text-center text-sm text-gray-500 mb-6">
                       ou appelez-nous
@@ -590,7 +648,7 @@ function Services() {
                   <h3 className="font-semibold text-gray-900 mb-1">{svc.title}</h3>
                   <p className="text-sm text-gray-500 mb-3">{svc.subtitle}</p>
                   <div className={`text-lg font-bold ${svcColors.text}`}>
-                    {svc.price} {!svc.price.includes('%') && svc.price !== 'Gratuit' && 'DH'}
+                    {svc.price} {!svc.price.includes('%') && !svc.price.includes('mois') && svc.price !== 'Gratuit' && DIRHAM_SYMBOL}
                   </div>
                 </button>
               )
@@ -626,10 +684,10 @@ function Services() {
                 <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
               </summary>
               <p className="mt-4 text-gray-600">
-                StayManager.ma est le leader de la gestion locative courte durée au Maroc.
-                Grâce à notre partenariat, nous pouvons vous proposer une gestion complète de votre bien
-                sur Airbnb, Booking et autres plateformes : annonces, tarification dynamique,
-                accueil des voyageurs, ménage, et suivi des performances.
+                StayManager.ma est la plateforme marocaine de gestion et de sécurisation des locations
+                courte durée. Grâce à notre partenariat, vous pilotez vos biens en toute sécurité :
+                vérification d'identité des voyageurs, serrures connectées, synchronisation des calendriers
+                (Airbnb, Booking), messages automatisés, contrats digitaux et gestion d'équipe.
               </p>
             </details>
 
@@ -641,7 +699,8 @@ function Services() {
               <p className="mt-4 text-gray-600">
                 Nos frais de gestion locative sont de 5% du loyer mensuel (charges comprises).
                 Pour la mise en location seule (sans gestion), nous facturons l'équivalent d'un mois de loyer.
-                Pour la location courte durée via StayManager, les frais sont de 15% du chiffre d'affaires généré.
+                Pour la location courte durée, la plateforme StayManager.ma propose des formules
+                à partir de 179 {DIRHAM_SYMBOL} par bien et par mois, avec 14 jours d'essai gratuit.
               </p>
             </details>
 

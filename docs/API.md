@@ -1,5 +1,8 @@
 # Documentation API Semsar
 
+> Mis à jour le 15 juillet 2026. Vue d'ensemble produit et architecture :
+> [SYSTEM_DESIGN.md](SYSTEM_DESIGN.md).
+
 Base URL : `http://localhost:7000/api/v1`
 
 ## Authentification
@@ -24,9 +27,14 @@ POST /auth/register
   "first_name": "Prénom",
   "last_name": "Nom",
   "phone": "+212 6XX XXX XXX",
-  "user_type": "particular"
+  "user_type": "particular",
+  "interest": "vente"
 }
 ```
+
+`interest` (optionnel) : intention déclarée, parmi `vente`, `mise-en-location`,
+`gestion-locative`, `courte-duree`, `estimation`, `autre`. Stockée sur l'utilisateur,
+elle pilote l'onboarding personnalisé du dashboard.
 
 **Réponse :**
 ```json
@@ -163,6 +171,130 @@ POST /properties/:id/contact
   "message": "Bonjour, je suis intéressé par ce bien..."
 }
 ```
+
+### Demande de service (page contact)
+
+```http
+POST /contact
+```
+
+Crée un lead `source=service_request` pour l'équipe commerciale. Public, sans auth.
+
+**Body :**
+```json
+{
+  "name": "Jean Dupont",
+  "email": "jean@example.com",
+  "phone": "+212 6XX XXX XXX",
+  "message": "Je souhaite faire gérer mon appartement...",
+  "service": "gestion-locative"
+}
+```
+
+`service` : `vente`, `mise-en-location`, `gestion-locative`, `courte-duree`,
+`estimation` ou `autre` (validé côté serveur, 400 sinon).
+
+---
+
+## Estimation
+
+```http
+POST /estimate
+```
+
+Public. Estime un prix de vente à partir des annonces actives comparables
+(médiane du prix/m², périmètre ville+type → ville → type, minimum 3 comparables).
+
+**Body :**
+```json
+{
+  "city": "Casablanca",
+  "property_type": "apartment",
+  "surface": 85
+}
+```
+
+**Réponse :**
+```json
+{
+  "available": true,
+  "scope": "city_and_type",
+  "comparables_count": 12,
+  "price_per_sqm": 16556,
+  "estimate": 1407291,
+  "estimate_low": 1266562,
+  "estimate_high": 1548020
+}
+```
+
+Si moins de 3 comparables : `{"available": false, "message": "..."}`.
+
+---
+
+## Vente en ligne (dossier de vente)
+
+Parcours front `/vendre`. Trois endpoints :
+
+### Upload de fichier
+
+```http
+POST /uploads
+Authorization: Bearer <access_token>
+Content-Type: multipart/form-data
+```
+
+Champs : `file` + `kind` (`photo` ou `document`). Limite 10 Mo.
+- `photo` (jpg/jpeg/png/webp) → réponse `{"url": "/uploads/photos/<uuid>.jpg", "original_name": "..."}`.
+  L'URL est publique (photos destinées à l'annonce).
+- `document` (idem + pdf) → réponse `{"file_id": "<uuid>.pdf", "original_name": "..."}`.
+  **Aucune URL publique** : le fichier est privé (CIN, titre foncier...).
+
+### Soumettre un dossier de vente
+
+```http
+POST /sale-requests
+Authorization: Bearer <access_token>
+```
+
+**Body :**
+```json
+{
+  "property": {
+    "property_type": "apartment",
+    "city": "Casablanca",
+    "neighborhood": "Maârif",
+    "surface": 85,
+    "rooms": 3,
+    "bedrooms": 2,
+    "bathrooms": 1,
+    "construction_year": 2015,
+    "features": ["ascenseur", "balcon"],
+    "description": "..."
+  },
+  "desired_price": 1407291,
+  "photos": ["/uploads/photos/<uuid>.jpg"],
+  "documents": [
+    {"doc_type": "titre_foncier", "file_id": "<uuid>.pdf", "original_name": "titre.pdf"}
+  ],
+  "wants_pro_photos": true
+}
+```
+
+Règles : `property_type`, `city`, `surface` et `desired_price` requis ; au moins
+une photo **ou** `wants_pro_photos=true`. Crée l'annonce en statut `pending`
+(titre auto-généré si absent), les images, les documents et un lead
+`service_request/vente`. **Réponse 201** : `{"reference": "SEM-XXXXXXXX", "property": {...}}`.
+
+### Télécharger un document de dossier
+
+```http
+GET /documents/:id
+Authorization: Bearer <access_token>
+```
+
+Réservé au propriétaire du bien ou à un admin (403 sinon). Les sérialisations de
+documents exposent `download_url` pointant vers cet endpoint, jamais le nom du
+fichier stocké.
 
 ---
 
@@ -481,7 +613,7 @@ GET /backoffice/leads
 | `page` | int | Page |
 | `per_page` | int | Résultats par page |
 | `status` | string | `new`, `contacted`, `qualified`, `converted`, `lost` |
-| `source` | string | `contact_form`, `phone_reveal`, `callback_request`, `website`, `manual` |
+| `source` | string | `contact_form`, `phone_reveal`, `callback_request`, `website`, `manual`, `service_request` |
 | `assigned_to` | int | ID de l'agent assigné |
 | `property_id` | int | ID du bien associé |
 | `q` | string | Recherche |
@@ -908,6 +1040,50 @@ GET /backoffice/stats/agent-performance?period=month
 ```http
 GET /backoffice/stats/export?format=csv&type=properties
 ```
+
+---
+
+## Autres domaines (résumé)
+
+### Espace client (JWT)
+
+| Endpoint | Description |
+|---|---|
+| `GET/PUT /auth/me`, `POST /auth/change-password` | Profil |
+| `GET /my-properties`, CRUD `/properties`, `POST /properties/:id/publish` | Mes annonces |
+| `GET /my-leads`, `GET /leads/:id`, `PUT /leads/:id/status` | Mes contacts reçus |
+| `GET /my-agency`, `POST/PUT /agencies`, `POST /agencies/:slug/regenerate-api-key` | Mon agence |
+
+### Programmes neufs
+
+| Endpoint | Description |
+|---|---|
+| `GET /programs`, `GET /programs/:slug` | Public : liste + détail |
+| `GET /programs/my`, `POST/PUT/DELETE /programs/:id` | Gestion promoteur |
+| `POST /programs/:id/publish`, `/unpublish` | Publication |
+| `POST/PUT/DELETE /programs/:id/units[/:unit_id]` | Lots |
+| `POST/DELETE /programs/:id/images[/:image_id]`, `/images/reorder` | Images |
+
+### Abonnements & facturation (JWT)
+
+| Endpoint | Description |
+|---|---|
+| `GET /subscription-plans[/:id]` | Plans (public) |
+| `POST /subscribe`, `GET /my-subscription`, `GET /subscription/current` | Souscription |
+| `POST /subscription/change-plan`, `POST /cancel-subscription` | Cycle de vie |
+| `GET/POST /payment-methods`, `DELETE /payment-methods/:id`, `/set-default` | Moyens de paiement |
+| `GET /invoices[/:id[/pdf]]`, `GET /my-payments` | Factures |
+| `POST /payments/create-intent`, `GET /payments/:reference`, `POST /payments/webhook` | Paiement (gateway CMI **non branchée**, simulé) |
+
+### Intégration StayManager (`/integrations/staymanager`, JWT)
+
+| Endpoint | Description |
+|---|---|
+| `POST /connect`, `POST /disconnect`, `GET /status`, `PUT /settings` | Connexion par clé API |
+| `GET /properties`, `GET /properties/available` | Biens liés / à lier |
+| `POST /properties/:id/link`, `/unlink`, `/sync` | Liaison et synchronisation |
+| `GET /reservations[/:id]`, `GET /calendar/:property_id` | Réservations |
+| `GET /sync-logs`, `POST /webhook` | Journal et webhook entrant |
 
 ---
 

@@ -41,6 +41,44 @@ def create_lead(property_id):
     }), 201
 
 
+VALID_SERVICES = {
+    'vente', 'mise-en-location', 'gestion-locative',
+    'courte-duree', 'estimation', 'autre'
+}
+
+
+@api_v1_bp.route('/contact', methods=['POST'])
+def create_service_request():
+    """Create a service request lead from the public contact page."""
+    data = request.get_json() or {}
+
+    if not data.get('name') or not data.get('email'):
+        return jsonify({'error': 'Name and email are required'}), 400
+
+    service = data.get('service')
+    if service and service not in VALID_SERVICES:
+        return jsonify({'error': 'Invalid service'}), 400
+
+    lead = Lead(
+        name=data['name'],
+        email=data['email'],
+        phone=data.get('phone'),
+        message=data.get('message'),
+        source='service_request',
+        service=service,
+        ip_address=request.remote_addr,
+        user_agent=request.user_agent.string[:255] if request.user_agent else None
+    )
+
+    db.session.add(lead)
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Service request sent successfully',
+        'lead_id': lead.id
+    }), 201
+
+
 @api_v1_bp.route('/my-leads', methods=['GET'])
 @jwt_required()
 def my_leads():

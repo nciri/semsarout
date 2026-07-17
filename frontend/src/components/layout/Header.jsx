@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiSettings, FiCreditCard, FiLayers, FiLink } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
+import Wordmark from '../common/Wordmark'
 
 function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -28,18 +29,12 @@ function Header() {
   }, [])
 
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-50">
+    <header className="sticky top-0 z-50 bg-white/[.92] backdrop-blur-md border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-[68px]">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-terracotta-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">S</span>
-            </div>
-            <div className="flex items-baseline">
-              <span className="font-display font-bold text-xl text-gray-900">Semsar</span>
-              <span className="font-display font-bold text-xl text-primary-600">Out</span>
-            </div>
+          <Link to="/" className="flex items-center">
+            <Wordmark />
           </Link>
 
           {/* Desktop Navigation */}
@@ -48,38 +43,43 @@ function Header() {
             <div className="flex items-center space-x-6">
               <Link
                 to="/annonces?transaction_type=sale"
-                className="text-gray-700 hover:text-primary-600 font-medium transition-colors"
+                className="text-slate-700 hover:text-midnight font-semibold text-[15px] transition-colors"
               >
                 Acheter
               </Link>
               <Link
                 to="/annonces?transaction_type=rent"
-                className="text-gray-700 hover:text-primary-600 font-medium transition-colors"
+                className="text-slate-700 hover:text-midnight font-semibold text-[15px] transition-colors"
               >
                 Louer
               </Link>
             </div>
 
             {/* Separator */}
-            <div className="mx-8 h-6 w-px bg-gray-200"></div>
+            <div className="mx-6 h-6 w-px bg-gray-200"></div>
 
-            {/* Secondary nav - Agences (different color) */}
+            {/* Programmes neufs - Highlighted */}
+            <Link
+              to="/programmes"
+              className="px-4 py-1.5 bg-midnight text-ivory font-semibold rounded-full hover:bg-slate-800 transition-all shadow-ds-sm hover:shadow-ds-md"
+            >
+              Programmes neufs
+            </Link>
+
+            {/* Separator */}
+            <div className="mx-10 h-6 w-px bg-gray-200"></div>
+
+            {/* Secondary nav - Agences & Services */}
             <div className="flex items-center space-x-6">
               <Link
-                to="/programmes"
-                className="text-terracotta-600 hover:text-terracotta-700 font-medium transition-colors"
-              >
-                Programmes neufs
-              </Link>
-              <Link
                 to="/agences"
-                className="text-terracotta-600 hover:text-terracotta-700 font-medium transition-colors"
+                className="text-emerald-500 hover:text-emerald-600 font-semibold text-[15px] transition-colors"
               >
                 Agences
               </Link>
               <Link
                 to="/nos-services"
-                className="text-terracotta-600 hover:text-terracotta-700 font-medium transition-colors"
+                className="text-emerald-500 hover:text-emerald-600 font-semibold text-[15px] transition-colors"
               >
                 Nos Services
               </Link>
@@ -281,21 +281,22 @@ function Header() {
               <div className="h-px bg-gray-200 my-2"></div>
               <Link
                 to="/programmes"
-                className="py-2 text-terracotta-600 font-medium"
+                className="inline-block my-2 px-4 py-2 bg-gradient-to-r from-terracotta-500 to-terracotta-600 text-white font-semibold rounded-full"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Programmes neufs
               </Link>
+              <div className="h-px bg-gray-200 my-2"></div>
               <Link
                 to="/agences"
-                className="py-2 text-terracotta-600 font-medium"
+                className="py-2 text-gray-600 font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Agences
               </Link>
               <Link
                 to="/nos-services"
-                className="py-2 text-terracotta-600 font-medium"
+                className="py-2 text-gray-600 font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Nos Services

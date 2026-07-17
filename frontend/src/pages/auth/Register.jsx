@@ -1,32 +1,49 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { FiUser, FiMail, FiLock, FiPhone, FiEye, FiEyeOff } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
+import { SERVICE_OPTIONS, isValidService } from '../../constants/services'
 
 function Register() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const { register: registerUser, isLoading } = useAuthStore()
 
-  const { register, handleSubmit, formState: { errors }, watch } = useForm()
+  const serviceParam = searchParams.get('service')
+  const serviceContext = isValidService(serviceParam) ? serviceParam : null
+  const redirectParam = searchParams.get('redirect')
+  // Only allow internal redirects to avoid open-redirect abuse
+  const redirectTo = redirectParam && redirectParam.startsWith('/') ? redirectParam : '/dashboard'
+
+  const { register, handleSubmit, formState: { errors }, watch } = useForm({
+    defaultValues: { interest: serviceContext || '' }
+  })
   const userType = watch('user_type', 'particular')
+  const interest = watch('interest', serviceContext || '')
 
   const onSubmit = async (data) => {
     setError('')
-    const result = await registerUser(data)
+    const result = await registerUser({
+      ...data,
+      interest: data.interest || undefined
+    })
 
     if (result.success) {
-      navigate('/dashboard')
+      navigate(redirectTo)
     } else {
       setError(result.error)
     }
   }
 
+  const loginLink = `/connexion${redirectParam ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`
+  const serviceMeta = serviceContext ? SERVICE_OPTIONS[serviceContext] : null
+
   return (
     <div className="min-h-[calc(100vh-200px)] flex items-center justify-center py-12 px-4">
-      <div className="max-w-md w-full">
+      <div className="max-w-4xl w-full">
         <div className="text-center mb-8">
           <h1 className="font-display text-2xl font-bold text-gray-900">
             Créer un compte
@@ -35,6 +52,20 @@ function Register() {
             Rejoignez Semsar et accédez à toutes les fonctionnalités
           </p>
         </div>
+
+        {/* Contexte service : l'utilisateur arrive depuis une page service/contact */}
+        {serviceMeta && (
+          <div className="mb-6 p-4 bg-primary-50 border border-primary-100 rounded-xl flex items-center">
+            <serviceMeta.icon className="w-5 h-5 text-primary-600 mr-3 flex-shrink-0" />
+            <div className="text-sm">
+              <span className="text-gray-600">Vous êtes intéressé par :</span>{' '}
+              <span className="font-semibold text-primary-700">{serviceMeta.shortLabel}</span>
+              <div className="text-gray-500 text-xs mt-0.5">
+                Après l'inscription, nous vous guiderons pour cette demande.
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="card p-8">
           {error && (
@@ -77,6 +108,34 @@ function Register() {
               </div>
             </div>
 
+            {/* Intent */}
+            <div>
+              <label className="label">Qu'est-ce qui vous amène ? <span className="text-gray-400 font-normal">(optionnel)</span></label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {Object.entries(SERVICE_OPTIONS).map(([key, opt]) => {
+                  const OptIcon = opt.icon
+                  const active = interest === key
+                  return (
+                    <label
+                      key={key}
+                      className={`flex items-center p-2.5 border-2 rounded-lg cursor-pointer transition-colors text-sm ${
+                        active ? 'border-primary-600 bg-primary-50 text-primary-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        value={key}
+                        {...register('interest')}
+                        className="sr-only"
+                      />
+                      <OptIcon className={`w-4 h-4 mr-2 flex-shrink-0 ${active ? 'text-primary-600' : 'text-gray-400'}`} />
+                      {opt.label}
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+
             {/* Name */}
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -106,39 +165,39 @@ function Register() {
               </div>
             </div>
 
-            {/* Email */}
-            <div>
-              <label className="label">Email</label>
-              <div className="relative">
-                <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="email"
-                  {...register('email', {
-                    required: 'Email requis',
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Email invalide'
-                    }
-                  })}
-                  className="input pl-10"
-                  placeholder="votre@email.com"
-                />
+            {/* Email + Phone */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="label">Email</label>
+                <div className="relative">
+                  <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="email"
+                    {...register('email', {
+                      required: 'Email requis',
+                      pattern: {
+                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                        message: 'Email invalide'
+                      }
+                    })}
+                    className="input pl-10"
+                    placeholder="votre@email.com"
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+                )}
               </div>
-              {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
-              )}
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label className="label">Téléphone</label>
-              <div className="relative">
-                <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  {...register('phone')}
-                  className="input pl-10"
-                  placeholder="+212 6XX XXX XXX"
-                />
+              <div>
+                <label className="label">Téléphone</label>
+                <div className="relative">
+                  <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    {...register('phone')}
+                    className="input pl-10"
+                    placeholder="+212 6XX XXX XXX"
+                  />
+                </div>
               </div>
             </div>
 
@@ -203,7 +262,7 @@ function Register() {
 
           <div className="mt-6 text-center text-sm text-gray-600">
             Déjà un compte ?{' '}
-            <Link to="/connexion" className="text-primary-600 hover:text-primary-700 font-medium">
+            <Link to={loginLink} className="text-primary-600 hover:text-primary-700 font-medium">
               Connectez-vous
             </Link>
           </div>

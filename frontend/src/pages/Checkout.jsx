@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { FiLock, FiCheck, FiCreditCard, FiArrowLeft } from 'react-icons/fi'
 import useAuthStore from '../store/authStore'
 import api from '../services/api'
+import { formatPrice } from '../utils/currency'
 
 const SERVICES = {
   'forfait-vente': {
@@ -336,7 +337,7 @@ function Checkout() {
                       ) : (
                         <>
                           <FiLock className="w-4 h-4 mr-2" />
-                          Payer {price.toLocaleString()} Đ
+                          Payer {formatPrice(price)}
                         </>
                       )}
                     </button>
@@ -364,7 +365,7 @@ function Checkout() {
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Sous-total</span>
-                  <span>{price.toLocaleString()} Đ</span>
+                  <span>{formatPrice(price)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">TVA (20%)</span>
@@ -375,7 +376,7 @@ function Checkout() {
               <div className="border-t border-gray-100 pt-4">
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total TTC</span>
-                  <span className="text-primary-600">{price.toLocaleString()} Đ</span>
+                  <span className="text-primary-600">{formatPrice(price)}</span>
                 </div>
               </div>
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
@@ -7,6 +7,7 @@ import useAuthStore from '../../store/authStore'
 function Login() {
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const { login, isLoading } = useAuthStore()
@@ -18,7 +19,10 @@ function Login() {
     const result = await login(data.email, data.password)
 
     if (result.success) {
-      const from = location.state?.from?.pathname || '/dashboard'
+      const redirectParam = searchParams.get('redirect')
+      const from = (redirectParam && redirectParam.startsWith('/') && redirectParam)
+        || location.state?.from?.pathname
+        || '/dashboard'
       navigate(from, { replace: true })
     } else {
       setError(result.error)
