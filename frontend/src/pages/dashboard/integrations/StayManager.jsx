@@ -17,15 +17,18 @@ import {
   FiZap
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
+import StayManagerWordmark from '../../../components/common/StayManagerWordmark'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
 
-// StayManager.ma brand colors
+// Official StayManager.ma brand colors (same palette as /nos-services)
 const SM_COLORS = {
-  primary: '#1e3a5f',      // Dark blue
-  primaryLight: '#2d4a6f', // Lighter blue for hover
-  secondary: '#f5a623',    // Orange/gold
-  secondaryLight: '#f7b84d' // Lighter orange for hover
+  primary: '#2E5E4E',       // Green
+  primaryLight: '#3A7561',  // Lighter green for hover
+  primaryDark: '#1F3D34',   // Dark green (gradient end)
+  secondary: '#C9A24B',     // Gold
+  secondaryLight: '#D6B366', // Lighter gold for hover
+  beige: '#F5F0E6'
 }
 
 export default function StayManager() {
@@ -263,23 +266,26 @@ export default function StayManager() {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-4 mb-4">
-          <div
-            className="w-14 h-14 rounded-xl flex items-center justify-center"
-            style={{ backgroundColor: SM_COLORS.primary }}
-          >
-            <span className="text-white font-bold text-xl">SM</span>
+      <div className="mb-8 p-6 rounded-2xl border" style={{
+        background: `linear-gradient(to right, ${SM_COLORS.beige}, #FAF7F2, #ECF4EF)`,
+        borderColor: '#E5DFD3'
+      }}>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex items-center gap-3">
+            <img src="/staymanager-logo.png" alt="StayManager.ma" className="h-10" />
+            <StayManagerWordmark className="text-2xl" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">StayManager</h1>
-            <p className="text-gray-600">Integration avec StayManager.ma</p>
+          <div className="sm:ml-2">
+            <p className="text-sm" style={{ color: SM_COLORS.secondary }}>En partenariat avec</p>
+            <p className="text-gray-600 text-sm">
+              La plateforme de gestion et de sécurisation des locations courte durée au Maroc
+            </p>
           </div>
           <a
             href="https://staymanager.ma"
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-auto flex items-center gap-2 text-sm hover:underline"
+            className="sm:ml-auto flex items-center gap-2 text-sm font-medium hover:underline shrink-0"
             style={{ color: SM_COLORS.primary }}
           >
             <FiExternalLink className="w-4 h-4" />
@@ -394,10 +400,7 @@ export default function StayManager() {
                   <button
                     type="submit"
                     disabled={connecting}
-                    className="flex items-center gap-2 px-6 py-2.5 text-white rounded-lg disabled:opacity-50 transition-colors"
-                    style={{ backgroundColor: SM_COLORS.secondary }}
-                    onMouseEnter={e => e.target.style.backgroundColor = SM_COLORS.secondaryLight}
-                    onMouseLeave={e => e.target.style.backgroundColor = SM_COLORS.secondary}
+                    className="flex items-center gap-2 px-6 py-2.5 text-white rounded-lg disabled:opacity-50 transition-opacity hover:opacity-90 bg-gradient-to-r from-[#1F3D34] via-[#2E5E4E] to-[#2E5E4E]"
                   >
                     {connecting ? (
                       <>
@@ -427,10 +430,7 @@ export default function StayManager() {
                 </p>
                 <button
                   onClick={() => setShowConnectForm(true)}
-                  className="inline-flex items-center gap-2 px-6 py-3 text-white rounded-lg transition-colors"
-                  style={{ backgroundColor: SM_COLORS.secondary }}
-                  onMouseEnter={e => e.target.style.backgroundColor = SM_COLORS.secondaryLight}
-                  onMouseLeave={e => e.target.style.backgroundColor = SM_COLORS.secondary}
+                  className="inline-flex items-center gap-2 px-6 py-3 text-white rounded-lg transition-opacity hover:opacity-90 bg-gradient-to-r from-[#1F3D34] via-[#2E5E4E] to-[#2E5E4E]"
                 >
                   <FiLink className="w-5 h-5" />
                   Connecter StayManager
@@ -525,8 +525,7 @@ export default function StayManager() {
               <p className="text-gray-600 mb-4">Aucun bien lie pour le moment</p>
               <Link
                 to="/dashboard/integrations/staymanager/properties"
-                className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors"
-                style={{ backgroundColor: SM_COLORS.secondary }}
+                className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-opacity hover:opacity-90 bg-gradient-to-r from-[#1F3D34] via-[#2E5E4E] to-[#2E5E4E]"
               >
                 <FiLink className="w-4 h-4" />
                 Lier un bien
