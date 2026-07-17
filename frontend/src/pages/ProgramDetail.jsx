@@ -44,6 +44,16 @@ const AMENITIES_LABELS = {
   spa: 'Spa'
 }
 
+const safeUrl = (url) => {
+  if (!url) return null
+  try {
+    const parsed = new URL(url)
+    return ['http:', 'https:'].includes(parsed.protocol) ? url : null
+  } catch {
+    return null
+  }
+}
+
 function ImageGallery({ images, coverImage }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [fullscreen, setFullscreen] = useState(false)
@@ -459,13 +469,13 @@ export default function ProgramDetail() {
             )}
 
             {/* Documents */}
-            {(program.brochure_url || program.video_url) && (
+            {(safeUrl(program.brochure_url) || safeUrl(program.video_url)) && (
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Documents</h2>
                 <div className="flex flex-wrap gap-3">
-                  {program.brochure_url && (
+                  {safeUrl(program.brochure_url) && (
                     <a
-                      href={program.brochure_url}
+                      href={safeUrl(program.brochure_url)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
@@ -474,9 +484,9 @@ export default function ProgramDetail() {
                       Télécharger la brochure
                     </a>
                   )}
-                  {program.video_url && (
+                  {safeUrl(program.video_url) && (
                     <a
-                      href={program.video_url}
+                      href={safeUrl(program.video_url)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"

@@ -366,6 +366,12 @@ def change_plan():
 
     if payment_method_id:
         pm = PaymentMethod.query.get(payment_method_id)
+        # Security: Verify ownership of payment method (prevent IDOR)
+        if pm:
+            if user.agency_id and pm.agency_id != user.agency_id:
+                return jsonify({'error': 'Unauthorized access to payment method'}), 403
+            elif not user.agency_id and pm.user_id != user.id:
+                return jsonify({'error': 'Unauthorized access to payment method'}), 403
 
     if not pm:
         return jsonify({'error': 'No payment method found. Please add a payment method first.'}), 400
@@ -390,21 +396,21 @@ def change_plan():
         billing_cycle = 'monthly'
 
     if subscription:
-        # Update existing subscription
+        # Update existing subscription - set to pending until payment is confirmed
         subscription.plan_id = new_plan.id
         subscription.billing_cycle = billing_cycle
         subscription.amount = amount
-        subscription.status = 'active'
+        subscription.status = 'incomplete'  # Wait for payment confirmation
         subscription.end_date = end_date
         subscription.updated_at = now
     else:
-        # Create new subscription
+        # Create new subscription - set to pending until payment is confirmed
         subscription = Subscription(
             agency_id=user.agency_id,
             plan_id=new_plan.id,
             billing_cycle=billing_cycle,
             amount=amount,
-            status='active',
+            status='incomplete',  # Wait for payment confirmation
             start_date=now,
             end_date=end_date
         )
@@ -431,9 +437,9 @@ def change_plan():
         tax_rate=Decimal('20'),
         tax_amount=Decimal(str(float(amount) * 0.2)),
         total=amount,
-        status='paid',
+        status='pending',  # Wait for payment gateway confirmation
         payment_method_id=pm.id,
-        paid_at=now,
+        paid_at=None,  # Set after payment is confirmed
         due_date=now
     )
 
