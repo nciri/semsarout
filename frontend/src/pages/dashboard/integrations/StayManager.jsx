@@ -12,7 +12,6 @@ import {
   FiUsers,
   FiClock,
   FiKey,
-  FiExternalLink,
   FiChevronRight,
   FiZap
 } from 'react-icons/fi'
@@ -266,31 +265,26 @@ export default function StayManager() {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="mb-8 p-6 rounded-2xl border" style={{
+      <div className="mt-2 mb-8 p-6 rounded-2xl border" style={{
         background: `linear-gradient(to right, ${SM_COLORS.beige}, #FAF7F2, #ECF4EF)`,
         borderColor: '#E5DFD3'
       }}>
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="flex items-center gap-3">
+          <a
+            href="https://staymanager.ma"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+          >
             <img src="/staymanager-logo.png" alt="StayManager.ma" className="h-10" />
             <StayManagerWordmark className="text-2xl" />
-          </div>
+          </a>
           <div className="sm:ml-2">
             <p className="text-sm" style={{ color: SM_COLORS.secondary }}>En partenariat avec</p>
             <p className="text-gray-600 text-sm">
               La plateforme de gestion et de sécurisation des locations courte durée au Maroc
             </p>
           </div>
-          <a
-            href="https://staymanager.ma"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="sm:ml-auto flex items-center gap-2 text-sm font-medium hover:underline shrink-0"
-            style={{ color: SM_COLORS.primary }}
-          >
-            <FiExternalLink className="w-4 h-4" />
-            staymanager.ma
-          </a>
         </div>
       </div>
 
@@ -425,15 +419,20 @@ export default function StayManager() {
               </form>
             ) : (
               <div className="text-center py-6">
-                <p className="text-gray-600 mb-6">
-                  Connectez votre compte StayManager pour synchroniser vos proprietes et reservations.
+                <p className="text-gray-600 mb-6 flex items-center justify-center gap-1.5 flex-wrap">
+                  Connectez votre compte
+                  <span className="inline-flex items-center gap-1">
+                    <img src="/staymanager-logo.png" alt="" className="h-4" />
+                    <StayManagerWordmark className="text-base" />
+                  </span>
+                  pour synchroniser vos proprietes et reservations.
                 </p>
                 <button
                   onClick={() => setShowConnectForm(true)}
                   className="inline-flex items-center gap-2 px-6 py-3 text-white rounded-lg transition-opacity hover:opacity-90 bg-gradient-to-r from-[#1F3D34] via-[#2E5E4E] to-[#2E5E4E]"
                 >
                   <FiLink className="w-5 h-5" />
-                  Connecter StayManager
+                  Connecter...
                 </button>
               </div>
             )}
