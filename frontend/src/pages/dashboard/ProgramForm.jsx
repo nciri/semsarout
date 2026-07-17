@@ -543,7 +543,7 @@ export default function DashboardProgramForm() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Link
@@ -563,18 +563,18 @@ export default function DashboardProgramForm() {
       </div>
 
       {/* Step indicator */}
-      <div className="flex items-center justify-between mb-8 overflow-x-auto pb-2">
+      <div className="flex items-center justify-between mb-8">
         {STEPS.map((step, index) => {
           const StepIcon = step.icon
           const isActive = currentStep === step.id
           const isCompleted = currentStep > step.id
 
           return (
-            <div key={step.id} className="flex items-center">
+            <div key={step.id} className={`flex items-center ${index < STEPS.length - 1 ? 'flex-1' : ''}`}>
               <button
                 onClick={() => programId && setCurrentStep(step.id)}
                 disabled={!programId && step.id !== 1}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors whitespace-nowrap ${
                   isActive
                     ? 'bg-primary-100 text-primary-700'
                     : isCompleted
@@ -582,7 +582,7 @@ export default function DashboardProgramForm() {
                     : 'text-gray-400'
                 } ${(!programId && step.id !== 1) ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-gray-100'}`}
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                   isActive
                     ? 'bg-primary-600 text-white'
                     : isCompleted
@@ -594,7 +594,7 @@ export default function DashboardProgramForm() {
                 <span className="hidden sm:inline font-medium">{step.title}</span>
               </button>
               {index < STEPS.length - 1 && (
-                <div className={`w-8 h-0.5 mx-2 ${isCompleted ? 'bg-green-600' : 'bg-gray-200'}`} />
+                <div className={`flex-1 h-0.5 mx-2 ${isCompleted ? 'bg-green-600' : 'bg-gray-200'}`} />
               )}
             </div>
           )
