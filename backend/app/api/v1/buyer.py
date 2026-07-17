@@ -1,10 +1,28 @@
 """Buyer features API: saved searches, favorites, messages, estimates."""
 from datetime import datetime
+from functools import wraps
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.api.v1 import api_v1_bp
 from app.models import User, SavedSearch, Favorite, BuyerMessage, PropertyEstimate, Property
+
+
+def require_buyer_role(f):
+    """Decorator to require buyer account role."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        current_user_id = int(get_jwt_identity())
+        user = User.query.get(current_user_id)
+
+        if not user:
+            return jsonify({'error': 'Utilisateur non trouvé'}), 404
+
+        if user.account_role != 'buyer':
+            return jsonify({'error': 'Cette fonctionnalité est réservée aux acheteurs/chercheurs'}), 403
+
+        return f(*args, **kwargs)
+    return decorated
 
 
 # ============================================
@@ -13,6 +31,7 @@ from app.models import User, SavedSearch, Favorite, BuyerMessage, PropertyEstima
 
 @api_v1_bp.route('/buyer/saved-searches', methods=['GET'])
 @jwt_required()
+@require_buyer_role
 def list_saved_searches():
     """List user's saved searches."""
     current_user_id = int(get_jwt_identity())
@@ -32,6 +51,7 @@ def list_saved_searches():
 
 @api_v1_bp.route('/buyer/saved-searches', methods=['POST'])
 @jwt_required()
+@require_buyer_role
 def create_saved_search():
     """Create a new saved search."""
     current_user_id = int(get_jwt_identity())
@@ -59,6 +79,7 @@ def create_saved_search():
 
 @api_v1_bp.route('/buyer/saved-searches/<int:search_id>', methods=['PUT'])
 @jwt_required()
+@require_buyer_role
 def update_saved_search(search_id):
     """Update a saved search."""
     current_user_id = int(get_jwt_identity())
@@ -86,6 +107,7 @@ def update_saved_search(search_id):
 
 @api_v1_bp.route('/buyer/saved-searches/<int:search_id>', methods=['DELETE'])
 @jwt_required()
+@require_buyer_role
 def delete_saved_search(search_id):
     """Delete a saved search."""
     current_user_id = int(get_jwt_identity())
@@ -106,6 +128,7 @@ def delete_saved_search(search_id):
 
 @api_v1_bp.route('/buyer/favorites', methods=['GET'])
 @jwt_required()
+@require_buyer_role
 def list_favorites():
     """List user's favorite properties."""
     current_user_id = int(get_jwt_identity())
@@ -125,6 +148,7 @@ def list_favorites():
 
 @api_v1_bp.route('/buyer/favorites', methods=['POST'])
 @jwt_required()
+@require_buyer_role
 def add_favorite():
     """Add a property to favorites."""
     current_user_id = int(get_jwt_identity())
@@ -162,6 +186,7 @@ def add_favorite():
 
 @api_v1_bp.route('/buyer/favorites/<int:favorite_id>', methods=['PUT'])
 @jwt_required()
+@require_buyer_role
 def update_favorite(favorite_id):
     """Update a favorite property."""
     current_user_id = int(get_jwt_identity())
@@ -184,6 +209,7 @@ def update_favorite(favorite_id):
 
 @api_v1_bp.route('/buyer/favorites/<int:favorite_id>', methods=['DELETE'])
 @jwt_required()
+@require_buyer_role
 def remove_favorite(favorite_id):
     """Remove a property from favorites."""
     current_user_id = int(get_jwt_identity())
@@ -204,6 +230,7 @@ def remove_favorite(favorite_id):
 
 @api_v1_bp.route('/buyer/messages', methods=['GET'])
 @jwt_required()
+@require_buyer_role
 def list_buyer_messages():
     """List user's messages."""
     current_user_id = int(get_jwt_identity())
@@ -223,6 +250,7 @@ def list_buyer_messages():
 
 @api_v1_bp.route('/buyer/messages', methods=['POST'])
 @jwt_required()
+@require_buyer_role
 def send_message():
     """Send a message about a property."""
     current_user_id = int(get_jwt_identity())
@@ -258,6 +286,7 @@ def send_message():
 
 @api_v1_bp.route('/buyer/messages/<int:message_id>', methods=['GET'])
 @jwt_required()
+@require_buyer_role
 def get_buyer_message(message_id):
     """Get a specific message."""
     current_user_id = int(get_jwt_identity())
@@ -281,6 +310,7 @@ def get_buyer_message(message_id):
 
 @api_v1_bp.route('/buyer/estimates', methods=['GET'])
 @jwt_required()
+@require_buyer_role
 def list_estimates():
     """List user's property estimates."""
     current_user_id = int(get_jwt_identity())
@@ -300,6 +330,7 @@ def list_estimates():
 
 @api_v1_bp.route('/buyer/estimates', methods=['POST'])
 @jwt_required()
+@require_buyer_role
 def create_estimate():
     """Create a property estimate."""
     current_user_id = int(get_jwt_identity())
@@ -336,6 +367,7 @@ def create_estimate():
 
 @api_v1_bp.route('/buyer/estimates/<int:estimate_id>', methods=['PUT'])
 @jwt_required()
+@require_buyer_role
 def update_estimate(estimate_id):
     """Update a property estimate."""
     current_user_id = int(get_jwt_identity())
@@ -363,6 +395,7 @@ def update_estimate(estimate_id):
 
 @api_v1_bp.route('/buyer/estimates/<int:estimate_id>', methods=['DELETE'])
 @jwt_required()
+@require_buyer_role
 def delete_estimate(estimate_id):
     """Delete a property estimate."""
     current_user_id = int(get_jwt_identity())

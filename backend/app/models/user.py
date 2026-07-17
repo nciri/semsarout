@@ -18,6 +18,9 @@ class User(db.Model):
     # User type: 'particular', 'professional', 'admin'
     user_type = db.Column(db.String(20), default='particular')
 
+    # Account role: 'buyer' (searcher), 'agent' (seller), 'admin'
+    account_role = db.Column(db.String(20), default='buyer')
+
     # Declared interest at signup: 'vente', 'mise-en-location', 'gestion-locative',
     # 'courte-duree', 'estimation', 'autre'
     interest = db.Column(db.String(30), nullable=True)
@@ -66,6 +69,7 @@ class User(db.Model):
             'phone': self.phone,
             'avatar_url': self.avatar_url,
             'user_type': self.user_type,
+            'account_role': self.account_role,
             'interest': self.interest,
             'is_verified': self.is_verified,
             'agency_id': self.agency_id,

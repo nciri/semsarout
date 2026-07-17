@@ -7,7 +7,7 @@ from app.models import User
 
 @api_v1_bp.route('/users/me', methods=['GET'])
 @jwt_required()
-def get_current_user():
+def get_my_profile():
     """Get current user's profile."""
     current_user_id = int(get_jwt_identity())
     user = User.query.get(current_user_id)
