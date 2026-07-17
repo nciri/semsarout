@@ -610,7 +610,7 @@ export default function Subscription() {
   const [selectedPlan, setSelectedPlan] = useState(null)
   const [processing, setProcessing] = useState(false)
   const [subscriptionSuccess, setSubscriptionSuccess] = useState(false)
-  const isAgency = user?.user_type === 'professional'
+  const isAgency = user?.user_type === 'professional' || user?.user_type === 'admin'
 
   // Plans from frontend constants (can also fetch from backend)
   const plans = isAgency ? AGENCY_PLANS : INDIVIDUAL_PLANS

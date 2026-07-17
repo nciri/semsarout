@@ -155,25 +155,31 @@ function PropertyDetail() {
             onClose={() => setLightboxOpen(false)}
           />
 
+          {/* Badges for Premium/Urgent */}
+          {(property.is_premium || property.is_urgent) && (
+            <div className="mb-6 flex flex-wrap gap-3">
+              {property.is_premium && (
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white rounded-lg font-semibold shadow-lg">
+                  <span className="text-lg">⭐</span>
+                  <span>Annonce Premium</span>
+                </div>
+              )}
+              {property.is_urgent && (
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg font-semibold shadow-lg">
+                  <span className="text-lg">🔥</span>
+                  <span>Annonce Urgente</span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Title & Price */}
           <div className="mb-6">
             <div className="flex items-start justify-between">
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <h1 className="font-display text-2xl font-bold text-gray-900">
-                    {property.title}
-                  </h1>
-                  {property.is_premium && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-semibold">
-                      ⭐ Premium
-                    </span>
-                  )}
-                  {property.is_urgent && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold">
-                      🔥 Urgent
-                    </span>
-                  )}
-                </div>
+                <h1 className="font-display text-2xl font-bold text-gray-900 mb-2">
+                  {property.title}
+                </h1>
                 <div className="flex items-center gap-4 text-gray-600">
                   <div className="flex items-center">
                     <FiMapPin className="w-4 h-4 mr-1" />
@@ -276,7 +282,7 @@ function PropertyDetail() {
               {property.floor != null && (
                 <div className="flex justify-between py-2 border-b">
                   <span className="text-gray-500">Étage</span>
-                  <span className="font-medium">{property.floor}{property.total_floors && ` / ${property.total_floors}`}</span>
+                  <span className="font-medium">{property.floor === 0 ? 'RC' : property.floor}{property.total_floors && ` / ${property.total_floors}`}</span>
                 </div>
               )}
               {property.construction_year && (
