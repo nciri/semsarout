@@ -453,8 +453,10 @@ export default function DashboardProgramForm() {
         // Update existing program
         await updateMutation.mutateAsync({ id: programId, data: formData })
       }
+      return true
     } catch (err) {
       setError(err.message)
+      return false
     } finally {
       setSaving(false)
     }
@@ -466,8 +468,8 @@ export default function DashboardProgramForm() {
       return
     }
 
-    await handleSaveStep()
-    if (currentStep < STEPS.length) {
+    const success = await handleSaveStep()
+    if (success && currentStep < STEPS.length) {
       setCurrentStep(currentStep + 1)
     }
   }
@@ -604,7 +606,23 @@ export default function DashboardProgramForm() {
       {/* Error message */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-          {error}
+          {error === 'Agence requise' ? (
+            <>
+              Vous devez d'abord créer votre agence pour publier un programme.{' '}
+              <Link to="/dashboard/agence" className="underline font-medium">
+                Créer mon agence
+              </Link>
+            </>
+          ) : error.includes('nécessite le plan Pro') ? (
+            <>
+              {error}{' '}
+              <Link to="/dashboard/abonnement" className="underline font-medium">
+                Voir les abonnements
+              </Link>
+            </>
+          ) : (
+            error
+          )}
         </div>
       )}
 
