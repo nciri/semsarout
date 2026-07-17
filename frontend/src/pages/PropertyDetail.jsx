@@ -124,7 +124,7 @@ function PropertyDetail() {
         {/* Main Content */}
         <div className="lg:col-span-2">
           {/* Image Gallery */}
-          <div className="relative bg-gray-200 rounded-xl overflow-hidden h-96 mb-6 group">
+          <div className={`relative bg-gray-200 rounded-xl overflow-hidden h-96 mb-6 group ${property.is_premium ? 'premium-border' : ''}`}>
             {images.length > 0 ? (
               <>
                 <img
@@ -226,7 +226,7 @@ function PropertyDetail() {
                 </div>
               </div>
               <div className="text-right">
-                <div className={`font-display text-[28px] font-extrabold ${property.is_urgent ? 'text-red-600' : 'text-midnight'}`}>
+                <div className={`font-display text-[28px] font-extrabold ${property.is_premium ? 'premium-price' : property.is_urgent ? 'text-red-600' : 'text-midnight'}`}>
                   {formatPrice(property.price)}
                   {property.transaction_type === 'rent' && <span className="text-sm font-semibold text-slate-500">/mois</span>}
                 </div>
