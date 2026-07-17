@@ -189,6 +189,7 @@ def change_password():
 def forgot_password():
     """Request a password reset token."""
     import secrets
+    import hashlib
 
     data = request.get_json() or {}
     email = data.get('email', '').strip().lower()
@@ -204,13 +205,18 @@ def forgot_password():
         return jsonify(generic_response)
 
     token = secrets.token_urlsafe(32)
-    user.reset_token = token
+    # Store only a hash: a DB or log leak alone should never yield a usable credential.
+    user.reset_token = hashlib.sha256(token.encode()).hexdigest()
     user.reset_token_expires = datetime.utcnow() + timedelta(hours=1)
     db.session.commit()
 
-    # No email provider configured yet: log the reset link for local/dev use.
-    reset_link = f'/reinitialiser-mot-de-passe?token={token}'
-    current_app.logger.info(f'Password reset requested for {email}. Link: {reset_link}')
+    # No email provider configured yet. Only surface the raw link when explicitly
+    # enabled for local/dev use — never log secrets in a normal environment.
+    if current_app.config.get('DEBUG_EMAIL_TO_LOG'):
+        reset_link = f'/reinitialiser-mot-de-passe?token={token}'
+        current_app.logger.info(f'[DEV ONLY] Password reset link for {email}: {reset_link}')
+    else:
+        current_app.logger.info('Password reset requested for %s', email)
 
     return jsonify(generic_response)
 
@@ -218,6 +224,8 @@ def forgot_password():
 @api_v1_bp.route('/auth/reset-password', methods=['POST'])
 def reset_password():
     """Reset password using a valid reset token."""
+    import hashlib
+
     data = request.get_json() or {}
     token = data.get('token')
     new_password = data.get('new_password')
@@ -228,7 +236,8 @@ def reset_password():
     if len(new_password) < 8:
         return jsonify({'error': 'Le mot de passe doit contenir au moins 8 caractères'}), 400
 
-    user = User.query.filter_by(reset_token=token).first()
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    user = User.query.filter_by(reset_token=token_hash).first()
 
     if not user or not user.reset_token_expires or user.reset_token_expires < datetime.utcnow():
         return jsonify({'error': 'Lien de réinitialisation invalide ou expiré'}), 400

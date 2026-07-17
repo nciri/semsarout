@@ -40,6 +40,10 @@ class DevelopmentConfig(Config):
         'DATABASE_URL',
         'postgresql://postgres:postgres@localhost:5432/semsar_dev'
     )
+    # No transactional email provider is configured yet. When explicitly enabled,
+    # password-reset links are logged locally instead of emailed. Never enable
+    # this outside local development.
+    DEBUG_EMAIL_TO_LOG = os.environ.get('DEBUG_EMAIL_TO_LOG', 'false').lower() == 'true'
 
 
 class TestingConfig(Config):
