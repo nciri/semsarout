@@ -501,6 +501,7 @@ def seed_properties(users, agencies):
             # Determine visibility options
             is_premium = random.random() < 0.15
             is_urgent = random.random() < 0.1
+            urgent_until = datetime.utcnow() + timedelta(days=random.randint(2, 14)) if is_urgent else None
             is_featured = random.random() < 0.2
 
             # Reference
@@ -536,6 +537,7 @@ def seed_properties(users, agencies):
                 status=status,
                 is_premium=is_premium,
                 is_urgent=is_urgent,
+                urgent_until=urgent_until,
                 is_featured=is_featured,
                 views_count=random.randint(10, 5000),
                 contacts_count=random.randint(0, 50),
