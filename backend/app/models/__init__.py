@@ -8,6 +8,7 @@ from app.models.client import Client, ClientInteraction
 from app.models.visit import Visit, CalendarEvent
 from app.models.transaction import Transaction, Offer, TransactionDocument, SALE_STAGES, RENT_STAGES
 from app.models.program import Program, ProgramUnit, ProgramImage, ProgramUnitImage
+from app.models.buyer import SavedSearch, Favorite, BuyerMessage, PropertyEstimate
 from app.models.staymanager import (
     StayManagerIntegration,
     StayManagerPropertyLink,
@@ -44,6 +45,10 @@ __all__ = [
     'ProgramUnit',
     'ProgramImage',
     'ProgramUnitImage',
+    'SavedSearch',
+    'Favorite',
+    'BuyerMessage',
+    'PropertyEstimate',
     'StayManagerIntegration',
     'StayManagerPropertyLink',
     'StayManagerReservation',
