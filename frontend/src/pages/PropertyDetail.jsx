@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from 'react-query'
 import { useForm } from 'react-hook-form'
@@ -17,11 +17,44 @@ function PropertyDetail() {
   const [currentImage, setCurrentImage] = useState(0)
   const [showContact, setShowContact] = useState(false)
   const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [timeRemaining, setTimeRemaining] = useState(null)
 
   const { data: property, isLoading } = useQuery(
     ['property', id],
     () => propertyService.getProperty(id)
   )
+
+  // Calculate time remaining for urgent listing
+  useEffect(() => {
+    if (!property?.is_urgent || !property?.urgent_until) return
+
+    const calculateTimeRemaining = () => {
+      const now = new Date()
+      const expiryDate = new Date(property.urgent_until)
+      const diff = expiryDate - now
+
+      if (diff <= 0) {
+        setTimeRemaining(null)
+        return
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+
+      if (days > 0) {
+        setTimeRemaining(`${days}j ${hours}h`)
+      } else if (hours > 0) {
+        setTimeRemaining(`${hours}h ${minutes}m`)
+      } else {
+        setTimeRemaining(`${minutes}m`)
+      }
+    }
+
+    calculateTimeRemaining()
+    const interval = setInterval(calculateTimeRemaining, 60000) // Update every minute
+    return () => clearInterval(interval)
+  }, [property?.is_urgent, property?.urgent_until])
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm()
 
@@ -43,6 +76,15 @@ function PropertyDetail() {
     land: 'Terrain',
     commercial: 'Local commercial',
     office: 'Bureau'
+  }
+
+  const PREMIUM_FEATURES = [
+    'piscine', 'pool', 'garage', 'ascenseur', 'elevator', 'terrasse', 'terrace',
+    'balcon', 'balcony', 'jardín', 'garden', 'parking', 'vue', 'view'
+  ]
+
+  const isPremiumFeature = (feature) => {
+    return PREMIUM_FEATURES.some(pf => feature.toLowerCase().includes(pf))
   }
 
   if (isLoading) {
@@ -91,10 +133,18 @@ function PropertyDetail() {
                   className="w-full h-full object-cover cursor-pointer"
                   onClick={() => setLightboxOpen(true)}
                 />
+                {/* Urgent Badge - Diagonal banner */}
+                {property.is_urgent && (
+                  <div className="absolute top-0 right-0 w-32 h-32 overflow-hidden">
+                    <div className="absolute top-2 right-(-10) w-40 h-12 bg-red-600 text-white font-bold text-center rotate-45 flex items-center justify-center shadow-lg">
+                      URGENT
+                    </div>
+                  </div>
+                )}
                 {/* Zoom indicator */}
                 <button
                   onClick={() => setLightboxOpen(true)}
-                  className="absolute top-4 right-4 bg-black/50 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-4 right-4 bg-black/50 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                   title="Voir en grand"
                 >
                   <FiZoomIn className="w-5 h-5" />
@@ -155,24 +205,6 @@ function PropertyDetail() {
             onClose={() => setLightboxOpen(false)}
           />
 
-          {/* Badges for Premium/Urgent */}
-          {(property.is_premium || property.is_urgent) && (
-            <div className="mb-6 flex flex-wrap gap-3">
-              {property.is_premium && (
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white rounded-lg font-semibold shadow-lg">
-                  <span className="text-lg">⭐</span>
-                  <span>Annonce Premium</span>
-                </div>
-              )}
-              {property.is_urgent && (
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg font-semibold shadow-lg">
-                  <span className="text-lg">🔥</span>
-                  <span>Annonce Urgente</span>
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Title & Price */}
           <div className="mb-6">
             <div className="flex items-start justify-between">
@@ -194,13 +226,18 @@ function PropertyDetail() {
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-display text-[28px] font-extrabold text-midnight">
+                <div className={`font-display text-[28px] font-extrabold ${property.is_urgent ? 'text-red-600' : 'text-midnight'}`}>
                   {formatPrice(property.price)}
                   {property.transaction_type === 'rent' && <span className="text-sm font-semibold text-slate-500">/mois</span>}
                 </div>
                 {property.price_per_sqm && (
                   <div className="text-sm text-gray-500">
                     {formatPrice(property.price_per_sqm)}/m²
+                  </div>
+                )}
+                {property.is_urgent && timeRemaining && (
+                  <div className="mt-2 text-sm font-bold text-red-600 bg-red-50 px-2 py-1 rounded inline-block">
+                    Expire dans: {timeRemaining}
                   </div>
                 )}
               </div>
@@ -257,12 +294,19 @@ function PropertyDetail() {
             <div className="mb-8">
               <h2 className="font-semibold text-lg mb-4">Caractéristiques</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {property.features.map((feature, idx) => (
-                  <div key={idx} className="flex items-center text-gray-600">
-                    <FiCheck className="w-4 h-4 text-green-500 mr-2" />
-                    <span>{feature}</span>
-                  </div>
-                ))}
+                {property.features.map((feature, idx) => {
+                  const isFeatured = property.is_premium && isPremiumFeature(feature)
+                  return (
+                    <div key={idx} className={`flex items-center ${isFeatured ? 'text-yellow-700' : 'text-gray-600'}`}>
+                      {isFeatured ? (
+                        <span className="text-lg mr-2">⭐</span>
+                      ) : (
+                        <FiCheck className="w-4 h-4 text-green-500 mr-2" />
+                      )}
+                      <span className={isFeatured ? 'font-semibold' : ''}>{feature}</span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
