@@ -1,73 +1,73 @@
 """
-StayManager.ma API Client Service
+StayManager.ma Partner API Client Service (API v1)
 
-This service provides integration with StayManager.ma property management platform
-for vacation rentals. It supports:
+Implements the contract documented in `docs/api/partner-api-v1.md` (staymanager.ma
+repo) for server-to-server integration with an agency's StayManager account:
 - Property sync
 - Reservation import
-- Guest verification status
-- Calendar sync
+- Guest verification (KYC) status
+- Calendar / availability sync
 - Smart lock management
+- Webhook subscription management
+
+Authentication is a single `X-API-Key` header — StayManager does not support any
+other auth scheme for this API. Keys are scoped (see `StayManagerError.required_scopes`
+on 403 responses); a key missing a required scope gets `403 missing_scope`.
 """
 
 import requests
 import hmac
 import hashlib
-from datetime import datetime
-from typing import Optional, Dict, List, Any
+from typing import Dict, List, Optional
 from flask import current_app
 
 
 class StayManagerError(Exception):
     """Exception for StayManager API errors."""
 
-    def __init__(self, message: str, status_code: int = None, response: Dict = None):
+    def __init__(self, message: str, status_code: int = None, error_code: str = None,
+                 required_scopes: List[str] = None, response: Dict = None):
         super().__init__(message)
         self.status_code = status_code
+        self.error_code = error_code
+        self.required_scopes = required_scopes
         self.response = response
 
 
 class StayManagerClient:
-    """API client for StayManager.ma integration."""
+    """API client for the StayManager.ma Partner API v1."""
 
-    DEFAULT_TIMEOUT = 30
-    MAX_RETRIES = 3
+    DEFAULT_TIMEOUT = 10  # StayManager's own webhook delivery timeout is 5s; be generous but bounded
 
-    def __init__(self, api_key: str = None, firebase_token: str = None):
+    def __init__(self, api_key: str):
         """
         Initialize StayManager client.
 
         Args:
-            api_key: StayManager API key for server-to-server auth
-            firebase_token: Firebase token for user-based auth
+            api_key: StayManager Partner API key (`sk_live_...`), created by the
+                agency itself from StayManager > Intégrations & API.
         """
+        if not api_key:
+            raise ValueError('api_key is required')
+
         self.base_url = current_app.config.get(
             'STAYMANAGER_API_URL',
-            'https://api.staymanager.ma/api'
+            'https://staymanager.ma/api/v1'
         )
         self.api_key = api_key
-        self.firebase_token = firebase_token
         self.session = requests.Session()
-        self._setup_auth()
-
-    def _setup_auth(self):
-        """Configure authentication headers."""
         self.session.headers['Content-Type'] = 'application/json'
         self.session.headers['Accept'] = 'application/json'
-
-        if self.firebase_token:
-            self.session.headers['Authorization'] = f'Bearer {self.firebase_token}'
-        elif self.api_key:
-            self.session.headers['X-API-Key'] = self.api_key
+        self.session.headers['X-API-Key'] = api_key
 
     def _request(self, method: str, endpoint: str, **kwargs) -> Dict:
         """
-        Make authenticated request to StayManager API.
+        Make an authenticated request to the StayManager Partner API.
 
         Args:
             method: HTTP method (GET, POST, PUT, DELETE)
-            endpoint: API endpoint path
-            **kwargs: Additional request arguments
+            endpoint: API endpoint path (e.g. '/properties')
+            **kwargs: Additional request arguments (json=, params=, ...)
 
         Returns:
             Parsed JSON response
@@ -79,54 +79,56 @@ class StayManagerClient:
         timeout = kwargs.pop('timeout', self.DEFAULT_TIMEOUT)
 
         try:
-            response = self.session.request(
-                method,
-                url,
-                timeout=timeout,
-                **kwargs
-            )
+            response = self.session.request(method, url, timeout=timeout, **kwargs)
+        except requests.exceptions.Timeout:
+            raise StayManagerError("Delai depasse. StayManager est peut-etre indisponible.")
+        except requests.exceptions.ConnectionError:
+            raise StayManagerError("Impossible de contacter StayManager. Verifiez la connexion.")
 
-            # Handle specific error codes
-            if response.status_code == 401:
-                raise StayManagerError(
-                    "Authentication failed. Please reconnect your StayManager account.",
-                    status_code=401
-                )
-            elif response.status_code == 403:
-                raise StayManagerError(
-                    "Access denied. Check your permissions.",
-                    status_code=403
-                )
-            elif response.status_code == 429:
-                raise StayManagerError(
-                    "Rate limit exceeded. Please try again later.",
-                    status_code=429
-                )
-
-            response.raise_for_status()
-
-            # Handle empty responses
-            if response.status_code == 204 or not response.content:
+        # Empty/no-content responses (e.g. DELETE)
+        if response.status_code == 204 or not response.content:
+            if response.ok:
                 return {}
 
-            return response.json()
+        try:
+            body = response.json()
+        except ValueError:
+            body = {}
 
-        except requests.exceptions.Timeout:
-            raise StayManagerError("Request timed out. StayManager may be unavailable.")
-        except requests.exceptions.ConnectionError:
-            raise StayManagerError("Unable to connect to StayManager. Check your internet connection.")
-        except requests.exceptions.HTTPError as e:
-            error_msg = str(e)
-            try:
-                error_data = response.json()
-                error_msg = error_data.get('message', error_data.get('error', str(e)))
-            except:
-                pass
-            raise StayManagerError(
-                f"StayManager API error: {error_msg}",
-                status_code=response.status_code,
-                response=error_data if 'error_data' in locals() else None
+        if response.ok:
+            return body
+
+        error_code = body.get('error')
+
+        if response.status_code == 401:
+            message = (
+                "Cle API StayManager invalide ou revoquee."
+                if error_code == 'invalid_api_key'
+                else "Le compte StayManager de l'agence est suspendu."
+                if error_code == 'account_suspended'
+                else "Authentification StayManager echouee."
             )
+            raise StayManagerError(message, status_code=401, error_code=error_code, response=body)
+
+        if response.status_code == 403 and error_code == 'missing_scope':
+            required = body.get('required', [])
+            scopes = ', '.join(required) if required else 'inconnu'
+            raise StayManagerError(
+                f"Cle API StayManager sans les droits necessaires (scope requis : {scopes}).",
+                status_code=403, error_code=error_code, required_scopes=required, response=body
+            )
+
+        if response.status_code == 404:
+            raise StayManagerError(
+                "Ressource introuvable sur StayManager.",
+                status_code=404, error_code=error_code or 'not_found', response=body
+            )
+
+        message = error_code or body.get('message') or f'HTTP {response.status_code}'
+        raise StayManagerError(
+            f"Erreur StayManager: {message}",
+            status_code=response.status_code, error_code=error_code, response=body
+        )
 
     # ========== Authentication & Profile ==========
 
@@ -212,20 +214,21 @@ class StayManagerClient:
         per_page: int = 50
     ) -> Dict:
         """
-        Get reservations with optional filters.
+        Get reservations with optional filters (envelope: {"reservations": [...]}
+        plus pagination info).
 
         Args:
             property_id: Filter by property UUID
-            start_date: Filter by check-in date (YYYY-MM-DD)
-            end_date: Filter by check-out date (YYYY-MM-DD)
-            status: Filter by status (confirmed, cancelled, blocked)
+            start_date: Filter by check-in/out overlap, ISO 8601 (not YYYY-MM-DD)
+            end_date: Filter by check-in/out overlap, ISO 8601 (not YYYY-MM-DD)
+            status: Filter by status (confirmed, cancelled, blocked, pending)
             page: Page number for pagination
-            per_page: Results per page
+            per_page: Results per page (server default 50, max 100)
 
         Returns:
-            Dictionary with reservations list and pagination info
+            Raw response dict — caller should read response['reservations']
         """
-        params = {'page': page, 'per_page': per_page}
+        params = {'page': page, 'per_page': min(per_page, 100)}
 
         if property_id:
             params['property_id'] = property_id
@@ -246,9 +249,10 @@ class StayManagerClient:
             reservation_id: StayManager reservation UUID
 
         Returns:
-            Reservation details with guest info
+            Reservation dict (unwrapped from the {"reservation": {...}} envelope)
         """
-        return self._request('GET', f'/reservations/{reservation_id}')
+        response = self._request('GET', f'/reservations/{reservation_id}')
+        return response.get('reservation', response) if isinstance(response, dict) else response
 
     def create_reservation(self, data: Dict) -> Dict:
         """
@@ -310,10 +314,14 @@ class StayManagerClient:
         return self._request('GET', f'/guests/{guest_id}/verification')
 
     # ========== Calendar ==========
+    # Note: there is no server-triggered "sync calendar" endpoint in the Partner
+    # API — StayManager's iCal sync with Airbnb/Booking runs on its own schedule
+    # and pushes reservation.* webhooks when it detects changes (see section 6/7
+    # of docs/api/partner-api-v1.md). We only ever read availability/ical here.
 
-    def get_availability(self, property_id: str, start_date: str, end_date: str) -> List[Dict]:
+    def get_availability(self, property_id: str, start_date: str, end_date: str) -> Dict:
         """
-        Get property availability for date range.
+        Get property availability for date range [start_date, end_date).
 
         Args:
             property_id: StayManager property UUID
@@ -321,34 +329,10 @@ class StayManagerClient:
             end_date: End date (YYYY-MM-DD)
 
         Returns:
-            List of availability entries
+            Availability data (booked/available periods)
         """
         params = {'start_date': start_date, 'end_date': end_date}
         return self._request('GET', f'/properties/{property_id}/availability', params=params)
-
-    def sync_calendar(self, property_id: str) -> Dict:
-        """
-        Trigger calendar sync for property.
-
-        Args:
-            property_id: StayManager property UUID
-
-        Returns:
-            Sync status
-        """
-        return self._request('POST', f'/calendar/sync/{property_id}')
-
-    def get_sync_status(self, property_id: str) -> Dict:
-        """
-        Get calendar sync status.
-
-        Args:
-            property_id: StayManager property UUID
-
-        Returns:
-            Current sync status and last sync time
-        """
-        return self._request('GET', f'/calendar/sync/status/{property_id}')
 
     def get_ical_url(self, property_id: str) -> str:
         """
@@ -391,32 +375,21 @@ class StayManagerClient:
         """
         return self._request('GET', f'/smart-locks/{lock_id}')
 
-    def generate_passcode(
-        self,
-        lock_id: str,
-        name: str,
-        start_time: datetime,
-        end_time: datetime,
-        passcode_type: str = 'temporary'
-    ) -> Dict:
+    def generate_passcode(self, lock_id: str, start_date, end_date) -> Dict:
         """
-        Generate smart lock passcode.
+        Generate a temporary smart lock passcode.
 
         Args:
             lock_id: StayManager lock ID
-            name: Name for the passcode
-            start_time: When passcode becomes valid
-            end_time: When passcode expires
-            passcode_type: Type of passcode (temporary, permanent)
+            start_date: When the passcode becomes valid (datetime, sent as ISO 8601)
+            end_date: When the passcode expires (datetime, sent as ISO 8601)
 
         Returns:
             Generated passcode details
         """
         data = {
-            'name': name,
-            'start_time': start_time.isoformat(),
-            'end_time': end_time.isoformat(),
-            'type': passcode_type
+            'start_date': start_date.isoformat() if hasattr(start_date, 'isoformat') else start_date,
+            'end_date': end_date.isoformat() if hasattr(end_date, 'isoformat') else end_date
         }
         return self._request('POST', f'/smart-locks/{lock_id}/generate-passcode', json=data)
 
@@ -455,21 +428,45 @@ class StayManagerClient:
 
     # ========== Messaging ==========
 
-    def send_message(self, reservation_id: str, template_id: str = None, message: str = None) -> Dict:
+    def send_message(self, reservation_id: str, message: str) -> Dict:
         """
-        Send message to guest.
+        Send a free-form SMS to the reservation's primary guest.
 
         Args:
             reservation_id: Reservation UUID
-            template_id: Optional template ID
-            message: Custom message (if not using template)
+            message: SMS body (required)
         """
-        data = {}
-        if template_id:
-            data['template_id'] = template_id
-        if message:
-            data['message'] = message
-        return self._request('POST', f'/reservations/{reservation_id}/message', json=data)
+        return self._request('POST', f'/reservations/{reservation_id}/message', json={'message': message})
+
+    # ========== Webhooks ==========
+
+    def register_webhook(self, url: str, secret: str, events: List[str]) -> Dict:
+        """
+        Register a webhook subscription (scope `webhooks:manage`).
+
+        Args:
+            url: Public https:// callback URL (must resolve to a public IP)
+            secret: Our own webhook secret; StayManager stores it as-is and uses
+                it to sign every delivery (HMAC-SHA256 over the raw body). It is
+                never echoed back in any response — keep the value we generated.
+            events: Subset of ['reservation.created', 'reservation.updated',
+                'reservation.cancelled', 'guest.verified', 'property.updated']
+
+        Returns:
+            The created webhook dict (id, url, events, active, ...) — no secret.
+        """
+        data = {'url': url, 'secret': secret, 'events': events}
+        response = self._request('POST', '/webhooks', json=data)
+        return response.get('webhook', response) if isinstance(response, dict) else response
+
+    def list_webhooks(self) -> List[Dict]:
+        """List this agency's webhook subscriptions."""
+        response = self._request('GET', '/webhooks')
+        return response.get('webhooks', response) if isinstance(response, dict) else response
+
+    def delete_webhook(self, webhook_id: str) -> Dict:
+        """Delete a webhook subscription."""
+        return self._request('DELETE', f'/webhooks/{webhook_id}')
 
     # ========== Webhook Utilities ==========
 

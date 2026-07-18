@@ -1,14 +1,15 @@
 """
 StayManager Integration API Endpoints
 
-Provides endpoints for connecting and managing the StayManager.ma integration.
+Provides endpoints for connecting and managing the StayManager.ma integration
+(Partner API v1 — docs/api/partner-api-v1.md in the staymanager.ma repo).
 All endpoints require authentication and an agency with the StayManager sync feature.
 """
 
 import secrets
 from datetime import datetime
 from functools import wraps
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import (
@@ -21,6 +22,15 @@ from app.models import (
     StayManagerSyncLog
 )
 from app.services.staymanager import StayManagerClient, StayManagerError
+
+# The 5 events StayManager's Partner API can deliver (docs section 6)
+WEBHOOK_EVENTS = [
+    'reservation.created',
+    'reservation.updated',
+    'reservation.cancelled',
+    'guest.verified',
+    'property.updated'
+]
 
 
 staymanager_bp = Blueprint('staymanager', __name__, url_prefix='/integrations/staymanager')
@@ -78,26 +88,25 @@ def get_status():
 @staymanager_bp.route('/connect', methods=['POST'])
 @require_staymanager_feature
 def connect():
-    """Connect StayManager account using API key or Firebase token."""
+    """Connect a StayManager account via Partner API key, then register our webhook."""
     current_user_id = int(get_jwt_identity())
     user = User.query.get(current_user_id)
     data = request.get_json() or {}
 
     api_key = data.get('api_key')
-    firebase_token = data.get('firebase_token')
     email = data.get('email')
 
-    if not api_key and not firebase_token:
-        return jsonify({'error': 'api_key ou firebase_token requis'}), 400
+    if not api_key:
+        return jsonify({'error': 'api_key requis'}), 400
 
     # Check if already connected
     existing = StayManagerIntegration.query.filter_by(agency_id=user.agency_id).first()
     if existing and existing.status == 'connected':
         return jsonify({'error': 'StayManager est deja connecte'}), 400
 
-    # Verify connection to StayManager
+    # Step 1: validate the key against GET /user/profile (docs section 3)
     try:
-        client = StayManagerClient(api_key=api_key, firebase_token=firebase_token)
+        client = StayManagerClient(api_key=api_key)
         profile = client.get_profile()
     except StayManagerError as e:
         return jsonify({'error': f'Connexion echouee: {str(e)}'}), 400
@@ -109,22 +118,55 @@ def connect():
         integration = StayManagerIntegration(agency_id=user.agency_id)
 
     integration.api_key_encrypted = api_key  # TODO: Encrypt in production
-    integration.staymanager_user_id = profile.get('firebase_uid') or profile.get('id')
+    # `id` is StayManager's internal agency id — it's the value that shows up as
+    # `agency_id` in every webhook payload, so it's what we match incoming
+    # deliveries against (see handle_webhook below). Not the same as firebase_uid.
+    integration.staymanager_user_id = profile.get('id')
     integration.staymanager_email = email or profile.get('email')
     integration.status = 'connected'
     integration.last_sync_at = datetime.utcnow()
     integration.sync_error = None
     integration.webhook_secret = secrets.token_urlsafe(32)
 
+    # Step 2: register our webhook (docs section 6 — "immediately after the
+    # profile test"). This needs its own api key scope (`webhooks:manage`) and a
+    # publicly-resolvable https URL, so it's best-effort: a failure here must not
+    # block the connection itself, just leave webhooks unregistered.
+    webhook_warning = None
+    app_base_url = current_app.config.get('APP_BASE_URL')
+
+    if not app_base_url or not app_base_url.startswith('https://'):
+        webhook_warning = (
+            "APP_BASE_URL n'est pas configure en https: les webhooks StayManager "
+            "ne peuvent pas etre enregistres. Les reservations ne se synchroniseront "
+            "qu'a la demande (bouton Synchroniser)."
+        )
+    else:
+        webhook_url = f"{app_base_url}/api/v1/integrations/staymanager/webhook"
+        try:
+            webhook = client.register_webhook(
+                url=webhook_url,
+                secret=integration.webhook_secret,
+                events=WEBHOOK_EVENTS
+            )
+            integration.staymanager_webhook_id = webhook.get('id')
+            integration.webhook_url = webhook_url
+        except StayManagerError as e:
+            webhook_warning = f"Webhook non enregistre: {str(e)}"
+
     if not existing:
         db.session.add(integration)
 
     db.session.commit()
 
-    return jsonify({
+    response = {
         'message': 'Connexion StayManager reussie',
         'integration': integration.to_dict(include_sensitive=True)
-    }), 201
+    }
+    if webhook_warning:
+        response['warning'] = webhook_warning
+
+    return jsonify(response), 201
 
 
 @staymanager_bp.route('/disconnect', methods=['POST'])
@@ -139,9 +181,20 @@ def disconnect():
     if not integration:
         return jsonify({'error': 'Aucune connexion StayManager trouvee'}), 404
 
+    # Best-effort webhook cleanup: don't block disconnection if this fails
+    # (revoked/expired key, network issue, etc.)
+    if integration.staymanager_webhook_id and integration.api_key_encrypted:
+        try:
+            client = StayManagerClient(api_key=integration.api_key_encrypted)
+            client.delete_webhook(integration.staymanager_webhook_id)
+        except StayManagerError:
+            pass
+
     integration.status = 'disconnected'
     integration.api_key_encrypted = None
     integration.sync_error = None
+    integration.staymanager_webhook_id = None
+    integration.webhook_url = None
     db.session.commit()
 
     return jsonify({'message': 'StayManager deconnecte avec succes'})
@@ -553,42 +606,44 @@ def list_sync_logs():
 
 @staymanager_bp.route('/webhook', methods=['POST'])
 def handle_webhook():
-    """Handle incoming webhooks from StayManager."""
+    """
+    Handle incoming webhooks from StayManager (Partner API v1, docs section 6).
+
+    StayManager sends a single `X-Signature` header (HMAC-SHA256 of the raw body,
+    keyed with the `webhook_secret` we supplied at registration) — there is no
+    separate secret header. The integration is identified by the `agency_id`
+    field in the body, which is StayManager's `staymanager_user_id` on our side.
+    Handlers must be idempotent: the same event can be re-delivered, and
+    reservation.created in particular can also fire from StayManager's own iCal
+    sync, not just from calls made through this API.
+    """
+    raw_body = request.get_data()
     signature = request.headers.get('X-Signature')
-    webhook_secret = request.headers.get('X-Webhook-Secret')
 
-    if not signature and not webhook_secret:
-        return jsonify({'error': 'Missing signature'}), 401
+    if not signature:
+        return jsonify({'error': 'Missing X-Signature header'}), 401
 
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     event_type = data.get('event')
     agency_id = data.get('agency_id')
 
-    if not event_type:
-        return jsonify({'error': 'Missing event type'}), 400
+    if not event_type or event_type not in WEBHOOK_EVENTS:
+        return jsonify({'error': 'Unknown or missing event type'}), 400
 
-    # Find integration by webhook secret or agency_id
-    integration = None
-    if webhook_secret:
-        integration = StayManagerIntegration.query.filter_by(
-            webhook_secret=webhook_secret
-        ).first()
-    elif agency_id:
-        integration = StayManagerIntegration.query.filter_by(
-            staymanager_user_id=agency_id
-        ).first()
+    if not agency_id:
+        return jsonify({'error': 'Missing agency_id'}), 400
 
-    if not integration:
+    integration = StayManagerIntegration.query.filter_by(
+        staymanager_user_id=agency_id
+    ).first()
+
+    if not integration or not integration.webhook_secret:
         return jsonify({'error': 'Integration not found'}), 404
 
-    # Verify signature if provided
-    if signature and integration.webhook_secret:
-        if not StayManagerClient.verify_webhook_signature(
-            request.get_data(),
-            signature,
-            integration.webhook_secret
-        ):
-            return jsonify({'error': 'Invalid signature'}), 401
+    if not StayManagerClient.verify_webhook_signature(
+        raw_body, signature, integration.webhook_secret
+    ):
+        return jsonify({'error': 'Invalid signature'}), 401
 
     # Process event
     try:
@@ -597,9 +652,9 @@ def handle_webhook():
         elif event_type == 'reservation.updated':
             _handle_reservation_updated(integration, data.get('reservation'))
         elif event_type == 'reservation.cancelled':
-            _handle_reservation_cancelled(integration, data.get('reservation_id'))
+            _handle_reservation_cancelled(integration, data.get('reservation'))
         elif event_type == 'guest.verified':
-            _handle_guest_verified(integration, data.get('guest_id'), data.get('reservation_id'))
+            _handle_guest_verified(integration, data.get('guest'), data.get('reservation'))
         elif event_type == 'property.updated':
             _handle_property_updated(integration, data.get('property'))
 
@@ -632,7 +687,7 @@ def _create_reservation_from_data(property_link_id: int, data: dict) -> StayMana
         guest_verified=data.get('guest_verified', False),
         verification_status=data.get('verification_status'),
         total_price=data.get('total_price'),
-        currency=data.get('currency', 'MAD'),
+        currency=data.get('currency', 'Dh'),
         guest_notes=data.get('notes'),
         special_requests=data.get('special_requests'),
         raw_data=data,
@@ -691,22 +746,25 @@ def _handle_reservation_updated(integration: StayManagerIntegration, reservation
         _update_reservation_from_data(reservation, reservation_data)
 
 
-def _handle_reservation_cancelled(integration: StayManagerIntegration, reservation_id: str):
-    """Handle reservation.cancelled webhook event."""
-    if not reservation_id:
+def _handle_reservation_cancelled(integration: StayManagerIntegration, reservation_data: dict):
+    """Handle reservation.cancelled webhook event (payload carries a full 'reservation' object)."""
+    if not reservation_data:
         return
 
     reservation = StayManagerReservation.query.filter_by(
-        staymanager_reservation_id=reservation_id
+        staymanager_reservation_id=reservation_data.get('id')
     ).first()
 
     if reservation:
+        _update_reservation_from_data(reservation, reservation_data)
         reservation.status = 'cancelled'
-        reservation.synced_at = datetime.utcnow()
 
 
-def _handle_guest_verified(integration: StayManagerIntegration, guest_id: str, reservation_id: str):
-    """Handle guest.verified webhook event."""
+def _handle_guest_verified(integration: StayManagerIntegration, guest_data: dict, reservation_data: dict):
+    """Handle guest.verified webhook event (payload carries 'reservation' and 'guest' objects)."""
+    reservation_id = reservation_data.get('id') if reservation_data else None
+    guest_id = guest_data.get('id') if guest_data else None
+
     if reservation_id:
         reservation = StayManagerReservation.query.filter_by(
             staymanager_reservation_id=reservation_id
@@ -716,7 +774,7 @@ def _handle_guest_verified(integration: StayManagerIntegration, guest_id: str, r
             reservation.verification_status = 'verified'
             reservation.synced_at = datetime.utcnow()
     elif guest_id:
-        # Update all reservations for this guest
+        # No reservation id supplied: mark every cached reservation for this guest
         StayManagerReservation.query.filter_by(
             staymanager_guest_id=guest_id
         ).update({

@@ -41,7 +41,6 @@ export default function StayManager() {
   const [success, setSuccess] = useState(null)
   const [showConnectForm, setShowConnectForm] = useState(false)
   const [apiKey, setApiKey] = useState('')
-  const [email, setEmail] = useState('')
 
   // Settings form
   const [settings, setSettings] = useState({
@@ -116,10 +115,7 @@ export default function StayManager() {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          api_key: apiKey,
-          email: email
-        })
+        body: JSON.stringify({ api_key: apiKey })
       })
 
       const data = await response.json()
@@ -129,7 +125,7 @@ export default function StayManager() {
       }
 
       setIntegration(data.integration)
-      setSuccess('Connexion StayManager reussie!')
+      setSuccess(data.warning ? `Connexion StayManager reussie ! ${data.warning}` : 'Connexion StayManager reussie!')
       setShowConnectForm(false)
       setApiKey('')
       fetchPropertyLinks()
@@ -363,19 +359,6 @@ export default function StayManager() {
               <form onSubmit={handleConnect} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email StayManager
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="votre@email.com"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Cle API StayManager
                   </label>
                   <input
@@ -387,7 +370,12 @@ export default function StayManager() {
                     required
                   />
                   <p className="mt-2 text-sm text-gray-500">
-                    Trouvez votre cle API dans les parametres de votre compte StayManager.
+                    Depuis StayManager &gt; Integrations &amp; API, creez une cle avec au minimum les
+                    droits <span className="font-mono text-xs">properties:read</span>,{' '}
+                    <span className="font-mono text-xs">reservations:read</span> et{' '}
+                    <span className="font-mono text-xs">webhooks:manage</span>. La cle (
+                    <span className="font-mono text-xs">sk_live_...</span>) ne s'affiche qu'une
+                    seule fois : copiez-la immediatement.
                   </p>
                 </div>
                 <div className="flex gap-3">

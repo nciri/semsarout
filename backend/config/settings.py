@@ -28,9 +28,17 @@ class Config:
     CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
     CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
 
-    # StayManager Integration
-    STAYMANAGER_API_URL = os.environ.get('STAYMANAGER_API_URL', 'https://api.staymanager.ma')
-    STAYMANAGER_API_KEY = os.environ.get('STAYMANAGER_API_KEY')
+    # StayManager Integration (Partner API v1 — see docs/api/partner-api-v1.md
+    # in the staymanager.ma repo). There is no api.staymanager.ma subdomain;
+    # everything is served from staymanager.ma itself under /api/v1.
+    STAYMANAGER_API_URL = os.environ.get('STAYMANAGER_API_URL', 'https://staymanager.ma/api/v1')
+
+    # Public HTTPS base URL of this SemsarOut deployment, used to build the
+    # webhook callback URL registered with StayManager
+    # (`{APP_BASE_URL}/api/v1/integrations/staymanager/webhook`). StayManager
+    # rejects non-https URLs and URLs resolving to private/loopback addresses,
+    # so this must be a real public hostname (e.g. an ngrok tunnel in dev).
+    APP_BASE_URL = os.environ.get('APP_BASE_URL')
 
 
 class DevelopmentConfig(Config):
