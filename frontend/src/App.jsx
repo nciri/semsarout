@@ -32,6 +32,12 @@ import DashboardProgramForm from './pages/dashboard/ProgramForm'
 import StayManagerIntegration from './pages/dashboard/integrations/StayManager'
 import StayManagerProperties from './pages/dashboard/integrations/StayManagerProperties'
 import StayManagerReservations from './pages/dashboard/integrations/StayManagerReservations'
+import SavedSearches from './pages/dashboard/SavedSearches'
+import BuyerMessages from './pages/dashboard/BuyerMessages'
+import AgencyMessages from './pages/dashboard/AgencyMessages'
+import Availability from './pages/dashboard/Availability'
+import MortgageSimulator from './pages/MortgageSimulator'
+import CompareProperties from './pages/CompareProperties'
 
 // Backoffice imports
 import BackofficeLayout from './pages/backoffice/components/BackofficeLayout'
@@ -77,6 +83,8 @@ function App() {
         <Route path="cgu" element={<LegalPage type="cgu" />} />
         <Route path="politique-de-confidentialite" element={<LegalPage type="confidentialite" />} />
         <Route path="cookies" element={<LegalPage type="cookies" />} />
+        <Route path="simulateur-credit" element={<MortgageSimulator />} />
+        <Route path="comparer" element={<CompareProperties />} />
 
         {/* Protected routes */}
         <Route path="dashboard" element={<PrivateRoute />}>
@@ -91,6 +99,10 @@ function App() {
           <Route path="agence" element={<MyAgency />} />
           <Route path="abonnement" element={<Subscription />} />
           <Route path="parametres" element={<DashboardSettings />} />
+          <Route path="mes-recherches" element={<SavedSearches />} />
+          <Route path="mes-messages" element={<BuyerMessages />} />
+          <Route path="messages" element={<AgencyMessages />} />
+          <Route path="disponibilites" element={<Availability />} />
           <Route path="integrations/staymanager" element={<StayManagerIntegration />} />
           <Route path="integrations/staymanager/properties" element={<StayManagerProperties />} />
           <Route path="integrations/staymanager/reservations" element={<StayManagerReservations />} />

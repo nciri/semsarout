@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiSettings, FiCreditCard, FiLayers, FiLink, FiBriefcase } from 'react-icons/fi'
+import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiSettings, FiCreditCard, FiLayers, FiLink, FiBriefcase, FiSearch, FiMail, FiCalendar } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
 import Wordmark from '../common/Wordmark'
 
@@ -135,6 +135,45 @@ function Header() {
                           <FiGrid className="w-4 h-4 mr-3 text-gray-400" />
                           Tableau de bord
                         </Link>
+                        {user?.account_role === 'buyer' ? (
+                          <>
+                            <Link
+                              to="/dashboard/mes-recherches"
+                              onClick={() => setIsUserMenuOpen(false)}
+                              className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
+                            >
+                              <FiSearch className="w-4 h-4 mr-3 text-gray-400" />
+                              Mes recherches
+                            </Link>
+                            <Link
+                              to="/dashboard/mes-messages"
+                              onClick={() => setIsUserMenuOpen(false)}
+                              className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
+                            >
+                              <FiMail className="w-4 h-4 mr-3 text-gray-400" />
+                              Mes messages
+                            </Link>
+                          </>
+                        ) : (
+                          <>
+                            <Link
+                              to="/dashboard/messages"
+                              onClick={() => setIsUserMenuOpen(false)}
+                              className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
+                            >
+                              <FiMail className="w-4 h-4 mr-3 text-gray-400" />
+                              Messages reçus
+                            </Link>
+                            <Link
+                              to="/dashboard/disponibilites"
+                              onClick={() => setIsUserMenuOpen(false)}
+                              className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
+                            >
+                              <FiCalendar className="w-4 h-4 mr-3 text-gray-400" />
+                              Mes disponibilités
+                            </Link>
+                          </>
+                        )}
                         <Link
                           to="/dashboard/annonces"
                           onClick={() => setIsUserMenuOpen(false)}

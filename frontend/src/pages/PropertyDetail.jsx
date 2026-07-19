@@ -12,6 +12,7 @@ import { propertyService } from '../services/propertyService'
 import { buyerService } from '../services/buyerService'
 import { formatPrice } from '../utils/currency'
 import PhotoLightbox from '../components/common/PhotoLightbox'
+import BookVisitWidget from '../components/common/BookVisitWidget'
 import useAuthStore from '../store/authStore'
 
 function PropertyDetail() {
@@ -312,6 +313,14 @@ function PropertyDetail() {
                     Expire dans: {timeRemaining}
                   </div>
                 )}
+                {property.transaction_type === 'sale' && (
+                  <Link
+                    to={`/simulateur-credit?price=${property.price}`}
+                    className="mt-2 text-sm text-primary-600 hover:underline inline-block"
+                  >
+                    Simuler un crédit pour ce bien
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -496,6 +505,8 @@ function PropertyDetail() {
                 </div>
               )}
             </div>
+
+            {isBuyer && <div className="mb-6"><BookVisitWidget propertyId={id} /></div>}
 
             {/* Actions */}
             <div className="flex gap-3">

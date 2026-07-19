@@ -1,12 +1,24 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FiMapPin, FiMaximize, FiHome, FiHeart } from 'react-icons/fi'
+import { toast } from 'react-toastify'
+import { FiMapPin, FiMaximize, FiHome, FiHeart, FiBarChart2, FiCheck } from 'react-icons/fi'
 import { IoBedOutline } from 'react-icons/io5'
 import { formatPrice, DIRHAM_SYMBOL } from '../../utils/currency'
+import useCompareStore, { MAX_COMPARE_PROPERTIES } from '../../store/compareStore'
 
 function PropertyCard({ property }) {
   const [fav, setFav] = useState(false)
+  const { isSelected, toggle } = useCompareStore()
+  const compared = isSelected(property.id)
   const primaryImage = property.images?.find(img => img.is_primary) || property.images?.[0]
+
+  const handleToggleCompare = (e) => {
+    e.preventDefault()
+    const ok = toggle(property.id)
+    if (!ok) {
+      toast.info(`Vous pouvez comparer ${MAX_COMPARE_PROPERTIES} biens maximum`)
+    }
+  }
 
   return (
     <Link
@@ -42,17 +54,33 @@ function PropertyCard({ property }) {
           )}
         </div>
 
-        {/* Favori */}
-        <button
-          aria-label="Favori"
-          onClick={(e) => { e.preventDefault(); setFav(!fav) }}
-          className="absolute top-2.5 right-2.5 w-[34px] h-[34px] rounded-full bg-white/[.92] shadow-ds-sm flex items-center justify-center"
-        >
-          <FiHeart
-            className={`w-[18px] h-[18px] ${fav ? 'text-redcard-500 fill-redcard-500' : 'text-slate-600'}`}
-            strokeWidth={1.8}
-          />
-        </button>
+        {/* Favori + Comparer */}
+        <div className="absolute top-2.5 right-2.5 flex gap-2">
+          <button
+            aria-label="Comparer"
+            title="Ajouter au comparateur"
+            onClick={handleToggleCompare}
+            className={`w-[34px] h-[34px] rounded-full shadow-ds-sm flex items-center justify-center ${
+              compared ? 'bg-primary-600' : 'bg-white/[.92]'
+            }`}
+          >
+            {compared ? (
+              <FiCheck className="w-[18px] h-[18px] text-white" strokeWidth={2} />
+            ) : (
+              <FiBarChart2 className="w-[18px] h-[18px] text-slate-600" strokeWidth={1.8} />
+            )}
+          </button>
+          <button
+            aria-label="Favori"
+            onClick={(e) => { e.preventDefault(); setFav(!fav) }}
+            className="w-[34px] h-[34px] rounded-full bg-white/[.92] shadow-ds-sm flex items-center justify-center"
+          >
+            <FiHeart
+              className={`w-[18px] h-[18px] ${fav ? 'text-redcard-500 fill-redcard-500' : 'text-slate-600'}`}
+              strokeWidth={1.8}
+            />
+          </button>
+        </div>
       </div>
 
       {/* Content */}
