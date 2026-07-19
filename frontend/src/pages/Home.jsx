@@ -25,16 +25,16 @@ function Home() {
             'radial-gradient(1100px 520px at 12% -20%, rgba(214,168,95,.24), transparent 55%), radial-gradient(820px 420px at 100% -10%, rgba(15,118,110,.20), transparent 50%), #0B1220'
         }}
       >
-        {/* Drapeau/skyline ambiants, très discrets, fondus dans le fond côté droit */}
+        {/* Skyline Maroc 2030 côté droit, fondue dans le fond à gauche pour ne pas gêner le texte */}
         <div
-          className="hidden lg:block absolute inset-0 opacity-[0.22] pointer-events-none"
+          className="hidden lg:block absolute inset-0 opacity-[0.4] pointer-events-none"
           style={{
             backgroundImage: 'url(/hero-bg.webp)',
-            backgroundSize: 'auto 115%',
-            backgroundPosition: 'right top',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center 20%',
             backgroundRepeat: 'no-repeat',
-            maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,.55) 35%, rgba(0,0,0,0) 62%)',
-            WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,.55) 35%, rgba(0,0,0,0) 62%)'
+            maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,.6) 45%, rgba(0,0,0,0) 72%)',
+            WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,.6) 45%, rgba(0,0,0,0) 72%)'
           }}
         />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 lg:pt-[70px] pb-20 lg:pb-[110px]">
