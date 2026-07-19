@@ -25,6 +25,18 @@ function Home() {
             'radial-gradient(1100px 520px at 12% -20%, rgba(214,168,95,.24), transparent 55%), radial-gradient(820px 420px at 100% -10%, rgba(15,118,110,.20), transparent 50%), #0B1220'
         }}
       >
+        {/* Drapeau/skyline ambiants, très discrets, fondus dans le fond côté droit */}
+        <div
+          className="hidden lg:block absolute inset-0 opacity-[0.22] pointer-events-none"
+          style={{
+            backgroundImage: 'url(/hero-bg.webp)',
+            backgroundSize: 'auto 115%',
+            backgroundPosition: 'right top',
+            backgroundRepeat: 'no-repeat',
+            maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,.55) 35%, rgba(0,0,0,0) 62%)',
+            WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,.55) 35%, rgba(0,0,0,0) 62%)'
+          }}
+        />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 lg:pt-[70px] pb-20 lg:pb-[110px]">
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-[14px] py-[7px] bg-white/[.08] border border-white/[.14] rounded-full text-[13px] font-semibold mb-6">
