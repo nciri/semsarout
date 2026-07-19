@@ -2,6 +2,7 @@
 from datetime import datetime, timedelta, time as dt_time
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from markupsafe import escape
 from app import db
 from app.api.v1 import api_v1_bp
 from app.models import User, Property, Visit, AgentAvailability
@@ -169,9 +170,9 @@ def book_visit(property_id):
     agent = User.query.get(property.owner_id)
     if agent and agent.email:
         content = (
-            f'<p>Bonjour {agent.first_name},</p>'
-            f'<p><strong>{user.full_name}</strong> a réservé une visite pour '
-            f'<strong>{property.title}</strong> le {scheduled_at.strftime("%d/%m/%Y à %H:%M")}.</p>'
+            f'<p>Bonjour {escape(agent.first_name)},</p>'
+            f'<p><strong>{escape(user.full_name)}</strong> a réservé une visite pour '
+            f'<strong>{escape(property.title)}</strong> le {scheduled_at.strftime("%d/%m/%Y à %H:%M")}.</p>'
             f'<p><a href="https://semsarout.ma/dashboard/visites">Voir dans mon calendrier</a></p>'
         )
         send_email(to=agent.email, subject='Nouvelle visite réservée', html_body=render_email(content))

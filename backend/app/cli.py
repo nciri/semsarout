@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import click
 from flask import current_app
 from flask.cli import with_appcontext
+from markupsafe import escape
 
 from app import db
 from app.models import SavedSearch, User, Property
@@ -74,15 +75,15 @@ def _run_search_alerts():
 
         items_html = ''.join(
             f'<div style="padding:12px 0;border-bottom:1px solid #eee">'
-            f'<a href="https://semsarout.ma/annonces/{p.id}" style="color:#0F766E;font-weight:bold;text-decoration:none">{p.title}</a>'
-            f'<div style="color:#64748b;font-size:14px">{p.city} · {p.price:.0f} Dh</div>'
+            f'<a href="https://semsarout.ma/annonces/{p.id}" style="color:#0F766E;font-weight:bold;text-decoration:none">{escape(p.title)}</a>'
+            f'<div style="color:#64748b;font-size:14px">{escape(p.city)} · {p.price:.0f} Dh</div>'
             f'</div>'
             for p in matches
         )
         content = (
-            f'<p>Bonjour {user.first_name},</p>'
+            f'<p>Bonjour {escape(user.first_name)},</p>'
             f'<p><strong>{len(matches)} nouveau(x) bien(s)</strong> correspondent à votre recherche '
-            f'« {search.name} » :</p>'
+            f'« {escape(search.name)} » :</p>'
             f'{items_html}'
         )
 

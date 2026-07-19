@@ -3,6 +3,7 @@ from datetime import datetime
 from functools import wraps
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from markupsafe import escape
 from app import db
 from app.api.v1 import api_v1_bp
 from app.models import User, SavedSearch, Favorite, BuyerMessage, MessageReply, PropertyEstimate, Property
@@ -281,11 +282,12 @@ def send_message():
 
     owner = User.query.get(property.owner_id)
     if owner and owner.email:
+        sender_label = escape(user.full_name) if user else escape(message.buyer_email)
         content = (
-            f'<p>Bonjour {owner.first_name},</p>'
-            f'<p><strong>{user.full_name if user else message.buyer_email}</strong> vous a envoyé un message '
-            f'concernant votre annonce <strong>{property.title}</strong> :</p>'
-            f'<p style="background:#f8fafc;padding:12px;border-radius:8px">{message.message}</p>'
+            f'<p>Bonjour {escape(owner.first_name)},</p>'
+            f'<p><strong>{sender_label}</strong> vous a envoyé un message '
+            f'concernant votre annonce <strong>{escape(property.title)}</strong> :</p>'
+            f'<p style="background:#f8fafc;padding:12px;border-radius:8px">{escape(message.message)}</p>'
             f'<p><a href="https://semsarout.ma/dashboard/leads">Répondre depuis votre tableau de bord</a></p>'
         )
         send_email(

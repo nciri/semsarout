@@ -2,6 +2,7 @@
 from datetime import datetime
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from markupsafe import escape
 from app import db
 from app.api.v1 import api_v1_bp
 from app.models import User, BuyerMessage, MessageReply, Property
@@ -94,9 +95,9 @@ def reply_to_agency_message(message_id):
     buyer = User.query.get(message.buyer_id)
     if buyer and buyer.email:
         content = (
-            f'<p>Bonjour {buyer.first_name},</p>'
-            f'<p>Vous avez reçu une réponse concernant votre message « {message.subject} » :</p>'
-            f'<p style="background:#f8fafc;padding:12px;border-radius:8px">{body}</p>'
+            f'<p>Bonjour {escape(buyer.first_name)},</p>'
+            f'<p>Vous avez reçu une réponse concernant votre message « {escape(message.subject)} » :</p>'
+            f'<p style="background:#f8fafc;padding:12px;border-radius:8px">{escape(body)}</p>'
             f'<p><a href="https://semsarout.ma/dashboard/mes-messages">Voir la conversation</a></p>'
         )
         send_email(
