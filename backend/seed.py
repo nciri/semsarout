@@ -314,6 +314,7 @@ def seed_users(agencies):
         last_name='SemsarOut',
         phone='+212 600 000 001',
         user_type='admin',
+        account_role='admin',
         is_verified=True,
         is_active=True
     )

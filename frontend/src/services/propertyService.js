@@ -53,5 +53,11 @@ export const propertyService = {
   revealPhone: async (propertyId, data = {}) => {
     const response = await api.post(`/properties/${propertyId}/reveal-phone`, data)
     return response.data
+  },
+
+  // Price positioning within the neighborhood (for the gauge)
+  getPricePosition: async (propertyId) => {
+    const response = await api.get(`/properties/${propertyId}/price-position`)
+    return response.data
   }
 }

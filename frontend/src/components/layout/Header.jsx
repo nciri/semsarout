@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiSettings, FiCreditCard, FiLayers, FiLink, FiBriefcase } from 'react-icons/fi'
+import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiSettings, FiCreditCard, FiLayers, FiLink, FiBriefcase, FiTrendingUp } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
 import Wordmark from '../common/Wordmark'
 
@@ -183,6 +183,16 @@ function Header() {
                           <FiSettings className="w-4 h-4 mr-3 text-gray-400" />
                           Paramètres
                         </Link>
+                        {(user?.user_type === 'admin' || user?.account_role === 'admin') && (
+                          <Link
+                            to="/dashboard/prix-marche"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
+                          >
+                            <FiTrendingUp className="w-4 h-4 mr-3 text-gray-400" />
+                            Prix de référence
+                          </Link>
+                        )}
                       </div>
 
                       {/* Logout */}

@@ -12,6 +12,7 @@ from app.models.program import (
     ProgramPlan, ProgramLot, LOT_STATUSES
 )
 from app.models.buyer import SavedSearch, Favorite, BuyerMessage, PropertyEstimate
+from app.models.market import NeighborhoodPriceRef
 from app.models.staymanager import (
     StayManagerIntegration,
     StayManagerPropertyLink,
@@ -55,6 +56,7 @@ __all__ = [
     'Favorite',
     'BuyerMessage',
     'PropertyEstimate',
+    'NeighborhoodPriceRef',
     'StayManagerIntegration',
     'StayManagerPropertyLink',
     'StayManagerReservation',

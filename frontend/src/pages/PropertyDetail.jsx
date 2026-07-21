@@ -12,6 +12,7 @@ import { propertyService } from '../services/propertyService'
 import { buyerService } from '../services/buyerService'
 import { formatPrice } from '../utils/currency'
 import PhotoLightbox from '../components/common/PhotoLightbox'
+import PriceGauge from '../components/common/PriceGauge'
 import useAuthStore from '../store/authStore'
 import { getAmenityIcon } from '../utils/amenityIcons'
 
@@ -30,6 +31,12 @@ function PropertyDetail() {
   const { data: property, isLoading } = useQuery(
     ['property', id],
     () => propertyService.getProperty(id)
+  )
+
+  const { data: pricePosition } = useQuery(
+    ['price-position', id],
+    () => propertyService.getPricePosition(id),
+    { enabled: !!id }
   )
 
   const isBuyer = !isAuthenticated || user?.account_role === 'buyer'
@@ -328,6 +335,13 @@ function PropertyDetail() {
               </div>
             </div>
           </div>
+
+          {/* Price positioning gauge */}
+          {pricePosition?.available && (
+            <div className="mb-8">
+              <PriceGauge data={pricePosition} />
+            </div>
+          )}
 
           {/* Key Features */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

@@ -30,6 +30,7 @@ import ProgramDetail from './pages/ProgramDetail'
 import DashboardPrograms from './pages/dashboard/Programs'
 import DashboardProgramForm from './pages/dashboard/ProgramForm'
 import ProgramPlanEditor from './pages/dashboard/ProgramPlanEditor'
+import MarketPrices from './pages/dashboard/MarketPrices'
 import StayManagerIntegration from './pages/dashboard/integrations/StayManager'
 import StayManagerProperties from './pages/dashboard/integrations/StayManagerProperties'
 import StayManagerReservations from './pages/dashboard/integrations/StayManagerReservations'
@@ -93,6 +94,7 @@ function App() {
           <Route path="agence" element={<MyAgency />} />
           <Route path="abonnement" element={<Subscription />} />
           <Route path="parametres" element={<DashboardSettings />} />
+          <Route path="prix-marche" element={<MarketPrices />} />
           <Route path="integrations/staymanager" element={<StayManagerIntegration />} />
           <Route path="integrations/staymanager/properties" element={<StayManagerProperties />} />
           <Route path="integrations/staymanager/reservations" element={<StayManagerReservations />} />
