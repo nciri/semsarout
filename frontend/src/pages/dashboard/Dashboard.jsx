@@ -6,7 +6,9 @@ import {
 } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
 import { propertyService } from '../../services/propertyService'
+import { leadService } from '../../services/leadService'
 import api from '../../services/api'
+import { FiAlertTriangle } from 'react-icons/fi'
 import { STAYMANAGER_REGISTER_URL } from '../../constants/services'
 import StayManagerWordmark from '../../components/common/StayManagerWordmark'
 
@@ -84,6 +86,11 @@ function Dashboard() {
     }
   )
 
+  // Compteurs de demandes non lues / en retard (partagé avec le badge du header)
+  const { data: leadsSummary } = useQuery('leads-summary', leadService.getSummary)
+  const overdueLeads = leadsSummary?.overdue_count || 0
+  const overdueDays = leadsSummary?.overdue_days || 3
+
   const isNewUser = propertiesData && propertiesData.total === 0
   const onboarding = isNewUser
     ? ONBOARDING[user?.interest] || ONBOARDING.autre
@@ -121,6 +128,27 @@ function Dashboard() {
           Bienvenue sur votre tableau de bord
         </p>
       </div>
+
+      {/* Alerte : demandes non lues depuis plus de N jours */}
+      {overdueLeads > 0 && (
+        <Link
+          to="/dashboard/leads?status=new"
+          className="flex items-start gap-3 mb-8 p-4 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 transition-colors"
+        >
+          <FiAlertTriangle className="w-6 h-6 text-red-600 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-semibold text-red-800">
+              {overdueLeads} demande{overdueLeads > 1 ? 's' : ''} non lue{overdueLeads > 1 ? 's' : ''} depuis plus de {overdueDays} jours
+            </p>
+            <p className="text-sm text-red-700">
+              Des prospects attendent une réponse. Traitez-les vite pour ne pas les perdre.
+            </p>
+          </div>
+          <span className="self-center text-sm font-medium text-red-700 whitespace-nowrap">
+            Traiter →
+          </span>
+        </Link>
+      )}
 
       {/* Onboarding selon l'intention déclarée */}
       {onboarding && (

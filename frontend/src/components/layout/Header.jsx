@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useQuery } from 'react-query'
 import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiSettings, FiCreditCard, FiLink, FiBriefcase, FiTrendingUp, FiInbox } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
+import { leadService } from '../../services/leadService'
 import Wordmark from '../common/Wordmark'
 
 function Header() {
@@ -18,6 +20,14 @@ function Header() {
   }
 
   const isAdmin = user?.user_type === 'admin' || user?.account_role === 'admin'
+
+  // Compteur de demandes non lues (badge + point sur l'avatar)
+  const { data: leadsSummary } = useQuery(
+    'leads-summary',
+    leadService.getSummary,
+    { enabled: isAuthenticated, refetchInterval: 60000, refetchOnWindowFocus: true }
+  )
+  const unreadLeads = leadsSummary?.unread_count || 0
 
   // Groupes métier du menu compte (voir proposition de réorganisation)
   const menuSections = [
@@ -148,6 +158,12 @@ function Header() {
                 ) : (
                   <FiUser className="w-5 h-5 text-gray-600" />
                 )}
+                {/* Pastille : demandes non lues, visible menu fermé */}
+                {isAuthenticated && unreadLeads > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-red-600 text-white text-[10px] font-bold ring-2 ring-white">
+                    {unreadLeads > 9 ? '9+' : unreadLeads}
+                  </span>
+                )}
               </button>
 
               {/* Dropdown Menu */}
@@ -176,7 +192,12 @@ function Header() {
                                 className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
                               >
                                 <Icon className="w-4 h-4 mr-3 text-gray-400" />
-                                {label}
+                                <span className="flex-1">{label}</span>
+                                {to === '/dashboard/leads' && unreadLeads > 0 && (
+                                  <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-600 text-white text-xs font-semibold">
+                                    {unreadLeads > 99 ? '99+' : unreadLeads}
+                                  </span>
+                                )}
                               </Link>
                             ))}
                           </div>
@@ -294,7 +315,12 @@ function Header() {
                           onClick={() => setIsMenuOpen(false)}
                         >
                           <Icon className="w-4 h-4 text-gray-400" />
-                          {label}
+                          <span className="flex-1">{label}</span>
+                          {to === '/dashboard/leads' && unreadLeads > 0 && (
+                            <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-600 text-white text-xs font-semibold">
+                              {unreadLeads > 99 ? '99+' : unreadLeads}
+                            </span>
+                          )}
                         </Link>
                       ))}
                     </div>
