@@ -12,12 +12,24 @@ function MyProperties() {
   const [deleteId, setDeleteId] = useState(null)
 
   const status = searchParams.get('status') || ''
+  const transactionType = searchParams.get('transaction_type') || ''
   const page = parseInt(searchParams.get('page') || '1')
 
   const { data, isLoading } = useQuery(
-    ['my-properties', { status, page }],
-    () => propertyService.getMyProperties({ status, page, per_page: 10 })
+    ['my-properties', { status, transactionType, page }],
+    () => propertyService.getMyProperties({ status, transaction_type: transactionType, page, per_page: 10 })
   )
+
+  const setFilter = (key, value) => {
+    const newParams = new URLSearchParams(searchParams)
+    if (value) {
+      newParams.set(key, value)
+    } else {
+      newParams.delete(key)
+    }
+    newParams.set('page', '1')
+    setSearchParams(newParams)
+  }
 
   const deleteMutation = useMutation(
     (id) => propertyService.deleteProperty(id),
@@ -69,10 +81,31 @@ function MyProperties() {
         </Link>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+      {/* Filtre par type de transaction : vente / location longue durée */}
+      <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
         {[
           { value: '', label: 'Toutes' },
+          { value: 'sale', label: 'Ventes' },
+          { value: 'rent', label: 'Locations' }
+        ].map(filter => (
+          <button
+            key={filter.value}
+            onClick={() => setFilter('transaction_type', filter.value)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${
+              transactionType === filter.value
+                ? 'bg-midnight text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {filter.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Filtre par statut */}
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+        {[
+          { value: '', label: 'Tous statuts' },
           { value: 'active', label: 'Actives' },
           { value: 'draft', label: 'Brouillons' },
           { value: 'sold', label: 'Vendues' },
@@ -80,16 +113,7 @@ function MyProperties() {
         ].map(filter => (
           <button
             key={filter.value}
-            onClick={() => {
-              const newParams = new URLSearchParams(searchParams)
-              if (filter.value) {
-                newParams.set('status', filter.value)
-              } else {
-                newParams.delete('status')
-              }
-              newParams.set('page', '1')
-              setSearchParams(newParams)
-            }}
+            onClick={() => setFilter('status', filter.value)}
             className={`px-4 py-2 rounded-lg text-sm whitespace-nowrap ${
               status === filter.value
                 ? 'bg-primary-600 text-white'

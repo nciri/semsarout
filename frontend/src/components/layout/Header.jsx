@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiSettings, FiCreditCard, FiLayers, FiLink, FiBriefcase, FiTrendingUp } from 'react-icons/fi'
+import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiSettings, FiCreditCard, FiLayers, FiLink, FiBriefcase, FiTrendingUp, FiInbox } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
 import Wordmark from '../common/Wordmark'
 
@@ -16,6 +16,43 @@ function Header() {
     setIsUserMenuOpen(false)
     navigate('/')
   }
+
+  const isAdmin = user?.user_type === 'admin' || user?.account_role === 'admin'
+
+  // Groupes métier du menu compte (voir proposition de réorganisation)
+  const menuSections = [
+    {
+      title: 'Activité',
+      items: [
+        { to: '/dashboard', label: 'Tableau de bord', icon: FiGrid },
+        { to: '/dashboard/annonces', label: 'Mes annonces', icon: FiFileText },
+        { to: '/dashboard/programmes', label: 'Programmes neufs', icon: FiLayers },
+        { to: '/dashboard/leads', label: 'Demandes / Leads', icon: FiInbox }
+      ]
+    },
+    {
+      title: 'Location courte durée',
+      items: [
+        { to: '/dashboard/staymanager', label: 'StayManager', icon: FiLink }
+      ]
+    },
+    {
+      title: 'Mon compte',
+      items: [
+        { to: '/dashboard/compte/agence', label: 'Mon agence', icon: FiBriefcase },
+        { to: '/dashboard/compte/abonnement', label: 'Abonnement', icon: FiCreditCard },
+        { to: '/dashboard/compte/parametres', label: 'Paramètres', icon: FiSettings }
+      ]
+    },
+    ...(isAdmin
+      ? [{
+          title: 'Administration',
+          items: [
+            { to: '/dashboard/prix-marche', label: 'Prix de référence', icon: FiTrendingUp }
+          ]
+        }]
+      : [])
+  ]
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -125,74 +162,26 @@ function Header() {
                         <p className="text-sm text-gray-500">{user?.email}</p>
                       </div>
 
-                      {/* Menu items */}
-                      <div className="py-2">
-                        <Link
-                          to="/dashboard"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        >
-                          <FiGrid className="w-4 h-4 mr-3 text-gray-400" />
-                          Tableau de bord
-                        </Link>
-                        <Link
-                          to="/dashboard/annonces"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        >
-                          <FiFileText className="w-4 h-4 mr-3 text-gray-400" />
-                          Mes annonces
-                        </Link>
-                        <Link
-                          to="/dashboard/programmes"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        >
-                          <FiLayers className="w-4 h-4 mr-3 text-gray-400" />
-                          Programmes
-                        </Link>
-                        <Link
-                          to="/dashboard/agence"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        >
-                          <FiBriefcase className="w-4 h-4 mr-3 text-gray-400" />
-                          Mon agence
-                        </Link>
-                        <Link
-                          to="/dashboard/integrations/staymanager"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        >
-                          <FiLink className="w-4 h-4 mr-3 text-gray-400" />
-                          StayManager
-                        </Link>
-                        <Link
-                          to="/dashboard/abonnement"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        >
-                          <FiCreditCard className="w-4 h-4 mr-3 text-gray-400" />
-                          Mon abonnement
-                        </Link>
-                        <Link
-                          to="/dashboard/parametres"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        >
-                          <FiSettings className="w-4 h-4 mr-3 text-gray-400" />
-                          Paramètres
-                        </Link>
-                        {(user?.user_type === 'admin' || user?.account_role === 'admin') && (
-                          <Link
-                            to="/dashboard/prix-marche"
-                            onClick={() => setIsUserMenuOpen(false)}
-                            className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
-                          >
-                            <FiTrendingUp className="w-4 h-4 mr-3 text-gray-400" />
-                            Prix de référence
-                          </Link>
-                        )}
+                      {/* Menu items regroupés par domaine métier */}
+                      <div className="py-1 max-h-[70vh] overflow-y-auto">
+                        {menuSections.map((section) => (
+                          <div key={section.title} className="py-1">
+                            <p className="px-4 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                              {section.title}
+                            </p>
+                            {section.items.map(({ to, label, icon: Icon }) => (
+                              <Link
+                                key={to}
+                                to={to}
+                                onClick={() => setIsUserMenuOpen(false)}
+                                className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
+                              >
+                                <Icon className="w-4 h-4 mr-3 text-gray-400" />
+                                {label}
+                              </Link>
+                            ))}
+                          </div>
+                        ))}
                       </div>
 
                       {/* Logout */}
@@ -293,40 +282,30 @@ function Header() {
               <div className="h-px bg-gray-200 my-2"></div>
               {isAuthenticated ? (
                 <>
-                  <Link
-                    to="/dashboard"
-                    className="py-2 text-gray-600"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Tableau de bord
-                  </Link>
-                  <Link
-                    to="/dashboard/annonces"
-                    className="py-2 text-gray-600"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Mes annonces
-                  </Link>
-                  <Link
-                    to="/dashboard/programmes"
-                    className="py-2 text-gray-600"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Mes programmes
-                  </Link>
-                  <Link
-                    to="/dashboard/abonnement"
-                    className="py-2 text-gray-600"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Mon abonnement
-                  </Link>
+                  {menuSections.map((section) => (
+                    <div key={section.title}>
+                      <p className="pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                        {section.title}
+                      </p>
+                      {section.items.map(({ to, label, icon: Icon }) => (
+                        <Link
+                          key={to}
+                          to={to}
+                          className="flex items-center gap-3 py-2 text-gray-600"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <Icon className="w-4 h-4 text-gray-400" />
+                          {label}
+                        </Link>
+                      ))}
+                    </div>
+                  ))}
                   <button
                     onClick={() => {
                       handleLogout()
                       setIsMenuOpen(false)
                     }}
-                    className="py-2 text-left text-red-600"
+                    className="py-2 mt-2 text-left text-red-600 border-t border-gray-200"
                   >
                     Déconnexion
                   </button>

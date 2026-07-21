@@ -585,6 +585,10 @@ def my_properties():
     if request.args.get('status'):
         query = query.filter(Property.status == request.args.get('status'))
 
+    # Filter by transaction type (vente / location longue durée)
+    if request.args.get('transaction_type'):
+        query = query.filter(Property.transaction_type == request.args.get('transaction_type'))
+
     query = query.order_by(Property.created_at.desc())
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 

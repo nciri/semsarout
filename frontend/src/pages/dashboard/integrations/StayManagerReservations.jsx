@@ -118,7 +118,7 @@ export default function StayManagerReservations() {
       {/* Header */}
       <div className="mb-8">
         <Link
-          to="/dashboard/integrations/staymanager"
+          to="/dashboard/staymanager"
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
         >
           <FiArrowLeft className="w-4 h-4" />

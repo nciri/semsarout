@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/layout/Layout'
 import Home from './pages/Home'
 import PropertyList from './pages/PropertyList'
@@ -31,9 +31,11 @@ import DashboardPrograms from './pages/dashboard/Programs'
 import DashboardProgramForm from './pages/dashboard/ProgramForm'
 import ProgramPlanEditor from './pages/dashboard/ProgramPlanEditor'
 import MarketPrices from './pages/dashboard/MarketPrices'
+import StayManagerTabs from './pages/dashboard/integrations/StayManagerTabs'
 import StayManagerIntegration from './pages/dashboard/integrations/StayManager'
 import StayManagerProperties from './pages/dashboard/integrations/StayManagerProperties'
 import StayManagerReservations from './pages/dashboard/integrations/StayManagerReservations'
+import AccountTabs from './pages/dashboard/AccountTabs'
 
 // Backoffice imports
 import BackofficeLayout from './pages/backoffice/components/BackofficeLayout'
@@ -91,13 +93,31 @@ function App() {
           <Route path="programmes/:id" element={<DashboardProgramForm />} />
           <Route path="programmes/:id/plan" element={<ProgramPlanEditor />} />
           <Route path="leads" element={<MyLeads />} />
-          <Route path="agence" element={<MyAgency />} />
-          <Route path="abonnement" element={<Subscription />} />
-          <Route path="parametres" element={<DashboardSettings />} />
+
+          {/* Mon compte : agence / abonnement / paramètres regroupés en onglets */}
+          <Route path="compte" element={<AccountTabs />}>
+            <Route index element={<Navigate to="agence" replace />} />
+            <Route path="agence" element={<MyAgency />} />
+            <Route path="abonnement" element={<Subscription />} />
+            <Route path="parametres" element={<DashboardSettings />} />
+          </Route>
+          {/* Anciennes URLs -> nouvelles (rétro-compatibilité) */}
+          <Route path="agence" element={<Navigate to="/dashboard/compte/agence" replace />} />
+          <Route path="abonnement" element={<Navigate to="/dashboard/compte/abonnement" replace />} />
+          <Route path="parametres" element={<Navigate to="/dashboard/compte/parametres" replace />} />
+
           <Route path="prix-marche" element={<MarketPrices />} />
-          <Route path="integrations/staymanager" element={<StayManagerIntegration />} />
-          <Route path="integrations/staymanager/properties" element={<StayManagerProperties />} />
-          <Route path="integrations/staymanager/reservations" element={<StayManagerReservations />} />
+
+          {/* StayManager : connexion / biens / réservations regroupés en onglets */}
+          <Route path="staymanager" element={<StayManagerTabs />}>
+            <Route index element={<StayManagerIntegration />} />
+            <Route path="biens" element={<StayManagerProperties />} />
+            <Route path="reservations" element={<StayManagerReservations />} />
+          </Route>
+          {/* Anciennes URLs -> nouvelles (rétro-compatibilité) */}
+          <Route path="integrations/staymanager" element={<Navigate to="/dashboard/staymanager" replace />} />
+          <Route path="integrations/staymanager/properties" element={<Navigate to="/dashboard/staymanager/biens" replace />} />
+          <Route path="integrations/staymanager/reservations" element={<Navigate to="/dashboard/staymanager/reservations" replace />} />
         </Route>
 
         {/* Checkout (protected) */}
