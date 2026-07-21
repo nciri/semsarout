@@ -11,8 +11,9 @@ function MyProperties() {
   const queryClient = useQueryClient()
   const [deleteId, setDeleteId] = useState(null)
 
+  // Deux onglets : les annonces en vente et celles en location
+  const transactionType = searchParams.get('transaction_type') === 'rent' ? 'rent' : 'sale'
   const status = searchParams.get('status') || ''
-  const transactionType = searchParams.get('transaction_type') || ''
   const page = parseInt(searchParams.get('page') || '1')
 
   const { data, isLoading } = useQuery(
@@ -20,12 +21,28 @@ function MyProperties() {
     () => propertyService.getMyProperties({ status, transaction_type: transactionType, page, per_page: 10 })
   )
 
-  const setFilter = (key, value) => {
+  // Statuts pertinents selon l'onglet (Vendues pour la vente, Louées pour la location)
+  const statusFilters = [
+    { value: '', label: 'Tous statuts' },
+    { value: 'active', label: 'Actives' },
+    { value: 'draft', label: 'Brouillons' },
+    transactionType === 'sale'
+      ? { value: 'sold', label: 'Vendues' }
+      : { value: 'rented', label: 'Louées' }
+  ]
+
+  const selectTab = (value) => {
+    // Changer d'onglet réinitialise le statut et la pagination
+    setSearchParams({ transaction_type: value, page: '1' })
+  }
+
+  const setStatus = (value) => {
     const newParams = new URLSearchParams(searchParams)
+    newParams.set('transaction_type', transactionType)
     if (value) {
-      newParams.set(key, value)
+      newParams.set('status', value)
     } else {
-      newParams.delete(key)
+      newParams.delete('status')
     }
     newParams.set('page', '1')
     setSearchParams(newParams)
@@ -81,39 +98,34 @@ function MyProperties() {
         </Link>
       </div>
 
-      {/* Filtre par type de transaction : vente / location longue durée */}
-      <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
-        {[
-          { value: '', label: 'Toutes' },
-          { value: 'sale', label: 'Ventes' },
-          { value: 'rent', label: 'Locations' }
-        ].map(filter => (
-          <button
-            key={filter.value}
-            onClick={() => setFilter('transaction_type', filter.value)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${
-              transactionType === filter.value
-                ? 'bg-midnight text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            {filter.label}
-          </button>
-        ))}
+      {/* Onglets : annonces en vente / en location */}
+      <div className="border-b border-gray-200 mb-4">
+        <nav className="flex gap-1 -mb-px">
+          {[
+            { value: 'sale', label: 'En vente' },
+            { value: 'rent', label: 'En location' }
+          ].map(tab => (
+            <button
+              key={tab.value}
+              onClick={() => selectTab(tab.value)}
+              className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
+                transactionType === tab.value
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
       </div>
 
-      {/* Filtre par statut */}
+      {/* Filtre par statut (propre à l'onglet) */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-        {[
-          { value: '', label: 'Tous statuts' },
-          { value: 'active', label: 'Actives' },
-          { value: 'draft', label: 'Brouillons' },
-          { value: 'sold', label: 'Vendues' },
-          { value: 'rented', label: 'Louées' }
-        ].map(filter => (
+        {statusFilters.map(filter => (
           <button
             key={filter.value}
-            onClick={() => setFilter('status', filter.value)}
+            onClick={() => setStatus(filter.value)}
             className={`px-4 py-2 rounded-lg text-sm whitespace-nowrap ${
               status === filter.value
                 ? 'bg-primary-600 text-white'
