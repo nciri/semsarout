@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from 'react-query'
 import { useParams, Link } from 'react-router-dom'
 import {
@@ -9,6 +9,7 @@ import {
 import { formatPrice } from '../utils/currency'
 import { getAmenityIcon } from '../utils/amenityIcons'
 import LotPlanViewer from '../components/common/LotPlanViewer'
+import useAuthStore from '../store/authStore'
 
 const programsService = {
   getProgram: async (slug) => {
@@ -233,6 +234,7 @@ function UnitCard({ unit }) {
 }
 
 function ContactForm({ program }) {
+  const { user, isAuthenticated } = useAuthStore()
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -242,6 +244,18 @@ function ContactForm({ program }) {
   const [submitted, setSubmitted] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [submitError, setSubmitError] = useState('')
+
+  // Pre-fill with the logged-in user's info (only empty fields, so edits stay)
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setFormData(f => ({
+        ...f,
+        name: f.name || `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+        email: f.email || user.email || '',
+        phone: f.phone || user.phone || ''
+      }))
+    }
+  }, [isAuthenticated, user])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
