@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from 'react-query'
-import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiSettings, FiCreditCard, FiLink, FiBriefcase, FiTrendingUp, FiInbox } from 'react-icons/fi'
+import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiLink, FiTrendingUp, FiInbox } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
 import { leadService } from '../../services/leadService'
 import Wordmark from '../common/Wordmark'
@@ -46,11 +46,10 @@ function Header() {
       ]
     },
     {
-      title: 'Mon compte',
+      // Les 3 pages (agence / abonnement / paramètres) sont des onglets d'une même page
+      title: null,
       items: [
-        { to: '/dashboard/compte/agence', label: 'Mon agence', icon: FiBriefcase },
-        { to: '/dashboard/compte/abonnement', label: 'Abonnement', icon: FiCreditCard },
-        { to: '/dashboard/compte/parametres', label: 'Paramètres', icon: FiSettings }
+        { to: '/dashboard/compte', label: 'Mon compte', icon: FiUser }
       ]
     },
     ...(isAdmin
@@ -180,10 +179,12 @@ function Header() {
                       {/* Menu items regroupés par domaine métier */}
                       <div className="py-1 max-h-[70vh] overflow-y-auto">
                         {menuSections.map((section) => (
-                          <div key={section.title} className="py-1">
-                            <p className="px-4 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-                              {section.title}
-                            </p>
+                          <div key={section.title || section.items[0].to} className="py-1">
+                            {section.title && (
+                              <p className="px-4 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                                {section.title}
+                              </p>
+                            )}
                             {section.items.map(({ to, label, icon: Icon }) => (
                               <Link
                                 key={to}
@@ -303,10 +304,12 @@ function Header() {
               {isAuthenticated ? (
                 <>
                   {menuSections.map((section) => (
-                    <div key={section.title}>
-                      <p className="pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-                        {section.title}
-                      </p>
+                    <div key={section.title || section.items[0].to}>
+                      {section.title && (
+                        <p className="pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                          {section.title}
+                        </p>
+                      )}
                       {section.items.map(({ to, label, icon: Icon }) => (
                         <Link
                           key={to}
