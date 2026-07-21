@@ -53,6 +53,7 @@ class Property(db.Model):
     # Visibility options
     is_premium = db.Column(db.Boolean, default=False)
     is_urgent = db.Column(db.Boolean, default=False)
+    urgent_until = db.Column(db.DateTime)  # When urgent status expires
     is_featured = db.Column(db.Boolean, default=False)
     boost_until = db.Column(db.DateTime)
 
@@ -76,6 +77,9 @@ class Property(db.Model):
     images = db.relationship('PropertyImage', back_populates='property',
                             lazy='dynamic', cascade='all, delete-orphan',
                             order_by='PropertyImage.position')
+
+    documents = db.relationship('PropertyDocument', back_populates='property',
+                               lazy='dynamic', cascade='all, delete-orphan')
 
     def to_dict(self, include_images=True):
         """Serialize property to dictionary."""
@@ -109,6 +113,7 @@ class Property(db.Model):
             'status': self.status,
             'is_premium': self.is_premium,
             'is_urgent': self.is_urgent,
+            'urgent_until': self.urgent_until.isoformat() if self.urgent_until else None,
             'is_featured': self.is_featured,
             'views_count': self.views_count,
             'contacts_count': self.contacts_count,
@@ -124,6 +129,40 @@ class Property(db.Model):
 
     def __repr__(self):
         return f'<Property {self.reference}>'
+
+
+class PropertyDocument(db.Model):
+    """Documents attached to a property (sale dossier): title deed, ID, plans..."""
+    __tablename__ = 'property_documents'
+
+    id = db.Column(db.Integer, primary_key=True)
+    property_id = db.Column(db.Integer, db.ForeignKey('properties.id'), nullable=False)
+
+    # 'titre_foncier', 'cin', 'plan', 'reglement_copropriete', 'diagnostic', 'autre'
+    doc_type = db.Column(db.String(30), nullable=False, default='autre')
+    file_url = db.Column(db.String(255), nullable=False)
+    original_name = db.Column(db.String(255))
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    property = db.relationship('Property', back_populates='documents')
+
+    def to_dict(self):
+        """Serialize document to dictionary.
+
+        The raw stored filename is never exposed: access goes through the
+        authenticated /api/v1/documents/<id> endpoint (owner or admin only).
+        """
+        return {
+            'id': self.id,
+            'doc_type': self.doc_type,
+            'download_url': f'/api/v1/documents/{self.id}',
+            'original_name': self.original_name,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+    def __repr__(self):
+        return f'<PropertyDocument {self.id}>'
 
 
 class PropertyImage(db.Model):

@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { useQuery } from 'react-query'
+import { useState, useEffect } from 'react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useQuery, useQueryClient } from 'react-query'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import {
@@ -9,19 +9,124 @@ import {
 } from 'react-icons/fi'
 import { IoBedOutline, IoWaterOutline } from 'react-icons/io5'
 import { propertyService } from '../services/propertyService'
+import { buyerService } from '../services/buyerService'
 import { formatPrice } from '../utils/currency'
 import PhotoLightbox from '../components/common/PhotoLightbox'
+import useAuthStore from '../store/authStore'
 
 function PropertyDetail() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const { user, isAuthenticated } = useAuthStore()
   const [currentImage, setCurrentImage] = useState(0)
   const [showContact, setShowContact] = useState(false)
   const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [timeRemaining, setTimeRemaining] = useState(null)
+  const [revealedPhone, setRevealedPhone] = useState(null)
+  const [isRevealingPhone, setIsRevealingPhone] = useState(false)
 
   const { data: property, isLoading } = useQuery(
     ['property', id],
     () => propertyService.getProperty(id)
   )
+
+  const isBuyer = !isAuthenticated || user?.account_role === 'buyer'
+
+  const { data: favoritesData } = useQuery(
+    ['favorites'],
+    () => buyerService.getFavorites({ per_page: 100 }),
+    { enabled: isAuthenticated && isBuyer }
+  )
+
+  const existingFavorite = favoritesData?.favorites?.find(
+    (f) => f.property_id === Number(id)
+  )
+
+  const handleToggleFavorite = async () => {
+    if (!isAuthenticated) {
+      navigate(`/connexion?redirect=/annonces/${id}`)
+      return
+    }
+    try {
+      if (existingFavorite) {
+        await buyerService.removeFavorite(existingFavorite.id)
+        toast.success('Retiré des favoris')
+      } else {
+        await buyerService.addFavorite(id)
+        toast.success('Ajouté aux favoris')
+      }
+      queryClient.invalidateQueries(['favorites'])
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Une erreur est survenue')
+    }
+  }
+
+  const handleShare = async () => {
+    const shareData = {
+      title: property?.title,
+      text: `Découvrez ce bien sur SemsarOut : ${property?.title}`,
+      url: window.location.href
+    }
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch {
+        // User cancelled share, ignore
+      }
+    } else {
+      await navigator.clipboard.writeText(window.location.href)
+      toast.success('Lien copié dans le presse-papier')
+    }
+  }
+
+  const handleRevealPhone = async () => {
+    if (revealedPhone) return
+    setIsRevealingPhone(true)
+    try {
+      const data = await propertyService.revealPhone(id, {
+        name: user ? `${user.first_name} ${user.last_name}` : undefined,
+        email: user?.email
+      })
+      setRevealedPhone(data.phone)
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Numéro indisponible pour ce bien')
+    } finally {
+      setIsRevealingPhone(false)
+    }
+  }
+
+  // Calculate time remaining for urgent listing
+  useEffect(() => {
+    if (!property?.is_urgent || !property?.urgent_until) return
+
+    const calculateTimeRemaining = () => {
+      const now = new Date()
+      const expiryDate = new Date(property.urgent_until)
+      const diff = expiryDate - now
+
+      if (diff <= 0) {
+        setTimeRemaining(null)
+        return
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+
+      if (days > 0) {
+        setTimeRemaining(`${days}j ${hours}h`)
+      } else if (hours > 0) {
+        setTimeRemaining(`${hours}h ${minutes}m`)
+      } else {
+        setTimeRemaining(`${minutes}m`)
+      }
+    }
+
+    calculateTimeRemaining()
+    const interval = setInterval(calculateTimeRemaining, 60000) // Update every minute
+    return () => clearInterval(interval)
+  }, [property?.is_urgent, property?.urgent_until])
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm()
 
@@ -43,6 +148,15 @@ function PropertyDetail() {
     land: 'Terrain',
     commercial: 'Local commercial',
     office: 'Bureau'
+  }
+
+  const PREMIUM_FEATURES = [
+    'piscine', 'pool', 'garage', 'ascenseur', 'elevator', 'terrasse', 'terrace',
+    'balcon', 'balcony', 'jardín', 'garden', 'parking', 'vue', 'view'
+  ]
+
+  const isPremiumFeature = (feature) => {
+    return PREMIUM_FEATURES.some(pf => feature.toLowerCase().includes(pf))
   }
 
   if (isLoading) {
@@ -82,7 +196,7 @@ function PropertyDetail() {
         {/* Main Content */}
         <div className="lg:col-span-2">
           {/* Image Gallery */}
-          <div className="relative bg-gray-200 rounded-xl overflow-hidden h-96 mb-6 group">
+          <div className={`relative bg-gray-200 rounded-xl overflow-hidden h-96 mb-6 group ${property.is_premium ? 'premium-border' : ''}`}>
             {images.length > 0 ? (
               <>
                 <img
@@ -91,10 +205,18 @@ function PropertyDetail() {
                   className="w-full h-full object-cover cursor-pointer"
                   onClick={() => setLightboxOpen(true)}
                 />
+                {/* Urgent Badge - Diagonal banner */}
+                {property.is_urgent && (
+                  <div className="absolute top-0 right-0 w-32 h-32 overflow-hidden">
+                    <div className="absolute top-2 -right-10 w-40 h-12 bg-red-600 text-white font-bold text-center rotate-45 flex items-center justify-center shadow-lg">
+                      URGENT
+                    </div>
+                  </div>
+                )}
                 {/* Zoom indicator */}
                 <button
                   onClick={() => setLightboxOpen(true)}
-                  className="absolute top-4 right-4 bg-black/50 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-4 right-4 bg-black/50 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                   title="Voir en grand"
                 >
                   <FiZoomIn className="w-5 h-5" />
@@ -176,13 +298,18 @@ function PropertyDetail() {
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold text-primary-600">
+                <div className={`font-display text-[28px] font-extrabold ${property.is_premium ? 'premium-price' : property.is_urgent ? 'text-red-600' : 'text-midnight'}`}>
                   {formatPrice(property.price)}
-                  {property.transaction_type === 'rent' && <span className="text-sm font-normal">/mois</span>}
+                  {property.transaction_type === 'rent' && <span className="text-sm font-semibold text-slate-500">/mois</span>}
                 </div>
                 {property.price_per_sqm && (
                   <div className="text-sm text-gray-500">
                     {formatPrice(property.price_per_sqm)}/m²
+                  </div>
+                )}
+                {property.is_urgent && timeRemaining && (
+                  <div className="mt-2 text-sm font-bold text-red-600 bg-red-50 px-2 py-1 rounded inline-block">
+                    Expire dans: {timeRemaining}
                   </div>
                 )}
               </div>
@@ -198,7 +325,7 @@ function PropertyDetail() {
                 <div className="text-sm text-gray-500">Surface</div>
               </div>
             )}
-            {property.rooms && (
+            {property.rooms != null && (
               <div className="bg-gray-50 rounded-lg p-4 text-center">
                 <div className="w-6 h-6 mx-auto text-gray-400 mb-2">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -210,14 +337,14 @@ function PropertyDetail() {
                 <div className="text-sm text-gray-500">Pièces</div>
               </div>
             )}
-            {property.bedrooms && (
+            {property.bedrooms != null && (
               <div className="bg-gray-50 rounded-lg p-4 text-center">
                 <IoBedOutline className="w-6 h-6 mx-auto text-gray-400 mb-2" />
                 <div className="font-semibold">{property.bedrooms}</div>
                 <div className="text-sm text-gray-500">Chambres</div>
               </div>
             )}
-            {property.bathrooms && (
+            {property.bathrooms != null && (
               <div className="bg-gray-50 rounded-lg p-4 text-center">
                 <IoWaterOutline className="w-6 h-6 mx-auto text-gray-400 mb-2" />
                 <div className="font-semibold">{property.bathrooms}</div>
@@ -239,12 +366,19 @@ function PropertyDetail() {
             <div className="mb-8">
               <h2 className="font-semibold text-lg mb-4">Caractéristiques</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {property.features.map((feature, idx) => (
-                  <div key={idx} className="flex items-center text-gray-600">
-                    <FiCheck className="w-4 h-4 text-green-500 mr-2" />
-                    <span>{feature}</span>
-                  </div>
-                ))}
+                {property.features.map((feature, idx) => {
+                  const isFeatured = property.is_premium && isPremiumFeature(feature)
+                  return (
+                    <div key={idx} className={`flex items-center ${isFeatured ? 'text-yellow-700' : 'text-gray-600'}`}>
+                      {isFeatured ? (
+                        <span className="text-lg mr-2">⭐</span>
+                      ) : (
+                        <FiCheck className="w-4 h-4 text-green-500 mr-2" />
+                      )}
+                      <span className={isFeatured ? 'font-semibold' : ''}>{feature}</span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
@@ -261,10 +395,10 @@ function PropertyDetail() {
                 <span className="text-gray-500">Transaction</span>
                 <span className="font-medium">{property.transaction_type === 'sale' ? 'Vente' : 'Location'}</span>
               </div>
-              {property.floor && (
+              {property.floor != null && (
                 <div className="flex justify-between py-2 border-b">
                   <span className="text-gray-500">Étage</span>
-                  <span className="font-medium">{property.floor}{property.total_floors && ` / ${property.total_floors}`}</span>
+                  <span className="font-medium">{property.floor === 0 ? 'RC' : property.floor}{property.total_floors && ` / ${property.total_floors}`}</span>
                 </div>
               )}
               {property.construction_year && (
@@ -344,21 +478,37 @@ function PropertyDetail() {
                     <FiMail className="w-4 h-4 mr-2" />
                     Envoyer un message
                   </button>
-                  <button className="btn-outline w-full">
-                    <FiPhone className="w-4 h-4 mr-2" />
-                    Nous appeler
-                  </button>
+                  {revealedPhone ? (
+                    <a href={`tel:${revealedPhone}`} className="btn-outline w-full">
+                      <FiPhone className="w-4 h-4 mr-2" />
+                      {revealedPhone}
+                    </a>
+                  ) : (
+                    <button
+                      onClick={handleRevealPhone}
+                      disabled={isRevealingPhone}
+                      className="btn-outline w-full"
+                    >
+                      <FiPhone className="w-4 h-4 mr-2" />
+                      {isRevealingPhone ? 'Chargement...' : 'Nous appeler'}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
 
             {/* Actions */}
             <div className="flex gap-3">
-              <button className="btn-secondary flex-1">
-                <FiHeart className="w-4 h-4 mr-2" />
-                Favoris
-              </button>
-              <button className="btn-secondary flex-1">
+              {isBuyer && (
+                <button
+                  onClick={handleToggleFavorite}
+                  className={`btn-secondary flex-1 ${existingFavorite ? 'text-red-600 border-red-200' : ''}`}
+                >
+                  <FiHeart className={`w-4 h-4 mr-2 ${existingFavorite ? 'fill-current' : ''}`} />
+                  {existingFavorite ? 'Retiré' : 'Favoris'}
+                </button>
+              )}
+              <button onClick={handleShare} className="btn-secondary flex-1">
                 <FiShare2 className="w-4 h-4 mr-2" />
                 Partager
               </button>

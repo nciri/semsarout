@@ -47,5 +47,11 @@ export const propertyService = {
   contactProperty: async (propertyId, data) => {
     const response = await api.post(`/properties/${propertyId}/contact`, data)
     return response.data
+  },
+
+  // Reveal owner/agency phone number
+  revealPhone: async (propertyId, data = {}) => {
+    const response = await api.post(`/properties/${propertyId}/reveal-phone`, data)
+    return response.data
   }
 }

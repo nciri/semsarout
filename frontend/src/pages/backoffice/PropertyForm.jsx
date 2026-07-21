@@ -5,6 +5,7 @@ import {
   FiArrowLeft, FiSave, FiUpload, FiX, FiHome, FiMapPin,
   FiDollarSign, FiGrid, FiImage
 } from 'react-icons/fi'
+import { DIRHAM_SYMBOL } from '../../utils/currency'
 
 const backofficeService = {
   getProperty: async (id) => {
@@ -320,7 +321,7 @@ export default function BackofficePropertyForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Prix (DH) <span className="text-red-500">*</span>
+                Prix ({DIRHAM_SYMBOL}) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"

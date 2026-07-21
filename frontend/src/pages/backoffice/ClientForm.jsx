@@ -5,6 +5,7 @@ import {
   FiArrowLeft, FiSave, FiUser, FiMail, FiPhone, FiMapPin,
   FiDollarSign, FiTag, FiFileText, FiX, FiPlus
 } from 'react-icons/fi'
+import { DIRHAM_SYMBOL } from '../../utils/currency'
 
 const backofficeService = {
   getClient: async (id) => {
@@ -427,7 +428,7 @@ export default function BackofficeClientForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Budget minimum (DH)
+                  Budget minimum ({DIRHAM_SYMBOL})
                 </label>
                 <input
                   type="number"
@@ -439,7 +440,7 @@ export default function BackofficeClientForm() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Budget maximum (DH)
+                  Budget maximum ({DIRHAM_SYMBOL})
                 </label>
                 <input
                   type="number"

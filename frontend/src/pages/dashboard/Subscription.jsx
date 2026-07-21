@@ -1,13 +1,168 @@
-import { useState } from 'react'
-import { useQuery } from 'react-query'
+import { useState, useEffect } from 'react'
+import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { Link } from 'react-router-dom'
 import {
   FiCheck, FiX, FiCreditCard, FiDownload, FiCheckCircle, FiClock,
   FiAlertCircle, FiCalendar, FiArrowRight, FiStar, FiZap, FiAward,
-  FiPlus, FiTrash2, FiEdit2
+  FiPlus, FiTrash2, FiEdit2, FiRefreshCw
 } from 'react-icons/fi'
+import { jsPDF } from 'jspdf'
+import axios from 'axios'
+import { toast } from 'react-toastify'
 import useAuthStore from '../../store/authStore'
 import { formatPrice } from '../../utils/currency'
+
+const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
+
+// Generate invoice PDF
+const generateInvoicePDF = (invoice, user) => {
+  const doc = new jsPDF()
+  const pageWidth = doc.internal.pageSize.getWidth()
+
+  // Colors
+  const primaryColor = [30, 58, 95] // #1e3a5f
+  const grayColor = [107, 114, 128]
+  const blackColor = [17, 24, 39]
+
+  // Header
+  doc.setFillColor(...primaryColor)
+  doc.rect(0, 0, pageWidth, 40, 'F')
+
+  // Logo/Company name
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(24)
+  doc.setFont('helvetica', 'bold')
+  doc.text('SemsarOut', 20, 25)
+
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'normal')
+  doc.text('www.semsarout.com', 20, 33)
+
+  // Invoice title
+  doc.setFontSize(12)
+  doc.text('FACTURE', pageWidth - 20, 25, { align: 'right' })
+  doc.text(invoice.reference, pageWidth - 20, 33, { align: 'right' })
+
+  // Reset text color
+  doc.setTextColor(...blackColor)
+
+  // Invoice details section
+  let yPos = 60
+
+  // Date and period
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'bold')
+  doc.text('Date de facturation:', 20, yPos)
+  doc.setFont('helvetica', 'normal')
+  doc.text(new Date(invoice.date).toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }), 70, yPos)
+
+  yPos += 8
+  doc.setFont('helvetica', 'bold')
+  doc.text('Période:', 20, yPos)
+  doc.setFont('helvetica', 'normal')
+  doc.text(invoice.period, 70, yPos)
+
+  // Client info
+  yPos += 20
+  doc.setFillColor(249, 250, 251)
+  doc.rect(20, yPos - 5, pageWidth - 40, 35, 'F')
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(11)
+  doc.text('Facturé à:', 25, yPos + 5)
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(10)
+  doc.text(user?.first_name && user?.last_name
+    ? `${user.first_name} ${user.last_name}`
+    : user?.email || 'Client', 25, yPos + 14)
+  doc.text(user?.email || '', 25, yPos + 22)
+
+  // Company info (right side)
+  doc.setFont('helvetica', 'bold')
+  doc.text('SemsarOut SARL', pageWidth - 25, yPos + 5, { align: 'right' })
+  doc.setFont('helvetica', 'normal')
+  doc.text('123 Boulevard Mohammed V', pageWidth - 25, yPos + 14, { align: 'right' })
+  doc.text('Casablanca, Maroc', pageWidth - 25, yPos + 22, { align: 'right' })
+
+  // Invoice items table
+  yPos += 50
+
+  // Table header
+  doc.setFillColor(...primaryColor)
+  doc.rect(20, yPos, pageWidth - 40, 10, 'F')
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'bold')
+  doc.text('Description', 25, yPos + 7)
+  doc.text('Quantité', 110, yPos + 7)
+  doc.text('Prix unitaire', 135, yPos + 7)
+  doc.text('Total', pageWidth - 25, yPos + 7, { align: 'right' })
+
+  // Table row
+  yPos += 10
+  doc.setTextColor(...blackColor)
+  doc.setFillColor(255, 255, 255)
+  doc.rect(20, yPos, pageWidth - 40, 12, 'F')
+  doc.setFont('helvetica', 'normal')
+  doc.text(`Abonnement ${invoice.planName || 'Premium'} - ${invoice.period}`, 25, yPos + 8)
+  doc.text('1', 115, yPos + 8)
+  doc.text(formatPrice(invoice.amount), 135, yPos + 8)
+  doc.text(formatPrice(invoice.amount), pageWidth - 25, yPos + 8, { align: 'right' })
+
+  // Separator line
+  yPos += 15
+  doc.setDrawColor(229, 231, 235)
+  doc.line(20, yPos, pageWidth - 20, yPos)
+
+  // Totals
+  yPos += 15
+  doc.setTextColor(...grayColor)
+  doc.text('Sous-total HT:', 130, yPos)
+  doc.setTextColor(...blackColor)
+  doc.text(formatPrice(invoice.amount * 0.8), pageWidth - 25, yPos, { align: 'right' })
+
+  yPos += 8
+  doc.setTextColor(...grayColor)
+  doc.text('TVA (20%):', 130, yPos)
+  doc.setTextColor(...blackColor)
+  doc.text(formatPrice(invoice.amount * 0.2), pageWidth - 25, yPos, { align: 'right' })
+
+  yPos += 10
+  doc.setFillColor(...primaryColor)
+  doc.rect(125, yPos - 5, pageWidth - 145, 12, 'F')
+  doc.setTextColor(255, 255, 255)
+  doc.setFont('helvetica', 'bold')
+  doc.text('Total TTC:', 130, yPos + 3)
+  doc.text(formatPrice(invoice.amount), pageWidth - 25, yPos + 3, { align: 'right' })
+
+  // Payment status
+  yPos += 25
+  doc.setTextColor(...blackColor)
+  doc.setFont('helvetica', 'normal')
+
+  if (invoice.status === 'paid') {
+    doc.setFillColor(220, 252, 231)
+    doc.rect(20, yPos, 60, 10, 'F')
+    doc.setTextColor(22, 163, 74)
+    doc.setFont('helvetica', 'bold')
+    doc.text('✓ PAYÉE', 30, yPos + 7)
+  }
+
+  // Footer
+  yPos = 260
+  doc.setTextColor(...grayColor)
+  doc.setFontSize(8)
+  doc.setFont('helvetica', 'normal')
+  doc.text('SemsarOut SARL - RC: 123456 - IF: 12345678 - ICE: 001234567000012', pageWidth / 2, yPos, { align: 'center' })
+  doc.text('Pour toute question concernant cette facture, contactez-nous à facturation@semsarout.com', pageWidth / 2, yPos + 6, { align: 'center' })
+
+  return doc
+}
 
 // PayPal icon component
 const PayPalIcon = ({ className }) => (
@@ -98,8 +253,9 @@ const AGENCY_PLANS = [
       { text: 'Statistiques basiques', included: true },
       { text: 'Import CSV', included: false },
       { text: 'API & Intégrations', included: false },
+      { text: 'Programmes immobiliers', included: false },
+      { text: 'StayManager sync', included: false },
       { text: 'CRM & Pipeline', included: false },
-      { text: 'Support prioritaire', included: false },
     ],
     cta: 'Choisir Starter',
     popular: false
@@ -119,8 +275,10 @@ const AGENCY_PLANS = [
       { text: 'Statistiques avancées', included: true },
       { text: 'Import CSV', included: true },
       { text: 'API & Intégrations', included: true },
-      { text: 'CRM & Pipeline', included: true },
+      { text: 'Programmes immobiliers (10 max)', included: true },
+      { text: 'StayManager sync illimité', included: true },
       { text: 'Support prioritaire', included: false },
+      { text: 'Account manager dédié', included: false },
     ],
     cta: 'Choisir Pro',
     popular: true
@@ -140,8 +298,10 @@ const AGENCY_PLANS = [
       { text: 'Analytics personnalisés', included: true },
       { text: 'Import CSV avancé', included: true },
       { text: 'API complète & Webhooks', included: true },
-      { text: 'CRM complet & StayManager', included: true },
-      { text: 'Support dédié 24/7', included: true },
+      { text: 'Programmes illimités', included: true },
+      { text: 'StayManager sync illimité', included: true },
+      { text: 'Support prioritaire 24/7', included: true },
+      { text: 'Account manager dédié', included: true },
     ],
     cta: 'Contacter les ventes',
     popular: false
@@ -243,6 +403,7 @@ function AddPaymentModal({ isOpen, onClose, onAdd, type }) {
   const [cvv, setCvv] = useState('')
   const [paypalEmail, setPaypalEmail] = useState('')
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   if (!isOpen) return null
 
@@ -268,14 +429,40 @@ function AddPaymentModal({ isOpen, onClose, onAdd, type }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    setSaving(false)
-    if (type === 'card') {
-      onAdd({ type: 'card', last4: cardNumber.slice(-4), brand: 'Visa', expiry: expiryDate, name: cardName })
-    } else {
-      onAdd({ type: 'paypal', email: paypalEmail })
+    setError('')
+
+    try {
+      let paymentData
+      if (type === 'card') {
+        // Get last 4 digits without spaces
+        const cleanCardNumber = cardNumber.replace(/\s/g, '')
+        paymentData = {
+          type: 'card',
+          last4: cleanCardNumber.slice(-4),
+          brand: 'visa',
+          expiry: expiryDate,
+          name: cardName
+        }
+      } else {
+        paymentData = {
+          type: 'paypal',
+          email: paypalEmail
+        }
+      }
+
+      await onAdd(paymentData)
+      // Reset form and close on success
+      setCardNumber('')
+      setCardName('')
+      setExpiryDate('')
+      setCvv('')
+      setPaypalEmail('')
+      onClose()
+    } catch (err) {
+      setError(err.response?.data?.error || 'Une erreur est survenue')
+    } finally {
+      setSaving(false)
     }
-    onClose()
   }
 
   return (
@@ -293,6 +480,11 @@ function AddPaymentModal({ isOpen, onClose, onAdd, type }) {
           </div>
 
           <form onSubmit={handleSubmit}>
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {error}
+              </div>
+            )}
             {type === 'card' ? (
               <div className="space-y-4">
                 <div>
@@ -403,55 +595,259 @@ function AddPaymentModal({ isOpen, onClose, onAdd, type }) {
   )
 }
 
+// API helper function
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token')
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
 export default function Subscription() {
   const { user } = useAuthStore()
+  const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState('plans')
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [paymentModalType, setPaymentModalType] = useState('card')
-  const isAgency = user?.user_type === 'professional'
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState(null)
+  const [processing, setProcessing] = useState(false)
+  const [subscriptionSuccess, setSubscriptionSuccess] = useState(false)
+  const isAgency = user?.user_type === 'professional' || user?.user_type === 'admin'
 
-  // Mock data for current subscription
-  const currentPlan = isAgency ? 'starter' : 'free'
+  // Plans from frontend constants (can also fetch from backend)
   const plans = isAgency ? AGENCY_PLANS : INDIVIDUAL_PLANS
 
-  // Mock payment methods
-  const [paymentMethods, setPaymentMethods] = useState([
-    { id: 1, type: 'card', brand: 'Visa', last4: '4242', expiry: '12/27', name: 'AHMED BENALI', isDefault: true },
-  ])
+  // Fetch current subscription from backend
+  const { data: subscriptionData, isLoading: loadingSubscription, refetch: refetchSubscription } = useQuery(
+    'currentSubscription',
+    async () => {
+      const { data } = await axios.get(`${API_URL}/subscription/current`, {
+        headers: getAuthHeaders()
+      })
+      return data
+    },
+    { enabled: !!user }
+  )
 
-  // Mock invoices
-  const invoices = [
-    { id: 1, reference: 'INV-2026-001', amount: isAgency ? 299 : 99, status: 'paid', date: '2026-01-01', period: 'Janvier 2026' },
-    { id: 2, reference: 'INV-2025-012', amount: isAgency ? 299 : 99, status: 'paid', date: '2025-12-01', period: 'Décembre 2025' },
-    { id: 3, reference: 'INV-2025-011', amount: isAgency ? 299 : 99, status: 'paid', date: '2025-11-01', period: 'Novembre 2025' },
-  ]
+  // Fetch payment methods from backend
+  const { data: paymentMethodsData, isLoading: loadingPaymentMethods, refetch: refetchPaymentMethods } = useQuery(
+    'paymentMethods',
+    async () => {
+      const { data } = await axios.get(`${API_URL}/payment-methods`, {
+        headers: getAuthHeaders()
+      })
+      return data.payment_methods || []
+    },
+    { enabled: !!user }
+  )
+
+  // Fetch invoices from backend
+  const { data: invoicesData, isLoading: loadingInvoices, refetch: refetchInvoices } = useQuery(
+    'invoices',
+    async () => {
+      const { data } = await axios.get(`${API_URL}/invoices`, {
+        headers: getAuthHeaders()
+      })
+      return data.invoices || []
+    },
+    { enabled: !!user }
+  )
+
+  // Get data from queries or use defaults
+  const paymentMethods = paymentMethodsData || []
+  const invoices = invoicesData || []
+  const currentPlan = subscriptionData?.current_plan || (isAgency ? 'starter' : 'free')
+  const activeSubscription = subscriptionData?.subscription
+  const [showManageMenu, setShowManageMenu] = useState(false)
+
+  const cancelMutation = useMutation(
+    async () => {
+      const { data } = await axios.post(`${API_URL}/cancel-subscription`, null, {
+        headers: getAuthHeaders()
+      })
+      return data
+    },
+    {
+      onSuccess: () => {
+        toast.success('Abonnement annulé')
+        refetchSubscription()
+        setShowManageMenu(false)
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.error || 'Erreur lors de l\'annulation')
+      }
+    }
+  )
+
+  const handleCancelSubscription = () => {
+    if (window.confirm('Êtes-vous sûr de vouloir annuler votre abonnement ?')) {
+      cancelMutation.mutate()
+    }
+  }
+
+  // Add payment method mutation
+  const addPaymentMutation = useMutation(
+    async (paymentData) => {
+      const { data } = await axios.post(`${API_URL}/payment-methods`, paymentData, {
+        headers: getAuthHeaders()
+      })
+      return data
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('paymentMethods')
+      }
+    }
+  )
+
+  // Delete payment method mutation
+  const deletePaymentMutation = useMutation(
+    async (pmId) => {
+      await axios.delete(`${API_URL}/payment-methods/${pmId}`, {
+        headers: getAuthHeaders()
+      })
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('paymentMethods')
+      }
+    }
+  )
+
+  // Set default payment method mutation
+  const setDefaultPaymentMutation = useMutation(
+    async (pmId) => {
+      await axios.post(`${API_URL}/payment-methods/${pmId}/set-default`, {}, {
+        headers: getAuthHeaders()
+      })
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('paymentMethods')
+      }
+    }
+  )
+
+  // Change plan mutation
+  const changePlanMutation = useMutation(
+    async ({ planId, billingCycle }) => {
+      const { data } = await axios.post(`${API_URL}/subscription/change-plan`, {
+        plan_id: planId,
+        billing_cycle: billingCycle || 'monthly'
+      }, {
+        headers: getAuthHeaders()
+      })
+      return data
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('currentSubscription')
+        queryClient.invalidateQueries('invoices')
+      }
+    }
+  )
 
   const handleSelectPlan = (plan) => {
-    // Redirect to checkout or show payment modal
-    console.log('Selected plan:', plan)
-    alert(`Vous avez sélectionné le plan ${plan.name}. La page de paiement sera disponible prochainement.`)
-  }
-
-  const handleAddPayment = (payment) => {
-    const newPayment = {
-      id: Date.now(),
-      isDefault: paymentMethods.length === 0,
-      ...payment
+    // Check if user has a payment method
+    if (paymentMethods.length === 0) {
+      // No payment method - switch to billing tab and prompt to add one
+      setActiveTab('billing')
+      return
     }
-    setPaymentMethods([...paymentMethods, newPayment])
+
+    // Show confirmation modal
+    setSelectedPlan(plan)
+    setShowConfirmModal(true)
   }
 
-  const handleSetDefaultPayment = (id) => {
-    setPaymentMethods(paymentMethods.map(pm => ({ ...pm, isDefault: pm.id === id })))
-  }
+  const handleConfirmSubscription = async () => {
+    if (!selectedPlan) return
 
-  const handleDeletePayment = (id) => {
-    if (window.confirm('Supprimer ce moyen de paiement ?')) {
-      const updated = paymentMethods.filter(pm => pm.id !== id)
-      if (updated.length > 0 && !updated.some(pm => pm.isDefault)) {
-        updated[0].isDefault = true
+    setProcessing(true)
+
+    try {
+      // Call API to change plan
+      const result = await changePlanMutation.mutateAsync({
+        planId: selectedPlan.id,
+        billingCycle: 'monthly'
+      })
+
+      setProcessing(false)
+      setShowConfirmModal(false)
+      setSubscriptionSuccess(true)
+
+      // Auto-download the invoice PDF if invoice was created
+      if (result.invoice) {
+        const invoiceForPdf = {
+          reference: result.invoice.reference,
+          amount: result.invoice.total,
+          status: result.invoice.status,
+          date: result.invoice.created_at,
+          period: result.invoice.period_label,
+          planName: selectedPlan.name
+        }
+        const pdf = generateInvoicePDF(invoiceForPdf, user)
+        pdf.save(`${result.invoice.reference}.pdf`)
       }
-      setPaymentMethods(updated)
+
+      // Hide success message after 5 seconds
+      setTimeout(() => setSubscriptionSuccess(false), 5000)
+    } catch (error) {
+      console.error('Error changing plan:', error)
+      setProcessing(false)
+      alert(error.response?.data?.error || 'Une erreur est survenue lors du changement de plan')
+    }
+  }
+
+  const handleDownloadPDF = async (invoice) => {
+    // Try to download from backend first
+    try {
+      const response = await axios.get(`${API_URL}/invoices/${invoice.id}/pdf`, {
+        headers: getAuthHeaders(),
+        responseType: 'blob'
+      })
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `${invoice.reference}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch {
+      // Fallback to client-side generation
+      const invoiceForPdf = {
+        reference: invoice.reference,
+        amount: invoice.total || invoice.amount,
+        status: invoice.status,
+        date: invoice.created_at || invoice.date,
+        period: invoice.period_label || invoice.period,
+        planName: invoice.planName || 'Abonnement'
+      }
+      const pdf = generateInvoicePDF(invoiceForPdf, user)
+      pdf.save(`${invoice.reference}.pdf`)
+    }
+  }
+
+  const handleAddPayment = async (payment) => {
+    // This will throw if it fails, which the modal will catch
+    await addPaymentMutation.mutateAsync(payment)
+  }
+
+  const handleSetDefaultPayment = async (id) => {
+    try {
+      await setDefaultPaymentMutation.mutateAsync(id)
+    } catch (error) {
+      console.error('Error setting default payment:', error)
+    }
+  }
+
+  const handleDeletePayment = async (id) => {
+    if (window.confirm('Supprimer ce moyen de paiement ?')) {
+      try {
+        await deletePaymentMutation.mutateAsync(id)
+      } catch (error) {
+        console.error('Error deleting payment method:', error)
+      }
     }
   }
 
@@ -461,6 +857,19 @@ export default function Subscription() {
   }
 
   const currentPlanData = plans.find(p => p.id === currentPlan)
+  const isLoading = loadingSubscription || loadingPaymentMethods || loadingInvoices
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-center py-20">
+          <FiRefreshCw className="w-8 h-8 text-primary-600 animate-spin" />
+          <span className="ml-3 text-gray-600">Chargement...</span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -516,13 +925,37 @@ export default function Subscription() {
                   <p className="text-2xl font-bold">
                     {formatPrice(currentPlanData.price)}<span className="text-lg font-normal opacity-80">/mois</span>
                   </p>
-                  <p className="opacity-80 text-sm mt-1">
-                    Prochain paiement le 1er février 2026
-                  </p>
+                  {activeSubscription?.end_date && (
+                    <p className="opacity-80 text-sm mt-1">
+                      Prochain paiement le {new Date(activeSubscription.end_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                  )}
                 </div>
-                <button className="px-6 py-3 bg-white text-primary-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-                  Gérer l'abonnement
-                </button>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowManageMenu(!showManageMenu)}
+                    className="px-6 py-3 bg-white text-primary-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+                  >
+                    Gérer l'abonnement
+                  </button>
+                  {showManageMenu && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10 text-gray-900">
+                      <button
+                        onClick={() => { setActiveTab('billing'); setShowManageMenu(false) }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                      >
+                        Voir la facturation
+                      </button>
+                      <button
+                        onClick={handleCancelSubscription}
+                        disabled={cancelMutation.isLoading}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                      >
+                        {cancelMutation.isLoading ? 'Annulation...' : 'Annuler l\'abonnement'}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -717,6 +1150,10 @@ export default function Subscription() {
                     {invoices.map(invoice => {
                       const statusConfig = STATUS_CONFIG[invoice.status] || STATUS_CONFIG.pending
                       const StatusIcon = statusConfig.icon
+                      // Handle both backend and local data format
+                      const period = invoice.period_label || invoice.period
+                      const date = invoice.created_at || invoice.date
+                      const amount = invoice.total || invoice.amount
 
                       return (
                         <tr key={invoice.id} className="hover:bg-gray-50">
@@ -724,14 +1161,14 @@ export default function Subscription() {
                             <span className="font-medium text-gray-900">{invoice.reference}</span>
                           </td>
                           <td className="px-6 py-4 text-gray-600">
-                            {invoice.period}
+                            {period}
                           </td>
                           <td className="px-6 py-4 text-gray-600">
-                            {new Date(invoice.date).toLocaleDateString('fr-FR')}
+                            {new Date(date).toLocaleDateString('fr-FR')}
                           </td>
                           <td className="px-6 py-4">
                             <span className="font-semibold text-gray-900">
-                              {formatPrice(invoice.amount)}
+                              {formatPrice(amount)}
                             </span>
                           </td>
                           <td className="px-6 py-4">
@@ -741,7 +1178,10 @@ export default function Subscription() {
                             </span>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
+                            <button
+                              onClick={() => handleDownloadPDF(invoice)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                            >
                               <FiDownload className="w-4 h-4" />
                               PDF
                             </button>
@@ -764,6 +1204,100 @@ export default function Subscription() {
         onAdd={handleAddPayment}
         type={paymentModalType}
       />
+
+      {/* Subscription Confirmation Modal */}
+      {showConfirmModal && selectedPlan && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/50" onClick={() => !processing && setShowConfirmModal(false)} />
+            <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+              <div className="text-center mb-6">
+                <div className={`w-16 h-16 rounded-full ${COLOR_CLASSES[selectedPlan.color].icon} flex items-center justify-center mx-auto mb-4`}>
+                  {(() => {
+                    const Icon = selectedPlan.icon
+                    return <Icon className="w-8 h-8" />
+                  })()}
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">
+                  Confirmer l'abonnement
+                </h2>
+                <p className="text-gray-600">
+                  Vous allez souscrire au plan <strong>{selectedPlan.name}</strong>
+                </p>
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-600">Plan {selectedPlan.name}</span>
+                  <span className="font-semibold text-gray-900">{formatPrice(selectedPlan.price)}/mois</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-500">Moyen de paiement</span>
+                  <span className="text-gray-700">
+                    {paymentMethods.find(pm => pm.isDefault)?.type === 'card'
+                      ? `•••• ${paymentMethods.find(pm => pm.isDefault)?.last4}`
+                      : 'PayPal'
+                    }
+                  </span>
+                </div>
+                <div className="border-t border-gray-200 mt-3 pt-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-gray-900">Total aujourd'hui</span>
+                    <span className="text-lg font-bold text-primary-600">{formatPrice(selectedPlan.price)}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Essai gratuit de 14 jours, puis {formatPrice(selectedPlan.price)}/mois
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  disabled={processing}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleConfirmSubscription}
+                  disabled={processing}
+                  className={`flex-1 px-4 py-3 ${COLOR_CLASSES[selectedPlan.color].button} text-white rounded-xl font-medium disabled:opacity-50 flex items-center justify-center gap-2`}
+                >
+                  {processing ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Traitement...
+                    </>
+                  ) : (
+                    <>
+                      <FiCheck className="w-5 h-5" />
+                      Confirmer
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <p className="text-xs text-gray-500 text-center mt-4">
+                En confirmant, vous acceptez nos conditions générales de vente
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Message */}
+      {subscriptionSuccess && (
+        <div className="fixed bottom-6 right-6 z-50 animate-slide-up">
+          <div className="bg-green-600 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3">
+            <FiCheckCircle className="w-6 h-6" />
+            <div>
+              <p className="font-medium">Abonnement activé !</p>
+              <p className="text-sm text-green-100">Votre plan a été mis à jour avec succès</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

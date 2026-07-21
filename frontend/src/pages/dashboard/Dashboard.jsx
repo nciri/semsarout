@@ -1,9 +1,72 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from 'react-query'
-import { FiHome, FiUsers, FiEye, FiMessageSquare, FiPlus, FiArrowRight } from 'react-icons/fi'
+import {
+  FiHome, FiUsers, FiEye, FiMessageSquare, FiPlus, FiArrowRight,
+  FiExternalLink
+} from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
 import { propertyService } from '../../services/propertyService'
 import api from '../../services/api'
+import { STAYMANAGER_REGISTER_URL } from '../../constants/services'
+import StayManagerWordmark from '../../components/common/StayManagerWordmark'
+
+/**
+ * Parcours d'accueil selon l'intention déclarée à l'inscription (user.interest).
+ * Affiché tant que l'utilisateur n'a pas encore d'annonce.
+ */
+const ONBOARDING = {
+  vente: {
+    title: 'Prêt à vendre votre bien ?',
+    subtitle: 'Constituez votre dossier de vente 100% en ligne en 10 minutes.',
+    actions: [
+      { label: 'Vendre en ligne', description: 'Descriptif, estimation, photos, documents : tout en un parcours', to: '/vendre', primary: true },
+      { label: 'Publier une annonce simple', description: 'Diffusez votre bien gratuitement sur SemsarOut', to: '/dashboard/annonces/nouvelle' },
+      { label: 'Estimation gratuite', description: 'Connaissez la valeur de votre bien avant de vendre', to: '/contact?service=estimation' }
+    ]
+  },
+  'mise-en-location': {
+    title: 'Mettons votre bien en location',
+    subtitle: 'Trouvez le locataire idéal, seul ou accompagné.',
+    actions: [
+      { label: 'Publier mon annonce de location', description: 'Diffusez votre bien et recevez des candidatures', to: '/dashboard/annonces/nouvelle', primary: true },
+      { label: 'Déléguer la mise en location', description: 'Nous sélectionnons le locataire pour 1 mois de loyer', to: '/contact?service=mise-en-location' }
+    ]
+  },
+  'gestion-locative': {
+    title: 'Déléguez la gestion de votre location',
+    subtitle: 'Loyers, travaux, litiges : nous nous occupons de tout pour 5% du loyer.',
+    actions: [
+      { label: 'Demander la gestion locative', description: 'Un conseiller vous rappelle sous 24h', to: '/contact?service=gestion-locative', primary: true },
+      { label: 'Découvrir le service en détail', description: 'Tout ce qui est inclus dans la gestion complète', to: '/nos-services/gestion-locative' }
+    ]
+  },
+  'courte-duree': {
+    title: 'Lancez votre location courte durée',
+    subtitle: 'Avec notre partenaire StayManager.ma : essai gratuit de 14 jours.',
+    staymanager: true,
+    actions: [
+      { label: 'Créer votre compte StayManager', description: 'Plateforme en libre-service dès 179 Đh/bien/mois', href: STAYMANAGER_REGISTER_URL, primary: true },
+      { label: 'Connecter StayManager à SemsarOut', description: 'Synchronisez vos biens et réservations', to: '/dashboard/integrations/staymanager' }
+    ]
+  },
+  estimation: {
+    title: 'Estimons votre bien gratuitement',
+    subtitle: 'Une estimation précise, basée sur le marché local, sans engagement.',
+    actions: [
+      { label: 'Demander mon estimation', description: 'Un expert analyse votre bien sous 24h', to: '/contact?service=estimation', primary: true },
+      { label: 'Publier une annonce', description: 'Vous connaissez déjà votre prix ? Diffusez votre bien', to: '/dashboard/annonces/nouvelle' }
+    ]
+  },
+  autre: {
+    title: 'Par où commencer ?',
+    subtitle: 'Découvrez ce que SemsarOut peut faire pour vous.',
+    actions: [
+      { label: 'Publier une annonce', description: 'Vente ou location, diffusez gratuitement', to: '/dashboard/annonces/nouvelle', primary: true },
+      { label: 'Découvrir nos services', description: 'Vente, location, gestion, courte durée', to: '/nos-services' },
+      { label: 'Parler à un conseiller', description: 'Réponse sous 24h ouvrées', to: '/contact' }
+    ]
+  }
+}
 
 function Dashboard() {
   const { user } = useAuthStore()
@@ -20,6 +83,11 @@ function Dashboard() {
       return response.data
     }
   )
+
+  const isNewUser = propertiesData && propertiesData.total === 0
+  const onboarding = isNewUser
+    ? ONBOARDING[user?.interest] || ONBOARDING.autre
+    : null
 
   const stats = [
     {
@@ -59,6 +127,63 @@ function Dashboard() {
           Nouvelle annonce
         </Link>
       </div>
+
+      {/* Onboarding selon l'intention déclarée */}
+      {onboarding && (
+        <div className={`card p-6 sm:p-8 mb-8 ${
+          onboarding.staymanager
+            ? 'bg-gradient-to-r from-[#F5F0E6] via-[#FAF7F2] to-[#ECF4EF] border border-[#E5DFD3]'
+            : 'bg-gradient-to-r from-primary-50 to-terracotta-50'
+        }`}>
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="font-display text-xl font-bold text-gray-900">
+              {onboarding.title}
+            </h2>
+            {onboarding.staymanager && (
+              <span className="hidden sm:flex items-center gap-1.5 ml-2">
+                <img src="/staymanager-logo.png" alt="StayManager.ma" className="h-6" />
+                <StayManagerWordmark className="text-base" />
+              </span>
+            )}
+          </div>
+          <p className="text-gray-600 text-sm mb-6">{onboarding.subtitle}</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {onboarding.actions.map((action, idx) => {
+              const inner = (
+                <>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`font-semibold ${action.primary ? 'text-white' : 'text-gray-900'}`}>
+                      {action.label}
+                    </span>
+                    {action.href
+                      ? <FiExternalLink className={`w-4 h-4 flex-shrink-0 ${action.primary ? 'text-white/80' : 'text-gray-400'}`} />
+                      : <FiArrowRight className={`w-4 h-4 flex-shrink-0 ${action.primary ? 'text-white/80' : 'text-gray-400'}`} />}
+                  </div>
+                  <p className={`text-sm ${action.primary ? 'text-white/85' : 'text-gray-500'}`}>
+                    {action.description}
+                  </p>
+                </>
+              )
+              const cls = `block p-4 rounded-xl transition-all hover:shadow-md ${
+                action.primary
+                  ? onboarding.staymanager
+                    ? 'bg-gradient-to-r from-[#1F3D34] to-[#2E5E4E]'
+                    : 'bg-primary-600 hover:bg-primary-700'
+                  : 'bg-white border border-gray-200 hover:border-gray-300'
+              }`
+              return action.href ? (
+                <a key={idx} href={action.href} target="_blank" rel="noopener noreferrer" className={cls}>
+                  {inner}
+                </a>
+              ) : (
+                <Link key={idx} to={action.to} className={cls}>
+                  {inner}
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

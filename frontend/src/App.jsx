@@ -7,8 +7,16 @@ import AgencyList from './pages/AgencyList'
 import AgencyDetail from './pages/AgencyDetail'
 import AgencyPricing from './pages/AgencyPricing'
 import Services from './pages/Services'
+import Contact from './pages/Contact'
+import SellProperty from './pages/SellProperty'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
+import ForgotPassword from './pages/auth/ForgotPassword'
+import ResetPassword from './pages/auth/ResetPassword'
+import About from './pages/About'
+import LegalPage from './pages/LegalPage'
+import CheckoutConfirmation from './pages/CheckoutConfirmation'
+import PaymentGateway from './pages/PaymentGateway'
 import Dashboard from './pages/dashboard/Dashboard'
 import MyProperties from './pages/dashboard/MyProperties'
 import CreateProperty from './pages/dashboard/CreateProperty'
@@ -17,6 +25,13 @@ import MyAgency from './pages/dashboard/MyAgency'
 import Checkout from './pages/Checkout'
 import NotFound from './pages/NotFound'
 import PrivateRoute from './components/auth/PrivateRoute'
+import ProgramList from './pages/ProgramList'
+import ProgramDetail from './pages/ProgramDetail'
+import DashboardPrograms from './pages/dashboard/Programs'
+import DashboardProgramForm from './pages/dashboard/ProgramForm'
+import StayManagerIntegration from './pages/dashboard/integrations/StayManager'
+import StayManagerProperties from './pages/dashboard/integrations/StayManagerProperties'
+import StayManagerReservations from './pages/dashboard/integrations/StayManagerReservations'
 
 // Backoffice imports
 import BackofficeLayout from './pages/backoffice/components/BackofficeLayout'
@@ -44,28 +59,50 @@ function App() {
         <Route index element={<Home />} />
         <Route path="annonces" element={<PropertyList />} />
         <Route path="annonces/:id" element={<PropertyDetail />} />
+        <Route path="programmes" element={<ProgramList />} />
+        <Route path="programmes/:slug" element={<ProgramDetail />} />
         <Route path="agences" element={<AgencyList />} />
         <Route path="agences/tarifs" element={<AgencyPricing />} />
         <Route path="agences/:slug" element={<AgencyDetail />} />
         <Route path="nos-services" element={<Services />} />
         <Route path="nos-services/:service" element={<Services />} />
+        <Route path="contact" element={<Contact />} />
+        <Route path="vendre" element={<SellProperty />} />
         <Route path="connexion" element={<Login />} />
         <Route path="inscription" element={<Register />} />
+        <Route path="mot-de-passe-oublie" element={<ForgotPassword />} />
+        <Route path="reinitialiser-mot-de-passe" element={<ResetPassword />} />
+        <Route path="a-propos" element={<About />} />
+        <Route path="mentions-legales" element={<LegalPage type="mentions" />} />
+        <Route path="cgu" element={<LegalPage type="cgu" />} />
+        <Route path="politique-de-confidentialite" element={<LegalPage type="confidentialite" />} />
+        <Route path="cookies" element={<LegalPage type="cookies" />} />
 
         {/* Protected routes */}
         <Route path="dashboard" element={<PrivateRoute />}>
           <Route index element={<Dashboard />} />
           <Route path="annonces" element={<MyProperties />} />
           <Route path="annonces/nouvelle" element={<CreateProperty />} />
+          <Route path="annonces/:id/modifier" element={<CreateProperty />} />
+          <Route path="programmes" element={<DashboardPrograms />} />
+          <Route path="programmes/nouveau" element={<DashboardProgramForm />} />
+          <Route path="programmes/:id" element={<DashboardProgramForm />} />
           <Route path="leads" element={<MyLeads />} />
           <Route path="agence" element={<MyAgency />} />
           <Route path="abonnement" element={<Subscription />} />
           <Route path="parametres" element={<DashboardSettings />} />
+          <Route path="integrations/staymanager" element={<StayManagerIntegration />} />
+          <Route path="integrations/staymanager/properties" element={<StayManagerProperties />} />
+          <Route path="integrations/staymanager/reservations" element={<StayManagerReservations />} />
         </Route>
 
         {/* Checkout (protected) */}
         <Route path="checkout" element={<PrivateRoute />}>
           <Route index element={<Checkout />} />
+          <Route path="confirmation" element={<CheckoutConfirmation />} />
+        </Route>
+        <Route path="payment-gateway" element={<PrivateRoute />}>
+          <Route index element={<PaymentGateway />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />

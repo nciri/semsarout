@@ -84,14 +84,7 @@ export default function PropertyMap({
   }, [mappableProperties])
 
   // Format price for marker
-  const formatMarkerPrice = (price) => {
-    if (price >= 1000000) {
-      return `${(price / 1000000).toFixed(1)}M Đ`
-    } else if (price >= 1000) {
-      return `${Math.round(price / 1000)}K Đ`
-    }
-    return `${price} Đ`
-  }
+  const formatMarkerPrice = (price) => formatPrice(price, { compact: true })
 
   if (mappableProperties.length === 0) {
     return (

@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from sqlalchemy import or_, and_, func
+from sqlalchemy import or_, and_, func, cast
 from app import db
 from app.api.v1 import api_v1_bp
 from app.models import Property, PropertyImage, User
@@ -124,8 +124,11 @@ def list_properties():
     if request.args.get('features'):
         features = request.args.get('features').split(',')
         for feature in features:
-            # Use PostgreSQL JSON contains operator
-            query = query.filter(Property.features.contains([feature]))
+            # Use case-insensitive text search on JSON array
+            # This handles both capitalized and lowercase feature values
+            query = query.filter(
+                func.lower(cast(Property.features, db.Text)).contains(feature.lower())
+            )
 
     # === Agency/Owner Filters ===
     if request.args.get('agency_id'):
@@ -301,7 +304,9 @@ def advanced_search():
 
     if filters.get('required_features'):
         for feature in filters['required_features']:
-            query = query.filter(Property.features.contains([feature]))
+            query = query.filter(
+                func.lower(cast(Property.features, db.Text)).contains(feature.lower())
+            )
 
     if filters.get('energy_classes'):
         query = query.filter(Property.energy_class.in_(filters['energy_classes']))
@@ -319,7 +324,9 @@ def advanced_search():
         elif prefs.get('high_floor'):
             query = query.filter(Property.floor >= 3)
         if prefs.get('with_elevator'):
-            query = query.filter(Property.features.contains(['ascenseur']))
+            query = query.filter(
+                func.lower(cast(Property.features, db.Text)).contains('ascenseur')
+            )
 
     if filters.get('owner_type'):
         if filters['owner_type'] == 'agency':

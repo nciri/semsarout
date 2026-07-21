@@ -5,6 +5,31 @@ from app.api.v1 import api_v1_bp
 from app.models import User
 
 
+@api_v1_bp.route('/users/me', methods=['GET'])
+@jwt_required()
+def get_my_profile():
+    """Get current user's profile."""
+    current_user_id = int(get_jwt_identity())
+    user = User.query.get(current_user_id)
+
+    if not user:
+        return jsonify({'error': 'Utilisateur non trouvé'}), 404
+
+    return jsonify({
+        'user': {
+            'id': user.id,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+            'phone': user.phone,
+            'avatar_url': user.avatar_url,
+            'user_type': user.user_type,
+            'agency_id': user.agency_id,
+            'created_at': user.created_at.isoformat() if user.created_at else None
+        }
+    })
+
+
 @api_v1_bp.route('/users/<int:user_id>', methods=['GET'])
 def get_user(user_id):
     """Get public user profile."""
