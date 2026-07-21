@@ -351,10 +351,14 @@ def change_plan():
     if not new_plan_id:
         return jsonify({'error': 'plan_id is required'}), 400
 
-    # Get new plan
-    new_plan = SubscriptionPlan.query.get(new_plan_id)
+    # Get new plan — plan_id may be a numeric PK or a slug ("pro", "starter"…).
+    # Only use .get() for numeric ids: a non-numeric string raises a DataError
+    # on the integer PK before we can fall back to a slug lookup.
+    new_plan = None
+    if isinstance(new_plan_id, int) or (isinstance(new_plan_id, str) and new_plan_id.isdigit()):
+        new_plan = SubscriptionPlan.query.get(int(new_plan_id))
     if not new_plan:
-        new_plan = SubscriptionPlan.query.filter_by(slug=new_plan_id).first()
+        new_plan = SubscriptionPlan.query.filter_by(slug=str(new_plan_id)).first()
     if not new_plan or not new_plan.is_active:
         return jsonify({'error': 'Plan not found'}), 404
 
