@@ -29,10 +29,8 @@ export default function MesBiensTabs() {
         </Link>
         <Link
           to="/dashboard/programmes"
-          className={`ml-2 mb-1 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold border-2 transition-colors ${
-            onProgrammes
-              ? 'border-amber-400 bg-amber-50 text-amber-700 shadow-sm'
-              : 'border-amber-400 text-amber-600 hover:bg-amber-50'
+          className={`inline-flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-colors ${
+            onProgrammes ? active : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300'
           }`}
         >
           <FiLayers className="w-4 h-4" />
