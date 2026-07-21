@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
-import { FiPlus, FiEdit2, FiTrash2, FiEye, FiMoreVertical } from 'react-icons/fi'
+import { FiEdit2, FiTrash2, FiEye, FiMoreVertical } from 'react-icons/fi'
 import { propertyService } from '../../services/propertyService'
 import { formatPrice } from '../../utils/currency'
+import MesBiensTabs from '../../components/dashboard/MesBiensTabs'
 
 function MyProperties() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -30,11 +31,6 @@ function MyProperties() {
       ? { value: 'sold', label: 'Vendues' }
       : { value: 'rented', label: 'Louées' }
   ]
-
-  const selectTab = (value) => {
-    // Changer d'onglet réinitialise le statut et la pagination
-    setSearchParams({ transaction_type: value, page: '1' })
-  }
 
   const setStatus = (value) => {
     const newParams = new URLSearchParams(searchParams)
@@ -87,38 +83,13 @@ function MyProperties() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-gray-900">Mes annonces</h1>
-          <p className="text-gray-600">{data?.total || 0} annonces au total</p>
-        </div>
-        <Link to="/dashboard/annonces/nouvelle" className="btn-primary mt-4 md:mt-0">
-          <FiPlus className="w-4 h-4 mr-2" />
-          Nouvelle annonce
-        </Link>
+      <div className="mb-6">
+        <h1 className="font-display text-2xl font-bold text-gray-900">Mes annonces</h1>
+        <p className="text-gray-600">{data?.total || 0} annonces au total</p>
       </div>
 
-      {/* Onglets : annonces en vente / en location */}
-      <div className="border-b border-gray-200 mb-4">
-        <nav className="flex gap-1 -mb-px">
-          {[
-            { value: 'sale', label: 'En vente' },
-            { value: 'rent', label: 'En location' }
-          ].map(tab => (
-            <button
-              key={tab.value}
-              onClick={() => selectTab(tab.value)}
-              className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
-                transactionType === tab.value
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
+      {/* Onglets : en vente / en location / programmes immobiliers */}
+      <MesBiensTabs />
 
       {/* Filtre par statut (propre à l'onglet) */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-2">

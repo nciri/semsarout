@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiSettings, FiCreditCard, FiLayers, FiLink, FiBriefcase, FiTrendingUp, FiInbox } from 'react-icons/fi'
+import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiSettings, FiCreditCard, FiLink, FiBriefcase, FiTrendingUp, FiInbox } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
 import Wordmark from '../common/Wordmark'
 
@@ -26,7 +26,6 @@ function Header() {
       items: [
         { to: '/dashboard', label: 'Tableau de bord', icon: FiGrid },
         { to: '/dashboard/annonces', label: 'Mes annonces', icon: FiFileText },
-        { to: '/dashboard/programmes', label: 'Programmes neufs', icon: FiLayers },
         { to: '/dashboard/leads', label: 'Demandes / Leads', icon: FiInbox }
       ]
     },

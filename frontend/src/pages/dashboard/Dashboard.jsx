@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from 'react-query'
 import {
-  FiHome, FiUsers, FiEye, FiMessageSquare, FiPlus, FiArrowRight,
+  FiHome, FiUsers, FiEye, FiMessageSquare, FiArrowRight,
   FiExternalLink
 } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
@@ -113,19 +113,13 @@ function Dashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-gray-900">
-            Bonjour, {user?.first_name} !
-          </h1>
-          <p className="text-gray-600">
-            Bienvenue sur votre tableau de bord
-          </p>
-        </div>
-        <Link to="/dashboard/annonces/nouvelle" className="btn-primary mt-4 md:mt-0">
-          <FiPlus className="w-4 h-4 mr-2" />
-          Nouvelle annonce
-        </Link>
+      <div className="mb-8">
+        <h1 className="font-display text-2xl font-bold text-gray-900">
+          Bonjour, {user?.first_name} !
+        </h1>
+        <p className="text-gray-600">
+          Bienvenue sur votre tableau de bord
+        </p>
       </div>
 
       {/* Onboarding selon l'intention déclarée */}
