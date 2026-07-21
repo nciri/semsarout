@@ -1,4 +1,5 @@
 import uuid
+import math
 from datetime import datetime
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -152,24 +153,28 @@ def list_properties():
         # Properties with at least one image
         query = query.filter(Property.images.any())
 
-    if request.args.get('with_virtual_tour') == 'true':
-        query = query.filter(Property.virtual_tour_url.isnot(None))
-
     # === Geo Filters ===
     if request.args.get('lat') and request.args.get('lng') and request.args.get('radius'):
-        # Simple bounding box filter (for precise distance, use PostGIS)
-        lat = float(request.args.get('lat'))
-        lng = float(request.args.get('lng'))
-        radius_km = float(request.args.get('radius'))
-        # Approximate: 1 degree ≈ 111 km
-        lat_delta = radius_km / 111.0
-        lng_delta = radius_km / (111.0 * abs(func.cos(func.radians(lat))))
-        query = query.filter(
-            and_(
-                Property.latitude.between(lat - lat_delta, lat + lat_delta),
-                Property.longitude.between(lng - lng_delta, lng + lng_delta)
+        # Simple bounding box filter (for precise distance, use PostGIS).
+        # Use Python math (lat/lng/radius are plain floats) — mixing them with
+        # SQL func.cos() previously produced an invalid expression and 500s.
+        try:
+            lat = float(request.args.get('lat'))
+            lng = float(request.args.get('lng'))
+            radius_km = float(request.args.get('radius'))
+        except (TypeError, ValueError):
+            lat = lng = radius_km = None
+        if lat is not None and lng is not None and radius_km:
+            # Approximate: 1 degree of latitude ≈ 111 km
+            lat_delta = radius_km / 111.0
+            cos_lat = max(abs(math.cos(math.radians(lat))), 0.01)  # avoid /0 near poles
+            lng_delta = radius_km / (111.0 * cos_lat)
+            query = query.filter(
+                and_(
+                    Property.latitude.between(lat - lat_delta, lat + lat_delta),
+                    Property.longitude.between(lng - lng_delta, lng + lng_delta)
+                )
             )
-        )
 
     # === Text Search ===
     if request.args.get('q'):
