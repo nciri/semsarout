@@ -562,6 +562,15 @@ export default function DashboardProgramForm() {
             {isEditing ? formData.name : 'Créez un nouveau projet immobilier'}
           </p>
         </div>
+        {isEditing && (
+          <Link
+            to={`/dashboard/programmes/${id}/plan`}
+            className="ml-auto btn-secondary inline-flex items-center gap-2"
+          >
+            <FiMapPin className="w-4 h-4" />
+            Plan interactif des lots
+          </Link>
+        )}
       </div>
 
       {/* Step indicator */}

@@ -59,6 +59,8 @@ class Program(db.Model):
     created_by = db.relationship('User')
     units = db.relationship('ProgramUnit', back_populates='program', cascade='all, delete-orphan')
     images = db.relationship('ProgramImage', back_populates='program', cascade='all, delete-orphan')
+    plans = db.relationship('ProgramPlan', back_populates='program', cascade='all, delete-orphan',
+                            order_by='ProgramPlan.position')
 
     def to_dict(self, include_units=False, include_images=False):
         """Serialize program to dictionary."""
@@ -234,3 +236,112 @@ class ProgramUnitImage(db.Model):
 
     def __repr__(self):
         return f'<ProgramUnitImage {self.id}>'
+
+
+# Lot status values used across the interactive lot plan feature
+LOT_STATUSES = ('available', 'reserved', 'sold')
+
+
+class ProgramPlan(db.Model):
+    """A visual plan (masterplan / floor plan) of a program, on which
+    individual lots are positioned as SVG polygon zones."""
+    __tablename__ = 'program_plans'
+
+    id = db.Column(db.Integer, primary_key=True)
+    program_id = db.Column(db.Integer, db.ForeignKey('programs.id'), nullable=False, index=True)
+
+    name = db.Column(db.String(150), nullable=False)  # "Plan de masse", "Étage 3"...
+    image_url = db.Column(db.String(500))
+    position = db.Column(db.Integer, default=0)  # ordering among a program's plans
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    program = db.relationship('Program', back_populates='plans')
+    lots = db.relationship('ProgramLot', back_populates='plan', cascade='all, delete-orphan')
+
+    def status_counts(self):
+        counts = {s: 0 for s in LOT_STATUSES}
+        for lot in self.lots:
+            if lot.status in counts:
+                counts[lot.status] += 1
+        return counts
+
+    def to_dict(self, include_lots=True):
+        data = {
+            'id': self.id,
+            'program_id': self.program_id,
+            'name': self.name,
+            'image_url': self.image_url,
+            'position': self.position,
+            'status_counts': self.status_counts(),
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+        if include_lots:
+            data['lots'] = [lot.to_dict() for lot in self.lots]
+        return data
+
+    def __repr__(self):
+        return f'<ProgramPlan {self.name}>'
+
+
+class ProgramLot(db.Model):
+    """An individual sellable lot positioned on a program plan.
+
+    Autonomous: carries its own specs rather than referencing a unit type.
+    `zone` stores the polygon as a list of normalized points [{x, y}, ...] with
+    x/y in 0..1 relative to the plan image, so it scales responsively."""
+    __tablename__ = 'program_lots'
+
+    id = db.Column(db.Integer, primary_key=True)
+    program_id = db.Column(db.Integer, db.ForeignKey('programs.id'), nullable=False, index=True)
+    plan_id = db.Column(db.Integer, db.ForeignKey('program_plans.id'), nullable=False, index=True)
+
+    reference = db.Column(db.String(50))          # "A302", "Lot 45"
+    title = db.Column(db.String(150))
+    lot_type = db.Column(db.String(30))           # apartment, villa, terrain, commercial...
+
+    surface = db.Column(db.Float)
+    rooms = db.Column(db.Integer)
+    bedrooms = db.Column(db.Integer)
+    bathrooms = db.Column(db.Integer)
+    floor = db.Column(db.Integer)
+    price = db.Column(db.Numeric(12, 2))
+
+    # available | reserved | sold
+    status = db.Column(db.String(20), default='available', index=True)
+
+    zone = db.Column(db.JSON)                     # [{x, y}, ...] normalized 0..1
+    description = db.Column(db.Text)
+    image_url = db.Column(db.String(500))
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    plan = db.relationship('ProgramPlan', back_populates='lots')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'program_id': self.program_id,
+            'plan_id': self.plan_id,
+            'reference': self.reference,
+            'title': self.title,
+            'lot_type': self.lot_type,
+            'surface': self.surface,
+            'rooms': self.rooms,
+            'bedrooms': self.bedrooms,
+            'bathrooms': self.bathrooms,
+            'floor': self.floor,
+            'price': float(self.price) if self.price is not None else None,
+            'status': self.status,
+            'zone': self.zone or [],
+            'description': self.description,
+            'image_url': self.image_url,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+    def __repr__(self):
+        return f'<ProgramLot {self.reference} {self.status}>'

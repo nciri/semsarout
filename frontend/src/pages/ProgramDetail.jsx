@@ -10,6 +10,7 @@ import {
 import { MdLocalParking, MdElevator } from 'react-icons/md'
 import { IoLeafOutline } from 'react-icons/io5'
 import { formatPrice } from '../utils/currency'
+import LotPlanViewer from '../components/common/LotPlanViewer'
 
 const programsService = {
   getProgram: async (slug) => {
@@ -496,6 +497,9 @@ export default function ProgramDetail() {
                 </div>
               </div>
             )}
+
+            {/* Interactive lot plan */}
+            <LotPlanViewer programId={program.id} programName={program.name} />
 
             {/* Amenities */}
             {program.amenities && program.amenities.length > 0 && (

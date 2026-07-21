@@ -3,11 +3,14 @@ from datetime import datetime
 from functools import wraps
 import uuid
 from flask import request, jsonify, g
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
 from slugify import slugify
 from app import db
 from app.api.v1 import api_v1_bp
-from app.models import Program, ProgramUnit, ProgramImage, ProgramUnitImage, User, Subscription, Lead
+from app.models import (
+    Program, ProgramUnit, ProgramImage, ProgramUnitImage,
+    ProgramPlan, ProgramLot, LOT_STATUSES, User, Subscription, Lead
+)
 
 
 def require_programs_feature(f):
@@ -731,3 +734,246 @@ def reorder_unit_images(program_id, unit_id):
     db.session.commit()
 
     return jsonify({'message': 'Images du type de bien réordonnées'})
+
+
+# ============================================
+# INTERACTIVE LOT PLAN — plans, lots, interest
+# ============================================
+
+LOT_EDITABLE_FIELDS = (
+    'reference', 'title', 'lot_type', 'surface', 'rooms', 'bedrooms',
+    'bathrooms', 'floor', 'price', 'status', 'zone', 'description', 'image_url'
+)
+
+
+def _owned_program_or_error(program_id):
+    """Return (program, None) if the current user's agency owns it, else (None, (resp, code))."""
+    current_user_id = int(get_jwt_identity())
+    user = User.query.get(current_user_id)
+    if not user or not user.agency_id:
+        return None, (jsonify({'error': 'Agence requise'}), 403)
+    program = Program.query.filter_by(id=program_id, agency_id=user.agency_id).first()
+    if not program:
+        return None, (jsonify({'error': 'Programme non trouvé'}), 404)
+    return program, None
+
+
+@api_v1_bp.route('/programs/<int:program_id>/plans', methods=['GET'])
+def list_program_plans(program_id):
+    """List a program's interactive plans with their lots.
+
+    Public for active programs; for non-active (draft/archived) programs only
+    the owning agency may view them.
+    """
+    program = Program.query.get_or_404(program_id)
+
+    if program.status != 'active':
+        user = None
+        try:
+            verify_jwt_in_request(optional=True)
+            uid = get_jwt_identity()
+            user = User.query.get(int(uid)) if uid else None
+        except Exception:
+            user = None
+        if not user or user.agency_id != program.agency_id:
+            return jsonify({'error': 'Programme non trouvé'}), 404
+
+    plans = ProgramPlan.query.filter_by(program_id=program_id).order_by(ProgramPlan.position).all()
+    return jsonify({'plans': [p.to_dict(include_lots=True) for p in plans]})
+
+
+@api_v1_bp.route('/programs/<int:program_id>/plans', methods=['POST'])
+@jwt_required()
+def create_program_plan(program_id):
+    """Add a plan to a program (owner only)."""
+    program, err = _owned_program_or_error(program_id)
+    if err:
+        return err
+
+    data = request.get_json() or {}
+    if not data.get('name'):
+        return jsonify({'error': 'Le nom du plan est requis'}), 400
+
+    max_pos = db.session.query(db.func.max(ProgramPlan.position)).filter_by(program_id=program_id).scalar()
+    plan = ProgramPlan(
+        program_id=program_id,
+        name=data['name'],
+        image_url=data.get('image_url'),
+        position=data.get('position', (max_pos or 0) + 1)
+    )
+    db.session.add(plan)
+    db.session.commit()
+    return jsonify({'plan': plan.to_dict()}), 201
+
+
+@api_v1_bp.route('/programs/<int:program_id>/plans/<int:plan_id>', methods=['PUT'])
+@jwt_required()
+def update_program_plan(program_id, plan_id):
+    """Update a plan (owner only)."""
+    program, err = _owned_program_or_error(program_id)
+    if err:
+        return err
+
+    plan = ProgramPlan.query.filter_by(id=plan_id, program_id=program_id).first()
+    if not plan:
+        return jsonify({'error': 'Plan non trouvé'}), 404
+
+    data = request.get_json() or {}
+    for field in ('name', 'image_url', 'position'):
+        if field in data:
+            setattr(plan, field, data[field])
+    db.session.commit()
+    return jsonify({'plan': plan.to_dict()})
+
+
+@api_v1_bp.route('/programs/<int:program_id>/plans/<int:plan_id>', methods=['DELETE'])
+@jwt_required()
+def delete_program_plan(program_id, plan_id):
+    """Delete a plan and its lots (owner only)."""
+    program, err = _owned_program_or_error(program_id)
+    if err:
+        return err
+
+    plan = ProgramPlan.query.filter_by(id=plan_id, program_id=program_id).first()
+    if not plan:
+        return jsonify({'error': 'Plan non trouvé'}), 404
+
+    db.session.delete(plan)
+    db.session.commit()
+    return jsonify({'message': 'Plan supprimé'})
+
+
+@api_v1_bp.route('/programs/<int:program_id>/lots', methods=['POST'])
+@jwt_required()
+def create_program_lot(program_id):
+    """Add a lot to a plan (owner only)."""
+    program, err = _owned_program_or_error(program_id)
+    if err:
+        return err
+
+    data = request.get_json() or {}
+    plan = ProgramPlan.query.filter_by(id=data.get('plan_id'), program_id=program_id).first()
+    if not plan:
+        return jsonify({'error': 'Plan non trouvé'}), 404
+
+    status = data.get('status', 'available')
+    if status not in LOT_STATUSES:
+        status = 'available'
+
+    lot = ProgramLot(
+        program_id=program_id,
+        plan_id=plan.id,
+        reference=data.get('reference'),
+        title=data.get('title'),
+        lot_type=data.get('lot_type'),
+        surface=data.get('surface'),
+        rooms=data.get('rooms'),
+        bedrooms=data.get('bedrooms'),
+        bathrooms=data.get('bathrooms'),
+        floor=data.get('floor'),
+        price=data.get('price'),
+        status=status,
+        zone=data.get('zone', []),
+        description=data.get('description'),
+        image_url=data.get('image_url')
+    )
+    db.session.add(lot)
+    db.session.commit()
+    return jsonify({'lot': lot.to_dict()}), 201
+
+
+@api_v1_bp.route('/programs/<int:program_id>/lots/<int:lot_id>', methods=['PUT'])
+@jwt_required()
+def update_program_lot(program_id, lot_id):
+    """Update a lot (owner only)."""
+    program, err = _owned_program_or_error(program_id)
+    if err:
+        return err
+
+    lot = ProgramLot.query.filter_by(id=lot_id, program_id=program_id).first()
+    if not lot:
+        return jsonify({'error': 'Lot non trouvé'}), 404
+
+    data = request.get_json() or {}
+    for field in LOT_EDITABLE_FIELDS:
+        if field in data:
+            if field == 'status' and data[field] not in LOT_STATUSES:
+                continue
+            setattr(lot, field, data[field])
+    db.session.commit()
+    return jsonify({'lot': lot.to_dict()})
+
+
+@api_v1_bp.route('/programs/<int:program_id>/lots/<int:lot_id>/status', methods=['PATCH'])
+@jwt_required()
+def update_program_lot_status(program_id, lot_id):
+    """Change a lot's status (owner only)."""
+    program, err = _owned_program_or_error(program_id)
+    if err:
+        return err
+
+    lot = ProgramLot.query.filter_by(id=lot_id, program_id=program_id).first()
+    if not lot:
+        return jsonify({'error': 'Lot non trouvé'}), 404
+
+    status = (request.get_json() or {}).get('status')
+    if status not in LOT_STATUSES:
+        return jsonify({'error': 'Statut invalide'}), 400
+    lot.status = status
+    db.session.commit()
+    return jsonify({'lot': lot.to_dict()})
+
+
+@api_v1_bp.route('/programs/<int:program_id>/lots/<int:lot_id>', methods=['DELETE'])
+@jwt_required()
+def delete_program_lot(program_id, lot_id):
+    """Delete a lot (owner only)."""
+    program, err = _owned_program_or_error(program_id)
+    if err:
+        return err
+
+    lot = ProgramLot.query.filter_by(id=lot_id, program_id=program_id).first()
+    if not lot:
+        return jsonify({'error': 'Lot non trouvé'}), 404
+
+    db.session.delete(lot)
+    db.session.commit()
+    return jsonify({'message': 'Lot supprimé'})
+
+
+@api_v1_bp.route('/programs/<int:program_id>/lots/interest', methods=['POST'])
+def express_lot_interest(program_id):
+    """Buyer expresses interest in one or more lots — creates a Lead for the
+    promoter. Lot statuses are never changed by this endpoint."""
+    program = Program.query.filter_by(id=program_id, status='active').first_or_404()
+
+    data = request.get_json() or {}
+    lot_ids = data.get('lot_ids', [])
+
+    if not data.get('name') or not data.get('phone'):
+        return jsonify({'error': 'Nom et téléphone requis'}), 400
+    if not lot_ids:
+        return jsonify({'error': 'Aucun lot sélectionné'}), 400
+
+    lots = ProgramLot.query.filter(
+        ProgramLot.program_id == program_id, ProgramLot.id.in_(lot_ids)
+    ).all()
+    lot_refs = ', '.join(l.reference or f'#{l.id}' for l in lots) or '—'
+    user_msg = (data.get('message') or '').strip()
+    message = f"[Programme: {program.name} — Lots: {lot_refs}] {user_msg}".strip()
+
+    lead = Lead(
+        name=data['name'],
+        email=data.get('email') or 'non-renseigne@semsarout.ma',
+        phone=data.get('phone'),
+        message=message,
+        source='contact_form',
+        agency_id=program.agency_id,
+        ip_address=request.remote_addr,
+        user_agent=request.user_agent.string[:255] if request.user_agent else None
+    )
+    program.contacts_count = (program.contacts_count or 0) + 1
+    db.session.add(lead)
+    db.session.commit()
+
+    return jsonify({'message': 'Demande envoyée avec succès', 'lots': lot_refs}), 201
