@@ -6,126 +6,37 @@ import {
   FiHome, FiImage, FiFile, FiVideo, FiSave, FiEye, FiX
 } from 'react-icons/fi'
 import { DIRHAM_SYMBOL, formatPrice } from '../../utils/currency'
+import api from '../../services/api'
+
+// Route through the shared axios instance: it reads accessToken from
+// auth-storage and auto-refreshes on 401, avoiding the stale-token desync that
+// a separate localStorage 'token' + raw fetch would cause.
+const unwrap = (res) => res.data
+const asError = (fallback) => (err) => {
+  throw new Error(err.response?.data?.error || fallback)
+}
 
 const programsService = {
   getProgram: async (id) => {
-    const response = await fetch(`/api/v1/programs/my?id=${id}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to fetch program')
-    const data = await response.json()
+    const { data } = await api.get('/programs/my', { params: { id } })
     return data.programs.find(p => p.id === parseInt(id))
   },
-  createProgram: async (data) => {
-    const response = await fetch('/api/v1/programs', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to create program')
-    }
-    return response.json()
-  },
-  updateProgram: async ({ id, data }) => {
-    const response = await fetch(`/api/v1/programs/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to update program')
-    }
-    return response.json()
-  },
-  addUnit: async ({ programId, data }) => {
-    const response = await fetch(`/api/v1/programs/${programId}/units`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to add unit')
-    return response.json()
-  },
-  updateUnit: async ({ programId, unitId, data }) => {
-    const response = await fetch(`/api/v1/programs/${programId}/units/${unitId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to update unit')
-    return response.json()
-  },
-  deleteUnit: async ({ programId, unitId }) => {
-    const response = await fetch(`/api/v1/programs/${programId}/units/${unitId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to delete unit')
-    return response.json()
-  },
-  addImage: async ({ programId, data }) => {
-    const response = await fetch(`/api/v1/programs/${programId}/images`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to add image')
-    return response.json()
-  },
-  deleteImage: async ({ programId, imageId }) => {
-    const response = await fetch(`/api/v1/programs/${programId}/images/${imageId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to delete image')
-    return response.json()
-  },
-  publishProgram: async (id) => {
-    const response = await fetch(`/api/v1/programs/${id}/publish`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to publish program')
-    }
-    return response.json()
-  }
+  createProgram: (data) =>
+    api.post('/programs', data).then(unwrap, asError('Erreur lors de la création du programme')),
+  updateProgram: ({ id, data }) =>
+    api.put(`/programs/${id}`, data).then(unwrap, asError('Erreur lors de la mise à jour du programme')),
+  addUnit: ({ programId, data }) =>
+    api.post(`/programs/${programId}/units`, data).then(unwrap, asError("Erreur lors de l'ajout du type de bien")),
+  updateUnit: ({ programId, unitId, data }) =>
+    api.put(`/programs/${programId}/units/${unitId}`, data).then(unwrap, asError('Erreur lors de la mise à jour du type de bien')),
+  deleteUnit: ({ programId, unitId }) =>
+    api.delete(`/programs/${programId}/units/${unitId}`).then(unwrap, asError('Erreur lors de la suppression')),
+  addImage: ({ programId, data }) =>
+    api.post(`/programs/${programId}/images`, data).then(unwrap, asError("Erreur lors de l'ajout de l'image")),
+  deleteImage: ({ programId, imageId }) =>
+    api.delete(`/programs/${programId}/images/${imageId}`).then(unwrap, asError("Erreur lors de la suppression de l'image")),
+  publishProgram: (id) =>
+    api.post(`/programs/${id}/publish`).then(unwrap, asError('Erreur lors de la publication'))
 }
 
 const STEPS = [
@@ -485,16 +396,30 @@ export default function DashboardProgramForm() {
       setError('Veuillez d\'abord sauvegarder les informations de base')
       return
     }
-    await addUnitMutation.mutateAsync({ programId, data: unitData })
+    setError('')
+    try {
+      await addUnitMutation.mutateAsync({ programId, data: unitData })
+    } catch (err) {
+      setError(err.message)
+    }
   }
 
   const handleUpdateUnit = async (unitData) => {
-    await updateUnitMutation.mutateAsync({ programId, unitId: editingUnit.id, data: unitData })
+    setError('')
+    try {
+      await updateUnitMutation.mutateAsync({ programId, unitId: editingUnit.id, data: unitData })
+    } catch (err) {
+      setError(err.message)
+    }
   }
 
   const handleDeleteUnit = async (unitId) => {
     if (window.confirm('Supprimer ce type de bien ?')) {
-      await deleteUnitMutation.mutateAsync({ programId, unitId })
+      try {
+        await deleteUnitMutation.mutateAsync({ programId, unitId })
+      } catch (err) {
+        setError(err.message)
+      }
     }
   }
 
@@ -504,15 +429,24 @@ export default function DashboardProgramForm() {
       setError('Veuillez d\'abord sauvegarder les informations de base')
       return
     }
-    await addImageMutation.mutateAsync({
-      programId,
-      data: { url: newImageUrl, image_type: newImageType }
-    })
+    setError('')
+    try {
+      await addImageMutation.mutateAsync({
+        programId,
+        data: { url: newImageUrl, image_type: newImageType }
+      })
+    } catch (err) {
+      setError(err.message)
+    }
   }
 
   const handleDeleteImage = async (imageId) => {
     if (window.confirm('Supprimer cette image ?')) {
-      await deleteImageMutation.mutateAsync({ programId, imageId })
+      try {
+        await deleteImageMutation.mutateAsync({ programId, imageId })
+      } catch (err) {
+        setError(err.message)
+      }
     }
   }
 

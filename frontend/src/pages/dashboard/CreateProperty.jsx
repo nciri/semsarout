@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 import { FiSave, FiEye } from 'react-icons/fi'
 import { propertyService } from '../../services/propertyService'
 import { DIRHAM_SYMBOL } from '../../utils/currency'
+import { getAmenityIcon } from '../../utils/amenityIcons'
 
 const PROPERTY_TYPES = [
   { value: 'apartment', label: 'Appartement' },
@@ -284,20 +285,24 @@ function CreateProperty() {
             <div className="mt-6">
               <label className="label">Équipements</label>
               <div className="flex flex-wrap gap-2">
-                {FEATURES.map(feature => (
-                  <button
-                    key={feature}
-                    type="button"
-                    onClick={() => toggleFeature(feature)}
-                    className={`px-3 py-1.5 rounded-full text-sm ${
-                      selectedFeatures.includes(feature)
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {feature}
-                  </button>
-                ))}
+                {FEATURES.map(feature => {
+                  const Icon = getAmenityIcon(feature)
+                  return (
+                    <button
+                      key={feature}
+                      type="button"
+                      onClick={() => toggleFeature(feature)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm ${
+                        selectedFeatures.includes(feature)
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {feature}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </div>

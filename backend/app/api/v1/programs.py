@@ -54,15 +54,43 @@ def generate_reference():
     return f"PRG-{uuid.uuid4().hex[:8].upper()}"
 
 
-def generate_slug(name):
-    """Generate unique slug for program."""
+def generate_slug(name, exclude_id=None):
+    """Generate a unique slug for a program.
+
+    `exclude_id` skips the program being updated so its own slug doesn't count
+    as a collision (otherwise every edit would append -1, breaking its URL)."""
     base_slug = slugify(name, max_length=200)
     slug = base_slug
     counter = 1
-    while Program.query.filter_by(slug=slug).first():
+    while True:
+        query = Program.query.filter_by(slug=slug)
+        if exclude_id is not None:
+            query = query.filter(Program.id != exclude_id)
+        if not query.first():
+            break
         slug = f"{base_slug}-{counter}"
         counter += 1
     return slug
+
+
+# Numeric unit fields and how to cast them. The frontend sends '' for blank
+# number inputs, which must become NULL (not '') before hitting Float/Integer
+# columns, otherwise Postgres raises and the request 500s.
+NUMERIC_UNIT_FIELDS = {
+    'surface_min': float, 'surface_max': float, 'rooms': int, 'bedrooms': int,
+    'bathrooms': int, 'price_from': float, 'price_to': float,
+    'total_count': int, 'available_count': int
+}
+
+
+def _to_number(value, cast=float):
+    """Coerce a value to a number, treating ''/None/invalid as None."""
+    if value is None or value == '':
+        return None
+    try:
+        return cast(value)
+    except (TypeError, ValueError):
+        return None
 
 
 # ============================================
@@ -283,6 +311,7 @@ def update_program(program_id):
         return jsonify({'error': 'Programme non trouvé'}), 404
 
     data = request.get_json()
+    old_name = program.name
 
     # Update allowed fields
     updatable_fields = [
@@ -303,9 +332,9 @@ def update_program(program_id):
         else:
             program.delivery_date = None
 
-    # Update slug if name changed
-    if 'name' in data:
-        program.slug = generate_slug(data['name'])
+    # Regenerate slug only when the name actually changes (keeps stable URLs)
+    if 'name' in data and data['name'] != old_name:
+        program.slug = generate_slug(data['name'], exclude_id=program.id)
 
     # Recalculate units and prices from units if requested
     if data.get('recalculate_from_units') and program.units:
@@ -430,15 +459,15 @@ def add_unit(program_id):
         program_id=program_id,
         name=data['name'],
         unit_type=data.get('unit_type'),
-        surface_min=data.get('surface_min'),
-        surface_max=data.get('surface_max'),
-        rooms=data.get('rooms'),
-        bedrooms=data.get('bedrooms'),
-        bathrooms=data.get('bathrooms'),
-        price_from=data.get('price_from'),
-        price_to=data.get('price_to'),
-        total_count=data.get('total_count', 0),
-        available_count=data.get('available_count', 0),
+        surface_min=_to_number(data.get('surface_min')),
+        surface_max=_to_number(data.get('surface_max')),
+        rooms=_to_number(data.get('rooms'), int),
+        bedrooms=_to_number(data.get('bedrooms'), int),
+        bathrooms=_to_number(data.get('bathrooms'), int),
+        price_from=_to_number(data.get('price_from')),
+        price_to=_to_number(data.get('price_to')),
+        total_count=_to_number(data.get('total_count'), int) or 0,
+        available_count=_to_number(data.get('available_count'), int) or 0,
         features=data.get('features', []),
         floor_plan_url=data.get('floor_plan_url')
     )
@@ -480,7 +509,10 @@ def update_unit(program_id, unit_id):
 
     for field in updatable_fields:
         if field in data:
-            setattr(unit, field, data[field])
+            if field in NUMERIC_UNIT_FIELDS:
+                setattr(unit, field, _to_number(data[field], NUMERIC_UNIT_FIELDS[field]))
+            else:
+                setattr(unit, field, data[field])
 
     db.session.commit()
 

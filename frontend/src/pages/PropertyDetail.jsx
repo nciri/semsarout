@@ -13,6 +13,7 @@ import { buyerService } from '../services/buyerService'
 import { formatPrice } from '../utils/currency'
 import PhotoLightbox from '../components/common/PhotoLightbox'
 import useAuthStore from '../store/authStore'
+import { getAmenityIcon } from '../utils/amenityIcons'
 
 function PropertyDetail() {
   const { id } = useParams()
@@ -129,6 +130,18 @@ function PropertyDetail() {
   }, [property?.is_urgent, property?.urgent_until])
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm()
+
+  // Prefill the contact form with the logged-in user's info when it opens
+  useEffect(() => {
+    if (showContact) {
+      reset({
+        name: user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : '',
+        email: user?.email || '',
+        phone: user?.phone || '',
+        message: `Bonjour, je suis intéressé(e) par votre bien "${property?.title || ''}". Pouvez-vous me contacter ?`
+      })
+    }
+  }, [showContact, user, property?.title, reset])
 
   const onSubmitContact = async (data) => {
     try {
@@ -368,12 +381,13 @@ function PropertyDetail() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {property.features.map((feature, idx) => {
                   const isFeatured = property.is_premium && isPremiumFeature(feature)
+                  const Icon = getAmenityIcon(feature)
                   return (
                     <div key={idx} className={`flex items-center ${isFeatured ? 'text-yellow-700' : 'text-gray-600'}`}>
                       {isFeatured ? (
                         <span className="text-lg mr-2">⭐</span>
                       ) : (
-                        <FiCheck className="w-4 h-4 text-green-500 mr-2" />
+                        <Icon className="w-4 h-4 text-primary-600 mr-2 flex-shrink-0" />
                       )}
                       <span className={isFeatured ? 'font-semibold' : ''}>{feature}</span>
                     </div>
@@ -458,7 +472,6 @@ function PropertyDetail() {
                       className="input"
                       rows="4"
                       placeholder="Votre message..."
-                      defaultValue={`Bonjour, je suis intéressé(e) par votre bien "${property.title}". Pouvez-vous me contacter ?`}
                     />
                   </div>
                   <button

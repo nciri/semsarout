@@ -4,12 +4,10 @@ import { useParams, Link } from 'react-router-dom'
 import {
   FiMapPin, FiCalendar, FiHome, FiPhone, FiMail, FiShare2,
   FiCheckCircle, FiClock, FiAlertCircle, FiChevronLeft, FiChevronRight,
-  FiDownload, FiPlay, FiX, FiMaximize2,
-  FiShield, FiActivity, FiDroplet, FiZap, FiWifi, FiHeart, FiUsers, FiSun, FiCoffee
+  FiDownload, FiPlay, FiX, FiMaximize2
 } from 'react-icons/fi'
-import { MdLocalParking, MdElevator } from 'react-icons/md'
-import { IoLeafOutline } from 'react-icons/io5'
 import { formatPrice } from '../utils/currency'
+import { getAmenityIcon } from '../utils/amenityIcons'
 import LotPlanViewer from '../components/common/LotPlanViewer'
 
 const programsService = {
@@ -46,27 +44,6 @@ const AMENITIES_LABELS = {
   elevator: 'Ascenseur',
   terrace: 'Terrasse',
   spa: 'Spa'
-}
-
-// Resolve an icon for an amenity by keyword — amenities are free-text (FR),
-// so we match on the label rather than a fixed key set.
-function amenityIcon(label) {
-  const s = (label || '').toLowerCase()
-  if (s.includes('piscine') || s.includes('pool')) return FiDroplet
-  if (s.includes('sport') || s.includes('gym') || s.includes('fitness')) return FiActivity
-  if (s.includes('sécur') || s.includes('secur') || s.includes('gardien') || s.includes('surveillance')) return FiShield
-  if (s.includes('parking') || s.includes('garage') || s.includes('stationnement')) return MdLocalParking
-  if (s.includes('jardin') || s.includes('paysag') || s.includes('vert') || s.includes('garden')) return IoLeafOutline
-  if (s.includes('ascenseur') || s.includes('elevator')) return MdElevator
-  if (s.includes('concierg') || s.includes('accueil') || s.includes('récept')) return FiUsers
-  if (s.includes('spa') || s.includes('hammam') || s.includes('bien-être') || s.includes('wellness')) return FiHeart
-  if (s.includes('recharge') || s.includes('électr') || s.includes('electr') || s.includes('borne')) return FiZap
-  if (s.includes('wifi') || s.includes('fibre') || s.includes('internet')) return FiWifi
-  if (s.includes('restaur') || s.includes('café') || s.includes('cafe')) return FiCoffee
-  if (s.includes('plage') || s.includes('mer') || s.includes('terrasse') || s.includes('balcon')) return FiSun
-  if (s.includes('club') || s.includes('salle')) return FiHome
-  if (s.includes('jeux') || s.includes('enfant') || s.includes('playground')) return FiUsers
-  return FiCheckCircle
 }
 
 const safeUrl = (url) => {
@@ -510,7 +487,7 @@ export default function ProgramDetail() {
                 <div className="flex flex-wrap gap-2">
                   {program.amenities.map(amenity => {
                     const label = AMENITIES_LABELS[amenity] || amenity
-                    const Icon = amenityIcon(label)
+                    const Icon = getAmenityIcon(label)
                     return (
                       <span
                         key={amenity}
