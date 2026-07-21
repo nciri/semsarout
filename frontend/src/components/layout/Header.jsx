@@ -45,13 +45,6 @@ function Header() {
         { to: '/dashboard/staymanager', label: 'StayManager', icon: FiLink }
       ]
     },
-    {
-      // Les 3 pages (agence / abonnement / paramètres) sont des onglets d'une même page
-      title: null,
-      items: [
-        { to: '/dashboard/compte', label: 'Mon compte', icon: FiUser }
-      ]
-    },
     ...(isAdmin
       ? [{
           title: 'Administration',
@@ -59,7 +52,14 @@ function Header() {
             { to: '/dashboard/prix-marche', label: 'Prix de référence', icon: FiTrendingUp }
           ]
         }]
-      : [])
+      : []),
+    {
+      // Les 3 pages (agence / abonnement / paramètres) sont des onglets d'une même page
+      title: null,
+      items: [
+        { to: '/dashboard/compte', label: 'Mon compte', icon: FiUser }
+      ]
+    }
   ]
 
   // Close menu when clicking outside
