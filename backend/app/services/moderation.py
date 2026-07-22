@@ -1,4 +1,5 @@
 """Shared platform-moderation logic (super-admin). Kept out of route modules for reuse/testing."""
+import secrets
 from datetime import datetime
 from app import db
 from app.models import User, ActivityLog
@@ -52,3 +53,43 @@ def unsuspend_agency(agency):
     agency.is_suspended = False
     agency.suspended_at = None
     agency.suspended_reason = None
+
+
+def soft_delete_user(user):
+    user.deleted_at = datetime.utcnow()
+    user.is_suspended = True  # also blocks login immediately
+
+
+def restore_user(user):
+    user.deleted_at = None
+    user.is_suspended = False
+    user.suspended_at = None
+    user.suspended_reason = None
+
+
+def soft_delete_agency(agency):
+    agency.deleted_at = datetime.utcnow()
+    agency.is_suspended = True
+
+
+def restore_agency(agency):
+    agency.deleted_at = None
+    agency.is_suspended = False
+    agency.suspended_at = None
+    agency.suspended_reason = None
+
+
+def anonymize_user(user):
+    """Irreversible PII scrub. Keeps FK-linked records intact."""
+    user.email = f'deleted+{user.id}@semsar.invalid'
+    user.first_name = 'Compte'
+    user.last_name = 'supprimé'
+    user.phone = None
+    user.avatar_url = None
+    user.reset_token = None
+    user.reset_token_expires = None
+    user.set_password(secrets.token_urlsafe(32))
+    if user.deleted_at is None:
+        user.deleted_at = datetime.utcnow()
+    user.is_suspended = True
+    user.anonymized_at = datetime.utcnow()
