@@ -9,6 +9,17 @@ from app.api.v1 import api_v1_bp
 from app.models import Property, PropertyImage, User
 
 
+def _exclude_moderated(query):
+    """Hide listings whose owner or agency is suspended/deleted (platform moderation)."""
+    from app.models import User as _User, Agency as _Agency
+    return (query.join(_User, Property.owner_id == _User.id)
+            .filter(_User.is_suspended.is_(False), _User.deleted_at.is_(None))
+            .outerjoin(_Agency, Property.agency_id == _Agency.id)
+            .filter(db.or_(_Agency.id.is_(None),
+                           db.and_(_Agency.is_suspended.is_(False),
+                                   _Agency.deleted_at.is_(None)))))
+
+
 class SearchQuery(db.Model):
     """Model to store AI search queries for v2."""
     __tablename__ = 'search_queries'
@@ -40,15 +51,7 @@ def list_properties():
 
     # Base query - only active properties for public
     query = Property.query.filter(Property.status == 'active')
-
-    # Hide listings whose owner or agency is suspended/deleted (platform moderation)
-    from app.models import User as _User, Agency as _Agency
-    query = (query.join(_User, Property.owner_id == _User.id)
-             .filter(_User.is_suspended.is_(False), _User.deleted_at.is_(None))
-             .outerjoin(_Agency, Property.agency_id == _Agency.id)
-             .filter(db.or_(_Agency.id.is_(None),
-                            db.and_(_Agency.is_suspended.is_(False),
-                                    _Agency.deleted_at.is_(None)))))
+    query = _exclude_moderated(query)
 
     # === Basic Filters ===
     if request.args.get('transaction_type'):
@@ -276,6 +279,7 @@ def advanced_search():
 
     # Build query with provided filters
     query = Property.query.filter(Property.status == 'active')
+    query = _exclude_moderated(query)
 
     # Apply standard filters from POST body
     if filters.get('transaction_type'):
