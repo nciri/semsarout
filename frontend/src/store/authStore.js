@@ -10,6 +10,8 @@ const useAuthStore = create(
       refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
+      impersonating: false,
+      impersonatedUser: null,
 
       login: async (email, password) => {
         set({ isLoading: true })
@@ -84,6 +86,33 @@ const useAuthStore = create(
         set({ user: { ...get().user, ...userData } })
       },
 
+      startImpersonation: (targetUser, token) => {
+        const s = get()
+        // Snapshot the super-admin session so we can restore it on exit
+        localStorage.setItem('semsar.adminAuth', JSON.stringify({
+          user: s.user, accessToken: s.accessToken, refreshToken: s.refreshToken,
+        }))
+        localStorage.setItem('token', token)
+        localStorage.setItem('userId', String(targetUser.id))
+        set({
+          user: targetUser, accessToken: token,
+          isAuthenticated: true, impersonating: true, impersonatedUser: targetUser,
+        })
+      },
+
+      stopImpersonation: () => {
+        const raw = localStorage.getItem('semsar.adminAuth')
+        localStorage.removeItem('semsar.adminAuth')
+        if (!raw) { get().logout(); return }
+        const admin = JSON.parse(raw)
+        localStorage.setItem('token', admin.accessToken)
+        localStorage.setItem('userId', String(admin.user.id))
+        set({
+          user: admin.user, accessToken: admin.accessToken, refreshToken: admin.refreshToken,
+          isAuthenticated: true, impersonating: false, impersonatedUser: null,
+        })
+      },
+
       refreshAccessToken: async () => {
         const { refreshToken } = get()
         if (!refreshToken) return false
@@ -106,7 +135,9 @@ const useAuthStore = create(
         user: state.user,
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
-        isAuthenticated: state.isAuthenticated
+        isAuthenticated: state.isAuthenticated,
+        impersonating: state.impersonating,
+        impersonatedUser: state.impersonatedUser
       })
     }
   )
