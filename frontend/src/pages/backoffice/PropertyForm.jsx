@@ -6,43 +6,20 @@ import {
   FiDollarSign, FiGrid, FiImage
 } from 'react-icons/fi'
 import { DIRHAM_SYMBOL } from '../../utils/currency'
+import api from '../../services/api'
 
 const backofficeService = {
   getProperty: async (id) => {
-    const response = await fetch(`/api/v1/backoffice/properties/${id}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to fetch property')
-    return response.json()
+    const { data } = await api.get(`/backoffice/properties/${id}`)
+    return data
   },
   createProperty: async (data) => {
-    const response = await fetch('/api/v1/backoffice/properties', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId'),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to create property')
-    return response.json()
+    const { data: res } = await api.post('/backoffice/properties', data)
+    return res
   },
   updateProperty: async ({ id, data }) => {
-    const response = await fetch(`/api/v1/backoffice/properties/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId'),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to update property')
-    return response.json()
+    const { data: res } = await api.put(`/backoffice/properties/${id}`, data)
+    return res
   }
 }
 
@@ -91,7 +68,8 @@ export default function BackofficePropertyForm() {
     latitude: '',
     longitude: '',
     features: [],
-    status: 'draft'
+    status: 'draft',
+    is_featured: false
   })
 
   const [images, setImages] = useState([])
@@ -125,7 +103,8 @@ export default function BackofficePropertyForm() {
         latitude: propertyData.latitude || '',
         longitude: propertyData.longitude || '',
         features: propertyData.features || [],
-        status: propertyData.status || 'draft'
+        status: propertyData.status || 'draft',
+        is_featured: propertyData.is_featured || false
       })
       if (propertyData.images) {
         setImages(propertyData.images)
@@ -306,6 +285,24 @@ export default function BackofficePropertyForm() {
                   <option value="active">Publié</option>
                   <option value="pending">En attente</option>
                 </select>
+              </div>
+
+              {/* Mise en avant : réservé aux admins/staff via le back-office */}
+              <div className="flex items-center">
+                <label className="inline-flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.is_featured}
+                    onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Mettre à la une
+                    <span className="block text-xs font-normal text-gray-400">
+                      Met l'annonce en avant dans les résultats de recherche
+                    </span>
+                  </span>
+                </label>
               </div>
             </div>
           </div>
