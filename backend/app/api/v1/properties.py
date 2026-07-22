@@ -7,17 +7,7 @@ from sqlalchemy import or_, and_, func, cast
 from app import db
 from app.api.v1 import api_v1_bp
 from app.models import Property, PropertyImage, User
-
-
-def _exclude_moderated(query):
-    """Hide listings whose owner or agency is suspended/deleted (platform moderation)."""
-    from app.models import User as _User, Agency as _Agency
-    return (query.join(_User, Property.owner_id == _User.id)
-            .filter(_User.is_suspended.is_(False), _User.deleted_at.is_(None))
-            .outerjoin(_Agency, Property.agency_id == _Agency.id)
-            .filter(db.or_(_Agency.id.is_(None),
-                           db.and_(_Agency.is_suspended.is_(False),
-                                   _Agency.deleted_at.is_(None)))))
+from app.services.moderation import exclude_moderated_properties as _exclude_moderated
 
 
 class SearchQuery(db.Model):
@@ -443,6 +433,18 @@ def get_search_suggestions():
 def get_property(property_id):
     """Get a single property by ID."""
     property = Property.query.get_or_404(property_id)
+
+    # Hide listings from moderated owners/agencies from the public (spec §6).
+    # This route has no auth requirement (purely public detail view), so a
+    # blanket 404 is safe here — it never masks an authenticated owner's own view.
+    from app.models import User as _User, Agency as _Agency
+    owner = _User.query.get(property.owner_id)
+    if owner is None or owner.is_suspended or owner.deleted_at is not None:
+        return jsonify({'error': 'Not found'}), 404
+    if property.agency_id:
+        ag = _Agency.query.get(property.agency_id)
+        if ag is not None and (ag.is_suspended or ag.deleted_at is not None):
+            return jsonify({'error': 'Not found'}), 404
 
     # Increment view count
     property.views_count += 1

@@ -22,6 +22,12 @@ with app.app_context():
     check(r.status_code == 200, "soft-delete 200")
     st, _ = login(c, 'demo@semsarout.ma', 'demo1234')
     check(st == 403, "deleted user cannot log in")
+
+    # --- M1: idempotent delete is a 200 no-op, not a 409/500 ---
+    r2 = c.delete(f'/api/v1/admin/accounts/users/{demo.id}', headers=h)
+    check(r2.status_code == 200, "delete already-deleted user -> 200 no-op")
+    check(r2.get_json().get('message') == 'Compte déjà supprimé', "no-op response has idempotent message")
+
     r = c.post(f'/api/v1/admin/accounts/users/{demo.id}/restore', headers=h)
     check(r.status_code == 200, "restore 200")
     st, _ = login(c, 'demo@semsarout.ma', 'demo1234')
@@ -33,6 +39,11 @@ with app.app_context():
     d2 = User.query.get(demo.id)
     check(d2.anonymized_at is not None, "anonymized_at set")
     check('@semsar.invalid' in d2.email, "email scrubbed")
+
+    # --- M1: idempotent anonymize is a 200 no-op, not a 409/500 ---
+    r3 = c.post(f'/api/v1/admin/accounts/users/{demo.id}/anonymize', headers=h)
+    check(r3.status_code == 200, "anonymize already-anonymized user -> 200 no-op")
+    check(r3.get_json().get('message') == 'Compte déjà anonymisé', "no-op response has idempotent message")
     # cannot delete last superadmin
     r = c.delete(f'/api/v1/admin/accounts/users/{body["user"]["id"]}', headers=h)
     check(r.status_code == 409, "cannot delete self/last superadmin -> 409")

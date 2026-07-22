@@ -4,6 +4,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.api.v1 import api_v1_bp
 from app.models import Agency, User, Property
+from app.services.moderation import exclude_moderated_properties
 from slugify import slugify
 
 
@@ -29,7 +30,10 @@ def list_agencies():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
 
-    query = Agency.query.filter(Agency.is_active == True, Agency.is_verified == True)
+    query = Agency.query.filter(
+        Agency.is_active == True, Agency.is_verified == True,
+        Agency.is_suspended.is_(False), Agency.deleted_at.is_(None)
+    )
 
     # Filter by city
     if request.args.get('city'):
@@ -54,6 +58,8 @@ def list_agencies():
 def get_agency(slug):
     """Get agency by slug."""
     agency = Agency.query.filter_by(slug=slug).first_or_404()
+    if agency.is_suspended or agency.deleted_at is not None:
+        return jsonify({'error': 'Not found'}), 404
     return jsonify({'agency': agency.to_dict(include_members=False)})
 
 
@@ -61,6 +67,8 @@ def get_agency(slug):
 def get_agency_properties(slug):
     """Get properties of an agency."""
     agency = Agency.query.filter_by(slug=slug).first_or_404()
+    if agency.is_suspended or agency.deleted_at is not None:
+        return jsonify({'error': 'Not found'}), 404
 
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
@@ -68,7 +76,8 @@ def get_agency_properties(slug):
     query = Property.query.filter(
         Property.agency_id == agency.id,
         Property.status == 'active'
-    ).order_by(Property.published_at.desc())
+    )
+    query = exclude_moderated_properties(query).order_by(Property.published_at.desc())
 
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 

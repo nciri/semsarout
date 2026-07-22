@@ -20,6 +20,17 @@ def is_login_blocked(user):
     return False, None
 
 
+def exclude_moderated_properties(query):
+    """Hide listings whose owner or agency is suspended/deleted (platform moderation)."""
+    from app.models import Property, Agency
+    return (query.join(User, Property.owner_id == User.id)
+            .filter(User.is_suspended.is_(False), User.deleted_at.is_(None))
+            .outerjoin(Agency, Property.agency_id == Agency.id)
+            .filter(db.or_(Agency.id.is_(None),
+                           db.and_(Agency.is_suspended.is_(False),
+                                   Agency.deleted_at.is_(None)))))
+
+
 def count_active_superadmins():
     return sum(1 for u in User.query.filter(User.deleted_at.is_(None), User.is_suspended.is_(False)).all()
                if any(r.slug == 'superadmin' for r in u.roles))

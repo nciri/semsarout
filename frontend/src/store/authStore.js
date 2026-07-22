@@ -95,7 +95,7 @@ const useAuthStore = create(
         localStorage.setItem('token', token)
         localStorage.setItem('userId', String(targetUser.id))
         set({
-          user: targetUser, accessToken: token,
+          user: targetUser, accessToken: token, refreshToken: null,
           isAuthenticated: true, impersonating: true, impersonatedUser: targetUser,
         })
       },

@@ -29,4 +29,15 @@ with app.app_context():
     r = c.post(f'/api/v1/admin/accounts/users/{sa_id}/impersonate', headers=h)
     check(r.status_code == 409, "cannot impersonate superadmin -> 409")
 
+    # --- M2: cannot impersonate a suspended target ---
+    r = c.post(f'/api/v1/admin/accounts/users/{target.id}/suspend',
+               json={'reason': 'test-impersonate-block'}, headers=h)
+    check(r.status_code == 200, "suspend target (impersonation test) 200")
+    r = c.post(f'/api/v1/admin/accounts/users/{target.id}/impersonate', headers=h)
+    check(r.status_code == 403, "cannot impersonate a suspended user -> 403")
+    r = c.post(f'/api/v1/admin/accounts/users/{target.id}/unsuspend', headers=h)
+    check(r.status_code == 200, "unsuspend target (impersonation test) 200")
+    r = c.post(f'/api/v1/admin/accounts/users/{target.id}/impersonate', headers=h)
+    check(r.status_code == 200, "impersonation works again after unsuspend")
+
 sys.exit(1 if FAILS else 0)

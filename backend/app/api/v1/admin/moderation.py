@@ -17,6 +17,8 @@ def suspend_user_route(user_id):
         return jsonify({'error': 'User not found'}), 404
     if u.id == g.current_user.id:
         return jsonify({'error': 'Vous ne pouvez pas vous suspendre vous-même.'}), 409
+    if u.is_suspended:
+        return jsonify({'message': 'Compte déjà suspendu', 'user': u.to_dict()})
     if _is_superadmin(u) and mod.count_active_superadmins() <= 1:
         return jsonify({'error': 'Impossible de suspendre le dernier super-admin.'}), 409
     reason = (request.get_json(silent=True) or {}).get('reason')
@@ -71,6 +73,8 @@ def delete_user_route(user_id):
         return jsonify({'error': 'User not found'}), 404
     if u.id == g.current_user.id:
         return jsonify({'error': 'Vous ne pouvez pas supprimer votre propre compte.'}), 409
+    if u.deleted_at is not None:
+        return jsonify({'message': 'Compte déjà supprimé', 'user': u.to_dict()})
     if _is_superadmin(u) and mod.count_active_superadmins() <= 1:
         return jsonify({'error': 'Impossible de supprimer le dernier super-admin.'}), 409
     mod.soft_delete_user(u)
@@ -101,6 +105,8 @@ def anonymize_user_route(user_id):
         return jsonify({'error': 'User not found'}), 404
     if u.id == g.current_user.id:
         return jsonify({'error': 'Vous ne pouvez pas vous anonymiser vous-même.'}), 409
+    if u.anonymized_at is not None:
+        return jsonify({'message': 'Compte déjà anonymisé', 'user': u.to_dict()})
     if _is_superadmin(u) and mod.count_active_superadmins() <= 1:
         return jsonify({'error': 'Impossible d\'anonymiser le dernier super-admin.'}), 409
     mod.anonymize_user(u)

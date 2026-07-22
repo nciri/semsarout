@@ -15,6 +15,8 @@ def impersonate(user_id):
         return jsonify({'error': 'User not found'}), 404
     if target.deleted_at is not None:
         return jsonify({'error': 'Compte supprimé : impersonation impossible.'}), 403
+    if target.is_suspended:
+        return jsonify({'error': 'Compte suspendu : impersonation impossible.'}), 403
     if any(r.slug == 'superadmin' for r in target.roles):
         return jsonify({'error': 'Impossible de se faire passer pour un super-admin.'}), 409
     token = create_access_token(

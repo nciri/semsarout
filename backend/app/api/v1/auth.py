@@ -100,6 +100,15 @@ def login():
 def refresh():
     """Refresh access token."""
     current_user_id = int(get_jwt_identity()) if get_jwt_identity() else None
+    user = User.query.get(current_user_id) if current_user_id else None
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    from app.services.moderation import is_login_blocked
+    blocked, reason = is_login_blocked(user)
+    if blocked:
+        return jsonify({'error': reason}), 403
+
     access_token = create_access_token(identity=str(current_user_id))
     return jsonify({'access_token': access_token})
 
