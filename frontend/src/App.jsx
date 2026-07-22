@@ -59,10 +59,13 @@ import BackofficeSettings from './pages/backoffice/Settings'
 import BackofficeStripeConfig from './pages/backoffice/StripeConfig'
 import Subscription from './pages/dashboard/Subscription'
 import DashboardSettings from './pages/dashboard/Settings'
+import ImpersonationBanner from './components/admin/ImpersonationBanner'
 
 function App() {
   return (
-    <Routes>
+    <>
+      <ImpersonationBanner />
+      <Routes>
       {/* Public routes */}
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
@@ -169,7 +172,8 @@ function App() {
           <Route path="activite" element={<AdminOverview />} />
         </Route>
       </Route>
-    </Routes>
+      </Routes>
+    </>
   )
 }
 
