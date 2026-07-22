@@ -11,7 +11,7 @@ function PropertyCard({ property }) {
   return (
     <Link
       to={`/annonces/${property.id}`}
-      className="block w-full bg-white rounded-ds-lg overflow-hidden border border-slate-200 shadow-ds-md hover:shadow-ds-lg hover:-translate-y-[3px] transition-all duration-200"
+      className="flex flex-col h-full w-full bg-white rounded-ds-lg overflow-hidden border border-slate-200 shadow-ds-md hover:shadow-ds-lg hover:-translate-y-[3px] transition-all duration-200"
     >
       {/* Image */}
       <div className="relative h-[190px] bg-gradient-to-br from-slate-200 to-slate-300 overflow-hidden">
@@ -56,7 +56,7 @@ function PropertyCard({ property }) {
       </div>
 
       {/* Content */}
-      <div className="p-4 flex flex-col gap-2">
+      <div className="p-4 flex flex-col gap-2 flex-1">
         <h3 className="font-display font-bold text-[17px] text-midnight tracking-[-.01em] line-clamp-1 m-0">
           {property.title}
         </h3>
@@ -82,7 +82,7 @@ function PropertyCard({ property }) {
           {property.rooms && <span>{property.rooms} pièces</span>}
         </div>
 
-        <div className="mt-1.5 font-display font-extrabold text-[20px] text-midnight">
+        <div className="mt-auto pt-1.5 font-display font-extrabold text-[20px] text-midnight">
           {formatPrice(property.price, { suffix: false })}
           <span className="text-[13px] font-semibold text-slate-500 ml-1">
             {property.transaction_type === 'rent' ? `${DIRHAM_SYMBOL}/mois` : DIRHAM_SYMBOL}
