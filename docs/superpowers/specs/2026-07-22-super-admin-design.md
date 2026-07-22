@@ -39,20 +39,22 @@ marketplace meubles.
 
 ## 3. Rôle & contrôle d'accès
 
-- Nouveau rôle système `superadmin` : `slug='superadmin'`, `level=0`, `is_system=True`,
-  `agency_id=None`. Créé au seed et attribué à un compte Semsar désigné (variable d'env
-  `SUPERADMIN_EMAIL` documentée dans `.env.example`, jamais de valeur en dur).
+- Nouveau rôle système `superadmin` : `slug='superadmin'`, `level=200`, `is_system=True`,
+  `agency_id=None`. **Convention réelle** (cf. `seed_backoffice.py:77`) : le rôle `admin` est à
+  `level=100` et `to_dict` retient le rôle de **plus haut** level comme principal ; `superadmin`
+  doit donc être au-dessus (200), contrairement au docstring trompeur du modèle. Créé au seed et
+  attribué à un compte Semsar désigné (variable d'env `SUPERADMIN_EMAIL` documentée dans
+  `.env.example`, jamais de valeur en dur).
 - Nouveau décorateur `require_superadmin` (fichier `backend/app/api/v1/admin/__init__.py`) :
   1. `verify_jwt_in_request()` ; 2. charge `g.current_user` depuis `get_jwt_identity()` ;
   3. refuse `403` si l'utilisateur ne porte pas le rôle `superadmin`. **Aucun** filtrage par
   agence — le super-admin est global.
 - L'identité vient **toujours** du token (jamais d'un en-tête client), comme le corrige déjà
   le commit `a8982cb`.
-- **Attention sérialisation** : `User.to_dict()` calcule le rôle « principal » via
-  `max(roles, key=level)`, or `superadmin` a `level=0` (le plus bas). `user.role` n'est donc
-  **pas** fiable pour détecter un super-admin. On ajoute un booléen dédié `is_superadmin`
-  (`any(r.slug == 'superadmin' for r in roles)`) dans `to_dict()` ; c'est lui que le front et le
-  garde de route consomment.
+- **Sérialisation** : plutôt que de coupler la détection au level, on ajoute un booléen
+  explicite `is_superadmin` (`any(r.slug == 'superadmin' for r in roles)`) dans
+  `User.to_dict()` ; c'est lui — et non `user.role` — que le front et le garde de route
+  consomment. Robuste même si la convention de level évolue.
 
 ## 4. Modèle de données
 
