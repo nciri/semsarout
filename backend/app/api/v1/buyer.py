@@ -128,9 +128,8 @@ def delete_saved_search(search_id):
 
 @api_v1_bp.route('/buyer/favorites', methods=['GET'])
 @jwt_required()
-@require_buyer_role
 def list_favorites():
-    """List user's favorite properties."""
+    """List user's favorite properties (property embedded for rendering)."""
     current_user_id = int(get_jwt_identity())
 
     page = request.args.get('page', 1, type=int)
@@ -139,7 +138,10 @@ def list_favorites():
     favorites = Favorite.query.filter_by(user_id=current_user_id).order_by(Favorite.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
 
     return jsonify({
-        'favorites': [f.to_dict() for f in favorites.items],
+        'favorites': [
+            {**f.to_dict(), 'property': f.property.to_dict() if f.property else None}
+            for f in favorites.items
+        ],
         'total': favorites.total,
         'pages': favorites.pages,
         'current_page': page
@@ -148,7 +150,6 @@ def list_favorites():
 
 @api_v1_bp.route('/buyer/favorites', methods=['POST'])
 @jwt_required()
-@require_buyer_role
 def add_favorite():
     """Add a property to favorites."""
     current_user_id = int(get_jwt_identity())
@@ -186,7 +187,6 @@ def add_favorite():
 
 @api_v1_bp.route('/buyer/favorites/<int:favorite_id>', methods=['PUT'])
 @jwt_required()
-@require_buyer_role
 def update_favorite(favorite_id):
     """Update a favorite property."""
     current_user_id = int(get_jwt_identity())
@@ -209,7 +209,6 @@ def update_favorite(favorite_id):
 
 @api_v1_bp.route('/buyer/favorites/<int:favorite_id>', methods=['DELETE'])
 @jwt_required()
-@require_buyer_role
 def remove_favorite(favorite_id):
     """Remove a property from favorites."""
     current_user_id = int(get_jwt_identity())
