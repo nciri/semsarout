@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from 'react-query'
-import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiLink, FiTrendingUp, FiInbox } from 'react-icons/fi'
+import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiLink, FiTrendingUp, FiInbox, FiShield } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
 import { leadService } from '../../services/leadService'
 import Wordmark from '../common/Wordmark'
@@ -50,6 +50,14 @@ function Header() {
           title: 'Administration',
           items: [
             { to: '/dashboard/prix-marche', label: 'Prix de référence', icon: FiTrendingUp }
+          ]
+        }]
+      : []),
+    ...(user?.is_superadmin
+      ? [{
+          title: 'Super-admin',
+          items: [
+            { to: '/admin', label: 'Plateforme', icon: FiShield }
           ]
         }]
       : []),

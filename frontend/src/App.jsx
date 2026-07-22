@@ -36,6 +36,11 @@ import StayManagerIntegration from './pages/dashboard/integrations/StayManager'
 import StayManagerProperties from './pages/dashboard/integrations/StayManagerProperties'
 import StayManagerReservations from './pages/dashboard/integrations/StayManagerReservations'
 import AccountTabs from './pages/dashboard/AccountTabs'
+import SuperAdminRoute from './components/auth/SuperAdminRoute'
+import AdminLayout from './pages/admin/AdminLayout'
+import AdminOverview from './pages/admin/AdminOverview'
+import AdminAccounts from './pages/admin/AdminAccounts'
+import AdminAccountDetail from './pages/admin/AdminAccountDetail'
 
 // Backoffice imports
 import BackofficeLayout from './pages/backoffice/components/BackofficeLayout'
@@ -152,6 +157,16 @@ function App() {
           <Route path="statistiques" element={<BackofficeStats />} />
           <Route path="parametres" element={<BackofficeSettings />} />
           <Route path="stripe" element={<BackofficeStripeConfig />} />
+        </Route>
+      </Route>
+
+      {/* Super-admin plateforme (protégé, rôle superadmin) */}
+      <Route path="/admin" element={<SuperAdminRoute />}>
+        <Route element={<AdminLayout />}>
+          <Route index element={<AdminOverview />} />
+          <Route path="comptes" element={<AdminAccounts />} />
+          <Route path="comptes/:kind/:id" element={<AdminAccountDetail />} />
+          <Route path="activite" element={<AdminOverview />} />
         </Route>
       </Route>
     </Routes>
