@@ -42,6 +42,13 @@ class Agency(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # Platform moderation (super-admin)
+    is_suspended = db.Column(db.Boolean, default=False, nullable=False)
+    suspended_at = db.Column(db.DateTime, nullable=True)
+    suspended_reason = db.Column(db.String(255), nullable=True)
+    deleted_at = db.Column(db.DateTime, nullable=True)
+    anonymized_at = db.Column(db.DateTime, nullable=True)
+
     # Relationships
     members = db.relationship('User', back_populates='agency', lazy='dynamic')
     properties = db.relationship('Property', back_populates='agency', lazy='dynamic')
@@ -65,11 +72,23 @@ class Agency(db.Model):
             'cover_image_url': self.cover_image_url,
             'is_verified': self.is_verified,
             'properties_count': self.properties.count(),
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'is_suspended': bool(self.is_suspended),
+            'suspended_reason': self.suspended_reason,
+            'deleted_at': self.deleted_at.isoformat() if self.deleted_at else None,
+            'anonymized_at': self.anonymized_at.isoformat() if self.anonymized_at else None,
         }
         if include_members:
             data['members'] = [m.to_dict() for m in self.members]
         return data
+
+    def moderation_state(self):
+        """Return 'deleted' | 'suspended' | 'active'."""
+        if self.deleted_at is not None:
+            return 'deleted'
+        if self.is_suspended:
+            return 'suspended'
+        return 'active'
 
     def __repr__(self):
         return f'<Agency {self.name}>'
