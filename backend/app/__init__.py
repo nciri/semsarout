@@ -49,4 +49,7 @@ def create_app(config_name='default'):
             os.path.abspath(os.path.join(uploads, 'photos')), filename
         )
 
+    from app.commands import register_commands
+    register_commands(app)
+
     return app
