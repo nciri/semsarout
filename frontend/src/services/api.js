@@ -17,12 +17,6 @@ api.interceptors.request.use(
         config.headers.Authorization = `Bearer ${state.accessToken}`
       }
     }
-    // Certains endpoints back-office identifient l'utilisateur via X-User-Id.
-    // userId est stable (jamais périmé, contrairement au token).
-    const userId = localStorage.getItem('userId')
-    if (userId) {
-      config.headers['X-User-Id'] = userId
-    }
     return config
   },
   (error) => Promise.reject(error)
