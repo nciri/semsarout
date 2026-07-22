@@ -75,6 +75,11 @@ def login():
     if not user.is_active:
         return jsonify({'error': 'Account is deactivated'}), 403
 
+    from app.services.moderation import is_login_blocked
+    blocked, reason = is_login_blocked(user)
+    if blocked:
+        return jsonify({'error': reason}), 403
+
     # Update last login
     user.last_login = datetime.utcnow()
     db.session.commit()
