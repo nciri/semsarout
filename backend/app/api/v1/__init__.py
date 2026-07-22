@@ -12,3 +12,7 @@ api_v1_bp.register_blueprint(backoffice_bp)
 # Import integrations blueprint
 from app.api.v1.integrations import integrations_bp
 api_v1_bp.register_blueprint(integrations_bp)
+
+# Import admin (platform super-admin) blueprint
+from app.api.v1.admin import admin_bp
+api_v1_bp.register_blueprint(admin_bp)
