@@ -49,7 +49,7 @@ function AdminAccountDetail() {
     }
   )
   const anonymize = useMutation(
-    () => adminService.anonymizeUser(id),
+    () => (isUser ? adminService.anonymizeUser(id) : adminService.anonymizeAgency(id)),
     {
       onSuccess: () => { toast.success('Anonymisé'); refresh() },
       onError: (e) => toast.error(e.response?.data?.error || 'Erreur'),
@@ -101,7 +101,7 @@ function AdminAccountDetail() {
           {status === 'deleted' && !entity.anonymized_at && (
             <button onClick={() => restore.mutate()} className="px-3 py-2 rounded-lg bg-green-100 text-green-800 text-sm">Restaurer</button>
           )}
-          {isUser && !entity.anonymized_at && (
+          {!entity.anonymized_at && (
             <button onClick={() => anonymize.mutate()} className="px-3 py-2 rounded-lg bg-red-600 text-white text-sm">Anonymiser (RGPD)</button>
           )}
         </div>

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from seed import app
 from app import db
-from app.models import User
+from app.models import User, Agency
 from app.commands import purge_deleted_accounts  # function form for testability
 
 FAILS = []
@@ -22,12 +22,25 @@ with app.app_context():
     u.anonymized_at = None
     db.session.commit()
 
+    # Arrange: a real seeded agency, also deleted 100 days ago, not anonymized.
+    ag = Agency.query.filter(Agency.email.notlike('deleted+%@semsar.invalid')).first()
+    if ag is None:
+        ag = Agency.query.first()
+    ag.deleted_at = datetime.utcnow() - timedelta(days=100)
+    ag.anonymized_at = None
+    db.session.commit()
+
     n = purge_deleted_accounts(retention_days=90)
-    check(n >= 1, "purge anonymized at least one account")
+    check(n >= 2, "purge anonymized at least one user and one agency")
     db.session.expire_all()
     u2 = User.query.get(u.id)
     check(u2.anonymized_at is not None, "old deleted user is anonymized")
     check('@semsar.invalid' in u2.email, "email scrubbed by purge")
+
+    ag2 = Agency.query.get(ag.id)
+    check(ag2.anonymized_at is not None, "old deleted agency is anonymized")
+    check(ag2.name == 'Agence supprimée' and '@semsar.invalid' in ag2.email,
+          "agency name/email scrubbed by purge")
 
     # Idempotent: running again anonymizes nothing new
     n2 = purge_deleted_accounts(retention_days=90)

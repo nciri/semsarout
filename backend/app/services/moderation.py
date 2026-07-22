@@ -104,3 +104,25 @@ def anonymize_user(user):
         user.deleted_at = datetime.utcnow()
     user.is_suspended = True
     user.anonymized_at = datetime.utcnow()
+
+
+def anonymize_agency(agency):
+    """Irreversible PII scrub for an agency. Keeps FK-linked records intact."""
+    agency.name = 'Agence supprimée'
+    agency.slug = f'agence-supprimee-{agency.id}'
+    agency.description = None
+    agency.email = f'deleted+agency{agency.id}@semsar.invalid'
+    agency.phone = None
+    agency.website = None
+    agency.address = None
+    agency.postal_code = None
+    agency.logo_url = None
+    agency.cover_image_url = None
+    agency.license_number = None
+    agency.rc_number = None
+    agency.ice_number = None
+    agency.api_key = None
+    if agency.deleted_at is None:
+        agency.deleted_at = datetime.utcnow()
+    agency.is_suspended = True
+    agency.anonymized_at = datetime.utcnow()

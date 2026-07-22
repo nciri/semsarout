@@ -10,6 +10,7 @@ export const adminService = {
   deleteUser: async (id) => (await api.delete(`/admin/accounts/users/${id}`)).data,
   restoreUser: async (id) => (await api.post(`/admin/accounts/users/${id}/restore`)).data,
   anonymizeUser: async (id) => (await api.post(`/admin/accounts/users/${id}/anonymize`)).data,
+  anonymizeAgency: async (id) => (await api.post(`/admin/accounts/agencies/${id}/anonymize`)).data,
   suspendAgency: async (id, reason) => (await api.post(`/admin/accounts/agencies/${id}/suspend`, { reason })).data,
   unsuspendAgency: async (id) => (await api.post(`/admin/accounts/agencies/${id}/unsuspend`)).data,
   deleteAgency: async (id) => (await api.delete(`/admin/accounts/agencies/${id}`)).data,

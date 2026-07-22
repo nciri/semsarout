@@ -137,3 +137,17 @@ def restore_agency_route(agency_id):
     mod.log_admin_action(g.current_user, 'restore', 'agency', a.id)
     db.session.commit()
     return jsonify({'message': 'Agence restaurée', 'agency': a.to_dict()})
+
+
+@admin_bp.route('/accounts/agencies/<int:agency_id>/anonymize', methods=['POST'])
+@require_superadmin
+def anonymize_agency_route(agency_id):
+    a = Agency.query.get(agency_id)
+    if not a:
+        return jsonify({'error': 'Agency not found'}), 404
+    if a.anonymized_at is not None:
+        return jsonify({'message': 'Agence déjà anonymisée', 'agency': a.to_dict()}), 200
+    mod.anonymize_agency(a)
+    mod.log_admin_action(g.current_user, 'anonymize', 'agency', a.id)
+    db.session.commit()
+    return jsonify({'message': 'Agence anonymisée', 'agency': a.to_dict()})
