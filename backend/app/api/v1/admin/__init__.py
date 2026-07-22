@@ -27,4 +27,4 @@ def require_superadmin(f):
 
 
 # Import routes so they register on admin_bp
-from app.api.v1.admin import overview  # noqa: E402,F401
+from app.api.v1.admin import overview, accounts  # noqa: E402,F401
