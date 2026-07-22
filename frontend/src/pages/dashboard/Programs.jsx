@@ -9,51 +9,25 @@ import {
 import useAuthStore from '../../store/authStore'
 import { formatPrice } from '../../utils/currency'
 import MesBiensTabs from '../../components/dashboard/MesBiensTabs'
+import api from '../../services/api'
 
 const programsService = {
   getMyPrograms: async (params) => {
     const searchParams = new URLSearchParams(params)
-    const response = await fetch(`/api/v1/programs/my?${searchParams}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to fetch programs')
-    return response.json()
+    const { data } = await api.get(`/programs/my?${searchParams}`)
+    return data
   },
   deleteProgram: async (id) => {
-    const response = await fetch(`/api/v1/programs/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to delete program')
-    return response.json()
+    const { data } = await api.delete(`/programs/${id}`)
+    return data
   },
   publishProgram: async (id) => {
-    const response = await fetch(`/api/v1/programs/${id}/publish`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to publish program')
-    return response.json()
+    const { data } = await api.post(`/programs/${id}/publish`)
+    return data
   },
   unpublishProgram: async (id) => {
-    const response = await fetch(`/api/v1/programs/${id}/unpublish`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to unpublish program')
-    return response.json()
+    const { data } = await api.post(`/programs/${id}/unpublish`)
+    return data
   }
 }
 

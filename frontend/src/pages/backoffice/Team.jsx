@@ -5,54 +5,25 @@ import {
   FiEdit2, FiTrash2, FiCheck, FiX, FiChevronDown, FiChevronRight,
   FiUserCheck, FiUsers, FiDollarSign, FiTrendingUp, FiEye
 } from 'react-icons/fi'
+import api from '../../services/api'
 
 const backofficeService = {
   getUsers: async (params) => {
     const searchParams = new URLSearchParams(params)
-    const response = await fetch(`/api/v1/backoffice/users?${searchParams}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to fetch users')
-    return response.json()
+    const { data } = await api.get(`/backoffice/users?${searchParams}`)
+    return data
   },
   getRoles: async () => {
-    const response = await fetch('/api/v1/backoffice/roles', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to fetch roles')
-    return response.json()
+    const { data } = await api.get('/backoffice/roles')
+    return data
   },
   updateUser: async ({ id, data }) => {
-    const response = await fetch(`/api/v1/backoffice/users/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId'),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to update user')
-    return response.json()
+    const { data: response } = await api.put(`/backoffice/users/${id}`, data)
+    return response
   },
   inviteUser: async (data) => {
-    const response = await fetch('/api/v1/backoffice/users/invite', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId'),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to invite user')
-    return response.json()
+    const { data: response } = await api.post('/backoffice/users/invite', data)
+    return response
   }
 }
 

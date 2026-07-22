@@ -6,29 +6,17 @@ import {
   FiEye, FiHome, FiMapPin, FiDollarSign, FiGrid, FiList
 } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
+import api from '../../services/api'
 
 const backofficeService = {
   getProperties: async (params) => {
     const searchParams = new URLSearchParams(params)
-    const response = await fetch(`/api/v1/backoffice/properties?${searchParams}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to fetch properties')
-    return response.json()
+    const { data } = await api.get(`/backoffice/properties?${searchParams}`)
+    return data
   },
   deleteProperty: async (id) => {
-    const response = await fetch(`/api/v1/backoffice/properties/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to delete property')
-    return response.json()
+    const { data } = await api.delete(`/backoffice/properties/${id}`)
+    return data
   }
 }
 

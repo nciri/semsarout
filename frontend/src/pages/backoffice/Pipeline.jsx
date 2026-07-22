@@ -6,41 +6,25 @@ import {
   FiCalendar, FiPhone, FiMail, FiEdit2, FiTrash2, FiChevronDown
 } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
+import api from '../../services/api'
 
 const backofficeService = {
   getPipeline: async (params) => {
     const searchParams = new URLSearchParams(params)
-    const response = await fetch(`/api/v1/backoffice/transactions/pipeline?${searchParams}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to fetch pipeline')
-    return response.json()
+    const { data } = await api.get(`/backoffice/transactions/pipeline?${searchParams}`)
+    return data
   },
   moveTransaction: async ({ id, stage, order }) => {
-    const response = await fetch(`/api/v1/backoffice/transactions/${id}/move`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId'),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ stage, order })
-    })
-    if (!response.ok) throw new Error('Failed to move transaction')
-    return response.json()
+    const { data } = await api.post(`/backoffice/transactions/${id}/move`, { stage, order })
+    return data
   },
   getAgents: async () => {
-    const response = await fetch('/api/v1/backoffice/users?role=agent', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) return { users: [] }
-    return response.json()
+    try {
+      const { data } = await api.get('/backoffice/users?role=agent')
+      return data
+    } catch (error) {
+      return { users: [] }
+    }
   }
 }
 

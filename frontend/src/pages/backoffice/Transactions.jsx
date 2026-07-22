@@ -6,18 +6,13 @@ import {
   FiCalendar, FiUser, FiHome, FiMoreVertical
 } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
+import api from '../../services/api'
 
 const backofficeService = {
   getTransactions: async (params) => {
     const searchParams = new URLSearchParams(params)
-    const response = await fetch(`/api/v1/backoffice/transactions?${searchParams}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to fetch transactions')
-    return response.json()
+    const { data } = await api.get(`/backoffice/transactions?${searchParams}`)
+    return data
   }
 }
 

@@ -5,77 +5,34 @@ import {
   FiCheck, FiX, FiMoreVertical, FiChevronLeft, FiChevronRight,
   FiFilter, FiList, FiGrid
 } from 'react-icons/fi'
+import api from '../../services/api'
 
 const backofficeService = {
   getVisits: async (params) => {
     const searchParams = new URLSearchParams(params)
-    const response = await fetch(`/api/v1/backoffice/visits?${searchParams}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to fetch visits')
-    return response.json()
+    const { data } = await api.get(`/backoffice/visits?${searchParams}`)
+    return data
   },
   getCalendarVisits: async (params) => {
     const searchParams = new URLSearchParams(params)
-    const response = await fetch(`/api/v1/backoffice/visits/calendar?${searchParams}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to fetch calendar')
-    return response.json()
+    const { data } = await api.get(`/backoffice/visits/calendar?${searchParams}`)
+    return data
   },
   createVisit: async (data) => {
-    const response = await fetch('/api/v1/backoffice/visits', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId'),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to create visit')
-    return response.json()
+    const { data: responseData } = await api.post('/backoffice/visits', data)
+    return responseData
   },
   confirmVisit: async (id) => {
-    const response = await fetch(`/api/v1/backoffice/visits/${id}/confirm`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to confirm visit')
-    return response.json()
+    const { data } = await api.post(`/backoffice/visits/${id}/confirm`)
+    return data
   },
   completeVisit: async ({ id, data }) => {
-    const response = await fetch(`/api/v1/backoffice/visits/${id}/complete`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId'),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to complete visit')
-    return response.json()
+    const { data: responseData } = await api.post(`/backoffice/visits/${id}/complete`, data)
+    return responseData
   },
   cancelVisit: async (id) => {
-    const response = await fetch(`/api/v1/backoffice/visits/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to cancel visit')
-    return response.json()
+    const { data } = await api.delete(`/backoffice/visits/${id}`)
+    return data
   }
 }
 
