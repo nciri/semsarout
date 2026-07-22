@@ -79,7 +79,8 @@ def create_roles_and_permissions():
         {'name': 'Agent', 'slug': 'agent', 'level': 50, 'permissions': [p for p in all_permissions if p.module in ['dashboard', 'properties', 'clients', 'leads', 'visits', 'transactions'] and p.slug.endswith('.view') or p.slug.endswith('.create') or p.slug.endswith('.edit')]},
         {'name': 'Marketing', 'slug': 'marketing', 'level': 40, 'permissions': [p for p in all_permissions if p.module in ['dashboard', 'leads', 'stats']]},
         {'name': 'Comptable', 'slug': 'accountant', 'level': 30, 'permissions': [p for p in all_permissions if p.module in ['dashboard', 'transactions', 'stats']]},
-        {'name': 'Lecture seule', 'slug': 'readonly', 'level': 10, 'permissions': [p for p in all_permissions if p.slug.endswith('.view')]}
+        {'name': 'Lecture seule', 'slug': 'readonly', 'level': 10, 'permissions': [p for p in all_permissions if p.slug.endswith('.view')]},
+        {'name': 'Super Admin', 'slug': 'superadmin', 'level': 200, 'permissions': all_permissions},
     ]
 
     created_roles = {}
@@ -158,6 +159,17 @@ def create_users(agency, roles):
 
     db.session.commit()
     print(f"  Created {len(users_data)} users")
+
+    # Assign the platform super-admin role to SUPERADMIN_EMAIL
+    import os
+    sa_email = os.environ.get('SUPERADMIN_EMAIL', 'admin@semsarout.ma')
+    sa_role = Role.query.filter_by(slug='superadmin').first()
+    sa_user = User.query.filter_by(email=sa_email).first()
+    if sa_role and sa_user and sa_role not in sa_user.roles:
+        sa_user.roles.append(sa_role)
+        print(f"  Assigned superadmin to {sa_email}")
+    db.session.commit()
+
     return created_users
 
 
