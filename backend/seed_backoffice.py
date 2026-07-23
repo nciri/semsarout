@@ -69,6 +69,18 @@ def create_roles_and_permissions():
                 db.session.add(perm)
                 permissions.append(perm)
 
+    # Extra permission outside the module/action grid: team management
+    manage_perm = Permission.query.filter_by(slug='team.manage').first()
+    if not manage_perm:
+        manage_perm = Permission(
+            name="Gérer l'équipe",
+            slug='team.manage',
+            module='team',
+            description="Permission to manage team members and seats"
+        )
+        db.session.add(manage_perm)
+        permissions.append(manage_perm)
+
     db.session.commit()
     all_permissions = Permission.query.all()
 
