@@ -11,3 +11,4 @@ from app.api.v1.backoffice import roles
 from app.api.v1.backoffice import stats
 from app.api.v1.backoffice import properties
 from app.api.v1.backoffice import leads
+from app.api.v1.backoffice import team

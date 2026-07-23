@@ -1,0 +1,141 @@
+from flask import jsonify, request, g
+from app import db
+from app.models import User, Agency, Team, Invitation, Role
+from app.api.v1.backoffice import backoffice_bp
+from app.api.v1.backoffice.dashboard import require_auth
+from app.services import seats
+
+
+def _agency():
+    return Agency.query.get(g.agency_id) if g.agency_id else None
+
+
+def _require_manage():
+    """Return (agency, None) if allowed, else (None, (json, status))."""
+    agency = _agency()
+    if not agency:
+        return None, (jsonify({'error': 'Aucune agence'}), 400)
+    if not seats.can_manage_team(g.current_user, agency):
+        return None, (jsonify({'error': "Vous n'avez pas le droit de gérer l'équipe."}), 403)
+    return agency, None
+
+
+@backoffice_bp.route('/team', methods=['GET'])
+@require_auth
+def get_team():
+    agency = _agency()
+    if not agency:
+        return jsonify({'error': 'Aucune agence'}), 400
+    members = User.query.filter(User.agency_id == agency.id, User.deleted_at.is_(None)).all()
+    owner = User.query.get(agency.owner_id) if agency.owner_id else None
+    teams = Team.query.filter_by(agency_id=agency.id).all()
+    pending = Invitation.query.filter_by(agency_id=agency.id, status='pending').all()
+
+    def member_row(u):
+        d = u.to_dict()
+        d['roles'] = [r.to_dict() for r in u.roles]
+        d['is_owner'] = (u.id == agency.owner_id)
+        return d
+
+    return jsonify({
+        'owner': owner.to_dict() if owner else None,
+        'members': [member_row(u) for u in members],
+        'teams': [t.to_dict() for t in teams],
+        'invitations': [i.to_dict() for i in pending if i.is_active_pending()],
+        'seats': {'used': seats.seats_used(agency), 'limit': seats.seats_limit(agency)},
+        'teams_quota': {'used': seats.teams_used(agency), 'limit': seats.teams_limit(agency)},
+        'can_manage': seats.can_manage_team(g.current_user, agency),
+    })
+
+
+@backoffice_bp.route('/teams', methods=['POST'])
+@require_auth
+def create_team():
+    agency, err = _require_manage()
+    if err:
+        return err
+    if not seats.can_create_team(agency):
+        return jsonify({'error': "Limite d'équipes atteinte pour votre plan."}), 409
+    name = (request.get_json(silent=True) or {}).get('name', '').strip()
+    if not name:
+        return jsonify({'error': "Nom d'équipe requis"}), 400
+    if Team.query.filter_by(agency_id=agency.id, name=name).first():
+        return jsonify({'error': 'Une équipe porte déjà ce nom.'}), 409
+    t = Team(agency_id=agency.id, name=name)
+    db.session.add(t)
+    db.session.commit()
+    return jsonify({'team': t.to_dict()}), 201
+
+
+@backoffice_bp.route('/teams/<int:team_id>', methods=['PUT'])
+@require_auth
+def rename_team(team_id):
+    agency, err = _require_manage()
+    if err:
+        return err
+    t = Team.query.filter_by(id=team_id, agency_id=agency.id).first()
+    if not t:
+        return jsonify({'error': 'Équipe introuvable'}), 404
+    name = (request.get_json(silent=True) or {}).get('name', '').strip()
+    if not name:
+        return jsonify({'error': "Nom d'équipe requis"}), 400
+    t.name = name
+    db.session.commit()
+    return jsonify({'team': t.to_dict()})
+
+
+@backoffice_bp.route('/teams/<int:team_id>', methods=['DELETE'])
+@require_auth
+def delete_team(team_id):
+    agency, err = _require_manage()
+    if err:
+        return err
+    t = Team.query.filter_by(id=team_id, agency_id=agency.id).first()
+    if not t:
+        return jsonify({'error': 'Équipe introuvable'}), 404
+    User.query.filter_by(team_id=t.id).update({'team_id': None})
+    db.session.delete(t)
+    db.session.commit()
+    return jsonify({'message': 'Équipe supprimée'})
+
+
+@backoffice_bp.route('/team/members/<int:user_id>', methods=['PUT'])
+@require_auth
+def update_member(user_id):
+    agency, err = _require_manage()
+    if err:
+        return err
+    u = User.query.filter_by(id=user_id, agency_id=agency.id).first()
+    if not u:
+        return jsonify({'error': 'Membre introuvable'}), 404
+    data = request.get_json(silent=True) or {}
+    if 'team_id' in data:
+        tid = data['team_id']
+        if tid is not None and not Team.query.filter_by(id=tid, agency_id=agency.id).first():
+            return jsonify({'error': 'Équipe invalide'}), 400
+        u.team_id = tid
+    if 'role_id' in data and data['role_id'] is not None:
+        role = Role.query.get(data['role_id'])
+        if role:
+            u.roles = [role]
+    db.session.commit()
+    d = u.to_dict()
+    d['roles'] = [r.to_dict() for r in u.roles]
+    return jsonify({'member': d})
+
+
+@backoffice_bp.route('/team/members/<int:user_id>', methods=['DELETE'])
+@require_auth
+def remove_member(user_id):
+    agency, err = _require_manage()
+    if err:
+        return err
+    if user_id == agency.owner_id:
+        return jsonify({'error': "Impossible de retirer le propriétaire du compte."}), 409
+    u = User.query.filter_by(id=user_id, agency_id=agency.id).first()
+    if not u:
+        return jsonify({'error': 'Membre introuvable'}), 404
+    u.agency_id = None
+    u.team_id = None
+    db.session.commit()
+    return jsonify({'message': 'Membre retiré'})
