@@ -24,6 +24,7 @@ from app.models.invitation import Invitation
 from app.models.contract import ContractTemplate, Contract
 from app.models.legal import Notary, LegalCase, LegalTask
 from app.models.artisan import Artisan, WorkOrder
+from app.models.shop import Product, Cart, CartItem, Order, OrderItem
 
 __all__ = [
     'User',
@@ -74,5 +75,10 @@ __all__ = [
     'LegalCase',
     'LegalTask',
     'Artisan',
-    'WorkOrder'
+    'WorkOrder',
+    'Product',
+    'Cart',
+    'CartItem',
+    'Order',
+    'OrderItem'
 ]
