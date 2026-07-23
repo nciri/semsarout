@@ -3,7 +3,7 @@ from flask import jsonify, request, g
 from app import db
 from app.api.v1.backoffice import backoffice_bp
 from app.api.v1.backoffice.dashboard import require_auth
-from app.models import Agency, Transaction, User
+from app.models import Agency, Transaction, User, Property, NeighborhoodPriceRef
 from app.services.analytics_scope import analytics_scope
 
 STAGE_PROBABILITY = {
@@ -141,5 +141,90 @@ def analytics_financial():
             'commission_by_month': revenue_trend,
             'win_loss_by_month': win_loss_by_month,
             'deals_by_type': deals_by_type,
+        },
+    })
+
+
+def _prop_base(agency, scope):
+    q = Property.query.filter(Property.agency_id == agency.id)
+    if not scope['all']:
+        q = q.filter(Property.owner_id == scope['agent_id'])
+    return q
+
+
+@backoffice_bp.route('/analytics/market', methods=['GET'])
+@require_auth
+def analytics_market():
+    agency, scope = current_scope()
+    if not agency:
+        return jsonify({'error': 'Aucune agence'}), 400
+    start = _range_start(request.args.get('range', '12m'))
+
+    active = _prop_base(agency, scope).filter(Property.status == 'active').all()
+    # Absorbed = terminal states (sale closed OR rental signed)
+    sold = _prop_base(agency, scope).filter(Property.status.in_(['sold', 'rented'])).all()
+
+    ppsqm = [float(p.price_per_sqm) for p in active if p.price_per_sqm]
+    portfolio_avg = round(sum(ppsqm) / len(ppsqm), 2) if ppsqm else 0
+
+    # Market reference weighted by the portfolio's neighborhoods
+    market_vals = []
+    for p in active:
+        ref = NeighborhoodPriceRef.query.filter_by(city=p.city, neighborhood=p.neighborhood).first()
+        if ref and ref.avg_price_sqm:
+            market_vals.append(float(ref.avg_price_sqm))
+    market_avg = round(sum(market_vals) / len(market_vals), 2) if market_vals else 0
+    price_gap = round((portfolio_avg - market_avg) / market_avg * 100, 1) if market_avg else 0
+
+    now = datetime.utcnow()
+    doms = [(now - (p.published_at or p.created_at)).days for p in active if (p.published_at or p.created_at)]
+    avg_dom = round(sum(doms) / len(doms), 1) if doms else 0
+    absorption = round(len(sold) / (len(sold) + len(active)), 3) if (len(sold) + len(active)) else 0
+
+    by_nb = {}
+    for p in active:
+        key = f"{p.city} · {p.neighborhood or '—'}"
+        by_nb.setdefault(key, {'portfolio': [], 'market': None})
+        if p.price_per_sqm:
+            by_nb[key]['portfolio'].append(float(p.price_per_sqm))
+        ref = NeighborhoodPriceRef.query.filter_by(city=p.city, neighborhood=p.neighborhood).first()
+        if ref:
+            by_nb[key]['market'] = float(ref.avg_price_sqm)
+    price_sqm_by_neighborhood = [
+        {'area': k, 'portfolio': round(sum(v['portfolio']) / len(v['portfolio']), 2) if v['portfolio'] else 0,
+         'market': v['market'] or 0}
+        for k, v in by_nb.items()
+    ]
+
+    buckets = {'0-30j': 0, '31-60j': 0, '61-90j': 0, '90j+': 0}
+    for d in doms:
+        if d <= 30: buckets['0-30j'] += 1
+        elif d <= 60: buckets['31-60j'] += 1
+        elif d <= 90: buckets['61-90j'] += 1
+        else: buckets['90j+'] += 1
+    days_on_market_distribution = [{'bucket': k, 'count': v} for k, v in buckets.items()]
+
+    val_by_city = {}
+    for p in active:
+        val_by_city.setdefault(p.city, 0.0)
+        val_by_city[p.city] += float(p.price or 0)
+    portfolio_valuation_by_city = [{'city': k, 'value': round(v, 2)} for k, v in val_by_city.items()]
+
+    status_counts = {}
+    for p in _prop_base(agency, scope).all():
+        status_counts.setdefault(p.status, 0)
+        status_counts[p.status] += 1
+    inventory_by_status = [{'status': k, 'count': v} for k, v in status_counts.items()]
+
+    return jsonify({
+        'summary': {
+            'portfolio_avg_price_sqm': portfolio_avg, 'market_avg_price_sqm': market_avg,
+            'price_gap_pct': price_gap, 'avg_days_on_market': avg_dom, 'absorption_rate': absorption,
+        },
+        'detail': {
+            'price_sqm_by_neighborhood': price_sqm_by_neighborhood,
+            'days_on_market_distribution': days_on_market_distribution,
+            'portfolio_valuation_by_city': portfolio_valuation_by_city,
+            'inventory_by_status': inventory_by_status,
         },
     })
