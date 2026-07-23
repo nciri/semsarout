@@ -212,8 +212,8 @@ def finalize_contract(cid):
     c = _get_contract(cid)
     if not c:
         return jsonify({'error': 'Contrat introuvable'}), 404
-    if c.status == 'signed':
-        return jsonify({'error': 'Contrat déjà signé.'}), 409
+    if c.status != 'draft':
+        return jsonify({'error': 'Seul un brouillon peut être finalisé.'}), 409
     pdf = _render_pdf_bytes(c)
     filename = f'contract_{c.id}_{int(c.created_at.timestamp()) if c.created_at else c.id}.pdf'
     with open(os.path.join(_documents_dir(), filename), 'wb') as fh:

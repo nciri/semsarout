@@ -21,8 +21,14 @@ except Exception:  # older bleach
 def sanitize_html(html):
     if not html:
         return ''
-    kwargs = dict(tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES,
-                  protocols=ALLOWED_PROTOCOLS, strip=True)
+    attributes = dict(ALLOWED_ATTRIBUTES)
+    kwargs = dict(tags=ALLOWED_TAGS, protocols=ALLOWED_PROTOCOLS, strip=True)
     if _CSS is not None:
         kwargs['css_sanitizer'] = _CSS
+    else:
+        # Without a CSS sanitizer, bleach keeps `style` values verbatim
+        # (CSS url() vector). Fail closed by dropping `style` entirely.
+        attributes = {k: [a for a in v if a != 'style'] for k, v in attributes.items()}
+        attributes = {k: v for k, v in attributes.items() if v}
+    kwargs['attributes'] = attributes
     return bleach.clean(html, **kwargs)
