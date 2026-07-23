@@ -32,17 +32,28 @@ le flux d'invitation.
 | Downgrade en surcapacité | **Bloqué** tant que le nb de membres dépasse la nouvelle limite |
 | Override super-admin | Via **impersonation** (brique 1) — pas de nouvelle UI dédiée |
 
-## 3. Réalité e-mail (contrainte)
+## 3. E-mail — Brevo (relais SMTP)
 
-Aucun provider SMTP n'est câblé (`auth.py:forgot_password` ne fait que loguer le lien en dev via
-`DEBUG_EMAIL_TO_LOG`). L'invitation suit donc **le même modèle** :
-- On génère un token, on stocke **uniquement son hash** (SHA-256), on expose un **lien
-  d'acceptation**.
-- L'UI admin affiche le lien d'invitation **copiable** → livraison manuelle possible immédiatement.
-- Un envoi e-mail best-effort est tenté **si** `MAIL_*` est configuré (helper `send_email`
-  centralisé, no-op sinon) ; sinon le lien copiable est le mécanisme de livraison.
+Provider retenu : **Brevo** (ex-Sendinblue), via son **relais SMTP** — donc à travers le
+`flask-mail` déjà initialisé (`app/__init__.py`), sans nouvelle dépendance. Config par variables
+d'environnement (jamais en dur), documentées dans `backend/.env.example` :
 
-C'est cohérent avec le choix « invitation par email » tout en restant fonctionnel sans SMTP.
+```
+MAIL_SERVER=smtp-relay.brevo.com
+MAIL_PORT=587
+MAIL_USE_TLS=true
+MAIL_USERNAME=<identifiant SMTP Brevo>
+MAIL_PASSWORD=<clé SMTP Brevo>          # secret — jamais commité
+MAIL_DEFAULT_SENDER=no-reply@<domaine vérifié Brevo>
+```
+
+`config/settings.py` doit lire ces variables (les ajouter si absentes). Le helper `send_email`
+(§8) envoie via `flask-mail` dès que `MAIL_SERVER` est configuré ; tant que ce n'est pas le cas
+(dev), il **logue** le lien (comportement identique au reset password actuel).
+
+Robustesse : le flux d'invitation ne dépend **jamais** du succès de l'envoi. On génère un token,
+on stocke **uniquement son hash** (SHA-256), et l'UI admin affiche systématiquement le **lien
+d'acceptation copiable** — livraison manuelle possible même si Brevo est momentanément KO.
 
 ## 4. Modèle de données
 
@@ -128,11 +139,14 @@ compte ici les membres réels hors owner — pas les invitations en attente ; on
 helper `active_member_seats(agency)` au service `seats` pour cette évaluation, distinct de
 `seats_used` qui inclut les pending pour l'enforcement d'invitation.)*
 
-## 8. E-mail — helper centralisé
-`backend/app/services/mailer.py` : `send_email(to, subject, body, html=None)` → si `MAIL_SERVER`
-configuré, envoie via `flask_mail` ; sinon log (comme le reset). Le flux invitation ne dépend
-JAMAIS du succès de l'envoi : le lien copiable reste la source de vérité. (On peut aussi
-rebrancher le reset password dessus, mais hors périmètre — ne pas le faire ici.)
+## 8. E-mail — helper centralisé (Brevo SMTP)
+`backend/app/services/mailer.py` : `send_email(to, subject, body, html=None) -> bool` → si
+`MAIL_SERVER` configuré (le relais Brevo, cf. §3), envoie via `flask_mail` et renvoie `True` ;
+sinon logue le contenu et renvoie `False`. Enveloppe l'envoi dans un `try/except` (une panne SMTP
+ne doit jamais faire échouer la requête d'invitation). Le lien copiable reste la source de vérité.
+`config/settings.py` doit exposer `MAIL_SERVER/PORT/USE_TLS/USERNAME/PASSWORD/DEFAULT_SENDER`
+depuis l'environnement. (On pourrait rebrancher le reset password sur ce helper, mais hors
+périmètre — ne pas le faire ici.)
 
 ## 9. Front
 
@@ -184,7 +198,7 @@ jauge de sièges à jour.
   `add_teams_and_seats`, `services/seats.py` (new), `services/mailer.py` (new),
   `api/v1/backoffice/team.py` (new) + enregistrement, `api/v1/invitations.py` (new) +
   enregistrement, `api/v1/backoffice/roles.py` (permission `team.manage` prise en compte),
-  `api/v1/billing.py` (blocage downgrade), `seed.py` / `seed_backoffice.py`, `scripts/verify_team_*.py`.
+  `api/v1/billing.py` (blocage downgrade), `config/settings.py` (vars MAIL_*), `backend/.env.example` (config Brevo, sans secrets), `seed.py` / `seed_backoffice.py`, `scripts/verify_team_*.py`.
 - **Frontend** : `pages/backoffice/Team.jsx` (refonte), `pages/auth/AcceptInvitation.jsx` (new),
   `services/teamService.js` (new), câblage routeur (`/invitation/:token`), `services/api.js` (aucun
   changement attendu).
