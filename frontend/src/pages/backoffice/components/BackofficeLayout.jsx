@@ -30,6 +30,7 @@ const MENU_ITEMS = [
     items: [
       { path: '/backoffice/transactions', icon: FiBriefcase, label: 'Transactions' },
       { path: '/backoffice/contrats', icon: FiFileText, label: 'Contrats' },
+      { path: '/backoffice/notaires', icon: FiBriefcase, label: 'Notaires' },
     ]
   },
   {
