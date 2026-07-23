@@ -29,4 +29,10 @@ with app.app_context():
         check(k in b.get('detail', {}), f"detail has {k}")
     check(b['summary']['revenue_realized'] >= 0, "revenue_realized non-negative")
 
+    r_all = c.get('/api/v1/backoffice/analytics/financial?range=12m', headers=h)
+    r_short = c.get('/api/v1/backoffice/analytics/financial?range=30d', headers=h)
+    lost_all = r_all.get_json()['summary']['deals_lost']
+    lost_short = r_short.get_json()['summary']['deals_lost']
+    check(lost_short <= lost_all, "deals_lost for 30d range <= 12m range")
+
 sys.exit(1 if FAILS else 0)

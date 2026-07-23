@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from flask import jsonify, request, g
+from app import db
 from app.api.v1.backoffice import backoffice_bp
 from app.api.v1.backoffice.dashboard import require_auth
 from app.models import Agency, Transaction, User
@@ -72,7 +73,10 @@ def analytics_financial():
 
     base = _txn_base(agency, scope, start)
     won = base.filter(Transaction.status == 'won', Transaction.closing_date >= start).all()
-    lost = base.filter(Transaction.status == 'lost').all()
+    lost = base.filter(
+        Transaction.status == 'lost',
+        db.func.coalesce(Transaction.closed_at, Transaction.updated_at) >= start,
+    ).all()
     open_deals = base.filter(Transaction.status == 'active').all()
 
     revenue_realized = sum(float(t.commission_amount or 0) for t in won)
@@ -97,9 +101,12 @@ def analytics_financial():
     for t in won:
         comm_by_agent.setdefault(t.agent_id, 0.0)
         comm_by_agent[t.agent_id] += float(t.commission_amount or 0)
+    agents_map = {}
+    if comm_by_agent:
+        agents_map = {u.id: u for u in User.query.filter(User.id.in_(comm_by_agent.keys())).all()}
     agent_rows = []
     for aid, amount in comm_by_agent.items():
-        agent = User.query.get(aid)
+        agent = agents_map.get(aid)
         agent_rows.append({'agent_id': aid, 'agent': agent.full_name if agent else '—', 'commission': round(amount, 2)})
     agent_rows.sort(key=lambda r: r['commission'], reverse=True)
 
