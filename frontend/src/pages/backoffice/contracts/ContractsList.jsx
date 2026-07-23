@@ -25,9 +25,12 @@ function ContractsList() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-2xl font-bold text-gray-900">Contrats</h1>
-        <Link to="/backoffice/contrats/nouveau" className="btn-primary inline-flex items-center gap-2">
-          <FiFilePlus /> Nouveau contrat
-        </Link>
+        <div>
+          <Link to="/backoffice/contrats/nouveau" className="btn-primary inline-flex items-center gap-2">
+            <FiFilePlus /> Nouveau contrat
+          </Link>
+          <Link to="/backoffice/contrats/modeles" className="btn-secondary inline-flex items-center gap-2 ml-2">Modèles</Link>
+        </div>
       </div>
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <table className="w-full text-sm">
