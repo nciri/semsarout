@@ -4,6 +4,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SCRIPTS = [
     'verify_team_models.py', 'verify_team_seed.py', 'verify_seats_service.py',
     'verify_team_api.py', 'verify_invitations.py', 'verify_downgrade_guard.py',
+    'verify_role_escalation.py',
 ]
 failed = []
 for s in SCRIPTS:

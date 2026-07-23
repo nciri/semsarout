@@ -3,7 +3,28 @@ from datetime import datetime
 from app import db
 from app.api.v1.backoffice import backoffice_bp
 from app.api.v1.backoffice.dashboard import require_auth
-from app.models import Role, Permission, User, ActivityLog, user_roles
+from app.models import Role, Permission, User, ActivityLog, Agency, user_roles
+from app.services import seats
+
+
+def _is_superadmin(user):
+    """Platform super-admins bypass agency-scoped role gates entirely."""
+    if user is None:
+        return False
+    return any(getattr(r, 'slug', None) == 'superadmin' for r in user.roles)
+
+
+def _require_manage_roles():
+    """Return (agency, None) if the acting user may manage this agency's roles,
+    else (None, (json, status)). Superadmins are exempt (agency may be None)."""
+    if _is_superadmin(g.current_user):
+        return Agency.query.get(g.agency_id) if g.agency_id else None, None
+    agency = Agency.query.get(g.agency_id) if g.agency_id else None
+    if not agency:
+        return None, (jsonify({'error': 'Aucune agence'}), 400)
+    if not seats.can_manage_team(g.current_user, agency):
+        return None, (jsonify({'error': "Vous n'avez pas le droit de gérer les rôles."}), 403)
+    return agency, None
 
 
 @backoffice_bp.route('/roles', methods=['GET'])
@@ -36,15 +57,31 @@ def get_role(role_id):
 @require_auth
 def create_role():
     """Create a new role."""
+    is_superadmin = _is_superadmin(g.current_user)
+    agency, err = _require_manage_roles()
+    if err:
+        return err
+
     data = request.get_json()
+
+    level = data.get('level', 100)
+    try:
+        level = int(level)
+    except (TypeError, ValueError):
+        level = 100
+    # Agency-created roles must never reach the platform / agency-admin range.
+    if not is_superadmin and level >= 100:
+        level = 99
 
     role = Role(
         name=data.get('name'),
         slug=data.get('slug') or data.get('name', '').lower().replace(' ', '_'),
         description=data.get('description'),
         color=data.get('color', 'gray'),
-        level=data.get('level', 100),
-        agency_id=g.agency_id
+        level=level,
+        # Agency-scoped roles are always tied to the acting agency; only a
+        # superadmin (with no agency) may create a global role.
+        agency_id=None if is_superadmin else agency.id
     )
 
     # Add permissions
@@ -62,12 +99,29 @@ def create_role():
 @require_auth
 def update_role(role_id):
     """Update a role."""
+    is_superadmin = _is_superadmin(g.current_user)
+    agency, err = _require_manage_roles()
+    if err:
+        return err
+
     role = Role.query.get_or_404(role_id)
+
+    # Agency managers may only touch roles that belong to their own agency;
+    # this also shields global/system roles (e.g. superadmin) from them.
+    if not is_superadmin and role.agency_id != agency.id:
+        return jsonify({'error': 'Rôle introuvable'}), 404
 
     if role.is_system:
         return jsonify({'error': 'Cannot modify system role'}), 403
 
     data = request.get_json()
+
+    if not is_superadmin and 'level' in data:
+        try:
+            lvl = int(data['level'])
+        except (TypeError, ValueError):
+            lvl = role.level
+        data['level'] = lvl if lvl < 100 else 99
 
     for field in ['name', 'description', 'color', 'level']:
         if field in data:
@@ -88,7 +142,15 @@ def update_role(role_id):
 @require_auth
 def delete_role(role_id):
     """Delete a role."""
+    is_superadmin = _is_superadmin(g.current_user)
+    agency, err = _require_manage_roles()
+    if err:
+        return err
+
     role = Role.query.get_or_404(role_id)
+
+    if not is_superadmin and role.agency_id != agency.id:
+        return jsonify({'error': 'Rôle introuvable'}), 404
 
     if role.is_system:
         return jsonify({'error': 'Cannot delete system role'}), 403
@@ -192,10 +254,29 @@ def update_user_roles(user_id):
     if g.agency_id and user.agency_id != g.agency_id:
         return jsonify({'error': 'Access denied'}), 403
 
+    is_superadmin = _is_superadmin(g.current_user)
+    agency, err = _require_manage_roles()
+    if err:
+        return err
+
     data = request.get_json()
     role_ids = data.get('roles', [])
 
-    roles = Role.query.filter(Role.id.in_(role_ids)).all()
+    if is_superadmin:
+        roles = Role.query.filter(Role.id.in_(role_ids)).all()
+        if len(roles) != len(set(role_ids)):
+            return jsonify({'error': 'Rôle invalide'}), 400
+    else:
+        # The owner's role can't be reassigned through this endpoint.
+        if agency.owner_id and user.id == agency.owner_id:
+            return jsonify({'error': "Le rôle du propriétaire ne peut pas être modifié."}), 409
+        roles = []
+        for rid in role_ids:
+            role = seats.resolve_assignable_role(agency, rid)
+            if role is None:
+                return jsonify({'error': 'Rôle invalide'}), 400
+            roles.append(role)
+
     user.roles = roles
 
     db.session.commit()
