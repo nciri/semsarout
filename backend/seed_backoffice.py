@@ -719,6 +719,29 @@ def seed_artisans():
     print("  Seeded has_artisans flag + demo artisans")
 
 
+def seed_products():
+    """Seed demo marketplace products (furniture + appliances)."""
+    from app.models import Product
+    if Product.query.count() > 0:
+        return
+    print("Seeding marketplace demo products...")
+    DEMO = [
+        ('lit', 'Lit double 160x200', 2500, 12),
+        ('canape', "Canapé d'angle 4 places", 4800, 6),
+        ('table', 'Table à manger 6 personnes', 1900, 9),
+        ('armoire', 'Armoire 3 portes', 3200, 5),
+        ('refrigerateur', 'Réfrigérateur combiné 300L', 4500, 8),
+        ('lave_linge', 'Lave-linge 8kg', 3900, 7),
+        ('four', 'Four encastrable', 2800, 4),
+        ('television', 'Télévision LED 50"', 3500, 10),
+    ]
+    from app.services.product_categories import group_of
+    for cat, name, price, stock in DEMO:
+        db.session.add(Product(category=cat, group=group_of(cat), name=name, price=price, stock=stock, is_active=True))
+    db.session.commit()
+    print("  Seeded demo marketplace products")
+
+
 def seed_all():
     """Run all seed functions."""
     with app.app_context():
@@ -740,6 +763,7 @@ def seed_all():
         seed_contract_templates()
         seed_legal()
         seed_artisans()
+        seed_products()
 
         print("\n" + "="*50)
         print("SEEDING COMPLETE!")
