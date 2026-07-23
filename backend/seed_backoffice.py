@@ -695,6 +695,30 @@ def seed_legal():
     print("  Seeded has_legal flag + demo notaries")
 
 
+def seed_artisans():
+    """Flag pro/enterprise plans with has_artisans and seed demo shared/private artisans."""
+    from app.models import SubscriptionPlan, Artisan, Agency
+    print("Seeding artisans (has_artisans flag + demo artisans)...")
+    for slug in ('pro', 'enterprise'):
+        plan = SubscriptionPlan.query.filter_by(slug=slug).first()
+        if plan:
+            plan.has_artisans = True
+    SHARED = [('plombier', 'Plomberie Atlas', 'Casablanca'),
+              ('electricien', 'Élec Express', 'Rabat'),
+              ('menage', 'Clean Home', 'Casablanca'),
+              ('peintre', 'Couleurs & Co', 'Marrakech')]
+    if Artisan.query.filter_by(agency_id=None).count() == 0:
+        for trade, name, city in SHARED:
+            db.session.add(Artisan(agency_id=None, trade=trade, name=name, company=name, city=city))
+    for agency in Agency.query.all():
+        if Artisan.query.filter_by(agency_id=agency.id).first():
+            continue
+        db.session.add(Artisan(agency_id=agency.id, trade='menuisier',
+                              name='Menuiserie du coin', city=agency.city or 'Casablanca'))
+    db.session.commit()
+    print("  Seeded has_artisans flag + demo artisans")
+
+
 def seed_all():
     """Run all seed functions."""
     with app.app_context():
@@ -715,6 +739,7 @@ def seed_all():
         create_activity_logs(agency, users)
         seed_contract_templates()
         seed_legal()
+        seed_artisans()
 
         print("\n" + "="*50)
         print("SEEDING COMPLETE!")
