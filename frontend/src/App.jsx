@@ -13,6 +13,7 @@ import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import ForgotPassword from './pages/auth/ForgotPassword'
 import ResetPassword from './pages/auth/ResetPassword'
+import AcceptInvitation from './pages/auth/AcceptInvitation'
 import About from './pages/About'
 import LegalPage from './pages/LegalPage'
 import CheckoutConfirmation from './pages/CheckoutConfirmation'
@@ -84,6 +85,7 @@ function App() {
         <Route path="inscription" element={<Register />} />
         <Route path="mot-de-passe-oublie" element={<ForgotPassword />} />
         <Route path="reinitialiser-mot-de-passe" element={<ResetPassword />} />
+        <Route path="invitation/:token" element={<AcceptInvitation />} />
         <Route path="a-propos" element={<About />} />
         <Route path="mentions-legales" element={<LegalPage type="mentions" />} />
         <Route path="cgu" element={<LegalPage type="cgu" />} />
