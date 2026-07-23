@@ -25,9 +25,12 @@ with app.app_context():
     s = b.get('summary', {})
     check('funnel' in s and 'closed' in s['funnel'], "summary funnel")
     f = s['funnel']
-    check(f['leads'] >= f['closed'], "funnel decreasing (leads >= closed)")
+    check(f['leads'] >= f['qualified'] >= f['visits'] >= f['offers'] >= f['closed'],
+          "funnel monotonic (leads >= qualified >= visits >= offers >= closed)")
     check(0 <= s['conversion_overall_pct'] <= 100, "conversion in [0,100]")
     for k in ('funnel_stages','conversion_by_stage','stage_velocity_days','expected_closings_timeline'):
         check(k in b.get('detail', {}), f"detail has {k}")
+    for row in b.get('detail', {}).get('conversion_by_stage', []):
+        check(0 <= row['pct'] <= 100, f"conversion_by_stage[{row.get('from')}] in [0,100]")
 
 sys.exit(1 if FAILS else 0)

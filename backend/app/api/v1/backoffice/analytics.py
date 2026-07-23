@@ -244,16 +244,22 @@ def analytics_pipeline():
     leads = lead_q.all()
     n_leads = len(leads)
     n_qualified = sum(1 for l in leads if l.qualified_at)
-    n_converted = sum(1 for l in leads if l.converted_at)
 
     txn_q = _txn_base(agency, scope, start)
     open_txn = txn_q.filter(Transaction.status == 'active').all()
-    won_txn = txn_q.filter(Transaction.status == 'won').all()
-    n_visits = sum(1 for t in (open_txn + won_txn) if t.visit_date)
-    n_offers = sum(1 for t in (open_txn + won_txn) if t.offer_date)
-    n_closed = len(won_txn)
+    won_txn = txn_q.filter(Transaction.status == 'won', Transaction.closing_date >= start).all()
+    txn_pool = open_txn + won_txn
+    reached_visit = sum(1 for t in txn_pool if t.visit_date or t.offer_date or t.closing_date or t.status == 'won')
+    reached_offer = sum(1 for t in txn_pool if t.offer_date or t.closing_date or t.status == 'won')
+    closed = len(won_txn)
 
-    conversion = round(n_closed / n_leads * 100, 1) if n_leads else 0
+    # Cap each stage at the previous so the funnel is non-increasing.
+    n_qualified = min(n_qualified, n_leads)
+    n_visits = min(reached_visit, n_qualified)
+    n_offers = min(reached_offer, n_visits)
+    n_closed = min(closed, n_offers)
+
+    conversion = min(100.0, round(n_closed / n_leads * 100, 1)) if n_leads else 0
     pipeline_value_open = round(sum(_commission_estimate(t) for t in open_txn), 2)
 
     now = datetime.utcnow()
@@ -267,7 +273,7 @@ def analytics_pipeline():
                       ('Offres', n_offers), ('Clôturés', n_closed)]]
 
     def conv(a, b):
-        return round(b / a * 100, 1) if a else 0
+        return min(100.0, round(b / a * 100, 1)) if a else 0
     conversion_by_stage = [
         {'from': 'Leads→Qualifiés', 'pct': conv(n_leads, n_qualified)},
         {'from': 'Qualifiés→Visites', 'pct': conv(n_qualified, n_visits)},
