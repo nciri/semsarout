@@ -677,6 +677,24 @@ et <strong>{{client_name}}</strong> (le Mandant), demeurant, tél. {{client_phon
     print("  Seeded contract templates + has_contracts flag")
 
 
+def seed_legal():
+    """Flag pro/enterprise plans with has_legal and seed a demo notary per agency."""
+    from app.models import SubscriptionPlan, Notary, Agency
+    print("Seeding legal (has_legal flag + demo notaries)...")
+    for slug in ('pro', 'enterprise'):
+        plan = SubscriptionPlan.query.filter_by(slug=slug).first()
+        if plan:
+            plan.has_legal = True
+    for agency in Agency.query.all():
+        if Notary.query.filter_by(agency_id=agency.id).first():
+            continue
+        db.session.add(Notary(agency_id=agency.id, name='Me Fatima Alaoui',
+                              office='Étude notariale Alaoui', city=agency.city or 'Casablanca',
+                              phone='+212 522 00 00 00', email='contact@notaire-alaoui.ma'))
+    db.session.commit()
+    print("  Seeded has_legal flag + demo notaries")
+
+
 def seed_all():
     """Run all seed functions."""
     with app.app_context():
@@ -696,6 +714,7 @@ def seed_all():
         create_calendar_events(agency, users)
         create_activity_logs(agency, users)
         seed_contract_templates()
+        seed_legal()
 
         print("\n" + "="*50)
         print("SEEDING COMPLETE!")
