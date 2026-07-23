@@ -21,6 +21,7 @@ from app.models.staymanager import (
 )
 from app.models.team import Team
 from app.models.invitation import Invitation
+from app.models.contract import ContractTemplate, Contract
 
 __all__ = [
     'User',
@@ -64,5 +65,7 @@ __all__ = [
     'StayManagerReservation',
     'StayManagerSyncLog',
     'Team',
-    'Invitation'
+    'Invitation',
+    'ContractTemplate',
+    'Contract'
 ]
