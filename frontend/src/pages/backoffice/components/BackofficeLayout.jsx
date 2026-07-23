@@ -4,7 +4,7 @@ import {
   FiHome, FiUsers, FiFileText, FiCalendar, FiDollarSign,
   FiSettings, FiBarChart2, FiMenu, FiX, FiBriefcase,
   FiUserCheck, FiGrid, FiMail, FiLogOut, FiBell, FiSearch,
-  FiChevronDown, FiExternalLink
+  FiChevronDown, FiExternalLink, FiTrendingUp
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
 
@@ -35,6 +35,7 @@ const MENU_ITEMS = [
     section: 'Administration',
     items: [
       { path: '/backoffice/equipe', icon: FiUserCheck, label: 'Équipe' },
+      { path: '/backoffice/analyses', icon: FiTrendingUp, label: 'Analyses' },
       { path: '/backoffice/statistiques', icon: FiBarChart2, label: 'Statistiques' },
       { path: '/backoffice/parametres', icon: FiSettings, label: 'Paramètres' },
       { path: '/backoffice/stripe', icon: FiDollarSign, label: 'Stripe', adminOnly: true },

@@ -58,6 +58,11 @@ import BackofficeTeam from './pages/backoffice/Team'
 import BackofficeStats from './pages/backoffice/Statistics'
 import BackofficeSettings from './pages/backoffice/Settings'
 import BackofficeStripeConfig from './pages/backoffice/StripeConfig'
+import AnalyticsLayout from './pages/backoffice/analytics/AnalyticsLayout'
+import FinancialAnalytics from './pages/backoffice/analytics/FinancialAnalytics'
+import MarketAnalytics from './pages/backoffice/analytics/MarketAnalytics'
+import PipelineAnalytics from './pages/backoffice/analytics/PipelineAnalytics'
+import TeamAnalytics from './pages/backoffice/analytics/TeamAnalytics'
 import Subscription from './pages/dashboard/Subscription'
 import DashboardSettings from './pages/dashboard/Settings'
 import ImpersonationBanner from './components/admin/ImpersonationBanner'
@@ -162,6 +167,12 @@ function App() {
           <Route path="statistiques" element={<BackofficeStats />} />
           <Route path="parametres" element={<BackofficeSettings />} />
           <Route path="stripe" element={<BackofficeStripeConfig />} />
+          <Route path="analyses" element={<AnalyticsLayout />}>
+            <Route index element={<FinancialAnalytics />} />
+            <Route path="marche" element={<MarketAnalytics />} />
+            <Route path="pipeline" element={<PipelineAnalytics />} />
+            <Route path="equipe" element={<TeamAnalytics />} />
+          </Route>
         </Route>
       </Route>
 
