@@ -54,11 +54,11 @@ def create_team():
     agency, err = _require_manage()
     if err:
         return err
-    if not seats.can_create_team(agency):
-        return jsonify({'error': "Limite d'équipes atteinte pour votre plan."}), 409
     name = (request.get_json(silent=True) or {}).get('name', '').strip()
     if not name:
         return jsonify({'error': "Nom d'équipe requis"}), 400
+    if not seats.can_create_team(agency):
+        return jsonify({'error': "Limite d'équipes atteinte pour votre plan."}), 409
     if Team.query.filter_by(agency_id=agency.id, name=name).first():
         return jsonify({'error': 'Une équipe porte déjà ce nom.'}), 409
     t = Team(agency_id=agency.id, name=name)
@@ -115,9 +115,14 @@ def update_member(user_id):
             return jsonify({'error': 'Équipe invalide'}), 400
         u.team_id = tid
     if 'role_id' in data and data['role_id'] is not None:
-        role = Role.query.get(data['role_id'])
-        if role:
-            u.roles = [role]
+        from sqlalchemy import or_
+        role = Role.query.filter(
+            Role.id == data['role_id'],
+            or_(Role.agency_id == agency.id, Role.agency_id.is_(None))
+        ).first()
+        if not role:
+            return jsonify({'error': 'Rôle invalide'}), 400
+        u.roles = [role]
     db.session.commit()
     d = u.to_dict()
     d['roles'] = [r.to_dict() for r in u.roles]

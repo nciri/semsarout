@@ -2,7 +2,7 @@ import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from seed import app
 from app import db
-from app.models import User, Agency, SubscriptionPlan, Subscription
+from app.models import User, Agency, SubscriptionPlan, Subscription, Role
 
 FAILS = []
 def check(c, m):
@@ -27,6 +27,48 @@ with app.app_context():
         agency.owner_id = admin.id
     db.session.commit()
 
+    # A second member of the same agency to exercise role assignment on someone
+    # other than the acting admin.
+    member = User.query.filter(User.agency_id == agency.id, User.id != admin.id).first()
+    if not member:
+        member = User(
+            email=f'member-verify@{agency.slug or "agency"}.test',
+            password_hash=admin.password_hash,
+            first_name='Verify', last_name='Member',
+            user_type=admin.user_type, agency_id=agency.id, is_active=True,
+        )
+        db.session.add(member)
+        db.session.commit()
+
+    # A custom role scoped to this agency (should be assignable).
+    own_role = Role.query.filter_by(agency_id=agency.id).first()
+    if not own_role:
+        own_role = Role(name=f'Rôle agence {agency.id}', slug=f'agency-{agency.id}-role',
+                         level=80, agency_id=agency.id)
+        db.session.add(own_role)
+        db.session.commit()
+
+    # A second agency with its own custom role (should be rejected for this agency).
+    other_agency = Agency.query.filter(Agency.id != agency.id).first()
+    if not other_agency:
+        other_agency = Agency(name='Autre Agence Verify', slug='autre-agence-verify', email='other-verify@test.ma')
+        db.session.add(other_agency)
+        db.session.commit()
+    foreign_role = Role.query.filter_by(agency_id=other_agency.id).first()
+    if not foreign_role:
+        foreign_role = Role(name=f'Rôle agence {other_agency.id}', slug=f'agency-{other_agency.id}-role',
+                             level=80, agency_id=other_agency.id)
+        db.session.add(foreign_role)
+        db.session.commit()
+
+    # A global (non agency-specific) role.
+    global_role = Role.query.filter_by(agency_id=None).first()
+
+    member_id = member.id
+    own_role_id = own_role.id
+    foreign_role_id = foreign_role.id
+    global_role_id = global_role.id if global_role else None
+
     c = app.test_client()
     tok = login(c, admin.email, 'password123')  # agency agents are seeded with this password
     if not tok:
@@ -43,5 +85,28 @@ with app.app_context():
     # second team on pro -> 409
     r = c.post('/api/v1/backoffice/teams', json={'name': 'Équipe B'}, headers=h)
     check(r.status_code == 409, "second team on pro -> 409")
+    # empty name -> 400 (validated before quota check)
+    r = c.post('/api/v1/backoffice/teams', json={'name': '  '}, headers=h)
+    check(r.status_code == 400, "empty team name -> 400")
+
+    # Role assignment scoping (agency isolation).
+    r = c.put(f'/api/v1/backoffice/team/members/{member_id}', json={'role_id': foreign_role_id}, headers=h)
+    check(r.status_code == 400, "assign role from another agency -> 400 (isolation)")
+
+    r = c.put(f'/api/v1/backoffice/team/members/{member_id}', json={'role_id': 9999999}, headers=h)
+    check(r.status_code == 400, "assign bogus role_id -> 400")
+
+    r = c.put(f'/api/v1/backoffice/team/members/{member_id}', json={'role_id': own_role_id}, headers=h)
+    check(r.status_code == 200, "assign own-agency custom role -> 200")
+    if r.status_code == 200:
+        role_ids = [ro['id'] for ro in r.get_json().get('member', {}).get('roles', [])]
+        check(own_role_id in role_ids, "own-agency role actually applied")
+
+    if global_role_id:
+        r = c.put(f'/api/v1/backoffice/team/members/{member_id}', json={'role_id': global_role_id}, headers=h)
+        check(r.status_code == 200, "assign global (agency_id=None) role -> 200")
+        if r.status_code == 200:
+            role_ids = [ro['id'] for ro in r.get_json().get('member', {}).get('roles', [])]
+            check(global_role_id in role_ids, "global role actually applied")
 
 sys.exit(1 if FAILS else 0)
