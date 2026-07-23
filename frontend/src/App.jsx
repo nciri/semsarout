@@ -42,6 +42,7 @@ import AdminLayout from './pages/admin/AdminLayout'
 import AdminOverview from './pages/admin/AdminOverview'
 import AdminAccounts from './pages/admin/AdminAccounts'
 import AdminAccountDetail from './pages/admin/AdminAccountDetail'
+import AdminSharedArtisans from './pages/admin/AdminSharedArtisans'
 
 // Backoffice imports
 import BackofficeLayout from './pages/backoffice/components/BackofficeLayout'
@@ -203,6 +204,7 @@ function App() {
           <Route path="comptes" element={<AdminAccounts />} />
           <Route path="comptes/:kind/:id" element={<AdminAccountDetail />} />
           <Route path="activite" element={<AdminOverview />} />
+          <Route path="artisans-partages" element={<AdminSharedArtisans />} />
         </Route>
       </Route>
       </Routes>
