@@ -1,9 +1,13 @@
+import secrets
+import hashlib
+from datetime import datetime, timedelta
 from flask import jsonify, request, g
 from app import db
 from app.models import User, Agency, Team, Invitation, Role
 from app.api.v1.backoffice import backoffice_bp
 from app.api.v1.backoffice.dashboard import require_auth
 from app.services import seats
+from app.services.mailer import send_email
 
 
 def _agency():
@@ -144,3 +148,74 @@ def remove_member(user_id):
     u.team_id = None
     db.session.commit()
     return jsonify({'message': 'Membre retiré'})
+
+
+def _new_token():
+    raw = secrets.token_urlsafe(32)
+    return raw, hashlib.sha256(raw.encode()).hexdigest()
+
+
+def _invite_path(raw):
+    return f'/invitation/{raw}'
+
+
+@backoffice_bp.route('/team/invitations', methods=['POST'])
+@require_auth
+def create_invitation():
+    agency, err = _require_manage()
+    if err:
+        return err
+    data = request.get_json(silent=True) or {}
+    email = (data.get('email') or '').strip().lower()
+    if not email:
+        return jsonify({'error': 'Email requis'}), 400
+    if User.query.filter_by(email=email, agency_id=agency.id).first():
+        return jsonify({'error': 'Cet utilisateur est déjà membre.'}), 409
+    if Invitation.query.filter_by(agency_id=agency.id, email=email, status='pending').first():
+        return jsonify({'error': 'Une invitation est déjà en attente pour cet email.'}), 409
+    if not seats.can_invite(agency):
+        return jsonify({'error': "Limite de sièges atteinte. Passez à un plan supérieur."}), 409
+
+    raw, token_hash = _new_token()
+    inv = Invitation(agency_id=agency.id, email=email, role_id=data.get('role_id'),
+                     team_id=data.get('team_id'), token_hash=token_hash, status='pending',
+                     invited_by=g.current_user.id, expires_at=datetime.utcnow() + timedelta(days=7))
+    db.session.add(inv)
+    db.session.commit()
+    path = _invite_path(raw)
+    send_email(email, f"Invitation à rejoindre {agency.name}",
+               f"Vous avez été invité à rejoindre {agency.name}. Activez votre compte : {path}")
+    return jsonify({'invitation': inv.to_dict(), 'invite_path': path}), 201
+
+
+@backoffice_bp.route('/team/invitations/<int:inv_id>/resend', methods=['POST'])
+@require_auth
+def resend_invitation(inv_id):
+    agency, err = _require_manage()
+    if err:
+        return err
+    inv = Invitation.query.filter_by(id=inv_id, agency_id=agency.id).first()
+    if not inv or inv.status != 'pending':
+        return jsonify({'error': 'Invitation introuvable'}), 404
+    raw, token_hash = _new_token()
+    inv.token_hash = token_hash
+    inv.expires_at = datetime.utcnow() + timedelta(days=7)
+    db.session.commit()
+    path = _invite_path(raw)
+    send_email(inv.email, f"Invitation à rejoindre {agency.name}",
+               f"Activez votre compte : {path}")
+    return jsonify({'invitation': inv.to_dict(), 'invite_path': path})
+
+
+@backoffice_bp.route('/team/invitations/<int:inv_id>', methods=['DELETE'])
+@require_auth
+def revoke_invitation(inv_id):
+    agency, err = _require_manage()
+    if err:
+        return err
+    inv = Invitation.query.filter_by(id=inv_id, agency_id=agency.id).first()
+    if not inv:
+        return jsonify({'error': 'Invitation introuvable'}), 404
+    inv.status = 'revoked'
+    db.session.commit()
+    return jsonify({'message': 'Invitation révoquée'})
