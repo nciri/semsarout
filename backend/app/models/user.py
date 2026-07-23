@@ -43,6 +43,9 @@ class User(db.Model):
     deleted_at = db.Column(db.DateTime, nullable=True)
     anonymized_at = db.Column(db.DateTime, nullable=True)
 
+    # Per-user dashboard customization (widget layout/preferences)
+    dashboard_config = db.Column(db.JSON, nullable=True)
+
     # Relationships
     agency_id = db.Column(db.Integer, db.ForeignKey('agencies.id'), nullable=True)
     agency = db.relationship('Agency', back_populates='members', foreign_keys=[agency_id])
@@ -105,6 +108,7 @@ class User(db.Model):
             'suspended_reason': self.suspended_reason,
             'deleted_at': self.deleted_at.isoformat() if self.deleted_at else None,
             'anonymized_at': self.anonymized_at.isoformat() if self.anonymized_at else None,
+            'dashboard_config': self.dashboard_config,
         }
 
     def __repr__(self):

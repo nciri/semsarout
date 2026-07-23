@@ -81,6 +81,18 @@ def create_roles_and_permissions():
         db.session.add(manage_perm)
         permissions.append(manage_perm)
 
+    # Extra permission outside the module/action grid: analytics visibility
+    analytics_perm = Permission.query.filter_by(slug='analytics.view_all').first()
+    if not analytics_perm:
+        analytics_perm = Permission(
+            name="Voir toutes les analyses",
+            slug='analytics.view_all',
+            module='analytics',
+            description="Permission to view agency-wide analytics (not just own)"
+        )
+        db.session.add(analytics_perm)
+        permissions.append(analytics_perm)
+
     db.session.commit()
     all_permissions = Permission.query.all()
 
