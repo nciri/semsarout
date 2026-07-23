@@ -2,7 +2,7 @@ import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from seed import app
 from app import db
-from app.models import User, Agency, SubscriptionPlan, Subscription, Role
+from app.models import User, Agency, SubscriptionPlan, Subscription, Role, Team
 
 FAILS = []
 def check(c, m):
@@ -61,13 +61,28 @@ with app.app_context():
         db.session.add(foreign_role)
         db.session.commit()
 
-    # A global (non agency-specific) role.
-    global_role = Role.query.filter_by(agency_id=None).first()
+    # A global (non agency-specific) role that is NOT a platform role.
+    global_role = Role.query.filter(
+        Role.agency_id.is_(None), Role.slug != 'superadmin'
+    ).filter((Role.level.is_(None)) | (Role.level < 200)).first()
+
+    # The platform superadmin role — must never be assignable via team management.
+    superadmin_role = Role.query.filter_by(slug='superadmin').first()
+
+    # A team belonging to the other agency (should be rejected for this agency).
+    foreign_team = Team.query.filter_by(agency_id=other_agency.id).first()
+    if not foreign_team:
+        foreign_team = Team(name='Équipe Autre Agence', agency_id=other_agency.id)
+        db.session.add(foreign_team)
+        db.session.commit()
 
     member_id = member.id
+    owner_id = agency.owner_id
     own_role_id = own_role.id
     foreign_role_id = foreign_role.id
     global_role_id = global_role.id if global_role else None
+    superadmin_role_id = superadmin_role.id if superadmin_role else None
+    foreign_team_id = foreign_team.id
 
     c = app.test_client()
     tok = login(c, admin.email, 'password123')  # agency agents are seeded with this password
@@ -108,5 +123,33 @@ with app.app_context():
         if r.status_code == 200:
             role_ids = [ro['id'] for ro in r.get_json().get('member', {}).get('roles', [])]
             check(global_role_id in role_ids, "global role actually applied")
+
+    # --- Privilege escalation regression: an agency manager must never be able
+    # to grant the platform superadmin role (or another agency's role) to a
+    # member, nor change the owner's role via team management. ---
+    if superadmin_role_id:
+        r = c.put(f'/api/v1/backoffice/team/members/{member_id}',
+                  json={'role_id': superadmin_role_id}, headers=h)
+        check(r.status_code == 400, "assign superadmin role -> 400 (blocked)")
+        db.session.expire_all()
+        member_check = User.query.get(member_id)
+        check(all(ro.slug != 'superadmin' for ro in member_check.roles),
+              "member did NOT gain superadmin role")
+
+        r = c.post('/api/v1/backoffice/team/invitations',
+                   json={'email': 'esc@test.com', 'role_id': superadmin_role_id}, headers=h)
+        check(r.status_code == 400, "invite with superadmin role -> 400 (blocked)")
+
+    r = c.post('/api/v1/backoffice/team/invitations',
+               json={'email': 'esc2@test.com', 'team_id': foreign_team_id}, headers=h)
+    check(r.status_code == 400, "invite with team_id from another agency -> 400 (blocked)")
+
+    r = c.post('/api/v1/backoffice/team/invitations',
+               json={'email': 'esc3@test.com', 'team_id': 99999999}, headers=h)
+    check(r.status_code == 400, "invite with bogus team_id -> 400")
+
+    r = c.put(f'/api/v1/backoffice/team/members/{owner_id}',
+              json={'role_id': own_role_id}, headers=h)
+    check(r.status_code == 409, "change owner's role -> 409 (owner protected)")
 
 sys.exit(1 if FAILS else 0)

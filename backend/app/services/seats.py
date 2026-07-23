@@ -1,6 +1,28 @@
 """Single source of truth for seat & team quota checks."""
 from datetime import datetime
-from app.models import User, Team, Invitation, Subscription
+from app.models import User, Team, Invitation, Subscription, Role
+
+
+# Platform-level roles must never be delegable through agency team management.
+PLATFORM_ROLE_SLUGS = {'superadmin'}
+
+
+def resolve_assignable_role(agency, role_id):
+    """Return a Role assignable within `agency`, or None if invalid/forbidden.
+
+    Assignable = the role belongs to this agency or is a global agency-role,
+    AND is not a platform role (superadmin / level >= 200).
+    """
+    if role_id is None:
+        return None
+    role = Role.query.get(role_id)
+    if role is None:
+        return None
+    if role.agency_id not in (None, agency.id):
+        return None
+    if role.slug in PLATFORM_ROLE_SLUGS or (role.level is not None and role.level >= 200):
+        return None
+    return role
 
 
 def _plan(agency):

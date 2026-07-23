@@ -3,7 +3,7 @@ import hashlib
 from datetime import datetime, timedelta
 from flask import jsonify, request, g
 from app import db
-from app.models import User, Agency, Team, Invitation, Role
+from app.models import User, Agency, Team, Invitation
 from app.api.v1.backoffice import backoffice_bp
 from app.api.v1.backoffice.dashboard import require_auth
 from app.services import seats
@@ -118,12 +118,11 @@ def update_member(user_id):
         if tid is not None and not Team.query.filter_by(id=tid, agency_id=agency.id).first():
             return jsonify({'error': 'Équipe invalide'}), 400
         u.team_id = tid
+    # Owner's role cannot be changed via team management (spec §7.1).
     if 'role_id' in data and data['role_id'] is not None:
-        from sqlalchemy import or_
-        role = Role.query.filter(
-            Role.id == data['role_id'],
-            or_(Role.agency_id == agency.id, Role.agency_id.is_(None))
-        ).first()
+        if u.id == agency.owner_id:
+            return jsonify({'error': "Le rôle du propriétaire ne peut pas être modifié."}), 409
+        role = seats.resolve_assignable_role(agency, data['role_id'])
         if not role:
             return jsonify({'error': 'Rôle invalide'}), 400
         u.roles = [role]
@@ -176,9 +175,16 @@ def create_invitation():
     if not seats.can_invite(agency):
         return jsonify({'error': "Limite de sièges atteinte. Passez à un plan supérieur."}), 409
 
+    role_id = data.get('role_id')
+    if role_id is not None and seats.resolve_assignable_role(agency, role_id) is None:
+        return jsonify({'error': 'Rôle invalide'}), 400
+    team_id = data.get('team_id')
+    if team_id is not None and not Team.query.filter_by(id=team_id, agency_id=agency.id).first():
+        return jsonify({'error': 'Équipe invalide'}), 400
+
     raw, token_hash = _new_token()
-    inv = Invitation(agency_id=agency.id, email=email, role_id=data.get('role_id'),
-                     team_id=data.get('team_id'), token_hash=token_hash, status='pending',
+    inv = Invitation(agency_id=agency.id, email=email, role_id=role_id,
+                     team_id=team_id, token_hash=token_hash, status='pending',
                      invited_by=g.current_user.id, expires_at=datetime.utcnow() + timedelta(days=7))
     db.session.add(inv)
     db.session.commit()
