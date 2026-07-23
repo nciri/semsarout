@@ -43,6 +43,15 @@ def accept_invitation(token):
     if not password or len(password) < 8:
         return jsonify({'error': 'Mot de passe (8 caractères min.) requis'}), 400
 
+    # Ownership proof: if the invited email already belongs to an account, the
+    # submitted password must match it BEFORE anything is mutated. Otherwise a
+    # manager who knows an existing user's email could invite it, grab the raw
+    # token from the create-invitation response, and take over that account
+    # with an arbitrary password.
+    existing = User.query.filter_by(email=inv.email).first()
+    if existing and not existing.check_password(password):
+        return jsonify({'error': "Un compte existe déjà pour cet email. Connectez-vous avec votre mot de passe habituel pour accepter l'invitation."}), 403
+
     # Re-check seats at accept time (guard the last-seat race), excluding THIS invitation.
     # Mark accepted first so it no longer counts as a pending seat, then require room for
     # the member about to be created: seats_used (without this pending) < limit.
@@ -53,7 +62,6 @@ def accept_invitation(token):
         db.session.rollback()
         return jsonify({'error': "Plus de siège disponible pour cette agence."}), 409
 
-    existing = User.query.filter_by(email=inv.email).first()
     if existing:
         user = existing
         user.agency_id = agency.id
@@ -70,7 +78,11 @@ def accept_invitation(token):
     if inv.role_id:
         role = Role.query.get(inv.role_id)
         if role:
-            user.roles = [role]
+            if existing:
+                if role not in user.roles:
+                    user.roles.append(role)
+            else:
+                user.roles = [role]
     inv.accepted_at = datetime.utcnow()
     db.session.commit()
 

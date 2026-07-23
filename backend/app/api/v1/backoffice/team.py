@@ -214,7 +214,7 @@ def revoke_invitation(inv_id):
     if err:
         return err
     inv = Invitation.query.filter_by(id=inv_id, agency_id=agency.id).first()
-    if not inv:
+    if not inv or inv.status != 'pending':
         return jsonify({'error': 'Invitation introuvable'}), 404
     inv.status = 'revoked'
     db.session.commit()
