@@ -58,6 +58,7 @@ import BackofficeTeam from './pages/backoffice/Team'
 import BackofficeStats from './pages/backoffice/Statistics'
 import BackofficeSettings from './pages/backoffice/Settings'
 import BackofficeStripeConfig from './pages/backoffice/StripeConfig'
+import ContractsList from './pages/backoffice/contracts/ContractsList'
 import AnalyticsLayout from './pages/backoffice/analytics/AnalyticsLayout'
 import FinancialAnalytics from './pages/backoffice/analytics/FinancialAnalytics'
 import MarketAnalytics from './pages/backoffice/analytics/MarketAnalytics'
@@ -167,6 +168,7 @@ function App() {
           <Route path="statistiques" element={<BackofficeStats />} />
           <Route path="parametres" element={<BackofficeSettings />} />
           <Route path="stripe" element={<BackofficeStripeConfig />} />
+          <Route path="contrats" element={<ContractsList />} />
           <Route path="analyses" element={<AnalyticsLayout />}>
             <Route index element={<FinancialAnalytics />} />
             <Route path="marche" element={<MarketAnalytics />} />

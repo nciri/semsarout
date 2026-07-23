@@ -29,6 +29,7 @@ const MENU_ITEMS = [
     section: 'Finance',
     items: [
       { path: '/backoffice/transactions', icon: FiBriefcase, label: 'Transactions' },
+      { path: '/backoffice/contrats', icon: FiFileText, label: 'Contrats' },
     ]
   },
   {
