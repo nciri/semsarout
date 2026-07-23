@@ -4,7 +4,7 @@ import {
   FiHome, FiUsers, FiFileText, FiCalendar, FiDollarSign,
   FiSettings, FiBarChart2, FiMenu, FiX, FiBriefcase,
   FiUserCheck, FiGrid, FiMail, FiLogOut, FiBell, FiSearch,
-  FiChevronDown, FiExternalLink, FiTrendingUp, FiShield
+  FiChevronDown, FiExternalLink, FiTrendingUp, FiShield, FiTool
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
 
@@ -31,6 +31,7 @@ const MENU_ITEMS = [
       { path: '/backoffice/transactions', icon: FiBriefcase, label: 'Transactions' },
       { path: '/backoffice/contrats', icon: FiFileText, label: 'Contrats' },
       { path: '/backoffice/notaires', icon: FiBriefcase, label: 'Notaires' },
+      { path: '/backoffice/artisans', icon: FiTool, label: 'Artisans' },
       { path: '/backoffice/juridique', icon: FiShield, label: 'Juridique' },
     ]
   },

@@ -63,6 +63,7 @@ import ContractCreate from './pages/backoffice/contracts/ContractCreate'
 import ContractEditor from './pages/backoffice/contracts/ContractEditor'
 import TemplatesManager from './pages/backoffice/contracts/TemplatesManager'
 import NotariesDirectory from './pages/backoffice/legal/NotariesDirectory'
+import ArtisansDirectory from './pages/backoffice/artisans/ArtisansDirectory'
 import LegalCasesList from './pages/backoffice/legal/LegalCasesList'
 import LegalCaseDetail from './pages/backoffice/legal/LegalCaseDetail'
 import AnalyticsLayout from './pages/backoffice/analytics/AnalyticsLayout'
@@ -179,6 +180,7 @@ function App() {
           <Route path="contrats/modeles" element={<TemplatesManager />} />
           <Route path="contrats/:id" element={<ContractEditor />} />
           <Route path="notaires" element={<NotariesDirectory />} />
+          <Route path="artisans" element={<ArtisansDirectory />} />
           <Route path="juridique" element={<LegalCasesList />} />
           <Route path="juridique/:id" element={<LegalCaseDetail />} />
           <Route path="analyses" element={<AnalyticsLayout />}>
