@@ -638,6 +638,45 @@ def create_activity_logs(agency, users):
     print(f"  Created 50 activity logs")
 
 
+def seed_contract_templates():
+    """Seed the 4 global built-in contract templates and flag pro/enterprise plans with has_contracts."""
+    from app.models import ContractTemplate, SubscriptionPlan
+    print("Seeding contract templates...")
+    BUILTINS = {
+        'mandate_sale': ('Mandat de vente', """<h2>MANDAT DE VENTE</h2>
+<p>Entre l'agence <strong>{{agency_name}}</strong>, sise {{agency_address}} (n° d'agrément {{agency_license}}),
+et <strong>{{client_name}}</strong> (le Mandant), demeurant, tél. {{client_phone}}.</p>
+<p>Le Mandant confie à l'agence la vente du bien situé <strong>{{property_address}}</strong>, {{property_city}}
+(réf. {{property_reference}}), d'une surface de {{property_surface}}, au prix de <strong>{{property_price}}</strong>.</p>
+<p>Commission d'agence : {{commission_rate}}.</p>
+<p>Fait le {{date}}. Signatures :</p>"""),
+        'mandate_rental': ('Mandat de location / gestion', """<h2>MANDAT DE LOCATION / GESTION</h2>
+<p>Entre <strong>{{agency_name}}</strong>, {{agency_address}}, et <strong>{{client_name}}</strong> (le Mandant).</p>
+<p>Objet : mise en location / gestion du bien {{property_address}}, {{property_city}} ({{property_type}},
+{{property_surface}}).</p><p>Fait le {{date}}.</p>"""),
+        'compromise': ('Compromis de vente', """<h2>COMPROMIS DE VENTE</h2>
+<p>Entre le vendeur et l'acquéreur <strong>{{client_name}}</strong>, concernant le bien
+<strong>{{property_address}}</strong>, {{property_city}} (réf. {{property_reference}}).</p>
+<p>Prix de vente : <strong>{{property_price}}</strong>. Référence dossier : {{transaction_reference}}.</p>
+<p>Fait le {{date}} à {{property_city}}.</p>"""),
+        'lease': ('Contrat de bail (habitation)', """<h2>CONTRAT DE BAIL À USAGE D'HABITATION</h2>
+<p>Entre le bailleur et le locataire <strong>{{client_name}}</strong> (tél. {{client_phone}}).</p>
+<p>Bien loué : <strong>{{property_address}}</strong>, {{property_city}} ({{property_surface}}, {{property_rooms}} pièces).</p>
+<p>Fait le {{date}}.</p>"""),
+    }
+    for dt, (name, body) in BUILTINS.items():
+        existing = ContractTemplate.query.filter_by(document_type=dt, agency_id=None, is_builtin=True).first()
+        if not existing:
+            db.session.add(ContractTemplate(agency_id=None, document_type=dt, name=name,
+                                            body_html=body, is_builtin=True))
+    for slug in ('pro', 'enterprise'):
+        plan = SubscriptionPlan.query.filter_by(slug=slug).first()
+        if plan:
+            plan.has_contracts = True
+    db.session.commit()
+    print("  Seeded contract templates + has_contracts flag")
+
+
 def seed_all():
     """Run all seed functions."""
     with app.app_context():
@@ -656,6 +695,7 @@ def seed_all():
         create_transactions(agency, users, clients, properties)
         create_calendar_events(agency, users)
         create_activity_logs(agency, users)
+        seed_contract_templates()
 
         print("\n" + "="*50)
         print("SEEDING COMPLETE!")
