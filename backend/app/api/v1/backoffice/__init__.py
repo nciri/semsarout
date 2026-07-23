@@ -15,3 +15,4 @@ from app.api.v1.backoffice import team
 from app.api.v1.backoffice import analytics
 from app.api.v1.backoffice import contracts
 from app.api.v1.backoffice import legal
+from app.api.v1.backoffice import artisans
