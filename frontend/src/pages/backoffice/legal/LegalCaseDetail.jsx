@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { FiCheckCircle, FiCircle, FiTrash2, FiPlus } from 'react-icons/fi'
@@ -10,7 +10,7 @@ const NEXT = { todo: 'in_progress', in_progress: 'done', done: 'todo' }
 function LegalCaseDetail() {
   const { id } = useParams()
   const qc = useQueryClient()
-  const { data, isLoading } = useQuery(['legal-case', id], () => legalService.getCase(id))
+  const { data, isLoading, isError } = useQuery(['legal-case', id], () => legalService.getCase(id))
   const { data: notariesData } = useQuery('notaries', () => legalService.listNotaries())
   const [newTask, setNewTask] = useState('')
 
@@ -23,6 +23,11 @@ function LegalCaseDetail() {
   const setNotary = useMutation((notary_id) => legalService.updateCase(id, { notary_id: notary_id || null }), { onSuccess: refresh, onError: onErr })
 
   if (isLoading) return <div className="p-8">Chargement…</div>
+  if (isError || !data?.case) return (
+    <div className="p-8 text-center text-gray-500">Dossier introuvable.
+      <div className="mt-3"><Link to="/backoffice/juridique" className="text-primary-600 underline">Retour aux dossiers</Link></div>
+    </div>
+  )
   const c = data.case
   const pct = c.tasks_total ? Math.round((c.tasks_done / c.tasks_total) * 100) : 0
   const notaries = notariesData?.notaries || []

@@ -2,7 +2,7 @@ import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from seed import app
 from app import db
-from app.models import User, Agency, SubscriptionPlan, Subscription
+from app.models import User, Agency, SubscriptionPlan, Subscription, LegalCase
 
 FAILS = []
 def check(c, m):
@@ -39,5 +39,19 @@ with app.app_context():
     check(r.status_code == 200 and r.get_json()['notary']['city'] == 'Fès', "update notary")
     r = c.delete(f'/api/v1/backoffice/notaries/{nid}', headers=h)
     check(r.status_code == 200, "delete notary")
+
+    # Deleting a notary assigned to a legal case must not raise a 500 (FK violation).
+    r = c.post('/api/v1/backoffice/notaries', json={'name': 'Me Assigned', 'city': 'Casablanca'}, headers=h)
+    check(r.status_code in (200, 201), "create notary for FK check")
+    nid2 = r.get_json()['notary']['id']
+    r = c.post('/api/v1/backoffice/legal-cases', json={'title': 'Dossier FK notaire', 'case_type': 'sale'}, headers=h)
+    check(r.status_code in (200, 201), "create legal case for FK check")
+    cid = r.get_json()['case']['id']
+    r = c.put(f'/api/v1/backoffice/legal-cases/{cid}', json={'notary_id': nid2}, headers=h)
+    check(r.status_code == 200 and r.get_json()['case']['notary_id'] == nid2, "assign notary to legal case")
+    r = c.delete(f'/api/v1/backoffice/notaries/{nid2}', headers=h)
+    check(r.status_code == 200, "delete notary assigned to legal case -> 200 (no FK 500)")
+    r = c.get(f'/api/v1/backoffice/legal-cases/{cid}', headers=h)
+    check(r.status_code == 200 and r.get_json()['case']['notary_id'] is None, "legal case notary_id nulled after notary deletion")
 
 sys.exit(1 if FAILS else 0)

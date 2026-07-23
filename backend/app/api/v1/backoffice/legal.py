@@ -71,6 +71,7 @@ def delete_notary(nid):
     n = Notary.query.filter_by(id=nid, agency_id=g.agency_id).first()
     if not n:
         return jsonify({'error': 'Notaire introuvable'}), 404
+    LegalCase.query.filter_by(agency_id=g.agency_id, notary_id=nid).update({'notary_id': None})
     db.session.delete(n)
     db.session.commit()
     return jsonify({'message': 'Notaire supprimé'})
