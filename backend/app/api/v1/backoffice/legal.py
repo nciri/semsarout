@@ -1,3 +1,4 @@
+from datetime import datetime
 from functools import wraps
 from flask import jsonify, request, g
 from app import db
@@ -163,3 +164,74 @@ def delete_legal_case(cid):
     db.session.delete(case)
     db.session.commit()
     return jsonify({'message': 'Dossier supprimé'})
+
+
+def _get_task_scoped(tid):
+    """Task whose parent case belongs to this agency, else None."""
+    task = LegalTask.query.get(tid)
+    if not task:
+        return None
+    case = LegalCase.query.filter_by(id=task.legal_case_id, agency_id=g.agency_id).first()
+    return task if case else None
+
+
+def _parse_due(v):
+    if not v:
+        return None
+    try:
+        return datetime.fromisoformat(v.replace('Z', '+00:00'))
+    except (ValueError, AttributeError):
+        return None
+
+
+@backoffice_bp.route('/legal-cases/<int:cid>/tasks', methods=['POST'])
+@require_legal
+def add_task(cid):
+    case = _get_case(cid)
+    if not case:
+        return jsonify({'error': 'Dossier introuvable'}), 404
+    data = request.get_json(silent=True) or {}
+    if not data.get('label'):
+        return jsonify({'error': 'Le libellé est requis'}), 400
+    maxpos = db.session.query(db.func.max(LegalTask.position)).filter_by(legal_case_id=cid).scalar()
+    t = LegalTask(legal_case_id=cid, label=data['label'], status='todo',
+                  due_date=_parse_due(data.get('due_date')), assignee_id=data.get('assignee_id'),
+                  position=(maxpos or 0) + 1)
+    db.session.add(t)
+    db.session.commit()
+    return jsonify({'task': t.to_dict()}), 201
+
+
+@backoffice_bp.route('/legal-tasks/<int:tid>', methods=['PUT'])
+@require_legal
+def update_task(tid):
+    t = _get_task_scoped(tid)
+    if not t:
+        return jsonify({'error': 'Tâche introuvable'}), 404
+    data = request.get_json(silent=True) or {}
+    if 'label' in data:
+        t.label = data['label']
+    if 'assignee_id' in data:
+        t.assignee_id = data['assignee_id']
+    if 'position' in data:
+        t.position = data['position']
+    if 'notes' in data:
+        t.notes = data['notes']
+    if 'due_date' in data:
+        t.due_date = _parse_due(data['due_date'])
+    if 'status' in data:
+        t.status = data['status']
+        t.completed_at = datetime.utcnow() if data['status'] == 'done' else None
+    db.session.commit()
+    return jsonify({'task': t.to_dict()})
+
+
+@backoffice_bp.route('/legal-tasks/<int:tid>', methods=['DELETE'])
+@require_legal
+def delete_task(tid):
+    t = _get_task_scoped(tid)
+    if not t:
+        return jsonify({'error': 'Tâche introuvable'}), 404
+    db.session.delete(t)
+    db.session.commit()
+    return jsonify({'message': 'Tâche supprimée'})
