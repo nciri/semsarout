@@ -22,6 +22,7 @@ from app.models.staymanager import (
 from app.models.team import Team
 from app.models.invitation import Invitation
 from app.models.contract import ContractTemplate, Contract
+from app.models.legal import Notary, LegalCase, LegalTask
 
 __all__ = [
     'User',
@@ -67,5 +68,8 @@ __all__ = [
     'Team',
     'Invitation',
     'ContractTemplate',
-    'Contract'
+    'Contract',
+    'Notary',
+    'LegalCase',
+    'LegalTask'
 ]
