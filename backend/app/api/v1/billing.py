@@ -362,6 +362,17 @@ def change_plan():
     if not new_plan or not new_plan.is_active:
         return jsonify({'error': 'Plan not found'}), 404
 
+    # Downgrade guard: block if the new plan's seat/team quota is exceeded (spec §7.3)
+    if user.agency_id:
+        from app.models import Agency
+        from app.services import seats
+        agency = Agency.query.get(user.agency_id)
+        if agency and new_plan.max_seats != -1 and seats.active_member_seats(agency) > new_plan.max_seats:
+            excess = seats.active_member_seats(agency) - new_plan.max_seats
+            return jsonify({'error': f"Retirez d'abord {excess} membre(s) pour passer à ce plan."}), 409
+        if agency and new_plan.max_teams != -1 and seats.teams_used(agency) > new_plan.max_teams:
+            return jsonify({'error': "Trop d'équipes pour ce plan : supprimez-en d'abord."}), 409
+
     # Get or verify payment method
     if user.agency_id:
         pm = PaymentMethod.query.filter_by(agency_id=user.agency_id, is_default=True).first()
