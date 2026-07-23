@@ -305,3 +305,76 @@ def analytics_pipeline():
                    'stage_velocity_days': stage_velocity_days,
                    'expected_closings_timeline': expected_closings_timeline},
     })
+
+
+@backoffice_bp.route('/analytics/team', methods=['GET'])
+@require_auth
+def analytics_team():
+    agency, scope = current_scope()
+    if not agency:
+        return jsonify({'error': 'Aucune agence'}), 400
+    start = _range_start(request.args.get('range', '12m'))
+
+    txns = _txn_base(agency, scope, start).filter(Transaction.created_at >= start).all()
+    lead_q = Lead.query.filter(Lead.agency_id == agency.id, Lead.created_at >= start)
+    if not scope['all']:
+        lead_q = lead_q.filter(Lead.assigned_to_id == scope['agent_id'])
+    leads = lead_q.all()
+
+    # Agent performance
+    agents = {}
+    for t in txns:
+        a = agents.setdefault(t.agent_id, {'deals': 0, 'won': 0, 'commission': 0.0})
+        a['deals'] += 1
+        if t.status == 'won':
+            a['won'] += 1
+            a['commission'] += float(t.commission_amount or 0)
+    agent_performance = []
+    for aid, d in agents.items():
+        user = User.query.get(aid)
+        agent_performance.append({
+            'agent_id': aid, 'agent': user.full_name if user else '—',
+            'deals': d['deals'], 'won': d['won'], 'commission': round(d['commission'], 2),
+            'conversion_pct': round(d['won'] / d['deals'] * 100, 1) if d['deals'] else 0,
+        })
+    agent_performance.sort(key=lambda r: r['commission'], reverse=True)
+    top_agents = agent_performance[:5]
+
+    # Lead ROI by source
+    sources = {}
+    for l in leads:
+        s = sources.setdefault(l.source or 'inconnu', {'leads': 0, 'converted': 0, 'cost': 0.0})
+        s['leads'] += 1
+        if l.converted_at:
+            s['converted'] += 1
+        if l.is_charged and l.charge_amount:
+            s['cost'] += float(l.charge_amount)
+    lead_roi_by_source = [
+        {'source': k, 'leads': v['leads'], 'converted': v['converted'], 'cost': round(v['cost'], 2),
+         'conversion_pct': round(v['converted'] / v['leads'] * 100, 1) if v['leads'] else 0}
+        for k, v in sources.items()
+    ]
+    total_leads = len(leads)
+    total_cost = sum(v['cost'] for v in sources.values())
+    cost_per_lead = round(total_cost / total_leads, 2) if total_leads else 0
+    best_source = max(lead_roi_by_source, key=lambda r: r['conversion_pct'], default={}).get('source')
+
+    conversion_by_source = [{'source': r['source'], 'pct': r['conversion_pct']} for r in lead_roi_by_source]
+    svc = {}
+    for l in leads:
+        s = svc.setdefault(l.service or 'autre', {'leads': 0, 'converted': 0})
+        s['leads'] += 1
+        if l.converted_at:
+            s['converted'] += 1
+    conversion_by_service = [
+        {'service': k, 'pct': round(v['converted'] / v['leads'] * 100, 1) if v['leads'] else 0}
+        for k, v in svc.items()
+    ]
+
+    return jsonify({
+        'summary': {'top_agents': top_agents,
+                    'lead_sources': [{'source': r['source'], 'leads': r['leads']} for r in lead_roi_by_source],
+                    'cost_per_lead': cost_per_lead, 'best_source': best_source},
+        'detail': {'agent_performance': agent_performance, 'lead_roi_by_source': lead_roi_by_source,
+                   'conversion_by_source': conversion_by_source, 'conversion_by_service': conversion_by_service},
+    })
