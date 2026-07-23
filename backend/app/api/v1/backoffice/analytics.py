@@ -5,6 +5,7 @@ from app.api.v1.backoffice import backoffice_bp
 from app.api.v1.backoffice.dashboard import require_auth
 from app.models import Agency, Transaction, User, Property, NeighborhoodPriceRef, Lead
 from app.services.analytics_scope import analytics_scope
+from app.services import seats as seats_service
 
 STAGE_PROBABILITY = {
     'contact': 0.10, 'visit': 0.40, 'offer': 0.60, 'negotiation': 0.70,
@@ -378,3 +379,105 @@ def analytics_team():
         'detail': {'agent_performance': agent_performance, 'lead_roi_by_source': lead_roi_by_source,
                    'conversion_by_source': conversion_by_source, 'conversion_by_service': conversion_by_service},
     })
+
+
+WIDGET_IDS = ['financial', 'pipeline', 'hot_leads', 'listings', 'market', 'team_seats', 'subscription', 'alerts']
+DEFAULT_WIDGETS = [{'id': wid, 'order': i, 'hidden': False} for i, wid in enumerate(WIDGET_IDS)]
+
+
+def _financial_summary(agency, scope):
+    start = _range_start('12m')
+    base = _txn_base(agency, scope, start)
+    won = base.filter(Transaction.status == 'won', Transaction.closing_date >= start).all()
+    open_deals = base.filter(Transaction.status == 'active').all()
+    return {
+        'revenue_realized': round(sum(float(t.commission_amount or 0) for t in won), 2),
+        'revenue_pipeline_weighted': round(sum(_commission_estimate(t) * stage_probability(t) for t in open_deals), 2),
+        'deals_won': len(won),
+    }
+
+
+@backoffice_bp.route('/analytics/overview', methods=['GET'])
+@require_auth
+def analytics_overview():
+    agency, scope = current_scope()
+    if not agency:
+        return jsonify({'error': 'Aucune agence'}), 400
+
+    fin = _financial_summary(agency, scope)
+
+    open_txn = _txn_base(agency, scope, _range_start('12m')).filter(Transaction.status == 'active').all()
+    pipeline = {'open_deals': len(open_txn),
+                'pipeline_value_open': round(sum(_commission_estimate(t) for t in open_txn), 2)}
+
+    # Listings
+    prop_q = _prop_base(agency, scope)
+    active_props = prop_q.filter(Property.status == 'active').all()
+    listings = {'active': len(active_props), 'views': sum(int(p.views_count or 0) for p in active_props)}
+
+    # Hot leads (unread + overdue) — reuse the overdue threshold
+    from app.api.v1.leads import LEAD_OVERDUE_DAYS
+    lead_q = Lead.query.filter(Lead.agency_id == agency.id)
+    if not scope['all']:
+        lead_q = lead_q.filter(Lead.assigned_to_id == scope['agent_id'])
+    unread = lead_q.filter(Lead.is_read.is_(False)).count()
+    overdue_cutoff = datetime.utcnow() - timedelta(days=LEAD_OVERDUE_DAYS)
+    overdue = lead_q.filter(Lead.is_read.is_(False), Lead.created_at < overdue_cutoff).count()
+    hot_leads = {'unread': unread, 'overdue': overdue}
+
+    # Market compact
+    ppsqm = [float(p.price_per_sqm) for p in active_props if p.price_per_sqm]
+    now = datetime.utcnow()
+    doms = [(now - (p.published_at or p.created_at)).days for p in active_props if (p.published_at or p.created_at)]
+    market = {'portfolio_avg_price_sqm': round(sum(ppsqm) / len(ppsqm), 2) if ppsqm else 0,
+              'avg_days_on_market': round(sum(doms) / len(doms), 1) if doms else 0}
+
+    # Team compact
+    team = {'members': seats_service.member_count(agency)}
+
+    # Seats + subscription (brick 2)
+    seats = {'used': seats_service.seats_used(agency), 'limit': seats_service.seats_limit(agency)}
+    sub = None
+    if agency.subscription:
+        sub = {'plan': agency.subscription.plan.name if agency.subscription.plan else None,
+               'status': agency.subscription.status}
+
+    # Alerts
+    alerts = []
+    if overdue:
+        alerts.append({'level': 'warning', 'text': f'{overdue} lead(s) en retard'})
+    soon = now + timedelta(days=7)
+    closing_soon = [t for t in open_txn if t.expected_closing_date and now <= t.expected_closing_date <= soon]
+    if closing_soon:
+        alerts.append({'level': 'info', 'text': f'{len(closing_soon)} deal(s) à clôturer cette semaine'})
+    if seats['limit'] not in (-1, 0) and seats['used'] >= seats['limit']:
+        alerts.append({'level': 'warning', 'text': 'Sièges épuisés — pensez à upgrader'})
+
+    config = g.current_user.dashboard_config or {'widgets': DEFAULT_WIDGETS}
+
+    return jsonify({
+        'financial': fin, 'market': market, 'pipeline': pipeline, 'team': team,
+        'listings': listings, 'hot_leads': hot_leads, 'seats': seats,
+        'subscription': sub, 'alerts': alerts, 'config': config,
+    })
+
+
+@backoffice_bp.route('/dashboard/config', methods=['GET'])
+@require_auth
+def get_dashboard_config():
+    return jsonify(g.current_user.dashboard_config or {'widgets': DEFAULT_WIDGETS})
+
+
+@backoffice_bp.route('/dashboard/config', methods=['PUT'])
+@require_auth
+def put_dashboard_config():
+    data = request.get_json(silent=True) or {}
+    widgets = data.get('widgets', [])
+    if not isinstance(widgets, list):
+        return jsonify({'error': 'widgets doit être une liste'}), 400
+    for w in widgets:
+        if w.get('id') not in WIDGET_IDS:
+            return jsonify({'error': f"Widget inconnu : {w.get('id')}"}), 400
+    g.current_user.dashboard_config = {'widgets': widgets}
+    db.session.commit()
+    return jsonify(g.current_user.dashboard_config)
