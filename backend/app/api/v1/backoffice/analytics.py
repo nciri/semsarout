@@ -3,7 +3,7 @@ from flask import jsonify, request, g
 from app import db
 from app.api.v1.backoffice import backoffice_bp
 from app.api.v1.backoffice.dashboard import require_auth
-from app.models import Agency, Transaction, User, Property, NeighborhoodPriceRef
+from app.models import Agency, Transaction, User, Property, NeighborhoodPriceRef, Lead
 from app.services.analytics_scope import analytics_scope
 
 STAGE_PROBABILITY = {
@@ -227,4 +227,75 @@ def analytics_market():
             'portfolio_valuation_by_city': portfolio_valuation_by_city,
             'inventory_by_status': inventory_by_status,
         },
+    })
+
+
+@backoffice_bp.route('/analytics/pipeline', methods=['GET'])
+@require_auth
+def analytics_pipeline():
+    agency, scope = current_scope()
+    if not agency:
+        return jsonify({'error': 'Aucune agence'}), 400
+    start = _range_start(request.args.get('range', '12m'))
+
+    lead_q = Lead.query.filter(Lead.agency_id == agency.id, Lead.created_at >= start)
+    if not scope['all']:
+        lead_q = lead_q.filter(Lead.assigned_to_id == scope['agent_id'])
+    leads = lead_q.all()
+    n_leads = len(leads)
+    n_qualified = sum(1 for l in leads if l.qualified_at)
+    n_converted = sum(1 for l in leads if l.converted_at)
+
+    txn_q = _txn_base(agency, scope, start)
+    open_txn = txn_q.filter(Transaction.status == 'active').all()
+    won_txn = txn_q.filter(Transaction.status == 'won').all()
+    n_visits = sum(1 for t in (open_txn + won_txn) if t.visit_date)
+    n_offers = sum(1 for t in (open_txn + won_txn) if t.offer_date)
+    n_closed = len(won_txn)
+
+    conversion = round(n_closed / n_leads * 100, 1) if n_leads else 0
+    pipeline_value_open = round(sum(_commission_estimate(t) for t in open_txn), 2)
+
+    now = datetime.utcnow()
+    soon = now + timedelta(days=30)
+    exp = [t for t in open_txn if t.expected_closing_date and now <= t.expected_closing_date <= soon]
+    expected_30d = {'count': len(exp), 'value': round(sum(_commission_estimate(t) for t in exp), 2)}
+
+    funnel = {'leads': n_leads, 'qualified': n_qualified, 'visits': n_visits, 'offers': n_offers, 'closed': n_closed}
+    funnel_stages = [{'stage': k, 'count': v} for k, v in
+                     [('Leads', n_leads), ('Qualifiés', n_qualified), ('Visites', n_visits),
+                      ('Offres', n_offers), ('Clôturés', n_closed)]]
+
+    def conv(a, b):
+        return round(b / a * 100, 1) if a else 0
+    conversion_by_stage = [
+        {'from': 'Leads→Qualifiés', 'pct': conv(n_leads, n_qualified)},
+        {'from': 'Qualifiés→Visites', 'pct': conv(n_qualified, n_visits)},
+        {'from': 'Visites→Offres', 'pct': conv(n_visits, n_offers)},
+        {'from': 'Offres→Clôturés', 'pct': conv(n_offers, n_closed)},
+    ]
+
+    # Stage velocity: avg days between consecutive funnel dates on won deals
+    def avg_days(pairs):
+        vals = [(b - a).days for a, b in pairs if a and b and (b - a).days >= 0]
+        return round(sum(vals) / len(vals), 1) if vals else 0
+    stage_velocity_days = [
+        {'stage': 'Contact→Visite', 'days': avg_days([(t.contact_date, t.visit_date) for t in won_txn])},
+        {'stage': 'Visite→Offre', 'days': avg_days([(t.visit_date, t.offer_date) for t in won_txn])},
+        {'stage': 'Offre→Clôture', 'days': avg_days([(t.offer_date, t.closing_date) for t in won_txn])},
+    ]
+
+    tl = {}
+    for t in exp:
+        k = t.expected_closing_date.strftime('%Y-%m-%d')
+        tl.setdefault(k, 0.0)
+        tl[k] += _commission_estimate(t)
+    expected_closings_timeline = [{'date': k, 'value': round(v, 2)} for k, v in sorted(tl.items())]
+
+    return jsonify({
+        'summary': {'funnel': funnel, 'conversion_overall_pct': conversion,
+                    'expected_closings_30d': expected_30d, 'pipeline_value_open': pipeline_value_open},
+        'detail': {'funnel_stages': funnel_stages, 'conversion_by_stage': conversion_by_stage,
+                   'stage_velocity_days': stage_velocity_days,
+                   'expected_closings_timeline': expected_closings_timeline},
     })
