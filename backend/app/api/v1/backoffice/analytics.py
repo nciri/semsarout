@@ -476,8 +476,8 @@ def put_dashboard_config():
     if not isinstance(widgets, list):
         return jsonify({'error': 'widgets doit être une liste'}), 400
     for w in widgets:
-        if w.get('id') not in WIDGET_IDS:
-            return jsonify({'error': f"Widget inconnu : {w.get('id')}"}), 400
+        if not isinstance(w, dict) or w.get('id') not in WIDGET_IDS:
+            return jsonify({'error': f"Widget invalide : {w if not isinstance(w, dict) else w.get('id')}"}), 400
     g.current_user.dashboard_config = {'widgets': widgets}
     db.session.commit()
     return jsonify(g.current_user.dashboard_config)

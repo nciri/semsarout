@@ -28,5 +28,8 @@ with app.app_context():
     r = c.put('/api/v1/backoffice/dashboard/config',
               json={'widgets': [{'id': 'bogus', 'order': 0, 'hidden': False}]}, headers=h)
     check(r.status_code == 400, "PUT config unknown id -> 400")
+    r = c.put('/api/v1/backoffice/dashboard/config',
+              json={'widgets': ['not_a_dict']}, headers=h)
+    check(r.status_code == 400, "PUT config malformed widget -> 400")
 
 sys.exit(1 if FAILS else 0)
