@@ -1,11 +1,14 @@
+import os
 from functools import wraps
-from flask import jsonify, request, g
+from datetime import datetime
+from io import BytesIO
+from flask import jsonify, request, g, current_app, send_from_directory
 from app import db
 from app.models import Agency, Subscription, ContractTemplate
 from app.api.v1.backoffice import backoffice_bp
 from app.api.v1.backoffice.dashboard import require_auth
 from app.services.html_sanitize import sanitize_html
-from app.models import Contract, Transaction, Property, Client
+from app.models import Contract, Transaction, Property, Client, TransactionDocument
 from app.services.contract_merge import build_context, render
 
 
@@ -180,3 +183,79 @@ def delete_contract(cid):
     db.session.delete(c)
     db.session.commit()
     return jsonify({'message': 'Contrat supprimé'})
+
+
+def _documents_dir():
+    base = current_app.config.get(
+        'UPLOAD_FOLDER',
+        os.path.join(current_app.root_path, '..', 'uploads'))
+    path = os.path.join(base, 'documents')
+    os.makedirs(path, exist_ok=True)
+    return os.path.abspath(path)
+
+
+def _render_pdf_bytes(contract):
+    from xhtml2pdf import pisa
+    html = f"""<html><head><meta charset="utf-8"><style>
+      body {{ font-family: Helvetica, Arial, sans-serif; font-size: 11pt; color: #111; }}
+      h1,h2,h3 {{ color: #1e3a5f; }} table {{ border-collapse: collapse; width: 100%; }}
+      td,th {{ border: 1px solid #ccc; padding: 4px; }}
+    </style></head><body>{contract.body_html}</body></html>"""
+    buf = BytesIO()
+    pisa.CreatePDF(src=html, dest=buf, encoding='utf-8')
+    return buf.getvalue()
+
+
+@backoffice_bp.route('/contracts/<int:cid>/finalize', methods=['POST'])
+@require_contracts
+def finalize_contract(cid):
+    c = _get_contract(cid)
+    if not c:
+        return jsonify({'error': 'Contrat introuvable'}), 404
+    if c.status == 'signed':
+        return jsonify({'error': 'Contrat déjà signé.'}), 409
+    pdf = _render_pdf_bytes(c)
+    filename = f'contract_{c.id}_{int(c.created_at.timestamp()) if c.created_at else c.id}.pdf'
+    with open(os.path.join(_documents_dir(), filename), 'wb') as fh:
+        fh.write(pdf)
+    c.pdf_url = filename
+    c.status = 'finalized'
+    c.finalized_at = datetime.utcnow()
+    # Copie du PDF dans les documents de la transaction liée
+    if c.transaction_id:
+        db.session.add(TransactionDocument(
+            transaction_id=c.transaction_id, document_type=c.document_type,
+            name=c.title, file_url=filename, mime_type='application/pdf',
+            requires_signature=True, signature_status='pending',
+            uploaded_by_id=g.current_user.id))
+    db.session.commit()
+    return jsonify({'contract': c.to_dict()})
+
+
+@backoffice_bp.route('/contracts/<int:cid>/mark-signed', methods=['POST'])
+@require_contracts
+def mark_signed(cid):
+    c = _get_contract(cid)
+    if not c:
+        return jsonify({'error': 'Contrat introuvable'}), 404
+    if c.status != 'finalized':
+        return jsonify({'error': 'Le contrat doit être finalisé avant signature.'}), 409
+    c.status = 'signed'
+    c.signed_at = datetime.utcnow()
+    if c.transaction_id and c.pdf_url:
+        doc = TransactionDocument.query.filter_by(transaction_id=c.transaction_id, file_url=c.pdf_url).first()
+        if doc:
+            doc.signature_status = 'signed'
+            doc.signed_at = datetime.utcnow()
+    db.session.commit()
+    return jsonify({'contract': c.to_dict()})
+
+
+@backoffice_bp.route('/contracts/<int:cid>/pdf', methods=['GET'])
+@require_contracts
+def download_contract_pdf(cid):
+    c = _get_contract(cid)
+    if not c or not c.pdf_url:
+        return jsonify({'error': 'PDF indisponible'}), 404
+    return send_from_directory(_documents_dir(), c.pdf_url, mimetype='application/pdf',
+                               as_attachment=False, download_name=f'{c.title}.pdf')
