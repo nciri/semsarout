@@ -28,6 +28,7 @@ class SubscriptionPlan(db.Model):
     max_programs = db.Column(db.Integer, default=0)  # -1 = unlimited
     has_contracts = db.Column(db.Boolean, default=False)
     has_legal = db.Column(db.Boolean, default=False)
+    has_artisans = db.Column(db.Boolean, default=False)
     max_seats = db.Column(db.Integer, default=0)   # invited members beyond owner; -1 = unlimited
     max_teams = db.Column(db.Integer, default=0)   # team labels; -1 = unlimited
 
@@ -62,6 +63,7 @@ class SubscriptionPlan(db.Model):
             'max_programs': self.max_programs,
             'has_contracts': self.has_contracts,
             'has_legal': self.has_legal,
+            'has_artisans': self.has_artisans,
             'max_seats': self.max_seats,
             'max_teams': self.max_teams,
             'price_monthly': float(self.price_monthly),

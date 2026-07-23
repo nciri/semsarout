@@ -23,6 +23,7 @@ from app.models.team import Team
 from app.models.invitation import Invitation
 from app.models.contract import ContractTemplate, Contract
 from app.models.legal import Notary, LegalCase, LegalTask
+from app.models.artisan import Artisan, WorkOrder
 
 __all__ = [
     'User',
@@ -71,5 +72,7 @@ __all__ = [
     'Contract',
     'Notary',
     'LegalCase',
-    'LegalTask'
+    'LegalTask',
+    'Artisan',
+    'WorkOrder'
 ]
