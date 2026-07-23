@@ -26,6 +26,8 @@ class SubscriptionPlan(db.Model):
     has_dedicated_account_manager = db.Column(db.Boolean, default=False)
     has_programs = db.Column(db.Boolean, default=False)  # Can create programs
     max_programs = db.Column(db.Integer, default=0)  # -1 = unlimited
+    max_seats = db.Column(db.Integer, default=0)   # invited members beyond owner; -1 = unlimited
+    max_teams = db.Column(db.Integer, default=0)   # team labels; -1 = unlimited
 
     # Pricing (MAD - Dirham marocain)
     price_monthly = db.Column(db.Numeric(10, 2), nullable=False)
@@ -56,6 +58,8 @@ class SubscriptionPlan(db.Model):
             'has_dedicated_account_manager': self.has_dedicated_account_manager,
             'has_programs': self.has_programs,
             'max_programs': self.max_programs,
+            'max_seats': self.max_seats,
+            'max_teams': self.max_teams,
             'price_monthly': float(self.price_monthly),
             'price_yearly': float(self.price_yearly) if self.price_yearly else None
         }

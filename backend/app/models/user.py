@@ -45,7 +45,8 @@ class User(db.Model):
 
     # Relationships
     agency_id = db.Column(db.Integer, db.ForeignKey('agencies.id'), nullable=True)
-    agency = db.relationship('Agency', back_populates='members')
+    agency = db.relationship('Agency', back_populates='members', foreign_keys=[agency_id])
+    team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=True)
     properties = db.relationship('Property', back_populates='owner', lazy='dynamic')
 
     def set_password(self, password):
@@ -95,6 +96,7 @@ class User(db.Model):
             'interest': self.interest,
             'is_verified': self.is_verified,
             'agency_id': self.agency_id,
+            'team_id': self.team_id,
             'role': primary_role.slug if primary_role else None,
             'role_name': primary_role.name if primary_role else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,

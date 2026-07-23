@@ -49,8 +49,12 @@ class Agency(db.Model):
     deleted_at = db.Column(db.DateTime, nullable=True)
     anonymized_at = db.Column(db.DateTime, nullable=True)
 
+    # Teams & seats
+    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+
     # Relationships
-    members = db.relationship('User', back_populates='agency', lazy='dynamic')
+    members = db.relationship('User', back_populates='agency', lazy='dynamic',
+                               foreign_keys='User.agency_id')
     properties = db.relationship('Property', back_populates='agency', lazy='dynamic')
     subscription = db.relationship('Subscription', back_populates='agency', uselist=False)
     leads = db.relationship('Lead', back_populates='agency', lazy='dynamic')

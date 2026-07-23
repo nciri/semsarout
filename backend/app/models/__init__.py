@@ -19,6 +19,8 @@ from app.models.staymanager import (
     StayManagerReservation,
     StayManagerSyncLog
 )
+from app.models.team import Team
+from app.models.invitation import Invitation
 
 __all__ = [
     'User',
@@ -60,5 +62,7 @@ __all__ = [
     'StayManagerIntegration',
     'StayManagerPropertyLink',
     'StayManagerReservation',
-    'StayManagerSyncLog'
+    'StayManagerSyncLog',
+    'Team',
+    'Invitation'
 ]
