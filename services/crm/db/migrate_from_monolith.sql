@@ -36,3 +36,29 @@ FROM public.client_interactions ON CONFLICT (id) DO NOTHING;
 
 SELECT setval(pg_get_serial_sequence('crm.client', 'id'), COALESCE((SELECT MAX(id) FROM crm.client), 1));
 SELECT setval(pg_get_serial_sequence('crm.client_interaction', 'id'), COALESCE((SELECT MAX(id) FROM crm.client_interaction), 1));
+
+-- Stage C : visites + événements de calendrier (property_ro enrichie : titre+adresse+ville)
+UPDATE crm.property_ro ro SET address = p.address, city = p.city FROM public.properties p WHERE p.id = ro.id;
+
+INSERT INTO crm.visit (
+    id, property_id, client_id, visitor_name, visitor_email, visitor_phone, agent_id,
+    scheduled_at, duration_minutes, status, visit_type, notes, internal_notes, report,
+    client_feedback, client_comments, confirmed_at, confirmation_method, agency_id,
+    created_at, updated_at, completed_at, cancelled_at, cancellation_reason)
+SELECT
+    id, property_id, client_id, visitor_name, visitor_email, visitor_phone, agent_id,
+    scheduled_at, duration_minutes, status, visit_type, notes, internal_notes, report,
+    client_feedback, client_comments, confirmed_at, confirmation_method, agency_id,
+    created_at, updated_at, completed_at, cancelled_at, cancellation_reason
+FROM public.visits ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO crm.calendar_event (
+    id, title, description, event_type, start_at, end_at, all_day, recurrence, location,
+    attendees, client_id, property_id, user_id, agency_id, status, color, created_at, updated_at)
+SELECT
+    id, title, description, event_type, start_at, end_at, all_day, recurrence, location,
+    attendees, client_id, property_id, user_id, agency_id, status, color, created_at, updated_at
+FROM public.calendar_events ON CONFLICT (id) DO NOTHING;
+
+SELECT setval(pg_get_serial_sequence('crm.visit', 'id'), COALESCE((SELECT MAX(id) FROM crm.visit), 1));
+SELECT setval(pg_get_serial_sequence('crm.calendar_event', 'id'), COALESCE((SELECT MAX(id) FROM crm.calendar_event), 1));

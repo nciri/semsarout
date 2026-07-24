@@ -87,11 +87,65 @@ class ClientInteraction(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class Visit(Base):
+    __tablename__ = "visit"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    property_id = Column(Integer, index=True)
+    client_id = Column(Integer, index=True)
+    visitor_name = Column(String(100))
+    visitor_email = Column(String(120))
+    visitor_phone = Column(String(20))
+    agent_id = Column(Integer)
+    scheduled_at = Column(DateTime, nullable=False)
+    duration_minutes = Column(Integer, default=30)
+    status = Column(String(20), default="scheduled")
+    visit_type = Column(String(20), default="in_person")
+    notes = Column(Text)
+    internal_notes = Column(Text)
+    report = Column(Text)
+    client_feedback = Column(String(20))
+    client_comments = Column(Text)
+    confirmed_at = Column(DateTime)
+    confirmation_method = Column(String(20))
+    agency_id = Column(Integer, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    completed_at = Column(DateTime)
+    cancelled_at = Column(DateTime)
+    cancellation_reason = Column(String(255))
+
+
+class CalendarEvent(Base):
+    __tablename__ = "calendar_event"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text)
+    event_type = Column(String(20), default="meeting")
+    start_at = Column(DateTime, nullable=False)
+    end_at = Column(DateTime)
+    all_day = Column(Boolean, default=False)
+    recurrence = Column(JSON)
+    location = Column(String(255))
+    attendees = Column(JSON, default=list)
+    client_id = Column(Integer)
+    property_id = Column(Integer)
+    user_id = Column(Integer)
+    agency_id = Column(Integer, index=True)
+    status = Column(String(20), default="pending")
+    color = Column(String(20), default="blue")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class PropertyRO(Base):
     __tablename__ = "property_ro"
 
     id = Column(BigInteger, primary_key=True)
     title = Column(String(200))
+    address = Column(String(255))
+    city = Column(String(100))
 
 
 class ProcessedMessage(Base):

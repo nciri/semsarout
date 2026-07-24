@@ -25,6 +25,8 @@ def _handle(routing_key: str, payload: dict, message_id: str) -> None:
                 ro = PropertyRO(id=pid)
                 db.add(ro)
             ro.title = payload.get("title")
+            ro.address = payload.get("address")
+            ro.city = payload.get("city")
         if message_id:
             db.add(ProcessedMessage(message_id=message_id))
         db.commit()

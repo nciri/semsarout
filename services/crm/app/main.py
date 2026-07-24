@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, setup_logging, setup_tracing
 
-from . import clients, users_client
+from . import clients, users_client, visits
 from .db import get_db, init_db
 from .models import Lead, PropertyRO
 
@@ -43,6 +43,7 @@ except Exception:  # noqa: BLE001
 
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 app.include_router(clients.router)  # sous-domaine clients (Stage B)
+app.include_router(visits.router)   # sous-domaine visites + calendrier (Stage C)
 
 
 def _err(msg: str, code: int) -> JSONResponse:
