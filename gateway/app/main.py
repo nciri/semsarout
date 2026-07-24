@@ -10,6 +10,7 @@ import time
 from contextlib import asynccontextmanager
 
 import httpx
+import jwt as pyjwt
 from fastapi import FastAPI, Request, Response
 from prometheus_fastapi_instrumentator import Instrumentator
 
@@ -30,15 +31,41 @@ _HOP_BY_HOP = {
 _IDENTITY_CACHE: dict[str, tuple[float, dict]] = {}
 
 
+def _identity_from_claims(payload: dict) -> dict:
+    sub = payload.get("sub")
+    return {
+        "user_id": int(sub) if isinstance(sub, str) and sub.isdigit() else sub,
+        "agency_id": payload.get("agency_id"),
+        "is_superadmin": bool(payload.get("is_superadmin")),
+        "role": payload.get("account_role"),
+        "features": payload.get("features") or [],
+    }
+
+
 async def _resolve_identity(app: FastAPI, authorization: str | None) -> dict | None:
-    """Valide le jeton en interrogeant le monolithe (/auth/me) et renvoie le contexte
-    d'auth (user_id, agency_id, is_superadmin, role). Résultat mis en cache brièvement."""
+    """Valide le jeton et renvoie le contexte d'auth (user_id, agency_id, is_superadmin,
+    role, features). **Priorité : validation LOCALE du JWT** (signature + claims embarqués),
+    sans appeler le monolithe. Repli /auth/me uniquement pour les anciens jetons sans claims."""
     if not authorization:
         return None
     now = time.monotonic()
     cached = _IDENTITY_CACHE.get(authorization)
     if cached and cached[0] > now:
         return cached[1]
+
+    token = authorization[7:].strip() if authorization[:7].lower() == "bearer " else authorization
+    try:
+        payload = pyjwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+    except pyjwt.PyJWTError:
+        return None  # signature/expiration invalide → rejet (pas d'appel monolithe)
+
+    # Jeton enrichi → résolution 100 % locale (frontière d'auth sévrée).
+    if "account_role" in payload or "is_superadmin" in payload:
+        ident = _identity_from_claims(payload)
+        _IDENTITY_CACHE[authorization] = (now + settings.identity_ttl_seconds, ident)
+        return ident
+
+    # Repli transition : ancien jeton valide mais sans claims → contexte via le monolithe.
     try:
         resp = await app.state.monolith.get(
             settings.auth_resolve_path, headers={"authorization": authorization}
@@ -93,6 +120,8 @@ def _inject_identity(headers: dict, ident: dict) -> None:
 # La découverte (GET /properties, /search, /suggestions), contact, price-position → monolithe.
 _LISTING_ID = re.compile(r"^/api/v1/properties/\d+$")
 _LISTING_PUBLISH = re.compile(r"^/api/v1/properties/\d+/publish$")
+# Engagement (Stage 3) : contact & reveal-phone (publics).
+_LISTING_ENGAGE = re.compile(r"^/api/v1/properties/\d+/(contact|reveal-phone)$")
 
 
 def _listing_match(path: str, method: str) -> bool:
@@ -102,7 +131,7 @@ def _listing_match(path: str, method: str) -> bool:
         return True
     if method in ("GET", "PUT", "DELETE") and _LISTING_ID.match(path):
         return True
-    if method == "POST" and _LISTING_PUBLISH.match(path):
+    if method == "POST" and (_LISTING_PUBLISH.match(path) or _LISTING_ENGAGE.match(path)):
         return True
     return False
 
@@ -117,7 +146,17 @@ def _search_discovery_match(path: str, method: str) -> bool:
     )
 
 
+_GEO_PRICE = re.compile(r"^/api/v1/properties/\d+/price-position$")
+
+
+def _geo_match(path: str, method: str) -> bool:
+    return bool(_GEO_PRICE.match(path) or path.startswith("/api/v1/market/"))
+
+
 def _resolve_upstream(app: FastAPI, path: str, method: str):
+    # geo AVANT listing : /properties/{id}/price-position + /market/* → geo.
+    if settings.geo_url and _geo_match(path, method):
+        return app.state.geo, path.replace("/api/v1", "", 1)
     # listing (détail/CRUD) AVANT la découverte (search) : /properties/{id} → listing.
     if settings.listing_url and _listing_match(path, method):
         return app.state.listing, path.replace("/api/v1", "", 1)
@@ -157,6 +196,13 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path.startswith("/api/v1/admin/shared-artisans")
     ):
         return app.state.directory, path.replace("/api/v1", "", 1)
+    if settings.messaging_url and path.startswith("/api/v1/buyer/messages"):
+        return app.state.messaging, path.replace("/api/v1", "", 1)
+    if settings.trust_safety_url and (
+        path.startswith("/api/v1/admin/accounts/users/")
+        or path.startswith("/api/v1/admin/accounts/agencies/")
+    ):
+        return app.state.trust_safety, path.replace("/api/v1", "", 1)
     if settings.crm_url and (
         path.startswith("/api/v1/backoffice/leads")
         or path.startswith("/api/v1/backoffice/clients")
@@ -188,12 +234,16 @@ async def lifespan(app: FastAPI):
     app.state.directory = _client_or_none(settings.directory_url)
     app.state.listing = _client_or_none(settings.listing_url)
     app.state.crm = _client_or_none(settings.crm_url)
+    app.state.geo = _client_or_none(settings.geo_url)
+    app.state.messaging = _client_or_none(settings.messaging_url)
+    app.state.trust_safety = _client_or_none(settings.trust_safety_url)
     yield
     for client in (
         app.state.monolith, app.state.identity, app.state.search,
         app.state.analytics, app.state.contract, app.state.legal,
         app.state.payment, app.state.billing, app.state.catalog, app.state.marketplace,
-        app.state.directory, app.state.listing, app.state.crm,
+        app.state.directory, app.state.listing, app.state.crm, app.state.geo,
+        app.state.messaging, app.state.trust_safety,
     ):
         if client is not None:
             await client.aclose()

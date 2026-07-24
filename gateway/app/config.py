@@ -21,6 +21,11 @@ class GatewaySettings(BaseSettings):
     auth_resolve_path: str = "/api/v1/auth/me"
     auth_features_path: str = "/api/v1/my-subscription"  # entitlements du plan
     identity_ttl_seconds: int = 30
+    # Sévrage de la frontière d'auth : le BFF valide le JWT LOCALEMENT (signature + claims
+    # d'identité embarqués) au lieu d'appeler le monolithe. Repli monolithe pour les anciens
+    # tokens sans claims. Le secret doit correspondre à JWT_SECRET_KEY du monolithe.
+    jwt_secret_key: str = "jwt-secret-change-in-prod"
+    jwt_algorithm: str = "HS256"
 
     # Services extraits (routage strangler). Vide = tout part au monolithe.
     identity_url: str | None = None
@@ -35,6 +40,9 @@ class GatewaySettings(BaseSettings):
     directory_url: str | None = None
     listing_url: str | None = None
     crm_url: str | None = None
+    geo_url: str | None = None
+    messaging_url: str | None = None
+    trust_safety_url: str | None = None
 
     otlp_endpoint: str = "http://localhost:4318"
 
