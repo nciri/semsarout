@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { FiGrid, FiUsers, FiActivity, FiTool, FiShoppingBag } from 'react-icons/fi'
+import { FiGrid, FiUsers, FiActivity, FiTool, FiShoppingBag, FiPackage } from 'react-icons/fi'
 
 const link = ({ isActive }) =>
   `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium ${
@@ -17,6 +17,7 @@ function AdminLayout() {
           <NavLink to="/admin/activite" className={link}><FiActivity /> Activité</NavLink>
           <NavLink to="/admin/artisans-partages" className={link}><FiTool /> Artisans partagés</NavLink>
           <NavLink to="/admin/produits" className={link}><FiShoppingBag /> Produits</NavLink>
+          <NavLink to="/admin/commandes" className={link}><FiPackage /> Commandes</NavLink>
         </nav>
       </aside>
       <main className="flex-1 p-8"><Outlet /></main>
