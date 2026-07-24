@@ -54,9 +54,16 @@ MAPPING: dict[str, Any] = {
     }
 }
 
+# Postgres trie DESC → NULLS FIRST, ASC → NULLS LAST : on aligne le placement des NULL.
+_PUB_DESC = {"published_at": {"order": "desc", "missing": "_first"}}
+_PUB_ASC = {"published_at": {"order": "asc", "missing": "_last"}}
+_FEAT = {"is_featured": "desc"}
+_URG = {"is_urgent": "desc"}
+_ID = {"id": "desc"}  # départage déterministe (pagination stable, parité des ex æquo)
+
 _SORTS = {
-    "newest": [{"published_at": "desc"}],
-    "oldest": [{"published_at": "asc"}],
+    "newest": [_PUB_DESC],
+    "oldest": [_PUB_ASC],
     "price_asc": [{"price": "asc"}],
     "price_desc": [{"price": "desc"}],
     "surface_asc": [{"surface": "asc"}],
@@ -65,14 +72,34 @@ _SORTS = {
     "rooms_desc": [{"rooms": "desc"}],
 }
 
+# Profil « search » (POST /properties/search) : tri distinct du monolithe — défaut
+# `relevance` (featured d'abord, puis récent), sans secondaire is_urgent.
+_SEARCH_SORTS = {
+    "relevance": [_FEAT, _PUB_DESC],
+    "newest": [_PUB_DESC],
+    "price_asc": [{"price": "asc"}],
+    "price_desc": [{"price": "desc"}],
+}
+
+
+def _resolve_sort(criteria: dict) -> list[dict]:
+    """Reproduit l'ORDER BY du monolithe selon l'endpoint (profil) et le mode de tri.
+    Ajoute `id desc` en départage pour une pagination déterministe (parité)."""
+    if criteria.get("sort_profile") == "search":
+        base = _SEARCH_SORTS.get(criteria.get("sort") or "relevance", _SEARCH_SORTS["relevance"])
+        return [*base, _ID]
+    # profil « list » (GET /properties) : primaire + featured/urgent (toujours appendus).
+    base = _SORTS.get(criteria.get("sort", "newest"), _SORTS["newest"])
+    return [*base, _FEAT, _URG, _ID]
+
 
 def os_client(url: str) -> OpenSearch:
     return OpenSearch(hosts=[url], http_compress=True)
 
 
 def ensure_index(client: OpenSearch) -> None:
-    if not client.indices.exists(PROPERTY_INDEX):
-        client.indices.create(PROPERTY_INDEX, body=MAPPING)
+    if not client.indices.exists(index=PROPERTY_INDEX):
+        client.indices.create(index=PROPERTY_INDEX, body=MAPPING)
 
 
 def _index_doc(doc: dict) -> dict:
@@ -197,11 +224,11 @@ def build_query(criteria: dict, hidden_users: list[int], hidden_agencies: list[i
     for group in should_or:
         must.append({"bool": {"should": group, "minimum_should_match": 1}})
 
-    # Tri : primaire (choisi) puis featured/urgent en secondaire (comme le monolithe).
-    sort = _SORTS.get(criteria.get("sort", "newest"), _SORTS["newest"]) + [
-        {"is_featured": "desc"}, {"is_urgent": "desc"}
-    ]
-    return {"query": {"bool": bool_query}, "sort": sort}
+    sort = _resolve_sort(criteria)
+    # `location`/`has_images` sont dérivés pour l'indexation (filtres géo/photos) mais
+    # absents du `to_dict()` du monolithe → exclus de la réponse pour la parité.
+    return {"query": {"bool": bool_query}, "sort": sort,
+            "_source": {"excludes": ["location", "has_images"]}}
 
 
 def search_listings(client: OpenSearch, criteria: dict, hidden_users=None, hidden_agencies=None) -> dict:
