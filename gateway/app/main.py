@@ -118,6 +118,13 @@ def _resolve_upstream(app: FastAPI, path: str):
         or path.startswith("/api/v1/admin/orders")
     ):
         return app.state.marketplace, path.replace("/api/v1", "", 1)
+    if settings.directory_url and (
+        path.startswith("/api/v1/backoffice/artisans")
+        or path.startswith("/api/v1/backoffice/artisan-trades")
+        or path.startswith("/api/v1/backoffice/work-orders")
+        or path.startswith("/api/v1/admin/shared-artisans")
+    ):
+        return app.state.directory, path.replace("/api/v1", "", 1)
     return app.state.monolith, path
 
 
@@ -139,11 +146,13 @@ async def lifespan(app: FastAPI):
     app.state.billing = _client_or_none(settings.billing_url)
     app.state.catalog = _client_or_none(settings.catalog_url)
     app.state.marketplace = _client_or_none(settings.marketplace_url)
+    app.state.directory = _client_or_none(settings.directory_url)
     yield
     for client in (
         app.state.monolith, app.state.identity, app.state.search,
         app.state.analytics, app.state.contract, app.state.legal,
         app.state.payment, app.state.billing, app.state.catalog, app.state.marketplace,
+        app.state.directory,
     ):
         if client is not None:
             await client.aclose()
