@@ -43,5 +43,19 @@ with app.app_context():
     prod.price = float(prod.price) + 999; db.session.commit()
     o = c.get(f'/api/v1/backoffice/shop/orders/{oid}', headers=h).get_json()['order']
     check(o['total'] == order['total'], "order total unchanged after product price change")
+    # null stock -> checkout must not 500 (None coalesced to 0)
+    prod2 = Product.query.filter_by(is_active=True).filter(Product.id != prod.id).first()
+    original_stock = prod2.stock
+    prod2.stock = None
+    db.session.commit()
+    cart = c.get('/api/v1/backoffice/shop/cart', headers=h).get_json()['cart']
+    for it in cart['items']:
+        c.delete(f"/api/v1/backoffice/shop/cart/items/{it['id']}", headers=h)
+    c.post('/api/v1/backoffice/shop/cart/items', json={'product_id': prod2.id, 'quantity': 1}, headers=h)
+    r = c.post('/api/v1/backoffice/shop/orders', json={'delivery_address': 'Rue Y, Casablanca'}, headers=h)
+    check(r.status_code != 500, "checkout with null-stock product does not 500")
+    check(r.status_code == 400, "checkout with null-stock product rejected as insufficient stock")
+    prod2.stock = original_stock
+    db.session.commit()
 
 sys.exit(1 if FAILS else 0)

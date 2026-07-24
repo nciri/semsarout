@@ -42,5 +42,12 @@ with app.app_context():
     check(line['quantity'] == 4, "quantity updated to 4")
     r = c.delete(f"/api/v1/backoffice/shop/cart/items/{line['id']}", headers=h)
     check(r.status_code == 200, "remove item")
+    # non-numeric quantity -> no 500, clamped to 1
+    r = c.post('/api/v1/backoffice/shop/cart/items', json={'product_id': prod.id, 'quantity': 'abc'}, headers=h)
+    check(r.status_code in (200, 201), "add to cart with non-numeric quantity does not 500 (treated as qty 1)")
+    cart = c.get('/api/v1/backoffice/shop/cart', headers=h).get_json()['cart']
+    line = next(x for x in cart['items'] if x['product_id'] == prod.id)
+    check(line['quantity'] == 1, "non-numeric quantity clamped to 1")
+    c.delete(f"/api/v1/backoffice/shop/cart/items/{line['id']}", headers=h)
 
 sys.exit(1 if FAILS else 0)

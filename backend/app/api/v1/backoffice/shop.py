@@ -68,7 +68,11 @@ def add_cart_item():
     prod = Product.query.filter_by(id=data.get('product_id'), is_active=True).first()
     if not prod:
         return jsonify({'error': 'Produit invalide'}), 400
-    qty = max(1, int(data.get('quantity') or 1))
+    raw = data.get('quantity')
+    try:
+        qty = max(1, int(raw))
+    except (TypeError, ValueError):
+        qty = 1
     cart = _get_or_create_cart()
     item = CartItem.query.filter_by(cart_id=cart.id, product_id=prod.id).first()
     if item:
@@ -135,7 +139,7 @@ def checkout():
         p = Product.query.get(it.product_id)
         if not p or not p.is_active:
             return jsonify({'error': 'Un produit du panier n\'est plus disponible.'}), 400
-        if p.stock < it.quantity:
+        if (p.stock or 0) < it.quantity:
             return jsonify({'error': f'Stock insuffisant pour « {p.name} ».'}), 400
         line_total = float(p.price) * it.quantity
         subtotal += line_total
@@ -179,12 +183,12 @@ def pay_order(oid):
     # re-check stock, then decrement
     for it in OrderItem.query.filter_by(order_id=order.id).all():
         p = Product.query.get(it.product_id) if it.product_id else None
-        if p and p.stock < it.quantity:
+        if p and (p.stock or 0) < it.quantity:
             return jsonify({'error': f'Stock insuffisant pour « {it.product_name} ».'}), 409
     for it in OrderItem.query.filter_by(order_id=order.id).all():
         p = Product.query.get(it.product_id) if it.product_id else None
         if p:
-            p.stock = p.stock - it.quantity
+            p.stock = (p.stock or 0) - it.quantity
     order.status = 'paid'
     order.paid_at = datetime.utcnow()
     order.payment_reference = f'PAY-{secrets.token_hex(4).upper()}'  # simulated gateway
