@@ -30,3 +30,17 @@ def internal_moderation_hidden():
         ).all()
     ]
     return jsonify({"user_ids": user_ids, "agency_ids": agency_ids})
+
+
+@api_v1_bp.route("/internal/agency/users", methods=["GET"])
+def internal_agency_users():
+    """Utilisateurs (agents) d'une agence — pour les noms/assignation côté crm."""
+    if request.headers.get("X-Internal-Token") != _TOKEN:
+        return jsonify({"error": "Forbidden"}), 403
+    agency_id = request.args.get("agency_id", type=int)
+    query = User.query.filter(User.is_active.is_(True))
+    if agency_id:
+        query = query.filter(User.agency_id == agency_id)
+    return jsonify({
+        "users": [{"id": u.id, "name": u.full_name, "email": u.email} for u in query.all()]
+    })
