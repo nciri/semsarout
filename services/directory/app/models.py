@@ -1,5 +1,5 @@
 """Modèles du service directory (schéma `directory`) — mêmes formes que le monolithe."""
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import BigInteger, Column, DateTime, Integer, Numeric, String, Text
 
@@ -19,11 +19,11 @@ class Artisan(Base):
     email = Column(String(120))
     notes = Column(Text)
     created_by = Column(Integer, nullable=True)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(
-        DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
 
@@ -39,13 +39,13 @@ class WorkOrder(Base):
     status = Column(String(20), default="requested")
     cost_estimate = Column(Numeric(12, 2), nullable=True)
     cost_final = Column(Numeric(12, 2), nullable=True)
-    scheduled_date = Column(DateTime(timezone=True), nullable=True)
-    completed_at = Column(DateTime(timezone=True), nullable=True)
+    scheduled_date = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
     notes = Column(Text)
     created_by = Column(Integer, nullable=True)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(
-        DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
