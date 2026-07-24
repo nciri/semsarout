@@ -5,6 +5,7 @@ Phase 0 : proxy transparent de `/api/*` vers le monolithe Flask, en préservant
 strangler, `proxy()` sera remplacé route par route par des appels aux nouveaux
 services et par de l'agrégation (BFF).
 """
+import time
 from contextlib import asynccontextmanager
 
 import httpx
@@ -23,6 +24,47 @@ _HOP_BY_HOP = {
     "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
     "te", "trailers", "transfer-encoding", "upgrade", "host", "content-length",
 }
+
+# Cache court d'identités résolues (clé = jeton Bearer).
+_IDENTITY_CACHE: dict[str, tuple[float, dict]] = {}
+
+
+async def _resolve_identity(app: FastAPI, authorization: str | None) -> dict | None:
+    """Valide le jeton en interrogeant le monolithe (/auth/me) et renvoie le contexte
+    d'auth (user_id, agency_id, is_superadmin, role). Résultat mis en cache brièvement."""
+    if not authorization:
+        return None
+    now = time.monotonic()
+    cached = _IDENTITY_CACHE.get(authorization)
+    if cached and cached[0] > now:
+        return cached[1]
+    try:
+        resp = await app.state.monolith.get(
+            settings.auth_resolve_path, headers={"authorization": authorization}
+        )
+    except httpx.HTTPError:
+        return None
+    if resp.status_code != 200:
+        return None
+    user = (resp.json() or {}).get("user", {})
+    ident = {
+        "user_id": user.get("id"),
+        "agency_id": user.get("agency_id"),
+        "is_superadmin": bool(user.get("is_superadmin")),
+        "role": user.get("account_role") or user.get("role"),
+    }
+    _IDENTITY_CACHE[authorization] = (now + settings.identity_ttl_seconds, ident)
+    return ident
+
+
+def _inject_identity(headers: dict, ident: dict) -> None:
+    if ident.get("user_id") is not None:
+        headers["x-semsar-user-id"] = str(ident["user_id"])
+    if ident.get("agency_id") is not None:
+        headers["x-semsar-agency-id"] = str(ident["agency_id"])
+    headers["x-semsar-superadmin"] = "1" if ident.get("is_superadmin") else "0"
+    if ident.get("role"):
+        headers["x-semsar-roles"] = str(ident["role"])
 
 
 # Table de routage strangler : (préfixe /api → (client, réécriture de préfixe)).
@@ -94,11 +136,21 @@ async def health() -> dict:
     include_in_schema=False,
 )
 async def proxy(path: str, request: Request) -> Response:
-    client, upstream_path = _resolve_upstream(request.app, request.url.path)
+    app = request.app
+    client, upstream_path = _resolve_upstream(app, request.url.path)
     url = upstream_path
     if request.url.query:
         url = f"{url}?{request.url.query}"
-    headers = {k: v for k, v in request.headers.items() if k.lower() not in _HOP_BY_HOP}
+    # Filtrer : hop-by-hop + tout X-Semsar-* ENTRANT (anti-usurpation : seul le BFF les pose).
+    headers = {
+        k: v for k, v in request.headers.items()
+        if k.lower() not in _HOP_BY_HOP and not k.lower().startswith("x-semsar-")
+    }
+    # Frontière d'auth : pour un service interne, résoudre l'identité et l'injecter.
+    if client is not app.state.monolith:
+        ident = await _resolve_identity(app, request.headers.get("authorization"))
+        if ident:
+            _inject_identity(headers, ident)
     upstream = await client.request(
         request.method, url, headers=headers, content=await request.body()
     )

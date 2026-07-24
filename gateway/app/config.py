@@ -16,6 +16,11 @@ class GatewaySettings(BaseSettings):
     upstream_url: str = "http://localhost:7000"
     request_timeout: float = 30.0
 
+    # Frontière d'auth (transition) : le BFF résout l'identité via cet endpoint du
+    # monolithe puis injecte X-Semsar-* vers les services internes. Cache court.
+    auth_resolve_path: str = "/api/v1/auth/me"
+    identity_ttl_seconds: int = 30
+
     # Services extraits (routage strangler). Vide = tout part au monolithe.
     identity_url: str | None = None
     search_url: str | None = None

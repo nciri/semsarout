@@ -37,6 +37,11 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "RS256"
     jwt_issuer: str = "semsar-identity"
 
+    # Transition strangler : faire confiance aux en-têtes d'identité X-Semsar-*
+    # injectés par le BFF (au lieu de vérifier le JWT). Le réseau interne DOIT
+    # empêcher tout accès direct aux services quand ce flag est actif.
+    trust_gateway_headers: bool = False
+
 
 @lru_cache
 def get_settings() -> Settings:

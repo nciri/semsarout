@@ -29,11 +29,35 @@ def principal_from_claims(claims: dict[str, Any]) -> Principal:
     )
 
 
+def _principal_from_headers(request: Request) -> Principal | None:
+    """Identité injectée par le BFF (frontière d'auth transitoire)."""
+    uid = request.headers.get("x-semsar-user-id")
+    if not uid:
+        return None
+    agency = request.headers.get("x-semsar-agency-id")
+    return Principal(
+        sub=uid,
+        roles=[r for r in request.headers.get("x-semsar-roles", "").split(",") if r],
+        agency_id=int(agency) if agency and agency.isdigit() else None,
+        is_superadmin=request.headers.get("x-semsar-superadmin", "").lower() in ("1", "true"),
+        claims={},
+    )
+
+
 def get_principal(request: Request) -> Principal:
+    settings = get_settings()
+
+    # Transition : faire confiance aux en-têtes d'identité injectés par le BFF.
+    if settings.trust_gateway_headers:
+        principal = _principal_from_headers(request)
+        if principal is None:
+            raise unauthorized("Identité de passerelle absente.")
+        return principal
+
+    # Cible : vérification directe du JWT RS256 (émis par identity).
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
         raise unauthorized("Jeton Bearer requis.")
-    settings = get_settings()
     if not settings.jwt_public_key:
         raise unauthorized("Clé de vérification JWT non configurée.")
     claims = decode_token(
