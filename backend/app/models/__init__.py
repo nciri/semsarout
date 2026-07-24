@@ -25,6 +25,7 @@ from app.models.contract import ContractTemplate, Contract
 from app.models.legal import Notary, LegalCase, LegalTask
 from app.models.artisan import Artisan, WorkOrder
 from app.models.shop import Product, Cart, CartItem, Order, OrderItem
+from app.models.outbox import OutboxEvent  # émission v2 (désactivée par défaut, cf. module)
 
 __all__ = [
     'User',
