@@ -9,7 +9,7 @@ import os
 from flask import jsonify, request
 
 from app.api.v1 import api_v1_bp
-from app.models import Agency, User
+from app.models import Agency, Property, User
 
 _TOKEN = os.environ.get("SEMSAR_INTERNAL_TOKEN", "change-me-internal")
 
@@ -44,3 +44,21 @@ def internal_agency_users():
     return jsonify({
         "users": [{"id": u.id, "name": u.full_name, "email": u.email} for u in query.all()]
     })
+
+
+@api_v1_bp.route("/internal/properties/<int:property_id>/contact-phone", methods=["GET"])
+def internal_contact_phone(property_id):
+    """Téléphone de contact d'un bien (agence ou propriétaire) — pour reveal-phone côté listing.
+    Transition : le téléphone appartient au domaine identity/agency, pas encore extrait."""
+    if request.headers.get("X-Internal-Token") != _TOKEN:
+        return jsonify({"error": "Forbidden"}), 403
+    p = Property.query.get(property_id)
+    if p is None:
+        return jsonify({"error": "Not found"}), 404
+    if p.agency_id:
+        agency = Agency.query.get(p.agency_id)
+        phone = agency.phone if agency else None
+    else:
+        owner = User.query.get(p.owner_id)
+        phone = owner.phone if owner else None
+    return jsonify({"phone": phone})
