@@ -4,7 +4,7 @@
 `product.*`) : elle permet d'afficher le panier et de figer les snapshots au checkout
 sans appel synchrone à catalog. La **source de vérité** des produits reste `catalog`.
 """
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import (
     BigInteger,
@@ -37,7 +37,7 @@ class Cart(Base):
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     user_id = Column(Integer, nullable=False, unique=True)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class CartItem(Base):
@@ -62,15 +62,17 @@ class Order(Base):
     subtotal = Column(Numeric(12, 2), default=0)
     total = Column(Numeric(12, 2), default=0)
     payment_reference = Column(String(50), nullable=True)
-    paid_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    paid_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(
-        DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
-    def to_dict(self, items=None) -> dict:
+    def to_dict(self, items=None, items_count=None) -> dict:
+        # `items_count` explicite pour les listes (sans embarquer le tableau `items`).
+        count = items_count if items_count is not None else (len(items) if items is not None else 0)
         d = {
             "id": self.id, "reference": self.reference, "agency_id": self.agency_id,
             "buyer_id": self.buyer_id, "property_id": self.property_id,
@@ -78,7 +80,7 @@ class Order(Base):
             "subtotal": float(self.subtotal or 0), "total": float(self.total or 0),
             "payment_reference": self.payment_reference,
             "paid_at": self.paid_at.isoformat() if self.paid_at else None,
-            "items_count": len(items) if items is not None else 0,
+            "items_count": count,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
         if items is not None:
@@ -109,4 +111,4 @@ class ProcessedMessage(Base):
     __tablename__ = "processed_message"
 
     message_id = Column(String(64), primary_key=True)
-    processed_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    processed_at = Column(DateTime, default=datetime.utcnow)

@@ -11,10 +11,11 @@ from datetime import datetime, timezone
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal, require_superadmin
-from semsar_common import get_settings, setup_logging, setup_tracing
+from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
 from . import catalog_client
 from .db import get_db, init_db
@@ -34,6 +35,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title=f"SemsarOut — {settings.service_name}", lifespan=lifespan)
+install_legacy_error_handlers(app)  # Problem (require_*/get_principal) -> {'error': ...} legacy
 
 try:
     setup_tracing(app, settings.service_name, settings.otlp_endpoint)
@@ -219,12 +221,21 @@ def pay_order(oid: int, principal: Principal = Depends(get_principal), db: Sessi
     return {"order": order.to_dict(items=order_items)}
 
 
+def _items_count_map(db: Session, order_ids: list[int]) -> dict[int, int]:
+    if not order_ids:
+        return {}
+    return dict(db.query(OrderItem.order_id, func.count(OrderItem.id))
+                .filter(OrderItem.order_id.in_(order_ids)).group_by(OrderItem.order_id).all())
+
+
 @app.get("/backoffice/shop/orders")
 def list_orders(status: str | None = None, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
     q = db.query(Order).filter(Order.agency_id == principal.agency_id)
     if status:
         q = q.filter(Order.status == status)
-    return {"orders": [o.to_dict() for o in q.order_by(Order.created_at.desc()).all()]}
+    orders = q.order_by(Order.created_at.desc()).all()
+    counts = _items_count_map(db, [o.id for o in orders])
+    return {"orders": [o.to_dict(items_count=counts.get(o.id, 0)) for o in orders]}
 
 
 @app.get("/backoffice/shop/orders/{oid}")
@@ -242,7 +253,9 @@ def admin_list_orders(status: str | None = None, _p: Principal = Depends(require
     q = db.query(Order)
     if status:
         q = q.filter(Order.status == status)
-    return {"orders": [o.to_dict() for o in q.order_by(Order.created_at.desc()).all()]}
+    orders = q.order_by(Order.created_at.desc()).all()
+    counts = _items_count_map(db, [o.id for o in orders])
+    return {"orders": [o.to_dict(items_count=counts.get(o.id, 0)) for o in orders]}
 
 
 @app.get("/admin/orders/{oid}")
