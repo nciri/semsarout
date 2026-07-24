@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     # empêcher tout accès direct aux services quand ce flag est actif.
     trust_gateway_headers: bool = False
 
+    # Jeton partagé pour les appels internes service→service (ex. marketplace→catalog).
+    internal_token: str = "change-me-internal"
+
 
 @lru_cache
 def get_settings() -> Settings:

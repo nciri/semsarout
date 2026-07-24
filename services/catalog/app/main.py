@@ -153,3 +153,23 @@ def admin_delete_product(pid: int, _p: Principal = Depends(require_superadmin), 
     db.commit()
     # marketplace consomme product.deleted pour nettoyer paniers/commandes (snapshots conservés).
     return {"message": "Produit supprimé"}
+
+
+# ---- Interne (service→service) : réservation atomique de stock au paiement ----
+@app.post("/internal/products/reserve", include_in_schema=False)
+async def reserve_stock(request: Request, db: Session = Depends(get_db)):
+    if request.headers.get("x-internal-token") != settings.internal_token:
+        return _err("Interdit", 403)
+    data = await _json(request)
+    items = data.get("items") or []
+    # Tout ou rien : on vérifie tout, puis on décrémente.
+    for it in items:
+        p = db.get(Product, it.get("product_id"))
+        if p is None or (p.stock or 0) < it.get("quantity", 0):
+            name = p.name if p else str(it.get("product_id"))
+            return _err(f"Stock insuffisant pour « {name} ».", 409)
+    for it in items:
+        p = db.get(Product, it["product_id"])
+        p.stock = (p.stock or 0) - it["quantity"]
+    db.commit()
+    return {"ok": True}
