@@ -1,6 +1,8 @@
+import secrets
+from datetime import datetime
 from flask import jsonify, request, g
 from app import db
-from app.models import Product, Agency, Cart, CartItem
+from app.models import Product, Agency, Cart, CartItem, Order, OrderItem, Property
 from app.api.v1.backoffice import backoffice_bp
 from app.api.v1.backoffice.dashboard import require_auth
 from app.services.product_categories import PRODUCT_CATEGORIES
@@ -108,3 +110,107 @@ def delete_cart_item(item_id):
     db.session.delete(item)
     db.session.commit()
     return jsonify({'cart': _cart_payload(cart)})
+
+
+def _require_agency():
+    if not g.agency_id:
+        return jsonify({'error': 'Un compte agence est requis pour commander.'}), 403
+    return None
+
+
+@backoffice_bp.route('/shop/orders', methods=['POST'])
+@require_auth
+def checkout():
+    err = _require_agency()
+    if err:
+        return err
+    cart = _get_or_create_cart()
+    items = CartItem.query.filter_by(cart_id=cart.id).all()
+    if not items:
+        return jsonify({'error': 'Votre panier est vide.'}), 400
+    # validate stock + active
+    lines = []
+    subtotal = 0.0
+    for it in items:
+        p = Product.query.get(it.product_id)
+        if not p or not p.is_active:
+            return jsonify({'error': 'Un produit du panier n\'est plus disponible.'}), 400
+        if p.stock < it.quantity:
+            return jsonify({'error': f'Stock insuffisant pour « {p.name} ».'}), 400
+        line_total = float(p.price) * it.quantity
+        subtotal += line_total
+        lines.append((p, it.quantity, line_total))
+
+    data = request.get_json(silent=True) or {}
+    delivery = data.get('delivery_address')
+    prop_id = None
+    if data.get('property_id'):
+        prop = Property.query.filter_by(id=data['property_id'], agency_id=g.agency_id).first()
+        if not prop:
+            return jsonify({'error': 'Bien de livraison invalide'}), 400
+        prop_id = prop.id
+        delivery = delivery or ', '.join(filter(None, [prop.address, prop.city]))
+
+    order = Order(reference=f'CMD-{secrets.token_hex(3).upper()}', agency_id=g.agency_id,
+                  buyer_id=g.current_user.id, property_id=prop_id, delivery_address=delivery,
+                  status='pending', subtotal=round(subtotal, 2), total=round(subtotal, 2))
+    db.session.add(order)
+    db.session.flush()
+    for p, qty, line_total in lines:
+        db.session.add(OrderItem(order_id=order.id, product_id=p.id, product_name=p.name,
+                                 unit_price=p.price, quantity=qty, line_total=round(line_total, 2)))
+    # clear cart
+    CartItem.query.filter_by(cart_id=cart.id).delete()
+    db.session.commit()
+    return jsonify({'order': order.to_dict(include_items=True)}), 201
+
+
+@backoffice_bp.route('/shop/orders/<int:oid>/pay', methods=['POST'])
+@require_auth
+def pay_order(oid):
+    err = _require_agency()
+    if err:
+        return err
+    order = Order.query.filter_by(id=oid, agency_id=g.agency_id).first()
+    if not order:
+        return jsonify({'error': 'Commande introuvable'}), 404
+    if order.status != 'pending':
+        return jsonify({'error': 'Commande déjà réglée ou traitée.'}), 409
+    # re-check stock, then decrement
+    for it in OrderItem.query.filter_by(order_id=order.id).all():
+        p = Product.query.get(it.product_id) if it.product_id else None
+        if p and p.stock < it.quantity:
+            return jsonify({'error': f'Stock insuffisant pour « {it.product_name} ».'}), 409
+    for it in OrderItem.query.filter_by(order_id=order.id).all():
+        p = Product.query.get(it.product_id) if it.product_id else None
+        if p:
+            p.stock = p.stock - it.quantity
+    order.status = 'paid'
+    order.paid_at = datetime.utcnow()
+    order.payment_reference = f'PAY-{secrets.token_hex(4).upper()}'  # simulated gateway
+    db.session.commit()
+    return jsonify({'order': order.to_dict(include_items=True)})
+
+
+@backoffice_bp.route('/shop/orders', methods=['GET'])
+@require_auth
+def list_orders():
+    err = _require_agency()
+    if err:
+        return err
+    q = Order.query.filter_by(agency_id=g.agency_id)
+    if request.args.get('status'):
+        q = q.filter(Order.status == request.args.get('status'))
+    return jsonify({'orders': [o.to_dict() for o in q.order_by(Order.created_at.desc()).all()]})
+
+
+@backoffice_bp.route('/shop/orders/<int:oid>', methods=['GET'])
+@require_auth
+def get_order(oid):
+    err = _require_agency()
+    if err:
+        return err
+    order = Order.query.filter_by(id=oid, agency_id=g.agency_id).first()
+    if not order:
+        return jsonify({'error': 'Commande introuvable'}), 404
+    return jsonify({'order': order.to_dict(include_items=True)})
