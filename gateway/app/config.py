@@ -19,6 +19,7 @@ class GatewaySettings(BaseSettings):
     # Services extraits (routage strangler). Vide = tout part au monolithe.
     identity_url: str | None = None
     search_url: str | None = None
+    analytics_url: str | None = None
 
     otlp_endpoint: str = "http://localhost:4318"
 

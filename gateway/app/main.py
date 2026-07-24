@@ -32,6 +32,8 @@ def _resolve_upstream(app: FastAPI, path: str):
         return app.state.identity, path.replace("/api/v1/identity", "/identity", 1)
     if settings.search_url and path.startswith("/api/v1/search"):
         return app.state.search, path.replace("/api/v1/search", "/search", 1)
+    if settings.analytics_url and path.startswith("/api/v1/analytics"):
+        return app.state.analytics, path.replace("/api/v1/analytics", "/analytics", 1)
     return app.state.monolith, path
 
 
@@ -46,8 +48,9 @@ async def lifespan(app: FastAPI):
     )
     app.state.identity = _client_or_none(settings.identity_url)
     app.state.search = _client_or_none(settings.search_url)
+    app.state.analytics = _client_or_none(settings.analytics_url)
     yield
-    for client in (app.state.monolith, app.state.identity, app.state.search):
+    for client in (app.state.monolith, app.state.identity, app.state.search, app.state.analytics):
         if client is not None:
             await client.aclose()
 
