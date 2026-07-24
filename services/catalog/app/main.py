@@ -13,7 +13,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal, require_superadmin
-from semsar_common import get_settings, setup_logging, setup_tracing
+from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 from semsar_events import enqueue
 
 from . import events
@@ -36,6 +36,7 @@ async def lifespan(app: FastAPI):
 
 # Pas de handlers RFC 9457 ici : on reproduit les erreurs {'error': msg} du monolithe.
 app = FastAPI(title=f"SemsarOut — {settings.service_name}", lifespan=lifespan)
+install_legacy_error_handlers(app)  # Problem (require_*/get_principal) -> {'error': ...} legacy
 
 try:
     setup_tracing(app, settings.service_name, settings.otlp_endpoint)

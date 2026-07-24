@@ -1,5 +1,5 @@
 """Modèle Product (schéma `catalog`) — mêmes champs/forme que le monolithe."""
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import BigInteger, Boolean, Column, DateTime, Integer, Numeric, String, Text
 
@@ -19,11 +19,11 @@ class Product(Base):
     image_url = Column(String(500))
     is_active = Column(Boolean, default=True)
     created_by = Column(Integer, nullable=True)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(
-        DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
     def to_dict(self) -> dict:
