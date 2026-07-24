@@ -20,6 +20,8 @@ class GatewaySettings(BaseSettings):
     identity_url: str | None = None
     search_url: str | None = None
     analytics_url: str | None = None
+    contract_url: str | None = None
+    legal_url: str | None = None
 
     otlp_endpoint: str = "http://localhost:4318"
 

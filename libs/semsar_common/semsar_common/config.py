@@ -23,6 +23,12 @@ class Settings(BaseSettings):
     # Projections
     opensearch_url: str = "http://localhost:9200"
 
+    # Stockage objet (MinIO/S3) + archivage WORM
+    s3_endpoint: str = "http://localhost:9000"
+    s3_access_key: str = "semsar"
+    s3_secret_key: str = "semsar-secret"
+    worm_bucket: str = "semsar-worm"
+
     # Observabilité
     otlp_endpoint: str = "http://localhost:4318"
 
