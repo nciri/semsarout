@@ -69,6 +69,13 @@ def get_principal(request: Request) -> Principal:
     return principal_from_claims(claims)
 
 
+def require_superadmin(principal: Principal = Depends(get_principal)) -> Principal:
+    """Dépendance FastAPI : réservé au super-admin plateforme."""
+    if not principal.is_superadmin:
+        raise forbidden("Réservé au super-admin.")
+    return principal
+
+
 def require_roles(*roles: str):
     """Dépendance FastAPI : exige au moins un des rôles (le super-admin passe toujours)."""
 

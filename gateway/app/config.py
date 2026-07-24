@@ -29,6 +29,8 @@ class GatewaySettings(BaseSettings):
     legal_url: str | None = None
     payment_url: str | None = None
     billing_url: str | None = None
+    catalog_url: str | None = None
+    marketplace_url: str | None = None
 
     otlp_endpoint: str = "http://localhost:4318"
 

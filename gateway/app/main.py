@@ -84,6 +84,19 @@ def _resolve_upstream(app: FastAPI, path: str):
         return app.state.payment, path.replace("/api/v1/payment", "/payment", 1)
     if settings.billing_url and path.startswith("/api/v1/billing"):
         return app.state.billing, path.replace("/api/v1/billing", "/billing", 1)
+    # Extraction du domaine boutique : routes EXISTANTES reroutées (préfixe /api/v1 retiré).
+    if settings.catalog_url and (
+        path.startswith("/api/v1/backoffice/shop/products")
+        or path.startswith("/api/v1/backoffice/shop/categories")
+        or path.startswith("/api/v1/admin/products")
+    ):
+        return app.state.catalog, path.replace("/api/v1", "", 1)
+    if settings.marketplace_url and (
+        path.startswith("/api/v1/backoffice/shop/cart")
+        or path.startswith("/api/v1/backoffice/shop/orders")
+        or path.startswith("/api/v1/admin/orders")
+    ):
+        return app.state.marketplace, path.replace("/api/v1", "", 1)
     return app.state.monolith, path
 
 
@@ -103,11 +116,13 @@ async def lifespan(app: FastAPI):
     app.state.legal = _client_or_none(settings.legal_url)
     app.state.payment = _client_or_none(settings.payment_url)
     app.state.billing = _client_or_none(settings.billing_url)
+    app.state.catalog = _client_or_none(settings.catalog_url)
+    app.state.marketplace = _client_or_none(settings.marketplace_url)
     yield
     for client in (
         app.state.monolith, app.state.identity, app.state.search,
         app.state.analytics, app.state.contract, app.state.legal,
-        app.state.payment, app.state.billing,
+        app.state.payment, app.state.billing, app.state.catalog, app.state.marketplace,
     ):
         if client is not None:
             await client.aclose()
