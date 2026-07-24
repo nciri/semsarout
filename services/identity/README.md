@@ -26,11 +26,17 @@ python -m app.relay
 
 ```bash
 # via le BFF (IDENTITY_URL doit pointer :8001 dans gateway/.env)
-curl -X POST localhost:8080/api/v1/identity/kyc -H 'content-type: application/json' \
-     -d '{"user_id": 1, "cin": "AB123456"}'
+# L'identité (user_id) est dérivée du JWT vérifié — jamais du corps (anti-IDOR).
+curl -X POST localhost:8080/api/v1/identity/kyc \
+     -H 'content-type: application/json' \
+     -H "Authorization: Bearer $TOKEN" \
+     -d '{"cin": "AB123456"}'
 # → 201 {"id":1,"status":"pending"}
 # Le relais publie « identity.kyc.requested » sur l'exchange semsar.events
 # (visible dans RabbitMQ UI :15672). Tout consumer lié (ex. notification) le reçoit.
+#
+# GET /api/v1/identity/kyc/{id} exige le même JWT ; seul le propriétaire
+# (ou un rôle admin/kyc_reviewer) peut consulter la vérification.
 ```
 
 ## Tests
