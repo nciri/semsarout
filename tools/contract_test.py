@@ -61,6 +61,18 @@ def cases(args):
             ("GET", "/api/v1/backoffice/shop/orders", None, None),
             ("GET", "/api/v1/admin/orders", None, None),
         ],
+        "messaging": [
+            ("GET", "/api/v1/buyer/messages", None, None),
+        ],
+        # trust-safety : mutations super-admin (agent1 → 403 des deux côtés).
+        "trust-safety": [
+            ("POST", "/api/v1/admin/accounts/users/999999/suspend", None, {}),
+            ("POST", "/api/v1/admin/accounts/agencies/999999/unsuspend", None, {}),
+        ],
+        "geo": [
+            *([("GET", f"/api/v1/properties/{pid}/price-position", None, None)] if pid else []),
+            ("GET", "/api/v1/market/neighborhood-prices", None, None),
+        ],
         "crm": [
             ("GET", "/api/v1/backoffice/leads", None, None),
             ("GET", "/api/v1/backoffice/leads/stats", None, None),
