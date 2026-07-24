@@ -1,4 +1,5 @@
--- Migration biens : monolithe -> listing (Stage 1). À exécuter AVANT le reroute BFF.
+-- Migration biens : monolithe (public.*) -> service listing. À exécuter AVANT le reroute BFF.
+-- Colonnes alignées sur les modèles listing (Property/PropertyImage/PropertyDocument).
 
 INSERT INTO listing.property (
     id, reference, title, description, property_type, transaction_type, price, price_per_sqm,

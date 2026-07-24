@@ -10,13 +10,14 @@ import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
 
+import httpx
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
-from semsar_common import get_settings, setup_logging, setup_tracing
+from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 from semsar_events import enqueue
 
 from . import events, moderation
@@ -43,6 +44,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title=f"SemsarOut — {settings.service_name}", lifespan=lifespan)
+install_legacy_error_handlers(app)  # Problem (require_*/get_principal) -> {'error': ...} legacy
 
 try:
     setup_tracing(app, settings.service_name, settings.otlp_endpoint)
@@ -194,6 +196,66 @@ def publish_property(property_id: int, principal: Principal = Depends(get_princi
     _emit(db, p, events.LISTING_UPDATED)
     db.commit()
     return {"message": "Property published successfully", "property": _prop_dict(db, p)}
+
+
+# ---- Engagement (Stage 3) : contact & reveal-phone (public) ----
+# Le listing incrémente contacts_count (qu'il possède) et émet `listing.contacted` ;
+# crm consomme l'événement pour créer le lead (découplage inter-domaines).
+def _contact_payload(p: Property, data: dict, source: str) -> dict:
+    return {
+        "property_id": p.id, "agency_id": p.agency_id, "owner_id": p.owner_id,
+        "name": data.get("name"), "email": data.get("email"), "phone": data.get("phone"),
+        "message": data.get("message"), "source": source, "service": data.get("service"),
+    }
+
+
+def _fetch_contact_phone(property_id: int) -> str | None:
+    """Téléphone agence/propriétaire via l'endpoint interne du monolithe (transition)."""
+    try:
+        resp = httpx.get(
+            f"{moderation.MONOLITH_URL}/api/v1/internal/properties/{property_id}/contact-phone",
+            headers={"x-internal-token": settings.internal_token}, timeout=5.0,
+        )
+    except httpx.HTTPError:
+        return None
+    return (resp.json() or {}).get("phone") if resp.status_code == 200 else None
+
+
+@app.post("/properties/{property_id}/contact", status_code=201)
+async def contact_property(property_id: int, request: Request, db: Session = Depends(get_db)):
+    p = db.get(Property, property_id)
+    if p is None:
+        return _err("Not found", 404)
+    data = await _json(request)
+    if not data.get("name") or not data.get("email"):
+        return _err("Name and email are required", 400)
+    p.contacts_count = (p.contacts_count or 0) + 1
+    enqueue(db, "property", p.id, events.LISTING_CONTACTED,
+            _contact_payload(p, data, data.get("source") or "contact_form"))
+    db.commit()
+    return {"message": "Contact request sent successfully"}
+
+
+@app.post("/properties/{property_id}/reveal-phone")
+async def reveal_phone(property_id: int, request: Request, db: Session = Depends(get_db)):
+    p = db.get(Property, property_id)
+    if p is None:
+        return _err("Not found", 404)
+    phone = _fetch_contact_phone(p.id)
+    if not phone:
+        return _err("Aucun numéro de téléphone disponible pour ce bien", 404)
+    data = await _json(request)
+    payload = _contact_payload(
+        p,
+        {"name": data.get("name", "Visiteur"),
+         "email": data.get("email", "non-renseigne@semsarout.ma"),
+         "phone": data.get("phone"), "message": "Demande de numéro de téléphone"},
+        "phone_reveal",
+    )
+    p.contacts_count = (p.contacts_count or 0) + 1
+    enqueue(db, "property", p.id, events.LISTING_CONTACTED, payload)
+    db.commit()
+    return {"phone": phone}
 
 
 # ---- Mes annonces ----
