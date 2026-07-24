@@ -22,6 +22,8 @@ class GatewaySettings(BaseSettings):
     analytics_url: str | None = None
     contract_url: str | None = None
     legal_url: str | None = None
+    payment_url: str | None = None
+    billing_url: str | None = None
 
     otlp_endpoint: str = "http://localhost:4318"
 
