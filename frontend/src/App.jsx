@@ -70,6 +70,8 @@ import WorkOrderDetail from './pages/backoffice/artisans/WorkOrderDetail'
 import LegalCasesList from './pages/backoffice/legal/LegalCasesList'
 import LegalCaseDetail from './pages/backoffice/legal/LegalCaseDetail'
 import AnalyticsLayout from './pages/backoffice/analytics/AnalyticsLayout'
+import ShopCatalog from './pages/backoffice/shop/ShopCatalog'
+import ProductDetail from './pages/backoffice/shop/ProductDetail'
 import FinancialAnalytics from './pages/backoffice/analytics/FinancialAnalytics'
 import MarketAnalytics from './pages/backoffice/analytics/MarketAnalytics'
 import PipelineAnalytics from './pages/backoffice/analytics/PipelineAnalytics'
@@ -188,6 +190,8 @@ function App() {
           <Route path="travaux/:id" element={<WorkOrderDetail />} />
           <Route path="juridique" element={<LegalCasesList />} />
           <Route path="juridique/:id" element={<LegalCaseDetail />} />
+          <Route path="boutique" element={<ShopCatalog />} />
+          <Route path="boutique/:id" element={<ProductDetail />} />
           <Route path="analyses" element={<AnalyticsLayout />}>
             <Route index element={<FinancialAnalytics />} />
             <Route path="marche" element={<MarketAnalytics />} />
