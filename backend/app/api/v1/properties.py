@@ -210,10 +210,11 @@ def list_properties():
     elif sort == 'rooms_desc':
         query = query.order_by(Property.rooms.desc())
 
-    # Featured/urgent first (secondary sort)
+    # Featured/urgent first (secondary sort), puis id desc (départage déterministe / pagination stable)
     query = query.order_by(
         Property.is_featured.desc(),
-        Property.is_urgent.desc()
+        Property.is_urgent.desc(),
+        Property.id.desc()
     )
 
     # Execute query
@@ -368,6 +369,9 @@ def advanced_search():
         query = query.order_by(Property.price.asc())
     elif sort == 'price_desc':
         query = query.order_by(Property.price.desc())
+
+    # id desc en départage déterministe (pagination stable / parité search)
+    query = query.order_by(Property.id.desc())
 
     # Pagination
     page = data.get('page', 1)
