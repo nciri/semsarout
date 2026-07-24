@@ -157,7 +157,10 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path.startswith("/api/v1/admin/shared-artisans")
     ):
         return app.state.directory, path.replace("/api/v1", "", 1)
-    if settings.crm_url and path.startswith("/api/v1/backoffice/leads"):
+    if settings.crm_url and (
+        path.startswith("/api/v1/backoffice/leads")
+        or path.startswith("/api/v1/backoffice/clients")
+    ):
         return app.state.crm, path.replace("/api/v1", "", 1)
     return app.state.monolith, path
 
