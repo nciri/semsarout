@@ -25,13 +25,28 @@ _HOP_BY_HOP = {
 }
 
 
+# Table de routage strangler : (préfixe /api → (client, réécriture de préfixe)).
+# Un préfixe absent => le monolithe. Étendue à chaque nouveau service extrait.
+def _resolve_upstream(app: FastAPI, path: str):
+    if settings.identity_url and path.startswith("/api/v1/identity"):
+        return app.state.identity, path.replace("/api/v1/identity", "/identity", 1)
+    return app.state.monolith, path
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.client = httpx.AsyncClient(
+    app.state.monolith = httpx.AsyncClient(
         base_url=settings.upstream_url, timeout=settings.request_timeout
     )
+    app.state.identity = (
+        httpx.AsyncClient(base_url=settings.identity_url, timeout=settings.request_timeout)
+        if settings.identity_url
+        else None
+    )
     yield
-    await app.state.client.aclose()
+    await app.state.monolith.aclose()
+    if app.state.identity is not None:
+        await app.state.identity.aclose()
 
 
 app = FastAPI(title="SemsarOut — BFF/gateway", lifespan=lifespan)
@@ -57,8 +72,8 @@ async def health() -> dict:
     include_in_schema=False,
 )
 async def proxy(path: str, request: Request) -> Response:
-    client: httpx.AsyncClient = request.app.state.client
-    url = request.url.path
+    client, upstream_path = _resolve_upstream(request.app, request.url.path)
+    url = upstream_path
     if request.url.query:
         url = f"{url}?{request.url.query}"
     headers = {k: v for k, v in request.headers.items() if k.lower() not in _HOP_BY_HOP}

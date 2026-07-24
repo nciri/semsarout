@@ -16,6 +16,9 @@ class GatewaySettings(BaseSettings):
     upstream_url: str = "http://localhost:7000"
     request_timeout: float = 30.0
 
+    # Services extraits (routage strangler). Vide = tout part au monolithe.
+    identity_url: str | None = None
+
     otlp_endpoint: str = "http://localhost:4318"
 
 
