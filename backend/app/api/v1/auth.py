@@ -6,7 +6,31 @@ from flask_jwt_extended import (
 )
 from app import db
 from app.api.v1 import api_v1_bp
-from app.models import User
+from app.models import User, Subscription
+
+
+def _identity_claims(user):
+    """Claims d'identité embarqués dans le JWT pour que le BFF résolve l'identité
+    LOCALEMENT (sévrage de la frontière d'auth — plus d'appel /auth/me + /my-subscription)."""
+    roles = list(user.roles) if hasattr(user, 'roles') else []
+    is_superadmin = any(getattr(r, 'slug', None) == 'superadmin' for r in roles)
+    features = []
+    if user.agency_id:
+        sub = Subscription.query.filter_by(agency_id=user.agency_id).first()
+        plan = sub.plan if sub else None
+        if plan:
+            if plan.has_artisans:
+                features.append('artisans')
+            if plan.has_contracts:
+                features.append('contracts')
+            if plan.has_legal:
+                features.append('legal')
+    return {
+        'agency_id': user.agency_id,
+        'is_superadmin': is_superadmin,
+        'account_role': user.account_role,
+        'features': features,
+    }
 
 
 @api_v1_bp.route('/auth/register', methods=['POST'])
@@ -48,7 +72,7 @@ def register():
     db.session.commit()
 
     # Generate tokens (identity must be a string for flask-jwt-extended)
-    access_token = create_access_token(identity=str(user.id))
+    access_token = create_access_token(identity=str(user.id), additional_claims=_identity_claims(user))
     refresh_token = create_refresh_token(identity=str(user.id))
 
     return jsonify({
@@ -85,7 +109,7 @@ def login():
     db.session.commit()
 
     # Generate tokens (identity must be a string for flask-jwt-extended)
-    access_token = create_access_token(identity=str(user.id))
+    access_token = create_access_token(identity=str(user.id), additional_claims=_identity_claims(user))
     refresh_token = create_refresh_token(identity=str(user.id))
 
     return jsonify({
@@ -109,7 +133,7 @@ def refresh():
     if blocked:
         return jsonify({'error': reason}), 403
 
-    access_token = create_access_token(identity=str(current_user_id))
+    access_token = create_access_token(identity=str(current_user_id), additional_claims=_identity_claims(user))
     return jsonify({'access_token': access_token})
 
 
