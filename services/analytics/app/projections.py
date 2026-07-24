@@ -19,6 +19,10 @@ def _metrics_for(routing_key: str, payload: dict) -> list[str]:
             names.append(f"listings.created.txn.{payload['transaction_type']}")
     elif routing_key == "listing.deleted":
         names.append("listings.deleted")
+    elif routing_key == "listing.contacted":
+        names.append("contacts.created")
+        if payload.get("source"):
+            names.append(f"contacts.created.source.{payload['source']}")
     elif routing_key == "identity.kyc.requested":
         names.append("kyc.requested")
     elif routing_key == "identity.kyc.verified":
