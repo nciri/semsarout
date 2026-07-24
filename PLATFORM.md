@@ -5,7 +5,7 @@ Structure additive introduite en **Phase 0** de la migration vers l'architecture
 `backend/` et le `frontend/` continuent de tourner sans modification.**
 
 ```
-libs/          semsar_common · semsar_auth · semsar_events   (socle partagé)
+libs/          semsar_common · semsar_auth · semsar_events · semsar_storage   (socle partagé)
 gateway/       BFF/gateway — réexpose /api/v1 à l'identique (ADR-0003)
 services/      les 18 services cibles (gabarit dans _template/)
 infra/         docker-compose (RabbitMQ · MinIO · OTel · Prometheus · Grafana · Loki)
