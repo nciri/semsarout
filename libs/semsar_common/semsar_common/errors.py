@@ -43,6 +43,18 @@ def conflict(detail: str | None = None, **extra: Any) -> Problem:
     return Problem(409, "Conflict", detail, extra=extra)
 
 
+def install_legacy_error_handlers(app: Any) -> None:
+    """Pour les services qui reproduisent les erreurs LEGACY `{'error': msg}` du monolithe :
+    convertit les `Problem` levés par les dépendances d'auth (require_*, get_principal) en
+    `{'error': ...}` avec le bon statut — sinon FastAPI renvoie 500 sur un Problem non géré."""
+    from fastapi import Request
+    from fastapi.responses import JSONResponse
+
+    @app.exception_handler(Problem)
+    async def _legacy_problem(request: Request, exc: Problem):  # noqa: ANN202
+        return JSONResponse({"error": exc.detail or exc.title}, status_code=exc.status)
+
+
 def install_error_handlers(app: Any) -> None:
     """Enregistre les handlers RFC 9457 sur une application FastAPI."""
     from fastapi import Request

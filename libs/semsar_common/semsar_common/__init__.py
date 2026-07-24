@@ -6,6 +6,7 @@ from .errors import (
     conflict,
     forbidden,
     install_error_handlers,
+    install_legacy_error_handlers,
     not_found,
     unauthorized,
 )
@@ -22,6 +23,7 @@ __all__ = [
     "not_found",
     "conflict",
     "install_error_handlers",
+    "install_legacy_error_handlers",
     "setup_logging",
     "setup_tracing",
 ]
