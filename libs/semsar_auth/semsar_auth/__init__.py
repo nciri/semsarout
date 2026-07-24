@@ -4,6 +4,7 @@ from .rbac import (
     Principal,
     get_principal,
     principal_from_claims,
+    require_feature,
     require_roles,
     require_superadmin,
 )
@@ -13,6 +14,7 @@ __all__ = [
     "Principal",
     "get_principal",
     "principal_from_claims",
+    "require_feature",
     "require_roles",
     "require_superadmin",
 ]

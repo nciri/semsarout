@@ -19,6 +19,7 @@ class GatewaySettings(BaseSettings):
     # Frontière d'auth (transition) : le BFF résout l'identité via cet endpoint du
     # monolithe puis injecte X-Semsar-* vers les services internes. Cache court.
     auth_resolve_path: str = "/api/v1/auth/me"
+    auth_features_path: str = "/api/v1/my-subscription"  # entitlements du plan
     identity_ttl_seconds: int = 30
 
     # Services extraits (routage strangler). Vide = tout part au monolithe.

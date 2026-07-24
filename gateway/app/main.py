@@ -52,9 +52,28 @@ async def _resolve_identity(app: FastAPI, authorization: str | None) -> dict | N
         "agency_id": user.get("agency_id"),
         "is_superadmin": bool(user.get("is_superadmin")),
         "role": user.get("account_role") or user.get("role"),
+        "features": await _resolve_features(app, authorization),
     }
     _IDENTITY_CACHE[authorization] = (now + settings.identity_ttl_seconds, ident)
     return ident
+
+
+async def _resolve_features(app: FastAPI, authorization: str) -> list[str]:
+    """Entitlements du plan de l'agence (artisans, contracts, legal), via le monolithe."""
+    try:
+        resp = await app.state.monolith.get(
+            settings.auth_features_path, headers={"authorization": authorization}
+        )
+    except httpx.HTTPError:
+        return []
+    if resp.status_code != 200:
+        return []
+    plan = ((resp.json() or {}).get("subscription") or {}).get("plan") or {}
+    return [name for name, flag in (
+        ("artisans", plan.get("has_artisans")),
+        ("contracts", plan.get("has_contracts")),
+        ("legal", plan.get("has_legal")),
+    ) if flag]
 
 
 def _inject_identity(headers: dict, ident: dict) -> None:
@@ -65,6 +84,8 @@ def _inject_identity(headers: dict, ident: dict) -> None:
     headers["x-semsar-superadmin"] = "1" if ident.get("is_superadmin") else "0"
     if ident.get("role"):
         headers["x-semsar-roles"] = str(ident["role"])
+    if ident.get("features"):
+        headers["x-semsar-features"] = ",".join(ident["features"])
 
 
 # Table de routage strangler : (préfixe /api → (client, réécriture de préfixe)).
