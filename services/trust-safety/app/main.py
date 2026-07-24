@@ -70,6 +70,11 @@ def _apply_moderation(db: Session, entity_type: str, entity_id: int, *, suspende
 async def _moderate(entity_type: str, entity_id: int, action: str, request: Request,
                     principal: Principal, db: Session) -> JSONResponse:
     """Délègue la mutation au monolithe (parité), puis audit + statut + événement sur succès."""
+    # Autorisation locale (défense en profondeur + parité) : réservé au super-admin. Évite de
+    # relayer au monolithe des requêtes non autorisées (amplification). Le monolithe reste le
+    # garde final via le Bearer transmis. Même message que le monolithe.
+    if not principal.is_superadmin:
+        return _err("Super-admin access required", 403)
     body = await request.body()
     plural = "users" if entity_type == "user" else "agencies"
     url = f"{MONOLITH_URL}/api/v1/admin/accounts/{plural}/{entity_id}/{action}"
@@ -149,14 +154,11 @@ def _hidden(db: Session) -> dict:
     }
 
 
-@app.get("/moderation/hidden")
-def moderation_hidden(db: Session = Depends(get_db)) -> dict:
-    return _hidden(db)
-
-
 @app.get("/internal/moderation/hidden")
 def internal_moderation_hidden(request: Request, db: Session = Depends(get_db)):
-    """Drop-in du endpoint interne du monolithe (même chemin/forme) pour repointer le masquage."""
+    """Comptes masqués (source du masquage §6). Drop-in du endpoint interne du monolithe :
+    les services (listing/search/geo/crm) repointent leur masquage ici. **Jeton interne exigé**
+    — la liste des comptes suspendus/supprimés est une donnée sensible, jamais publique."""
     if request.headers.get("x-internal-token") != settings.internal_token:
         return _err("Forbidden", 403)
     return _hidden(db)

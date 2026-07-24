@@ -7,9 +7,10 @@ Modération des comptes (suspension), **audit** super-admin et **masquage** (§6
     mutation du compte est **déléguée** au monolithe (domaine identité en transition) pour une
     parité exacte ; trust-safety enregistre l'audit, met à jour son statut de modération et émet
     `account.suspended/unsuspended`.
-  - `GET /moderation/hidden` et `GET /internal/moderation/hidden` — comptes masqués (source du
+  - `GET /internal/moderation/hidden` (**jeton interne exigé**) — comptes masqués (source du
     masquage). Drop-in du endpoint interne du monolithe : les services (listing/search/geo/crm)
-    peuvent repointer leur masquage ici.
+    peuvent repointer leur masquage ici. La liste des comptes suspendus/supprimés est sensible,
+    jamais exposée sans authentification.
 - **Relay** (`app.relay`) : publie les événements `account.*`.
 - **Source de vérité** : `moderation_status` (statut) + `admin_action` (audit).
 
