@@ -33,6 +33,7 @@ class GatewaySettings(BaseSettings):
     catalog_url: str | None = None
     marketplace_url: str | None = None
     directory_url: str | None = None
+    listing_url: str | None = None
 
     otlp_endpoint: str = "http://localhost:4318"
 
