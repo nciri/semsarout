@@ -21,10 +21,11 @@ class GatewaySettings(BaseSettings):
     auth_resolve_path: str = "/api/v1/auth/me"
     auth_features_path: str = "/api/v1/my-subscription"  # entitlements du plan
     identity_ttl_seconds: int = 30
-    # Sévrage de la frontière d'auth : le BFF valide le JWT LOCALEMENT (signature + claims
-    # d'identité embarqués) au lieu d'appeler le monolithe. Repli monolithe pour les anciens
-    # tokens sans claims. Le secret doit correspondre à JWT_SECRET_KEY du monolithe.
-    jwt_secret_key: str = "jwt-secret-change-in-prod"
+    # Sévrage de la frontière d'auth : si `jwt_secret_key` est fourni (env JWT_SECRET_KEY,
+    # doit correspondre au monolithe), le BFF valide le JWT LOCALEMENT (signature + claims).
+    # **Pas de défaut** : sans secret configuré, le BFF retombe sur le monolithe (/auth/me) —
+    # on ne vérifie jamais une signature avec une clé codée en dur.
+    jwt_secret_key: str = ""
     jwt_algorithm: str = "HS256"
 
     # Services extraits (routage strangler). Vide = tout part au monolithe.

@@ -53,19 +53,20 @@ async def _resolve_identity(app: FastAPI, authorization: str | None) -> dict | N
     if cached and cached[0] > now:
         return cached[1]
 
-    token = authorization[7:].strip() if authorization[:7].lower() == "bearer " else authorization
-    try:
-        payload = pyjwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
-    except pyjwt.PyJWTError:
-        return None  # signature/expiration invalide → rejet (pas d'appel monolithe)
+    # Validation LOCALE seulement si une clé est configurée (jamais de clé codée en dur).
+    if settings.jwt_secret_key:
+        token = authorization[7:].strip() if authorization[:7].lower() == "bearer " else authorization
+        try:
+            payload = pyjwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+        except pyjwt.PyJWTError:
+            return None  # signature/expiration invalide → rejet (pas d'appel monolithe)
+        # Jeton enrichi → résolution 100 % locale (frontière d'auth sévrée).
+        if "account_role" in payload or "is_superadmin" in payload:
+            ident = _identity_from_claims(payload)
+            _IDENTITY_CACHE[authorization] = (now + settings.identity_ttl_seconds, ident)
+            return ident
 
-    # Jeton enrichi → résolution 100 % locale (frontière d'auth sévrée).
-    if "account_role" in payload or "is_superadmin" in payload:
-        ident = _identity_from_claims(payload)
-        _IDENTITY_CACHE[authorization] = (now + settings.identity_ttl_seconds, ident)
-        return ident
-
-    # Repli transition : ancien jeton valide mais sans claims → contexte via le monolithe.
+    # Repli : pas de clé configurée, ou ancien jeton sans claims → contexte via le monolithe.
     try:
         resp = await app.state.monolith.get(
             settings.auth_resolve_path, headers={"authorization": authorization}
