@@ -90,7 +90,9 @@ def _criteria_from_body(body: dict) -> dict:
         "energy_classes": f.get("energy_classes"),
         "min_construction_year": cy.get("min"), "max_construction_year": cy.get("max"),
         "owner_type": f.get("owner_type"), "features": f.get("features"),
-        "q": f.get("q") or body.get("q"), "sort": body.get("sort") or "newest",
+        "q": f.get("q") or body.get("q"),
+        # Le monolithe lit `filters.sort` (défaut « relevance ») pour la recherche avancée.
+        "sort": f.get("sort") or body.get("sort") or "relevance", "sort_profile": "search",
         "page": body.get("page") or 1, "per_page": body.get("per_page") or 20,
     }
 
@@ -102,14 +104,39 @@ def list_properties(request: Request) -> dict:
     return search_listings(_client, _criteria_from_query(request.query_params), hu, ha)
 
 
+# Listes statiques renvoyées telles quelles par le monolithe (parité de `available_filters`).
+_AVAILABLE_FILTERS = {
+    "property_types": ["apartment", "house", "villa", "riad", "land", "commercial", "office", "garage"],
+    "features": [
+        "parking", "garage", "jardin", "terrasse", "balcon", "piscine",
+        "ascenseur", "gardien", "climatisation", "chauffage", "meublé",
+        "cuisine équipée", "cave", "vue mer", "vue montagne", "duplex",
+    ],
+    "energy_classes": ["A", "B", "C", "D", "E", "F", "G"],
+    "sort_options": ["relevance", "newest", "price_asc", "price_desc", "surface_asc", "surface_desc"],
+}
+
+
 @app.post("/properties/search")
 async def advanced_search(request: Request) -> dict:
     try:
         body = await request.json()
     except Exception:  # noqa: BLE001
         body = {}
+    if not isinstance(body, dict):
+        body = {}
     hu, ha = moderation.hidden()
-    return search_listings(_client, _criteria_from_body(body if isinstance(body, dict) else {}), hu, ha)
+    result = search_listings(_client, _criteria_from_body(body), hu, ha)
+    # Enveloppe du monolithe : recherche IA (stub v2) + filtres disponibles.
+    ai_query = body.get("ai_query")
+    result["ai_response"] = {
+        "status": "v2_pending",
+        "message": "AI search sera disponible dans la v2",
+        "original_query": ai_query,
+        "tip": "Pour l'instant, utilisez les filtres avancés ci-dessous",
+    } if ai_query else None
+    result["available_filters"] = _AVAILABLE_FILTERS
+    return result
 
 
 @app.get("/properties/suggestions")

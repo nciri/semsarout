@@ -19,8 +19,9 @@ def main() -> None:
     def handle(routing_key: str, payload: dict, _message_id: str) -> None:
         if routing_key == "listing.deleted":
             delete_property(client, payload["id"])
-        else:  # listing.created | listing.updated
+        elif routing_key in ("listing.created", "listing.updated"):
             index_property(client, payload)
+        # autres (ex. listing.contacted) : non pertinents pour l'index → ignorés
 
     consumer = EventConsumer(
         settings.rabbitmq_url,
