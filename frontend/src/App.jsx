@@ -73,6 +73,8 @@ import AnalyticsLayout from './pages/backoffice/analytics/AnalyticsLayout'
 import ShopCatalog from './pages/backoffice/shop/ShopCatalog'
 import ProductDetail from './pages/backoffice/shop/ProductDetail'
 import Cart from './pages/backoffice/shop/Cart'
+import OrdersList from './pages/backoffice/shop/OrdersList'
+import OrderDetail from './pages/backoffice/shop/OrderDetail'
 import FinancialAnalytics from './pages/backoffice/analytics/FinancialAnalytics'
 import MarketAnalytics from './pages/backoffice/analytics/MarketAnalytics'
 import PipelineAnalytics from './pages/backoffice/analytics/PipelineAnalytics'
@@ -194,6 +196,8 @@ function App() {
           <Route path="boutique" element={<ShopCatalog />} />
           <Route path="boutique/:id" element={<ProductDetail />} />
           <Route path="panier" element={<Cart />} />
+          <Route path="mes-commandes" element={<OrdersList />} />
+          <Route path="mes-commandes/:id" element={<OrderDetail />} />
           <Route path="analyses" element={<AnalyticsLayout />}>
             <Route index element={<FinancialAnalytics />} />
             <Route path="marche" element={<MarketAnalytics />} />
