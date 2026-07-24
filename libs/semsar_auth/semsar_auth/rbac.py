@@ -75,7 +75,7 @@ def get_principal(request: Request) -> Principal:
 def require_superadmin(principal: Principal = Depends(get_principal)) -> Principal:
     """Dépendance FastAPI : réservé au super-admin plateforme."""
     if not principal.is_superadmin:
-        raise forbidden("Réservé au super-admin.")
+        raise forbidden("Super-admin access required")  # parité contrat monolithe
     return principal
 
 
