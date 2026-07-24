@@ -29,6 +29,17 @@ with app.app_context():
     check(line['quantity'] == 3, "quantities merged (2+1=3)")
     r = c.put(f"/api/v1/backoffice/shop/cart/items/{line['id']}", json={'quantity': 5}, headers=h)
     check(r.status_code == 200, "update quantity")
+    r = c.put(f"/api/v1/backoffice/shop/cart/items/{line['id']}", json={'quantity': 0}, headers=h)
+    check(r.status_code == 400, "update quantity 0 rejected")
+    r = c.put(f"/api/v1/backoffice/shop/cart/items/{line['id']}", json={'quantity': -1}, headers=h)
+    check(r.status_code == 400, "update quantity -1 rejected")
+    r = c.put(f"/api/v1/backoffice/shop/cart/items/{line['id']}", json={'quantity': 'x'}, headers=h)
+    check(r.status_code == 400, "update quantity non-integer rejected")
+    r = c.put(f"/api/v1/backoffice/shop/cart/items/{line['id']}", json={'quantity': 4}, headers=h)
+    check(r.status_code == 200, "update quantity 4 accepted")
+    cart = c.get('/api/v1/backoffice/shop/cart', headers=h).get_json()['cart']
+    line = next(x for x in cart['items'] if x['id'] == line['id'])
+    check(line['quantity'] == 4, "quantity updated to 4")
     r = c.delete(f"/api/v1/backoffice/shop/cart/items/{line['id']}", headers=h)
     check(r.status_code == 200, "remove item")
 

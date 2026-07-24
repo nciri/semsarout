@@ -85,7 +85,12 @@ def update_cart_item(item_id):
     item = CartItem.query.filter_by(id=item_id, cart_id=cart.id).first()
     if not item:
         return jsonify({'error': 'Article introuvable'}), 404
-    qty = int((request.get_json(silent=True) or {}).get('quantity') or 1)
+    data = request.get_json(silent=True) or {}
+    raw = data.get('quantity')
+    try:
+        qty = int(raw)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Quantité invalide'}), 400
     if qty < 1:
         return jsonify({'error': 'Quantité invalide'}), 400
     item.quantity = qty
