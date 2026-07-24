@@ -1,4 +1,4 @@
-# services/ — les 18 services de la cible v2
+# services/ — les 19 services de la cible v2
 
 Chaque service : **FastAPI**, **1 schéma + 1 rôle PostgreSQL** dédiés (ADR-0002), **outbox**
 transactionnel, publie/consomme des événements sur `semsar.events`, expose `/health` et `/metrics`.
@@ -20,11 +20,12 @@ Gabarit : `services/_template/` (à cloner vers `services/<nom>`).
 | 11 | legal | legal (notaires · dossiers) |
 | 12 | billing | subscription · factures |
 | 13 | payment | paiements · séquestre CMI |
-| 14 | marketplace | shop (produits · panier · commandes) |
-| 15 | directory | artisan (+ interventions) |
-| 16 | trust-safety | modération · suspension · impersonation |
-| 17 | analytics | agrégats (projection) |
-| 18 | integrations | staymanager · ingestion partenaires (HMAC) |
+| 14 | catalog | shop — **produits (plateforme, CRUD super-admin)** ; source de vérité |
+| 15 | marketplace | shop — **panier · commandes (agence)** ; consomme le catalogue |
+| 16 | directory | artisan (+ interventions) |
+| 17 | trust-safety | modération · suspension · impersonation |
+| 18 | analytics | agrégats (projection) |
+| 19 | integrations | staymanager · ingestion partenaires (HMAC) |
 
 **Ordre d'extraction (strangler, cf. §8 du doc cible)** : identity → notification →
 contract + legal → billing + payment → puis domaines cœur → décommissionnement du monolithe.

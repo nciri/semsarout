@@ -1,7 +1,7 @@
 # SemsarOut — Architecture cible v2
 
 > **Statut :** cible **validée**. **Décisions actées :** services en **FastAPI** · découpage
-> **complet (18 services)** · **toutes** les priorités métier retenues (recherche OpenSearch,
+> **complet (19 services)** · **toutes** les priorités métier retenues (recherche OpenSearch,
 > WORM contrats/juridique, séquestre CMI, KYC/CIN). **Contrainte structurante :** le frontend
 > React existant (SPA aboutie) n'est **pas modifié** — la cible préserve le contrat `/api/v1`.
 > **Inspiration :** architecture m3a-l3achrane (`docs/m3a-architecture.drawio`), transposée
@@ -71,14 +71,15 @@ schéma + rôle PG dédié, *outbox*, publie/consomme des événements.
 | **contract** | `contract` | Contrats, **e-signature**, archivage **WORM** |
 | **legal** | `legal` (notaires, dossiers, checklists) | Suivi juridique ; docs → WORM |
 | **billing** | `subscription`, factures | Abonnements, factures, plans/flags |
-| **payment** | commandes marketplace, paiements | **Séquestre CMI**, encaissement, frais |
-| **marketplace** | `shop` (produits, panier, commandes) | Boutique mobilier/électroménager hôtes |
+| **payment** | paiements | **Séquestre CMI**, encaissement, frais |
+| **catalog** | `shop` — produits (plateforme) | Catalogue mobilier/électroménager, **CRUD super-admin** ; source de vérité ; projection OpenSearch pour la découverte |
+| **marketplace** | `shop` — panier, commandes | Panier + commandes **agence** ; **consomme** le catalogue (`product.*`) et déclenche le paiement (séquestre) |
 | **directory** | `artisan` (artisans + interventions) | Annuaire artisans, bons de travaux |
 | **trust-safety** | (super-admin) | Modération, suspension, impersonation auditée, avis |
 | **analytics** | (dashboard/analyses) | Agrégats k-anonymisés (projection reconstructible) |
 | **integrations / ingestion** | `staymanager` | Connecteurs partenaires (StayManager…), HMAC, webhooks, quarantaine/rejeu |
 
-> **Note de pragmatisme :** on ne crée pas 18 services d'un coup. Voir le chemin de migration (§8) :
+> **Note de pragmatisme :** on ne crée pas 19 services d'un coup. Voir le chemin de migration (§8) :
 > on démarre en **monolithe modulaire** avec ces frontières logiques, et on **extrait par valeur**.
 
 ## 5. Données & projections
@@ -139,7 +140,7 @@ Durcissement schéma+rôle par service, tout événementiel, DLQ/retries, ADRs f
 
 1. **Langage des services** : **FastAPI** (async, OpenAPI natif, aligné m3a) pour tous les services.
    Le monolithe Flask subsiste uniquement le temps du strangler (§8), puis est décommissionné.
-2. **Profondeur du découpage** : **cible complète — les 18 services** du §4 (pas de regroupement).
+2. **Profondeur du découpage** : **cible complète — les 19 services** du §4 (pas de regroupement).
    Le strangler (§8) permet d'y arriver sans big-bang, un service à la fois.
 3. **Priorités métier** : **toutes** retenues — recherche **OpenSearch**, **WORM** contrats/juridique,
    **séquestre CMI**, **KYC/CIN** (+ e-signature, SMS/WhatsApp). Séquençage d'exécution : voir §8.

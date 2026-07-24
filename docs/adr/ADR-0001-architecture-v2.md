@@ -6,14 +6,14 @@
 ## Décision
 
 Faire évoluer le backend monolithe Flask vers une architecture **orientée services,
-événementielle et observable**, en **18 services FastAPI**, **sans modifier le frontend**
+événementielle et observable**, en **19 services FastAPI**, **sans modifier le frontend**
 (le contrat `/api/v1` est préservé par un **BFF**).
 
 ### Choix actés
 
 1. **Langage services :** FastAPI (async, OpenAPI natif). Le monolithe Flask subsiste le
    temps du strangler puis est décommissionné.
-2. **Découpage :** 18 services (cf. §4 du doc cible), atteints progressivement (strangler).
+2. **Découpage :** 19 services (cf. §4 du doc cible), atteints progressivement (strangler).
 3. **Données :** PostgreSQL **natif** (jamais conteneurisé, cf. ADR-0002), 1 schéma + 1 rôle
    par service, **outbox transactionnel**, projections reconstructibles (OpenSearch, analytics).
 4. **Bus :** RabbitMQ (topic `semsar.events`, file + DLQ par service, livraison ≥ 1,
