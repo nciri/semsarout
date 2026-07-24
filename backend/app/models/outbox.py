@@ -33,21 +33,10 @@ class OutboxEvent(db.Model):
 
 
 def _property_doc(p: Property) -> dict:
-    return {
-        "id": p.id,
-        "reference": p.reference,
-        "title": p.title,
-        "description": p.description,
-        "city": p.city,
-        "transaction_type": p.transaction_type,
-        "property_type": p.property_type,
-        "status": p.status,
-        "price": float(p.price) if p.price is not None else None,
-        "bedrooms": p.bedrooms,
-        "area": p.surface,
-        "agency_id": p.agency_id,
-        "location": ({"lat": p.latitude, "lon": p.longitude} if p.latitude and p.longitude else None),
-    }
+    # Doc COMPLET (to_dict + location géo) pour l'indexation search à parité (Stage 2).
+    doc = p.to_dict(include_images=True)
+    doc["location"] = {"lat": p.latitude, "lon": p.longitude} if p.latitude and p.longitude else None
+    return doc
 
 
 def _emit(connection, event_type: str, aggregate_id, payload: dict) -> None:

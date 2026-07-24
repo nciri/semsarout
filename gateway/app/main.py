@@ -109,9 +109,20 @@ def _listing_match(path: str, method: str) -> bool:
 
 # Table de routage strangler : (préfixe /api → (client, réécriture de préfixe)).
 # Un préfixe absent => le monolithe. Étendue à chaque nouveau service extrait.
+def _search_discovery_match(path: str, method: str) -> bool:
+    return (
+        (method == "GET" and path == "/api/v1/properties")
+        or (method == "POST" and path == "/api/v1/properties/search")
+        or (method == "GET" and path == "/api/v1/properties/suggestions")
+    )
+
+
 def _resolve_upstream(app: FastAPI, path: str, method: str):
+    # listing (détail/CRUD) AVANT la découverte (search) : /properties/{id} → listing.
     if settings.listing_url and _listing_match(path, method):
         return app.state.listing, path.replace("/api/v1", "", 1)
+    if settings.search_url and _search_discovery_match(path, method):
+        return app.state.search, path.replace("/api/v1", "", 1)
     if settings.identity_url and path.startswith("/api/v1/identity"):
         return app.state.identity, path.replace("/api/v1/identity", "/identity", 1)
     if settings.search_url and path.startswith("/api/v1/search"):

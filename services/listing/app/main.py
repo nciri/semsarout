@@ -95,18 +95,18 @@ def _prop_dict(db: Session, p: Property, include_images: bool = True) -> dict:
     return data
 
 
-def _event_doc(p: Property) -> dict:
-    return {
-        "id": p.id, "reference": p.reference, "title": p.title, "description": p.description,
-        "city": p.city, "transaction_type": p.transaction_type, "property_type": p.property_type,
-        "status": p.status, "price": float(p.price) if p.price is not None else None,
-        "bedrooms": p.bedrooms, "area": p.surface, "agency_id": p.agency_id,
-        "location": ({"lat": p.latitude, "lon": p.longitude} if p.latitude and p.longitude else None),
-    }
+def _event_doc(db: Session, p: Property) -> dict:
+    # Doc COMPLET (+ location géo) : indexé tel quel par search → parité des réponses.
+    doc = _prop_dict(db, p, include_images=True)
+    doc["location"] = {"lat": p.latitude, "lon": p.longitude} if p.latitude and p.longitude else None
+    return doc
 
 
 def _emit(db: Session, p: Property, event_type: str) -> None:
-    enqueue(db, "property", p.id, event_type, _event_doc(p))
+    if event_type == events.LISTING_DELETED:
+        enqueue(db, "property", p.id, event_type, {"id": p.id})
+    else:
+        enqueue(db, "property", p.id, event_type, _event_doc(db, p))
 
 
 @app.get("/health", include_in_schema=False)
