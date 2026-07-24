@@ -1,0 +1,24 @@
+"""Configuration du BFF/gateway."""
+from functools import lru_cache
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class GatewaySettings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    service_name: str = "gateway"
+    environment: str = "dev"
+    log_level: str = "INFO"
+
+    # Monolithe Flask cible (Phase 0). Au fil du strangler, des routes seront
+    # redirigées vers les nouveaux services (identity, listing, …).
+    upstream_url: str = "http://localhost:7000"
+    request_timeout: float = 30.0
+
+    otlp_endpoint: str = "http://localhost:4318"
+
+
+@lru_cache
+def get_settings() -> GatewaySettings:
+    return GatewaySettings()

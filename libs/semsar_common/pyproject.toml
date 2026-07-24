@@ -1,0 +1,19 @@
+[project]
+name = "semsar-common"
+version = "0.1.0"
+description = "SemsarOut — socle partagé : config, erreurs RFC 9457, logs JSON, tracing OTel."
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic-settings>=2.2",
+    "python-json-logger>=2.0",
+    "opentelemetry-sdk>=1.25",
+    "opentelemetry-exporter-otlp-proto-http>=1.25",
+    "opentelemetry-instrumentation-fastapi>=0.46b0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["semsar_common"]

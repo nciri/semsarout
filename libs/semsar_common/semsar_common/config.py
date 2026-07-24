@@ -1,0 +1,34 @@
+"""Configuration commune à tous les services (12-factor, via variables d'env)."""
+from functools import lru_cache
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    # Identité du service
+    service_name: str = "semsar-service"
+    environment: str = "dev"
+    log_level: str = "INFO"
+
+    # Données (PostgreSQL natif — cf. ADR-0002 ; 1 rôle/schéma par service)
+    database_url: str | None = None
+    redis_url: str = "redis://localhost:6379/0"
+
+    # Bus d'événements
+    rabbitmq_url: str = "amqp://semsar:semsar@localhost:5672/"
+    events_exchange: str = "semsar.events"
+
+    # Observabilité
+    otlp_endpoint: str = "http://localhost:4318"
+
+    # Auth — JWT RS256 (clé publique pour vérification)
+    jwt_public_key: str | None = None
+    jwt_algorithm: str = "RS256"
+    jwt_issuer: str = "semsar-identity"
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()

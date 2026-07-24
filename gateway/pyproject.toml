@@ -1,0 +1,23 @@
+[project]
+name = "semsar-gateway"
+version = "0.1.0"
+description = "SemsarOut — BFF/gateway : réexpose /api/v1 à l'identique (proxy → agrégation)."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "httpx>=0.27",
+    "prometheus-fastapi-instrumentator>=7.0",
+    "pydantic-settings>=2.2",
+    "semsar-common",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["app"]
