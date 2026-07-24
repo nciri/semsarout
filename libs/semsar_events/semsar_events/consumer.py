@@ -40,9 +40,12 @@ class EventConsumer:
 
     def run(
         self,
-        handler: Callable[[str, dict], None],
+        handler: Callable[[str, dict, str], None],
         already_processed: Callable[[str], bool] = lambda _mid: False,
     ) -> None:
+        """`handler(routing_key, payload, message_id)` : le message_id permet au
+        handler d'être idempotent (dédup dans sa propre transaction). `already_processed`
+        est un pré-filtre optionnel et bon marché."""
         conn = pika.BlockingConnection(pika.URLParameters(self._url))
         ch = conn.channel()
         self._declare(ch)
@@ -54,7 +57,7 @@ class EventConsumer:
                 _ch.basic_ack(method.delivery_tag)
                 return
             try:
-                handler(method.routing_key, json.loads(body))
+                handler(method.routing_key, json.loads(body), mid)
                 _ch.basic_ack(method.delivery_tag)
             except Exception:  # noqa: BLE001 — renvoi en DLQ, pas de requeue infini
                 _ch.basic_nack(method.delivery_tag, requeue=False)
