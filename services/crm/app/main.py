@@ -15,7 +15,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
-from semsar_common import get_settings, setup_logging, setup_tracing
+from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
 from . import clients, users_client, visits
 from .db import get_db, init_db
@@ -35,6 +35,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title=f"SemsarOut — {settings.service_name}", lifespan=lifespan)
+install_legacy_error_handlers(app)  # Problem (require_*/get_principal) -> {'error': ...} legacy
 
 try:
     setup_tracing(app, settings.service_name, settings.otlp_endpoint)

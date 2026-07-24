@@ -62,3 +62,7 @@ FROM public.calendar_events ON CONFLICT (id) DO NOTHING;
 
 SELECT setval(pg_get_serial_sequence('crm.visit', 'id'), COALESCE((SELECT MAX(id) FROM crm.visit), 1));
 SELECT setval(pg_get_serial_sequence('crm.calendar_event', 'id'), COALESCE((SELECT MAX(id) FROM crm.calendar_event), 1));
+
+-- Projection transactions (domaine futur) : compte `transactions_count` par client.
+INSERT INTO crm.transaction_ro (id, client_id)
+SELECT id, client_id FROM public.transactions ON CONFLICT (id) DO NOTHING;

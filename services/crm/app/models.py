@@ -153,3 +153,12 @@ class ProcessedMessage(Base):
 
     message_id = Column(String(64), primary_key=True)
     processed_at = Column(DateTime, default=datetime.utcnow)
+
+
+class TransactionRO(Base):
+    """Projection des transactions (domaine futur) — juste (id, client_id) pour compter
+    `transactions_count` par client. Amorcée à la migration, maintenue par `transaction.*`."""
+    __tablename__ = "transaction_ro"
+
+    id = Column(BigInteger, primary_key=True)
+    client_id = Column(BigInteger, index=True)

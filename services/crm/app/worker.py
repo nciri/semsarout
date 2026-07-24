@@ -6,7 +6,17 @@ from semsar_common import get_settings, setup_logging
 from semsar_events import EventConsumer
 
 from .db import SessionLocal, init_db
-from .models import ProcessedMessage, PropertyRO
+from .models import Lead, ProcessedMessage, PropertyRO
+
+
+def _create_lead(db, payload: dict) -> None:
+    """Un contact sur une annonce (`listing.contacted`) devient un lead crm."""
+    db.add(Lead(
+        name=payload.get("name"), email=payload.get("email"), phone=payload.get("phone"),
+        message=payload.get("message"), source=payload.get("source") or "contact_form",
+        service=payload.get("service"), status="new",
+        property_id=payload.get("property_id"), agency_id=payload.get("agency_id"),
+    ))
 
 
 def _handle(routing_key: str, payload: dict, message_id: str) -> None:
@@ -14,12 +24,14 @@ def _handle(routing_key: str, payload: dict, message_id: str) -> None:
     try:
         if message_id and db.get(ProcessedMessage, message_id) is not None:
             return
-        pid = payload.get("id")
-        if routing_key == "listing.deleted":
-            ro = db.get(PropertyRO, pid)
+        if routing_key == "listing.contacted":
+            _create_lead(db, payload)
+        elif routing_key == "listing.deleted":
+            ro = db.get(PropertyRO, payload.get("id"))
             if ro is not None:
                 db.delete(ro)
-        else:
+        elif routing_key in ("listing.created", "listing.updated"):
+            pid = payload.get("id")
             ro = db.get(PropertyRO, pid)
             if ro is None:
                 ro = PropertyRO(id=pid)

@@ -9,10 +9,21 @@ from semsar_auth import Principal, get_principal
 
 from . import users_client
 from .db import get_db
-from .models import Client, ClientInteraction, Lead
+from .models import Client, ClientInteraction, Lead, TransactionRO, Visit
 from .util import err, iso, json_body
 
 router = APIRouter()
+
+
+def _counts(db: Session, client_ids: list[int]) -> tuple[dict[int, int], dict[int, int]]:
+    """visits_count (crm.visit) et transactions_count (projection) par client — en lot."""
+    if not client_ids:
+        return {}, {}
+    v = dict(db.query(Visit.client_id, func.count(Visit.id))
+             .filter(Visit.client_id.in_(client_ids)).group_by(Visit.client_id).all())
+    t = dict(db.query(TransactionRO.client_id, func.count(TransactionRO.id))
+             .filter(TransactionRO.client_id.in_(client_ids)).group_by(TransactionRO.client_id).all())
+    return v, t
 
 _FIELDS = [
     "first_name", "last_name", "email", "phone", "phone_secondary", "whatsapp", "address",
@@ -22,7 +33,8 @@ _FIELDS = [
 ]
 
 
-def _client_dict(c: Client, include_interactions: bool = False, db: Session = None) -> dict:
+def _client_dict(c: Client, include_interactions: bool = False, db: Session = None,
+                 visits_count: int = 0, transactions_count: int = 0) -> dict:
     data = {
         "id": c.id, "first_name": c.first_name, "last_name": c.last_name,
         "full_name": f"{c.first_name or ''} {c.last_name or ''}".strip(),
@@ -35,9 +47,7 @@ def _client_dict(c: Client, include_interactions: bool = False, db: Session = No
         "tags": c.tags or [], "assigned_to_id": c.assigned_to_id,
         "assigned_to_name": users_client.name_of(c.agency_id, c.assigned_to_id),
         "agency_id": c.agency_id,
-        # visits_count / transactions_count : 0 tant que les stages C/D (visites/transactions)
-        # ne sont pas dans crm. Câblés à ce moment-là.
-        "visits_count": 0, "transactions_count": 0,
+        "visits_count": visits_count, "transactions_count": transactions_count,
         "created_at": iso(c.created_at), "last_contact_at": iso(c.last_contact_at),
     }
     if include_interactions and db is not None:
@@ -94,7 +104,10 @@ def get_clients(request: Request, principal: Principal = Depends(get_principal),
     total = query.count()
     items = query.offset((page - 1) * per_page).limit(per_page).all()
     pages = (total + per_page - 1) // per_page if per_page else 1
-    return {"clients": [_client_dict(c) for c in items], "total": total, "pages": pages, "current_page": page}
+    vmap, tmap = _counts(db, [c.id for c in items])
+    clients = [_client_dict(c, visits_count=vmap.get(c.id, 0), transactions_count=tmap.get(c.id, 0))
+               for c in items]
+    return {"clients": clients, "total": total, "pages": pages, "current_page": page}
 
 
 @router.get("/backoffice/clients/stats")
@@ -141,7 +154,9 @@ def get_client(client_id: int, principal: Principal = Depends(get_principal), db
     c, e = _owned(db, client_id, principal)
     if e:
         return e
-    return _client_dict(c, include_interactions=True, db=db)
+    vmap, tmap = _counts(db, [c.id])
+    return _client_dict(c, include_interactions=True, db=db,
+                        visits_count=vmap.get(c.id, 0), transactions_count=tmap.get(c.id, 0))
 
 
 @router.post("/backoffice/clients", status_code=201)
