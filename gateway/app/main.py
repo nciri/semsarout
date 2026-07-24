@@ -30,7 +30,13 @@ _HOP_BY_HOP = {
 def _resolve_upstream(app: FastAPI, path: str):
     if settings.identity_url and path.startswith("/api/v1/identity"):
         return app.state.identity, path.replace("/api/v1/identity", "/identity", 1)
+    if settings.search_url and path.startswith("/api/v1/search"):
+        return app.state.search, path.replace("/api/v1/search", "/search", 1)
     return app.state.monolith, path
+
+
+def _client_or_none(url: str | None) -> httpx.AsyncClient | None:
+    return httpx.AsyncClient(base_url=url, timeout=settings.request_timeout) if url else None
 
 
 @asynccontextmanager
@@ -38,15 +44,12 @@ async def lifespan(app: FastAPI):
     app.state.monolith = httpx.AsyncClient(
         base_url=settings.upstream_url, timeout=settings.request_timeout
     )
-    app.state.identity = (
-        httpx.AsyncClient(base_url=settings.identity_url, timeout=settings.request_timeout)
-        if settings.identity_url
-        else None
-    )
+    app.state.identity = _client_or_none(settings.identity_url)
+    app.state.search = _client_or_none(settings.search_url)
     yield
-    await app.state.monolith.aclose()
-    if app.state.identity is not None:
-        await app.state.identity.aclose()
+    for client in (app.state.monolith, app.state.identity, app.state.search):
+        if client is not None:
+            await client.aclose()
 
 
 app = FastAPI(title="SemsarOut — BFF/gateway", lifespan=lifespan)

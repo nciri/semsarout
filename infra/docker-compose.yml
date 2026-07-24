@@ -65,6 +65,25 @@ services:
       - "3100:3100"
     restart: unless-stopped
 
+  opensearch:
+    image: opensearchproject/opensearch:2
+    container_name: semsar-opensearch
+    environment:
+      - discovery.type=single-node
+      - plugins.security.disabled=true          # dev uniquement (pas d'auth sur :9200)
+      - bootstrap.memory_lock=true
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=Semsar_dev_2026!
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+    ports:
+      - "9200:9200"
+    restart: unless-stopped
+
   grafana:
     image: grafana/grafana:latest
     container_name: semsar-grafana
@@ -88,3 +107,4 @@ volumes:
   prometheus_data:
   loki_data:
   grafana_data:
+  opensearch_data:

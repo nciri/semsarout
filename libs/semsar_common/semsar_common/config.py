@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     rabbitmq_url: str = "amqp://semsar:semsar@localhost:5672/"
     events_exchange: str = "semsar.events"
 
+    # Projections
+    opensearch_url: str = "http://localhost:9200"
+
     # Observabilité
     otlp_endpoint: str = "http://localhost:4318"
 
