@@ -172,6 +172,8 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         return app.state.geo, path.replace("/api/v1", "", 1)
     if settings.agency_url and _agency_match(path, method):
         return app.state.agency, path.replace("/api/v1", "", 1)
+    if settings.audit_url and path.startswith("/api/v1/admin/activity"):
+        return app.state.audit, path.replace("/api/v1", "", 1)
     # listing (détail/CRUD) AVANT la découverte (search) : /properties/{id} → listing.
     if settings.listing_url and _listing_match(path, method):
         return app.state.listing, path.replace("/api/v1", "", 1)
@@ -276,13 +278,14 @@ async def lifespan(app: FastAPI):
     app.state.messaging = _client_or_none(settings.messaging_url)
     app.state.trust_safety = _client_or_none(settings.trust_safety_url)
     app.state.agency = _client_or_none(settings.agency_url)
+    app.state.audit = _client_or_none(settings.audit_url)
     yield
     for client in (
         app.state.monolith, app.state.identity, app.state.search,
         app.state.analytics, app.state.contract, app.state.legal,
         app.state.payment, app.state.billing, app.state.catalog, app.state.marketplace,
         app.state.directory, app.state.listing, app.state.crm, app.state.geo,
-        app.state.messaging, app.state.trust_safety, app.state.agency,
+        app.state.messaging, app.state.trust_safety, app.state.agency, app.state.audit,
     ):
         if client is not None:
             await client.aclose()

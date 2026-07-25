@@ -74,6 +74,9 @@ def cases(args):
             ("POST", "/api/v1/admin/accounts/users/999999/suspend", None, {}),
             ("POST", "/api/v1/admin/accounts/agencies/999999/unsuspend", None, {}),
         ],
+        "audit": [
+            ("GET", "/api/v1/admin/activity", None, None),
+        ],
         "agency": [
             ("GET", "/api/v1/agencies", None, None),
             ("GET", "/api/v1/agencies/immo-casa-premium", None, None),
