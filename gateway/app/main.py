@@ -163,12 +163,12 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         return app.state.listing, path.replace("/api/v1", "", 1)
     if settings.search_url and _search_discovery_match(path, method):
         return app.state.search, path.replace("/api/v1", "", 1)
-    # identity émet les JWT : login/refresh + lecture /auth/me. (register, PUT/DELETE me,
-    # change-password → monolithe tant qu'il détient les écritures utilisateur.)
+    # identity = auth complète : émission JWT (login/refresh) + **écritures compte**
+    # (register, PUT/DELETE /auth/me, change-password) + lecture /auth/me.
     if settings.identity_url and (
-        path == "/api/v1/auth/login"
-        or path == "/api/v1/auth/refresh"
-        or (method == "GET" and path == "/api/v1/auth/me")
+        path in ("/api/v1/auth/login", "/api/v1/auth/refresh",
+                 "/api/v1/auth/register", "/api/v1/auth/change-password")
+        or path == "/api/v1/auth/me"  # GET (lecture) + PUT (profil) + DELETE (suppression)
     ):
         return app.state.identity, path.replace("/api/v1", "", 1)
     if settings.identity_url and path.startswith("/api/v1/identity"):
