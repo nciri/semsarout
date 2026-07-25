@@ -9,3 +9,10 @@ GRANT ALL ON SCHEMA identity TO identity;
 
 -- Extensions utiles (chiffrement du CIN au repos en cible)
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- Séquence des ids d'`audit.logged` émis par identity (attribution de rôles, CRUD des rôles).
+-- Démarrée très haut : plage disjointe de `activity_logs.id` du monolithe, pour que
+-- l'idempotence par id du service audit reste correcte (cf. app/audit.py). Idempotent —
+-- créée aussi au démarrage par init_db(), gardée ici pour les installations neuves.
+CREATE SEQUENCE IF NOT EXISTS identity.audit_log_seq START WITH 9000000000001;
+ALTER SEQUENCE identity.audit_log_seq OWNER TO identity;

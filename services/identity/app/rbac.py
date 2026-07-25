@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from semsar_auth import Principal, get_principal
 from semsar_events import enqueue
 
-from . import seats
+from . import audit, seats
 from .auth import _user_event_doc
 from .db import get_db
 from .models import AgencyRO, PermissionRO, RoleRO, UserRO, user_role_ro
@@ -33,8 +33,12 @@ async def _json(request: Request) -> dict:
     return data if isinstance(data, dict) else {}
 
 
+def _actor_id(principal: Principal) -> int | None:
+    return int(principal.sub) if principal.sub and principal.sub.isdigit() else None
+
+
 def _acting(principal: Principal, db: Session) -> UserRO | None:
-    uid = int(principal.sub) if principal.sub and principal.sub.isdigit() else None
+    uid = _actor_id(principal)
     return db.get(UserRO, uid) if uid else None
 
 
@@ -151,6 +155,9 @@ async def update_user_roles(user_id: int, request: Request, principal: Principal
             roles.append(role)
     user.roles = roles
     _emit_user(db, user)
+    audit.emit(db, actor_id=_actor_id(principal), action="update_roles",
+               entity_type="user", entity_id=user.id, agency_id=principal.agency_id,
+               extra_data={"roles": [r.name for r in roles]})
     db.commit()
     return {"message": "Roles updated"}
 
@@ -209,6 +216,9 @@ async def create_role(request: Request, principal: Principal = Depends(get_princ
     db.add(role)
     db.flush()
     enqueue(db, "role", role.id, "role.created", _role_doc(role))
+    audit.emit(db, actor_id=_actor_id(principal), action="create",
+               entity_type="role", entity_id=role.id, agency_id=principal.agency_id,
+               extra_data={"name": role.name, "slug": role.slug})
     db.commit()
     return role.to_dict(include_permissions=True, users_count=0)
 
@@ -241,6 +251,9 @@ async def update_role(role_id: int, request: Request, principal: Principal = Dep
             return err
         role.permissions = _perms(db, data["permissions"])
     enqueue(db, "role", role.id, "role.updated", _role_doc(role))
+    audit.emit(db, actor_id=_actor_id(principal), action="update",
+               entity_type="role", entity_id=role.id, agency_id=principal.agency_id,
+               extra_data={"name": role.name})
     db.commit()
     counts = _counts(db, [role.id])
     return role.to_dict(include_permissions=True, users_count=counts.get(role.id, 0))
@@ -261,6 +274,9 @@ def delete_role(role_id: int, principal: Principal = Depends(get_principal), db:
     if _counts(db, [role.id]).get(role.id, 0) > 0:
         return _err("Cannot delete role with assigned users", 400)
     enqueue(db, "role", role.id, "role.deleted", {"id": role.id})
+    audit.emit(db, actor_id=_actor_id(principal), action="delete",
+               entity_type="role", entity_id=role.id, agency_id=principal.agency_id,
+               extra_data={"name": role.name, "slug": role.slug})
     db.delete(role)
     db.commit()
     return {"message": "Role deleted"}

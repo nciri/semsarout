@@ -3,7 +3,7 @@
 Le rôle `identity` a `search_path = identity` : les tables du domaine ET l'outbox
 sont créées/lues dans le schéma `identity`, sans collision avec les autres services.
 """
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
 from semsar_common import get_settings
@@ -23,6 +23,12 @@ def init_db() -> None:
     """Crée les tables du domaine et l'outbox (dans le schéma du rôle)."""
     Base.metadata.create_all(_engine)
     OutboxBase.metadata.create_all(_engine)
+    # Séquence des ids d'audit émis par identity : plage disjointe de celle du monolithe
+    # (cf. app/audit.py) pour ne jamais collisionner avec `activity_logs.id`.
+    with _engine.begin() as conn:
+        conn.execute(text(
+            "CREATE SEQUENCE IF NOT EXISTS identity.audit_log_seq START WITH 9000000000001"
+        ))
 
 
 def get_db() -> Session:

@@ -98,8 +98,13 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
 ```
 
 ## 8. Reste à faire (priorisé)
-1. **Émettre `audit.logged` depuis identity** (assign-roles, role CRUD) — sinon ces actions ne
-   sont plus tracées (le monolithe les a déléguées). Ajout ciblé.
+1. ~~**Émettre `audit.logged` depuis identity**~~ ✅ **FAIT** — `services/identity/app/audit.py`
+   émet `audit.logged` pour `update_user_roles` (parité : le monolithe ne traçait QUE
+   `update_roles`), plus le CRUD des rôles (create/update/delete — nouveau, forward-looking).
+   IDs tirés d'une **séquence dédiée** `identity.audit_log_seq` (plage disjointe `>9e12`) pour ne
+   jamais collisionner avec `activity_logs.id` du monolithe (le service audit indexe l'idempotence
+   sur cet id). Vérifié bout-en-bout : les 3 actions apparaissent dans `GET /admin/activity` avec
+   le nom d'acteur résolu. Contrat 33/33 intact.
 2. **Répliquer les durcissements sécurité côté monolithe** avant décommissionnement :
    IDOR `GET /backoffice/roles/{id}` (scoper comme la liste) + anti-escalation permissions
    (create/update role). Aujourd'hui identity est plus strict que le monolithe.
