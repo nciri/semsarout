@@ -69,6 +69,41 @@ def _coerce(col: str, value):
     return value
 
 
+_ROLE_COLS = ["name", "slug", "description", "color", "level", "is_system", "agency_id"]
+
+
+def _upsert_role(app, payload: dict) -> None:
+    """Sync public.roles + role_permissions depuis role.created/updated (émis par identity)."""
+    cols = [c for c in _ROLE_COLS if c in payload]
+    insert_cols = ["id"] + cols + ["created_at", "updated_at"]
+    vals = ", ".join([":id"] + [f":{c}" for c in cols] + ["now()", "now()"])
+    updates = ", ".join([f"{c} = EXCLUDED.{c}" for c in cols] + ["updated_at = now()"])
+    params = {"id": payload["id"], **{c: payload[c] for c in cols}}
+    with app.app_context():
+        db.session.execute(
+            text(f"INSERT INTO roles ({', '.join(insert_cols)}) VALUES ({vals}) "
+                 f"ON CONFLICT (id) DO UPDATE SET {updates}"), params)
+        if "permission_ids" in payload:
+            db.session.execute(text("DELETE FROM role_permissions WHERE role_id = :rid"),
+                               {"rid": payload["id"]})
+            for pid in payload["permission_ids"]:
+                db.session.execute(
+                    text("INSERT INTO role_permissions (role_id, permission_id) VALUES (:rid, :pid) "
+                         "ON CONFLICT DO NOTHING"), {"rid": payload["id"], "pid": pid})
+        db.session.execute(
+            text("SELECT setval(pg_get_serial_sequence('roles','id'), "
+                 "GREATEST((SELECT last_value FROM roles_id_seq), :id))"), {"id": payload["id"]})
+        db.session.commit()
+
+
+def _delete_role(app, role_id) -> None:
+    with app.app_context():
+        db.session.execute(text("DELETE FROM role_permissions WHERE role_id = :rid"), {"rid": role_id})
+        db.session.execute(text("DELETE FROM user_roles WHERE role_id = :rid"), {"rid": role_id})
+        db.session.execute(text("DELETE FROM roles WHERE id = :rid"), {"rid": role_id})
+        db.session.commit()
+
+
 def main() -> None:
     app = create_app()
     conn = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
@@ -76,15 +111,21 @@ def main() -> None:
     ch.exchange_declare(EXCHANGE, exchange_type="topic", durable=True)
     ch.queue_declare(QUEUE, durable=True)
     ch.queue_bind(QUEUE, EXCHANGE, routing_key="user.#")
+    ch.queue_bind(QUEUE, EXCHANGE, routing_key="role.#")
 
     def on_message(_ch, method, _props, body):
         try:
             payload = json.loads(body)
-            if method.routing_key == "user.deleted":
+            rk = method.routing_key
+            if rk == "user.deleted":
                 with app.app_context():
                     db.session.execute(text("UPDATE users SET is_active=false WHERE id=:id"),
                                        {"id": payload["id"]})
                     db.session.commit()
+            elif rk == "role.deleted":
+                _delete_role(app, payload["id"])
+            elif rk.startswith("role.") and payload.get("id") is not None:
+                _upsert_role(app, payload)
             elif payload.get("id") is not None:
                 _upsert(app, payload)
             _ch.basic_ack(method.delivery_tag)

@@ -185,10 +185,10 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path == "/api/v1/auth/me"  # GET (lecture) + PUT (profil) + DELETE (suppression)
     ):
         return app.state.identity, path.replace("/api/v1", "", 1)
-    # RBAC lecture (rôles & permissions) → identity.
-    if settings.identity_url and method == "GET" and (
+    # RBAC rôles (lecture + CRUD) & permissions (lecture) → identity.
+    if settings.identity_url and (
         path.startswith("/api/v1/backoffice/roles")
-        or path == "/api/v1/backoffice/permissions"
+        or (method == "GET" and path == "/api/v1/backoffice/permissions")
     ):
         return app.state.identity, path.replace("/api/v1", "", 1)
     # RBAC écritures (gestion utilisateur : rôles / activation) → identity.
