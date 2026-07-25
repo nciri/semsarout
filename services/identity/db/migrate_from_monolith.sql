@@ -33,3 +33,6 @@ FROM public.agencies a
 LEFT JOIN public.subscriptions s ON s.agency_id = a.id
 LEFT JOIN public.subscription_plans p ON p.id = s.plan_id
 ON CONFLICT (id) DO NOTHING;
+
+-- Réaligner la séquence pour les nouvelles inscriptions (register côté identity)
+SELECT setval(pg_get_serial_sequence('identity.user_ro','id'), COALESCE((SELECT MAX(id) FROM identity.user_ro),1));

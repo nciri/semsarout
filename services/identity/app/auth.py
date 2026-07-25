@@ -8,16 +8,38 @@ import os
 import time
 import uuid
 
+from datetime import datetime
+
 import jwt as pyjwt
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from semsar_auth import Principal, get_principal
+from semsar_events import enqueue
 
 from .db import get_db
 from .models import AgencyRO, UserRO
+
+_VALID_INTERESTS = {"vente", "mise-en-location", "gestion-locative", "courte-duree", "estimation", "autre"}
+
+
+def _user_event_doc(u: UserRO) -> dict:
+    """Payload user.* (toutes les colonnes de public.users) pour resync du monolithe."""
+    def iso(v):
+        return v.isoformat() if v else None
+    return {
+        "id": u.id, "email": u.email, "password_hash": u.password_hash,
+        "first_name": u.first_name, "last_name": u.last_name, "phone": u.phone,
+        "avatar_url": u.avatar_url, "user_type": u.user_type, "account_role": u.account_role,
+        "interest": u.interest, "is_active": u.is_active, "is_verified": u.is_verified,
+        "created_at": iso(u.created_at), "last_login": iso(u.last_login),
+        "is_suspended": bool(u.is_suspended), "suspended_at": iso(u.suspended_at),
+        "suspended_reason": u.suspended_reason, "deleted_at": iso(u.deleted_at),
+        "anonymized_at": iso(u.anonymized_at), "dashboard_config": u.dashboard_config,
+        "agency_id": u.agency_id, "team_id": u.team_id,
+    }
 
 router = APIRouter()
 
@@ -113,6 +135,83 @@ def me(principal: Principal = Depends(get_principal), db: Session = Depends(get_
     if not user:
         return _err("User not found", 404)
     return {"user": user.to_dict()}
+
+
+@router.post("/auth/register", status_code=201)
+async def register(request: Request, db: Session = Depends(get_db)):
+    data = await _json(request)
+    for field in ("email", "password", "first_name", "last_name"):
+        if not data.get(field):
+            return _err(f"{field} is required", 400)
+    if db.query(UserRO).filter(UserRO.email == data["email"]).first():
+        return _err("Email already registered", 409)
+    interest = data.get("interest") if data.get("interest") in _VALID_INTERESTS else None
+    user = UserRO(
+        email=data["email"], password_hash=generate_password_hash(data["password"]),
+        first_name=data["first_name"], last_name=data["last_name"], phone=data.get("phone"),
+        user_type=data.get("user_type", "particular"), account_role="buyer",
+        interest=interest, is_active=True, is_verified=False, created_at=datetime.utcnow(),
+    )
+    db.add(user)
+    db.flush()  # obtenir l'id
+    enqueue(db, "user", user.id, "user.created", _user_event_doc(user))
+    db.commit()
+    claims = _claims(db, user)
+    return {
+        "message": "User registered successfully", "user": user.to_dict(),
+        "access_token": _token(user.id, ACCESS_TTL, "access", claims),
+        "refresh_token": _token(user.id, REFRESH_TTL, "refresh"),
+    }
+
+
+def _current(principal: Principal, db: Session) -> UserRO | None:
+    uid = int(principal.sub) if principal.sub and principal.sub.isdigit() else None
+    return db.get(UserRO, uid) if uid else None
+
+
+@router.put("/auth/me")
+async def update_me(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    user = _current(principal, db)
+    if not user:
+        return _err("User not found", 404)
+    data = await _json(request)
+    for field in ("first_name", "last_name", "phone", "avatar_url"):
+        if field in data:
+            setattr(user, field, data[field])
+    enqueue(db, "user", user.id, "user.updated", _user_event_doc(user))
+    db.commit()
+    return {"user": user.to_dict()}
+
+
+@router.delete("/auth/me")
+async def delete_me(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    user = _current(principal, db)
+    if not user:
+        return _err("User not found", 404)
+    data = await _json(request)
+    if not data.get("password") or not check_password_hash(user.password_hash, data["password"]):
+        return _err("Mot de passe requis pour confirmer la suppression", 401)
+    user.is_active = False
+    user.email = f"deleted-{user.id}-{user.email}"
+    enqueue(db, "user", user.id, "user.updated", _user_event_doc(user))
+    db.commit()
+    return {"message": "Compte supprimé"}
+
+
+@router.post("/auth/change-password")
+async def change_password(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    user = _current(principal, db)
+    if not user:
+        return _err("User not found", 404)
+    data = await _json(request)
+    if not data.get("current_password") or not data.get("new_password"):
+        return _err("Current and new password are required", 400)
+    if not check_password_hash(user.password_hash, data["current_password"]):
+        return _err("Current password is incorrect", 401)
+    user.password_hash = generate_password_hash(data["new_password"])
+    enqueue(db, "user", user.id, "user.updated", _user_event_doc(user))
+    db.commit()
+    return {"message": "Password changed successfully"}
 
 
 @router.post("/auth/refresh")
