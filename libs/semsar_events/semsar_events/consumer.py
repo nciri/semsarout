@@ -1,8 +1,22 @@
-"""Consumer idempotent : 1 file (+ DLQ) par service, dédoublonnage par message_id."""
+"""Consumer idempotent : 1 file (+ DLQ) par service, dédoublonnage par message_id.
+Résilient : reconnexion automatique en cas de perte de connexion RabbitMQ."""
 import json
+import logging
+import time
 from typing import Callable, Iterable
 
 import pika
+import pika.exceptions
+
+_log = logging.getLogger("semsar_events.consumer")
+
+_RECOVERABLE = (
+    pika.exceptions.AMQPConnectionError,
+    pika.exceptions.StreamLostError,
+    pika.exceptions.ConnectionClosed,
+    pika.exceptions.ChannelClosed,
+    pika.exceptions.ChannelWrongStateError,
+)
 
 
 class EventConsumer:
@@ -45,11 +59,10 @@ class EventConsumer:
     ) -> None:
         """`handler(routing_key, payload, message_id)` : le message_id permet au
         handler d'être idempotent (dédup dans sa propre transaction). `already_processed`
-        est un pré-filtre optionnel et bon marché."""
-        conn = pika.BlockingConnection(pika.URLParameters(self._url))
-        ch = conn.channel()
-        self._declare(ch)
-        ch.basic_qos(prefetch_count=16)
+        est un pré-filtre optionnel et bon marché.
+
+        Boucle **résiliente** : sur perte de connexion RabbitMQ, reconnecte et reprend la
+        consommation (les messages non ackés sont redélivrés — traitement idempotent requis)."""
 
         def _on_message(_ch, method, props, body):
             mid = props.message_id or ""
@@ -62,5 +75,24 @@ class EventConsumer:
             except Exception:  # noqa: BLE001 — renvoi en DLQ, pas de requeue infini
                 _ch.basic_nack(method.delivery_tag, requeue=False)
 
-        ch.basic_consume(self._queue, _on_message)
-        ch.start_consuming()
+        while True:
+            conn = None
+            try:
+                conn = pika.BlockingConnection(pika.URLParameters(self._url))
+                ch = conn.channel()
+                self._declare(ch)
+                ch.basic_qos(prefetch_count=16)
+                ch.basic_consume(self._queue, _on_message)
+                _log.info("consumer '%s' connecté", self._queue)
+                ch.start_consuming()
+            except _RECOVERABLE as exc:
+                _log.warning("consumer '%s' déconnecté, reconnexion : %s", self._queue, exc)
+                time.sleep(2.0)
+            except KeyboardInterrupt:
+                break
+            finally:
+                try:
+                    if conn is not None and conn.is_open:
+                        conn.close()
+                except Exception:  # noqa: BLE001
+                    pass

@@ -1,25 +1,17 @@
-"""Relais outbox → RabbitMQ du service trust-safety.  python -m app.relay"""
-import time
+"""Relais outbox → RabbitMQ du service trust-safety — boucle résiliente (reconnexion auto).
 
-from semsar_common import get_settings
-from semsar_events import EventPublisher, relay_batch
+    python -m app.relay
+"""
+from semsar_common import get_settings, setup_logging
+from semsar_events import run_relay
 
 from .db import SessionLocal
 
 
 def main() -> None:
     settings = get_settings()
-    publisher = EventPublisher(settings.rabbitmq_url, settings.events_exchange)
-    try:
-        while True:
-            db = SessionLocal()
-            try:
-                published = relay_batch(db, publisher)
-            finally:
-                db.close()
-            time.sleep(1.0 if published == 0 else 0.0)
-    finally:
-        publisher.close()
+    setup_logging(settings.service_name, settings.log_level)
+    run_relay(SessionLocal, settings.rabbitmq_url, settings.events_exchange)
 
 
 if __name__ == "__main__":

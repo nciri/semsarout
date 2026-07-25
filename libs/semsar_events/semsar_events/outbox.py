@@ -1,10 +1,14 @@
 """Outbox transactionnel : les événements sont écrits DANS la transaction métier,
 puis publiés de façon fiable par un relais (garantie « au moins une fois »)."""
+import logging
+import time
 from datetime import datetime, timezone
 
 from sqlalchemy import BigInteger, Column, DateTime, Index, String
 from sqlalchemy import JSON
 from sqlalchemy.orm import declarative_base
+
+_log = logging.getLogger("semsar_events.relay")
 
 OutboxBase = declarative_base()
 
@@ -54,3 +58,28 @@ def relay_batch(session, publisher, batch_size: int = 100) -> int:
     if count:
         session.commit()
     return count
+
+
+def run_relay(session_factory, url: str, exchange: str = "semsar.events",
+              idle_sleep: float = 1.0) -> None:
+    """Boucle de relais **résiliente** : ne meurt jamais sur une erreur transitoire (perte
+    RabbitMQ, hoquet DB). En cas d'échec, reconnecte le publisher, temporise, et réessaie —
+    les événements non publiés restent en attente jusqu'au retour du courtier."""
+    from .publisher import EventPublisher
+
+    publisher = EventPublisher(url, exchange)
+    try:
+        while True:
+            try:
+                session = session_factory()
+                try:
+                    published = relay_batch(session, publisher)
+                finally:
+                    session.close()
+                time.sleep(idle_sleep if published == 0 else 0.0)
+            except Exception as exc:  # noqa: BLE001
+                _log.warning("relais : lot échoué, reconnexion + backoff : %s", exc)
+                publisher.reset()
+                time.sleep(2.0)
+    finally:
+        publisher.close()
