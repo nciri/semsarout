@@ -168,6 +168,21 @@ def _perms(db: Session, ids: list) -> list:
     return db.query(PermissionRO).filter(PermissionRO.id.in_(ids)).all() if ids else []
 
 
+def _assert_grantable(db: Session, principal: Principal, agency, permission_ids):
+    """Anti-escalation : un manager ne peut accorder à un rôle que des permissions qu'il DÉTIENT.
+    Super-admin et propriétaire d'agence (autorité pleine) ne sont pas restreints. 403 sinon."""
+    ids = list(permission_ids or [])
+    if not ids or principal.is_superadmin:
+        return None
+    acting = _acting(principal, db)
+    if agency is not None and acting is not None and agency.owner_id == acting.id:
+        return None
+    held = {p.id for r in (acting.roles if acting else []) for p in r.permissions}
+    if not set(ids).issubset(held):
+        return _err("Vous ne pouvez accorder que des permissions que vous détenez.", 403)
+    return None
+
+
 @router.post("/backoffice/roles", status_code=201)
 async def create_role(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
     agency, err = _require_manage_roles(principal, db)
@@ -187,6 +202,9 @@ async def create_role(request: Request, principal: Principal = Depends(get_princ
         is_system=False, agency_id=None if principal.is_superadmin else agency.id,
     )
     if "permissions" in data:
+        err = _assert_grantable(db, principal, agency, data["permissions"])
+        if err:
+            return err
         role.permissions = _perms(db, data["permissions"])
     db.add(role)
     db.flush()
@@ -218,6 +236,9 @@ async def update_role(role_id: int, request: Request, principal: Principal = Dep
         if field in data:
             setattr(role, field, data[field])
     if "permissions" in data:
+        err = _assert_grantable(db, principal, agency, data["permissions"])
+        if err:
+            return err
         role.permissions = _perms(db, data["permissions"])
     enqueue(db, "role", role.id, "role.updated", _role_doc(role))
     db.commit()
