@@ -13,6 +13,7 @@ from sqlalchemy import inspect as sa_inspect
 
 from app import db
 from app.models.property import Property
+from app.models.user import User
 
 _ENABLED = os.environ.get("SEMSAR_OUTBOX_ENABLED", "").lower() in ("1", "true", "yes")
 
@@ -39,11 +40,33 @@ def _property_doc(p: Property) -> dict:
     return doc
 
 
-def _emit(connection, event_type: str, aggregate_id, payload: dict) -> None:
+def _iso(v):
+    return v.isoformat() if v else None
+
+
+def _user_doc(user: User) -> dict:
+    # Colonnes nécessaires à identity pour l'auth (dont password_hash). Les rôles NE sont PAS
+    # touchés ici (accès relationnel pendant le flush = risqué) : synchronisés à la migration ;
+    # les changements de rôle (rares) nécessitent un re-seed. La sync critique = suspension/suppression.
+    return {
+        "id": user.id, "email": user.email, "password_hash": user.password_hash,
+        "first_name": user.first_name, "last_name": user.last_name, "phone": user.phone,
+        "avatar_url": user.avatar_url, "user_type": user.user_type,
+        "account_role": user.account_role, "interest": user.interest,
+        "is_active": user.is_active, "is_verified": user.is_verified,
+        "created_at": _iso(user.created_at), "last_login": _iso(user.last_login),
+        "is_suspended": bool(user.is_suspended), "suspended_at": _iso(user.suspended_at),
+        "suspended_reason": user.suspended_reason, "deleted_at": _iso(user.deleted_at),
+        "anonymized_at": _iso(user.anonymized_at), "dashboard_config": user.dashboard_config,
+        "agency_id": user.agency_id, "team_id": user.team_id,
+    }
+
+
+def _emit(connection, aggregate_type: str, event_type: str, aggregate_id, payload: dict) -> None:
     # Écrit dans la MÊME transaction/connexion que la mutation métier (outbox atomique).
     connection.execute(
         OutboxEvent.__table__.insert().values(
-            aggregate_type="property",
+            aggregate_type=aggregate_type,
             aggregate_id=str(aggregate_id),
             event_type=event_type,
             payload=payload,
@@ -56,15 +79,27 @@ if _ENABLED:  # pragma: no cover — activation explicite en Phase 1
 
     @event.listens_for(Property, "after_insert")
     def _on_insert(_mapper, connection, target):
-        _emit(connection, "listing.created", target.id, _property_doc(target))
+        _emit(connection, "property", "listing.created", target.id, _property_doc(target))
 
     @event.listens_for(Property, "after_update")
     def _on_update(_mapper, connection, target):
         changed = {a.key for a in sa_inspect(target).attrs if a.history.has_changes()}
         if changed and changed <= _COUNTER_FIELDS:
             return  # seulement des compteurs → pas de réindexation
-        _emit(connection, "listing.updated", target.id, _property_doc(target))
+        _emit(connection, "property", "listing.updated", target.id, _property_doc(target))
 
     @event.listens_for(Property, "after_delete")
     def _on_delete(_mapper, connection, target):
-        _emit(connection, "listing.deleted", target.id, {"id": target.id})
+        _emit(connection, "property", "listing.deleted", target.id, {"id": target.id})
+
+    @event.listens_for(User, "after_insert")
+    def _on_user_insert(_mapper, connection, target):
+        _emit(connection, "user", "user.created", target.id, _user_doc(target))
+
+    @event.listens_for(User, "after_update")
+    def _on_user_update(_mapper, connection, target):
+        _emit(connection, "user", "user.updated", target.id, _user_doc(target))
+
+    @event.listens_for(User, "after_delete")
+    def _on_user_delete(_mapper, connection, target):
+        _emit(connection, "user", "user.deleted", target.id, {"id": target.id})
