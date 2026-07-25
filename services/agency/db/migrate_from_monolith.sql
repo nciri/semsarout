@@ -13,5 +13,9 @@ SELECT
 FROM public.agencies ON CONFLICT (id) DO NOTHING;
 SELECT setval(pg_get_serial_sequence('agency.agency','id'), COALESCE((SELECT MAX(id) FROM agency.agency),1));
 
-INSERT INTO agency.listing_ro (id, agency_id)
-SELECT id, agency_id FROM public.properties ON CONFLICT (id) DO NOTHING;
+INSERT INTO agency.listing_ro (
+    id, agency_id, reference, title, price, city, property_type, transaction_type,
+    surface, rooms, bedrooms, status, published_at)
+SELECT id, agency_id, reference, title, price, city, property_type, transaction_type,
+    surface, rooms, bedrooms, status, published_at
+FROM public.properties ON CONFLICT (id) DO NOTHING;

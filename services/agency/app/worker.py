@@ -3,6 +3,8 @@
     python -m app.worker
 Idempotent (dédup par message_id). Reconstructible.
 """
+from datetime import datetime
+
 from semsar_common import get_settings, setup_logging
 from semsar_events import EventConsumer
 
@@ -26,6 +28,11 @@ def _handle(routing_key: str, payload: dict, message_id: str) -> None:
                 ro = ListingRO(id=pid)
                 db.add(ro)
             ro.agency_id = payload.get("agency_id")
+            for f in ("reference", "title", "price", "city", "property_type",
+                      "transaction_type", "surface", "rooms", "bedrooms", "status"):
+                setattr(ro, f, payload.get(f))
+            pub = payload.get("published_at")
+            ro.published_at = datetime.fromisoformat(pub) if pub else None
         if message_id:
             db.add(ProcessedMessage(message_id=message_id))
         db.commit()

@@ -28,7 +28,12 @@ def normalize(obj):
     if isinstance(obj, dict):
         return {k: normalize(v) for k, v in sorted(obj.items()) if k not in VOLATILE}
     if isinstance(obj, list):
-        return [normalize(v) for v in obj]
+        items = [normalize(v) for v in obj]
+        # Collections d'entités par `id` (ex. `members` de /my-agency) : le monolithe ne garantit
+        # PAS l'ordre (relations sans ORDER BY) → comparaison ordre-insensible par id.
+        if items and all(isinstance(v, dict) and "id" in v for v in items):
+            items = sorted(items, key=lambda v: str(v.get("id")))
+        return items
     return obj
 
 
@@ -80,6 +85,7 @@ def cases(args):
         "agency": [
             ("GET", "/api/v1/agencies", None, None),
             ("GET", "/api/v1/agencies/immo-casa-premium", None, None),
+            ("GET", "/api/v1/my-agency", None, None),
         ],
         "geo": [
             *([("GET", f"/api/v1/properties/{pid}/price-position", None, None)] if pid else []),

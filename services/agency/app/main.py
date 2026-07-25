@@ -11,8 +11,10 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
+from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
+from . import members_client
 from .db import get_db, init_db
 from .models import Agency, ListingRO
 
@@ -77,6 +79,49 @@ def list_agencies(request: Request, db: Session = Depends(get_db)) -> dict:
         "agencies": [a.to_dict(properties_count=counts.get(a.id, 0)) for a in items],
         "total": total, "pages": pages, "current_page": page,
     }
+
+
+@app.get("/my-agency")
+def my_agency(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    """Agence de l'utilisateur courant, avec ses membres (parité `include_members=True`).
+    Les membres viennent d'identity (propriétaire des comptes) — dicts complets `User.to_dict`."""
+    if principal.agency_id is None:
+        return _err("You do not belong to an agency", 404)
+    agency = db.get(Agency, principal.agency_id)
+    if agency is None:
+        return _err("You do not belong to an agency", 404)
+    cnt = _counts(db, [agency.id]).get(agency.id, 0)
+    data = agency.to_dict(properties_count=cnt)
+    data["members"] = members_client.members_of(agency.id)
+    return {"agency": data}
+
+
+def _listing_dict(l: ListingRO) -> dict:
+    n = lambda v: float(v) if v is not None else None  # noqa: E731
+    return {"id": l.id, "reference": l.reference, "title": l.title, "price": n(l.price),
+            "city": l.city, "property_type": l.property_type, "transaction_type": l.transaction_type,
+            "surface": n(l.surface), "rooms": l.rooms, "bedrooms": l.bedrooms, "status": l.status,
+            "published_at": l.published_at.isoformat() if l.published_at else None}
+
+
+@app.get("/agencies/{slug}/properties")
+def agency_properties(slug: str, request: Request, db: Session = Depends(get_db)):
+    """Biens actifs d'une agence. Écart assumé : dict réduit (non consommé par le front ; le
+    monolithe renvoie le dict complet du bien) ; masquage modération non appliqué ici."""
+    agency = db.query(Agency).filter(Agency.slug == slug).first()
+    if agency is None or agency.is_suspended or agency.deleted_at is not None:
+        return _err("Not found", 404)
+    qp = request.query_params
+    page = int(qp.get("page") or 1)
+    per_page = int(qp.get("per_page") or 20)
+    q = (db.query(ListingRO)
+         .filter(ListingRO.agency_id == agency.id, ListingRO.status == "active")
+         .order_by(ListingRO.published_at.desc()))
+    total = q.count()
+    items = q.offset((page - 1) * per_page).limit(per_page).all()
+    pages = (total + per_page - 1) // per_page if per_page else 1
+    return {"properties": [_listing_dict(l) for l in items], "total": total,
+            "pages": pages, "current_page": page}
 
 
 @app.get("/agencies/{slug}")

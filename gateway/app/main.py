@@ -154,16 +154,16 @@ def _search_discovery_match(path: str, method: str) -> bool:
 _GEO_PRICE = re.compile(r"^/api/v1/properties/\d+/price-position$")
 # RBAC écritures utilisateur (rôles/activation) → identity ; GET /backoffice/users reste au monolithe.
 _RBAC_USER_WRITE = re.compile(r"^/api/v1/backoffice/users/\d+/(roles|activate|deactivate)$")
-# agency (lecture) : liste, détail par slug (SANS le sous-chemin /properties), et /my-agency.
+# agency (lecture) : liste, détail par slug, sous-chemin /properties, et /my-agency (avec membres).
 _AGENCY_SLUG = re.compile(r"^/api/v1/agencies/[^/]+$")
+_AGENCY_PROPS = re.compile(r"^/api/v1/agencies/[^/]+/properties$")
 
 
 def _agency_match(path: str, method: str) -> bool:
-    # Liste + détail par slug (lecture, include_members=False). `/my-agency` (include_members=True,
-    # membres = domaine users/roles) et le sous-chemin /properties restent au monolithe.
     if method != "GET":
         return False
-    return path == "/api/v1/agencies" or bool(_AGENCY_SLUG.match(path))
+    return (path == "/api/v1/agencies" or path == "/api/v1/my-agency"
+            or bool(_AGENCY_SLUG.match(path)) or bool(_AGENCY_PROPS.match(path)))
 
 
 def _geo_match(path: str, method: str) -> bool:

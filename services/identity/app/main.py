@@ -85,6 +85,18 @@ def internal_agency_seats(agency_id: int, x_internal_token: str = Header(default
             "teams_used": seats.teams_used(db, ag)}
 
 
+@app.get("/internal/agency/{agency_id}/members", include_in_schema=False)
+def internal_agency_members(agency_id: int, x_internal_token: str = Header(default=""),
+                            db: Session = Depends(get_db)) -> dict:
+    """Membres d'une agence (dicts complets, parité `User.to_dict`) — pour `/my-agency` du
+    service agency. identity possède les comptes (v2-native, pas le monolithe)."""
+    if x_internal_token != settings.internal_token:
+        raise forbidden("Forbidden")
+    from .models import UserRO
+    members = db.query(UserRO).filter(UserRO.agency_id == agency_id).order_by(UserRO.id).all()
+    return {"members": [m.to_dict() for m in members]}
+
+
 class KycRequest(BaseModel):
     cin: str
 

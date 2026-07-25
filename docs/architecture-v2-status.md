@@ -4,7 +4,7 @@
 > Décrit ce qui est fait, ce qui tourne, comment tout relancer, et le reste à faire.
 > Branche : `feature/architecture-v2` (commits **locaux uniquement**, aucun upstream, aucun push).
 
-Dernière mise à jour de session : contrat **59/59 PASS** (…, payment +4, buyer +3). #6 démarré : T1 buyer FAIT.
+Dernière mise à jour de session : contrat **60/60 PASS**. #6 en cours : T1 buyer + T2 agency FAITS.
 
 > **REPRISE (contexte frais)** — §8 items #1, #2, #5 **FAITS** ; **#4 `transactions` FAIT** ;
 > **`legal` FAIT** ; **`contract` FAIT** (tranches de #3, vérifiés E2E + gates 403 + create/finalize,
@@ -73,7 +73,7 @@ reconstructibles). Validation JWT **locale** au BFF (frontière d'auth sévrée)
 | geo | 8509 | positionnement prix + `/market/neighborhood-prices` |
 | messaging | 8510 | messages acheteur (`/buyer/messages`) |
 | trust-safety | 8511 | modération comptes (`/admin/accounts/*/suspend|unsuspend`) + masquage souverain |
-| agency | 8512 | agences lecture (`GET /agencies`, `/agencies/{slug}`) |
+| agency | 8512 | agences lecture (`GET /agencies`, `/agencies/{slug}`, **`/my-agency`** +membres, **`/agencies/{slug}/properties`**) |
 | audit | 8513 | journal transverse (`GET /admin/activity`) |
 | transactions | 8514 | pipeline ventes/locations (`/backoffice/transactions*` : liste/pipeline/stats/stages/CRUD/move/offers/documents) |
 | legal | 8506 | notaires + dossiers juridiques + checklists (`/backoffice/notaries*`, `/backoffice/legal-cases*`, `/backoffice/legal-tasks*`) — gate premium `legal` |
@@ -81,7 +81,7 @@ reconstructibles). Validation JWT **locale** au BFF (frontière d'auth sévrée)
 | billing | 8508 | plans + abonnement (`/subscription-plans*`, `/my-subscription`, `/subscription/current`, `/cancel-subscription`, `/subscription/change-plan`) |
 | payment | 8507 | intention de paiement + webhook (`/payments/create-intent`, `/payments/webhook`, `/payments/{ref}`, `/my-payments`) — CMI simulé |
 | buyer | 8515 | acheteur : recherches sauvegardées + favoris + estimations (`/buyer/saved-searches*`, `/buyer/favorites*`, `/buyer/estimates*`) |
-| identity | 8501 | **auth complète** (voir §3) + RBAC + teams/invitations + `internal/agency/{id}/seats` |
+| identity | 8501 | **auth complète** (voir §3) + RBAC + teams/invitations + `internal/agency/{id}/seats|members` |
 
 **Services additifs (nouvelles surfaces, PAS consommées par le front — voir reste à faire) :**
 identity(KYC) · notification 8502 · analytics 8504
@@ -222,7 +222,8 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
      `/buyer/estimates*` (CRUD). Par utilisateur (`user_id` du JWT). `/buyer/messages*` = **déjà**
      servi par messaging. Nouveau service `services/buyer` (schéma dédié) + migration
      (`saved_searches`/`favorites`/`estimates`) + projection biens.
-   - **T2 agency completion** (2 routes) : `/my-agency` (include_members → membres = domaine identity ;
+   - ✅ **T2 agency completion FAIT** (`/my-agency` membres via identity `internal/.../members`, parité ; `/agencies/{slug}/properties` = dict réduit, non front-consommé, hors contrat)
+   - ~~T2 agency completion~~ (2 routes) : `/my-agency` (include_members → membres = domaine identity ;
      appel interne identity ou projection) + `/agencies/{slug}/properties` (biens de l'agence →
      projection listing). Étend le service `agency` existant (:8512).
    - **T3 `dashboards`/`analytics`/`stats`** (~21 routes, **LA PLUS DURE** — agrégations cross-domaine).
@@ -262,4 +263,4 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
 ## 10. Contrat / vérification
 `tools/contract_test.py` compare monolithe vs BFF route par route (statut + JSON normalisé, champs
 volatils ignorés). Groupes : catalog, directory, listing, search, crm, marketplace, geo, messaging,
-trust-safety, rbac, agency, audit, transactions, legal, contract, billing, payment, buyer. **59/59** actuellement.
+trust-safety, rbac, agency, audit, transactions, legal, contract, billing, payment, buyer. **60/60** actuellement (comparaison des collections par `id` ordre-insensible : membres de /my-agency non ordonnés côté monolithe).
