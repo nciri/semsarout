@@ -63,3 +63,5 @@ FROM public.agencies a
 LEFT JOIN public.subscriptions s ON s.agency_id=a.id
 LEFT JOIN public.subscription_plans p ON p.id=s.plan_id
 WHERE a.id=ar.id;
+
+SELECT setval(pg_get_serial_sequence('identity.role_ro','id'), COALESCE((SELECT MAX(id) FROM identity.role_ro),1));

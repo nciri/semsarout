@@ -153,3 +153,93 @@ async def update_user_roles(user_id: int, request: Request, principal: Principal
     _emit_user(db, user)
     db.commit()
     return {"message": "Roles updated"}
+
+
+# ---- CRUD des rôles (identity source de vérité, émet role.*) ----
+def _role_doc(role: RoleRO) -> dict:
+    return {
+        "id": role.id, "name": role.name, "slug": role.slug, "description": role.description,
+        "color": role.color, "level": role.level, "is_system": bool(role.is_system),
+        "agency_id": role.agency_id, "permission_ids": [p.id for p in role.permissions],
+    }
+
+
+def _perms(db: Session, ids: list) -> list:
+    return db.query(PermissionRO).filter(PermissionRO.id.in_(ids)).all() if ids else []
+
+
+@router.post("/backoffice/roles", status_code=201)
+async def create_role(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    agency, err = _require_manage_roles(principal, db)
+    if err:
+        return err
+    data = await _json(request)
+    try:
+        level = int(data.get("level", 100))
+    except (TypeError, ValueError):
+        level = 100
+    if not principal.is_superadmin and level >= 100:
+        level = 99
+    role = RoleRO(
+        name=data.get("name"),
+        slug=data.get("slug") or (data.get("name", "") or "").lower().replace(" ", "_"),
+        description=data.get("description"), color=data.get("color", "gray"), level=level,
+        is_system=False, agency_id=None if principal.is_superadmin else agency.id,
+    )
+    if "permissions" in data:
+        role.permissions = _perms(db, data["permissions"])
+    db.add(role)
+    db.flush()
+    enqueue(db, "role", role.id, "role.created", _role_doc(role))
+    db.commit()
+    return role.to_dict(include_permissions=True, users_count=0)
+
+
+@router.put("/backoffice/roles/{role_id}")
+async def update_role(role_id: int, request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    agency, err = _require_manage_roles(principal, db)
+    if err:
+        return err
+    role = db.get(RoleRO, role_id)
+    if role is None:
+        return _err("Not found", 404)
+    if not principal.is_superadmin and role.agency_id != agency.id:
+        return _err("Rôle introuvable", 404)
+    if role.is_system:
+        return _err("Cannot modify system role", 403)
+    data = await _json(request)
+    if not principal.is_superadmin and "level" in data:
+        try:
+            lvl = int(data["level"])
+        except (TypeError, ValueError):
+            lvl = role.level
+        data["level"] = lvl if lvl < 100 else 99
+    for field in ("name", "description", "color", "level"):
+        if field in data:
+            setattr(role, field, data[field])
+    if "permissions" in data:
+        role.permissions = _perms(db, data["permissions"])
+    enqueue(db, "role", role.id, "role.updated", _role_doc(role))
+    db.commit()
+    counts = _counts(db, [role.id])
+    return role.to_dict(include_permissions=True, users_count=counts.get(role.id, 0))
+
+
+@router.delete("/backoffice/roles/{role_id}")
+def delete_role(role_id: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    agency, err = _require_manage_roles(principal, db)
+    if err:
+        return err
+    role = db.get(RoleRO, role_id)
+    if role is None:
+        return _err("Not found", 404)
+    if not principal.is_superadmin and role.agency_id != agency.id:
+        return _err("Rôle introuvable", 404)
+    if role.is_system:
+        return _err("Cannot delete system role", 403)
+    if _counts(db, [role.id]).get(role.id, 0) > 0:
+        return _err("Cannot delete role with assigned users", 400)
+    enqueue(db, "role", role.id, "role.deleted", {"id": role.id})
+    db.delete(role)
+    db.commit()
+    return {"message": "Role deleted"}
