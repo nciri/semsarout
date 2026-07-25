@@ -13,6 +13,7 @@ from sqlalchemy import inspect as sa_inspect
 
 from app import db
 from app.models.property import Property
+from app.models.role import ActivityLog
 from app.models.user import User
 
 _ENABLED = os.environ.get("SEMSAR_OUTBOX_ENABLED", "").lower() in ("1", "true", "yes")
@@ -103,3 +104,13 @@ if _ENABLED:  # pragma: no cover — activation explicite en Phase 1
     @event.listens_for(User, "after_delete")
     def _on_user_delete(_mapper, connection, target):
         _emit(connection, "user", "user.deleted", target.id, {"id": target.id})
+
+    @event.listens_for(ActivityLog, "after_insert")
+    def _on_audit_insert(_mapper, connection, target):
+        # Journal transverse : chaque écriture d'audit du monolithe est diffusée au service audit.
+        _emit(connection, "audit", "audit.logged", target.id, {
+            "id": target.id, "user_id": target.user_id, "action": target.action,
+            "entity_type": target.entity_type, "entity_id": target.entity_id,
+            "extra_data": target.extra_data, "ip_address": target.ip_address,
+            "agency_id": target.agency_id, "created_at": _iso(target.created_at),
+        })
