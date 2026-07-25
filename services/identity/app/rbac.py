@@ -45,7 +45,9 @@ def get_roles(principal: Principal = Depends(get_principal), db: Session = Depen
 @router.get("/backoffice/roles/{role_id}")
 def get_role(role_id: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
     role = db.get(RoleRO, role_id)
-    if role is None:
+    # Cloisonnement multi-agences (même portée que la liste) : un rôle d'une autre agence
+    # n'est pas lisible → 404. Corrige l'IDOR présent aussi côté monolithe (get_or_404 non scoping).
+    if role is None or (role.agency_id is not None and role.agency_id != principal.agency_id):
         return _err("Not found", 404)
     counts = _counts(db, [role.id])
     return role.to_dict(include_permissions=True, users_count=counts.get(role.id, 0))
