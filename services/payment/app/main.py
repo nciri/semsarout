@@ -5,6 +5,9 @@ Reproduit `/payments/create-intent`, `/payments/webhook`, `/payments/{reference}
 monolithe : payment_url mock). Un paiement d'abonnement confirmé émet `payment.completed`
 (outbox) → le service billing crée/prolonge l'abonnement (v2-native, pas d'écriture cross-domaine).
 """
+import hashlib
+import hmac
+import os
 from contextlib import asynccontextmanager
 from datetime import datetime
 
@@ -23,6 +26,13 @@ from .util import err, iso, json_body, opt_int
 
 settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
+
+# Signature webhook passerelle (optionnelle) : si un secret est configuré, on vérifie l'HMAC du
+# corps ; sinon on l'accepte (parité monolithe, qui n'a pas de secret — passerelle simulée).
+_WEBHOOK_SECRET = os.environ.get("PAYMENT_WEBHOOK_SECRET", "")
+# États terminaux : on ne retraite pas un webhook déjà appliqué (anti-rejeu → pas de double
+# prolongation d'abonnement).
+_TERMINAL = {"completed", "failed", "refunded"}
 
 # Prix des services ponctuels — parité `SERVICE_PRICES` du monolithe.
 SERVICE_PRICES = {
@@ -119,7 +129,18 @@ async def create_payment_intent(request: Request, db: Session = Depends(get_db),
 
 @app.post("/payments/webhook")
 async def payment_webhook(request: Request, db: Session = Depends(get_db)):
-    data = await json_body(request)
+    raw = await request.body()
+    # Vérification de signature si un secret est configuré (fail-closed) ; no-op sinon (parité).
+    if _WEBHOOK_SECRET:
+        sig = request.headers.get("x-gateway-signature", "")
+        expected = hmac.new(_WEBHOOK_SECRET.encode(), raw, hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(sig, expected):
+            return err("unauthorized", 401)
+    try:
+        data = await request.json()
+        data = data if isinstance(data, dict) else {}
+    except Exception:  # noqa: BLE001
+        data = {}
     reference = data.get("reference")
     status = data.get("status")
     gateway_reference = data.get("gateway_reference")
@@ -127,6 +148,10 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
     p = db.query(Payment).filter(Payment.reference == reference).first()
     if not p:
         return err("Payment not found", 404)
+    # Anti-rejeu : un paiement déjà en état terminal n'est pas retraité (évite la double
+    # prolongation d'abonnement via un webhook rejoué).
+    if p.status in _TERMINAL:
+        return {"status": "ok"}
 
     if status == "success":
         p.status = "completed"
