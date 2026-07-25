@@ -112,13 +112,32 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
    détient ; super-admin/owner exemptés) — miroir exact de la logique d'identity. Vérifié en direct
    contre le monolithe : IDOR 404 vs global 200 ; escalation 403 (perm non détenue) vs 201 (détenue).
    Contrat 33/33 intact.
-3. **Brancher les services additifs** (contract/legal/billing/payment) : ils exposent de
-   NOUVELLES routes (`/contract`, `/legal`…) que le front n'utilise pas — il tape encore les
-   routes du monolithe. Soit reproduire les routes existantes, soit repointer le front.
-4. **Domaines non extraits** : `transactions` (9 routes) · `programs` (21 routes, nouveaux
-   développements) · `buyer`/estimations/favoris · `dashboards`/`analytics`/`stats` (le front tape
-   le monolithe, pas notre service analytics) · `integrations` (staymanager) · `/dashboard/activity`
-   (agency-scoped) · `/my-agency` (include_members) · `/agencies/{slug}/properties`.
+3. **Brancher les services additifs** (contract/legal/billing/payment) — **décision : reproduire
+   les routes du monolithe à l'identique** (front intact). Chaque service expose aujourd'hui des
+   routes neuves (`/contract/*`, `/legal/*`, `/billing/*`, `/payment/*`) non consommées ; il faut
+   servir les **routes legacy** que le front tape. Cartographie front → monolithe :
+   - **contract** → `/backoffice/contracts*` (+ `/finalize`, `/mark-signed`, `/pdf`) et
+     `/backoffice/contract-templates*` (`backend/app/api/v1/backoffice/contracts.py`).
+   - **legal** → `/backoffice/notaries*`, `/backoffice/legal-cases*` (+ `/tasks`),
+     `/backoffice/legal-tasks*` (`backend/app/api/v1/backoffice/legal.py`).
+   - **billing** → `/subscription-plans`, `/subscription/current`, `/subscription/change-plan`,
+     `/cancel-subscription` (`billing.py`+`subscriptions.py`). **`/payment-methods*` = non-feature**
+     (table absente du monolithe → 404 ; parité = ne rien router).
+   - **payment** → `/payments/create-intent` (`payments.py`).
+   **Ordre de dépendances** : le gating premium se lit **depuis le JWT** (`Principal.features`
+   contient `contracts`/`legal`/`artisans`) → legal & contract **ne dépendent PAS** d'une projection
+   billing pour le 403. contract dépend en plus des **transactions (#4)** pour create/finalize
+   (`Transaction`+`TransactionDocument`). Donc : **legal (autonome) → billing → transactions(#4) →
+   contract → payment**. Chaque tranche = migration de projection (`migrate_from_monolith.sql`) +
+   port fidèle des routes (scopé agence, erreurs `{'error'}`) + routage BFF + ajout au contrat.
+4. **Domaines non extraits** (périmètre : **tout**) : `transactions` (9 routes) · `programs`
+   (21 routes, nouveau dev) · `buyer`/estimations/favoris · `dashboards`/`analytics`/`stats` (front
+   tape le monolithe) · `integrations` (staymanager) · `/dashboard/activity` · `/my-agency`
+   (include_members) · `/agencies/{slug}/properties`. Priorité : `transactions` d'abord (débloque
+   contract), puis surfaces front-facing (dashboards/analytics, buyer/favoris, my-agency), puis
+   `programs`/`integrations` (nouvelles surfaces). Chantier long, plusieurs tranches.
+   **Note d'avancement** : #3/#4 mappés et priorisés (cette session) ; exécution tranche par tranche,
+   contrat rejoué à chaque fois. legal = 1ʳᵉ tranche en cours.
 5. ~~**Repoint masquage**~~ ✅ **FAIT** — `dev-mesh-up.sh` pointe désormais
    `MODERATION_HIDDEN_URL` de listing/search vers **trust-safety**
    (`:8511/internal/moderation/hidden`, souverain) au lieu du monolithe — prérequis au
