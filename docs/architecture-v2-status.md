@@ -119,8 +119,13 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
    développements) · `buyer`/estimations/favoris · `dashboards`/`analytics`/`stats` (le front tape
    le monolithe, pas notre service analytics) · `integrations` (staymanager) · `/dashboard/activity`
    (agency-scoped) · `/my-agency` (include_members) · `/agencies/{slug}/properties`.
-5. **Repoint masquage** : déjà repointable (listing/search lisent trust-safety via
-   `MODERATION_HIDDEN_URL`). geo/crm ne masquent pas.
+5. ~~**Repoint masquage**~~ ✅ **FAIT** — `dev-mesh-up.sh` pointe désormais
+   `MODERATION_HIDDEN_URL` de listing/search vers **trust-safety**
+   (`:8511/internal/moderation/hidden`, souverain) au lieu du monolithe — prérequis au
+   décommissionnement. Vérifié : suspendre un vendeur via BFF→trust-safety masque son bien
+   (listing 404), l'unsuspendre le rétablit (200). geo/crm **ne masquent pas** — c'est la
+   **parité** : le `price_position` du monolithe (`market.py`) n'exclut pas non plus les comptes
+   modérés ; masquer dans geo/crm divergerait. Rien à faire côté geo/crm.
 6. **Décommissionnement final** : identity émet les jetons pour de bon (le monolithe arrête),
    pointer 100 % du proxy front → BFF, éteindre le monolithe.
 

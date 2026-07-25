@@ -48,10 +48,14 @@ SVCS="identity:8501 notification:8502 analytics:8504 contract:8505 legal:8506 pa
 catalog:8009 marketplace:8010 directory:8011 listing:8012 crm:8013 search:8103 geo:8509 \
 messaging:8510 trust-safety:8511 agency:8512 audit:8513"
 S3="S3_ENDPOINT_URL=http://localhost:9000 S3_ACCESS_KEY=semsar S3_SECRET_KEY=semsar-secret AWS_ACCESS_KEY_ID=semsar AWS_SECRET_ACCESS_KEY=semsar-secret"
+# Masquage (§6) : listing/search lisent les comptes cachés depuis trust-safety (souverain),
+# plus le monolithe — prérequis au décommissionnement.
+TS_HIDDEN="MODERATION_HIDDEN_URL=http://localhost:8511/internal/moderation/hidden"
 for pair in $SVCS; do
   svc="${pair%%:*}"; port="${pair##*:}"
   kill_port "$port"
   extra=""; [ "$svc" = "contract" ] && extra="$S3"; [ "$svc" = "identity" ] && extra="JWT_SECRET_KEY=$JWT"
+  case "$svc" in listing|search) extra="$extra $TS_HIDDEN";; esac
   env SERVICE_NAME="$svc" DATABASE_URL="$(dburl "$svc")" TRUST_GATEWAY_HEADERS=true \
       INTERNAL_TOKEN="$ITOK" MONOLITH_URL="$MONO" RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" \
       OPENSEARCH_URL="$OS" $extra \
