@@ -6,6 +6,15 @@
 
 Dernière mise à jour de session : contrat **33/33 PASS**.
 
+> **REPRISE (contexte frais)** — §8 items #1, #2, #5 **FAITS** (vérifiés E2E, contrat vert).
+> Prochaine tranche : **#4 `transactions`** — elle débloque les chemins *create* de legal & contract
+> (le `create_legal_case`/`create_contract` du monolithe dérivent de `Transaction` +
+> `TransactionDocument`). Ordre d'exécution mappé : `transactions → legal/contract → billing → payment → #6`.
+> Findings clés : gating premium lu dans le JWT (`Principal.features`) → legal/contract **ne dépendent
+> pas** d'une projection billing pour le 403 ; `/payment-methods` = non-feature (table absente du
+> monolithe → 404, ne pas router). Détail complet en §8.3/§8.4. Décisions utilisateur : #3 = reproduire
+> les routes legacy ; #4 = tout extraire ; #6 = coupure auto autorisée si contrat vert.
+
 ---
 
 ## 1. Vision cible (rappel)
