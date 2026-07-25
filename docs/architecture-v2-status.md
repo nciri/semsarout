@@ -4,12 +4,18 @@
 > Décrit ce qui est fait, ce qui tourne, comment tout relancer, et le reste à faire.
 > Branche : `feature/architecture-v2` (commits **locaux uniquement**, aucun upstream, aucun push).
 
-Dernière mise à jour de session : contrat **33/33 PASS**.
+Dernière mise à jour de session : contrat **41/41 PASS** (transactions ajouté, +8 cas).
 
-> **REPRISE (contexte frais)** — §8 items #1, #2, #5 **FAITS** (vérifiés E2E, contrat vert).
-> Prochaine tranche : **#4 `transactions`** — elle débloque les chemins *create* de legal & contract
-> (le `create_legal_case`/`create_contract` du monolithe dérivent de `Transaction` +
-> `TransactionDocument`). Ordre d'exécution mappé : `transactions → legal/contract → billing → payment → #6`.
+> **REPRISE (contexte frais)** — §8 items #1, #2, #5 **FAITS** ; **#4 `transactions` FAIT** (1ʳᵉ
+> tranche de #4, vérifié E2E, contrat 41/41). Service `services/transactions` (:8514, schéma/rôle
+> dédiés) reroute `/backoffice/transactions*` à l'identique (liste/pipeline/stats/stages/CRUD/move/
+> offers/documents), émet `transaction.*` (outbox→crm maintient `transaction_ro`).
+> **Fix mesh au passage** : `message_id` d'outbox namespacé par `aggregate_type`
+> (`libs/semsar_events/…/outbox.py`) — sans ça, un consumer multi-publisher (crm = listing.* +
+> transaction.*) collisionnait sur les id d'outbox locaux (relais existants rechargent la lib au
+> prochain `dev-mesh-up.sh`).
+> Prochaine tranche : **legal** (autonome, gating via `Principal.features`), puis **contract**
+> (dépend de transactions, désormais dispo). Ordre restant : `legal → billing → contract → payment → #6`.
 > Findings clés : gating premium lu dans le JWT (`Principal.features`) → legal/contract **ne dépendent
 > pas** d'une projection billing pour le 403 ; `/payment-methods` = non-feature (table absente du
 > monolithe → 404, ne pas router). Détail complet en §8.3/§8.4. Décisions utilisateur : #3 = reproduire
@@ -40,6 +46,7 @@ reconstructibles). Validation JWT **locale** au BFF (frontière d'auth sévrée)
 | trust-safety | 8511 | modération comptes (`/admin/accounts/*/suspend|unsuspend`) + masquage souverain |
 | agency | 8512 | agences lecture (`GET /agencies`, `/agencies/{slug}`) |
 | audit | 8513 | journal transverse (`GET /admin/activity`) |
+| transactions | 8514 | pipeline ventes/locations (`/backoffice/transactions*` : liste/pipeline/stats/stages/CRUD/move/offers/documents) |
 | identity | 8501 | **auth complète** (voir §3) + RBAC + teams/invitations |
 
 **Services additifs (nouvelles surfaces, PAS consommées par le front — voir reste à faire) :**
@@ -75,9 +82,11 @@ Le monolithe sert encore ~240 routes qui lisent `public.users`/`roles`/`activity
 Tous les relais/consumers survivent aux redémarrages RabbitMQ (prouvé × 3) :
 - `EventPublisher` : reconnexion + réessai backoff. `run_relay` : boucle de relais qui ne meurt jamais.
 - `EventConsumer` : boucle de reconnexion. Scripts monolithe (pika brut) : mêmes boucles.
-- Publishers (outbox+relay) : listing, catalog, identity (+ contract/payment/billing) + monolithe.
+- Publishers (outbox+relay) : listing, catalog, identity, transactions (+ contract/payment/billing) + monolithe.
 - Consumers (workers) : search, crm, marketplace, geo, agency, messaging, analytics, billing,
-  notification, identity, audit + monolithe (`consume_users.py`).
+  notification, identity, audit, transactions + monolithe (`consume_users.py`).
+- **Idempotence multi-publisher** : `message_id` d'outbox namespacé par `aggregate_type` (les id
+  d'outbox sont locaux à chaque publisher ; crm consomme désormais listing.* **et** transaction.*).
 
 ## 6. Infra & environnement
 - **Postgres** natif :5432, base `semsar_dev`, admin `postgres:postgres`. Un rôle/schéma par
@@ -103,7 +112,7 @@ bash scripts/dev-mesh-up.sh
 TOK=$(curl -s -XPOST localhost:8099/api/v1/auth/login -H 'content-type: application/json' \
   -d '{"email":"agent1@immo-casa-premium.ma","password":"password123"}' | python3 -c 'import sys,json;print(json.load(sys.stdin)["access_token"])')
 python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://localhost:8099 \
-  --token "$TOK" --services catalog,directory,listing,search,crm,marketplace,geo,messaging,trust-safety,rbac,agency,audit --property-id 90
+  --token "$TOK" --services catalog,directory,listing,search,crm,marketplace,geo,messaging,trust-safety,rbac,agency,audit,transactions --property-id 90
 ```
 
 ## 8. Reste à faire (priorisé)
@@ -139,14 +148,18 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
    (`Transaction`+`TransactionDocument`). Donc : **legal (autonome) → billing → transactions(#4) →
    contract → payment**. Chaque tranche = migration de projection (`migrate_from_monolith.sql`) +
    port fidèle des routes (scopé agence, erreurs `{'error'}`) + routage BFF + ajout au contrat.
-4. **Domaines non extraits** (périmètre : **tout**) : `transactions` (9 routes) · `programs`
+4. **Domaines non extraits** (périmètre : **tout**) : ~~`transactions` (14 routes)~~ ✅ **FAIT**
+   (`services/transactions`, :8514, contrat 41/41) · `programs`
    (21 routes, nouveau dev) · `buyer`/estimations/favoris · `dashboards`/`analytics`/`stats` (front
    tape le monolithe) · `integrations` (staymanager) · `/dashboard/activity` · `/my-agency`
-   (include_members) · `/agencies/{slug}/properties`. Priorité : `transactions` d'abord (débloque
-   contract), puis surfaces front-facing (dashboards/analytics, buyer/favoris, my-agency), puis
+   (include_members) · `/agencies/{slug}/properties`. Priorité : ~~`transactions` d'abord (débloque
+   contract)~~ fait, puis surfaces front-facing (dashboards/analytics, buyer/favoris, my-agency), puis
    `programs`/`integrations` (nouvelles surfaces). Chantier long, plusieurs tranches.
-   **Note d'avancement** : #3/#4 mappés et priorisés (cette session) ; exécution tranche par tranche,
-   contrat rejoué à chaque fois. legal = 1ʳᵉ tranche en cours.
+   **Note d'avancement** : #3/#4 mappés et priorisés ; **transactions extrait** (émet `transaction.*`,
+   crm maintient `transaction_ro`). Écarts assumés (hors contrat de lecture) : audit create/stage_change
+   non répliqué (comme crm) ; bascule `property.status=sold/rented` sur `won` (effet listing) différée ;
+   détail `property`/`client` imbriqués = projections réduites (non consommés par le front). Prochaine
+   tranche : legal (autonome) puis contract (dépend de transactions).
 5. ~~**Repoint masquage**~~ ✅ **FAIT** — `dev-mesh-up.sh` pointe désormais
    `MODERATION_HIDDEN_URL` de listing/search vers **trust-safety**
    (`:8511/internal/moderation/hidden`, souverain) au lieu du monolithe — prérequis au
@@ -176,4 +189,4 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
 ## 10. Contrat / vérification
 `tools/contract_test.py` compare monolithe vs BFF route par route (statut + JSON normalisé, champs
 volatils ignorés). Groupes : catalog, directory, listing, search, crm, marketplace, geo, messaging,
-trust-safety, rbac, agency, audit. **33/33** actuellement.
+trust-safety, rbac, agency, audit, transactions. **41/41** actuellement.

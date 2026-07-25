@@ -85,6 +85,16 @@ def cases(args):
             *([("GET", f"/api/v1/properties/{pid}/price-position", None, None)] if pid else []),
             ("GET", "/api/v1/market/neighborhood-prices", None, None),
         ],
+        "transactions": [
+            ("GET", "/api/v1/backoffice/transactions", None, None),
+            ("GET", "/api/v1/backoffice/transactions", {"type": "sale"}, None),
+            ("GET", "/api/v1/backoffice/transactions", {"status": "won"}, None),
+            ("GET", "/api/v1/backoffice/transactions/pipeline", {"type": "sale"}, None),
+            ("GET", "/api/v1/backoffice/transactions/pipeline", {"type": "rent"}, None),
+            ("GET", "/api/v1/backoffice/transactions/stats", None, None),
+            ("GET", "/api/v1/backoffice/transactions/stages", {"type": "sale"}, None),
+            ("GET", "/api/v1/backoffice/transactions/stages", {"type": "rent"}, None),
+        ],
         "crm": [
             ("GET", "/api/v1/backoffice/leads", None, None),
             ("GET", "/api/v1/backoffice/leads/stats", None, None),

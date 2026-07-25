@@ -1,4 +1,5 @@
-"""Consumer crm — projette le titre des biens (via `listing.*`) pour `property_title`.
+"""Consumer crm — projette le titre des biens (via `listing.*`) pour `property_title`,
+et maintient `transaction_ro` (via `transaction.*`) pour `transactions_count` par client.
 
     python -m app.worker
 """
@@ -6,7 +7,7 @@ from semsar_common import get_settings, setup_logging
 from semsar_events import EventConsumer
 
 from .db import SessionLocal, init_db
-from .models import Lead, ProcessedMessage, PropertyRO
+from .models import Lead, ProcessedMessage, PropertyRO, TransactionRO
 
 
 def _create_lead(db, payload: dict) -> None:
@@ -39,6 +40,17 @@ def _handle(routing_key: str, payload: dict, message_id: str) -> None:
             ro.title = payload.get("title")
             ro.address = payload.get("address")
             ro.city = payload.get("city")
+        elif routing_key == "transaction.deleted":
+            ro = db.get(TransactionRO, payload.get("id"))
+            if ro is not None:
+                db.delete(ro)
+        elif routing_key in ("transaction.created", "transaction.updated"):
+            tid = payload.get("id")
+            ro = db.get(TransactionRO, tid)
+            if ro is None:
+                ro = TransactionRO(id=tid)
+                db.add(ro)
+            ro.client_id = payload.get("client_id")
         if message_id:
             db.add(ProcessedMessage(message_id=message_id))
         db.commit()
@@ -56,7 +68,7 @@ def main() -> None:
         init_db()
     consumer = EventConsumer(
         settings.rabbitmq_url, service_name=settings.service_name,
-        bindings=["listing.#"], exchange=settings.events_exchange,
+        bindings=["listing.#", "transaction.#"], exchange=settings.events_exchange,
     )
     consumer.run(handler=_handle)
 

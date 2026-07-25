@@ -250,6 +250,8 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path.startswith("/api/v1/backoffice/calendar")
     ):
         return app.state.crm, path.replace("/api/v1", "", 1)
+    if settings.transactions_url and path.startswith("/api/v1/backoffice/transactions"):
+        return app.state.transactions, path.replace("/api/v1", "", 1)
     return app.state.monolith, path
 
 
@@ -274,6 +276,7 @@ async def lifespan(app: FastAPI):
     app.state.directory = _client_or_none(settings.directory_url)
     app.state.listing = _client_or_none(settings.listing_url)
     app.state.crm = _client_or_none(settings.crm_url)
+    app.state.transactions = _client_or_none(settings.transactions_url)
     app.state.geo = _client_or_none(settings.geo_url)
     app.state.messaging = _client_or_none(settings.messaging_url)
     app.state.trust_safety = _client_or_none(settings.trust_safety_url)
@@ -284,8 +287,9 @@ async def lifespan(app: FastAPI):
         app.state.monolith, app.state.identity, app.state.search,
         app.state.analytics, app.state.contract, app.state.legal,
         app.state.payment, app.state.billing, app.state.catalog, app.state.marketplace,
-        app.state.directory, app.state.listing, app.state.crm, app.state.geo,
-        app.state.messaging, app.state.trust_safety, app.state.agency, app.state.audit,
+        app.state.directory, app.state.listing, app.state.crm, app.state.transactions,
+        app.state.geo, app.state.messaging, app.state.trust_safety, app.state.agency,
+        app.state.audit,
     ):
         if client is not None:
             await client.aclose()

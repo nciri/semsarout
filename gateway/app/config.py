@@ -41,6 +41,7 @@ class GatewaySettings(BaseSettings):
     directory_url: str | None = None
     listing_url: str | None = None
     crm_url: str | None = None
+    transactions_url: str | None = None
     geo_url: str | None = None
     messaging_url: str | None = None
     trust_safety_url: str | None = None

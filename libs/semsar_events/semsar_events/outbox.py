@@ -52,7 +52,11 @@ def relay_batch(session, publisher, batch_size: int = 100) -> int:
     )
     count = 0
     for row in rows:
-        publisher.publish(row.event_type, row.payload, message_id=str(row.id))
+        # message_id namespacé par aggregate_type (domaine) : les id d'outbox sont locaux à
+        # chaque publisher → sans namespace ils collisionnent chez un consumer multi-publisher
+        # (ex. crm consomme listing.* ET transaction.*). aggregate_type est disjoint par domaine.
+        publisher.publish(row.event_type, row.payload,
+                          message_id=f"{row.aggregate_type}:{row.id}")
         row.published_at = datetime.now(timezone.utc)
         count += 1
     if count:
