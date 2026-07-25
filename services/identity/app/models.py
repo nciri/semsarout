@@ -156,6 +156,48 @@ class AgencyRO(Base):
     owner_id = Column(Integer)
     max_seats = Column(Integer, default=0)
     max_teams = Column(Integer, default=0)
+    name = Column(String(100))
+
+
+class Team(Base):
+    __tablename__ = "team"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    agency_id = Column(Integer, nullable=False, index=True)
+    name = Column(String(80), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self, members_count: int = 0) -> dict:
+        return {"id": self.id, "agency_id": self.agency_id, "name": self.name,
+                "members_count": members_count}
+
+
+class Invitation(Base):
+    __tablename__ = "invitation"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    agency_id = Column(Integer, nullable=False, index=True)
+    email = Column(String(120), nullable=False)
+    role_id = Column(Integer)
+    team_id = Column(Integer)
+    token_hash = Column(String(64), nullable=False, index=True)
+    status = Column(String(20), default="pending")  # pending|accepted|revoked|expired
+    invited_by = Column(Integer)
+    expires_at = Column(DateTime)
+    accepted_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def is_active_pending(self) -> bool:
+        return self.status == "pending" and (self.expires_at is None or self.expires_at > datetime.utcnow())
+
+    def to_dict(self, role_name=None) -> dict:
+        return {
+            "id": self.id, "agency_id": self.agency_id, "email": self.email,
+            "role_id": self.role_id, "role_name": role_name, "team_id": self.team_id,
+            "status": self.status,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
 
 
 class ProcessedMessage(Base):

@@ -65,3 +65,8 @@ LEFT JOIN public.subscription_plans p ON p.id=s.plan_id
 WHERE a.id=ar.id;
 
 SELECT setval(pg_get_serial_sequence('identity.role_ro','id'), COALESCE((SELECT MAX(id) FROM identity.role_ro),1));
+
+-- Teams/invitations : nom d'agence pour l'affichage des invitations (tables team/invitation
+-- créées vides par init_db — pas de données à migrer).
+ALTER TABLE identity.agency_ro ADD COLUMN IF NOT EXISTS name VARCHAR(100);
+UPDATE identity.agency_ro ar SET name=a.name FROM public.agencies a WHERE a.id=ar.id;

@@ -5,9 +5,12 @@ Source unique de vérité pour les contrôles de quota, portée dans identity (q
 max_teams`) ; l'**usage** se calcule sur les projections identity (`user_ro`, et à terme
 teams/invitations). Tant que teams/invitations ne sont pas extraits, leur usage vaut 0.
 """
+from datetime import datetime
+
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from .models import AgencyRO, RoleRO, UserRO
+from .models import AgencyRO, Invitation, RoleRO, Team, UserRO
 
 PLATFORM_ROLE_SLUGS = {"superadmin"}
 
@@ -37,8 +40,10 @@ def active_member_seats(db: Session, agency: AgencyRO) -> int:
 
 
 def pending_invites(db: Session, agency: AgencyRO) -> int:
-    # invitations pas encore extraites vers identity → 0 (données vides côté monolithe).
-    return 0
+    now = datetime.utcnow()
+    return db.query(Invitation).filter(
+        Invitation.agency_id == agency.id, Invitation.status == "pending",
+        or_(Invitation.expires_at.is_(None), Invitation.expires_at > now)).count()
 
 
 def seats_used(db: Session, agency: AgencyRO) -> int:
@@ -55,7 +60,7 @@ def teams_limit(agency: AgencyRO) -> int:
 
 
 def teams_used(db: Session, agency: AgencyRO) -> int:
-    return 0  # teams pas encore extraits vers identity
+    return db.query(Team).filter(Team.agency_id == agency.id).count()
 
 
 def can_create_team(db: Session, agency: AgencyRO) -> bool:

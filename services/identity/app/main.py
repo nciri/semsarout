@@ -23,7 +23,7 @@ from semsar_common import (
 )
 from semsar_events import enqueue
 
-from . import auth, events, rbac
+from . import auth, events, rbac, team
 from .db import get_db, init_db
 from .models import KycVerification
 
@@ -61,6 +61,7 @@ Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_sch
 # Auth (émission des JWT) + RBAC lecture — routes legacy `{'error'}`, à part du KYC (RFC 9457).
 app.include_router(auth.router)
 app.include_router(rbac.router)
+app.include_router(team.router)
 
 
 @app.get("/health", include_in_schema=False)
