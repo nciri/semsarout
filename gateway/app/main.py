@@ -194,6 +194,12 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
     # RBAC écritures (gestion utilisateur : rôles / activation) → identity.
     if settings.identity_url and _RBAC_USER_WRITE.match(path):
         return app.state.identity, path.replace("/api/v1", "", 1)
+    # Équipes & invitations (gestion + acceptation) → identity.
+    if settings.identity_url and (
+        path.startswith("/api/v1/backoffice/team")
+        or path.startswith("/api/v1/invitations/")
+    ):
+        return app.state.identity, path.replace("/api/v1", "", 1)
     if settings.identity_url and path.startswith("/api/v1/identity"):
         return app.state.identity, path.replace("/api/v1/identity", "/identity", 1)
     if settings.search_url and path.startswith("/api/v1/search"):
