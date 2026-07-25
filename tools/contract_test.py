@@ -86,6 +86,7 @@ def cases(args):
             ("GET", "/api/v1/agencies", None, None),
             ("GET", "/api/v1/agencies/immo-casa-premium", None, None),
             ("GET", "/api/v1/my-agency", None, None),
+            ("GET", "/api/v1/agencies/immo-casa-premium/properties", None, None),
         ],
         "geo": [
             *([("GET", f"/api/v1/properties/{pid}/price-position", None, None)] if pid else []),

@@ -55,7 +55,11 @@ for pair in $SVCS; do
   svc="${pair%%:*}"; port="${pair##*:}"
   kill_port "$port"
   extra=""; [ "$svc" = "contract" ] && extra="$S3"; [ "$svc" = "identity" ] && extra="JWT_SECRET_KEY=$JWT"
-  case "$svc" in billing|agency) extra="IDENTITY_URL=http://localhost:8501";; esac
+  case "$svc" in
+    billing) extra="IDENTITY_URL=http://localhost:8501";;
+    agency)  extra="IDENTITY_URL=http://localhost:8501 LISTING_URL=http://localhost:8012";;
+    buyer)   extra="LISTING_URL=http://localhost:8012";;
+  esac
   case "$svc" in listing|search) extra="$extra $TS_HIDDEN";; esac
   env SERVICE_NAME="$svc" DATABASE_URL="$(dburl "$svc")" TRUST_GATEWAY_HEADERS=true \
       INTERNAL_TOKEN="$ITOK" MONOLITH_URL="$MONO" RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" \
@@ -87,7 +91,7 @@ worker() { env SERVICE_NAME="$1" DATABASE_URL="$(dburl "$1")" RABBITMQ_URL="$RMQ
   OPENSEARCH_URL="$OS" MONOLITH_URL="$MONO" INTERNAL_TOKEN="$ITOK" \
   PYTHONPATH="services/$1" nohup python3 -m app.worker > "$LOG/$1-worker.log" 2>&1 & }
 for r in listing catalog identity contract payment billing transactions; do relay "$r"; done
-for w in search crm marketplace geo agency messaging analytics billing notification identity audit transactions legal contract buyer; do worker "$w"; done
+for w in search crm marketplace geo agency messaging analytics billing notification identity audit transactions legal contract; do worker "$w"; done
 ( cd backend; set -a; source .env; set +a
   RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" nohup venv/bin/python scripts/consume_users.py > "$LOG/monolith-consumer.log" 2>&1 &
   RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" nohup venv/bin/python scripts/relay_outbox.py > "$LOG/monolith-relay.log" 2>&1 & )

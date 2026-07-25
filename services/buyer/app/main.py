@@ -16,8 +16,9 @@ from sqlalchemy.orm import Session
 from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
+from . import listing_client
 from .db import get_db, init_db
-from .models import Favorite, PropertyEstimate, PropertyRO, SavedSearch
+from .models import Favorite, PropertyEstimate, SavedSearch
 from .util import err, iso, json_body
 
 settings = get_settings()
@@ -71,14 +72,6 @@ def _search_dict(s: SavedSearch) -> dict:
 def _fav_dict(f: Favorite) -> dict:
     return {"id": f.id, "user_id": f.user_id, "property_id": f.property_id,
             "notes": f.notes, "rating": f.rating, "created_at": iso(f.created_at)}
-
-
-def _prop_dict(p: PropertyRO | None) -> dict | None:
-    if p is None:
-        return None
-    return {"id": p.id, "reference": p.reference, "title": p.title, "price": _num(p.price),
-            "city": p.city, "property_type": p.property_type, "transaction_type": p.transaction_type,
-            "surface": _num(p.surface), "rooms": p.rooms, "bedrooms": p.bedrooms, "status": p.status}
 
 
 def _est_dict(e: PropertyEstimate) -> dict:
@@ -156,7 +149,9 @@ def list_favorites(request: Request, principal: Principal = Depends(get_principa
     total = q.count()
     items = q.offset((page - 1) * per_page).limit(per_page).all()
     pages = (total + per_page - 1) // per_page if per_page else 0
-    favs = [{**_fav_dict(f), "property": _prop_dict(db.get(PropertyRO, f.property_id))} for f in items]
+    # Dict COMPLET du bien (parité) via l'endpoint interne de listing.
+    props = listing_client.by_ids([f.property_id for f in items])
+    favs = [{**_fav_dict(f), "property": props.get(f.property_id)} for f in items]
     return {"favorites": favs, "total": total, "pages": pages, "current_page": page}
 
 
@@ -166,7 +161,7 @@ async def add_favorite(request: Request, principal: Principal = Depends(get_prin
     property_id = data.get("property_id")
     if not property_id:
         return err("property_id requis", 400)
-    if db.get(PropertyRO, property_id) is None:
+    if not listing_client.exists(property_id):
         return err("Propriété non trouvée", 404)
     uid = _uid(principal)
     if db.query(Favorite).filter(Favorite.user_id == uid, Favorite.property_id == property_id).first():
@@ -223,7 +218,7 @@ async def create_estimate(request: Request, principal: Principal = Depends(get_p
     estimated_price = data.get("estimated_price")
     if not property_id or not estimated_price:
         return err("property_id et estimated_price requis", 400)
-    if db.get(PropertyRO, property_id) is None:
+    if not listing_client.exists(property_id):
         return err("Propriété non trouvée", 404)
     e = PropertyEstimate(user_id=_uid(principal), property_id=property_id, estimated_price=estimated_price,
                          estimated_reason=data.get("estimated_reason"), market_analysis=data.get("market_analysis"),

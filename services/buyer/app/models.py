@@ -1,7 +1,8 @@
 """Modèles du service buyer (schéma `buyer`) — parité `backend/app/models/buyer.py`.
 
 `/buyer/messages*` reste au service **messaging** (déjà extrait) — non modélisé ici.
-`PropertyRO` = projection réduite des biens (carte favori), maintenue par `listing.*`.
+Le bien imbriqué (favoris) vient du service **listing** (dict complet, `app/listing_client.py`) :
+aucune projection de bien ici (listing en est propriétaire).
 """
 from datetime import datetime
 
@@ -51,26 +52,3 @@ class PropertyEstimate(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
-class PropertyRO(Base):
-    """Projection réduite du bien (carte favori) — via `listing.*`. Écart assumé : le monolithe
-    imbrique le dict complet du bien ; ici les champs d'affichage clés (favoris = 0 en base)."""
-    __tablename__ = "property_ro"
-
-    id = Column(BigInteger, primary_key=True)
-    reference = Column(String(50))
-    title = Column(String(200))
-    price = Column(Numeric(12, 2))
-    city = Column(String(100))
-    property_type = Column(String(50))
-    transaction_type = Column(String(20))
-    surface = Column(Numeric(10, 2))
-    rooms = Column(Integer)
-    bedrooms = Column(Integer)
-    status = Column(String(20))
-
-
-class ProcessedMessage(Base):
-    __tablename__ = "processed_message"
-
-    message_id = Column(String(64), primary_key=True)
-    processed_at = Column(DateTime, default=datetime.utcnow)

@@ -1,11 +1,6 @@
 -- Migration buyer : monolithe -> buyer. À exécuter AVANT le reroute BFF.
--- property_ro (réduite) amorcée depuis public.properties (puis maintenue par listing.*).
 -- saved_searches/favorites/property_estimates : copiés (0 ligne actuellement, INSERT idempotent).
-
-INSERT INTO buyer.property_ro (
-    id, reference, title, price, city, property_type, transaction_type, surface, rooms, bedrooms, status)
-SELECT id, reference, title, price, city, property_type, transaction_type, surface, rooms, bedrooms, status
-FROM public.properties ON CONFLICT (id) DO NOTHING;
+-- Aucun bien projeté ici : le dict complet du bien vient du service listing (app/listing_client.py).
 
 INSERT INTO buyer.saved_search (
     id, user_id, name, description, criteria, notify_new_matches, last_notified_at, created_at, updated_at)

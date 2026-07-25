@@ -5,7 +5,7 @@
 """
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, Integer, Numeric, String, Text
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, Integer, String, Text
 
 from .db import Base
 
@@ -57,23 +57,12 @@ class Agency(Base):
 
 
 class ListingRO(Base):
-    """Projection des biens : (id, agency_id) pour `properties_count` + champs d'affichage
-    réduits pour `/agencies/{slug}/properties` (non consommé par le front → dict réduit assumé)."""
+    """Projection (id, agency_id) via `listing.*` — pour `properties_count`. Reconstructible.
+    Le dict complet des biens vient du service listing (`app/listing_client.py`)."""
     __tablename__ = "listing_ro"
 
     id = Column(BigInteger, primary_key=True)
     agency_id = Column(Integer, index=True)
-    reference = Column(String(50))
-    title = Column(String(200))
-    price = Column(Numeric(12, 2))
-    city = Column(String(100))
-    property_type = Column(String(50))
-    transaction_type = Column(String(20))
-    surface = Column(Numeric(10, 2))
-    rooms = Column(Integer)
-    bedrooms = Column(Integer)
-    status = Column(String(20))
-    published_at = Column(DateTime)
 
 
 class ProcessedMessage(Base):

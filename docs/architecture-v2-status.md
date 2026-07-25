@@ -4,7 +4,7 @@
 > Décrit ce qui est fait, ce qui tourne, comment tout relancer, et le reste à faire.
 > Branche : `feature/architecture-v2` (commits **locaux uniquement**, aucun upstream, aucun push).
 
-Dernière mise à jour de session : contrat **60/60 PASS**. #6 en cours : T1 buyer + T2 agency FAITS.
+Dernière mise à jour de session : contrat **61/61 PASS**. #6 : T1 buyer + T2 agency FAITS (dicts biens COMPLETS via listing, aucun écart résiduel).
 
 > **REPRISE (contexte frais)** — §8 items #1, #2, #5 **FAITS** ; **#4 `transactions` FAIT** ;
 > **`legal` FAIT** ; **`contract` FAIT** (tranches de #3, vérifiés E2E + gates 403 + create/finalize,
@@ -67,7 +67,7 @@ reconstructibles). Validation JWT **locale** au BFF (frontière d'auth sévrée)
 | catalog | 8009 | boutique produits (`/backoffice/shop/products`, `/admin/products`) |
 | marketplace | 8010 | panier/commandes (`/backoffice/shop/cart|orders`, `/admin/orders`) |
 | directory | 8011 | artisans/travaux (`/backoffice/artisans|work-orders|artisan-trades`) |
-| listing | 8012 | biens : détail/CRUD/publish/my-properties + engagement (contact/reveal-phone) |
+| listing | 8012 | biens : détail/CRUD/publish/my-properties + engagement (contact/reveal-phone) + `internal/properties` (dicts complets pour buyer/agency) |
 | crm | 8013 | leads/clients/visites (`/backoffice/leads|clients|visits`) |
 | search | 8103 | découverte biens (`GET /properties`, `/properties/search`, `/suggestions`) — OpenSearch |
 | geo | 8509 | positionnement prix + `/market/neighborhood-prices` |
@@ -217,12 +217,12 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
    relais rechargés sur la lib outbox corrigée. **Reste ~100+ routes front-facing** (sur 289
    totales, la majorité déjà extraite). **Plan de tranches (ordonné, à exécuter une par une avec
    parité + E2E + commit, comme les 5 précédentes)** :
-   - ✅ **T1 `buyer` FAIT** (`services/buyer` :8515, contrat 59/59) : `/buyer/saved-searches*` (CRUD),
-     `/buyer/favorites*` (CRUD, enrichissement titre bien → projection `property_ro`),
+   - ✅ **T1 `buyer` FAIT** (`services/buyer` :8515) : `/buyer/saved-searches*` (CRUD),
+     `/buyer/favorites*` (CRUD ; bien imbriqué = **dict COMPLET via listing** `internal/properties`, aucune projection locale),
      `/buyer/estimates*` (CRUD). Par utilisateur (`user_id` du JWT). `/buyer/messages*` = **déjà**
      servi par messaging. Nouveau service `services/buyer` (schéma dédié) + migration
      (`saved_searches`/`favorites`/`estimates`) + projection biens.
-   - ✅ **T2 agency completion FAIT** (`/my-agency` membres via identity `internal/.../members`, parité ; `/agencies/{slug}/properties` = dict réduit, non front-consommé, hors contrat)
+   - ✅ **T2 agency completion FAIT** (`/my-agency` membres via identity `internal/.../members` ; `/agencies/{slug}/properties` = **dicts COMPLETS via listing** `internal/properties`, masquage inclus — parité, au contrat)
    - ~~T2 agency completion~~ (2 routes) : `/my-agency` (include_members → membres = domaine identity ;
      appel interne identity ou projection) + `/agencies/{slug}/properties` (biens de l'agence →
      projection listing). Étend le service `agency` existant (:8512).
@@ -263,4 +263,4 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
 ## 10. Contrat / vérification
 `tools/contract_test.py` compare monolithe vs BFF route par route (statut + JSON normalisé, champs
 volatils ignorés). Groupes : catalog, directory, listing, search, crm, marketplace, geo, messaging,
-trust-safety, rbac, agency, audit, transactions, legal, contract, billing, payment, buyer. **60/60** actuellement (comparaison des collections par `id` ordre-insensible : membres de /my-agency non ordonnés côté monolithe).
+trust-safety, rbac, agency, audit, transactions, legal, contract, billing, payment, buyer. **61/61** actuellement (collections par `id` ordre-insensible : membres /my-agency + biens /agencies/{slug}/properties non ordonnés côté monolithe).

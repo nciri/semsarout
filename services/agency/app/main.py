@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
-from . import members_client
+from . import listing_client, members_client
 from .db import get_db, init_db
 from .models import Agency, ListingRO
 
@@ -96,32 +96,16 @@ def my_agency(principal: Principal = Depends(get_principal), db: Session = Depen
     return {"agency": data}
 
 
-def _listing_dict(l: ListingRO) -> dict:
-    n = lambda v: float(v) if v is not None else None  # noqa: E731
-    return {"id": l.id, "reference": l.reference, "title": l.title, "price": n(l.price),
-            "city": l.city, "property_type": l.property_type, "transaction_type": l.transaction_type,
-            "surface": n(l.surface), "rooms": l.rooms, "bedrooms": l.bedrooms, "status": l.status,
-            "published_at": l.published_at.isoformat() if l.published_at else None}
-
-
 @app.get("/agencies/{slug}/properties")
 def agency_properties(slug: str, request: Request, db: Session = Depends(get_db)):
-    """Biens actifs d'une agence. Écart assumé : dict réduit (non consommé par le front ; le
-    monolithe renvoie le dict complet du bien) ; masquage modération non appliqué ici."""
+    """Biens actifs d'une agence — dicts COMPLETS (parité) via le service listing (propriétaire
+    du bien), masquage modération inclus. agency résout le slug → agency_id (son domaine)."""
     agency = db.query(Agency).filter(Agency.slug == slug).first()
     if agency is None or agency.is_suspended or agency.deleted_at is not None:
         return _err("Not found", 404)
     qp = request.query_params
-    page = int(qp.get("page") or 1)
-    per_page = int(qp.get("per_page") or 20)
-    q = (db.query(ListingRO)
-         .filter(ListingRO.agency_id == agency.id, ListingRO.status == "active")
-         .order_by(ListingRO.published_at.desc()))
-    total = q.count()
-    items = q.offset((page - 1) * per_page).limit(per_page).all()
-    pages = (total + per_page - 1) // per_page if per_page else 1
-    return {"properties": [_listing_dict(l) for l in items], "total": total,
-            "pages": pages, "current_page": page}
+    return listing_client.by_agency(agency.id, "active",
+                                    int(qp.get("page") or 1), int(qp.get("per_page") or 20))
 
 
 @app.get("/agencies/{slug}")

@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 
 import httpx
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import Session
@@ -114,6 +114,34 @@ def _emit(db: Session, p: Property, event_type: str) -> None:
 @app.get("/health", include_in_schema=False)
 async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
+
+
+@app.get("/internal/properties", include_in_schema=False)
+def internal_properties(request: Request, x_internal_token: str = Header(default=""),
+                        db: Session = Depends(get_db)):
+    """Dicts COMPLETS de biens (parité `Property.to_dict`) pour d'autres services (buyer, agency).
+    `?ids=1,2,3` → liste des biens correspondants. `?agency_id=X&status=active&page&per_page` →
+    biens de l'agence, masquage modération appliqué, paginé. listing possède le bien (v2-native)."""
+    if x_internal_token != settings.internal_token:
+        return JSONResponse({"error": "Forbidden"}, status_code=403)
+    qp = request.query_params
+    if qp.get("ids"):
+        ids = [int(x) for x in qp["ids"].split(",") if x.strip().isdigit()]
+        props = db.query(Property).filter(Property.id.in_(ids)).all() if ids else []
+        return {"properties": [_prop_dict(db, p) for p in props]}
+    if qp.get("agency_id"):
+        q = db.query(Property).filter(Property.agency_id == int(qp["agency_id"]))
+        if qp.get("status"):
+            q = q.filter(Property.status == qp["status"])
+        rows = [p for p in q.order_by(Property.published_at.desc()).all()
+                if not moderation.is_hidden(p.owner_id, p.agency_id)]
+        page = int(qp.get("page") or 1)
+        per_page = int(qp.get("per_page") or 20)
+        total = len(rows)
+        items = rows[(page - 1) * per_page: (page - 1) * per_page + per_page]
+        return {"properties": [_prop_dict(db, p) for p in items], "total": total,
+                "pages": math.ceil(total / per_page) if per_page else 1, "current_page": page}
+    return {"properties": []}
 
 
 # ---- Détail public (masquage modération + vues) ----
