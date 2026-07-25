@@ -5,21 +5,54 @@ depuis les projections identity (`role_ro`/`permission_ro`). Les écritures (CRU
 d'équipe, invitations) restent au monolithe pour l'instant (RBAC à base de sièges + agence).
 Erreurs legacy `{'error': msg}`.
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
+from semsar_events import enqueue
 
+from . import seats
+from .auth import _user_event_doc
 from .db import get_db
-from .models import PermissionRO, RoleRO, user_role_ro
+from .models import AgencyRO, PermissionRO, RoleRO, UserRO, user_role_ro
 
 router = APIRouter()
 
 
 def _err(msg: str, code: int) -> JSONResponse:
     return JSONResponse({"error": msg}, status_code=code)
+
+
+async def _json(request: Request) -> dict:
+    try:
+        data = await request.json()
+    except Exception:  # noqa: BLE001
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _acting(principal: Principal, db: Session) -> UserRO | None:
+    uid = int(principal.sub) if principal.sub and principal.sub.isdigit() else None
+    return db.get(UserRO, uid) if uid else None
+
+
+def _require_manage_roles(principal: Principal, db: Session):
+    """Reproduit `_require_manage_roles` : (agency, None) si autorisé, sinon (None, err)."""
+    agency = db.get(AgencyRO, principal.agency_id) if principal.agency_id else None
+    if principal.is_superadmin:
+        return agency, None
+    if agency is None:
+        return None, _err("Aucune agence", 400)
+    if not seats.can_manage_team(db, _acting(principal, db), agency):
+        return None, _err("Vous n'avez pas le droit de gérer les rôles.", 403)
+    return agency, None
+
+
+def _emit_user(db: Session, user: UserRO) -> None:
+    db.flush()
+    enqueue(db, "user", user.id, "user.updated", _user_event_doc(user))
 
 
 def _counts(db: Session, role_ids: list[int]) -> dict[int, int]:
@@ -60,3 +93,63 @@ def get_permissions(_p: Principal = Depends(get_principal), db: Session = Depend
     for p in perms:
         grouped.setdefault(p.module, []).append(p.to_dict())
     return {"permissions": [p.to_dict() for p in perms], "grouped": grouped}
+
+
+# ---- Écritures (gestion des utilisateurs) ----
+def _scoped_user(db: Session, principal: Principal, user_id: int):
+    user = db.get(UserRO, user_id)
+    if user is None:
+        return None, _err("User not found", 404)
+    if principal.agency_id and user.agency_id != principal.agency_id:
+        return None, _err("Access denied", 403)
+    return user, None
+
+
+@router.post("/backoffice/users/{user_id}/activate")
+def activate_user(user_id: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    user, err = _scoped_user(db, principal, user_id)
+    if err:
+        return err
+    user.is_active = True
+    _emit_user(db, user)
+    db.commit()
+    return {"message": "User activated"}
+
+
+@router.post("/backoffice/users/{user_id}/deactivate")
+def deactivate_user(user_id: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    user, err = _scoped_user(db, principal, user_id)
+    if err:
+        return err
+    user.is_active = False
+    _emit_user(db, user)
+    db.commit()
+    return {"message": "User deactivated"}
+
+
+@router.put("/backoffice/users/{user_id}/roles")
+async def update_user_roles(user_id: int, request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    user, err = _scoped_user(db, principal, user_id)
+    if err:
+        return err
+    agency, err = _require_manage_roles(principal, db)
+    if err:
+        return err
+    role_ids = (await _json(request)).get("roles", [])
+    if principal.is_superadmin:
+        roles = db.query(RoleRO).filter(RoleRO.id.in_(role_ids)).all()
+        if len(roles) != len(set(role_ids)):
+            return _err("Rôle invalide", 400)
+    else:
+        if agency.owner_id and user.id == agency.owner_id:
+            return _err("Le rôle du propriétaire ne peut pas être modifié.", 409)
+        roles = []
+        for rid in role_ids:
+            role = seats.resolve_assignable_role(db, agency.id, rid)
+            if role is None:
+                return _err("Rôle invalide", 400)
+            roles.append(role)
+    user.roles = roles
+    _emit_user(db, user)
+    db.commit()
+    return {"message": "Roles updated"}

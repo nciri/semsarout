@@ -39,6 +39,7 @@ def _user_event_doc(u: UserRO) -> dict:
         "suspended_reason": u.suspended_reason, "deleted_at": iso(u.deleted_at),
         "anonymized_at": iso(u.anonymized_at), "dashboard_config": u.dashboard_config,
         "agency_id": u.agency_id, "team_id": u.team_id,
+        "role_ids": [r.id for r in u.roles],  # resync public.user_roles côté monolithe
     }
 
 router = APIRouter()
