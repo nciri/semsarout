@@ -23,7 +23,7 @@ from semsar_common import (
 )
 from semsar_events import enqueue
 
-from . import events
+from . import auth, events
 from .db import get_db, init_db
 from .models import KycVerification
 
@@ -57,6 +57,9 @@ except Exception:  # noqa: BLE001
     pass
 
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
+
+# Auth (émission des JWT) — routes legacy `{'error'}`, montées à part du KYC (RFC 9457).
+app.include_router(auth.router)
 
 
 @app.get("/health", include_in_schema=False)

@@ -12,6 +12,7 @@ dependencies = [
     "semsar-common",
     "semsar-auth",
     "semsar-events",
+    "werkzeug>=3.0",
 ]
 
 [project.optional-dependencies]
