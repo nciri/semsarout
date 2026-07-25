@@ -252,6 +252,12 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         return app.state.crm, path.replace("/api/v1", "", 1)
     if settings.transactions_url and path.startswith("/api/v1/backoffice/transactions"):
         return app.state.transactions, path.replace("/api/v1", "", 1)
+    if settings.legal_url and (
+        path.startswith("/api/v1/backoffice/notaries")
+        or path.startswith("/api/v1/backoffice/legal-cases")
+        or path.startswith("/api/v1/backoffice/legal-tasks")
+    ):
+        return app.state.legal, path.replace("/api/v1", "", 1)
     return app.state.monolith, path
 
 

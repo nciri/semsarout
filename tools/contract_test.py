@@ -95,6 +95,13 @@ def cases(args):
             ("GET", "/api/v1/backoffice/transactions/stages", {"type": "sale"}, None),
             ("GET", "/api/v1/backoffice/transactions/stages", {"type": "rent"}, None),
         ],
+        "legal": [
+            ("GET", "/api/v1/backoffice/notaries", None, None),
+            ("GET", "/api/v1/backoffice/legal-cases", None, None),
+            ("GET", "/api/v1/backoffice/legal-cases", {"status": "open"}, None),
+            *([("GET", f"/api/v1/backoffice/legal-cases/{args.legal_case_id}", None, None)]
+              if args.legal_case_id else []),
+        ],
         "crm": [
             ("GET", "/api/v1/backoffice/leads", None, None),
             ("GET", "/api/v1/backoffice/leads/stats", None, None),
@@ -126,6 +133,7 @@ def main() -> int:
     p.add_argument("--services", default="all")
     p.add_argument("--property-id", type=int, default=None)
     p.add_argument("--lead-id", type=int, default=None)
+    p.add_argument("--legal-case-id", type=int, default=None)
     args = p.parse_args()
 
     all_cases = cases(args)

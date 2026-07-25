@@ -4,18 +4,23 @@
 > Décrit ce qui est fait, ce qui tourne, comment tout relancer, et le reste à faire.
 > Branche : `feature/architecture-v2` (commits **locaux uniquement**, aucun upstream, aucun push).
 
-Dernière mise à jour de session : contrat **41/41 PASS** (transactions ajouté, +8 cas).
+Dernière mise à jour de session : contrat **45/45 PASS** (transactions +8, legal +4).
 
-> **REPRISE (contexte frais)** — §8 items #1, #2, #5 **FAITS** ; **#4 `transactions` FAIT** (1ʳᵉ
-> tranche de #4, vérifié E2E, contrat 41/41). Service `services/transactions` (:8514, schéma/rôle
-> dédiés) reroute `/backoffice/transactions*` à l'identique (liste/pipeline/stats/stages/CRUD/move/
-> offers/documents), émet `transaction.*` (outbox→crm maintient `transaction_ro`).
-> **Fix mesh au passage** : `message_id` d'outbox namespacé par `aggregate_type`
-> (`libs/semsar_events/…/outbox.py`) — sans ça, un consumer multi-publisher (crm = listing.* +
+> **REPRISE (contexte frais)** — §8 items #1, #2, #5 **FAITS** ; **#4 `transactions` FAIT** ;
+> **`legal` FAIT** (1ʳᵉ tranche de #3, vérifié E2E + gate 403 + create, contrat 45/45).
+> `services/transactions` (:8514) reroute `/backoffice/transactions*`, émet `transaction.*`
+> (outbox→crm/legal maintiennent leurs projections). `services/legal` (:8506) **réécrit pour servir
+> les routes legacy** `/backoffice/notaries*`, `/backoffice/legal-cases*` (+`/tasks`),
+> `/backoffice/legal-tasks*` à l'identique (gate premium via `Principal.features` → 403
+> "Fonction réservée aux plans Pro et Entreprise."). legal consomme `transaction.*`/`listing.*`
+> pour ses projections d'appartenance (create de dossier lié à une transaction).
+> **Fix mesh** : `message_id` d'outbox namespacé par `aggregate_type`
+> (`libs/semsar_events/…/outbox.py`) — sans ça, un consumer multi-publisher (crm/legal = listing.* +
 > transaction.*) collisionnait sur les id d'outbox locaux (relais existants rechargent la lib au
 > prochain `dev-mesh-up.sh`).
-> Prochaine tranche : **legal** (autonome, gating via `Principal.features`), puis **contract**
-> (dépend de transactions, désormais dispo). Ordre restant : `legal → billing → contract → payment → #6`.
+> Prochaine tranche : **contract** (dépend de transactions+documents, désormais dispo — routes
+> `/backoffice/contracts*` +`/finalize`/`/mark-signed`/`/pdf`, `/backoffice/contract-templates*`),
+> puis **billing** puis **payment**. Ordre restant : `contract → billing → payment → #6`.
 > Findings clés : gating premium lu dans le JWT (`Principal.features`) → legal/contract **ne dépendent
 > pas** d'une projection billing pour le 403 ; `/payment-methods` = non-feature (table absente du
 > monolithe → 404, ne pas router). Détail complet en §8.3/§8.4. Décisions utilisateur : #3 = reproduire
@@ -47,10 +52,11 @@ reconstructibles). Validation JWT **locale** au BFF (frontière d'auth sévrée)
 | agency | 8512 | agences lecture (`GET /agencies`, `/agencies/{slug}`) |
 | audit | 8513 | journal transverse (`GET /admin/activity`) |
 | transactions | 8514 | pipeline ventes/locations (`/backoffice/transactions*` : liste/pipeline/stats/stages/CRUD/move/offers/documents) |
+| legal | 8506 | notaires + dossiers juridiques + checklists (`/backoffice/notaries*`, `/backoffice/legal-cases*`, `/backoffice/legal-tasks*`) — gate premium `legal` |
 | identity | 8501 | **auth complète** (voir §3) + RBAC + teams/invitations |
 
 **Services additifs (nouvelles surfaces, PAS consommées par le front — voir reste à faire) :**
-identity(KYC) · notification 8502 · analytics 8504 · contract 8505 · legal 8506 · payment 8507 · billing 8508
+identity(KYC) · notification 8502 · analytics 8504 · contract 8505 · payment 8507 · billing 8508
 
 ## 3. Domaine identité/auth (le plus important, basculé)
 `identity` (:8501) est **source de vérité** pour les comptes et **émet les JWT** :
@@ -84,9 +90,9 @@ Tous les relais/consumers survivent aux redémarrages RabbitMQ (prouvé × 3) :
 - `EventConsumer` : boucle de reconnexion. Scripts monolithe (pika brut) : mêmes boucles.
 - Publishers (outbox+relay) : listing, catalog, identity, transactions (+ contract/payment/billing) + monolithe.
 - Consumers (workers) : search, crm, marketplace, geo, agency, messaging, analytics, billing,
-  notification, identity, audit, transactions + monolithe (`consume_users.py`).
+  notification, identity, audit, transactions, legal + monolithe (`consume_users.py`).
 - **Idempotence multi-publisher** : `message_id` d'outbox namespacé par `aggregate_type` (les id
-  d'outbox sont locaux à chaque publisher ; crm consomme désormais listing.* **et** transaction.*).
+  d'outbox sont locaux à chaque publisher ; crm/legal consomment listing.* **et** transaction.*).
 
 ## 6. Infra & environnement
 - **Postgres** natif :5432, base `semsar_dev`, admin `postgres:postgres`. Un rôle/schéma par
@@ -112,7 +118,7 @@ bash scripts/dev-mesh-up.sh
 TOK=$(curl -s -XPOST localhost:8099/api/v1/auth/login -H 'content-type: application/json' \
   -d '{"email":"agent1@immo-casa-premium.ma","password":"password123"}' | python3 -c 'import sys,json;print(json.load(sys.stdin)["access_token"])')
 python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://localhost:8099 \
-  --token "$TOK" --services catalog,directory,listing,search,crm,marketplace,geo,messaging,trust-safety,rbac,agency,audit,transactions --property-id 90
+  --token "$TOK" --services catalog,directory,listing,search,crm,marketplace,geo,messaging,trust-safety,rbac,agency,audit,transactions,legal --property-id 90 --legal-case-id 1
 ```
 
 ## 8. Reste à faire (priorisé)
@@ -145,9 +151,12 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
    **Ordre de dépendances** : le gating premium se lit **depuis le JWT** (`Principal.features`
    contient `contracts`/`legal`/`artisans`) → legal & contract **ne dépendent PAS** d'une projection
    billing pour le 403. contract dépend en plus des **transactions (#4)** pour create/finalize
-   (`Transaction`+`TransactionDocument`). Donc : **legal (autonome) → billing → transactions(#4) →
-   contract → payment**. Chaque tranche = migration de projection (`migrate_from_monolith.sql`) +
+   (`Transaction`+`TransactionDocument`). Donc : **legal (autonome) → transactions(#4) → contract →
+   billing → payment**. Chaque tranche = migration de projection (`migrate_from_monolith.sql`) +
    port fidèle des routes (scopé agence, erreurs `{'error'}`) + routage BFF + ajout au contrat.
+   **Avancement** : ✅ **legal FAIT** (`services/legal` réécrit en routes legacy, gate 403 vérifié,
+   projections `transaction_ro`/`property_ro` via `transaction.*`/`listing.*`, contrat +4) ;
+   ✅ transactions (#4) FAIT. Reste : **contract** (prochaine, dépend de transactions dispo), billing, payment.
 4. **Domaines non extraits** (périmètre : **tout**) : ~~`transactions` (14 routes)~~ ✅ **FAIT**
    (`services/transactions`, :8514, contrat 41/41) · `programs`
    (21 routes, nouveau dev) · `buyer`/estimations/favoris · `dashboards`/`analytics`/`stats` (front
@@ -189,4 +198,4 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
 ## 10. Contrat / vérification
 `tools/contract_test.py` compare monolithe vs BFF route par route (statut + JSON normalisé, champs
 volatils ignorés). Groupes : catalog, directory, listing, search, crm, marketplace, geo, messaging,
-trust-safety, rbac, agency, audit, transactions. **41/41** actuellement.
+trust-safety, rbac, agency, audit, transactions, legal. **45/45** actuellement.

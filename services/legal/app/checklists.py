@@ -1,4 +1,7 @@
-"""Checklists juridiques par défaut, générées à la création d'un dossier."""
+"""Checklists juridiques par défaut, générées à la création d'un dossier.
+
+Miroir exact de `backend/app/services/legal_checklists.py` (parité création).
+"""
 
 _SALE = [
     "Vérification du titre foncier",
@@ -12,15 +15,13 @@ _SALE = [
 ]
 
 _RENTAL = [
-    "Pièces d'identité des parties",
-    "Justificatifs de revenus",
-    "Rédaction du bail",
+    "Vérification de la propriété",
     "État des lieux d'entrée",
+    "Contrat de bail signé",
     "Dépôt de garantie encaissé",
-    "Signature du bail",
     "Enregistrement du bail",
 ]
 
 
 def default_tasks(case_type: str) -> list[str]:
-    return _RENTAL if case_type == "rental" else _SALE
+    return list(_RENTAL if case_type == "rental" else _SALE)

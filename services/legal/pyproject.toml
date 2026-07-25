@@ -11,6 +11,7 @@ dependencies = [
     "psycopg[binary]>=3.1",
     "semsar-common",
     "semsar-auth",
+    "semsar-events",
 ]
 
 [project.optional-dependencies]
