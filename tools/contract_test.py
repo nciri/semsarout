@@ -74,6 +74,10 @@ def cases(args):
             ("POST", "/api/v1/admin/accounts/users/999999/suspend", None, {}),
             ("POST", "/api/v1/admin/accounts/agencies/999999/unsuspend", None, {}),
         ],
+        "agency": [
+            ("GET", "/api/v1/agencies", None, None),
+            ("GET", "/api/v1/agencies/immo-casa-premium", None, None),
+        ],
         "geo": [
             *([("GET", f"/api/v1/properties/{pid}/price-position", None, None)] if pid else []),
             ("GET", "/api/v1/market/neighborhood-prices", None, None),

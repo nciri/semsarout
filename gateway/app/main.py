@@ -148,6 +148,16 @@ def _search_discovery_match(path: str, method: str) -> bool:
 
 
 _GEO_PRICE = re.compile(r"^/api/v1/properties/\d+/price-position$")
+# agency (lecture) : liste, détail par slug (SANS le sous-chemin /properties), et /my-agency.
+_AGENCY_SLUG = re.compile(r"^/api/v1/agencies/[^/]+$")
+
+
+def _agency_match(path: str, method: str) -> bool:
+    # Liste + détail par slug (lecture, include_members=False). `/my-agency` (include_members=True,
+    # membres = domaine users/roles) et le sous-chemin /properties restent au monolithe.
+    if method != "GET":
+        return False
+    return path == "/api/v1/agencies" or bool(_AGENCY_SLUG.match(path))
 
 
 def _geo_match(path: str, method: str) -> bool:
@@ -158,6 +168,8 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
     # geo AVANT listing : /properties/{id}/price-position + /market/* → geo.
     if settings.geo_url and _geo_match(path, method):
         return app.state.geo, path.replace("/api/v1", "", 1)
+    if settings.agency_url and _agency_match(path, method):
+        return app.state.agency, path.replace("/api/v1", "", 1)
     # listing (détail/CRUD) AVANT la découverte (search) : /properties/{id} → listing.
     if settings.listing_url and _listing_match(path, method):
         return app.state.listing, path.replace("/api/v1", "", 1)
@@ -252,13 +264,14 @@ async def lifespan(app: FastAPI):
     app.state.geo = _client_or_none(settings.geo_url)
     app.state.messaging = _client_or_none(settings.messaging_url)
     app.state.trust_safety = _client_or_none(settings.trust_safety_url)
+    app.state.agency = _client_or_none(settings.agency_url)
     yield
     for client in (
         app.state.monolith, app.state.identity, app.state.search,
         app.state.analytics, app.state.contract, app.state.legal,
         app.state.payment, app.state.billing, app.state.catalog, app.state.marketplace,
         app.state.directory, app.state.listing, app.state.crm, app.state.geo,
-        app.state.messaging, app.state.trust_safety,
+        app.state.messaging, app.state.trust_safety, app.state.agency,
     ):
         if client is not None:
             await client.aclose()

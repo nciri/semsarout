@@ -44,6 +44,7 @@ class GatewaySettings(BaseSettings):
     geo_url: str | None = None
     messaging_url: str | None = None
     trust_safety_url: str | None = None
+    agency_url: str | None = None
 
     otlp_endpoint: str = "http://localhost:4318"
 
