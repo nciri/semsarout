@@ -4,7 +4,7 @@
 > Décrit ce qui est fait, ce qui tourne, comment tout relancer, et le reste à faire.
 > Branche : `feature/architecture-v2` (commits **locaux uniquement**, aucun upstream, aucun push).
 
-Dernière mise à jour de session : contrat **56/56 PASS** (transactions +8, legal +4, contract +3, billing +4, payment +4).
+Dernière mise à jour de session : contrat **59/59 PASS** (…, payment +4, buyer +3). #6 démarré : T1 buyer FAIT.
 
 > **REPRISE (contexte frais)** — §8 items #1, #2, #5 **FAITS** ; **#4 `transactions` FAIT** ;
 > **`legal` FAIT** ; **`contract` FAIT** (tranches de #3, vérifiés E2E + gates 403 + create/finalize,
@@ -80,6 +80,7 @@ reconstructibles). Validation JWT **locale** au BFF (frontière d'auth sévrée)
 | contract | 8505 | modèles + contrats + fusion + finalisation PDF (`/backoffice/contracts*` +`/finalize`/`/mark-signed`/`/pdf`, `/backoffice/contract-templates*`) — gate premium `contracts` (+ `contract_templates`) |
 | billing | 8508 | plans + abonnement (`/subscription-plans*`, `/my-subscription`, `/subscription/current`, `/cancel-subscription`, `/subscription/change-plan`) |
 | payment | 8507 | intention de paiement + webhook (`/payments/create-intent`, `/payments/webhook`, `/payments/{ref}`, `/my-payments`) — CMI simulé |
+| buyer | 8515 | acheteur : recherches sauvegardées + favoris + estimations (`/buyer/saved-searches*`, `/buyer/favorites*`, `/buyer/estimates*`) |
 | identity | 8501 | **auth complète** (voir §3) + RBAC + teams/invitations + `internal/agency/{id}/seats` |
 
 **Services additifs (nouvelles surfaces, PAS consommées par le front — voir reste à faire) :**
@@ -117,7 +118,7 @@ Tous les relais/consumers survivent aux redémarrages RabbitMQ (prouvé × 3) :
 - `EventConsumer` : boucle de reconnexion. Scripts monolithe (pika brut) : mêmes boucles.
 - Publishers (outbox+relay) : listing, catalog, identity, transactions (+ contract/payment/billing) + monolithe.
 - Consumers (workers) : search, crm, marketplace, geo, agency, messaging, analytics, billing,
-  notification, identity, audit, transactions, legal, contract + monolithe (`consume_users.py`).
+  notification, identity, audit, transactions, legal, contract, buyer + monolithe (`consume_users.py`).
 - **Idempotence multi-publisher** : `message_id` d'outbox namespacé par `aggregate_type` (les id
   d'outbox sont locaux à chaque publisher ; crm/legal/contract consomment listing.* **et**
   transaction.*, transactions consomme listing.* **et** contract.*).
@@ -151,7 +152,7 @@ bash scripts/dev-mesh-up.sh
 TOK=$(curl -s -XPOST localhost:8099/api/v1/auth/login -H 'content-type: application/json' \
   -d '{"email":"agent1@immo-casa-premium.ma","password":"password123"}' | python3 -c 'import sys,json;print(json.load(sys.stdin)["access_token"])')
 python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://localhost:8099 \
-  --token "$TOK" --services catalog,directory,listing,search,crm,marketplace,geo,messaging,trust-safety,rbac,agency,audit,transactions,legal,contract,billing,payment --property-id 90 --legal-case-id 1
+  --token "$TOK" --services catalog,directory,listing,search,crm,marketplace,geo,messaging,trust-safety,rbac,agency,audit,transactions,legal,contract,billing,payment,buyer --property-id 90 --legal-case-id 1
 ```
 
 ## 8. Reste à faire (priorisé)
@@ -216,7 +217,7 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
    relais rechargés sur la lib outbox corrigée. **Reste ~100+ routes front-facing** (sur 289
    totales, la majorité déjà extraite). **Plan de tranches (ordonné, à exécuter une par une avec
    parité + E2E + commit, comme les 5 précédentes)** :
-   - **T1 `buyer`** (12 routes, la plus autonome) : `/buyer/saved-searches*` (CRUD),
+   - ✅ **T1 `buyer` FAIT** (`services/buyer` :8515, contrat 59/59) : `/buyer/saved-searches*` (CRUD),
      `/buyer/favorites*` (CRUD, enrichissement titre bien → projection `property_ro`),
      `/buyer/estimates*` (CRUD). Par utilisateur (`user_id` du JWT). `/buyer/messages*` = **déjà**
      servi par messaging. Nouveau service `services/buyer` (schéma dédié) + migration
@@ -261,4 +262,4 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
 ## 10. Contrat / vérification
 `tools/contract_test.py` compare monolithe vs BFF route par route (statut + JSON normalisé, champs
 volatils ignorés). Groupes : catalog, directory, listing, search, crm, marketplace, geo, messaging,
-trust-safety, rbac, agency, audit, transactions, legal, contract, billing, payment. **56/56** actuellement.
+trust-safety, rbac, agency, audit, transactions, legal, contract, billing, payment, buyer. **59/59** actuellement.
