@@ -44,13 +44,51 @@ user_role_ro = Table(
 )
 
 
+role_permission_ro = Table(
+    "role_permission_ro", Base.metadata,
+    Column("role_id", Integer, ForeignKey("role_ro.id"), primary_key=True),
+    Column("permission_id", Integer, ForeignKey("permission_ro.id"), primary_key=True),
+)
+
+
+class PermissionRO(Base):
+    __tablename__ = "permission_ro"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100))
+    slug = Column(String(100), unique=True, nullable=False)
+    description = Column(String(255))
+    module = Column(String(50))
+
+    def to_dict(self) -> dict:
+        return {"id": self.id, "name": self.name, "slug": self.slug,
+                "description": self.description, "module": self.module}
+
+
 class RoleRO(Base):
     __tablename__ = "role_ro"
 
     id = Column(Integer, primary_key=True)
     slug = Column(String(50), unique=True, nullable=False)
     name = Column(String(100))
+    description = Column(String(255))
+    color = Column(String(20))
     level = Column(Integer, default=100)
+    is_system = Column(Boolean, default=False)
+    agency_id = Column(Integer, index=True)
+
+    permissions = relationship("PermissionRO", secondary=role_permission_ro,
+                               order_by="PermissionRO.id", lazy="selectin")
+
+    def to_dict(self, include_permissions: bool = False, users_count: int = 0) -> dict:
+        data = {
+            "id": self.id, "name": self.name, "slug": self.slug,
+            "description": self.description, "color": self.color, "level": self.level,
+            "is_system": self.is_system, "users_count": users_count,
+        }
+        if include_permissions:
+            data["permissions"] = [p.to_dict() for p in self.permissions]
+        return data
 
 
 class UserRO(Base):

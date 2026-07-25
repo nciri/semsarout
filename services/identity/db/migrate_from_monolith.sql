@@ -36,3 +36,19 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Réaligner la séquence pour les nouvelles inscriptions (register côté identity)
 SELECT setval(pg_get_serial_sequence('identity.user_ro','id'), COALESCE((SELECT MAX(id) FROM identity.user_ro),1));
+
+-- RBAC (lecture) : colonnes rôle étendues + permissions + associations
+ALTER TABLE identity.role_ro ADD COLUMN IF NOT EXISTS description VARCHAR(255);
+ALTER TABLE identity.role_ro ADD COLUMN IF NOT EXISTS color VARCHAR(20);
+ALTER TABLE identity.role_ro ADD COLUMN IF NOT EXISTS is_system BOOLEAN DEFAULT false;
+ALTER TABLE identity.role_ro ADD COLUMN IF NOT EXISTS agency_id INTEGER;
+
+UPDATE identity.role_ro r SET description=p.description, color=p.color,
+       is_system=p.is_system, agency_id=p.agency_id
+FROM public.roles p WHERE p.id = r.id;
+
+INSERT INTO identity.permission_ro (id, name, slug, description, module)
+SELECT id, name, slug, description, module FROM public.permissions ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO identity.role_permission_ro (role_id, permission_id)
+SELECT role_id, permission_id FROM public.role_permissions ON CONFLICT DO NOTHING;
