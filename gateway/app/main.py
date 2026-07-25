@@ -148,6 +148,8 @@ def _search_discovery_match(path: str, method: str) -> bool:
 
 
 _GEO_PRICE = re.compile(r"^/api/v1/properties/\d+/price-position$")
+# RBAC écritures utilisateur (rôles/activation) → identity ; GET /backoffice/users reste au monolithe.
+_RBAC_USER_WRITE = re.compile(r"^/api/v1/backoffice/users/\d+/(roles|activate|deactivate)$")
 # agency (lecture) : liste, détail par slug (SANS le sous-chemin /properties), et /my-agency.
 _AGENCY_SLUG = re.compile(r"^/api/v1/agencies/[^/]+$")
 
@@ -188,6 +190,9 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         path.startswith("/api/v1/backoffice/roles")
         or path == "/api/v1/backoffice/permissions"
     ):
+        return app.state.identity, path.replace("/api/v1", "", 1)
+    # RBAC écritures (gestion utilisateur : rôles / activation) → identity.
+    if settings.identity_url and _RBAC_USER_WRITE.match(path):
         return app.state.identity, path.replace("/api/v1", "", 1)
     if settings.identity_url and path.startswith("/api/v1/identity"):
         return app.state.identity, path.replace("/api/v1/identity", "/identity", 1)

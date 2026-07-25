@@ -49,6 +49,16 @@ def _upsert(app, payload: dict) -> None:
                  "GREATEST((SELECT last_value FROM users_id_seq), :id))"),
             {"id": payload["id"]},
         )
+        # Sync des rôles (si l'événement porte role_ids — ex. PUT /users/{id}/roles côté identity).
+        if "role_ids" in payload:
+            db.session.execute(text("DELETE FROM user_roles WHERE user_id = :uid"),
+                               {"uid": payload["id"]})
+            for rid in payload["role_ids"]:
+                db.session.execute(
+                    text("INSERT INTO user_roles (user_id, role_id) VALUES (:uid, :rid) "
+                         "ON CONFLICT DO NOTHING"),
+                    {"uid": payload["id"], "rid": rid},
+                )
         db.session.commit()
 
 
