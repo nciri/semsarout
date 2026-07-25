@@ -1,28 +1,28 @@
-# service payment
+# Service `payment`
 
-Encaissement en **séquestre CMI** (simulé, même esprit que le mock du monolithe). Cloisonné
-par agence (JWT). Schéma + rôle PostgreSQL dédiés (ADR-0002). Émet les événements du cycle
-séquestre via l'outbox.
+Intention de paiement + webhook passerelle, extrait du monolithe. **Réécrit pour servir les routes
+legacy** que le front consomme (cf. `backend/app/api/v1/payments.py`). Passerelle CMI **simulée**
+(comme le monolithe : `payment_url` mock).
 
-## Cycle séquestre
+- **Port** : 8507 · **Schéma/rôle Postgres** : `payment` (ADR-0002).
+- **Routes** (reroutées par le BFF, préfixe `/api/v1` retiré) :
+  `POST /payments/create-intent` (auth optionnelle), `POST /payments/webhook`,
+  `GET /payments/{reference}`, `GET /my-payments`.
+- **Montant** : services ponctuels via `SERVICE_PRICES` ; abonnement via projection locale `plan_ro`
+  (prix par slug, amorcée à la migration).
+- **Webhook confirmé** (paiement d'abonnement) → émet `payment.completed` (outbox → `app/relay.py`) ;
+  le **worker billing** crée/prolonge l'abonnement (v2-native, pas d'écriture cross-domaine). Le
+  monolithe écrivait directement la `Subscription` — ici c'est chorégraphié par événement.
+- **Auth optionnelle** : `create-intent`/`{ref}` lisent l'identité des en-têtes `x-semsar-*` posés
+  par le BFF (absent = paiement anonyme, comme `@jwt_required(optional=True)`).
 
-```
-POST /payment/payments              -> pending  (+ gateway_url simulée)
-POST /payment/payments/{id}/pay     -> held     (fonds SOUS SÉQUESTRE)   émet payment.held
-POST /payment/payments/{id}/release -> released (fonds au bénéficiaire)  émet payment.released
-POST /payment/payments/{id}/refund  -> refunded                          émet payment.refunded
-```
-
-## Démarrer (dev)
+## Migration & lancement
 
 ```bash
-psql "$ADMIN_DATABASE_URL" -f db/schema.sql
-cp .env.example .env
-pip install -e ../../libs/semsar_common -e ../../libs/semsar_auth -e ../../libs/semsar_events -e .
-
-uvicorn app.main:app --host 0.0.0.0 --port 8007   # JWT_PUBLIC_KEY requis
-python -m app.relay                                # relais outbox -> RabbitMQ
+psql "$ADMIN" -f services/payment/db/schema.sql                  # rôle + schéma (une fois)
+# init_db() crée les tables au démarrage du service, puis :
+psql "$ADMIN" -f services/payment/db/migrate_from_monolith.sql   # plan_ro (+ paiements existants)
 ```
 
-`billing` consomme `payment.released` pour activer un abonnement (chorégraphie).
-Le BFF route `/api/v1/payment/*` ici. En cible : intégration CMI réelle derrière `gateway.py`.
+Lancé par `scripts/dev-mesh-up.sh` (service + relais ; `PAYMENT_URL` câblé au BFF). Pas de worker
+(payment est publisher). Vérification de parité : `tools/contract_test.py --services payment`.

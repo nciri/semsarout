@@ -216,6 +216,11 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         return app.state.contract, path.replace("/api/v1/contract", "/contract", 1)
     if settings.legal_url and path.startswith("/api/v1/legal"):
         return app.state.legal, path.replace("/api/v1/legal", "/legal", 1)
+    # payment (routes legacy) : intention + webhook + statut + historique.
+    if settings.payment_url and (
+        path.startswith("/api/v1/payments/") or path == "/api/v1/my-payments"
+    ):
+        return app.state.payment, path.replace("/api/v1", "", 1)
     if settings.payment_url and path.startswith("/api/v1/payment"):
         return app.state.payment, path.replace("/api/v1/payment", "/payment", 1)
     if settings.billing_url and path.startswith("/api/v1/billing"):

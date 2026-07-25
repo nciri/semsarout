@@ -95,6 +95,12 @@ def cases(args):
             ("GET", "/api/v1/backoffice/transactions/stages", {"type": "sale"}, None),
             ("GET", "/api/v1/backoffice/transactions/stages", {"type": "rent"}, None),
         ],
+        "payment": [
+            ("GET", "/api/v1/my-payments", None, None),
+            ("POST", "/api/v1/payments/create-intent", None, {}),
+            ("POST", "/api/v1/payments/create-intent", None, {"service_id": "nope"}),
+            ("GET", "/api/v1/payments/PAY-DOESNOTEXIST", None, None),
+        ],
         "billing": [
             ("GET", "/api/v1/subscription-plans", None, None),
             ("GET", "/api/v1/subscription-plans/1", None, None),

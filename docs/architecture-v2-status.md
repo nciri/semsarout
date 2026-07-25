@@ -4,7 +4,7 @@
 > Décrit ce qui est fait, ce qui tourne, comment tout relancer, et le reste à faire.
 > Branche : `feature/architecture-v2` (commits **locaux uniquement**, aucun upstream, aucun push).
 
-Dernière mise à jour de session : contrat **52/52 PASS** (transactions +8, legal +4, contract +3, billing +4).
+Dernière mise à jour de session : contrat **56/56 PASS** (transactions +8, legal +4, contract +3, billing +4, payment +4).
 
 > **REPRISE (contexte frais)** — §8 items #1, #2, #5 **FAITS** ; **#4 `transactions` FAIT** ;
 > **`legal` FAIT** ; **`contract` FAIT** (tranches de #3, vérifiés E2E + gates 403 + create/finalize,
@@ -35,8 +35,16 @@ Dernière mise à jour de session : contrat **52/52 PASS** (transactions +8, leg
 > interne d'identity** (`GET /internal/agency/{id}/seats`, v2-native, pas le monolithe). Écart assumé :
 > les features de gating restent projetées par identity (`agency_ro.features`), billing ne les pilote
 > pas encore.
-> Prochaine tranche : **payment** (`/payments/create-intent`), puis **#6** (décommissionnement).
-> Ordre restant : `payment → #6`.
+> **`payment` FAIT** : `services/payment` (:8507) réécrit pour servir `/payments/create-intent`,
+> `/payments/webhook`, `/payments/{reference}`, `/my-payments` (passerelle CMI simulée, comme le
+> monolithe). Montant d'abonnement via projection locale `plan_ro` (prix par slug). Le webhook confirmé
+> émet `payment.completed` → **worker billing crée/prolonge l'abonnement** (v2-native, sans écriture
+> cross-domaine) — vérifié E2E (create-intent service+plan, webhook → +365 j). `create-intent` est en
+> auth optionnelle (identité lue des en-têtes `x-semsar-*` si présentes).
+> **TOUTES les tranches de service sont FAITES.** Reste : **#6 décommissionnement** — pointer 100 %
+> du proxy front → BFF (le monolithe ne sert plus que les ~240 routes non encore extraites : voir §8.4
+> `programs`/`buyer`/`dashboards`/`analytics`/`integrations`), puis éteindre le monolithe quand tout
+> est extrait. Prérequis avant coupure : relancer `dev-mesh-up.sh` (recharge la lib outbox partout).
 > Findings clés : gating premium lu dans le JWT (`Principal.features`) → legal/contract **ne dépendent
 > pas** d'une projection billing pour le 403 ; `/payment-methods` = non-feature (table absente du
 > monolithe → 404, ne pas router). Détail complet en §8.3/§8.4. Décisions utilisateur : #3 = reproduire
@@ -71,10 +79,11 @@ reconstructibles). Validation JWT **locale** au BFF (frontière d'auth sévrée)
 | legal | 8506 | notaires + dossiers juridiques + checklists (`/backoffice/notaries*`, `/backoffice/legal-cases*`, `/backoffice/legal-tasks*`) — gate premium `legal` |
 | contract | 8505 | modèles + contrats + fusion + finalisation PDF (`/backoffice/contracts*` +`/finalize`/`/mark-signed`/`/pdf`, `/backoffice/contract-templates*`) — gate premium `contracts` (+ `contract_templates`) |
 | billing | 8508 | plans + abonnement (`/subscription-plans*`, `/my-subscription`, `/subscription/current`, `/cancel-subscription`, `/subscription/change-plan`) |
+| payment | 8507 | intention de paiement + webhook (`/payments/create-intent`, `/payments/webhook`, `/payments/{ref}`, `/my-payments`) — CMI simulé |
 | identity | 8501 | **auth complète** (voir §3) + RBAC + teams/invitations + `internal/agency/{id}/seats` |
 
 **Services additifs (nouvelles surfaces, PAS consommées par le front — voir reste à faire) :**
-identity(KYC) · notification 8502 · analytics 8504 · payment 8507
+identity(KYC) · notification 8502 · analytics 8504
 
 ## 3. Domaine identité/auth (le plus important, basculé)
 `identity` (:8501) est **source de vérité** pour les comptes et **émet les JWT** :
@@ -114,6 +123,9 @@ Tous les relais/consumers survivent aux redémarrages RabbitMQ (prouvé × 3) :
   transaction.*, transactions consomme listing.* **et** contract.*).
 - **Effet cross-domaine contract→transactions** : `contract.finalized`/`.signed` (outbox contract) →
   worker transactions crée/maj le `TransactionDocument` (copie du PDF dans la transaction liée).
+- **Chorégraphie paiement→abonnement** : `payment.released` (séquestre) **et** `payment.completed`
+  (webhook) → worker billing active/prolonge l'abonnement de l'agence (billing pilote son domaine ;
+  payment n'écrit jamais dans billing).
 
 ## 6. Infra & environnement
 - **Postgres** natif :5432, base `semsar_dev`, admin `postgres:postgres`. Un rôle/schéma par
@@ -139,7 +151,7 @@ bash scripts/dev-mesh-up.sh
 TOK=$(curl -s -XPOST localhost:8099/api/v1/auth/login -H 'content-type: application/json' \
   -d '{"email":"agent1@immo-casa-premium.ma","password":"password123"}' | python3 -c 'import sys,json;print(json.load(sys.stdin)["access_token"])')
 python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://localhost:8099 \
-  --token "$TOK" --services catalog,directory,listing,search,crm,marketplace,geo,messaging,trust-safety,rbac,agency,audit,transactions,legal,contract,billing --property-id 90 --legal-case-id 1
+  --token "$TOK" --services catalog,directory,listing,search,crm,marketplace,geo,messaging,trust-safety,rbac,agency,audit,transactions,legal,contract,billing,payment --property-id 90 --legal-case-id 1
 ```
 
 ## 8. Reste à faire (priorisé)
@@ -177,8 +189,8 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
    port fidèle des routes (scopé agence, erreurs `{'error'}`) + routage BFF + ajout au contrat.
    **Avancement** : ✅ **legal FAIT** ; ✅ **contract FAIT** (`services/legal`/`services/contract`
    réécrits en routes legacy, gates 403 vérifiés, projections via `transaction.*`/`listing.*`,
-   contrat +7) ; ✅ **billing FAIT** (routes legacy, garde-fou sièges via identity, contrat +4) ;
-   ✅ transactions (#4) FAIT. Reste : **payment** (prochaine).
+   contrat +7) ; ✅ **billing FAIT** (routes legacy, garde-fou sièges via identity, contrat +4) ; ✅ **payment FAIT** (routes legacy, webhook→billing, contrat +4) ;
+   ✅ transactions (#4) FAIT. **Toutes les tranches de service faites** ; reste #6 (décommissionnement).
 4. **Domaines non extraits** (périmètre : **tout**) : ~~`transactions` (14 routes)~~ ✅ **FAIT**
    (`services/transactions`, :8514, contrat 41/41) · `programs`
    (21 routes, nouveau dev) · `buyer`/estimations/favoris · `dashboards`/`analytics`/`stats` (front
@@ -220,4 +232,4 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
 ## 10. Contrat / vérification
 `tools/contract_test.py` compare monolithe vs BFF route par route (statut + JSON normalisé, champs
 volatils ignorés). Groupes : catalog, directory, listing, search, crm, marketplace, geo, messaging,
-trust-safety, rbac, agency, audit, transactions, legal, contract, billing. **52/52** actuellement.
+trust-safety, rbac, agency, audit, transactions, legal, contract, billing, payment. **56/56** actuellement.
