@@ -64,6 +64,11 @@ def cases(args):
         "messaging": [
             ("GET", "/api/v1/buyer/messages", None, None),
         ],
+        # identity RBAC (lecture) : rôles & permissions
+        "rbac": [
+            ("GET", "/api/v1/backoffice/roles", None, None),
+            ("GET", "/api/v1/backoffice/permissions", None, None),
+        ],
         # trust-safety : mutations super-admin (agent1 → 403 des deux côtés).
         "trust-safety": [
             ("POST", "/api/v1/admin/accounts/users/999999/suspend", None, {}),
