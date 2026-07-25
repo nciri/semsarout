@@ -105,9 +105,13 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
    jamais collisionner avec `activity_logs.id` du monolithe (le service audit indexe l'idempotence
    sur cet id). Vérifié bout-en-bout : les 3 actions apparaissent dans `GET /admin/activity` avec
    le nom d'acteur résolu. Contrat 33/33 intact.
-2. **Répliquer les durcissements sécurité côté monolithe** avant décommissionnement :
-   IDOR `GET /backoffice/roles/{id}` (scoper comme la liste) + anti-escalation permissions
-   (create/update role). Aujourd'hui identity est plus strict que le monolithe.
+2. ~~**Répliquer les durcissements sécurité côté monolithe**~~ ✅ **FAIT** —
+   `backend/app/api/v1/backoffice/roles.py` : `get_role` scope désormais par agence (rôle d'une
+   autre agence -> 404, corrige l'IDOR de `get_or_404`) et `create_role`/`update_role` appliquent
+   `_assert_grantable` (anti-escalation : un manager ne peut accorder que des permissions qu'il
+   détient ; super-admin/owner exemptés) — miroir exact de la logique d'identity. Vérifié en direct
+   contre le monolithe : IDOR 404 vs global 200 ; escalation 403 (perm non détenue) vs 201 (détenue).
+   Contrat 33/33 intact.
 3. **Brancher les services additifs** (contract/legal/billing/payment) : ils exposent de
    NOUVELLES routes (`/contract`, `/legal`…) que le front n'utilise pas — il tape encore les
    routes du monolithe. Soit reproduire les routes existantes, soit repointer le front.

@@ -27,6 +27,22 @@ def _require_manage_roles():
     return agency, None
 
 
+def _assert_grantable(agency, permission_ids):
+    """Anti-escalation : un manager ne peut accorder à un rôle que des permissions qu'il DÉTIENT.
+    Super-admin et propriétaire d'agence (autorité pleine) ne sont pas restreints. 403 sinon.
+    Renvoie (json, status) en cas de refus, sinon None."""
+    ids = list(permission_ids or [])
+    if not ids or _is_superadmin(g.current_user):
+        return None
+    acting = g.current_user
+    if agency is not None and acting is not None and agency.owner_id == acting.id:
+        return None
+    held = {p.id for r in (acting.roles if acting else []) for p in r.permissions}
+    if not set(ids).issubset(held):
+        return jsonify({'error': "Vous ne pouvez accorder que des permissions que vous détenez."}), 403
+    return None
+
+
 @backoffice_bp.route('/roles', methods=['GET'])
 @require_auth
 def get_roles():
@@ -48,7 +64,12 @@ def get_roles():
 @require_auth
 def get_role(role_id):
     """Get a single role with permissions."""
-    role = Role.query.get_or_404(role_id)
+    role = Role.query.get(role_id)
+
+    # Cloisonnement multi-agences (même portée que la liste) : un rôle d'une autre agence
+    # n'est pas lisible -> 404. Corrige l'IDOR de get_or_404 (non scopé par agence).
+    if role is None or (role.agency_id is not None and role.agency_id != g.agency_id):
+        return jsonify({'error': 'Not found'}), 404
 
     return jsonify(role.to_dict(include_permissions=True))
 
@@ -86,6 +107,9 @@ def create_role():
 
     # Add permissions
     if 'permissions' in data:
+        err = _assert_grantable(agency, data['permissions'])
+        if err:
+            return err
         permissions = Permission.query.filter(Permission.id.in_(data['permissions'])).all()
         role.permissions = permissions
 
@@ -129,6 +153,9 @@ def update_role(role_id):
 
     # Update permissions
     if 'permissions' in data:
+        err = _assert_grantable(agency, data['permissions'])
+        if err:
+            return err
         permissions = Permission.query.filter(Permission.id.in_(data['permissions'])).all()
         role.permissions = permissions
 
