@@ -14,8 +14,10 @@ sur des champs disjoints, de façon idempotente.
 """
 import json
 import os
+import time
 
 import pika
+import pika.exceptions
 from sqlalchemy import text
 
 from app import create_app, db
@@ -104,14 +106,17 @@ def _delete_role(app, role_id) -> None:
         db.session.commit()
 
 
+_RECOVERABLE = (
+    pika.exceptions.AMQPConnectionError,
+    pika.exceptions.StreamLostError,
+    pika.exceptions.ConnectionClosed,
+    pika.exceptions.ChannelClosed,
+    pika.exceptions.ChannelWrongStateError,
+)
+
+
 def main() -> None:
     app = create_app()
-    conn = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
-    ch = conn.channel()
-    ch.exchange_declare(EXCHANGE, exchange_type="topic", durable=True)
-    ch.queue_declare(QUEUE, durable=True)
-    ch.queue_bind(QUEUE, EXCHANGE, routing_key="user.#")
-    ch.queue_bind(QUEUE, EXCHANGE, routing_key="role.#")
 
     def on_message(_ch, method, _props, body):
         try:
@@ -133,10 +138,31 @@ def main() -> None:
             print(f"[consume_users] erreur: {exc}", flush=True)
             _ch.basic_nack(method.delivery_tag, requeue=False)
 
-    ch.basic_qos(prefetch_count=20)
-    ch.basic_consume(QUEUE, on_message)
-    print("[consume_users] en écoute sur user.# ...", flush=True)
-    ch.start_consuming()
+    # Boucle résiliente : reconnexion auto sur perte de RabbitMQ.
+    while True:
+        conn = None
+        try:
+            conn = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
+            ch = conn.channel()
+            ch.exchange_declare(EXCHANGE, exchange_type="topic", durable=True)
+            ch.queue_declare(QUEUE, durable=True)
+            ch.queue_bind(QUEUE, EXCHANGE, routing_key="user.#")
+            ch.queue_bind(QUEUE, EXCHANGE, routing_key="role.#")
+            ch.basic_qos(prefetch_count=20)
+            ch.basic_consume(QUEUE, on_message)
+            print("[consume_users] en écoute sur user.# / role.# ...", flush=True)
+            ch.start_consuming()
+        except _RECOVERABLE as exc:
+            print(f"[consume_users] déconnecté, reconnexion : {exc}", flush=True)
+            time.sleep(2.0)
+        except KeyboardInterrupt:
+            break
+        finally:
+            try:
+                if conn is not None and conn.is_open:
+                    conn.close()
+            except Exception:  # noqa: BLE001
+                pass
 
 
 if __name__ == "__main__":
