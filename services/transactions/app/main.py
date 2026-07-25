@@ -66,7 +66,9 @@ def _emit(db: Session, t: Transaction, event_type: str) -> None:
     enqueue(db, "transaction", t.id, event_type, {
         "id": t.id, "client_id": t.client_id, "property_id": t.property_id,
         "agency_id": t.agency_id, "status": t.status, "transaction_type": t.transaction_type,
-        "reference": t.reference,
+        "reference": t.reference, "agent_id": t.agent_id,
+        "asking_price": num(t.asking_price), "commission_rate": num(t.commission_rate),
+        "commission_amount": num(t.commission_amount),
     })
 
 

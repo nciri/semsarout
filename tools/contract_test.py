@@ -95,6 +95,11 @@ def cases(args):
             ("GET", "/api/v1/backoffice/transactions/stages", {"type": "sale"}, None),
             ("GET", "/api/v1/backoffice/transactions/stages", {"type": "rent"}, None),
         ],
+        "contract": [
+            ("GET", "/api/v1/backoffice/contract-templates", None, None),
+            ("GET", "/api/v1/backoffice/contracts", None, None),
+            ("GET", "/api/v1/backoffice/contracts", {"status": "draft"}, None),
+        ],
         "legal": [
             ("GET", "/api/v1/backoffice/notaries", None, None),
             ("GET", "/api/v1/backoffice/legal-cases", None, None),

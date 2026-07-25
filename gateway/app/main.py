@@ -98,11 +98,15 @@ async def _resolve_features(app: FastAPI, authorization: str) -> list[str]:
     if resp.status_code != 200:
         return []
     plan = ((resp.json() or {}).get("subscription") or {}).get("plan") or {}
-    return [name for name, flag in (
+    feats = [name for name, flag in (
         ("artisans", plan.get("has_artisans")),
         ("contracts", plan.get("has_contracts")),
         ("legal", plan.get("has_legal")),
     ) if flag]
+    # Entitlement de capacité : gestion des modèles de contrat (plan Entreprise).
+    if plan.get("slug") == "enterprise":
+        feats.append("contract_templates")
+    return feats
 
 
 def _inject_identity(headers: dict, ident: dict) -> None:
@@ -258,6 +262,11 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path.startswith("/api/v1/backoffice/legal-tasks")
     ):
         return app.state.legal, path.replace("/api/v1", "", 1)
+    if settings.contract_url and (
+        path.startswith("/api/v1/backoffice/contracts")
+        or path.startswith("/api/v1/backoffice/contract-templates")
+    ):
+        return app.state.contract, path.replace("/api/v1", "", 1)
     return app.state.monolith, path
 
 

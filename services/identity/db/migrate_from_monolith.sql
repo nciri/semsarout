@@ -26,13 +26,25 @@ SELECT a.id, COALESCE(a.is_suspended,false), (a.deleted_at IS NOT NULL), a.suspe
            SELECT unnest(ARRAY[
              CASE WHEN p.has_artisans THEN 'artisans' END,
              CASE WHEN p.has_contracts THEN 'contracts' END,
-             CASE WHEN p.has_legal THEN 'legal' END]) f
+             CASE WHEN p.has_legal THEN 'legal' END,
+             -- Entitlement de capacité (pas un flag de plan) : gestion des modèles de
+             -- contrat, réservée au plan Entreprise (parité `can_manage_templates`).
+             CASE WHEN p.slug = 'enterprise' THEN 'contract_templates' END]) f
          ) x WHERE f IS NOT NULL
        ), '[]'::jsonb)
 FROM public.agencies a
 LEFT JOIN public.subscriptions s ON s.agency_id = a.id
 LEFT JOIN public.subscription_plans p ON p.id = s.plan_id
 ON CONFLICT (id) DO NOTHING;
+
+-- Idempotent (lignes agency_ro déjà présentes) : ajoute `contract_templates` aux agences
+-- Entreprise sans dupliquer.
+UPDATE identity.agency_ro ar
+SET features = (ar.features::jsonb || '["contract_templates"]'::jsonb)
+FROM public.subscriptions s
+JOIN public.subscription_plans p ON p.id = s.plan_id
+WHERE s.agency_id = ar.id AND p.slug = 'enterprise'
+  AND NOT (ar.features::jsonb ? 'contract_templates');
 
 -- Réaligner la séquence pour les nouvelles inscriptions (register côté identity)
 SELECT setval(pg_get_serial_sequence('identity.user_ro','id'), COALESCE((SELECT MAX(id) FROM identity.user_ro),1));

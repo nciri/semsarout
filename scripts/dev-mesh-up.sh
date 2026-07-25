@@ -85,7 +85,7 @@ worker() { env SERVICE_NAME="$1" DATABASE_URL="$(dburl "$1")" RABBITMQ_URL="$RMQ
   OPENSEARCH_URL="$OS" MONOLITH_URL="$MONO" INTERNAL_TOKEN="$ITOK" \
   PYTHONPATH="services/$1" nohup python3 -m app.worker > "$LOG/$1-worker.log" 2>&1 & }
 for r in listing catalog identity contract payment billing transactions; do relay "$r"; done
-for w in search crm marketplace geo agency messaging analytics billing notification identity audit transactions legal; do worker "$w"; done
+for w in search crm marketplace geo agency messaging analytics billing notification identity audit transactions legal contract; do worker "$w"; done
 ( cd backend; set -a; source .env; set +a
   RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" nohup venv/bin/python scripts/consume_users.py > "$LOG/monolith-consumer.log" 2>&1 &
   RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" nohup venv/bin/python scripts/relay_outbox.py > "$LOG/monolith-relay.log" 2>&1 & )
