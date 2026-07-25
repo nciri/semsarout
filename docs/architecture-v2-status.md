@@ -212,6 +212,35 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
    modérés ; masquer dans geo/crm divergerait. Rien à faire côté geo/crm.
 6. **Décommissionnement final** : identity émet les jetons pour de bon (le monolithe arrête),
    pointer 100 % du proxy front → BFF, éteindre le monolithe.
+   **Baseline propre faite** : `dev-mesh-up.sh` rejoué → 21 services 200, contrat **56/56**, tous les
+   relais rechargés sur la lib outbox corrigée. **Reste ~100+ routes front-facing** (sur 289
+   totales, la majorité déjà extraite). **Plan de tranches (ordonné, à exécuter une par une avec
+   parité + E2E + commit, comme les 5 précédentes)** :
+   - **T1 `buyer`** (12 routes, la plus autonome) : `/buyer/saved-searches*` (CRUD),
+     `/buyer/favorites*` (CRUD, enrichissement titre bien → projection `property_ro`),
+     `/buyer/estimates*` (CRUD). Par utilisateur (`user_id` du JWT). `/buyer/messages*` = **déjà**
+     servi par messaging. Nouveau service `services/buyer` (schéma dédié) + migration
+     (`saved_searches`/`favorites`/`estimates`) + projection biens.
+   - **T2 agency completion** (2 routes) : `/my-agency` (include_members → membres = domaine identity ;
+     appel interne identity ou projection) + `/agencies/{slug}/properties` (biens de l'agence →
+     projection listing). Étend le service `agency` existant (:8512).
+   - **T3 `dashboards`/`analytics`/`stats`** (~21 routes, **LA PLUS DURE** — agrégations cross-domaine).
+     `backoffice/dashboard.py`(5) + `backoffice/stats.py`(6) + `backoffice/analytics.py`(10 :
+     financial/market/pipeline/team/overview + `/dashboard/config` GET/PUT). ⚠ **le service
+     `analytics` actuel est un stub** (`MetricCounter` + 1 route démo) : il faut **construire les
+     read-models** (projections transactions/leads/clients/biens/visites/commissions) pour
+     reproduire les agrégats (tendances CA, funnel de conversion, perf agents avec commissions,
+     stats marché). Effort dédié conséquent — ne pas router le front vers un stub en cours de route
+     (dashboards live cassés). `/dashboard/config` (2 routes, JSON par agence) est le sous-morceau
+     le plus borné, extractible en premier.
+   - **T4 `programs`** (28 routes, `programs.py`) : **nouveau dev** (promotions immobilières neuves +
+     `programs/{id}/plans`), pas encore consommé pareil — nouveau service.
+   - **T5 `integrations`/staymanager** (14 routes) : sync externe (staymanager) — nouvelle surface.
+   - **Divers restants** : `selling.py`(4), `leads.py` racine public(7) vs backoffice(crm),
+     `users.py`(3, `/backoffice/users` GET reste), `admin/shop|artisans|overview|impersonation`,
+     `properties.py` découverte publique déjà en search/listing (vérifier le résidu).
+   **Coupure** : quand une tranche est verte au contrat, basculer son routage BFF (déjà le patron) ;
+   quand **tout** est extrait → retirer le repli monolithe du BFF, éteindre `:7000`.
 
 ## 9. Pièges connus (IMPORTANT pour un contexte frais)
 - **`git commit` doit être une commande Bash SEULE** (le hook `block-no-verify` faux-positive sur
