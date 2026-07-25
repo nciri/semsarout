@@ -144,7 +144,8 @@ class UserRO(Base):
 
 
 class AgencyRO(Base):
-    """Projection minimale des agences — blocage login + features (claims JWT)."""
+    """Projection des agences — blocage login + features (claims JWT) + quotas de sièges
+    (`max_seats`/`max_teams` du plan, `owner_id`) pour la logique `seats`."""
     __tablename__ = "agency_ro"
 
     id = Column(Integer, primary_key=True)
@@ -152,6 +153,9 @@ class AgencyRO(Base):
     is_deleted = Column(Boolean, default=False)
     suspended_reason = Column(Text)
     features = Column(JSON, default=list)
+    owner_id = Column(Integer)
+    max_seats = Column(Integer, default=0)
+    max_teams = Column(Integer, default=0)
 
 
 class ProcessedMessage(Base):

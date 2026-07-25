@@ -52,3 +52,14 @@ SELECT id, name, slug, description, module FROM public.permissions ON CONFLICT (
 
 INSERT INTO identity.role_permission_ro (role_id, permission_id)
 SELECT role_id, permission_id FROM public.role_permissions ON CONFLICT DO NOTHING;
+
+-- Seats : owner + limites du plan (max_seats/max_teams) pour la logique de quotas
+ALTER TABLE identity.agency_ro ADD COLUMN IF NOT EXISTS owner_id INTEGER;
+ALTER TABLE identity.agency_ro ADD COLUMN IF NOT EXISTS max_seats INTEGER DEFAULT 0;
+ALTER TABLE identity.agency_ro ADD COLUMN IF NOT EXISTS max_teams INTEGER DEFAULT 0;
+UPDATE identity.agency_ro ar SET owner_id=a.owner_id,
+       max_seats=COALESCE(p.max_seats,0), max_teams=COALESCE(p.max_teams,0)
+FROM public.agencies a
+LEFT JOIN public.subscriptions s ON s.agency_id=a.id
+LEFT JOIN public.subscription_plans p ON p.id=s.plan_id
+WHERE a.id=ar.id;
