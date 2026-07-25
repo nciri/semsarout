@@ -267,6 +267,15 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path.startswith("/api/v1/backoffice/contract-templates")
     ):
         return app.state.contract, path.replace("/api/v1", "", 1)
+    # billing : plans + abonnement (routes legacy). `/my-subscription` sert aussi au repli
+    # features du BFF, mais celui-ci appelle le monolithe directement (hors routage).
+    if settings.billing_url and (
+        path.startswith("/api/v1/subscription-plans")
+        or path.startswith("/api/v1/subscription/")
+        or path == "/api/v1/my-subscription"
+        or path == "/api/v1/cancel-subscription"
+    ):
+        return app.state.billing, path.replace("/api/v1", "", 1)
     return app.state.monolith, path
 
 

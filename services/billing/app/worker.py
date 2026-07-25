@@ -26,13 +26,14 @@ def _activate(routing_key: str, payload: dict, message_id: str) -> None:
         agency_id = payload.get("agency_id")
         sub = (
             db.query(Subscription)
-            .filter(Subscription.agency_id == agency_id, Subscription.status == "pending")
+            .filter(Subscription.agency_id == agency_id,
+                    Subscription.status.in_(["pending", "incomplete"]))
             .order_by(Subscription.id.desc())
             .first()
         )
         if sub is not None:
             sub.status = "active"
-            sub.current_period_end = datetime.now(timezone.utc) + timedelta(days=30)
+            sub.end_date = datetime.now(timezone.utc) + timedelta(days=30)
             invoice = (
                 db.query(Invoice)
                 .filter(Invoice.subscription_id == sub.id, Invoice.status == "unpaid")

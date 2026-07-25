@@ -6,7 +6,7 @@ RabbitMQ (`identity.kyc.requested`). Le BFF route `/api/v1/identity/*` vers ce s
 """
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Header
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -67,6 +67,22 @@ app.include_router(team.router)
 @app.get("/health", include_in_schema=False)
 async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
+
+
+@app.get("/internal/agency/{agency_id}/seats", include_in_schema=False)
+def internal_agency_seats(agency_id: int, x_internal_token: str = Header(default=""),
+                          db: Session = Depends(get_db)) -> dict:
+    """Décompte sièges/équipes d'une agence — pour le garde-fou de rétrogradation de plan
+    (service billing). identity est propriétaire des membres/équipes (v2-native, pas le monolithe)."""
+    if x_internal_token != settings.internal_token:
+        raise forbidden("Forbidden")
+    from . import seats
+    from .models import AgencyRO
+    ag = db.get(AgencyRO, agency_id)
+    if ag is None:
+        return {"active_member_seats": 0, "teams_used": 0}
+    return {"active_member_seats": seats.active_member_seats(db, ag),
+            "teams_used": seats.teams_used(db, ag)}
 
 
 class KycRequest(BaseModel):

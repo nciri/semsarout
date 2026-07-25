@@ -55,6 +55,7 @@ for pair in $SVCS; do
   svc="${pair%%:*}"; port="${pair##*:}"
   kill_port "$port"
   extra=""; [ "$svc" = "contract" ] && extra="$S3"; [ "$svc" = "identity" ] && extra="JWT_SECRET_KEY=$JWT"
+  [ "$svc" = "billing" ] && extra="IDENTITY_URL=http://localhost:8501"
   case "$svc" in listing|search) extra="$extra $TS_HIDDEN";; esac
   env SERVICE_NAME="$svc" DATABASE_URL="$(dburl "$svc")" TRUST_GATEWAY_HEADERS=true \
       INTERNAL_TOKEN="$ITOK" MONOLITH_URL="$MONO" RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" \

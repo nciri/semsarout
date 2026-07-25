@@ -4,7 +4,7 @@
 > Décrit ce qui est fait, ce qui tourne, comment tout relancer, et le reste à faire.
 > Branche : `feature/architecture-v2` (commits **locaux uniquement**, aucun upstream, aucun push).
 
-Dernière mise à jour de session : contrat **48/48 PASS** (transactions +8, legal +4, contract +3).
+Dernière mise à jour de session : contrat **52/52 PASS** (transactions +8, legal +4, contract +3, billing +4).
 
 > **REPRISE (contexte frais)** — §8 items #1, #2, #5 **FAITS** ; **#4 `transactions` FAIT** ;
 > **`legal` FAIT** ; **`contract` FAIT** (tranches de #3, vérifiés E2E + gates 403 + create/finalize,
@@ -26,9 +26,17 @@ Dernière mise à jour de session : contrat **48/48 PASS** (transactions +8, leg
 > listing.* + transaction.* ; transactions = listing.* + contract.*) collisionnait sur les id
 > d'outbox locaux (relais existants rechargent la lib au prochain `dev-mesh-up.sh`).
 > **Dépendances runtime ajoutées** (system python3) : `bleach`, `xhtml2pdf` (sanitize + PDF).
-> Prochaine tranche : **billing** (`/subscription-plans`, `/subscription/current`,
-> `/subscription/change-plan`, `/cancel-subscription`) puis **payment** (`/payments/create-intent`).
-> Ordre restant : `billing → payment → #6`.
+> **`billing` FAIT** : `services/billing` (:8508) réécrit pour servir les routes legacy
+> `/subscription-plans`(+`/{id}`), `/my-subscription`, `/subscription/current`,
+> `/cancel-subscription`, `/subscription/change-plan`. **Découverte** : le monolithe **500ait** sur
+> `change-plan` (happy path) car `payment_methods`/`invoices` **n'existent pas** en base — v2 le rend
+> fonctionnel (validation plan 404 + garde-fou sièges 409 + bascule *incomplete* + facture *unpaid* +
+> `billing.invoice.created`). Le garde-fou de rétrogradation lit les sièges/équipes via un **endpoint
+> interne d'identity** (`GET /internal/agency/{id}/seats`, v2-native, pas le monolithe). Écart assumé :
+> les features de gating restent projetées par identity (`agency_ro.features`), billing ne les pilote
+> pas encore.
+> Prochaine tranche : **payment** (`/payments/create-intent`), puis **#6** (décommissionnement).
+> Ordre restant : `payment → #6`.
 > Findings clés : gating premium lu dans le JWT (`Principal.features`) → legal/contract **ne dépendent
 > pas** d'une projection billing pour le 403 ; `/payment-methods` = non-feature (table absente du
 > monolithe → 404, ne pas router). Détail complet en §8.3/§8.4. Décisions utilisateur : #3 = reproduire
@@ -62,10 +70,11 @@ reconstructibles). Validation JWT **locale** au BFF (frontière d'auth sévrée)
 | transactions | 8514 | pipeline ventes/locations (`/backoffice/transactions*` : liste/pipeline/stats/stages/CRUD/move/offers/documents) |
 | legal | 8506 | notaires + dossiers juridiques + checklists (`/backoffice/notaries*`, `/backoffice/legal-cases*`, `/backoffice/legal-tasks*`) — gate premium `legal` |
 | contract | 8505 | modèles + contrats + fusion + finalisation PDF (`/backoffice/contracts*` +`/finalize`/`/mark-signed`/`/pdf`, `/backoffice/contract-templates*`) — gate premium `contracts` (+ `contract_templates`) |
-| identity | 8501 | **auth complète** (voir §3) + RBAC + teams/invitations |
+| billing | 8508 | plans + abonnement (`/subscription-plans*`, `/my-subscription`, `/subscription/current`, `/cancel-subscription`, `/subscription/change-plan`) |
+| identity | 8501 | **auth complète** (voir §3) + RBAC + teams/invitations + `internal/agency/{id}/seats` |
 
 **Services additifs (nouvelles surfaces, PAS consommées par le front — voir reste à faire) :**
-identity(KYC) · notification 8502 · analytics 8504 · payment 8507 · billing 8508
+identity(KYC) · notification 8502 · analytics 8504 · payment 8507
 
 ## 3. Domaine identité/auth (le plus important, basculé)
 `identity` (:8501) est **source de vérité** pour les comptes et **émet les JWT** :
@@ -130,7 +139,7 @@ bash scripts/dev-mesh-up.sh
 TOK=$(curl -s -XPOST localhost:8099/api/v1/auth/login -H 'content-type: application/json' \
   -d '{"email":"agent1@immo-casa-premium.ma","password":"password123"}' | python3 -c 'import sys,json;print(json.load(sys.stdin)["access_token"])')
 python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://localhost:8099 \
-  --token "$TOK" --services catalog,directory,listing,search,crm,marketplace,geo,messaging,trust-safety,rbac,agency,audit,transactions,legal,contract --property-id 90 --legal-case-id 1
+  --token "$TOK" --services catalog,directory,listing,search,crm,marketplace,geo,messaging,trust-safety,rbac,agency,audit,transactions,legal,contract,billing --property-id 90 --legal-case-id 1
 ```
 
 ## 8. Reste à faire (priorisé)
@@ -168,7 +177,8 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
    port fidèle des routes (scopé agence, erreurs `{'error'}`) + routage BFF + ajout au contrat.
    **Avancement** : ✅ **legal FAIT** ; ✅ **contract FAIT** (`services/legal`/`services/contract`
    réécrits en routes legacy, gates 403 vérifiés, projections via `transaction.*`/`listing.*`,
-   contrat +7) ; ✅ transactions (#4) FAIT. Reste : **billing** (prochaine) puis **payment**.
+   contrat +7) ; ✅ **billing FAIT** (routes legacy, garde-fou sièges via identity, contrat +4) ;
+   ✅ transactions (#4) FAIT. Reste : **payment** (prochaine).
 4. **Domaines non extraits** (périmètre : **tout**) : ~~`transactions` (14 routes)~~ ✅ **FAIT**
    (`services/transactions`, :8514, contrat 41/41) · `programs`
    (21 routes, nouveau dev) · `buyer`/estimations/favoris · `dashboards`/`analytics`/`stats` (front
@@ -210,4 +220,4 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
 ## 10. Contrat / vérification
 `tools/contract_test.py` compare monolithe vs BFF route par route (statut + JSON normalisé, champs
 volatils ignorés). Groupes : catalog, directory, listing, search, crm, marketplace, geo, messaging,
-trust-safety, rbac, agency, audit, transactions, legal, contract. **48/48** actuellement.
+trust-safety, rbac, agency, audit, transactions, legal, contract, billing. **52/52** actuellement.
