@@ -201,6 +201,9 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
     # (agrégats) reste au monolithe (T3 analytics à venir).
     if settings.identity_url and path == "/api/v1/backoffice/dashboard/config":
         return app.state.identity, path.replace("/api/v1", "", 1)
+    # dashboard (KPIs + charts + activity) → analytics ; /config déjà routé vers identity ci-dessus.
+    if settings.analytics_url and path.startswith("/api/v1/backoffice/dashboard"):
+        return app.state.analytics, path.replace("/api/v1/backoffice", "", 1)
     # analytics : agrégats extraits (financial/pipeline/ping). market/team/overview + stats/dashboard
     # restent au monolithe pour l'instant. Préfixe /api/v1/backoffice retiré → /analytics/*.
     if settings.analytics_url and path in (

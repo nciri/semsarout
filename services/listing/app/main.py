@@ -133,7 +133,10 @@ def internal_properties(request: Request, x_internal_token: str = Header(default
         # Dump brut : TOUS les biens de l'agence (sans masquage ni pagination) — pour les agrégats
         # analytics (_prop_base du monolithe n'exclut pas les modérés).
         rows = db.query(Property).filter(Property.agency_id == int(qp["agency_id"])).all()
-        return {"properties": [_prop_dict(db, p) for p in rows]}
+        # +updated_at (hors Property.to_dict) : requis par les agrégats dashboard (sold_this_month).
+        return {"properties": [{**_prop_dict(db, p),
+                                "updated_at": p.updated_at.isoformat() if p.updated_at else None}
+                               for p in rows]}
     if qp.get("agency_id"):
         q = db.query(Property).filter(Property.agency_id == int(qp["agency_id"]))
         if qp.get("status"):

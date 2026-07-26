@@ -79,6 +79,13 @@ def cases(args):
         "dashboard-config": [
             ("GET", "/api/v1/backoffice/dashboard/config", None, None),
         ],
+        "dashboard": [
+            ("GET", "/api/v1/backoffice/dashboard", None, None),
+            ("GET", "/api/v1/backoffice/dashboard/charts/leads-by-source", None, None),
+            ("GET", "/api/v1/backoffice/dashboard/charts/properties-by-status", None, None),
+            ("GET", "/api/v1/backoffice/dashboard/charts/revenue-trend", None, None),
+            ("GET", "/api/v1/backoffice/dashboard/activity", None, None),
+        ],
         "analytics": [
             ("GET", "/api/v1/backoffice/analytics/ping", None, None),
             ("GET", "/api/v1/backoffice/analytics/financial", None, None),

@@ -4,7 +4,7 @@
 > Décrit ce qui est fait, ce qui tourne, comment tout relancer, et le reste à faire.
 > Branche : `feature/architecture-v2` (commits **locaux uniquement**, aucun upstream, aucun push).
 
-Dernière mise à jour de session : contrat **77/77 PASS**. #6 : T1+T2 FAITS ; T3 en cours (dashboard/config + analytics/* (6) + **stats/* (6)** FAITS ; reste dashboard + charts/* + dashboard/activity).
+Dernière mise à jour de session : contrat **82/82 PASS**. #6 : **T1+T2+T3 FAITS**. T3 (dashboards/analytics/stats) intégralement extrait (dashboard/config + analytics/* 6 + stats/* 6 + dashboard+charts 4 + activity). Reste T4 programs, T5 staymanager, divers, coupure.
 
 > **REPRISE (contexte frais)** — §8 items #1, #2, #5 **FAITS** ; **#4 `transactions` FAIT** ;
 > **`legal` FAIT** ; **`contract` FAIT** (tranches de #3, vérifiés E2E + gates 403 + create/finalize,
@@ -82,7 +82,7 @@ reconstructibles). Validation JWT **locale** au BFF (frontière d'auth sévrée)
 | payment | 8507 | intention de paiement + webhook (`/payments/create-intent`, `/payments/webhook`, `/payments/{ref}`, `/my-payments`) — CMI simulé |
 | buyer | 8515 | acheteur : recherches sauvegardées + favoris + estimations (`/buyer/saved-searches*`, `/buyer/favorites*`, `/buyer/estimates*`) |
 | identity | 8501 | **auth complète** (voir §3) + RBAC + teams/invitations + `dashboard/config` + `internal/agency/{id}/seats|members|analytics-scope` |
-| analytics | 8504 | agrégats cross-domaine query-time : `/analytics/*` (6) + `/stats/*` (6 : overview/agent-performance/conversion-funnel/properties-by-city/price-distribution/export CSV) — dumps internes transactions/crm(leads/clients/visits)/listing/geo/billing + identity |
+| analytics | 8504 | **tout dashboards/analytics/stats** query-time : `/analytics/*` (6) + `/stats/*` (6) + `/dashboard`+`/dashboard/charts/*`+`/dashboard/activity` — dumps internes transactions/crm/listing/geo/billing/audit + identity scope/seats |
 
 **Services additifs (nouvelles surfaces, PAS consommées par le front — voir reste à faire) :**
 identity(KYC) · notification 8502
@@ -269,4 +269,4 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
 ## 10. Contrat / vérification
 `tools/contract_test.py` compare monolithe vs BFF route par route (statut + JSON normalisé, champs
 volatils ignorés). Groupes : catalog, directory, listing, search, crm, marketplace, geo, messaging,
-trust-safety, rbac, dashboard-config, analytics, stats, agency, audit, transactions, legal, contract, billing, payment, buyer. **77/77** actuellement (normalize : collections de dicts triées par contenu — ordre non garanti côté monolithe ; `views`/`views_count` volatils) (collections par `id` ordre-insensible : membres /my-agency + biens /agencies/{slug}/properties non ordonnés côté monolithe).
+trust-safety, rbac, dashboard-config, dashboard, analytics, stats, agency, audit, transactions, legal, contract, billing, payment, buyer. **82/82** actuellement (normalize : collections de dicts triées par contenu — ordre non garanti côté monolithe ; `views`/`views_count` volatils) (collections par `id` ordre-insensible : membres /my-agency + biens /agencies/{slug}/properties non ordonnés côté monolithe).

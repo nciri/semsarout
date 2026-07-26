@@ -15,6 +15,7 @@ IDENTITY_URL = os.environ.get("IDENTITY_URL", "http://localhost:8501")
 LISTING_URL = os.environ.get("LISTING_URL", "http://localhost:8012")
 GEO_URL = os.environ.get("GEO_URL", "http://localhost:8509")
 BILLING_URL = os.environ.get("BILLING_URL", "http://localhost:8508")
+AUDIT_URL = os.environ.get("AUDIT_URL", "http://localhost:8513")
 
 
 def _get(url: str, params: dict) -> dict:
@@ -69,3 +70,8 @@ def seats(agency_id: int) -> dict:
 
 def subscription(agency_id: int):
     return _get(f"{BILLING_URL}/internal/subscription", {"agency_id": agency_id}).get("subscription")
+
+
+def activity(agency_id: int, page: int, per_page: int) -> dict:
+    return _get(f"{AUDIT_URL}/internal/activity",
+                {"agency_id": agency_id, "page": page, "per_page": per_page})

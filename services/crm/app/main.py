@@ -18,6 +18,7 @@ from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
 from . import clients, users_client, visits
+from .visits import _visit_dict
 from .db import get_db, init_db
 from .models import Client, Lead, PropertyRO, Visit
 
@@ -103,13 +104,10 @@ def internal_leads(request: Request, x_internal_token: str = Header(default=""),
     q = db.query(Lead)
     if aid:
         q = q.filter(Lead.agency_id == int(aid))
-    return {"leads": [{
-        "id": l.id, "agency_id": l.agency_id, "assigned_to_id": l.assigned_to_id,
-        "source": l.source, "service": l.service, "status": l.status, "is_charged": l.is_charged,
-        "charge_amount": float(l.charge_amount) if l.charge_amount is not None else None,
-        "is_read": l.is_read, "created_at": _iso(l.created_at), "qualified_at": _iso(l.qualified_at),
-        "converted_at": _iso(l.converted_at), "contacted_at": _iso(l.contacted_at),
-    } for l in q.all()]}
+    # Dict COMPLET (parité Lead.to_dict via _lead_dict) + champs analytics (charge_amount).
+    return {"leads": [{**_lead_dict(db, l),
+                       "charge_amount": float(l.charge_amount) if l.charge_amount is not None else None}
+                      for l in q.all()]}
 
 
 @app.get("/internal/clients", include_in_schema=False)
@@ -140,10 +138,10 @@ def internal_visits(request: Request, x_internal_token: str = Header(default="")
     q = db.query(Visit)
     if aid:
         q = q.filter(Visit.agency_id == int(aid))
-    return {"visits": [{
-        "id": v.id, "agency_id": v.agency_id, "agent_id": v.agent_id, "status": v.status,
-        "created_at": _iso(v.created_at), "completed_at": _iso(v.completed_at),
-    } for v in q.all()]}
+    # Dict COMPLET (parité Visit.to_dict via _visit_dict) + champs analytics (agency_id/completed_at).
+    return {"visits": [{**_visit_dict(db, v), "agency_id": v.agency_id,
+                        "completed_at": _iso(v.completed_at)}
+                       for v in q.all()]}
 
 
 @app.get("/backoffice/leads")

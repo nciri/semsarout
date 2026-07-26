@@ -16,7 +16,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
-from . import compute, sources, stats
+from . import compute, dashboard, sources, stats
 from .util import err
 
 settings = get_settings()
@@ -166,3 +166,36 @@ def stats_export(request: Request, principal: Principal = Depends(get_principal)
     fname = f"{etype}_{datetime.utcnow().strftime('%Y%m%d')}.csv"
     return Response(content=body, media_type="text/csv",
                     headers={"content-disposition": f"attachment; filename={fname}"})
+
+
+# ---- Dashboard (KPIs + charts + activity), cloisonné par agence ----
+@app.get("/dashboard")
+def dashboard_summary(principal: Principal = Depends(get_principal)):
+    aid = principal.agency_id
+    return dashboard.main(sources.properties(aid), sources.leads(aid), sources.clients(aid),
+                          sources.visits(aid), sources.transactions(aid))
+
+
+@app.get("/dashboard/charts/leads-by-source")
+def dashboard_leads_by_source(request: Request, principal: Principal = Depends(get_principal)):
+    try:
+        days = int(request.query_params.get("days", "30"))
+    except ValueError:
+        days = 30
+    return dashboard.leads_by_source(sources.leads(principal.agency_id), days)
+
+
+@app.get("/dashboard/charts/properties-by-status")
+def dashboard_properties_by_status(principal: Principal = Depends(get_principal)):
+    return dashboard.properties_by_status(sources.properties(principal.agency_id))
+
+
+@app.get("/dashboard/charts/revenue-trend")
+def dashboard_revenue_trend(principal: Principal = Depends(get_principal)):
+    return dashboard.revenue_trend(sources.transactions(principal.agency_id))
+
+
+@app.get("/dashboard/activity")
+def dashboard_activity(request: Request, principal: Principal = Depends(get_principal)):
+    qp = request.query_params
+    return sources.activity(principal.agency_id, int(qp.get("page") or 1), int(qp.get("per_page") or 20))
