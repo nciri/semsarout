@@ -8,7 +8,7 @@ par les événements `listing.*` (worker) — aucun appel synchrone inter-servic
 """
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import Session
@@ -60,6 +60,18 @@ def require_admin(principal: Principal = Depends(get_principal)) -> Principal:
     if not principal.is_superadmin:
         raise forbidden("Accès réservé aux administrateurs")
     return principal
+
+
+@app.get("/internal/neighborhood-prices", include_in_schema=False)
+def internal_neighborhood_prices(x_internal_token: str = Header(default=""),
+                                 db: Session = Depends(get_db)):
+    """Références de prix par quartier — pour les agrégats marché du service analytics."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    rows = db.query(NeighborhoodPriceRef).all()
+    return {"refs": [{"city": r.city, "neighborhood": r.neighborhood,
+                      "avg_price_sqm": float(r.avg_price_sqm) if r.avg_price_sqm is not None else None}
+                     for r in rows]}
 
 
 @app.get("/health", include_in_schema=False)

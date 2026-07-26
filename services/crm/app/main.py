@@ -106,6 +106,7 @@ def internal_leads(request: Request, x_internal_token: str = Header(default=""),
     return {"leads": [{
         "id": l.id, "agency_id": l.agency_id, "assigned_to_id": l.assigned_to_id,
         "source": l.source, "service": l.service, "status": l.status, "is_charged": l.is_charged,
+        "charge_amount": float(l.charge_amount) if l.charge_amount is not None else None,
         "is_read": l.is_read, "created_at": _iso(l.created_at), "qualified_at": _iso(l.qualified_at),
         "converted_at": _iso(l.converted_at), "contacted_at": _iso(l.contacted_at),
     } for l in q.all()]}

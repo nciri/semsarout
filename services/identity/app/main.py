@@ -80,9 +80,11 @@ def internal_agency_seats(agency_id: int, x_internal_token: str = Header(default
     from .models import AgencyRO
     ag = db.get(AgencyRO, agency_id)
     if ag is None:
-        return {"active_member_seats": 0, "teams_used": 0}
+        return {"active_member_seats": 0, "teams_used": 0, "member_count": 0,
+                "seats_used": 0, "seats_limit": 0}
     return {"active_member_seats": seats.active_member_seats(db, ag),
-            "teams_used": seats.teams_used(db, ag)}
+            "teams_used": seats.teams_used(db, ag), "member_count": seats.member_count(db, ag),
+            "seats_used": seats.seats_used(db, ag), "seats_limit": seats.seats_limit(ag)}
 
 
 @app.get("/internal/agency/{agency_id}/members", include_in_schema=False)
@@ -106,14 +108,14 @@ def internal_analytics_scope(agency_id: int, user_id: int, x_internal_token: str
         raise forbidden("Forbidden")
     from .models import AgencyRO, UserRO
     ag = db.get(AgencyRO, agency_id)
-    if ag is not None and ag.owner_id and ag.owner_id == user_id:
-        return {"all": True, "agent_id": None}
     user = db.get(UserRO, user_id)
-    if user is not None and any(
-        any(p.slug == "analytics.view_all" for p in r.permissions) for r in user.roles
-    ):
-        return {"all": True, "agent_id": None}
-    return {"all": False, "agent_id": user_id}
+    cfg = user.dashboard_config if user is not None else None
+    all_ = bool(
+        (ag is not None and ag.owner_id and ag.owner_id == user_id)
+        or (user is not None and any(
+            any(p.slug == "analytics.view_all" for p in r.permissions) for r in user.roles))
+    )
+    return {"all": all_, "agent_id": None if all_ else user_id, "dashboard_config": cfg}
 
 
 class KycRequest(BaseModel):

@@ -129,6 +129,11 @@ def internal_properties(request: Request, x_internal_token: str = Header(default
         ids = [int(x) for x in qp["ids"].split(",") if x.strip().isdigit()]
         props = db.query(Property).filter(Property.id.in_(ids)).all() if ids else []
         return {"properties": [_prop_dict(db, p) for p in props]}
+    if qp.get("agency_id") and qp.get("all"):
+        # Dump brut : TOUS les biens de l'agence (sans masquage ni pagination) — pour les agrégats
+        # analytics (_prop_base du monolithe n'exclut pas les modérés).
+        rows = db.query(Property).filter(Property.agency_id == int(qp["agency_id"])).all()
+        return {"properties": [_prop_dict(db, p) for p in rows]}
     if qp.get("agency_id"):
         q = db.query(Property).filter(Property.agency_id == int(qp["agency_id"]))
         if qp.get("status"):

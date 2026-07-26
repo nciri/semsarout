@@ -28,6 +28,7 @@ class Lead(Base):
     agency_id = Column(Integer, index=True)
     assigned_to_id = Column(Integer)
     is_charged = Column(Boolean, default=False)
+    charge_amount = Column(Numeric(10, 2))
     is_read = Column(Boolean, default=False)
     read_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow)

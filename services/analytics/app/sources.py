@@ -12,6 +12,9 @@ from semsar_common import get_settings
 TRANSACTIONS_URL = os.environ.get("TRANSACTIONS_URL", "http://localhost:8514")
 CRM_URL = os.environ.get("CRM_URL", "http://localhost:8013")
 IDENTITY_URL = os.environ.get("IDENTITY_URL", "http://localhost:8501")
+LISTING_URL = os.environ.get("LISTING_URL", "http://localhost:8012")
+GEO_URL = os.environ.get("GEO_URL", "http://localhost:8509")
+BILLING_URL = os.environ.get("BILLING_URL", "http://localhost:8508")
 
 
 def _get(url: str, params: dict) -> dict:
@@ -39,3 +42,19 @@ def scope(agency_id: int, user_id: int) -> dict:
 def agent_names(agency_id: int) -> dict[int, str]:
     members = _get(f"{IDENTITY_URL}/internal/agency/{agency_id}/members", {}).get("members", [])
     return {m["id"]: m.get("full_name") for m in members}
+
+
+def properties(agency_id: int) -> list[dict]:
+    return _get(f"{LISTING_URL}/internal/properties", {"agency_id": agency_id, "all": 1}).get("properties", [])
+
+
+def neighborhood_refs() -> list[dict]:
+    return _get(f"{GEO_URL}/internal/neighborhood-prices", {}).get("refs", [])
+
+
+def seats(agency_id: int) -> dict:
+    return _get(f"{IDENTITY_URL}/internal/agency/{agency_id}/seats", {})
+
+
+def subscription(agency_id: int):
+    return _get(f"{BILLING_URL}/internal/subscription", {"agency_id": agency_id}).get("subscription")

@@ -14,7 +14,7 @@ billing ne les pilote pas encore (décommissionnement final).
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Header, Request
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import extract
 from sqlalchemy.orm import Session
@@ -99,6 +99,20 @@ def _agency_sub(db: Session, agency_id: int, status: str | None = None) -> Subsc
 @app.get("/health", include_in_schema=False)
 async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
+
+
+@app.get("/internal/subscription", include_in_schema=False)
+def internal_subscription(request: Request, x_internal_token: str = Header(default=""),
+                          db: Session = Depends(get_db)):
+    """Abonnement d'une agence (nom du plan + statut) — pour l'overview du service analytics."""
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    aid = request.query_params.get("agency_id")
+    sub = _agency_sub(db, int(aid)) if aid else None
+    if sub is None:
+        return {"subscription": None}
+    plan = db.get(SubscriptionPlan, sub.plan_id)
+    return {"subscription": {"plan": plan.name if plan else None, "status": sub.status}}
 
 
 @app.get("/subscription-plans")

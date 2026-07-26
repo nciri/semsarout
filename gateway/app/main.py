@@ -207,6 +207,9 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         "/api/v1/backoffice/analytics/ping",
         "/api/v1/backoffice/analytics/financial",
         "/api/v1/backoffice/analytics/pipeline",
+        "/api/v1/backoffice/analytics/market",
+        "/api/v1/backoffice/analytics/team",
+        "/api/v1/backoffice/analytics/overview",
     ):
         return app.state.analytics, path.replace("/api/v1/backoffice", "", 1)
     # RBAC écritures (gestion utilisateur : rôles / activation) → identity.

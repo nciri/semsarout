@@ -21,7 +21,7 @@ import sys
 import requests
 
 # Champs volatils ignorés dans la comparaison (ex. le compteur de vues s'incrémente à chaque GET).
-VOLATILE = {"views_count"}
+VOLATILE = {"views_count", "views"}
 
 
 def normalize(obj):
@@ -29,10 +29,12 @@ def normalize(obj):
         return {k: normalize(v) for k, v in sorted(obj.items()) if k not in VOLATILE}
     if isinstance(obj, list):
         items = [normalize(v) for v in obj]
-        # Collections d'entités par `id` (ex. `members` de /my-agency) : le monolithe ne garantit
-        # PAS l'ordre (relations sans ORDER BY) → comparaison ordre-insensible par id.
-        if items and all(isinstance(v, dict) and "id" in v for v in items):
-            items = sorted(items, key=lambda v: str(v.get("id")))
+        # Collections de dicts (membres, agrégats par ville/quartier/source…) : le monolithe ne
+        # garantit PAS l'ordre (relations/dicts construits depuis des requêtes sans ORDER BY) →
+        # comparaison ordre-insensible (tri par contenu normalisé). Les deux côtés triés à
+        # l'identique → l'égalité ne teste que le multiensemble, jamais un faux positif.
+        if items and all(isinstance(v, dict) for v in items):
+            items = sorted(items, key=lambda v: json.dumps(v, sort_keys=True, ensure_ascii=False))
         return items
     return obj
 
@@ -83,6 +85,9 @@ def cases(args):
             ("GET", "/api/v1/backoffice/analytics/financial", {"range": "30d"}, None),
             ("GET", "/api/v1/backoffice/analytics/pipeline", None, None),
             ("GET", "/api/v1/backoffice/analytics/pipeline", {"range": "ytd"}, None),
+            ("GET", "/api/v1/backoffice/analytics/market", None, None),
+            ("GET", "/api/v1/backoffice/analytics/team", None, None),
+            ("GET", "/api/v1/backoffice/analytics/overview", None, None),
         ],
         # trust-safety : mutations super-admin (agent1 → 403 des deux côtés).
         "trust-safety": [
