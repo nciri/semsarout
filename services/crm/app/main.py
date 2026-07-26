@@ -8,7 +8,7 @@ Les sous-domaines clients/visites/transactions suivront (mêmes patrons).
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import func, or_
@@ -91,6 +91,24 @@ def _owned(db: Session, lead_id: int, principal: Principal):
 @app.get("/health", include_in_schema=False)
 async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
+
+
+@app.get("/internal/leads", include_in_schema=False)
+def internal_leads(request: Request, x_internal_token: str = Header(default=""),
+                   db: Session = Depends(get_db)):
+    """Lignes brutes de leads (par agence) — pour les agrégats du service analytics."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    aid = request.query_params.get("agency_id")
+    q = db.query(Lead)
+    if aid:
+        q = q.filter(Lead.agency_id == int(aid))
+    return {"leads": [{
+        "id": l.id, "agency_id": l.agency_id, "assigned_to_id": l.assigned_to_id,
+        "source": l.source, "service": l.service, "status": l.status, "is_charged": l.is_charged,
+        "is_read": l.is_read, "created_at": _iso(l.created_at), "qualified_at": _iso(l.qualified_at),
+        "converted_at": _iso(l.converted_at), "contacted_at": _iso(l.contacted_at),
+    } for l in q.all()]}
 
 
 @app.get("/backoffice/leads")

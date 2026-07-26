@@ -77,6 +77,13 @@ def cases(args):
         "dashboard-config": [
             ("GET", "/api/v1/backoffice/dashboard/config", None, None),
         ],
+        "analytics": [
+            ("GET", "/api/v1/backoffice/analytics/ping", None, None),
+            ("GET", "/api/v1/backoffice/analytics/financial", None, None),
+            ("GET", "/api/v1/backoffice/analytics/financial", {"range": "30d"}, None),
+            ("GET", "/api/v1/backoffice/analytics/pipeline", None, None),
+            ("GET", "/api/v1/backoffice/analytics/pipeline", {"range": "ytd"}, None),
+        ],
         # trust-safety : mutations super-admin (agent1 → 403 des deux côtés).
         "trust-safety": [
             ("POST", "/api/v1/admin/accounts/users/999999/suspend", None, {}),

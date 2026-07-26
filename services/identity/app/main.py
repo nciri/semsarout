@@ -97,6 +97,25 @@ def internal_agency_members(agency_id: int, x_internal_token: str = Header(defau
     return {"members": [m.to_dict() for m in members]}
 
 
+@app.get("/internal/agency/{agency_id}/analytics-scope", include_in_schema=False)
+def internal_analytics_scope(agency_id: int, user_id: int, x_internal_token: str = Header(default=""),
+                             db: Session = Depends(get_db)) -> dict:
+    """Portée analytics (parité `analytics_scope`) : agence entière si propriétaire de l'agence ou
+    permission `analytics.view_all` ; sinon cloisonné à l'agent. identity possède comptes/rôles."""
+    if x_internal_token != settings.internal_token:
+        raise forbidden("Forbidden")
+    from .models import AgencyRO, UserRO
+    ag = db.get(AgencyRO, agency_id)
+    if ag is not None and ag.owner_id and ag.owner_id == user_id:
+        return {"all": True, "agent_id": None}
+    user = db.get(UserRO, user_id)
+    if user is not None and any(
+        any(p.slug == "analytics.view_all" for p in r.permissions) for r in user.roles
+    ):
+        return {"all": True, "agent_id": None}
+    return {"all": False, "agent_id": user_id}
+
+
 class KycRequest(BaseModel):
     cin: str
 

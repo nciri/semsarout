@@ -16,7 +16,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 import uuid
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Header, Request
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
@@ -143,6 +143,34 @@ def _parse_dt(v):
 @app.get("/health", include_in_schema=False)
 async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
+
+
+def _raw(t: Transaction) -> dict:
+    return {
+        "id": t.id, "agency_id": t.agency_id, "agent_id": t.agent_id, "client_id": t.client_id,
+        "property_id": t.property_id, "transaction_type": t.transaction_type, "stage": t.stage,
+        "status": t.status, "asking_price": num(t.asking_price), "offer_price": num(t.offer_price),
+        "final_price": num(t.final_price), "commission_rate": num(t.commission_rate),
+        "commission_amount": num(t.commission_amount), "probability": t.probability,
+        "contact_date": iso(t.contact_date), "visit_date": iso(t.visit_date),
+        "offer_date": iso(t.offer_date), "acceptance_date": iso(t.acceptance_date),
+        "compromise_date": iso(t.compromise_date), "closing_date": iso(t.closing_date),
+        "expected_closing_date": iso(t.expected_closing_date), "created_at": iso(t.created_at),
+        "updated_at": iso(t.updated_at), "closed_at": iso(t.closed_at),
+    }
+
+
+@app.get("/internal/transactions", include_in_schema=False)
+def internal_transactions(request: Request, x_internal_token: str = Header(default=""),
+                          db: Session = Depends(get_db)):
+    """Lignes brutes de transactions (par agence) — pour les agrégats du service analytics."""
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    aid = request.query_params.get("agency_id")
+    q = db.query(Transaction)
+    if aid:
+        q = q.filter(Transaction.agency_id == int(aid))
+    return {"transactions": [_raw(t) for t in q.all()]}
 
 
 # ---- Collections & agrégats (routes littérales AVANT /{tx_id}) ----

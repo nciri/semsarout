@@ -1,23 +1,33 @@
-"""Service analytics — API de lecture des agrégats (k-anonymisés).
+"""Service analytics — agrégats cross-domaine (query-time).
 
-Métriques plateforme : réservé aux rôles admin/analyst (le super-admin passe toujours).
-Le worker (`python -m app.worker`) maintient les compteurs ; cette API les restitue.
+Reproduit `/analytics/ping`, `/analytics/financial`, `/analytics/pipeline` — cf.
+`backend/app/api/v1/backoffice/analytics.py`. Ne duplique PAS les données : lit les lignes brutes
+via les endpoints internes des services propriétaires (transactions, crm, identity) et agrège en
+mémoire. Portée (agence entière vs agent) résolue par identity. Autres agrégats (market/team/
+overview, stats/*, dashboard, charts) à venir.
 """
-from fastapi import Depends, FastAPI
+from contextlib import asynccontextmanager
+
+from fastapi import Depends, FastAPI, Request
 from prometheus_fastapi_instrumentator import Instrumentator
-from sqlalchemy.orm import Session
 
-from semsar_auth import Principal, require_roles
-from semsar_common import get_settings, install_error_handlers, setup_logging, setup_tracing
+from semsar_auth import Principal, get_principal
+from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
-from .db import SessionLocal, init_db
-from .models import MetricCounter
+from . import compute, sources
+from .util import err
 
 settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
 
-app = FastAPI(title=f"SemsarOut — {settings.service_name}")
-install_error_handlers(app)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+
+
+app = FastAPI(title=f"SemsarOut — {settings.service_name}", lifespan=lifespan)
+install_legacy_error_handlers(app)
 
 try:
     setup_tracing(app, settings.service_name, settings.otlp_endpoint)
@@ -27,21 +37,15 @@ except Exception:  # noqa: BLE001
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
 
-def get_db() -> Session:
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+def _uid(principal: Principal) -> int | None:
+    return int(principal.sub) if principal.sub and principal.sub.isdigit() else None
 
 
-@app.on_event("startup")
-def _startup() -> None:
-    if settings.database_url:
-        try:
-            init_db()
-        except Exception:  # noqa: BLE001
-            pass
+def _scope(principal: Principal) -> dict | None:
+    """(scope) pour l'agence de l'utilisateur, ou None si aucune agence — parité current_scope."""
+    if principal.agency_id is None:
+        return None
+    return sources.scope(principal.agency_id, _uid(principal))
 
 
 @app.get("/health", include_in_schema=False)
@@ -49,19 +53,28 @@ async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
 
 
-@app.get("/analytics/overview")
-def overview(
-    _principal: Principal = Depends(require_roles("admin", "analyst")),
-    db: Session = Depends(get_db),
-) -> dict:
-    metrics = {row.name: row.value for row in db.query(MetricCounter).all()}
-    created = metrics.get("listings.created", 0)
-    deleted = metrics.get("listings.deleted", 0)
-    return {
-        "metrics": metrics,
-        "summary": {
-            "listings_net": created - deleted,
-            "kyc_requested": metrics.get("kyc.requested", 0),
-            "kyc_verified": metrics.get("kyc.verified", 0),
-        },
-    }
+@app.get("/analytics/ping")
+def analytics_ping(principal: Principal = Depends(get_principal)):
+    return {"ok": True, "scope": _scope(principal)}
+
+
+@app.get("/analytics/financial")
+def analytics_financial(request: Request, principal: Principal = Depends(get_principal)):
+    scope = _scope(principal)
+    if scope is None:
+        return err("Aucune agence", 400)
+    rng = request.query_params.get("range", "12m")
+    txns = sources.transactions(principal.agency_id)
+    names = sources.agent_names(principal.agency_id)
+    return compute.financial(txns, scope, rng, names)
+
+
+@app.get("/analytics/pipeline")
+def analytics_pipeline(request: Request, principal: Principal = Depends(get_principal)):
+    scope = _scope(principal)
+    if scope is None:
+        return err("Aucune agence", 400)
+    rng = request.query_params.get("range", "12m")
+    txns = sources.transactions(principal.agency_id)
+    leads = sources.leads(principal.agency_id)
+    return compute.pipeline(txns, leads, scope, rng)
