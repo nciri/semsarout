@@ -89,6 +89,15 @@ def cases(args):
             ("GET", "/api/v1/backoffice/analytics/team", None, None),
             ("GET", "/api/v1/backoffice/analytics/overview", None, None),
         ],
+        "stats": [
+            ("GET", "/api/v1/backoffice/stats/overview", None, None),
+            ("GET", "/api/v1/backoffice/stats/overview", {"period": "90"}, None),
+            ("GET", "/api/v1/backoffice/stats/agent-performance", None, None),
+            ("GET", "/api/v1/backoffice/stats/conversion-funnel", None, None),
+            ("GET", "/api/v1/backoffice/stats/properties-by-city", None, None),
+            ("GET", "/api/v1/backoffice/stats/price-distribution", {"type": "sale"}, None),
+            ("GET", "/api/v1/backoffice/stats/price-distribution", {"type": "rent"}, None),
+        ],
         # trust-safety : mutations super-admin (agent1 → 403 des deux côtés).
         "trust-safety": [
             ("POST", "/api/v1/admin/accounts/users/999999/suspend", None, {}),

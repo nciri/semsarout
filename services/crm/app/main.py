@@ -19,7 +19,7 @@ from semsar_common import get_settings, install_legacy_error_handlers, setup_log
 
 from . import clients, users_client, visits
 from .db import get_db, init_db
-from .models import Lead, PropertyRO
+from .models import Client, Lead, PropertyRO, Visit
 
 settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
@@ -110,6 +110,40 @@ def internal_leads(request: Request, x_internal_token: str = Header(default=""),
         "is_read": l.is_read, "created_at": _iso(l.created_at), "qualified_at": _iso(l.qualified_at),
         "converted_at": _iso(l.converted_at), "contacted_at": _iso(l.contacted_at),
     } for l in q.all()]}
+
+
+@app.get("/internal/clients", include_in_schema=False)
+def internal_clients(request: Request, x_internal_token: str = Header(default=""),
+                     db: Session = Depends(get_db)):
+    """Lignes brutes de clients (par agence) — pour les stats du service analytics."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    aid = request.query_params.get("agency_id")
+    q = db.query(Client)
+    if aid:
+        q = q.filter(Client.agency_id == int(aid))
+    return {"clients": [{
+        "id": c.id, "agency_id": c.agency_id, "assigned_to_id": c.assigned_to_id,
+        "full_name": f"{c.first_name or ''} {c.last_name or ''}".strip(), "email": c.email,
+        "phone": c.phone, "client_type": c.client_type, "status": c.status, "source": c.source,
+        "city": c.city, "created_at": _iso(c.created_at),
+    } for c in q.all()]}
+
+
+@app.get("/internal/visits", include_in_schema=False)
+def internal_visits(request: Request, x_internal_token: str = Header(default=""),
+                    db: Session = Depends(get_db)):
+    """Lignes brutes de visites (par agence) — pour les stats du service analytics."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    aid = request.query_params.get("agency_id")
+    q = db.query(Visit)
+    if aid:
+        q = q.filter(Visit.agency_id == int(aid))
+    return {"visits": [{
+        "id": v.id, "agency_id": v.agency_id, "agent_id": v.agent_id, "status": v.status,
+        "created_at": _iso(v.created_at), "completed_at": _iso(v.completed_at),
+    } for v in q.all()]}
 
 
 @app.get("/backoffice/leads")

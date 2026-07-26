@@ -39,9 +39,20 @@ def scope(agency_id: int, user_id: int) -> dict:
     return data or {"all": False, "agent_id": user_id}
 
 
+def members(agency_id: int) -> list[dict]:
+    return _get(f"{IDENTITY_URL}/internal/agency/{agency_id}/members", {}).get("members", [])
+
+
 def agent_names(agency_id: int) -> dict[int, str]:
-    members = _get(f"{IDENTITY_URL}/internal/agency/{agency_id}/members", {}).get("members", [])
-    return {m["id"]: m.get("full_name") for m in members}
+    return {m["id"]: m.get("full_name") for m in members(agency_id)}
+
+
+def clients(agency_id: int) -> list[dict]:
+    return _get(f"{CRM_URL}/internal/clients", {"agency_id": agency_id}).get("clients", [])
+
+
+def visits(agency_id: int) -> list[dict]:
+    return _get(f"{CRM_URL}/internal/visits", {"agency_id": agency_id}).get("visits", [])
 
 
 def properties(agency_id: int) -> list[dict]:

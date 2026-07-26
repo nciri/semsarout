@@ -147,7 +147,8 @@ async def health() -> dict:
 
 def _raw(t: Transaction) -> dict:
     return {
-        "id": t.id, "agency_id": t.agency_id, "agent_id": t.agent_id, "client_id": t.client_id,
+        "id": t.id, "reference": t.reference, "agency_id": t.agency_id, "agent_id": t.agent_id,
+        "client_id": t.client_id,
         "property_id": t.property_id, "transaction_type": t.transaction_type, "stage": t.stage,
         "status": t.status, "asking_price": num(t.asking_price), "offer_price": num(t.offer_price),
         "final_price": num(t.final_price), "commission_rate": num(t.commission_rate),

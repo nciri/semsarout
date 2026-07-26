@@ -8,13 +8,15 @@ overview, stats/*, dashboard, charts) à venir.
 """
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, Request
+from datetime import datetime
+
+from fastapi import Depends, FastAPI, Request, Response
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
-from . import compute, sources
+from . import compute, sources, stats
 from .util import err
 
 settings = get_settings()
@@ -113,3 +115,54 @@ def analytics_overview(principal: Principal = Depends(get_principal)):
     return compute.overview(sources.transactions(aid), sources.properties(aid), sources.leads(aid),
                             scope, sources.seats(aid), sources.subscription(aid),
                             scope.get("dashboard_config"))
+
+
+# ---- Stats (cloisonné par agence, sans scope agent) ----
+def _days(request: Request) -> int:
+    try:
+        return int(request.query_params.get("period", "30"))
+    except ValueError:
+        return 30
+
+
+@app.get("/stats/overview")
+def stats_overview(request: Request, principal: Principal = Depends(get_principal)):
+    aid = principal.agency_id
+    return stats.overview(sources.properties(aid), sources.leads(aid), sources.clients(aid),
+                          sources.visits(aid), _days(request))
+
+
+@app.get("/stats/agent-performance")
+def stats_agent_performance(request: Request, principal: Principal = Depends(get_principal)):
+    aid = principal.agency_id
+    return stats.agent_performance(sources.members(aid), sources.properties(aid), sources.visits(aid),
+                                   sources.transactions(aid), sources.clients(aid), _days(request))
+
+
+@app.get("/stats/conversion-funnel")
+def stats_conversion_funnel(request: Request, principal: Principal = Depends(get_principal)):
+    aid = principal.agency_id
+    return stats.conversion_funnel(sources.leads(aid), sources.visits(aid),
+                                   sources.transactions(aid), _days(request))
+
+
+@app.get("/stats/properties-by-city")
+def stats_properties_by_city(principal: Principal = Depends(get_principal)):
+    return stats.properties_by_city(sources.properties(principal.agency_id))
+
+
+@app.get("/stats/price-distribution")
+def stats_price_distribution(request: Request, principal: Principal = Depends(get_principal)):
+    ttype = request.query_params.get("type", "sale")
+    return stats.price_distribution(sources.properties(principal.agency_id), ttype)
+
+
+@app.get("/stats/export")
+def stats_export(request: Request, principal: Principal = Depends(get_principal)):
+    aid = principal.agency_id
+    etype = request.query_params.get("type", "properties")
+    body = stats.export_csv(etype, sources.properties(aid), sources.clients(aid),
+                            sources.transactions(aid), sources.agent_names(aid))
+    fname = f"{etype}_{datetime.utcnow().strftime('%Y%m%d')}.csv"
+    return Response(content=body, media_type="text/csv",
+                    headers={"content-disposition": f"attachment; filename={fname}"})

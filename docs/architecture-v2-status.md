@@ -4,7 +4,7 @@
 > Décrit ce qui est fait, ce qui tourne, comment tout relancer, et le reste à faire.
 > Branche : `feature/architecture-v2` (commits **locaux uniquement**, aucun upstream, aucun push).
 
-Dernière mise à jour de session : contrat **70/70 PASS**. #6 : T1+T2 FAITS ; T3 en cours (dashboard/config + analytics **/{ping,financial,pipeline,market,team,overview}** FAITS ; reste stats/* + dashboard + charts).
+Dernière mise à jour de session : contrat **77/77 PASS**. #6 : T1+T2 FAITS ; T3 en cours (dashboard/config + analytics/* (6) + **stats/* (6)** FAITS ; reste dashboard + charts/* + dashboard/activity).
 
 > **REPRISE (contexte frais)** — §8 items #1, #2, #5 **FAITS** ; **#4 `transactions` FAIT** ;
 > **`legal` FAIT** ; **`contract` FAIT** (tranches de #3, vérifiés E2E + gates 403 + create/finalize,
@@ -82,7 +82,7 @@ reconstructibles). Validation JWT **locale** au BFF (frontière d'auth sévrée)
 | payment | 8507 | intention de paiement + webhook (`/payments/create-intent`, `/payments/webhook`, `/payments/{ref}`, `/my-payments`) — CMI simulé |
 | buyer | 8515 | acheteur : recherches sauvegardées + favoris + estimations (`/buyer/saved-searches*`, `/buyer/favorites*`, `/buyer/estimates*`) |
 | identity | 8501 | **auth complète** (voir §3) + RBAC + teams/invitations + `dashboard/config` + `internal/agency/{id}/seats|members|analytics-scope` |
-| analytics | 8504 | agrégats cross-domaine query-time : `/analytics/{ping,financial,pipeline,market,team,overview}` (dumps internes transactions/crm/listing/geo/billing + scope/seats identity) |
+| analytics | 8504 | agrégats cross-domaine query-time : `/analytics/*` (6) + `/stats/*` (6 : overview/agent-performance/conversion-funnel/properties-by-city/price-distribution/export CSV) — dumps internes transactions/crm(leads/clients/visits)/listing/geo/billing + identity |
 
 **Services additifs (nouvelles surfaces, PAS consommées par le front — voir reste à faire) :**
 identity(KYC) · notification 8502
@@ -237,9 +237,10 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
      (dashboards live cassés). `/dashboard/config` (JSON par utilisateur) ✅ **FAIT** (servi par identity — config sur le
      compte ; GET/PUT parité, propagation via user.updated). **Approche validée : agrégation query-time** (analytics lit les dumps internes des services
      propriétaires et agrège en mémoire, parité exacte). ✅ **financial/pipeline/ping/market/team/overview FAITS** (parité exacte). Reste : **stats/*** (6),
-     **dashboard** + **charts/*** (leads-by-source, properties-by-status, revenue-trend), **dashboard/activity**
-     (audit dump). Dumps internes faits : transactions, crm leads (+charge_amount), listing (raw+`/internal/properties`),
-     geo neighborhood-refs, identity scope/seats(member_count/seats_used/limit)/dashboard_config, billing subscription.
+     **stats/* FAITS**. Reste : **dashboard** + **charts/*** (leads-by-source, properties-by-status,
+     revenue-trend), **dashboard/activity** (audit dump). Dumps internes faits : transactions, crm
+     (leads+charge_amount/clients/visits), listing (raw), geo refs, identity scope/seats/dashboard_config,
+     billing subscription. Écart : export CSV non testé au contrat (ordre des lignes non déterministe).
    - **T4 `programs`** (28 routes, `programs.py`) : **nouveau dev** (promotions immobilières neuves +
      `programs/{id}/plans`), pas encore consommé pareil — nouveau service.
    - **T5 `integrations`/staymanager** (14 routes) : sync externe (staymanager) — nouvelle surface.
@@ -268,4 +269,4 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
 ## 10. Contrat / vérification
 `tools/contract_test.py` compare monolithe vs BFF route par route (statut + JSON normalisé, champs
 volatils ignorés). Groupes : catalog, directory, listing, search, crm, marketplace, geo, messaging,
-trust-safety, rbac, dashboard-config, analytics, agency, audit, transactions, legal, contract, billing, payment, buyer. **70/70** actuellement (normalize : collections de dicts triées par contenu — ordre non garanti côté monolithe ; `views`/`views_count` volatils) (collections par `id` ordre-insensible : membres /my-agency + biens /agencies/{slug}/properties non ordonnés côté monolithe).
+trust-safety, rbac, dashboard-config, analytics, stats, agency, audit, transactions, legal, contract, billing, payment, buyer. **77/77** actuellement (normalize : collections de dicts triées par contenu — ordre non garanti côté monolithe ; `views`/`views_count` volatils) (collections par `id` ordre-insensible : membres /my-agency + biens /agencies/{slug}/properties non ordonnés côté monolithe).
