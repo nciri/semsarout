@@ -197,6 +197,10 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or (method == "GET" and path == "/api/v1/backoffice/permissions")
     ):
         return app.state.identity, path.replace("/api/v1", "", 1)
+    # Config widgets du tableau de bord (sur le compte) → identity. Le reste de /dashboard*
+    # (agrégats) reste au monolithe (T3 analytics à venir).
+    if settings.identity_url and path == "/api/v1/backoffice/dashboard/config":
+        return app.state.identity, path.replace("/api/v1", "", 1)
     # RBAC écritures (gestion utilisateur : rôles / activation) → identity.
     if settings.identity_url and _RBAC_USER_WRITE.match(path):
         return app.state.identity, path.replace("/api/v1", "", 1)

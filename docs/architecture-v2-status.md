@@ -4,7 +4,7 @@
 > Décrit ce qui est fait, ce qui tourne, comment tout relancer, et le reste à faire.
 > Branche : `feature/architecture-v2` (commits **locaux uniquement**, aucun upstream, aucun push).
 
-Dernière mise à jour de session : contrat **61/61 PASS**. #6 : T1 buyer + T2 agency FAITS (dicts biens COMPLETS via listing, aucun écart résiduel).
+Dernière mise à jour de session : contrat **62/62 PASS**. #6 : T1 buyer + T2 agency FAITS ; T3 démarré (dashboard/config FAIT ; agrégats analytics à venir).
 
 > **REPRISE (contexte frais)** — §8 items #1, #2, #5 **FAITS** ; **#4 `transactions` FAIT** ;
 > **`legal` FAIT** ; **`contract` FAIT** (tranches de #3, vérifiés E2E + gates 403 + create/finalize,
@@ -233,8 +233,9 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
      read-models** (projections transactions/leads/clients/biens/visites/commissions) pour
      reproduire les agrégats (tendances CA, funnel de conversion, perf agents avec commissions,
      stats marché). Effort dédié conséquent — ne pas router le front vers un stub en cours de route
-     (dashboards live cassés). `/dashboard/config` (2 routes, JSON par agence) est le sous-morceau
-     le plus borné, extractible en premier.
+     (dashboards live cassés). `/dashboard/config` (JSON par utilisateur) ✅ **FAIT** (servi par identity — config sur le
+     compte ; GET/PUT parité, propagation via user.updated). Reste les **agrégats** (financial/market/
+     pipeline/team/overview + stats/* + dashboard + charts/*) : buildout read-models/dumps cross-domaine.
    - **T4 `programs`** (28 routes, `programs.py`) : **nouveau dev** (promotions immobilières neuves +
      `programs/{id}/plans`), pas encore consommé pareil — nouveau service.
    - **T5 `integrations`/staymanager** (14 routes) : sync externe (staymanager) — nouvelle surface.

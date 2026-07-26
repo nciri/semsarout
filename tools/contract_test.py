@@ -74,6 +74,9 @@ def cases(args):
             ("GET", "/api/v1/backoffice/roles", None, None),
             ("GET", "/api/v1/backoffice/permissions", None, None),
         ],
+        "dashboard-config": [
+            ("GET", "/api/v1/backoffice/dashboard/config", None, None),
+        ],
         # trust-safety : mutations super-admin (agent1 → 403 des deux côtés).
         "trust-safety": [
             ("POST", "/api/v1/admin/accounts/users/999999/suspend", None, {}),

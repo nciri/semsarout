@@ -199,6 +199,40 @@ async def delete_me(request: Request, principal: Principal = Depends(get_princip
     return {"message": "Compte supprimé"}
 
 
+# Config des widgets du tableau de bord (portée depuis backoffice/analytics.py du monolithe).
+# Stockée sur le compte (dashboard_config) → identity en est propriétaire.
+_WIDGET_IDS = ["financial", "pipeline", "hot_leads", "listings", "market", "team_seats",
+               "subscription", "alerts"]
+_DEFAULT_WIDGETS = [{"id": wid, "order": i, "hidden": False} for i, wid in enumerate(_WIDGET_IDS)]
+
+
+@router.get("/backoffice/dashboard/config")
+def get_dashboard_config(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    user = _current(principal, db)
+    if not user:
+        return _err("User not found", 404)
+    return user.dashboard_config or {"widgets": _DEFAULT_WIDGETS}
+
+
+@router.put("/backoffice/dashboard/config")
+async def put_dashboard_config(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    user = _current(principal, db)
+    if not user:
+        return _err("User not found", 404)
+    data = await _json(request)
+    widgets = data.get("widgets", [])
+    if not isinstance(widgets, list):
+        return _err("widgets doit être une liste", 400)
+    for w in widgets:
+        if not isinstance(w, dict) or w.get("id") not in _WIDGET_IDS:
+            bad = w if not isinstance(w, dict) else w.get("id")
+            return _err(f"Widget invalide : {bad}", 400)
+    user.dashboard_config = {"widgets": widgets}
+    enqueue(db, "user", user.id, "user.updated", _user_event_doc(user))
+    db.commit()
+    return user.dashboard_config
+
+
 @router.post("/auth/change-password")
 async def change_password(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
     user = _current(principal, db)
