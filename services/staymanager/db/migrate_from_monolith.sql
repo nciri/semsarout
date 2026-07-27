@@ -1,8 +1,8 @@
 -- Migration staymanager : monolithe -> staymanager. À exécuter AVANT le reroute BFF.
 -- property_ro (bien imbriqué d'un lien) amorcée depuis public.properties. Le reste : 0 ligne.
 
-INSERT INTO staymanager.property_ro (id, title, reference)
-SELECT id, title, reference FROM public.properties ON CONFLICT (id) DO NOTHING;
+INSERT INTO staymanager.property_ro (id, agency_id, title, reference)
+SELECT id, agency_id, title, reference FROM public.properties ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO staymanager.staymanager_integration (
     id, agency_id, staymanager_user_id, staymanager_email, api_key_encrypted, status, last_sync_at,

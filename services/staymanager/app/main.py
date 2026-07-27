@@ -262,7 +262,7 @@ async def link_property(property_id: int, request: Request, principal: Principal
     if not i or i.status != "connected":
         return err("StayManager non connecte", 400)
     ro = db.get(PropertyRO, property_id)
-    if ro is None:
+    if ro is None or ro.agency_id != principal.agency_id:  # parité : bien de l'agence uniquement (anti-IDOR)
         return err("Bien non trouve", 404)
     if db.query(StayManagerPropertyLink).filter(StayManagerPropertyLink.property_id == property_id).first():
         return err("Ce bien est deja lie a StayManager", 400)

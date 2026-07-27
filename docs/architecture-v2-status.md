@@ -252,6 +252,25 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
    **Coupure** : quand une tranche est verte au contrat, basculer son routage BFF (déjà le patron) ;
    quand **tout** est extrait → retirer le repli monolithe du BFF, éteindre `:7000`.
 
+   ### État de la coupure finale (T1..T5 FAITS, contrat 88/88)
+   **Fait** : front → BFF à **100 %** (`vite.config` `/api` → :8099) ; `users_client` de
+   crm/transactions/contract **repointé vers identity** (`/internal/agency/{id}/members?active_only=1`)
+   — ces 3 services ne dépendent plus du monolithe pour les noms d'agents.
+   **Bloqueurs restants avant d'éteindre `:7000`** (à traiter, puis retirer le repli monolithe du BFF) :
+   - **Deps internes v2 → monolithe** : (a) `listing` reveal-phone → `/internal/properties/{id}/contact-phone`
+     (repointer vers agency/identity : téléphone agence/propriétaire) ; (b) `trust-safety` suspend/unsuspend
+     → écrit dans `/admin/accounts/*` du monolithe (repointer l'écriture vers identity, propriétaire des
+     comptes) ; (c) BFF repli features `/my-subscription` (legacy tokens seulement — billing le sert déjà).
+   - **Routes front encore servies par le monolithe** (repli BFF) : `selling`(4), `leads` racine public(7),
+     `users`(3, `GET /backoffice/users`), `admin/shop|artisans|overview|impersonation`,
+     `/dashboard/activity` (fait via analytics), integrations autres. ~20 routes mineures à extraire.
+   - **Statique** : `/uploads` (images) sert encore depuis le disque du monolithe (`vite.config`) → migrer
+     vers stockage objet (MinIO/S3) avant extinction.
+   - **Sync transitoire** : `consume_users.py`/`relay_outbox.py` (monolithe) deviennent inutiles une fois
+     `:7000` éteint (plus personne ne lit `public.users`).
+   **Ordre** : (1) repointer contact-phone + trust-safety, (2) extraire les ~20 routes mineures, (3) migrer
+   `/uploads`, (4) retirer le repli monolithe du BFF (`upstream_url`) + le proxy `/uploads`, (5) éteindre `:7000`.
+
 ## 9. Pièges connus (IMPORTANT pour un contexte frais)
 - **`git commit` doit être une commande Bash SEULE** (le hook `block-no-verify` faux-positive sur
   les commandes composées). `git add` peut être chaîné, pas `git commit`.

@@ -88,14 +88,18 @@ def internal_agency_seats(agency_id: int, x_internal_token: str = Header(default
 
 
 @app.get("/internal/agency/{agency_id}/members", include_in_schema=False)
-def internal_agency_members(agency_id: int, x_internal_token: str = Header(default=""),
+def internal_agency_members(agency_id: int, active_only: int = 0, x_internal_token: str = Header(default=""),
                             db: Session = Depends(get_db)) -> dict:
-    """Membres d'une agence (dicts complets, parité `User.to_dict`) — pour `/my-agency` du
-    service agency. identity possède les comptes (v2-native, pas le monolithe)."""
+    """Membres d'une agence (dicts complets, parité `User.to_dict`) — pour `/my-agency` (agency) et
+    la résolution de noms (users_client de crm/transactions/contract). `active_only=1` → uniquement
+    les comptes actifs (parité `/internal/agency/users` du monolithe). identity possède les comptes."""
     if x_internal_token != settings.internal_token:
         raise forbidden("Forbidden")
     from .models import UserRO
-    members = db.query(UserRO).filter(UserRO.agency_id == agency_id).order_by(UserRO.id).all()
+    q = db.query(UserRO).filter(UserRO.agency_id == agency_id)
+    if active_only:
+        q = q.filter(UserRO.is_active.is_(True))
+    members = q.order_by(UserRO.id).all()
     return {"members": [m.to_dict() for m in members]}
 
 

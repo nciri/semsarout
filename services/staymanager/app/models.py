@@ -106,5 +106,6 @@ class PropertyRO(Base):
     __tablename__ = "property_ro"
 
     id = Column(BigInteger, primary_key=True)
+    agency_id = Column(Integer, index=True)
     title = Column(String(200))
     reference = Column(String(50))

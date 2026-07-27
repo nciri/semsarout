@@ -54,13 +54,14 @@ TS_HIDDEN="MODERATION_HIDDEN_URL=http://localhost:8511/internal/moderation/hidde
 for pair in $SVCS; do
   svc="${pair%%:*}"; port="${pair##*:}"
   kill_port "$port"
-  extra=""; [ "$svc" = "contract" ] && extra="$S3"; [ "$svc" = "identity" ] && extra="JWT_SECRET_KEY=$JWT"
+  extra=""; [ "$svc" = "contract" ] && extra="$S3 IDENTITY_URL=http://localhost:8501"; [ "$svc" = "identity" ] && extra="JWT_SECRET_KEY=$JWT"
   case "$svc" in
     billing) extra="IDENTITY_URL=http://localhost:8501";;
     agency)  extra="IDENTITY_URL=http://localhost:8501 LISTING_URL=http://localhost:8012";;
     buyer)   extra="LISTING_URL=http://localhost:8012";;
     programs) extra="BILLING_URL=http://localhost:8508";;
     staymanager) extra="BILLING_URL=http://localhost:8508";;
+    crm|transactions) extra="IDENTITY_URL=http://localhost:8501";;
     analytics) extra="TRANSACTIONS_URL=http://localhost:8514 CRM_URL=http://localhost:8013 IDENTITY_URL=http://localhost:8501 LISTING_URL=http://localhost:8012 GEO_URL=http://localhost:8509 BILLING_URL=http://localhost:8508 AUDIT_URL=http://localhost:8513";;
   esac
   case "$svc" in listing|search) extra="$extra $TS_HIDDEN";; esac

@@ -1,4 +1,8 @@
-"""Noms des agents d'agence — projetés depuis l'endpoint interne du monolithe (cache court)."""
+"""Noms des agents d'agence — via l'endpoint interne d'**identity** (propriétaire des comptes).
+
+v2-native : ne dépend plus du monolithe (prérequis au décommissionnement). `active_only=1`
+reproduit le filtre `is_active` du `/internal/agency/users` du monolithe. Cache court.
+"""
 import os
 import time
 
@@ -6,27 +10,31 @@ import httpx
 
 from semsar_common import get_settings
 
-MONOLITH_URL = os.environ.get("MONOLITH_URL", "http://localhost:7000")
+IDENTITY_URL = os.environ.get("IDENTITY_URL", "http://localhost:8501")
 _TTL = 60.0
 _CACHE: dict[int, tuple[float, list[dict]]] = {}
 
 
 def agents(agency_id: int | None) -> list[dict]:
-    key = agency_id or 0
-    cached = _CACHE.get(key)
+    if agency_id is None:
+        return []
+    cached = _CACHE.get(agency_id)
     if cached and time.monotonic() - cached[0] < _TTL:
         return cached[1]
     try:
         resp = httpx.get(
-            f"{MONOLITH_URL}/api/v1/internal/agency/users",
-            params={"agency_id": agency_id} if agency_id else {},
+            f"{IDENTITY_URL}/internal/agency/{agency_id}/members",
+            params={"active_only": 1},
             headers={"x-internal-token": get_settings().internal_token},
             timeout=5.0,
         )
-        users = (resp.json() or {}).get("users", []) if resp.status_code == 200 else []
+        members = (resp.json() or {}).get("members", []) if resp.status_code == 200 else []
     except httpx.HTTPError:
-        users = cached[1] if cached else []
-    _CACHE[key] = (time.monotonic(), users)
+        members = cached[1] if cached else []
+        _CACHE[agency_id] = (time.monotonic(), members)
+        return members
+    users = [{"id": m["id"], "name": m.get("full_name"), "email": m.get("email")} for m in members]
+    _CACHE[agency_id] = (time.monotonic(), users)
     return users
 
 
