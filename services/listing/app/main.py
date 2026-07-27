@@ -16,6 +16,7 @@ import httpx
 from fastapi import Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
@@ -322,6 +323,119 @@ async def estimate_price(request: Request, db: Session = Depends(get_db)):
         "price_per_sqm": round(ppsqm), "estimate": round(estimate),
         "estimate_low": round(estimate * 0.9), "estimate_high": round(estimate * 1.1),
     }
+
+
+# ---- Gestion des biens en backoffice (cloisonnée agence) — parité `backoffice/properties.py` ----
+_BO_WRITABLE = ["title", "description", "property_type", "transaction_type", "price", "charges",
+                "surface", "land_surface", "rooms", "bedrooms", "bathrooms", "floor", "total_floors",
+                "construction_year", "features", "energy_class", "address", "city", "neighborhood",
+                "postal_code", "latitude", "longitude", "status", "is_premium", "is_urgent", "is_featured"]
+
+
+def _bo_reference(db: Session) -> str:
+    count = db.query(Property).count() + 1
+    return f"PROP-{datetime.utcnow().strftime('%Y%m')}-{count:04d}"
+
+
+def _bo_access(p: Property, principal: Principal):
+    """Cloisonnement agence (parité) : un bien d'une autre agence → 403."""
+    if principal.agency_id and p.agency_id != principal.agency_id:
+        return _err("Access denied", 403)
+    return None
+
+
+@app.get("/backoffice/properties")
+def bo_list_properties(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
+    qp = request.query_params
+    page = int(qp.get("page") or 1)
+    per_page = int(qp.get("per_page") or 20)
+    q = db.query(Property)
+    if principal.agency_id:
+        q = q.filter(Property.agency_id == principal.agency_id)
+    if qp.get("type"):
+        q = q.filter(Property.property_type == qp.get("type"))
+    if qp.get("transaction_type"):
+        q = q.filter(Property.transaction_type == qp.get("transaction_type"))
+    if qp.get("status"):
+        q = q.filter(Property.status == qp.get("status"))
+    if qp.get("city"):
+        q = q.filter(Property.city == qp.get("city"))
+    if qp.get("min_price"):
+        q = q.filter(Property.price >= float(qp.get("min_price")))
+    if qp.get("max_price"):
+        q = q.filter(Property.price <= float(qp.get("max_price")))
+    if qp.get("q"):
+        t = f"%{qp.get('q')}%"
+        q = q.filter(or_(Property.title.ilike(t), Property.reference.ilike(t),
+                         Property.city.ilike(t), Property.neighborhood.ilike(t)))
+    sort_by = qp.get("sort_by") or "created_at"
+    col = getattr(Property, sort_by, None)
+    if col is not None:
+        q = q.order_by(col.desc() if (qp.get("sort_order") or "desc") == "desc" else col.asc())
+    total = q.count()
+    items = q.offset((page - 1) * per_page).limit(per_page).all()
+    pages = (total + per_page - 1) // per_page if per_page else 1
+    return {"properties": [_prop_dict(db, p, include_images=True) for p in items],
+            "total": total, "pages": pages, "current_page": page}
+
+
+@app.get("/backoffice/properties/{property_id}")
+def bo_get_property(property_id: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    p = db.get(Property, property_id)
+    if p is None:
+        return _err("Not found", 404)
+    denied = _bo_access(p, principal)
+    if denied:
+        return denied
+    return _prop_dict(db, p, include_images=True)
+
+
+@app.post("/backoffice/properties", status_code=201)
+async def bo_create_property(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    data = await _json(request)
+    uid = int(principal.sub) if principal.sub and str(principal.sub).isdigit() else None
+    p = Property(reference=_bo_reference(db), status=data.get("status", "draft"),
+                 owner_id=uid, agency_id=principal.agency_id,
+                 **{k: data.get(k) for k in _BO_WRITABLE if k in data and k != "status"})
+    if p.features is None:
+        p.features = data.get("features", [])
+    db.add(p)
+    db.flush()
+    _emit(db, p, events.LISTING_CREATED)
+    db.commit()
+    return JSONResponse(_prop_dict(db, p, include_images=True), status_code=201)
+
+
+@app.put("/backoffice/properties/{property_id}")
+async def bo_update_property(property_id: int, request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    p = db.get(Property, property_id)
+    if p is None:
+        return _err("Not found", 404)
+    denied = _bo_access(p, principal)
+    if denied:
+        return denied
+    data = await _json(request)
+    for field in _BO_WRITABLE:
+        if field in data:
+            setattr(p, field, data[field])
+    p.updated_at = datetime.utcnow()
+    _emit(db, p, events.LISTING_UPDATED)
+    db.commit()
+    return _prop_dict(db, p, include_images=True)
+
+
+@app.delete("/backoffice/properties/{property_id}")
+def bo_delete_property(property_id: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    p = db.get(Property, property_id)
+    if p is None:
+        return _err("Not found", 404)
+    denied = _bo_access(p, principal)
+    if denied:
+        return denied
+    p.status = "archived"  # soft delete (parité : archivage, pas suppression)
+    _emit(db, p, events.LISTING_UPDATED)
+    db.commit()
+    return {"message": "Property archived"}
 
 
 @app.post("/properties/{property_id}/contact", status_code=201)

@@ -127,6 +127,8 @@ _LISTING_ID = re.compile(r"^/api/v1/properties/\d+$")
 _LISTING_PUBLISH = re.compile(r"^/api/v1/properties/\d+/publish$")
 # Engagement (Stage 3) : contact & reveal-phone (publics).
 _LISTING_ENGAGE = re.compile(r"^/api/v1/properties/\d+/(contact|reveal-phone)$")
+# Gestion des biens en backoffice (détail/maj/suppression) → listing.
+_BO_PROPERTY_ID = re.compile(r"^/api/v1/backoffice/properties/\d+$")
 # Leads publics gérés par l'utilisateur : GET /leads/{id} + PUT /leads/{id}/status → crm.
 _CRM_LEADS_PUBLIC = re.compile(r"^/api/v1/leads/\d+(/status)?$")
 # Lecture détail d'un compte (super-admin) : GET → analytics (agrégat). Les ÉCRITURES de
@@ -144,6 +146,11 @@ def _listing_match(path: str, method: str) -> bool:
     if method == "POST" and (_LISTING_PUBLISH.match(path) or _LISTING_ENGAGE.match(path)):
         return True
     if method == "POST" and path == "/api/v1/estimate":  # estimation prix (comparables actifs)
+        return True
+    # Gestion des biens en backoffice (liste/détail/CRUD, cloisonnée agence).
+    if path == "/api/v1/backoffice/properties" and method in ("GET", "POST"):
+        return True
+    if _BO_PROPERTY_ID.match(path) and method in ("GET", "PUT", "DELETE"):
         return True
     return False
 

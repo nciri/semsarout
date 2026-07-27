@@ -290,8 +290,13 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
    BFF : **16 routes réelles** tombent encore au monolithe (backlog fini ci-dessous), + 2 fantômes
    `GET/PUT /backoffice/settings` que **le monolithe ne sert pas** (Settings.jsx appelle un endpoint
    inexistant — hors périmètre coupure, à voir côté front). Backlog groupé par propriétaire cible :
-   - **A. Gestion des biens backoffice → listing** (5) : `GET/POST /backoffice/properties`,
-     `GET/PUT/DELETE /backoffice/properties/{id}` (listing possède déjà le CRUD public `/properties*`).
+   - ✅ **A. Gestion des biens backoffice → listing FAIT** (5) : `GET /backoffice/properties`
+     (cloisonné agence : filtres type/transaction/status/city/prix/q, tri, pagination, `to_dict`
+     include_images) + `GET /{id}` (garde 403 Access denied) + `POST` (réf `PROP-YYYYMM-NNNN`,
+     émet `listing.created`) + `PUT /{id}` (émet `listing.updated`) + `DELETE /{id}` (**soft-delete**
+     status=archived, émet `listing.updated`). Parité exacte (lectures) + E2E writes + gardes 403.
+     Contrat **115/115**. Écart mineur : l'`ActivityLog` des actions bien n'est pas ré-émis (flux
+     d'activité) — non bloquant.
    - ✅ **B. Écritures agence → agency FAIT** (3) : `POST /agencies` (création self-service :
      émet `agency.created` → identity crée `agency_ro` + associe l'utilisateur créateur
      `agency_id`+`professional` + émet `user.updated`), `PUT /agencies/{slug}` (maj + slug si nom

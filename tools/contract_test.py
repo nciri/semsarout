@@ -55,6 +55,12 @@ def cases(args):
         ],
         "listing": [
             ("GET", "/api/v1/my-properties", None, None),
+            ("GET", "/api/v1/backoffice/properties", None, None),           # → listing (gestion agence)
+            ("GET", "/api/v1/backoffice/properties", {"status": "active"}, None),
+            # Cloisonnement agence : bien d'une autre agence (id 3) → 403 des deux côtés (non mutant).
+            ("GET", "/api/v1/backoffice/properties/3", None, None),
+            ("PUT", "/api/v1/backoffice/properties/3", None, {"price": 1}),
+            ("DELETE", "/api/v1/backoffice/properties/3", None, None),
             ("POST", "/api/v1/estimate", None, {"city": "Casablanca", "property_type": "apartment", "surface": 100}),
             ("POST", "/api/v1/estimate", None, {"city": "Fès", "property_type": "villa", "surface": 250}),
             *([("GET", f"/api/v1/properties/{pid}", None, None)] if pid else []),
