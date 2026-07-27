@@ -249,8 +249,12 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
    - **Divers restants** : `selling.py` : ✅ **`estimate`** (→ listing, valorisation query-time
      sur annonces comparables, parité exacte) **FAIT** ; `sale-requests`/`documents`/`uploads`
      **couplés au stockage objet** (sale-requests crée un bien + valide des `file_id` de documents
-     sur disque) → à faire avec la migration `/uploads`. `admin/shop`(writes produits/commandes) +
-     `admin/artisans`(writes shared-artisans).
+     sur disque) → à faire avec la migration `/uploads`.
+   - ✅ **`admin/shop` + `admin/artisans` (écritures) DÉJÀ FAITS** (tranches catalog/marketplace/
+     directory) : produits CRUD → **catalog** (émet `product.*`, marketplace consomme pour purger
+     paniers/commandes) ; commandes GET/GET/PUT statut → **marketplace** ; shared-artisans CRUD →
+     **directory**. Routés (préfixe, toutes méthodes) et fonctionnels — E2E validé (lifecycle
+     complet + validations 400/404 + agent1→403). Contrat **102/102** (groupe `admin-shop-writes`).
      `users.py`(3, profils publics) **mort côté front** (0 réf) → à droper à l'extinction, pas à
      migrer. ✅ **FAITS** : `admin/overview` (→ analytics), `admin/impersonation` (→ identity),
      **groupe leads/contact publics** (`leads.py` 7 routes) : contact/reveal-phone sur annonce déjà

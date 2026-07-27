@@ -118,6 +118,18 @@ def cases(args):
             ("GET", "/api/v1/admin/overview", None, None),
             ("POST", "/api/v1/admin/accounts/users/3/impersonate", None, {}),
         ],
+        # Écritures boutique/artisans super-admin (agent1 → 403 des deux côtés) : verrouille le
+        # routage + la garde des routes déjà extraites (catalog/marketplace/directory).
+        "admin-shop-writes": [
+            ("POST", "/api/v1/admin/products", None, {"name": "x", "category": "lit"}),
+            ("PUT", "/api/v1/admin/products/1", None, {"price": 1}),
+            ("DELETE", "/api/v1/admin/products/999999", None, None),
+            ("GET", "/api/v1/admin/orders", None, None),
+            ("PUT", "/api/v1/admin/orders/999999", None, {"status": "paid"}),
+            ("POST", "/api/v1/admin/shared-artisans", None, {"name": "x", "trade": "plombier"}),
+            ("PUT", "/api/v1/admin/shared-artisans/999999", None, {"city": "x"}),
+            ("DELETE", "/api/v1/admin/shared-artisans/999999", None, None),
+        ],
         "audit": [
             ("GET", "/api/v1/admin/activity", None, None),
         ],
