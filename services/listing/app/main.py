@@ -267,6 +267,20 @@ def _fetch_contact_phone(p: Property) -> str | None:
     return (resp.json() or {}).get("phone") if resp.status_code == 200 else None
 
 
+@app.get("/internal/property-counts", include_in_schema=False)
+def internal_property_counts(request: Request, db: Session = Depends(get_db)):
+    """Nombre de biens par propriétaire et par agence (super-admin `/admin/accounts`)."""
+    from sqlalchemy import func
+    if request.headers.get("x-internal-token") != settings.internal_token:
+        return _err("Forbidden", 403)
+    by_owner = dict(db.query(Property.owner_id, func.count()).filter(
+        Property.owner_id.isnot(None)).group_by(Property.owner_id).all())
+    by_agency = dict(db.query(Property.agency_id, func.count()).filter(
+        Property.agency_id.isnot(None)).group_by(Property.agency_id).all())
+    return {"by_owner": {str(k): v for k, v in by_owner.items()},
+            "by_agency": {str(k): v for k, v in by_agency.items()}}
+
+
 @app.post("/estimate")
 async def estimate_price(request: Request, db: Session = Depends(get_db)):
     """Estimation d'un prix de vente à partir d'annonces actives comparables (parité

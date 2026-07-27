@@ -182,6 +182,32 @@ def mod_anonymize(agency_id: int, reason: str | None = None, actor_id: int | Non
     return _agency_msg(db, "Agence anonymisée", a)
 
 
+def _mod_state(a: Agency) -> str:
+    return "deleted" if a.deleted_at else ("suspended" if a.is_suspended else "active")
+
+
+@app.get("/internal/agencies", include_in_schema=False)
+def internal_agencies(request: Request, db: Session = Depends(get_db)):
+    """Dump léger de toutes les agences (super-admin `/admin/accounts`) — agrégé par analytics."""
+    if request.headers.get("x-internal-token") != settings.internal_token:
+        return _err("Forbidden", 403)
+    rows = db.query(Agency).all()
+    return {"agencies": [{"id": a.id, "name": a.name, "email": a.email,
+                          "status": _mod_state(a), "owner_id": a.owner_id} for a in rows]}
+
+
+@app.get("/internal/agency/{agency_id}", include_in_schema=False)
+def internal_agency_detail(agency_id: int, request: Request, db: Session = Depends(get_db)):
+    """Détail d'une agence (`to_dict` complet) — pour `/admin/accounts/agencies/{id}`."""
+    if request.headers.get("x-internal-token") != settings.internal_token:
+        return _err("Forbidden", 403)
+    a = db.get(Agency, agency_id)
+    if a is None:
+        return {"agency": None}
+    cnt = _counts(db, [a.id]).get(a.id, 0)
+    return {"agency": a.to_dict(properties_count=cnt)}
+
+
 @app.get("/internal/agencies/stats", include_in_schema=False)
 def internal_agencies_stats(request: Request, db: Session = Depends(get_db)):
     """Compteurs agences plateforme (super-admin overview) — agrégés par analytics."""

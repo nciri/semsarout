@@ -118,6 +118,18 @@ def internal_subscription(request: Request, x_internal_token: str = Header(defau
                              "has_staymanager_sync": bool(plan.has_staymanager_sync) if plan else False}}
 
 
+@app.get("/internal/subscriptions", include_in_schema=False)
+def internal_subscriptions(x_internal_token: str = Header(default=""), db: Session = Depends(get_db)):
+    """Abonnement (dict complet) par agence — pour `/admin/accounts` (plan) et le détail agence."""
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    subs = db.query(Subscription).all()
+    out: dict[str, dict] = {}
+    for s in subs:
+        out.setdefault(str(s.agency_id), _sub_dict(db, s))  # 1 par agence (parité `a.subscription`)
+    return {"subscriptions": out}
+
+
 @app.get("/internal/subscriptions/stats", include_in_schema=False)
 def internal_subscriptions_stats(x_internal_token: str = Header(default=""),
                                  db: Session = Depends(get_db)):

@@ -74,6 +74,36 @@ def subscriptions_stats() -> dict:
     return _get(f"{BILLING_URL}/internal/subscriptions/stats", {})
 
 
+# --- Comptes admin (super-admin) : `/admin/accounts` (liste + détail) ---
+def users_list() -> list[dict]:
+    return _get(f"{IDENTITY_URL}/internal/users", {}).get("users", [])
+
+
+def user_detail(user_id: int) -> dict:
+    return _get(f"{IDENTITY_URL}/internal/user/{user_id}", {})
+
+
+def agencies_list() -> list[dict]:
+    return _get(f"{AGENCY_URL}/internal/agencies", {}).get("agencies", [])
+
+
+def agency_detail(agency_id: int) -> dict:
+    return _get(f"{AGENCY_URL}/internal/agency/{agency_id}", {})
+
+
+def subscriptions_map() -> dict:
+    return _get(f"{BILLING_URL}/internal/subscriptions", {}).get("subscriptions", {})
+
+
+def property_counts() -> dict:
+    return _get(f"{LISTING_URL}/internal/property-counts", {})
+
+
+def entity_activity(entity_type: str, entity_id: int, limit: int = 30) -> list[dict]:
+    return _get(f"{AUDIT_URL}/internal/activity",
+                {"entity_type": entity_type, "entity_id": entity_id, "limit": limit}).get("activities", [])
+
+
 def neighborhood_refs() -> list[dict]:
     return _get(f"{GEO_URL}/internal/neighborhood-prices", {}).get("refs", [])
 

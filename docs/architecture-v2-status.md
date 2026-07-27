@@ -294,11 +294,16 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
      `GET/PUT/DELETE /backoffice/properties/{id}` (listing possède déjà le CRUD public `/properties*`).
    - **B. Écritures agence → agency** (3) : `POST /agencies`, `PUT /agencies/{slug}`,
      `POST /agencies/{slug}/regenerate-api-key` (agency a déjà les écritures modération + émet `agency.*`).
-   - **C. Lectures comptes/users admin → identity** (4) : `GET /admin/accounts`,
-     `GET /admin/accounts/users/{id}`, `GET /admin/accounts/agencies/{id}`, `GET /backoffice/users`.
-     ⚠️ **BUG routage** : les 2 détails `/admin/accounts/{users|agencies}/{id}` (GET) tombent
-     aujourd'hui sur **trust-safety** (règle préfixe) qui ne sert que les écritures modération →
-     **cassés (404/405)**. Fix : règle BFF `GET /admin/accounts*` → identity AVANT la règle trust-safety.
+   - **C. Lectures comptes/users admin** (4) : ✅ **`GET /admin/accounts` (liste) + `/users/{id}` +
+     `/agencies/{id}` (détails) FAITS → analytics** (agrégat query-time : identity=users, agency=agences,
+     billing=plan/abonnement, listing=nb biens, audit=activité). **BUG routage CORRIGÉ** : les GET
+     détail tombaient sur trust-safety (405) → règle BFF `GET /admin/accounts*` → analytics AVANT la
+     règle trust-safety (les ÉCRITURES modération y restent). Endpoints internes ajoutés : identity
+     `/internal/users`+`/internal/user/{id}`, agency `/internal/agencies`+`/internal/agency/{id}`,
+     billing `/internal/subscriptions`, listing `/internal/property-counts`, audit `/internal/activity`
+     (filtre entity_type/entity_id). Parité exacte (liste+filtres+détails+404+403), `last_login` ajouté
+     aux champs VOLATILE (dérive v2↔monolithe). Contrat **105/105**. **Reste `GET /backoffice/users`
+     → identity** (liste users agence-scoped + rôles, simple, indépendant).
    - **D. Factures → billing** (2) : `GET /invoices`, `GET /invoices/{id}/pdf` (xhtml2pdf déjà dispo).
    - **E. Reset mot de passe → identity (+notification)** (2) : `POST /auth/forgot-password`,
      `POST /auth/reset-password` (token de reset + envoi email via notification).

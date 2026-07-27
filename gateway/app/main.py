@@ -129,6 +129,9 @@ _LISTING_PUBLISH = re.compile(r"^/api/v1/properties/\d+/publish$")
 _LISTING_ENGAGE = re.compile(r"^/api/v1/properties/\d+/(contact|reveal-phone)$")
 # Leads publics gérés par l'utilisateur : GET /leads/{id} + PUT /leads/{id}/status → crm.
 _CRM_LEADS_PUBLIC = re.compile(r"^/api/v1/leads/\d+(/status)?$")
+# Lecture détail d'un compte (super-admin) : GET → analytics (agrégat). Les ÉCRITURES de
+# modération (même préfixe) restent à trust-safety.
+_ADMIN_ACCOUNT_DETAIL = re.compile(r"^/api/v1/admin/accounts/(users|agencies)/\d+$")
 
 
 def _listing_match(path: str, method: str) -> bool:
@@ -229,6 +232,12 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         return app.state.analytics, path.replace("/api/v1/backoffice", "", 1)
     # Overview plateforme super-admin (agrège users/agences/abonnements) → analytics.
     if settings.analytics_url and method == "GET" and path == "/api/v1/admin/overview":
+        return app.state.analytics, path.replace("/api/v1", "", 1)
+    # Lecture comptes super-admin : liste + détail user/agence → analytics (agrégat). AVANT la
+    # règle trust-safety `/admin/accounts/*` (qui ne sert que les ÉCRITURES de modération).
+    if settings.analytics_url and method == "GET" and (
+        path == "/api/v1/admin/accounts" or _ADMIN_ACCOUNT_DETAIL.match(path)
+    ):
         return app.state.analytics, path.replace("/api/v1", "", 1)
     # RBAC écritures (gestion utilisateur : rôles / activation) → identity.
     if settings.identity_url and _RBAC_USER_WRITE.match(path):

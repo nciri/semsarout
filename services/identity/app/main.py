@@ -123,6 +123,36 @@ def internal_analytics_scope(agency_id: int, user_id: int, x_internal_token: str
     return {"all": all_, "agent_id": None if all_ else user_id, "dashboard_config": cfg}
 
 
+def _mod_state(u) -> str:
+    return "deleted" if u.deleted_at else ("suspended" if u.is_suspended else "active")
+
+
+@app.get("/internal/users", include_in_schema=False)
+def internal_users(x_internal_token: str = Header(default=""), db: Session = Depends(get_db)) -> dict:
+    """Dump léger de tous les comptes users (super-admin `/admin/accounts`) — agrégé par analytics."""
+    if x_internal_token != settings.internal_token:
+        raise forbidden("Forbidden")
+    from .models import UserRO
+    rows = db.query(UserRO).all()
+    return {"users": [{"id": u.id, "name": u.full_name, "email": u.email,
+                       "status": _mod_state(u),
+                       "last_login": u.last_login.isoformat() if u.last_login else None}
+                      for u in rows]}
+
+
+@app.get("/internal/user/{user_id}", include_in_schema=False)
+def internal_user_detail(user_id: int, x_internal_token: str = Header(default=""),
+                         db: Session = Depends(get_db)):
+    """Détail d'un compte user (`to_dict` complet + agency_id) — pour `/admin/accounts/users/{id}`."""
+    if x_internal_token != settings.internal_token:
+        raise forbidden("Forbidden")
+    from .models import UserRO
+    u = db.get(UserRO, user_id)
+    if u is None:
+        return {"user": None}
+    return {"user": u.to_dict(), "agency_id": u.agency_id}
+
+
 @app.get("/internal/users/stats", include_in_schema=False)
 def internal_users_stats(x_internal_token: str = Header(default=""), db: Session = Depends(get_db)) -> dict:
     """Compteurs users plateforme (super-admin overview) — agrégés par analytics. identity possède

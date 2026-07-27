@@ -55,8 +55,17 @@ def internal_activity(request: Request, x_internal_token: str = Header(default="
     q = db.query(ActivityLog)
     if qp.get("agency_id"):
         q = q.filter(ActivityLog.agency_id == int(qp.get("agency_id")))
+    # Filtre par entité (détail compte super-admin `/admin/accounts/{users|agencies}/{id}`).
+    if qp.get("entity_type") and qp.get("entity_id"):
+        q = q.filter(ActivityLog.entity_type == qp.get("entity_type"),
+                     ActivityLog.entity_id == int(qp.get("entity_id")))
     q = q.order_by(ActivityLog.created_at.desc())
     total = q.count()
+    if qp.get("limit"):  # détail : liste simple limitée (parité `_activity_for`, 30)
+        rows = q.limit(int(qp["limit"])).all()
+        nm = {u.id: u.full_name for u in db.query(UserRO).filter(
+            UserRO.id.in_([r.user_id for r in rows if r.user_id])).all()}
+        return {"activities": [r.to_dict(user_name=nm.get(r.user_id)) for r in rows]}
     items = q.offset((page - 1) * per_page).limit(per_page).all()
     pages = (total + per_page - 1) // per_page if per_page else 1
     names = {u.id: u.full_name for u in db.query(UserRO).filter(

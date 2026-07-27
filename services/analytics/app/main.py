@@ -76,6 +76,77 @@ def admin_overview(principal: Principal = Depends(get_principal)):
     }
 
 
+@app.get("/admin/accounts")
+def admin_accounts(request: Request, principal: Principal = Depends(get_principal)):
+    """Liste unifiée users+agences (super-admin, parité `admin/accounts.py:list_accounts`).
+    Agrège identity (users) + agency (agences) + billing (plan) + listing (nb biens)."""
+    if not principal.is_superadmin:
+        return err("Super-admin access required", 403)
+    qp = request.query_params
+    kind = qp.get("type"); status = qp.get("status"); q = (qp.get("q") or "").strip().lower()
+    page = int(qp.get("page") or 1); per_page = int(qp.get("per_page") or 20)
+    counts = sources.property_counts()
+    by_owner = counts.get("by_owner", {}); by_agency = counts.get("by_agency", {})
+    rows = []
+    if kind in (None, "user"):
+        for u in sources.users_list():
+            if q and q not in (u["name"] or "").lower() and q not in (u["email"] or "").lower():
+                continue
+            rows.append({"kind": "user", "id": u["id"], "name": u["name"], "email": u["email"],
+                         "status": u["status"], "plan": None, "last_login": u["last_login"],
+                         "listings_count": by_owner.get(str(u["id"]), 0)})
+    if kind in (None, "agency"):
+        subs = sources.subscriptions_map()
+        for a in sources.agencies_list():
+            if q and q not in (a["name"] or "").lower():
+                continue
+            sub = subs.get(str(a["id"]))
+            plan = (sub or {}).get("plan")
+            rows.append({"kind": "agency", "id": a["id"], "name": a["name"], "email": a["email"],
+                         "status": a["status"], "plan": plan.get("slug") if plan else None,
+                         "last_login": None, "listings_count": by_agency.get(str(a["id"]), 0)})
+    if status:
+        rows = [r for r in rows if r["status"] == status]
+    if qp.get("plan"):
+        rows = [r for r in rows if r["plan"] == qp.get("plan")]
+    rows.sort(key=lambda r: (r["name"] or "").lower())
+    total = len(rows)
+    items = rows[(page - 1) * per_page:(page - 1) * per_page + per_page]
+    pages = (total + per_page - 1) // per_page if per_page else 1
+    return {"items": items, "total": total, "page": page, "pages": pages}
+
+
+@app.get("/admin/accounts/users/{user_id}")
+def admin_account_user(user_id: int, principal: Principal = Depends(get_principal)):
+    if not principal.is_superadmin:
+        return err("Super-admin access required", 403)
+    ud = sources.user_detail(user_id)
+    if ud.get("user") is None:
+        return err("User not found", 404)
+    agency_id = ud.get("agency_id")
+    agency = sources.agency_detail(agency_id).get("agency") if agency_id else None
+    return {
+        "user": ud["user"], "agency": agency,
+        "listings_count": sources.property_counts().get("by_owner", {}).get(str(user_id), 0),
+        "activity": sources.entity_activity("user", user_id),
+    }
+
+
+@app.get("/admin/accounts/agencies/{agency_id}")
+def admin_account_agency(agency_id: int, principal: Principal = Depends(get_principal)):
+    if not principal.is_superadmin:
+        return err("Super-admin access required", 403)
+    ad = sources.agency_detail(agency_id)
+    if ad.get("agency") is None:
+        return err("Agency not found", 404)
+    return {
+        "agency": ad["agency"], "members": sources.members(agency_id),
+        "subscription": sources.subscriptions_map().get(str(agency_id)),
+        "listings_count": sources.property_counts().get("by_agency", {}).get(str(agency_id), 0),
+        "activity": sources.entity_activity("agency", agency_id),
+    }
+
+
 @app.get("/analytics/ping")
 def analytics_ping(principal: Principal = Depends(get_principal)):
     scope = _scope(principal)

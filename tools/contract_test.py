@@ -21,7 +21,7 @@ import sys
 import requests
 
 # Champs volatils ignorés dans la comparaison (ex. le compteur de vues s'incrémente à chaque GET).
-VOLATILE = {"views_count", "views", "updated_at"}
+VOLATILE = {"views_count", "views", "updated_at", "last_login"}
 
 
 def normalize(obj):
@@ -117,6 +117,11 @@ def cases(args):
         "admin-platform": [
             ("GET", "/api/v1/admin/overview", None, None),
             ("POST", "/api/v1/admin/accounts/users/3/impersonate", None, {}),
+            # Lectures comptes → analytics ; agent1→403 des deux côtés (avant le fix routage, le
+            # GET détail tombait sur trust-safety → 405 ≠ 403 : ce cas verrouille le routage).
+            ("GET", "/api/v1/admin/accounts", None, None),
+            ("GET", "/api/v1/admin/accounts/users/1", None, None),
+            ("GET", "/api/v1/admin/accounts/agencies/1", None, None),
         ],
         # Écritures boutique/artisans super-admin (agent1 → 403 des deux côtés) : verrouille le
         # routage + la garde des routes déjà extraites (catalog/marketplace/directory).
