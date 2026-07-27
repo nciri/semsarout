@@ -19,6 +19,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from semsar_auth import Principal, get_principal
 from semsar_events import enqueue
 
+from . import audit
 from .db import get_db
 from .models import AgencyRO, UserRO
 
@@ -267,3 +268,31 @@ async def refresh(request: Request, db: Session = Depends(get_db)):
     if blocked:
         return _err(blocked, 403)
     return {"access_token": _token(user.id, ACCESS_TTL, "access", _claims(db, user))}
+
+
+# Impersonation super-admin — émet un JWT complet AU NOM d'un autre compte (30 min), avec le
+# claim `impersonated_by`. identity possède l'émission des jetons ; parité exacte du monolithe
+# (`admin/impersonation.py`). Audit via `audit.logged`. Le BFF route `.../impersonate` ici.
+_IMPERSONATE_TTL = 1800  # 30 min (comme le monolithe)
+
+
+@router.post("/admin/accounts/users/{user_id}/impersonate")
+def impersonate(user_id: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    if not principal.is_superadmin:
+        return _err("Super-admin access required", 403)
+    target = db.get(UserRO, user_id)
+    if target is None:
+        return _err("User not found", 404)
+    if target.deleted_at is not None:
+        return _err("Compte supprimé : impersonation impossible.", 403)
+    if target.is_suspended:
+        return _err("Compte suspendu : impersonation impossible.", 403)
+    if any(r.slug == "superadmin" for r in target.roles):
+        return _err("Impossible de se faire passer pour un super-admin.", 409)
+    actor = int(principal.sub) if principal.sub and principal.sub.isdigit() else None
+    token = _token(target.id, _IMPERSONATE_TTL, "access",
+                   {**_claims(db, target), "impersonated_by": actor})
+    audit.emit(db, actor_id=actor, action="impersonate_start", entity_type="user",
+               entity_id=target.id, agency_id=target.agency_id)
+    db.commit()
+    return {"access_token": token, "user": target.to_dict()}

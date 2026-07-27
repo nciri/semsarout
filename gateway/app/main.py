@@ -197,6 +197,11 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or (method == "GET" and path == "/api/v1/backoffice/permissions")
     ):
         return app.state.identity, path.replace("/api/v1", "", 1)
+    # Impersonation super-admin (émission d'un JWT au nom d'autrui) → identity (émetteur des
+    # jetons). AVANT la règle trust-safety `/admin/accounts/*` : ce n'est pas de la modération.
+    if settings.identity_url and path.startswith("/api/v1/admin/accounts/users/") \
+            and path.endswith("/impersonate"):
+        return app.state.identity, path.replace("/api/v1", "", 1)
     # Config widgets du tableau de bord (sur le compte) → identity. Le reste de /dashboard*
     # (agrégats) reste au monolithe (T3 analytics à venir).
     if settings.identity_url and path == "/api/v1/backoffice/dashboard/config":
