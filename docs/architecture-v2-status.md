@@ -333,8 +333,20 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
      nommé, gardes 400/403/404). Pas de fichiers seed à migrer (images seed = URLs picsum externes).
    - **Statique** : `/uploads` (images/docs) sert encore depuis le disque du monolithe (`vite.config`).
    - **Sync transitoire** : `consume_users.py`/`relay_outbox.py` (monolithe) inutiles une fois `:7000` éteint.
-   **Ordre restant** : (1) groupes A–E (14 routes, 4 services), (2) phase stockage objet (F + `/uploads`),
-   (3) retirer le repli monolithe du BFF (`upstream_url`) + le proxy `/uploads`, (4) éteindre `:7000`.
+   ### ✅ COUPURE FINALE TERMINÉE (monolithe décommissionné)
+   Tous les groupes A–F sont extraits ; l'audit `route_audit.py` ne montre plus **aucune** route
+   réelle vers le monolithe (seules restent 2 fantômes `/backoffice/settings` que le monolithe ne
+   sert pas — bug front à part). **Repli monolithe retiré du BFF** : `_resolve_upstream` renvoie 404
+   pour toute route non mappée (plus de `app.state.monolith` dans le routage) ; `_resolve_identity`
+   valide 100 % localement (jetons enrichis par identity) — les anciens jetons sans claims sont
+   rejetés (reconnexion) ; le repli features monolithe est supprimé (claims forgés par identity).
+   Proxy `/uploads/*` → listing seul. **`:7000` éteint** + `consume_users.py`/`relay_outbox.py`
+   arrêtés (sync transitoire inutile). `dev-mesh-up.sh` ne démarre plus le monolithe.
+   **Validation** : contrat **119/119** (dernier run monolithe up, repli déjà retiré) ; puis
+   **smoke test v2 STANDALONE 24/24** (monolithe DOWN) sur tous les domaines (auth, listing, crm,
+   agency, search, analytics, billing, catalog, directory, contract, legal, transactions, buyer,
+   programs, invoices, admin/accounts, dashboard, uploads). **Le mesh FastAPI sert 100 % du front,
+   sans le monolithe.** Reste hors périmètre : le bug front `Settings.jsx` (endpoint inexistant).
 
 ## 9. Pièges connus (IMPORTANT pour un contexte frais)
 - **`git commit` doit être une commande Bash SEULE** (le hook `block-no-verify` faux-positive sur

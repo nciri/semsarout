@@ -66,47 +66,10 @@ async def _resolve_identity(app: FastAPI, authorization: str | None) -> dict | N
             _IDENTITY_CACHE[authorization] = (now + settings.identity_ttl_seconds, ident)
             return ident
 
-    # Repli : pas de clé configurée, ou ancien jeton sans claims → contexte via le monolithe.
-    try:
-        resp = await app.state.monolith.get(
-            settings.auth_resolve_path, headers={"authorization": authorization}
-        )
-    except httpx.HTTPError:
-        return None
-    if resp.status_code != 200:
-        return None
-    user = (resp.json() or {}).get("user", {})
-    ident = {
-        "user_id": user.get("id"),
-        "agency_id": user.get("agency_id"),
-        "is_superadmin": bool(user.get("is_superadmin")),
-        "role": user.get("account_role") or user.get("role"),
-        "features": await _resolve_features(app, authorization),
-    }
-    _IDENTITY_CACHE[authorization] = (now + settings.identity_ttl_seconds, ident)
-    return ident
-
-
-async def _resolve_features(app: FastAPI, authorization: str) -> list[str]:
-    """Entitlements du plan de l'agence (artisans, contracts, legal), via le monolithe."""
-    try:
-        resp = await app.state.monolith.get(
-            settings.auth_features_path, headers={"authorization": authorization}
-        )
-    except httpx.HTTPError:
-        return []
-    if resp.status_code != 200:
-        return []
-    plan = ((resp.json() or {}).get("subscription") or {}).get("plan") or {}
-    feats = [name for name, flag in (
-        ("artisans", plan.get("has_artisans")),
-        ("contracts", plan.get("has_contracts")),
-        ("legal", plan.get("has_legal")),
-    ) if flag]
-    # Entitlement de capacité : gestion des modèles de contrat (plan Entreprise).
-    if plan.get("slug") == "enterprise":
-        feats.append("contract_templates")
-    return feats
+    # Monolithe décommissionné : plus de repli. Un jeton sans claims (ancien, émis avant que
+    # identity ne devienne l'émetteur) est rejeté → l'utilisateur se reconnecte (nouveau jeton
+    # enrichi). Les claims (dont `features`) sont désormais toujours forgés par identity.
+    return None
 
 
 def _inject_identity(headers: dict, ident: dict) -> None:
@@ -364,7 +327,8 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path.startswith("/api/v1/invoices/")  # factures (liste + PDF)
     ):
         return app.state.billing, path.replace("/api/v1", "", 1)
-    return app.state.monolith, path
+    # Monolithe décommissionné : plus de repli. Toute route non mappée → 404 (client None).
+    return None, path
 
 
 def _client_or_none(url: str | None) -> httpx.AsyncClient | None:
@@ -435,6 +399,8 @@ async def health() -> dict:
 async def proxy(path: str, request: Request) -> Response:
     app = request.app
     client, upstream_path = _resolve_upstream(app, request.url.path, request.method)
+    if client is None:  # route non servie par v2 (monolithe décommissionné)
+        return Response(content=b'{"error":"Not found"}', status_code=404, media_type="application/json")
     url = upstream_path
     if request.url.query:
         url = f"{url}?{request.url.query}"
@@ -443,11 +409,10 @@ async def proxy(path: str, request: Request) -> Response:
         k: v for k, v in request.headers.items()
         if k.lower() not in _HOP_BY_HOP and not k.lower().startswith("x-semsar-")
     }
-    # Frontière d'auth : pour un service interne, résoudre l'identité et l'injecter.
-    if client is not app.state.monolith:
-        ident = await _resolve_identity(app, request.headers.get("authorization"))
-        if ident:
-            _inject_identity(headers, ident)
+    # Frontière d'auth : tous les upstreams sont des services internes → injecter l'identité.
+    ident = await _resolve_identity(app, request.headers.get("authorization"))
+    if ident:
+        _inject_identity(headers, ident)
     upstream = await client.request(
         request.method, url, headers=headers, content=await request.body()
     )
@@ -467,7 +432,9 @@ async def uploads_proxy(path: str, request: Request) -> Response:
     """Sert les médias publics (`/uploads/photos/*`) depuis le service listing (stockage objet),
     en remplacement du disque du monolithe. Repli monolithe si listing absent."""
     app = request.app
-    client = app.state.listing or app.state.monolith
+    client = app.state.listing
+    if client is None:
+        return Response(content=b"", status_code=404)
     upstream = await client.request("GET", f"/uploads/{path}")
     resp_headers = {k: v for k, v in upstream.headers.items() if k.lower() not in _HOP_BY_HOP}
     return Response(content=upstream.content, status_code=upstream.status_code,

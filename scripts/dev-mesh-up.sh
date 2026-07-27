@@ -36,11 +36,11 @@ docker compose -f infra/docker-compose.yml up -d rabbitmq minio >/dev/null 2>&1
 for i in $(seq 1 30); do docker exec semsar-rabbitmq rabbitmq-diagnostics -q ping >/dev/null 2>&1 && break; sleep 1; done
 echo "   rabbitmq/minio ok (opensearch/postgres supposés déjà up)"
 
-echo "== 2. Monolithe (:7000, outbox activé) =="
-kill_port 7000; sleep 2
-( cd backend; set -a; source .env; set +a
-  SEMSAR_OUTBOX_ENABLED=true nohup venv/bin/python run.py > "$LOG/monolith.log" 2>&1 & )
-sleep 5
+echo "== 2. Monolithe (:7000) — DÉCOMMISSIONNÉ =="
+# La coupure finale est faite : le BFF ne route plus rien vers le monolithe (repli retiré),
+# tous les services v2 sont souverains. Pour comparer au contrat (tools/contract_test.py), relancer
+# le monolithe manuellement :  ( cd backend; set -a; source .env; set +a; venv/bin/python run.py )
+echo "   (non démarré — voir docs/architecture-v2-status.md)"
 
 echo "== 3. Services (uvicorn) =="
 # svc:port  (rôle DB = svc avec - -> _)
@@ -98,9 +98,7 @@ worker() { env SERVICE_NAME="$1" DATABASE_URL="$(dburl "$1")" RABBITMQ_URL="$RMQ
   PYTHONPATH="services/$1" nohup python3 -m app.worker > "$LOG/$1-worker.log" 2>&1 & }
 for r in listing catalog identity contract payment billing transactions programs agency; do relay "$r"; done
 for w in search crm marketplace geo agency messaging analytics billing notification identity audit transactions legal contract; do worker "$w"; done
-( cd backend; set -a; source .env; set +a
-  RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" nohup venv/bin/python scripts/consume_users.py > "$LOG/monolith-consumer.log" 2>&1 &
-  RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" nohup venv/bin/python scripts/relay_outbox.py > "$LOG/monolith-relay.log" 2>&1 & )
+# Monolithe décommissionné : consume_users.py / relay_outbox.py (sync transitoire) ne sont plus lancés.
 sleep 5
 
 echo "== 6. Santé =="
