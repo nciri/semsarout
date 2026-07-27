@@ -122,6 +122,17 @@ def internal_analytics_scope(agency_id: int, user_id: int, x_internal_token: str
     return {"all": all_, "agent_id": None if all_ else user_id, "dashboard_config": cfg}
 
 
+@app.get("/internal/user/{user_id}/phone", include_in_schema=False)
+def internal_user_phone(user_id: int, x_internal_token: str = Header(default=""),
+                        db: Session = Depends(get_db)) -> dict:
+    """Téléphone d'un utilisateur (propriétaire d'un bien) — pour reveal-phone côté listing."""
+    if x_internal_token != settings.internal_token:
+        raise forbidden("Forbidden")
+    from .models import UserRO
+    u = db.get(UserRO, user_id)
+    return {"phone": u.phone if u else None}
+
+
 class KycRequest(BaseModel):
     cin: str
 

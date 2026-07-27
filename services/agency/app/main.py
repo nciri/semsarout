@@ -58,6 +58,15 @@ async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
 
 
+@app.get("/internal/agency/{agency_id}/phone", include_in_schema=False)
+def internal_agency_phone(agency_id: int, request: Request, db: Session = Depends(get_db)):
+    """Téléphone d'une agence — pour reveal-phone côté listing (v2-native, remplace le monolithe)."""
+    if request.headers.get("x-internal-token") != settings.internal_token:
+        return _err("Forbidden", 403)
+    a = db.get(Agency, agency_id)
+    return {"phone": a.phone if a else None}
+
+
 @app.get("/agencies")
 def list_agencies(request: Request, db: Session = Depends(get_db)) -> dict:
     qp = request.query_params

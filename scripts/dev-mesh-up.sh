@@ -65,6 +65,7 @@ for pair in $SVCS; do
     analytics) extra="TRANSACTIONS_URL=http://localhost:8514 CRM_URL=http://localhost:8013 IDENTITY_URL=http://localhost:8501 LISTING_URL=http://localhost:8012 GEO_URL=http://localhost:8509 BILLING_URL=http://localhost:8508 AUDIT_URL=http://localhost:8513";;
   esac
   case "$svc" in listing|search) extra="$extra $TS_HIDDEN";; esac
+  [ "$svc" = "listing" ] && extra="$extra AGENCY_URL=http://localhost:8512 IDENTITY_URL=http://localhost:8501"
   env SERVICE_NAME="$svc" DATABASE_URL="$(dburl "$svc")" TRUST_GATEWAY_HEADERS=true \
       INTERNAL_TOKEN="$ITOK" MONOLITH_URL="$MONO" RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" \
       OPENSEARCH_URL="$OS" $extra \

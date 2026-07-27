@@ -6,6 +6,7 @@ La **découverte** (`GET /properties`, `/search`, `/suggestions`) reste au monol
 Émet `listing.created/updated/deleted`.
 """
 import math
+import os
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -245,13 +246,21 @@ def _contact_payload(p: Property, data: dict, source: str) -> dict:
     }
 
 
-def _fetch_contact_phone(property_id: int) -> str | None:
-    """Téléphone agence/propriétaire via l'endpoint interne du monolithe (transition)."""
+_AGENCY_URL = os.environ.get("AGENCY_URL", "http://localhost:8512")
+_IDENTITY_URL = os.environ.get("IDENTITY_URL", "http://localhost:8501")
+
+
+def _fetch_contact_phone(p: Property) -> str | None:
+    """Téléphone de contact (v2-native) : agence via `agency`, sinon propriétaire via `identity`.
+    Le téléphone appartient aux domaines agency/identity — plus de dépendance au monolithe."""
+    if p.agency_id:
+        url = f"{_AGENCY_URL}/internal/agency/{p.agency_id}/phone"
+    elif p.owner_id:
+        url = f"{_IDENTITY_URL}/internal/user/{p.owner_id}/phone"
+    else:
+        return None
     try:
-        resp = httpx.get(
-            f"{moderation.MONOLITH_URL}/api/v1/internal/properties/{property_id}/contact-phone",
-            headers={"x-internal-token": settings.internal_token}, timeout=5.0,
-        )
+        resp = httpx.get(url, headers={"x-internal-token": settings.internal_token}, timeout=5.0)
     except httpx.HTTPError:
         return None
     return (resp.json() or {}).get("phone") if resp.status_code == 200 else None
@@ -277,7 +286,7 @@ async def reveal_phone(property_id: int, request: Request, db: Session = Depends
     p = db.get(Property, property_id)
     if p is None:
         return _err("Not found", 404)
-    phone = _fetch_contact_phone(p.id)
+    phone = _fetch_contact_phone(p)
     if not phone:
         return _err("Aucun numéro de téléphone disponible pour ce bien", 404)
     data = await _json(request)
