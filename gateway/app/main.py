@@ -206,7 +206,8 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
     # (register, PUT/DELETE /auth/me, change-password) + lecture /auth/me.
     if settings.identity_url and (
         path in ("/api/v1/auth/login", "/api/v1/auth/refresh",
-                 "/api/v1/auth/register", "/api/v1/auth/change-password")
+                 "/api/v1/auth/register", "/api/v1/auth/change-password",
+                 "/api/v1/auth/forgot-password", "/api/v1/auth/reset-password")
         or path == "/api/v1/auth/me"  # GET (lecture) + PUT (profil) + DELETE (suppression)
     ):
         return app.state.identity, path.replace("/api/v1", "", 1)

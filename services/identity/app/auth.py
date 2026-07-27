@@ -250,6 +250,52 @@ async def change_password(request: Request, principal: Principal = Depends(get_p
     return {"message": "Password changed successfully"}
 
 
+@router.post("/auth/forgot-password")
+async def forgot_password(request: Request, db: Session = Depends(get_db)):
+    """Demande de réinitialisation (parité `auth.py:forgot_password`). Réponse générique
+    (anti-énumération). Stocke le SHA256 du jeton + expiration 1 h. Pas d'envoi email (comme le
+    monolithe : provider non configuré ; le lien n'est journalisé qu'en dev)."""
+    import hashlib
+    import secrets
+    from datetime import timedelta
+    data = await _json(request)
+    email = (data.get("email") or "").strip().lower()
+    generic = {"message": "Si un compte existe avec cet email, un lien de réinitialisation a été envoyé."}
+    if not email:
+        return _err("Email requis", 400)
+    user = db.query(UserRO).filter(UserRO.email == email).first()
+    if user is None:
+        return generic  # ne révèle pas l'existence du compte
+    token = secrets.token_urlsafe(32)
+    user.reset_token = hashlib.sha256(token.encode()).hexdigest()
+    user.reset_token_expires = datetime.utcnow() + timedelta(hours=1)
+    db.commit()
+    return generic
+
+
+@router.post("/auth/reset-password")
+async def reset_password(request: Request, db: Session = Depends(get_db)):
+    """Réinitialise le mot de passe via un jeton valide (parité `auth.py:reset_password`)."""
+    import hashlib
+    data = await _json(request)
+    token = data.get("token")
+    new_password = data.get("new_password")
+    if not token or not new_password:
+        return _err("Token et nouveau mot de passe requis", 400)
+    if len(new_password) < 8:
+        return _err("Le mot de passe doit contenir au moins 8 caractères", 400)
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    user = db.query(UserRO).filter(UserRO.reset_token == token_hash).first()
+    if user is None or not user.reset_token_expires or user.reset_token_expires < datetime.utcnow():
+        return _err("Lien de réinitialisation invalide ou expiré", 400)
+    user.password_hash = generate_password_hash(new_password)
+    user.reset_token = None
+    user.reset_token_expires = None
+    enqueue(db, "user", user.id, "user.updated", _user_event_doc(user))
+    db.commit()
+    return {"message": "Mot de passe réinitialisé avec succès"}
+
+
 @router.post("/auth/refresh")
 async def refresh(request: Request, db: Session = Depends(get_db)):
     auth = request.headers.get("authorization", "")

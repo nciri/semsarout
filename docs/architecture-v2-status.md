@@ -318,8 +318,12 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
      `GET /invoices/{id}/pdf` (reportlab). **Implémentation v2-native** : la table `invoices` du
      monolithe n'existe pas en dev (→ 500), donc pas de parité à reproduire (cf. change-plan). E2E
      validé (liste vide + facture semée → PDF 200 application/pdf valide + garde 404/403).
-   - **E. Reset mot de passe → identity (+notification)** (2) : `POST /auth/forgot-password`,
-     `POST /auth/reset-password` (token de reset + envoi email via notification).
+   - ✅ **E. Reset mot de passe → identity FAIT** (2) : `POST /auth/forgot-password` (réponse
+     générique anti-énumération, stocke SHA256(jeton)+expiration 1 h sur `user_ro`) +
+     `POST /auth/reset-password` (valide le jeton, réinitialise, efface, émet `user.updated`).
+     **Pas de notification requise** : le monolithe n'envoie pas d'email (provider non configuré,
+     log seulement). Colonnes `reset_token`/`reset_token_expires` ajoutées à `user_ro`. E2E validé
+     (flux complet + login avec nouveau mdp + jeton à usage unique). Contrat **119/119**.
    - **F. Phase stockage objet** (2) : `POST /uploads`, `POST /sale-requests` (dépend de uploads).
    - **Statique** : `/uploads` (images/docs) sert encore depuis le disque du monolithe (`vite.config`).
    - **Sync transitoire** : `consume_users.py`/`relay_outbox.py` (monolithe) inutiles une fois `:7000` éteint.

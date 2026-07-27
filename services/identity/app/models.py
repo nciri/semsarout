@@ -113,6 +113,8 @@ class UserRO(Base):
     suspended_reason = Column(Text)
     deleted_at = Column(DateTime)
     anonymized_at = Column(DateTime)
+    reset_token = Column(String(64), index=True)  # SHA256 du jeton de réinitialisation
+    reset_token_expires = Column(DateTime)
     dashboard_config = Column(JSON)
     agency_id = Column(Integer, index=True)
     team_id = Column(Integer)

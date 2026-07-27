@@ -118,6 +118,14 @@ def cases(args):
             ("POST", "/api/v1/admin/accounts/users/999999/suspend", None, {}),
             ("POST", "/api/v1/admin/accounts/agencies/999999/unsuspend", None, {}),
         ],
+        # Réinitialisation de mot de passe (public) → identity. Cas non mutants (email inconnu /
+        # jeton invalide / champs manquants) → réponses identiques des deux côtés.
+        "auth-reset": [
+            ("POST", "/api/v1/auth/forgot-password", None, {"email": "nobody-xyz@nowhere.invalid"}),
+            ("POST", "/api/v1/auth/forgot-password", None, {}),
+            ("POST", "/api/v1/auth/reset-password", None, {"token": "WRONG", "new_password": "abcdefgh"}),
+            ("POST", "/api/v1/auth/reset-password", None, {}),
+        ],
         # admin plateforme super-admin (agent1 → 403 des deux côtés) : overview (analytics),
         # impersonation (identity).
         "admin-platform": [
