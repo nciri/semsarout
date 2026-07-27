@@ -246,9 +246,12 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
    - ✅ **T4 `programs` FAIT** (`services/programs` :8516, 28 routes, contrat 84/84) — nouveau dev, (promotions immobilières neuves +
      `programs/{id}/plans`), pas encore consommé pareil — nouveau service.
    - ✅ **T5 `staymanager` FAIT** (`services/staymanager` :8517, 14 routes, contrat 88/88) — gate `has_staymanager_sync` (billing), API externe via `app/client.py` ; toutes données vides en dev (états non-connecté).
-   - **Divers restants** : `selling.py`(4), `leads.py` racine public(7) vs backoffice(crm),
-     `users.py`(3, `/backoffice/users` GET reste), `admin/shop|artisans|overview|impersonation`,
-     `properties.py` découverte publique déjà en search/listing (vérifier le résidu).
+   - **Divers restants** : `selling.py`(4 : estimate/sale-requests/documents/uploads), `leads.py`
+     racine public(7 : contact/reveal-phone/my-leads/leads-status → crm/listing), `admin/shop`(writes
+     produits/commandes) + `admin/artisans`(writes shared-artisans). `users.py`(3, profils publics)
+     **mort côté front** (0 réf) → à droper à l'extinction, pas à migrer. ✅ **`admin/overview`**
+     (→ analytics, agrège identity+agency+billing, parité exacte) et ✅ **`admin/impersonation`**
+     (→ identity) **FAITS**.
    **Coupure** : quand une tranche est verte au contrat, basculer son routage BFF (déjà le patron) ;
    quand **tout** est extrait → retirer le repli monolithe du BFF, éteindre `:7000`.
 

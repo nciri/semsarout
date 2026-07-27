@@ -223,6 +223,9 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
     # stats/* (tout le groupe extrait) → analytics.
     if settings.analytics_url and path.startswith("/api/v1/backoffice/stats/"):
         return app.state.analytics, path.replace("/api/v1/backoffice", "", 1)
+    # Overview plateforme super-admin (agrège users/agences/abonnements) → analytics.
+    if settings.analytics_url and method == "GET" and path == "/api/v1/admin/overview":
+        return app.state.analytics, path.replace("/api/v1", "", 1)
     # RBAC écritures (gestion utilisateur : rôles / activation) → identity.
     if settings.identity_url and _RBAC_USER_WRITE.match(path):
         return app.state.identity, path.replace("/api/v1", "", 1)

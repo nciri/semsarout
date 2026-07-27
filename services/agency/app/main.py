@@ -182,6 +182,19 @@ def mod_anonymize(agency_id: int, reason: str | None = None, actor_id: int | Non
     return _agency_msg(db, "Agence anonymisée", a)
 
 
+@app.get("/internal/agencies/stats", include_in_schema=False)
+def internal_agencies_stats(request: Request, db: Session = Depends(get_db)):
+    """Compteurs agences plateforme (super-admin overview) — agrégés par analytics."""
+    if request.headers.get("x-internal-token") != settings.internal_token:
+        return _err("Forbidden", 403)
+    return {
+        "total_agencies": db.query(Agency).filter(Agency.deleted_at.is_(None)).count(),
+        "suspended_agencies": db.query(Agency).filter(Agency.is_suspended.is_(True)).count(),
+        "deleted_pending_agencies": db.query(Agency).filter(
+            Agency.deleted_at.isnot(None), Agency.anonymized_at.is_(None)).count(),
+    }
+
+
 @app.get("/agencies")
 def list_agencies(request: Request, db: Session = Depends(get_db)) -> dict:
     qp = request.query_params

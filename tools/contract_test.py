@@ -110,6 +110,12 @@ def cases(args):
             ("POST", "/api/v1/admin/accounts/users/999999/suspend", None, {}),
             ("POST", "/api/v1/admin/accounts/agencies/999999/unsuspend", None, {}),
         ],
+        # admin plateforme super-admin (agent1 → 403 des deux côtés) : overview (analytics),
+        # impersonation (identity).
+        "admin-platform": [
+            ("GET", "/api/v1/admin/overview", None, None),
+            ("POST", "/api/v1/admin/accounts/users/3/impersonate", None, {}),
+        ],
         "audit": [
             ("GET", "/api/v1/admin/activity", None, None),
         ],

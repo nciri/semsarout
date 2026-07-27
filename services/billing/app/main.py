@@ -118,6 +118,26 @@ def internal_subscription(request: Request, x_internal_token: str = Header(defau
                              "has_staymanager_sync": bool(plan.has_staymanager_sync) if plan else False}}
 
 
+@app.get("/internal/subscriptions/stats", include_in_schema=False)
+def internal_subscriptions_stats(x_internal_token: str = Header(default=""),
+                                 db: Session = Depends(get_db)):
+    """Abonnements actifs par plan + MRR (super-admin overview) — agrégés par analytics. billing
+    possède les abonnements (parité des sous-comptes de `admin/overview.py`)."""
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    active = db.query(Subscription).filter(Subscription.status == "active").all()
+    plans = {p.id: p.slug for p in db.query(SubscriptionPlan).all()}
+    by_plan: dict[str, int] = {}
+    mrr = 0.0
+    for s in active:
+        slug = plans.get(s.plan_id)
+        if slug:
+            by_plan[slug] = by_plan.get(slug, 0) + 1
+        amt = float(s.amount or 0)
+        mrr += amt / 12.0 if s.billing_cycle == "yearly" else amt
+    return {"active_subscriptions": by_plan, "mrr_estimate": round(mrr, 2)}
+
+
 @app.get("/subscription-plans")
 def list_plans(db: Session = Depends(get_db)) -> dict:
     plans = db.query(SubscriptionPlan).filter(SubscriptionPlan.is_active.is_(True)).all()

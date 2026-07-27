@@ -55,6 +55,27 @@ async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
 
 
+@app.get("/admin/overview")
+def admin_overview(principal: Principal = Depends(get_principal)):
+    """Overview plateforme super-admin (parité `admin/overview.py`) : agrège les compteurs des
+    services propriétaires (identity=users, agency=agences, billing=abonnements). Query-time."""
+    if not principal.is_superadmin:
+        return err("Super-admin access required", 403)
+    us = sources.users_stats()
+    ag = sources.agencies_stats()
+    sub = sources.subscriptions_stats()
+    return {
+        "total_users": us.get("total_users", 0),
+        "total_agencies": ag.get("total_agencies", 0),
+        "active_subscriptions": sub.get("active_subscriptions", {}),
+        "mrr_estimate": sub.get("mrr_estimate", 0.0),
+        "signups_last_30d": us.get("signups_last_30d", 0),
+        "suspended_count": us.get("suspended_users", 0) + ag.get("suspended_agencies", 0),
+        "deleted_pending_purge_count": (us.get("deleted_pending_users", 0)
+                                        + ag.get("deleted_pending_agencies", 0)),
+    }
+
+
 @app.get("/analytics/ping")
 def analytics_ping(principal: Principal = Depends(get_principal)):
     scope = _scope(principal)

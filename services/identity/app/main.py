@@ -123,6 +123,25 @@ def internal_analytics_scope(agency_id: int, user_id: int, x_internal_token: str
     return {"all": all_, "agent_id": None if all_ else user_id, "dashboard_config": cfg}
 
 
+@app.get("/internal/users/stats", include_in_schema=False)
+def internal_users_stats(x_internal_token: str = Header(default=""), db: Session = Depends(get_db)) -> dict:
+    """Compteurs users plateforme (super-admin overview) — agrégés par analytics. identity possède
+    les comptes (parité des sous-comptes de `admin/overview.py`)."""
+    if x_internal_token != settings.internal_token:
+        raise forbidden("Forbidden")
+    from datetime import datetime, timedelta
+
+    from .models import UserRO
+    since = datetime.utcnow() - timedelta(days=30)
+    return {
+        "total_users": db.query(UserRO).filter(UserRO.deleted_at.is_(None)).count(),
+        "signups_last_30d": db.query(UserRO).filter(UserRO.created_at >= since).count(),
+        "suspended_users": db.query(UserRO).filter(UserRO.is_suspended.is_(True)).count(),
+        "deleted_pending_users": db.query(UserRO).filter(
+            UserRO.deleted_at.isnot(None), UserRO.anonymized_at.is_(None)).count(),
+    }
+
+
 @app.get("/internal/user/{user_id}/phone", include_in_schema=False)
 def internal_user_phone(user_id: int, x_internal_token: str = Header(default=""),
                         db: Session = Depends(get_db)) -> dict:

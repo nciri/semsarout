@@ -62,7 +62,7 @@ for pair in $SVCS; do
     programs) extra="BILLING_URL=http://localhost:8508";;
     staymanager) extra="BILLING_URL=http://localhost:8508";;
     crm|transactions) extra="IDENTITY_URL=http://localhost:8501";;
-    analytics) extra="TRANSACTIONS_URL=http://localhost:8514 CRM_URL=http://localhost:8013 IDENTITY_URL=http://localhost:8501 LISTING_URL=http://localhost:8012 GEO_URL=http://localhost:8509 BILLING_URL=http://localhost:8508 AUDIT_URL=http://localhost:8513";;
+    analytics) extra="TRANSACTIONS_URL=http://localhost:8514 CRM_URL=http://localhost:8013 IDENTITY_URL=http://localhost:8501 LISTING_URL=http://localhost:8012 GEO_URL=http://localhost:8509 BILLING_URL=http://localhost:8508 AUDIT_URL=http://localhost:8513 AGENCY_URL=http://localhost:8512";;
     trust-safety) extra="IDENTITY_URL=http://localhost:8501 AGENCY_URL=http://localhost:8512";;
   esac
   case "$svc" in listing|search) extra="$extra $TS_HIDDEN";; esac

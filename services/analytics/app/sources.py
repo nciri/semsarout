@@ -16,6 +16,7 @@ LISTING_URL = os.environ.get("LISTING_URL", "http://localhost:8012")
 GEO_URL = os.environ.get("GEO_URL", "http://localhost:8509")
 BILLING_URL = os.environ.get("BILLING_URL", "http://localhost:8508")
 AUDIT_URL = os.environ.get("AUDIT_URL", "http://localhost:8513")
+AGENCY_URL = os.environ.get("AGENCY_URL", "http://localhost:8512")
 
 
 def _get(url: str, params: dict) -> dict:
@@ -58,6 +59,19 @@ def visits(agency_id: int) -> list[dict]:
 
 def properties(agency_id: int) -> list[dict]:
     return _get(f"{LISTING_URL}/internal/properties", {"agency_id": agency_id, "all": 1}).get("properties", [])
+
+
+# --- Overview plateforme (super-admin) : compteurs des services propriétaires ---
+def users_stats() -> dict:
+    return _get(f"{IDENTITY_URL}/internal/users/stats", {})
+
+
+def agencies_stats() -> dict:
+    return _get(f"{AGENCY_URL}/internal/agencies/stats", {})
+
+
+def subscriptions_stats() -> dict:
+    return _get(f"{BILLING_URL}/internal/subscriptions/stats", {})
 
 
 def neighborhood_refs() -> list[dict]:
