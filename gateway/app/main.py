@@ -345,6 +345,8 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path.startswith("/api/v1/subscription/")
         or path == "/api/v1/my-subscription"
         or path == "/api/v1/cancel-subscription"
+        or path == "/api/v1/invoices"
+        or path.startswith("/api/v1/invoices/")  # factures (liste + PDF)
     ):
         return app.state.billing, path.replace("/api/v1", "", 1)
     return app.state.monolith, path

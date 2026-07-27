@@ -309,7 +309,10 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
      aux champs VOLATILE (dérive v2↔monolithe). ✅ **`GET /backoffice/users` → identity FAIT**
      (liste users cloisonnée agence + rôles avec `users_count`, filtres type/is_active/q, parité
      exacte agent1+admin). **Groupe C COMPLET.** Contrat **107/107**.
-   - **D. Factures → billing** (2) : `GET /invoices`, `GET /invoices/{id}/pdf` (xhtml2pdf déjà dispo).
+   - ✅ **D. Factures → billing FAIT** (2) : `GET /invoices` (cloisonné agence, paginé) +
+     `GET /invoices/{id}/pdf` (reportlab). **Implémentation v2-native** : la table `invoices` du
+     monolithe n'existe pas en dev (→ 500), donc pas de parité à reproduire (cf. change-plan). E2E
+     validé (liste vide + facture semée → PDF 200 application/pdf valide + garde 404/403).
    - **E. Reset mot de passe → identity (+notification)** (2) : `POST /auth/forgot-password`,
      `POST /auth/reset-password` (token de reset + envoi email via notification).
    - **F. Phase stockage objet** (2) : `POST /uploads`, `POST /sale-requests` (dépend de uploads).

@@ -14,7 +14,7 @@ billing ne les pilote pas encore (décommissionnement final).
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
-from fastapi import Depends, FastAPI, Header, Request
+from fastapi import Depends, FastAPI, Header, Request, Response
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import extract
 from sqlalchemy.orm import Session
@@ -185,6 +185,63 @@ def current_subscription(principal: Principal = Depends(get_principal), db: Sess
         current_plan = plan.slug if plan else "free"
     return {"subscription": _sub_dict(db, sub) if sub else None,
             "current_plan": current_plan, "plans": [_plan_dict(p) for p in plans]}
+
+
+# ---- Factures (parité `billing.py` list/pdf) — billing possède les factures. Le monolithe ne
+# sert plus ces routes (sa table `invoices` n'existe pas en dev → 500) : implémentation v2-native.
+@app.get("/invoices")
+def list_invoices(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
+    """Factures de l'agence de l'utilisateur (paginées, plus récentes d'abord)."""
+    qp = request.query_params
+    page = int(qp.get("page") or 1)
+    per_page = int(qp.get("per_page") or 20)
+    q = db.query(Invoice)
+    q = q.filter(Invoice.agency_id == principal.agency_id) if principal.agency_id else q.filter(False)
+    q = q.order_by(Invoice.issued_at.desc())
+    total = q.count()
+    items = q.offset((page - 1) * per_page).limit(per_page).all()
+    pages = (total + per_page - 1) // per_page if per_page else 1
+    return {"invoices": [_invoice_dict(i) for i in items], "total": total,
+            "pages": pages, "current_page": page}
+
+
+@app.get("/invoices/{invoice_id}/pdf")
+def invoice_pdf(invoice_id: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    inv = db.get(Invoice, invoice_id)
+    if inv is None:
+        return err("Not found", 404)
+    if principal.agency_id is None or inv.agency_id != principal.agency_id:
+        return err("Unauthorized", 403)
+    pdf = _render_invoice_pdf(inv)
+    return Response(pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": f"attachment; filename={inv.reference}.pdf"})
+
+
+def _render_invoice_pdf(inv: Invoice) -> bytes:
+    """Facture PDF (reportlab). Champs disponibles côté billing : reference, période, montant, statut."""
+    from io import BytesIO
+
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import mm
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=20 * mm, bottomMargin=20 * mm)
+    styles = getSampleStyleSheet()
+    head = ParagraphStyle("Header", parent=styles["Heading1"], fontSize=24,
+                          textColor=colors.HexColor("#1e3a5f"), spaceAfter=10)
+    info = ParagraphStyle("Info", parent=styles["Normal"], fontSize=10)
+    story = [
+        Paragraph("SemsarOut", head), Paragraph("www.semsarout.com", styles["Normal"]), Spacer(1, 20),
+        Paragraph(f"<b>FACTURE</b> {inv.reference}", head),
+        Paragraph(f"Date : {inv.issued_at.strftime('%d/%m/%Y') if inv.issued_at else '-'}", info),
+        Paragraph(f"Période : {inv.period_label or '-'}", info),
+        Paragraph(f"Montant : {float(inv.amount):.2f} MAD", info),
+        Paragraph(f"Statut : {inv.status}", info),
+    ]
+    doc.build(story)
+    return buf.getvalue()
 
 
 @app.post("/cancel-subscription")
