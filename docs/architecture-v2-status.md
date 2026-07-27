@@ -253,14 +253,19 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
    quand **tout** est extrait → retirer le repli monolithe du BFF, éteindre `:7000`.
 
    ### État de la coupure finale (T1..T5 FAITS, contrat 88/88)
-   **Fait** : front → BFF à **100 %** (`vite.config` `/api` → :8099) ; `users_client` de
-   crm/transactions/contract **repointé vers identity** (`/internal/agency/{id}/members?active_only=1`)
-   — ces 3 services ne dépendent plus du monolithe pour les noms d'agents.
+   **Fait** : front → BFF à **100 %** (`vite.config` `/api` → :8099) ; **deps internes v2→monolithe
+   supprimées (2/3)** : (a) `users_client` de crm/transactions/contract → **identity**
+   (`/internal/agency/{id}/members?active_only=1`, noms d'agents) ; (b) `listing` reveal-phone →
+   **agency** (`/internal/agency/{id}/phone`, bien d'agence) / **identity** (`/internal/user/{id}/phone`,
+   bien de propriétaire). Ces 4 services ne dépendent plus du monolithe.
    **Bloqueurs restants avant d'éteindre `:7000`** (à traiter, puis retirer le repli monolithe du BFF) :
-   - **Deps internes v2 → monolithe** : (a) `listing` reveal-phone → `/internal/properties/{id}/contact-phone`
-     (repointer vers agency/identity : téléphone agence/propriétaire) ; (b) `trust-safety` suspend/unsuspend
-     → écrit dans `/admin/accounts/*` du monolithe (repointer l'écriture vers identity, propriétaire des
-     comptes) ; (c) BFF repli features `/my-subscription` (legacy tokens seulement — billing le sert déjà).
+   - **Dep interne v2 → monolithe restante** : `trust-safety` suspend/unsuspend **délègue l'écriture**
+     du compte au monolithe (`/admin/accounts/{users|agencies}/{id}/{suspend|unsuspend}`). Le masquage
+     est déjà souverain (ModerationStatus trust-safety) ; il reste à **extraire le domaine modération
+     de compte** (suspend/unsuspend + delete/restore/anonymize × users/agencies = ~12 routes, avec
+     gardes : anti-auto-suspension, dernier super-admin) vers **identity** (propriétaire des comptes,
+     écrit `is_suspended`/`deleted_at`/`anonymized_at` + émet). Effort dédié (domaine accounts complet).
+   - BFF repli features `/my-subscription` (legacy tokens seulement — billing le sert déjà, non bloquant).
    - **Routes front encore servies par le monolithe** (repli BFF) : `selling`(4), `leads` racine public(7),
      `users`(3, `GET /backoffice/users`), `admin/shop|artisans|overview|impersonation`,
      `/dashboard/activity` (fait via analytics), integrations autres. ~20 routes mineures à extraire.
