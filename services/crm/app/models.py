@@ -26,6 +26,7 @@ class Lead(Base):
     lost_at = Column(DateTime)
     property_id = Column(Integer, index=True)
     agency_id = Column(Integer, index=True)
+    owner_id = Column(Integer, index=True)  # bien de particulier (pas d'agence) — cloisonne `/my-leads`
     assigned_to_id = Column(Integer)
     is_charged = Column(Boolean, default=False)
     charge_amount = Column(Numeric(10, 2))

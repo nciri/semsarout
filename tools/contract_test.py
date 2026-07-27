@@ -179,6 +179,9 @@ def cases(args):
               if args.legal_case_id else []),
         ],
         "crm": [
+            ("GET", "/api/v1/my-leads", None, None),
+            ("GET", "/api/v1/my-leads", {"status": "new"}, None),
+            ("GET", "/api/v1/my-leads/summary", None, None),
             ("GET", "/api/v1/backoffice/leads", None, None),
             ("GET", "/api/v1/backoffice/leads/stats", None, None),
             ("GET", "/api/v1/backoffice/leads/agents", None, None),

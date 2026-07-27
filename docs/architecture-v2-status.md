@@ -246,12 +246,15 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
    - ✅ **T4 `programs` FAIT** (`services/programs` :8516, 28 routes, contrat 84/84) — nouveau dev, (promotions immobilières neuves +
      `programs/{id}/plans`), pas encore consommé pareil — nouveau service.
    - ✅ **T5 `staymanager` FAIT** (`services/staymanager` :8517, 14 routes, contrat 88/88) — gate `has_staymanager_sync` (billing), API externe via `app/client.py` ; toutes données vides en dev (états non-connecté).
-   - **Divers restants** : `selling.py`(4 : estimate/sale-requests/documents/uploads), `leads.py`
-     racine public(7 : contact/reveal-phone/my-leads/leads-status → crm/listing), `admin/shop`(writes
-     produits/commandes) + `admin/artisans`(writes shared-artisans). `users.py`(3, profils publics)
-     **mort côté front** (0 réf) → à droper à l'extinction, pas à migrer. ✅ **`admin/overview`**
-     (→ analytics, agrège identity+agency+billing, parité exacte) et ✅ **`admin/impersonation`**
-     (→ identity) **FAITS**.
+   - **Divers restants** : `selling.py`(4 : estimate/sale-requests/documents/uploads),
+     `admin/shop`(writes produits/commandes) + `admin/artisans`(writes shared-artisans).
+     `users.py`(3, profils publics) **mort côté front** (0 réf) → à droper à l'extinction, pas à
+     migrer. ✅ **FAITS** : `admin/overview` (→ analytics), `admin/impersonation` (→ identity),
+     **groupe leads/contact publics** (`leads.py` 7 routes) : contact/reveal-phone sur annonce déjà
+     chez **listing** (`listing.contacted` → worker crm) ; `/contact` (demande de service),
+     `/my-leads`(+summary), `/leads/{id}`(GET marque lu), `/leads/{id}/status`(PUT) → **crm**
+     (ajout `owner_id` au lead crm pour cloisonner les biens de particuliers ; backfillé). Parité
+     exacte (agence + particulier via impersonation), contrat **92/92**.
    **Coupure** : quand une tranche est verte au contrat, basculer son routage BFF (déjà le patron) ;
    quand **tout** est extrait → retirer le repli monolithe du BFF, éteindre `:7000`.
 

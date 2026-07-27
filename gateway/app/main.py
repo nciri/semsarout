@@ -127,6 +127,8 @@ _LISTING_ID = re.compile(r"^/api/v1/properties/\d+$")
 _LISTING_PUBLISH = re.compile(r"^/api/v1/properties/\d+/publish$")
 # Engagement (Stage 3) : contact & reveal-phone (publics).
 _LISTING_ENGAGE = re.compile(r"^/api/v1/properties/\d+/(contact|reveal-phone)$")
+# Leads publics gérés par l'utilisateur : GET /leads/{id} + PUT /leads/{id}/status → crm.
+_CRM_LEADS_PUBLIC = re.compile(r"^/api/v1/leads/\d+(/status)?$")
 
 
 def _listing_match(path: str, method: str) -> bool:
@@ -296,6 +298,14 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path.startswith("/api/v1/backoffice/clients")
         or path.startswith("/api/v1/backoffice/visits")
         or path.startswith("/api/v1/backoffice/calendar")
+    ):
+        return app.state.crm, path.replace("/api/v1", "", 1)
+    # Leads publics / « mes leads » (page contact publique + gestion par l'utilisateur) → crm.
+    # (contact/reveal-phone sur une annonce restent chez listing, cf. _LISTING_ENGAGE.)
+    if settings.crm_url and (
+        (method == "POST" and path == "/api/v1/contact")
+        or (method == "GET" and path in ("/api/v1/my-leads", "/api/v1/my-leads/summary"))
+        or _CRM_LEADS_PUBLIC.match(path)
     ):
         return app.state.crm, path.replace("/api/v1", "", 1)
     if settings.transactions_url and path.startswith("/api/v1/backoffice/transactions"):

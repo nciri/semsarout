@@ -17,6 +17,7 @@ def _create_lead(db, payload: dict) -> None:
         message=payload.get("message"), source=payload.get("source") or "contact_form",
         service=payload.get("service"), status="new",
         property_id=payload.get("property_id"), agency_id=payload.get("agency_id"),
+        owner_id=payload.get("owner_id"),  # bien de particulier → cloisonnement /my-leads
     ))
 
 
