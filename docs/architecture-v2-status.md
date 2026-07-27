@@ -324,7 +324,13 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
      **Pas de notification requise** : le monolithe n'envoie pas d'email (provider non configuré,
      log seulement). Colonnes `reset_token`/`reset_token_expires` ajoutées à `user_ro`. E2E validé
      (flux complet + login avec nouveau mdp + jeton à usage unique). Contrat **119/119**.
-   - **F. Phase stockage objet** (2) : `POST /uploads`, `POST /sale-requests` (dépend de uploads).
+   - ✅ **F. Stockage objet FAIT** : `POST /uploads` (photo/document → MinIO/S3 via `semsar_storage`,
+     validations ext/taille/kind) + `GET /uploads/photos/{name}` (flux public depuis l'objet, proxifié
+     par le BFF) + `GET /documents/{id}` (privé, auth + propriétaire) + `POST /sale-requests` (crée le
+     bien pending + images + documents validés dans l'objet + ouvre un lead crm via `listing.contacted`,
+     nom résolu via identity). Bucket `semsar-media`. **`/uploads` repointé du disque monolithe → BFF→
+     listing** (`vite.config`). E2E validé (upload→serve round-trip MinIO, sale-request→bien+doc+lead
+     nommé, gardes 400/403/404). Pas de fichiers seed à migrer (images seed = URLs picsum externes).
    - **Statique** : `/uploads` (images/docs) sert encore depuis le disque du monolithe (`vite.config`).
    - **Sync transitoire** : `consume_users.py`/`relay_outbox.py` (monolithe) inutiles une fois `:7000` éteint.
    **Ordre restant** : (1) groupes A–E (14 routes, 4 services), (2) phase stockage objet (F + `/uploads`),

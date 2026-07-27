@@ -14,10 +14,13 @@ from statistics import median
 
 import httpx
 from fastapi import Depends, FastAPI, Header, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
+from werkzeug.utils import secure_filename
+
+from . import storage
 
 from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
@@ -25,7 +28,7 @@ from semsar_events import enqueue
 
 from . import events, moderation
 from .db import get_db, init_db
-from .models import Property, PropertyImage
+from .models import Property, PropertyDocument, PropertyImage
 
 settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
@@ -446,6 +449,162 @@ def bo_delete_property(property_id: int, principal: Principal = Depends(get_prin
     _emit(db, p, events.LISTING_UPDATED)
     db.commit()
     return {"message": "Property archived"}
+
+
+# ---- Médias (uploads/documents) — stockage objet (MinIO/S3), parité `selling.py` ----
+_ALLOWED_EXT = {"jpg", "jpeg", "png", "webp", "pdf"}
+_VALID_DOC_TYPES = {"titre_foncier", "cin", "plan", "reglement_copropriete", "diagnostic", "autre"}
+_CT = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp",
+       "pdf": "application/pdf"}
+
+
+def _content_type(name: str) -> str:
+    return _CT.get(name.rsplit(".", 1)[-1].lower() if "." in name else "", "application/octet-stream")
+
+
+@app.post("/uploads", status_code=201)
+async def upload_file(request: Request):
+    """Upload d'une photo (publique) ou d'un document (privé) → stockage objet."""
+    form = await request.form()
+    file = form.get("file")
+    if file is None or not hasattr(file, "filename"):
+        return _err("No file provided", 400)
+    kind = form.get("kind", "photo")
+    if kind not in ("photo", "document"):
+        return _err("Invalid kind (photo or document)", 400)
+    if not file.filename:
+        return _err("Empty filename", 400)
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+    allowed = _ALLOWED_EXT if kind == "document" else _ALLOWED_EXT - {"pdf"}
+    if ext not in allowed:
+        return _err(f'File type not allowed (accepted: {", ".join(sorted(allowed))})', 400)
+    data = await file.read()
+    if len(data) > 10 * 1024 * 1024:
+        return _err("File too large (max 10 MB)", 400)
+    stored = f"{uuid.uuid4().hex}.{ext}"
+    if kind == "photo":
+        storage.media().put(f"photos/{stored}", data, _content_type(stored))
+        return JSONResponse({"url": f"/uploads/photos/{stored}",
+                             "original_name": secure_filename(file.filename)}, status_code=201)
+    storage.media().put(f"documents/{stored}", data, _content_type(stored))
+    return JSONResponse({"file_id": stored, "original_name": secure_filename(file.filename)},
+                        status_code=201)
+
+
+@app.get("/uploads/photos/{name}")
+def serve_photo(name: str):
+    """Sert une photo publique depuis le stockage objet (remplace le disque du monolithe)."""
+    try:
+        data = storage.media().get(f"photos/{os.path.basename(name)}")
+    except Exception:  # noqa: BLE001
+        return _err("Not found", 404)
+    return Response(content=data, media_type=_content_type(name))
+
+
+@app.get("/documents/{doc_id}")
+def download_document(doc_id: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    """Sert un document de bien (PII) à son propriétaire (ou un admin). Auth + cloisonnement."""
+    doc = db.get(PropertyDocument, doc_id)
+    if doc is None:
+        return _err("Not found", 404)
+    p = db.get(Property, doc.property_id)
+    uid = _bo_uid(principal)
+    if not ((p is not None and p.owner_id == uid) or principal.is_superadmin):
+        return _err("Unauthorized", 403)
+    try:
+        data = storage.media().get(f"documents/{os.path.basename(doc.file_url)}")
+    except Exception:  # noqa: BLE001
+        return _err("Not found", 404)
+    return Response(content=data, media_type=_content_type(doc.file_url),
+                    headers={"Content-Disposition": f"attachment; filename={doc.original_name or doc.file_url}"})
+
+
+def _doc_dict(d: PropertyDocument) -> dict:
+    return {"id": d.id, "doc_type": d.doc_type, "original_name": d.original_name,
+            "created_at": d.created_at.isoformat() if d.created_at else None}
+
+
+_TYPE_LABELS = {"apartment": "Appartement", "house": "Maison", "villa": "Villa", "riad": "Riad",
+                "land": "Terrain", "commercial": "Local commercial", "office": "Bureau",
+                "garage": "Garage/Parking"}
+
+
+@app.post("/sale-requests", status_code=201)
+async def create_sale_request(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    """Dossier de vente en ligne : crée le bien (pending) + images + documents + ouvre un lead."""
+    uid = _bo_uid(principal)
+    if uid is None:
+        return _err("User not found", 404)
+    data = await _json(request)
+    pd = data.get("property") or {}
+    for f in ("property_type", "city", "surface"):
+        if not pd.get(f):
+            return _err(f"property.{f} is required", 400)
+    if not data.get("desired_price"):
+        return _err("desired_price is required", 400)
+    photos = data.get("photos") or []
+    documents = data.get("documents") or []
+    wants_pro = bool(data.get("wants_pro_photos"))
+    if not photos and not wants_pro:
+        return _err("At least one photo or the professional shooting option is required", 400)
+    title = pd.get("title")
+    if not title:
+        label = _TYPE_LABELS.get(pd["property_type"], "Bien")
+        rooms = pd.get("rooms")
+        title = f"{label}{f' {rooms} pièces' if rooms else ''} - {pd['city']}"
+    surface = float(pd["surface"]); price = float(data["desired_price"])
+    p = Property(
+        reference=_bo_reference(db), title=title, description=pd.get("description"),
+        property_type=pd["property_type"], transaction_type="sale", price=price,
+        price_per_sqm=round(price / surface, 2) if surface else None, surface=surface,
+        land_surface=pd.get("land_surface"), rooms=pd.get("rooms"), bedrooms=pd.get("bedrooms"),
+        bathrooms=pd.get("bathrooms"), floor=pd.get("floor"), total_floors=pd.get("total_floors"),
+        construction_year=pd.get("construction_year"), features=pd.get("features", []),
+        address=pd.get("address"), city=pd["city"], neighborhood=pd.get("neighborhood"),
+        postal_code=pd.get("postal_code"), owner_id=uid, agency_id=principal.agency_id,
+        status="pending")
+    db.add(p)
+    db.flush()
+    for idx, url in enumerate(photos):
+        db.add(PropertyImage(property_id=p.id, url=url, position=idx, is_primary=(idx == 0)))
+    saved = []
+    for doc in documents:
+        fid = doc.get("file_id")
+        if not fid:
+            continue
+        fid = os.path.basename(fid)
+        if not storage.exists(f"documents/{fid}"):
+            continue
+        dt = doc.get("doc_type")
+        pdoc = PropertyDocument(property_id=p.id, doc_type=dt if dt in _VALID_DOC_TYPES else "autre",
+                                file_url=fid, original_name=doc.get("original_name"))
+        db.add(pdoc)
+        saved.append(pdoc)
+    summary = (f"Dossier de vente en ligne {p.reference} - {title} - Prix souhaité : {int(price)} MAD"
+               f" - {len(photos)} photo(s), {len(documents)} document(s)"
+               f"{' - Shooting pro demandé' if wants_pro else ''}")
+    u = _fetch_user(uid)
+    enqueue(db, "property", p.id, events.LISTING_CONTACTED, {
+        "property_id": None, "agency_id": None, "owner_id": uid,
+        "name": u.get("full_name"), "email": u.get("email"), "phone": u.get("phone"),
+        "message": data.get("notes") or summary, "source": "service_request", "service": "vente"})
+    _emit(db, p, events.LISTING_CREATED)
+    db.flush()
+    saved_docs = [_doc_dict(d) for d in saved]
+    db.commit()
+    return JSONResponse({"message": "Sale request submitted successfully",
+                         "property": _prop_dict(db, p, include_images=True),
+                         "documents": saved_docs, "reference": p.reference}, status_code=201)
+
+
+def _fetch_user(uid: int) -> dict:
+    """Profil (nom/email/téléphone) du créateur, pour le lead — via identity (propriétaire)."""
+    try:
+        r = httpx.get(f"{_IDENTITY_URL}/internal/user/{uid}",
+                      headers={"x-internal-token": settings.internal_token}, timeout=5.0)
+        return (r.json() or {}).get("user") or {} if r.status_code == 200 else {}
+    except httpx.HTTPError:
+        return {}
 
 
 @app.post("/properties/{property_id}/contact", status_code=201)

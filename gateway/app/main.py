@@ -129,6 +129,8 @@ _LISTING_PUBLISH = re.compile(r"^/api/v1/properties/\d+/publish$")
 _LISTING_ENGAGE = re.compile(r"^/api/v1/properties/\d+/(contact|reveal-phone)$")
 # Gestion des biens en backoffice (détail/maj/suppression) → listing.
 _BO_PROPERTY_ID = re.compile(r"^/api/v1/backoffice/properties/\d+$")
+# Téléchargement d'un document de bien (authentifié) → listing.
+_DOCUMENTS_ID = re.compile(r"^/api/v1/documents/\d+$")
 # Leads publics gérés par l'utilisateur : GET /leads/{id} + PUT /leads/{id}/status → crm.
 _CRM_LEADS_PUBLIC = re.compile(r"^/api/v1/leads/\d+(/status)?$")
 # Lecture détail d'un compte (super-admin) : GET → analytics (agrégat). Les ÉCRITURES de
@@ -146,6 +148,11 @@ def _listing_match(path: str, method: str) -> bool:
     if method == "POST" and (_LISTING_PUBLISH.match(path) or _LISTING_ENGAGE.match(path)):
         return True
     if method == "POST" and path == "/api/v1/estimate":  # estimation prix (comparables actifs)
+        return True
+    # Médias + dossier de vente en ligne (stockage objet).
+    if method == "POST" and path in ("/api/v1/uploads", "/api/v1/sale-requests"):
+        return True
+    if method == "GET" and _DOCUMENTS_ID.match(path):
         return True
     # Gestion des biens en backoffice (liste/détail/CRUD, cloisonnée agence).
     if path == "/api/v1/backoffice/properties" and method in ("GET", "POST"):
@@ -453,3 +460,15 @@ async def proxy(path: str, request: Request) -> Response:
         headers=resp_headers,
         media_type=upstream.headers.get("content-type"),
     )
+
+
+@app.api_route("/uploads/{path:path}", methods=["GET", "HEAD"], include_in_schema=False)
+async def uploads_proxy(path: str, request: Request) -> Response:
+    """Sert les médias publics (`/uploads/photos/*`) depuis le service listing (stockage objet),
+    en remplacement du disque du monolithe. Repli monolithe si listing absent."""
+    app = request.app
+    client = app.state.listing or app.state.monolith
+    upstream = await client.request("GET", f"/uploads/{path}")
+    resp_headers = {k: v for k, v in upstream.headers.items() if k.lower() not in _HOP_BY_HOP}
+    return Response(content=upstream.content, status_code=upstream.status_code,
+                    headers=resp_headers, media_type=upstream.headers.get("content-type"))
