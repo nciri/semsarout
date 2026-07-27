@@ -13,7 +13,7 @@ from semsar_common import get_settings, setup_logging
 from semsar_events import EventConsumer
 
 from .db import SessionLocal, init_db
-from .models import ProcessedMessage, UserRO
+from .models import AgencyRO, ProcessedMessage, UserRO
 
 _COLS = (
     "email", "password_hash", "first_name", "last_name", "phone", "avatar_url", "user_type",
@@ -33,6 +33,23 @@ def _handle(routing_key: str, payload: dict, message_id: str) -> None:
         if message_id and db.get(ProcessedMessage, message_id) is not None:
             return
         uid = payload.get("id")
+        if routing_key.startswith("agency."):
+            # Modération d'agence (possédée par le service agency) → resync du flag de blocage
+            # login sur `agency_ro` (`_login_blocked` lit AgencyRO.is_suspended/is_deleted).
+            ag = db.get(AgencyRO, uid)
+            if ag is not None:
+                if "is_suspended" in payload:
+                    ag.is_suspended = bool(payload["is_suspended"])
+                if "is_deleted" in payload:
+                    ag.is_deleted = bool(payload["is_deleted"])
+                if "suspended_reason" in payload:
+                    ag.suspended_reason = payload["suspended_reason"]
+                if payload.get("name"):
+                    ag.name = payload["name"]
+            if message_id:
+                db.add(ProcessedMessage(message_id=message_id))
+            db.commit()
+            return
         if routing_key == "user.deleted":
             u = db.get(UserRO, uid)
             if u is not None:
@@ -66,7 +83,7 @@ def main() -> None:
         init_db()
     consumer = EventConsumer(
         settings.rabbitmq_url, service_name=settings.service_name,
-        bindings=["user.#"], exchange=settings.events_exchange,
+        bindings=["user.#", "agency.#"], exchange=settings.events_exchange,
     )
     consumer.run(handler=_handle)
 

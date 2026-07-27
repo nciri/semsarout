@@ -254,17 +254,22 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
 
    ### État de la coupure finale (T1..T5 FAITS, contrat 88/88)
    **Fait** : front → BFF à **100 %** (`vite.config` `/api` → :8099) ; **deps internes v2→monolithe
-   supprimées (2/3)** : (a) `users_client` de crm/transactions/contract → **identity**
+   supprimées (3/3)** : (a) `users_client` de crm/transactions/contract → **identity**
    (`/internal/agency/{id}/members?active_only=1`, noms d'agents) ; (b) `listing` reveal-phone →
-   **agency** (`/internal/agency/{id}/phone`, bien d'agence) / **identity** (`/internal/user/{id}/phone`,
-   bien de propriétaire). Ces 4 services ne dépendent plus du monolithe.
-   **Bloqueurs restants avant d'éteindre `:7000`** (à traiter, puis retirer le repli monolithe du BFF) :
-   - **Dep interne v2 → monolithe restante** : `trust-safety` suspend/unsuspend **délègue l'écriture**
-     du compte au monolithe (`/admin/accounts/{users|agencies}/{id}/{suspend|unsuspend}`). Le masquage
-     est déjà souverain (ModerationStatus trust-safety) ; il reste à **extraire le domaine modération
-     de compte** (suspend/unsuspend + delete/restore/anonymize × users/agencies = ~12 routes, avec
-     gardes : anti-auto-suspension, dernier super-admin) vers **identity** (propriétaire des comptes,
-     écrit `is_suspended`/`deleted_at`/`anonymized_at` + émet). Effort dédié (domaine accounts complet).
+   **agency** (`/internal/agency/{id}/phone`) / **identity** (`/internal/user/{id}/phone`) ; (c)
+   **modération de compte** (`trust-safety`) n'écrit **plus** dans le monolithe. **Plus aucun
+   service v2 ne dépend du monolithe.**
+   - ✅ **Domaine modération de compte extrait** (façade `trust-safety` → propriétaire de l'entité) :
+     les 10 routes `/admin/accounts/{users|agencies}/{id}/{suspend|unsuspend|DELETE|restore|anonymize}`
+     délèguent la mutation par **jeton interne** à **identity** (users : `UserRO`, gardes auto-action +
+     dernier super-admin + déjà-fait, parité messages/`to_dict`, émet `user.updated`) et au service
+     **agency** (agencies : modèle `Agency` complet, anonymisation PII, émet `agency.*`). `trust-safety`
+     garde audit + **masquage** (§6, `ModerationStatus` pour les 5 actions) + événements `account.*`.
+     identity **consomme `agency.*`** pour resynchroniser `agency_ro.is_suspended/is_deleted` (cohérence
+     du blocage login `_login_blocked`). Outbox+relais ajoutés à agency. E2E validé (lifecycle complet
+     users+agencies : suspend/unsuspend/delete/restore/anonymize, gardes 409/404, masquage, blocage
+     login, resync AgencyRO), contrat **87/87** (trust-safety : agent1→403 des deux côtés). Le monolithe
+     `admin/moderation.py` n'est **plus atteint** (le BFF route `/admin/accounts/*` → trust-safety).
    - BFF repli features `/my-subscription` (legacy tokens seulement — billing le sert déjà, non bloquant).
    - **Routes front encore servies par le monolithe** (repli BFF) : `selling`(4), `leads` racine public(7),
      `users`(3, `GET /backoffice/users`), `admin/shop|artisans|overview|impersonation`,
@@ -273,7 +278,7 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
      vers stockage objet (MinIO/S3) avant extinction.
    - **Sync transitoire** : `consume_users.py`/`relay_outbox.py` (monolithe) deviennent inutiles une fois
      `:7000` éteint (plus personne ne lit `public.users`).
-   **Ordre** : (1) repointer contact-phone + trust-safety, (2) extraire les ~20 routes mineures, (3) migrer
+   **Ordre** : (1) ✅ contact-phone + trust-safety repointés, (2) extraire les ~20 routes mineures, (3) migrer
    `/uploads`, (4) retirer le repli monolithe du BFF (`upstream_url`) + le proxy `/uploads`, (5) éteindre `:7000`.
 
 ## 9. Pièges connus (IMPORTANT pour un contexte frais)

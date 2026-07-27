@@ -23,7 +23,7 @@ from semsar_common import (
 )
 from semsar_events import enqueue
 
-from . import auth, events, rbac, team
+from . import accounts, auth, events, rbac, team
 from .db import get_db, init_db
 from .models import KycVerification
 
@@ -62,6 +62,7 @@ Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_sch
 app.include_router(auth.router)
 app.include_router(rbac.router)
 app.include_router(team.router)
+app.include_router(accounts.router)  # modération de compte utilisateur (délégué par trust-safety)
 
 
 @app.get("/health", include_in_schema=False)

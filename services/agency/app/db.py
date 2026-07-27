@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
 from semsar_common import get_settings
+from semsar_events import OutboxBase
 
 _settings = get_settings()
 _engine = create_engine(
@@ -15,6 +16,7 @@ Base = declarative_base()
 
 def init_db() -> None:
     Base.metadata.create_all(_engine)
+    OutboxBase.metadata.create_all(_engine)  # table outbox (agency émet agency.* pour identity)
 
 
 def get_db() -> Session:

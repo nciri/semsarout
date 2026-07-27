@@ -63,6 +63,7 @@ for pair in $SVCS; do
     staymanager) extra="BILLING_URL=http://localhost:8508";;
     crm|transactions) extra="IDENTITY_URL=http://localhost:8501";;
     analytics) extra="TRANSACTIONS_URL=http://localhost:8514 CRM_URL=http://localhost:8013 IDENTITY_URL=http://localhost:8501 LISTING_URL=http://localhost:8012 GEO_URL=http://localhost:8509 BILLING_URL=http://localhost:8508 AUDIT_URL=http://localhost:8513";;
+    trust-safety) extra="IDENTITY_URL=http://localhost:8501 AGENCY_URL=http://localhost:8512";;
   esac
   case "$svc" in listing|search) extra="$extra $TS_HIDDEN";; esac
   [ "$svc" = "listing" ] && extra="$extra AGENCY_URL=http://localhost:8512 IDENTITY_URL=http://localhost:8501"
@@ -95,7 +96,7 @@ relay() { env SERVICE_NAME="$1" DATABASE_URL="$(dburl "$1")" RABBITMQ_URL="$RMQ"
 worker() { env SERVICE_NAME="$1" DATABASE_URL="$(dburl "$1")" RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" \
   OPENSEARCH_URL="$OS" MONOLITH_URL="$MONO" INTERNAL_TOKEN="$ITOK" \
   PYTHONPATH="services/$1" nohup python3 -m app.worker > "$LOG/$1-worker.log" 2>&1 & }
-for r in listing catalog identity contract payment billing transactions programs; do relay "$r"; done
+for r in listing catalog identity contract payment billing transactions programs agency; do relay "$r"; done
 for w in search crm marketplace geo agency messaging analytics billing notification identity audit transactions legal contract; do worker "$w"; done
 ( cd backend; set -a; source .env; set +a
   RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" nohup venv/bin/python scripts/consume_users.py > "$LOG/monolith-consumer.log" 2>&1 &

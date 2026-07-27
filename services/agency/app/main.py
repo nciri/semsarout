@@ -4,8 +4,9 @@
 Les écritures (create/update/regenerate-api-key) restent au monolithe pour l'instant.
 """
 from contextlib import asynccontextmanager
+from datetime import datetime
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import func, or_
@@ -13,8 +14,9 @@ from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
+from semsar_events import enqueue
 
-from . import listing_client, members_client
+from . import events, listing_client, members_client
 from .db import get_db, init_db
 from .models import Agency, ListingRO
 
@@ -65,6 +67,119 @@ def internal_agency_phone(agency_id: int, request: Request, db: Session = Depend
         return _err("Forbidden", 403)
     a = db.get(Agency, agency_id)
     return {"phone": a.phone if a else None}
+
+
+# ---- Modération de compte agence (super-admin) — déléguée par trust-safety (jeton interne) ----
+# agency possède l'entité agence (modèle complet + `to_dict`). identity consomme les événements
+# `agency.*` pour resynchroniser `agency_ro` (blocage login). Parité EXACTE des réponses du
+# monolithe (`/admin/accounts/agencies/*`) : mêmes messages, mêmes codes, `Agency.to_dict()`.
+def _agency_msg(db: Session, message: str, a: Agency, code: int = 200) -> JSONResponse:
+    cnt = _counts(db, [a.id]).get(a.id, 0)
+    return JSONResponse({"message": message, "agency": a.to_dict(properties_count=cnt)}, status_code=code)
+
+
+def _emit_agency(db: Session, a: Agency, event_type: str) -> None:
+    enqueue(db, "agency", a.id, event_type, {
+        "id": a.id, "name": a.name,
+        "is_suspended": bool(a.is_suspended), "is_deleted": a.deleted_at is not None,
+        "suspended_reason": a.suspended_reason,
+    })
+
+
+def _mod_resolve(agency_id: int, token: str, db: Session):
+    if token != settings.internal_token:
+        return None, _err("Forbidden", 403)
+    a = db.get(Agency, agency_id)
+    if a is None:
+        return None, _err("Agency not found", 404)
+    return a, None
+
+
+@app.post("/internal/accounts/agencies/{agency_id}/suspend", include_in_schema=False)
+def mod_suspend(agency_id: int, reason: str | None = None, actor_id: int | None = None,
+                x_internal_token: str = Header(default=""), db: Session = Depends(get_db)):
+    a, err = _mod_resolve(agency_id, x_internal_token, db)
+    if err:
+        return err
+    a.is_suspended = True
+    a.suspended_at = datetime.utcnow()
+    a.suspended_reason = reason
+    _emit_agency(db, a, events.AGENCY_SUSPENDED)
+    db.commit()
+    return _agency_msg(db, "Agence suspendue", a)
+
+
+@app.post("/internal/accounts/agencies/{agency_id}/unsuspend", include_in_schema=False)
+def mod_unsuspend(agency_id: int, reason: str | None = None, actor_id: int | None = None,
+                  x_internal_token: str = Header(default=""), db: Session = Depends(get_db)):
+    a, err = _mod_resolve(agency_id, x_internal_token, db)
+    if err:
+        return err
+    a.is_suspended = False
+    a.suspended_at = None
+    a.suspended_reason = None
+    _emit_agency(db, a, events.AGENCY_UNSUSPENDED)
+    db.commit()
+    return _agency_msg(db, "Agence réactivée", a)
+
+
+@app.post("/internal/accounts/agencies/{agency_id}/delete", include_in_schema=False)
+def mod_delete(agency_id: int, reason: str | None = None, actor_id: int | None = None,
+               x_internal_token: str = Header(default=""), db: Session = Depends(get_db)):
+    a, err = _mod_resolve(agency_id, x_internal_token, db)
+    if err:
+        return err
+    a.deleted_at = datetime.utcnow()
+    a.is_suspended = True
+    _emit_agency(db, a, events.AGENCY_DELETED)
+    db.commit()
+    return _agency_msg(db, "Agence supprimée", a)
+
+
+@app.post("/internal/accounts/agencies/{agency_id}/restore", include_in_schema=False)
+def mod_restore(agency_id: int, reason: str | None = None, actor_id: int | None = None,
+                x_internal_token: str = Header(default=""), db: Session = Depends(get_db)):
+    a, err = _mod_resolve(agency_id, x_internal_token, db)
+    if err:
+        return err
+    a.deleted_at = None
+    a.is_suspended = False
+    a.suspended_at = None
+    a.suspended_reason = None
+    _emit_agency(db, a, events.AGENCY_RESTORED)
+    db.commit()
+    return _agency_msg(db, "Agence restaurée", a)
+
+
+@app.post("/internal/accounts/agencies/{agency_id}/anonymize", include_in_schema=False)
+def mod_anonymize(agency_id: int, reason: str | None = None, actor_id: int | None = None,
+                  x_internal_token: str = Header(default=""), db: Session = Depends(get_db)):
+    a, err = _mod_resolve(agency_id, x_internal_token, db)
+    if err:
+        return err
+    if a.anonymized_at is not None:
+        return _agency_msg(db, "Agence déjà anonymisée", a)
+    a.name = "Agence supprimée"
+    a.slug = f"agence-supprimee-{a.id}"
+    a.description = None
+    a.email = f"deleted+agency{a.id}@semsar.invalid"
+    a.phone = None
+    a.website = None
+    a.address = None
+    a.postal_code = None
+    a.logo_url = None
+    a.cover_image_url = None
+    a.license_number = None
+    a.rc_number = None
+    a.ice_number = None
+    a.api_key = None
+    if a.deleted_at is None:
+        a.deleted_at = datetime.utcnow()
+    a.is_suspended = True
+    a.anonymized_at = datetime.utcnow()
+    _emit_agency(db, a, events.AGENCY_ANONYMIZED)
+    db.commit()
+    return _agency_msg(db, "Agence anonymisée", a)
 
 
 @app.get("/agencies")
