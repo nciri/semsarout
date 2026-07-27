@@ -10,6 +10,7 @@ import os
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
+from statistics import median
 
 import httpx
 from fastapi import Depends, FastAPI, Header, Request
@@ -264,6 +265,49 @@ def _fetch_contact_phone(p: Property) -> str | None:
     except httpx.HTTPError:
         return None
     return (resp.json() or {}).get("phone") if resp.status_code == 200 else None
+
+
+@app.post("/estimate")
+async def estimate_price(request: Request, db: Session = Depends(get_db)):
+    """Estimation d'un prix de vente à partir d'annonces actives comparables (parité
+    `selling.py:estimate_price`). Lecture seule sur les biens (listing les possède)."""
+    data = await _json(request)
+    city = data.get("city")
+    property_type = data.get("property_type")
+    surface = data.get("surface")
+    if not city or not property_type or not surface:
+        return _err("city, property_type and surface are required", 400)
+    try:
+        surface = float(surface)
+    except (TypeError, ValueError):
+        return _err("surface must be a number", 400)
+    if surface <= 0:
+        return _err("surface must be positive", 400)
+
+    base = db.query(Property).filter(
+        Property.transaction_type == "sale", Property.status == "active",
+        Property.price.isnot(None), Property.surface.isnot(None), Property.surface > 0)
+    scopes = [
+        ("city_and_type", base.filter(Property.city.ilike(city), Property.property_type == property_type)),
+        ("city", base.filter(Property.city.ilike(city))),
+        ("type", base.filter(Property.property_type == property_type)),
+    ]
+    comparables, scope_used = [], None
+    for scope_name, query in scopes:
+        rows = query.limit(500).all()
+        if len(rows) >= 3:
+            comparables, scope_used = rows, scope_name
+            break
+    if not comparables:
+        return {"available": False, "message": "Pas assez de biens comparables pour estimer"}
+
+    ppsqm = median(float(p.price) / p.surface for p in comparables)
+    estimate = ppsqm * surface
+    return {
+        "available": True, "scope": scope_used, "comparables_count": len(comparables),
+        "price_per_sqm": round(ppsqm), "estimate": round(estimate),
+        "estimate_low": round(estimate * 0.9), "estimate_high": round(estimate * 1.1),
+    }
 
 
 @app.post("/properties/{property_id}/contact", status_code=201)

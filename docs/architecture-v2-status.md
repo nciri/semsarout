@@ -246,8 +246,11 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
    - ✅ **T4 `programs` FAIT** (`services/programs` :8516, 28 routes, contrat 84/84) — nouveau dev, (promotions immobilières neuves +
      `programs/{id}/plans`), pas encore consommé pareil — nouveau service.
    - ✅ **T5 `staymanager` FAIT** (`services/staymanager` :8517, 14 routes, contrat 88/88) — gate `has_staymanager_sync` (billing), API externe via `app/client.py` ; toutes données vides en dev (états non-connecté).
-   - **Divers restants** : `selling.py`(4 : estimate/sale-requests/documents/uploads),
-     `admin/shop`(writes produits/commandes) + `admin/artisans`(writes shared-artisans).
+   - **Divers restants** : `selling.py` : ✅ **`estimate`** (→ listing, valorisation query-time
+     sur annonces comparables, parité exacte) **FAIT** ; `sale-requests`/`documents`/`uploads`
+     **couplés au stockage objet** (sale-requests crée un bien + valide des `file_id` de documents
+     sur disque) → à faire avec la migration `/uploads`. `admin/shop`(writes produits/commandes) +
+     `admin/artisans`(writes shared-artisans).
      `users.py`(3, profils publics) **mort côté front** (0 réf) → à droper à l'extinction, pas à
      migrer. ✅ **FAITS** : `admin/overview` (→ analytics), `admin/impersonation` (→ identity),
      **groupe leads/contact publics** (`leads.py` 7 routes) : contact/reveal-phone sur annonce déjà

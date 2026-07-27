@@ -55,6 +55,8 @@ def cases(args):
         ],
         "listing": [
             ("GET", "/api/v1/my-properties", None, None),
+            ("POST", "/api/v1/estimate", None, {"city": "Casablanca", "property_type": "apartment", "surface": 100}),
+            ("POST", "/api/v1/estimate", None, {"city": "Fès", "property_type": "villa", "surface": 250}),
             *([("GET", f"/api/v1/properties/{pid}", None, None)] if pid else []),
         ],
         "search": [

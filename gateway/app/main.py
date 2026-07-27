@@ -140,6 +140,8 @@ def _listing_match(path: str, method: str) -> bool:
         return True
     if method == "POST" and (_LISTING_PUBLISH.match(path) or _LISTING_ENGAGE.match(path)):
         return True
+    if method == "POST" and path == "/api/v1/estimate":  # estimation prix (comparables actifs)
+        return True
     return False
 
 
