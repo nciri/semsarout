@@ -139,6 +139,8 @@ def cases(args):
             ("GET", "/api/v1/admin/activity", None, None),
         ],
         "agency": [
+            ("GET", "/api/v1/backoffice/users", None, None),          # → identity (liste users agence)
+            ("GET", "/api/v1/backoffice/users", {"q": "a"}, None),
             ("GET", "/api/v1/agencies", None, None),
             ("GET", "/api/v1/agencies/immo-casa-premium", None, None),
             ("GET", "/api/v1/my-agency", None, None),

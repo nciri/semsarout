@@ -202,6 +202,7 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
     if settings.identity_url and (
         path.startswith("/api/v1/backoffice/roles")
         or (method == "GET" and path == "/api/v1/backoffice/permissions")
+        or (method == "GET" and path == "/api/v1/backoffice/users")  # liste users backoffice
     ):
         return app.state.identity, path.replace("/api/v1", "", 1)
     # Impersonation super-admin (émission d'un JWT au nom d'autrui) → identity (émetteur des

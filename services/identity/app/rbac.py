@@ -68,6 +68,38 @@ def _counts(db: Session, role_ids: list[int]) -> dict[int, int]:
     return dict(rows)
 
 
+@router.get("/backoffice/users")
+def get_users(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
+    """Liste des utilisateurs (backoffice, cloisonnée à l'agence) — parité
+    `backend/app/api/v1/backoffice/roles.py:get_users`. Chaque user + ses rôles (avec users_count)."""
+    qp = request.query_params
+    page = int(qp.get("page") or 1)
+    per_page = int(qp.get("per_page") or 20)
+    query = db.query(UserRO)
+    if principal.agency_id:
+        query = query.filter(UserRO.agency_id == principal.agency_id)
+    if qp.get("type"):
+        query = query.filter(UserRO.user_type == qp.get("type"))
+    if qp.get("is_active") is not None and qp.get("is_active") != "":
+        query = query.filter(UserRO.is_active.is_(qp.get("is_active").lower() == "true"))
+    if qp.get("q"):
+        term = f"%{qp.get('q')}%"
+        query = query.filter(or_(UserRO.first_name.ilike(term), UserRO.last_name.ilike(term),
+                                 UserRO.email.ilike(term)))
+    query = query.order_by(UserRO.created_at.desc())
+    total = query.count()
+    items = query.offset((page - 1) * per_page).limit(per_page).all()
+    pages = (total + per_page - 1) // per_page if per_page else 1
+    role_ids = {r.id for u in items for r in u.roles}
+    counts = _counts(db, list(role_ids))
+    users = []
+    for u in items:
+        d = u.to_dict()
+        d["roles"] = [r.to_dict(users_count=counts.get(r.id, 0)) for r in u.roles]
+        users.append(d)
+    return {"users": users, "total": total, "pages": pages, "current_page": page}
+
+
 @router.get("/backoffice/roles")
 def get_roles(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
     agency_id = principal.agency_id

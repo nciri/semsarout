@@ -302,8 +302,9 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
      `/internal/users`+`/internal/user/{id}`, agency `/internal/agencies`+`/internal/agency/{id}`,
      billing `/internal/subscriptions`, listing `/internal/property-counts`, audit `/internal/activity`
      (filtre entity_type/entity_id). Parité exacte (liste+filtres+détails+404+403), `last_login` ajouté
-     aux champs VOLATILE (dérive v2↔monolithe). Contrat **105/105**. **Reste `GET /backoffice/users`
-     → identity** (liste users agence-scoped + rôles, simple, indépendant).
+     aux champs VOLATILE (dérive v2↔monolithe). ✅ **`GET /backoffice/users` → identity FAIT**
+     (liste users cloisonnée agence + rôles avec `users_count`, filtres type/is_active/q, parité
+     exacte agent1+admin). **Groupe C COMPLET.** Contrat **107/107**.
    - **D. Factures → billing** (2) : `GET /invoices`, `GET /invoices/{id}/pdf` (xhtml2pdf déjà dispo).
    - **E. Reset mot de passe → identity (+notification)** (2) : `POST /auth/forgot-password`,
      `POST /auth/reset-password` (token de reset + envoi email via notification).
