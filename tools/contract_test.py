@@ -141,6 +141,11 @@ def cases(args):
         "agency": [
             ("GET", "/api/v1/backoffice/users", None, None),          # → identity (liste users agence)
             ("GET", "/api/v1/backoffice/users", {"q": "a"}, None),
+            # Écritures agence (gardes non-mutantes, parité des deux côtés) : agent1 a déjà une
+            # agence → 400 ; non-propriétaire d'une autre agence → 403.
+            ("POST", "/api/v1/agencies", None, {"name": "X", "email": "x@y.co"}),
+            ("PUT", "/api/v1/agencies/rabat-immobilier", None, {"website": "x"}),
+            ("POST", "/api/v1/agencies/rabat-immobilier/regenerate-api-key", None, {}),
             ("GET", "/api/v1/agencies", None, None),
             ("GET", "/api/v1/agencies/immo-casa-premium", None, None),
             ("GET", "/api/v1/my-agency", None, None),

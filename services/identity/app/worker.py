@@ -33,9 +33,30 @@ def _handle(routing_key: str, payload: dict, message_id: str) -> None:
         if message_id and db.get(ProcessedMessage, message_id) is not None:
             return
         uid = payload.get("id")
+        if routing_key == "agency.created":
+            # Nouvelle agence (self-service pro) → créer agency_ro + associer l'utilisateur
+            # créateur (agency_id + user_type=professional), puis émettre user.updated.
+            from semsar_events import enqueue
+
+            from .auth import _user_event_doc
+            if db.get(AgencyRO, uid) is None:
+                db.add(AgencyRO(id=uid, name=payload.get("name"), owner_id=payload.get("owner_id"),
+                                features=[], max_seats=0, max_teams=0,
+                                is_suspended=False, is_deleted=False))
+            owner_id = payload.get("owner_id")
+            if owner_id:
+                u = db.get(UserRO, owner_id)
+                if u is not None and u.agency_id != uid:
+                    u.agency_id = uid
+                    u.user_type = "professional"
+                    enqueue(db, "user", u.id, "user.updated", _user_event_doc(u))
+            if message_id:
+                db.add(ProcessedMessage(message_id=message_id))
+            db.commit()
+            return
         if routing_key.startswith("agency."):
-            # Modération d'agence (possédée par le service agency) → resync du flag de blocage
-            # login sur `agency_ro` (`_login_blocked` lit AgencyRO.is_suspended/is_deleted).
+            # Modération/maj d'agence (possédée par le service agency) → resync du flag de blocage
+            # login sur `agency_ro` (`_login_blocked` lit AgencyRO.is_suspended/is_deleted) + nom.
             ag = db.get(AgencyRO, uid)
             if ag is not None:
                 if "is_suspended" in payload:

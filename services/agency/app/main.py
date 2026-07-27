@@ -3,9 +3,11 @@
 `properties_count` vient d'une projection locale `listing_ro` (événements `listing.*`).
 Les écritures (create/update/regenerate-api-key) restent au monolithe pour l'instant.
 """
+import secrets
 from contextlib import asynccontextmanager
 from datetime import datetime
 
+from slugify import slugify
 from fastapi import Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -44,6 +46,29 @@ Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_sch
 
 def _err(msg: str, code: int) -> JSONResponse:
     return JSONResponse({"error": msg}, status_code=code)
+
+
+async def _json(request: Request) -> dict:
+    try:
+        data = await request.json()
+    except Exception:  # noqa: BLE001
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _gen_slug(db: Session, name: str) -> str:
+    base = slugify(name); slug = base; c = 1
+    while db.query(Agency).filter(Agency.slug == slug).first():
+        slug = f"{base}-{c}"; c += 1
+    return slug
+
+
+def _gen_api_key() -> str:
+    return f"sk_{secrets.token_urlsafe(32)}"
+
+
+_AGENCY_WRITABLE = ["name", "description", "email", "phone", "website", "address", "city",
+                    "postal_code", "license_number", "rc_number", "ice_number"]
 
 
 def _counts(db: Session, agency_ids: list[int]) -> dict[int, int]:
@@ -278,3 +303,62 @@ def get_agency(slug: str, db: Session = Depends(get_db)):
         return _err("Not found", 404)
     cnt = _counts(db, [agency.id]).get(agency.id, 0)
     return {"agency": agency.to_dict(properties_count=cnt)}
+
+
+# ---- Écritures agence (self-service pro) — parité `agencies.py` create/update/regenerate ----
+@app.post("/agencies", status_code=201)
+async def create_agency(request: Request, principal: Principal = Depends(get_principal),
+                        db: Session = Depends(get_db)):
+    uid = int(principal.sub) if principal.sub and str(principal.sub).isdigit() else None
+    if uid is None:
+        return _err("User not found", 404)
+    if principal.agency_id:
+        return _err("You already belong to an agency", 400)
+    data = await _json(request)
+    for f in ("name", "email"):
+        if not data.get(f):
+            return _err(f"{f} is required", 400)
+    a = Agency(name=data["name"], slug=_gen_slug(db, data["name"]), email=data["email"],
+               api_key=_gen_api_key(), owner_id=uid,
+               **{k: data.get(k) for k in _AGENCY_WRITABLE if k not in ("name", "email")})
+    db.add(a)
+    db.flush()
+    # identity consomme agency.created → crée agency_ro + associe l'utilisateur (agency_id + pro).
+    enqueue(db, "agency", a.id, events.AGENCY_CREATED, {"id": a.id, "name": a.name, "owner_id": uid})
+    db.commit()
+    return JSONResponse({"message": "Agency created successfully",
+                         "agency": a.to_dict(properties_count=0)}, status_code=201)
+
+
+@app.put("/agencies/{slug}")
+async def update_agency(slug: str, request: Request, principal: Principal = Depends(get_principal),
+                        db: Session = Depends(get_db)):
+    a = db.query(Agency).filter(Agency.slug == slug).first()
+    if a is None:
+        return _err("Not found", 404)
+    if principal.agency_id != a.id:
+        return _err("Unauthorized", 403)
+    data = await _json(request)
+    old_name = a.name
+    for field in _AGENCY_WRITABLE:
+        if field in data:
+            setattr(a, field, data[field])
+    if "name" in data and old_name != data["name"]:  # slug regénéré si le nom change
+        a.slug = _gen_slug(db, data["name"])
+    _emit_agency(db, a, events.AGENCY_UPDATED)
+    db.commit()
+    cnt = _counts(db, [a.id]).get(a.id, 0)
+    return {"message": "Agency updated successfully", "agency": a.to_dict(properties_count=cnt)}
+
+
+@app.post("/agencies/{slug}/regenerate-api-key")
+def regenerate_api_key(slug: str, principal: Principal = Depends(get_principal),
+                       db: Session = Depends(get_db)):
+    a = db.query(Agency).filter(Agency.slug == slug).first()
+    if a is None:
+        return _err("Not found", 404)
+    if principal.agency_id != a.id:
+        return _err("Unauthorized", 403)
+    a.api_key = _gen_api_key()
+    db.commit()
+    return {"message": "API key regenerated", "api_key": a.api_key}

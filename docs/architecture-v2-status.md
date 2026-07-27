@@ -292,8 +292,12 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
    inexistant — hors périmètre coupure, à voir côté front). Backlog groupé par propriétaire cible :
    - **A. Gestion des biens backoffice → listing** (5) : `GET/POST /backoffice/properties`,
      `GET/PUT/DELETE /backoffice/properties/{id}` (listing possède déjà le CRUD public `/properties*`).
-   - **B. Écritures agence → agency** (3) : `POST /agencies`, `PUT /agencies/{slug}`,
-     `POST /agencies/{slug}/regenerate-api-key` (agency a déjà les écritures modération + émet `agency.*`).
+   - ✅ **B. Écritures agence → agency FAIT** (3) : `POST /agencies` (création self-service :
+     émet `agency.created` → identity crée `agency_ro` + associe l'utilisateur créateur
+     `agency_id`+`professional` + émet `user.updated`), `PUT /agencies/{slug}` (maj + slug si nom
+     change, émet `agency.updated`), `POST /agencies/{slug}/regenerate-api-key`. Gardes parité
+     (400 déjà-membre/champ requis, 403 non-propriétaire, 404). E2E validé (création + association
+     asynchrone du user). Contrat **110/110**.
    - **C. Lectures comptes/users admin** (4) : ✅ **`GET /admin/accounts` (liste) + `/users/{id}` +
      `/agencies/{id}` (détails) FAITS → analytics** (agrégat query-time : identity=users, agency=agences,
      billing=plan/abonnement, listing=nb biens, audit=activité). **BUG routage CORRIGÉ** : les GET

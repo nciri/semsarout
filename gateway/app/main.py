@@ -164,13 +164,18 @@ _RBAC_USER_WRITE = re.compile(r"^/api/v1/backoffice/users/\d+/(roles|activate|de
 # agency (lecture) : liste, détail par slug, sous-chemin /properties, et /my-agency (avec membres).
 _AGENCY_SLUG = re.compile(r"^/api/v1/agencies/[^/]+$")
 _AGENCY_PROPS = re.compile(r"^/api/v1/agencies/[^/]+/properties$")
+_AGENCY_REGEN = re.compile(r"^/api/v1/agencies/[^/]+/regenerate-api-key$")
 
 
 def _agency_match(path: str, method: str) -> bool:
-    if method != "GET":
-        return False
-    return (path == "/api/v1/agencies" or path == "/api/v1/my-agency"
-            or bool(_AGENCY_SLUG.match(path)) or bool(_AGENCY_PROPS.match(path)))
+    if method == "GET":
+        return (path == "/api/v1/agencies" or path == "/api/v1/my-agency"
+                or bool(_AGENCY_SLUG.match(path)) or bool(_AGENCY_PROPS.match(path)))
+    if method == "POST":  # création + régénération de clé API
+        return path == "/api/v1/agencies" or bool(_AGENCY_REGEN.match(path))
+    if method == "PUT":   # mise à jour (par slug)
+        return bool(_AGENCY_SLUG.match(path))
+    return False
 
 
 def _geo_match(path: str, method: str) -> bool:
