@@ -337,9 +337,17 @@ def _bo_reference(db: Session) -> str:
     return f"PROP-{datetime.utcnow().strftime('%Y%m')}-{count:04d}"
 
 
+def _bo_uid(principal: Principal) -> int | None:
+    return int(principal.sub) if principal.sub and str(principal.sub).isdigit() else None
+
+
 def _bo_access(p: Property, principal: Principal):
-    """Cloisonnement agence (parité) : un bien d'une autre agence → 403."""
-    if principal.agency_id and p.agency_id != principal.agency_id:
+    """Cloisonnement : agence → même agence ; sans agence → propriétaire du bien. Durcit l'IDOR
+    du monolithe (`if g.agency_id and ...` laissait un compte sans agence accéder à tout bien)."""
+    if principal.agency_id:
+        if p.agency_id != principal.agency_id:
+            return _err("Access denied", 403)
+    elif p.owner_id != _bo_uid(principal):
         return _err("Access denied", 403)
     return None
 
@@ -350,8 +358,10 @@ def bo_list_properties(request: Request, principal: Principal = Depends(get_prin
     page = int(qp.get("page") or 1)
     per_page = int(qp.get("per_page") or 20)
     q = db.query(Property)
-    if principal.agency_id:
+    if principal.agency_id:  # cloisonnement : agence entière, sinon biens du propriétaire seul
         q = q.filter(Property.agency_id == principal.agency_id)
+    else:
+        q = q.filter(Property.owner_id == _bo_uid(principal))
     if qp.get("type"):
         q = q.filter(Property.property_type == qp.get("type"))
     if qp.get("transaction_type"):
