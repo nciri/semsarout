@@ -25,7 +25,7 @@ def _handle(routing_key: str, payload: dict, message_id: str) -> None:
     try:
         if message_id and db.get(ProcessedMessage, message_id) is not None:
             return
-        if routing_key == "listing.contacted":
+        if routing_key in ("listing.contacted", "program.contacted"):
             _create_lead(db, payload)
         elif routing_key == "listing.deleted":
             ro = db.get(PropertyRO, payload.get("id"))
@@ -68,7 +68,7 @@ def main() -> None:
         init_db()
     consumer = EventConsumer(
         settings.rabbitmq_url, service_name=settings.service_name,
-        bindings=["listing.#", "transaction.#"], exchange=settings.events_exchange,
+        bindings=["listing.#", "transaction.#", "program.#"], exchange=settings.events_exchange,
     )
     consumer.run(handler=_handle)
 

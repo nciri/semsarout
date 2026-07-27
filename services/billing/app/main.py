@@ -112,7 +112,9 @@ def internal_subscription(request: Request, x_internal_token: str = Header(defau
     if sub is None:
         return {"subscription": None}
     plan = db.get(SubscriptionPlan, sub.plan_id)
-    return {"subscription": {"plan": plan.name if plan else None, "status": sub.status}}
+    return {"subscription": {"plan": plan.name if plan else None, "status": sub.status,
+                             "has_programs": bool(plan.has_programs) if plan else False,
+                             "max_programs": plan.max_programs if plan else 0}}
 
 
 @app.get("/subscription-plans")

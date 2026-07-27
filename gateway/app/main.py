@@ -274,6 +274,8 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path.startswith("/api/v1/buyer/estimates")
     ):
         return app.state.buyer, path.replace("/api/v1", "", 1)
+    if settings.programs_url and path.startswith("/api/v1/programs"):
+        return app.state.programs, path.replace("/api/v1", "", 1)
     if settings.trust_safety_url and (
         path.startswith("/api/v1/admin/accounts/users/")
         or path.startswith("/api/v1/admin/accounts/agencies/")
@@ -334,6 +336,7 @@ async def lifespan(app: FastAPI):
     app.state.crm = _client_or_none(settings.crm_url)
     app.state.transactions = _client_or_none(settings.transactions_url)
     app.state.buyer = _client_or_none(settings.buyer_url)
+    app.state.programs = _client_or_none(settings.programs_url)
     app.state.geo = _client_or_none(settings.geo_url)
     app.state.messaging = _client_or_none(settings.messaging_url)
     app.state.trust_safety = _client_or_none(settings.trust_safety_url)
@@ -345,8 +348,8 @@ async def lifespan(app: FastAPI):
         app.state.analytics, app.state.contract, app.state.legal,
         app.state.payment, app.state.billing, app.state.catalog, app.state.marketplace,
         app.state.directory, app.state.listing, app.state.crm, app.state.transactions,
-        app.state.buyer, app.state.geo, app.state.messaging, app.state.trust_safety,
-        app.state.agency, app.state.audit,
+        app.state.buyer, app.state.programs, app.state.geo, app.state.messaging,
+        app.state.trust_safety, app.state.agency, app.state.audit,
     ):
         if client is not None:
             await client.aclose()

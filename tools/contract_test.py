@@ -21,7 +21,7 @@ import sys
 import requests
 
 # Champs volatils ignorés dans la comparaison (ex. le compteur de vues s'incrémente à chaque GET).
-VOLATILE = {"views_count", "views"}
+VOLATILE = {"views_count", "views", "updated_at"}
 
 
 def normalize(obj):
@@ -132,6 +132,10 @@ def cases(args):
             ("GET", "/api/v1/backoffice/transactions/stats", None, None),
             ("GET", "/api/v1/backoffice/transactions/stages", {"type": "sale"}, None),
             ("GET", "/api/v1/backoffice/transactions/stages", {"type": "rent"}, None),
+        ],
+        "programs": [
+            ("GET", "/api/v1/programs", None, None),
+            ("GET", "/api/v1/programs", {"type": "residential"}, None),
         ],
         "buyer": [
             ("GET", "/api/v1/buyer/saved-searches", None, None),
