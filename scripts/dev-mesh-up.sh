@@ -46,7 +46,7 @@ echo "== 3. Services (uvicorn) =="
 # svc:port  (rôle DB = svc avec - -> _)
 SVCS="identity:8501 notification:8502 analytics:8504 contract:8505 legal:8506 payment:8507 billing:8508 \
 catalog:8009 marketplace:8010 directory:8011 listing:8012 crm:8013 search:8103 geo:8509 \
-messaging:8510 trust-safety:8511 agency:8512 audit:8513 transactions:8514 buyer:8515 programs:8516"
+messaging:8510 trust-safety:8511 agency:8512 audit:8513 transactions:8514 buyer:8515 programs:8516 staymanager:8517"
 S3="S3_ENDPOINT_URL=http://localhost:9000 S3_ACCESS_KEY=semsar S3_SECRET_KEY=semsar-secret AWS_ACCESS_KEY_ID=semsar AWS_SECRET_ACCESS_KEY=semsar-secret"
 # Masquage (§6) : listing/search lisent les comptes cachés depuis trust-safety (souverain),
 # plus le monolithe — prérequis au décommissionnement.
@@ -60,6 +60,7 @@ for pair in $SVCS; do
     agency)  extra="IDENTITY_URL=http://localhost:8501 LISTING_URL=http://localhost:8012";;
     buyer)   extra="LISTING_URL=http://localhost:8012";;
     programs) extra="BILLING_URL=http://localhost:8508";;
+    staymanager) extra="BILLING_URL=http://localhost:8508";;
     analytics) extra="TRANSACTIONS_URL=http://localhost:8514 CRM_URL=http://localhost:8013 IDENTITY_URL=http://localhost:8501 LISTING_URL=http://localhost:8012 GEO_URL=http://localhost:8509 BILLING_URL=http://localhost:8508 AUDIT_URL=http://localhost:8513";;
   esac
   case "$svc" in listing|search) extra="$extra $TS_HIDDEN";; esac
@@ -80,7 +81,7 @@ env UPSTREAM_URL="$MONO" JWT_SECRET_KEY="$JWT" INTERNAL_TOKEN="$ITOK" \
   AGENCY_URL=http://localhost:8512 AUDIT_URL=http://localhost:8513 IDENTITY_URL=http://localhost:8501 \
   ANALYTICS_URL=http://localhost:8504 CONTRACT_URL=http://localhost:8505 LEGAL_URL=http://localhost:8506 \
   PAYMENT_URL=http://localhost:8507 BILLING_URL=http://localhost:8508 TRANSACTIONS_URL=http://localhost:8514 \
-  BUYER_URL=http://localhost:8515 PROGRAMS_URL=http://localhost:8516 \
+  BUYER_URL=http://localhost:8515 PROGRAMS_URL=http://localhost:8516 STAYMANAGER_URL=http://localhost:8517 \
   nohup python3 -m uvicorn app.main:app --app-dir gateway --host 127.0.0.1 --port "$BFF_PORT" \
   > "$LOG/bff.log" 2>&1 &
 sleep 4
@@ -103,7 +104,7 @@ echo "== 6. Santé =="
 for e in "monolithe:7000:/api/v1/properties?per_page=1" "BFF:$BFF_PORT:/health" \
   identity:8501 catalog:8009 marketplace:8010 directory:8011 listing:8012 crm:8013 search:8103 \
   geo:8509 messaging:8510 trust-safety:8511 agency:8512 audit:8513 notification:8502 analytics:8504 \
-  contract:8505 legal:8506 payment:8507 billing:8508 transactions:8514 buyer:8515 programs:8516; do
+  contract:8505 legal:8506 payment:8507 billing:8508 transactions:8514 buyer:8515 programs:8516 staymanager:8517; do
   n="${e%%:*}"; rest="${e#*:}"; p="${rest%%:*}"; path="${rest#*:}"; [ "$path" = "$p" ] && path="/health"
   printf "   %-13s -> %s\n" "$n" "$(curl -s -o /dev/null -w '%{http_code}' -m3 "http://localhost:$p$path")"
 done

@@ -4,7 +4,7 @@
 > Décrit ce qui est fait, ce qui tourne, comment tout relancer, et le reste à faire.
 > Branche : `feature/architecture-v2` (commits **locaux uniquement**, aucun upstream, aucun push).
 
-Dernière mise à jour de session : contrat **84/84 PASS**. #6 : **T1+T2+T3+T4 FAITS**. T4 programs extrait (28 routes, `services/programs` :8516). Reste T5 staymanager, divers (selling/leads racine/users/admin), coupure finale.
+Dernière mise à jour de session : contrat **88/88 PASS**. #6 : **T1..T5 FAITS** (toutes les tranches de service). staymanager extrait (`services/staymanager` :8517). Reste : divers (selling/leads racine/users/admin — surfaces mineures) + **coupure finale** (retirer le repli monolithe du BFF, éteindre :7000).
 
 > **REPRISE (contexte frais)** — §8 items #1, #2, #5 **FAITS** ; **#4 `transactions` FAIT** ;
 > **`legal` FAIT** ; **`contract` FAIT** (tranches de #3, vérifiés E2E + gates 403 + create/finalize,
@@ -81,6 +81,7 @@ reconstructibles). Validation JWT **locale** au BFF (frontière d'auth sévrée)
 | billing | 8508 | plans + abonnement (`/subscription-plans*`, `/my-subscription`, `/subscription/current`, `/cancel-subscription`, `/subscription/change-plan`) |
 | payment | 8507 | intention de paiement + webhook (`/payments/create-intent`, `/payments/webhook`, `/payments/{ref}`, `/my-payments`) — CMI simulé |
 | buyer | 8515 | acheteur : recherches sauvegardées + favoris + estimations (`/buyer/saved-searches*`, `/buyer/favorites*`, `/buyer/estimates*`) |
+| staymanager | 8517 | intégration StayManager.ma (`/integrations/staymanager/*` : statut/connect/biens/réservations/sync/webhook) — gate `has_staymanager_sync` |
 | programs | 8516 | programmes immobiliers neufs (`/programs*` : liste/détail/my + unités/images/plans/lots interactifs) — gate feature `has_programs` (billing) |
 | identity | 8501 | **auth complète** (voir §3) + RBAC + teams/invitations + `dashboard/config` + `internal/agency/{id}/seats|members|analytics-scope` |
 | analytics | 8504 | **tout dashboards/analytics/stats** query-time : `/analytics/*` (6) + `/stats/*` (6) + `/dashboard`+`/dashboard/charts/*`+`/dashboard/activity` — dumps internes transactions/crm/listing/geo/billing/audit + identity scope/seats |
@@ -244,7 +245,7 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
      billing subscription. Écart : export CSV non testé au contrat (ordre des lignes non déterministe).
    - ✅ **T4 `programs` FAIT** (`services/programs` :8516, 28 routes, contrat 84/84) — nouveau dev, (promotions immobilières neuves +
      `programs/{id}/plans`), pas encore consommé pareil — nouveau service.
-   - **T5 `integrations`/staymanager** (14 routes) : sync externe (staymanager) — nouvelle surface.
+   - ✅ **T5 `staymanager` FAIT** (`services/staymanager` :8517, 14 routes, contrat 88/88) — gate `has_staymanager_sync` (billing), API externe via `app/client.py` ; toutes données vides en dev (états non-connecté).
    - **Divers restants** : `selling.py`(4), `leads.py` racine public(7) vs backoffice(crm),
      `users.py`(3, `/backoffice/users` GET reste), `admin/shop|artisans|overview|impersonation`,
      `properties.py` découverte publique déjà en search/listing (vérifier le résidu).
@@ -270,4 +271,4 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
 ## 10. Contrat / vérification
 `tools/contract_test.py` compare monolithe vs BFF route par route (statut + JSON normalisé, champs
 volatils ignorés). Groupes : catalog, directory, listing, search, crm, marketplace, geo, messaging,
-trust-safety, rbac, dashboard-config, dashboard, analytics, stats, agency, audit, transactions, legal, contract, billing, payment, buyer, programs. **84/84** actuellement (`updated_at` volatil : bumpé par l'incrément de vues au GET détail) (normalize : collections de dicts triées par contenu — ordre non garanti côté monolithe ; `views`/`views_count` volatils) (collections par `id` ordre-insensible : membres /my-agency + biens /agencies/{slug}/properties non ordonnés côté monolithe).
+trust-safety, rbac, dashboard-config, dashboard, analytics, stats, agency, audit, transactions, legal, contract, billing, payment, buyer, programs, staymanager. **88/88** actuellement (`updated_at` volatil : bumpé par l'incrément de vues au GET détail) (normalize : collections de dicts triées par contenu — ordre non garanti côté monolithe ; `views`/`views_count` volatils) (collections par `id` ordre-insensible : membres /my-agency + biens /agencies/{slug}/properties non ordonnés côté monolithe).

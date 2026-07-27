@@ -137,6 +137,12 @@ def cases(args):
             ("GET", "/api/v1/programs", None, None),
             ("GET", "/api/v1/programs", {"type": "residential"}, None),
         ],
+        "staymanager": [
+            ("GET", "/api/v1/integrations/staymanager/status", None, None),
+            ("GET", "/api/v1/integrations/staymanager/properties", None, None),
+            ("GET", "/api/v1/integrations/staymanager/reservations", None, None),
+            ("GET", "/api/v1/integrations/staymanager/sync-logs", None, None),
+        ],
         "buyer": [
             ("GET", "/api/v1/buyer/saved-searches", None, None),
             ("GET", "/api/v1/buyer/favorites", None, None),

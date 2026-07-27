@@ -44,6 +44,7 @@ class GatewaySettings(BaseSettings):
     transactions_url: str | None = None
     buyer_url: str | None = None
     programs_url: str | None = None
+    staymanager_url: str | None = None
     geo_url: str | None = None
     messaging_url: str | None = None
     trust_safety_url: str | None = None
