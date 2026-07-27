@@ -284,15 +284,29 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
      login, resync AgencyRO), contrat **87/87** (trust-safety : agent1→403 des deux côtés). Le monolithe
      `admin/moderation.py` n'est **plus atteint** (le BFF route `/admin/accounts/*` → trust-safety).
    - BFF repli features `/my-subscription` (legacy tokens seulement — billing le sert déjà, non bloquant).
-   - **Routes front encore servies par le monolithe** (repli BFF) : `selling`(4), `leads` racine public(7),
-     `users`(3, `GET /backoffice/users`), `admin/shop|artisans|overview|impersonation`,
-     `/dashboard/activity` (fait via analytics), integrations autres. ~20 routes mineures à extraire.
-   - **Statique** : `/uploads` (images) sert encore depuis le disque du monolithe (`vite.config`) → migrer
-     vers stockage objet (MinIO/S3) avant extinction.
-   - **Sync transitoire** : `consume_users.py`/`relay_outbox.py` (monolithe) deviennent inutiles une fois
-     `:7000` éteint (plus personne ne lit `public.users`).
-   **Ordre** : (1) ✅ contact-phone + trust-safety repointés, (2) extraire les ~20 routes mineures, (3) migrer
-   `/uploads`, (4) retirer le repli monolithe du BFF (`upstream_url`) + le proxy `/uploads`, (5) éteindre `:7000`.
+
+   ### Audit de la surface monolithe restante (`tools/route_audit.py`, 2026-07-28)
+   Résolution des **196 endpoints appelés par le front** à travers le vrai `_resolve_upstream` du
+   BFF : **16 routes réelles** tombent encore au monolithe (backlog fini ci-dessous), + 2 fantômes
+   `GET/PUT /backoffice/settings` que **le monolithe ne sert pas** (Settings.jsx appelle un endpoint
+   inexistant — hors périmètre coupure, à voir côté front). Backlog groupé par propriétaire cible :
+   - **A. Gestion des biens backoffice → listing** (5) : `GET/POST /backoffice/properties`,
+     `GET/PUT/DELETE /backoffice/properties/{id}` (listing possède déjà le CRUD public `/properties*`).
+   - **B. Écritures agence → agency** (3) : `POST /agencies`, `PUT /agencies/{slug}`,
+     `POST /agencies/{slug}/regenerate-api-key` (agency a déjà les écritures modération + émet `agency.*`).
+   - **C. Lectures comptes/users admin → identity** (4) : `GET /admin/accounts`,
+     `GET /admin/accounts/users/{id}`, `GET /admin/accounts/agencies/{id}`, `GET /backoffice/users`.
+     ⚠️ **BUG routage** : les 2 détails `/admin/accounts/{users|agencies}/{id}` (GET) tombent
+     aujourd'hui sur **trust-safety** (règle préfixe) qui ne sert que les écritures modération →
+     **cassés (404/405)**. Fix : règle BFF `GET /admin/accounts*` → identity AVANT la règle trust-safety.
+   - **D. Factures → billing** (2) : `GET /invoices`, `GET /invoices/{id}/pdf` (xhtml2pdf déjà dispo).
+   - **E. Reset mot de passe → identity (+notification)** (2) : `POST /auth/forgot-password`,
+     `POST /auth/reset-password` (token de reset + envoi email via notification).
+   - **F. Phase stockage objet** (2) : `POST /uploads`, `POST /sale-requests` (dépend de uploads).
+   - **Statique** : `/uploads` (images/docs) sert encore depuis le disque du monolithe (`vite.config`).
+   - **Sync transitoire** : `consume_users.py`/`relay_outbox.py` (monolithe) inutiles une fois `:7000` éteint.
+   **Ordre restant** : (1) groupes A–E (14 routes, 4 services), (2) phase stockage objet (F + `/uploads`),
+   (3) retirer le repli monolithe du BFF (`upstream_url`) + le proxy `/uploads`, (4) éteindre `:7000`.
 
 ## 9. Pièges connus (IMPORTANT pour un contexte frais)
 - **`git commit` doit être une commande Bash SEULE** (le hook `block-no-verify` faux-positive sur
