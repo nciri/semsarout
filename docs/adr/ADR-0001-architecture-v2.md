@@ -1,6 +1,7 @@
 # ADR-0001 — Adoption de l'architecture cible v2
 
-- **Statut :** accepté
+- **Statut :** accepté — **partiellement amendé par [ADR-0005](ADR-0005-ecarts-as-built.md)**
+  (écarts as-built : HS256 au lieu de RS256, 22 services, erreurs legacy, analytics query-time, pas de Traefik).
 - **Contexte :** voir `docs/architecture-v2.md` et `docs/architecture-v2.drawio`.
 
 ## Décision

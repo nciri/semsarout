@@ -1,11 +1,17 @@
 # SemsarOut — Architecture cible v2
 
-> **Statut :** cible **validée**. **Décisions actées :** services en **FastAPI** · découpage
-> **complet (19 services)** · **toutes** les priorités métier retenues (recherche OpenSearch,
-> WORM contrats/juridique, séquestre CMI, KYC/CIN). **Contrainte structurante :** le frontend
-> React existant (SPA aboutie) n'est **pas modifié** — la cible préserve le contrat `/api/v1`.
-> **Inspiration :** architecture m3a-l3achrane (`docs/m3a-architecture.drawio`), transposée
-> au domaine immobilier de SemsarOut. **Diagramme :** `docs/architecture-v2.drawio`.
+> **Statut :** cible **validée** — **migration RÉALISÉE** (strangler terminé le 2026-07-28, monolithe
+> Flask **décommissionné**, le mesh FastAPI sert 100 % du front). **Décisions actées :** services en
+> **FastAPI** · **toutes** les priorités métier retenues (recherche OpenSearch, WORM contrats/juridique,
+> séquestre CMI, KYC/CIN). **Contrainte structurante :** le frontend React existant (SPA aboutie) n'est
+> **pas modifié** — le contrat `/api/v1` est préservé. **Inspiration :** architecture m3a-l3achrane
+> (`docs/m3a-architecture.drawio`). **Diagramme (as-built) :** `docs/architecture-v2.drawio`.
+>
+> ⚠️ **Écarts as-built vs cette cible : voir `docs/adr/ADR-0005-ecarts-as-built.md`.** En bref :
+> JWT **HS256** (secret partagé) au lieu de RS256 · **22 services** (transactions/programs/audit
+> détachés) au lieu de 19 · format d'erreur **legacy `{'error'}`** dominant (parité front) au lieu de
+> RFC 9457 · analytics = **agrégation query-time** au lieu de projection · **pas de Traefik** (le BFF
+> est l'entrée). Ce document décrit la **cible d'origine** ; l'ADR-0005 fait foi pour l'état réel.
 
 ---
 
