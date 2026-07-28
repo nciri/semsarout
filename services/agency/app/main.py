@@ -246,6 +246,60 @@ def internal_agencies_stats(request: Request, db: Session = Depends(get_db)):
     }
 
 
+# ---- Paramètres backoffice de l'agence (nouveau : jamais servi par le monolithe) ----
+# Blob de config par agence (commission, notifications, SMTP…). Les champs `agency_*` sont
+# pré-remplis depuis le profil de l'agence. `smtp_password` est **write-only** (jamais renvoyé).
+_SETTINGS_DEFAULTS = {
+    "default_commission_rate": 3, "currency": "MAD", "timezone": "Africa/Casablanca",
+    "email_notifications": True, "sms_notifications": False, "lead_auto_assign": False,
+    "visit_reminder_hours": 24, "smtp_host": "", "smtp_port": "", "smtp_user": "",
+}
+
+
+def _settings_view(a: Agency) -> dict:
+    """Vue fusionnée : défauts + profil agence (agency_*) + blob stocké, sans le secret SMTP."""
+    view = dict(_SETTINGS_DEFAULTS)
+    view.update({
+        "agency_name": a.name, "agency_email": a.email, "agency_phone": a.phone,
+        "agency_address": a.address, "agency_city": a.city, "agency_website": a.website,
+        "agency_description": a.description,
+    })
+    stored = dict(a.settings or {})
+    stored.pop("smtp_password", None)  # ne jamais renvoyer le secret
+    view.update(stored)
+    return view
+
+
+@app.get("/backoffice/settings")
+def get_settings(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    if principal.agency_id is None:
+        return {}
+    a = db.get(Agency, principal.agency_id)
+    return _settings_view(a) if a is not None else {}
+
+
+@app.put("/backoffice/settings")
+async def put_settings(request: Request, principal: Principal = Depends(get_principal),
+                       db: Session = Depends(get_db)):
+    if principal.agency_id is None:
+        return _err("You do not belong to an agency", 404)
+    a = db.get(Agency, principal.agency_id)
+    if a is None:
+        return _err("You do not belong to an agency", 404)
+    data = await _json(request)
+    stored = dict(a.settings or {})
+    # smtp_password write-only : ne remplacer que si une nouvelle valeur non vide est fournie.
+    new_pw = data.pop("smtp_password", None)
+    stored.update(data)
+    if new_pw:
+        stored["smtp_password"] = new_pw
+    a.settings = stored
+    from sqlalchemy.orm.attributes import flag_modified
+    flag_modified(a, "settings")  # JSON muté en place → forcer le UPDATE
+    db.commit()
+    return _settings_view(a)
+
+
 @app.get("/agencies")
 def list_agencies(request: Request, db: Session = Depends(get_db)) -> dict:
     qp = request.query_params

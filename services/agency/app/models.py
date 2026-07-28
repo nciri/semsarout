@@ -5,7 +5,7 @@
 """
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, Integer, String, Text
+from sqlalchemy import JSON, BigInteger, Boolean, Column, DateTime, Integer, String, Text
 
 from .db import Base
 
@@ -40,6 +40,7 @@ class Agency(Base):
     deleted_at = Column(DateTime)
     anonymized_at = Column(DateTime)
     owner_id = Column(Integer)
+    settings = Column(JSON)  # config backoffice (commission, notifications, SMTP…) — hors to_dict
 
     def to_dict(self, properties_count: int = 0) -> dict:
         return {

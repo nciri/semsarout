@@ -346,7 +346,12 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
    **smoke test v2 STANDALONE 24/24** (monolithe DOWN) sur tous les domaines (auth, listing, crm,
    agency, search, analytics, billing, catalog, directory, contract, legal, transactions, buyer,
    programs, invoices, admin/accounts, dashboard, uploads). **Le mesh FastAPI sert 100 % du front,
-   sans le monolithe.** Reste hors périmètre : le bug front `Settings.jsx` (endpoint inexistant).
+   sans le monolithe.**
+   - ✅ **`/backoffice/settings` implémenté → agency** (nouveau, jamais servi par le monolithe) :
+     `GET/PUT` d'un blob de config par agence (commission, devise, notifications, SMTP…), champs
+     `agency_*` pré-remplis depuis le profil, `smtp_password` **write-only** (jamais renvoyé,
+     préservé sur maj partielle). Dernier appel front sans backend → résolu. **`route_audit.py`
+     ne liste plus AUCUNE route monolithe.**
 
 ## 9. Pièges connus (IMPORTANT pour un contexte frais)
 - **`git commit` doit être une commande Bash SEULE** (le hook `block-no-verify` faux-positive sur
