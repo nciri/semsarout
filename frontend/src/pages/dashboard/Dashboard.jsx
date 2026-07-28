@@ -1,13 +1,20 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation } from 'react-query'
+import { Link, Navigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { analyticsService } from '../../services/analyticsService'
 import { WIDGETS, Widget } from '../../components/dashboard/widgets'
+import useAuthStore from '../../store/authStore'
 
 const DEFAULT = Object.keys(WIDGETS).map((id, i) => ({ id, order: i, hidden: false }))
+const SHELL = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'
 
 function Dashboard() {
-  const { data: overview, isLoading } = useQuery('dashboard-overview', analyticsService.getOverview)
+  const user = useAuthStore((s) => s.user)
+  // Le super-admin n'a pas d'agence → ce tableau de bord agence renvoie 400. On n'appelle pas
+  // l'overview pour lui et on le renvoie vers son espace plateforme (/admin).
+  const isSuperadmin = !!user?.is_superadmin
+  const { data: overview, isLoading, isError, refetch } = useQuery('dashboard-overview', analyticsService.getOverview, { retry: false, enabled: !isSuperadmin })
   const [editing, setEditing] = useState(false)
   const [widgets, setWidgets] = useState(DEFAULT)
   const [dragId, setDragId] = useState(null)
@@ -34,11 +41,27 @@ function Dashboard() {
   }
   const toggleHide = (id) => setWidgets(widgets.map((w) => (w.id === id ? { ...w, hidden: !w.hidden } : w)))
 
-  if (isLoading) return <div className="p-8">Chargement…</div>
+  if (isSuperadmin) return <Navigate to="/admin" replace />
+  if (isLoading) return <div className={SHELL}>Chargement…</div>
+  if (isError || !overview) {
+    return (
+      <div className={SHELL}>
+        <h1 className="text-2xl font-bold text-gray-900 mb-5">Tour de contrôle</h1>
+        <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
+          <p className="text-gray-600 mb-1">Impossible de charger le tableau de bord.</p>
+          <p className="text-sm text-gray-400 mb-5">Votre session a peut-être expiré.</p>
+          <div className="flex items-center justify-center gap-3">
+            <button onClick={() => refetch()} className="btn-secondary text-sm">Réessayer</button>
+            <Link to="/connexion" className="btn-primary text-sm">Se reconnecter</Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
   const visible = widgets.filter((w) => editing || !w.hidden)
 
   return (
-    <div className="p-6">
+    <div className={SHELL}>
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-2xl font-bold text-gray-900">Tour de contrôle</h1>
         {editing

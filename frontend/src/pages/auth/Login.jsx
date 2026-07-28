@@ -20,9 +20,12 @@ function Login() {
 
     if (result.success) {
       const redirectParam = searchParams.get('redirect')
-      const from = (redirectParam && redirectParam.startsWith('/') && redirectParam)
+      const explicit = (redirectParam && redirectParam.startsWith('/') && redirectParam)
         || location.state?.from?.pathname
-        || '/dashboard'
+      // Un super-admin n'a pas d'agence → le tableau de bord agence (/dashboard) renvoie 400.
+      // Sans cible explicite, l'envoyer vers son espace plateforme (/admin).
+      const isSuperadmin = useAuthStore.getState().user?.is_superadmin
+      const from = explicit || (isSuperadmin ? '/admin' : '/dashboard')
       navigate(from, { replace: true })
     } else {
       setError(result.error)
