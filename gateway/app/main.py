@@ -433,7 +433,7 @@ async def uploads_proxy(path: str, request: Request) -> Response:
     en remplacement du disque du monolithe. Repli monolithe si listing absent."""
     app = request.app
     client = app.state.listing
-    if client is None:
+    if client is None or ".." in path:  # anti-traversée : pas de segments remontants
         return Response(content=b"", status_code=404)
     upstream = await client.request("GET", f"/uploads/{path}")
     resp_headers = {k: v for k, v in upstream.headers.items() if k.lower() not in _HOP_BY_HOP}

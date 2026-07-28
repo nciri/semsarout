@@ -463,8 +463,15 @@ def _content_type(name: str) -> str:
 
 
 @app.post("/uploads", status_code=201)
-async def upload_file(request: Request):
-    """Upload d'une photo (publique) ou d'un document (privé) → stockage objet."""
+async def upload_file(request: Request, principal: Principal = Depends(get_principal)):
+    """Upload d'une photo (publique) ou d'un document (privé) → stockage objet. Authentifié
+    (parité `@jwt_required`) : pas d'écriture de stockage anonyme."""
+    uid = _bo_uid(principal)
+    if uid is None:
+        return _err("Unauthorized", 401)
+    clen = request.headers.get("content-length")
+    if clen and clen.isdigit() and int(clen) > 11 * 1024 * 1024:  # borne précoce (marge multipart)
+        return _err("File too large (max 10 MB)", 400)
     form = await request.form()
     file = form.get("file")
     if file is None or not hasattr(file, "filename"):
@@ -486,7 +493,8 @@ async def upload_file(request: Request):
         storage.media().put(f"photos/{stored}", data, _content_type(stored))
         return JSONResponse({"url": f"/uploads/photos/{stored}",
                              "original_name": secure_filename(file.filename)}, status_code=201)
-    storage.media().put(f"documents/{stored}", data, _content_type(stored))
+    # Documents : clé cloisonnée par uploader (anti cross-claim d'un file_id d'autrui).
+    storage.media().put(f"documents/{uid}/{stored}", data, _content_type(stored))
     return JSONResponse({"file_id": stored, "original_name": secure_filename(file.filename)},
                         status_code=201)
 
@@ -498,7 +506,8 @@ def serve_photo(name: str):
         data = storage.media().get(f"photos/{os.path.basename(name)}")
     except Exception:  # noqa: BLE001
         return _err("Not found", 404)
-    return Response(content=data, media_type=_content_type(name))
+    return Response(content=data, media_type=_content_type(name),
+                    headers={"X-Content-Type-Options": "nosniff"})
 
 
 @app.get("/documents/{doc_id}")
@@ -511,12 +520,16 @@ def download_document(doc_id: int, principal: Principal = Depends(get_principal)
     uid = _bo_uid(principal)
     if not ((p is not None and p.owner_id == uid) or principal.is_superadmin):
         return _err("Unauthorized", 403)
+    # file_url = "{uid}/{uuid}.ext" (posé par nous, jamais par l'utilisateur) → pas de traversée.
+    key = "/".join(part for part in doc.file_url.split("/") if part not in ("", ".", ".."))
     try:
-        data = storage.media().get(f"documents/{os.path.basename(doc.file_url)}")
+        data = storage.media().get(f"documents/{key}")
     except Exception:  # noqa: BLE001
         return _err("Not found", 404)
-    return Response(content=data, media_type=_content_type(doc.file_url),
-                    headers={"Content-Disposition": f"attachment; filename={doc.original_name or doc.file_url}"})
+    fname = os.path.basename(doc.original_name or key)
+    return Response(content=data, media_type=_content_type(key),
+                    headers={"Content-Disposition": f'attachment; filename="{fname}"',
+                             "X-Content-Type-Options": "nosniff"})
 
 
 def _doc_dict(d: PropertyDocument) -> dict:
@@ -573,11 +586,12 @@ async def create_sale_request(request: Request, principal: Principal = Depends(g
         if not fid:
             continue
         fid = os.path.basename(fid)
-        if not storage.exists(f"documents/{fid}"):
+        # Ne réclame QUE des documents uploadés par le même utilisateur (clé cloisonnée).
+        if not storage.exists(f"documents/{uid}/{fid}"):
             continue
         dt = doc.get("doc_type")
         pdoc = PropertyDocument(property_id=p.id, doc_type=dt if dt in _VALID_DOC_TYPES else "autre",
-                                file_url=fid, original_name=doc.get("original_name"))
+                                file_url=f"{uid}/{fid}", original_name=doc.get("original_name"))
         db.add(pdoc)
         saved.append(pdoc)
     summary = (f"Dossier de vente en ligne {p.reference} - {title} - Prix souhaité : {int(price)} MAD"
