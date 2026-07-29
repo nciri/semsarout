@@ -780,3 +780,42 @@ async def submit_application(request: Request, principal: Principal = Depends(ge
         "property_id": a.property_id, "property_title": prop.get("title")})
     db.commit()
     return _application_dict(a)
+
+
+def _own_application(db, application_id: int, principal: Principal):
+    a = db.get(TenantApplication, application_id)
+    if a is None or a.applicant_user_id != int(principal.sub):
+        return None
+    return a
+
+
+@app.get("/gestion-locative/applications")
+def my_applications(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    q = (db.query(TenantApplication)
+         .filter(TenantApplication.applicant_user_id == int(principal.sub))
+         .order_by(TenantApplication.created_at.desc()))
+    return {"applications": [_application_dict(a) for a in q.all()]}
+
+
+@app.get("/gestion-locative/applications/{application_id}")
+def my_application(application_id: int, principal: Principal = Depends(get_principal),
+                   db: Session = Depends(get_db)):
+    a = _own_application(db, application_id, principal)
+    if a is None:
+        return err("Candidature introuvable.", 404)
+    docs = db.query(ApplicationDocument).filter(
+        ApplicationDocument.application_id == a.id).all()
+    return _application_dict(a, docs=docs)
+
+
+@app.post("/gestion-locative/applications/{application_id}/withdraw")
+def withdraw_application(application_id: int, principal: Principal = Depends(get_principal),
+                         db: Session = Depends(get_db)):
+    a = _own_application(db, application_id, principal)
+    if a is None:
+        return err("Candidature introuvable.", 404)
+    if a.status in ("accepted", "rejected"):
+        return err("Candidature déjà traitée.", 400)
+    a.status = "withdrawn"
+    db.commit()
+    return _application_dict(a)
