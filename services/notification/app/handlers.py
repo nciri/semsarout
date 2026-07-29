@@ -8,6 +8,7 @@ import logging
 import os
 
 from . import email as email_adapter
+from . import render
 from .db import SessionLocal
 from .models import NotificationLog, ProcessedMessage
 
@@ -42,23 +43,14 @@ def _log(db, channel: str, recipient: str, template: str, status: str) -> None:
 
 def _handle_password_reset(db, payload: dict) -> None:
     to = (payload.get("email") or "").strip()
-    name = payload.get("name") or ""
     token = payload.get("token") or ""
-    link = f"{_BASE_URL}/reinitialiser-mot-de-passe?token={token}"
     if not to or not token:
         _log(db, "email", to or "?", "password_reset", "failed")
         return
-    subject = "Réinitialisation de votre mot de passe SemsarOut"
-    text = (f"Bonjour {name},\n\n"
-            f"Vous avez demandé la réinitialisation de votre mot de passe.\n"
-            f"Cliquez sur ce lien (valable 1 heure) :\n\n{link}\n\n"
-            f"Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.\n\n"
-            f"— L'équipe SemsarOut")
-    html = (f"<p>Bonjour {name},</p>"
-            f"<p>Vous avez demandé la réinitialisation de votre mot de passe.</p>"
-            f'<p><a href="{link}">Réinitialiser mon mot de passe</a> (lien valable 1 heure).</p>'
-            f"<p>Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>"
-            f"<p>— L'équipe SemsarOut</p>")
+    link = f"{_BASE_URL}/reinitialiser-mot-de-passe?token={token}"
+    # Gabarit Jinja2 autoescapé → `name` (et toute variable) est échappé : pas d'injection HTML.
+    subject, html, text = render.render_email("password_reset.html",
+                                              name=payload.get("name") or "", link=link)
     try:
         email_adapter.send_email(to, subject, text, html=html)
         _log(db, "email", to, "password_reset", "sent")

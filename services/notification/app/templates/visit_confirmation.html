@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block subject %}Confirmation de votre visite — {{ property_title or "SemsarOut" }}{% endblock %}
+{% block preheader %}{{ date }}{% if time %} à {{ time }}{% endif %} — détails de votre rendez-vous.{% endblock %}
+{% block content %}
+<h1 style="margin:0 0 14px 0; font-size:20px; color:{{ brand.dark }};">Votre visite est confirmée</h1>
+<p style="margin:0 0 18px 0;">Bonjour{% if name %} {{ name }}{% endif %}, votre rendez-vous de visite est confirmé. Voici les détails :</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:{{ brand.gold_soft }}; border-radius:10px; margin:0 0 22px 0;">
+  <tr><td style="padding:16px 20px; font-size:14px; line-height:1.8; color:{{ brand.text }};">
+    {% if property_title %}<div><strong>Bien :</strong> {{ property_title }}</div>{% endif %}
+    <div><strong>Date :</strong> {{ date }}{% if time %} à {{ time }}{% endif %}</div>
+    {% if address %}<div><strong>Adresse :</strong> {{ address }}</div>{% endif %}
+    {% if agent_name %}<div><strong>Votre conseiller :</strong> {{ agent_name }}{% if agent_phone %} — {{ agent_phone }}{% endif %}</div>{% endif %}
+  </td></tr>
+</table>
+<p style="margin:0; font-size:13px; color:{{ brand.muted }};">En cas d'empêchement, prévenez votre conseiller au plus tôt. À très bientôt — l'équipe SemsarOut.</p>
+{% endblock %}

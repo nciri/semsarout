@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block subject %}Votre demande a bien été envoyée — SemsarOut{% endblock %}
+{% block preheader %}Nous avons transmis votre demande à l'agence.{% endblock %}
+{% block content %}
+<h1 style="margin:0 0 14px 0; font-size:20px; color:{{ brand.dark }};">Demande bien reçue</h1>
+<p style="margin:0 0 14px 0;">Bonjour{% if name %} {{ name }}{% endif %},</p>
+<p style="margin:0 0 18px 0;">Nous avons bien reçu votre demande de contact
+{% if property_title %}concernant <strong>{{ property_title }}</strong>{% endif %}.
+{% if agency_name %}Elle a été transmise à <strong>{{ agency_name }}</strong>, qui vous recontactera au plus vite.{% else %}Un conseiller vous recontactera au plus vite.{% endif %}</p>
+{% if property_url %}
+<p style="margin:0 0 26px 0;">
+  <a href="{{ property_url }}" style="display:inline-block; background:{{ brand.gold }}; color:#ffffff; text-decoration:none; font-weight:bold; font-size:15px; padding:12px 26px; border-radius:9px;">Revoir l'annonce</a>
+</p>
+{% endif %}
+<p style="margin:0; font-size:13px; color:{{ brand.muted }};">Merci de votre confiance — l'équipe SemsarOut.</p>
+{% endblock %}
