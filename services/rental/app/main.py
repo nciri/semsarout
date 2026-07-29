@@ -80,6 +80,28 @@ def _emit_mandate(db: Session, m: Mandate, event_type: str) -> None:
     })
 
 
+def _lease_dict(l: Lease) -> dict:
+    return {
+        "id": l.id, "reference": l.reference, "mandate_id": l.mandate_id,
+        "property_id": l.property_id, "tenant_client_id": l.tenant_client_id,
+        "agency_id": l.agency_id, "rent_amount": num(l.rent_amount),
+        "charges_amount": num(l.charges_amount), "deposit_amount": num(l.deposit_amount),
+        "payment_day": l.payment_day, "start_date": iso(l.start_date), "end_date": iso(l.end_date),
+        "irl_index_ref": l.irl_index_ref, "status": l.status, "signed_at": iso(l.signed_at),
+        "notes": l.notes, "created_at": iso(l.created_at),
+    }
+
+
+def _emit_lease(db: Session, l: Lease, event_type: str) -> None:
+    enqueue(db, "lease", l.id, event_type, {
+        "id": l.id, "reference": l.reference, "mandate_id": l.mandate_id,
+        "property_id": l.property_id, "tenant_client_id": l.tenant_client_id,
+        "agency_id": l.agency_id, "rent_amount": num(l.rent_amount),
+        "charges_amount": num(l.charges_amount), "deposit_amount": num(l.deposit_amount),
+        "start_date": iso(l.start_date), "end_date": iso(l.end_date),
+    })
+
+
 @app.get("/health", include_in_schema=False)
 def health():
     return {"status": "ok", "service": settings.service_name}
@@ -170,3 +192,94 @@ def internal_mandate(mandate_id: int, x_internal_token: str = Header(default="")
         return err("Forbidden", 403)
     m = db.get(Mandate, mandate_id)
     return {"mandate": _mandate_dict(m) if m else None}
+
+
+@app.get("/backoffice/gestion-locative/leases")
+def list_leases(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    q = db.query(Lease).filter(Lease.agency_id == principal.agency_id)
+    return {"leases": [_lease_dict(l) for l in q.order_by(Lease.created_at.desc()).all()]}
+
+
+@app.get("/backoffice/gestion-locative/leases/{lease_id}")
+def get_lease(lease_id: int, principal: Principal = Depends(get_principal),
+              db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    l = db.get(Lease, lease_id)
+    if l is None or l.agency_id != principal.agency_id:
+        return err("Bail introuvable.", 404)
+    return _lease_dict(l)
+
+
+@app.post("/backoffice/gestion-locative/leases", status_code=201)
+async def create_lease(request: Request, principal: Principal = Depends(get_principal),
+                       db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    data = await json_body(request)
+    mandate = db.get(Mandate, data.get("mandate_id"))
+    if mandate is None or mandate.agency_id != principal.agency_id:
+        return err("Mandat introuvable.", 404)
+    if not data.get("tenant_client_id") or data.get("rent_amount") is None:
+        return err("tenant_client_id et rent_amount sont requis.", 400)
+    l = Lease(
+        reference=_reference("BAIL"), mandate_id=mandate.id, property_id=mandate.property_id,
+        tenant_client_id=data["tenant_client_id"], agency_id=principal.agency_id,
+        rent_amount=data["rent_amount"], charges_amount=data.get("charges_amount", 0),
+        deposit_amount=data.get("deposit_amount", 0), payment_day=data.get("payment_day", 1),
+        start_date=_parse_dt(data.get("start_date")), end_date=_parse_dt(data.get("end_date")),
+        irl_index_ref=data.get("irl_index_ref"), notes=data.get("notes"),
+    )
+    db.add(l)
+    db.flush()
+    _emit_lease(db, l, events.LEASE_CREATED)
+    db.commit()
+    return _lease_dict(l)
+
+
+@app.patch("/backoffice/gestion-locative/leases/{lease_id}")
+async def update_lease(lease_id: int, request: Request,
+                       principal: Principal = Depends(get_principal),
+                       db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    l = db.get(Lease, lease_id)
+    if l is None or l.agency_id != principal.agency_id:
+        return err("Bail introuvable.", 404)
+    data = await json_body(request)
+    for field in ("rent_amount", "charges_amount", "deposit_amount", "payment_day",
+                  "irl_index_ref", "notes"):
+        if field in data:
+            setattr(l, field, data[field])
+    if "start_date" in data:
+        l.start_date = _parse_dt(data["start_date"])
+    if "end_date" in data:
+        l.end_date = _parse_dt(data["end_date"])
+    db.commit()
+    return _lease_dict(l)
+
+
+@app.post("/backoffice/gestion-locative/leases/{lease_id}/sign")
+def sign_lease(lease_id: int, principal: Principal = Depends(get_principal),
+               db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    l = db.get(Lease, lease_id)
+    if l is None or l.agency_id != principal.agency_id:
+        return err("Bail introuvable.", 404)
+    l.status = "active"
+    l.signed_at = datetime.utcnow()
+    _emit_lease(db, l, events.LEASE_SIGNED)
+    db.commit()
+    return _lease_dict(l)
+
+
+@app.get("/internal/leases/{lease_id}", include_in_schema=False)
+def internal_lease(lease_id: int, x_internal_token: str = Header(default=""),
+                   db: Session = Depends(get_db)):
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    l = db.get(Lease, lease_id)
+    return {"lease": _lease_dict(l) if l else None}
