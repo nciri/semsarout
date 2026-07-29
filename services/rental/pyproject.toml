@@ -1,7 +1,7 @@
 [project]
 name = "semsar-rental"
 version = "0.1.0"
-description = "SemsarOut — service gestion locative (mandats, baux, quittancement, charges)."
+description = "SemsarOut — service gestion locative (Phase 1 : mandats, baux ; quittancement/charges à venir)."
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.110",
