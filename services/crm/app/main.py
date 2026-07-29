@@ -292,6 +292,35 @@ def internal_mark_reminder(visit_id: int, x_internal_token: str = Header(default
     return {"ok": True}
 
 
+@app.get("/internal/visits/due-follow-ups", include_in_schema=False)
+def internal_due_follow_ups(x_internal_token: str = Header(default=""), db: Session = Depends(get_db)):
+    """Visites ayant eu lieu il y a ~1 jour (fenêtre 20–48 h), non annulées, sans avis encore
+    demandé — pour l'ordonnanceur (avis post-visite J+1). Fenêtre bornée = pas de rattrapage des
+    vieilles visites ; idempotent via `follow_up_sent_at`."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    from datetime import timedelta
+    now = datetime.utcnow()
+    rows = (db.query(Visit)
+            .filter(Visit.follow_up_sent_at.is_(None), Visit.cancelled_at.is_(None),
+                    Visit.scheduled_at < now - timedelta(hours=20),
+                    Visit.scheduled_at >= now - timedelta(hours=48))
+            .all())
+    return {"visits": [_visit_dict(db, v) for v in rows]}
+
+
+@app.post("/internal/visits/{visit_id}/follow-up-sent", include_in_schema=False)
+def internal_mark_follow_up(visit_id: int, x_internal_token: str = Header(default=""),
+                            db: Session = Depends(get_db)):
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    v = db.get(Visit, visit_id)
+    if v is not None:
+        v.follow_up_sent_at = datetime.utcnow()
+        db.commit()
+    return {"ok": True}
+
+
 @app.get("/backoffice/leads")
 def get_leads(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
     qp = request.query_params

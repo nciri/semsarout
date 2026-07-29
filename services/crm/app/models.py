@@ -111,6 +111,7 @@ class Visit(Base):
     confirmed_at = Column(DateTime)
     confirmation_method = Column(String(20))
     reminder_sent_at = Column(DateTime)  # rappel J-1 envoyé (ordonnanceur) — anti-doublon
+    follow_up_sent_at = Column(DateTime)  # avis post-visite J+1 envoyé — anti-doublon
     agency_id = Column(Integer, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

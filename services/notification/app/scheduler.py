@@ -57,12 +57,40 @@ def _job_visit_reminders(db) -> int:
     return sent
 
 
+def _job_visit_follow_ups(db) -> int:
+    """Avis post-visite J+1 : visites ayant eu lieu il y a ~1 jour, sans avis encore demandé."""
+    try:
+        r = httpx.get(f"{_crm()}/internal/visits/due-follow-ups", headers=_headers(), timeout=10.0)
+        visits = r.json().get("visits", []) if r.status_code == 200 else []
+    except (httpx.HTTPError, ValueError):
+        return 0
+    base = os.environ.get("PUBLIC_BASE_URL", "http://localhost:5600")
+    sent = 0
+    for v in visits:
+        to = (v.get("visitor_email") or "").strip()
+        if _valid_email(to):
+            pid = v.get("property_id")
+            _try_send(db, to, "visit_follow_up.html", "visit_follow_up", from_email=_contact(),
+                      name=v.get("contact_name"), property_title=v.get("property_title"),
+                      property_url=(f"{base}/annonce/{pid}" if pid else None))
+            db.commit()
+            sent += 1
+        try:
+            httpx.post(f"{_crm()}/internal/visits/{v['id']}/follow-up-sent", headers=_headers(), timeout=10.0)
+        except httpx.HTTPError:
+            pass
+    return sent
+
+
 def run_once() -> None:
     db = SessionLocal()
     try:
         n = _job_visit_reminders(db)
         if n:
             logger.info("rappels de visite envoyés", extra={"count": n})
+        f = _job_visit_follow_ups(db)
+        if f:
+            logger.info("avis post-visite envoyés", extra={"count": f})
     except Exception:  # noqa: BLE001 — un job qui échoue ne doit pas tuer la boucle
         logger.exception("échec d'un job d'ordonnanceur")
     finally:
