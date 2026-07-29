@@ -144,6 +144,32 @@ def _job_rent_overdue_reminders(db) -> int:
     return sent
 
 
+def _job_landlord_payouts(db) -> int:
+    """Avis de virement : loyers encaissés à reverser au propriétaire (net des honoraires)."""
+    try:
+        r = httpx.get(f"{_rental()}/internal/rent-periods/due-payouts", headers=_headers(), timeout=10.0)
+        periods = r.json().get("rent_periods", []) if r.status_code == 200 else []
+    except (httpx.HTTPError, ValueError):
+        return 0
+    sent = 0
+    for rp in periods:
+        landlord = recipients.client(rp.get("landlord_client_id"))
+        to = (landlord.get("email") or "").strip()
+        if _valid_email(to):
+            _try_send(db, to, "landlord_payout.html", "landlord_payout", from_email=_contact(),
+                      name=landlord.get("name"), period_label=rp.get("period_label"),
+                      gross_amount=rp.get("gross_amount"), fee_percent=rp.get("fee_percent"),
+                      net_amount=rp.get("net_amount"))
+            db.commit()
+            sent += 1
+        try:
+            httpx.post(f"{_rental()}/internal/rent-periods/{rp['id']}/payout-sent",
+                       headers=_headers(), timeout=10.0)
+        except httpx.HTTPError:
+            pass
+    return sent
+
+
 def _job_generate_rent_periods(db) -> int:
     """Génère l'échéance du mois courant pour chaque bail actif (idempotent côté rental)."""
     try:
@@ -171,6 +197,9 @@ def run_once() -> None:
         g = _job_generate_rent_periods(db)
         if g:
             logger.info("échéances de loyer générées", extra={"count": g})
+        po = _job_landlord_payouts(db)
+        if po:
+            logger.info("avis de virement envoyés", extra={"count": po})
     except Exception:  # noqa: BLE001 — un job qui échoue ne doit pas tuer la boucle
         logger.exception("échec d'un job d'ordonnanceur")
     finally:

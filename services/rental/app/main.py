@@ -385,6 +385,41 @@ def internal_rent_reminder_sent(period_id: int, x_internal_token: str = Header(d
     return {"ok": True}
 
 
+@app.get("/internal/rent-periods/due-payouts", include_in_schema=False)
+def internal_rent_due_payouts(x_internal_token: str = Header(default=""),
+                              db: Session = Depends(get_db)):
+    """Loyers encaissés à reverser au propriétaire (avis de virement non encore envoyé)."""
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    out = []
+    rows = (db.query(RentPeriod)
+            .filter(RentPeriod.status == "paid", RentPeriod.payout_sent_at.is_(None)).all())
+    for rp in rows:
+        lease = db.get(Lease, rp.lease_id)
+        mandate = db.get(Mandate, lease.mandate_id) if lease else None
+        if mandate is None:
+            continue
+        fee = float(mandate.fee_percent or 0)
+        gross = float(rp.paid_amount or rp.total_amount or 0)
+        net = round(gross * (1 - fee / 100.0), 2)
+        out.append({"id": rp.id, "landlord_client_id": mandate.landlord_client_id,
+                    "period_label": rp.period_label, "gross_amount": gross,
+                    "fee_percent": fee, "net_amount": net})
+    return {"rent_periods": out}
+
+
+@app.post("/internal/rent-periods/{period_id}/payout-sent", include_in_schema=False)
+def internal_rent_payout_sent(period_id: int, x_internal_token: str = Header(default=""),
+                              db: Session = Depends(get_db)):
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    rp = db.get(RentPeriod, period_id)
+    if rp is not None:
+        rp.payout_sent_at = datetime.utcnow()
+        db.commit()
+    return {"ok": True}
+
+
 @app.get("/backoffice/gestion-locative/leases/{lease_id}/rent-periods")
 def list_rent_periods(lease_id: int, principal: Principal = Depends(get_principal),
                       db: Session = Depends(get_db)):
