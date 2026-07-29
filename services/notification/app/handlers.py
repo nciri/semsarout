@@ -227,6 +227,18 @@ def _handle_lease_revised(db, payload: dict) -> None:
               effective_date=(eff.split("T")[0] if eff else None))
 
 
+def _handle_charge_regularized(db, payload):
+    """rental.charge_regularization.sent → décompte annuel des charges au locataire."""
+    tenant = recipients.client(payload.get("tenant_client_id"))
+    to = (tenant.get("email") or "").strip()
+    if not _valid_email(to):
+        return
+    _try_send(db, to, "charge_regularization.html", "charge_regularization", from_email=_contact(),
+              name=tenant.get("name"), year=payload.get("year"),
+              provisions_total=payload.get("provisions_total"),
+              actual_total=payload.get("actual_total"), balance=payload.get("balance"))
+
+
 def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
     db = SessionLocal()
     try:
@@ -254,6 +266,8 @@ def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
             _handle_deposit_returned(db, payload)
         elif routing_key == "rental.lease.revised":
             _handle_lease_revised(db, payload)
+        elif routing_key == "rental.charge_regularization.sent":
+            _handle_charge_regularized(db, payload)
         else:
             channel, template = _TEMPLATES.get(routing_key, ("log", routing_key))
             _log(db, channel, str(payload.get("user_id", "?")), template, "sent")

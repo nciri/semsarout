@@ -18,7 +18,7 @@ from semsar_events import enqueue
 
 from . import events
 from .db import get_db, init_db
-from .models import ClientRO, CrgReport, Lease, Mandate, PropertyRO, RentPeriod
+from .models import ChargeRegularization, ClientRO, CrgReport, Lease, Mandate, PropertyRO, RentPeriod
 from .util import err, iso, json_body, num
 
 settings = get_settings()
@@ -655,3 +655,66 @@ def crg_pdf(mandate_id: int, crg_id: int, principal: Principal = Depends(get_pri
         mandate_reference=mnd.reference if mnd else None)
     return Response(data, media_type="application/pdf",
                     headers={"Content-Disposition": f"attachment; filename=CRG-{crg.year}-{crg.month:02d}.pdf"})
+
+
+def _charge_reg_dict(cr: ChargeRegularization) -> dict:
+    return {"id": cr.id, "lease_id": cr.lease_id, "year": cr.year,
+            "provisions_total": num(cr.provisions_total), "actual_total": num(cr.actual_total),
+            "balance": num(cr.balance), "status": cr.status,
+            "statement_sent_at": iso(cr.statement_sent_at), "created_at": iso(cr.created_at)}
+
+
+@app.post("/backoffice/gestion-locative/leases/{lease_id}/charge-regularizations", status_code=201)
+async def create_charge_reg(lease_id: int, request: Request,
+                            principal: Principal = Depends(get_principal),
+                            db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    l = db.get(Lease, lease_id)
+    if l is None or l.agency_id != principal.agency_id:
+        return err("Bail introuvable.", 404)
+    data = await json_body(request)
+    if data.get("year") is None or data.get("actual_total") is None:
+        return err("year et actual_total sont requis.", 400)
+    year = int(data["year"])
+    provisions = sum(float(rp.charges_amount or 0) for rp in db.query(RentPeriod).filter(
+        RentPeriod.lease_id == lease_id, RentPeriod.year == year, RentPeriod.status == "paid").all())
+    actual = float(data["actual_total"])
+    cr = ChargeRegularization(lease_id=lease_id, agency_id=principal.agency_id, year=year,
+                              provisions_total=round(provisions, 2), actual_total=actual,
+                              balance=round(actual - provisions, 2))
+    db.add(cr)
+    db.commit()
+    return _charge_reg_dict(cr)
+
+
+@app.get("/backoffice/gestion-locative/leases/{lease_id}/charge-regularizations")
+def list_charge_reg(lease_id: int, principal: Principal = Depends(get_principal),
+                    db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    l = db.get(Lease, lease_id)
+    if l is None or l.agency_id != principal.agency_id:
+        return err("Bail introuvable.", 404)
+    q = (db.query(ChargeRegularization).filter(ChargeRegularization.lease_id == lease_id)
+         .order_by(ChargeRegularization.year.desc()))
+    return {"charge_regularizations": [_charge_reg_dict(cr) for cr in q.all()]}
+
+
+@app.post("/backoffice/gestion-locative/charge-regularizations/{reg_id}/send")
+def send_charge_reg(reg_id: int, principal: Principal = Depends(get_principal),
+                    db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    cr = db.get(ChargeRegularization, reg_id)
+    if cr is None or cr.agency_id != principal.agency_id:
+        return err("Régularisation introuvable.", 404)
+    lease = db.get(Lease, cr.lease_id)
+    cr.status = "sent"
+    cr.statement_sent_at = datetime.utcnow()
+    enqueue(db, "charge_regularization", cr.id, events.CHARGE_REGULARIZED, {
+        "id": cr.id, "tenant_client_id": lease.tenant_client_id if lease else None,
+        "year": cr.year, "provisions_total": num(cr.provisions_total),
+        "actual_total": num(cr.actual_total), "balance": num(cr.balance)})
+    db.commit()
+    return _charge_reg_dict(cr)

@@ -101,6 +101,21 @@ class CrgReport(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class ChargeRegularization(Base):
+    __tablename__ = "charge_regularization"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    lease_id = Column(Integer, index=True, nullable=False)
+    agency_id = Column(Integer, index=True, nullable=False)
+    year = Column(Integer, nullable=False)
+    provisions_total = Column(Numeric(12, 2), default=0)   # charges provisionnées encaissées
+    actual_total = Column(Numeric(12, 2), default=0)       # charges réelles (saisie agence)
+    balance = Column(Numeric(12, 2), default=0)            # +=dû par locataire / -=à rembourser
+    status = Column(String(20), default="draft")           # draft|sent|settled
+    statement_sent_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class PropertyRO(Base):
     """Projection locale du bien (via listing.*) : property_title / property_city."""
     __tablename__ = "property_ro"
