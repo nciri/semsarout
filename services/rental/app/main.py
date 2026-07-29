@@ -736,6 +736,17 @@ def _property_lookup(property_id: int) -> dict:
         return {}
 
 
+def _user_lookup(user_id: int) -> dict:
+    """Utilisateur (email/nom) via l'endpoint interne identity — pour l'email authentifié du candidat."""
+    base = os.environ.get("IDENTITY_URL", "http://localhost:8501")
+    try:
+        r = httpx.get(f"{base}/internal/user/{user_id}",
+                      headers={"x-internal-token": settings.internal_token}, timeout=5.0)
+        return (r.json().get("user") or {}) if r.status_code == 200 else {}
+    except (httpx.HTTPError, ValueError):
+        return {}
+
+
 def _application_dict(a: TenantApplication, docs=None) -> dict:
     out = {
         "id": a.id, "property_id": a.property_id, "agency_id": a.agency_id,
@@ -766,10 +777,13 @@ async def submit_application(request: Request, principal: Principal = Depends(ge
     except (TypeError, ValueError):
         return err("property_id invalide.", 400)
     prop = _property_lookup(property_id)
+    account = _user_lookup(int(principal.sub))
+    applicant_email = account.get("email") or data.get("applicant_email")
+    applicant_name = data.get("applicant_name") or account.get("name")
     a = TenantApplication(
         property_id=property_id, agency_id=prop.get("agency_id"),
         owner_id=prop.get("owner_id"), applicant_user_id=int(principal.sub),
-        applicant_name=data.get("applicant_name"), applicant_email=data.get("applicant_email"),
+        applicant_name=applicant_name, applicant_email=applicant_email,
         applicant_phone=data.get("applicant_phone"), monthly_income=data.get("monthly_income"),
         guarantor_name=data.get("guarantor_name"), guarantor_income=data.get("guarantor_income"),
         status="received")
@@ -862,6 +876,9 @@ async def upload_document(application_id: int, request: Request,
     a = _own_application(db, application_id, principal)
     if a is None:
         return err("Candidature introuvable.", 404)
+    cl = request.headers.get("content-length")
+    if cl and cl.isdigit() and int(cl) > 10 * 1024 * 1024:
+        return err("Fichier trop volumineux (max 10 Mo).", 400)
     body = await request.body()
     if not body:
         return err("Fichier vide.", 400)
