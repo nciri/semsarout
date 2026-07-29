@@ -168,6 +168,29 @@ def _handle_contract_signed(db, payload: dict) -> None:
               document_type=payload.get("document_type"))
 
 
+def _handle_mandate_signed(db, payload: dict) -> None:
+    """`rental.mandate.signed` : email récap au propriétaire bailleur."""
+    landlord = recipients.client(payload.get("landlord_client_id"))
+    to = (landlord.get("email") or "").strip()
+    if not _valid_email(to):
+        return
+    _try_send(db, to, "mandate_signed.html", "mandate_signed", from_email=_contact(),
+              name=landlord.get("name"), reference=payload.get("reference"),
+              mandate_type=payload.get("mandate_type"), fee_percent=payload.get("fee_percent"))
+
+
+def _handle_lease_signed(db, payload: dict) -> None:
+    """`rental.lease.signed` : email récap au locataire (le propriétaire est notifié via le mandat)."""
+    tenant = recipients.client(payload.get("tenant_client_id"))
+    to = (tenant.get("email") or "").strip()
+    prop = None  # titre du bien : projeté en Phase 2 (property_ro) ; absent = géré par le gabarit
+    if _valid_email(to):
+        _try_send(db, to, "lease_signed.html", "lease_signed", from_email=_contact(),
+                  name=tenant.get("name"), property_title=prop,
+                  rent_amount=payload.get("rent_amount"), charges_amount=payload.get("charges_amount"),
+                  deposit_amount=payload.get("deposit_amount"))
+
+
 def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
     db = SessionLocal()
     try:
@@ -185,6 +208,10 @@ def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
             _handle_work_order(db, payload)
         elif routing_key == "contract.signed":
             _handle_contract_signed(db, payload)
+        elif routing_key == "rental.mandate.signed":
+            _handle_mandate_signed(db, payload)
+        elif routing_key == "rental.lease.signed":
+            _handle_lease_signed(db, payload)
         else:
             channel, template = _TEMPLATES.get(routing_key, ("log", routing_key))
             _log(db, channel, str(payload.get("user_id", "?")), template, "sent")

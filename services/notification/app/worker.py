@@ -23,7 +23,8 @@ def main() -> None:
         service_name=settings.service_name,
         bindings=["identity.kyc.#", "identity.password_reset",
                   "listing.contacted", "program.contacted", "visit.created", "transaction.updated",
-                  "work_order.created", "contract.signed"],
+                  "work_order.created", "contract.signed",
+                  "rental.mandate.signed", "rental.lease.signed"],
         exchange=settings.events_exchange,
     )
     consumer.run(handler=handle_event)
