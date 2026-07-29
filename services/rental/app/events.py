@@ -1,0 +1,5 @@
+"""Événements publiés par rental (consommés par notification pour les emails)."""
+MANDATE_CREATED = "rental.mandate.created"
+MANDATE_SIGNED = "rental.mandate.signed"
+LEASE_CREATED = "rental.lease.created"
+LEASE_SIGNED = "rental.lease.signed"
