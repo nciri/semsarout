@@ -214,6 +214,19 @@ def _handle_deposit_returned(db, payload: dict) -> None:
               return_amount=payload.get("return_amount"))
 
 
+def _handle_lease_revised(db, payload: dict) -> None:
+    """`rental.lease.revised` → avis de révision de loyer au locataire."""
+    tenant = recipients.client(payload.get("tenant_client_id"))
+    to = (tenant.get("email") or "").strip()
+    if not _valid_email(to):
+        return
+    eff = payload.get("effective_date")
+    _try_send(db, to, "lease_revised.html", "lease_revised", from_email=_contact(),
+              name=tenant.get("name"), old_rent=payload.get("old_rent"),
+              new_rent=payload.get("new_rent"),
+              effective_date=(eff.split("T")[0] if eff else None))
+
+
 def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
     db = SessionLocal()
     try:
@@ -239,6 +252,8 @@ def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
             _handle_rent_paid(db, payload)
         elif routing_key == "rental.deposit.returned":
             _handle_deposit_returned(db, payload)
+        elif routing_key == "rental.lease.revised":
+            _handle_lease_revised(db, payload)
         else:
             channel, template = _TEMPLATES.get(routing_key, ("log", routing_key))
             _log(db, channel, str(payload.get("user_id", "?")), template, "sent")

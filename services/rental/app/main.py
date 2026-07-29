@@ -372,6 +372,30 @@ async def deposit_return(lease_id: int, request: Request,
     return _lease_dict(l)
 
 
+@app.post("/backoffice/gestion-locative/leases/{lease_id}/revise")
+async def revise_lease(lease_id: int, request: Request,
+                       principal: Principal = Depends(get_principal),
+                       db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    l = db.get(Lease, lease_id)
+    if l is None or l.agency_id != principal.agency_id:
+        return err("Bail introuvable.", 404)
+    data = await json_body(request)
+    if data.get("new_rent") is None:
+        return err("new_rent est requis.", 400)
+    old_rent = num(l.rent_amount)
+    l.rent_amount = data["new_rent"]
+    l.last_revision_at = datetime.utcnow()
+    effective = _parse_dt(data.get("effective_date"))
+    enqueue(db, "lease", l.id, events.LEASE_REVISED, {
+        "id": l.id, "tenant_client_id": l.tenant_client_id, "property_id": l.property_id,
+        "old_rent": old_rent, "new_rent": num(l.rent_amount),
+        "effective_date": iso(effective)})
+    db.commit()
+    return _lease_dict(l)
+
+
 @app.get("/internal/leases/{lease_id}", include_in_schema=False)
 def internal_lease(lease_id: int, x_internal_token: str = Header(default=""),
                    db: Session = Depends(get_db)):
