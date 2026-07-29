@@ -1,17 +1,17 @@
 {% extends "base.html" %}
-{% from "_components.html" import button, card %}
+{% from "_components.html" import button, card, lucide %}
 {% block subject %}Visite confirmée{% if property_title %} — {{ property_title }}{% endif %}{% endblock %}
-{% block preheader %}{{ date }}{% if time %} à {{ time }}{% endif %} — voici les détails de votre rendez-vous.{% endblock %}
-{% block badge %}📅{% endblock %}
+{% block preheader %}{{ date }}{% if time %} à {{ time }}{% endif %} — détails de votre rendez-vous.{% endblock %}
+{% block badge %}{{ lucide("calendar-check") }}{% endblock %}
 {% block hero_title %}Votre visite est confirmée{% endblock %}
-{% block hero_subtitle %}<p style="margin:10px 0 0 0; font-size:15px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}, nous vous attendons !</p>{% endblock %}
+{% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}, nous vous attendons.</p>{% endblock %}
 {% block content %}
-<p style="margin:0 0 6px 0; text-align:center;">Voici le récapitulatif de votre rendez-vous de visite :</p>
+<p style="text-align:center; color:{{ brand.ink }};">Voici le récapitulatif de votre rendez-vous de visite :</p>
 {{ card(
-  ([("🏡 Bien", property_title)] if property_title else []) +
-  [("📆 Date", date ~ ((" à " ~ time) if time else ""))] +
-  ([("📍 Adresse", address)] if address else []) +
-  ([("👤 Conseiller", (agent_name ~ ((" — " ~ agent_phone) if agent_phone else "")))] if agent_name else [])) }}
-{% if map_url %}<table role="presentation" width="100%"><tr><td align="center">{{ button(map_url, "Voir l'itinéraire", "secondary") }}</td></tr></table>{% endif %}
-<p style="margin:22px 0 0 0; font-size:13px; color:{{ brand.muted }}; text-align:center;">Un empêchement ? Prévenez votre conseiller au plus tôt pour reprogrammer. À très bientôt&nbsp;! 🔑</p>
+  ([("Bien", property_title)] if property_title else []) +
+  [("Date", date ~ ((" à " ~ time) if time else ""))] +
+  ([("Adresse", address)] if address else []) +
+  ([("Conseiller", (agent_name ~ ((" — " ~ agent_phone) if agent_phone else "")))] if agent_name else [])) }}
+{% if map_url %}<table role="presentation" width="100%"><tr><td align="center">{{ button(map_url, "Voir l'itinéraire") }}</td></tr></table>{% endif %}
+<p style="margin-top:22px; font-size:13px; color:{{ brand.muted }}; text-align:center;">Un empêchement ? Prévenez votre conseiller au plus tôt pour reprogrammer. À très bientôt.</p>
 {% endblock %}

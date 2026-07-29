@@ -8,70 +8,57 @@
 <meta name="supported-color-schemes" content="light">
 <title>{% block subject %}SemsarOut{% endblock %}</title>
 <style>
-  body,table,td,a{ -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:{{ brand.gray_bg }}; -webkit-text-size-adjust:100%; }
   table,td{ mso-table-lspace:0; mso-table-rspace:0; }
-  img{ border:0; line-height:100%; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic; }
-  a{ color:{{ brand.teal }}; }
-  .sm-hide{ } .sm-full{ }
-  @media only screen and (max-width:620px){
-    .container{ width:100% !important; border-radius:0 !important; }
+  a{ color:{{ brand.gold_dark }}; }
+  @media (max-width:480px){
+    .wrap{ padding:0 !important; }
+    .card{ border-radius:0 !important; box-shadow:none !important; }
     .px{ padding-left:22px !important; padding-right:22px !important; }
-    .hero-pad{ padding-left:22px !important; padding-right:22px !important; }
-    h1{ font-size:22px !important; }
   }
 </style>
 </head>
-<body style="margin:0; padding:0; width:100%; background:{{ brand.ivory }};">
+<body style="background:{{ brand.gray_bg }};">
 <div style="display:none; max-height:0; overflow:hidden; opacity:0; mso-hide:all;">{% block preheader %}{% endblock %}</div>
-<div style="display:none; max-height:0; overflow:hidden;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
 
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:{{ brand.ivory }};">
-  <tr><td align="center" style="padding:30px 12px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:{{ brand.gray_bg }};">
+  <tr><td align="center" class="wrap" style="padding:34px 16px;">
 
-    <table role="presentation" width="600" cellpadding="0" cellspacing="0" class="container"
-           style="width:600px; max-width:600px; background:#ffffff; border-radius:18px; overflow:hidden; box-shadow:0 10px 34px rgba(11,18,32,.10); border:1px solid #efeae1;">
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" class="card"
+           style="width:600px; max-width:600px; background:{{ brand.panel }}; border-radius:16px; overflow:hidden; box-shadow:0 4px 30px rgba(15,23,42,.07);">
 
-      <!-- Bandeau marque -->
-      <tr><td style="background:{{ brand.dark }}; background:linear-gradient(135deg,#0B1220 0%,#16213a 100%); padding:24px 34px;">
-        <table role="presentation" width="100%"><tr>
-          <td style="font-family:Georgia,'Times New Roman',serif; font-size:24px; font-weight:800; letter-spacing:-.2px; color:#ffffff;">Semsar<span style="display:inline-block; background:linear-gradient(150deg,{{ brand.red }} 0%,{{ brand.red_dark }} 100%); color:#ffffff; font-size:18px; font-weight:800; line-height:1; padding:3px 9px; border-radius:5px; margin-left:5px; transform:rotate(-4deg);">Out</span></td>
-          <td align="right" style="font-family:'Segoe UI',Arial,sans-serif; font-size:10px; letter-spacing:2.5px; text-transform:uppercase; color:#8b97ad;">Immobilier · Maroc</td>
-        </tr></table>
+      <!-- Header épuré (letterhead) -->
+      <tr><td style="padding:26px 40px 22px; text-align:center; border-bottom:1px solid {{ brand.line_soft }};">
+        <span style="font-family:Georgia,'Times New Roman',serif; font-size:25px; font-weight:800; letter-spacing:-.4px; color:{{ brand.strong }};">Semsar<span style="display:inline-block; background:linear-gradient(150deg,{{ brand.red }} 0%,{{ brand.red_dark }} 100%); color:#ffffff; font-size:19px; line-height:1; padding:3px 9px; border-radius:5px; margin-left:4px; transform:rotate(-4deg);">Out</span></span>
       </td></tr>
-      <tr><td style="height:4px; line-height:4px; font-size:0; background:linear-gradient(90deg,{{ brand.gold }} 0%,{{ brand.gold_dark }} 55%,{{ brand.teal }} 100%);">&nbsp;</td></tr>
 
-      <!-- Héros : badge + titre -->
-      <tr><td class="hero-pad" style="padding:38px 40px 8px 40px; text-align:center;">
-        <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:0 auto 18px auto;"><tr>
-          <td align="center" width="72" height="72" valign="middle"
-              style="width:72px; height:72px; border-radius:50%; background:{{ brand.gold_soft }}; border:1px solid #efe1c6; font-size:32px; line-height:72px; text-align:center;">{% block badge %}🏡{% endblock %}</td>
+      <!-- Héros : icône monochrome + titre -->
+      <tr><td class="px" style="padding:36px 40px 8px; text-align:center;">
+        <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:0 auto 18px;"><tr>
+          <td align="center" valign="middle" width="60" height="60" style="width:60px; height:60px; border-radius:50%; background:{{ brand.icon_bg }}; border:1px solid {{ brand.line }};">{% block badge %}{% endblock %}</td>
         </tr></table>
-        <h1 style="margin:0; font-family:'Segoe UI',Arial,sans-serif; font-size:25px; line-height:1.25; font-weight:800; color:{{ brand.dark }};">{% block hero_title %}{% endblock %}</h1>
+        <h1 style="font-family:'Helvetica Neue',Arial,sans-serif; font-size:23px; line-height:1.3; font-weight:700; color:{{ brand.strong }};">{% block hero_title %}{% endblock %}</h1>
         {% block hero_subtitle %}{% endblock %}
       </td></tr>
 
       <!-- Contenu -->
-      <tr><td class="px" style="padding:16px 40px 34px 40px; font-family:'Segoe UI',Arial,sans-serif; font-size:15px; line-height:1.65; color:{{ brand.text }};">
+      <tr><td class="px" style="padding:18px 40px 34px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:15px; line-height:1.65; color:{{ brand.ink }};">
         {% block content %}{% endblock %}
       </td></tr>
 
       <!-- Footer -->
-      <tr><td style="padding:26px 40px; background:#faf7f1; border-top:1px solid #f0e9dc; text-align:center;">
-        <p style="margin:0 0 12px 0; font-family:'Segoe UI',Arial,sans-serif; font-size:13px;">
-          <a href="{{ app.base_url }}" style="color:{{ brand.gold_dark }}; text-decoration:none; font-weight:600;">Accueil</a>&nbsp;&nbsp;·&nbsp;&nbsp;
-          <a href="{{ app.base_url }}/recherche" style="color:{{ brand.gold_dark }}; text-decoration:none; font-weight:600;">Rechercher un bien</a>&nbsp;&nbsp;·&nbsp;&nbsp;
-          <a href="{{ app.base_url }}/contact" style="color:{{ brand.gold_dark }}; text-decoration:none; font-weight:600;">Contact</a>
+      <tr><td style="padding:24px 40px; background:#fafbfc; border-top:1px solid {{ brand.line }}; text-align:center; font-family:'Helvetica Neue',Arial,sans-serif;">
+        <p style="font-size:13px; line-height:1.7; color:{{ brand.muted }};">Retrouvez tout sur <a href="{{ app.base_url }}" style="color:{{ brand.gold_dark }}; text-decoration:none; font-weight:500;">SemsarOut</a>. Une question&nbsp;? <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }}; text-decoration:none; font-weight:500;">contact@semsarout.com</a></p>
+        <p style="margin-top:12px;">
+          <a href="{{ app.base_url }}" style="font-size:12px; color:{{ brand.faint }}; text-decoration:none; margin:0 8px;">Accueil</a>
+          <a href="{{ app.base_url }}/recherche" style="font-size:12px; color:{{ brand.faint }}; text-decoration:none; margin:0 8px;">Rechercher</a>
+          <a href="{{ app.base_url }}/contact" style="font-size:12px; color:{{ brand.faint }}; text-decoration:none; margin:0 8px;">Contact</a>
         </p>
-        <p style="margin:0 0 4px 0; font-family:'Segoe UI',Arial,sans-serif; font-size:12px; color:{{ brand.muted }};">
-          <strong style="color:{{ brand.dark }};">SemsarOut</strong> — la plateforme immobilière du Maroc.
-        </p>
-        <p style="margin:0; font-family:'Segoe UI',Arial,sans-serif; font-size:11px; color:#a7a7a7;">
-          {% block footer_note %}Email automatique, merci de ne pas y répondre.{% endblock %} · © {{ app.year }} SemsarOut
-        </p>
+        <p style="margin-top:12px; font-size:11px; color:#b6bcc6;">{% block footer_note %}Email automatique, merci de ne pas y répondre.{% endblock %} · © {{ app.year }} SemsarOut — Maroc</p>
       </td></tr>
 
     </table>
-    <div style="height:22px; line-height:22px; font-size:0;">&nbsp;</div>
   </td></tr>
 </table>
 </body>

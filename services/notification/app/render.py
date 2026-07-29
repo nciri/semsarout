@@ -20,10 +20,15 @@ _env = Environment(
 
 # Palette de marque (cf. frontend/tailwind.config.js) — accessible dans tous les gabarits.
 _env.globals["brand"] = {
-    "gold": "#C6923F", "gold_dark": "#A9781F", "gold_soft": "#FBF5EA",
-    "dark": "#0B1220", "ivory": "#FAF9F7", "teal": "#0F766E",
-    "red": "#C1121F", "red_dark": "#870B15",  # carton « Out » du wordmark du site
-    "text": "#1f2937", "muted": "#6b7280", "border": "#ececec",
+    # Fond épuré (gris clair) + carte blanche, façon design system minimal.
+    "gray_bg": "#f3f4f6", "panel": "#ffffff",
+    "line": "#e6e8eb", "line_soft": "#f1f2f4",
+    "ink": "#1e293b", "strong": "#0f172a", "muted": "#64748b", "faint": "#9aa3b2",
+    # Icônes monochromes (style lucide), cercle neutre.
+    "icon": "#334155", "icon_bg": "#f4f5f7",
+    # Accents de marque (usage parcimonieux) : or pour le CTA, rouge pour le carton « Out ».
+    "gold": "#C6923F", "gold_dark": "#A9781F",
+    "red": "#C1121F", "red_dark": "#870B15", "dark": "#0B1220", "teal": "#0F766E",
 }
 _env.globals["currency"] = "Đh"  # symbole dirham utilisé sur le site
 

@@ -1,14 +1,13 @@
 {% extends "base.html" %}
-{% from "_components.html" import button, card %}
+{% from "_components.html" import button, card, lucide %}
 {% block subject %}Votre demande a bien été envoyée — SemsarOut{% endblock %}
 {% block preheader %}Nous avons transmis votre demande{% if agency_name %} à {{ agency_name }}{% endif %}.{% endblock %}
-{% block badge %}📩{% endblock %}
+{% block badge %}{{ lucide("mail-check") }}{% endblock %}
 {% block hero_title %}Demande bien reçue{% endblock %}
-{% block hero_subtitle %}<p style="margin:10px 0 0 0; font-size:15px; color:{{ brand.muted }};">Merci{% if name %} {{ name }}{% endif %}, on s'occupe de vous.</p>{% endblock %}
+{% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Merci{% if name %} {{ name }}{% endif %}, on s'occupe de vous.</p>{% endblock %}
 {% block content %}
-<p style="margin:0 0 8px 0; text-align:center;">Votre demande de contact{% if property_title %} concernant <strong>{{ property_title }}</strong>{% endif %} a bien été enregistrée
-{% if agency_name %}et transmise à <strong>{{ agency_name }}</strong>{% endif %}. Un conseiller vous recontactera au plus vite.</p>
+<p style="text-align:center; color:{{ brand.ink }};">Votre demande de contact{% if property_title %} concernant <strong>{{ property_title }}</strong>{% endif %} a bien été enregistrée{% if agency_name %} et transmise à <strong>{{ agency_name }}</strong>{% endif %}. Un conseiller vous recontactera au plus vite.</p>
 {% if property_title %}{{ card([("Bien", property_title)] + ([("Prix", price)] if price else []) + ([("Ville", city)] if city else [])) }}{% endif %}
-{% if property_url %}<table role="presentation" width="100%"><tr><td align="center">{{ button(property_url, "Revoir l'annonce", "secondary") }}</td></tr></table>{% endif %}
-<p style="margin:24px 0 0 0; font-size:13px; color:{{ brand.muted }}; text-align:center;">En attendant, découvrez d'autres biens qui pourraient vous plaire sur <a href="{{ app.base_url }}/recherche" style="color:{{ brand.gold_dark }};">SemsarOut</a>.</p>
+{% if property_url %}<table role="presentation" width="100%"><tr><td align="center">{{ button(property_url, "Revoir l'annonce") }}</td></tr></table>{% endif %}
+<p style="margin-top:22px; font-size:13px; color:{{ brand.muted }}; text-align:center;">En attendant, découvrez d'autres biens sur <a href="{{ app.base_url }}/recherche" style="color:{{ brand.gold_dark }};">SemsarOut</a>.</p>
 {% endblock %}
