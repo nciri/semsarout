@@ -74,6 +74,8 @@ class Invoice(Base):
     period_label = Column(String(40))
     issued_at = Column(DateTime, default=datetime.utcnow)
     paid_at = Column(DateTime)
+    reminder_count = Column(Integer, default=0)   # relances impayé envoyées (dunning) — anti-doublon
+    last_reminder_at = Column(DateTime)           # date de la dernière relance (cadence)
 
 
 class ProcessedMessage(Base):

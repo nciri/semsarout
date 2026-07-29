@@ -6,8 +6,9 @@ Boucle de polling (DB-backed, idempotente) plutôt qu'une pile Celery/Redis : ch
 interroge la source (endpoint interne du service propriétaire) pour les éléments dus, envoie
 l'email et marque l'élément traité côté source. Intervalle réglable (SCHEDULER_INTERVAL_SECONDS).
 
-Jobs actuels : rappel de visite J-1. Les futurs (avis post-visite, comptes-rendus périodiques,
-relances, anniversaires) s'ajoutent comme des fonctions `_job_*` appelées dans `run_once`.
+Jobs actuels : rappel de visite J-1, avis post-visite J+1, relance impayé d'abonnement (dunning).
+Les futurs (comptes-rendus périodiques, anniversaires — en attente des domaines gestion locative /
+mandat) s'ajoutent comme des fonctions `_job_*` appelées dans `run_once`.
 """
 import logging
 import os
@@ -17,6 +18,7 @@ import httpx
 
 from semsar_common import setup_logging
 
+from . import recipients
 from .db import SessionLocal
 from .handlers import _contact, _fmt_fr, _try_send, _valid_email, load_dotenv
 
@@ -25,6 +27,10 @@ logger = logging.getLogger("notification.scheduler")
 
 def _crm() -> str:
     return os.environ.get("CRM_URL", "http://localhost:8013")
+
+
+def _billing() -> str:
+    return os.environ.get("BILLING_URL", "http://localhost:8508")
 
 
 def _headers() -> dict:
@@ -82,6 +88,33 @@ def _job_visit_follow_ups(db) -> int:
     return sent
 
 
+def _job_unpaid_invoice_reminders(db) -> int:
+    """Relance impayé : factures d'abonnement non réglées, cadence J+3 puis toutes les 7 j (max 3)."""
+    try:
+        r = httpx.get(f"{_billing()}/internal/invoices/due-reminders", headers=_headers(), timeout=10.0)
+        invoices = r.json().get("invoices", []) if r.status_code == 200 else []
+    except (httpx.HTTPError, ValueError):
+        return 0
+    sent = 0
+    for inv in invoices:
+        agency = recipients.agency(inv.get("agency_id"))
+        to = (agency.get("email") or "").strip()
+        if _valid_email(to):
+            _try_send(db, to, "invoice_reminder.html", "invoice_reminder", from_email=_contact(),
+                      agency_name=agency.get("name"), reference=inv.get("reference"),
+                      amount=inv.get("amount"), period_label=inv.get("period_label"),
+                      reminder_count=inv.get("reminder_count", 0))
+            db.commit()
+            sent += 1
+        # Marque relancé même si email absent/invalide → pas de re-traitement en boucle.
+        try:
+            httpx.post(f"{_billing()}/internal/invoices/{inv['id']}/reminder-sent",
+                       headers=_headers(), timeout=10.0)
+        except httpx.HTTPError:
+            pass
+    return sent
+
+
 def run_once() -> None:
     db = SessionLocal()
     try:
@@ -91,6 +124,9 @@ def run_once() -> None:
         f = _job_visit_follow_ups(db)
         if f:
             logger.info("avis post-visite envoyés", extra={"count": f})
+        i = _job_unpaid_invoice_reminders(db)
+        if i:
+            logger.info("relances impayé envoyées", extra={"count": i})
     except Exception:  # noqa: BLE001 — un job qui échoue ne doit pas tuer la boucle
         logger.exception("échec d'un job d'ordonnanceur")
     finally:

@@ -150,6 +150,50 @@ def internal_subscriptions_stats(x_internal_token: str = Header(default=""),
     return {"active_subscriptions": by_plan, "mrr_estimate": round(mrr, 2)}
 
 
+# Cadence de relance impayé (dunning) : 1re relance J+3 après émission, puis toutes les 7 j,
+# max 3 relances. Idempotent via reminder_count/last_reminder_at (marqués par l'ordonnanceur).
+_FIRST_REMINDER_DAYS = 3
+_REMINDER_INTERVAL_DAYS = 7
+_MAX_REMINDERS = 3
+
+
+@app.get("/internal/invoices/due-reminders", include_in_schema=False)
+def internal_invoices_due_reminders(x_internal_token: str = Header(default=""),
+                                    db: Session = Depends(get_db)):
+    """Factures impayées dues pour une relance — consommé par l'ordonnanceur notification."""
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    now = datetime.utcnow()
+    out = []
+    for inv in db.query(Invoice).filter(Invoice.status == "unpaid").all():
+        count = inv.reminder_count or 0
+        if count >= _MAX_REMINDERS:
+            continue
+        if count == 0:
+            due = inv.issued_at is not None and inv.issued_at <= now - timedelta(days=_FIRST_REMINDER_DAYS)
+        else:
+            due = inv.last_reminder_at is not None and \
+                inv.last_reminder_at <= now - timedelta(days=_REMINDER_INTERVAL_DAYS)
+        if due:
+            out.append({"id": inv.id, "reference": inv.reference, "agency_id": inv.agency_id,
+                        "amount": float(inv.amount or 0), "period_label": inv.period_label,
+                        "issued_at": iso(inv.issued_at), "reminder_count": count})
+    return {"invoices": out}
+
+
+@app.post("/internal/invoices/{invoice_id}/reminder-sent", include_in_schema=False)
+def internal_invoice_reminder_sent(invoice_id: int, x_internal_token: str = Header(default=""),
+                                   db: Session = Depends(get_db)):
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    inv = db.get(Invoice, invoice_id)
+    if inv is not None and inv.status == "unpaid":
+        inv.reminder_count = (inv.reminder_count or 0) + 1
+        inv.last_reminder_at = datetime.utcnow()
+        db.commit()
+    return {"ok": True}
+
+
 @app.get("/subscription-plans")
 def list_plans(db: Session = Depends(get_db)) -> dict:
     plans = db.query(SubscriptionPlan).filter(SubscriptionPlan.is_active.is_(True)).all()

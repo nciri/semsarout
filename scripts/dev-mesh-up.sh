@@ -100,7 +100,8 @@ for r in listing catalog identity contract payment billing transactions programs
 for w in search crm marketplace geo agency messaging analytics billing notification identity audit transactions legal contract; do worker "$w"; done
 # Ordonnanceur (Vague 2) : emails temporels (rappels de visite J-1, …).
 env SERVICE_NAME=notification DATABASE_URL="$(dburl notification)" RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" \
-  OPENSEARCH_URL="$OS" INTERNAL_TOKEN="$ITOK" CRM_URL=http://localhost:8013 PYTHONPATH="services/notification" \
+  OPENSEARCH_URL="$OS" INTERNAL_TOKEN="$ITOK" CRM_URL=http://localhost:8013 BILLING_URL=http://localhost:8508 \
+  AGENCY_URL=http://localhost:8512 IDENTITY_URL=http://localhost:8501 PYTHONPATH="services/notification" \
   nohup python3 -m app.scheduler > "$LOG/notification-scheduler.log" 2>&1 &
 # Monolithe décommissionné : consume_users.py / relay_outbox.py (sync transitoire) ne sont plus lancés.
 sleep 5

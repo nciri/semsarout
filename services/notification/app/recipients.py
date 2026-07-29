@@ -14,9 +14,13 @@ def _get(url: str) -> dict:
         return {}
 
 
-def agency_email(agency_id: int) -> str | None:
+def agency(agency_id: int) -> dict:
     base = os.environ.get("AGENCY_URL", "http://localhost:8512")
-    return (_get(f"{base}/internal/agency/{agency_id}").get("agency") or {}).get("email")
+    return _get(f"{base}/internal/agency/{agency_id}").get("agency") or {}
+
+
+def agency_email(agency_id: int) -> str | None:
+    return agency(agency_id).get("email")
 
 
 def user_email(user_id: int) -> str | None:
