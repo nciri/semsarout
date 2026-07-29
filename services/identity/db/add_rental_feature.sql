@@ -2,7 +2,7 @@
 -- has_rental (billing ne pilote pas encore les features en live). Idempotent.
 UPDATE identity.agency_ro ar
 SET features = (
-    SELECT jsonb_agg(DISTINCT f) FROM jsonb_array_elements_text(ar.features || '["rental"]'::jsonb) f
+    SELECT jsonb_agg(DISTINCT f) FROM jsonb_array_elements_text(ar.features::jsonb || '["rental"]'::jsonb) f
 )
 WHERE ar.id IN (
     SELECT s.agency_id FROM public.subscriptions s
