@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { useQuery, useQueryClient } from 'react-query'
+import { useQuery, useQueryClient, useMutation } from 'react-query'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import {
   FiMapPin, FiMaximize, FiPhone, FiMail, FiHeart,
-  FiShare2, FiChevronLeft, FiChevronRight, FiCheck, FiZoomIn, FiEye
+  FiShare2, FiChevronLeft, FiChevronRight, FiCheck, FiZoomIn, FiEye, FiFileText
 } from 'react-icons/fi'
 import { IoBedOutline, IoWaterOutline } from 'react-icons/io5'
 import { propertyService } from '../services/propertyService'
 import { buyerService } from '../services/buyerService'
+import { applicantService } from '../services/rentalService'
 import api from '../services/api'
 import { formatPrice } from '../utils/currency'
 import PhotoLightbox from '../components/common/PhotoLightbox'
@@ -36,6 +37,11 @@ function PropertyDetail() {
   const [timeRemaining, setTimeRemaining] = useState(null)
   const [revealedPhone, setRevealedPhone] = useState(null)
   const [isRevealingPhone, setIsRevealingPhone] = useState(false)
+  const [applyOpen, setApplyOpen] = useState(false)
+  const [applyForm, setApplyForm] = useState({
+    applicant_name: '', applicant_email: '', applicant_phone: '',
+    monthly_income: '', guarantor_name: '', guarantor_income: '',
+  })
 
   const { data: property, isLoading } = useQuery(
     ['property', id],
@@ -178,6 +184,38 @@ function PropertyDetail() {
       toast.error('Erreur lors de l\'envoi du message')
     }
   }
+
+  // Prefill the application form with the logged-in user's info
+  useEffect(() => {
+    if (user) {
+      setApplyForm((f) => ({
+        ...f,
+        applicant_name: [user.first_name, user.last_name].filter(Boolean).join(' '),
+        applicant_email: user.email || '',
+        applicant_phone: user.phone || '',
+      }))
+    }
+  }, [user])
+
+  const applyMut = useMutation(
+    () => applicantService.submit({
+      property_id: Number(id),
+      applicant_name: applyForm.applicant_name,
+      applicant_email: applyForm.applicant_email,
+      applicant_phone: applyForm.applicant_phone,
+      monthly_income: applyForm.monthly_income ? Number(applyForm.monthly_income) : null,
+      guarantor_name: applyForm.guarantor_name || null,
+      guarantor_income: applyForm.guarantor_income ? Number(applyForm.guarantor_income) : null,
+    }),
+    {
+      onSuccess: () => {
+        toast.success('Candidature envoyée — suivez-la dans « Mes candidatures ».')
+        setApplyOpen(false)
+        navigate('/dashboard/candidatures')
+      },
+      onError: (error) => toast.error(error.response?.data?.error || 'Une erreur est survenue')
+    }
+  )
 
   const PROPERTY_TYPES = {
     apartment: 'Appartement',
@@ -606,6 +644,16 @@ function PropertyDetail() {
               )}
             </div>
 
+            {/* Postuler (location uniquement) */}
+            {property.transaction_type === 'rent' && (
+              <button
+                onClick={() => isAuthenticated ? setApplyOpen(true) : navigate('/connexion', { state: { from: `/annonces/${id}` } })}
+                className="inline-flex items-center justify-center gap-2 w-full px-5 py-3 mb-6 bg-primary-600 text-white rounded-xl font-semibold hover:bg-primary-700 transition-colors"
+              >
+                <FiFileText className="w-5 h-5" /> Déposer un dossier de candidature
+              </button>
+            )}
+
             {/* Actions */}
             <div className="flex gap-3">
               {isBuyer && (
@@ -625,6 +673,95 @@ function PropertyDetail() {
           </div>
         </div>
       </div>
+
+      {/* Modale de candidature */}
+      {applyOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full">
+            <h3 className="font-semibold text-lg mb-4">Déposer un dossier de candidature</h3>
+            <form
+              onSubmit={(e) => { e.preventDefault(); applyMut.mutate() }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="label">Nom *</label>
+                <input
+                  className="input"
+                  value={applyForm.applicant_name}
+                  onChange={(e) => setApplyForm((f) => ({ ...f, applicant_name: e.target.value }))}
+                  placeholder="Votre nom"
+                  required
+                />
+              </div>
+              <div>
+                <label className="label">Email *</label>
+                <input
+                  type="email"
+                  className="input"
+                  value={applyForm.applicant_email}
+                  onChange={(e) => setApplyForm((f) => ({ ...f, applicant_email: e.target.value }))}
+                  placeholder="votre@email.com"
+                  required
+                />
+              </div>
+              <div>
+                <label className="label">Téléphone</label>
+                <input
+                  className="input"
+                  value={applyForm.applicant_phone}
+                  onChange={(e) => setApplyForm((f) => ({ ...f, applicant_phone: e.target.value }))}
+                  placeholder="+212 6XX XXX XXX"
+                />
+              </div>
+              <div>
+                <label className="label">Revenu mensuel (MAD)</label>
+                <input
+                  type="number"
+                  className="input"
+                  value={applyForm.monthly_income}
+                  onChange={(e) => setApplyForm((f) => ({ ...f, monthly_income: e.target.value }))}
+                  placeholder="8000"
+                />
+              </div>
+              <div>
+                <label className="label">Nom du garant</label>
+                <input
+                  className="input"
+                  value={applyForm.guarantor_name}
+                  onChange={(e) => setApplyForm((f) => ({ ...f, guarantor_name: e.target.value }))}
+                  placeholder="Nom du garant (facultatif)"
+                />
+              </div>
+              <div>
+                <label className="label">Revenu du garant (MAD)</label>
+                <input
+                  type="number"
+                  className="input"
+                  value={applyForm.guarantor_income}
+                  onChange={(e) => setApplyForm((f) => ({ ...f, guarantor_income: e.target.value }))}
+                  placeholder="Facultatif"
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setApplyOpen(false)}
+                  className="btn-secondary"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={applyMut.isLoading}
+                  className="btn-primary"
+                >
+                  {applyMut.isLoading ? 'Envoi...' : 'Envoyer ma candidature'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

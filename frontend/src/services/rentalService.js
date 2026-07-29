@@ -1,6 +1,7 @@
 import api from './api'
 
 const B = '/backoffice/gestion-locative'
+const C = '/gestion-locative'
 
 export const rentalService = {
   // Mandats
@@ -26,4 +27,15 @@ export const rentalService = {
   getApplication: async (id) => (await api.get(`${B}/applications/${id}`)).data,
   decideApplication: async (id, data) => (await api.post(`${B}/applications/${id}/decide`, data)).data,
   validateDocument: async (appId, docId, data) => (await api.patch(`${B}/applications/${appId}/documents/${docId}`, data)).data,
+}
+
+export const applicantService = {
+  submit: async (data) => (await api.post(`${C}/applications`, data)).data,
+  myApplications: async () => (await api.get(`${C}/applications`)).data,
+  myApplication: async (id) => (await api.get(`${C}/applications/${id}`)).data,
+  withdraw: async (id) => (await api.post(`${C}/applications/${id}/withdraw`)).data,
+  uploadDocument: async (appId, file, docType) => (await api.post(
+    `${C}/applications/${appId}/documents`, file,
+    { params: { doc_type: docType, filename: file.name }, headers: { 'Content-Type': file.type || 'application/octet-stream' } })).data,
+  documentUrl: (appId, docId) => `${C}/applications/${appId}/documents/${docId}`,
 }
