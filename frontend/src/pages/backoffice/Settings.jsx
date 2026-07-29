@@ -339,7 +339,7 @@ export default function BackofficeSettings() {
                     onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
-                    <option value="MAD">Dirham Marocain (MAD)</option>
+                    <option value="MAD">Dirham marocain (Đh)</option>
                     <option value="EUR">Euro (EUR)</option>
                     <option value="USD">Dollar US (USD)</option>
                   </select>

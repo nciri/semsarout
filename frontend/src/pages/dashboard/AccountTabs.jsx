@@ -1,10 +1,9 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { FiBriefcase, FiCreditCard, FiSettings } from 'react-icons/fi'
+import { FiBriefcase, FiCreditCard } from 'react-icons/fi'
 
 const TABS = [
   { to: 'agence', label: 'Agence', icon: FiBriefcase },
-  { to: 'abonnement', label: 'Abonnement', icon: FiCreditCard },
-  { to: 'parametres', label: 'Paramètres', icon: FiSettings }
+  { to: 'abonnement', label: 'Abonnement', icon: FiCreditCard }
 ]
 
 // Regroupe agence / abonnement / paramètres sous une seule entrée « Mon compte »

@@ -9,8 +9,9 @@ import { fmtMAD, fmtPct } from '../../../components/analytics/palette'
 
 function PipelineAnalytics() {
   const range = useRange()
-  const { data, isLoading } = useQuery(['analytics', 'pipeline', range], () => analyticsService.getPipeline(range))
+  const { data, isLoading, isError } = useQuery(['analytics', 'pipeline', range], () => analyticsService.getPipeline(range))
   if (isLoading) return <p>Chargement…</p>
+  if (isError || !data) return <p className="text-gray-500">Aucune donnée d'analyse disponible.</p>
   const s = data.summary, d = data.detail
   return (
     <div className="space-y-6">

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from 'react-query'
-import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiLink, FiTrendingUp, FiInbox, FiShield } from 'react-icons/fi'
+import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiLink, FiTrendingUp, FiInbox, FiShield, FiBriefcase } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
 import { leadService } from '../../services/leadService'
 import Wordmark from '../common/Wordmark'
@@ -11,7 +11,11 @@ function Header() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const { isAuthenticated, user, logout } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const userMenuRef = useRef(null)
+
+  // Item du menu correspondant à la page courante (fond distinct)
+  const isActivePath = (to) => (to === '/dashboard' ? location.pathname === '/dashboard' : location.pathname.startsWith(to))
 
   const handleLogout = () => {
     logout()
@@ -39,6 +43,14 @@ function Header() {
         { to: '/dashboard/leads', label: 'Demandes / Leads', icon: FiInbox }
       ]
     },
+    ...(user?.agency_id
+      ? [{
+          title: null,
+          items: [
+            { to: '/backoffice', label: "Gestion de l'agence", icon: FiBriefcase }
+          ]
+        }]
+      : []),
     {
       title: 'Location courte durée',
       items: [
@@ -193,14 +205,16 @@ function Header() {
                                 {section.title}
                               </p>
                             )}
-                            {section.items.map(({ to, label, icon: Icon }) => (
+                            {section.items.map(({ to, label, icon: Icon }) => {
+                              const active = isActivePath(to)
+                              return (
                               <Link
                                 key={to}
                                 to={to}
                                 onClick={() => setIsUserMenuOpen(false)}
-                                className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
+                                className={`flex items-center px-4 py-2 ${active ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
                               >
-                                <Icon className="w-4 h-4 mr-3 text-gray-400" />
+                                <Icon className={`w-4 h-4 mr-3 ${active ? 'text-primary-600' : 'text-gray-400'}`} />
                                 <span className="flex-1">{label}</span>
                                 {to === '/dashboard/leads' && unreadLeads > 0 && (
                                   <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-600 text-white text-xs font-semibold">
@@ -208,7 +222,8 @@ function Header() {
                                   </span>
                                 )}
                               </Link>
-                            ))}
+                              )
+                            })}
                           </div>
                         ))}
                       </div>
@@ -318,14 +333,16 @@ function Header() {
                           {section.title}
                         </p>
                       )}
-                      {section.items.map(({ to, label, icon: Icon }) => (
+                      {section.items.map(({ to, label, icon: Icon }) => {
+                        const active = isActivePath(to)
+                        return (
                         <Link
                           key={to}
                           to={to}
-                          className="flex items-center gap-3 py-2 text-gray-600"
+                          className={`flex items-center gap-3 px-3 py-2 rounded-lg ${active ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-600'}`}
                           onClick={() => setIsMenuOpen(false)}
                         >
-                          <Icon className="w-4 h-4 text-gray-400" />
+                          <Icon className={`w-4 h-4 ${active ? 'text-primary-600' : 'text-gray-400'}`} />
                           <span className="flex-1">{label}</span>
                           {to === '/dashboard/leads' && unreadLeads > 0 && (
                             <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-600 text-white text-xs font-semibold">
@@ -333,7 +350,8 @@ function Header() {
                             </span>
                           )}
                         </Link>
-                      ))}
+                        )
+                      })}
                     </div>
                   ))}
                   <button

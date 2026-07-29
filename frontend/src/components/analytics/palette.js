@@ -38,6 +38,6 @@ export function useChartTheme() {
 
 export const AXIS = 'currentColor'
 
-export const fmtMAD = (n) => `${Number(n || 0).toLocaleString('fr-FR')} MAD`
+export const fmtMAD = (n) => `${Number(n || 0).toLocaleString('fr-FR')} Đh`
 export const fmtNum = (n) => Number(n || 0).toLocaleString('fr-FR')
 export const fmtPct = (n) => `${Number(n || 0).toLocaleString('fr-FR')} %`

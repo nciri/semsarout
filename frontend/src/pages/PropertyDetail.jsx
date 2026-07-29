@@ -10,11 +10,20 @@ import {
 import { IoBedOutline, IoWaterOutline } from 'react-icons/io5'
 import { propertyService } from '../services/propertyService'
 import { buyerService } from '../services/buyerService'
+import api from '../services/api'
 import { formatPrice } from '../utils/currency'
 import PhotoLightbox from '../components/common/PhotoLightbox'
 import PriceGauge from '../components/common/PriceGauge'
 import useAuthStore from '../store/authStore'
 import { getAmenityIcon } from '../utils/amenityIcons'
+
+const LEAD_STATUS = {
+  new: ['Nouveau', 'bg-blue-100 text-blue-700'],
+  contacted: ['Contacté', 'bg-yellow-100 text-yellow-700'],
+  qualified: ['Qualifié', 'bg-green-100 text-green-700'],
+  converted: ['Converti', 'bg-purple-100 text-purple-700'],
+  lost: ['Perdu', 'bg-gray-100 text-gray-600'],
+}
 
 function PropertyDetail() {
   const { id } = useParams()
@@ -50,6 +59,15 @@ function PropertyDetail() {
   const existingFavorite = favoritesData?.favorites?.find(
     (f) => f.property_id === Number(id)
   )
+
+  // Agence propriétaire du bien : afficher les contacts intéressés par cette annonce
+  const isOwnerAgency = isAuthenticated && !!user?.agency_id && !!property?.agency_id && user.agency_id === property.agency_id
+  const { data: interestedData, isLoading: interestedLoading } = useQuery(
+    ['property-leads', id],
+    async () => (await api.get(`/backoffice/leads?property_id=${id}&per_page=100`)).data,
+    { enabled: !!isOwnerAgency }
+  )
+  const interestedLeads = interestedData?.leads || []
 
   const handleToggleFavorite = async () => {
     if (!isAuthenticated) {
@@ -241,6 +259,23 @@ function PropertyDetail() {
                 >
                   <FiZoomIn className="w-5 h-5" />
                 </button>
+                {/* Favori — même cœur que les cartes d'annonces */}
+                {isBuyer && (
+                  <button
+                    aria-label="Favori"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleToggleFavorite()
+                    }}
+                    className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-white/[.92] shadow-ds-sm flex items-center justify-center z-10 hover:bg-white transition-colors"
+                    title={existingFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                  >
+                    <FiHeart
+                      className={`w-5 h-5 ${existingFavorite ? 'text-redcard-500 fill-redcard-500' : 'text-slate-600'}`}
+                      strokeWidth={1.8}
+                    />
+                  </button>
+                )}
                 {/* Image counter */}
                 <div className="absolute top-4 left-4 bg-black/50 text-white text-sm px-3 py-1 rounded-full">
                   {currentImage + 1} / {images.length}
@@ -446,6 +481,53 @@ function PropertyDetail() {
         {/* Sidebar */}
         <div className="lg:col-span-1">
           <div className="sticky top-24">
+            {/* Contacts intéressés — visible uniquement par l'agence propriétaire */}
+            {isOwnerAgency && (
+              <div className="card p-6 mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold">Contacts intéressés</h3>
+                  <span className="badge-primary">{interestedLeads.length}</span>
+                </div>
+                {interestedLoading ? (
+                  <p className="text-sm text-gray-400">Chargement…</p>
+                ) : interestedLeads.length === 0 ? (
+                  <p className="text-sm text-gray-400">Aucun contact intéressé pour l'instant.</p>
+                ) : (
+                  <ul className="space-y-3 max-h-[26rem] overflow-y-auto -mr-2 pr-2">
+                    {interestedLeads.map((l) => (
+                      <li key={l.id} className="border border-gray-100 rounded-lg p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium text-gray-900 text-sm truncate">{l.name}</span>
+                          <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${LEAD_STATUS[l.status]?.[1] || 'bg-gray-100 text-gray-600'}`}>
+                            {LEAD_STATUS[l.status]?.[0] || l.status}
+                          </span>
+                        </div>
+                        <div className="mt-1.5 space-y-1">
+                          {l.email && (
+                            <a href={`mailto:${l.email}`} className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-primary-600">
+                              <FiMail className="w-3.5 h-3.5 text-gray-400" /> <span className="truncate">{l.email}</span>
+                            </a>
+                          )}
+                          {l.phone && (
+                            <a href={`tel:${l.phone}`} className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-primary-600">
+                              <FiPhone className="w-3.5 h-3.5 text-gray-400" /> {l.phone}
+                            </a>
+                          )}
+                        </div>
+                        {l.message && <p className="text-xs text-gray-400 mt-1.5 line-clamp-2">{l.message}</p>}
+                        <p className="text-[11px] text-gray-400 mt-1.5">
+                          {l.created_at ? new Date(l.created_at).toLocaleDateString('fr-FR') : ''}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <Link to="/backoffice/leads" className="block text-center text-sm text-primary-600 hover:text-primary-700 mt-4">
+                  Gérer dans le back-office →
+                </Link>
+              </div>
+            )}
+
             {/* Contact Card */}
             <div className="card p-6 mb-6">
               <h3 className="font-semibold mb-4">Nous contacter</h3>
@@ -532,7 +614,7 @@ function PropertyDetail() {
                   className={`btn-secondary flex-1 ${existingFavorite ? 'text-red-600 border-red-200' : ''}`}
                 >
                   <FiHeart className={`w-4 h-4 mr-2 ${existingFavorite ? 'fill-current' : ''}`} />
-                  {existingFavorite ? 'Retiré' : 'Favoris'}
+                  {existingFavorite ? 'En favori' : 'Ajouter aux favoris'}
                 </button>
               )}
               <button onClick={handleShare} className="btn-secondary flex-1">

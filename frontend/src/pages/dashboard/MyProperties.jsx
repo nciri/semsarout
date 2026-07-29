@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
-import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiHeart } from 'react-icons/fi'
+import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiHeart, FiUploadCloud } from 'react-icons/fi'
 import { propertyService } from '../../services/propertyService'
 import { buyerService } from '../../services/buyerService'
 import { formatPrice } from '../../utils/currency'
@@ -183,7 +183,7 @@ function MyProperties() {
                   <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Statut</th>
                   <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Vues</th>
                   <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Contacts</th>
-                  <th className="text-right px-6 py-4 text-sm font-medium text-gray-500">Actions</th>
+                  <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -206,7 +206,7 @@ function MyProperties() {
                     <td className="px-6 py-4 text-gray-600">{property.views_count}</td>
                     <td className="px-6 py-4 text-gray-600">{property.contacts_count}</td>
                     <td className="px-6 py-4">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-start gap-2">
                         <Link
                           to={`/annonces/${property.id}`}
                           className="p-2 text-gray-400 hover:text-gray-600"
@@ -241,9 +241,11 @@ function MyProperties() {
                             {property.status === 'draft' && (
                               <button
                                 onClick={() => publishMutation.mutate(property.id)}
-                                className="px-3 py-1 text-sm bg-primary-600 text-white rounded hover:bg-primary-700"
+                                disabled={publishMutation.isLoading}
+                                className="p-2 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded disabled:opacity-50"
+                                title="Publier"
                               >
-                                Publier
+                                <FiUploadCloud className="w-4 h-4" />
                               </button>
                             )}
                           </>
