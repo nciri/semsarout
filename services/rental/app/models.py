@@ -136,6 +136,43 @@ class ClientRO(Base):
     client_type = Column(String(20))
 
 
+class TenantApplication(Base):
+    __tablename__ = "tenant_application"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    property_id = Column(Integer, index=True, nullable=False)
+    agency_id = Column(Integer, index=True)                 # agence du bien (aiguillage)
+    owner_id = Column(Integer, index=True)                  # bien de particulier
+    applicant_user_id = Column(Integer, index=True, nullable=False)  # uid JWT (propriété candidat)
+    applicant_name = Column(String(150))
+    applicant_email = Column(String(120))
+    applicant_phone = Column(String(30))
+    monthly_income = Column(Numeric(12, 2))
+    guarantor_name = Column(String(150))
+    guarantor_income = Column(Numeric(12, 2))
+    status = Column(String(20), default="received")         # received|reviewing|accepted|rejected|withdrawn
+    submitted_at = Column(DateTime, default=datetime.utcnow)
+    decided_at = Column(DateTime)
+    decision_reason = Column(String(255))
+    ack_sent_at = Column(DateTime)
+    missing_docs_reminder_sent_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ApplicationDocument(Base):
+    __tablename__ = "application_document"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    application_id = Column(Integer, index=True, nullable=False)
+    doc_type = Column(String(40))                           # cin|bulletin_salaire|contrat_travail|avis_impot|garant_*
+    status = Column(String(20), default="received")         # received|validated|rejected
+    file_key = Column(String(255))
+    filename = Column(String(255))
+    content_type = Column(String(100))
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class ProcessedMessage(Base):
     __tablename__ = "processed_message"
 

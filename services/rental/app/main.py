@@ -5,8 +5,10 @@ CRUD mandats de gestion + baux (back-office, gating `rental`). Émet rental.mand
 """
 from contextlib import asynccontextmanager
 from datetime import datetime
+import os
 import uuid
 
+import httpx
 from fastapi import Depends, FastAPI, Header, Request, Response
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -18,7 +20,8 @@ from semsar_events import enqueue
 
 from . import events
 from .db import get_db, init_db
-from .models import ChargeRegularization, ClientRO, CrgReport, Lease, Mandate, PropertyRO, RentPeriod
+from .models import (ApplicationDocument, ChargeRegularization, ClientRO, CrgReport, Lease,
+                     Mandate, PropertyRO, RentPeriod, TenantApplication)
 from .util import err, iso, json_body, num
 
 settings = get_settings()
@@ -720,3 +723,56 @@ def send_charge_reg(reg_id: int, principal: Principal = Depends(get_principal),
         "actual_total": num(cr.actual_total), "balance": num(cr.balance)})
     db.commit()
     return _charge_reg_dict(cr)
+
+
+def _property_lookup(property_id: int) -> dict:
+    """Bien -> agence/propriétaire via l'endpoint interne listing (aiguillage)."""
+    base = os.environ.get("LISTING_URL", "http://localhost:8012")
+    try:
+        r = httpx.get(f"{base}/internal/property/{property_id}",
+                      headers={"x-internal-token": settings.internal_token}, timeout=5.0)
+        return (r.json().get("property") or {}) if r.status_code == 200 else {}
+    except (httpx.HTTPError, ValueError):
+        return {}
+
+
+def _application_dict(a: TenantApplication, docs=None) -> dict:
+    out = {
+        "id": a.id, "property_id": a.property_id, "agency_id": a.agency_id,
+        "applicant_user_id": a.applicant_user_id, "applicant_name": a.applicant_name,
+        "applicant_email": a.applicant_email, "applicant_phone": a.applicant_phone,
+        "monthly_income": num(a.monthly_income), "guarantor_name": a.guarantor_name,
+        "guarantor_income": num(a.guarantor_income), "status": a.status,
+        "submitted_at": iso(a.submitted_at), "decided_at": iso(a.decided_at),
+        "decision_reason": a.decision_reason, "created_at": iso(a.created_at),
+    }
+    if docs is not None:
+        out["documents"] = [{"id": d.id, "doc_type": d.doc_type, "status": d.status,
+                             "filename": d.filename, "created_at": iso(d.created_at)} for d in docs]
+    return out
+
+
+@app.post("/gestion-locative/applications", status_code=201)
+async def submit_application(request: Request, principal: Principal = Depends(get_principal),
+                             db: Session = Depends(get_db)):
+    """Candidature d'un utilisateur connecté (grand public) sur un bien. PAS de gating agence."""
+    if principal.agency_id is None and not principal.sub:
+        return err("Authentification requise.", 401)
+    data = await json_body(request)
+    if not data.get("property_id"):
+        return err("property_id est requis.", 400)
+    prop = _property_lookup(int(data["property_id"]))
+    a = TenantApplication(
+        property_id=int(data["property_id"]), agency_id=prop.get("agency_id"),
+        owner_id=prop.get("owner_id"), applicant_user_id=int(principal.sub),
+        applicant_name=data.get("applicant_name"), applicant_email=data.get("applicant_email"),
+        applicant_phone=data.get("applicant_phone"), monthly_income=data.get("monthly_income"),
+        guarantor_name=data.get("guarantor_name"), guarantor_income=data.get("guarantor_income"),
+        status="received")
+    db.add(a)
+    db.flush()
+    enqueue(db, "tenant_application", a.id, events.APPLICATION_RECEIVED, {
+        "id": a.id, "applicant_email": a.applicant_email, "applicant_name": a.applicant_name,
+        "property_id": a.property_id, "property_title": prop.get("title")})
+    db.commit()
+    return _application_dict(a)
