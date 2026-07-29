@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useParams, Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { FiArrowLeft, FiCheckCircle, FiDownload } from 'react-icons/fi'
+import { FiArrowLeft, FiCheckCircle, FiDownload, FiLock } from 'react-icons/fi'
 import api from '../../../services/api'
 import { rentalService } from '../../../services/rentalService'
-import { Panel, StatusBadge, DataTable, EmptyState, Modal, Field, PRIMARY_BTN, SECONDARY_BTN, Select } from '../../../components/backoffice/ui'
+import { Panel, StatusBadge, DataTable, EmptyState, Modal, Field, PRIMARY_BTN, SECONDARY_BTN, Select, GatedNotice } from '../../../components/backoffice/ui'
 
 async function openPdf(url) {
   try { const res = await api.get(url, { responseType: 'blob' }); window.open(URL.createObjectURL(res.data), '_blank') }
@@ -22,7 +22,7 @@ const RP_STATUS = {
 function LeaseDetail() {
   const { id } = useParams()
   const qc = useQueryClient()
-  const { data: l, isLoading } = useQuery(['rental-lease', id], () => rentalService.getLease(id))
+  const { data: l, isLoading, error } = useQuery(['rental-lease', id], () => rentalService.getLease(id))
   const { data: rpData } = useQuery(['rental-rent-periods', id], () => rentalService.listRentPeriods(id))
   const [payFor, setPayFor] = useState(null)   // rent period being paid
   const [payForm, setPayForm] = useState({ amount: '', method: 'virement' })
@@ -38,7 +38,14 @@ function LeaseDetail() {
     onError: (e) => toast.error(e.response?.data?.error || 'Erreur'),
   })
 
-  if (isLoading || !l) return <div className="p-6 text-gray-500">Chargement…</div>
+  if (error?.response?.status === 403) return <GatedNotice icon={FiLock} title="Gestion locative" message="La gestion locative est réservée aux plans Pro et Entreprise." />
+  if (isLoading) return <div className="p-6 text-gray-500">Chargement…</div>
+  if (!l) return (
+    <div className="p-6">
+      <Link to="/backoffice/gestion-locative/baux" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"><FiArrowLeft className="w-4 h-4" /> Retour</Link>
+      <p className="mt-4 text-gray-500">Élément introuvable.</p>
+    </div>
+  )
   const periods = rpData?.rent_periods || []
   const columns = [
     { header: 'Période', cell: (p) => <span className="text-gray-700">{p.period_label}</span> },

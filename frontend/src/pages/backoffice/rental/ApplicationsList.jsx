@@ -18,6 +18,7 @@ function ApplicationsList() {
   const apps = data?.applications || []
   const stats = useMemo(() => ({ total: apps.length, received: apps.filter((a) => a.status === 'received').length, accepted: apps.filter((a) => a.status === 'accepted').length }), [apps])
   if (error?.response?.status === 403) return <GatedNotice icon={FiLock} title="Candidatures" message="La gestion locative est réservée aux plans Pro et Entreprise." />
+  if (error) return <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-gray-500">Une erreur est survenue lors du chargement. Réessayez plus tard.</div>
 
   const columns = [
     { header: 'Candidat', cell: (a) => <Link className="text-primary-600 hover:text-primary-700 font-medium" to={`/backoffice/gestion-locative/candidatures/${a.id}`}>{a.applicant_name || a.applicant_email || `#${a.id}`}</Link> },

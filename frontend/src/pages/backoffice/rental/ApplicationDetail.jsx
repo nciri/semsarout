@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useParams, Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { FiArrowLeft, FiCheck, FiX } from 'react-icons/fi'
+import { FiArrowLeft, FiCheck, FiX, FiLock } from 'react-icons/fi'
 import { rentalService } from '../../../services/rentalService'
-import { Panel, StatusBadge, DataTable, EmptyState, Modal, Field, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
+import { Panel, StatusBadge, DataTable, EmptyState, Modal, Field, PRIMARY_BTN, SECONDARY_BTN, GatedNotice } from '../../../components/backoffice/ui'
 
 const DOC_STATUS = {
   received: ['Reçue', 'bg-blue-100 text-blue-700'],
@@ -15,7 +15,7 @@ const DOC_STATUS = {
 function ApplicationDetail() {
   const { id } = useParams()
   const qc = useQueryClient()
-  const { data: a, isLoading } = useQuery(['rental-application', id], () => rentalService.getApplication(id))
+  const { data: a, isLoading, error } = useQuery(['rental-application', id], () => rentalService.getApplication(id))
   const [rejectOpen, setRejectOpen] = useState(false)
   const [reason, setReason] = useState('')
   const refresh = () => qc.invalidateQueries(['rental-application', id])
@@ -27,7 +27,14 @@ function ApplicationDetail() {
     onSuccess: () => { toast.success('Pièce mise à jour'); refresh() },
     onError: (e) => toast.error(e.response?.data?.error || 'Erreur'),
   })
-  if (isLoading || !a) return <div className="p-6 text-gray-500">Chargement…</div>
+  if (error?.response?.status === 403) return <GatedNotice icon={FiLock} title="Gestion locative" message="La gestion locative est réservée aux plans Pro et Entreprise." />
+  if (isLoading) return <div className="p-6 text-gray-500">Chargement…</div>
+  if (!a) return (
+    <div className="p-6">
+      <Link to="/backoffice/gestion-locative/candidatures" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"><FiArrowLeft className="w-4 h-4" /> Retour</Link>
+      <p className="mt-4 text-gray-500">Élément introuvable.</p>
+    </div>
+  )
   const docs = a.documents || []
   const pending = ['received', 'reviewing'].includes(a.status)
   const docColumns = [
@@ -36,8 +43,8 @@ function ApplicationDetail() {
     { header: 'Statut', cell: (d) => <StatusBadge label={DOC_STATUS[d.status]?.[0] || d.status} className={DOC_STATUS[d.status]?.[1]} /> },
     { header: '', align: 'right', cell: (d) => (
       <div className="flex gap-2 justify-end">
-        <button onClick={() => validateDoc.mutate({ docId: d.id, status: 'validated' })} className="text-emerald-600 hover:text-emerald-700 inline-flex items-center gap-1"><FiCheck className="w-4 h-4" /> Valider</button>
-        <button onClick={() => validateDoc.mutate({ docId: d.id, status: 'rejected' })} className="text-red-600 hover:text-red-700 inline-flex items-center gap-1"><FiX className="w-4 h-4" /> Refuser</button>
+        <button disabled={validateDoc.isLoading} onClick={() => validateDoc.mutate({ docId: d.id, status: 'validated' })} className="text-emerald-600 hover:text-emerald-700 inline-flex items-center gap-1"><FiCheck className="w-4 h-4" /> Valider</button>
+        <button disabled={validateDoc.isLoading} onClick={() => validateDoc.mutate({ docId: d.id, status: 'rejected' })} className="text-red-600 hover:text-red-700 inline-flex items-center gap-1"><FiX className="w-4 h-4" /> Refuser</button>
       </div>
     ) },
   ]

@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useParams, Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { FiArrowLeft, FiCheckCircle, FiDownload } from 'react-icons/fi'
+import { FiArrowLeft, FiCheckCircle, FiDownload, FiLock } from 'react-icons/fi'
 import api from '../../../services/api'
 import { rentalService } from '../../../services/rentalService'
-import { Panel, StatusBadge, DataTable, EmptyState, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
+import { Panel, StatusBadge, DataTable, EmptyState, GatedNotice, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
 
 const STATUS = {
   draft: ['Brouillon', 'bg-gray-100 text-gray-700'],
@@ -23,13 +23,20 @@ async function openPdf(url) {
 function MandateDetail() {
   const { id } = useParams()
   const qc = useQueryClient()
-  const { data: m, isLoading } = useQuery(['rental-mandate', id], () => rentalService.getMandate(id))
+  const { data: m, isLoading, error } = useQuery(['rental-mandate', id], () => rentalService.getMandate(id))
   const { data: crgData } = useQuery(['rental-crg', id], () => rentalService.listCrg(id))
   const sign = useMutation(() => rentalService.signMandate(id), {
     onSuccess: () => { toast.success('Mandat signé'); qc.invalidateQueries(['rental-mandate', id]) },
     onError: (e) => toast.error(e.response?.data?.error || 'Erreur'),
   })
-  if (isLoading || !m) return <div className="p-6 text-gray-500">Chargement…</div>
+  if (error?.response?.status === 403) return <GatedNotice icon={FiLock} title="Gestion locative" message="La gestion locative est réservée aux plans Pro et Entreprise." />
+  if (isLoading) return <div className="p-6 text-gray-500">Chargement…</div>
+  if (!m) return (
+    <div className="p-6">
+      <Link to="/backoffice/gestion-locative" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"><FiArrowLeft className="w-4 h-4" /> Retour</Link>
+      <p className="mt-4 text-gray-500">Élément introuvable.</p>
+    </div>
+  )
 
   const crg = crgData?.reports || []
   const crgColumns = [

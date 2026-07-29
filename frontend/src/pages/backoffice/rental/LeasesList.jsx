@@ -32,6 +32,7 @@ function LeasesList() {
   const leases = data?.leases || []
   const stats = useMemo(() => ({ total: leases.length, active: leases.filter((l) => l.status === 'active').length }), [leases])
   if (error?.response?.status === 403) return <GatedNotice icon={FiLock} title="Baux" message="La gestion locative est réservée aux plans Pro et Entreprise." />
+  if (error) return <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-gray-500">Une erreur est survenue lors du chargement. Réessayez plus tard.</div>
 
   const columns = [
     { header: 'Référence', cell: (l) => <Link className="text-primary-600 hover:text-primary-700 font-medium" to={`/backoffice/gestion-locative/baux/${l.id}`}>{l.reference}</Link> },
