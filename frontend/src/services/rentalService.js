@@ -25,6 +25,10 @@ export const rentalService = {
   // Candidatures
   listApplications: async () => (await api.get(`${B}/applications`)).data,
   getApplication: async (id) => (await api.get(`${B}/applications/${id}`)).data,
+  createApplication: async (data) => (await api.post(`${B}/applications`, data)).data,
+  uploadApplicationDoc: async (appId, file, docType) => (await api.post(
+    `${B}/applications/${appId}/documents`, file,
+    { params: { doc_type: docType, filename: file.name }, headers: { 'Content-Type': file.type || 'application/octet-stream' } })).data,
   decideApplication: async (id, data) => (await api.post(`${B}/applications/${id}/decide`, data)).data,
   validateDocument: async (appId, docId, data) => (await api.patch(`${B}/applications/${appId}/documents/${docId}`, data)).data,
 }
