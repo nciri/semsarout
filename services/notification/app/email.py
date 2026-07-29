@@ -14,13 +14,15 @@ def is_configured() -> bool:
                 and os.environ.get("SMTP_PASSWORD"))
 
 
-def send_email(to: str, subject: str, body: str, *, html: str | None = None) -> None:
-    """Envoie un email via SMTP (STARTTLS sur 587, SSL implicite sur 465). Lève si échec."""
+def send_email(to: str, subject: str, body: str, *, html: str | None = None,
+               from_email: str | None = None) -> None:
+    """Envoie un email via SMTP (STARTTLS sur 587, SSL implicite sur 465). `from_email` permet de
+    choisir l'expéditeur (noreply@ / contact@…) selon le cas. Lève si échec."""
     host = os.environ["SMTP_HOST"]
     port = int(os.environ.get("SMTP_PORT", "587"))
     user = os.environ["SMTP_USER"]
     password = os.environ["SMTP_PASSWORD"]
-    sender = os.environ.get("SMTP_FROM", user)
+    sender = from_email or os.environ.get("SMTP_FROM", user)
     sender_name = os.environ.get("SMTP_FROM_NAME", "SemsarOut")
 
     msg = EmailMessage()

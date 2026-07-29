@@ -22,8 +22,10 @@ _env = Environment(
 _env.globals["brand"] = {
     "gold": "#C6923F", "gold_dark": "#A9781F", "gold_soft": "#FBF5EA",
     "dark": "#0B1220", "ivory": "#FAF9F7", "teal": "#0F766E",
+    "red": "#C1121F", "red_dark": "#870B15",  # carton « Out » du wordmark du site
     "text": "#1f2937", "muted": "#6b7280", "border": "#ececec",
 }
+_env.globals["currency"] = "Đh"  # symbole dirham utilisé sur le site
 
 
 def _globals() -> dict:

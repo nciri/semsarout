@@ -245,7 +245,8 @@ def publish_property(property_id: int, principal: Principal = Depends(get_princi
 # crm consomme l'événement pour créer le lead (découplage inter-domaines).
 def _contact_payload(p: Property, data: dict, source: str) -> dict:
     return {
-        "property_id": p.id, "agency_id": p.agency_id, "owner_id": p.owner_id,
+        "property_id": p.id, "property_title": p.title,
+        "agency_id": p.agency_id, "owner_id": p.owner_id,
         "name": data.get("name"), "email": data.get("email"), "phone": data.get("phone"),
         "message": data.get("message"), "source": source, "service": data.get("service"),
     }

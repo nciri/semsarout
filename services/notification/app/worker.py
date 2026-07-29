@@ -21,7 +21,8 @@ def main() -> None:
     consumer = EventConsumer(
         settings.rabbitmq_url,
         service_name=settings.service_name,
-        bindings=["identity.kyc.#", "identity.password_reset"],
+        bindings=["identity.kyc.#", "identity.password_reset",
+                  "listing.contacted", "program.contacted"],
         exchange=settings.events_exchange,
     )
     consumer.run(handler=handle_event)

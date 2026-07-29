@@ -8,9 +8,11 @@ import logging
 import os
 
 from . import email as email_adapter
-from . import render
+from . import recipients, render
 from .db import SessionLocal
 from .models import NotificationLog, ProcessedMessage
+
+_PLACEHOLDER_EMAILS = {"non-renseigne@semsarout.ma"}
 
 logger = logging.getLogger("notification")
 
@@ -49,15 +51,54 @@ def _handle_password_reset(db, payload: dict) -> None:
         return
     link = f"{_BASE_URL}/reinitialiser-mot-de-passe?token={token}"
     # Gabarit Jinja2 autoescapé → `name` (et toute variable) est échappé : pas d'injection HTML.
-    subject, html, text = render.render_email("password_reset.html",
-                                              name=payload.get("name") or "", link=link)
+    _try_send(db, to, "password_reset.html", "password_reset", from_email=_noreply(),
+              name=payload.get("name") or "", link=link)
+
+
+# Expéditeur selon le cas : noreply pour les envois automatiques sans réponse attendue ;
+# contact pour les emails relationnels (le destinataire peut répondre).
+def _noreply() -> str:
+    return os.environ.get("SMTP_FROM_NOREPLY", "noreply@semsarout.com")
+
+
+def _contact() -> str:
+    return os.environ.get("SMTP_FROM_CONTACT", "contact@semsarout.com")
+
+
+def _try_send(db, to: str, template: str, log_name: str, from_email: str | None = None, **ctx) -> None:
+    subject, html, text = render.render_email(template, **ctx)
     try:
-        email_adapter.send_email(to, subject, text, html=html)
-        _log(db, "email", to, "password_reset", "sent")
-        logger.info("email reset envoyé", extra={"recipient": to})
-    except Exception as exc:  # noqa: BLE001 — échec SMTP : journalisé, pas de boucle DLQ
-        _log(db, "email", to, "password_reset", "failed")
-        logger.error("échec envoi email reset: %s", exc)
+        email_adapter.send_email(to, subject, text, html=html, from_email=from_email)
+        _log(db, "email", to, log_name, "sent")
+        logger.info("email envoyé", extra={"template": log_name, "recipient": to})
+    except Exception as exc:  # noqa: BLE001 — échec SMTP journalisé, pas de boucle DLQ
+        _log(db, "email", to, log_name, "failed")
+        logger.error("échec envoi %s: %s", log_name, exc)
+
+
+def _valid_email(addr) -> bool:
+    return bool(addr) and "@" in addr and addr not in _PLACEHOLDER_EMAILS
+
+
+def _handle_contact(db, payload: dict) -> None:
+    """`listing.contacted` / `program.contacted` : accusé au prospect + alerte lead à l'agence."""
+    title = payload.get("property_title")
+    prospect = (payload.get("email") or "").strip()
+    # 1) Accusé de réception au prospect (email réel, hors dossier de vente en ligne).
+    if _valid_email(prospect) and payload.get("source") != "service_request":
+        _try_send(db, prospect, "contact_confirmation.html", "contact_confirmation",
+                  from_email=_noreply(), name=payload.get("name"), property_title=title)
+    # 2) Alerte « nouveau lead » à l'agence (ou au propriétaire particulier).
+    to = None
+    if payload.get("agency_id"):
+        to = recipients.agency_email(payload["agency_id"])
+    elif payload.get("owner_id"):
+        to = recipients.user_email(payload["owner_id"])
+    if _valid_email(to):
+        _try_send(db, to, "lead_notification.html", "lead_notification", from_email=_contact(),
+                  lead_name=payload.get("name"), lead_email=prospect or None,
+                  lead_phone=payload.get("phone"), lead_message=payload.get("message"),
+                  property_title=title, source=payload.get("source"))
 
 
 def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
@@ -67,6 +108,8 @@ def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
             return
         if routing_key == "identity.password_reset":
             _handle_password_reset(db, payload)
+        elif routing_key in ("listing.contacted", "program.contacted"):
+            _handle_contact(db, payload)
         else:
             channel, template = _TEMPLATES.get(routing_key, ("log", routing_key))
             _log(db, channel, str(payload.get("user_id", "?")), template, "sent")
