@@ -34,6 +34,7 @@ class SubscriptionPlan(Base):
     has_contracts = Column(Boolean, default=False)
     has_legal = Column(Boolean, default=False)
     has_artisans = Column(Boolean, default=False)
+    has_rental = Column(Boolean, default=False)
     max_seats = Column(Integer, default=0)
     max_teams = Column(Integer, default=0)
     price_monthly = Column(Numeric(10, 2), nullable=False)

@@ -63,6 +63,7 @@ def _plan_dict(p: SubscriptionPlan) -> dict:
         "has_dedicated_account_manager": p.has_dedicated_account_manager,
         "has_programs": p.has_programs, "max_programs": p.max_programs,
         "has_contracts": p.has_contracts, "has_legal": p.has_legal, "has_artisans": p.has_artisans,
+        "has_rental": p.has_rental,
         "max_seats": p.max_seats, "max_teams": p.max_teams,
         "price_monthly": float(p.price_monthly),
         "price_yearly": float(p.price_yearly) if p.price_yearly else None,
