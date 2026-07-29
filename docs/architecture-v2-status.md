@@ -83,6 +83,7 @@ reconstructibles). Validation JWT **locale** au BFF (frontière d'auth sévrée)
 | buyer | 8515 | acheteur : recherches sauvegardées + favoris + estimations (`/buyer/saved-searches*`, `/buyer/favorites*`, `/buyer/estimates*`) |
 | staymanager | 8517 | intégration StayManager.ma (`/integrations/staymanager/*` : statut/connect/biens/réservations/sync/webhook) — gate `has_staymanager_sync` |
 | programs | 8516 | programmes immobiliers neufs (`/programs*` : liste/détail/my + unités/images/plans/lots interactifs) — gate feature `has_programs` (billing) |
+| rental | 8518 | gestion locative (mandats, baux ; quittancement/CRG à venir) |
 | identity | 8501 | **auth complète** (voir §3) + RBAC + teams/invitations + `dashboard/config` + `internal/agency/{id}/seats|members|analytics-scope` |
 | analytics | 8504 | **tout dashboards/analytics/stats** query-time : `/analytics/*` (6) + `/stats/*` (6) + `/dashboard`+`/dashboard/charts/*`+`/dashboard/activity` — dumps internes transactions/crm/listing/geo/billing/audit + identity scope/seats |
 

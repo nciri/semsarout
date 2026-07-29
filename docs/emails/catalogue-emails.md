@@ -56,28 +56,29 @@
 | Relance pour pièces manquantes | 🔴 | Idem + ordonnanceur. |
 | Acceptation / refus du dossier | 🔴 | Idem. |
 | Bailleur : proposition de dossiers candidats | 🔴 | Idem. |
-| Bailleur : notification de mise en location (bail signé) | 🔴 | Pas de domaine bail/location. |
+| Bailleur : notification de mise en location (bail signé) | ✅ | Phase 1 : domaine `rental` livré, événement `lease.signed` émis et traité. |
 
 ## 3. Gestion Locative (syndic / administration de biens) — **domaine absent**
 
 > **Tout 🔴** : SemsarOut n'a ni bail, ni quittancement, ni comptabilité locative. Nécessite un
 > **nouveau service `rental` (gestion locative)** : baux, échéanciers, quittances, charges, dépôts.
 
-| Processus | Statut |
-|---|---|
-| Appel de loyer / avis d'échéance (mensuel) | 🔴 |
-| Quittance de loyer | 🔴 |
-| Relances impayés (1ʳᵉ amiable, 2ᵉ avant mise en demeure) | 🔴 |
-| Révision annuelle du loyer (indice IRL) | 🔴 |
-| Régularisation des charges (décompte annuel) | 🔴 |
-| Mise à jour pièces (assurance habitation, entretien chaudière) | 🔴 |
-| Congé / préavis (accusé + consignes) | 🔴 |
-| États des lieux (entrée/sortie + copie signée) | 🔴 |
-| Restitution du dépôt de garantie (décompte final) | 🔴 |
-| Propriétaire : Compte‑rendu de gestion (CRG) mensuel/trimestriel | 🔴 |
-| Propriétaire : avis de virement des loyers | 🔴 |
-| Propriétaire : demande d'accord pour travaux (devis) | 🔴 |
-| Propriétaire : aide à la déclaration fiscale (2044 / micro‑foncier) | 🔴 |
+| Processus | Statut | Notes |
+|---|---|---|
+| Mandat de gestion signé (notification) | ✅ | Phase 1 : événement `mandate.signed` émis et traité. |
+| Appel de loyer / avis d'échéance (mensuel) | 🔴 | Phase 2/3 (planifié) |
+| Quittance de loyer | 🔴 | Phase 2/3 (planifié) |
+| Relances impayés (1ʳᵉ amiable, 2ᵉ avant mise en demeure) | 🔴 | Phase 2/3 + ordonnanceur (planifié) |
+| Révision annuelle du loyer (indice IRL) | 🔴 | Phase 2/3 + ordonnanceur (planifié) |
+| Régularisation des charges (décompte annuel) | 🔴 | Phase 2/3 + ordonnanceur (planifié) |
+| Mise à jour pièces (assurance habitation, entretien chaudière) | 🔴 | Phase 2/3 (planifié) |
+| Congé / préavis (accusé + consignes) | 🔴 | Phase 2/3 (planifié) |
+| États des lieux (entrée/sortie + copie signée) | 🔴 | Phase 2/3 (planifié) |
+| Restitution du dépôt de garantie (décompte final) | 🔴 | Phase 2/3 (planifié) |
+| Propriétaire : Compte‑rendu de gestion (CRG) mensuel/trimestriel | 🔴 | Phase 2/3 + ordonnanceur (planifié) |
+| Propriétaire : avis de virement des loyers | 🔴 | Phase 2/3 (planifié) |
+| Propriétaire : demande d'accord pour travaux (devis) | 🔴 | Phase 2/3 (planifié) |
+| Propriétaire : aide à la déclaration fiscale (2044 / micro‑foncier) | 🔴 | Phase 2/3 (planifié) |
 
 ## 4. Maintenance, Travaux et Sinistres
 
