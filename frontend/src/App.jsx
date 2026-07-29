@@ -23,6 +23,7 @@ import MyProperties from './pages/dashboard/MyProperties'
 import CreateProperty from './pages/dashboard/CreateProperty'
 import MyLeads from './pages/dashboard/MyLeads'
 import MyApplications from './pages/dashboard/MyApplications'
+import MyApplicationDetail from './pages/dashboard/MyApplicationDetail'
 import MyAgency from './pages/dashboard/MyAgency'
 import Checkout from './pages/Checkout'
 import NotFound from './pages/NotFound'
@@ -138,6 +139,7 @@ function App() {
           <Route path="programmes/:id/plan" element={<ProgramPlanEditor />} />
           <Route path="leads" element={<MyLeads />} />
           <Route path="candidatures" element={<MyApplications />} />
+          <Route path="candidatures/:id" element={<MyApplicationDetail />} />
 
           {/* Mon compte : agence / abonnement / paramètres regroupés en onglets */}
           <Route path="compte" element={<AccountTabs />}>
