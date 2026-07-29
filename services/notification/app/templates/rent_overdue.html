@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_components.html" import button, card, lucide with context %}
+{% set final = (reminder_count or 0) >= 2 %}
+{% block subject %}{% if final %}Dernier rappel : loyer {{ period_label }} impayé{% else %}Rappel : votre loyer {{ period_label }} reste à régler{% endif %}{% endblock %}
+{% block preheader %}Un règlement rapide évite tout désagrément. Merci de régulariser votre loyer.{% endblock %}
+{% block badge %}{{ lucide("credit-card") }}{% endblock %}
+{% block hero_title %}{% if final %}Dernier rappel de loyer{% else %}Loyer en attente{% endif %}{% endblock %}
+{% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}, votre loyer n'a pas encore été réglé.</p>{% endblock %}
+{% block content %}
+<p style="text-align:center; color:{{ brand.ink }};">Sauf erreur de notre part, le loyer de la période <strong>{{ period_label }}</strong> reste impayé. Merci de procéder à son règlement dans les meilleurs délais.</p>
+{{ card([("Période", period_label)]
+  + [("Montant dû", "{:,.0f}".format(total_amount|float).replace(",", " ") ~ " " ~ currency)]) }}
+<p style="margin-top:18px; font-size:13px; color:{{ brand.muted }}; text-align:center;">Vous avez déjà réglé&nbsp;? Merci de ne pas tenir compte de ce message. Une question&nbsp;? <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
+{% endblock %}

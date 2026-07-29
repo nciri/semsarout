@@ -119,6 +119,31 @@ def _job_unpaid_invoice_reminders(db) -> int:
     return sent
 
 
+def _job_rent_overdue_reminders(db) -> int:
+    """Relance loyer impayé : échéances non réglées, cadence J+3 puis toutes les 7 j (max 3)."""
+    try:
+        r = httpx.get(f"{_rental()}/internal/rent-periods/due-reminders", headers=_headers(), timeout=10.0)
+        periods = r.json().get("rent_periods", []) if r.status_code == 200 else []
+    except (httpx.HTTPError, ValueError):
+        return 0
+    sent = 0
+    for rp in periods:
+        tenant = recipients.client(rp.get("tenant_client_id"))
+        to = (tenant.get("email") or "").strip()
+        if _valid_email(to):
+            _try_send(db, to, "rent_overdue.html", "rent_overdue", from_email=_contact(),
+                      name=tenant.get("name"), period_label=rp.get("period_label"),
+                      total_amount=rp.get("total_amount"), reminder_count=rp.get("reminder_count", 0))
+            db.commit()
+            sent += 1
+        try:
+            httpx.post(f"{_rental()}/internal/rent-periods/{rp['id']}/reminder-sent",
+                       headers=_headers(), timeout=10.0)
+        except httpx.HTTPError:
+            pass
+    return sent
+
+
 def _job_generate_rent_periods(db) -> int:
     """Génère l'échéance du mois courant pour chaque bail actif (idempotent côté rental)."""
     try:
@@ -140,6 +165,9 @@ def run_once() -> None:
         i = _job_unpaid_invoice_reminders(db)
         if i:
             logger.info("relances impayé envoyées", extra={"count": i})
+        ro = _job_rent_overdue_reminders(db)
+        if ro:
+            logger.info("relances loyer envoyées", extra={"count": ro})
         g = _job_generate_rent_periods(db)
         if g:
             logger.info("échéances de loyer générées", extra={"count": g})

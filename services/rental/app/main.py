@@ -335,6 +335,56 @@ def internal_generate_rent_periods(x_internal_token: str = Header(default=""),
     return {"created": created}
 
 
+_RENT_FIRST_REMINDER_DAYS = 3
+_RENT_REMINDER_INTERVAL_DAYS = 7
+_RENT_MAX_REMINDERS = 3
+
+
+@app.get("/internal/rent-periods/due-reminders", include_in_schema=False)
+def internal_rent_due_reminders(x_internal_token: str = Header(default=""),
+                                db: Session = Depends(get_db)):
+    """Échéances impayées dues pour une relance (J+3 après échéance, puis toutes les 7 j, max 3)."""
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    from datetime import timedelta
+    now = datetime.utcnow()
+    out = []
+    rows = (db.query(RentPeriod)
+            .filter(RentPeriod.status.in_(["pending", "partial", "late"]),
+                    RentPeriod.due_date.isnot(None)).all())
+    for rp in rows:
+        count = rp.reminder_count or 0
+        if count >= _RENT_MAX_REMINDERS:
+            continue
+        if count == 0:
+            due = rp.due_date <= now - timedelta(days=_RENT_FIRST_REMINDER_DAYS)
+        else:
+            due = rp.last_reminder_at is not None and \
+                rp.last_reminder_at <= now - timedelta(days=_RENT_REMINDER_INTERVAL_DAYS)
+        if not due:
+            continue
+        lease = db.get(Lease, rp.lease_id)
+        out.append({"id": rp.id, "tenant_client_id": lease.tenant_client_id if lease else None,
+                    "period_label": rp.period_label, "total_amount": num(rp.total_amount),
+                    "reminder_count": count})
+    return {"rent_periods": out}
+
+
+@app.post("/internal/rent-periods/{period_id}/reminder-sent", include_in_schema=False)
+def internal_rent_reminder_sent(period_id: int, x_internal_token: str = Header(default=""),
+                                db: Session = Depends(get_db)):
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    rp = db.get(RentPeriod, period_id)
+    if rp is not None and rp.status in ("pending", "partial", "late"):
+        rp.reminder_count = (rp.reminder_count or 0) + 1
+        rp.last_reminder_at = datetime.utcnow()
+        if rp.status == "pending":
+            rp.status = "late"
+        db.commit()
+    return {"ok": True}
+
+
 @app.get("/backoffice/gestion-locative/leases/{lease_id}/rent-periods")
 def list_rent_periods(lease_id: int, principal: Principal = Depends(get_principal),
                       db: Session = Depends(get_db)):
