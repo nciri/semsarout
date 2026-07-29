@@ -286,6 +286,18 @@ def internal_property_counts(request: Request, db: Session = Depends(get_db)):
             "by_agency": {str(k): v for k, v in by_agency.items()}}
 
 
+@app.get("/internal/property/{property_id}", include_in_schema=False)
+def internal_property(property_id: int, request: Request, db: Session = Depends(get_db)):
+    """Bien (agence/propriétaire/titre) pour l'aiguillage des candidatures locatives (rental)."""
+    if request.headers.get("x-internal-token") != settings.internal_token:
+        return _err("Forbidden", 403)
+    p = db.get(Property, property_id)
+    if p is None:
+        return {"property": None}
+    return {"property": {"id": p.id, "title": p.title, "city": p.city,
+                         "agency_id": p.agency_id, "owner_id": p.owner_id}}
+
+
 @app.post("/estimate")
 async def estimate_price(request: Request, db: Session = Depends(get_db)):
     """Estimation d'un prix de vente à partir d'annonces actives comparables (parité
