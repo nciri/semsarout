@@ -9,7 +9,7 @@ export const rentalService = {
   createMandate: async (data) => (await api.post(`${B}/mandates`, data)).data,
   signMandate: async (id) => (await api.post(`${B}/mandates/${id}/sign`)).data,
   listCrg: async (mandateId) => (await api.get(`${B}/mandates/${mandateId}/crg`)).data,
-  crgPdfUrl: (mandateId, crgId) => `/api/v1${B}/mandates/${mandateId}/crg/${crgId}.pdf`,
+  crgPdfUrl: (mandateId, crgId) => `${B}/mandates/${mandateId}/crg/${crgId}.pdf`,
   // Baux
   listLeases: async () => (await api.get(`${B}/leases`)).data,
   getLease: async (id) => (await api.get(`${B}/leases/${id}`)).data,
@@ -20,7 +20,7 @@ export const rentalService = {
   // Quittancement
   listRentPeriods: async (leaseId) => (await api.get(`${B}/leases/${leaseId}/rent-periods`)).data,
   payRentPeriod: async (id, data) => (await api.post(`${B}/rent-periods/${id}/pay`, data)).data,
-  receiptPdfUrl: (id) => `/api/v1${B}/rent-periods/${id}/receipt.pdf`,
+  receiptPdfUrl: (id) => `${B}/rent-periods/${id}/receipt.pdf`,
   // Candidatures
   listApplications: async () => (await api.get(`${B}/applications`)).data,
   getApplication: async (id) => (await api.get(`${B}/applications/${id}`)).data,
