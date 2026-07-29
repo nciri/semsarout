@@ -87,6 +87,7 @@ env UPSTREAM_URL="$MONO" JWT_SECRET_KEY="$JWT" INTERNAL_TOKEN="$ITOK" \
   ANALYTICS_URL=http://localhost:8504 CONTRACT_URL=http://localhost:8505 LEGAL_URL=http://localhost:8506 \
   PAYMENT_URL=http://localhost:8507 BILLING_URL=http://localhost:8508 TRANSACTIONS_URL=http://localhost:8514 \
   BUYER_URL=http://localhost:8515 PROGRAMS_URL=http://localhost:8516 STAYMANAGER_URL=http://localhost:8517 \
+  RENTAL_URL=http://localhost:8518 \
   nohup python3 -m uvicorn app.main:app --app-dir gateway --host 127.0.0.1 --port "$BFF_PORT" \
   > "$LOG/bff.log" 2>&1 &
 sleep 4
