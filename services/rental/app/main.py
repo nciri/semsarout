@@ -747,7 +747,8 @@ def _user_lookup(user_id: int) -> dict:
         return {}
 
 
-def _application_dict(a: TenantApplication, docs=None) -> dict:
+def _application_dict(db, a: TenantApplication, docs=None) -> dict:
+    ro = db.get(PropertyRO, a.property_id)
     out = {
         "id": a.id, "property_id": a.property_id, "agency_id": a.agency_id,
         "applicant_user_id": a.applicant_user_id, "applicant_name": a.applicant_name,
@@ -756,6 +757,7 @@ def _application_dict(a: TenantApplication, docs=None) -> dict:
         "guarantor_income": num(a.guarantor_income), "status": a.status,
         "submitted_at": iso(a.submitted_at), "decided_at": iso(a.decided_at),
         "decision_reason": a.decision_reason, "created_at": iso(a.created_at),
+        "property_title": (ro.title if ro else None),
     }
     if docs is not None:
         out["documents"] = [{"id": d.id, "doc_type": d.doc_type, "status": d.status,
@@ -793,7 +795,7 @@ async def submit_application(request: Request, principal: Principal = Depends(ge
         "id": a.id, "applicant_email": a.applicant_email, "applicant_name": a.applicant_name,
         "property_id": a.property_id, "property_title": prop.get("title")})
     db.commit()
-    return _application_dict(a)
+    return _application_dict(db, a)
 
 
 def _own_application(db, application_id: int, principal: Principal):
@@ -808,7 +810,7 @@ def my_applications(principal: Principal = Depends(get_principal), db: Session =
     q = (db.query(TenantApplication)
          .filter(TenantApplication.applicant_user_id == int(principal.sub))
          .order_by(TenantApplication.created_at.desc()))
-    return {"applications": [_application_dict(a) for a in q.all()]}
+    return {"applications": [_application_dict(db, a) for a in q.all()]}
 
 
 @app.get("/gestion-locative/applications/{application_id}")
@@ -819,7 +821,7 @@ def my_application(application_id: int, principal: Principal = Depends(get_princ
         return err("Candidature introuvable.", 404)
     docs = db.query(ApplicationDocument).filter(
         ApplicationDocument.application_id == a.id).all()
-    return _application_dict(a, docs=docs)
+    return _application_dict(db, a, docs=docs)
 
 
 @app.post("/gestion-locative/applications/{application_id}/withdraw")
@@ -832,7 +834,7 @@ def withdraw_application(application_id: int, principal: Principal = Depends(get
         return err("Candidature déjà traitée.", 400)
     a.status = "withdrawn"
     db.commit()
-    return _application_dict(a)
+    return _application_dict(db, a)
 
 
 @app.get("/internal/applications/due-missing-docs-reminders", include_in_schema=False)
@@ -942,7 +944,7 @@ def agency_applications(principal: Principal = Depends(get_principal), db: Sessi
     q = (db.query(TenantApplication)
          .filter(TenantApplication.agency_id == principal.agency_id)
          .order_by(TenantApplication.created_at.desc()))
-    return {"applications": [_application_dict(a) for a in q.all()]}
+    return {"applications": [_application_dict(db, a) for a in q.all()]}
 
 
 @app.get("/backoffice/gestion-locative/applications/{application_id}")
@@ -954,7 +956,7 @@ def agency_application(application_id: int, principal: Principal = Depends(get_p
     if a is None or a.agency_id != principal.agency_id:
         return err("Candidature introuvable.", 404)
     docs = db.query(ApplicationDocument).filter(ApplicationDocument.application_id == a.id).all()
-    return _application_dict(a, docs=docs)
+    return _application_dict(db, a, docs=docs)
 
 
 @app.post("/backoffice/gestion-locative/applications/{application_id}/decide")
@@ -979,4 +981,4 @@ async def decide_application(application_id: int, request: Request,
         "id": a.id, "applicant_email": a.applicant_email, "applicant_name": a.applicant_name,
         "property_id": a.property_id, "decision": decision, "reason": a.decision_reason})
     db.commit()
-    return _application_dict(a)
+    return _application_dict(db, a)
