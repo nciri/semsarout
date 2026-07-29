@@ -20,9 +20,9 @@
    de visite (J‑1), rapports périodiques (CRG, compte‑rendu de mandat), révision IRL annuelle,
    relances (impayés, pièces manquantes), anniversaires, demandes d'avis différées. Redis/Celery
    étaient dans la cible (`architecture-v2.md`) mais **ne sont pas branchés**.
-2. **Domaine « gestion locative »** — baux, quittancement, quittances, charges, dépôts de garantie,
-   compte‑rendu de gestion. SemsarOut est aujourd'hui une plateforme **annonces + CRM + transactions**,
-   **pas** un logiciel de **syndic / administration de biens**. Toute la section 3 en dépend.
+2. **Domaine « gestion locative »** — baux, quittancement, quittances, charges, dépôts, CRG.
+   SemsarOut est aujourd'hui une plateforme **annonces + CRM + transactions + gestion locative (Phase 1)**.
+   La suite (quittances, charges, CRG, etc.) se construit par phases. Voir section 3 pour le détail.
 
 ---
 
@@ -58,10 +58,10 @@
 | Bailleur : proposition de dossiers candidats | 🔴 | Idem. |
 | Bailleur : notification de mise en location (bail signé) | ✅ | Phase 1 : domaine `rental` livré, événement `lease.signed` émis et traité. |
 
-## 3. Gestion Locative (syndic / administration de biens) — **domaine absent**
+## 3. Gestion Locative (syndic / administration de biens) — socle livré (Phase 1) ; suite planifiée (Phases 2-5)
 
-> **Tout 🔴** : SemsarOut n'a ni bail, ni quittancement, ni comptabilité locative. Nécessite un
-> **nouveau service `rental` (gestion locative)** : baux, échéanciers, quittances, charges, dépôts.
+> Service `rental` en place : **Phase 1 livrée** (mandats + baux signés). **Phases 2-5 🔴** : quittances,
+> appels de loyer, charges, dépôts, CRG, révisions IRL, régularisations (à construire progressivement).
 
 | Processus | Statut | Notes |
 |---|---|---|
