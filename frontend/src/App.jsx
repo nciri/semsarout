@@ -60,15 +60,21 @@ import BackofficeTransactions from './pages/backoffice/Transactions'
 import BackofficeTeam from './pages/backoffice/Team'
 import BackofficeStats from './pages/backoffice/Statistics'
 import BackofficeSettings from './pages/backoffice/Settings'
+import SettingsHub from './pages/backoffice/SettingsHub'
 import BackofficeStripeConfig from './pages/backoffice/StripeConfig'
 import ContractsList from './pages/backoffice/contracts/ContractsList'
 import ContractCreate from './pages/backoffice/contracts/ContractCreate'
 import ContractEditor from './pages/backoffice/contracts/ContractEditor'
 import TemplatesManager from './pages/backoffice/contracts/TemplatesManager'
 import NotariesDirectory from './pages/backoffice/legal/NotariesDirectory'
+import NotairesLayout from './pages/backoffice/legal/NotairesLayout'
+import ArtisansLayout from './pages/backoffice/artisans/ArtisansLayout'
 import ArtisansDirectory from './pages/backoffice/artisans/ArtisansDirectory'
 import WorkOrdersList from './pages/backoffice/artisans/WorkOrdersList'
 import WorkOrderDetail from './pages/backoffice/artisans/WorkOrderDetail'
+import RentalLayout from './pages/backoffice/rental/RentalLayout'
+import MandatesList from './pages/backoffice/rental/MandatesList'
+import MandateDetail from './pages/backoffice/rental/MandateDetail'
 import LegalCasesList from './pages/backoffice/legal/LegalCasesList'
 import LegalCaseDetail from './pages/backoffice/legal/LegalCaseDetail'
 import AnalyticsLayout from './pages/backoffice/analytics/AnalyticsLayout'
@@ -132,7 +138,7 @@ function App() {
             <Route index element={<Navigate to="agence" replace />} />
             <Route path="agence" element={<MyAgency />} />
             <Route path="abonnement" element={<Subscription />} />
-            <Route path="parametres" element={<DashboardSettings />} />
+            <Route path="parametres" element={<Navigate to="/backoffice/parametres" replace />} />
           </Route>
           {/* Anciennes URLs -> nouvelles (rétro-compatibilité) */}
           <Route path="agence" element={<Navigate to="/dashboard/compte/agence" replace />} />
@@ -183,18 +189,34 @@ function App() {
           <Route path="transactions/:id" element={<BackofficeTransactions />} />
           <Route path="equipe" element={<BackofficeTeam />} />
           <Route path="statistiques" element={<BackofficeStats />} />
-          <Route path="parametres" element={<BackofficeSettings />} />
+          <Route path="parametres" element={<SettingsHub />} />
           <Route path="stripe" element={<BackofficeStripeConfig />} />
           <Route path="contrats" element={<ContractsList />} />
           <Route path="contrats/nouveau" element={<ContractCreate />} />
           <Route path="contrats/modeles" element={<TemplatesManager />} />
           <Route path="contrats/:id" element={<ContractEditor />} />
-          <Route path="notaires" element={<NotariesDirectory />} />
-          <Route path="artisans" element={<ArtisansDirectory />} />
-          <Route path="travaux" element={<WorkOrdersList />} />
-          <Route path="travaux/:id" element={<WorkOrderDetail />} />
-          <Route path="juridique" element={<LegalCasesList />} />
-          <Route path="juridique/:id" element={<LegalCaseDetail />} />
+          {/* Artisans : annuaire + interventions en onglets */}
+          <Route path="artisans" element={<ArtisansLayout />}>
+            <Route index element={<ArtisansDirectory />} />
+            <Route path="interventions" element={<WorkOrdersList />} />
+          </Route>
+          <Route path="artisans/interventions/:id" element={<WorkOrderDetail />} />
+          {/* Gestion locative : mandats + baux + candidatures en onglets */}
+          <Route path="gestion-locative" element={<RentalLayout />}>
+            <Route index element={<MandatesList />} />
+          </Route>
+          <Route path="gestion-locative/mandats/:id" element={<MandateDetail />} />
+          {/* Notaires & juridique : notaires + dossiers en onglets */}
+          <Route path="notaires" element={<NotairesLayout />}>
+            <Route index element={<NotariesDirectory />} />
+            <Route path="dossiers" element={<LegalCasesList />} />
+          </Route>
+          <Route path="notaires/dossiers/:id" element={<LegalCaseDetail />} />
+          {/* Rétro-compatibilité anciennes URLs */}
+          <Route path="travaux" element={<Navigate to="/backoffice/artisans/interventions" replace />} />
+          <Route path="travaux/:id" element={<Navigate to="/backoffice/artisans/interventions" replace />} />
+          <Route path="juridique" element={<Navigate to="/backoffice/notaires/dossiers" replace />} />
+          <Route path="juridique/:id" element={<Navigate to="/backoffice/notaires/dossiers" replace />} />
           <Route path="boutique" element={<ShopCatalog />} />
           <Route path="boutique/:id" element={<ProductDetail />} />
           <Route path="panier" element={<Cart />} />

@@ -4,9 +4,10 @@ import {
   FiHome, FiUsers, FiFileText, FiCalendar, FiDollarSign,
   FiSettings, FiBarChart2, FiMenu, FiX, FiBriefcase,
   FiUserCheck, FiGrid, FiMail, FiLogOut, FiBell, FiSearch,
-  FiChevronDown, FiExternalLink, FiTrendingUp, FiShield, FiTool, FiClipboard, FiShoppingBag, FiPackage
+  FiChevronDown, FiExternalLink, FiTrendingUp, FiShield, FiTool, FiClipboard, FiShoppingBag, FiPackage, FiKey
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
+import Wordmark from '../../../components/common/Wordmark'
 
 const MENU_ITEMS = [
   {
@@ -32,8 +33,7 @@ const MENU_ITEMS = [
       { path: '/backoffice/contrats', icon: FiFileText, label: 'Contrats' },
       { path: '/backoffice/notaires', icon: FiBriefcase, label: 'Notaires' },
       { path: '/backoffice/artisans', icon: FiTool, label: 'Artisans' },
-      { path: '/backoffice/travaux', icon: FiClipboard, label: 'Travaux' },
-      { path: '/backoffice/juridique', icon: FiShield, label: 'Juridique' },
+      { path: '/backoffice/gestion-locative', icon: FiKey, label: 'Gestion locative' },
       { path: '/backoffice/boutique', icon: FiShoppingBag, label: 'Boutique' },
       { path: '/backoffice/mes-commandes', icon: FiPackage, label: 'Mes commandes' },
     ]
@@ -93,8 +93,8 @@ export default function BackofficeLayout() {
           >
             <FiMenu className="w-6 h-6" />
           </button>
-          <Link to="/backoffice" className="font-display font-bold text-lg text-primary-600">
-            SemsarOut
+          <Link to="/backoffice">
+            <Wordmark className="text-[18px]" />
           </Link>
           <div className="flex items-center gap-2">
             <button className="p-2 text-gray-500 hover:text-gray-700 relative">
@@ -113,7 +113,7 @@ export default function BackofficeLayout() {
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 border-b">
-              <span className="font-display font-bold text-lg text-primary-600">SemsarOut</span>
+              <Wordmark className="text-[18px]" />
               <button
                 onClick={() => setMobileMenuOpen(false)}
                 className="p-2 text-gray-500 hover:text-gray-700"
@@ -152,11 +152,11 @@ export default function BackofficeLayout() {
         {/* Logo */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
           {sidebarOpen ? (
-            <Link to="/backoffice" className="font-display font-bold text-xl text-primary-600">
-              SemsarOut
+            <Link to="/backoffice">
+              <Wordmark />
             </Link>
           ) : (
-            <Link to="/backoffice" className="font-display font-bold text-xl text-primary-600 mx-auto">
+            <Link to="/backoffice" className="font-display font-extrabold text-xl text-midnight mx-auto">
               S
             </Link>
           )}
