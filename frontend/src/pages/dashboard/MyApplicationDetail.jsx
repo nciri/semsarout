@@ -61,7 +61,7 @@ function MyApplicationDetail() {
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       <Link to="/dashboard/candidatures" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"><FiArrowLeft className="w-4 h-4" /> Mes candidatures</Link>
 
-      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+      <div className="card p-6">
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-xl font-bold text-gray-900">Candidature — bien #{a.property_id}</h1>
@@ -73,7 +73,7 @@ function MyApplicationDetail() {
         {a.status === 'accepted' && <p className="mt-3 text-sm text-emerald-700">Félicitations, votre dossier a été retenu — l'agence vous recontactera.</p>}
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+      <div className="card p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-gray-900">Pièces justificatives</h2>
           {canEdit && (
@@ -81,7 +81,7 @@ function MyApplicationDetail() {
               <select value={docType} onChange={(e) => setDocType(e.target.value)} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
                 {DOC_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
-              <button disabled={upload.isLoading} onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-2 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50">
+              <button disabled={upload.isLoading} onClick={() => fileRef.current?.click()} className="btn-primary gap-2">
                 <FiUploadCloud className="w-4 h-4" /> Ajouter
               </button>
               <input ref={fileRef} type="file" className="hidden" onChange={onPick} />

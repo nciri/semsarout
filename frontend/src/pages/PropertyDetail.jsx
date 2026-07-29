@@ -647,7 +647,7 @@ function PropertyDetail() {
             {/* Postuler (location uniquement) */}
             {property.transaction_type === 'rent' && (
               <button
-                onClick={() => isAuthenticated ? setApplyOpen(true) : navigate('/connexion', { state: { from: `/annonces/${id}` } })}
+                onClick={() => isAuthenticated ? setApplyOpen(true) : navigate('/connexion', { state: { from: { pathname: `/annonces/${id}` } } })}
                 className="btn-primary w-full flex items-center justify-center gap-2 mb-6"
               >
                 <FiFileText className="w-5 h-5" /> Déposer un dossier de candidature
