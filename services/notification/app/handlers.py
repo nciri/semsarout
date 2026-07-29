@@ -191,6 +191,18 @@ def _handle_lease_signed(db, payload: dict) -> None:
                   deposit_amount=payload.get("deposit_amount"))
 
 
+def _handle_rent_paid(db, payload: dict) -> None:
+    """`rental.rent.paid` : quittance de loyer au locataire."""
+    tenant = recipients.client(payload.get("tenant_client_id"))
+    to = (tenant.get("email") or "").strip()
+    if not _valid_email(to):
+        return
+    _try_send(db, to, "rent_receipt.html", "rent_receipt", from_email=_contact(),
+              name=tenant.get("name"), period_label=payload.get("period_label"),
+              receipt_number=payload.get("receipt_number"),
+              paid_amount=payload.get("paid_amount"), total_amount=payload.get("total_amount"))
+
+
 def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
     db = SessionLocal()
     try:
@@ -212,6 +224,8 @@ def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
             _handle_mandate_signed(db, payload)
         elif routing_key == "rental.lease.signed":
             _handle_lease_signed(db, payload)
+        elif routing_key == "rental.rent.paid":
+            _handle_rent_paid(db, payload)
         else:
             channel, template = _TEMPLATES.get(routing_key, ("log", routing_key))
             _log(db, channel, str(payload.get("user_id", "?")), template, "sent")
