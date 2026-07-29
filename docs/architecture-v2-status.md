@@ -83,7 +83,7 @@ reconstructibles). Validation JWT **locale** au BFF (frontière d'auth sévrée)
 | buyer | 8515 | acheteur : recherches sauvegardées + favoris + estimations (`/buyer/saved-searches*`, `/buyer/favorites*`, `/buyer/estimates*`) |
 | staymanager | 8517 | intégration StayManager.ma (`/integrations/staymanager/*` : statut/connect/biens/réservations/sync/webhook) — gate `has_staymanager_sync` |
 | programs | 8516 | programmes immobiliers neufs (`/programs*` : liste/détail/my + unités/images/plans/lots interactifs) — gate feature `has_programs` (billing) |
-| rental | 8518 | gestion locative (mandats, baux ; quittancement/CRG à venir) |
+| rental | 8518 | gestion locative — mandats/CRG, baux/quittancement, candidatures (backend **complet** ; **UI back-office livrée**, voir §11) |
 | identity | 8501 | **auth complète** (voir §3) + RBAC + teams/invitations + `dashboard/config` + `internal/agency/{id}/seats|members|analytics-scope` |
 | analytics | 8504 | **tout dashboards/analytics/stats** query-time : `/analytics/*` (6) + `/stats/*` (6) + `/dashboard`+`/dashboard/charts/*`+`/dashboard/activity` — dumps internes transactions/crm/listing/geo/billing/audit + identity scope/seats |
 
@@ -374,3 +374,20 @@ python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://loc
 `tools/contract_test.py` compare monolithe vs BFF route par route (statut + JSON normalisé, champs
 volatils ignorés). Groupes : catalog, directory, listing, search, crm, marketplace, geo, messaging,
 trust-safety, rbac, dashboard-config, dashboard, analytics, stats, agency, audit, transactions, legal, contract, billing, payment, buyer, programs, staymanager. **88/88** actuellement (`updated_at` volatil : bumpé par l'incrément de vues au GET détail) (normalize : collections de dicts triées par contenu — ordre non garanti côté monolithe ; `views`/`views_count` volatils) (collections par `id` ordre-insensible : membres /my-agency + biens /agencies/{slug}/properties non ordonnés côté monolithe).
+
+## 11. Gestion locative — Vague 3 COMPLÈTE (backend + UI, Phase 5)
+`rental` (:8518) est un domaine **neuf** (pas de route legacy à reproduire, hors contrat
+`contract_test.py`). Backend (Phases 1-4) + **UI back-office (Phase 5) livrée** :
+- **Mandats** : liste/détail, signature, CRG (compte-rendu de gestion) + export PDF.
+- **Baux & quittancement** : liste/détail des baux (signature, révision, restitution du dépôt de
+  garantie), échéances de loyer (paiement, quittance PDF).
+- **Candidatures locatives** : liste/détail, pièces justificatives (valider/refuser), décision
+  (accepter/refuser).
+- Frontend : `frontend/src/pages/backoffice/rental/{RentalLayout,MandatesList,MandateDetail,
+  LeasesList,LeaseDetail,ApplicationsList,ApplicationDetail}.jsx` + `frontend/src/services/
+  rentalService.js`, routées sous `/backoffice/gestion-locative/*` (onglets Mandats/Baux/
+  Candidatures), gate premium (`GatedNotice` sur 403). Conforme à la charte back-office existante
+  (kit `components/backoffice/ui`, tokens Tailwind uniquement, `react-icons/fi`, react-query +
+  `react-toastify`). `npm run build` vert.
+- Hors périmètre (noté pour une itération future) : espace candidat public (upload pièces),
+  autocomplete bien/client à la création (IDs numériques pour l'instant), onglet CRG dédié.
