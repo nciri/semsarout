@@ -230,6 +230,35 @@ def internal_mandates_due_crg(x_internal_token: str = Header(default=""),
     return {"reports": out}
 
 
+@app.get("/internal/mandates/due-expiry", include_in_schema=False)
+def internal_mandates_due_expiry(x_internal_token: str = Header(default=""),
+                                 db: Session = Depends(get_db)):
+    """Mandats actifs arrivant à échéance dans ≤ 60 j, sans avis encore envoyé."""
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    from datetime import timedelta
+    now = datetime.utcnow()
+    horizon = now + timedelta(days=60)
+    rows = (db.query(Mandate)
+            .filter(Mandate.status == "active", Mandate.expiry_notice_sent_at.is_(None),
+                    Mandate.end_date.isnot(None), Mandate.end_date > now,
+                    Mandate.end_date <= horizon).all())
+    return {"mandates": [{"id": m.id, "landlord_client_id": m.landlord_client_id,
+                          "reference": m.reference, "end_date": iso(m.end_date)} for m in rows]}
+
+
+@app.post("/internal/mandates/{mandate_id}/expiry-notice-sent", include_in_schema=False)
+def internal_mandate_expiry_sent(mandate_id: int, x_internal_token: str = Header(default=""),
+                                 db: Session = Depends(get_db)):
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    m = db.get(Mandate, mandate_id)
+    if m is not None:
+        m.expiry_notice_sent_at = datetime.utcnow()
+        db.commit()
+    return {"ok": True}
+
+
 @app.get("/internal/mandates/{mandate_id}", include_in_schema=False)
 def internal_mandate(mandate_id: int, x_internal_token: str = Header(default=""),
                      db: Session = Depends(get_db)):

@@ -206,6 +206,32 @@ def _job_crg_reports(db) -> int:
     return sent
 
 
+def _job_mandate_expiry_notices(db) -> int:
+    """Avis d'échéance de mandat (J-60) au propriétaire."""
+    try:
+        r = httpx.get(f"{_rental()}/internal/mandates/due-expiry", headers=_headers(), timeout=10.0)
+        mandates = r.json().get("mandates", []) if r.status_code == 200 else []
+    except (httpx.HTTPError, ValueError):
+        return 0
+    sent = 0
+    for mnd in mandates:
+        landlord = recipients.client(mnd.get("landlord_client_id"))
+        to = (landlord.get("email") or "").strip()
+        if _valid_email(to):
+            end = mnd.get("end_date")
+            end_fr = end.split("T")[0] if end else None
+            _try_send(db, to, "mandate_expiry.html", "mandate_expiry", from_email=_contact(),
+                      name=landlord.get("name"), reference=mnd.get("reference"), end_date=end_fr)
+            db.commit()
+            sent += 1
+        try:
+            httpx.post(f"{_rental()}/internal/mandates/{mnd['id']}/expiry-notice-sent",
+                       headers=_headers(), timeout=10.0)
+        except httpx.HTTPError:
+            pass
+    return sent
+
+
 def run_once() -> None:
     db = SessionLocal()
     try:
@@ -230,6 +256,9 @@ def run_once() -> None:
         cr = _job_crg_reports(db)
         if cr:
             logger.info("CRG envoyés", extra={"count": cr})
+        me = _job_mandate_expiry_notices(db)
+        if me:
+            logger.info("avis d'échéance de mandat envoyés", extra={"count": me})
     except Exception:  # noqa: BLE001 — un job qui échoue ne doit pas tuer la boucle
         logger.exception("échec d'un job d'ordonnanceur")
     finally:

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% from "_components.html" import card, lucide with context %}
+{% block subject %}Votre mandat de gestion arrive à échéance{% endblock %}
+{% block preheader %}Votre mandat {{ reference }} expire prochainement — pensons au renouvellement.{% endblock %}
+{% block badge %}{{ lucide("calendar-clock") }}{% endblock %}
+{% block hero_title %}Échéance de votre mandat{% endblock %}
+{% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}, votre mandat arrive bientôt à son terme.</p>{% endblock %}
+{% block content %}
+<p style="text-align:center; color:{{ brand.ink }};">Votre mandat de gestion <strong>{{ reference }}</strong> arrive à échéance{% if end_date %} le <strong>{{ end_date }}</strong>{% endif %}. Pour assurer la continuité de la gestion de votre bien, nous vous proposons d'en discuter le renouvellement.</p>
+{{ card(([("Mandat", reference)] if reference else []) + ([("Échéance", end_date)] if end_date else [])) }}
+<p style="margin-top:18px; font-size:13px; color:{{ brand.muted }}; text-align:center;">Notre équipe vous recontactera. Une question&nbsp;? <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
+{% endblock %}
