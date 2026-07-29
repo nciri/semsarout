@@ -5,28 +5,15 @@ import { toast } from 'react-toastify'
 import { FiArrowLeft, FiUploadCloud, FiDownload, FiFile } from 'react-icons/fi'
 import api from '../../services/api'
 import { applicantService } from '../../services/rentalService'
-
-const STATUS = {
-  received: ['Reçue', 'bg-blue-100 text-blue-700'],
-  reviewing: ['En étude', 'bg-amber-100 text-amber-700'],
-  accepted: ['Acceptée', 'bg-emerald-100 text-emerald-700'],
-  rejected: ['Refusée', 'bg-red-100 text-red-700'],
-  withdrawn: ['Retirée', 'bg-gray-100 text-gray-700'],
-}
-const DOC_STATUS = {
-  received: ['Reçue', 'bg-blue-100 text-blue-700'],
-  validated: ['Validée', 'bg-emerald-100 text-emerald-700'],
-  rejected: ['Refusée', 'bg-red-100 text-red-700'],
-}
-const DOC_TYPES = [
-  ['cin', "Pièce d'identité (CIN)"], ['bulletin_salaire', 'Bulletin de salaire'],
-  ['contrat_travail', 'Contrat de travail'], ['avis_impot', "Avis d'imposition"],
-  ['garant', 'Pièce du garant'], ['autre', 'Autre'],
-]
+import { APP_STATUS, DOC_STATUS, DOC_TYPES } from './applicationStatus'
 
 async function openDoc(url) {
-  try { const res = await api.get(url, { responseType: 'blob' }); window.open(URL.createObjectURL(res.data), '_blank') }
-  catch { toast.error('Fichier indisponible') }
+  try {
+    const res = await api.get(url, { responseType: 'blob' })
+    const u = URL.createObjectURL(res.data)
+    window.open(u, '_blank')
+    setTimeout(() => URL.revokeObjectURL(u), 60000)
+  } catch { toast.error('Fichier indisponible') }
 }
 
 function MyApplicationDetail() {
@@ -64,10 +51,10 @@ function MyApplicationDetail() {
       <div className="card p-6">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Candidature — bien #{a.property_id}</h1>
+            <h1 className="text-xl font-bold text-gray-900">Candidature — {a.property_title || `bien #${a.property_id}`}</h1>
             <p className="text-sm text-gray-500 mt-1">Déposée le {a.submitted_at ? new Date(a.submitted_at).toLocaleDateString('fr-FR') : '—'}</p>
           </div>
-          <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${STATUS[a.status]?.[1] || 'bg-gray-100 text-gray-700'}`}>{STATUS[a.status]?.[0] || a.status}</span>
+          <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${APP_STATUS[a.status]?.[1] || 'bg-gray-100 text-gray-700'}`}>{APP_STATUS[a.status]?.[0] || a.status}</span>
         </div>
         {a.status === 'rejected' && a.decision_reason && <p className="mt-3 text-sm text-red-700">Motif : {a.decision_reason}</p>}
         {a.status === 'accepted' && <p className="mt-3 text-sm text-emerald-700">Félicitations, votre dossier a été retenu — l'agence vous recontactera.</p>}

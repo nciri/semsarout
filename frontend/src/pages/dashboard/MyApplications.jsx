@@ -3,14 +3,7 @@ import { Link } from 'react-router-dom'
 import { FiInbox, FiChevronRight } from 'react-icons/fi'
 import { applicantService } from '../../services/rentalService'
 import { formatPrice } from '../../utils/currency'
-
-const STATUS = {
-  received: ['Reçue', 'bg-blue-100 text-blue-700'],
-  reviewing: ['En étude', 'bg-amber-100 text-amber-700'],
-  accepted: ['Acceptée', 'bg-emerald-100 text-emerald-700'],
-  rejected: ['Refusée', 'bg-red-100 text-red-700'],
-  withdrawn: ['Retirée', 'bg-gray-100 text-gray-700'],
-}
+import { APP_STATUS } from './applicationStatus'
 
 function MyApplications() {
   const { data, isLoading } = useQuery('my-applications', () => applicantService.myApplications())
@@ -35,11 +28,11 @@ function MyApplications() {
             <Link key={a.id} to={`/dashboard/candidatures/${a.id}`}
               className="flex items-center justify-between card p-4 hover:shadow-md transition-shadow">
               <div>
-                <p className="font-semibold text-gray-900">Bien #{a.property_id}</p>
+                <p className="font-semibold text-gray-900">{a.property_title || `Bien #${a.property_id}`}</p>
                 <p className="text-sm text-gray-500">Déposée le {a.submitted_at ? new Date(a.submitted_at).toLocaleDateString('fr-FR') : '—'}{a.monthly_income ? ` · revenus ${formatPrice(a.monthly_income)}` : ''}</p>
               </div>
               <div className="flex items-center gap-3">
-                <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${STATUS[a.status]?.[1] || 'bg-gray-100 text-gray-700'}`}>{STATUS[a.status]?.[0] || a.status}</span>
+                <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${APP_STATUS[a.status]?.[1] || 'bg-gray-100 text-gray-700'}`}>{APP_STATUS[a.status]?.[0] || a.status}</span>
                 <FiChevronRight className="w-5 h-5 text-gray-300" />
               </div>
             </Link>
