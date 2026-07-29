@@ -245,7 +245,8 @@ def _handle_application_received(db, payload):
     if not _valid_email(to):
         return
     _try_send(db, to, "application_received.html", "application_received", from_email=_contact(),
-              name=payload.get("applicant_name"), property_title=payload.get("property_title"))
+              name=payload.get("applicant_name"), property_title=payload.get("property_title"),
+              by_agent=payload.get("by_agent"))
 
 
 def _handle_application_decided(db, payload):

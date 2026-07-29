@@ -747,11 +747,24 @@ def _user_lookup(user_id: int) -> dict:
         return {}
 
 
+def _client_lookup(client_id: int) -> dict:
+    """Client CRM -> email/nom via l'endpoint interne crm (dossiers déposés par l'agence)."""
+    base = os.environ.get("CRM_URL", "http://localhost:8013")
+    try:
+        r = httpx.get(f"{base}/internal/client/{client_id}",
+                      headers={"x-internal-token": settings.internal_token}, timeout=5.0)
+        return (r.json().get("client") or {}) if r.status_code == 200 else {}
+    except (httpx.HTTPError, ValueError):
+        return {}
+
+
 def _application_dict(db, a: TenantApplication, docs=None) -> dict:
     ro = db.get(PropertyRO, a.property_id)
     out = {
         "id": a.id, "property_id": a.property_id, "agency_id": a.agency_id,
-        "applicant_user_id": a.applicant_user_id, "applicant_name": a.applicant_name,
+        "applicant_user_id": a.applicant_user_id,
+        "submitted_by_agent_id": a.submitted_by_agent_id, "client_id": a.client_id,
+        "applicant_name": a.applicant_name,
         "applicant_email": a.applicant_email, "applicant_phone": a.applicant_phone,
         "monthly_income": num(a.monthly_income), "guarantor_name": a.guarantor_name,
         "guarantor_income": num(a.guarantor_income), "status": a.status,
@@ -794,6 +807,39 @@ async def submit_application(request: Request, principal: Principal = Depends(ge
     enqueue(db, "tenant_application", a.id, events.APPLICATION_RECEIVED, {
         "id": a.id, "applicant_email": a.applicant_email, "applicant_name": a.applicant_name,
         "property_id": a.property_id, "property_title": prop.get("title")})
+    db.commit()
+    return _application_dict(db, a)
+
+
+@app.post("/backoffice/gestion-locative/applications", status_code=201)
+async def create_application_for_client(request: Request, principal: Principal = Depends(get_principal),
+                                        db: Session = Depends(get_db)):
+    """Dépôt d'un dossier de candidature par l'agence, pour le compte d'un crm.Client."""
+    if (g := _gate(principal)) is not None:
+        return g
+    data = await json_body(request)
+    if not data.get("property_id") or not data.get("client_id"):
+        return err("property_id et client_id sont requis.", 400)
+    try:
+        property_id = int(data["property_id"])
+        client_id = int(data["client_id"])
+    except (TypeError, ValueError):
+        return err("property_id/client_id invalide.", 400)
+    prop = _property_lookup(property_id)
+    client = _client_lookup(client_id)
+    a = TenantApplication(
+        property_id=property_id, agency_id=principal.agency_id,
+        owner_id=prop.get("owner_id"), applicant_user_id=None, client_id=client_id,
+        submitted_by_agent_id=int(principal.sub),
+        applicant_name=client.get("name"), applicant_email=client.get("email"),
+        applicant_phone=client.get("phone"), monthly_income=data.get("monthly_income"),
+        guarantor_name=data.get("guarantor_name"), guarantor_income=data.get("guarantor_income"),
+        status="received")
+    db.add(a)
+    db.flush()
+    enqueue(db, "tenant_application", a.id, events.APPLICATION_RECEIVED, {
+        "id": a.id, "applicant_email": a.applicant_email, "applicant_name": a.applicant_name,
+        "property_id": a.property_id, "property_title": prop.get("title"), "by_agent": True})
     db.commit()
     return _application_dict(db, a)
 
@@ -877,6 +923,37 @@ async def upload_document(application_id: int, request: Request,
                           db: Session = Depends(get_db)):
     a = _own_application(db, application_id, principal)
     if a is None:
+        return err("Candidature introuvable.", 404)
+    cl = request.headers.get("content-length")
+    if cl and cl.isdigit() and int(cl) > 10 * 1024 * 1024:
+        return err("Fichier trop volumineux (max 10 Mo).", 400)
+    body = await request.body()
+    if not body:
+        return err("Fichier vide.", 400)
+    if len(body) > 10 * 1024 * 1024:
+        return err("Fichier trop volumineux (max 10 Mo).", 400)
+    doc_type = request.query_params.get("doc_type", "autre")
+    filename = request.query_params.get("filename", "piece")
+    content_type = request.headers.get("content-type", "application/octet-stream")
+    from . import storage
+    key = f"applications/{a.id}/{uuid.uuid4().hex}"
+    storage.docs_storage().put(key, body, content_type)
+    d = ApplicationDocument(application_id=a.id, doc_type=doc_type, status="received",
+                            file_key=key, filename=filename, content_type=content_type)
+    db.add(d)
+    db.commit()
+    return {"id": d.id, "doc_type": d.doc_type, "status": d.status, "filename": d.filename}
+
+
+@app.post("/backoffice/gestion-locative/applications/{application_id}/documents", status_code=201)
+async def upload_document_agency(application_id: int, request: Request,
+                                 principal: Principal = Depends(get_principal),
+                                 db: Session = Depends(get_db)):
+    """Dépôt d'une pièce par l'agence sur un dossier de candidature de son périmètre."""
+    if (g := _gate(principal)) is not None:
+        return g
+    a = db.get(TenantApplication, application_id)
+    if a is None or a.agency_id != principal.agency_id:
         return err("Candidature introuvable.", 404)
     cl = request.headers.get("content-length")
     if cl and cl.isdigit() and int(cl) > 10 * 1024 * 1024:

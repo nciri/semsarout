@@ -143,7 +143,9 @@ class TenantApplication(Base):
     property_id = Column(Integer, index=True, nullable=False)
     agency_id = Column(Integer, index=True)                 # agence du bien (aiguillage)
     owner_id = Column(Integer, index=True)                  # bien de particulier
-    applicant_user_id = Column(Integer, index=True, nullable=False)  # uid JWT (propriété candidat)
+    applicant_user_id = Column(Integer, index=True, nullable=True)  # uid JWT (propriété candidat)
+    submitted_by_agent_id = Column(Integer, index=True)      # user agence ayant déposé pour un client
+    client_id = Column(Integer, index=True)                  # crm.Client (dossier déposé par l'agence)
     applicant_name = Column(String(150))
     applicant_email = Column(String(120))
     applicant_phone = Column(String(30))
