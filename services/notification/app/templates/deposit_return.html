@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "_components.html" import card, lucide with context %}
+{% block subject %}Restitution de votre dépôt de garantie{% endblock %}
+{% block preheader %}Votre dépôt de garantie vous est restitué.{% endblock %}
+{% block badge %}{{ lucide("piggy-bank") }}{% endblock %}
+{% block hero_title %}Dépôt de garantie restitué{% endblock %}
+{% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}, votre dépôt vous est reversé.</p>{% endblock %}
+{% block content %}
+<p style="text-align:center; color:{{ brand.ink }};">Suite à la fin de votre location, votre dépôt de garantie vous est restitué. Nous vous remercions de votre confiance.</p>
+{{ card(([("Dépôt initial", "{:,.0f}".format(deposit_amount|float).replace(",", " ") ~ " " ~ currency)] if deposit_amount else [])
+  + [("Montant restitué", "{:,.0f}".format(return_amount|float).replace(",", " ") ~ " " ~ currency)]) }}
+<p style="margin-top:18px; font-size:13px; color:{{ brand.muted }}; text-align:center;">Une question&nbsp;? <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
+{% endblock %}

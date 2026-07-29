@@ -350,6 +350,28 @@ def sign_lease(lease_id: int, principal: Principal = Depends(get_principal),
     return _lease_dict(l)
 
 
+@app.post("/backoffice/gestion-locative/leases/{lease_id}/deposit-return")
+async def deposit_return(lease_id: int, request: Request,
+                         principal: Principal = Depends(get_principal),
+                         db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    l = db.get(Lease, lease_id)
+    if l is None or l.agency_id != principal.agency_id:
+        return err("Bail introuvable.", 404)
+    if l.deposit_returned_at is not None:
+        return err("Dépôt déjà restitué.", 400)
+    data = await json_body(request)
+    amount = data.get("amount", l.deposit_amount)
+    l.deposit_returned_at = datetime.utcnow()
+    l.deposit_return_amount = amount
+    enqueue(db, "lease", l.id, events.DEPOSIT_RETURNED, {
+        "id": l.id, "tenant_client_id": l.tenant_client_id, "property_id": l.property_id,
+        "deposit_amount": num(l.deposit_amount), "return_amount": num(amount)})
+    db.commit()
+    return _lease_dict(l)
+
+
 @app.get("/internal/leases/{lease_id}", include_in_schema=False)
 def internal_lease(lease_id: int, x_internal_token: str = Header(default=""),
                    db: Session = Depends(get_db)):

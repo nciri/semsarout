@@ -203,6 +203,17 @@ def _handle_rent_paid(db, payload: dict) -> None:
               paid_amount=payload.get("paid_amount"), total_amount=payload.get("total_amount"))
 
 
+def _handle_deposit_returned(db, payload: dict) -> None:
+    """`rental.deposit.returned` : confirmation de restitution au locataire."""
+    tenant = recipients.client(payload.get("tenant_client_id"))
+    to = (tenant.get("email") or "").strip()
+    if not _valid_email(to):
+        return
+    _try_send(db, to, "deposit_return.html", "deposit_return", from_email=_contact(),
+              name=tenant.get("name"), deposit_amount=payload.get("deposit_amount"),
+              return_amount=payload.get("return_amount"))
+
+
 def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
     db = SessionLocal()
     try:
@@ -226,6 +237,8 @@ def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
             _handle_lease_signed(db, payload)
         elif routing_key == "rental.rent.paid":
             _handle_rent_paid(db, payload)
+        elif routing_key == "rental.deposit.returned":
+            _handle_deposit_returned(db, payload)
         else:
             channel, template = _TEMPLATES.get(routing_key, ("log", routing_key))
             _log(db, channel, str(payload.get("user_id", "?")), template, "sent")

@@ -24,7 +24,8 @@ def main() -> None:
         bindings=["identity.kyc.#", "identity.password_reset",
                   "listing.contacted", "program.contacted", "visit.created", "transaction.updated",
                   "work_order.created", "contract.signed",
-                  "rental.mandate.signed", "rental.lease.signed", "rental.rent.paid"],
+                  "rental.mandate.signed", "rental.lease.signed", "rental.rent.paid",
+                  "rental.deposit.returned"],
         exchange=settings.events_exchange,
     )
     consumer.run(handler=handle_event)
