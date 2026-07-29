@@ -6,7 +6,7 @@ projection locale maintenue par listing.* ; ClientRO (nom) sert l'affichage back
 """
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Integer, Numeric, String, Text
+from sqlalchemy import Column, DateTime, Integer, Numeric, String, Text, UniqueConstraint
 
 from .db import Base
 
@@ -57,6 +57,31 @@ class Lease(Base):
     notes = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class RentPeriod(Base):
+    __tablename__ = "rent_period"
+    __table_args__ = (UniqueConstraint("lease_id", "year", "month", name="uq_rent_period_lease_ym"),)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    lease_id = Column(Integer, index=True, nullable=False)
+    agency_id = Column(Integer, index=True, nullable=False)   # dénormalisé (cloisonnement)
+    period_label = Column(String(40))                         # ex "Août 2026"
+    year = Column(Integer, nullable=False)
+    month = Column(Integer, nullable=False)
+    rent_amount = Column(Numeric(12, 2), nullable=False)
+    charges_amount = Column(Numeric(12, 2), default=0)
+    total_amount = Column(Numeric(12, 2), nullable=False)
+    due_date = Column(DateTime)
+    status = Column(String(20), default="pending")            # pending|paid|partial|late
+    paid_amount = Column(Numeric(12, 2))
+    paid_at = Column(DateTime)
+    payment_method = Column(String(20))                       # virement|cheque|especes|carte
+    receipt_number = Column(String(30), unique=True)          # n° de quittance (à l'encaissement)
+    reminder_count = Column(Integer, default=0)               # relance loyer impayé (dunning)
+    last_reminder_at = Column(DateTime)
+    payout_sent_at = Column(DateTime)                         # avis de virement propriétaire
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class PropertyRO(Base):

@@ -33,6 +33,10 @@ def _billing() -> str:
     return os.environ.get("BILLING_URL", "http://localhost:8508")
 
 
+def _rental() -> str:
+    return os.environ.get("RENTAL_URL", "http://localhost:8518")
+
+
 def _headers() -> dict:
     return {"x-internal-token": os.environ.get("INTERNAL_TOKEN", "")}
 
@@ -115,6 +119,15 @@ def _job_unpaid_invoice_reminders(db) -> int:
     return sent
 
 
+def _job_generate_rent_periods(db) -> int:
+    """Génère l'échéance du mois courant pour chaque bail actif (idempotent côté rental)."""
+    try:
+        r = httpx.post(f"{_rental()}/internal/rent-periods/generate", headers=_headers(), timeout=15.0)
+        return r.json().get("created", 0) if r.status_code == 200 else 0
+    except (httpx.HTTPError, ValueError):
+        return 0
+
+
 def run_once() -> None:
     db = SessionLocal()
     try:
@@ -127,6 +140,9 @@ def run_once() -> None:
         i = _job_unpaid_invoice_reminders(db)
         if i:
             logger.info("relances impayé envoyées", extra={"count": i})
+        g = _job_generate_rent_periods(db)
+        if g:
+            logger.info("échéances de loyer générées", extra={"count": g})
     except Exception:  # noqa: BLE001 — un job qui échoue ne doit pas tuer la boucle
         logger.exception("échec d'un job d'ordonnanceur")
     finally:

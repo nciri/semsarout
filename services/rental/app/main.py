@@ -18,7 +18,7 @@ from semsar_events import enqueue
 
 from . import events
 from .db import get_db, init_db
-from .models import Lease, Mandate
+from .models import Lease, Mandate, RentPeriod
 from .util import err, iso, json_body, num
 
 settings = get_settings()
@@ -100,6 +100,22 @@ def _emit_lease(db: Session, l: Lease, event_type: str) -> None:
         "charges_amount": num(l.charges_amount), "deposit_amount": num(l.deposit_amount),
         "start_date": iso(l.start_date), "end_date": iso(l.end_date),
     })
+
+
+_MONTHS_FR = ["", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août",
+              "Septembre", "Octobre", "Novembre", "Décembre"]
+
+
+def _rent_period_dict(rp: RentPeriod) -> dict:
+    return {
+        "id": rp.id, "lease_id": rp.lease_id, "agency_id": rp.agency_id,
+        "period_label": rp.period_label, "year": rp.year, "month": rp.month,
+        "rent_amount": num(rp.rent_amount), "charges_amount": num(rp.charges_amount),
+        "total_amount": num(rp.total_amount), "due_date": iso(rp.due_date), "status": rp.status,
+        "paid_amount": num(rp.paid_amount), "paid_at": iso(rp.paid_at),
+        "payment_method": rp.payment_method, "receipt_number": rp.receipt_number,
+        "created_at": iso(rp.created_at),
+    }
 
 
 @app.get("/health", include_in_schema=False)
@@ -283,3 +299,41 @@ def internal_lease(lease_id: int, x_internal_token: str = Header(default=""),
         return err("Forbidden", 403)
     l = db.get(Lease, lease_id)
     return {"lease": _lease_dict(l) if l else None}
+
+
+@app.post("/internal/rent-periods/generate", include_in_schema=False)
+def internal_generate_rent_periods(x_internal_token: str = Header(default=""),
+                                   db: Session = Depends(get_db)):
+    """Crée l'échéance du mois courant pour chaque bail actif (idempotent). Appelé par l'ordonnanceur."""
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    now = datetime.utcnow()
+    y, m = now.year, now.month
+    created = 0
+    for l in db.query(Lease).filter(Lease.status == "active").all():
+        if db.query(RentPeriod).filter(RentPeriod.lease_id == l.id, RentPeriod.year == y,
+                                       RentPeriod.month == m).first():
+            continue
+        rent = l.rent_amount or 0
+        charges = l.charges_amount or 0
+        day = min(int(l.payment_day or 1), 28)
+        rp = RentPeriod(lease_id=l.id, agency_id=l.agency_id, period_label=f"{_MONTHS_FR[m]} {y}",
+                        year=y, month=m, rent_amount=rent, charges_amount=charges,
+                        total_amount=rent + charges, due_date=datetime(y, m, day), status="pending")
+        db.add(rp)
+        created += 1
+    db.commit()
+    return {"created": created}
+
+
+@app.get("/backoffice/gestion-locative/leases/{lease_id}/rent-periods")
+def list_rent_periods(lease_id: int, principal: Principal = Depends(get_principal),
+                      db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    l = db.get(Lease, lease_id)
+    if l is None or l.agency_id != principal.agency_id:
+        return err("Bail introuvable.", 404)
+    q = (db.query(RentPeriod).filter(RentPeriod.lease_id == lease_id)
+         .order_by(RentPeriod.year.desc(), RentPeriod.month.desc()))
+    return {"rent_periods": [_rent_period_dict(rp) for rp in q.all()]}
