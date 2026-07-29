@@ -58,17 +58,16 @@
 | Bailleur : proposition de dossiers candidats | 🔴 | Idem. |
 | Bailleur : notification de mise en location (bail signé) | ✅ | Phase 1 : domaine `rental` livré, événement `lease.signed` émis et traité. |
 
-## 3. Gestion Locative (syndic / administration de biens) — socle livré (Phase 1) ; suite planifiée (Phases 2-5)
+## 3. Gestion Locative (syndic / administration de biens) — socle livré (Phases 1-2) ; suite planifiée (Phases 3-5)
 
-> Service `rental` en place : **Phase 1 livrée** (mandats + baux signés). **Phases 2-5 🔴** : quittances,
-> appels de loyer, charges, dépôts, CRG, révisions IRL, régularisations (à construire progressivement).
+> Service `rental` en place : **Phases 1-2 livrées** (mandats, baux, quittancement — quittance, relance loyer, avis de virement). **Phases 3-5 🔴** : CRG, IRL, charges, candidature, UI (à construire progressivement).
 
 | Processus | Statut | Notes |
 |---|---|---|
 | Mandat de gestion signé (notification) | ✅ | Phase 1 : événement `mandate.signed` émis et traité. |
 | Appel de loyer / avis d'échéance (mensuel) | 🔴 | Phase 2/3 (planifié) |
-| Quittance de loyer | 🔴 | Phase 2/3 (planifié) |
-| Relances impayés (1ʳᵉ amiable, 2ᵉ avant mise en demeure) | 🔴 | Phase 2/3 + ordonnanceur (planifié) |
+| Quittance de loyer | ✅ | Phase 2 : email + PDF générés et envoyés. |
+| Relances impayés (1ʳᵉ amiable, 2ᵉ avant mise en demeure) | ✅ | Phase 2 : dunning (J+3, J+7, max 3) implémenté. |
 | Révision annuelle du loyer (indice IRL) | 🔴 | Phase 2/3 + ordonnanceur (planifié) |
 | Régularisation des charges (décompte annuel) | 🔴 | Phase 2/3 + ordonnanceur (planifié) |
 | Mise à jour pièces (assurance habitation, entretien chaudière) | 🔴 | Phase 2/3 (planifié) |
@@ -76,7 +75,7 @@
 | États des lieux (entrée/sortie + copie signée) | 🔴 | Phase 2/3 (planifié) |
 | Restitution du dépôt de garantie (décompte final) | 🔴 | Phase 2/3 (planifié) |
 | Propriétaire : Compte‑rendu de gestion (CRG) mensuel/trimestriel | 🔴 | Phase 2/3 + ordonnanceur (planifié) |
-| Propriétaire : avis de virement des loyers | 🔴 | Phase 2/3 (planifié) |
+| Propriétaire : avis de virement des loyers | ✅ | Phase 2 : avis de paiement généré et envoyé au propriétaire. |
 | Propriétaire : demande d'accord pour travaux (devis) | 🔴 | Phase 2/3 (planifié) |
 | Propriétaire : aide à la déclaration fiscale (2044 / micro‑foncier) | 🔴 | Phase 2/3 (planifié) |
 
