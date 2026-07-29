@@ -714,7 +714,7 @@ function PropertyDetail() {
                 />
               </div>
               <div>
-                <label className="label">Revenu mensuel (MAD)</label>
+                <label className="label">Revenu mensuel (Đh)</label>
                 <input
                   type="number"
                   className="input"
@@ -733,7 +733,7 @@ function PropertyDetail() {
                 />
               </div>
               <div>
-                <label className="label">Revenu du garant (MAD)</label>
+                <label className="label">Revenu du garant (Đh)</label>
                 <input
                   type="number"
                   className="input"

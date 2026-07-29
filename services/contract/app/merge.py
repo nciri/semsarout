@@ -9,7 +9,7 @@ from datetime import datetime
 
 def _money(v):
     try:
-        return f"{float(v):,.2f} MAD".replace(",", " ")
+        return f"{float(v):,.2f} Đh".replace(",", " ")
     except (TypeError, ValueError):
         return ""
 

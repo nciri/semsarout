@@ -282,7 +282,7 @@ def _render_invoice_pdf(inv: Invoice) -> bytes:
         Paragraph(f"<b>FACTURE</b> {inv.reference}", head),
         Paragraph(f"Date : {inv.issued_at.strftime('%d/%m/%Y') if inv.issued_at else '-'}", info),
         Paragraph(f"Période : {inv.period_label or '-'}", info),
-        Paragraph(f"Montant : {float(inv.amount):.2f} MAD", info),
+        Paragraph(f"Montant : {float(inv.amount):.2f} Đh", info),
         Paragraph(f"Statut : {inv.status}", info),
     ]
     doc.build(story)

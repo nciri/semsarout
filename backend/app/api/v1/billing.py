@@ -283,7 +283,7 @@ def generate_invoice_pdf(invoice, user):
     plan_name = invoice.subscription.plan.name if invoice.subscription else 'Abonnement'
     table_data = [
         ['Description', 'Qté', 'Prix unitaire', 'Total'],
-        [f'Abonnement {plan_name} - {invoice.period_label}', '1', f'{invoice.subtotal:.2f} MAD', f'{invoice.subtotal:.2f} MAD'],
+        [f'Abonnement {plan_name} - {invoice.period_label}', '1', f'{invoice.subtotal:.2f} Đh', f'{invoice.subtotal:.2f} Đh'],
     ]
 
     table = Table(table_data, colWidths=[250, 50, 80, 80])
@@ -302,9 +302,9 @@ def generate_invoice_pdf(invoice, user):
 
     # Totals
     totals_data = [
-        ['', '', 'Sous-total HT:', f'{invoice.subtotal:.2f} MAD'],
-        ['', '', f'TVA ({invoice.tax_rate}%):', f'{invoice.tax_amount:.2f} MAD'],
-        ['', '', 'Total TTC:', f'{invoice.total:.2f} MAD'],
+        ['', '', 'Sous-total HT:', f'{invoice.subtotal:.2f} Đh'],
+        ['', '', f'TVA ({invoice.tax_rate}%):', f'{invoice.tax_amount:.2f} Đh'],
+        ['', '', 'Total TTC:', f'{invoice.total:.2f} Đh'],
     ]
     totals_table = Table(totals_data, colWidths=[200, 60, 100, 100])
     totals_table.setStyle(TableStyle([

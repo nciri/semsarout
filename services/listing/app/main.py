@@ -607,7 +607,7 @@ async def create_sale_request(request: Request, principal: Principal = Depends(g
                                 file_url=f"{uid}/{fid}", original_name=doc.get("original_name"))
         db.add(pdoc)
         saved.append(pdoc)
-    summary = (f"Dossier de vente en ligne {p.reference} - {title} - Prix souhaité : {int(price)} MAD"
+    summary = (f"Dossier de vente en ligne {p.reference} - {title} - Prix souhaité : {int(price)} Đh"
                f" - {len(photos)} photo(s), {len(documents)} document(s)"
                f"{' - Shooting pro demandé' if wants_pro else ''}")
     u = _fetch_user(uid)

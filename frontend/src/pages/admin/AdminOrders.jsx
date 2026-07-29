@@ -22,7 +22,7 @@ function AdminOrders() {
           <tbody>
             {orders.map((o) => (
               <tr key={o.id} className="border-t border-slate-100">
-                <td className="px-4 py-3 font-medium">{o.reference}</td><td>{o.agency_id}</td><td>{o.total} MAD</td>
+                <td className="px-4 py-3 font-medium">{o.reference}</td><td>{o.agency_id}</td><td>{o.total} Đh</td>
                 <td>
                   <select value={o.status} onChange={(e) => upd.mutate({ id: o.id, status: e.target.value })} className="border border-slate-300 rounded px-2 py-1 text-slate-900">
                     {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}

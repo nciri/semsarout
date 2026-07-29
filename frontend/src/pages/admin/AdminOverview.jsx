@@ -21,7 +21,7 @@ function AdminOverview() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Kpi label="Utilisateurs" value={d.total_users} />
         <Kpi label="Agences" value={d.total_agencies} />
-        <Kpi label="MRR estimé (MAD)" value={d.mrr_estimate} />
+        <Kpi label="MRR estimé (Đh)" value={d.mrr_estimate} />
         <Kpi label="Inscriptions 30j" value={d.signups_last_30d} />
         <Kpi label="Comptes suspendus" value={d.suspended_count} />
         <Kpi label="En attente de purge" value={d.deleted_pending_purge_count} />

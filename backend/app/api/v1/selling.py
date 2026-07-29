@@ -263,7 +263,7 @@ def create_sale_request():
 
     summary = (
         f"Dossier de vente en ligne {property.reference} - {title} - "
-        f"Prix souhaité : {int(price)} MAD - "
+        f"Prix souhaité : {int(price)} Đh - "
         f"{len(photos)} photo(s), {len(documents)} document(s)"
         f"{' - Shooting pro demandé' if wants_pro_photos else ''}"
     )

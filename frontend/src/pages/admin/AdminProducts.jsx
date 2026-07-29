@@ -34,7 +34,7 @@ function AdminProducts() {
             <tbody>
               {products.map((p) => (
                 <tr key={p.id} className="border-t border-slate-100">
-                  <td className="px-4 py-3 font-medium">{p.name}</td><td>{p.price} MAD</td><td>{p.stock}</td>
+                  <td className="px-4 py-3 font-medium">{p.name}</td><td>{p.price} Đh</td><td>{p.stock}</td>
                   <td><input type="checkbox" checked={p.is_active} onChange={(e) => toggle.mutate({ id: p.id, is_active: e.target.checked })} /></td>
                   <td className="text-right"><button onClick={() => del.mutate(p.id)} className="text-red-600"><FiTrash2 /></button></td>
                 </tr>
@@ -48,7 +48,7 @@ function AdminProducts() {
           <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm mb-2 text-slate-900">
             {CATS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
-          {[['name', 'Nom *'], ['price', 'Prix (MAD)'], ['stock', 'Stock'], ['image_url', "URL image"]].map(([f, ph]) => (
+          {[['name', 'Nom *'], ['price', 'Prix (Đh)'], ['stock', 'Stock'], ['image_url', "URL image"]].map(([f, ph]) => (
             <input key={f} value={form[f]} onChange={(e) => setForm({ ...form, [f]: e.target.value })} placeholder={ph} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm mb-2 text-slate-900" />
           ))}
           <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description" rows="2" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm mb-2 text-slate-900" />
