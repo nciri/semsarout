@@ -118,6 +118,15 @@ def _rent_period_dict(rp: RentPeriod) -> dict:
     }
 
 
+def _emit_rent_paid(db: Session, rp: RentPeriod, lease: Lease) -> None:
+    enqueue(db, "rent_period", rp.id, events.RENT_PAID, {
+        "id": rp.id, "lease_id": rp.lease_id, "agency_id": rp.agency_id,
+        "tenant_client_id": lease.tenant_client_id, "property_id": lease.property_id,
+        "period_label": rp.period_label, "total_amount": num(rp.total_amount),
+        "paid_amount": num(rp.paid_amount), "receipt_number": rp.receipt_number,
+    })
+
+
 @app.get("/health", include_in_schema=False)
 def health():
     return {"status": "ok", "service": settings.service_name}
@@ -337,3 +346,29 @@ def list_rent_periods(lease_id: int, principal: Principal = Depends(get_principa
     q = (db.query(RentPeriod).filter(RentPeriod.lease_id == lease_id)
          .order_by(RentPeriod.year.desc(), RentPeriod.month.desc()))
     return {"rent_periods": [_rent_period_dict(rp) for rp in q.all()]}
+
+
+@app.post("/backoffice/gestion-locative/rent-periods/{period_id}/pay")
+async def pay_rent_period(period_id: int, request: Request,
+                          principal: Principal = Depends(get_principal),
+                          db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    rp = db.get(RentPeriod, period_id)
+    if rp is None or rp.agency_id != principal.agency_id:
+        return err("Échéance introuvable.", 404)
+    data = await json_body(request)
+    if data.get("amount") is None:
+        return err("Le montant est requis.", 400)
+    amount = float(data["amount"])
+    rp.paid_amount = amount
+    rp.payment_method = data.get("method", "virement")
+    rp.paid_at = _parse_dt(data.get("paid_at")) or datetime.utcnow()
+    rp.status = "paid" if amount >= float(rp.total_amount or 0) else "partial"
+    if rp.status == "paid" and not rp.receipt_number:
+        rp.receipt_number = _reference("QIT")
+    lease = db.get(Lease, rp.lease_id)
+    if rp.status == "paid":
+        _emit_rent_paid(db, rp, lease)   # quittance envoyée par notification
+    db.commit()
+    return _rent_period_dict(rp)
