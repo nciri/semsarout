@@ -26,7 +26,8 @@ def main() -> None:
                   "work_order.created", "contract.signed",
                   "rental.mandate.signed", "rental.lease.signed", "rental.rent.paid",
                   "rental.deposit.returned", "rental.lease.revised",
-                  "rental.charge_regularization.sent"],
+                  "rental.charge_regularization.sent",
+                  "rental.application.received", "rental.application.decided"],
         exchange=settings.events_exchange,
     )
     consumer.run(handler=handle_event)

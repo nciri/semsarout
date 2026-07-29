@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_components.html" import card, lucide with context %}
+{% set accepted = decision == "accepted" %}
+{% block subject %}{% if accepted %}Bonne nouvelle : votre candidature est acceptée{% else %}Suite à votre candidature{% endif %}{% endblock %}
+{% block preheader %}{% if accepted %}Votre dossier a été retenu.{% else %}Votre dossier n'a pas été retenu cette fois.{% endif %}{% endblock %}
+{% block badge %}{{ lucide("circle-check" if accepted else "circle-x") }}{% endblock %}
+{% block hero_title %}{% if accepted %}Candidature acceptée{% else %}Réponse à votre candidature{% endif %}{% endblock %}
+{% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}.</p>{% endblock %}
+{% block content %}
+{% if accepted %}
+<p style="text-align:center; color:{{ brand.ink }};">Excellente nouvelle&nbsp;! Votre dossier a été <strong>retenu</strong>. Notre équipe vous recontactera pour la suite (bail, état des lieux, remise des clés).</p>
+{% else %}
+<p style="text-align:center; color:{{ brand.ink }};">Après étude, votre dossier n'a pas été retenu pour ce bien{% if reason %} ({{ reason }}){% endif %}. Nous vous remercions de votre intérêt et restons à votre disposition pour d'autres biens.</p>
+{% endif %}
+<p style="margin-top:18px; font-size:13px; color:{{ brand.muted }}; text-align:center;">Une question&nbsp;? <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
+{% endblock %}

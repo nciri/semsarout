@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from "_components.html" import card, lucide with context %}
+{% block subject %}Votre candidature est bien reçue{% endblock %}
+{% block preheader %}Nous avons bien reçu votre dossier de candidature{% if property_title %} pour {{ property_title }}{% endif %}.{% endblock %}
+{% block badge %}{{ lucide("clipboard-check") }}{% endblock %}
+{% block hero_title %}Candidature reçue{% endblock %}
+{% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}, merci de votre intérêt.</p>{% endblock %}
+{% block content %}
+<p style="text-align:center; color:{{ brand.ink }};">Nous avons bien reçu votre dossier de candidature{% if property_title %} pour <strong>{{ property_title }}</strong>{% endif %}. Notre équipe l'étudie et reviendra vers vous rapidement.</p>
+<p style="margin-top:18px; font-size:13px; color:{{ brand.muted }}; text-align:center;">Pensez à compléter vos pièces justificatives depuis votre espace pour accélérer l'étude. Une question&nbsp;? <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
+{% endblock %}

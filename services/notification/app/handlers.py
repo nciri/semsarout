@@ -239,6 +239,25 @@ def _handle_charge_regularized(db, payload):
               actual_total=payload.get("actual_total"), balance=payload.get("balance"))
 
 
+def _handle_application_received(db, payload):
+    """rental.application.received → accusé de réception au candidat."""
+    to = (payload.get("applicant_email") or "").strip()
+    if not _valid_email(to):
+        return
+    _try_send(db, to, "application_received.html", "application_received", from_email=_contact(),
+              name=payload.get("applicant_name"), property_title=payload.get("property_title"))
+
+
+def _handle_application_decided(db, payload):
+    """rental.application.decided → décision (accept/refus) au candidat."""
+    to = (payload.get("applicant_email") or "").strip()
+    if not _valid_email(to):
+        return
+    _try_send(db, to, "application_decision.html", "application_decision", from_email=_contact(),
+              name=payload.get("applicant_name"), decision=payload.get("decision"),
+              reason=payload.get("reason"))
+
+
 def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
     db = SessionLocal()
     try:
@@ -268,6 +287,10 @@ def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
             _handle_lease_revised(db, payload)
         elif routing_key == "rental.charge_regularization.sent":
             _handle_charge_regularized(db, payload)
+        elif routing_key == "rental.application.received":
+            _handle_application_received(db, payload)
+        elif routing_key == "rental.application.decided":
+            _handle_application_decided(db, payload)
         else:
             channel, template = _TEMPLATES.get(routing_key, ("log", routing_key))
             _log(db, channel, str(payload.get("user_id", "?")), template, "sent")
