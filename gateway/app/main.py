@@ -308,6 +308,8 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         return app.state.crm, path.replace("/api/v1", "", 1)
     if settings.transactions_url and path.startswith("/api/v1/backoffice/transactions"):
         return app.state.transactions, path.replace("/api/v1", "", 1)
+    if settings.rental_url and path.startswith("/api/v1/backoffice/gestion-locative"):
+        return app.state.rental, path.replace("/api/v1", "", 1)
     if settings.legal_url and (
         path.startswith("/api/v1/backoffice/notaries")
         or path.startswith("/api/v1/backoffice/legal-cases")
@@ -356,6 +358,7 @@ async def lifespan(app: FastAPI):
     app.state.listing = _client_or_none(settings.listing_url)
     app.state.crm = _client_or_none(settings.crm_url)
     app.state.transactions = _client_or_none(settings.transactions_url)
+    app.state.rental = _client_or_none(settings.rental_url)
     app.state.buyer = _client_or_none(settings.buyer_url)
     app.state.programs = _client_or_none(settings.programs_url)
     app.state.staymanager = _client_or_none(settings.staymanager_url)
@@ -370,6 +373,7 @@ async def lifespan(app: FastAPI):
         app.state.analytics, app.state.contract, app.state.legal,
         app.state.payment, app.state.billing, app.state.catalog, app.state.marketplace,
         app.state.directory, app.state.listing, app.state.crm, app.state.transactions,
+        app.state.rental,
         app.state.buyer, app.state.programs, app.state.staymanager, app.state.geo,
         app.state.messaging, app.state.trust_safety, app.state.agency, app.state.audit,
     ):

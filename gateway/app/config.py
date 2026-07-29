@@ -42,6 +42,7 @@ class GatewaySettings(BaseSettings):
     listing_url: str | None = None
     crm_url: str | None = None
     transactions_url: str | None = None
+    rental_url: str | None = None
     buyer_url: str | None = None
     programs_url: str | None = None
     staymanager_url: str | None = None
