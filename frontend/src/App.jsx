@@ -75,6 +75,8 @@ import WorkOrderDetail from './pages/backoffice/artisans/WorkOrderDetail'
 import RentalLayout from './pages/backoffice/rental/RentalLayout'
 import MandatesList from './pages/backoffice/rental/MandatesList'
 import MandateDetail from './pages/backoffice/rental/MandateDetail'
+import LeasesList from './pages/backoffice/rental/LeasesList'
+import LeaseDetail from './pages/backoffice/rental/LeaseDetail'
 import LegalCasesList from './pages/backoffice/legal/LegalCasesList'
 import LegalCaseDetail from './pages/backoffice/legal/LegalCaseDetail'
 import AnalyticsLayout from './pages/backoffice/analytics/AnalyticsLayout'
@@ -204,8 +206,10 @@ function App() {
           {/* Gestion locative : mandats + baux + candidatures en onglets */}
           <Route path="gestion-locative" element={<RentalLayout />}>
             <Route index element={<MandatesList />} />
+            <Route path="baux" element={<LeasesList />} />
           </Route>
           <Route path="gestion-locative/mandats/:id" element={<MandateDetail />} />
+          <Route path="gestion-locative/baux/:id" element={<LeaseDetail />} />
           {/* Notaires & juridique : notaires + dossiers en onglets */}
           <Route path="notaires" element={<NotairesLayout />}>
             <Route index element={<NotariesDirectory />} />
