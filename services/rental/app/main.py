@@ -882,3 +882,50 @@ async def validate_document(application_id: int, doc_id: int, request: Request,
     d.status = status
     db.commit()
     return {"id": d.id, "status": d.status}
+
+
+@app.get("/backoffice/gestion-locative/applications")
+def agency_applications(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    q = (db.query(TenantApplication)
+         .filter(TenantApplication.agency_id == principal.agency_id)
+         .order_by(TenantApplication.created_at.desc()))
+    return {"applications": [_application_dict(a) for a in q.all()]}
+
+
+@app.get("/backoffice/gestion-locative/applications/{application_id}")
+def agency_application(application_id: int, principal: Principal = Depends(get_principal),
+                       db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    a = db.get(TenantApplication, application_id)
+    if a is None or a.agency_id != principal.agency_id:
+        return err("Candidature introuvable.", 404)
+    docs = db.query(ApplicationDocument).filter(ApplicationDocument.application_id == a.id).all()
+    return _application_dict(a, docs=docs)
+
+
+@app.post("/backoffice/gestion-locative/applications/{application_id}/decide")
+async def decide_application(application_id: int, request: Request,
+                             principal: Principal = Depends(get_principal),
+                             db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    a = db.get(TenantApplication, application_id)
+    if a is None or a.agency_id != principal.agency_id:
+        return err("Candidature introuvable.", 404)
+    if a.status in ("accepted", "rejected", "withdrawn"):
+        return err("Candidature déjà traitée.", 400)
+    data = await json_body(request)
+    decision = data.get("decision")
+    if decision not in ("accepted", "rejected"):
+        return err("decision doit être 'accepted' ou 'rejected'.", 400)
+    a.status = decision
+    a.decided_at = datetime.utcnow()
+    a.decision_reason = data.get("reason")
+    enqueue(db, "tenant_application", a.id, events.APPLICATION_DECIDED, {
+        "id": a.id, "applicant_email": a.applicant_email, "applicant_name": a.applicant_name,
+        "property_id": a.property_id, "decision": decision, "reason": a.decision_reason})
+    db.commit()
+    return _application_dict(a)
