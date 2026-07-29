@@ -316,7 +316,7 @@ def internal_generate_rent_periods(x_internal_token: str = Header(default=""),
             continue
         rent = l.rent_amount or 0
         charges = l.charges_amount or 0
-        day = min(int(l.payment_day or 1), 28)
+        day = min(max(int(l.payment_day or 1), 1), 28)
         rp = RentPeriod(lease_id=l.id, agency_id=l.agency_id, period_label=f"{_MONTHS_FR[m]} {y}",
                         year=y, month=m, rent_amount=rent, charges_amount=charges,
                         total_amount=rent + charges, due_date=datetime(y, m, day), status="pending")
