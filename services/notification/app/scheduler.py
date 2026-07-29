@@ -179,6 +179,33 @@ def _job_generate_rent_periods(db) -> int:
         return 0
 
 
+def _job_crg_reports(db) -> int:
+    """CRG mensuel : récapitulatif des loyers encaissés le mois dernier, au propriétaire."""
+    try:
+        r = httpx.get(f"{_rental()}/internal/mandates/due-crg", headers=_headers(), timeout=10.0)
+        reports = r.json().get("reports", []) if r.status_code == 200 else []
+    except (httpx.HTTPError, ValueError):
+        return 0
+    sent = 0
+    for rep in reports:
+        landlord = recipients.client(rep.get("landlord_client_id"))
+        to = (landlord.get("email") or "").strip()
+        if _valid_email(to):
+            _try_send(db, to, "crg_report.html", "crg_report", from_email=_contact(),
+                      name=landlord.get("name"), period_label=rep.get("period_label"),
+                      rent_collected=rep.get("rent_collected"), fees=rep.get("fees"),
+                      net=rep.get("net"))
+            db.commit()
+            sent += 1
+        try:
+            httpx.post(f"{_rental()}/internal/mandates/{rep['mandate_id']}/crg-sent",
+                       headers=_headers(), json={k: rep[k] for k in ("rent_collected", "fees", "net")},
+                       timeout=10.0)
+        except httpx.HTTPError:
+            pass
+    return sent
+
+
 def run_once() -> None:
     db = SessionLocal()
     try:
@@ -200,6 +227,9 @@ def run_once() -> None:
         po = _job_landlord_payouts(db)
         if po:
             logger.info("avis de virement envoyés", extra={"count": po})
+        cr = _job_crg_reports(db)
+        if cr:
+            logger.info("CRG envoyés", extra={"count": cr})
     except Exception:  # noqa: BLE001 — un job qui échoue ne doit pas tuer la boucle
         logger.exception("échec d'un job d'ordonnanceur")
     finally:

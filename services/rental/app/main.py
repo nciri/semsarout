@@ -18,7 +18,7 @@ from semsar_events import enqueue
 
 from . import events
 from .db import get_db, init_db
-from .models import ClientRO, Lease, Mandate, PropertyRO, RentPeriod
+from .models import ClientRO, CrgReport, Lease, Mandate, PropertyRO, RentPeriod
 from .util import err, iso, json_body, num
 
 settings = get_settings()
@@ -208,6 +208,26 @@ def sign_mandate(mandate_id: int, principal: Principal = Depends(get_principal),
     _emit_mandate(db, m, events.MANDATE_SIGNED)
     db.commit()
     return _mandate_dict(m)
+
+
+@app.get("/internal/mandates/due-crg", include_in_schema=False)
+def internal_mandates_due_crg(x_internal_token: str = Header(default=""),
+                              db: Session = Depends(get_db)):
+    """Mandats actifs avec des loyers encaissés le mois dernier, sans CRG encore émis pour ce mois."""
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    y, m = _prev_period(datetime.utcnow())
+    out = []
+    for mnd in db.query(Mandate).filter(Mandate.status == "active").all():
+        if db.query(CrgReport).filter(CrgReport.mandate_id == mnd.id, CrgReport.year == y,
+                                      CrgReport.month == m).first():
+            continue
+        agg = _crg_aggregate(db, mnd, y, m)
+        if agg["rent_collected"] <= 0:
+            continue
+        out.append({"mandate_id": mnd.id, "landlord_client_id": mnd.landlord_client_id,
+                    "period_label": f"{_MONTHS_FR[m]} {y}", "year": y, "month": m, **agg})
+    return {"reports": out}
 
 
 @app.get("/internal/mandates/{mandate_id}", include_in_schema=False)
@@ -485,3 +505,60 @@ def rent_receipt_pdf(period_id: int, principal: Principal = Depends(get_principa
         property_title=prop.title if prop else None)
     return Response(data, media_type="application/pdf",
                     headers={"Content-Disposition": f"attachment; filename={rp.receipt_number}.pdf"})
+
+
+def _prev_period(now: datetime) -> tuple[int, int]:
+    """Mois précédent (couvert par le CRG émis en début de mois courant)."""
+    return (now.year - 1, 12) if now.month == 1 else (now.year, now.month - 1)
+
+
+def _crg_aggregate(db, mandate, y: int, m: int) -> dict:
+    """Agrège les loyers encaissés des baux d'un mandat pour un mois donné."""
+    lease_ids = [l.id for l in db.query(Lease).filter(Lease.mandate_id == mandate.id).all()]
+    collected = 0.0
+    if lease_ids:
+        rows = (db.query(RentPeriod)
+                .filter(RentPeriod.lease_id.in_(lease_ids), RentPeriod.year == y,
+                        RentPeriod.month == m, RentPeriod.status == "paid").all())
+        collected = sum(float(rp.paid_amount or rp.total_amount or 0) for rp in rows)
+    fee_pct = float(mandate.fee_percent or 0)
+    fees = round(collected * fee_pct / 100.0, 2)
+    return {"rent_collected": round(collected, 2), "fees": fees,
+            "net": round(collected - fees, 2)}
+
+
+@app.post("/internal/mandates/{mandate_id}/crg-sent", include_in_schema=False)
+async def internal_mandate_crg_sent(mandate_id: int, request: Request,
+                                    x_internal_token: str = Header(default=""),
+                                    db: Session = Depends(get_db)):
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    mnd = db.get(Mandate, mandate_id)
+    if mnd is None:
+        return {"ok": True}
+    data = await json_body(request)
+    y, m = _prev_period(datetime.utcnow())
+    if not db.query(CrgReport).filter(CrgReport.mandate_id == mnd.id, CrgReport.year == y,
+                                      CrgReport.month == m).first():
+        db.add(CrgReport(mandate_id=mnd.id, agency_id=mnd.agency_id,
+                         period_label=f"{_MONTHS_FR[m]} {y}", year=y, month=m,
+                         rent_collected=data.get("rent_collected", 0), fees=data.get("fees", 0),
+                         net=data.get("net", 0), sent_at=datetime.utcnow()))
+        db.commit()
+    return {"ok": True}
+
+
+@app.get("/backoffice/gestion-locative/mandates/{mandate_id}/crg")
+def list_crg(mandate_id: int, principal: Principal = Depends(get_principal),
+             db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    mnd = db.get(Mandate, mandate_id)
+    if mnd is None or mnd.agency_id != principal.agency_id:
+        return err("Mandat introuvable.", 404)
+    q = (db.query(CrgReport).filter(CrgReport.mandate_id == mandate_id)
+         .order_by(CrgReport.year.desc(), CrgReport.month.desc()))
+    return {"reports": [{"id": c.id, "period_label": c.period_label, "year": c.year,
+                         "month": c.month, "rent_collected": num(c.rent_collected),
+                         "fees": num(c.fees), "net": num(c.net), "sent_at": iso(c.sent_at)}
+                        for c in q.all()]}

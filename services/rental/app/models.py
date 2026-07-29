@@ -84,6 +84,23 @@ class RentPeriod(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class CrgReport(Base):
+    __tablename__ = "crg_report"
+    __table_args__ = (UniqueConstraint("mandate_id", "year", "month", name="uq_crg_mandate_ym"),)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    mandate_id = Column(Integer, index=True, nullable=False)
+    agency_id = Column(Integer, index=True, nullable=False)
+    period_label = Column(String(40))
+    year = Column(Integer, nullable=False)
+    month = Column(Integer, nullable=False)
+    rent_collected = Column(Numeric(12, 2), default=0)
+    fees = Column(Numeric(12, 2), default=0)
+    net = Column(Numeric(12, 2), default=0)
+    sent_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class PropertyRO(Base):
     """Projection locale du bien (via listing.*) : property_title / property_city."""
     __tablename__ = "property_ro"

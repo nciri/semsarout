@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_components.html" import card, lucide with context %}
+{% block subject %}Votre compte-rendu de gestion — {{ period_label }}{% endblock %}
+{% block preheader %}Le récapitulatif de la gestion locative de votre bien pour {{ period_label }}.{% endblock %}
+{% block badge %}{{ lucide("chart-column") }}{% endblock %}
+{% block hero_title %}Compte-rendu de gestion{% endblock %}
+{% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}, voici votre CRG pour {{ period_label }}.</p>{% endblock %}
+{% block content %}
+<p style="text-align:center; color:{{ brand.ink }};">Voici le récapitulatif de la gestion de votre bien pour la période <strong>{{ period_label }}</strong>.</p>
+{{ card([("Loyers encaissés", "{:,.0f}".format(rent_collected|float).replace(",", " ") ~ " " ~ currency)]
+  + [("Honoraires de gestion", "{:,.0f}".format(fees|float).replace(",", " ") ~ " " ~ currency)]
+  + [("Net reversé", "{:,.0f}".format(net|float).replace(",", " ") ~ " " ~ currency)]) }}
+<p style="margin-top:18px; font-size:13px; color:{{ brand.muted }}; text-align:center;">Le détail complet est disponible dans votre espace SemsarOut. Une question&nbsp;? <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
+{% endblock %}
