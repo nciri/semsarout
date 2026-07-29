@@ -60,21 +60,22 @@
 
 ## 3. Gestion Locative (syndic / administration de biens) — socle livré (Phases 1-2) ; suite planifiée (Phases 3-5)
 
-> Service `rental` en place : **Phases 1-2 livrées** (mandats, baux, quittancement — quittance, relance loyer, avis de virement). **Phases 3-5 🔴** : CRG, IRL, charges, candidature, UI (à construire progressivement).
+> Service `rental` en place : **Phases 1-3 livrées** (mandats, baux, quittancement, CRG/échéance/dépôt/révision/charges). **Phases 4-5 à venir** (candidature, UI).
 
 | Processus | Statut | Notes |
 |---|---|---|
 | Mandat de gestion signé (notification) | ✅ | Phase 1 : événement `mandate.signed` émis et traité. |
+| Avis d'échéance de mandat | ✅ | Phase 3 : email envoyé 60j avant expiration du mandat, déclenché par ordonnanceur. |
 | Appel de loyer / avis d'échéance (mensuel) | 🔴 | Phase 2/3 (planifié) |
 | Quittance de loyer | ✅ | Phase 2 : email + PDF générés et envoyés. |
 | Relances impayés (1ʳᵉ amiable, 2ᵉ avant mise en demeure) | ✅ | Phase 2 : dunning (J+3, J+7, max 3) implémenté. |
-| Révision annuelle du loyer (indice IRL) | 🔴 | Phase 2/3 + ordonnanceur (planifié) |
-| Régularisation des charges (décompte annuel) | 🔴 | Phase 2/3 + ordonnanceur (planifié) |
+| Révision annuelle du loyer (indice IRL) | ✅ | Phase 3 : déclenché par l'agence (route back-office `/revise`). |
+| Régularisation des charges (décompte annuel) | ✅ | Phase 3 : déclenché par l'agence (route back-office `/charge-regularizations/{id}/send`). |
 | Mise à jour pièces (assurance habitation, entretien chaudière) | 🔴 | Phase 2/3 (planifié) |
 | Congé / préavis (accusé + consignes) | 🔴 | Phase 2/3 (planifié) |
 | États des lieux (entrée/sortie + copie signée) | 🔴 | Phase 2/3 (planifié) |
-| Restitution du dépôt de garantie (décompte final) | 🔴 | Phase 2/3 (planifié) |
-| Propriétaire : Compte‑rendu de gestion (CRG) mensuel/trimestriel | 🔴 | Phase 2/3 + ordonnanceur (planifié) |
+| Restitution du dépôt de garantie (décompte final) | ✅ | Phase 3 : email envoyé lors de la restitution, déclenché par événement `DEPOSIT_RETURNED`. |
+| Propriétaire : Compte‑rendu de gestion (CRG) mensuel/trimestriel | ✅ | Phase 3 : email + PDF générés et envoyés par ordonnanceur (données loyer + frais). |
 | Propriétaire : avis de virement des loyers | ✅ | Phase 2 : avis de paiement généré et envoyé au propriétaire. |
 | Propriétaire : demande d'accord pour travaux (devis) | 🔴 | Phase 2/3 (planifié) |
 | Propriétaire : aide à la déclaration fiscale (2044 / micro‑foncier) | 🔴 | Phase 2/3 (planifié) |
