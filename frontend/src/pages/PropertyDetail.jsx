@@ -5,7 +5,8 @@ import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import {
   FiMapPin, FiMaximize, FiPhone, FiMail, FiHeart,
-  FiShare2, FiChevronLeft, FiChevronRight, FiCheck, FiZoomIn, FiEye, FiFileText
+  FiShare2, FiChevronLeft, FiChevronRight, FiCheck, FiZoomIn, FiEye, FiFileText,
+  FiUploadCloud, FiTrash2
 } from 'react-icons/fi'
 import { IoBedOutline, IoWaterOutline } from 'react-icons/io5'
 import { propertyService } from '../services/propertyService'
@@ -17,6 +18,9 @@ import PhotoLightbox from '../components/common/PhotoLightbox'
 import PriceGauge from '../components/common/PriceGauge'
 import useAuthStore from '../store/authStore'
 import { getAmenityIcon } from '../utils/amenityIcons'
+import { DOC_TYPES } from './dashboard/applicationStatus'
+
+const MAX_DOC_SIZE = 10 * 1024 * 1024
 
 const LEAD_STATUS = {
   new: ['Nouveau', 'bg-blue-100 text-blue-700'],
@@ -42,6 +46,9 @@ function PropertyDetail() {
     applicant_name: '', applicant_email: '', applicant_phone: '',
     monthly_income: '', guarantor_name: '', guarantor_income: '',
   })
+  const [applyDocs, setApplyDocs] = useState([])
+  const [pendingDocType, setPendingDocType] = useState(DOC_TYPES[0][0])
+  const [uploadingDocs, setUploadingDocs] = useState(false)
 
   const { data: property, isLoading } = useQuery(
     ['property', id],
@@ -198,24 +205,57 @@ function PropertyDetail() {
   }, [user])
 
   const applyMut = useMutation(
-    () => applicantService.submit({
-      property_id: Number(id),
-      applicant_name: applyForm.applicant_name,
-      applicant_email: applyForm.applicant_email,
-      applicant_phone: applyForm.applicant_phone,
-      monthly_income: applyForm.monthly_income ? Number(applyForm.monthly_income) : null,
-      guarantor_name: applyForm.guarantor_name || null,
-      guarantor_income: applyForm.guarantor_income ? Number(applyForm.guarantor_income) : null,
-    }),
+    async () => {
+      const created = await applicantService.submit({
+        property_id: Number(id),
+        applicant_name: applyForm.applicant_name,
+        applicant_email: applyForm.applicant_email,
+        applicant_phone: applyForm.applicant_phone,
+        monthly_income: applyForm.monthly_income ? Number(applyForm.monthly_income) : null,
+        guarantor_name: applyForm.guarantor_name || null,
+        guarantor_income: applyForm.guarantor_income ? Number(applyForm.guarantor_income) : null,
+      })
+      if (applyDocs.length) {
+        setUploadingDocs(true)
+        try {
+          for (const doc of applyDocs) {
+            try {
+              await applicantService.uploadDocument(created.id, doc.file, doc.docType)
+            } catch (err) {
+              toast.error(`Échec de l'envoi de « ${doc.file.name} »`)
+            }
+          }
+        } finally {
+          setUploadingDocs(false)
+        }
+      }
+      return created
+    },
     {
       onSuccess: () => {
-        toast.success('Candidature envoyée — suivez-la dans « Mes candidatures ».')
+        toast.success('Candidature envoyée avec vos pièces.')
         setApplyOpen(false)
+        setApplyDocs([])
         navigate('/dashboard/candidatures')
       },
       onError: (error) => toast.error(error.response?.data?.error || 'Une erreur est survenue')
     }
   )
+
+  const handleAddApplyDoc = (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (file.size > MAX_DOC_SIZE) {
+      toast.error('Fichier trop volumineux (max 10 Mo)')
+      return
+    }
+    setApplyDocs((docs) => [...docs, { docType: pendingDocType, file }])
+  }
+
+  const removeApplyDoc = (index) => {
+    setApplyDocs((docs) => docs.filter((_, i) => i !== index))
+  }
 
   const PROPERTY_TYPES = {
     apartment: 'Appartement',
@@ -677,7 +717,7 @@ function PropertyDetail() {
       {/* Modale de candidature */}
       {applyOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full">
+          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto">
             <h3 className="font-semibold text-lg mb-4">Déposer un dossier de candidature</h3>
             <form
               onSubmit={(e) => { e.preventDefault(); applyMut.mutate() }}
@@ -742,20 +782,66 @@ function PropertyDetail() {
                   placeholder="Facultatif"
                 />
               </div>
+
+              <div className="border-t border-gray-200 pt-4">
+                <label className="label">Pièces jointes</label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <select
+                    className="input sm:w-56"
+                    value={pendingDocType}
+                    onChange={(e) => setPendingDocType(e.target.value)}
+                  >
+                    {DOC_TYPES.map(([value, labelText]) => (
+                      <option key={value} value={value}>{labelText}</option>
+                    ))}
+                  </select>
+                  <label className="btn-secondary flex-1 justify-center cursor-pointer">
+                    <FiUploadCloud className="w-4 h-4 mr-2" />
+                    Ajouter un fichier
+                    <input type="file" className="hidden" onChange={handleAddApplyDoc} />
+                  </label>
+                </div>
+                {applyDocs.length > 0 && (
+                  <ul className="mt-3 space-y-2">
+                    {applyDocs.map((doc, index) => (
+                      <li
+                        key={`${doc.file.name}-${index}`}
+                        className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm"
+                      >
+                        <span className="truncate">
+                          <span className="font-medium">
+                            {DOC_TYPES.find(([value]) => value === doc.docType)?.[1] || doc.docType}
+                          </span>
+                          {' — '}{doc.file.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeApplyDoc(index)}
+                          className="text-gray-400 hover:text-red-600 shrink-0 ml-2"
+                          aria-label="Retirer ce fichier"
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setApplyOpen(false)}
+                  onClick={() => { setApplyOpen(false); setApplyDocs([]) }}
                   className="btn-secondary"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
-                  disabled={applyMut.isLoading}
+                  disabled={applyMut.isLoading || uploadingDocs}
                   className="btn-primary"
                 >
-                  {applyMut.isLoading ? 'Envoi...' : 'Envoyer ma candidature'}
+                  {uploadingDocs ? 'Envoi des pièces...' : applyMut.isLoading ? 'Envoi...' : 'Envoyer ma candidature'}
                 </button>
               </div>
             </form>
