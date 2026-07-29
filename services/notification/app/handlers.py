@@ -66,8 +66,8 @@ def _contact() -> str:
 
 
 def _try_send(db, to: str, template: str, log_name: str, from_email: str | None = None, **ctx) -> None:
-    subject, html, text = render.render_email(template, **ctx)
     try:
+        subject, html, text = render.render_email(template, **ctx)
         email_adapter.send_email(to, subject, text, html=html, from_email=from_email)
         _log(db, "email", to, log_name, "sent")
         logger.info("email envoyé", extra={"template": log_name, "recipient": to})
