@@ -58,7 +58,7 @@
 | Bailleur : proposition de dossiers candidats | 🔴 | Idem. |
 | Bailleur : notification de mise en location (bail signé) | ✅ | Phase 1 : domaine `rental` livré, événement `lease.signed` émis et traité. |
 
-## 3. Gestion Locative (syndic / administration de biens) — socle livré (Phases 1-2) ; suite planifiée (Phases 3-5)
+## 3. Gestion Locative (syndic / administration de biens) — socle livré (Phases 1-3) ; suite planifiée (Phases 4-5)
 
 > Service `rental` en place : **Phases 1-3 livrées** (mandats, baux, quittancement, CRG/échéance/dépôt/révision/charges). **Phases 4-5 à venir** (candidature, UI).
 
