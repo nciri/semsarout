@@ -400,7 +400,7 @@ def internal_rent_due_payouts(x_internal_token: str = Header(default=""),
         if mandate is None:
             continue
         fee = float(mandate.fee_percent or 0)
-        gross = float(rp.paid_amount or rp.total_amount or 0)
+        gross = min(float(rp.paid_amount or rp.total_amount or 0), float(rp.total_amount or 0))
         net = round(gross * (1 - fee / 100.0), 2)
         out.append({"id": rp.id, "landlord_client_id": mandate.landlord_client_id,
                     "period_label": rp.period_label, "gross_amount": gross,
@@ -442,10 +442,13 @@ async def pay_rent_period(period_id: int, request: Request,
     rp = db.get(RentPeriod, period_id)
     if rp is None or rp.agency_id != principal.agency_id:
         return err("Échéance introuvable.", 404)
+    was_paid = rp.status == "paid"
     data = await json_body(request)
     if data.get("amount") is None:
         return err("Le montant est requis.", 400)
     amount = float(data["amount"])
+    if amount <= 0:
+        return err("Le montant doit être positif.", 400)
     rp.paid_amount = amount
     rp.payment_method = data.get("method", "virement")
     rp.paid_at = _parse_dt(data.get("paid_at")) or datetime.utcnow()
@@ -453,7 +456,7 @@ async def pay_rent_period(period_id: int, request: Request,
     if rp.status == "paid" and not rp.receipt_number:
         rp.receipt_number = _reference("QIT")
     lease = db.get(Lease, rp.lease_id)
-    if rp.status == "paid":
+    if rp.status == "paid" and not was_paid:
         _emit_rent_paid(db, rp, lease)   # quittance envoyée par notification
     db.commit()
     return _rent_period_dict(rp)
