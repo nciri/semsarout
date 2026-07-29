@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 import uuid
 
-from fastapi import Depends, FastAPI, Header, Request
+from fastapi import Depends, FastAPI, Header, Request, Response
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import Session
@@ -18,7 +18,7 @@ from semsar_events import enqueue
 
 from . import events
 from .db import get_db, init_db
-from .models import Lease, Mandate, RentPeriod
+from .models import ClientRO, Lease, Mandate, PropertyRO, RentPeriod
 from .util import err, iso, json_body, num
 
 settings = get_settings()
@@ -372,3 +372,28 @@ async def pay_rent_period(period_id: int, request: Request,
         _emit_rent_paid(db, rp, lease)   # quittance envoyée par notification
     db.commit()
     return _rent_period_dict(rp)
+
+
+@app.get("/backoffice/gestion-locative/rent-periods/{period_id}/receipt.pdf")
+def rent_receipt_pdf(period_id: int, principal: Principal = Depends(get_principal),
+                     db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    rp = db.get(RentPeriod, period_id)
+    if rp is None or rp.agency_id != principal.agency_id:
+        return err("Échéance introuvable.", 404)
+    if not rp.receipt_number:
+        return err("Quittance indisponible : échéance non réglée.", 400)
+    lease = db.get(Lease, rp.lease_id)
+    mandate = db.get(Mandate, lease.mandate_id) if lease else None
+    tenant = db.get(ClientRO, lease.tenant_client_id) if lease else None
+    landlord = db.get(ClientRO, mandate.landlord_client_id) if mandate else None
+    prop = db.get(PropertyRO, lease.property_id) if lease else None
+    from . import pdf as pdf_mod
+    data = pdf_mod.render_receipt_pdf(
+        rp,
+        tenant_name=f"{tenant.first_name} {tenant.last_name}" if tenant else None,
+        landlord_name=f"{landlord.first_name} {landlord.last_name}" if landlord else None,
+        property_title=prop.title if prop else None)
+    return Response(data, media_type="application/pdf",
+                    headers={"Content-Disposition": f"attachment; filename={rp.receipt_number}.pdf"})
