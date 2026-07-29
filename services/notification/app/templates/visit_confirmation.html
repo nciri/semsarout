@@ -1,16 +1,17 @@
 {% extends "base.html" %}
-{% block subject %}Confirmation de votre visite — {{ property_title or "SemsarOut" }}{% endblock %}
-{% block preheader %}{{ date }}{% if time %} à {{ time }}{% endif %} — détails de votre rendez-vous.{% endblock %}
+{% from "_components.html" import button, card %}
+{% block subject %}Visite confirmée{% if property_title %} — {{ property_title }}{% endif %}{% endblock %}
+{% block preheader %}{{ date }}{% if time %} à {{ time }}{% endif %} — voici les détails de votre rendez-vous.{% endblock %}
+{% block badge %}📅{% endblock %}
+{% block hero_title %}Votre visite est confirmée{% endblock %}
+{% block hero_subtitle %}<p style="margin:10px 0 0 0; font-size:15px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}, nous vous attendons !</p>{% endblock %}
 {% block content %}
-<h1 style="margin:0 0 14px 0; font-size:20px; color:{{ brand.dark }};">Votre visite est confirmée</h1>
-<p style="margin:0 0 18px 0;">Bonjour{% if name %} {{ name }}{% endif %}, votre rendez-vous de visite est confirmé. Voici les détails :</p>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:{{ brand.gold_soft }}; border-radius:10px; margin:0 0 22px 0;">
-  <tr><td style="padding:16px 20px; font-size:14px; line-height:1.8; color:{{ brand.text }};">
-    {% if property_title %}<div><strong>Bien :</strong> {{ property_title }}</div>{% endif %}
-    <div><strong>Date :</strong> {{ date }}{% if time %} à {{ time }}{% endif %}</div>
-    {% if address %}<div><strong>Adresse :</strong> {{ address }}</div>{% endif %}
-    {% if agent_name %}<div><strong>Votre conseiller :</strong> {{ agent_name }}{% if agent_phone %} — {{ agent_phone }}{% endif %}</div>{% endif %}
-  </td></tr>
-</table>
-<p style="margin:0; font-size:13px; color:{{ brand.muted }};">En cas d'empêchement, prévenez votre conseiller au plus tôt. À très bientôt — l'équipe SemsarOut.</p>
+<p style="margin:0 0 6px 0; text-align:center;">Voici le récapitulatif de votre rendez-vous de visite :</p>
+{{ card(
+  ([("🏡 Bien", property_title)] if property_title else []) +
+  [("📆 Date", date ~ ((" à " ~ time) if time else ""))] +
+  ([("📍 Adresse", address)] if address else []) +
+  ([("👤 Conseiller", (agent_name ~ ((" — " ~ agent_phone) if agent_phone else "")))] if agent_name else [])) }}
+{% if map_url %}<table role="presentation" width="100%"><tr><td align="center">{{ button(map_url, "Voir l'itinéraire", "secondary") }}</td></tr></table>{% endif %}
+<p style="margin:22px 0 0 0; font-size:13px; color:{{ brand.muted }}; text-align:center;">Un empêchement ? Prévenez votre conseiller au plus tôt pour reprogrammer. À très bientôt&nbsp;! 🔑</p>
 {% endblock %}

@@ -1,0 +1,20 @@
+{# Composants email réutilisables (compatibles clients mail : table + styles inline). #}
+
+{% macro button(url, label, kind="primary") -%}
+{%- set bg = brand.gold if kind == "primary" else brand.teal -%}
+{%- set bg2 = brand.gold_dark if kind == "primary" else "#0B5C55" -%}
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0;"><tr>
+  <td align="center" bgcolor="{{ bg }}" style="border-radius:12px; background:linear-gradient(180deg,{{ bg }} 0%,{{ bg2 }} 100%); box-shadow:0 6px 16px rgba(166,120,31,.28);">
+    <a href="{{ url }}" style="display:inline-block; padding:15px 34px; font-family:'Segoe UI',Arial,sans-serif; font-size:15px; font-weight:700; line-height:1; color:#ffffff; text-decoration:none; letter-spacing:.2px;">{{ label }}</a>
+  </td>
+</tr></table>
+{%- endmacro %}
+
+{% macro card(rows, accent=None) -%}
+{%- set ac = accent or brand.gold -%}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 24px 0; border:1px solid {{ brand.border }}; border-left:4px solid {{ ac }}; border-radius:12px; background:{{ brand.gold_soft }};">
+  <tr><td style="padding:16px 22px; font-family:'Segoe UI',Arial,sans-serif; font-size:14px; line-height:1.9; color:{{ brand.text }};">
+    {% for label, value in rows %}<div><span style="color:{{ brand.muted }};">{{ label }}</span>&nbsp;&nbsp;<strong style="color:{{ brand.dark }};">{{ value }}</strong></div>{% endfor %}
+  </td></tr>
+</table>
+{%- endmacro %}
