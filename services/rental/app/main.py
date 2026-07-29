@@ -756,14 +756,18 @@ def _application_dict(a: TenantApplication, docs=None) -> dict:
 async def submit_application(request: Request, principal: Principal = Depends(get_principal),
                              db: Session = Depends(get_db)):
     """Candidature d'un utilisateur connecté (grand public) sur un bien. PAS de gating agence."""
-    if principal.agency_id is None and not principal.sub:
+    if not principal.sub:
         return err("Authentification requise.", 401)
     data = await json_body(request)
     if not data.get("property_id"):
         return err("property_id est requis.", 400)
-    prop = _property_lookup(int(data["property_id"]))
+    try:
+        property_id = int(data["property_id"])
+    except (TypeError, ValueError):
+        return err("property_id invalide.", 400)
+    prop = _property_lookup(property_id)
     a = TenantApplication(
-        property_id=int(data["property_id"]), agency_id=prop.get("agency_id"),
+        property_id=property_id, agency_id=prop.get("agency_id"),
         owner_id=prop.get("owner_id"), applicant_user_id=int(principal.sub),
         applicant_name=data.get("applicant_name"), applicant_email=data.get("applicant_email"),
         applicant_phone=data.get("applicant_phone"), monthly_income=data.get("monthly_income"),
