@@ -819,3 +819,66 @@ def withdraw_application(application_id: int, principal: Principal = Depends(get
     a.status = "withdrawn"
     db.commit()
     return _application_dict(a)
+
+
+@app.post("/gestion-locative/applications/{application_id}/documents", status_code=201)
+async def upload_document(application_id: int, request: Request,
+                          principal: Principal = Depends(get_principal),
+                          db: Session = Depends(get_db)):
+    a = _own_application(db, application_id, principal)
+    if a is None:
+        return err("Candidature introuvable.", 404)
+    body = await request.body()
+    if not body:
+        return err("Fichier vide.", 400)
+    if len(body) > 10 * 1024 * 1024:
+        return err("Fichier trop volumineux (max 10 Mo).", 400)
+    doc_type = request.query_params.get("doc_type", "autre")
+    filename = request.query_params.get("filename", "piece")
+    content_type = request.headers.get("content-type", "application/octet-stream")
+    from . import storage
+    key = f"applications/{a.id}/{uuid.uuid4().hex}"
+    storage.docs_storage().put(key, body, content_type)
+    d = ApplicationDocument(application_id=a.id, doc_type=doc_type, status="received",
+                            file_key=key, filename=filename, content_type=content_type)
+    db.add(d)
+    db.commit()
+    return {"id": d.id, "doc_type": d.doc_type, "status": d.status, "filename": d.filename}
+
+
+@app.get("/gestion-locative/applications/{application_id}/documents/{doc_id}")
+def download_document(application_id: int, doc_id: int,
+                      principal: Principal = Depends(get_principal),
+                      db: Session = Depends(get_db)):
+    a = db.get(TenantApplication, application_id)
+    d = db.get(ApplicationDocument, doc_id)
+    if a is None or d is None or d.application_id != a.id:
+        return err("Pièce introuvable.", 404)
+    is_owner = a.applicant_user_id == int(principal.sub)
+    is_agency = principal.agency_id is not None and a.agency_id == principal.agency_id
+    if not (is_owner or is_agency):
+        return err("Accès refusé.", 403)
+    from . import storage
+    data = storage.docs_storage().get(d.file_key)
+    return Response(data, media_type=d.content_type or "application/octet-stream",
+                    headers={"Content-Disposition": f"attachment; filename={d.filename or 'piece'}",
+                             "X-Content-Type-Options": "nosniff"})
+
+
+@app.patch("/backoffice/gestion-locative/applications/{application_id}/documents/{doc_id}")
+async def validate_document(application_id: int, doc_id: int, request: Request,
+                            principal: Principal = Depends(get_principal),
+                            db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    a = db.get(TenantApplication, application_id)
+    d = db.get(ApplicationDocument, doc_id)
+    if a is None or d is None or d.application_id != a.id or a.agency_id != principal.agency_id:
+        return err("Pièce introuvable.", 404)
+    data = await json_body(request)
+    status = data.get("status")
+    if status not in ("validated", "rejected", "received"):
+        return err("Statut invalide.", 400)
+    d.status = status
+    db.commit()
+    return {"id": d.id, "status": d.status}
