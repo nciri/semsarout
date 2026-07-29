@@ -22,3 +22,8 @@ def agency_email(agency_id: int) -> str | None:
 def user_email(user_id: int) -> str | None:
     base = os.environ.get("IDENTITY_URL", "http://localhost:8501")
     return (_get(f"{base}/internal/user/{user_id}").get("user") or {}).get("email")
+
+
+def client(client_id: int) -> dict:
+    base = os.environ.get("CRM_URL", "http://localhost:8013")
+    return _get(f"{base}/internal/client/{client_id}").get("client") or {}

@@ -218,6 +218,19 @@ def internal_leads(request: Request, x_internal_token: str = Header(default=""),
                       for l in q.all()]}
 
 
+@app.get("/internal/client/{client_id}", include_in_schema=False)
+def internal_client(client_id: int, x_internal_token: str = Header(default=""),
+                    db: Session = Depends(get_db)):
+    """Email/nom d'un client — pour la résolution des destinataires (service notification)."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    c = db.get(Client, client_id)
+    if c is None:
+        return {"client": None}
+    return {"client": {"id": c.id, "email": c.email,
+                       "name": f"{c.first_name or ''} {c.last_name or ''}".strip()}}
+
+
 @app.get("/internal/clients", include_in_schema=False)
 def internal_clients(request: Request, x_internal_token: str = Header(default=""),
                      db: Session = Depends(get_db)):

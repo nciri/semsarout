@@ -131,6 +131,20 @@ def _handle_visit(db, payload: dict) -> None:
               agent_name=payload.get("agent_name"))
 
 
+def _handle_transaction(db, payload: dict) -> None:
+    """`transaction.updated` : email au client uniquement aux statuts terminaux (won/lost) —
+    pas à chaque déplacement de pipeline (anti-spam)."""
+    if payload.get("status") not in ("won", "lost"):
+        return
+    c = recipients.client(payload.get("client_id"))
+    to = (c.get("email") or "").strip()
+    if not _valid_email(to):
+        return
+    _try_send(db, to, "transaction_status.html", "transaction_status", from_email=_contact(),
+              name=c.get("name"), status=payload.get("status"), reference=payload.get("reference"),
+              transaction_type=payload.get("transaction_type"))
+
+
 def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
     db = SessionLocal()
     try:
@@ -142,6 +156,8 @@ def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
             _handle_contact(db, payload)
         elif routing_key == "visit.created":
             _handle_visit(db, payload)
+        elif routing_key == "transaction.updated":
+            _handle_transaction(db, payload)
         else:
             channel, template = _TEMPLATES.get(routing_key, ("log", routing_key))
             _log(db, channel, str(payload.get("user_id", "?")), template, "sent")
