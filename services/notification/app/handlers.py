@@ -101,6 +101,36 @@ def _handle_contact(db, payload: dict) -> None:
                   property_title=title, source=payload.get("source"))
 
 
+_MONTHS_FR = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août",
+              "septembre", "octobre", "novembre", "décembre"]
+_DAYS_FR = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+
+
+def _fmt_fr(iso_str) -> tuple[str, str]:
+    """ISO → ("Samedi 15 août 2026", "15h00"). Chaîne vide si non parsable."""
+    if not iso_str:
+        return "", ""
+    from datetime import datetime
+    try:
+        dt = datetime.fromisoformat(str(iso_str).replace("Z", "+00:00"))
+    except ValueError:
+        return str(iso_str), ""
+    date = f"{_DAYS_FR[dt.weekday()].capitalize()} {dt.day} {_MONTHS_FR[dt.month - 1]} {dt.year}"
+    return date, f"{dt.hour}h{dt.minute:02d}"
+
+
+def _handle_visit(db, payload: dict) -> None:
+    """`visit.created` : email de confirmation de visite au visiteur."""
+    to = (payload.get("visitor_email") or "").strip()
+    if not _valid_email(to):
+        return
+    date, time = _fmt_fr(payload.get("scheduled_at"))
+    _try_send(db, to, "visit_confirmation.html", "visit_confirmation", from_email=_contact(),
+              name=payload.get("contact_name"), property_title=payload.get("property_title"),
+              date=date, time=time, address=payload.get("property_address"),
+              agent_name=payload.get("agent_name"))
+
+
 def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
     db = SessionLocal()
     try:
@@ -110,6 +140,8 @@ def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
             _handle_password_reset(db, payload)
         elif routing_key in ("listing.contacted", "program.contacted"):
             _handle_contact(db, payload)
+        elif routing_key == "visit.created":
+            _handle_visit(db, payload)
         else:
             channel, template = _TEMPLATES.get(routing_key, ("log", routing_key))
             _log(db, channel, str(payload.get("user_id", "?")), template, "sent")

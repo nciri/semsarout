@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
+from semsar_events import enqueue
 
 from . import users_client
 from .db import get_db
@@ -151,6 +152,9 @@ async def create_visit(request: Request, principal: Principal = Depends(get_prin
         status="scheduled", agency_id=principal.agency_id,
     )
     db.add(v)
+    db.flush()
+    # notification consomme visit.created → email de confirmation au visiteur.
+    enqueue(db, "visit", v.id, "visit.created", _visit_dict(db, v))
     db.commit()
     return _visit_dict(db, v)
 

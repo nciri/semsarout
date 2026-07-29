@@ -96,7 +96,7 @@ relay() { env SERVICE_NAME="$1" DATABASE_URL="$(dburl "$1")" RABBITMQ_URL="$RMQ"
 worker() { env SERVICE_NAME="$1" DATABASE_URL="$(dburl "$1")" RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" \
   OPENSEARCH_URL="$OS" MONOLITH_URL="$MONO" INTERNAL_TOKEN="$ITOK" \
   PYTHONPATH="services/$1" nohup python3 -m app.worker > "$LOG/$1-worker.log" 2>&1 & }
-for r in listing catalog identity contract payment billing transactions programs agency; do relay "$r"; done
+for r in listing catalog identity contract payment billing transactions programs agency crm; do relay "$r"; done
 for w in search crm marketplace geo agency messaging analytics billing notification identity audit transactions legal contract; do worker "$w"; done
 # Monolithe décommissionné : consume_users.py / relay_outbox.py (sync transitoire) ne sont plus lancés.
 sleep 5
