@@ -310,6 +310,8 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         return app.state.transactions, path.replace("/api/v1", "", 1)
     if settings.rental_url and path.startswith("/api/v1/backoffice/gestion-locative"):
         return app.state.rental, path.replace("/api/v1", "", 1)
+    if settings.rental_url and path.startswith("/api/v1/gestion-locative"):
+        return app.state.rental, path.replace("/api/v1", "", 1)
     if settings.legal_url and (
         path.startswith("/api/v1/backoffice/notaries")
         or path.startswith("/api/v1/backoffice/legal-cases")
