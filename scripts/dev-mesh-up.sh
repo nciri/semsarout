@@ -46,7 +46,8 @@ echo "== 3. Services (uvicorn) =="
 # svc:port  (rôle DB = svc avec - -> _)
 SVCS="identity:8501 notification:8502 analytics:8504 contract:8505 legal:8506 payment:8507 billing:8508 \
 catalog:8009 marketplace:8010 directory:8011 listing:8012 crm:8013 search:8103 geo:8509 \
-messaging:8510 trust-safety:8511 agency:8512 audit:8513 transactions:8514 buyer:8515 programs:8516 staymanager:8517"
+messaging:8510 trust-safety:8511 agency:8512 audit:8513 transactions:8514 buyer:8515 programs:8516 staymanager:8517 \
+rental:8518"
 S3="S3_ENDPOINT_URL=http://localhost:9000 S3_ACCESS_KEY=semsar S3_SECRET_KEY=semsar-secret AWS_ACCESS_KEY_ID=semsar AWS_SECRET_ACCESS_KEY=semsar-secret"
 # Masquage (§6) : listing/search lisent les comptes cachés depuis trust-safety (souverain),
 # plus le monolithe — prérequis au décommissionnement.
@@ -64,6 +65,7 @@ for pair in $SVCS; do
     crm|transactions) extra="IDENTITY_URL=http://localhost:8501";;
     analytics) extra="TRANSACTIONS_URL=http://localhost:8514 CRM_URL=http://localhost:8013 IDENTITY_URL=http://localhost:8501 LISTING_URL=http://localhost:8012 GEO_URL=http://localhost:8509 BILLING_URL=http://localhost:8508 AUDIT_URL=http://localhost:8513 AGENCY_URL=http://localhost:8512";;
     trust-safety) extra="IDENTITY_URL=http://localhost:8501 AGENCY_URL=http://localhost:8512";;
+    rental) extra="IDENTITY_URL=http://localhost:8501 CRM_URL=http://localhost:8013 LISTING_URL=http://localhost:8012";;
   esac
   case "$svc" in listing|search) extra="$extra $TS_HIDDEN";; esac
   [ "$svc" = "listing" ] && extra="$extra AGENCY_URL=http://localhost:8512 IDENTITY_URL=http://localhost:8501 $S3 MEDIA_BUCKET=semsar-media"
@@ -96,8 +98,8 @@ relay() { env SERVICE_NAME="$1" DATABASE_URL="$(dburl "$1")" RABBITMQ_URL="$RMQ"
 worker() { env SERVICE_NAME="$1" DATABASE_URL="$(dburl "$1")" RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" \
   OPENSEARCH_URL="$OS" MONOLITH_URL="$MONO" INTERNAL_TOKEN="$ITOK" \
   PYTHONPATH="services/$1" nohup python3 -m app.worker > "$LOG/$1-worker.log" 2>&1 & }
-for r in listing catalog identity contract payment billing transactions programs agency crm directory; do relay "$r"; done
-for w in search crm marketplace geo agency messaging analytics billing notification identity audit transactions legal contract; do worker "$w"; done
+for r in listing catalog identity contract payment billing transactions programs agency crm directory rental; do relay "$r"; done
+for w in search crm marketplace geo agency messaging analytics billing notification identity audit transactions legal contract rental; do worker "$w"; done
 # Ordonnanceur (Vague 2) : emails temporels (rappels de visite J-1, …).
 env SERVICE_NAME=notification DATABASE_URL="$(dburl notification)" RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" \
   OPENSEARCH_URL="$OS" INTERNAL_TOKEN="$ITOK" CRM_URL=http://localhost:8013 BILLING_URL=http://localhost:8508 \
@@ -110,7 +112,8 @@ echo "== 6. Santé =="
 for e in "monolithe:7000:/api/v1/properties?per_page=1" "BFF:$BFF_PORT:/health" \
   identity:8501 catalog:8009 marketplace:8010 directory:8011 listing:8012 crm:8013 search:8103 \
   geo:8509 messaging:8510 trust-safety:8511 agency:8512 audit:8513 notification:8502 analytics:8504 \
-  contract:8505 legal:8506 payment:8507 billing:8508 transactions:8514 buyer:8515 programs:8516 staymanager:8517; do
+  contract:8505 legal:8506 payment:8507 billing:8508 transactions:8514 buyer:8515 programs:8516 staymanager:8517 \
+  rental:8518; do
   n="${e%%:*}"; rest="${e#*:}"; p="${rest%%:*}"; path="${rest#*:}"; [ "$path" = "$p" ] && path="/health"
   printf "   %-13s -> %s\n" "$n" "$(curl -s -o /dev/null -w '%{http_code}' -m3 "http://localhost:$p$path")"
 done
