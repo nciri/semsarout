@@ -300,6 +300,7 @@ def mark_signed(cid: int, principal: Principal = Depends(get_principal), db: Ses
     if c.transaction_id and c.pdf_url:
         enqueue(db, "contract", c.id, events.CONTRACT_SIGNED, {
             "contract_id": c.id, "transaction_id": c.transaction_id, "pdf_url": c.pdf_url,
+            "client_id": c.client_id, "title": c.title, "document_type": c.document_type,
         })
     db.commit()
     return {"contract": _contract_dict(c)}

@@ -14,6 +14,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, require_feature, require_superadmin
+from semsar_events import enqueue
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
 from .db import get_db, init_db
@@ -209,6 +210,16 @@ async def create_work_order(request: Request, principal: Principal = Depends(_ar
         created_by=int(principal.sub) if principal.sub.isdigit() else None,
     )
     db.add(wo)
+    db.flush()
+    # notification consomme work_order.created → ordre de service par email à l'artisan.
+    artisan = db.get(Artisan, wo.artisan_id) if wo.artisan_id else None
+    enqueue(db, "work_order", wo.id, "work_order.created", {
+        "id": wo.id, "title": wo.title, "trade": wo.trade, "notes": wo.notes,
+        "scheduled_date": wo.scheduled_date.isoformat() if wo.scheduled_date else None,
+        "artisan_email": artisan.email if artisan else None,
+        "artisan_name": artisan.name if artisan else None,
+        "cost_estimate": float(wo.cost_estimate) if wo.cost_estimate is not None else None,
+    })
     db.commit()
     return {"work_order": _wo_dict(db, wo)}
 

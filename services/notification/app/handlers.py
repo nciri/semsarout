@@ -145,6 +145,29 @@ def _handle_transaction(db, payload: dict) -> None:
               transaction_type=payload.get("transaction_type"))
 
 
+def _handle_work_order(db, payload: dict) -> None:
+    """`work_order.created` : ordre de service par email à l'artisan."""
+    to = (payload.get("artisan_email") or "").strip()
+    if not _valid_email(to):
+        return
+    date, _ = _fmt_fr(payload.get("scheduled_date"))
+    _try_send(db, to, "work_order.html", "work_order", from_email=_contact(),
+              artisan_name=payload.get("artisan_name"), title=payload.get("title"),
+              trade=payload.get("trade"), notes=payload.get("notes"),
+              scheduled_date=date or None, cost_estimate=payload.get("cost_estimate"))
+
+
+def _handle_contract_signed(db, payload: dict) -> None:
+    """`contract.signed` : email « document signé » au client (email résolu via crm)."""
+    c = recipients.client(payload.get("client_id")) if payload.get("client_id") else {}
+    to = (c.get("email") or "").strip()
+    if not _valid_email(to):
+        return
+    _try_send(db, to, "contract_signed.html", "contract_signed", from_email=_contact(),
+              name=c.get("name"), title=payload.get("title"),
+              document_type=payload.get("document_type"))
+
+
 def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
     db = SessionLocal()
     try:
@@ -158,6 +181,10 @@ def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
             _handle_visit(db, payload)
         elif routing_key == "transaction.updated":
             _handle_transaction(db, payload)
+        elif routing_key == "work_order.created":
+            _handle_work_order(db, payload)
+        elif routing_key == "contract.signed":
+            _handle_contract_signed(db, payload)
         else:
             channel, template = _TEMPLATES.get(routing_key, ("log", routing_key))
             _log(db, channel, str(payload.get("user_id", "?")), template, "sent")
