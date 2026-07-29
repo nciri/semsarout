@@ -232,6 +232,30 @@ def _job_mandate_expiry_notices(db) -> int:
     return sent
 
 
+def _job_application_missing_docs(db) -> int:
+    """Relance pièces manquantes : candidatures sans aucune pièce après 3 j."""
+    try:
+        r = httpx.get(f"{_rental()}/internal/applications/due-missing-docs-reminders",
+                      headers=_headers(), timeout=10.0)
+        apps = r.json().get("applications", []) if r.status_code == 200 else []
+    except (httpx.HTTPError, ValueError):
+        return 0
+    sent = 0
+    for app in apps:
+        to = (app.get("applicant_email") or "").strip()
+        if _valid_email(to):
+            _try_send(db, to, "application_missing_docs.html", "application_missing_docs",
+                      from_email=_contact(), name=app.get("applicant_name"))
+            db.commit()
+            sent += 1
+        try:
+            httpx.post(f"{_rental()}/internal/applications/{app['id']}/missing-docs-reminder-sent",
+                       headers=_headers(), timeout=10.0)
+        except httpx.HTTPError:
+            pass
+    return sent
+
+
 def run_once() -> None:
     db = SessionLocal()
     try:
@@ -259,6 +283,9 @@ def run_once() -> None:
         me = _job_mandate_expiry_notices(db)
         if me:
             logger.info("avis d'échéance de mandat envoyés", extra={"count": me})
+        md = _job_application_missing_docs(db)
+        if md:
+            logger.info("relances pièces manquantes envoyées", extra={"count": md})
     except Exception:  # noqa: BLE001 — un job qui échoue ne doit pas tuer la boucle
         logger.exception("échec d'un job d'ordonnanceur")
     finally:

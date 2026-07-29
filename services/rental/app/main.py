@@ -821,6 +821,40 @@ def withdraw_application(application_id: int, principal: Principal = Depends(get
     return _application_dict(a)
 
 
+@app.get("/internal/applications/due-missing-docs-reminders", include_in_schema=False)
+def internal_apps_due_missing_docs(x_internal_token: str = Header(default=""),
+                                   db: Session = Depends(get_db)):
+    """Candidatures actives, soumises il y a ≥ 3 j, sans aucune pièce, non encore relancées."""
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    from datetime import timedelta
+    cutoff = datetime.utcnow() - timedelta(days=3)
+    out = []
+    rows = (db.query(TenantApplication)
+            .filter(TenantApplication.status.in_(["received", "reviewing"]),
+                    TenantApplication.missing_docs_reminder_sent_at.is_(None),
+                    TenantApplication.submitted_at <= cutoff).all())
+    for a in rows:
+        doc_count = db.query(ApplicationDocument).filter(
+            ApplicationDocument.application_id == a.id).count()
+        if doc_count == 0:
+            out.append({"id": a.id, "applicant_email": a.applicant_email,
+                        "applicant_name": a.applicant_name})
+    return {"applications": out}
+
+
+@app.post("/internal/applications/{application_id}/missing-docs-reminder-sent", include_in_schema=False)
+def internal_app_missing_docs_sent(application_id: int, x_internal_token: str = Header(default=""),
+                                   db: Session = Depends(get_db)):
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    a = db.get(TenantApplication, application_id)
+    if a is not None:
+        a.missing_docs_reminder_sent_at = datetime.utcnow()
+        db.commit()
+    return {"ok": True}
+
+
 @app.post("/gestion-locative/applications/{application_id}/documents", status_code=201)
 async def upload_document(application_id: int, request: Request,
                           principal: Principal = Depends(get_principal),
