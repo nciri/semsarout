@@ -58,9 +58,16 @@
 | Bailleur : proposition de dossiers candidats | 🔴 | Hors périmètre — optionnel (Phase 4+ planifié). |
 | Bailleur : notification de mise en location (bail signé) | ✅ | Phase 1 : domaine `rental` livré, événement `lease.signed` émis et traité. |
 
-## 3. Gestion Locative (syndic / administration de biens) — socle livré (Phases 1-4) ; suite planifiée (Phase 5)
+> **UI candidat livrée (Phase 6)** : CTA « Postuler » sur l'annonce en location (`PropertyDetail.jsx`),
+> suivi « Mes candidatures » (liste + détail), dépôt/téléchargement des pièces justificatives (S3) et
+> retrait de candidature — `frontend/src/pages/dashboard/{MyApplications,MyApplicationDetail}.jsx` +
+> `applicantService` (`frontend/src/services/rentalService.js`). Charte dashboard respectée (Tailwind
+> tokens, `react-icons/fi`, react-query). Les emails ci-dessus (accusé, relance, décision) sont le
+> pendant notification de ce parcours candidat.
 
-> Service `rental` en place : **Phases 1-4 livrées** (mandats, baux, quittancement, CRG/échéance/dépôt/révision/charges, candidature). **Phase 5 à venir** (UI).
+## 3. Gestion Locative (syndic / administration de biens) — socle livré (Phases 1-4) ; UI livrée (Phases 5-6)
+
+> Service `rental` en place : **Phases 1-4 livrées** (mandats, baux, quittancement, CRG/échéance/dépôt/révision/charges, candidature). **Phase 5 livrée** (UI back-office). **Phase 6 livrée** (UI candidat — postuler, suivi, pièces).
 
 | Processus | Statut | Notes |
 |---|---|---|
@@ -129,6 +136,9 @@
 
 **Vague 3 — nécessite le domaine « gestion locative » (nouveau service `rental`)**
 - Toute la section 3 + section 2 (dossiers/baux) + sinistres (section 4).
+- Vague 3 **complète de bout en bout** : backend (Phases 1-4) + emails (accusé/relance/décision,
+  quittances, CRG, dépôt) + UI back-office agence (Phase 5) + UI candidat (Phase 6 — postuler, suivre,
+  déposer les pièces). Restent hors périmètre : sinistres (section 4) et les processus 🔴 encore listés.
 
 > Chaque email de la vague 1 réutilise la **base de gabarit** (`templates/base.html`) et le **rendu
 > autoescapé** (`app/render.py`) — sûr contre l'injection HTML, cohérent avec le design SemsarOut.
