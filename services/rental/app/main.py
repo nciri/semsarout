@@ -562,3 +562,21 @@ def list_crg(mandate_id: int, principal: Principal = Depends(get_principal),
                          "month": c.month, "rent_collected": num(c.rent_collected),
                          "fees": num(c.fees), "net": num(c.net), "sent_at": iso(c.sent_at)}
                         for c in q.all()]}
+
+
+@app.get("/backoffice/gestion-locative/mandates/{mandate_id}/crg/{crg_id}.pdf")
+def crg_pdf(mandate_id: int, crg_id: int, principal: Principal = Depends(get_principal),
+            db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    crg = db.get(CrgReport, crg_id)
+    if crg is None or crg.mandate_id != mandate_id or crg.agency_id != principal.agency_id:
+        return err("CRG introuvable.", 404)
+    mnd = db.get(Mandate, mandate_id)
+    landlord = db.get(ClientRO, mnd.landlord_client_id) if mnd else None
+    from . import pdf as pdf_mod
+    data = pdf_mod.render_crg_pdf(
+        crg, landlord_name=(f"{landlord.first_name} {landlord.last_name}" if landlord else None),
+        mandate_reference=mnd.reference if mnd else None)
+    return Response(data, media_type="application/pdf",
+                    headers={"Content-Disposition": f"attachment; filename=CRG-{crg.year}-{crg.month:02d}.pdf"})
