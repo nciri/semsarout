@@ -362,7 +362,7 @@ async def deposit_return(lease_id: int, request: Request,
     if l.deposit_returned_at is not None:
         return err("Dépôt déjà restitué.", 400)
     data = await json_body(request)
-    amount = data.get("amount", l.deposit_amount)
+    amount = data.get("amount") or l.deposit_amount
     l.deposit_returned_at = datetime.utcnow()
     l.deposit_return_amount = amount
     enqueue(db, "lease", l.id, events.DEPOSIT_RETURNED, {
@@ -709,6 +709,8 @@ def send_charge_reg(reg_id: int, principal: Principal = Depends(get_principal),
     cr = db.get(ChargeRegularization, reg_id)
     if cr is None or cr.agency_id != principal.agency_id:
         return err("Régularisation introuvable.", 404)
+    if cr.status == "sent":
+        return err("Régularisation déjà envoyée.", 400)
     lease = db.get(Lease, cr.lease_id)
     cr.status = "sent"
     cr.statement_sent_at = datetime.utcnow()
