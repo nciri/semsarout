@@ -52,15 +52,15 @@
 | Processus | Statut | Ce qui existe / manque |
 |---|---|---|
 | Prise de RDV / visite (candidat) | 🟡 | Idem visites (section 1). |
-| Accusé de réception du dossier de candidature | 🔴 | Pas de domaine « dossier de candidature locative ». |
-| Relance pour pièces manquantes | 🔴 | Idem + ordonnanceur. |
-| Acceptation / refus du dossier | 🔴 | Idem. |
-| Bailleur : proposition de dossiers candidats | 🔴 | Idem. |
+| Accusé de réception du dossier de candidature | ✅ | Phase 4 : domaine `rental` livré, événement `submit_application` émis et traité. |
+| Relance pour pièces manquantes | ✅ | Phase 4 : job ordonnanceur `due-missing-docs-reminders` implémenté. |
+| Acceptation / refus du dossier | ✅ | Phase 4 : événement `decide_application` émis et traité. |
+| Bailleur : proposition de dossiers candidats | 🔴 | Hors périmètre — optionnel (Phase 4+ planifié). |
 | Bailleur : notification de mise en location (bail signé) | ✅ | Phase 1 : domaine `rental` livré, événement `lease.signed` émis et traité. |
 
-## 3. Gestion Locative (syndic / administration de biens) — socle livré (Phases 1-3) ; suite planifiée (Phases 4-5)
+## 3. Gestion Locative (syndic / administration de biens) — socle livré (Phases 1-4) ; suite planifiée (Phase 5)
 
-> Service `rental` en place : **Phases 1-3 livrées** (mandats, baux, quittancement, CRG/échéance/dépôt/révision/charges). **Phases 4-5 à venir** (candidature, UI).
+> Service `rental` en place : **Phases 1-4 livrées** (mandats, baux, quittancement, CRG/échéance/dépôt/révision/charges, candidature). **Phase 5 à venir** (UI).
 
 | Processus | Statut | Notes |
 |---|---|---|
