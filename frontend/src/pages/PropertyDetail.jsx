@@ -648,7 +648,7 @@ function PropertyDetail() {
             {property.transaction_type === 'rent' && (
               <button
                 onClick={() => isAuthenticated ? setApplyOpen(true) : navigate('/connexion', { state: { from: `/annonces/${id}` } })}
-                className="inline-flex items-center justify-center gap-2 w-full px-5 py-3 mb-6 bg-primary-600 text-white rounded-xl font-semibold hover:bg-primary-700 transition-colors"
+                className="btn-primary w-full flex items-center justify-center gap-2 mb-6"
               >
                 <FiFileText className="w-5 h-5" /> Déposer un dossier de candidature
               </button>
