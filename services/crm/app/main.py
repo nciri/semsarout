@@ -265,6 +265,33 @@ def internal_visits(request: Request, x_internal_token: str = Header(default="")
                        for v in q.all()]}
 
 
+@app.get("/internal/visits/due-reminders", include_in_schema=False)
+def internal_due_reminders(x_internal_token: str = Header(default=""), db: Session = Depends(get_db)):
+    """Visites à venir dans les 24 h, non annulées, dont le rappel n'a pas encore été envoyé —
+    pour l'ordonnanceur (rappel J-1). Idempotent via `reminder_sent_at`."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    from datetime import timedelta
+    now = datetime.utcnow()
+    rows = (db.query(Visit)
+            .filter(Visit.reminder_sent_at.is_(None), Visit.cancelled_at.is_(None),
+                    Visit.scheduled_at > now, Visit.scheduled_at <= now + timedelta(hours=24))
+            .all())
+    return {"visits": [_visit_dict(db, v) for v in rows]}
+
+
+@app.post("/internal/visits/{visit_id}/reminder-sent", include_in_schema=False)
+def internal_mark_reminder(visit_id: int, x_internal_token: str = Header(default=""),
+                           db: Session = Depends(get_db)):
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    v = db.get(Visit, visit_id)
+    if v is not None:
+        v.reminder_sent_at = datetime.utcnow()
+        db.commit()
+    return {"ok": True}
+
+
 @app.get("/backoffice/leads")
 def get_leads(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
     qp = request.query_params

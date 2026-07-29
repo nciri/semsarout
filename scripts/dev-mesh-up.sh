@@ -90,7 +90,7 @@ env UPSTREAM_URL="$MONO" JWT_SECRET_KEY="$JWT" INTERNAL_TOKEN="$ITOK" \
 sleep 4
 
 echo "== 5. Mesh événementiel (relais + workers + consumers monolithe) =="
-kill_pat "-m app.relay"; kill_pat "-m app.worker"; kill_pat "consume_users.py"; kill_pat "relay_outbox.py"; sleep 2
+kill_pat "-m app.relay"; kill_pat "-m app.worker"; kill_pat "-m app.scheduler"; kill_pat "consume_users.py"; kill_pat "relay_outbox.py"; sleep 2
 relay() { env SERVICE_NAME="$1" DATABASE_URL="$(dburl "$1")" RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" \
   PYTHONPATH="services/$1" nohup python3 -m app.relay > "$LOG/$1-relay.log" 2>&1 & }
 worker() { env SERVICE_NAME="$1" DATABASE_URL="$(dburl "$1")" RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" \
@@ -98,6 +98,10 @@ worker() { env SERVICE_NAME="$1" DATABASE_URL="$(dburl "$1")" RABBITMQ_URL="$RMQ
   PYTHONPATH="services/$1" nohup python3 -m app.worker > "$LOG/$1-worker.log" 2>&1 & }
 for r in listing catalog identity contract payment billing transactions programs agency crm directory; do relay "$r"; done
 for w in search crm marketplace geo agency messaging analytics billing notification identity audit transactions legal contract; do worker "$w"; done
+# Ordonnanceur (Vague 2) : emails temporels (rappels de visite J-1, …).
+env SERVICE_NAME=notification DATABASE_URL="$(dburl notification)" RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" \
+  OPENSEARCH_URL="$OS" INTERNAL_TOKEN="$ITOK" CRM_URL=http://localhost:8013 PYTHONPATH="services/notification" \
+  nohup python3 -m app.scheduler > "$LOG/notification-scheduler.log" 2>&1 &
 # Monolithe décommissionné : consume_users.py / relay_outbox.py (sync transitoire) ne sont plus lancés.
 sleep 5
 
