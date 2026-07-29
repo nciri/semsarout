@@ -9,10 +9,11 @@ from semsar_common import get_settings, setup_logging
 from semsar_events import EventConsumer
 
 from .db import init_db
-from .handlers import handle_event
+from .handlers import handle_event, load_dotenv
 
 
 def main() -> None:
+    load_dotenv()  # SMTP_* + PUBLIC_BASE_URL depuis services/notification/.env
     settings = get_settings()
     setup_logging(settings.service_name, settings.log_level)
     if settings.database_url:
@@ -20,7 +21,7 @@ def main() -> None:
     consumer = EventConsumer(
         settings.rabbitmq_url,
         service_name=settings.service_name,
-        bindings=["identity.kyc.#"],
+        bindings=["identity.kyc.#", "identity.password_reset"],
         exchange=settings.events_exchange,
     )
     consumer.run(handler=handle_event)

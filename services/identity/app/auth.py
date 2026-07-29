@@ -269,6 +269,12 @@ async def forgot_password(request: Request, db: Session = Depends(get_db)):
     token = secrets.token_urlsafe(32)
     user.reset_token = hashlib.sha256(token.encode()).hexdigest()
     user.reset_token_expires = datetime.utcnow() + timedelta(hours=1)
+    # notification consomme cet événement → envoie le mail avec le lien. Le jeton BRUT ne transite
+    # que sur le bus interne (jamais renvoyé au client). SHA256 seul est stocké en base.
+    enqueue(db, "user", user.id, "identity.password_reset", {
+        "user_id": user.id, "email": user.email,
+        "name": (user.first_name or "").strip(), "token": token,
+    })
     db.commit()
     return generic
 

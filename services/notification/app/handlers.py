@@ -1,14 +1,19 @@
 """Traitement des événements : idempotent, atomique (effet + marquage dans 1 transaction).
 
-L'« envoi » est ici une écriture dans `notification_log` (+ log) ; en cible, un adaptateur
-email/SMS/WhatsApp est branché. En cas d'exception, le message part en DLQ (pas de rejeu infini).
+Canaux : `email` (SMTP réel via `app.email`) ou `log` (trace en base). En cas d'échec d'envoi,
+on journalise `status='failed'` et on marque quand même le message traité (pas de boucle DLQ ni
+de doublon d'email : l'utilisateur peut relancer la demande).
 """
 import logging
+import os
 
+from . import email as email_adapter
 from .db import SessionLocal
 from .models import NotificationLog, ProcessedMessage
 
 logger = logging.getLogger("notification")
+
+_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "http://localhost:5600")
 
 # routing key -> (canal, gabarit). Extensible au fil des événements consommés.
 _TEMPLATES = {
@@ -17,24 +22,68 @@ _TEMPLATES = {
 }
 
 
+def load_dotenv() -> None:
+    """Charge `services/notification/.env` dans l'environnement (SMTP_*, PUBLIC_BASE_URL) — pas de
+    dépendance externe. Les variables déjà posées par le lanceur ont la priorité (setdefault)."""
+    path = os.path.join(os.path.dirname(__file__), "..", ".env")
+    if not os.path.exists(path):
+        return
+    for line in open(path, encoding="utf-8"):
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, val = line.split("=", 1)
+        os.environ.setdefault(key.strip(), val.strip())
+
+
+def _log(db, channel: str, recipient: str, template: str, status: str) -> None:
+    db.add(NotificationLog(channel=channel, recipient=recipient, template=template, status=status))
+
+
+def _handle_password_reset(db, payload: dict) -> None:
+    to = (payload.get("email") or "").strip()
+    name = payload.get("name") or ""
+    token = payload.get("token") or ""
+    link = f"{_BASE_URL}/reinitialiser-mot-de-passe?token={token}"
+    if not to or not token:
+        _log(db, "email", to or "?", "password_reset", "failed")
+        return
+    subject = "Réinitialisation de votre mot de passe SemsarOut"
+    text = (f"Bonjour {name},\n\n"
+            f"Vous avez demandé la réinitialisation de votre mot de passe.\n"
+            f"Cliquez sur ce lien (valable 1 heure) :\n\n{link}\n\n"
+            f"Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.\n\n"
+            f"— L'équipe SemsarOut")
+    html = (f"<p>Bonjour {name},</p>"
+            f"<p>Vous avez demandé la réinitialisation de votre mot de passe.</p>"
+            f'<p><a href="{link}">Réinitialiser mon mot de passe</a> (lien valable 1 heure).</p>'
+            f"<p>Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>"
+            f"<p>— L'équipe SemsarOut</p>")
+    try:
+        email_adapter.send_email(to, subject, text, html=html)
+        _log(db, "email", to, "password_reset", "sent")
+        logger.info("email reset envoyé", extra={"recipient": to})
+    except Exception as exc:  # noqa: BLE001 — échec SMTP : journalisé, pas de boucle DLQ
+        _log(db, "email", to, "password_reset", "failed")
+        logger.error("échec envoi email reset: %s", exc)
+
+
 def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
     db = SessionLocal()
     try:
-        # Idempotence : si déjà traité, on ne refait rien.
         if message_id and db.get(ProcessedMessage, message_id) is not None:
             return
-
-        channel, template = _TEMPLATES.get(routing_key, ("log", routing_key))
-        recipient = str(payload.get("user_id", "?"))
-
-        db.add(NotificationLog(channel=channel, recipient=recipient, template=template, status="sent"))
+        if routing_key == "identity.password_reset":
+            _handle_password_reset(db, payload)
+        else:
+            channel, template = _TEMPLATES.get(routing_key, ("log", routing_key))
+            _log(db, channel, str(payload.get("user_id", "?")), template, "sent")
+            logger.info("notification traitée", extra={"event": routing_key})
         if message_id:
             db.add(ProcessedMessage(message_id=message_id))
         db.commit()  # effet + marquage : atomiques
-
-        logger.info("notification envoyée", extra={"event": routing_key, "recipient": recipient})
     except Exception:
         db.rollback()
-        raise  # -> DLQ
+        raise  # -> DLQ (erreurs inattendues, hors échec SMTP déjà capturé)
     finally:
         db.close()
