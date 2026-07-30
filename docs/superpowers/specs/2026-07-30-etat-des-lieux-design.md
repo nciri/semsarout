@@ -167,9 +167,9 @@ Respecte la charte (kit, tokens, `Đh`, `react-icons/fi`, react-query, `GatedNot
 
 ## 12. Phasage (plans séparés)
 
-- **Phase A — Domaine EDL** : entités Inventory/Room/Item/Photo + jeu par défaut + endpoints
+- **Phase A — Domaine EDL ✅ livré** : entités Inventory/Room/Item/Photo + jeu par défaut + endpoints
   back-office de remplissage (pièces/éléments/photos S3) + PDF EDL + UI éditeur (dans LeaseDetail).
-- **Phase B — Décompte & comparaison** : `DepositSettlement`/`DeductionLine` + calcul + finalisation
+- **Phase B — Décompte & comparaison ✅ livré** : `DepositSettlement`/`DeductionLine` + calcul + finalisation
   (restitution dépôt + `rental.deposit.settled` + email décompte + PDF joint) + vue comparaison
   entrée↔sortie + UI décompte.
 - **Phase C — Signature 3a9dSign** : intégration réelle (invitation, statut par signataire, retour
