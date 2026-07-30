@@ -1287,6 +1287,8 @@ async def add_item(room_id: int, request: Request, principal: Principal = Depend
     data = await json_body(request)
     if not data.get("label"):
         return err("Le libellé de l'élément est requis.", 400)
+    if "condition" in data and data["condition"] not in ("bon", "moyen", "mauvais"):
+        return err("État invalide.", 400)
     n = db.query(InventoryItem).filter(InventoryItem.room_id == r.id).count()
     it = InventoryItem(room_id=r.id, label=data["label"], condition=data.get("condition", "bon"),
                        comment=data.get("comment"), position=n)
