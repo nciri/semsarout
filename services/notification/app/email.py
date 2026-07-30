@@ -15,7 +15,7 @@ def is_configured() -> bool:
 
 
 def send_email(to: str, subject: str, body: str, *, html: str | None = None,
-               from_email: str | None = None) -> None:
+               from_email: str | None = None, attachments: list[tuple[str, bytes, str]] | None = None) -> None:
     """Envoie un email via SMTP (STARTTLS sur 587, SSL implicite sur 465). `from_email` permet de
     choisir l'expéditeur (noreply@ / contact@…) selon le cas. Lève si échec."""
     host = os.environ["SMTP_HOST"]
@@ -32,6 +32,9 @@ def send_email(to: str, subject: str, body: str, *, html: str | None = None,
     msg.set_content(body)
     if html:
         msg.add_alternative(html, subtype="html")
+    for att in (attachments or []):
+        fname, data, subtype = att
+        msg.add_attachment(data, maintype="application", subtype=subtype or "pdf", filename=fname)
 
     ctx = ssl.create_default_context()
     if port == 465:

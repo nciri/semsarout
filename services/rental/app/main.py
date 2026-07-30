@@ -585,6 +585,28 @@ def rent_receipt_pdf(period_id: int, principal: Principal = Depends(get_principa
                     headers={"Content-Disposition": f"attachment; filename={rp.receipt_number}.pdf"})
 
 
+@app.get("/internal/rent-periods/{period_id}/receipt.pdf", include_in_schema=False)
+def internal_receipt_pdf(period_id: int, x_internal_token: str = Header(default=""),
+                         db: Session = Depends(get_db)):
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    rp = db.get(RentPeriod, period_id)
+    if rp is None or not rp.receipt_number:
+        return err("Quittance indisponible.", 404)
+    lease = db.get(Lease, rp.lease_id)
+    mandate = db.get(Mandate, lease.mandate_id) if lease else None
+    tenant = db.get(ClientRO, lease.tenant_client_id) if lease else None
+    landlord = db.get(ClientRO, mandate.landlord_client_id) if mandate else None
+    prop = db.get(PropertyRO, lease.property_id) if lease else None
+    from . import pdf as pdf_mod
+    data = pdf_mod.render_receipt_pdf(
+        rp, tenant_name=(f"{tenant.first_name} {tenant.last_name}" if tenant else None),
+        landlord_name=(f"{landlord.first_name} {landlord.last_name}" if landlord else None),
+        property_title=(prop.title if prop else None))
+    return Response(data, media_type="application/pdf",
+                    headers={"Content-Disposition": f"attachment; filename={rp.receipt_number}.pdf"})
+
+
 def _prev_period(now: datetime) -> tuple[int, int]:
     """Mois précédent (couvert par le CRG émis en début de mois courant)."""
     return (now.year - 1, 12) if now.month == 1 else (now.year, now.month - 1)

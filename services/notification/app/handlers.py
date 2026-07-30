@@ -7,6 +7,8 @@ de doublon d'email : l'utilisateur peut relancer la demande).
 import logging
 import os
 
+import httpx
+
 from . import email as email_adapter
 from . import recipients, render
 from .db import SessionLocal
@@ -65,15 +67,29 @@ def _contact() -> str:
     return os.environ.get("SMTP_FROM_CONTACT", "contact@semsarout.com")
 
 
-def _try_send(db, to: str, template: str, log_name: str, from_email: str | None = None, **ctx) -> None:
+def _try_send(db, to: str, template: str, log_name: str, from_email: str | None = None,
+              attachments=None, **ctx) -> None:
     try:
         subject, html, text = render.render_email(template, **ctx)
-        email_adapter.send_email(to, subject, text, html=html, from_email=from_email)
+        email_adapter.send_email(to, subject, text, html=html, from_email=from_email,
+                                  attachments=attachments)
         _log(db, "email", to, log_name, "sent")
         logger.info("email envoyé", extra={"template": log_name, "recipient": to})
     except Exception as exc:  # noqa: BLE001 — échec SMTP journalisé, pas de boucle DLQ
         _log(db, "email", to, log_name, "failed")
         logger.error("échec envoi %s: %s", log_name, exc)
+
+
+def _fetch_receipt_pdf(period_id):
+    """Récupère le PDF de quittance via l'endpoint interne (token-auth) de `rental`. Retourne
+    `None` en cas d'échec — l'appelant envoie alors l'email sans pièce jointe (pas de blocage)."""
+    base = os.environ.get("RENTAL_URL", "http://localhost:8518")
+    try:
+        r = httpx.get(f"{base}/internal/rent-periods/{period_id}/receipt.pdf",
+                      headers={"x-internal-token": os.environ.get("INTERNAL_TOKEN", "")}, timeout=10.0)
+        return r.content if r.status_code == 200 else None
+    except httpx.HTTPError:
+        return None
 
 
 def _valid_email(addr) -> bool:
@@ -197,7 +213,10 @@ def _handle_rent_paid(db, payload: dict) -> None:
     to = (tenant.get("email") or "").strip()
     if not _valid_email(to):
         return
+    pdf = _fetch_receipt_pdf(payload.get("id"))
+    atts = [(f"Quittance-{payload.get('receipt_number') or payload.get('id')}.pdf", pdf, "pdf")] if pdf else None
     _try_send(db, to, "rent_receipt.html", "rent_receipt", from_email=_contact(),
+              attachments=atts,
               name=tenant.get("name"), period_label=payload.get("period_label"),
               receipt_number=payload.get("receipt_number"),
               paid_amount=payload.get("paid_amount"), total_amount=payload.get("total_amount"))
