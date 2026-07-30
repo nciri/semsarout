@@ -172,8 +172,8 @@ Respecte la charte (kit, tokens, `Đh`, `react-icons/fi`, react-query, `GatedNot
 - **Phase B — Décompte & comparaison ✅ livré** : `DepositSettlement`/`DeductionLine` + calcul + finalisation
   (restitution dépôt + `rental.deposit.settled` + email décompte + PDF joint) + vue comparaison
   entrée↔sortie + UI décompte.
-- **Phase C — Signature 3a9dSign** : intégration réelle (invitation, statut par signataire, retour
-  signé, `mark-signed` remplacé par le flux e-sign) — quand la config 3a9dSign est fournie.
+- **Phase C — Signature 3a9dSign ✅ livré** : intégration réelle (invitation, statut par signataire, retour
+  signé, `mark-signed` remplacé par le flux e-sign) ; brique réutilisable (client signing.py + entité SignatureRequest générique + polling via ordonnanceur), appliquée aux 4 documents (EDL/décompte/bail/mandat), générateurs PDF bail+mandat créés, récupération du PDF signé, UI SignaturePanel. Limite sandbox : lien de signature non récupérable par API → complétion réelle hors sandbox ; webhook non auto-enregistrable (polling retenu).
 
 Chaque phase : lint + typecheck + tests + build verts, E2E email (Phase B), un commit par changement.
 
