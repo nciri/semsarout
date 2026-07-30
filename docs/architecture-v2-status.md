@@ -390,6 +390,7 @@ bout :
   applicationStatus}.js` — dépôt de candidature depuis l'annonce, suivi de statut, upload/
   consultation des pièces justificatives, retrait de candidature ; routé sous
   `/dashboard/candidatures` et `/dashboard/candidatures/:id`.
+- **États des lieux (EDL) — Phase A livré** : entités Inventory/Room/Item/Photo, remplissage structuré (pièces/éléments), photos S3, PDF, UI éditeur (LeaseDetail). Phases B/C : décompte caution + comparaison entrée↔sortie + signature 3a9dSign.
 - Frontend agence : `frontend/src/pages/backoffice/rental/{RentalLayout,MandatesList,MandateDetail,
   LeasesList,LeaseDetail,ApplicationsList,ApplicationDetail}.jsx` + `frontend/src/services/
   rentalService.js`, routées sous `/backoffice/gestion-locative/*` (onglets Mandats/Baux/

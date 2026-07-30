@@ -80,7 +80,7 @@
 | Régularisation des charges (décompte annuel) | ✅ | Phase 3 : déclenché par l'agence (route back-office `/charge-regularizations/{id}/send`). |
 | Mise à jour pièces (assurance habitation, entretien chaudière) | 🔴 | Phase 2/3 (planifié) |
 | Congé / préavis (accusé + consignes) | 🔴 | Phase 2/3 (planifié) |
-| États des lieux (entrée/sortie + copie signée) | 🔴 | Phase 2/3 (planifié) |
+| États des lieux (entrée/sortie + copie signée) | ✅ | Phase A livré : remplissage + photos + PDF + UI éditeur. Phase B/C : décompte/comparaison/signature. |
 | Restitution du dépôt de garantie (décompte final) | ✅ | Phase 3 : email envoyé lors de la restitution, déclenché par événement `DEPOSIT_RETURNED`. |
 | Propriétaire : Compte‑rendu de gestion (CRG) mensuel/trimestriel | ✅ | Phase 3 : email + PDF générés et envoyés par ordonnanceur (données loyer + frais). |
 | Propriétaire : avis de virement des loyers | ✅ | Phase 2 : avis de paiement généré et envoyé au propriétaire. |
