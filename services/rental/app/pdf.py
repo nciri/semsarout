@@ -98,9 +98,9 @@ def render_settlement_pdf(s, lines, tenant_name: str, landlord_name: str, proper
         return f"{float(v or 0):,.2f} Đh".replace(",", " ")
 
     deposit = float(s.deposit_amount or 0)
-    total = float(s.total_deductions or 0)
-    refunded = float(s.refunded_amount or 0)
-    balance = float(s.balance_due or 0)
+    total = sum(float(l.amount or 0) for l in lines)
+    refunded = deposit - total if deposit > total else 0
+    balance = total - deposit if total > deposit else 0
     story = [
         Paragraph("SemsarOut", head), Paragraph("www.semsarout.com", styles["Normal"]), Spacer(1, 20),
         Paragraph("<b>DÉCOMPTE DE CAUTION</b>", head),
