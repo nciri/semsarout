@@ -92,6 +92,18 @@ def _fetch_receipt_pdf(period_id):
         return None
 
 
+def _fetch_settlement_pdf(settlement_id):
+    """PDF du décompte via l'endpoint interne (token-auth) de `rental`. `None` si échec (email
+    envoyé sans pièce jointe — pas de blocage)."""
+    base = os.environ.get("RENTAL_URL", "http://localhost:8518")
+    try:
+        r = httpx.get(f"{base}/internal/settlements/{settlement_id}.pdf",
+                      headers={"x-internal-token": os.environ.get("INTERNAL_TOKEN", "")}, timeout=10.0)
+        return r.content if r.status_code == 200 else None
+    except httpx.HTTPError:
+        return None
+
+
 def _valid_email(addr) -> bool:
     return bool(addr) and "@" in addr and addr not in _PLACEHOLDER_EMAILS
 
@@ -233,6 +245,23 @@ def _handle_deposit_returned(db, payload: dict) -> None:
               return_amount=payload.get("return_amount"))
 
 
+def _handle_deposit_settled(db, payload: dict) -> None:
+    """`rental.deposit.settled` : décompte de sortie au locataire (retenues + restitué + solde)."""
+    tenant = recipients.client(payload.get("tenant_client_id"))
+    to = (tenant.get("email") or "").strip()
+    if not _valid_email(to):
+        return
+    pdf = _fetch_settlement_pdf(payload.get("id"))
+    atts = [(f"Decompte-caution-{payload.get('id')}.pdf", pdf, "pdf")] if pdf else None
+    _try_send(db, to, "deposit_settlement.html", "deposit_settlement", from_email=_contact(),
+              attachments=atts, name=tenant.get("name"),
+              deposit_amount=payload.get("deposit_amount"),
+              total_deductions=payload.get("total_deductions"),
+              refunded_amount=payload.get("refunded_amount"),
+              balance_due=payload.get("balance_due"),
+              property_id=payload.get("property_id"))
+
+
 def _handle_lease_revised(db, payload: dict) -> None:
     """`rental.lease.revised` → avis de révision de loyer au locataire."""
     tenant = recipients.client(payload.get("tenant_client_id"))
@@ -304,6 +333,8 @@ def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
             _handle_rent_paid(db, payload)
         elif routing_key == "rental.deposit.returned":
             _handle_deposit_returned(db, payload)
+        elif routing_key == "rental.deposit.settled":
+            _handle_deposit_settled(db, payload)
         elif routing_key == "rental.lease.revised":
             _handle_lease_revised(db, payload)
         elif routing_key == "rental.charge_regularization.sent":

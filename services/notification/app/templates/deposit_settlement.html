@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_components.html" import button, card, lucide with context %}
+{% block subject %}Décompte de votre dépôt de garantie{% endblock %}
+{% block preheader %}Le décompte de votre dépôt de garantie est disponible.{% endblock %}
+{% block badge %}{{ lucide("piggy-bank") }}{% endblock %}
+{% block hero_title %}Décompte de votre dépôt de garantie{% endblock %}
+{% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}, voici le décompte de sortie de votre location.</p>{% endblock %}
+{% block content %}
+<p style="text-align:left; color:{{ brand.ink }};">Suite à la fin de votre location, voici le récapitulatif de votre dépôt de garantie.</p>
+{{ card([
+  ("Dépôt de garantie", "{:,.0f}".format(deposit_amount|float).replace(",", " ") ~ " " ~ currency),
+  ("Total des retenues", "{:,.0f}".format(total_deductions|float).replace(",", " ") ~ " " ~ currency),
+  ("Caution restituée", "{:,.0f}".format(refunded_amount|float).replace(",", " ") ~ " " ~ currency),
+]) }}
+{% if balance_due and balance_due|float > 0 %}
+<p style="text-align:left; color:{{ brand.strong }}; font-weight:600;">Solde restant à votre charge : {{ "{:,.0f}".format(balance_due|float).replace(",", " ") }} {{ currency }}</p>
+<p style="text-align:left; color:{{ brand.ink }};">Vous trouverez le détail de ce décompte dans le PDF joint à cet email. Notre agence reviendra vers vous pour le règlement de ce solde.</p>
+{% else %}
+<p style="text-align:left; color:{{ brand.ink }};">Le détail de ce décompte est joint à cet email au format PDF. Le solde vous sera restitué.</p>
+{% endif %}
+{% if property_id %}<table role="presentation" width="100%"><tr><td align="center">{{ button(app.base_url ~ "/annonces/" ~ property_id, "Voir le bien") }}</td></tr></table>{% endif %}
+<p style="margin-top:18px; font-size:13px; color:{{ brand.muted }}; text-align:left;">Une question&nbsp;? <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
+{% endblock %}
