@@ -65,7 +65,12 @@ for pair in $SVCS; do
     crm|transactions) extra="IDENTITY_URL=http://localhost:8501";;
     analytics) extra="TRANSACTIONS_URL=http://localhost:8514 CRM_URL=http://localhost:8013 IDENTITY_URL=http://localhost:8501 LISTING_URL=http://localhost:8012 GEO_URL=http://localhost:8509 BILLING_URL=http://localhost:8508 AUDIT_URL=http://localhost:8513 AGENCY_URL=http://localhost:8512";;
     trust-safety) extra="IDENTITY_URL=http://localhost:8501 AGENCY_URL=http://localhost:8512";;
-    rental) extra="IDENTITY_URL=http://localhost:8501 CRM_URL=http://localhost:8013 LISTING_URL=http://localhost:8012 $S3 RENTAL_DOCS_BUCKET=semsar-rental-docs";;
+    rental)
+      # SIGN_API_URL/SIGN_API_KEY (3a9dSign) restent un secret local, jamais en dur ici — lus depuis
+      # le .env gitignoré du service (sous-shell pour ne pas polluer l'env du script parent).
+      SIGN_VARS="$( [ -f services/rental/.env ] && ( set -a; . services/rental/.env; set +a; \
+        echo "SIGN_API_URL=${SIGN_API_URL:-} SIGN_API_KEY=${SIGN_API_KEY:-}" ) )"
+      extra="IDENTITY_URL=http://localhost:8501 CRM_URL=http://localhost:8013 LISTING_URL=http://localhost:8012 $S3 RENTAL_DOCS_BUCKET=semsar-rental-docs $SIGN_VARS";;
   esac
   case "$svc" in listing|search) extra="$extra $TS_HIDDEN";; esac
   [ "$svc" = "listing" ] && extra="$extra AGENCY_URL=http://localhost:8512 IDENTITY_URL=http://localhost:8501 $S3 MEDIA_BUCKET=semsar-media"

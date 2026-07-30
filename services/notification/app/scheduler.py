@@ -256,6 +256,17 @@ def _job_application_missing_docs(db) -> int:
     return sent
 
 
+def _job_signature_poll(db) -> int:
+    """Poll de complétion des signatures 3a9dSign (EDL/décompte/bail/mandat) — rental garde la
+    logique métier, ce job ne fait que déclencher le cycle (même patron que les autres jobs
+    "internal" ci-dessus, aucun envoi d'email ici — c'est le job Task 5 qui notifiera)."""
+    try:
+        r = httpx.post(f"{_rental()}/internal/signatures/poll", headers=_headers(), timeout=15.0)
+        return r.json().get("updated", 0) if r.status_code == 200 else 0
+    except (httpx.HTTPError, ValueError):
+        return 0
+
+
 def run_once() -> None:
     db = SessionLocal()
     try:
@@ -286,6 +297,9 @@ def run_once() -> None:
         md = _job_application_missing_docs(db)
         if md:
             logger.info("relances pièces manquantes envoyées", extra={"count": md})
+        sp = _job_signature_poll(db)
+        if sp:
+            logger.info("signatures mises à jour (poll 3a9dSign)", extra={"count": sp})
     except Exception:  # noqa: BLE001 — un job qui échoue ne doit pas tuer la boucle
         logger.exception("échec d'un job d'ordonnanceur")
     finally:

@@ -1644,6 +1644,49 @@ def internal_signed_pdf(sig_id: int, x_internal_token: str = Header(default=""),
                     headers={"Content-Disposition": f"attachment; filename=signe-{sig_id}.pdf"})
 
 
+@app.post("/internal/signatures/poll", include_in_schema=False)
+def poll_signatures(x_internal_token: str = Header(default=""), db: Session = Depends(get_db)):
+    """Interroge 3a9dSign pour les demandes en cours ; sur complétion, récupère le PDF signé,
+    le stocke en S3, marque le document local signé et émet l'événement "signé" (appelé par
+    l'ordonnanceur du service notification, toutes les ~60 s)."""
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    if not signing.signing_enabled():
+        return {"checked": 0}
+    pending = db.query(SignatureRequest).filter(SignatureRequest.status.in_(("sent", "in_progress"))).all()
+    updated = 0
+    for sig in pending:
+        try:
+            st = signing.get_status(sig.envelope_id)
+        except signing.SigningError:
+            continue
+        if st == sig.status:
+            continue
+        if st == "completed":
+            ctx = _sig_context_by_agency(db, sig.doc_type, sig.doc_ref_id, sig.agency_id)
+            signed_key = None
+            try:
+                data = signing.fetch_signed_pdf(sig.envelope_id, sig.document_id)
+                signed_key = f"signatures/{sig.id}/signed.pdf"
+                from . import storage
+                storage.docs_storage().put(signed_key, data, "pdf")
+            except signing.SigningError:
+                signed_key = None
+            sig.signed_pdf_key = signed_key
+            sig.status = "completed"
+            if ctx is not None:
+                ctx["mark_signed_fn"](signed_key)
+                enqueue(db, sig.doc_type, sig.doc_ref_id, ctx["event"], {
+                    "id": sig.doc_ref_id, "signature_id": sig.id, "doc_type": sig.doc_type,
+                    "tenant_client_id": ctx["counterparty_client_id"]})
+            updated += 1
+        elif st in ("in_progress", "declined", "voided", "expired"):
+            sig.status = st
+            updated += 1
+    db.commit()
+    return {"checked": len(pending), "updated": updated}
+
+
 _COND_RANK = {"bon": 0, "moyen": 1, "mauvais": 2}
 
 
