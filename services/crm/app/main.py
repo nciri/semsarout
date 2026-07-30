@@ -228,7 +228,8 @@ def internal_client(client_id: int, x_internal_token: str = Header(default=""),
     if c is None:
         return {"client": None}
     return {"client": {"id": c.id, "email": c.email,
-                       "name": f"{c.first_name or ''} {c.last_name or ''}".strip()}}
+                       "name": f"{c.first_name or ''} {c.last_name or ''}".strip(),
+                       "phone": c.phone, "agency_id": c.agency_id}}
 
 
 @app.get("/internal/clients", include_in_schema=False)

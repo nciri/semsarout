@@ -825,8 +825,12 @@ async def create_application_for_client(request: Request, principal: Principal =
         client_id = int(data["client_id"])
     except (TypeError, ValueError):
         return err("property_id/client_id invalide.", 400)
-    prop = _property_lookup(property_id)
     client = _client_lookup(client_id)
+    if not client or client.get("agency_id") != principal.agency_id:
+        return err("Client introuvable.", 404)
+    prop = _property_lookup(property_id)
+    if not prop or prop.get("agency_id") != principal.agency_id:
+        return err("Bien introuvable.", 404)
     a = TenantApplication(
         property_id=property_id, agency_id=principal.agency_id,
         owner_id=prop.get("owner_id"), applicant_user_id=None, client_id=client_id,
