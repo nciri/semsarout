@@ -1183,6 +1183,29 @@ def list_inventories(lease_id: int, principal: Principal = Depends(get_principal
     return {"inventories": [_inventory_dict(db, i) for i in rows]}
 
 
+@app.get("/backoffice/gestion-locative/inventories/{inv_id}.pdf")
+def inventory_pdf(inv_id: int, principal: Principal = Depends(get_principal),
+                  db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    inv = _owned_inventory(db, inv_id, principal)
+    if inv is None:
+        return err("État des lieux introuvable.", 404)
+    from . import storage
+    if inv.pdf_key:
+        data = storage.docs_storage().get(inv.pdf_key)
+    else:   # PDF à la volée si pas encore finalisé
+        rooms = _inventory_dict(db, inv, full=True)["rooms"]
+        lease = db.get(Lease, inv.lease_id)
+        prop = db.get(PropertyRO, lease.property_id) if lease else None
+        tenant = db.get(ClientRO, lease.tenant_client_id) if lease else None
+        from . import pdf as pdf_mod
+        data = pdf_mod.render_inventory_pdf(inv, rooms, prop.title if prop else None,
+                                            f"{tenant.first_name} {tenant.last_name}" if tenant else None)
+    return Response(data, media_type="application/pdf",
+                    headers={"Content-Disposition": f"attachment; filename=EDL-{inv.type}-{inv.id}.pdf"})
+
+
 @app.get("/backoffice/gestion-locative/inventories/{inv_id}")
 def get_inventory(inv_id: int, principal: Principal = Depends(get_principal),
                   db: Session = Depends(get_db)):
@@ -1412,6 +1435,17 @@ def finalize_inventory(inv_id: int, principal: Principal = Depends(get_principal
         return err("État des lieux déjà finalisé.", 400)
     inv.status = "finalized"
     inv.finalized_at = datetime.utcnow()
+    rooms = _inventory_dict(db, inv, full=True)["rooms"]
+    lease = db.get(Lease, inv.lease_id)
+    prop = db.get(PropertyRO, lease.property_id) if lease else None
+    tenant = db.get(ClientRO, lease.tenant_client_id) if lease else None
+    from . import pdf as pdf_mod, storage
+    data = pdf_mod.render_inventory_pdf(
+        inv, rooms, property_title=(prop.title if prop else None),
+        tenant_name=(f"{tenant.first_name} {tenant.last_name}" if tenant else None))
+    key = f"inventories/{inv.id}/edl_{inv.type}.pdf"
+    storage.docs_storage().put(key, data, "pdf")
+    inv.pdf_key = key
     enqueue(db, "inventory", inv.id, events.INVENTORY_FINALIZED, {
         "id": inv.id, "lease_id": inv.lease_id, "type": inv.type})
     db.commit()

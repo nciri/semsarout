@@ -38,6 +38,47 @@ def render_receipt_pdf(rp, tenant_name: str, landlord_name: str, property_title:
     return buf.getvalue()
 
 
+def render_inventory_pdf(inv, rooms, property_title: str, tenant_name: str) -> bytes:
+    """État des lieux PDF. `rooms` = liste [{name, items:[{label,condition,comment}]}]."""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import mm
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=18 * mm, bottomMargin=18 * mm)
+    styles = getSampleStyleSheet()
+    head = ParagraphStyle("H", parent=styles["Heading1"], fontSize=22,
+                          textColor=colors.HexColor("#0B1220"), spaceAfter=8)
+    rh = ParagraphStyle("RH", parent=styles["Heading2"], fontSize=13,
+                        textColor=colors.HexColor("#0F766E"), spaceBefore=10, spaceAfter=4)
+    info = ParagraphStyle("I", parent=styles["Normal"], fontSize=10, leading=15)
+    label = "d'ENTRÉE" if inv.type == "entree" else "de SORTIE"
+    story = [
+        Paragraph("SemsarOut", head), Paragraph("www.semsarout.com", styles["Normal"]), Spacer(1, 14),
+        Paragraph(f"<b>ÉTAT DES LIEUX {label}</b>", head),
+        Paragraph(f"Bien : {property_title or '-'}", info),
+        Paragraph(f"Locataire : {tenant_name or '-'}", info),
+        Paragraph(f"Date : {inv.conducted_at.strftime('%d/%m/%Y') if inv.conducted_at else '-'}", info),
+        Spacer(1, 8),
+    ]
+    for r in rooms:
+        story.append(Paragraph(r["name"], rh))
+        for it in r["items"]:
+            cond = {"bon": "Bon", "moyen": "Moyen", "mauvais": "Mauvais"}.get(it["condition"], it["condition"])
+            line = f"• <b>{it['label']}</b> : {cond}"
+            if it.get("comment"):
+                line += f" — {it['comment']}"
+            story.append(Paragraph(line, info))
+    if inv.general_notes:
+        story += [Spacer(1, 10), Paragraph("<b>Observations générales</b>", rh),
+                  Paragraph(inv.general_notes, info)]
+    story += [Spacer(1, 20), Paragraph("Signatures : bailleur / gestionnaire — locataire", info)]
+    doc.build(story)
+    return buf.getvalue()
+
+
 def render_crg_pdf(crg, landlord_name: str, mandate_reference: str) -> bytes:
     """Compte-rendu de gestion PDF. `crg` = CrgReport."""
     from reportlab.lib import colors
