@@ -1341,6 +1341,84 @@ def delete_deduction_line(line_id: int, principal: Principal = Depends(get_princ
     return _settlement_dict(db, s)
 
 
+@app.post("/backoffice/gestion-locative/settlements/{sid}/finalize")
+def finalize_settlement(sid: int, principal: Principal = Depends(get_principal),
+                        db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    s = _owned_settlement(db, sid, principal)
+    if s is None:
+        return err("Décompte introuvable.", 404)
+    if s.status != "draft":
+        return err("Décompte déjà finalisé.", 400)
+    lease = db.get(Lease, s.lease_id)
+    if lease is None:
+        return err("Bail introuvable.", 404)
+    if lease.deposit_returned_at is not None:
+        return err("Dépôt déjà restitué pour ce bail.", 400)
+    lines = db.query(DeductionLine).filter(DeductionLine.settlement_id == s.id).all()
+    total = sum(float(l.amount or 0) for l in lines)
+    deposit = float(s.deposit_amount or 0)
+    refunded = deposit - total if deposit > total else 0
+    balance = total - deposit if total > deposit else 0
+    s.total_deductions = total
+    s.refunded_amount = refunded
+    s.balance_due = balance
+    s.status = "finalized"
+    s.finalized_at = datetime.utcnow()
+    s.sent_at = datetime.utcnow()
+    lease.deposit_returned_at = datetime.utcnow()
+    lease.deposit_return_amount = refunded
+    enqueue(db, "lease", lease.id, events.DEPOSIT_SETTLED, {
+        "id": s.id, "lease_id": lease.id, "tenant_client_id": lease.tenant_client_id,
+        "property_id": lease.property_id, "deposit_amount": num(deposit),
+        "total_deductions": num(total), "refunded_amount": num(refunded),
+        "balance_due": num(balance)})
+    db.commit()
+    return _settlement_dict(db, s)
+
+
+def _settlement_pdf_bytes(db, s):
+    lines = db.query(DeductionLine).filter(DeductionLine.settlement_id == s.id).order_by(DeductionLine.id).all()
+    lease = db.get(Lease, s.lease_id)
+    mandate = db.get(Mandate, lease.mandate_id) if lease else None
+    tenant = db.get(ClientRO, lease.tenant_client_id) if lease else None
+    landlord = db.get(ClientRO, mandate.landlord_client_id) if mandate else None
+    prop = db.get(PropertyRO, lease.property_id) if lease else None
+    from . import pdf as pdf_mod
+    return pdf_mod.render_settlement_pdf(
+        s, lines,
+        tenant_name=(f"{tenant.first_name} {tenant.last_name}" if tenant else None),
+        landlord_name=(f"{landlord.first_name} {landlord.last_name}" if landlord else None),
+        property_title=(prop.title if prop else None))
+
+
+@app.get("/backoffice/gestion-locative/settlements/{sid}.pdf")
+def settlement_pdf(sid: int, principal: Principal = Depends(get_principal),
+                   db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    s = _owned_settlement(db, sid, principal)
+    if s is None:
+        return err("Décompte introuvable.", 404)
+    data = _settlement_pdf_bytes(db, s)
+    return Response(data, media_type="application/pdf",
+                    headers={"Content-Disposition": f"attachment; filename=decompte-caution-{sid}.pdf"})
+
+
+@app.get("/internal/settlements/{sid}.pdf", include_in_schema=False)
+def internal_settlement_pdf(sid: int, x_internal_token: str = Header(default=""),
+                            db: Session = Depends(get_db)):
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    s = db.get(DepositSettlement, sid)
+    if s is None:
+        return err("Décompte introuvable.", 404)
+    data = _settlement_pdf_bytes(db, s)
+    return Response(data, media_type="application/pdf",
+                    headers={"Content-Disposition": f"attachment; filename=decompte-caution-{sid}.pdf"})
+
+
 _COND_RANK = {"bon": 0, "moyen": 1, "mauvais": 2}
 
 
