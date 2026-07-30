@@ -144,6 +144,11 @@ projets.
 | **Agence Enterprise** | grande agence / réseau | -1 | ✓ (-1) | tout + support/KAM | 1999 |
 | **Promoteur** *(palier dédié — décision §9)* | promoteur neuf | selon | ✓ (n) | module Programmes + lots + plans + statut chantier | à définir (piste 1 499–2 499/mois) |
 
+> **Facturation des pros (Agences & Promoteurs) : abonnement ANNUEL obligatoire** (engagement
+> 12 mois, facturé sur `price_yearly`), précédé de **14 jours d'essai gratuit**. Les montants du
+> tableau sont l'**équivalent mensuel** — le prélèvement est **à l'année**. Pas d'option mensuelle
+> pour les pros.
+>
 > Le mode **« agence en ligne » (B2B2C)** n'est pas un palier d'abonnement : c'est le **modèle
 > commission** appliqué au particulier (et au promoteur en direct) — voir §5.4 / §5.7.
 
@@ -161,10 +166,12 @@ valeur est captée **à la transaction**, pas à la publication :
   d'achat (vente) sur une annonce de particulier passent **par la plateforme** (mise en relation
   médiée). SemsarOut agit de facto comme **agence en ligne** du particulier → visibilité sur la
   formation des affaires et capacité à facturer à la conclusion.
-- **1re affaire offerte, puis commission** : la **1re** transaction conclue (bail signé / vente
-  actée) via un particulier est **gratuite** (accroche freemium). **Dès la 2e annonce**, le
-  particulier est informé qu'**à la conclusion** de cette 2e location/vente (et des suivantes) une
-  **commission** est due.
+- **1re affaire offerte, puis commission — comptage en AFFAIRES CONCLUES** (pas en annonces) : la
+  **1re** transaction conclue du compte (bail signé / vente actée, tous biens confondus) est
+  **gratuite** (accroche freemium). **Dès la 2e affaire conclue** (et les suivantes), une
+  **commission** est due **à la conclusion**. Un bailleur d'un seul bien qui reloue plusieurs fois
+  paie donc dès sa **2e location conclue** (compteur par compte, pas par annonce). L'UI informe le
+  particulier de ce basculement au plus tard à la création d'une 2e annonce.
 - **Commission = forfait fixe configurable** : **4 999 MAD par transaction conclue** par défaut,
   **paramétrable** (réglage admin ; adaptable par type location/vente et évolutif dans le temps).
   Facturée à l'**événement de conclusion** via Stripe.
@@ -232,17 +239,21 @@ plan agence) — offre et tarification lisibles pour ce segment, avec son propre
 ---
 
 ## 8. Écarts techniques à combler (backlog priorisé)
-1. **Palier « Gratuit / Particulier »** dans `SubscriptionPlan` (+ attribution par défaut à tout
-   compte sans agence) — *prérequis.*
-2. **Application de `max_listings`** à la publication/activation d'annonce (compteur d'annonces
-   actives vs plan) + message d'upgrade. *(Le plus gros ROI.)*
-3. **Application de `max_programs`** à la création de programme.
-4. **Boosts à la carte** (à la une / urgent / renouvellement) : catalogue + paiement Stripe unitaire
-   + expiration/rebump.
-5. **Monétisation lead** : déblocage de contact payant (s'appuyer sur `is_charged`/`has_lead_contact`).
-6. **Moteur de commission** (mode agence-en-ligne) : calcul % sur loyers encaissés / ventes + reversement.
-7. **Palier / add-on Promoteur** (selon décision §9) + tarification par programmes/lots.
-8. **Garde-fous canal** (marque/tarif distincts si conflit agences ↔ offre directe).
+1. **Interception de la demande** : candidatures (location) + demandes d'achat (vente) sur annonces
+   de particuliers **médiées par la plateforme** (le contact ne transite pas en clair). *Prérequis P1.*
+2. **Moteur de commission** : suivi de **conclusion** (bail signé / vente actée) + **compteur « 1re
+   affaire offerte » par compte** + **facturation forfait configurable** (défaut 4 999 MAD) via Stripe.
+3. **Parcours vente « demande d'achat → vente actée »** (traçage de la conclusion côté vente ; la
+   location est déjà couverte par candidatures → bail signé).
+4. **Facturation pro : abonnement ANNUEL + essai 14 jours** — souscription sur `price_yearly`
+   uniquement, période d'essai gratuite gérée côté Stripe (pas d'option mensuelle pour les pros).
+5. **Palier Promoteur dédié** + module Programmes gaté + **application de `max_programs`**.
+6. **Boosts à la carte** (à la une / urgent / renouvellement) : catalogue + paiement Stripe unitaire
+   + **expiration 60 j** / rebump.
+7. **Réglages admin configurables** : montant de commission (par type location/vente), prix des boosts.
+8. **Anti-contournement & garde-fous** : conclusion hors plateforme, détection d'usage pro, CGU/KYC ;
+   marque/segments distincts si conflit agences ↔ offre directe.
+9. *(Optionnel)* **Monétisation lead** : déblocage de contact payant (`is_charged`/`has_lead_contact`).
 
 ---
 
@@ -251,10 +262,14 @@ plan agence) — offre et tarification lisibles pour ce segment, avec son propre
 ### Tranché
 1. **Particulier** : annonces **gratuites et illimitées** ; **interception** de toutes les
    candidatures (location) / demandes d'achat (vente) ; **1re affaire offerte**, puis **commission
-   dès la 2e annonce**, due **à la conclusion** (bail signé / vente actée). Cf. §5.4.
+   dès la 2e affaire conclue**, due **à la conclusion** (bail signé / vente actée). Cf. §5.4.
 2. **Promoteur = palier d'abonnement dédié** (pas un add-on sur plan agence).
 3. **Commission = forfait fixe configurable**, **défaut 4 999 MAD** par transaction conclue,
    paramétrable (par type et dans le temps).
+4. **Comptage en affaires conclues, par compte** (pas par annonce) : 1re transaction conclue offerte,
+   commission à partir de la 2e — y compris un même bien reloué plusieurs fois.
+5. **Agences & Promoteurs : abonnement ANNUEL obligatoire** (engagement 12 mois, facturé
+   `price_yearly`), précédé de **14 jours d'essai gratuit**. Aucune option mensuelle pour les pros.
 
 ### Recommandations (à confirmer)
 4. **Conflit de canal** — *ce que c'était* : SemsarOut vend un logiciel **aux** agences (SaaS) tout en
