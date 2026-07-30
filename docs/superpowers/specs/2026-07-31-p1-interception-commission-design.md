@@ -44,6 +44,14 @@ active (P6). P1 pose seulement les *hooks* pour P6.
 | Défaillance du gate | **Fail-closed** (on ne finalise pas la signature si le moteur est injoignable) |
 | Client e-sign | Extrait en **lib partagée `libs/semsar_signing`** (rental + selling) |
 | Gabarit compromis | **Complet, adapté au marché marocain** (pas minimal) ; validation juriste requise |
+| Conclusion bail particulier | **Flux bail particulier dédié** : `Lease` gagne `owner_id` ; parcours « Mon espace » pour conclure + e-signer (réutilise `Lease` + `SignatureRequest` + polling) ; `rental.lease.signed` porte l'`account_id` du propriétaire |
+
+> **Note (trou technique levé au moment du plan)** : aujourd'hui un bail appartient à une **agence**
+> (`Lease.agency_id`, flux back-office gaté `rental` : `sign_lease`, e-sign, polling). Il n'existait
+> **aucun** chemin de conclusion de bail côté **particulier**. Or c'est le particulier (sans agence)
+> qui doit payer la commission location. **Décision** : on construit un **flux bail particulier
+> dédié** (cf. tableau ci-dessus, traité au Plan 4) — sinon « candidature → `rental.lease.signed` »
+> ne couvrirait jamais le cas particulier.
 
 ## 3. Architecture d'ensemble
 
