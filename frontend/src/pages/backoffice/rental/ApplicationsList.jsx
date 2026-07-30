@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { FiLock, FiInbox, FiPlus, FiX, FiHome } from 'react-icons/fi'
+import { FiLock, FiInbox, FiPlus, FiX, FiHome, FiStar } from 'react-icons/fi'
 import { rentalService } from '../../../services/rentalService'
 import { DOC_TYPES } from '../../dashboard/applicationStatus'
 import { StatCard, DataTable, StatusBadge, EmptyState, GatedNotice, Modal, Field, Select, SearchInput, Toolbar, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
@@ -10,6 +10,7 @@ import { StatCard, DataTable, StatusBadge, EmptyState, GatedNotice, Modal, Field
 const STATUS = {
   received: ['Reçue', 'bg-blue-100 text-blue-700'],
   reviewing: ['En étude', 'bg-amber-100 text-amber-700'],
+  shortlist: ['Présélectionné', 'bg-indigo-100 text-indigo-700'],
   accepted: ['Acceptée', 'bg-emerald-50 text-emerald-700'],
   rejected: ['Refusée', 'bg-red-100 text-red-700'],
   withdrawn: ['Retirée', 'bg-gray-100 text-gray-700'],
@@ -58,6 +59,14 @@ function ApplicationsList() {
       onError: (e) => toast.error(e.response?.data?.error || 'Erreur'),
     }
   )
+
+  const shortlist = useMutation((id) => rentalService.shortlistApplication(id), {
+    onSuccess: () => {
+      toast.success('Candidature présélectionnée')
+      qc.invalidateQueries('rental-applications')
+    },
+    onError: (e) => toast.error(e.response?.data?.error || 'Erreur'),
+  })
 
   const addDoc = (e) => {
     const file = e.target.files?.[0]
@@ -108,6 +117,16 @@ function ApplicationsList() {
     { header: 'Déposée le', cell: (a) => <span className="text-gray-600">{a.submitted_at ? new Date(a.submitted_at).toLocaleDateString('fr-FR') : '—'}</span> },
     { header: 'Revenu mensuel', align: 'right', cell: (a) => <span className="text-gray-700">{a.monthly_income != null ? `${a.monthly_income} Đh` : '—'}</span> },
     { header: 'Statut', cell: (a) => <StatusBadge label={STATUS[a.status]?.[0] || a.status} className={STATUS[a.status]?.[1]} /> },
+    { header: '', cell: (a) => (
+      ['received', 'reviewing'].includes(a.status) ? (
+        <button onClick={() => shortlist.mutate(a.id)} disabled={shortlist.isLoading}
+          className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+          <FiStar className="w-4 h-4" /> Présélectionner
+        </button>
+      ) : a.status === 'shortlist' ? (
+        <span className="text-sm text-indigo-600">Présélectionné</span>
+      ) : null
+    ) },
   ]
 
   return (

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useParams, Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { FiArrowLeft, FiCheck, FiX, FiLock } from 'react-icons/fi'
+import { FiArrowLeft, FiCheck, FiX, FiLock, FiStar } from 'react-icons/fi'
 import { rentalService } from '../../../services/rentalService'
 import { Panel, StatusBadge, DataTable, EmptyState, Modal, Field, PRIMARY_BTN, SECONDARY_BTN, GatedNotice } from '../../../components/backoffice/ui'
 
@@ -23,6 +23,10 @@ function ApplicationDetail() {
     onSuccess: () => { toast.success('Décision enregistrée'); setRejectOpen(false); refresh() },
     onError: (e) => toast.error(e.response?.data?.error || 'Erreur'),
   })
+  const shortlist = useMutation(() => rentalService.shortlistApplication(id), {
+    onSuccess: () => { toast.success('Candidature présélectionnée'); refresh() },
+    onError: (e) => toast.error(e.response?.data?.error || 'Erreur'),
+  })
   const validateDoc = useMutation(({ docId, status }) => rentalService.validateDocument(id, docId, { status }), {
     onSuccess: () => { toast.success('Pièce mise à jour'); refresh() },
     onError: (e) => toast.error(e.response?.data?.error || 'Erreur'),
@@ -36,7 +40,7 @@ function ApplicationDetail() {
     </div>
   )
   const docs = a.documents || []
-  const pending = ['received', 'reviewing'].includes(a.status)
+  const pending = ['received', 'reviewing', 'shortlist'].includes(a.status)
   const docColumns = [
     { header: 'Type', cell: (d) => <span className="text-gray-700">{d.doc_type}</span> },
     { header: 'Fichier', cell: (d) => <span className="text-gray-600">{d.filename || '—'}</span> },
@@ -54,6 +58,9 @@ function ApplicationDetail() {
       <Link to="/backoffice/gestion-locative/candidatures" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"><FiArrowLeft className="w-4 h-4" /> Retour aux candidatures</Link>
       {a.submitted_by_agent_id && <StatusBadge label="Déposé par l'agence" className="bg-gray-100 text-gray-600" />}
       <Panel title={`Candidature ${a.applicant_name || `#${a.id}`}`} action={pending && <div className="flex gap-2">
+        {['received', 'reviewing'].includes(a.status) && (
+          <button disabled={shortlist.isLoading} onClick={() => shortlist.mutate()} className={SECONDARY_BTN}><FiStar className="w-5 h-5" /> Présélectionner</button>
+        )}
         <button disabled={decide.isLoading} onClick={() => decide.mutate({ decision: 'accepted' })} className={PRIMARY_BTN}><FiCheck className="w-5 h-5" /> Accepter</button>
         <button onClick={() => setRejectOpen(true)} className={SECONDARY_BTN}><FiX className="w-5 h-5" /> Refuser</button>
       </div>}>
