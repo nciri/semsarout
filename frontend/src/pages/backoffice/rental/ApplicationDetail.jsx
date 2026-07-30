@@ -6,6 +6,14 @@ import { FiArrowLeft, FiCheck, FiX, FiLock, FiStar } from 'react-icons/fi'
 import { rentalService } from '../../../services/rentalService'
 import { Panel, StatusBadge, DataTable, EmptyState, Modal, Field, PRIMARY_BTN, SECONDARY_BTN, GatedNotice } from '../../../components/backoffice/ui'
 
+const STATUS = {
+  received: ['Reçue', 'bg-blue-100 text-blue-700'],
+  reviewing: ['En étude', 'bg-amber-100 text-amber-700'],
+  shortlist: ['Présélectionné', 'bg-indigo-100 text-indigo-700'],
+  accepted: ['Acceptée', 'bg-emerald-50 text-emerald-700'],
+  rejected: ['Refusée', 'bg-red-100 text-red-700'],
+  withdrawn: ['Retirée', 'bg-gray-100 text-gray-700'],
+}
 const DOC_STATUS = {
   received: ['Reçue', 'bg-blue-100 text-blue-700'],
   validated: ['Validée', 'bg-emerald-50 text-emerald-700'],
@@ -65,7 +73,7 @@ function ApplicationDetail() {
         <button onClick={() => setRejectOpen(true)} className={SECONDARY_BTN}><FiX className="w-5 h-5" /> Refuser</button>
       </div>}>
         <dl className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-          <div><dt className="text-gray-500">Statut</dt><dd className="mt-1"><StatusBadge label={a.status} /></dd></div>
+          <div><dt className="text-gray-500">Statut</dt><dd className="mt-1"><StatusBadge label={STATUS[a.status]?.[0] || a.status} className={STATUS[a.status]?.[1]} /></dd></div>
           <div><dt className="text-gray-500">Email</dt><dd className="mt-1 text-gray-900">{a.applicant_email || '—'}</dd></div>
           <div><dt className="text-gray-500">Téléphone</dt><dd className="mt-1 text-gray-900">{a.applicant_phone || '—'}</dd></div>
           <div><dt className="text-gray-500">Revenu mensuel</dt><dd className="mt-1 text-gray-900">{a.monthly_income != null ? `${a.monthly_income} Đh` : '—'}</dd></div>
