@@ -1336,6 +1336,70 @@ def delete_item(item_id: int, principal: Principal = Depends(get_principal),
     return {"ok": True}
 
 
+@app.post("/backoffice/gestion-locative/items/{item_id}/photos", status_code=201)
+async def upload_item_photo(item_id: int, request: Request,
+                            principal: Principal = Depends(get_principal),
+                            db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    it, inv = _owned_item(db, item_id, principal)
+    if it is None:
+        return err("Élément introuvable.", 404)
+    if inv.status != "draft":
+        return err("État des lieux verrouillé.", 400)
+    cl = request.headers.get("content-length")
+    if cl and cl.isdigit() and int(cl) > 10 * 1024 * 1024:
+        return err("Fichier trop volumineux (max 10 Mo).", 400)
+    body = await request.body()
+    if not body:
+        return err("Fichier vide.", 400)
+    if len(body) > 10 * 1024 * 1024:
+        return err("Fichier trop volumineux (max 10 Mo).", 400)
+    filename = request.query_params.get("filename", "photo")
+    content_type = request.headers.get("content-type", "application/octet-stream")
+    from . import storage
+    key = f"inventories/{inv.id}/{uuid.uuid4().hex}"
+    storage.docs_storage().put(key, body, content_type)
+    p = InventoryPhoto(item_id=it.id, file_key=key, filename=filename, content_type=content_type)
+    db.add(p)
+    db.commit()
+    return _photo_dict(p)
+
+
+@app.get("/backoffice/gestion-locative/inventory-photos/{photo_id}")
+def download_item_photo(photo_id: int, principal: Principal = Depends(get_principal),
+                        db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    p = db.get(InventoryPhoto, photo_id)
+    it = db.get(InventoryItem, p.item_id) if p else None
+    _, inv = _owned_room(db, it.room_id, principal) if it else (None, None)
+    if p is None or inv is None:
+        return err("Photo introuvable.", 404)
+    from . import storage
+    data = storage.docs_storage().get(p.file_key)
+    return Response(data, media_type=p.content_type or "application/octet-stream",
+                    headers={"Content-Disposition": f"attachment; filename={p.filename or 'photo'}",
+                             "X-Content-Type-Options": "nosniff"})
+
+
+@app.delete("/backoffice/gestion-locative/inventory-photos/{photo_id}")
+def delete_item_photo(photo_id: int, principal: Principal = Depends(get_principal),
+                      db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    p = db.get(InventoryPhoto, photo_id)
+    it = db.get(InventoryItem, p.item_id) if p else None
+    _, inv = _owned_room(db, it.room_id, principal) if it else (None, None)
+    if p is None or inv is None:
+        return err("Photo introuvable.", 404)
+    if inv.status != "draft":
+        return err("État des lieux verrouillé.", 400)
+    db.delete(p)
+    db.commit()
+    return {"ok": True}
+
+
 @app.post("/backoffice/gestion-locative/inventories/{inv_id}/finalize")
 def finalize_inventory(inv_id: int, principal: Principal = Depends(get_principal),
                        db: Session = Depends(get_db)):
