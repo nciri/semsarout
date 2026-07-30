@@ -59,7 +59,12 @@ function InventoryEditor() {
                           <option value="bon">Bon</option><option value="moyen">Moyen</option><option value="mauvais">Mauvais</option>
                         </select>}
                     <input defaultValue={it.comment || ''} disabled={ro} placeholder="commentaire" onBlur={(e) => !ro && patchItem.mutate({ itemId: it.id, data: { comment: e.target.value } })} className="flex-1 min-w-[140px] px-2 py-1 border border-gray-200 rounded-lg text-sm disabled:bg-gray-50" />
-                    {(it.photos || []).map((ph) => <button key={ph.id} onClick={() => openPdf(rentalService.inventoryPhotoUrl(ph.id))} className="text-primary-600 text-xs underline">{ph.filename}</button>)}
+                    {(it.photos || []).map((ph) => (
+                      <span key={ph.id} className="inline-flex items-center gap-1">
+                        <button onClick={() => openPdf(rentalService.inventoryPhotoUrl(ph.id))} className="text-primary-600 text-xs underline">{ph.filename}</button>
+                        {!ro && <button onClick={() => delPhoto.mutate(ph.id)} className="text-gray-300 hover:text-red-600"><FiTrash2 className="w-3.5 h-3.5" /></button>}
+                      </span>
+                    ))}
                     {!ro && <label className="text-gray-400 hover:text-primary-600 cursor-pointer"><FiUploadCloud className="w-4 h-4" /><input type="file" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) upPhoto.mutate({ itemId: it.id, file: f }); e.target.value = '' }} /></label>}
                     {!ro && <button onClick={() => delItem.mutate(it.id)} className="text-gray-300 hover:text-red-600"><FiTrash2 className="w-4 h-4" /></button>}
                   </div>
