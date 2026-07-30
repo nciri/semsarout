@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
+import { LuLock } from 'react-icons/lu'
 import useAuthStore from '../../store/authStore'
 
 function Login() {
@@ -41,7 +42,7 @@ function Login() {
           {/* Logo */}
           <Link to="/" className="inline-flex items-center space-x-2 mb-6">
             <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-terracotta-500 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-xl">S</span>
+              <LuLock className="w-6 h-6 text-white" strokeWidth={2.25} />
             </div>
           </Link>
           <h1 className="font-display text-2xl font-bold text-gray-900">
