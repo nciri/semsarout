@@ -1492,7 +1492,8 @@ def _sig_context_by_agency(db, doc_type: str, doc_id: int, agency_id: int):
                 "counterparty_client_id": lease.tenant_client_id if lease else None,
                 "title": f"État des lieux {inv.type} — bail {inv.lease_id}",
                 "ext_ref": f"rental:inventory:{inv.id}:{agency_id}",
-                "mark_signed_fn": mark, "event": events.INVENTORY_SIGNED}
+                "mark_signed_fn": mark, "event": events.INVENTORY_SIGNED,
+                "signed_payload": {"tenant_client_id": lease.tenant_client_id if lease else None}}
     if doc_type == "settlement":
         s = db.get(DepositSettlement, doc_id)
         if s is None or s.agency_id != agency_id:
@@ -1507,33 +1508,41 @@ def _sig_context_by_agency(db, doc_type: str, doc_id: int, agency_id: int):
                 "counterparty_client_id": lease.tenant_client_id if lease else None,
                 "title": f"Décompte de caution — bail {s.lease_id}",
                 "ext_ref": f"rental:settlement:{s.id}:{agency_id}",
-                "mark_signed_fn": mark, "event": events.SETTLEMENT_SIGNED}
+                "mark_signed_fn": mark, "event": events.SETTLEMENT_SIGNED,
+                "signed_payload": {"tenant_client_id": lease.tenant_client_id if lease else None}}
     if doc_type == "lease":
         l = db.get(Lease, doc_id)
         if l is None or l.agency_id != agency_id:
             return None
 
         def mark(signed_key):
+            l.status = "active"
             l.signed_at = datetime.utcnow()
             l.signed_pdf_key = signed_key
         return {"entity": l, "ready": True, "pdf_bytes_fn": lambda: _lease_pdf_bytes(db, l),
                 "counterparty_client_id": l.tenant_client_id,
                 "title": f"Bail {l.reference or l.id}",
                 "ext_ref": f"rental:lease:{l.id}:{agency_id}",
-                "mark_signed_fn": mark, "event": events.LEASE_SIGNED}
+                "mark_signed_fn": mark, "event": events.LEASE_SIGNED,
+                "signed_payload": {"tenant_client_id": l.tenant_client_id, "rent_amount": num(l.rent_amount),
+                                    "charges_amount": num(l.charges_amount),
+                                    "deposit_amount": num(l.deposit_amount)}}
     if doc_type == "mandate":
         m = db.get(Mandate, doc_id)
         if m is None or m.agency_id != agency_id:
             return None
 
         def mark(signed_key):
+            m.status = "active"
             m.signed_at = datetime.utcnow()
             m.signed_pdf_key = signed_key
         return {"entity": m, "ready": True, "pdf_bytes_fn": lambda: _mandate_pdf_bytes(db, m),
                 "counterparty_client_id": m.landlord_client_id,   # bailleur, pas locataire
                 "title": f"Mandat {m.reference or m.id}",
                 "ext_ref": f"rental:mandate:{m.id}:{agency_id}",
-                "mark_signed_fn": mark, "event": events.MANDATE_SIGNED}
+                "mark_signed_fn": mark, "event": events.MANDATE_SIGNED,
+                "signed_payload": {"landlord_client_id": m.landlord_client_id, "reference": m.reference,
+                                    "mandate_type": m.mandate_type, "fee_percent": num(m.fee_percent)}}
     return None
 
 
@@ -1678,7 +1687,7 @@ def poll_signatures(x_internal_token: str = Header(default=""), db: Session = De
                 ctx["mark_signed_fn"](signed_key)
                 enqueue(db, sig.doc_type, sig.doc_ref_id, ctx["event"], {
                     "id": sig.doc_ref_id, "signature_id": sig.id, "doc_type": sig.doc_type,
-                    "tenant_client_id": ctx["counterparty_client_id"]})
+                    **ctx["signed_payload"]})
             updated += 1
         elif st in ("in_progress", "declined", "voided", "expired"):
             sig.status = st
