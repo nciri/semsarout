@@ -38,6 +38,79 @@ def render_receipt_pdf(rp, tenant_name: str, landlord_name: str, property_title:
     return buf.getvalue()
 
 
+def render_lease_pdf(lease, mandate, tenant_name: str, landlord_name: str, property_title: str) -> bytes:
+    """Contrat de bail PDF. `lease` = Lease, `mandate` = Mandate associé (peut être None)."""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import mm
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=20 * mm, bottomMargin=20 * mm)
+    styles = getSampleStyleSheet()
+    head = ParagraphStyle("H", parent=styles["Heading1"], fontSize=22,
+                          textColor=colors.HexColor("#0B1220"), spaceAfter=10)
+    info = ParagraphStyle("I", parent=styles["Normal"], fontSize=10, leading=16)
+
+    def money(v):
+        return f"{float(v or 0):,.2f} Đh".replace(",", " ")
+
+    def d(dt):
+        return dt.strftime("%d/%m/%Y") if dt else "-"
+
+    story = [
+        Paragraph("SemsarOut", head), Paragraph("www.semsarout.com", styles["Normal"]), Spacer(1, 18),
+        Paragraph(f"<b>CONTRAT DE BAIL</b> {lease.reference or ''}", head),
+        Paragraph(f"Bailleur : {landlord_name or '-'}", info),
+        Paragraph(f"Locataire : {tenant_name or '-'}", info),
+        Paragraph(f"Bien : {property_title or '-'}", info),
+        Spacer(1, 10),
+        Paragraph(f"Loyer mensuel : {money(lease.rent_amount)}", info),
+        Paragraph(f"Charges : {money(lease.charges_amount)}", info),
+        Paragraph(f"Dépôt de garantie : {money(lease.deposit_amount)}", info),
+        Paragraph(f"Jour d'échéance : le {lease.payment_day or 1} de chaque mois", info),
+        Paragraph(f"Période : du {d(lease.start_date)} au {d(lease.end_date)}", info),
+        Spacer(1, 14),
+        Paragraph("Fait pour signature électronique via SemsarOut / 3a9dSign.", info),
+    ]
+    doc.build(story)
+    return buf.getvalue()
+
+
+def render_mandate_pdf(mandate, landlord_name: str, property_title: str) -> bytes:
+    """Mandat de gestion/location PDF. `mandate` = Mandate."""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import mm
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=20 * mm, bottomMargin=20 * mm)
+    styles = getSampleStyleSheet()
+    head = ParagraphStyle("H", parent=styles["Heading1"], fontSize=22,
+                          textColor=colors.HexColor("#0B1220"), spaceAfter=10)
+    info = ParagraphStyle("I", parent=styles["Normal"], fontSize=10, leading=16)
+
+    def d(dt):
+        return dt.strftime("%d/%m/%Y") if dt else "-"
+
+    story = [
+        Paragraph("SemsarOut", head), Paragraph("www.semsarout.com", styles["Normal"]), Spacer(1, 18),
+        Paragraph(f"<b>MANDAT DE {(mandate.mandate_type or 'gestion').upper()}</b> {mandate.reference or ''}", head),
+        Paragraph(f"Mandant (bailleur) : {landlord_name or '-'}", info),
+        Paragraph(f"Bien : {property_title or '-'}", info),
+        Paragraph(f"Type de mandat : {mandate.mandate_type or '-'}", info),
+        Paragraph(f"Honoraires : {float(mandate.fee_percent or 0):.2f} %", info),
+        Paragraph(f"Période : du {d(mandate.start_date)} au {d(mandate.end_date)}", info),
+        Spacer(1, 14),
+        Paragraph("Fait pour signature électronique via SemsarOut / 3a9dSign.", info),
+    ]
+    doc.build(story)
+    return buf.getvalue()
+
+
 def render_inventory_pdf(inv, rooms, property_title: str, tenant_name: str) -> bytes:
     """État des lieux PDF. `rooms` = liste [{name, items:[{label,condition,comment}]}]."""
     from reportlab.lib import colors

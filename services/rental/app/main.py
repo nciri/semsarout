@@ -144,6 +144,26 @@ def list_mandates(principal: Principal = Depends(get_principal), db: Session = D
     return {"mandates": [_mandate_dict(m) for m in q.order_by(Mandate.created_at.desc()).all()]}
 
 
+def _mandate_pdf_bytes(db, mandate):
+    landlord = db.get(ClientRO, mandate.landlord_client_id)
+    prop = db.get(PropertyRO, mandate.property_id)
+    from . import pdf as pdf_mod
+    return pdf_mod.render_mandate_pdf(
+        mandate, landlord_name=(f"{landlord.first_name} {landlord.last_name}" if landlord else None),
+        property_title=(prop.title if prop else None))
+
+
+@app.get("/backoffice/gestion-locative/mandates/{mandate_id}.pdf")
+def mandate_pdf(mandate_id: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    m = db.get(Mandate, mandate_id)
+    if m is None or m.agency_id != principal.agency_id:
+        return err("Mandat introuvable.", 404)
+    return Response(_mandate_pdf_bytes(db, m), media_type="application/pdf",
+                    headers={"Content-Disposition": f"attachment; filename=mandat-{mandate_id}.pdf"})
+
+
 @app.get("/backoffice/gestion-locative/mandates/{mandate_id}")
 def get_mandate(mandate_id: int, principal: Principal = Depends(get_principal),
                 db: Session = Depends(get_db)):
@@ -278,6 +298,30 @@ def list_leases(principal: Principal = Depends(get_principal), db: Session = Dep
         return g
     q = db.query(Lease).filter(Lease.agency_id == principal.agency_id)
     return {"leases": [_lease_dict(l) for l in q.order_by(Lease.created_at.desc()).all()]}
+
+
+def _lease_pdf_bytes(db, lease):
+    mandate = db.get(Mandate, lease.mandate_id)
+    tenant = db.get(ClientRO, lease.tenant_client_id)
+    landlord = db.get(ClientRO, mandate.landlord_client_id) if mandate else None
+    prop = db.get(PropertyRO, lease.property_id)
+    from . import pdf as pdf_mod
+    return pdf_mod.render_lease_pdf(
+        lease, mandate,
+        tenant_name=(f"{tenant.first_name} {tenant.last_name}" if tenant else None),
+        landlord_name=(f"{landlord.first_name} {landlord.last_name}" if landlord else None),
+        property_title=(prop.title if prop else None))
+
+
+@app.get("/backoffice/gestion-locative/leases/{lease_id}.pdf")
+def lease_pdf(lease_id: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    l = db.get(Lease, lease_id)
+    if l is None or l.agency_id != principal.agency_id:
+        return err("Bail introuvable.", 404)
+    return Response(_lease_pdf_bytes(db, l), media_type="application/pdf",
+                    headers={"Content-Disposition": f"attachment; filename=bail-{lease_id}.pdf"})
 
 
 @app.get("/backoffice/gestion-locative/leases/{lease_id}")
