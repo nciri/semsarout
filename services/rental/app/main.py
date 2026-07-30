@@ -1073,8 +1073,10 @@ async def decide_application(application_id: int, request: Request,
     a.status = decision
     a.decided_at = datetime.utcnow()
     a.decision_reason = data.get("reason")
+    ro = db.get(PropertyRO, a.property_id)
     enqueue(db, "tenant_application", a.id, events.APPLICATION_DECIDED, {
         "id": a.id, "applicant_email": a.applicant_email, "applicant_name": a.applicant_name,
-        "property_id": a.property_id, "decision": decision, "reason": a.decision_reason})
+        "property_id": a.property_id, "property_title": (ro.title if ro else None),
+        "decision": decision, "reason": a.decision_reason})
     db.commit()
     return _application_dict(db, a)

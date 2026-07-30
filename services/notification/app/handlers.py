@@ -246,7 +246,7 @@ def _handle_application_received(db, payload):
         return
     _try_send(db, to, "application_received.html", "application_received", from_email=_contact(),
               name=payload.get("applicant_name"), property_title=payload.get("property_title"),
-              by_agent=payload.get("by_agent"))
+              property_id=payload.get("property_id"), by_agent=payload.get("by_agent"))
 
 
 def _handle_application_decided(db, payload):
@@ -256,7 +256,8 @@ def _handle_application_decided(db, payload):
         return
     _try_send(db, to, "application_decision.html", "application_decision", from_email=_contact(),
               name=payload.get("applicant_name"), decision=payload.get("decision"),
-              reason=payload.get("reason"))
+              reason=payload.get("reason"), property_id=payload.get("property_id"),
+              property_title=payload.get("property_title"))
 
 
 def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
