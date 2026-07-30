@@ -7,11 +7,11 @@
 {% block hero_title %}{% if final %}Dernier rappel avant suspension{% else %}Votre facture est en attente{% endif %}{% endblock %}
 {% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if agency_name %} {{ agency_name }}{% endif %}, une facture reste impayée.</p>{% endblock %}
 {% block content %}
-<p style="text-align:center; color:{{ brand.ink }};">Sauf erreur de notre part, la facture ci-dessous n'a pas encore été réglée. Merci de procéder à son règlement pour {% if final %}<strong>éviter la suspension de votre abonnement et de vos annonces</strong>{% else %}garder votre compte SemsarOut pleinement actif{% endif %}.</p>
+<p style="text-align:left; color:{{ brand.ink }};">Sauf erreur de notre part, la facture ci-dessous n'a pas encore été réglée. Merci de procéder à son règlement pour {% if final %}<strong>éviter la suspension de votre abonnement et de vos annonces</strong>{% else %}garder votre compte SemsarOut pleinement actif{% endif %}.</p>
 {{ card(
   [("Référence", reference)]
   + ([("Période", period_label)] if period_label else [])
   + [("Montant dû", "{:,.0f}".format(amount|float).replace(",", " ") ~ " " ~ currency)]) }}
 <table role="presentation" width="100%"><tr><td align="center">{{ button(app.base_url ~ "/backoffice/abonnement", "Régler ma facture") }}</td></tr></table>
-<p style="margin-top:22px; font-size:13px; color:{{ brand.muted }}; text-align:center;">Vous avez déjà effectué le règlement&nbsp;? Merci de ne pas tenir compte de ce message. Une question sur votre facturation&nbsp;? Écrivez-nous à <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
+<p style="margin-top:22px; font-size:13px; color:{{ brand.muted }}; text-align:left;">Vous avez déjà effectué le règlement&nbsp;? Merci de ne pas tenir compte de ce message. Une question sur votre facturation&nbsp;? Écrivez-nous à <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
 {% endblock %}

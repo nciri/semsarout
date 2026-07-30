@@ -6,9 +6,9 @@
 {% block hero_title %}Loyer bien reçu{% endblock %}
 {% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}, votre paiement est enregistré.</p>{% endblock %}
 {% block content %}
-<p style="text-align:center; color:{{ brand.ink }};">Nous confirmons la réception de votre loyer pour la période <strong>{{ period_label }}</strong>. Voici votre quittance.</p>
+<p style="text-align:left; color:{{ brand.ink }};">Nous confirmons la réception de votre loyer pour la période <strong>{{ period_label }}</strong>. Voici votre quittance.</p>
 {{ card(([("Quittance n°", receipt_number)] if receipt_number else [])
   + [("Période", period_label)]
   + [("Montant réglé", "{:,.0f}".format((paid_amount or total_amount)|float).replace(",", " ") ~ " " ~ currency)]) }}
-<p style="margin-top:18px; font-size:13px; color:{{ brand.muted }}; text-align:center;">Une question sur votre loyer&nbsp;? Écrivez-nous à <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
+<p style="margin-top:18px; font-size:13px; color:{{ brand.muted }}; text-align:left;">Une question sur votre loyer&nbsp;? Écrivez-nous à <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
 {% endblock %}

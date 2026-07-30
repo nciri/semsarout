@@ -6,8 +6,8 @@
 {% block hero_title %}Votre document est signé{% endblock %}
 {% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}.</p>{% endblock %}
 {% block content %}
-<p style="text-align:center; color:{{ brand.ink }};">Bonne nouvelle : <strong>{{ title or "votre contrat" }}</strong> a été <strong>signé</strong>. Un exemplaire vous est mis à disposition dans votre espace SemsarOut.</p>
+<p style="text-align:left; color:{{ brand.ink }};">Bonne nouvelle : <strong>{{ title or "votre contrat" }}</strong> a été <strong>signé</strong>. Un exemplaire vous est mis à disposition dans votre espace SemsarOut.</p>
 {{ card([("Document", title or "Contrat")] + ([("Type", document_type)] if document_type else [])) }}
 <table role="presentation" width="100%"><tr><td align="center">{{ button(app.base_url ~ "/backoffice/contracts", "Consulter mon document") }}</td></tr></table>
-<p style="margin-top:22px; font-size:13px; color:{{ brand.muted }}; text-align:center;">Merci de votre confiance — l'équipe SemsarOut.</p>
+<p style="margin-top:22px; font-size:13px; color:{{ brand.muted }}; text-align:left;">Merci de votre confiance — l'équipe SemsarOut.</p>
 {% endblock %}

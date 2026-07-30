@@ -7,9 +7,9 @@
 {% block hero_title %}Régularisation des charges {{ year }}{% endblock %}
 {% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}, voici votre décompte annuel.</p>{% endblock %}
 {% block content %}
-<p style="text-align:center; color:{{ brand.ink }};">Voici le décompte de vos charges pour l'année <strong>{{ year }}</strong>, comparant les provisions versées aux charges réelles.</p>
+<p style="text-align:left; color:{{ brand.ink }};">Voici le décompte de vos charges pour l'année <strong>{{ year }}</strong>, comparant les provisions versées aux charges réelles.</p>
 {{ card([("Provisions versées", "{:,.0f}".format(provisions_total|float).replace(",", " ") ~ " " ~ currency)]
   + [("Charges réelles", "{:,.0f}".format(actual_total|float).replace(",", " ") ~ " " ~ currency)]
   + [(("Solde à régler" if owed else "Trop-perçu à rembourser"), "{:,.0f}".format((balance|float)|abs).replace(",", " ") ~ " " ~ currency)]) }}
-<p style="margin-top:18px; font-size:13px; color:{{ brand.muted }}; text-align:center;">{% if owed %}Ce solde sera ajouté à votre prochaine échéance.{% else %}Ce montant vous sera remboursé.{% endif %} Une question&nbsp;? <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
+<p style="margin-top:18px; font-size:13px; color:{{ brand.muted }}; text-align:left;">{% if owed %}Ce solde sera ajouté à votre prochaine échéance.{% else %}Ce montant vous sera remboursé.{% endif %} Une question&nbsp;? <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
 {% endblock %}

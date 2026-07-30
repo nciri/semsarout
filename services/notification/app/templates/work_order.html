@@ -6,7 +6,7 @@
 {% block hero_title %}Nouvel ordre de service{% endblock %}
 {% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if artisan_name %} {{ artisan_name }}{% endif %}, une intervention vous attend.</p>{% endblock %}
 {% block content %}
-<p style="text-align:center; color:{{ brand.ink }};">Une agence vous confie l'intervention suivante via SemsarOut :</p>
+<p style="text-align:left; color:{{ brand.ink }};">Une agence vous confie l'intervention suivante via SemsarOut :</p>
 {{ card(
   [("Intervention", title)] +
   ([("Métier", trade)] if trade else []) +
@@ -17,5 +17,5 @@
 <table role="presentation" width="100%" style="margin:4px 0 22px;"><tr><td style="padding:14px 18px; background:#f4f5f7; border-radius:10px; font-size:14px; line-height:1.6; color:{{ brand.ink }};">{{ notes }}</td></tr></table>
 {% endif %}
 <table role="presentation" width="100%"><tr><td align="center">{{ button(app.base_url ~ "/backoffice/work-orders", "Voir l'ordre de service") }}</td></tr></table>
-<p style="margin-top:22px; font-size:13px; color:{{ brand.muted }}; text-align:center;">Merci de confirmer votre disponibilité auprès de l'agence.</p>
+<p style="margin-top:22px; font-size:13px; color:{{ brand.muted }}; text-align:left;">Merci de confirmer votre disponibilité auprès de l'agence.</p>
 {% endblock %}

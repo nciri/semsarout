@@ -6,10 +6,10 @@
 {% block hero_title %}Bail signé{% endblock %}
 {% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}, votre location est confirmée.</p>{% endblock %}
 {% block content %}
-<p style="text-align:center; color:{{ brand.ink }};">Votre bail est désormais actif{% if property_title %} pour <strong>{{ property_title }}</strong>{% endif %}. Voici les principales conditions.</p>
+<p style="text-align:left; color:{{ brand.ink }};">Votre bail est désormais actif{% if property_title %} pour <strong>{{ property_title }}</strong>{% endif %}. Voici les principales conditions.</p>
 {{ card(([("Bien", property_title)] if property_title else [])
   + [("Loyer", ("{:,.0f}".format(rent_amount|float).replace(",", " ")) ~ " " ~ currency)]
   + ([("Charges", ("{:,.0f}".format(charges_amount|float).replace(",", " ")) ~ " " ~ currency)] if charges_amount else [])
   + ([("Dépôt de garantie", ("{:,.0f}".format(deposit_amount|float).replace(",", " ")) ~ " " ~ currency)] if deposit_amount else [])) }}
-<p style="margin-top:18px; font-size:13px; color:{{ brand.muted }}; text-align:center;">Votre première quittance vous parviendra après le premier règlement. Une question&nbsp;? <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
+<p style="margin-top:18px; font-size:13px; color:{{ brand.muted }}; text-align:left;">Votre première quittance vous parviendra après le premier règlement. Une question&nbsp;? <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
 {% endblock %}

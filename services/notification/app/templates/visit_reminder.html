@@ -6,11 +6,11 @@
 {% block hero_title %}Votre visite, c'est bientôt{% endblock %}
 {% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}, un petit rappel.</p>{% endblock %}
 {% block content %}
-<p style="text-align:center; color:{{ brand.ink }};">Nous vous rappelons votre rendez-vous de visite à venir :</p>
+<p style="text-align:left; color:{{ brand.ink }};">Nous vous rappelons votre rendez-vous de visite à venir :</p>
 {{ card(
   ([("Bien", property_title)] if property_title else []) +
   [("Date", date ~ ((" à " ~ time) if time else ""))] +
   ([("Adresse", address)] if address else []) +
   ([("Conseiller", agent_name)] if agent_name else [])) }}
-<p style="margin-top:20px; font-size:13px; color:{{ brand.muted }}; text-align:center;">Un empêchement ? Prévenez votre conseiller au plus tôt pour reprogrammer. À très bientôt.</p>
+<p style="margin-top:20px; font-size:13px; color:{{ brand.muted }}; text-align:left;">Un empêchement ? Prévenez votre conseiller au plus tôt pour reprogrammer. À très bientôt.</p>
 {% endblock %}
