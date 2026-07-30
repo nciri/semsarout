@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation, Outlet } from 'react-router-dom'
+import { Link, useLocation, Outlet, Navigate } from 'react-router-dom'
 import {
   FiHome, FiUsers, FiFileText, FiCalendar, FiDollarSign,
   FiSettings, FiBarChart2, FiMenu, FiX, FiBriefcase,
@@ -56,6 +56,10 @@ export default function BackofficeLayout() {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const location = useLocation()
   const { user, logout } = useAuthStore()
+
+  // Le back-office est réservé aux comptes rattachés à une agence : un particulier est renvoyé
+  // vers son espace, un superadmin vers la plateforme.
+  if (user && !user.agency_id) return <Navigate to={user.is_superadmin ? '/admin' : '/dashboard'} replace />
 
   const isActive = (path, exact = false) => {
     if (exact) return location.pathname === path

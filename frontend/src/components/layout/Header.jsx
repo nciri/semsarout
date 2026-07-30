@@ -38,7 +38,7 @@ function Header() {
     {
       title: 'Activité',
       items: [
-        { to: '/dashboard', label: 'Tableau de bord', icon: FiGrid },
+        { to: '/dashboard', label: user?.agency_id ? 'Tour de contrôle' : 'Mon espace', icon: FiGrid },
         { to: '/dashboard/annonces', label: 'Mes annonces', icon: FiFileText },
         { to: '/dashboard/candidatures', label: 'Mes candidatures', icon: FiClipboard },
         { to: '/dashboard/leads', label: 'Demandes / Leads', icon: FiInbox }

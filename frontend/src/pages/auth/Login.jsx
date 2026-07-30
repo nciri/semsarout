@@ -22,10 +22,12 @@ function Login() {
       const redirectParam = searchParams.get('redirect')
       const explicit = (redirectParam && redirectParam.startsWith('/') && redirectParam)
         || location.state?.from?.pathname
-      // Un super-admin n'a pas d'agence → le tableau de bord agence (/dashboard) renvoie 400.
-      // Sans cible explicite, l'envoyer vers son espace plateforme (/admin).
-      const isSuperadmin = useAuthStore.getState().user?.is_superadmin
-      const from = explicit || (isSuperadmin ? '/admin' : '/dashboard')
+      // Accueil selon le type de compte : superadmin → plateforme (/admin) ; agent d'agence
+      // (agency_id défini) → back-office (/backoffice) ; particulier → son espace (/dashboard).
+      // Une cible explicite (?redirect ou état de navigation) reste prioritaire.
+      const u = useAuthStore.getState().user
+      const home = u?.is_superadmin ? '/admin' : (u?.agency_id ? '/backoffice' : '/dashboard')
+      const from = explicit || home
       navigate(from, { replace: true })
     } else {
       setError(result.error)

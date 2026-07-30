@@ -5,16 +5,18 @@ import { toast } from 'react-toastify'
 import { analyticsService } from '../../services/analyticsService'
 import { WIDGETS, Widget } from '../../components/dashboard/widgets'
 import useAuthStore from '../../store/authStore'
+import MonEspace from './MonEspace'
 
 const DEFAULT = Object.keys(WIDGETS).map((id, i) => ({ id, order: i, hidden: false }))
 const SHELL = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'
 
 function Dashboard() {
   const user = useAuthStore((s) => s.user)
-  // Le super-admin n'a pas d'agence → ce tableau de bord agence renvoie 400. On n'appelle pas
-  // l'overview pour lui et on le renvoie vers son espace plateforme (/admin).
+  // La « Tour de contrôle » est le tableau de bord AGENCE (overview back-office → 400 sans agence).
+  // On ne l'appelle donc que pour un agent d'agence. Superadmin → /admin ; particulier → « Mon espace ».
   const isSuperadmin = !!user?.is_superadmin
-  const { data: overview, isLoading, isError, refetch } = useQuery('dashboard-overview', analyticsService.getOverview, { retry: false, enabled: !isSuperadmin })
+  const hasAgency = !!user?.agency_id
+  const { data: overview, isLoading, isError, refetch } = useQuery('dashboard-overview', analyticsService.getOverview, { retry: false, enabled: !isSuperadmin && hasAgency })
   const [editing, setEditing] = useState(false)
   const [widgets, setWidgets] = useState(DEFAULT)
   const [dragId, setDragId] = useState(null)
@@ -42,6 +44,7 @@ function Dashboard() {
   const toggleHide = (id) => setWidgets(widgets.map((w) => (w.id === id ? { ...w, hidden: !w.hidden } : w)))
 
   if (isSuperadmin) return <Navigate to="/admin" replace />
+  if (!hasAgency) return <MonEspace user={user} />
   if (isLoading) return <div className={SHELL}>Chargement…</div>
   if (isError || !overview) {
     return (
