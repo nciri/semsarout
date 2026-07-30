@@ -1192,3 +1192,177 @@ def get_inventory(inv_id: int, principal: Principal = Depends(get_principal),
     if inv is None or inv.agency_id != principal.agency_id:
         return err("État des lieux introuvable.", 404)
     return _inventory_dict(db, inv, full=True)
+
+
+def _owned_inventory(db, inv_id: int, principal: Principal):
+    inv = db.get(Inventory, inv_id)
+    if inv is None or inv.agency_id != principal.agency_id:
+        return None
+    return inv
+
+
+def _owned_room(db, room_id: int, principal: Principal):
+    r = db.get(InventoryRoom, room_id)
+    if r is None:
+        return None, None
+    inv = _owned_inventory(db, r.inventory_id, principal)
+    return (r, inv) if inv is not None else (None, None)
+
+
+def _owned_item(db, item_id: int, principal: Principal):
+    it = db.get(InventoryItem, item_id)
+    if it is None:
+        return None, None
+    r, inv = _owned_room(db, it.room_id, principal)
+    return (it, inv) if inv is not None else (None, None)
+
+
+@app.patch("/backoffice/gestion-locative/inventories/{inv_id}")
+async def update_inventory(inv_id: int, request: Request,
+                           principal: Principal = Depends(get_principal),
+                           db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    inv = _owned_inventory(db, inv_id, principal)
+    if inv is None:
+        return err("État des lieux introuvable.", 404)
+    if inv.status != "draft":
+        return err("État des lieux verrouillé (finalisé).", 400)
+    data = await json_body(request)
+    if "general_notes" in data:
+        inv.general_notes = data["general_notes"]
+    db.commit()
+    return _inventory_dict(db, inv)
+
+
+@app.post("/backoffice/gestion-locative/inventories/{inv_id}/rooms", status_code=201)
+async def add_room(inv_id: int, request: Request, principal: Principal = Depends(get_principal),
+                   db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    inv = _owned_inventory(db, inv_id, principal)
+    if inv is None:
+        return err("État des lieux introuvable.", 404)
+    if inv.status != "draft":
+        return err("État des lieux verrouillé.", 400)
+    data = await json_body(request)
+    if not data.get("name"):
+        return err("Le nom de la pièce est requis.", 400)
+    n = db.query(InventoryRoom).filter(InventoryRoom.inventory_id == inv.id).count()
+    r = InventoryRoom(inventory_id=inv.id, name=data["name"], position=n)
+    db.add(r)
+    db.commit()
+    return {"id": r.id, "name": r.name, "position": r.position, "items": []}
+
+
+@app.delete("/backoffice/gestion-locative/rooms/{room_id}")
+def delete_room(room_id: int, principal: Principal = Depends(get_principal),
+                db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    r, inv = _owned_room(db, room_id, principal)
+    if r is None:
+        return err("Pièce introuvable.", 404)
+    if inv.status != "draft":
+        return err("État des lieux verrouillé.", 400)
+    items = db.query(InventoryItem).filter(InventoryItem.room_id == r.id).all()
+    for it in items:
+        db.query(InventoryPhoto).filter(InventoryPhoto.item_id == it.id).delete()
+        db.delete(it)
+    db.delete(r)
+    db.commit()
+    return {"ok": True}
+
+
+@app.post("/backoffice/gestion-locative/rooms/{room_id}/items", status_code=201)
+async def add_item(room_id: int, request: Request, principal: Principal = Depends(get_principal),
+                   db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    r, inv = _owned_room(db, room_id, principal)
+    if r is None:
+        return err("Pièce introuvable.", 404)
+    if inv.status != "draft":
+        return err("État des lieux verrouillé.", 400)
+    data = await json_body(request)
+    if not data.get("label"):
+        return err("Le libellé de l'élément est requis.", 400)
+    n = db.query(InventoryItem).filter(InventoryItem.room_id == r.id).count()
+    it = InventoryItem(room_id=r.id, label=data["label"], condition=data.get("condition", "bon"),
+                       comment=data.get("comment"), position=n)
+    db.add(it)
+    db.commit()
+    return {"id": it.id, "label": it.label, "condition": it.condition, "comment": it.comment, "photos": []}
+
+
+@app.patch("/backoffice/gestion-locative/items/{item_id}")
+async def update_item(item_id: int, request: Request, principal: Principal = Depends(get_principal),
+                      db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    it, inv = _owned_item(db, item_id, principal)
+    if it is None:
+        return err("Élément introuvable.", 404)
+    if inv.status != "draft":
+        return err("État des lieux verrouillé.", 400)
+    data = await json_body(request)
+    if "condition" in data:
+        if data["condition"] not in ("bon", "moyen", "mauvais"):
+            return err("État invalide.", 400)
+        it.condition = data["condition"]
+    if "comment" in data:
+        it.comment = data["comment"]
+    if "label" in data and data["label"]:
+        it.label = data["label"]
+    db.commit()
+    return {"id": it.id, "label": it.label, "condition": it.condition, "comment": it.comment}
+
+
+@app.delete("/backoffice/gestion-locative/items/{item_id}")
+def delete_item(item_id: int, principal: Principal = Depends(get_principal),
+                db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    it, inv = _owned_item(db, item_id, principal)
+    if it is None:
+        return err("Élément introuvable.", 404)
+    if inv.status != "draft":
+        return err("État des lieux verrouillé.", 400)
+    db.query(InventoryPhoto).filter(InventoryPhoto.item_id == it.id).delete()
+    db.delete(it)
+    db.commit()
+    return {"ok": True}
+
+
+@app.post("/backoffice/gestion-locative/inventories/{inv_id}/finalize")
+def finalize_inventory(inv_id: int, principal: Principal = Depends(get_principal),
+                       db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    inv = _owned_inventory(db, inv_id, principal)
+    if inv is None:
+        return err("État des lieux introuvable.", 404)
+    if inv.status != "draft":
+        return err("État des lieux déjà finalisé.", 400)
+    inv.status = "finalized"
+    inv.finalized_at = datetime.utcnow()
+    enqueue(db, "inventory", inv.id, events.INVENTORY_FINALIZED, {
+        "id": inv.id, "lease_id": inv.lease_id, "type": inv.type})
+    db.commit()
+    return _inventory_dict(db, inv)
+
+
+@app.post("/backoffice/gestion-locative/inventories/{inv_id}/mark-signed")
+def mark_inventory_signed(inv_id: int, principal: Principal = Depends(get_principal),
+                          db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    inv = _owned_inventory(db, inv_id, principal)
+    if inv is None:
+        return err("État des lieux introuvable.", 404)
+    if inv.status == "draft":
+        return err("Finalisez l'état des lieux avant de le signer.", 400)
+    inv.status = "signed"
+    inv.signed_at = datetime.utcnow()
+    db.commit()
+    return _inventory_dict(db, inv)
