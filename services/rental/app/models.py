@@ -165,6 +165,34 @@ class InventoryPhoto(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class DepositSettlement(Base):
+    __tablename__ = "deposit_settlement"
+    __table_args__ = (UniqueConstraint("lease_id", name="uq_settlement_lease"),)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    lease_id = Column(Integer, index=True, nullable=False)
+    agency_id = Column(Integer, index=True, nullable=False)
+    deposit_amount = Column(Numeric(12, 2), default=0)        # snapshot caution au décompte
+    total_deductions = Column(Numeric(12, 2), default=0)
+    refunded_amount = Column(Numeric(12, 2), default=0)
+    balance_due = Column(Numeric(12, 2), default=0)           # solde à réclamer (dégâts > caution)
+    status = Column(String(20), default="draft")             # draft | finalized
+    finalized_at = Column(DateTime)
+    sent_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class DeductionLine(Base):
+    __tablename__ = "deduction_line"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    settlement_id = Column(Integer, index=True, nullable=False)
+    label = Column(String(160), nullable=False)
+    amount = Column(Numeric(12, 2), nullable=False)
+    item_id = Column(Integer)                                 # rattachement facultatif à un élément dégradé
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class PropertyRO(Base):
     """Projection locale du bien (via listing.*) : property_title / property_city."""
     __tablename__ = "property_ro"

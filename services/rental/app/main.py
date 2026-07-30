@@ -20,9 +20,9 @@ from semsar_events import enqueue
 
 from . import events
 from .db import get_db, init_db
-from .models import (ApplicationDocument, ChargeRegularization, ClientRO, CrgReport, Inventory,
-                     InventoryItem, InventoryPhoto, InventoryRoom, Lease, Mandate, PropertyRO,
-                     RentPeriod, TenantApplication)
+from .models import (ApplicationDocument, ChargeRegularization, ClientRO, CrgReport,
+                     DeductionLine, DepositSettlement, Inventory, InventoryItem, InventoryPhoto,
+                     InventoryRoom, Lease, Mandate, PropertyRO, RentPeriod, TenantApplication)
 from .util import err, iso, json_body, num
 
 settings = get_settings()
@@ -1238,6 +1238,151 @@ def _owned_item(db, item_id: int, principal: Principal):
         return None, None
     r, inv = _owned_room(db, it.room_id, principal)
     return (it, inv) if inv is not None else (None, None)
+
+
+def _owned_settlement(db, sid: int, principal: Principal):
+    s = db.get(DepositSettlement, sid)
+    if s is None or s.agency_id != principal.agency_id:
+        return None
+    return s
+
+
+def _settlement_dict(db: Session, s: DepositSettlement) -> dict:
+    lines = (db.query(DeductionLine).filter(DeductionLine.settlement_id == s.id)
+             .order_by(DeductionLine.id).all())
+    total = sum(float(l.amount or 0) for l in lines)
+    deposit = float(s.deposit_amount or 0)
+    refunded = deposit - total if deposit > total else 0
+    balance = total - deposit if total > deposit else 0
+    return {"id": s.id, "lease_id": s.lease_id, "status": s.status,
+            "deposit_amount": num(deposit), "total_deductions": num(total),
+            "refunded_amount": num(refunded), "balance_due": num(balance),
+            "finalized_at": iso(s.finalized_at),
+            "lines": [{"id": l.id, "label": l.label, "amount": num(l.amount),
+                       "item_id": l.item_id} for l in lines]}
+
+
+@app.post("/backoffice/gestion-locative/leases/{lease_id}/settlement", status_code=201)
+def create_settlement(lease_id: int, principal: Principal = Depends(get_principal),
+                      db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    l = db.get(Lease, lease_id)
+    if l is None or l.agency_id != principal.agency_id:
+        return err("Bail introuvable.", 404)
+    if db.query(DepositSettlement).filter(DepositSettlement.lease_id == lease_id).first():
+        return err("Un décompte existe déjà pour ce bail.", 400)
+    s = DepositSettlement(lease_id=lease_id, agency_id=principal.agency_id,
+                          deposit_amount=l.deposit_amount or 0)
+    db.add(s)
+    db.commit()
+    return _settlement_dict(db, s)
+
+
+@app.get("/backoffice/gestion-locative/leases/{lease_id}/settlement")
+def get_settlement(lease_id: int, principal: Principal = Depends(get_principal),
+                   db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    l = db.get(Lease, lease_id)
+    if l is None or l.agency_id != principal.agency_id:
+        return err("Bail introuvable.", 404)
+    s = db.query(DepositSettlement).filter(DepositSettlement.lease_id == lease_id).first()
+    if s is None:
+        return err("Aucun décompte pour ce bail.", 404)
+    return _settlement_dict(db, s)
+
+
+@app.post("/backoffice/gestion-locative/settlements/{sid}/lines", status_code=201)
+async def add_deduction_line(sid: int, request: Request,
+                             principal: Principal = Depends(get_principal),
+                             db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    s = _owned_settlement(db, sid, principal)
+    if s is None:
+        return err("Décompte introuvable.", 404)
+    if s.status != "draft":
+        return err("Décompte verrouillé (finalisé).", 400)
+    data = await json_body(request)
+    label = (data.get("label") or "").strip()
+    if not label:
+        return err("Le libellé de la retenue est requis.", 400)
+    try:
+        amount = float(data.get("amount"))
+    except (TypeError, ValueError):
+        return err("Montant invalide.", 400)
+    if amount <= 0:
+        return err("Le montant doit être positif.", 400)
+    item_id = data.get("item_id")
+    if item_id is not None:   # rattachement facultatif : l'élément doit appartenir à un EDL de ce bail
+        it, inv = _owned_item(db, item_id, principal)
+        if it is None or inv.lease_id != s.lease_id:
+            return err("Élément invalide pour ce bail.", 400)
+    line = DeductionLine(settlement_id=s.id, label=label, amount=amount, item_id=item_id)
+    db.add(line)
+    db.commit()
+    return _settlement_dict(db, s)
+
+
+@app.delete("/backoffice/gestion-locative/deduction-lines/{line_id}")
+def delete_deduction_line(line_id: int, principal: Principal = Depends(get_principal),
+                          db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    line = db.get(DeductionLine, line_id)
+    s = _owned_settlement(db, line.settlement_id, principal) if line else None
+    if line is None or s is None:
+        return err("Ligne introuvable.", 404)
+    if s.status != "draft":
+        return err("Décompte verrouillé.", 400)
+    db.delete(line)
+    db.commit()
+    return _settlement_dict(db, s)
+
+
+_COND_RANK = {"bon": 0, "moyen": 1, "mauvais": 2}
+
+
+@app.get("/backoffice/gestion-locative/leases/{lease_id}/inventories/compare")
+def compare_inventories(lease_id: int, principal: Principal = Depends(get_principal),
+                        db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    l = db.get(Lease, lease_id)
+    if l is None or l.agency_id != principal.agency_id:
+        return err("Bail introuvable.", 404)
+    invs = {i.type: i for i in db.query(Inventory).filter(Inventory.lease_id == lease_id).all()}
+    entree, sortie = invs.get("entree"), invs.get("sortie")
+
+    def _by_room(inv):
+        out = {}
+        if inv is None:
+            return out
+        rooms = db.query(InventoryRoom).filter(InventoryRoom.inventory_id == inv.id).all()
+        for r in rooms:
+            items = db.query(InventoryItem).filter(InventoryItem.room_id == r.id).all()
+            out[r.name] = {it.label: it for it in items}
+        return out
+
+    e_rooms, s_rooms = _by_room(entree), _by_room(sortie)
+    room_names = list(dict.fromkeys(list(e_rooms.keys()) + list(s_rooms.keys())))
+    rooms = []
+    for rname in room_names:
+        e_items, s_items = e_rooms.get(rname, {}), s_rooms.get(rname, {})
+        labels = list(dict.fromkeys(list(e_items.keys()) + list(s_items.keys())))
+        items = []
+        for label in labels:
+            ei, si = e_items.get(label), s_items.get(label)
+            degraded = bool(ei and si and _COND_RANK.get(si.condition, 0) > _COND_RANK.get(ei.condition, 0))
+            items.append({"label": label,
+                          "entree": ei.condition if ei else None,
+                          "sortie": si.condition if si else None,
+                          "sortie_comment": si.comment if si else None,
+                          "sortie_item_id": si.id if si else None,
+                          "degraded": degraded})
+        rooms.append({"name": rname, "items": items})
+    return {"has_entree": entree is not None, "has_sortie": sortie is not None, "rooms": rooms}
 
 
 @app.patch("/backoffice/gestion-locative/inventories/{inv_id}")
