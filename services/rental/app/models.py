@@ -152,7 +152,7 @@ class TenantApplication(Base):
     monthly_income = Column(Numeric(12, 2))
     guarantor_name = Column(String(150))
     guarantor_income = Column(Numeric(12, 2))
-    status = Column(String(20), default="received")         # received|reviewing|accepted|rejected|withdrawn
+    status = Column(String(20), default="received")         # received|reviewing|shortlist|accepted|rejected|withdrawn
     submitted_at = Column(DateTime, default=datetime.utcnow)
     decided_at = Column(DateTime)
     decision_reason = Column(String(255))

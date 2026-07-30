@@ -887,6 +887,21 @@ def withdraw_application(application_id: int, principal: Principal = Depends(get
     return _application_dict(db, a)
 
 
+@app.post("/backoffice/gestion-locative/applications/{application_id}/shortlist")
+def shortlist_application(application_id: int, principal: Principal = Depends(get_principal),
+                          db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    a = db.get(TenantApplication, application_id)
+    if a is None or a.agency_id != principal.agency_id:
+        return err("Candidature introuvable.", 404)
+    if a.status not in ("received", "reviewing", "shortlist"):
+        return err("Candidature déjà traitée.", 400)
+    a.status = "shortlist"
+    db.commit()
+    return _application_dict(db, a)
+
+
 @app.get("/internal/applications/due-missing-docs-reminders", include_in_schema=False)
 def internal_apps_due_missing_docs(x_internal_token: str = Header(default=""),
                                    db: Session = Depends(get_db)):
@@ -897,7 +912,7 @@ def internal_apps_due_missing_docs(x_internal_token: str = Header(default=""),
     cutoff = datetime.utcnow() - timedelta(days=3)
     out = []
     rows = (db.query(TenantApplication)
-            .filter(TenantApplication.status.in_(["received", "reviewing"]),
+            .filter(TenantApplication.status.in_(["received", "reviewing", "shortlist"]),
                     TenantApplication.missing_docs_reminder_sent_at.is_(None),
                     TenantApplication.submitted_at <= cutoff).all())
     for a in rows:
