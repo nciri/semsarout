@@ -32,6 +32,22 @@ export const rentalService = {
   decideApplication: async (id, data) => (await api.post(`${B}/applications/${id}/decide`, data)).data,
   shortlistApplication: async (id) => (await api.post(`${B}/applications/${id}/shortlist`)).data,
   validateDocument: async (appId, docId, data) => (await api.patch(`${B}/applications/${appId}/documents/${docId}`, data)).data,
+  // États des lieux
+  listInventories: async (leaseId) => (await api.get(`${B}/leases/${leaseId}/inventories`)).data,
+  createInventory: async (leaseId, type) => (await api.post(`${B}/leases/${leaseId}/inventories`, { type })).data,
+  getInventory: async (invId) => (await api.get(`${B}/inventories/${invId}`)).data,
+  patchInventory: async (invId, data) => (await api.patch(`${B}/inventories/${invId}`, data)).data,
+  finalizeInventory: async (invId) => (await api.post(`${B}/inventories/${invId}/finalize`)).data,
+  addRoom: async (invId, name) => (await api.post(`${B}/inventories/${invId}/rooms`, { name })).data,
+  deleteRoom: async (roomId) => (await api.delete(`${B}/rooms/${roomId}`)).data,
+  addItem: async (roomId, data) => (await api.post(`${B}/rooms/${roomId}/items`, data)).data,
+  patchItem: async (itemId, data) => (await api.patch(`${B}/items/${itemId}`, data)).data,
+  deleteItem: async (itemId) => (await api.delete(`${B}/items/${itemId}`)).data,
+  uploadItemPhoto: async (itemId, file) => (await api.post(`${B}/items/${itemId}/photos`, file,
+    { params: { filename: file.name }, headers: { 'Content-Type': file.type || 'application/octet-stream' } })).data,
+  inventoryPhotoUrl: (photoId) => `${B}/inventory-photos/${photoId}`,
+  deleteItemPhoto: async (photoId) => (await api.delete(`${B}/inventory-photos/${photoId}`)).data,
+  inventoryPdfUrl: (invId) => `${B}/inventories/${invId}.pdf`,
 }
 
 export const applicantService = {

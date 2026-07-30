@@ -81,6 +81,7 @@ import LeasesList from './pages/backoffice/rental/LeasesList'
 import LeaseDetail from './pages/backoffice/rental/LeaseDetail'
 import ApplicationsList from './pages/backoffice/rental/ApplicationsList'
 import ApplicationDetail from './pages/backoffice/rental/ApplicationDetail'
+import InventoryEditor from './pages/backoffice/rental/InventoryEditor'
 import LegalCasesList from './pages/backoffice/legal/LegalCasesList'
 import LegalCaseDetail from './pages/backoffice/legal/LegalCaseDetail'
 import AnalyticsLayout from './pages/backoffice/analytics/AnalyticsLayout'
@@ -218,6 +219,7 @@ function App() {
           <Route path="gestion-locative/mandats/:id" element={<MandateDetail />} />
           <Route path="gestion-locative/baux/:id" element={<LeaseDetail />} />
           <Route path="gestion-locative/candidatures/:id" element={<ApplicationDetail />} />
+          <Route path="gestion-locative/etats-des-lieux/:invId" element={<InventoryEditor />} />
           {/* Notaires & juridique : notaires + dossiers en onglets */}
           <Route path="notaires" element={<NotairesLayout />}>
             <Route index element={<NotariesDirectory />} />

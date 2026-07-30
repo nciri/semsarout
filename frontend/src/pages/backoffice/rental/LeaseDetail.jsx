@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { FiArrowLeft, FiCheckCircle, FiDownload, FiLock } from 'react-icons/fi'
+import { FiArrowLeft, FiCheckCircle, FiDownload, FiLock, FiFileText } from 'react-icons/fi'
 import api from '../../../services/api'
 import { rentalService } from '../../../services/rentalService'
 import { Panel, StatusBadge, DataTable, EmptyState, Modal, Field, PRIMARY_BTN, SECONDARY_BTN, Select, GatedNotice } from '../../../components/backoffice/ui'
@@ -22,19 +22,25 @@ const RP_STATUS = {
 function LeaseDetail() {
   const { id } = useParams()
   const qc = useQueryClient()
+  const navigate = useNavigate()
   const { data: l, isLoading, error } = useQuery(['rental-lease', id], () => rentalService.getLease(id))
   const { data: rpData } = useQuery(['rental-rent-periods', id], () => rentalService.listRentPeriods(id))
+  const { data: invData } = useQuery(['rental-inventories', id], () => rentalService.listInventories(id))
   const [payFor, setPayFor] = useState(null)   // rent period being paid
   const [payForm, setPayForm] = useState({ amount: '', method: 'virement' })
   const [reviseOpen, setReviseOpen] = useState(false)
   const [newRent, setNewRent] = useState('')
 
-  const refresh = () => { qc.invalidateQueries(['rental-lease', id]); qc.invalidateQueries(['rental-rent-periods', id]) }
+  const refresh = () => { qc.invalidateQueries(['rental-lease', id]); qc.invalidateQueries(['rental-rent-periods', id]); qc.invalidateQueries(['rental-inventories', id]) }
   const sign = useMutation(() => rentalService.signLease(id), { onSuccess: () => { toast.success('Bail signé'); refresh() }, onError: (e) => toast.error(e.response?.data?.error || 'Erreur') })
   const revise = useMutation(() => rentalService.reviseLease(id, { new_rent: Number(newRent) }), { onSuccess: () => { toast.success('Loyer révisé'); setReviseOpen(false); refresh() }, onError: (e) => toast.error(e.response?.data?.error || 'Erreur') })
   const returnDep = useMutation(() => rentalService.returnDeposit(id, {}), { onSuccess: () => { toast.success('Dépôt restitué'); refresh() }, onError: (e) => toast.error(e.response?.data?.error || 'Erreur') })
   const pay = useMutation(() => rentalService.payRentPeriod(payFor.id, { amount: Number(payForm.amount), method: payForm.method }), {
     onSuccess: () => { toast.success('Paiement enregistré'); setPayFor(null); setPayForm({ amount: '', method: 'virement' }); refresh() },
+    onError: (e) => toast.error(e.response?.data?.error || 'Erreur'),
+  })
+  const createInv = useMutation((type) => rentalService.createInventory(id, type), {
+    onSuccess: (created) => { toast.success('État des lieux créé'); refresh(); navigate(`/backoffice/gestion-locative/etats-des-lieux/${created.id}`) },
     onError: (e) => toast.error(e.response?.data?.error || 'Erreur'),
   })
 
@@ -74,6 +80,30 @@ function LeaseDetail() {
       <Panel title="Quittancement">
         <DataTable columns={columns} rows={periods}
           empty={<EmptyState title="Aucune échéance" description="Les échéances de loyer sont générées mensuellement par l'ordonnanceur." />} />
+      </Panel>
+      <Panel title="États des lieux">
+        <div className="space-y-3">
+          {['entree', 'sortie'].map((type) => {
+            const found = (invData?.inventories || []).find((i) => i.type === type)
+            const label = type === 'entree' ? "État des lieux d'entrée" : 'État des lieux de sortie'
+            return (
+              <div key={type} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                <div className="flex items-center gap-3">
+                  <FiFileText className="w-5 h-5 text-gray-300" />
+                  <span className="text-gray-700">{label}</span>
+                  {found && <StatusBadge label={found.status} />}
+                </div>
+                {found ? (
+                  <Link to={`/backoffice/gestion-locative/etats-des-lieux/${found.id}`} className="text-primary-600 hover:text-primary-700 font-medium">Ouvrir</Link>
+                ) : (
+                  <button disabled={createInv.isLoading} onClick={() => createInv.mutate(type)} className={SECONDARY_BTN}>
+                    Créer {type === 'entree' ? "l'EDL d'entrée" : "l'EDL de sortie"}
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </Panel>
 
       <Modal open={!!payFor} onClose={() => setPayFor(null)} title={`Enregistrer un paiement — ${payFor?.period_label || ''}`}
