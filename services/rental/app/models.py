@@ -26,6 +26,7 @@ class Mandate(Base):
     end_date = Column(DateTime)
     status = Column(String(20), default="draft")             # draft|active|expired|terminated
     signed_at = Column(DateTime)
+    signed_pdf_key = Column(String(255))
     expiry_notice_sent_at = Column(DateTime)                 # avis d'échéance (anti-doublon)
     notes = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -54,6 +55,7 @@ class Lease(Base):
     revision_notice_sent_at = Column(DateTime)               # avis de révision (anti-doublon)
     status = Column(String(20), default="draft")             # draft|active|ended|terminated
     signed_at = Column(DateTime)
+    signed_pdf_key = Column(String(255))
     notes = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -179,6 +181,8 @@ class DepositSettlement(Base):
     status = Column(String(20), default="draft")             # draft | finalized
     finalized_at = Column(DateTime)
     sent_at = Column(DateTime)
+    signed_at = Column(DateTime)
+    signed_pdf_key = Column(String(255))
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -257,3 +261,22 @@ class ProcessedMessage(Base):
 
     message_id = Column(String(64), primary_key=True)
     processed_at = Column(DateTime, default=datetime.utcnow)
+
+
+class SignatureRequest(Base):
+    """Demande de signature électronique (3a9dSign) pour un document rental (EDL/décompte/bail/mandat)."""
+    __tablename__ = "signature_request"
+    __table_args__ = (UniqueConstraint("doc_type", "doc_ref_id", name="uq_signature_doc"),)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    doc_type = Column(String(20), nullable=False)            # inventory|settlement|lease|mandate
+    doc_ref_id = Column(Integer, nullable=False)
+    agency_id = Column(Integer, index=True, nullable=False)
+    envelope_id = Column(String(64))
+    document_id = Column(String(64))
+    status = Column(String(20), default="pending")           # pending|sent|in_progress|completed|declined|voided|expired
+    signed_pdf_key = Column(String(255))
+    signers = Column(Text)                                    # JSON [{name,email,order}]
+    error = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

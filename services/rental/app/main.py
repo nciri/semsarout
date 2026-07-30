@@ -5,6 +5,7 @@ CRUD mandats de gestion + baux (back-office, gating `rental`). Émet rental.mand
 """
 from contextlib import asynccontextmanager
 from datetime import datetime
+import json
 import os
 import uuid
 
@@ -18,11 +19,12 @@ from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 from semsar_events import enqueue
 
-from . import events
+from . import events, signing
 from .db import get_db, init_db
 from .models import (ApplicationDocument, ChargeRegularization, ClientRO, CrgReport,
                      DeductionLine, DepositSettlement, Inventory, InventoryItem, InventoryPhoto,
-                     InventoryRoom, Lease, Mandate, PropertyRO, RentPeriod, TenantApplication)
+                     InventoryRoom, Lease, Mandate, PropertyRO, RentPeriod, SignatureRequest,
+                     TenantApplication)
 from .util import err, iso, json_body, num
 
 settings = get_settings()
@@ -1227,6 +1229,19 @@ def list_inventories(lease_id: int, principal: Principal = Depends(get_principal
     return {"inventories": [_inventory_dict(db, i) for i in rows]}
 
 
+def _inventory_pdf_bytes(db, inv):
+    from . import storage
+    if inv.pdf_key:
+        return storage.docs_storage().get(inv.pdf_key)
+    rooms = _inventory_dict(db, inv, full=True)["rooms"]   # PDF à la volée si pas encore finalisé
+    lease = db.get(Lease, inv.lease_id)
+    prop = db.get(PropertyRO, lease.property_id) if lease else None
+    tenant = db.get(ClientRO, lease.tenant_client_id) if lease else None
+    from . import pdf as pdf_mod
+    return pdf_mod.render_inventory_pdf(inv, rooms, prop.title if prop else None,
+                                        f"{tenant.first_name} {tenant.last_name}" if tenant else None)
+
+
 @app.get("/backoffice/gestion-locative/inventories/{inv_id}.pdf")
 def inventory_pdf(inv_id: int, principal: Principal = Depends(get_principal),
                   db: Session = Depends(get_db)):
@@ -1235,17 +1250,7 @@ def inventory_pdf(inv_id: int, principal: Principal = Depends(get_principal),
     inv = _owned_inventory(db, inv_id, principal)
     if inv is None:
         return err("État des lieux introuvable.", 404)
-    from . import storage
-    if inv.pdf_key:
-        data = storage.docs_storage().get(inv.pdf_key)
-    else:   # PDF à la volée si pas encore finalisé
-        rooms = _inventory_dict(db, inv, full=True)["rooms"]
-        lease = db.get(Lease, inv.lease_id)
-        prop = db.get(PropertyRO, lease.property_id) if lease else None
-        tenant = db.get(ClientRO, lease.tenant_client_id) if lease else None
-        from . import pdf as pdf_mod
-        data = pdf_mod.render_inventory_pdf(inv, rooms, prop.title if prop else None,
-                                            f"{tenant.first_name} {tenant.last_name}" if tenant else None)
+    data = _inventory_pdf_bytes(db, inv)
     return Response(data, media_type="application/pdf",
                     headers={"Content-Disposition": f"attachment; filename=EDL-{inv.type}-{inv.id}.pdf"})
 
@@ -1461,6 +1466,182 @@ def internal_settlement_pdf(sid: int, x_internal_token: str = Header(default="")
     data = _settlement_pdf_bytes(db, s)
     return Response(data, media_type="application/pdf",
                     headers={"Content-Disposition": f"attachment; filename=decompte-caution-{sid}.pdf"})
+
+
+def _crm_client(client_id) -> dict:
+    """{email, name} d'un client crm — délègue à _client_lookup (même patron que notification)."""
+    return _client_lookup(client_id)
+
+
+def _sig_context_by_agency(db, doc_type: str, doc_id: int, agency_id: int):
+    """Retourne dict{entity, ready, pdf_bytes_fn, counterparty_client_id, title, ext_ref,
+    mark_signed_fn, event} ou None si introuvable/mauvaise agence. `ready` False si le doc doit
+    d'abord être finalisé. Contrepartie = locataire (EDL/décompte/bail) ou bailleur (mandat)."""
+    if doc_type == "inventory":
+        inv = db.get(Inventory, doc_id)
+        if inv is None or inv.agency_id != agency_id:
+            return None
+        lease = db.get(Lease, inv.lease_id)
+
+        def mark(signed_key):
+            inv.status = "signed"
+            inv.signed_at = datetime.utcnow()
+            inv.pdf_key = signed_key or inv.pdf_key
+        return {"entity": inv, "ready": inv.status in ("finalized", "signed"),
+                "pdf_bytes_fn": lambda: _inventory_pdf_bytes(db, inv),
+                "counterparty_client_id": lease.tenant_client_id if lease else None,
+                "title": f"État des lieux {inv.type} — bail {inv.lease_id}",
+                "ext_ref": f"rental:inventory:{inv.id}:{agency_id}",
+                "mark_signed_fn": mark, "event": events.INVENTORY_SIGNED}
+    if doc_type == "settlement":
+        s = db.get(DepositSettlement, doc_id)
+        if s is None or s.agency_id != agency_id:
+            return None
+        lease = db.get(Lease, s.lease_id)
+
+        def mark(signed_key):
+            s.signed_at = datetime.utcnow()
+            s.signed_pdf_key = signed_key
+        return {"entity": s, "ready": s.status == "finalized",
+                "pdf_bytes_fn": lambda: _settlement_pdf_bytes(db, s),
+                "counterparty_client_id": lease.tenant_client_id if lease else None,
+                "title": f"Décompte de caution — bail {s.lease_id}",
+                "ext_ref": f"rental:settlement:{s.id}:{agency_id}",
+                "mark_signed_fn": mark, "event": events.SETTLEMENT_SIGNED}
+    if doc_type == "lease":
+        l = db.get(Lease, doc_id)
+        if l is None or l.agency_id != agency_id:
+            return None
+
+        def mark(signed_key):
+            l.signed_at = datetime.utcnow()
+            l.signed_pdf_key = signed_key
+        return {"entity": l, "ready": True, "pdf_bytes_fn": lambda: _lease_pdf_bytes(db, l),
+                "counterparty_client_id": l.tenant_client_id,
+                "title": f"Bail {l.reference or l.id}",
+                "ext_ref": f"rental:lease:{l.id}:{agency_id}",
+                "mark_signed_fn": mark, "event": events.LEASE_SIGNED}
+    if doc_type == "mandate":
+        m = db.get(Mandate, doc_id)
+        if m is None or m.agency_id != agency_id:
+            return None
+
+        def mark(signed_key):
+            m.signed_at = datetime.utcnow()
+            m.signed_pdf_key = signed_key
+        return {"entity": m, "ready": True, "pdf_bytes_fn": lambda: _mandate_pdf_bytes(db, m),
+                "counterparty_client_id": m.landlord_client_id,   # bailleur, pas locataire
+                "title": f"Mandat {m.reference or m.id}",
+                "ext_ref": f"rental:mandate:{m.id}:{agency_id}",
+                "mark_signed_fn": mark, "event": events.MANDATE_SIGNED}
+    return None
+
+
+def _sig_context(db, doc_type: str, doc_id: int, principal: Principal):
+    return _sig_context_by_agency(db, doc_type, doc_id, principal.agency_id)
+
+
+_DOC_TYPES = ("inventory", "settlement", "lease", "mandate")
+
+
+def _sig_dict(db, sig) -> dict:
+    return {"id": sig.id, "doc_type": sig.doc_type, "doc_ref_id": sig.doc_ref_id,
+            "status": sig.status, "has_signed_pdf": bool(sig.signed_pdf_key),
+            "signers": json.loads(sig.signers) if sig.signers else [], "error": sig.error}
+
+
+@app.post("/backoffice/gestion-locative/{doc_type}/{doc_id}/request-signature")
+async def request_signature(doc_type: str, doc_id: int, request: Request,
+                            principal: Principal = Depends(get_principal),
+                            db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    if doc_type not in _DOC_TYPES:
+        return err("Type de document invalide.", 400)
+    if not signing.signing_enabled():
+        return err("Signature électronique non configurée.", 400)
+    ctx = _sig_context(db, doc_type, doc_id, principal)
+    if ctx is None:
+        return err("Document introuvable.", 404)
+    if not ctx["ready"]:
+        return err("Le document doit être finalisé avant signature.", 400)
+    existing = (db.query(SignatureRequest)
+                .filter(SignatureRequest.doc_type == doc_type, SignatureRequest.doc_ref_id == doc_id).first())
+    if existing is not None and existing.status not in ("declined", "voided", "expired"):
+        return err("Signature déjà demandée pour ce document.", 400)
+    data = await json_body(request)
+    manager_email = (data.get("manager_email") or "").strip()
+    manager_name = (data.get("manager_name") or "Gestionnaire").strip()
+    if not manager_email:
+        return err("Email du gestionnaire requis.", 400)
+    cp = _crm_client(ctx["counterparty_client_id"])   # {email, name}
+    if not cp.get("email"):
+        return err("Email de la contrepartie introuvable.", 400)
+    try:
+        env = signing.create_envelope(ctx["title"], ctx["ext_ref"])
+        pdf_bytes = ctx["pdf_bytes_fn"]()
+        docid, pages = signing.add_document(env, f"{doc_type}-{doc_id}.pdf", pdf_bytes)
+        r1 = signing.add_recipient(env, manager_email, manager_name, 1)
+        r2 = signing.add_recipient(env, cp["email"], cp.get("name") or "Signataire", 2)
+        signing.place_signature_field(env, docid, r1, pages, 72, 72)
+        signing.place_signature_field(env, docid, r2, pages, 340, 72)
+        signing.send_envelope(env)
+    except signing.SigningError as e:
+        return err(f"Échec de l'envoi en signature : {e}", 502)
+    signers = [{"name": manager_name, "email": manager_email, "order": 1},
+               {"name": cp.get("name"), "email": cp["email"], "order": 2}]
+    if existing is not None:
+        sig = existing
+        sig.envelope_id, sig.document_id, sig.status, sig.error = env, docid, "sent", None
+        sig.signers, sig.signed_pdf_key = json.dumps(signers), None
+    else:
+        sig = SignatureRequest(doc_type=doc_type, doc_ref_id=doc_id, agency_id=principal.agency_id,
+                               envelope_id=env, document_id=docid, status="sent", signers=json.dumps(signers))
+        db.add(sig)
+    db.commit()
+    return _sig_dict(db, sig)
+
+
+@app.get("/backoffice/gestion-locative/signatures/{sig_id}/signed.pdf")
+def signed_pdf(sig_id: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    # Enregistrée AVANT /signatures/{doc_type}/{doc_id} : Starlette matche par ordre d'enregistrement,
+    # pas par spécificité — sinon "signed.pdf" serait capturé comme doc_id (échec de parsing int).
+    if (g := _gate(principal)) is not None:
+        return g
+    sig = db.get(SignatureRequest, sig_id)
+    if sig is None or sig.agency_id != principal.agency_id:
+        return err("Signature introuvable.", 404)
+    if not sig.signed_pdf_key:
+        return err("Document signé indisponible.", 404)
+    from . import storage
+    data = storage.docs_storage().get(sig.signed_pdf_key)
+    return Response(data, media_type="application/pdf",
+                    headers={"Content-Disposition": f"attachment; filename=signe-{sig.doc_type}-{sig.doc_ref_id}.pdf"})
+
+
+@app.get("/backoffice/gestion-locative/signatures/{doc_type}/{doc_id}")
+def get_signature(doc_type: str, doc_id: int, principal: Principal = Depends(get_principal),
+                  db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    sig = (db.query(SignatureRequest).filter(SignatureRequest.doc_type == doc_type,
+           SignatureRequest.doc_ref_id == doc_id, SignatureRequest.agency_id == principal.agency_id).first())
+    if sig is None:
+        return err("Aucune demande de signature.", 404)
+    return _sig_dict(db, sig)
+
+
+@app.get("/internal/signatures/{sig_id}/signed.pdf", include_in_schema=False)
+def internal_signed_pdf(sig_id: int, x_internal_token: str = Header(default=""), db: Session = Depends(get_db)):
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    sig = db.get(SignatureRequest, sig_id)
+    if sig is None or not sig.signed_pdf_key:
+        return err("Indisponible.", 404)
+    from . import storage
+    data = storage.docs_storage().get(sig.signed_pdf_key)
+    return Response(data, media_type="application/pdf",
+                    headers={"Content-Disposition": f"attachment; filename=signe-{sig_id}.pdf"})
 
 
 _COND_RANK = {"bon": 0, "moyen": 1, "mauvais": 2}
