@@ -6,6 +6,8 @@ import { FiArrowLeft, FiPlus, FiTrash2, FiUploadCloud, FiDownload, FiLock, FiChe
 import api from '../../../services/api'
 import { rentalService } from '../../../services/rentalService'
 import { Panel, StatusBadge, GatedNotice, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
+import SignaturePanel from '../../../components/backoffice/SignaturePanel'
+import useAuthStore from '../../../store/authStore'
 
 const COND = { bon: ['Bon', 'bg-emerald-50 text-emerald-700'], moyen: ['Moyen', 'bg-amber-100 text-amber-700'], mauvais: ['Mauvais', 'bg-red-100 text-red-700'] }
 async function openPdf(url) {
@@ -16,6 +18,9 @@ async function openPdf(url) {
 function InventoryEditor() {
   const { invId } = useParams()
   const qc = useQueryClient()
+  const { user } = useAuthStore()
+  const managerName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.email
+  const managerEmail = user?.email
   const { data: inv, isLoading, error } = useQuery(['inventory', invId], () => rentalService.getInventory(invId))
   const [newRoom, setNewRoom] = useState('')
   const refresh = () => qc.invalidateQueries(['inventory', invId])
@@ -81,6 +86,7 @@ function InventoryEditor() {
           </div>
         )}
       </Panel>
+      <SignaturePanel docType="inventory" docId={invId} managerName={managerName} managerEmail={managerEmail} disabled={inv.status === 'draft'} />
     </div>
   )
 }

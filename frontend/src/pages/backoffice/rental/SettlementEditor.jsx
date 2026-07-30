@@ -6,6 +6,8 @@ import { FiArrowLeft, FiPlus, FiTrash2, FiDownload, FiLock, FiCheckCircle, FiAle
 import api from '../../../services/api'
 import { rentalService } from '../../../services/rentalService'
 import { Panel, StatusBadge, Field, EmptyState, GatedNotice, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
+import SignaturePanel from '../../../components/backoffice/SignaturePanel'
+import useAuthStore from '../../../store/authStore'
 
 const COND = { bon: ['Bon', 'bg-emerald-50 text-emerald-700'], moyen: ['Moyen', 'bg-amber-100 text-amber-700'], mauvais: ['Mauvais', 'bg-red-100 text-red-700'] }
 const money = (v) => `${Number(v || 0).toLocaleString('fr-FR')} Đh`
@@ -17,6 +19,9 @@ async function openPdf(url) {
 function SettlementEditor() {
   const { leaseId } = useParams()
   const qc = useQueryClient()
+  const { user } = useAuthStore()
+  const managerName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.email
+  const managerEmail = user?.email
   const { data: s, isLoading, error } = useQuery(['settlement', leaseId], () => rentalService.getSettlement(leaseId), { retry: false })
   const { data: cmp } = useQuery(['inv-compare', leaseId], () => rentalService.compareInventories(leaseId), { retry: false })
   const [label, setLabel] = useState('')
@@ -111,6 +116,7 @@ function SettlementEditor() {
           </div>
         )}
       </Panel>
+      {ro && <SignaturePanel docType="settlement" docId={s.id} managerName={managerName} managerEmail={managerEmail} />}
     </div>
   )
 }

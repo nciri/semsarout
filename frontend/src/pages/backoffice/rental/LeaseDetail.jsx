@@ -6,6 +6,8 @@ import { FiArrowLeft, FiCheckCircle, FiDownload, FiLock, FiFileText, FiDollarSig
 import api from '../../../services/api'
 import { rentalService } from '../../../services/rentalService'
 import { Panel, StatusBadge, DataTable, EmptyState, Modal, Field, PRIMARY_BTN, SECONDARY_BTN, Select, GatedNotice } from '../../../components/backoffice/ui'
+import SignaturePanel from '../../../components/backoffice/SignaturePanel'
+import useAuthStore from '../../../store/authStore'
 
 async function openPdf(url) {
   try { const res = await api.get(url, { responseType: 'blob' }); window.open(URL.createObjectURL(res.data), '_blank') }
@@ -23,6 +25,9 @@ function LeaseDetail() {
   const { id } = useParams()
   const qc = useQueryClient()
   const navigate = useNavigate()
+  const { user } = useAuthStore()
+  const managerName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.email
+  const managerEmail = user?.email
   const { data: l, isLoading, error } = useQuery(['rental-lease', id], () => rentalService.getLease(id))
   const { data: rpData } = useQuery(['rental-rent-periods', id], () => rentalService.listRentPeriods(id))
   const { data: invData } = useQuery(['rental-inventories', id], () => rentalService.listInventories(id))
@@ -66,6 +71,7 @@ function LeaseDetail() {
     <div className="space-y-6">
       <Link to="/backoffice/gestion-locative/baux" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"><FiArrowLeft className="w-4 h-4" /> Retour aux baux</Link>
       <Panel title={`Bail ${l.reference}`} action={<div className="flex gap-2">
+        <button onClick={() => openPdf(rentalService.leasePdfUrl(id))} className={SECONDARY_BTN}><FiDownload className="w-4 h-4" /> PDF</button>
         {l.status === 'draft' && <button disabled={sign.isLoading} onClick={() => sign.mutate()} className={PRIMARY_BTN}><FiCheckCircle className="w-5 h-5" /> Signer</button>}
         {l.status === 'active' && <button onClick={() => { setNewRent(String(l.rent_amount)); setReviseOpen(true) }} className={SECONDARY_BTN}>Réviser le loyer</button>}
         {l.status === 'active' && <button disabled={returnDep.isLoading} onClick={() => returnDep.mutate()} className={SECONDARY_BTN}>Restituer le dépôt</button>}
@@ -107,6 +113,8 @@ function LeaseDetail() {
           })}
         </div>
       </Panel>
+
+      <SignaturePanel docType="lease" docId={id} managerName={managerName} managerEmail={managerEmail} />
 
       <Modal open={!!payFor} onClose={() => setPayFor(null)} title={`Enregistrer un paiement — ${payFor?.period_label || ''}`}
         footer={<>

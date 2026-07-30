@@ -56,6 +56,12 @@ export const rentalService = {
   finalizeSettlement: async (sid) => (await api.post(`${B}/settlements/${sid}/finalize`)).data,
   settlementPdfUrl: (sid) => `${B}/settlements/${sid}.pdf`,
   compareInventories: async (leaseId) => (await api.get(`${B}/leases/${leaseId}/inventories/compare`)).data,
+  // Signature électronique
+  requestSignature: async (docType, docId, body) => (await api.post(`${B}/${docType}/${docId}/request-signature`, body)).data,
+  getSignature: async (docType, docId) => (await api.get(`${B}/signatures/${docType}/${docId}`)).data,
+  signedPdfUrl: (sigId) => `${B}/signatures/${sigId}/signed.pdf`,
+  leasePdfUrl: (id) => `${B}/leases/${id}.pdf`,
+  mandatePdfUrl: (id) => `${B}/mandates/${id}.pdf`,
 }
 
 export const applicantService = {

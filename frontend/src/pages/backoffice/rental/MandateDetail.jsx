@@ -5,6 +5,8 @@ import { FiArrowLeft, FiCheckCircle, FiDownload, FiLock } from 'react-icons/fi'
 import api from '../../../services/api'
 import { rentalService } from '../../../services/rentalService'
 import { Panel, StatusBadge, DataTable, EmptyState, GatedNotice, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
+import SignaturePanel from '../../../components/backoffice/SignaturePanel'
+import useAuthStore from '../../../store/authStore'
 
 const STATUS = {
   draft: ['Brouillon', 'bg-gray-100 text-gray-700'],
@@ -23,6 +25,9 @@ async function openPdf(url) {
 function MandateDetail() {
   const { id } = useParams()
   const qc = useQueryClient()
+  const { user } = useAuthStore()
+  const managerName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.email
+  const managerEmail = user?.email
   const { data: m, isLoading, error } = useQuery(['rental-mandate', id], () => rentalService.getMandate(id))
   const { data: crgData } = useQuery(['rental-crg', id], () => rentalService.listCrg(id))
   const sign = useMutation(() => rentalService.signMandate(id), {
@@ -49,7 +54,10 @@ function MandateDetail() {
   return (
     <div className="space-y-6">
       <Link to="/backoffice/gestion-locative" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"><FiArrowLeft className="w-4 h-4" /> Retour aux mandats</Link>
-      <Panel title={`Mandat ${m.reference}`} action={m.status === 'draft' && <button disabled={sign.isLoading} onClick={() => sign.mutate()} className={PRIMARY_BTN}><FiCheckCircle className="w-5 h-5" /> Signer</button>}>
+      <Panel title={`Mandat ${m.reference}`} action={<div className="flex gap-2">
+        <button onClick={() => openPdf(rentalService.mandatePdfUrl(id))} className={SECONDARY_BTN}><FiDownload className="w-4 h-4" /> PDF</button>
+        {m.status === 'draft' && <button disabled={sign.isLoading} onClick={() => sign.mutate()} className={PRIMARY_BTN}><FiCheckCircle className="w-5 h-5" /> Signer</button>}
+      </div>}>
         <dl className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
           <div><dt className="text-gray-500">Statut</dt><dd className="mt-1"><StatusBadge label={STATUS[m.status]?.[0] || m.status} className={STATUS[m.status]?.[1]} /></dd></div>
           <div><dt className="text-gray-500">Type</dt><dd className="mt-1 text-gray-900">{m.mandate_type === 'gestion' ? 'Gestion' : 'Location'}</dd></div>
@@ -62,6 +70,7 @@ function MandateDetail() {
         <DataTable columns={crgColumns} rows={crg}
           empty={<EmptyState title="Aucun CRG" description="Les comptes-rendus mensuels apparaissent ici une fois les loyers encaissés." />} />
       </Panel>
+      <SignaturePanel docType="mandate" docId={id} managerName={managerName} managerEmail={managerEmail} />
     </div>
   )
 }
