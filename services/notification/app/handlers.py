@@ -104,6 +104,18 @@ def _fetch_settlement_pdf(settlement_id):
         return None
 
 
+def _fetch_signed_pdf(signature_id):
+    """PDF signé via l'endpoint interne (token-auth) de `rental`. `None` si échec (email envoyé
+    sans pièce jointe — pas de blocage)."""
+    base = os.environ.get("RENTAL_URL", "http://localhost:8518")
+    try:
+        r = httpx.get(f"{base}/internal/signatures/{signature_id}/signed.pdf",
+                      headers={"x-internal-token": os.environ.get("INTERNAL_TOKEN", "")}, timeout=10.0)
+        return r.content if r.status_code == 200 else None
+    except httpx.HTTPError:
+        return None
+
+
 def _valid_email(addr) -> bool:
     return bool(addr) and "@" in addr and addr not in _PLACEHOLDER_EMAILS
 
@@ -262,6 +274,30 @@ def _handle_deposit_settled(db, payload: dict) -> None:
               property_id=payload.get("property_id"))
 
 
+def _handle_inventory_signed(db, payload: dict) -> None:
+    """`rental.inventory.signed` : état des lieux signé par toutes les parties, PDF signé joint."""
+    tenant = recipients.client(payload.get("tenant_client_id"))
+    to = (tenant.get("email") or "").strip()
+    if not _valid_email(to):
+        return
+    pdf = _fetch_signed_pdf(payload.get("signature_id"))
+    atts = [(f"EDL-signe-{payload.get('id')}.pdf", pdf, "pdf")] if pdf else None
+    _try_send(db, to, "inventory_signed.html", "inventory_signed", from_email=_contact(),
+              attachments=atts, name=tenant.get("name"))
+
+
+def _handle_settlement_signed(db, payload: dict) -> None:
+    """`rental.settlement.signed` : décompte de caution signé par toutes les parties, PDF signé joint."""
+    tenant = recipients.client(payload.get("tenant_client_id"))
+    to = (tenant.get("email") or "").strip()
+    if not _valid_email(to):
+        return
+    pdf = _fetch_signed_pdf(payload.get("signature_id"))
+    atts = [(f"Decompte-signe-{payload.get('id')}.pdf", pdf, "pdf")] if pdf else None
+    _try_send(db, to, "settlement_signed.html", "settlement_signed", from_email=_contact(),
+              attachments=atts, name=tenant.get("name"))
+
+
 def _handle_lease_revised(db, payload: dict) -> None:
     """`rental.lease.revised` → avis de révision de loyer au locataire."""
     tenant = recipients.client(payload.get("tenant_client_id"))
@@ -335,6 +371,10 @@ def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
             _handle_deposit_returned(db, payload)
         elif routing_key == "rental.deposit.settled":
             _handle_deposit_settled(db, payload)
+        elif routing_key == "rental.inventory.signed":
+            _handle_inventory_signed(db, payload)
+        elif routing_key == "rental.settlement.signed":
+            _handle_settlement_signed(db, payload)
         elif routing_key == "rental.lease.revised":
             _handle_lease_revised(db, payload)
         elif routing_key == "rental.charge_regularization.sent":
