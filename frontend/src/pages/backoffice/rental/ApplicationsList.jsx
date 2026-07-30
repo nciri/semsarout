@@ -5,7 +5,7 @@ import { toast } from 'react-toastify'
 import { FiLock, FiInbox, FiPlus, FiX, FiHome } from 'react-icons/fi'
 import { rentalService } from '../../../services/rentalService'
 import { DOC_TYPES } from '../../dashboard/applicationStatus'
-import { StatCard, DataTable, StatusBadge, EmptyState, GatedNotice, Modal, Field, Select, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
+import { StatCard, DataTable, StatusBadge, EmptyState, GatedNotice, Modal, Field, Select, SearchInput, Toolbar, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
 
 const STATUS = {
   received: ['Reçue', 'bg-blue-100 text-blue-700'],
@@ -24,6 +24,9 @@ function ApplicationsList() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [docs, setDocs] = useState([])
   const [pendingDocType, setPendingDocType] = useState(DOC_TYPES[0][0])
+  const [statusFilter, setStatusFilter] = useState('')
+  const [propertyFilter, setPropertyFilter] = useState('')
+  const [search, setSearch] = useState('')
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
   const create = useMutation(
@@ -68,17 +71,29 @@ function ApplicationsList() {
   const apps = data?.applications || []
   const stats = useMemo(() => ({ total: apps.length, received: apps.filter((a) => a.status === 'received').length, accepted: apps.filter((a) => a.status === 'accepted').length }), [apps])
 
-  // Regroupement des candidatures par bien (le bien porte le contexte, pas la ligne)
+  // Biens distincts (pour le filtre par bien)
+  const properties = useMemo(() => {
+    const m = new Map()
+    for (const a of apps) if (!m.has(a.property_id)) m.set(a.property_id, a.property_title || `Bien #${a.property_id}`)
+    return Array.from(m.entries()).map(([id, title]) => ({ id, title }))
+  }, [apps])
+
+  // Filtres (statut, bien, recherche candidat) puis regroupement par bien
   const groups = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    const filtered = apps.filter((a) =>
+      (!statusFilter || a.status === statusFilter) &&
+      (!propertyFilter || String(a.property_id) === propertyFilter) &&
+      (!q || (a.applicant_name || '').toLowerCase().includes(q) || (a.applicant_email || '').toLowerCase().includes(q)))
     const byProperty = new Map()
-    for (const a of apps) {
+    for (const a of filtered) {
       if (!byProperty.has(a.property_id)) {
         byProperty.set(a.property_id, { property_id: a.property_id, title: a.property_title, apps: [] })
       }
       byProperty.get(a.property_id).apps.push(a)
     }
     return Array.from(byProperty.values()).sort((x, y) => y.apps.length - x.apps.length)
-  }, [apps])
+  }, [apps, statusFilter, propertyFilter, search])
 
   if (error?.response?.status === 403) return <GatedNotice icon={FiLock} title="Candidatures" message="La gestion locative est réservée aux plans Pro et Entreprise." />
   if (error) return <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-gray-500">Une erreur est survenue lors du chargement. Réessayez plus tard.</div>
@@ -106,11 +121,28 @@ function ApplicationsList() {
         <button onClick={() => setOpen(true)} className={PRIMARY_BTN}><FiPlus className="w-5 h-5" /> Déposer un dossier pour un client</button>
       </div>
 
+      {apps.length > 0 && (
+        <Toolbar>
+          <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un candidat (nom, email)…" />
+          <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <option value="">Tous les statuts</option>
+            {Object.entries(STATUS).map(([value, [labelText]]) => <option key={value} value={value}>{labelText}</option>)}
+          </Select>
+          <Select value={propertyFilter} onChange={(e) => setPropertyFilter(e.target.value)}>
+            <option value="">Tous les biens</option>
+            {properties.map((p) => <option key={p.id} value={String(p.id)}>{p.title}</option>)}
+          </Select>
+        </Toolbar>
+      )}
+
       {isLoading ? (
         <DataTable columns={columns} rows={[]} isLoading />
-      ) : groups.length === 0 ? (
+      ) : apps.length === 0 ? (
         <DataTable columns={columns} rows={[]}
           empty={<EmptyState icon={FiInbox} title="Aucune candidature" description="Les dossiers déposés par les candidats sur vos biens apparaissent ici, regroupés par bien." />} />
+      ) : groups.length === 0 ? (
+        <DataTable columns={columns} rows={[]}
+          empty={<EmptyState icon={FiInbox} title="Aucun résultat" description="Aucune candidature ne correspond à vos filtres." />} />
       ) : (
         <div className="space-y-8">
           {groups.map((g) => (
