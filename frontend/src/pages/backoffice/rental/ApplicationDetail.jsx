@@ -63,7 +63,7 @@ function ApplicationDetail() {
           <div><dt className="text-gray-500">Téléphone</dt><dd className="mt-1 text-gray-900">{a.applicant_phone || '—'}</dd></div>
           <div><dt className="text-gray-500">Revenu mensuel</dt><dd className="mt-1 text-gray-900">{a.monthly_income != null ? `${a.monthly_income} Đh` : '—'}</dd></div>
           <div><dt className="text-gray-500">Garant</dt><dd className="mt-1 text-gray-900">{a.guarantor_name || '—'}</dd></div>
-          <div><dt className="text-gray-500">Bien (ID)</dt><dd className="mt-1 text-gray-900">{a.property_id}</dd></div>
+          <div><dt className="text-gray-500">Bien</dt><dd className="mt-1 text-gray-900">{a.property_title || `Bien #${a.property_id}`}</dd></div>
         </dl>
       </Panel>
       <Panel title="Pièces justificatives">

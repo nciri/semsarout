@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { FiLock, FiInbox, FiPlus, FiX } from 'react-icons/fi'
+import { FiLock, FiInbox, FiPlus, FiX, FiHome } from 'react-icons/fi'
 import { rentalService } from '../../../services/rentalService'
 import { DOC_TYPES } from '../../dashboard/applicationStatus'
 import { StatCard, DataTable, StatusBadge, EmptyState, GatedNotice, Modal, Field, Select, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
@@ -67,6 +67,19 @@ function ApplicationsList() {
 
   const apps = data?.applications || []
   const stats = useMemo(() => ({ total: apps.length, received: apps.filter((a) => a.status === 'received').length, accepted: apps.filter((a) => a.status === 'accepted').length }), [apps])
+
+  // Regroupement des candidatures par bien (le bien porte le contexte, pas la ligne)
+  const groups = useMemo(() => {
+    const byProperty = new Map()
+    for (const a of apps) {
+      if (!byProperty.has(a.property_id)) {
+        byProperty.set(a.property_id, { property_id: a.property_id, title: a.property_title, apps: [] })
+      }
+      byProperty.get(a.property_id).apps.push(a)
+    }
+    return Array.from(byProperty.values()).sort((x, y) => y.apps.length - x.apps.length)
+  }, [apps])
+
   if (error?.response?.status === 403) return <GatedNotice icon={FiLock} title="Candidatures" message="La gestion locative est réservée aux plans Pro et Entreprise." />
   if (error) return <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-gray-500">Une erreur est survenue lors du chargement. Réessayez plus tard.</div>
 
@@ -77,7 +90,7 @@ function ApplicationsList() {
         {a.submitted_by_agent_id && <StatusBadge label="Déposé par l'agence" className="bg-gray-100 text-gray-600" />}
       </div>
     ) },
-    { header: 'Bien (ID)', cell: (a) => <span className="text-gray-600">{a.property_id}</span> },
+    { header: 'Déposée le', cell: (a) => <span className="text-gray-600">{a.submitted_at ? new Date(a.submitted_at).toLocaleDateString('fr-FR') : '—'}</span> },
     { header: 'Revenu mensuel', align: 'right', cell: (a) => <span className="text-gray-700">{a.monthly_income != null ? `${a.monthly_income} Đh` : '—'}</span> },
     { header: 'Statut', cell: (a) => <StatusBadge label={STATUS[a.status]?.[0] || a.status} className={STATUS[a.status]?.[1]} /> },
   ]
@@ -92,8 +105,26 @@ function ApplicationsList() {
       <div className="flex justify-end">
         <button onClick={() => setOpen(true)} className={PRIMARY_BTN}><FiPlus className="w-5 h-5" /> Déposer un dossier pour un client</button>
       </div>
-      <DataTable columns={columns} rows={apps} isLoading={isLoading}
-        empty={<EmptyState icon={FiInbox} title="Aucune candidature" description="Les dossiers déposés par les candidats sur vos biens apparaissent ici." />} />
+
+      {isLoading ? (
+        <DataTable columns={columns} rows={[]} isLoading />
+      ) : groups.length === 0 ? (
+        <DataTable columns={columns} rows={[]}
+          empty={<EmptyState icon={FiInbox} title="Aucune candidature" description="Les dossiers déposés par les candidats sur vos biens apparaissent ici, regroupés par bien." />} />
+      ) : (
+        <div className="space-y-8">
+          {groups.map((g) => (
+            <div key={g.property_id} className="space-y-2">
+              <div className="flex items-center gap-2">
+                <FiHome className="w-4 h-4 text-gray-400" />
+                <h2 className="font-semibold text-gray-900">{g.title || `Bien #${g.property_id}`}</h2>
+                <span className="text-sm text-gray-400">· {g.apps.length} candidature{g.apps.length > 1 ? 's' : ''}</span>
+              </div>
+              <DataTable columns={columns} rows={g.apps} />
+            </div>
+          ))}
+        </div>
+      )}
 
       <Modal open={open} onClose={() => setOpen(false)} title="Déposer un dossier pour un client"
         footer={<>
