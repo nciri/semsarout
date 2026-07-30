@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { FiArrowLeft, FiCheckCircle, FiDownload, FiLock, FiFileText } from 'react-icons/fi'
+import { FiArrowLeft, FiCheckCircle, FiDownload, FiLock, FiFileText, FiDollarSign } from 'react-icons/fi'
 import api from '../../../services/api'
 import { rentalService } from '../../../services/rentalService'
 import { Panel, StatusBadge, DataTable, EmptyState, Modal, Field, PRIMARY_BTN, SECONDARY_BTN, Select, GatedNotice } from '../../../components/backoffice/ui'
@@ -81,7 +81,9 @@ function LeaseDetail() {
         <DataTable columns={columns} rows={periods}
           empty={<EmptyState title="Aucune échéance" description="Les échéances de loyer sont générées mensuellement par l'ordonnanceur." />} />
       </Panel>
-      <Panel title="États des lieux">
+      <Panel title="États des lieux" action={
+        <Link to={`/backoffice/gestion-locative/decompte/${id}`} className={SECONDARY_BTN}><FiDollarSign className="w-4 h-4" /> Décompte de sortie</Link>
+      }>
         <div className="space-y-3">
           {['entree', 'sortie'].map((type) => {
             const found = (invData?.inventories || []).find((i) => i.type === type)

@@ -48,6 +48,14 @@ export const rentalService = {
   inventoryPhotoUrl: (photoId) => `${B}/inventory-photos/${photoId}`,
   deleteItemPhoto: async (photoId) => (await api.delete(`${B}/inventory-photos/${photoId}`)).data,
   inventoryPdfUrl: (invId) => `${B}/inventories/${invId}.pdf`,
+  // Décompte de caution + comparaison EDL
+  getSettlement: async (leaseId) => (await api.get(`${B}/leases/${leaseId}/settlement`)).data,
+  createSettlement: async (leaseId) => (await api.post(`${B}/leases/${leaseId}/settlement`)).data,
+  addDeductionLine: async (sid, data) => (await api.post(`${B}/settlements/${sid}/lines`, data)).data,
+  deleteDeductionLine: async (lineId) => (await api.delete(`${B}/deduction-lines/${lineId}`)).data,
+  finalizeSettlement: async (sid) => (await api.post(`${B}/settlements/${sid}/finalize`)).data,
+  settlementPdfUrl: (sid) => `${B}/settlements/${sid}.pdf`,
+  compareInventories: async (leaseId) => (await api.get(`${B}/leases/${leaseId}/inventories/compare`)).data,
 }
 
 export const applicantService = {
