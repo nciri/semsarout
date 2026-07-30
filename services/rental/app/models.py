@@ -116,6 +116,55 @@ class ChargeRegularization(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class Inventory(Base):
+    __tablename__ = "inventory"
+    __table_args__ = (UniqueConstraint("lease_id", "type", name="uq_inventory_lease_type"),)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    lease_id = Column(Integer, index=True, nullable=False)
+    agency_id = Column(Integer, index=True, nullable=False)
+    type = Column(String(10), nullable=False)                 # entree | sortie
+    status = Column(String(20), default="draft")              # draft | finalized | signed
+    general_notes = Column(Text)
+    conducted_at = Column(DateTime)
+    conducted_by_id = Column(Integer)
+    finalized_at = Column(DateTime)
+    signed_at = Column(DateTime)
+    pdf_key = Column(String(255))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class InventoryRoom(Base):
+    __tablename__ = "inventory_room"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    inventory_id = Column(Integer, index=True, nullable=False)
+    name = Column(String(80), nullable=False)
+    position = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class InventoryItem(Base):
+    __tablename__ = "inventory_item"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    room_id = Column(Integer, index=True, nullable=False)
+    label = Column(String(80), nullable=False)
+    condition = Column(String(10), default="bon")             # bon | moyen | mauvais
+    comment = Column(Text)
+    position = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class InventoryPhoto(Base):
+    __tablename__ = "inventory_photo"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    item_id = Column(Integer, index=True, nullable=False)
+    file_key = Column(String(255))
+    filename = Column(String(255))
+    content_type = Column(String(100))
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class PropertyRO(Base):
     """Projection locale du bien (via listing.*) : property_title / property_city."""
     __tablename__ = "property_ro"

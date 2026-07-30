@@ -20,8 +20,9 @@ from semsar_events import enqueue
 
 from . import events
 from .db import get_db, init_db
-from .models import (ApplicationDocument, ChargeRegularization, ClientRO, CrgReport, Lease,
-                     Mandate, PropertyRO, RentPeriod, TenantApplication)
+from .models import (ApplicationDocument, ChargeRegularization, ClientRO, CrgReport, Inventory,
+                     InventoryItem, InventoryPhoto, InventoryRoom, Lease, Mandate, PropertyRO,
+                     RentPeriod, TenantApplication)
 from .util import err, iso, json_body, num
 
 settings = get_settings()
@@ -1102,3 +1103,92 @@ async def decide_application(application_id: int, request: Request,
         "decision": decision, "reason": a.decision_reason})
     db.commit()
     return _application_dict(db, a)
+
+
+# --- État des lieux (EDL) --------------------------------------------------
+
+_DEFAULT_EDL = [
+    ("Entrée", ["Murs", "Sol", "Plafond", "Porte", "Interrupteurs"]),
+    ("Séjour", ["Murs", "Sol", "Plafond", "Fenêtres", "Volets", "Électricité"]),
+    ("Cuisine", ["Murs", "Sol", "Plan de travail", "Évier", "Robinetterie", "Placards", "Électroménager"]),
+    ("Chambre", ["Murs", "Sol", "Plafond", "Fenêtres", "Placards"]),
+    ("Salle de bain", ["Murs", "Sol", "Douche/Baignoire", "Lavabo", "Robinetterie", "WC"]),
+]
+
+
+def _photo_dict(p: InventoryPhoto) -> dict:
+    return {"id": p.id, "filename": p.filename, "content_type": p.content_type, "created_at": iso(p.created_at)}
+
+
+def _inventory_dict(db: Session, inv: Inventory, full: bool = False) -> dict:
+    out = {"id": inv.id, "lease_id": inv.lease_id, "type": inv.type, "status": inv.status,
+           "general_notes": inv.general_notes, "conducted_at": iso(inv.conducted_at),
+           "finalized_at": iso(inv.finalized_at), "signed_at": iso(inv.signed_at),
+           "has_pdf": bool(inv.pdf_key), "created_at": iso(inv.created_at)}
+    if full:
+        rooms = (db.query(InventoryRoom).filter(InventoryRoom.inventory_id == inv.id)
+                 .order_by(InventoryRoom.position, InventoryRoom.id).all())
+        out["rooms"] = []
+        for r in rooms:
+            items = (db.query(InventoryItem).filter(InventoryItem.room_id == r.id)
+                     .order_by(InventoryItem.position, InventoryItem.id).all())
+            out["rooms"].append({"id": r.id, "name": r.name, "position": r.position, "items": [
+                {"id": it.id, "label": it.label, "condition": it.condition, "comment": it.comment,
+                 "photos": [_photo_dict(p) for p in db.query(InventoryPhoto).filter(
+                     InventoryPhoto.item_id == it.id).order_by(InventoryPhoto.id).all()]}
+                for it in items]})
+    return out
+
+
+@app.post("/backoffice/gestion-locative/leases/{lease_id}/inventories", status_code=201)
+async def create_inventory(lease_id: int, request: Request,
+                           principal: Principal = Depends(get_principal),
+                           db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    l = db.get(Lease, lease_id)
+    if l is None or l.agency_id != principal.agency_id:
+        return err("Bail introuvable.", 404)
+    data = await json_body(request)
+    edl_type = data.get("type")
+    if edl_type not in ("entree", "sortie"):
+        return err("type doit être 'entree' ou 'sortie'.", 400)
+    if db.query(Inventory).filter(Inventory.lease_id == lease_id, Inventory.type == edl_type).first():
+        return err("Un état des lieux de ce type existe déjà pour ce bail.", 400)
+    inv = Inventory(lease_id=lease_id, agency_id=principal.agency_id, type=edl_type,
+                    conducted_by_id=int(principal.sub) if principal.sub else None,
+                    conducted_at=datetime.utcnow())
+    db.add(inv)
+    db.flush()
+    if data.get("prefill", True):   # pré-remplir avec le jeu par défaut
+        for ri, (rname, items) in enumerate(_DEFAULT_EDL):
+            room = InventoryRoom(inventory_id=inv.id, name=rname, position=ri)
+            db.add(room)
+            db.flush()
+            for ii, label in enumerate(items):
+                db.add(InventoryItem(room_id=room.id, label=label, position=ii))
+    db.commit()
+    return _inventory_dict(db, inv, full=True)
+
+
+@app.get("/backoffice/gestion-locative/leases/{lease_id}/inventories")
+def list_inventories(lease_id: int, principal: Principal = Depends(get_principal),
+                     db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    l = db.get(Lease, lease_id)
+    if l is None or l.agency_id != principal.agency_id:
+        return err("Bail introuvable.", 404)
+    rows = db.query(Inventory).filter(Inventory.lease_id == lease_id).order_by(Inventory.type).all()
+    return {"inventories": [_inventory_dict(db, i) for i in rows]}
+
+
+@app.get("/backoffice/gestion-locative/inventories/{inv_id}")
+def get_inventory(inv_id: int, principal: Principal = Depends(get_principal),
+                  db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    inv = db.get(Inventory, inv_id)
+    if inv is None or inv.agency_id != principal.agency_id:
+        return err("État des lieux introuvable.", 404)
+    return _inventory_dict(db, inv, full=True)
