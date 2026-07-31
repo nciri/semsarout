@@ -12,8 +12,9 @@ from app.main import app
 
 
 @pytest.fixture
-def db_session():
-    engine = create_engine("sqlite:///:memory:", future=True)
+def db_session(tmp_path):
+    db_file = tmp_path / "test.db"
+    engine = create_engine(f"sqlite:///{db_file}", future=True, connect_args={"check_same_thread": False})
     Base.metadata.create_all(engine)
     OutboxBase.metadata.create_all(engine)
     session = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)()
