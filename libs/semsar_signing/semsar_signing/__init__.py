@@ -1,6 +1,4 @@
 """Client 3a9dSign partagé (transport pur ; la logique métier reste dans chaque service)."""
-import httpx
-
 from .client import (
     SigningError,
     add_document,

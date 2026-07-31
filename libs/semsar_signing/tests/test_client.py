@@ -36,7 +36,7 @@ def test_create_envelope_posts_and_returns_id(monkeypatch):
             captured["json"] = json
             return _Resp()
 
-    monkeypatch.setattr(signing, "httpx", type("m", (), {"Client": _FakeClient}))
+    monkeypatch.setattr(signing.client, "httpx", type("m", (), {"Client": _FakeClient}))
     env_id = signing.create_envelope("Bail 123", "rental:lease:1:9")
     assert env_id == "env-42"
     assert captured["path"] == "/envelopes"

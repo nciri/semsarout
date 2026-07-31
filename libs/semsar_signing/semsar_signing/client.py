@@ -1,6 +1,7 @@
 """Client 3a9dSign (signature électronique). Auth = en-tête X-API-Key (clé en env, jamais loggée)."""
 import os
-import sys
+
+import httpx
 
 
 class SigningError(Exception):
@@ -23,12 +24,7 @@ def _headers() -> dict:
     return {"X-API-Key": _key()}
 
 
-def _get_httpx():
-    return sys.modules['semsar_signing'].httpx
-
-
-def _client():
-    httpx = _get_httpx()
+def _client() -> httpx.Client:
     return httpx.Client(base_url=_base(), headers=_headers(), timeout=20.0)
 
 
@@ -86,12 +82,12 @@ def get_status(env_id: str) -> str:
 
 
 def fetch_signed_pdf(env_id: str, document_id: str) -> bytes:
-    httpx = _get_httpx()
     with _client() as c:
         r = c.get(f"/envelopes/{env_id}/documents/{document_id}/download")
         if r.status_code >= 300:
             raise SigningError(f"download {r.status_code}")
         url = r.json()["url"]
+        # l'URL présignée pointe MinIO (host docker) ; réécrire vers localhost en dev si besoin
         url = url.replace("http://minio:9000", os.environ.get("S3_ENDPOINT_URL", "http://localhost:9000"))
         rr = httpx.get(url, timeout=30.0)
     if rr.status_code >= 300:
