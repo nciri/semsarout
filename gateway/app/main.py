@@ -170,6 +170,10 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         return app.state.agency, path.replace("/api/v1", "", 1)
     if settings.audit_url and path.startswith("/api/v1/admin/activity"):
         return app.state.audit, path.replace("/api/v1", "", 1)
+    # commission (back-office) : le gate `/internal/commission/gate` est interne
+    # (appelé service→service), pas exposé via le BFF.
+    if settings.commission_url and path.startswith("/api/v1/backoffice/commission"):
+        return app.state.commission, path.replace("/api/v1", "", 1)
     # listing (détail/CRUD) AVANT la découverte (search) : /properties/{id} → listing.
     if settings.listing_url and _listing_match(path, method):
         return app.state.listing, path.replace("/api/v1", "", 1)
@@ -369,6 +373,7 @@ async def lifespan(app: FastAPI):
     app.state.trust_safety = _client_or_none(settings.trust_safety_url)
     app.state.agency = _client_or_none(settings.agency_url)
     app.state.audit = _client_or_none(settings.audit_url)
+    app.state.commission = _client_or_none(settings.commission_url)
     yield
     for client in (
         app.state.monolith, app.state.identity, app.state.search,
@@ -378,6 +383,7 @@ async def lifespan(app: FastAPI):
         app.state.rental,
         app.state.buyer, app.state.programs, app.state.staymanager, app.state.geo,
         app.state.messaging, app.state.trust_safety, app.state.agency, app.state.audit,
+        app.state.commission,
     ):
         if client is not None:
             await client.aclose()
