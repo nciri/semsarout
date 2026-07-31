@@ -2,7 +2,7 @@ from app import models, main
 
 
 def test_lease_has_owner_columns(db_session):
-    l = models.Lease(property_id=1, owner_id=5, tenant_user_id=10, reference="B-1", status="draft")
+    l = models.Lease(property_id=1, owner_id=5, tenant_user_id=10, reference="B-1", status="draft", rent_amount=4500)
     db_session.add(l)
     db_session.commit()
     assert l.owner_id == 5 and l.tenant_user_id == 10

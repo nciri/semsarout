@@ -44,7 +44,7 @@ class Lease(Base):
     agency_id = Column(Integer, index=True)                   # absent pour un bail particulier
     owner_id = Column(Integer, index=True)       # bail de particulier (sans agence)
     tenant_user_id = Column(Integer)             # locataire = utilisateur (pas un crm.Client)
-    rent_amount = Column(Numeric(12, 2))
+    rent_amount = Column(Numeric(12, 2), nullable=False)
     charges_amount = Column(Numeric(12, 2), default=0)
     deposit_amount = Column(Numeric(12, 2), default=0)
     deposit_returned_at = Column(DateTime)
