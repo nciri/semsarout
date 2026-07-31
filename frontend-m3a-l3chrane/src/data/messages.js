@@ -1,0 +1,58 @@
+export const threads = [
+  {
+    id: 1,
+    nom: 'Karim',
+    avatar: '/uploads/avatar-2.jpg',
+    dernier: 'Ça marche, on se voit samedi alors 😊',
+    heure: '09:42',
+    messages: [
+      { mine: false, texte: 'Salut ! Ta chambre est toujours disponible ?', heure: '09:10' },
+      { mine: true, texte: 'Oui, toujours dispo. Tu veux passer la visiter ?', heure: '09:15' },
+      { mine: false, texte: 'Avec plaisir, samedi matin ça te va ?', heure: '09:30' },
+      { mine: true, texte: 'Parfait pour moi, vers 10h ?', heure: '09:35' },
+      { mine: false, texte: 'Ça marche, on se voit samedi alors 😊', heure: '09:42' },
+    ],
+  },
+  {
+    id: 2,
+    nom: 'Salma',
+    avatar: '/uploads/avatar-3.jpg',
+    dernier: 'Merci pour les infos, à bientôt !',
+    heure: 'Hier',
+    messages: [
+      { mine: false, texte: 'Bonjour, le studio est proche de quelle ligne de bus ?', heure: '14:02' },
+      { mine: true, texte: "Bonjour ! Il y a un arrêt à 3 minutes à pied.", heure: '14:10' },
+      { mine: false, texte: "Super, et l'immeuble est sécurisé ?", heure: '14:12' },
+      { mine: true, texte: 'Oui, gardien présent 24h/24.', heure: '14:15' },
+      { mine: false, texte: 'Merci pour les infos, à bientôt !', heure: '14:20' },
+    ],
+  },
+  {
+    id: 3,
+    nom: 'Nadia',
+    avatar: '/uploads/avatar-4.jpg',
+    dernier: "On garde le contact, bonne journée.",
+    heure: 'Lun',
+    messages: [
+      { mine: true, texte: "Bonjour, votre annonce m'intéresse beaucoup.", heure: '11:00' },
+      { mine: false, texte: 'Bonjour, merci ! Vous cherchez pour quelle date ?', heure: '11:05' },
+      { mine: true, texte: 'Idéalement début septembre.', heure: '11:07' },
+      { mine: false, texte: "C'est un peu tôt, on confirme les dispos en août.", heure: '11:12' },
+      { mine: true, texte: "D'accord, je repasserai vous voir.", heure: '11:15' },
+      { mine: false, texte: 'On garde le contact, bonne journée.', heure: '11:16' },
+    ],
+  },
+  {
+    id: 4,
+    nom: 'Othmane',
+    avatar: '/uploads/avatar-8.jpg',
+    dernier: 'Je vous envoie les photos supplémentaires.',
+    heure: 'Ven',
+    messages: [
+      { mine: false, texte: 'Bonjour, la cuisine est-elle vraiment équipée ?', heure: '16:20' },
+      { mine: true, texte: 'Oui, four, frigo et plaques incluses.', heure: '16:25' },
+      { mine: false, texte: 'Parfait, avez-vous des photos plus récentes ?', heure: '16:26' },
+      { mine: true, texte: 'Je vous envoie les photos supplémentaires.', heure: '16:30' },
+    ],
+  },
+]
