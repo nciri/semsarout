@@ -104,7 +104,7 @@ def _emit_lease(db: Session, l: Lease, event_type: str) -> None:
     enqueue(db, "lease", l.id, event_type, {
         "id": l.id, "reference": l.reference, "mandate_id": l.mandate_id,
         "property_id": l.property_id, "tenant_client_id": l.tenant_client_id,
-        "agency_id": l.agency_id, "rent_amount": num(l.rent_amount),
+        "agency_id": l.agency_id, "account_id": l.owner_id, "rent_amount": num(l.rent_amount),
         "charges_amount": num(l.charges_amount), "deposit_amount": num(l.deposit_amount),
         "start_date": iso(l.start_date), "end_date": iso(l.end_date),
     })
