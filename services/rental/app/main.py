@@ -829,6 +829,11 @@ def _client_lookup(client_id: int) -> dict:
         return {}
 
 
+def _application_event_payload(app_id, applicant_user_id, owner_id, property_id, property_title) -> dict:
+    return {"id": app_id, "applicant_user_id": applicant_user_id, "owner_id": owner_id,
+            "property_id": property_id, "property_title": property_title}
+
+
 def _application_dict(db, a: TenantApplication, docs=None) -> dict:
     ro = db.get(PropertyRO, a.property_id)
     out = {
@@ -836,7 +841,8 @@ def _application_dict(db, a: TenantApplication, docs=None) -> dict:
         "applicant_user_id": a.applicant_user_id,
         "submitted_by_agent_id": a.submitted_by_agent_id, "client_id": a.client_id,
         "applicant_name": a.applicant_name,
-        "applicant_email": a.applicant_email, "applicant_phone": a.applicant_phone,
+        "applicant_email": a.applicant_email if a.agency_id else None,
+        "applicant_phone": a.applicant_phone if a.agency_id else None,
         "monthly_income": num(a.monthly_income), "guarantor_name": a.guarantor_name,
         "guarantor_income": num(a.guarantor_income), "status": a.status,
         "submitted_at": iso(a.submitted_at), "decided_at": iso(a.decided_at),
@@ -875,9 +881,9 @@ async def submit_application(request: Request, principal: Principal = Depends(ge
         status="received")
     db.add(a)
     db.flush()
-    enqueue(db, "tenant_application", a.id, events.APPLICATION_RECEIVED, {
-        "id": a.id, "applicant_email": a.applicant_email, "applicant_name": a.applicant_name,
-        "property_id": a.property_id, "property_title": prop.get("title")})
+    enqueue(db, "tenant_application", a.id, events.APPLICATION_RECEIVED,
+            _application_event_payload(a.id, a.applicant_user_id, a.owner_id, a.property_id,
+                                       prop.get("title")))
     db.commit()
     return _application_dict(db, a)
 
@@ -912,9 +918,9 @@ async def create_application_for_client(request: Request, principal: Principal =
         status="received")
     db.add(a)
     db.flush()
-    enqueue(db, "tenant_application", a.id, events.APPLICATION_RECEIVED, {
-        "id": a.id, "applicant_email": a.applicant_email, "applicant_name": a.applicant_name,
-        "property_id": a.property_id, "property_title": prop.get("title"), "by_agent": True})
+    enqueue(db, "tenant_application", a.id, events.APPLICATION_RECEIVED,
+            {**_application_event_payload(a.id, a.applicant_user_id, a.owner_id, a.property_id,
+                                          prop.get("title")), "by_agent": True})
     db.commit()
     return _application_dict(db, a)
 
