@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from 'react-query'
-import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiLink, FiTrendingUp, FiInbox, FiShield, FiBriefcase, FiClipboard } from 'react-icons/fi'
+import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiLink, FiTrendingUp, FiInbox, FiShield, FiBriefcase, FiClipboard, FiSearch, FiMail, FiCalendar } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
 import { leadService } from '../../services/leadService'
 import Wordmark from '../common/Wordmark'
@@ -44,11 +44,26 @@ function Header() {
         { to: '/dashboard/leads', label: 'Demandes / Leads', icon: FiInbox }
       ]
     },
+    ...(!user?.agency_id
+      ? [{
+          title: 'Recherche',
+          items: [
+            { to: '/dashboard/mes-recherches', label: 'Mes recherches', icon: FiSearch },
+            { to: '/dashboard/mes-messages', label: 'Mes messages', icon: FiMail }
+          ]
+        }]
+      : []),
     ...(user?.agency_id
       ? [{
           title: null,
           items: [
             { to: '/backoffice', label: "Gestion de l'agence", icon: FiBriefcase }
+          ]
+        }, {
+          title: 'Relation client',
+          items: [
+            { to: '/dashboard/messages', label: 'Messagerie', icon: FiMail },
+            { to: '/dashboard/disponibilites', label: 'Disponibilités', icon: FiCalendar }
           ]
         }]
       : []),
