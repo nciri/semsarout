@@ -21,7 +21,7 @@ from semsar_events import enqueue
 
 import semsar_signing as signing
 
-from . import events
+from . import commission_client, events
 from .db import get_db, init_db
 from .models import (ApplicationDocument, ChargeRegularization, ClientRO, CrgReport,
                      DeductionLine, DepositSettlement, Inventory, InventoryItem, InventoryPhoto,
@@ -388,6 +388,77 @@ async def create_owner_lease(request: Request, principal: Principal = Depends(ge
     db.add(l)
     db.commit()
     return _lease_dict(l)
+
+
+def _owner_email(uid: int) -> str | None:
+    acc = _user_lookup(uid)
+    return acc.get("email") if acc else None
+
+
+def _applicant_email_for_lease(db, l: Lease) -> str | None:
+    ta = (db.query(TenantApplication)
+          .filter(TenantApplication.property_id == l.property_id,
+                  TenantApplication.applicant_user_id == l.tenant_user_id,
+                  TenantApplication.status == "accepted").first())
+    return ta.applicant_email if ta else None
+
+
+def _owner_lease_pdf_bytes(db, l: Lease) -> bytes:
+    return _lease_pdf_bytes(db, l)
+
+
+@app.post("/gestion-locative/owner/leases/{lease_id}/request-signature")
+async def owner_request_lease_signature(lease_id: int, request: Request,
+                                        principal: Principal = Depends(get_principal),
+                                        db: Session = Depends(get_db)):
+    if not principal.sub:
+        return err("Authentification requise.", 401)
+    uid = int(principal.sub)
+    l = db.get(Lease, lease_id)
+    if l is None or l.owner_id != uid:
+        return err("Bail introuvable.", 404)
+    # 1) Gate commission (fail-closed) — vérifié avant toute config signature
+    try:
+        decision = commission_client.gate(account_id=uid, deal_type="rental", source_ref=lease_id)
+    except commission_client.CommissionUnavailable:
+        return err("Vérification de facturation indisponible, réessayez.", 503)
+    if decision.get("state") == "BLOCKED":
+        return JSONResponse({"error": "Commission due avant signature.",
+                             "pay_url": decision.get("pay_url")}, status_code=402)
+    # 2) Lancer la e-signature (OPEN)
+    if not signing.signing_enabled():
+        return err("Signature électronique non configurée.", 400)
+    data = await json_body(request)
+    owner_email = _owner_email(uid)
+    tenant_email = (data.get("tenant_email") or _applicant_email_for_lease(db, l) or "").strip()
+    if not owner_email or not tenant_email:
+        return err("Emails propriétaire et locataire requis.", 400)
+    existing = (db.query(SignatureRequest)
+                .filter(SignatureRequest.doc_type == "lease", SignatureRequest.doc_ref_id == lease_id).first())
+    if existing is not None and existing.status not in ("declined", "voided", "expired"):
+        return err("Signature déjà demandée.", 400)
+    try:
+        env = signing.create_envelope(f"Bail {l.reference or l.id}", f"rental:lease:{l.id}:owner:{uid}")
+        docid, pages = signing.add_document(env, f"lease-{l.id}.pdf", _owner_lease_pdf_bytes(db, l))
+        r1 = signing.add_recipient(env, owner_email, "Propriétaire", 1)
+        r2 = signing.add_recipient(env, tenant_email, "Locataire", 2)
+        signing.place_signature_field(env, docid, r1, pages, 72, 72)
+        signing.place_signature_field(env, docid, r2, pages, 340, 72)
+        signing.send_envelope(env)
+    except signing.SigningError as e:
+        return err(f"Échec de l'envoi en signature : {e}", 502)
+    signers = json.dumps([{"name": "Propriétaire", "email": owner_email, "order": 1},
+                          {"name": "Locataire", "email": tenant_email, "order": 2}])
+    if existing is not None:
+        existing.envelope_id, existing.document_id, existing.status = env, docid, "sent"
+        existing.error, existing.signers, existing.signed_pdf_key = None, signers, None
+        sig = existing
+    else:
+        sig = SignatureRequest(doc_type="lease", doc_ref_id=lease_id, agency_id=0,
+                               envelope_id=env, document_id=docid, status="sent", signers=signers)
+        db.add(sig)
+    db.commit()
+    return _sig_dict(db, sig)
 
 
 @app.patch("/backoffice/gestion-locative/leases/{lease_id}")
