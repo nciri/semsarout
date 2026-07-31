@@ -290,6 +290,13 @@ def internal_property_counts(request: Request, db: Session = Depends(get_db)):
             "by_agency": {str(k): v for k, v in by_agency.items()}}
 
 
+@app.get("/internal/properties/{property_id}/owner", include_in_schema=False)
+def internal_owner(property_id: int, db: Session = Depends(get_db)):
+    """Propriétaire d'un bien (uid opaque) — résolution du seller pour le flux vente médiée."""
+    p = db.get(Property, property_id)
+    return {"owner_id": p.owner_id if p else None}
+
+
 @app.get("/internal/property/{property_id}", include_in_schema=False)
 def internal_property(property_id: int, request: Request, db: Session = Depends(get_db)):
     """Bien (agence/propriétaire/titre) pour l'aiguillage des candidatures locatives (rental)."""

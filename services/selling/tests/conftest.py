@@ -37,7 +37,7 @@ def client(db_session, principal):
     app.dependency_overrides.clear()
 
 
-def make_client(db_session, uid: int, roles: list[str]):
+def make_client(db_session, uid="10", roles=("buyer",)):
     p = Principal(sub=str(uid), roles=roles, agency_id=None,
                   is_superadmin=False, features=[], claims={})
     app.dependency_overrides[get_db] = lambda: db_session
