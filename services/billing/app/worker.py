@@ -19,17 +19,21 @@ from .models import Invoice, ProcessedMessage, Subscription
 
 
 def _handle(routing_key: str, payload: dict, message_id: str) -> None:
-    if payload.get("purpose") != "subscription":
-        return
+    purpose = payload.get("purpose")
     db = SessionLocal()
     try:
         if message_id and db.get(ProcessedMessage, message_id) is not None:
             return  # idempotence
-        agency_id = payload.get("agency_id")
-        if routing_key == "payment.released":
-            _activate_pending(db, agency_id)
-        elif routing_key == "payment.completed":
-            _create_or_extend(db, payload, agency_id)
+        if routing_key == "commission.due" and purpose == "commission":
+            _create_commission_invoice(db, payload)
+        elif routing_key == "payment.completed" and purpose == "commission":
+            _mark_commission_paid(db, payload)
+        elif purpose == "subscription":
+            agency_id = payload.get("agency_id")
+            if routing_key == "payment.released":
+                _activate_pending(db, agency_id)
+            elif routing_key == "payment.completed":
+                _create_or_extend(db, payload, agency_id)
         if message_id:
             db.add(ProcessedMessage(message_id=message_id))
         db.commit()
@@ -38,6 +42,27 @@ def _handle(routing_key: str, payload: dict, message_id: str) -> None:
         raise
     finally:
         db.close()
+
+
+def _create_commission_invoice(db, payload) -> None:
+    ref = payload.get("invoice_ref")
+    if db.query(Invoice).filter(Invoice.reference == ref).first() is not None:
+        return
+    inv = Invoice(reference=ref, invoice_type="commission", account_id=payload.get("account_id"),
+                  amount=payload.get("amount"), status="unpaid",
+                  period_label=f"commission {payload.get('deal_type')}")
+    db.add(inv)
+    db.flush()
+    enqueue(db, "invoice", inv.id, events.INVOICE_CREATED, {
+        "invoice_id": inv.id, "account_id": payload.get("account_id"),
+        "amount": float(payload.get("amount") or 0), "purpose": "commission"})
+
+
+def _mark_commission_paid(db, payload) -> None:
+    inv = db.query(Invoice).filter(Invoice.reference == payload.get("invoice_ref")).first()
+    if inv is not None and inv.status != "paid":
+        inv.status = "paid"
+        inv.paid_at = datetime.utcnow()
 
 
 def _activate_pending(db, agency_id) -> None:
@@ -79,7 +104,7 @@ def main() -> None:
     consumer = EventConsumer(
         settings.rabbitmq_url,
         service_name=settings.service_name,
-        bindings=["payment.released", "payment.completed"],
+        bindings=["payment.released", "payment.completed", "commission.due"],
         exchange=settings.events_exchange,
     )
     consumer.run(handler=_handle)

@@ -68,7 +68,9 @@ class Invoice(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     reference = Column(String(30), unique=True, index=True)
-    subscription_id = Column(Integer, ForeignKey("subscription.id"), nullable=False)
+    subscription_id = Column(Integer, ForeignKey("subscription.id"), nullable=True)
+    invoice_type = Column(String(20), nullable=False, default="subscription")  # subscription | commission
+    account_id = Column(Integer, index=True)  # compte facturé pour une commission (particulier/promoteur)
     agency_id = Column(Integer, index=True)
     amount = Column(Numeric(10, 2), nullable=False)
     status = Column(String(20), default="unpaid")  # unpaid|paid
