@@ -18,8 +18,8 @@ export function SidebarNav({
   return (
     <nav style={{ width, minWidth: width, height: "100%", background: "var(--surface-navy)", display: "flex", flexDirection: "column", padding: "20px 14px", boxSizing: "border-box", ...style }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 8px 22px" }}>
-        <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: "var(--radius-sm)", background: "var(--gold-500)", color: "var(--navy-800)" }}>
-          <Icon name="home" size={19} strokeWidth={2.4} />
+        <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: "var(--radius-sm)", background: "#fff", padding: 3, boxSizing: "border-box" }}>
+          <img src="/logo-mark.png" alt="" style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
         </span>
         <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.1 }}>
           <span style={{ font: "var(--fw-extrabold) var(--fs-body) var(--font-display)", color: "#fff" }}>M3a-L3chrane</span>
