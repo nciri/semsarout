@@ -62,7 +62,7 @@ async def health() -> dict:
 
 
 def _is_participant(conv: Conversation, uid: int) -> bool:
-    return uid in (conv.owner_party, conv.requester_party)
+    return bool(uid) and uid in (conv.owner_party, conv.requester_party)
 
 
 @app.get("/messaging/conversations")
@@ -79,6 +79,8 @@ def list_conversations(principal: Principal = Depends(get_principal), db: Sessio
 @app.get("/messaging/conversations/{conversation_id}")
 def get_conversation(conversation_id: int, principal: Principal = Depends(get_principal),
                      db: Session = Depends(get_db)):
+    if not principal.sub:
+        return _err("Authentification requise", 401)
     uid = _uid(principal)
     conv = db.get(Conversation, conversation_id)
     if conv is None:
@@ -97,6 +99,8 @@ def get_conversation(conversation_id: int, principal: Principal = Depends(get_pr
 @app.post("/messaging/conversations/{conversation_id}/messages", status_code=201)
 async def post_message(conversation_id: int, request: Request,
                        principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    if not principal.sub:
+        return _err("Authentification requise", 401)
     uid = _uid(principal)
     conv = db.get(Conversation, conversation_id)
     if conv is None:
