@@ -1,8 +1,8 @@
-"""Service messaging — messages acheteur ↔ vendeur/agence.
+"""Service messaging — conversations bidirectionnelles entre participants.
 
-Reproduit à l'identique les routes du monolithe : `GET/POST /buyer/messages`,
-`GET /buyer/messages/{id}` (réservé au rôle acheteur). **Erreurs legacy `{'error': msg}`**.
-Valide l'existence du bien via une projection locale `listing_ro` (événements `listing.*`).
+Routes : `GET /messaging/conversations`, `GET /messaging/conversations/{id}`,
+`POST /messaging/conversations/{id}/messages` (réservées aux participants de la
+conversation, tout rôle authentifié). **Erreurs legacy `{'error': msg}`**.
 """
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -16,7 +16,7 @@ from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
 from .db import get_db, init_db
-from .models import BuyerMessage, ListingRO
+from .models import Conversation, Message
 
 settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
@@ -61,53 +61,54 @@ async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
 
 
-@app.get("/buyer/messages")
-def list_messages(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
-    if "buyer" not in principal.roles:
-        return _err("Cette fonctionnalité est réservée aux acheteurs/chercheurs", 403)
-    qp = request.query_params
-    page = int(qp.get("page") or 1)
-    per_page = int(qp.get("per_page") or 20)
-    q = db.query(BuyerMessage).filter(BuyerMessage.buyer_id == _uid(principal))
-    total = q.count()
-    items = (q.order_by(BuyerMessage.created_at.desc())
-             .offset((page - 1) * per_page).limit(per_page).all())
-    pages = (total + per_page - 1) // per_page if per_page else 1
-    return {"messages": [m.to_dict() for m in items], "total": total,
-            "pages": pages, "current_page": page}
+def _is_participant(conv: Conversation, uid: int) -> bool:
+    return uid in (conv.owner_party, conv.requester_party)
 
 
-@app.post("/buyer/messages", status_code=201)
-async def send_message(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
-    if "buyer" not in principal.roles:
-        return _err("Cette fonctionnalité est réservée aux acheteurs/chercheurs", 403)
-    data = await _json(request)
-    property_id = data.get("property_id")
-    if not property_id:
-        return _err("property_id requis", 400)
-    if db.get(ListingRO, property_id) is None:
-        return _err("Propriété non trouvée", 404)
-    msg = BuyerMessage(
-        buyer_id=_uid(principal), property_id=property_id,
-        subject=data.get("subject", "Demande d'information"),
-        message=data.get("message"),
-        buyer_email=data.get("email", ""), buyer_phone=data.get("phone", ""),
-    )
-    db.add(msg)
+@app.get("/messaging/conversations")
+def list_conversations(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    if not principal.sub:
+        return _err("Authentification requise", 401)
+    uid = _uid(principal)
+    q = (db.query(Conversation)
+         .filter((Conversation.owner_party == uid) | (Conversation.requester_party == uid))
+         .order_by(Conversation.updated_at.desc()))
+    return {"conversations": [c.to_dict() for c in q.all()]}
+
+
+@app.get("/messaging/conversations/{conversation_id}")
+def get_conversation(conversation_id: int, principal: Principal = Depends(get_principal),
+                     db: Session = Depends(get_db)):
+    uid = _uid(principal)
+    conv = db.get(Conversation, conversation_id)
+    if conv is None:
+        return _err("Conversation introuvable", 404)
+    if not _is_participant(conv, uid):
+        return _err("Accès refusé", 403)
+    msgs = (db.query(Message).filter(Message.conversation_id == conversation_id)
+            .order_by(Message.created_at).all())
+    for m in msgs:
+        if m.sender_party != uid and m.read_at is None:
+            m.read_at = datetime.utcnow()
     db.commit()
-    return {"message": msg.to_dict(), "status": "Message envoyé avec succès"}
+    return {"conversation": conv.to_dict(), "messages": [m.to_dict() for m in msgs]}
 
 
-@app.get("/buyer/messages/{message_id}")
-def get_message(message_id: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
-    if "buyer" not in principal.roles:
-        return _err("Cette fonctionnalité est réservée aux acheteurs/chercheurs", 403)
-    msg = db.query(BuyerMessage).filter(
-        BuyerMessage.id == message_id, BuyerMessage.buyer_id == _uid(principal)).first()
-    if msg is None:
-        return _err("Message non trouvé", 404)
-    if msg.status == "new":
-        msg.status = "read"
-        msg.read_at = datetime.utcnow()
-        db.commit()
-    return {"message": msg.to_dict()}
+@app.post("/messaging/conversations/{conversation_id}/messages", status_code=201)
+async def post_message(conversation_id: int, request: Request,
+                       principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    uid = _uid(principal)
+    conv = db.get(Conversation, conversation_id)
+    if conv is None:
+        return _err("Conversation introuvable", 404)
+    if not _is_participant(conv, uid):
+        return _err("Accès refusé", 403)
+    data = await _json(request)
+    body = (data.get("body") or "").strip()
+    if not body:
+        return _err("Message vide", 400)
+    m = Message(conversation_id=conversation_id, sender_party=uid, body=body)
+    conv.updated_at = datetime.utcnow()
+    db.add(m)
+    db.commit()
+    return {"message": m.to_dict()}
