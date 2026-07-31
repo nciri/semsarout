@@ -278,7 +278,7 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path.startswith("/api/v1/admin/shared-artisans")
     ):
         return app.state.directory, path.replace("/api/v1", "", 1)
-    if settings.messaging_url and path.startswith("/api/v1/buyer/messages"):
+    if settings.messaging_url and path.startswith("/api/v1/messaging"):
         return app.state.messaging, path.replace("/api/v1", "", 1)
     if settings.buyer_url and (
         path.startswith("/api/v1/buyer/saved-searches")
