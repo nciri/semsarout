@@ -291,8 +291,10 @@ def internal_property_counts(request: Request, db: Session = Depends(get_db)):
 
 
 @app.get("/internal/properties/{property_id}/owner", include_in_schema=False)
-def internal_owner(property_id: int, db: Session = Depends(get_db)):
+def internal_owner(property_id: int, x_internal_token: str = Header(default=""), db: Session = Depends(get_db)):
     """Propriétaire d'un bien (uid opaque) — résolution du seller pour le flux vente médiée."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
     p = db.get(Property, property_id)
     return {"owner_id": p.owner_id if p else None}
 
