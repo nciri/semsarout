@@ -1,4 +1,4 @@
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { SidebarNav } from '../../ds/index.js'
 
 const ITEMS = [
@@ -15,9 +15,9 @@ const ITEMS = [
 const ROUTES = { dash: '/partenaire' }
 
 export default function PartnerLayout() {
-  const { pathname } = useLocation()
   const navigate = useNavigate()
-  const active = pathname.startsWith('/partenaire') ? 'dash' : 'dash'
+  // Single built route so far — branch on pathname once more partner screens exist.
+  const active = 'dash'
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>

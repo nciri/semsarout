@@ -28,6 +28,15 @@ function quotaStatus(partner) {
   return { label: 'Sous quota', tone: 'warning' }
 }
 
+// VerifiedBadge's `level` (full | partial | none) must reflect the real verifies/quota
+// ratio, not the component's "full" default — a quota of 0 shown "full" would fabricate trust.
+function verifiedLevel(partner) {
+  const ratio = partner.quota > 0 ? partner.verifies / partner.quota : 0
+  if (ratio >= 1) return 'full'
+  if (ratio > 0) return 'partial'
+  return 'none'
+}
+
 export default function PartnerPortal() {
   const [partners, setPartners] = useState(null)
   const [query, setQuery] = useState('')
@@ -185,7 +194,7 @@ export default function PartnerPortal() {
                       <Badge tone="navy">{p.type}</Badge>
                     </td>
                     <td style={{ padding: '13px 20px' }}>
-                      <VerifiedBadge label={`${p.verifies} vérifiés`} size="sm" />
+                      <VerifiedBadge label={`${p.verifies} vérifiés`} level={verifiedLevel(p)} size="sm" />
                     </td>
                     <td style={{ padding: '13px 20px', font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-body)' }}>
                       {p.quota}
