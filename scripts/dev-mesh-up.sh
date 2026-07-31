@@ -70,7 +70,7 @@ for pair in $SVCS; do
       # le .env gitignoré du service (sous-shell pour ne pas polluer l'env du script parent).
       SIGN_VARS="$( [ -f services/rental/.env ] && ( set -a; . services/rental/.env; set +a; \
         echo "SIGN_API_URL=${SIGN_API_URL:-} SIGN_API_KEY=${SIGN_API_KEY:-}" ) )"
-      extra="IDENTITY_URL=http://localhost:8501 CRM_URL=http://localhost:8013 LISTING_URL=http://localhost:8012 $S3 RENTAL_DOCS_BUCKET=semsar-rental-docs $SIGN_VARS";;
+      extra="IDENTITY_URL=http://localhost:8501 CRM_URL=http://localhost:8013 LISTING_URL=http://localhost:8012 $S3 RENTAL_DOCS_BUCKET=semsar-rental-docs COMMISSION_URL=http://localhost:8519 $SIGN_VARS";;
     commission) extra="PAYMENT_URL=http://localhost:8507";;
   esac
   case "$svc" in listing|search) extra="$extra $TS_HIDDEN";; esac
