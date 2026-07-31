@@ -80,6 +80,8 @@ async def create_payment_intent(request: Request, db: Session = Depends(get_db),
     data = await json_body(request)
     service_id = data.get("service_id")
     plan_id = data.get("plan_id")
+    purpose = data.get("purpose")
+    commission_ref = data.get("commission_ref")
     billing_cycle = data.get("billing_cycle", "yearly")
     payment_method = data.get("payment_method", "card")
     customer = data.get("customer_info") or {}
@@ -87,7 +89,13 @@ async def create_payment_intent(request: Request, db: Session = Depends(get_db),
     amount = 0
     payment_type = None
     resolved_plan_id = None
-    if service_id and service_id in SERVICE_PRICES:
+    if purpose == "commission":
+        try:
+            amount = float(data.get("amount"))
+        except (TypeError, ValueError):
+            amount = 0
+        payment_type = "commission"
+    elif service_id and service_id in SERVICE_PRICES:
         amount = SERVICE_PRICES[service_id]
         payment_type = "service"
     elif plan_id:
@@ -103,7 +111,8 @@ async def create_payment_intent(request: Request, db: Session = Depends(get_db),
 
     p = Payment(
         reference=gateway.new_reference(), payment_type=payment_type,
-        service_id=service_id if payment_type == "service" else None,
+        service_id=commission_ref if payment_type == "commission" else (
+            service_id if payment_type == "service" else None),
         plan_id=resolved_plan_id if payment_type == "subscription" else None,
         billing_cycle=billing_cycle if payment_type == "subscription" else None,
         amount=amount, payment_method=payment_method,
@@ -163,6 +172,10 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
                 "payment_id": p.id, "agency_id": p.agency_id, "plan_id": p.plan_id,
                 "billing_cycle": p.billing_cycle, "amount": float(p.amount), "purpose": "subscription",
             })
+        if p.payment_type == "commission":
+            enqueue(db, "payment", p.id, events.PAYMENT_COMPLETED, {
+                "payment_id": p.id, "invoice_ref": p.reference, "commission_ref": p.service_id,
+                "account_id": p.user_id, "purpose": "commission"})
         db.commit()
     elif status == "failed":
         p.status = "failed"
