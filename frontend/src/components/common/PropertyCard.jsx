@@ -1,11 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
-import { FiMapPin, FiMaximize, FiHome, FiHeart } from 'react-icons/fi'
+import { FiMapPin, FiMaximize, FiHome, FiHeart, FiBarChart2, FiCheck } from 'react-icons/fi'
 import { IoBedOutline } from 'react-icons/io5'
 import { formatPrice, DIRHAM_SYMBOL } from '../../utils/currency'
 import useAuthStore from '../../store/authStore'
 import { buyerService } from '../../services/buyerService'
+import useCompareStore, { MAX_COMPARE_PROPERTIES } from '../../store/compareStore'
 
 function PropertyCard({ property, variant = 'vertical' }) {
   const { isAuthenticated } = useAuthStore()
@@ -59,17 +60,42 @@ function PropertyCard({ property, variant = 'vertical' }) {
     </div>
   )
 
+  const { isSelected, toggle } = useCompareStore()
+  const compared = isSelected(property.id)
+
+  const handleToggleCompare = (e) => {
+    e.preventDefault()
+    const ok = toggle(property.id)
+    if (!ok) {
+      toast.info(`Vous pouvez comparer ${MAX_COMPARE_PROPERTIES} biens maximum`)
+    }
+  }
+
   const favButton = (
-    <button
-      aria-label="Favori"
-      onClick={handleFav}
-      className="absolute top-2.5 right-2.5 w-[34px] h-[34px] rounded-full bg-white/[.92] shadow-ds-sm flex items-center justify-center"
-    >
-      <FiHeart
-        className={`w-[18px] h-[18px] ${isFav ? 'text-redcard-500 fill-redcard-500' : 'text-slate-600'}`}
-        strokeWidth={1.8}
-      />
-    </button>
+    <div className="absolute top-2.5 right-2.5 flex gap-2">
+      <button
+        aria-label="Comparer"
+        title="Ajouter au comparateur"
+        onClick={handleToggleCompare}
+        className={`w-[34px] h-[34px] rounded-full shadow-ds-sm flex items-center justify-center ${compared ? 'bg-primary-600' : 'bg-white/[.92]'}`}
+      >
+        {compared ? (
+          <FiCheck className="w-[18px] h-[18px] text-white" strokeWidth={2} />
+        ) : (
+          <FiBarChart2 className="w-[18px] h-[18px] text-slate-600" strokeWidth={1.8} />
+        )}
+      </button>
+      <button
+        aria-label="Favori"
+        onClick={handleFav}
+        className="w-[34px] h-[34px] rounded-full bg-white/[.92] shadow-ds-sm flex items-center justify-center"
+      >
+        <FiHeart
+          className={`w-[18px] h-[18px] ${isFav ? 'text-redcard-500 fill-redcard-500' : 'text-slate-600'}`}
+          strokeWidth={1.8}
+        />
+      </button>
+    </div>
   )
 
   const metaRow = (

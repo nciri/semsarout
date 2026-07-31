@@ -1,15 +1,19 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from 'react-query'
+import { toast } from 'react-toastify'
 import {
   FiFilter, FiGrid, FiList, FiChevronLeft, FiChevronRight,
-  FiMap, FiSliders, FiX
+  FiMap, FiSliders, FiX, FiBell
 } from 'react-icons/fi'
 import { HiSparkles } from 'react-icons/hi2'
 import PropertyCard from '../components/common/PropertyCard'
 import AdvancedSearch from '../components/search/AdvancedSearch'
 import PropertyMap from '../components/map/PropertyMap'
+import CompareBar from '../components/common/CompareBar'
 import { propertyService } from '../services/propertyService'
+import { buyerService } from '../services/buyerService'
+import useAuthStore from '../store/authStore'
 
 const SORT_OPTIONS = [
   { value: 'newest', label: 'Plus récentes' },
@@ -32,6 +36,8 @@ function PropertyList() {
   const [viewMode, setViewMode] = useState(VIEW_MODES.GRID)
   const [showMobileSearch, setShowMobileSearch] = useState(false)
   const [selectedProperty, setSelectedProperty] = useState(null)
+  const [savingSearch, setSavingSearch] = useState(false)
+  const { isAuthenticated } = useAuthStore()
 
   const page = parseInt(searchParams.get('page') || '1')
 
@@ -85,6 +91,30 @@ function PropertyList() {
 
   const clearAllFilters = () => {
     setSearchParams({})
+  }
+
+  const handleSaveSearch = async () => {
+    if (!isAuthenticated) {
+      toast.info('Connectez-vous pour sauvegarder cette recherche')
+      return
+    }
+    const name = window.prompt('Nom de cette recherche (ex: "Appart Casablanca -2M")', getTitle())
+    if (!name) return
+
+    setSavingSearch(true)
+    try {
+      const criteria = Object.fromEntries(
+        Object.entries(filters).filter(([key, value]) =>
+          !['page', 'per_page', 'sort'].includes(key) && Boolean(value)
+        )
+      )
+      await buyerService.createSavedSearch({ name, criteria, notify_new_matches: true })
+      toast.success('Recherche sauvegardée ! Vous recevrez un email pour chaque nouveau bien correspondant.')
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde')
+    } finally {
+      setSavingSearch(false)
+    }
   }
 
   // Count active filters for badge
@@ -205,13 +235,23 @@ function PropertyList() {
 
             {/* Active filters summary */}
             {activeFiltersCount > 0 && (
-              <button
-                onClick={clearAllFilters}
-                className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm"
-              >
-                <FiX className="w-4 h-4" />
-                Effacer ({activeFiltersCount})
-              </button>
+              <>
+                <button
+                  onClick={clearAllFilters}
+                  className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm"
+                >
+                  <FiX className="w-4 h-4" />
+                  Effacer ({activeFiltersCount})
+                </button>
+                <button
+                  onClick={handleSaveSearch}
+                  disabled={savingSearch}
+                  className="flex items-center gap-2 px-3 py-1.5 border border-primary-200 text-primary-700 hover:bg-primary-50 rounded-lg text-sm font-medium disabled:opacity-50"
+                >
+                  <FiBell className="w-4 h-4" />
+                  Sauvegarder + alertes
+                </button>
+              </>
             )}
 
             {/* Sort */}
@@ -449,6 +489,7 @@ function PropertyList() {
           </>
         )}
       </div>
+      <CompareBar />
     </div>
   )
 }

@@ -3,9 +3,11 @@ from datetime import datetime
 from functools import wraps
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from markupsafe import escape
 from app import db
 from app.api.v1 import api_v1_bp
-from app.models import User, SavedSearch, Favorite, BuyerMessage, PropertyEstimate, Property
+from app.models import User, SavedSearch, Favorite, BuyerMessage, MessageReply, PropertyEstimate, Property
+from app.services.mailer import send_email, render_email
 
 
 def require_buyer_role(f):
@@ -277,6 +279,22 @@ def send_message():
     db.session.add(message)
     db.session.commit()
 
+    owner = User.query.get(property.owner_id)
+    if owner and owner.email:
+        sender_label = escape(user.full_name) if user else escape(message.buyer_email)
+        content = (
+            f'<p>Bonjour {escape(owner.first_name)},</p>'
+            f'<p><strong>{sender_label}</strong> vous a envoyé un message '
+            f'concernant votre annonce <strong>{escape(property.title)}</strong> :</p>'
+            f'<p style="background:#f8fafc;padding:12px;border-radius:8px">{escape(message.message)}</p>'
+            f'<p><a href="https://semsarout.ma/dashboard/leads">Répondre depuis votre tableau de bord</a></p>'
+        )
+        send_email(
+            to=owner.email,
+            subject=f'Nouveau message : {message.subject}',
+            html_body=render_email(content)
+        )
+
     return jsonify({
         'message': message.to_dict(),
         'status': 'Message envoyé avec succès'
@@ -287,7 +305,7 @@ def send_message():
 @jwt_required()
 @require_buyer_role
 def get_buyer_message(message_id):
-    """Get a specific message."""
+    """Get a specific message thread (including agent replies)."""
     current_user_id = int(get_jwt_identity())
     message = BuyerMessage.query.filter_by(id=message_id, buyer_id=current_user_id).first()
 
@@ -300,7 +318,35 @@ def get_buyer_message(message_id):
         message.read_at = datetime.utcnow()
         db.session.commit()
 
-    return jsonify({'message': message.to_dict()})
+    return jsonify({'message': message.to_dict(include_replies=True)})
+
+
+@api_v1_bp.route('/buyer/messages/<int:message_id>/reply', methods=['POST'])
+@jwt_required()
+@require_buyer_role
+def reply_to_message(message_id):
+    """Buyer adds a reply to an existing message thread."""
+    current_user_id = int(get_jwt_identity())
+    message = BuyerMessage.query.filter_by(id=message_id, buyer_id=current_user_id).first()
+
+    if not message:
+        return jsonify({'error': 'Message non trouvé'}), 404
+
+    data = request.get_json() or {}
+    body = data.get('body', '').strip()
+    if not body:
+        return jsonify({'error': 'Le message ne peut pas être vide'}), 400
+
+    reply = MessageReply(
+        buyer_message_id=message.id,
+        sender_role='buyer',
+        sender_user_id=current_user_id,
+        body=body
+    )
+    db.session.add(reply)
+    db.session.commit()
+
+    return jsonify({'reply': reply.to_dict()}), 201
 
 
 # ============================================

@@ -47,6 +47,12 @@ import AdminAccountDetail from './pages/admin/AdminAccountDetail'
 import AdminSharedArtisans from './pages/admin/AdminSharedArtisans'
 import AdminProducts from './pages/admin/AdminProducts'
 import AdminOrders from './pages/admin/AdminOrders'
+import SavedSearches from './pages/dashboard/SavedSearches'
+import BuyerMessages from './pages/dashboard/BuyerMessages'
+import AgencyMessages from './pages/dashboard/AgencyMessages'
+import Availability from './pages/dashboard/Availability'
+import MortgageSimulator from './pages/MortgageSimulator'
+import CompareProperties from './pages/CompareProperties'
 
 // Backoffice imports
 import BackofficeLayout from './pages/backoffice/components/BackofficeLayout'
@@ -128,6 +134,8 @@ function App() {
         <Route path="cgu" element={<LegalPage type="cgu" />} />
         <Route path="politique-de-confidentialite" element={<LegalPage type="confidentialite" />} />
         <Route path="cookies" element={<LegalPage type="cookies" />} />
+        <Route path="simulateur-credit" element={<MortgageSimulator />} />
+        <Route path="comparer" element={<CompareProperties />} />
 
         {/* Protected routes */}
         <Route path="dashboard" element={<PrivateRoute />}>
@@ -154,6 +162,12 @@ function App() {
           <Route path="agence" element={<Navigate to="/dashboard/compte/agence" replace />} />
           <Route path="abonnement" element={<Navigate to="/dashboard/compte/abonnement" replace />} />
           <Route path="parametres" element={<Navigate to="/dashboard/compte/parametres" replace />} />
+
+          {/* Buyer-experience : recherches sauvegardées, messagerie, disponibilités */}
+          <Route path="mes-recherches" element={<SavedSearches />} />
+          <Route path="mes-messages" element={<BuyerMessages />} />
+          <Route path="messages" element={<AgencyMessages />} />
+          <Route path="disponibilites" element={<Availability />} />
 
           <Route path="prix-marche" element={<MarketPrices />} />
 

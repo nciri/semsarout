@@ -39,8 +39,18 @@ export const buyerService = {
     return response.data
   },
 
+  getMessage: async (messageId) => {
+    const response = await api.get(`/buyer/messages/${messageId}`)
+    return response.data
+  },
+
   sendMessage: async (data) => {
     const response = await api.post('/buyer/messages', data)
+    return response.data
+  },
+
+  replyToMessage: async (messageId, body) => {
+    const response = await api.post(`/buyer/messages/${messageId}/reply`, { body })
     return response.data
   },
 
