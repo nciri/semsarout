@@ -19,7 +19,9 @@ from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 from semsar_events import enqueue
 
-from . import events, signing
+import semsar_signing as signing
+
+from . import events
 from .db import get_db, init_db
 from .models import (ApplicationDocument, ChargeRegularization, ClientRO, CrgReport,
                      DeductionLine, DepositSettlement, Inventory, InventoryItem, InventoryPhoto,
