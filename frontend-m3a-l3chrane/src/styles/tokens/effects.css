@@ -1,0 +1,28 @@
+/* Radii, shadows, transitions, focus ring. */
+:root {
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  /* Soft, subtle elevation — cards float gently off a light page. */
+  --shadow-xs: 0 1px 2px rgba(20, 32, 63, 0.06);
+  --shadow-sm: 0 2px 6px rgba(20, 32, 63, 0.07);
+  --shadow-md: 0 6px 18px rgba(20, 32, 63, 0.09);
+  --shadow-lg: 0 14px 40px rgba(20, 32, 63, 0.14);
+  --shadow-nav: 0 2px 10px rgba(15, 26, 56, 0.35);
+
+  --ring-focus: 0 0 0 3px rgba(51, 71, 138, 0.28);
+  --ring-accent: 0 0 0 3px rgba(239, 178, 77, 0.35);
+
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1); /* @kind other */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);     /* @kind other */
+  --dur-fast: 120ms;  /* @kind other */
+  --dur-base: 180ms;  /* @kind other */
+  --dur-slow: 280ms;  /* @kind other */
+}
+
+a { color: var(--link); text-decoration: none; transition: color var(--dur-fast) var(--ease-standard); }
+a:hover { color: var(--link-hover); }
