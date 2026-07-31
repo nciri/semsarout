@@ -13,5 +13,3 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
-a { color: var(--link); text-decoration: none; }
-a:hover { color: var(--link-hover); }

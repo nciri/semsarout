@@ -93,7 +93,7 @@ export default function Landing() {
               <Icon name="image" size={40} /><span style={{ font: 'var(--fw-medium) var(--fs-sm) var(--font-body)' }}>Photo — ville marocaine</span>
             </div>
             <div style={{ position: 'absolute', left: 20, bottom: 20, right: 20, display: 'flex', gap: 12 }}>
-              <FloatCard icon="user-check" title="Salma, 19 ans" sub="Vérifiée · Rabat" />
+              <FloatCard icon="user" title="Salma, 19 ans" sub="Colocataire · Rabat" />
               <FloatCard icon="home" title="F4 · Agdal" sub="85% compatible" />
             </div>
           </div>

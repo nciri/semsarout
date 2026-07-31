@@ -1,5 +1,5 @@
 # Fondations plateforme v2 — raccourcis (cf. PLATFORM.md)
-.PHONY: infra-up infra-down libs-install gateway-run gateway-test
+.PHONY: infra-up infra-down libs-install gateway-run gateway-test m3a-install m3a-dev m3a-build m3a-lint
 
 infra-up:            ## Démarre l'infra plateforme (RabbitMQ, MinIO, OTel, Prometheus, Grafana, Loki)
 	docker compose -f infra/docker-compose.yml up -d
