@@ -64,6 +64,10 @@ def _err(msg: str, code: int) -> JSONResponse:
     return JSONResponse({"error": msg}, status_code=code)
 
 
+def _is_particulier(p) -> bool:
+    return bool(p.owner_id) and not p.agency_id
+
+
 async def _json(request: Request) -> dict:
     try:
         data = await request.json()
@@ -643,8 +647,12 @@ async def contact_property(property_id: int, request: Request, db: Session = Dep
     if not data.get("name") or not data.get("email"):
         return _err("Name and email are required", 400)
     p.contacts_count = (p.contacts_count or 0) + 1
-    enqueue(db, "property", p.id, events.LISTING_CONTACTED,
-            _contact_payload(p, data, data.get("source") or "contact_form"))
+    payload = _contact_payload(p, data, data.get("source") or "contact_form")
+    if _is_particulier(p):
+        payload["email"] = None
+        payload["phone"] = None
+        payload["source"] = "mediated"
+    enqueue(db, "property", p.id, events.LISTING_CONTACTED, payload)
     db.commit()
     return {"message": "Contact request sent successfully"}
 
@@ -654,6 +662,8 @@ async def reveal_phone(property_id: int, request: Request, db: Session = Depends
     p = db.get(Property, property_id)
     if p is None:
         return _err("Not found", 404)
+    if _is_particulier(p):
+        return _err("Contact via la messagerie de la plateforme (annonce particulier).", 403)
     phone = _fetch_contact_phone(p)
     if not phone:
         return _err("Aucun numéro de téléphone disponible pour ce bien", 404)
