@@ -1,8 +1,9 @@
 """Service selling — flux vente médiée (demande d'achat → offre → compromis e-signé)."""
 import json
 from contextlib import asynccontextmanager
+from datetime import datetime
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import Session
@@ -12,7 +13,7 @@ from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 from semsar_events import enqueue
 
-from . import commission_client, compromis_pdf, events, listing_client
+from . import commission_client, compromis_pdf, events, listing_client, storage
 from .db import get_db, init_db  # noqa: F401
 from .models import Compromis, Offer, ProcessedMessage, PurchaseInquiry, SignatureRequest  # noqa: F401
 from .util import err, iso, json_body  # noqa: F401
@@ -169,3 +170,49 @@ async def prepare_compromis(inquiry_id: int, request: Request,
     db.add(sig)
     db.commit()
     return {"compromis": {"id": c.id, "status": c.status}, "signature": {"status": sig.status}}
+
+
+@app.post("/internal/signatures/poll", include_in_schema=False)
+def poll_signatures(x_internal_token: str = Header(default=""), db: Session = Depends(get_db)):
+    """Interroge 3a9dSign pour les compromis en cours ; sur complétion, stocke le PDF signé,
+    marque le compromis/la demande conclue et émet `sale.compromis.signed` ; sur refus/annulation,
+    libère la commission associée (appelé par l'ordonnanceur, toutes les ~60 s)."""
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    if not signing.signing_enabled():
+        return {"checked": 0}
+    pending = db.query(SignatureRequest).filter(SignatureRequest.status.in_(("sent", "in_progress"))).all()
+    updated = 0
+    for sig in pending:
+        try:
+            st = signing.get_status(sig.envelope_id)
+        except signing.SigningError:
+            continue
+        if st == sig.status:
+            continue
+        if st == "completed":
+            c = db.get(Compromis, sig.doc_ref_id)
+            inq = db.get(PurchaseInquiry, c.inquiry_id) if c else None
+            signed_key = None
+            try:
+                data = signing.fetch_signed_pdf(sig.envelope_id, sig.document_id)
+                signed_key = f"selling/compromis/{c.id}/signed.pdf"
+                storage.docs_storage().put(signed_key, data, "pdf")
+            except Exception:  # noqa: BLE001
+                signed_key = None
+            sig.signed_pdf_key, sig.status = signed_key, "completed"
+            if c is not None:
+                c.status, c.signed_at, c.signed_pdf_key = "signed", datetime.utcnow(), signed_key
+            if inq is not None:
+                inq.status = "concluded"
+                enqueue(db, "compromis", c.id, events.COMPROMIS_SIGNED, {
+                    "id": c.id, "account_id": inq.seller_party, "inquiry_id": inq.id,
+                    "property_id": inq.property_id})
+            updated += 1
+        elif st in ("in_progress", "declined", "voided", "expired"):
+            if st in ("declined", "voided", "expired"):
+                commission_client.void("sale", sig.doc_ref_id)
+            sig.status = st
+            updated += 1
+    db.commit()
+    return {"checked": len(pending), "updated": updated}
