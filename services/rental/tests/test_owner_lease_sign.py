@@ -13,6 +13,7 @@ def _lease(db_session, owner=5):
 
 def test_blocked_returns_402_with_pay_url(db_session, monkeypatch):
     _lease(db_session)
+    monkeypatch.setattr(main.signing, "signing_enabled", lambda: True)
     monkeypatch.setattr(main.commission_client, "gate",
                         lambda **k: {"state": "BLOCKED", "billable": True, "pay_url": "/pay?ref=X"})
     client = make_owner_client(db_session, uid="5")
@@ -24,6 +25,7 @@ def test_blocked_returns_402_with_pay_url(db_session, monkeypatch):
 
 def test_gate_unavailable_is_fail_closed(db_session, monkeypatch):
     _lease(db_session)
+    monkeypatch.setattr(main.signing, "signing_enabled", lambda: True)
     def boom(**k):
         raise main.commission_client.CommissionUnavailable("down")
     monkeypatch.setattr(main.commission_client, "gate", boom)

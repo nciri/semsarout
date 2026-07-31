@@ -417,7 +417,10 @@ async def owner_request_lease_signature(lease_id: int, request: Request,
     l = db.get(Lease, lease_id)
     if l is None or l.owner_id != uid:
         return err("Bail introuvable.", 404)
-    # 1) Gate commission (fail-closed) — vérifié avant toute config signature
+    # 1) Vérifier signing_enabled (cheap local check, avant toute side-effect)
+    if not signing.signing_enabled():
+        return err("Signature électronique non configurée.", 400)
+    # 2) Gate commission (fail-closed) — has side effects (Conclusion row, payment, invoice)
     try:
         decision = commission_client.gate(account_id=uid, deal_type="rental", source_ref=lease_id)
     except commission_client.CommissionUnavailable:
@@ -425,9 +428,7 @@ async def owner_request_lease_signature(lease_id: int, request: Request,
     if decision.get("state") == "BLOCKED":
         return JSONResponse({"error": "Commission due avant signature.",
                              "pay_url": decision.get("pay_url")}, status_code=402)
-    # 2) Lancer la e-signature (OPEN)
-    if not signing.signing_enabled():
-        return err("Signature électronique non configurée.", 400)
+    # 3) Lancer la e-signature (OPEN)
     data = await json_body(request)
     owner_email = _owner_email(uid)
     tenant_email = (data.get("tenant_email") or _applicant_email_for_lease(db, l) or "").strip()
