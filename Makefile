@@ -15,3 +15,15 @@ gateway-run:         ## Lance le BFF/gateway sur :8080
 
 gateway-test:        ## Tests du gateway
 	pytest gateway/tests
+
+m3a-install:         ## Installe dépendances frontend-m3a-l3chrane
+	cd frontend-m3a-l3chrane && npm install
+
+m3a-dev:             ## Lance frontend-m3a-l3chrane sur :5610
+	cd frontend-m3a-l3chrane && npm run dev
+
+m3a-build:           ## Build frontend-m3a-l3chrane
+	cd frontend-m3a-l3chrane && npm run build
+
+m3a-lint:            ## Lint frontend-m3a-l3chrane
+	cd frontend-m3a-l3chrane && npm run lint
