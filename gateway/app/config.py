@@ -51,6 +51,8 @@ class GatewaySettings(BaseSettings):
     trust_safety_url: str | None = None
     agency_url: str | None = None
     audit_url: str | None = None
+    commission_url: str | None = None
+    selling_url: str | None = None
 
     otlp_endpoint: str = "http://localhost:4318"
 

@@ -38,10 +38,12 @@ class Lease(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     reference = Column(String(30), unique=True, nullable=False, index=True)
-    mandate_id = Column(Integer, index=True, nullable=False)
+    mandate_id = Column(Integer, index=True)                  # absent pour un bail particulier
     property_id = Column(Integer, index=True, nullable=False)
-    tenant_client_id = Column(Integer, index=True, nullable=False)
-    agency_id = Column(Integer, index=True, nullable=False)
+    tenant_client_id = Column(Integer, index=True)            # absent pour un bail particulier (voir tenant_user_id)
+    agency_id = Column(Integer, index=True)                   # absent pour un bail particulier
+    owner_id = Column(Integer, index=True)       # bail de particulier (sans agence)
+    tenant_user_id = Column(Integer)             # locataire = utilisateur (pas un crm.Client)
     rent_amount = Column(Numeric(12, 2), nullable=False)
     charges_amount = Column(Numeric(12, 2), default=0)
     deposit_amount = Column(Numeric(12, 2), default=0)

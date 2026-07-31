@@ -37,6 +37,10 @@ def _rental() -> str:
     return os.environ.get("RENTAL_URL", "http://localhost:8518")
 
 
+def _selling() -> str:
+    return os.environ.get("SELLING_URL", "http://localhost:8520")
+
+
 def _headers() -> dict:
     return {"x-internal-token": os.environ.get("INTERNAL_TOKEN", "")}
 
@@ -257,14 +261,23 @@ def _job_application_missing_docs(db) -> int:
 
 
 def _job_signature_poll(db) -> int:
-    """Poll de complétion des signatures 3a9dSign (EDL/décompte/bail/mandat) — rental garde la
-    logique métier, ce job ne fait que déclencher le cycle (même patron que les autres jobs
-    "internal" ci-dessus, aucun envoi d'email ici — c'est le job Task 5 qui notifiera)."""
+    """Poll de complétion des signatures 3a9dSign (EDL/décompte/bail/mandat pour rental, compromis
+    pour selling) — chaque service garde sa logique métier, ce job ne fait que déclencher le cycle
+    (même patron que les autres jobs "internal" ci-dessus, aucun envoi d'email ici — c'est le job
+    Task 5 qui notifiera). Les deux appels sont isolés : un échec côté selling ne doit pas empêcher
+    le poll rental (ni l'inverse)."""
+    updated = 0
     try:
         r = httpx.post(f"{_rental()}/internal/signatures/poll", headers=_headers(), timeout=15.0)
-        return r.json().get("updated", 0) if r.status_code == 200 else 0
+        updated += r.json().get("updated", 0) if r.status_code == 200 else 0
     except (httpx.HTTPError, ValueError):
-        return 0
+        pass
+    try:
+        r = httpx.post(f"{_selling()}/internal/signatures/poll", headers=_headers(), timeout=15.0)
+        updated += r.json().get("updated", 0) if r.status_code == 200 else 0
+    except (httpx.HTTPError, ValueError):
+        pass
+    return updated
 
 
 def run_once() -> None:

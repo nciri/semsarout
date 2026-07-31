@@ -4,7 +4,7 @@ import logging
 import time
 from datetime import datetime, timezone
 
-from sqlalchemy import BigInteger, Column, DateTime, Index, String
+from sqlalchemy import BigInteger, Column, DateTime, Index, Integer, String
 from sqlalchemy import JSON
 from sqlalchemy.orm import declarative_base
 
@@ -16,7 +16,9 @@ OutboxBase = declarative_base()
 class OutboxEvent(OutboxBase):
     __tablename__ = "outbox"
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    # Integer sur SQLite (alias du rowid → autoincrément natif), BIGINT en Postgres :
+    # BigInteger seul n'est pas reconnu comme rowid alias par SQLite et ne s'auto-incrémente pas.
+    id = Column(Integer().with_variant(BigInteger(), "postgresql"), primary_key=True, autoincrement=True)
     aggregate_type = Column(String(80), nullable=False)
     aggregate_id = Column(String(80), nullable=False)
     event_type = Column(String(120), nullable=False)  # routing key, ex. « listing.published »

@@ -19,7 +19,9 @@ from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 from semsar_events import enqueue
 
-from . import events, signing
+import semsar_signing as signing
+
+from . import commission_client, events
 from .db import get_db, init_db
 from .models import (ApplicationDocument, ChargeRegularization, ClientRO, CrgReport,
                      DeductionLine, DepositSettlement, Inventory, InventoryItem, InventoryPhoto,
@@ -102,7 +104,7 @@ def _emit_lease(db: Session, l: Lease, event_type: str) -> None:
     enqueue(db, "lease", l.id, event_type, {
         "id": l.id, "reference": l.reference, "mandate_id": l.mandate_id,
         "property_id": l.property_id, "tenant_client_id": l.tenant_client_id,
-        "agency_id": l.agency_id, "rent_amount": num(l.rent_amount),
+        "agency_id": l.agency_id, "account_id": l.owner_id, "rent_amount": num(l.rent_amount),
         "charges_amount": num(l.charges_amount), "deposit_amount": num(l.deposit_amount),
         "start_date": iso(l.start_date), "end_date": iso(l.end_date),
     })
@@ -361,6 +363,103 @@ async def create_lease(request: Request, principal: Principal = Depends(get_prin
     _emit_lease(db, l, events.LEASE_CREATED)
     db.commit()
     return _lease_dict(l)
+
+
+@app.post("/gestion-locative/owner/leases", status_code=201)
+async def create_owner_lease(request: Request, principal: Principal = Depends(get_principal),
+                             db: Session = Depends(get_db)):
+    if not principal.sub:
+        return err("Authentification requise.", 401)
+    uid = int(principal.sub)
+    data = await json_body(request)
+    app_id = data.get("application_id")
+    ta = db.get(TenantApplication, app_id) if app_id else None
+    if ta is None or ta.owner_id != uid:
+        return err("Candidature introuvable.", 404)
+    if ta.status != "accepted":
+        return err("La candidature doit être acceptée avant d'établir le bail.", 400)
+    if not data.get("rent_amount"):
+        return err("rent_amount requis.", 400)
+    l = Lease(owner_id=uid, property_id=ta.property_id, tenant_user_id=ta.applicant_user_id,
+              reference=f"BP-{uid}-{ta.id}", status="draft",
+              rent_amount=data.get("rent_amount"), charges_amount=data.get("charges_amount"),
+              deposit_amount=data.get("deposit_amount"),
+              start_date=_parse_dt(data.get("start_date")), end_date=_parse_dt(data.get("end_date")))
+    db.add(l)
+    db.commit()
+    return _lease_dict(l)
+
+
+def _owner_email(uid: int) -> str | None:
+    acc = _user_lookup(uid)
+    return acc.get("email") if acc else None
+
+
+def _applicant_email_for_lease(db, l: Lease) -> str | None:
+    ta = (db.query(TenantApplication)
+          .filter(TenantApplication.property_id == l.property_id,
+                  TenantApplication.applicant_user_id == l.tenant_user_id,
+                  TenantApplication.status == "accepted").first())
+    return ta.applicant_email if ta else None
+
+
+def _owner_lease_pdf_bytes(db, l: Lease) -> bytes:
+    return _lease_pdf_bytes(db, l)
+
+
+@app.post("/gestion-locative/owner/leases/{lease_id}/request-signature")
+async def owner_request_lease_signature(lease_id: int, request: Request,
+                                        principal: Principal = Depends(get_principal),
+                                        db: Session = Depends(get_db)):
+    if not principal.sub:
+        return err("Authentification requise.", 401)
+    uid = int(principal.sub)
+    l = db.get(Lease, lease_id)
+    if l is None or l.owner_id != uid:
+        return err("Bail introuvable.", 404)
+    # 1) Vérifier signing_enabled (cheap local check, avant toute side-effect)
+    if not signing.signing_enabled():
+        return err("Signature électronique non configurée.", 400)
+    # 2) Gate commission (fail-closed) — has side effects (Conclusion row, payment, invoice)
+    try:
+        decision = commission_client.gate(account_id=uid, deal_type="rental", source_ref=lease_id)
+    except commission_client.CommissionUnavailable:
+        return err("Vérification de facturation indisponible, réessayez.", 503)
+    if decision.get("state") == "BLOCKED":
+        return JSONResponse({"error": "Commission due avant signature.",
+                             "pay_url": decision.get("pay_url")}, status_code=402)
+    # 3) Lancer la e-signature (OPEN)
+    data = await json_body(request)
+    owner_email = _owner_email(uid)
+    tenant_email = (data.get("tenant_email") or _applicant_email_for_lease(db, l) or "").strip()
+    if not owner_email or not tenant_email:
+        return err("Emails propriétaire et locataire requis.", 400)
+    existing = (db.query(SignatureRequest)
+                .filter(SignatureRequest.doc_type == "lease", SignatureRequest.doc_ref_id == lease_id).first())
+    if existing is not None and existing.status not in ("declined", "voided", "expired"):
+        return err("Signature déjà demandée.", 400)
+    try:
+        env = signing.create_envelope(f"Bail {l.reference or l.id}", f"rental:lease:{l.id}:owner:{uid}")
+        docid, pages = signing.add_document(env, f"lease-{l.id}.pdf", _owner_lease_pdf_bytes(db, l))
+        r1 = signing.add_recipient(env, owner_email, "Propriétaire", 1)
+        r2 = signing.add_recipient(env, tenant_email, "Locataire", 2)
+        signing.place_signature_field(env, docid, r1, pages, 72, 72)
+        signing.place_signature_field(env, docid, r2, pages, 340, 72)
+        signing.send_envelope(env)
+    except signing.SigningError as e:
+        return err(f"Échec de l'envoi en signature : {e}", 502)
+    signers = json.dumps([{"name": "Propriétaire", "email": owner_email, "order": 1},
+                          {"name": "Locataire", "email": tenant_email, "order": 2}])
+    if existing is not None:
+        existing.envelope_id, existing.document_id, existing.status = env, docid, "sent"
+        existing.error, existing.signers, existing.signed_pdf_key = None, signers, None
+        sig = existing
+    else:
+        sig = SignatureRequest(doc_type="lease", doc_ref_id=lease_id, agency_id=0,
+                               envelope_id=env, document_id=docid, status="sent", signers=signers)
+        db.add(sig)
+    db.commit()
+    return _sig_dict(db, sig)
 
 
 @app.patch("/backoffice/gestion-locative/leases/{lease_id}")
@@ -827,6 +926,11 @@ def _client_lookup(client_id: int) -> dict:
         return {}
 
 
+def _application_event_payload(app_id, applicant_user_id, owner_id, property_id, property_title) -> dict:
+    return {"id": app_id, "applicant_user_id": applicant_user_id, "owner_id": owner_id,
+            "property_id": property_id, "property_title": property_title}
+
+
 def _application_dict(db, a: TenantApplication, docs=None) -> dict:
     ro = db.get(PropertyRO, a.property_id)
     out = {
@@ -834,7 +938,8 @@ def _application_dict(db, a: TenantApplication, docs=None) -> dict:
         "applicant_user_id": a.applicant_user_id,
         "submitted_by_agent_id": a.submitted_by_agent_id, "client_id": a.client_id,
         "applicant_name": a.applicant_name,
-        "applicant_email": a.applicant_email, "applicant_phone": a.applicant_phone,
+        "applicant_email": a.applicant_email if a.agency_id else None,
+        "applicant_phone": a.applicant_phone if a.agency_id else None,
         "monthly_income": num(a.monthly_income), "guarantor_name": a.guarantor_name,
         "guarantor_income": num(a.guarantor_income), "status": a.status,
         "submitted_at": iso(a.submitted_at), "decided_at": iso(a.decided_at),
@@ -873,9 +978,9 @@ async def submit_application(request: Request, principal: Principal = Depends(ge
         status="received")
     db.add(a)
     db.flush()
-    enqueue(db, "tenant_application", a.id, events.APPLICATION_RECEIVED, {
-        "id": a.id, "applicant_email": a.applicant_email, "applicant_name": a.applicant_name,
-        "property_id": a.property_id, "property_title": prop.get("title")})
+    enqueue(db, "tenant_application", a.id, events.APPLICATION_RECEIVED,
+            _application_event_payload(a.id, a.applicant_user_id, a.owner_id, a.property_id,
+                                       prop.get("title")))
     db.commit()
     return _application_dict(db, a)
 
@@ -910,9 +1015,9 @@ async def create_application_for_client(request: Request, principal: Principal =
         status="received")
     db.add(a)
     db.flush()
-    enqueue(db, "tenant_application", a.id, events.APPLICATION_RECEIVED, {
-        "id": a.id, "applicant_email": a.applicant_email, "applicant_name": a.applicant_name,
-        "property_id": a.property_id, "property_title": prop.get("title"), "by_agent": True})
+    enqueue(db, "tenant_application", a.id, events.APPLICATION_RECEIVED,
+            {**_application_event_payload(a.id, a.applicant_user_id, a.owner_id, a.property_id,
+                                          prop.get("title")), "by_agent": True})
     db.commit()
     return _application_dict(db, a)
 
@@ -1512,7 +1617,21 @@ def _sig_context_by_agency(db, doc_type: str, doc_id: int, agency_id: int):
                 "signed_payload": {"tenant_client_id": lease.tenant_client_id if lease else None}}
     if doc_type == "lease":
         l = db.get(Lease, doc_id)
-        if l is None or l.agency_id != agency_id:
+        if l is None:
+            return None
+        if l.owner_id:  # bail particulier (sig.agency_id == 0) — sans rattachement agence
+            def mark_owner(signed_key):
+                l.status = "active"
+                l.signed_at = datetime.utcnow()
+                l.signed_pdf_key = signed_key
+            return {"entity": l, "ready": True, "pdf_bytes_fn": lambda: _lease_pdf_bytes(db, l),
+                    "counterparty_client_id": None,
+                    "title": f"Bail {l.reference or l.id}",
+                    "ext_ref": f"rental:lease:{l.id}:owner",
+                    "mark_signed_fn": mark_owner, "event": events.LEASE_SIGNED,
+                    "signed_payload": {"account_id": l.owner_id, "tenant_user_id": l.tenant_user_id,
+                                        "rent_amount": num(l.rent_amount)}}
+        if l.agency_id != agency_id:
             return None
 
         def mark(signed_key):
@@ -1690,6 +1809,11 @@ def poll_signatures(x_internal_token: str = Header(default=""), db: Session = De
                     **ctx["signed_payload"]})
             updated += 1
         elif st in ("in_progress", "declined", "voided", "expired"):
+            if st in ("declined", "voided", "expired") and sig.doc_type == "lease":
+                l = db.get(Lease, sig.doc_ref_id)
+                if l is not None and l.owner_id:
+                    from . import commission_client
+                    commission_client.void("rental", sig.doc_ref_id)
             sig.status = st
             updated += 1
     db.commit()
