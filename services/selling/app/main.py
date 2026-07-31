@@ -143,6 +143,12 @@ async def prepare_compromis(inquiry_id: int, request: Request,
     acheteur_email = (data.get("acheteur_email") or "").strip()
     if not vendeur_email or not acheteur_email:
         return err("Emails vendeur et acheteur requis.", 400)
+    # Guard: prevent duplicate active signature requests
+    existing_sig = (db.query(SignatureRequest)
+                    .filter(SignatureRequest.doc_type == "compromis",
+                            SignatureRequest.doc_ref_id == c.id).first())
+    if existing_sig is not None and existing_sig.status not in ("declined", "voided", "expired"):
+        return err("Signature déjà demandée pour ce compromis.", 400)
     try:
         pdf = compromis_pdf.render(data)
         env = signing.create_envelope(f"Compromis {c.id}", f"sale:compromis:{c.id}")
