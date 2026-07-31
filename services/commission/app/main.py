@@ -1,7 +1,7 @@
 """Service commission — moteur de compteur d'affaires + gate de facturation."""
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Header, Request
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
@@ -114,6 +114,7 @@ def decide_gate(db: Session, account_id: int, deal_type: str, source_ref: int) -
         rule = active_rule(db, deal_type)
         credit = (db.query(Conclusion)
                   .filter(Conclusion.account_id == account_id, Conclusion.paid.is_(True),
+                          Conclusion.billable.is_(True),
                           Conclusion.status == "voided").order_by(Conclusion.id).first())
         if credit is not None:
             credit.status = "reused"
@@ -148,7 +149,10 @@ def _gate_response(concl: Conclusion) -> dict:
 
 
 @app.get("/internal/commission/gate")
-def gate(account_id: int, deal_type: str, source_ref: int, db: Session = Depends(get_db)):
+def gate(account_id: int, deal_type: str, source_ref: int, db: Session = Depends(get_db),
+          x_internal_token: str = Header(default="")):
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
     if deal_type not in _DEAL_TYPES:
         return err("deal_type invalide.", 400)
     concl = decide_gate(db, account_id, deal_type, source_ref)
@@ -157,7 +161,10 @@ def gate(account_id: int, deal_type: str, source_ref: int, db: Session = Depends
 
 
 @app.post("/internal/commission/void")
-async def void_conclusion(request: Request, db: Session = Depends(get_db)):
+async def void_conclusion(request: Request, db: Session = Depends(get_db),
+                           x_internal_token: str = Header(default="")):
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
     data = await json_body(request)
     concl = (db.query(Conclusion)
              .filter(Conclusion.deal_type == data.get("deal_type"),

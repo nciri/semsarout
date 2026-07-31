@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from semsar_auth import Principal, get_principal
+from semsar_common import get_settings
 from semsar_events import OutboxBase
 
 from app import models  # noqa: F401 — enregistre les tables
@@ -32,6 +33,6 @@ def principal():
 def client(db_session, principal):
     app.dependency_overrides[get_db] = lambda: db_session
     app.dependency_overrides[get_principal] = lambda: principal
-    with TestClient(app) as c:
+    with TestClient(app, headers={"x-internal-token": get_settings().internal_token}) as c:
         yield c
     app.dependency_overrides.clear()
