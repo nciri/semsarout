@@ -47,7 +47,7 @@ export default function ListingDetail() {
               <div style={{ position: 'absolute', right: 14, bottom: 14 }}><Button variant="secondary" size="sm" iconLeft="images">Voir les {listing.photos.length} photos</Button></div>
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-              {listing.photos.map((photo) => <div key={photo} style={{ flex: 1, height: 56, borderRadius: 'var(--radius-sm)', background: 'var(--navy-100)' }} />)}
+              {listing.photos.map((photo, i) => <div key={`${i}-${photo}`} style={{ flex: 1, height: 56, borderRadius: 'var(--radius-sm)', background: 'var(--navy-100)' }} />)}
             </div>
 
             <div style={{ marginTop: 26, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
@@ -74,7 +74,7 @@ export default function ListingDetail() {
             <h3 style={{ font: 'var(--fw-bold) var(--fs-h3) var(--font-display)', color: 'var(--navy-700)', margin: '26px 0 12px' }}>Colocataires actuels</h3>
             <div style={{ display: 'flex', gap: 24 }}>
               {listing.colocataires.map((coloc) => (
-                <Avatar key={coloc.nom} name={coloc.nom} src={coloc.avatar} showLabel verified />
+                <Avatar key={coloc.nom} name={coloc.nom} src={coloc.avatar} showLabel />
               ))}
             </div>
           </div>
