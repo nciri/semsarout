@@ -13,9 +13,11 @@ independent from the existing `frontend/` (semsar) app and is driven entirely by
 (project `7918b4a1-1afc-4f61-9807-762a645ceb81`), whose visual ground truth is
 `uploads/layout.png`.
 
-This build is **mock-data only** — no backend, no auth, no external calls. It exists to make
-the site look and feel real across all three product surfaces, with a clean seam for wiring a
-real API later.
+This build ships **mock data** for every surface, but M3a-L3chrane is **not a throwaway
+standalone**: it runs on **its own domain** while sharing the **same backend, gateway, and
+infrastructure as SemsarOut**. So the data layer is built as a real seam that mirrors the
+semsar frontend's API client exactly — mock fixtures sit *behind* that seam today and are
+swapped for live gateway calls later by flipping one flag, with no change to the surfaces.
 
 ## 2. Scope
 
@@ -29,7 +31,13 @@ real API later.
 **Out of scope (flagged):**
 - Real photography and logo — neutral placeholders per DS policy (`assets/logo.svg` /
   `assets/icons/` to be supplied later).
-- Real authentication, real data/API, escrow/payment, e-signature.
+- **Live backend wiring** — the API seam is built and shaped like semsar's, but this build
+  resolves to mock fixtures. Flipping to live gateway calls is a follow-up.
+- Real authentication, escrow/payment, e-signature (the auth-token storage shape matches
+  semsar so it plugs in later — see §3.4).
+- **Backend tenant resolution** — the shared gateway/backend distinguishing M3a-L3chrane from
+  SemsarOut by request `Host` (or an equivalent tenant key) is a **backend dependency**, not
+  part of this frontend build. Noted as an assumption in §6.
 - Full AR / darija-latin translation and RTL runtime toggle — layout stays RTL-friendly and
   copy is French-first; full i18n is v2.
 - React Native mobile app (DS `apps/mobile`, v2).
@@ -64,7 +72,8 @@ frontend-m3a-l3chrane/
       web/     WebLayout Landing SearchResults ListingDetail
       app/     AppLayout Dashboard Messaging
       partner/ PartnerLayout PartnerPortal
-    data/      listings.js profiles.js partners.js messages.js  index.js
+    services/  api.js               # axios client, mirrors semsar (baseURL /api/v1 + interceptors)
+    data/      listings.js profiles.js partners.js messages.js  index.js  # mock fixtures
     lib/       format.js            # MAD money, French spacing, match-% helpers
 ```
 
@@ -118,18 +127,32 @@ Landing → *Rechercher* / card click navigates to search / detail; breadcrumb r
 surface-switcher (or footer links) lets a reviewer jump between web / seeker / partner without
 auth. `App.jsx` wraps routes in `<Suspense>` with a light fallback.
 
-### 3.4 Mock data
+### 3.4 Data layer — mock behind a semsar-shaped seam
 
-`src/data/*.js` export plain JS fixtures, read directly by surfaces (no fetch, no async):
+M3a-L3chrane shares SemsarOut's backend/gateway, so the client is built to match semsar's,
+with mock fixtures behind a single switch:
 
-- `listings.js` — ~9–12 realistic Moroccan colocations: title, city/quartier, price (MAD/mois),
-  photos (placeholder blocks), amenity chips, current-roommate avatars, match %, verified flag.
-- `profiles.js` — seeker profiles with compatibility fields (neutral-lifestyle terms only:
-  *Non-fumeur, Calme, Invités OK* — **never** nationality/origin/religion labels, hard DS rule).
-- `partners.js` — institutional partners (universities/employers), rosters, verification counts,
-  quotas.
-- `messages.js` — conversation threads for Messaging.
-- `index.js` barrel. A later real API swaps this module with the same shape.
+- **`src/services/api.js`** — an axios instance identical in shape to semsar's:
+  `baseURL: '/api/v1'`, JSON headers, a request interceptor attaching the Bearer token from
+  `localStorage['auth-storage']` (same key/shape as semsar so a future shared session plugs in),
+  and a 401→`/auth/refresh` response interceptor. Present but unused while mocks are on.
+- **Per-domain service modules** (`listingsService`, `profilesService`, `partnersService`,
+  `messagesService`) expose async functions (`listListings()`, `getListing(id)`, …). Each reads
+  a **`USE_MOCK`** flag (env `VITE_USE_MOCK`, default `true`): when true it resolves the
+  `src/data/` fixture; when false it calls `api.js`. Surfaces only ever call the service
+  functions (always async), so flipping the flag needs **zero surface changes**.
+- **`src/data/*.js`** — plain JS fixtures shaped like expected API responses:
+  - `listings.js` — ~9–12 realistic Moroccan colocations: title, city/quartier, price (MAD/mois),
+    photos (placeholder blocks), amenity chips, current-roommate avatars, match %, verified flag.
+  - `profiles.js` — seeker profiles with compatibility fields (neutral-lifestyle terms only:
+    *Non-fumeur, Calme, Invités OK* — **never** nationality/origin/religion labels, hard DS rule).
+  - `partners.js` — institutional partners (universities/employers), rosters, verification
+    counts, quotas.
+  - `messages.js` — conversation threads for Messaging.
+  - `index.js` barrel.
+- **Dev proxy** — `vite.config.js` proxies `/api` and `/uploads` → `http://localhost:8099`
+  (the same gateway semsar uses), on a distinct port (e.g. `5610`) so both frontends run
+  side by side.
 
 ### 3.5 Content & copy rules (enforced)
 
@@ -158,12 +181,21 @@ Per the repo's testing-protocol:
   listing card, seeker dashboard, and partner block.
 - No unit-test suite in this mock-data build; a `format.js` smoke check is optional.
 
-## 6. Integration with the monorepo
+## 6. Integration with the monorepo & shared infra
 
+- **Own domain, shared backend/infra.** M3a-L3chrane is served as its own static build under its
+  own domain, but its `/api` (+`/uploads`) traffic targets the **same gateway** (`:8099`) as
+  SemsarOut. In dev this is the Vite proxy (§3.4); in prod the domain's reverse proxy points
+  `/api` at the shared gateway.
+- **Backend tenant resolution (dependency, out of scope here).** For one gateway/backend to serve
+  two domains, it must scope requests to the right vertical — expected via the request `Host`
+  header (or an explicit tenant key). This spec assumes that mechanism exists or is added on the
+  backend side; this frontend does nothing special beyond same-origin `/api` calls. Flagged so
+  the backend work is tracked separately.
 - Add a **root `Makefile`** target group (e.g. `m3a-dev`, `m3a-build`, `m3a-lint`) mirroring the
   existing frontend targets, so the new app joins the standard gate without disturbing semsar.
 - `.gitignore` covers `frontend-m3a-l3chrane/node_modules` and `dist`.
-- No changes to `services/`, `gateway/`, `backend/`, or the existing `frontend/`.
+- No changes to `services/`, `gateway/`, `backend/`, or the existing `frontend/` in this build.
 
 ## 7. Non-negotiables
 
