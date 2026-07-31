@@ -112,6 +112,17 @@ def decide_gate(db: Session, account_id: int, deal_type: str, source_ref: int) -
         counter.free_conclusion_id = concl.id
     else:
         rule = active_rule(db, deal_type)
+        credit = (db.query(Conclusion)
+                  .filter(Conclusion.account_id == account_id, Conclusion.paid.is_(True),
+                          Conclusion.status == "voided").order_by(Conclusion.id).first())
+        if credit is not None:
+            credit.status = "reused"
+            concl = Conclusion(account_id=account_id, deal_type=deal_type, source_ref=source_ref,
+                               billable=True, commission_amount=credit.commission_amount,
+                               invoice_ref=credit.invoice_ref, paid=True, status="pending")
+            db.add(concl)
+            db.flush()
+            return concl
         concl = Conclusion(account_id=account_id, deal_type=deal_type, source_ref=source_ref,
                            billable=True, commission_amount=rule.flat_amount, paid=False, status="pending")
         db.add(concl)
@@ -143,3 +154,20 @@ def gate(account_id: int, deal_type: str, source_ref: int, db: Session = Depends
     concl = decide_gate(db, account_id, deal_type, source_ref)
     db.commit()
     return _gate_response(concl)
+
+
+@app.post("/internal/commission/void")
+async def void_conclusion(request: Request, db: Session = Depends(get_db)):
+    data = await json_body(request)
+    concl = (db.query(Conclusion)
+             .filter(Conclusion.deal_type == data.get("deal_type"),
+                     Conclusion.source_ref == data.get("source_ref")).first())
+    if concl is None:
+        return err("Conclusion introuvable.", 404)
+    concl.status = "voided"
+    counter = db.get(DealCounter, concl.account_id)
+    if counter is not None and counter.free_conclusion_id == concl.id:
+        counter.first_deal_free_used = False
+        counter.free_conclusion_id = None
+    db.commit()
+    return {"status": "voided", "conclusion_id": concl.id}
