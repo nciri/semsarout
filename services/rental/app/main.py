@@ -1617,7 +1617,21 @@ def _sig_context_by_agency(db, doc_type: str, doc_id: int, agency_id: int):
                 "signed_payload": {"tenant_client_id": lease.tenant_client_id if lease else None}}
     if doc_type == "lease":
         l = db.get(Lease, doc_id)
-        if l is None or l.agency_id != agency_id:
+        if l is None:
+            return None
+        if l.owner_id:  # bail particulier (sig.agency_id == 0) — sans rattachement agence
+            def mark_owner(signed_key):
+                l.status = "active"
+                l.signed_at = datetime.utcnow()
+                l.signed_pdf_key = signed_key
+            return {"entity": l, "ready": True, "pdf_bytes_fn": lambda: _lease_pdf_bytes(db, l),
+                    "counterparty_client_id": None,
+                    "title": f"Bail {l.reference or l.id}",
+                    "ext_ref": f"rental:lease:{l.id}:owner",
+                    "mark_signed_fn": mark_owner, "event": events.LEASE_SIGNED,
+                    "signed_payload": {"account_id": l.owner_id, "tenant_user_id": l.tenant_user_id,
+                                        "rent_amount": num(l.rent_amount)}}
+        if l.agency_id != agency_id:
             return None
 
         def mark(signed_key):
@@ -1795,6 +1809,11 @@ def poll_signatures(x_internal_token: str = Header(default=""), db: Session = De
                     **ctx["signed_payload"]})
             updated += 1
         elif st in ("in_progress", "declined", "voided", "expired"):
+            if st in ("declined", "voided", "expired") and sig.doc_type == "lease":
+                l = db.get(Lease, sig.doc_ref_id)
+                if l is not None and l.owner_id:
+                    from . import commission_client
+                    commission_client.void("rental", sig.doc_ref_id)
             sig.status = st
             updated += 1
     db.commit()
