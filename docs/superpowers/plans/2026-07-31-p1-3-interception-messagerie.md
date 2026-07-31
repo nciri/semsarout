@@ -487,13 +487,11 @@ if __name__ == "__main__":
         s.close()
 ```
 
-- [ ] **Step 4 : Lancer le test** → PASS. Puis **supprimer `BuyerMessage`** de `models.py` (le modèle et son `to_dict`).
+- [ ] **Step 4 : Lancer le test** → PASS.
 
-> Ordre d'exploitation : appliquer `migrate_conversation.sql` → lancer `python migrate_buyer_message.py` en prod → puis déployer la suppression de `BuyerMessage`. En dev/tests, le test ci-dessus valide la migration ; garder `BuyerMessage` dans models jusqu'à ce que le test passe, puis le retirer et adapter le test (le supprimer, il ne compile plus sans le modèle).
+> **Décision (unique, non ambiguë)** : `BuyerMessage` est **conservé en modèle legacy read-only** — plus aucun endpoint (supprimés en Task 2), mais le modèle et sa table survivent pour l'audit et pour que la migration puisse les lire. **Ne PAS supprimer** le modèle `BuyerMessage`. Ordre d'exploitation prod : appliquer `migrate_conversation.sql` → lancer `python migrate_buyer_message.py` (idempotent). Le test de migration reste donc valide en permanence.
 
-- [ ] **Step 5 : Retirer le test de migration** (il dépend de `BuyerMessage`) et le remplacer par un commentaire de traçabilité dans le README du service, OU garder `BuyerMessage` en modèle « legacy read-only ». **Décision de ce plan** : garder `BuyerMessage` comme modèle legacy (lecture seule, plus aucun endpoint) → le test reste valide et la table survit pour audit. Ne PAS supprimer le modèle ; supprimer seulement les endpoints (déjà fait Task 2).
-
-- [ ] **Step 6 : Commit**
+- [ ] **Step 5 : Commit**
 
 ```bash
 git add services/messaging
