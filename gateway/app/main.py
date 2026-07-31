@@ -316,6 +316,8 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         return app.state.rental, path.replace("/api/v1", "", 1)
     if settings.rental_url and path.startswith("/api/v1/gestion-locative"):
         return app.state.rental, path.replace("/api/v1", "", 1)
+    if settings.selling_url and path.startswith("/api/v1/vente"):
+        return app.state.selling, path.replace("/api/v1", "", 1)
     if settings.legal_url and (
         path.startswith("/api/v1/backoffice/notaries")
         or path.startswith("/api/v1/backoffice/legal-cases")
@@ -374,6 +376,7 @@ async def lifespan(app: FastAPI):
     app.state.agency = _client_or_none(settings.agency_url)
     app.state.audit = _client_or_none(settings.audit_url)
     app.state.commission = _client_or_none(settings.commission_url)
+    app.state.selling = _client_or_none(settings.selling_url)
     yield
     for client in (
         app.state.monolith, app.state.identity, app.state.search,
@@ -383,7 +386,7 @@ async def lifespan(app: FastAPI):
         app.state.rental,
         app.state.buyer, app.state.programs, app.state.staymanager, app.state.geo,
         app.state.messaging, app.state.trust_safety, app.state.agency, app.state.audit,
-        app.state.commission,
+        app.state.commission, app.state.selling,
     ):
         if client is not None:
             await client.aclose()
