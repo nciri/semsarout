@@ -8,7 +8,9 @@ from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
+from semsar_events import enqueue
 
+from . import events, payment_client
 from .db import get_db, init_db
 from .models import CommissionRule, Conclusion, DealCounter
 from .util import err, iso, json_body
@@ -114,6 +116,15 @@ def decide_gate(db: Session, account_id: int, deal_type: str, source_ref: int) -
                            billable=True, commission_amount=rule.flat_amount, paid=False, status="pending")
         db.add(concl)
         db.flush()
+        ref, pay_url = payment_client.create_commission_intent(
+            account_id=account_id, amount=float(rule.flat_amount),
+            deal_type=deal_type, source_ref=source_ref)
+        concl.invoice_ref = ref
+        concl.pay_url = pay_url
+        enqueue(db, "conclusion", concl.id, events.COMMISSION_DUE, {
+            "conclusion_id": concl.id, "account_id": account_id, "deal_type": deal_type,
+            "source_ref": source_ref, "amount": float(rule.flat_amount),
+            "invoice_ref": ref, "purpose": "commission"})
     return concl
 
 

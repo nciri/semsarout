@@ -11,8 +11,11 @@ def test_first_deal_is_open_and_waived(client, db_session):
     assert body["billable"] is False
 
 
-def test_second_deal_is_blocked(client, db_session):
+def test_second_deal_is_blocked(client, db_session, monkeypatch):
+    import app.main as main
     from app import models
+    monkeypatch.setattr(main.payment_client, "create_commission_intent",
+                        lambda **k: ("PAY-STUB", "/payment-gateway?ref=PAY-STUB"))
     # 1re affaire réservée puis effectivement conclue (compteur avancé)
     _gate(client, 100, "rental", 1)
     c = db_session.query(models.DealCounter).get(100)
