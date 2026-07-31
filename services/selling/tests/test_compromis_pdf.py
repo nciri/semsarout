@@ -1,6 +1,6 @@
 """Tests for compromis PDF generation with HTML escaping."""
 import pytest
-from services.selling.app.compromis_pdf import _fill, render
+from app.compromis_pdf import _fill, render
 
 
 def test_html_escaping_in_scalar_fields():
