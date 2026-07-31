@@ -65,7 +65,13 @@ export default function Dashboard() {
       <AppHeader prenom={profile.prenom} verifiee={profile.verifiee} />
       <div style={{ padding: 32 }}>
         <div style={{ display: 'flex', gap: 16, marginBottom: 26 }}>
-          <StatCard icon="badge-check" tone="green" label="Profil vérifié" value="Étudiant" sub="CIN + statut" />
+          <StatCard
+            icon="badge-check"
+            tone={profile.verifiee ? 'green' : 'gold'}
+            label="Profil vérifié"
+            value={profile.verifiee ? 'Vérifié' : 'En attente'}
+            sub="CIN + statut"
+          />
           <StatCard icon="git-compare-arrows" tone="navy" label="Compatibilité moyenne" value={`${avgMatch}%`} sub="Excellent" />
           <StatCard icon="file-text" tone="gold" label="Candidatures" value="3" sub="En cours" />
         </div>

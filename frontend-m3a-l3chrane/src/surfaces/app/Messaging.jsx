@@ -91,7 +91,7 @@ export default function Messaging() {
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && send()}
-                placeholder="Écrire un message… 😊"
+                placeholder="Écrire un message…"
                 style={{ flex: 1, height: 44, padding: '0 16px', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-pill)', outline: 'none', font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-strong)' }}
               />
               <IconButton icon="send" label="Envoyer" variant="navy" round onClick={send} />
