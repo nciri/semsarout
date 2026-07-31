@@ -10,7 +10,7 @@ from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
 from .db import get_db, init_db
-from .models import CommissionRule
+from .models import CommissionRule, Conclusion, DealCounter
 from .util import err, iso, json_body
 
 settings = get_settings()
@@ -83,3 +83,52 @@ async def create_rule(request: Request, principal: Principal = Depends(get_princ
     db.add(r)
     db.commit()
     return {"rule": _rule_dict(r)}
+
+
+def _counter(db: Session, account_id: int) -> DealCounter:
+    c = db.get(DealCounter, account_id)
+    if c is None:
+        c = DealCounter(account_id=account_id, concluded_count=0, first_deal_free_used=False)
+        db.add(c)
+        db.flush()
+    return c
+
+
+def decide_gate(db: Session, account_id: int, deal_type: str, source_ref: int) -> Conclusion:
+    concl = (db.query(Conclusion)
+             .filter(Conclusion.deal_type == deal_type, Conclusion.source_ref == source_ref).first())
+    if concl is not None:
+        return concl
+    counter = _counter(db, account_id)
+    if not counter.first_deal_free_used:
+        # réserve la 1re affaire offerte pour cette conclusion
+        concl = Conclusion(account_id=account_id, deal_type=deal_type, source_ref=source_ref,
+                           billable=False, commission_amount=0, paid=True, status="pending")
+        db.add(concl)
+        db.flush()
+        counter.first_deal_free_used = True
+        counter.free_conclusion_id = concl.id
+    else:
+        rule = active_rule(db, deal_type)
+        concl = Conclusion(account_id=account_id, deal_type=deal_type, source_ref=source_ref,
+                           billable=True, commission_amount=rule.flat_amount, paid=False, status="pending")
+        db.add(concl)
+        db.flush()
+    return concl
+
+
+def _gate_response(concl: Conclusion) -> dict:
+    if not concl.billable or concl.paid:
+        return {"state": "OPEN", "billable": concl.billable,
+                "invoice_ref": concl.invoice_ref, "pay_url": None}
+    return {"state": "BLOCKED", "billable": True,
+            "invoice_ref": concl.invoice_ref, "pay_url": concl.pay_url}
+
+
+@app.get("/internal/commission/gate")
+def gate(account_id: int, deal_type: str, source_ref: int, db: Session = Depends(get_db)):
+    if deal_type not in _DEAL_TYPES:
+        return err("deal_type invalide.", 400)
+    concl = decide_gate(db, account_id, deal_type, source_ref)
+    db.commit()
+    return _gate_response(concl)
