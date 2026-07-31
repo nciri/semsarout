@@ -365,6 +365,31 @@ async def create_lease(request: Request, principal: Principal = Depends(get_prin
     return _lease_dict(l)
 
 
+@app.post("/gestion-locative/owner/leases", status_code=201)
+async def create_owner_lease(request: Request, principal: Principal = Depends(get_principal),
+                             db: Session = Depends(get_db)):
+    if not principal.sub:
+        return err("Authentification requise.", 401)
+    uid = int(principal.sub)
+    data = await json_body(request)
+    app_id = data.get("application_id")
+    ta = db.get(TenantApplication, app_id) if app_id else None
+    if ta is None or ta.owner_id != uid:
+        return err("Candidature introuvable.", 404)
+    if ta.status != "accepted":
+        return err("La candidature doit être acceptée avant d'établir le bail.", 400)
+    if not data.get("rent_amount"):
+        return err("rent_amount requis.", 400)
+    l = Lease(owner_id=uid, property_id=ta.property_id, tenant_user_id=ta.applicant_user_id,
+              reference=f"BP-{uid}-{ta.id}", status="draft",
+              rent_amount=data.get("rent_amount"), charges_amount=data.get("charges_amount"),
+              deposit_amount=data.get("deposit_amount"),
+              start_date=_parse_dt(data.get("start_date")), end_date=_parse_dt(data.get("end_date")))
+    db.add(l)
+    db.commit()
+    return _lease_dict(l)
+
+
 @app.patch("/backoffice/gestion-locative/leases/{lease_id}")
 async def update_lease(lease_id: int, request: Request,
                        principal: Principal = Depends(get_principal),
