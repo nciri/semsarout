@@ -11,8 +11,19 @@ const SORT_PARAMS = { pertinence: 'relevance', 'prix-asc': 'rent_asc', 'prix-des
 
 const amenityLabel = (code) => AMENITY_LABELS[code] ?? code.replaceAll('_', ' ')
 
+// Valeurs canoniques du référentiel lifestyle (semsar_common.coloc_referential) → libellés FR.
+const LIFESTYLE_LABELS = {
+  non_fumeur: 'Non-fumeur', fumeur: 'Fumeur accepté',
+  acceptes: 'Animaux acceptés', refuses: 'Sans animaux',
+  souvent: 'Invités bienvenus', rarement: 'Invités occasionnels',
+  tot: 'Couche-tôt', tard: 'Couche-tard',
+  frequent: 'Ménage fréquent', souple: 'Ménage souple',
+}
+
+const lifestyleLabel = (value) => LIFESTYLE_LABELS[value] ?? value.replaceAll('_', ' ')
+
 export function buildChips(source) {
-  const chips = [...(source.rules ?? [])]
+  const chips = (source.rules ?? []).map(lifestyleLabel)
   if (source.furnished) chips.push('Meublé')
   for (const code of source.amenities ?? []) chips.push(amenityLabel(code))
   return chips
@@ -74,4 +85,18 @@ export function mapSearchFilters(filtres = {}) {
   if (filtres.q) params.q = filtres.q
   if (SORT_PARAMS[filtres.tri]) params.sort = SORT_PARAMS[filtres.tri]
   return params
+}
+
+export function mapProfile(p) {
+  return {
+    prenom: p.display_name ?? '',
+    avatar: null,
+    verifiee: Boolean(p.is_verified),
+    lifestyle: (p.lifestyle ?? []).map((a) => lifestyleLabel(a.value)),
+    recherche: {
+      ville: p.city ?? '',
+      budgetMad: p.budget_max != null ? Math.round(p.budget_max) : null,
+      dispo: p.move_in_date ? new Date(p.move_in_date).toLocaleDateString('fr-FR') : '',
+    },
+  }
 }
