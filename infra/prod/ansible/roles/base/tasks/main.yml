@@ -89,14 +89,17 @@
 
 # Le BFF (semsar-gateway) écoute sur 0.0.0.0:{{ bff_port }} pour que Traefik
 # (conteneur Docker, cf. traefik-dynamic.yml.j2 → host.docker.internal) puisse
-# le joindre : ce trafic arrive sur l'hôte via l'interface docker0, pas
-# loopback, et serait donc bloqué par `default deny incoming` sans cette
-# règle. Elle ne rouvre PAS le port sur Internet : le firewall Hetzner (en
-# amont, cf. terraform) n'autorise que 22/80/443 depuis l'extérieur — 8099
-# reste inaccessible hors du réseau docker0 de la machine elle-même.
-- name: "ufw — autoriser le trafic docker0 vers le BFF ({{ bff_port }}/tcp, pour Traefik)"
+# le joindre : ce trafic arrive sur l'hôte via le bridge du réseau Compose
+# (`br-<hash>` du réseau `semsar-platform`, PAS `docker0` — le nom de bridge
+# n'est pas stable), et serait bloqué par `default deny incoming` sans cette
+# règle. On autorise donc par SOUS-RÉSEAU SOURCE : 172.16.0.0/12 couvre le
+# pool d'adresses par défaut de Docker. Elle ne rouvre PAS le port sur
+# Internet : le firewall Hetzner (en amont, cf. terraform) n'autorise que
+# 22/80/443 depuis l'extérieur, et 172.16.0.0/12 n'est pas routable public —
+# 8099 reste inaccessible hors des conteneurs de la machine elle-même.
+- name: "ufw — autoriser les conteneurs Docker vers le BFF ({{ bff_port }}/tcp, pour Traefik)"
   ansible.builtin.command:
-    cmd: "ufw allow in on docker0 to any port {{ bff_port }} proto tcp"
+    cmd: "ufw allow in to any port {{ bff_port }} proto tcp from 172.16.0.0/12"
   changed_when: true
 
 - name: ufw — activer (non-interactif)
