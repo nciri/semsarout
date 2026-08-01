@@ -6,8 +6,17 @@ export default defineConfig({
   server: {
     port: 5610,
     proxy: {
-      '/api': { target: 'http://localhost:8099', changeOrigin: true },
-      '/uploads': { target: 'http://localhost:8099', changeOrigin: true },
+      // Dev : le BFF résout le tenant via cet en-tête (en prod : par Host/Traefik).
+      '/api': {
+        target: 'http://localhost:8099',
+        changeOrigin: true,
+        headers: { 'x-tenant': 'm3a-l3achrane' },
+      },
+      '/uploads': {
+        target: 'http://localhost:8099',
+        changeOrigin: true,
+        headers: { 'x-tenant': 'm3a-l3achrane' },
+      },
     },
   },
   resolve: { alias: { '@': '/src' } },
