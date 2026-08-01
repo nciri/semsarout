@@ -19,6 +19,7 @@ from sqlalchemy import (
     String,
     Table,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 
@@ -93,9 +94,12 @@ class RoleRO(Base):
 
 class UserRO(Base):
     __tablename__ = "user_ro"
+    # Un même email peut exister sur les deux produits (comptes séparés par tenant).
+    __table_args__ = (UniqueConstraint("tenant", "email", name="uq_user_ro_tenant_email"),)
 
     id = Column(BigInteger, primary_key=True)
-    email = Column(String(120), unique=True, nullable=False, index=True)
+    tenant = Column(String(32), nullable=False, default="semsar", index=True)
+    email = Column(String(120), nullable=False, index=True)
     password_hash = Column(String(256), nullable=False)
     first_name = Column(String(50))
     last_name = Column(String(50))
@@ -129,7 +133,7 @@ class UserRO(Base):
         primary = max(self.roles, key=lambda r: r.level) if self.roles else None
         is_superadmin = any(r.slug == "superadmin" for r in self.roles)
         return {
-            "id": self.id, "email": self.email, "first_name": self.first_name,
+            "id": self.id, "tenant": self.tenant, "email": self.email, "first_name": self.first_name,
             "last_name": self.last_name, "full_name": self.full_name, "phone": self.phone,
             "avatar_url": self.avatar_url, "user_type": self.user_type,
             "account_role": self.account_role, "interest": self.interest,
