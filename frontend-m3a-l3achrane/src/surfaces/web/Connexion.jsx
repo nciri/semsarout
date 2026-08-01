@@ -49,12 +49,14 @@ export default function Connexion() {
           {mode === 'register' && (
             <>
               <Input
+                id="first_name"
                 label={<>Prénom{requiredStar}</>}
                 value={form.first_name}
                 onChange={set('first_name')}
                 required
               />
               <Input
+                id="last_name"
                 label={<>Nom{requiredStar}</>}
                 value={form.last_name}
                 onChange={set('last_name')}
@@ -63,6 +65,7 @@ export default function Connexion() {
             </>
           )}
           <Input
+            id="email"
             label={<>Email{requiredStar}</>}
             type="email"
             value={form.email}
@@ -70,6 +73,7 @@ export default function Connexion() {
             required
           />
           <Input
+            id="password"
             label={<>Mot de passe{requiredStar}</>}
             type="password"
             value={form.password}
@@ -83,7 +87,7 @@ export default function Connexion() {
         </form>
         <button
           type="button"
-          onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+          onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(null) }}
           style={{
             background: 'none', border: 'none', cursor: 'pointer', marginTop: 12,
             textDecoration: 'underline', font: 'var(--fw-regular) var(--fs-sm) var(--font-body)',
