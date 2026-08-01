@@ -87,6 +87,18 @@
   loop: ["22", "80", "443"]
   changed_when: true
 
+# Le BFF (semsar-gateway) écoute sur 0.0.0.0:{{ bff_port }} pour que Traefik
+# (conteneur Docker, cf. traefik-dynamic.yml.j2 → host.docker.internal) puisse
+# le joindre : ce trafic arrive sur l'hôte via l'interface docker0, pas
+# loopback, et serait donc bloqué par `default deny incoming` sans cette
+# règle. Elle ne rouvre PAS le port sur Internet : le firewall Hetzner (en
+# amont, cf. terraform) n'autorise que 22/80/443 depuis l'extérieur — 8099
+# reste inaccessible hors du réseau docker0 de la machine elle-même.
+- name: "ufw — autoriser le trafic docker0 vers le BFF ({{ bff_port }}/tcp, pour Traefik)"
+  ansible.builtin.command:
+    cmd: "ufw allow in on docker0 to any port {{ bff_port }} proto tcp"
+  changed_when: true
+
 - name: ufw — activer (non-interactif)
   ansible.builtin.command:
     cmd: ufw --force enable

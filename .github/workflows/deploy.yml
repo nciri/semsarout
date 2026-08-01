@@ -110,14 +110,25 @@ jobs:
           printf '[prod]\n%s ansible_user=root ansible_ssh_private_key_file=%s/ssh/deploy_key\n' \
             "$SERVER_IP" "$RUNNER_TEMP" > "$RUNNER_TEMP/inventory.ini"
 
+      - name: Write extra-vars file
+        env:
+          JWT_SECRET_KEY_PROD: ${{ secrets.JWT_SECRET_KEY_PROD }}
+        run: |
+          set -euo pipefail
+          umask 077
+          cat > "$RUNNER_TEMP/vars.yml" <<EOF
+          jwt_secret_key: "${JWT_SECRET_KEY_PROD}"
+          semsar_domain: semsarout.com
+          m3a_l3achrane_domain: m3a-l3achrane.ma
+          EOF
+
       - name: Run playbook
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
-          JWT_SECRET_KEY_PROD: ${{ secrets.JWT_SECRET_KEY_PROD }}
         run: |
           set -euo pipefail
           ansible-playbook infra/prod/ansible/playbook.yml \
             -i "$RUNNER_TEMP/inventory.ini" \
             -u root \
             --private-key "$RUNNER_TEMP/ssh/deploy_key" \
-            --extra-vars "jwt_secret_key=${JWT_SECRET_KEY_PROD} semsar_domain=semsarout.com m3a_l3achrane_domain=m3a-l3achrane.ma"
+            --extra-vars "@$RUNNER_TEMP/vars.yml"

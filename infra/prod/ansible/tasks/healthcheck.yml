@@ -8,6 +8,36 @@
   delay: 3
   until: semsar_bff_health.status == 200
 
+# Healthcheck de façade : traverse Traefik → BFF (et pas juste le BFF en
+# loopback ci-dessus) pour prouver que le chemin réel des utilisateurs
+# fonctionne. `--resolve` force 127.0.0.1 sans dépendre de la propagation DNS
+# (le serveur peut ne pas encore avoir les enregistrements A publics au
+# moment de ce run) ; le Host envoyé est celui qui pilote le SNI/routage
+# Traefik. GET /api/v1/properties est public (pas d'auth) côté BFF — voir
+# gateway/app/main.py — donc un 200 ici prouve que Traefik joint bien le BFF
+# (host.docker.internal:{{ bff_port }}, cf. traefik-dynamic.yml.j2).
+- name: "Healthcheck — le BFF répond à travers Traefik ({{ semsar_domain }})"
+  ansible.builtin.command:
+    cmd: >-
+      curl -ksf --resolve {{ semsar_domain }}:443:127.0.0.1
+      https://{{ semsar_domain }}/api/v1/properties
+  changed_when: false
+  register: semsar_facade_health_main
+  retries: 5
+  delay: 3
+  until: semsar_facade_health_main.rc == 0
+
+- name: "Healthcheck — le BFF répond à travers Traefik ({{ m3a_l3achrane_domain }})"
+  ansible.builtin.command:
+    cmd: >-
+      curl -ksf --resolve {{ m3a_l3achrane_domain }}:443:127.0.0.1
+      https://{{ m3a_l3achrane_domain }}/api/v1/properties
+  changed_when: false
+  register: semsar_facade_health_tenant
+  retries: 5
+  delay: 3
+  until: semsar_facade_health_tenant.rc == 0
+
 - name: Healthcheck — lister toutes les units systemd du mesh
   ansible.builtin.set_fact:
     semsar_mesh_units: >-
@@ -27,5 +57,6 @@
 - name: Healthcheck — résumé
   ansible.builtin.debug:
     msg: >-
-      BFF OK (http://127.0.0.1:{{ bff_port }}/health) —
+      BFF OK (http://127.0.0.1:{{ bff_port }}/health), façade Traefik→BFF OK
+      ({{ semsar_domain }} + {{ m3a_l3achrane_domain }}) —
       {{ semsar_mesh_units | length }} unités systemd actives.

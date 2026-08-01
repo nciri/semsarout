@@ -9,7 +9,13 @@ Group={{ semsar_group }}
 WorkingDirectory={{ semsar_app_dir }}/gateway
 EnvironmentFile={{ semsar_secrets_file }}
 EnvironmentFile={{ semsar_env_dir }}/gateway.env
-ExecStart={{ semsar_venv_dir }}/bin/python -m uvicorn app.main:app --app-dir {{ semsar_app_dir }}/gateway --host 127.0.0.1 --port {{ bff_port }}
+# Écoute sur 0.0.0.0 (au lieu de 127.0.0.1 comme le reste du mesh) : Traefik
+# (conteneur Docker) joint le BFF via host.docker.internal:{{ bff_port }}
+# (cf. traefik-dynamic.yml.j2), donc la socket doit accepter les connexions
+# entrantes depuis l'interface docker0, pas seulement loopback. Le firewall
+# Hetzner (roles/base, 22/80/443 uniquement) et la règle ufw docker0→8099
+# (roles/base) bornent qui peut effectivement joindre ce port.
+ExecStart={{ semsar_venv_dir }}/bin/python -m uvicorn app.main:app --app-dir {{ semsar_app_dir }}/gateway --host 0.0.0.0 --port {{ bff_port }}
 Restart=on-failure
 RestartSec=3
 NoNewPrivileges=true
