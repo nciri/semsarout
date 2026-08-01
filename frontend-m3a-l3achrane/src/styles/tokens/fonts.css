@@ -1,0 +1,12 @@
+/* Fonts — SUBSTITUTION FLAG: no font binaries were provided with the brief.
+   The mockup's display face reads as a friendly geometric humanist sans; we use
+   Plus Jakarta Sans as the closest Google Fonts match, and Tajawal for Arabic /
+   darija-latin RTL. Replace with licensed brand fonts if/when supplied. */
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&family=Tajawal:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+:root {
+  --font-display: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-arabic: "Tajawal", "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}

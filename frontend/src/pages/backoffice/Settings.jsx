@@ -4,30 +4,16 @@ import {
   FiSave, FiUpload, FiGlobe, FiMail, FiPhone, FiMapPin,
   FiDollarSign, FiBell, FiShield, FiDatabase, FiKey
 } from 'react-icons/fi'
+import api from '../../services/api'
 
 const backofficeService = {
   getSettings: async () => {
-    const response = await fetch('/api/v1/backoffice/settings', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to fetch settings')
-    return response.json()
+    const { data } = await api.get('/backoffice/settings')
+    return data
   },
   updateSettings: async (data) => {
-    const response = await fetch('/api/v1/backoffice/settings', {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId'),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to update settings')
-    return response.json()
+    const { data: responseData } = await api.put('/backoffice/settings', data)
+    return responseData
   }
 }
 
@@ -353,7 +339,7 @@ export default function BackofficeSettings() {
                     onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
-                    <option value="MAD">Dirham Marocain (MAD)</option>
+                    <option value="MAD">Dirham marocain (Đh)</option>
                     <option value="EUR">Euro (EUR)</option>
                     <option value="USD">Dollar US (USD)</option>
                   </select>

@@ -7,6 +7,11 @@ import {
 } from 'react-icons/fi'
 import { HiSparkles } from 'react-icons/hi2'
 import { DIRHAM_SYMBOL } from '../../utils/currency'
+import MultiSelectDropdown from './MultiSelectDropdown'
+
+// Normalise une valeur de type de bien (tableau, chaîne "a,b" ou vide) en tableau
+const toTypeArray = (v) =>
+  Array.isArray(v) ? v : (v ? String(v).split(',').filter(Boolean) : [])
 
 const PROPERTY_TYPES = [
   { value: 'apartment', label: 'Appartement' },
@@ -74,7 +79,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
   // Filter state
   const [filters, setFilters] = useState({
     transaction_type: initialFilters.transaction_type || searchParams.get('transaction_type') || 'sale',
-    property_type: initialFilters.property_type || searchParams.get('property_type') || '',
+    property_type: toTypeArray(initialFilters.property_type ?? searchParams.get('property_type')),
     city: initialFilters.city || searchParams.get('city') || '',
     neighborhood: initialFilters.neighborhood || searchParams.get('neighborhood') || '',
     min_price: initialFilters.min_price || searchParams.get('min_price') || '',
@@ -98,6 +103,15 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }))
+  }
+
+  const handlePropertyTypeToggle = (value) => {
+    setFilters(prev => ({
+      ...prev,
+      property_type: prev.property_type.includes(value)
+        ? prev.property_type.filter(t => t !== value)
+        : [...prev.property_type, value]
+    }))
   }
 
   const handleFeatureToggle = (feature) => {
@@ -159,7 +173,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
   const resetFilters = () => {
     setFilters({
       transaction_type: 'sale',
-      property_type: '',
+      property_type: [],
       city: '',
       neighborhood: '',
       min_price: '',
@@ -239,17 +253,14 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
               </datalist>
             </div>
 
-            {/* Property type */}
-            <select
-              value={filters.property_type}
-              onChange={(e) => handleFilterChange('property_type', e.target.value)}
-              className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">Type de bien</option>
-              {PROPERTY_TYPES.map(type => (
-                <option key={type.value} value={type.value}>{type.label}</option>
-              ))}
-            </select>
+            {/* Property type (multi-sélection) */}
+            <MultiSelectDropdown
+              label="Type de bien"
+              options={PROPERTY_TYPES}
+              selected={filters.property_type}
+              onToggle={handlePropertyTypeToggle}
+              className="min-w-[170px]"
+            />
 
             {/* Advanced filters button */}
             <button
@@ -573,16 +584,12 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
               <FiHome className="inline w-4 h-4 mr-1" />
               Type de bien
             </label>
-            <select
-              value={filters.property_type}
-              onChange={(e) => handleFilterChange('property_type', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">Tous les types</option>
-              {PROPERTY_TYPES.map(type => (
-                <option key={type.value} value={type.value}>{type.label}</option>
-              ))}
-            </select>
+            <MultiSelectDropdown
+              label="Tous les types"
+              options={PROPERTY_TYPES}
+              selected={filters.property_type}
+              onToggle={handlePropertyTypeToggle}
+            />
           </div>
 
           {/* Price range */}

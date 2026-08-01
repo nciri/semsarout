@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from "_components.html" import card, lucide with context %}
+{% block subject %}Votre décompte de caution signé{% endblock %}
+{% block preheader %}Votre décompte de caution a été signé par toutes les parties.{% endblock %}
+{% block badge %}{{ lucide("file-check") }}{% endblock %}
+{% block hero_title %}Décompte de caution signé{% endblock %}
+{% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}, la signature est complète.</p>{% endblock %}
+{% block content %}
+<p style="text-align:left; color:{{ brand.ink }};">Votre décompte de caution a été signé par l'ensemble des parties. Vous trouverez la copie signée en pièce jointe de cet email.</p>
+<p style="margin-top:18px; font-size:13px; color:{{ brand.muted }}; text-align:left;">Une question&nbsp;? <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
+{% endblock %}

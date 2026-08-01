@@ -7,11 +7,14 @@ export default defineConfig({
     port: 5600,
     proxy: {
       '/api': {
-        target: 'http://localhost:7000',
+        // BFF/gateway v2 : route catalog + directory vers les microservices,
+        // tout le reste retombe sur le monolithe (:7000). Voir docs/architecture-v2-bringup.md.
+        target: 'http://localhost:8099',
         changeOrigin: true
       },
       '/uploads': {
-        target: 'http://localhost:7000',
+        // Médias servis par le BFF (→ listing / stockage objet), plus le disque du monolithe.
+        target: 'http://localhost:8099',
         changeOrigin: true
       }
     }

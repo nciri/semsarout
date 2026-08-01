@@ -15,6 +15,12 @@
     @apply font-display text-midnight tracking-tight;
   }
 
+  /* Évite que les <select> héritent d'un texte clair sur fond sombre
+     (ex. barre de recherche sur le hero). Les champs .input gardent text-midnight. */
+  select {
+    color: #334155;
+  }
+
   select option {
     color: #000000;
     background-color: #ffffff;

@@ -247,7 +247,7 @@ export default function StayManager() {
             Cette fonctionnalite est disponible avec le plan Pro ou superieur.
           </p>
           <Link
-            to="/dashboard/abonnement"
+            to="/dashboard/compte/abonnement"
             className="inline-flex items-center gap-2 px-6 py-3 bg-terracotta-600 text-white rounded-lg hover:bg-terracotta-700 transition-colors"
           >
             Passer au plan Pro
@@ -497,7 +497,7 @@ export default function StayManager() {
               Biens lies ({propertyLinks.length})
             </h2>
             <Link
-              to="/dashboard/integrations/staymanager/properties"
+              to="/dashboard/staymanager/biens"
               className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors"
               style={{ color: SM_COLORS.primary }}
             >
@@ -511,7 +511,7 @@ export default function StayManager() {
               <FiHome className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-600 mb-4">Aucun bien lie pour le moment</p>
               <Link
-                to="/dashboard/integrations/staymanager/properties"
+                to="/dashboard/staymanager/biens"
                 className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-opacity hover:opacity-90 bg-gradient-to-r from-[#1F3D34] via-[#2E5E4E] to-[#2E5E4E]"
               >
                 <FiLink className="w-4 h-4" />
@@ -564,7 +564,7 @@ export default function StayManager() {
 
               {propertyLinks.length > 5 && (
                 <Link
-                  to="/dashboard/integrations/staymanager/properties"
+                  to="/dashboard/staymanager/biens"
                   className="block text-center py-3 font-medium hover:underline"
                   style={{ color: SM_COLORS.primary }}
                 >

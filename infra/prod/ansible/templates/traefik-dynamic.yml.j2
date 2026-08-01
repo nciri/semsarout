@@ -1,0 +1,26 @@
+# Généré par Ansible (roles/docker_infra) — provider "file" de Traefik : route
+# /api et /uploads des deux domaines vers le BFF (systemd, hors docker), joint via
+# host.docker.internal (extra_hosts: host-gateway, cf. compose.prod.yml.j2).
+# Priorité 100 > routeurs nginx (priorité 1, Host seul) : /api et /uploads ne
+# tombent jamais sur le nginx statique.
+http:
+  routers:
+    bff-semsarout:
+      rule: "(Host(`{{ semsar_domain }}`) || Host(`www.{{ semsar_domain }}`)) && (PathPrefix(`/api`) || PathPrefix(`/uploads`))"
+      entrypoints: [websecure]
+      service: bff
+      priority: 100
+      tls:
+        certResolver: letsencrypt
+    bff-m3a-l3achrane:
+      rule: "(Host(`{{ m3a_l3achrane_domain }}`) || Host(`www.{{ m3a_l3achrane_domain }}`)) && (PathPrefix(`/api`) || PathPrefix(`/uploads`))"
+      entrypoints: [websecure]
+      service: bff
+      priority: 100
+      tls:
+        certResolver: letsencrypt
+  services:
+    bff:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:{{ bff_port }}"

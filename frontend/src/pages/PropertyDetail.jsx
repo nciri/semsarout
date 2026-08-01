@@ -1,20 +1,35 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { useQuery, useQueryClient } from 'react-query'
+import { useQuery, useQueryClient, useMutation } from 'react-query'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import {
   FiMapPin, FiMaximize, FiPhone, FiMail, FiHeart,
-  FiShare2, FiChevronLeft, FiChevronRight, FiCheck, FiZoomIn, FiEye
+  FiShare2, FiChevronLeft, FiChevronRight, FiCheck, FiZoomIn, FiEye, FiFileText,
+  FiUploadCloud, FiTrash2
 } from 'react-icons/fi'
 import { IoBedOutline, IoWaterOutline } from 'react-icons/io5'
 import { propertyService } from '../services/propertyService'
 import { buyerService } from '../services/buyerService'
+import { applicantService } from '../services/rentalService'
+import api from '../services/api'
 import { formatPrice } from '../utils/currency'
 import PhotoLightbox from '../components/common/PhotoLightbox'
 import PriceGauge from '../components/common/PriceGauge'
+import BookVisitWidget from '../components/common/BookVisitWidget'
 import useAuthStore from '../store/authStore'
 import { getAmenityIcon } from '../utils/amenityIcons'
+import { DOC_TYPES } from './dashboard/applicationStatus'
+
+const MAX_DOC_SIZE = 10 * 1024 * 1024
+
+const LEAD_STATUS = {
+  new: ['Nouveau', 'bg-blue-100 text-blue-700'],
+  contacted: ['Contacté', 'bg-yellow-100 text-yellow-700'],
+  qualified: ['Qualifié', 'bg-green-100 text-green-700'],
+  converted: ['Converti', 'bg-purple-100 text-purple-700'],
+  lost: ['Perdu', 'bg-gray-100 text-gray-600'],
+}
 
 function PropertyDetail() {
   const { id } = useParams()
@@ -27,6 +42,14 @@ function PropertyDetail() {
   const [timeRemaining, setTimeRemaining] = useState(null)
   const [revealedPhone, setRevealedPhone] = useState(null)
   const [isRevealingPhone, setIsRevealingPhone] = useState(false)
+  const [applyOpen, setApplyOpen] = useState(false)
+  const [applyForm, setApplyForm] = useState({
+    applicant_name: '', applicant_email: '', applicant_phone: '',
+    monthly_income: '', guarantor_name: '', guarantor_income: '',
+  })
+  const [applyDocs, setApplyDocs] = useState([])
+  const [pendingDocType, setPendingDocType] = useState(DOC_TYPES[0][0])
+  const [uploadingDocs, setUploadingDocs] = useState(false)
 
   const { data: property, isLoading } = useQuery(
     ['property', id],
@@ -50,6 +73,15 @@ function PropertyDetail() {
   const existingFavorite = favoritesData?.favorites?.find(
     (f) => f.property_id === Number(id)
   )
+
+  // Agence propriétaire du bien : afficher les contacts intéressés par cette annonce
+  const isOwnerAgency = isAuthenticated && !!user?.agency_id && !!property?.agency_id && user.agency_id === property.agency_id
+  const { data: interestedData, isLoading: interestedLoading } = useQuery(
+    ['property-leads', id],
+    async () => (await api.get(`/backoffice/leads?property_id=${id}&per_page=100`)).data,
+    { enabled: !!isOwnerAgency }
+  )
+  const interestedLeads = interestedData?.leads || []
 
   const handleToggleFavorite = async () => {
     if (!isAuthenticated) {
@@ -161,6 +193,71 @@ function PropertyDetail() {
     }
   }
 
+  // Prefill the application form with the logged-in user's info
+  useEffect(() => {
+    if (user) {
+      setApplyForm((f) => ({
+        ...f,
+        applicant_name: [user.first_name, user.last_name].filter(Boolean).join(' '),
+        applicant_email: user.email || '',
+        applicant_phone: user.phone || '',
+      }))
+    }
+  }, [user])
+
+  const applyMut = useMutation(
+    async () => {
+      const created = await applicantService.submit({
+        property_id: Number(id),
+        applicant_name: applyForm.applicant_name,
+        applicant_email: applyForm.applicant_email,
+        applicant_phone: applyForm.applicant_phone,
+        monthly_income: applyForm.monthly_income ? Number(applyForm.monthly_income) : null,
+        guarantor_name: applyForm.guarantor_name || null,
+        guarantor_income: applyForm.guarantor_income ? Number(applyForm.guarantor_income) : null,
+      })
+      if (applyDocs.length) {
+        setUploadingDocs(true)
+        try {
+          for (const doc of applyDocs) {
+            try {
+              await applicantService.uploadDocument(created.id, doc.file, doc.docType)
+            } catch (err) {
+              toast.error(`Échec de l'envoi de « ${doc.file.name} »`)
+            }
+          }
+        } finally {
+          setUploadingDocs(false)
+        }
+      }
+      return created
+    },
+    {
+      onSuccess: () => {
+        toast.success('Candidature envoyée avec vos pièces.')
+        setApplyOpen(false)
+        setApplyDocs([])
+        navigate('/dashboard/candidatures')
+      },
+      onError: (error) => toast.error(error.response?.data?.error || 'Une erreur est survenue')
+    }
+  )
+
+  const handleAddApplyDoc = (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (file.size > MAX_DOC_SIZE) {
+      toast.error('Fichier trop volumineux (max 10 Mo)')
+      return
+    }
+    setApplyDocs((docs) => [...docs, { docType: pendingDocType, file }])
+  }
+
+  const removeApplyDoc = (index) => {
+    setApplyDocs((docs) => docs.filter((_, i) => i !== index))
+  }
+
   const PROPERTY_TYPES = {
     apartment: 'Appartement',
     house: 'Maison',
@@ -241,6 +338,23 @@ function PropertyDetail() {
                 >
                   <FiZoomIn className="w-5 h-5" />
                 </button>
+                {/* Favori — même cœur que les cartes d'annonces */}
+                {isBuyer && (
+                  <button
+                    aria-label="Favori"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleToggleFavorite()
+                    }}
+                    className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-white/[.92] shadow-ds-sm flex items-center justify-center z-10 hover:bg-white transition-colors"
+                    title={existingFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                  >
+                    <FiHeart
+                      className={`w-5 h-5 ${existingFavorite ? 'text-redcard-500 fill-redcard-500' : 'text-slate-600'}`}
+                      strokeWidth={1.8}
+                    />
+                  </button>
+                )}
                 {/* Image counter */}
                 <div className="absolute top-4 left-4 bg-black/50 text-white text-sm px-3 py-1 rounded-full">
                   {currentImage + 1} / {images.length}
@@ -331,6 +445,14 @@ function PropertyDetail() {
                   <div className="mt-2 text-sm font-bold text-red-600 bg-red-50 px-2 py-1 rounded inline-block">
                     Expire dans: {timeRemaining}
                   </div>
+                )}
+                {property.transaction_type === 'sale' && (
+                  <Link
+                    to={`/simulateur-credit?price=${property.price}`}
+                    className="mt-2 text-sm text-primary-600 hover:underline inline-block"
+                  >
+                    Simuler un crédit pour ce bien
+                  </Link>
                 )}
               </div>
             </div>
@@ -446,6 +568,53 @@ function PropertyDetail() {
         {/* Sidebar */}
         <div className="lg:col-span-1">
           <div className="sticky top-24">
+            {/* Contacts intéressés — visible uniquement par l'agence propriétaire */}
+            {isOwnerAgency && (
+              <div className="card p-6 mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold">Contacts intéressés</h3>
+                  <span className="badge-primary">{interestedLeads.length}</span>
+                </div>
+                {interestedLoading ? (
+                  <p className="text-sm text-gray-400">Chargement…</p>
+                ) : interestedLeads.length === 0 ? (
+                  <p className="text-sm text-gray-400">Aucun contact intéressé pour l'instant.</p>
+                ) : (
+                  <ul className="space-y-3 max-h-[26rem] overflow-y-auto -mr-2 pr-2">
+                    {interestedLeads.map((l) => (
+                      <li key={l.id} className="border border-gray-100 rounded-lg p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium text-gray-900 text-sm truncate">{l.name}</span>
+                          <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${LEAD_STATUS[l.status]?.[1] || 'bg-gray-100 text-gray-600'}`}>
+                            {LEAD_STATUS[l.status]?.[0] || l.status}
+                          </span>
+                        </div>
+                        <div className="mt-1.5 space-y-1">
+                          {l.email && (
+                            <a href={`mailto:${l.email}`} className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-primary-600">
+                              <FiMail className="w-3.5 h-3.5 text-gray-400" /> <span className="truncate">{l.email}</span>
+                            </a>
+                          )}
+                          {l.phone && (
+                            <a href={`tel:${l.phone}`} className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-primary-600">
+                              <FiPhone className="w-3.5 h-3.5 text-gray-400" /> {l.phone}
+                            </a>
+                          )}
+                        </div>
+                        {l.message && <p className="text-xs text-gray-400 mt-1.5 line-clamp-2">{l.message}</p>}
+                        <p className="text-[11px] text-gray-400 mt-1.5">
+                          {l.created_at ? new Date(l.created_at).toLocaleDateString('fr-FR') : ''}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <Link to="/backoffice/leads" className="block text-center text-sm text-primary-600 hover:text-primary-700 mt-4">
+                  Gérer dans le back-office →
+                </Link>
+              </div>
+            )}
+
             {/* Contact Card */}
             <div className="card p-6 mb-6">
               <h3 className="font-semibold mb-4">Nous contacter</h3>
@@ -524,6 +693,17 @@ function PropertyDetail() {
               )}
             </div>
 
+            {/* Postuler (location uniquement) */}
+            {property.transaction_type === 'rent' && (
+              <button
+                onClick={() => isAuthenticated ? setApplyOpen(true) : navigate('/connexion', { state: { from: { pathname: `/annonces/${id}` } } })}
+                className="btn-primary w-full flex items-center justify-center gap-2 mb-6"
+              >
+                <FiFileText className="w-5 h-5" /> Déposer un dossier de candidature
+              </button>
+            )}
+            {isBuyer && <div className="mb-6"><BookVisitWidget propertyId={id} /></div>}
+
             {/* Actions */}
             <div className="flex gap-3">
               {isBuyer && (
@@ -532,7 +712,7 @@ function PropertyDetail() {
                   className={`btn-secondary flex-1 ${existingFavorite ? 'text-red-600 border-red-200' : ''}`}
                 >
                   <FiHeart className={`w-4 h-4 mr-2 ${existingFavorite ? 'fill-current' : ''}`} />
-                  {existingFavorite ? 'Retiré' : 'Favoris'}
+                  {existingFavorite ? 'En favori' : 'Ajouter aux favoris'}
                 </button>
               )}
               <button onClick={handleShare} className="btn-secondary flex-1">
@@ -543,6 +723,141 @@ function PropertyDetail() {
           </div>
         </div>
       </div>
+
+      {/* Modale de candidature */}
+      {applyOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto">
+            <h3 className="font-semibold text-lg mb-4">Déposer un dossier de candidature</h3>
+            <form
+              onSubmit={(e) => { e.preventDefault(); applyMut.mutate() }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="label">Nom *</label>
+                <input
+                  className="input"
+                  value={applyForm.applicant_name}
+                  onChange={(e) => setApplyForm((f) => ({ ...f, applicant_name: e.target.value }))}
+                  placeholder="Votre nom"
+                  required
+                />
+              </div>
+              <div>
+                <label className="label">Email *</label>
+                <input
+                  type="email"
+                  className="input"
+                  value={applyForm.applicant_email}
+                  onChange={(e) => setApplyForm((f) => ({ ...f, applicant_email: e.target.value }))}
+                  placeholder="votre@email.com"
+                  required
+                />
+              </div>
+              <div>
+                <label className="label">Téléphone</label>
+                <input
+                  className="input"
+                  value={applyForm.applicant_phone}
+                  onChange={(e) => setApplyForm((f) => ({ ...f, applicant_phone: e.target.value }))}
+                  placeholder="+212 6XX XXX XXX"
+                />
+              </div>
+              <div>
+                <label className="label">Revenu mensuel (Đh)</label>
+                <input
+                  type="number"
+                  className="input"
+                  value={applyForm.monthly_income}
+                  onChange={(e) => setApplyForm((f) => ({ ...f, monthly_income: e.target.value }))}
+                  placeholder="8000"
+                />
+              </div>
+              <div>
+                <label className="label">Nom du garant</label>
+                <input
+                  className="input"
+                  value={applyForm.guarantor_name}
+                  onChange={(e) => setApplyForm((f) => ({ ...f, guarantor_name: e.target.value }))}
+                  placeholder="Nom du garant (facultatif)"
+                />
+              </div>
+              <div>
+                <label className="label">Revenu du garant (Đh)</label>
+                <input
+                  type="number"
+                  className="input"
+                  value={applyForm.guarantor_income}
+                  onChange={(e) => setApplyForm((f) => ({ ...f, guarantor_income: e.target.value }))}
+                  placeholder="Facultatif"
+                />
+              </div>
+
+              <div className="border-t border-gray-200 pt-4">
+                <label className="label">Pièces jointes</label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <select
+                    className="input sm:w-56"
+                    value={pendingDocType}
+                    onChange={(e) => setPendingDocType(e.target.value)}
+                  >
+                    {DOC_TYPES.map(([value, labelText]) => (
+                      <option key={value} value={value}>{labelText}</option>
+                    ))}
+                  </select>
+                  <label className="btn-secondary flex-1 justify-center cursor-pointer">
+                    <FiUploadCloud className="w-4 h-4 mr-2" />
+                    Ajouter un fichier
+                    <input type="file" className="hidden" onChange={handleAddApplyDoc} />
+                  </label>
+                </div>
+                {applyDocs.length > 0 && (
+                  <ul className="mt-3 space-y-2">
+                    {applyDocs.map((doc, index) => (
+                      <li
+                        key={`${doc.file.name}-${index}`}
+                        className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm"
+                      >
+                        <span className="truncate">
+                          <span className="font-medium">
+                            {DOC_TYPES.find(([value]) => value === doc.docType)?.[1] || doc.docType}
+                          </span>
+                          {' — '}{doc.file.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeApplyDoc(index)}
+                          className="text-gray-400 hover:text-red-600 shrink-0 ml-2"
+                          aria-label="Retirer ce fichier"
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setApplyOpen(false); setApplyDocs([]) }}
+                  className="btn-secondary"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={applyMut.isLoading || uploadingDocs}
+                  className="btn-primary"
+                >
+                  {uploadingDocs ? 'Envoi des pièces...' : applyMut.isLoading ? 'Envoi...' : 'Envoyer ma candidature'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

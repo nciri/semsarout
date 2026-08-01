@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_components.html" import card, lucide with context %}
+{% block subject %}Virement de vos loyers — {{ period_label }}{% endblock %}
+{% block preheader %}Vos loyers de la période {{ period_label }} vous sont reversés.{% endblock %}
+{% block badge %}{{ lucide("banknote") }}{% endblock %}
+{% block hero_title %}Reversement de vos loyers{% endblock %}
+{% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}, voici le détail de votre reversement.</p>{% endblock %}
+{% block content %}
+<p style="text-align:left; color:{{ brand.ink }};">Le loyer de la période <strong>{{ period_label }}</strong> a été encaissé. Après déduction des honoraires de gestion, le montant net vous est reversé.</p>
+{{ card([("Période", period_label)]
+  + [("Loyer encaissé", "{:,.0f}".format(gross_amount|float).replace(",", " ") ~ " " ~ currency)]
+  + ([("Honoraires", (fee_percent|string) ~ " %")] if fee_percent else [])
+  + [("Net reversé", "{:,.0f}".format(net_amount|float).replace(",", " ") ~ " " ~ currency)]) }}
+<p style="margin-top:18px; font-size:13px; color:{{ brand.muted }}; text-align:left;">Une question sur votre gestion locative&nbsp;? <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
+{% endblock %}

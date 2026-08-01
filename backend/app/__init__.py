@@ -29,6 +29,10 @@ def create_app(config_name='default'):
     from app.api.v1 import api_v1_bp
     app.register_blueprint(api_v1_bp, url_prefix='/api/v1')
 
+    # Register CLI commands (e.g. `flask send-search-alerts`, run from a cron)
+    from app.cli import register_cli
+    register_cli(app)
+
     # Health check route
     @app.route('/health')
     def health_check():
@@ -48,5 +52,8 @@ def create_app(config_name='default'):
         return send_from_directory(
             os.path.abspath(os.path.join(uploads, 'photos')), filename
         )
+
+    from app.commands import register_commands
+    register_commands(app)
 
     return app

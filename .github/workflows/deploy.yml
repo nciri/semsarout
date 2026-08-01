@@ -1,0 +1,134 @@
+name: Deploy prod (Hetzner)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: Terraform apply
+    runs-on: ubuntu-latest
+    outputs:
+      server_ip: ${{ steps.output.outputs.server_ip }}
+    defaults:
+      run:
+        working-directory: infra/prod/terraform
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.6"
+
+      - name: Derive SSH public key from deploy key
+        id: ssh_key
+        env:
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          key_file="$(mktemp)"
+          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > "$key_file"
+          pub_key="$(ssh-keygen -y -f "$key_file")"
+          rm -f "$key_file"
+          {
+            echo "pub_key<<SSH_PUB_KEY_EOF"
+            echo "$pub_key"
+            echo "SSH_PUB_KEY_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Terraform init
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.TF_BACKEND_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_BACKEND_SECRET_KEY }}
+        run: |
+          set -euo pipefail
+          terraform init \
+            -backend-config="endpoint=https://fsn1.your-objectstorage.com" \
+            -backend-config="bucket=semsarout-tfstate" \
+            -backend-config="key=semsarout/prod.tfstate" \
+            -backend-config="region=fsn1" \
+            -backend-config="skip_credentials_validation=true" \
+            -backend-config="skip_region_validation=true" \
+            -backend-config="skip_requesting_account_id=true" \
+            -backend-config="skip_metadata_api_check=true" \
+            -backend-config="skip_s3_checksum=true" \
+            -backend-config="use_path_style=true"
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform apply
+        env:
+          TF_VAR_hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
+          TF_VAR_ssh_public_key: ${{ steps.ssh_key.outputs.pub_key }}
+        run: terraform apply -auto-approve
+
+      - name: Read server_ip output
+        id: output
+        run: |
+          set -euo pipefail
+          echo "server_ip=$(terraform output -raw server_ip)" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Ansible deploy
+    needs: terraform
+    runs-on: ubuntu-latest
+    env:
+      SERVER_IP: ${{ needs.terraform.outputs.server_ip }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Ansible
+        run: pip install ansible-core
+
+      - name: Write SSH deploy key
+        env:
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p "$RUNNER_TEMP/ssh"
+          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > "$RUNNER_TEMP/ssh/deploy_key"
+          chmod 600 "$RUNNER_TEMP/ssh/deploy_key"
+
+      - name: Write inventory
+        run: |
+          set -euo pipefail
+          printf '[prod]\n%s ansible_user=root ansible_ssh_private_key_file=%s/ssh/deploy_key\n' \
+            "$SERVER_IP" "$RUNNER_TEMP" > "$RUNNER_TEMP/inventory.ini"
+
+      - name: Write extra-vars file
+        env:
+          JWT_SECRET_KEY_PROD: ${{ secrets.JWT_SECRET_KEY_PROD }}
+        run: |
+          set -euo pipefail
+          umask 077
+          cat > "$RUNNER_TEMP/vars.yml" <<EOF
+          jwt_secret_key: "${JWT_SECRET_KEY_PROD}"
+          semsar_domain: semsarout.com
+          m3a_l3achrane_domain: m3a-l3achrane.ma
+          EOF
+
+      - name: Run playbook
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+        run: |
+          set -euo pipefail
+          ansible-playbook infra/prod/ansible/playbook.yml \
+            -i "$RUNNER_TEMP/inventory.ini" \
+            -u root \
+            --private-key "$RUNNER_TEMP/ssh/deploy_key" \
+            --extra-vars "@$RUNNER_TEMP/vars.yml"

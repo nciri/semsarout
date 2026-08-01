@@ -45,6 +45,7 @@ function Footer() {
               <li><Link to="/nos-services" className="hover:text-white transition-colors">Photos Professionnelles</Link></li>
               <li><Link to="/nos-services" className="hover:text-white transition-colors">Estimation Gratuite</Link></li>
               <li><Link to="/annonces?transaction_type=sale" className="hover:text-white transition-colors">Acheter un bien</Link></li>
+              <li><Link to="/simulateur-credit" className="hover:text-white transition-colors">Simulateur de crédit</Link></li>
             </ul>
           </div>
 

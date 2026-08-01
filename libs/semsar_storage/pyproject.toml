@@ -1,0 +1,15 @@
+[project]
+name = "semsar-storage"
+version = "0.1.0"
+description = "SemsarOut — stockage objet S3/MinIO + archivage WORM (Object Lock)."
+requires-python = ">=3.11"
+dependencies = [
+    "boto3>=1.34",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["semsar_storage"]

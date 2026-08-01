@@ -7,6 +7,7 @@ from sqlalchemy import or_, and_, func, cast
 from app import db
 from app.api.v1 import api_v1_bp
 from app.models import Property, PropertyImage, User
+from app.services.moderation import exclude_moderated_properties as _exclude_moderated
 
 
 class SearchQuery(db.Model):
@@ -40,6 +41,7 @@ def list_properties():
 
     # Base query - only active properties for public
     query = Property.query.filter(Property.status == 'active')
+    query = _exclude_moderated(query)
 
     # === Basic Filters ===
     if request.args.get('transaction_type'):
@@ -208,10 +210,11 @@ def list_properties():
     elif sort == 'rooms_desc':
         query = query.order_by(Property.rooms.desc())
 
-    # Featured/urgent first (secondary sort)
+    # Featured/urgent first (secondary sort), puis id desc (départage déterministe / pagination stable)
     query = query.order_by(
         Property.is_featured.desc(),
-        Property.is_urgent.desc()
+        Property.is_urgent.desc(),
+        Property.id.desc()
     )
 
     # Execute query
@@ -267,6 +270,7 @@ def advanced_search():
 
     # Build query with provided filters
     query = Property.query.filter(Property.status == 'active')
+    query = _exclude_moderated(query)
 
     # Apply standard filters from POST body
     if filters.get('transaction_type'):
@@ -366,6 +370,9 @@ def advanced_search():
     elif sort == 'price_desc':
         query = query.order_by(Property.price.desc())
 
+    # id desc en départage déterministe (pagination stable / parité search)
+    query = query.order_by(Property.id.desc())
+
     # Pagination
     page = data.get('page', 1)
     per_page = min(data.get('per_page', 20), 100)
@@ -430,6 +437,18 @@ def get_search_suggestions():
 def get_property(property_id):
     """Get a single property by ID."""
     property = Property.query.get_or_404(property_id)
+
+    # Hide listings from moderated owners/agencies from the public (spec §6).
+    # This route has no auth requirement (purely public detail view), so a
+    # blanket 404 is safe here — it never masks an authenticated owner's own view.
+    from app.models import User as _User, Agency as _Agency
+    owner = _User.query.get(property.owner_id)
+    if owner is None or owner.is_suspended or owner.deleted_at is not None:
+        return jsonify({'error': 'Not found'}), 404
+    if property.agency_id:
+        ag = _Agency.query.get(property.agency_id)
+        if ag is not None and (ag.is_suspended or ag.deleted_at is not None):
+            return jsonify({'error': 'Not found'}), 404
 
     # Increment view count
     property.views_count += 1
@@ -584,6 +603,10 @@ def my_properties():
     # Filter by status
     if request.args.get('status'):
         query = query.filter(Property.status == request.args.get('status'))
+
+    # Filter by transaction type (vente / location longue durée)
+    if request.args.get('transaction_type'):
+        query = query.filter(Property.transaction_type == request.args.get('transaction_type'))
 
     query = query.order_by(Property.created_at.desc())
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)

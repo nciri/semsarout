@@ -8,51 +8,26 @@ import {
 } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
 import { formatPrice } from '../../utils/currency'
+import MesBiensTabs from '../../components/dashboard/MesBiensTabs'
+import api from '../../services/api'
 
 const programsService = {
   getMyPrograms: async (params) => {
     const searchParams = new URLSearchParams(params)
-    const response = await fetch(`/api/v1/programs/my?${searchParams}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to fetch programs')
-    return response.json()
+    const { data } = await api.get(`/programs/my?${searchParams}`)
+    return data
   },
   deleteProgram: async (id) => {
-    const response = await fetch(`/api/v1/programs/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to delete program')
-    return response.json()
+    const { data } = await api.delete(`/programs/${id}`)
+    return data
   },
   publishProgram: async (id) => {
-    const response = await fetch(`/api/v1/programs/${id}/publish`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to publish program')
-    return response.json()
+    const { data } = await api.post(`/programs/${id}/publish`)
+    return data
   },
   unpublishProgram: async (id) => {
-    const response = await fetch(`/api/v1/programs/${id}/unpublish`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to unpublish program')
-    return response.json()
+    const { data } = await api.post(`/programs/${id}/unpublish`)
+    return data
   }
 }
 
@@ -407,17 +382,14 @@ export default function DashboardPrograms() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      {/* En-tête unifié avec « Mes annonces » : ici on affiche le nombre de programmes gérés */}
+      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Programmes immobiliers</h1>
-          <p className="text-gray-500">
-            Gérez vos projets immobiliers neufs
+          <h1 className="font-display text-2xl font-bold text-gray-900">Mes annonces</h1>
+          <p className="text-gray-600">
+            {data?.total || 0} programme{(data?.total || 0) > 1 ? 's' : ''} géré{(data?.total || 0) > 1 ? 's' : ''}
             {programsLimit && (
-              <span className="ml-2 text-sm text-gray-400">
-                ({data?.total || 0}/{programsLimit} programmes)
-              </span>
+              <span className="ml-1 text-sm text-gray-400">sur {programsLimit}</span>
             )}
           </p>
         </div>
@@ -429,6 +401,8 @@ export default function DashboardPrograms() {
           Nouveau programme
         </Link>
       </div>
+      <MesBiensTabs />
+      <div className="space-y-6">
 
       {/* Search and filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">

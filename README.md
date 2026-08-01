@@ -169,6 +169,15 @@ frontend/
 - Import CSV
 - Intégration StayManager (prévue)
 
+## Maintenance / RGPD
+
+### Purge RGPD des comptes supprimés
+
+Les comptes supprimés (soft-delete) restent restaurables 90 jours, puis sont anonymisés.
+Brancher la commande sur un cron quotidien :
+
+    0 3 * * *  cd /chemin/backend && source venv/bin/activate && flask purge-deleted
+
 ## Licence
 
 Propriétaire - Tous droits réservés

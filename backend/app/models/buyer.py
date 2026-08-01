@@ -99,8 +99,14 @@ class BuyerMessage(db.Model):
     buyer = db.relationship('User', foreign_keys=[buyer_id], backref='sent_messages')
     property = db.relationship('Property', backref='buyer_messages')
 
-    def to_dict(self):
-        return {
+    # Relationships
+    replies = db.relationship(
+        'MessageReply', back_populates='thread',
+        order_by='MessageReply.created_at', cascade='all, delete-orphan'
+    )
+
+    def to_dict(self, include_replies=False):
+        data = {
             'id': self.id,
             'buyer_id': self.buyer_id,
             'property_id': self.property_id,
@@ -112,9 +118,47 @@ class BuyerMessage(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'read_at': self.read_at.isoformat() if self.read_at else None
         }
+        if include_replies:
+            data['replies'] = [r.to_dict() for r in self.replies]
+        return data
 
     def __repr__(self):
         return f'<BuyerMessage {self.id}>'
+
+
+class MessageReply(db.Model):
+    """A reply within a BuyerMessage thread, from either the buyer or the agent."""
+    __tablename__ = 'message_replies'
+
+    id = db.Column(db.Integer, primary_key=True)
+    buyer_message_id = db.Column(db.Integer, db.ForeignKey('buyer_messages.id'), nullable=False, index=True)
+
+    # 'buyer' or 'agent'
+    sender_role = db.Column(db.String(10), nullable=False)
+    sender_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+
+    body = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    read_at = db.Column(db.DateTime)
+
+    # Relationships
+    thread = db.relationship('BuyerMessage', back_populates='replies')
+    sender = db.relationship('User', foreign_keys=[sender_user_id])
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'buyer_message_id': self.buyer_message_id,
+            'sender_role': self.sender_role,
+            'sender_user_id': self.sender_user_id,
+            'sender_name': self.sender.full_name if self.sender else None,
+            'body': self.body,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'read_at': self.read_at.isoformat() if self.read_at else None
+        }
+
+    def __repr__(self):
+        return f'<MessageReply {self.id}>'
 
 
 class PropertyEstimate(db.Model):

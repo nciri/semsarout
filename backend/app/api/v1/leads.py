@@ -1,8 +1,20 @@
+from datetime import datetime, timedelta
+
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.api.v1 import api_v1_bp
 from app.models import Lead, Property, User, Agency
+
+# Un lead non lu devient "en retard" au-delà de ce délai (jours)
+LEAD_OVERDUE_DAYS = 3
+
+
+def _leads_query_for(user):
+    """Base query scoping leads to the current user (agency or individual owner)."""
+    if user.agency_id:
+        return Lead.query.filter(Lead.agency_id == user.agency_id)
+    return Lead.query.filter(Lead.owner_id == user.id)
 
 
 @api_v1_bp.route('/properties/<int:property_id>/contact', methods=['POST'])
@@ -130,12 +142,7 @@ def my_leads():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
 
-    if user.agency_id:
-        # Agency leads
-        query = Lead.query.filter(Lead.agency_id == user.agency_id)
-    else:
-        # Individual owner leads
-        query = Lead.query.filter(Lead.owner_id == user.id)
+    query = _leads_query_for(user)
 
     # Filter by status
     if request.args.get('status'):
@@ -149,6 +156,30 @@ def my_leads():
         'total': pagination.total,
         'pages': pagination.pages,
         'current_page': page
+    })
+
+
+@api_v1_bp.route('/my-leads/summary', methods=['GET'])
+@jwt_required()
+def my_leads_summary():
+    """Lightweight counters for the leads badge and the dashboard alert."""
+    current_user_id = int(get_jwt_identity()) if get_jwt_identity() else None
+    user = User.query.get(current_user_id)
+
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    base = _leads_query_for(user)
+    unread = base.filter(Lead.is_read.is_(False))
+    unread_count = unread.count()
+
+    overdue_cutoff = datetime.utcnow() - timedelta(days=LEAD_OVERDUE_DAYS)
+    overdue_count = unread.filter(Lead.created_at < overdue_cutoff).count()
+
+    return jsonify({
+        'unread_count': unread_count,
+        'overdue_count': overdue_count,
+        'overdue_days': LEAD_OVERDUE_DAYS
     })
 
 
@@ -171,6 +202,12 @@ def get_lead(lead_id):
     else:
         if lead.owner_id != user.id:
             return jsonify({'error': 'Unauthorized'}), 403
+
+    # Opening the detail marks the lead as read
+    if not lead.is_read:
+        lead.is_read = True
+        lead.read_at = datetime.utcnow()
+        db.session.commit()
 
     return jsonify({'lead': lead.to_dict()})
 

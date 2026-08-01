@@ -5,18 +5,13 @@ import {
 } from 'react-icons/fi'
 import { Link } from 'react-router-dom'
 import { formatPrice } from '../../utils/currency'
+import api from '../../services/api'
 
 // Mock service - replace with actual API service
 const backofficeService = {
   getDashboard: async () => {
-    const response = await fetch('/api/v1/backoffice/dashboard', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to fetch dashboard')
-    return response.json()
+    const { data } = await api.get('/backoffice/dashboard')
+    return data
   }
 }
 

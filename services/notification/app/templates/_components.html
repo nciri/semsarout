@@ -1,0 +1,26 @@
+{# Composants email réutilisables — style épuré, compatibles clients mail. #}
+
+{# Icônes lucide en PNG HÉBERGÉ (compat Gmail 100% : Gmail ne rend pas le SVG inline).
+   Fichiers : frontend/public/email-icons/{name}.png (52px, servis à {base_url}/email-icons/). #}
+{% macro lucide(name, size=26) -%}
+<img src="{{ app.base_url }}/email-icons/{{ name }}.png" width="{{ size }}" height="{{ size }}" alt="" style="display:block; margin:0 auto; border:0;">
+{%- endmacro %}
+
+{% macro button(url, label) -%}
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:4px auto;"><tr>
+  <td align="center" bgcolor="{{ brand.gold }}" style="border-radius:10px;">
+    <a href="{{ url }}" style="display:inline-block; padding:14px 34px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:15px; font-weight:600; line-height:1; color:#ffffff; text-decoration:none; letter-spacing:.2px;">{{ label }}</a>
+  </td>
+</tr></table>
+{%- endmacro %}
+
+{% macro card(rows) -%}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 22px 0; border:1px solid {{ brand.line }}; border-radius:12px; background:#fafbfc;">
+  {% for label, value in rows %}
+  <tr>
+    <td style="padding:12px 18px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:13px; color:{{ brand.muted }};{% if not loop.last %} border-bottom:1px solid {{ brand.line_soft }};{% endif %}">{{ label }}</td>
+    <td style="padding:12px 18px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:14px; font-weight:600; color:{{ brand.strong }}; text-align:right;{% if not loop.last %} border-bottom:1px solid {{ brand.line_soft }};{% endif %}">{{ value }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{%- endmacro %}

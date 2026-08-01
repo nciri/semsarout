@@ -118,7 +118,7 @@ export default function StayManagerReservations() {
       {/* Header */}
       <div className="mb-8">
         <Link
-          to="/dashboard/integrations/staymanager"
+          to="/dashboard/staymanager"
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
         >
           <FiArrowLeft className="w-4 h-4" />
@@ -260,7 +260,7 @@ export default function StayManagerReservations() {
                     <div className="text-right">
                       {reservation.total_price && (
                         <p className="font-semibold text-gray-900">
-                          {parseFloat(reservation.total_price).toLocaleString('fr-FR')} {reservation.currency || 'MAD'}
+                          {parseFloat(reservation.total_price).toLocaleString('fr-FR')} {reservation.currency || 'Đh'}
                         </p>
                       )}
                       {reservation.guest?.count && (
@@ -376,7 +376,7 @@ export default function StayManagerReservations() {
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-3">Prix total</h4>
                   <p className="text-2xl font-bold text-gray-900">
-                    {parseFloat(selectedReservation.total_price).toLocaleString('fr-FR')} {selectedReservation.currency || 'MAD'}
+                    {parseFloat(selectedReservation.total_price).toLocaleString('fr-FR')} {selectedReservation.currency || 'Đh'}
                   </p>
                 </div>
               )}

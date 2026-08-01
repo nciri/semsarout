@@ -7,12 +7,10 @@ import {
   FiPlus, FiTrash2, FiEdit2, FiRefreshCw
 } from 'react-icons/fi'
 import { jsPDF } from 'jspdf'
-import axios from 'axios'
 import { toast } from 'react-toastify'
 import useAuthStore from '../../store/authStore'
 import { formatPrice } from '../../utils/currency'
-
-const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
+import api from '../../services/api'
 
 // Generate invoice PDF
 const generateInvoicePDF = (invoice, user) => {
@@ -595,12 +593,6 @@ function AddPaymentModal({ isOpen, onClose, onAdd, type }) {
   )
 }
 
-// API helper function
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
-
 export default function Subscription() {
   const { user } = useAuthStore()
   const queryClient = useQueryClient()
@@ -620,9 +612,7 @@ export default function Subscription() {
   const { data: subscriptionData, isLoading: loadingSubscription, refetch: refetchSubscription } = useQuery(
     'currentSubscription',
     async () => {
-      const { data } = await axios.get(`${API_URL}/subscription/current`, {
-        headers: getAuthHeaders()
-      })
+      const { data } = await api.get('/subscription/current')
       return data
     },
     { enabled: !!user }
@@ -632,9 +622,7 @@ export default function Subscription() {
   const { data: paymentMethodsData, isLoading: loadingPaymentMethods, refetch: refetchPaymentMethods } = useQuery(
     'paymentMethods',
     async () => {
-      const { data } = await axios.get(`${API_URL}/payment-methods`, {
-        headers: getAuthHeaders()
-      })
+      const { data } = await api.get('/payment-methods')
       return data.payment_methods || []
     },
     { enabled: !!user }
@@ -644,9 +632,7 @@ export default function Subscription() {
   const { data: invoicesData, isLoading: loadingInvoices, refetch: refetchInvoices } = useQuery(
     'invoices',
     async () => {
-      const { data } = await axios.get(`${API_URL}/invoices`, {
-        headers: getAuthHeaders()
-      })
+      const { data } = await api.get('/invoices')
       return data.invoices || []
     },
     { enabled: !!user }
@@ -661,9 +647,7 @@ export default function Subscription() {
 
   const cancelMutation = useMutation(
     async () => {
-      const { data } = await axios.post(`${API_URL}/cancel-subscription`, null, {
-        headers: getAuthHeaders()
-      })
+      const { data } = await api.post('/cancel-subscription', null)
       return data
     },
     {
@@ -687,9 +671,7 @@ export default function Subscription() {
   // Add payment method mutation
   const addPaymentMutation = useMutation(
     async (paymentData) => {
-      const { data } = await axios.post(`${API_URL}/payment-methods`, paymentData, {
-        headers: getAuthHeaders()
-      })
+      const { data } = await api.post('/payment-methods', paymentData)
       return data
     },
     {
@@ -702,9 +684,7 @@ export default function Subscription() {
   // Delete payment method mutation
   const deletePaymentMutation = useMutation(
     async (pmId) => {
-      await axios.delete(`${API_URL}/payment-methods/${pmId}`, {
-        headers: getAuthHeaders()
-      })
+      await api.delete(`/payment-methods/${pmId}`)
     },
     {
       onSuccess: () => {
@@ -716,9 +696,7 @@ export default function Subscription() {
   // Set default payment method mutation
   const setDefaultPaymentMutation = useMutation(
     async (pmId) => {
-      await axios.post(`${API_URL}/payment-methods/${pmId}/set-default`, {}, {
-        headers: getAuthHeaders()
-      })
+      await api.post(`/payment-methods/${pmId}/set-default`, {})
     },
     {
       onSuccess: () => {
@@ -730,11 +708,9 @@ export default function Subscription() {
   // Change plan mutation
   const changePlanMutation = useMutation(
     async ({ planId, billingCycle }) => {
-      const { data } = await axios.post(`${API_URL}/subscription/change-plan`, {
+      const { data } = await api.post('/subscription/change-plan', {
         plan_id: planId,
         billing_cycle: billingCycle || 'monthly'
-      }, {
-        headers: getAuthHeaders()
       })
       return data
     },
@@ -801,8 +777,7 @@ export default function Subscription() {
   const handleDownloadPDF = async (invoice) => {
     // Try to download from backend first
     try {
-      const response = await axios.get(`${API_URL}/invoices/${invoice.id}/pdf`, {
-        headers: getAuthHeaders(),
+      const response = await api.get(`/invoices/${invoice.id}/pdf`, {
         responseType: 'blob'
       })
       const url = window.URL.createObjectURL(new Blob([response.data]))
@@ -872,7 +847,7 @@ export default function Subscription() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Mon abonnement</h1>

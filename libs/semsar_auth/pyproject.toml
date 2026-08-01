@@ -1,0 +1,17 @@
+[project]
+name = "semsar-auth"
+version = "0.1.0"
+description = "SemsarOut — vérification JWT RS256 et RBAC (dépendances FastAPI)."
+requires-python = ">=3.11"
+dependencies = [
+    "pyjwt[crypto]>=2.8",
+    "fastapi>=0.110",
+    "semsar-common",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["semsar_auth"]

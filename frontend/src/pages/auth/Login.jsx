@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
+import { LuLock } from 'react-icons/lu'
 import useAuthStore from '../../store/authStore'
 
 function Login() {
@@ -20,9 +21,14 @@ function Login() {
 
     if (result.success) {
       const redirectParam = searchParams.get('redirect')
-      const from = (redirectParam && redirectParam.startsWith('/') && redirectParam)
+      const explicit = (redirectParam && redirectParam.startsWith('/') && redirectParam)
         || location.state?.from?.pathname
-        || '/dashboard'
+      // Accueil selon le type de compte : superadmin → plateforme (/admin) ; agent d'agence
+      // (agency_id défini) → back-office (/backoffice) ; particulier → son espace (/dashboard).
+      // Une cible explicite (?redirect ou état de navigation) reste prioritaire.
+      const u = useAuthStore.getState().user
+      const home = u?.is_superadmin ? '/admin' : (u?.agency_id ? '/backoffice' : '/dashboard')
+      const from = explicit || home
       navigate(from, { replace: true })
     } else {
       setError(result.error)
@@ -36,7 +42,7 @@ function Login() {
           {/* Logo */}
           <Link to="/" className="inline-flex items-center space-x-2 mb-6">
             <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-terracotta-500 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-xl">S</span>
+              <LuLock className="w-6 h-6 text-white" strokeWidth={2.25} />
             </div>
           </Link>
           <h1 className="font-display text-2xl font-bold text-gray-900">

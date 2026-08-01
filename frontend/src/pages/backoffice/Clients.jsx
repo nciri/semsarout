@@ -7,29 +7,17 @@ import {
   FiCalendar, FiChevronDown, FiChevronRight
 } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
+import api from '../../services/api'
 
 const backofficeService = {
   getClients: async (params) => {
     const searchParams = new URLSearchParams(params)
-    const response = await fetch(`/api/v1/backoffice/clients?${searchParams}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to fetch clients')
-    return response.json()
+    const { data } = await api.get(`/backoffice/clients?${searchParams}`)
+    return data
   },
   deleteClient: async (id) => {
-    const response = await fetch(`/api/v1/backoffice/clients/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to delete client')
-    return response.json()
+    const { data } = await api.delete(`/backoffice/clients/${id}`)
+    return data
   }
 }
 

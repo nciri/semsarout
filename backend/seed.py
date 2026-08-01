@@ -149,6 +149,8 @@ def seed_plans():
             'has_dedicated_account_manager': False,
             'has_programs': False,
             'max_programs': 0,
+            'max_seats': 0,
+            'max_teams': 0,
             'price_monthly': 299,
             'price_yearly': 2990
         },
@@ -168,6 +170,8 @@ def seed_plans():
             'has_dedicated_account_manager': False,
             'has_programs': True,
             'max_programs': 10,
+            'max_seats': 5,
+            'max_teams': 1,
             'price_monthly': 799,
             'price_yearly': 7990
         },
@@ -187,6 +191,8 @@ def seed_plans():
             'has_dedicated_account_manager': True,
             'has_programs': True,
             'max_programs': -1,
+            'max_seats': -1,
+            'max_teams': -1,
             'price_monthly': 1999,
             'price_yearly': 19990
         }
@@ -383,6 +389,17 @@ def seed_users(agencies):
         print(f"  Created user: {user.email}")
 
     db.session.commit()
+
+    # Set each agency's owner = its admin (or first member)
+    for agency in Agency.query.all():
+        if agency.owner_id:
+            continue
+        member = (User.query.filter_by(agency_id=agency.id)
+                  .order_by(User.created_at.asc()).first())
+        if member:
+            agency.owner_id = member.id
+    db.session.commit()
+
     return users
 
 

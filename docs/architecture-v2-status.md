@@ -1,0 +1,401 @@
+# Migration v2 — État & reprise (handoff)
+
+> **But de ce document** : permettre de reprendre le chantier v2 avec un contexte vierge.
+> Décrit ce qui est fait, ce qui tourne, comment tout relancer, et le reste à faire.
+> Branche : `feature/architecture-v2` (commits **locaux uniquement**, aucun upstream, aucun push).
+
+Dernière mise à jour de session : contrat **88/88 PASS**. #6 : **T1..T5 FAITS** (toutes les tranches de service). staymanager extrait (`services/staymanager` :8517). Reste : divers (selling/leads racine/users/admin — surfaces mineures) + **coupure finale** (retirer le repli monolithe du BFF, éteindre :7000).
+
+> **REPRISE (contexte frais)** — §8 items #1, #2, #5 **FAITS** ; **#4 `transactions` FAIT** ;
+> **`legal` FAIT** ; **`contract` FAIT** (tranches de #3, vérifiés E2E + gates 403 + create/finalize,
+> contrat 48/48). `services/transactions` (:8514) reroute `/backoffice/transactions*`, émet
+> `transaction.*`. `services/legal` (:8506) et `services/contract` (:8505) **réécrits pour servir les
+> routes legacy** (`/backoffice/notaries*`+`/legal-cases*`+`/legal-tasks*` ;
+> `/backoffice/contracts*`+`/finalize`/`/mark-signed`/`/pdf`+`/contract-templates*`) à l'identique,
+> gate premium via `Principal.features` (`legal` / `contracts`).
+> **Entitlement plan Entreprise** : `can_manage_templates` (gestion des modèles) n'était pas
+> distinguable dans le JWT (Pro et Entreprise ont les mêmes flags) → ajout d'un entitlement de
+> capacité **`contract_templates`** dans `agency_ro.features` (identity, migration) pour le plan
+> Entreprise ; il circule dans tout le pipeline features existant (JWT→BFF→Principal). Pas de
+> dépendance monolithe (archi v2).
+> **Finalisation contract** : PDF (xhtml2pdf) archivé en stockage objet (MinIO), et la copie dans les
+> documents de la transaction est **déléguée** via `contract.finalized`/`contract.signed` →
+> worker transactions crée/maj le `TransactionDocument` (vérifié E2E : create+sign propagés).
+> **Fix mesh** : `message_id` d'outbox namespacé par `aggregate_type`
+> (`libs/semsar_events/…/outbox.py`) — sans ça, un consumer multi-publisher (crm/legal/contract =
+> listing.* + transaction.* ; transactions = listing.* + contract.*) collisionnait sur les id
+> d'outbox locaux (relais existants rechargent la lib au prochain `dev-mesh-up.sh`).
+> **Dépendances runtime ajoutées** (system python3) : `bleach`, `xhtml2pdf` (contract), `python-slugify` (programs).
+> **`billing` FAIT** : `services/billing` (:8508) réécrit pour servir les routes legacy
+> `/subscription-plans`(+`/{id}`), `/my-subscription`, `/subscription/current`,
+> `/cancel-subscription`, `/subscription/change-plan`. **Découverte** : le monolithe **500ait** sur
+> `change-plan` (happy path) car `payment_methods`/`invoices` **n'existent pas** en base — v2 le rend
+> fonctionnel (validation plan 404 + garde-fou sièges 409 + bascule *incomplete* + facture *unpaid* +
+> `billing.invoice.created`). Le garde-fou de rétrogradation lit les sièges/équipes via un **endpoint
+> interne d'identity** (`GET /internal/agency/{id}/seats`, v2-native, pas le monolithe). Écart assumé :
+> les features de gating restent projetées par identity (`agency_ro.features`), billing ne les pilote
+> pas encore.
+> **`payment` FAIT** : `services/payment` (:8507) réécrit pour servir `/payments/create-intent`,
+> `/payments/webhook`, `/payments/{reference}`, `/my-payments` (passerelle CMI simulée, comme le
+> monolithe). Montant d'abonnement via projection locale `plan_ro` (prix par slug). Le webhook confirmé
+> émet `payment.completed` → **worker billing crée/prolonge l'abonnement** (v2-native, sans écriture
+> cross-domaine) — vérifié E2E (create-intent service+plan, webhook → +365 j). `create-intent` est en
+> auth optionnelle (identité lue des en-têtes `x-semsar-*` si présentes).
+> **TOUTES les tranches de service sont FAITES.** Reste : **#6 décommissionnement** — pointer 100 %
+> du proxy front → BFF (le monolithe ne sert plus que les ~240 routes non encore extraites : voir §8.4
+> `programs`/`buyer`/`dashboards`/`analytics`/`integrations`), puis éteindre le monolithe quand tout
+> est extrait. Prérequis avant coupure : relancer `dev-mesh-up.sh` (recharge la lib outbox partout).
+> Findings clés : gating premium lu dans le JWT (`Principal.features`) → legal/contract **ne dépendent
+> pas** d'une projection billing pour le 403 ; `/payment-methods` = non-feature (table absente du
+> monolithe → 404, ne pas router). Détail complet en §8.3/§8.4. Décisions utilisateur : #3 = reproduire
+> les routes legacy ; #4 = tout extraire ; #6 = coupure auto autorisée si contrat vert.
+
+---
+
+## 1. Vision cible (rappel)
+Décommissionner le monolithe Flask, ne garder que des **microservices FastAPI** + le BFF +
+les frontaux existants avec un minimum de changements. Le BFF réexpose `/api/v1` **à
+l'identique** (front intact). Chaque service : schéma + rôle Postgres dédiés (ADR-0002),
+événementiel RabbitMQ (outbox transactionnel + consumers idempotents + projections
+reconstructibles). Validation JWT **locale** au BFF (frontière d'auth sévrée).
+
+## 2. Ce qui est FAIT (services extraits, à parité 33/33)
+
+**Services qui reroutent des routes existantes du front (parité de contrat) :**
+| Service | Port | Domaine |
+|---|---|---|
+| catalog | 8009 | boutique produits (`/backoffice/shop/products`, `/admin/products`) |
+| marketplace | 8010 | panier/commandes (`/backoffice/shop/cart|orders`, `/admin/orders`) |
+| directory | 8011 | artisans/travaux (`/backoffice/artisans|work-orders|artisan-trades`) |
+| listing | 8012 | biens : détail/CRUD/publish/my-properties + engagement (contact/reveal-phone) + `internal/properties` (dicts complets pour buyer/agency) |
+| crm | 8013 | leads/clients/visites (`/backoffice/leads|clients|visits`) |
+| search | 8103 | découverte biens (`GET /properties`, `/properties/search`, `/suggestions`) — OpenSearch |
+| geo | 8509 | positionnement prix + `/market/neighborhood-prices` |
+| messaging | 8510 | messages acheteur (`/buyer/messages`) |
+| trust-safety | 8511 | modération comptes (`/admin/accounts/*/suspend|unsuspend`) + masquage souverain |
+| agency | 8512 | agences lecture (`GET /agencies`, `/agencies/{slug}`, **`/my-agency`** +membres, **`/agencies/{slug}/properties`**) |
+| audit | 8513 | journal transverse (`GET /admin/activity`) |
+| transactions | 8514 | pipeline ventes/locations (`/backoffice/transactions*` : liste/pipeline/stats/stages/CRUD/move/offers/documents) |
+| legal | 8506 | notaires + dossiers juridiques + checklists (`/backoffice/notaries*`, `/backoffice/legal-cases*`, `/backoffice/legal-tasks*`) — gate premium `legal` |
+| contract | 8505 | modèles + contrats + fusion + finalisation PDF (`/backoffice/contracts*` +`/finalize`/`/mark-signed`/`/pdf`, `/backoffice/contract-templates*`) — gate premium `contracts` (+ `contract_templates`) |
+| billing | 8508 | plans + abonnement (`/subscription-plans*`, `/my-subscription`, `/subscription/current`, `/cancel-subscription`, `/subscription/change-plan`) |
+| payment | 8507 | intention de paiement + webhook (`/payments/create-intent`, `/payments/webhook`, `/payments/{ref}`, `/my-payments`) — CMI simulé |
+| buyer | 8515 | acheteur : recherches sauvegardées + favoris + estimations (`/buyer/saved-searches*`, `/buyer/favorites*`, `/buyer/estimates*`) |
+| staymanager | 8517 | intégration StayManager.ma (`/integrations/staymanager/*` : statut/connect/biens/réservations/sync/webhook) — gate `has_staymanager_sync` |
+| programs | 8516 | programmes immobiliers neufs (`/programs*` : liste/détail/my + unités/images/plans/lots interactifs) — gate feature `has_programs` (billing) |
+| rental | 8518 | gestion locative — mandats/CRG, baux/quittancement, candidatures (backend **complet** ; **UI agence + UI candidat livrées**, voir §11) |
+| identity | 8501 | **auth complète** (voir §3) + RBAC + teams/invitations + `dashboard/config` + `internal/agency/{id}/seats|members|analytics-scope` |
+| analytics | 8504 | **tout dashboards/analytics/stats** query-time : `/analytics/*` (6) + `/stats/*` (6) + `/dashboard`+`/dashboard/charts/*`+`/dashboard/activity` — dumps internes transactions/crm/listing/geo/billing/audit + identity scope/seats |
+
+**Services additifs (nouvelles surfaces, PAS consommées par le front — voir reste à faire) :**
+identity(KYC) · notification 8502
+
+## 3. Domaine identité/auth (le plus important, basculé)
+`identity` (:8501) est **source de vérité** pour les comptes et **émet les JWT** :
+- `POST /auth/login`, `/auth/refresh`, `GET/PUT/DELETE /auth/me`, `POST /auth/register`,
+  `/auth/change-password` — tous servis par identity.
+- Jetons forgés compatibles flask-jwt-extended (même secret HS256 `PURGED-DEV-SECRET`
+  + claims enrichis `agency_id/is_superadmin/account_role/features`), acceptés par le monolithe
+  **et** le BFF.
+- RBAC : rôles/permissions (lecture + CRUD), users (assign-roles gated `seats`, activate/deactivate),
+  teams + invitations. Logique `seats` relocalisée dans `services/identity/app/seats.py`.
+- **Anti-escalation** : un manager ne peut accorder que des permissions qu'il détient (403 sinon) ;
+  super-admin/owner exemptés. **IDOR** `GET /backoffice/roles/{id}` cloisonné par agence.
+
+**Frontière d'auth locale** : le BFF valide le JWT localement (`JWT_SECRET_KEY` fourni), 0 appel
+`/auth/me`. Repli monolithe pour les anciens jetons sans claims.
+
+## 4. Inversions de propriété + sync (transition)
+Le monolithe sert encore ~240 routes qui lisent `public.users`/`roles`/`activity_logs`. Donc :
+- **identity → monolithe** : identity écrit users/roles → émet `user.*` / `role.*` → le consumer
+  monolithe `backend/scripts/consume_users.py` resynchronise `public.users`, `user_roles`,
+  `roles`, `role_permissions` en **SQL brut** (pas d'ORM → **anti-boucle**).
+- **monolithe → identity** : suspensions (via trust-safety) écrivent `public.users` → `user.*`
+  (outbox monolithe) → worker identity. Champs disjoints, idempotent, zéro conflit.
+- **monolithe → audit** : chaque insert `ActivityLog` émet `audit.logged` (listener outbox) → worker audit.
+- Projections lecture (`crm.property_ro`, `geo.listing_ro`, `agency.listing_ro`, etc.) maintenues
+  par `listing.*` / `product.*`.
+
+## 5. Mesh événementiel — RÉSILIENT
+Tous les relais/consumers survivent aux redémarrages RabbitMQ (prouvé × 3) :
+- `EventPublisher` : reconnexion + réessai backoff. `run_relay` : boucle de relais qui ne meurt jamais.
+- `EventConsumer` : boucle de reconnexion. Scripts monolithe (pika brut) : mêmes boucles.
+- Publishers (outbox+relay) : listing, catalog, identity, transactions (+ contract/payment/billing) + monolithe.
+- Consumers (workers) : search, crm, marketplace, geo, agency, messaging, analytics, billing,
+  notification, identity, audit, transactions, legal, contract, buyer + monolithe (`consume_users.py`).
+- **Idempotence multi-publisher** : `message_id` d'outbox namespacé par `aggregate_type` (les id
+  d'outbox sont locaux à chaque publisher ; crm/legal/contract consomment listing.* **et**
+  transaction.*, transactions consomme listing.* **et** contract.*).
+- **Effet cross-domaine contract→transactions** : `contract.finalized`/`.signed` (outbox contract) →
+  worker transactions crée/maj le `TransactionDocument` (copie du PDF dans la transaction liée).
+- **Chorégraphie paiement→abonnement** : `payment.released` (séquestre) **et** `payment.completed`
+  (webhook) → worker billing active/prolonge l'abonnement de l'agence (billing pilote son domaine ;
+  payment n'écrit jamais dans billing).
+
+## 6. Infra & environnement
+- **Postgres** natif :5432, base `semsar_dev`, admin `postgres:postgres`. Un rôle/schéma par
+  service (`catalog:catalog`, …, `trust_safety:trust_safety`). Creds réelles via `.env` (gitignoré).
+- **RabbitMQ** :5672 / UI :15672 (`semsar:semsar`) · **MinIO** :9000/:9001 · **OpenSearch** :9200.
+  Lancés via `docker compose -f infra/docker-compose.yml up -d rabbitmq minio`.
+- **Monolithe** : `cd backend && (set -a; source .env; set +a) && SEMSAR_OUTBOX_ENABLED=true venv/bin/python run.py`
+  — Flask debug reloader (éditer le source recharge). `JWT_SECRET_KEY=PURGED-DEV-SECRET`.
+- **BFF** : lancé avec `JWT_SECRET_KEY=PURGED-DEV-SECRET` + tous les `*_URL`. Port **8099**.
+- **Frontend** :5600, `vite.config.js` proxy `/api` → `http://localhost:8099` (BFF).
+- **Comptes de test** : `agent1@immo-casa-premium.ma`/`password123` (buyer, **owner** agence 1) ;
+  `admin@semsarout.ma`/`admin123` (**super-admin**) ; staff agence `*@semsarout.ma`/`password123`.
+- `INTERNAL_TOKEN=change-me-internal` (endpoints internes du monolithe).
+
+## 7. Relancer toute la stack
+Script : **`scripts/dev-mesh-up.sh`** (démarre infra + monolithe + tous les services + relais +
+workers + consumers, puis affiche la santé). Migrations : chaque `services/<svc>/db/schema.sql`
+puis `migrate_from_monolith.sql` (idempotents). Vérif : `tools/contract_test.py`.
+
+```bash
+bash scripts/dev-mesh-up.sh
+# puis, token + contrat :
+TOK=$(curl -s -XPOST localhost:8099/api/v1/auth/login -H 'content-type: application/json' \
+  -d '{"email":"agent1@immo-casa-premium.ma","password":"password123"}' | python3 -c 'import sys,json;print(json.load(sys.stdin)["access_token"])')
+python3 tools/contract_test.py --monolith http://localhost:7000 --bff http://localhost:8099 \
+  --token "$TOK" --services catalog,directory,listing,search,crm,marketplace,geo,messaging,trust-safety,rbac,agency,audit,transactions,legal,contract,billing,payment,buyer --property-id 90 --legal-case-id 1
+```
+
+## 8. Reste à faire (priorisé)
+1. ~~**Émettre `audit.logged` depuis identity**~~ ✅ **FAIT** — `services/identity/app/audit.py`
+   émet `audit.logged` pour `update_user_roles` (parité : le monolithe ne traçait QUE
+   `update_roles`), plus le CRUD des rôles (create/update/delete — nouveau, forward-looking).
+   IDs tirés d'une **séquence dédiée** `identity.audit_log_seq` (plage disjointe `>9e12`) pour ne
+   jamais collisionner avec `activity_logs.id` du monolithe (le service audit indexe l'idempotence
+   sur cet id). Vérifié bout-en-bout : les 3 actions apparaissent dans `GET /admin/activity` avec
+   le nom d'acteur résolu. Contrat 33/33 intact.
+2. ~~**Répliquer les durcissements sécurité côté monolithe**~~ ✅ **FAIT** —
+   `backend/app/api/v1/backoffice/roles.py` : `get_role` scope désormais par agence (rôle d'une
+   autre agence -> 404, corrige l'IDOR de `get_or_404`) et `create_role`/`update_role` appliquent
+   `_assert_grantable` (anti-escalation : un manager ne peut accorder que des permissions qu'il
+   détient ; super-admin/owner exemptés) — miroir exact de la logique d'identity. Vérifié en direct
+   contre le monolithe : IDOR 404 vs global 200 ; escalation 403 (perm non détenue) vs 201 (détenue).
+   Contrat 33/33 intact.
+3. **Brancher les services additifs** (contract/legal/billing/payment) — **décision : reproduire
+   les routes du monolithe à l'identique** (front intact). Chaque service expose aujourd'hui des
+   routes neuves (`/contract/*`, `/legal/*`, `/billing/*`, `/payment/*`) non consommées ; il faut
+   servir les **routes legacy** que le front tape. Cartographie front → monolithe :
+   - **contract** → `/backoffice/contracts*` (+ `/finalize`, `/mark-signed`, `/pdf`) et
+     `/backoffice/contract-templates*` (`backend/app/api/v1/backoffice/contracts.py`).
+   - **legal** → `/backoffice/notaries*`, `/backoffice/legal-cases*` (+ `/tasks`),
+     `/backoffice/legal-tasks*` (`backend/app/api/v1/backoffice/legal.py`).
+   - **billing** → `/subscription-plans`, `/subscription/current`, `/subscription/change-plan`,
+     `/cancel-subscription` (`billing.py`+`subscriptions.py`). **`/payment-methods*` = non-feature**
+     (table absente du monolithe → 404 ; parité = ne rien router).
+   - **payment** → `/payments/create-intent` (`payments.py`).
+   **Ordre de dépendances** : le gating premium se lit **depuis le JWT** (`Principal.features`
+   contient `contracts`/`legal`/`artisans`) → legal & contract **ne dépendent PAS** d'une projection
+   billing pour le 403. contract dépend en plus des **transactions (#4)** pour create/finalize
+   (`Transaction`+`TransactionDocument`). Donc : **legal (autonome) → transactions(#4) → contract →
+   billing → payment**. Chaque tranche = migration de projection (`migrate_from_monolith.sql`) +
+   port fidèle des routes (scopé agence, erreurs `{'error'}`) + routage BFF + ajout au contrat.
+   **Avancement** : ✅ **legal FAIT** ; ✅ **contract FAIT** (`services/legal`/`services/contract`
+   réécrits en routes legacy, gates 403 vérifiés, projections via `transaction.*`/`listing.*`,
+   contrat +7) ; ✅ **billing FAIT** (routes legacy, garde-fou sièges via identity, contrat +4) ; ✅ **payment FAIT** (routes legacy, webhook→billing, contrat +4) ;
+   ✅ transactions (#4) FAIT. **Toutes les tranches de service faites** ; reste #6 (décommissionnement).
+4. **Domaines non extraits** (périmètre : **tout**) : ~~`transactions` (14 routes)~~ ✅ **FAIT**
+   (`services/transactions`, :8514, contrat 41/41) · `programs`
+   (21 routes, nouveau dev) · `buyer`/estimations/favoris · `dashboards`/`analytics`/`stats` (front
+   tape le monolithe) · `integrations` (staymanager) · `/dashboard/activity` · `/my-agency`
+   (include_members) · `/agencies/{slug}/properties`. Priorité : ~~`transactions` d'abord (débloque
+   contract)~~ fait, puis surfaces front-facing (dashboards/analytics, buyer/favoris, my-agency), puis
+   `programs`/`integrations` (nouvelles surfaces). Chantier long, plusieurs tranches.
+   **Note d'avancement** : #3/#4 mappés et priorisés ; **transactions extrait** (émet `transaction.*`,
+   crm maintient `transaction_ro`). Écarts assumés (hors contrat de lecture) : audit create/stage_change
+   non répliqué (comme crm) ; bascule `property.status=sold/rented` sur `won` (effet listing) différée ;
+   détail `property`/`client` imbriqués = projections réduites (non consommés par le front). Prochaine
+   tranche : legal (autonome) puis contract (dépend de transactions).
+5. ~~**Repoint masquage**~~ ✅ **FAIT** — `dev-mesh-up.sh` pointe désormais
+   `MODERATION_HIDDEN_URL` de listing/search vers **trust-safety**
+   (`:8511/internal/moderation/hidden`, souverain) au lieu du monolithe — prérequis au
+   décommissionnement. Vérifié : suspendre un vendeur via BFF→trust-safety masque son bien
+   (listing 404), l'unsuspendre le rétablit (200). geo/crm **ne masquent pas** — c'est la
+   **parité** : le `price_position` du monolithe (`market.py`) n'exclut pas non plus les comptes
+   modérés ; masquer dans geo/crm divergerait. Rien à faire côté geo/crm.
+6. **Décommissionnement final** : identity émet les jetons pour de bon (le monolithe arrête),
+   pointer 100 % du proxy front → BFF, éteindre le monolithe.
+   **Baseline propre faite** : `dev-mesh-up.sh` rejoué → 21 services 200, contrat **56/56**, tous les
+   relais rechargés sur la lib outbox corrigée. **Reste ~100+ routes front-facing** (sur 289
+   totales, la majorité déjà extraite). **Plan de tranches (ordonné, à exécuter une par une avec
+   parité + E2E + commit, comme les 5 précédentes)** :
+   - ✅ **T1 `buyer` FAIT** (`services/buyer` :8515) : `/buyer/saved-searches*` (CRUD),
+     `/buyer/favorites*` (CRUD ; bien imbriqué = **dict COMPLET via listing** `internal/properties`, aucune projection locale),
+     `/buyer/estimates*` (CRUD). Par utilisateur (`user_id` du JWT). `/buyer/messages*` = **déjà**
+     servi par messaging. Nouveau service `services/buyer` (schéma dédié) + migration
+     (`saved_searches`/`favorites`/`estimates`) + projection biens.
+   - ✅ **T2 agency completion FAIT** (`/my-agency` membres via identity `internal/.../members` ; `/agencies/{slug}/properties` = **dicts COMPLETS via listing** `internal/properties`, masquage inclus — parité, au contrat)
+   - ~~T2 agency completion~~ (2 routes) : `/my-agency` (include_members → membres = domaine identity ;
+     appel interne identity ou projection) + `/agencies/{slug}/properties` (biens de l'agence →
+     projection listing). Étend le service `agency` existant (:8512).
+   - **T3 `dashboards`/`analytics`/`stats`** (~21 routes, **LA PLUS DURE** — agrégations cross-domaine).
+     `backoffice/dashboard.py`(5) + `backoffice/stats.py`(6) + `backoffice/analytics.py`(10 :
+     financial/market/pipeline/team/overview + `/dashboard/config` GET/PUT). ⚠ **le service
+     `analytics` actuel est un stub** (`MetricCounter` + 1 route démo) : il faut **construire les
+     read-models** (projections transactions/leads/clients/biens/visites/commissions) pour
+     reproduire les agrégats (tendances CA, funnel de conversion, perf agents avec commissions,
+     stats marché). Effort dédié conséquent — ne pas router le front vers un stub en cours de route
+     (dashboards live cassés). `/dashboard/config` (JSON par utilisateur) ✅ **FAIT** (servi par identity — config sur le
+     compte ; GET/PUT parité, propagation via user.updated). **Approche validée : agrégation query-time** (analytics lit les dumps internes des services
+     propriétaires et agrège en mémoire, parité exacte). ✅ **financial/pipeline/ping/market/team/overview FAITS** (parité exacte). Reste : **stats/*** (6),
+     **stats/* FAITS**. Reste : **dashboard** + **charts/*** (leads-by-source, properties-by-status,
+     revenue-trend), **dashboard/activity** (audit dump). Dumps internes faits : transactions, crm
+     (leads+charge_amount/clients/visits), listing (raw), geo refs, identity scope/seats/dashboard_config,
+     billing subscription. Écart : export CSV non testé au contrat (ordre des lignes non déterministe).
+   - ✅ **T4 `programs` FAIT** (`services/programs` :8516, 28 routes, contrat 84/84) — nouveau dev, (promotions immobilières neuves +
+     `programs/{id}/plans`), pas encore consommé pareil — nouveau service.
+   - ✅ **T5 `staymanager` FAIT** (`services/staymanager` :8517, 14 routes, contrat 88/88) — gate `has_staymanager_sync` (billing), API externe via `app/client.py` ; toutes données vides en dev (états non-connecté).
+   - **Divers restants** : `selling.py` : ✅ **`estimate`** (→ listing, valorisation query-time
+     sur annonces comparables, parité exacte) **FAIT** ; `sale-requests`/`documents`/`uploads`
+     **couplés au stockage objet** (sale-requests crée un bien + valide des `file_id` de documents
+     sur disque) → à faire avec la migration `/uploads`.
+   - ✅ **`admin/shop` + `admin/artisans` (écritures) DÉJÀ FAITS** (tranches catalog/marketplace/
+     directory) : produits CRUD → **catalog** (émet `product.*`, marketplace consomme pour purger
+     paniers/commandes) ; commandes GET/GET/PUT statut → **marketplace** ; shared-artisans CRUD →
+     **directory**. Routés (préfixe, toutes méthodes) et fonctionnels — E2E validé (lifecycle
+     complet + validations 400/404 + agent1→403). Contrat **102/102** (groupe `admin-shop-writes`).
+     `users.py`(3, profils publics) **mort côté front** (0 réf) → à droper à l'extinction, pas à
+     migrer. ✅ **FAITS** : `admin/overview` (→ analytics), `admin/impersonation` (→ identity),
+     **groupe leads/contact publics** (`leads.py` 7 routes) : contact/reveal-phone sur annonce déjà
+     chez **listing** (`listing.contacted` → worker crm) ; `/contact` (demande de service),
+     `/my-leads`(+summary), `/leads/{id}`(GET marque lu), `/leads/{id}/status`(PUT) → **crm**
+     (ajout `owner_id` au lead crm pour cloisonner les biens de particuliers ; backfillé). Parité
+     exacte (agence + particulier via impersonation), contrat **92/92**.
+   **Coupure** : quand une tranche est verte au contrat, basculer son routage BFF (déjà le patron) ;
+   quand **tout** est extrait → retirer le repli monolithe du BFF, éteindre `:7000`.
+
+   ### État de la coupure finale (T1..T5 FAITS, contrat 88/88)
+   **Fait** : front → BFF à **100 %** (`vite.config` `/api` → :8099) ; **deps internes v2→monolithe
+   supprimées (3/3)** : (a) `users_client` de crm/transactions/contract → **identity**
+   (`/internal/agency/{id}/members?active_only=1`, noms d'agents) ; (b) `listing` reveal-phone →
+   **agency** (`/internal/agency/{id}/phone`) / **identity** (`/internal/user/{id}/phone`) ; (c)
+   **modération de compte** (`trust-safety`) n'écrit **plus** dans le monolithe. **Plus aucun
+   service v2 ne dépend du monolithe.**
+   - ✅ **Domaine modération de compte extrait** (façade `trust-safety` → propriétaire de l'entité) :
+     les 10 routes `/admin/accounts/{users|agencies}/{id}/{suspend|unsuspend|DELETE|restore|anonymize}`
+     délèguent la mutation par **jeton interne** à **identity** (users : `UserRO`, gardes auto-action +
+     dernier super-admin + déjà-fait, parité messages/`to_dict`, émet `user.updated`) et au service
+     **agency** (agencies : modèle `Agency` complet, anonymisation PII, émet `agency.*`). `trust-safety`
+     garde audit + **masquage** (§6, `ModerationStatus` pour les 5 actions) + événements `account.*`.
+     identity **consomme `agency.*`** pour resynchroniser `agency_ro.is_suspended/is_deleted` (cohérence
+     du blocage login `_login_blocked`). Outbox+relais ajoutés à agency. E2E validé (lifecycle complet
+     users+agencies : suspend/unsuspend/delete/restore/anonymize, gardes 409/404, masquage, blocage
+     login, resync AgencyRO), contrat **87/87** (trust-safety : agent1→403 des deux côtés). Le monolithe
+     `admin/moderation.py` n'est **plus atteint** (le BFF route `/admin/accounts/*` → trust-safety).
+   - BFF repli features `/my-subscription` (legacy tokens seulement — billing le sert déjà, non bloquant).
+
+   ### Audit de la surface monolithe restante (`tools/route_audit.py`, 2026-07-28)
+   Résolution des **196 endpoints appelés par le front** à travers le vrai `_resolve_upstream` du
+   BFF : **16 routes réelles** tombent encore au monolithe (backlog fini ci-dessous), + 2 fantômes
+   `GET/PUT /backoffice/settings` que **le monolithe ne sert pas** (Settings.jsx appelle un endpoint
+   inexistant — hors périmètre coupure, à voir côté front). Backlog groupé par propriétaire cible :
+   - ✅ **A. Gestion des biens backoffice → listing FAIT** (5) : `GET /backoffice/properties`
+     (cloisonné agence : filtres type/transaction/status/city/prix/q, tri, pagination, `to_dict`
+     include_images) + `GET /{id}` (garde 403 Access denied) + `POST` (réf `PROP-YYYYMM-NNNN`,
+     émet `listing.created`) + `PUT /{id}` (émet `listing.updated`) + `DELETE /{id}` (**soft-delete**
+     status=archived, émet `listing.updated`). Parité exacte (lectures) + E2E writes + gardes 403.
+     Contrat **115/115**. Écart mineur : l'`ActivityLog` des actions bien n'est pas ré-émis (flux
+     d'activité) — non bloquant.
+   - ✅ **B. Écritures agence → agency FAIT** (3) : `POST /agencies` (création self-service :
+     émet `agency.created` → identity crée `agency_ro` + associe l'utilisateur créateur
+     `agency_id`+`professional` + émet `user.updated`), `PUT /agencies/{slug}` (maj + slug si nom
+     change, émet `agency.updated`), `POST /agencies/{slug}/regenerate-api-key`. Gardes parité
+     (400 déjà-membre/champ requis, 403 non-propriétaire, 404). E2E validé (création + association
+     asynchrone du user). Contrat **110/110**.
+   - **C. Lectures comptes/users admin** (4) : ✅ **`GET /admin/accounts` (liste) + `/users/{id}` +
+     `/agencies/{id}` (détails) FAITS → analytics** (agrégat query-time : identity=users, agency=agences,
+     billing=plan/abonnement, listing=nb biens, audit=activité). **BUG routage CORRIGÉ** : les GET
+     détail tombaient sur trust-safety (405) → règle BFF `GET /admin/accounts*` → analytics AVANT la
+     règle trust-safety (les ÉCRITURES modération y restent). Endpoints internes ajoutés : identity
+     `/internal/users`+`/internal/user/{id}`, agency `/internal/agencies`+`/internal/agency/{id}`,
+     billing `/internal/subscriptions`, listing `/internal/property-counts`, audit `/internal/activity`
+     (filtre entity_type/entity_id). Parité exacte (liste+filtres+détails+404+403), `last_login` ajouté
+     aux champs VOLATILE (dérive v2↔monolithe). ✅ **`GET /backoffice/users` → identity FAIT**
+     (liste users cloisonnée agence + rôles avec `users_count`, filtres type/is_active/q, parité
+     exacte agent1+admin). **Groupe C COMPLET.** Contrat **107/107**.
+   - ✅ **D. Factures → billing FAIT** (2) : `GET /invoices` (cloisonné agence, paginé) +
+     `GET /invoices/{id}/pdf` (reportlab). **Implémentation v2-native** : la table `invoices` du
+     monolithe n'existe pas en dev (→ 500), donc pas de parité à reproduire (cf. change-plan). E2E
+     validé (liste vide + facture semée → PDF 200 application/pdf valide + garde 404/403).
+   - ✅ **E. Reset mot de passe → identity FAIT** (2) : `POST /auth/forgot-password` (réponse
+     générique anti-énumération, stocke SHA256(jeton)+expiration 1 h sur `user_ro`) +
+     `POST /auth/reset-password` (valide le jeton, réinitialise, efface, émet `user.updated`).
+     **Pas de notification requise** : le monolithe n'envoie pas d'email (provider non configuré,
+     log seulement). Colonnes `reset_token`/`reset_token_expires` ajoutées à `user_ro`. E2E validé
+     (flux complet + login avec nouveau mdp + jeton à usage unique). Contrat **119/119**.
+   - ✅ **F. Stockage objet FAIT** : `POST /uploads` (photo/document → MinIO/S3 via `semsar_storage`,
+     validations ext/taille/kind) + `GET /uploads/photos/{name}` (flux public depuis l'objet, proxifié
+     par le BFF) + `GET /documents/{id}` (privé, auth + propriétaire) + `POST /sale-requests` (crée le
+     bien pending + images + documents validés dans l'objet + ouvre un lead crm via `listing.contacted`,
+     nom résolu via identity). Bucket `semsar-media`. **`/uploads` repointé du disque monolithe → BFF→
+     listing** (`vite.config`). E2E validé (upload→serve round-trip MinIO, sale-request→bien+doc+lead
+     nommé, gardes 400/403/404). Pas de fichiers seed à migrer (images seed = URLs picsum externes).
+   - **Statique** : `/uploads` (images/docs) sert encore depuis le disque du monolithe (`vite.config`).
+   - **Sync transitoire** : `consume_users.py`/`relay_outbox.py` (monolithe) inutiles une fois `:7000` éteint.
+   ### ✅ COUPURE FINALE TERMINÉE (monolithe décommissionné)
+   Tous les groupes A–F sont extraits ; l'audit `route_audit.py` ne montre plus **aucune** route
+   réelle vers le monolithe (seules restent 2 fantômes `/backoffice/settings` que le monolithe ne
+   sert pas — bug front à part). **Repli monolithe retiré du BFF** : `_resolve_upstream` renvoie 404
+   pour toute route non mappée (plus de `app.state.monolith` dans le routage) ; `_resolve_identity`
+   valide 100 % localement (jetons enrichis par identity) — les anciens jetons sans claims sont
+   rejetés (reconnexion) ; le repli features monolithe est supprimé (claims forgés par identity).
+   Proxy `/uploads/*` → listing seul. **`:7000` éteint** + `consume_users.py`/`relay_outbox.py`
+   arrêtés (sync transitoire inutile). `dev-mesh-up.sh` ne démarre plus le monolithe.
+   **Validation** : contrat **119/119** (dernier run monolithe up, repli déjà retiré) ; puis
+   **smoke test v2 STANDALONE 24/24** (monolithe DOWN) sur tous les domaines (auth, listing, crm,
+   agency, search, analytics, billing, catalog, directory, contract, legal, transactions, buyer,
+   programs, invoices, admin/accounts, dashboard, uploads). **Le mesh FastAPI sert 100 % du front,
+   sans le monolithe.**
+   - ✅ **`/backoffice/settings` implémenté → agency** (nouveau, jamais servi par le monolithe) :
+     `GET/PUT` d'un blob de config par agence (commission, devise, notifications, SMTP…), champs
+     `agency_*` pré-remplis depuis le profil, `smtp_password` **write-only** (jamais renvoyé,
+     préservé sur maj partielle). Dernier appel front sans backend → résolu. **`route_audit.py`
+     ne liste plus AUCUNE route monolithe.**
+
+## 9. Pièges connus (IMPORTANT pour un contexte frais)
+- **`git commit` doit être une commande Bash SEULE** (le hook `block-no-verify` faux-positive sur
+  les commandes composées). `git add` peut être chaîné, pas `git commit`.
+- **PAS d'attribution IA** dans les messages de commit (règle utilisateur). Conventional Commits.
+- **`pkill -f "port 80xx"`** matche le shell lui-même → utiliser `fuser -k 80xx/tcp`.
+- **Bash `UID` est en lecture seule** → nommer la variable autrement (`USR`).
+- **`curl | python -c json.load(sys.stdin)`** échoue sur les retours-ligne bruts dans le JSON
+  (descriptions de biens) → utiliser `urllib` en Python.
+- Le hook **rtk** peut mangler `ls`/`grep` → utiliser `python3 -c "import os; os.listdir(...)"`.
+- **Secret JWT réel** = `PURGED-DEV-SECRET` (dans `backend/.env`, gitignoré). Un jour
+  présent dans l'historique local du commit `42a0a07` (dev only, non poussé) — à purger/roter avant push.
+- **Frontend non commité** : le lot UI du début (MAD→Đh, modals, favoris…) + `vite.config.js` proxy
+  restent dans l'arbre de travail (préoccupation distincte du backend v2, laissée volontairement).
+- Mots de passe de rôles Postgres en clair dans les `schema.sql` = **convention dev** (tous les
+  services), pas un secret prod (creds réelles via env). Ne pas diverger pièce par pièce.
+
+## 10. Contrat / vérification
+`tools/contract_test.py` compare monolithe vs BFF route par route (statut + JSON normalisé, champs
+volatils ignorés). Groupes : catalog, directory, listing, search, crm, marketplace, geo, messaging,
+trust-safety, rbac, dashboard-config, dashboard, analytics, stats, agency, audit, transactions, legal, contract, billing, payment, buyer, programs, staymanager. **88/88** actuellement (`updated_at` volatil : bumpé par l'incrément de vues au GET détail) (normalize : collections de dicts triées par contenu — ordre non garanti côté monolithe ; `views`/`views_count` volatils) (collections par `id` ordre-insensible : membres /my-agency + biens /agencies/{slug}/properties non ordonnés côté monolithe).
+
+## 11. Gestion locative — Vague 3 COMPLÈTE (backend + emails + PDF + UI agence + UI candidat)
+`rental` (:8518) est un domaine **neuf** (pas de route legacy à reproduire, hors contrat
+`contract_test.py`). Backend (Phases 1-4, avec emails transactionnels via `notification` et export
+PDF) + **UI back-office agence (Phase 5)** + **UI candidat public (Phase 6)** livrées de bout en
+bout :
+- **Mandats** : liste/détail, signature, CRG (compte-rendu de gestion) + export PDF.
+- **Baux & quittancement** : liste/détail des baux (signature, révision, restitution du dépôt de
+  garantie), échéances de loyer (paiement, quittance PDF).
+- **Candidatures locatives** (côté agence) : liste/détail, pièces justificatives (valider/refuser),
+  décision (accepter/refuser). La projection locale `rental.property_ro` (alimentée par les
+  événements `listing.*`) permet d'afficher le titre du bien dans les candidatures.
+- **Espace candidat public** : `frontend/src/pages/dashboard/{MyApplications,MyApplicationDetail,
+  applicationStatus}.js` — dépôt de candidature depuis l'annonce, suivi de statut, upload/
+  consultation des pièces justificatives, retrait de candidature ; routé sous
+  `/dashboard/candidatures` et `/dashboard/candidatures/:id`.
+- **États des lieux (EDL) — Phase A livré** : entités Inventory/Room/Item/Photo, remplissage structuré (pièces/éléments), photos S3, PDF, UI éditeur (LeaseDetail). **Phase B livré** : décompte de caution (DepositSettlement/DeductionLine, calcul `refunded_amount`/`balance_due` + finalisation qui pilote restitution dépôt via `rental.deposit.settled`), comparaison entrée↔sortie, email de décompte de sortie + PDF joint, UI SettlementEditor. **Phase C livré** : signature 3a9dSign (brique réutilisable : client signing.py + entité SignatureRequest générique + polling via ordonnanceur, appliquée aux 4 documents EDL/décompte/bail/mandat, générateurs PDF bail+mandat créés, récupération du PDF signé, UI SignaturePanel). Limite sandbox : lien de signature non récupérable par API → complétion réelle hors sandbox ; webhook non auto-enregistrable avec clé API (polling retenu).
+- Frontend agence : `frontend/src/pages/backoffice/rental/{RentalLayout,MandatesList,MandateDetail,
+  LeasesList,LeaseDetail,ApplicationsList,ApplicationDetail}.jsx` + `frontend/src/services/
+  rentalService.js`, routées sous `/backoffice/gestion-locative/*` (onglets Mandats/Baux/
+  Candidatures), gate premium (`GatedNotice` sur 403). Conforme à la charte back-office existante
+  (kit `components/backoffice/ui`, tokens Tailwind uniquement, `react-icons/fi`, react-query +
+  `react-toastify`). `npm run build` vert.
+- Hors périmètre (noté pour une itération future) : autocomplete bien/client à la création (IDs
+  numériques pour l'instant), onglet CRG dédié.

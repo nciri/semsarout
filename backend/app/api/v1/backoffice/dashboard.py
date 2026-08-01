@@ -1,4 +1,5 @@
 from flask import jsonify, request, g
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from functools import wraps
 from datetime import datetime, timedelta
 from sqlalchemy import func, and_
@@ -11,28 +12,23 @@ from app.models import (
 
 
 def require_auth(f):
-    """Decorator to require authentication for backoffice endpoints."""
+    """Require a valid JWT and load the authenticated user into g.
+
+    L'identité provient du token (get_jwt_identity), jamais d'un en-tête
+    fourni par le client : impossible d'usurper un autre utilisateur.
+    """
     @wraps(f)
     def decorated(*args, **kwargs):
-        # TODO: Implement proper JWT authentication
-        # For now, we'll use a simple header check
-        auth_header = request.headers.get('Authorization')
-        if not auth_header:
+        try:
+            verify_jwt_in_request()
+        except Exception:
             return jsonify({'error': 'Authorization required'}), 401
 
-        # Extract user from token (simplified)
-        # In production, decode JWT and get user
-        try:
-            # Simulated - replace with real JWT decode
-            user_id = request.headers.get('X-User-Id')
-            if user_id:
-                g.current_user = User.query.get(int(user_id))
-                g.agency_id = g.current_user.agency_id if g.current_user else None
-            else:
-                g.current_user = None
-                g.agency_id = None
-        except:
+        identity = get_jwt_identity()
+        g.current_user = User.query.get(int(identity)) if identity else None
+        if not g.current_user:
             return jsonify({'error': 'Invalid token'}), 401
+        g.agency_id = g.current_user.agency_id
 
         return f(*args, **kwargs)
     return decorated

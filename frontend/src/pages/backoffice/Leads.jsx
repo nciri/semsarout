@@ -4,42 +4,21 @@ import {
   FiMail, FiPhone, FiFilter, FiSearch, FiChevronUp,
   FiChevronDown, FiCheck, FiX, FiEye, FiUserPlus, FiCalendar, FiMessageSquare
 } from 'react-icons/fi'
+import api from '../../services/api'
 
 const backofficeService = {
   getLeads: async (params) => {
     const searchParams = new URLSearchParams(params)
-    const response = await fetch(`/api/v1/backoffice/leads?${searchParams}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to fetch leads')
-    return response.json()
+    const { data } = await api.get(`/backoffice/leads?${searchParams}`)
+    return data
   },
   updateLead: async ({ id, data }) => {
-    const response = await fetch(`/api/v1/backoffice/leads/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId'),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to update lead')
-    return response.json()
+    const { data: responseData } = await api.put(`/backoffice/leads/${id}`, data)
+    return responseData
   },
   convertToClient: async (id) => {
-    const response = await fetch(`/api/v1/backoffice/clients/convert-lead/${id}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to convert lead')
-    return response.json()
+    const { data } = await api.post(`/backoffice/clients/convert-lead/${id}`)
+    return data
   }
 }
 

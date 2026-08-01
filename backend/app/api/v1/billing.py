@@ -283,7 +283,7 @@ def generate_invoice_pdf(invoice, user):
     plan_name = invoice.subscription.plan.name if invoice.subscription else 'Abonnement'
     table_data = [
         ['Description', 'Qté', 'Prix unitaire', 'Total'],
-        [f'Abonnement {plan_name} - {invoice.period_label}', '1', f'{invoice.subtotal:.2f} MAD', f'{invoice.subtotal:.2f} MAD'],
+        [f'Abonnement {plan_name} - {invoice.period_label}', '1', f'{invoice.subtotal:.2f} Đh', f'{invoice.subtotal:.2f} Đh'],
     ]
 
     table = Table(table_data, colWidths=[250, 50, 80, 80])
@@ -302,9 +302,9 @@ def generate_invoice_pdf(invoice, user):
 
     # Totals
     totals_data = [
-        ['', '', 'Sous-total HT:', f'{invoice.subtotal:.2f} MAD'],
-        ['', '', f'TVA ({invoice.tax_rate}%):', f'{invoice.tax_amount:.2f} MAD'],
-        ['', '', 'Total TTC:', f'{invoice.total:.2f} MAD'],
+        ['', '', 'Sous-total HT:', f'{invoice.subtotal:.2f} Đh'],
+        ['', '', f'TVA ({invoice.tax_rate}%):', f'{invoice.tax_amount:.2f} Đh'],
+        ['', '', 'Total TTC:', f'{invoice.total:.2f} Đh'],
     ]
     totals_table = Table(totals_data, colWidths=[200, 60, 100, 100])
     totals_table.setStyle(TableStyle([
@@ -351,12 +351,27 @@ def change_plan():
     if not new_plan_id:
         return jsonify({'error': 'plan_id is required'}), 400
 
-    # Get new plan
-    new_plan = SubscriptionPlan.query.get(new_plan_id)
+    # Get new plan — plan_id may be a numeric PK or a slug ("pro", "starter"…).
+    # Only use .get() for numeric ids: a non-numeric string raises a DataError
+    # on the integer PK before we can fall back to a slug lookup.
+    new_plan = None
+    if isinstance(new_plan_id, int) or (isinstance(new_plan_id, str) and new_plan_id.isdigit()):
+        new_plan = SubscriptionPlan.query.get(int(new_plan_id))
     if not new_plan:
-        new_plan = SubscriptionPlan.query.filter_by(slug=new_plan_id).first()
+        new_plan = SubscriptionPlan.query.filter_by(slug=str(new_plan_id)).first()
     if not new_plan or not new_plan.is_active:
         return jsonify({'error': 'Plan not found'}), 404
+
+    # Downgrade guard: block if the new plan's seat/team quota is exceeded (spec §7.3)
+    if user.agency_id:
+        from app.models import Agency
+        from app.services import seats
+        agency = Agency.query.get(user.agency_id)
+        if agency and new_plan.max_seats != -1 and seats.active_member_seats(agency) > new_plan.max_seats:
+            excess = seats.active_member_seats(agency) - new_plan.max_seats
+            return jsonify({'error': f"Retirez d'abord {excess} membre(s) pour passer à ce plan."}), 409
+        if agency and new_plan.max_teams != -1 and seats.teams_used(agency) > new_plan.max_teams:
+            return jsonify({'error': "Trop d'équipes pour ce plan : supprimez-en d'abord."}), 409
 
     # Get or verify payment method
     if user.agency_id:

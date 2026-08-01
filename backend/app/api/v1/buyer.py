@@ -3,9 +3,11 @@ from datetime import datetime
 from functools import wraps
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from markupsafe import escape
 from app import db
 from app.api.v1 import api_v1_bp
-from app.models import User, SavedSearch, Favorite, BuyerMessage, PropertyEstimate, Property
+from app.models import User, SavedSearch, Favorite, BuyerMessage, MessageReply, PropertyEstimate, Property
+from app.services.mailer import send_email, render_email
 
 
 def require_buyer_role(f):
@@ -128,9 +130,8 @@ def delete_saved_search(search_id):
 
 @api_v1_bp.route('/buyer/favorites', methods=['GET'])
 @jwt_required()
-@require_buyer_role
 def list_favorites():
-    """List user's favorite properties."""
+    """List user's favorite properties (property embedded for rendering)."""
     current_user_id = int(get_jwt_identity())
 
     page = request.args.get('page', 1, type=int)
@@ -139,7 +140,10 @@ def list_favorites():
     favorites = Favorite.query.filter_by(user_id=current_user_id).order_by(Favorite.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
 
     return jsonify({
-        'favorites': [f.to_dict() for f in favorites.items],
+        'favorites': [
+            {**f.to_dict(), 'property': f.property.to_dict() if f.property else None}
+            for f in favorites.items
+        ],
         'total': favorites.total,
         'pages': favorites.pages,
         'current_page': page
@@ -148,7 +152,6 @@ def list_favorites():
 
 @api_v1_bp.route('/buyer/favorites', methods=['POST'])
 @jwt_required()
-@require_buyer_role
 def add_favorite():
     """Add a property to favorites."""
     current_user_id = int(get_jwt_identity())
@@ -186,7 +189,6 @@ def add_favorite():
 
 @api_v1_bp.route('/buyer/favorites/<int:favorite_id>', methods=['PUT'])
 @jwt_required()
-@require_buyer_role
 def update_favorite(favorite_id):
     """Update a favorite property."""
     current_user_id = int(get_jwt_identity())
@@ -209,7 +211,6 @@ def update_favorite(favorite_id):
 
 @api_v1_bp.route('/buyer/favorites/<int:favorite_id>', methods=['DELETE'])
 @jwt_required()
-@require_buyer_role
 def remove_favorite(favorite_id):
     """Remove a property from favorites."""
     current_user_id = int(get_jwt_identity())
@@ -278,6 +279,22 @@ def send_message():
     db.session.add(message)
     db.session.commit()
 
+    owner = User.query.get(property.owner_id)
+    if owner and owner.email:
+        sender_label = escape(user.full_name) if user else escape(message.buyer_email)
+        content = (
+            f'<p>Bonjour {escape(owner.first_name)},</p>'
+            f'<p><strong>{sender_label}</strong> vous a envoyé un message '
+            f'concernant votre annonce <strong>{escape(property.title)}</strong> :</p>'
+            f'<p style="background:#f8fafc;padding:12px;border-radius:8px">{escape(message.message)}</p>'
+            f'<p><a href="https://semsarout.ma/dashboard/leads">Répondre depuis votre tableau de bord</a></p>'
+        )
+        send_email(
+            to=owner.email,
+            subject=f'Nouveau message : {message.subject}',
+            html_body=render_email(content)
+        )
+
     return jsonify({
         'message': message.to_dict(),
         'status': 'Message envoyé avec succès'
@@ -288,7 +305,7 @@ def send_message():
 @jwt_required()
 @require_buyer_role
 def get_buyer_message(message_id):
-    """Get a specific message."""
+    """Get a specific message thread (including agent replies)."""
     current_user_id = int(get_jwt_identity())
     message = BuyerMessage.query.filter_by(id=message_id, buyer_id=current_user_id).first()
 
@@ -301,7 +318,35 @@ def get_buyer_message(message_id):
         message.read_at = datetime.utcnow()
         db.session.commit()
 
-    return jsonify({'message': message.to_dict()})
+    return jsonify({'message': message.to_dict(include_replies=True)})
+
+
+@api_v1_bp.route('/buyer/messages/<int:message_id>/reply', methods=['POST'])
+@jwt_required()
+@require_buyer_role
+def reply_to_message(message_id):
+    """Buyer adds a reply to an existing message thread."""
+    current_user_id = int(get_jwt_identity())
+    message = BuyerMessage.query.filter_by(id=message_id, buyer_id=current_user_id).first()
+
+    if not message:
+        return jsonify({'error': 'Message non trouvé'}), 404
+
+    data = request.get_json() or {}
+    body = data.get('body', '').strip()
+    if not body:
+        return jsonify({'error': 'Le message ne peut pas être vide'}), 400
+
+    reply = MessageReply(
+        buyer_message_id=message.id,
+        sender_role='buyer',
+        sender_user_id=current_user_id,
+        body=body
+    )
+    db.session.add(reply)
+    db.session.commit()
+
+    return jsonify({'reply': reply.to_dict()}), 201
 
 
 # ============================================
