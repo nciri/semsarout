@@ -30,6 +30,29 @@ _HOP_BY_HOP = {
 # Cache court d'identités résolues (clé = jeton Bearer).
 _IDENTITY_CACHE: dict[str, tuple[float, dict]] = {}
 
+_KNOWN_TENANTS = {"semsar", "m3a-l3achrane"}
+
+
+def _parse_tenant_hosts(raw: str) -> dict[str, str]:
+    mapping: dict[str, str] = {}
+    for pair in raw.split(","):
+        host, _, tenant = pair.partition("=")
+        if host.strip() and tenant.strip() in _KNOWN_TENANTS:
+            mapping[host.strip().lower()] = tenant.strip()
+    return mapping
+
+
+_TENANT_HOSTS = _parse_tenant_hosts(settings.tenant_hosts)
+
+
+def _resolve_tenant(headers, host: str) -> str:
+    """Tenant de la requête : en-tête x-tenant en dev (proxy Vite), sinon table Host."""
+    if settings.environment == "dev":
+        wanted = headers.get("x-tenant")
+        if wanted in _KNOWN_TENANTS:
+            return wanted
+    return _TENANT_HOSTS.get((host or "").split(":")[0].lower(), "semsar")
+
 
 def _identity_from_claims(payload: dict) -> dict:
     sub = payload.get("sub")
@@ -39,6 +62,7 @@ def _identity_from_claims(payload: dict) -> dict:
         "is_superadmin": bool(payload.get("is_superadmin")),
         "role": payload.get("account_role"),
         "features": payload.get("features") or [],
+        "tenant": payload.get("tenant") or "semsar",
     }
 
 
@@ -422,15 +446,24 @@ async def proxy(path: str, request: Request) -> Response:
     url = upstream_path
     if request.url.query:
         url = f"{url}?{request.url.query}"
-    # Filtrer : hop-by-hop + tout X-Semsar-* ENTRANT (anti-usurpation : seul le BFF les pose).
+    tenant = _resolve_tenant(request.headers, request.headers.get("host", ""))
+    # Filtrer : hop-by-hop + tout X-Semsar-* ENTRANT (anti-usurpation : seul le BFF les pose)
+    # + x-tenant (consommé ici, jamais relayé).
     headers = {
         k: v for k, v in request.headers.items()
-        if k.lower() not in _HOP_BY_HOP and not k.lower().startswith("x-semsar-")
+        if k.lower() not in _HOP_BY_HOP
+        and not k.lower().startswith("x-semsar-")
+        and k.lower() != "x-tenant"
     }
     # Frontière d'auth : tous les upstreams sont des services internes → injecter l'identité.
     ident = await _resolve_identity(app, request.headers.get("authorization"))
     if ident:
+        if ident.get("tenant", "semsar") != tenant:
+            # Jeton d'un produit utilisé sur l'autre (semsar ⇄ m3a-l3achrane) → rejet.
+            return Response(content=b'{"error":"Tenant mismatch"}', status_code=403,
+                            media_type="application/json")
         _inject_identity(headers, ident)
+    headers["x-semsar-tenant"] = tenant
     upstream = await client.request(
         request.method, url, headers=headers, content=await request.body()
     )

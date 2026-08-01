@@ -28,6 +28,10 @@ class GatewaySettings(BaseSettings):
     jwt_secret_key: str = ""
     jwt_algorithm: str = "HS256"
 
+    # Multi-tenant (M3a-L3achrane) : "host=tenant,host2=tenant2". En dev, l'en-tête
+    # x-tenant (posé par le proxy Vite du front) est honoré ; en prod seul Host compte.
+    tenant_hosts: str = ""
+
     # Services extraits (routage strangler). Vide = tout part au monolithe.
     identity_url: str | None = None
     search_url: str | None = None
