@@ -12,5 +12,5 @@ def test_health_ok():
 
 def test_create_requires_auth():
     with TestClient(app) as client:
-        resp = client.post("/contract/contracts", json={"title": "X"})
+        resp = client.post("/backoffice/contracts", json={"title": "X"})
         assert resp.status_code == 401  # sans jeton -> refusé

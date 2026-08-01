@@ -12,5 +12,5 @@ def test_health_ok():
 
 def test_cases_require_auth():
     with TestClient(app) as client:
-        resp = client.get("/legal/cases")
+        resp = client.get("/backoffice/legal-cases")
         assert resp.status_code == 401

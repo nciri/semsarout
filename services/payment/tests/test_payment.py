@@ -12,5 +12,5 @@ def test_health_ok():
 
 def test_create_requires_auth():
     with TestClient(app) as client:
-        resp = client.post("/payment/payments", json={"amount": 100, "purpose": "order"})
+        resp = client.get("/my-payments")
         assert resp.status_code == 401

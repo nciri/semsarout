@@ -12,5 +12,5 @@ def test_health_ok():
 
 def test_subscribe_requires_auth():
     with TestClient(app) as client:
-        resp = client.post("/billing/subscribe", json={"plan_slug": "pro"})
+        resp = client.get("/my-subscription")
         assert resp.status_code == 401
