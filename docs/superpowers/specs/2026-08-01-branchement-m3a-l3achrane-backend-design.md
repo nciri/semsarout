@@ -92,8 +92,9 @@ Ajustements par rapport au code initial :
   calculé à la première lecture puis mis en cache dans `match_scores` ; les événements
   `coloc.profile_updated` / `coloc.listing_published` **invalident** les entrées
   concernées au lieu de tout recalculer (pas d'explosion N×M).
-- Les FK `user_id` référencent les UUID de l'identity semsarout, transmis par les
-  en-têtes `x-semsar-*` injectés par le BFF.
+- Les FK `user_id` référencent les ids numériques (`BigInteger`) de l'identity
+  semsarout (`user_ro.id`), transmis par les en-têtes `x-semsar-*` injectés par le
+  BFF — les UUID v7 du dépôt initial sont convertis lors du port.
 - `coloc-trust` porte le service le mieux testé du dépôt initial ; le `trust-safety`
   semsarout conserve uniquement les actions plateforme (suspension de comptes).
 
