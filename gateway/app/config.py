@@ -61,6 +61,10 @@ class GatewaySettings(BaseSettings):
     commission_url: str | None = None
     selling_url: str | None = None
     coloc_listing_url: str | None = None
+    coloc_profile_url: str | None = None
+    matching_url: str | None = None
+    # Jeton interne partagé (appels BFF → APIs internes des services, ex. matching).
+    internal_token: str = ""
 
     otlp_endpoint: str = "http://localhost:4318"
 
