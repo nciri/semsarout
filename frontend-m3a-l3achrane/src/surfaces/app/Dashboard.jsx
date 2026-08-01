@@ -58,7 +58,8 @@ export default function Dashboard() {
     )
   }
 
-  const avgMatch = Math.round(recs.reduce((s, l) => s + l.matchPct, 0) / recs.length)
+  const matches = recs.map((l) => l.matchPct).filter((m) => m != null)
+  const avgMatch = matches.length ? Math.round(matches.reduce((s, m) => s + m, 0) / matches.length) : null
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)' }}>
@@ -72,7 +73,7 @@ export default function Dashboard() {
             value={profile.verifiee ? 'Vérifié' : 'En attente'}
             sub="CIN + statut"
           />
-          <StatCard icon="git-compare-arrows" tone="navy" label="Compatibilité moyenne" value={`${avgMatch}%`} sub="Excellent" />
+          <StatCard icon="git-compare-arrows" tone="navy" label="Compatibilité moyenne" value={avgMatch != null ? `${avgMatch}%` : '—'} sub={avgMatch != null ? 'Excellent' : 'Bientôt disponible'} />
           <StatCard icon="file-text" tone="gold" label="Candidatures" value="3" sub="En cours" />
         </div>
 
@@ -123,7 +124,7 @@ export default function Dashboard() {
             </div>
           </div>
           <div style={{ background: '#fff', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', padding: 20, boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <CompatibilityRing value={avgMatch} size={120} stroke={10} label="Compatibilité moyenne" />
+            {avgMatch != null && <CompatibilityRing value={avgMatch} size={120} stroke={10} label="Compatibilité moyenne" />}
           </div>
         </div>
       </div>

@@ -7,7 +7,7 @@ import { AmenityChip } from "./AmenityChip.jsx";
 
 /** ListingCard — the core marketplace card: photo + match score, title, location, price, amenities. */
 export function ListingCard({
-  image, imageTone = "var(--navy-100)", match = 85, verified = true, title = "Chambre dans un F4",
+  image, imageTone = "var(--navy-100)", match, verified = true, title = "Chambre dans un F4",
   city = "Maârif, Casablanca", price = 2300, amenities = [{ icon: "users", label: "3 colocs" }, { icon: "volume-x", label: "Calme" }, { icon: "cigarette-off", label: "Non-fumeur" }],
   onClick, style,
 }) {
@@ -23,7 +23,7 @@ export function ListingCard({
       }}
     >
       <div style={{ position: "relative", height: 150, background: image ? `center/cover url(${image})` : imageTone }}>
-        <div style={{ position: "absolute", top: 10, left: 10 }}><MatchScore value={match} size="sm" /></div>
+        {match != null && <div style={{ position: "absolute", top: 10, left: 10 }}><MatchScore value={match} size="sm" /></div>}
         {verified && <div style={{ position: "absolute", top: 10, right: 10 }}><VerifiedBadge label="Vérifiée" size="sm" /></div>}
       </div>
       <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
