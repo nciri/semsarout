@@ -1,0 +1,140 @@
+---
+- name: Installer les paquets système requis
+  ansible.builtin.apt:
+    name:
+      - git
+      - python3.12-venv
+      - python3-pip
+      - ufw
+      - curl
+      - ca-certificates
+      - gnupg
+      - lsb-release
+      - rsync
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Créer le groupe applicatif semsar
+  ansible.builtin.group:
+    name: "{{ semsar_group }}"
+    system: true
+
+- name: Créer l'utilisateur applicatif semsar (non-root, owner de /opt/semsar)
+  ansible.builtin.user:
+    name: "{{ semsar_user }}"
+    group: "{{ semsar_group }}"
+    system: true
+    home: /opt/semsar
+    shell: /bin/bash
+    create_home: true
+
+- name: Créer /opt/semsar et /etc/semsar
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ semsar_user }}"
+    group: "{{ semsar_group }}"
+    mode: "0750"
+  loop:
+    - /opt/semsar
+    - "{{ semsar_www_dir }}"
+
+- name: Créer /etc/semsar (root-only)
+  ansible.builtin.file:
+    path: /etc/semsar
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Créer /etc/semsar/env (root-only, lu par les units systemd via EnvironmentFile)
+  ansible.builtin.file:
+    path: "{{ semsar_env_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Cloner/mettre à jour le dépôt applicatif sur {{ semsar_git_branch }}
+  ansible.builtin.git:
+    repo: "{{ semsar_git_repo }}"
+    dest: "{{ semsar_app_dir }}"
+    version: "{{ semsar_git_branch }}"
+    force: true
+    accept_hostkey: true
+  become: true
+  become_user: "{{ semsar_user }}"
+  register: semsar_app_checkout
+  notify:
+    - restart mesh units
+
+# Pare-feu — 22/80/443 uniquement, tout le reste bloqué (services applicatifs sur
+# 127.0.0.1 uniquement, jamais exposés directement). CLI `ufw` directe (pas de
+# module dédié : le workflow CI n'installe que ansible-core, sans community.general)
+# — `ufw allow`/`default` sont idempotents nativement (pas de doublon de règle).
+- name: ufw — politique par défaut deny incoming / allow outgoing
+  ansible.builtin.command:
+    cmd: "ufw default {{ item.policy }} {{ item.direction }}"
+  loop:
+    - { direction: incoming, policy: deny }
+    - { direction: outgoing, policy: allow }
+  changed_when: true
+
+- name: ufw — autoriser SSH/HTTP/HTTPS
+  ansible.builtin.command:
+    cmd: "ufw allow {{ item }}/tcp"
+  loop: ["22", "80", "443"]
+  changed_when: true
+
+- name: ufw — activer (non-interactif)
+  ansible.builtin.command:
+    cmd: ufw --force enable
+  changed_when: true
+
+# Secrets — génération idempotente. Le fichier n'est écrit QUE s'il n'existe pas
+# déjà : rejouer le playbook ne régénère jamais un mot de passe déjà utilisé pour
+# créer un rôle PostgreSQL (ce qui désynchroniserait rôle et secret). Les valeurs
+# sont générées ici (lookup `password`, exécuté sur le contrôleur, jamais persisté
+# côté contrôleur puisque la cible est /dev/null) puis écrites uniquement sur le
+# serveur cible, root-only (0600).
+- name: Vérifier l'existence de {{ semsar_secrets_file }}
+  ansible.builtin.stat:
+    path: "{{ semsar_secrets_file }}"
+  register: semsar_secrets_stat
+
+- name: Générer les secrets applicatifs (première exécution uniquement)
+  ansible.builtin.set_fact:
+    semsar_generated_secrets: "{{ semsar_generated_secrets | default({}) | combine({item: lookup('password', '/dev/null length=32 chars=ascii_letters,digits')}) }}"
+  loop: "{{ semsar_db_roles }}"
+  when: not semsar_secrets_stat.stat.exists
+
+- name: Générer les secrets d'infra (RabbitMQ, MinIO, jeton interne)
+  ansible.builtin.set_fact:
+    semsar_rabbitmq_pass: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters,digits') }}"
+    semsar_minio_password: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters,digits') }}"
+    semsar_internal_token: "{{ lookup('password', '/dev/null length=40 chars=ascii_letters,digits') }}"
+  when: not semsar_secrets_stat.stat.exists
+
+- name: Écrire /etc/semsar/secrets.env (root-only, 0600)
+  ansible.builtin.template:
+    src: secrets.env.j2
+    dest: "{{ semsar_secrets_file }}"
+    owner: root
+    group: root
+    mode: "0600"
+  when: not semsar_secrets_stat.stat.exists
+
+# Relecture — que le fichier vienne d'être généré ou qu'il existe déjà d'une
+# exécution précédente, les rôles postgres/mesh ont besoin des valeurs en mémoire.
+- name: Relire /etc/semsar/secrets.env
+  ansible.builtin.slurp:
+    src: "{{ semsar_secrets_file }}"
+  register: semsar_secrets_raw
+
+- name: Charger les secrets en variable structurée
+  ansible.builtin.set_fact:
+    semsar_secrets: "{{ semsar_secrets_yaml | from_yaml }}"
+  vars:
+    semsar_secrets_lines: "{{ (semsar_secrets_raw.content | b64decode).splitlines() | select('match', '^[A-Za-z_][A-Za-z0-9_]*=') | list }}"
+    semsar_secrets_yaml: "{{ semsar_secrets_lines | map('regex_replace', '^([A-Za-z_][A-Za-z0-9_]*)=(.*)$', '\\1: \"\\2\"') | join('\n') }}"

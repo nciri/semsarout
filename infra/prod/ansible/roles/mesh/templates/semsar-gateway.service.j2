@@ -1,0 +1,19 @@
+[Unit]
+Description=SemsarOut — BFF/gateway
+After=network.target
+
+[Service]
+Type=simple
+User={{ semsar_user }}
+Group={{ semsar_group }}
+WorkingDirectory={{ semsar_app_dir }}/gateway
+EnvironmentFile={{ semsar_secrets_file }}
+EnvironmentFile={{ semsar_env_dir }}/gateway.env
+ExecStart={{ semsar_venv_dir }}/bin/python -m uvicorn app.main:app --app-dir {{ semsar_app_dir }}/gateway --host 127.0.0.1 --port {{ bff_port }}
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

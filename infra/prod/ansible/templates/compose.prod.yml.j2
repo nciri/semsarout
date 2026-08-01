@@ -1,0 +1,85 @@
+# Généré par Ansible (roles/docker_infra) — fichier compose ADDITIONNEL, fusionné
+# avec infra/docker-compose.yml du dépôt (docker compose -f infra/docker-compose.yml
+# -f compose.prod.yml ...). Objectifs :
+#   1. Restreindre RabbitMQ/MinIO/OpenSearch à 127.0.0.1 (docker manipule iptables et
+#      contourne sinon les règles ufw — ces ports ne doivent jamais être publics).
+#   2. Ajouter Traefik v3 (TLS Let's Encrypt, HTTP->HTTPS) + nginx statique pour les
+#      deux fronts. La stack d'observabilité (otel/prometheus/loki/grafana) du
+#      compose dev n'est PAS démarrée en prod (poids inutile pour ce premier
+#      déploiement) : elle n'est simplement jamais passée à `docker compose up`.
+name: semsar-platform
+
+services:
+  rabbitmq:
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
+
+  minio:
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+
+  opensearch:
+    ports:
+      - "127.0.0.1:9200:9200"
+
+  traefik:
+    image: traefik:v3.1
+    container_name: semsar-traefik
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.letsencrypt.acme.email={{ letsencrypt_email }}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_certs:/letsencrypt
+      - {{ semsar_app_dir }}/infra/prod-generated/traefik-dynamic.yml:/etc/traefik/dynamic/bff.yml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  nginx-semsarout:
+    image: nginx:1.27-alpine
+    container_name: semsar-nginx-semsarout
+    volumes:
+      - {{ semsar_www_dir }}/semsarout:/usr/share/nginx/html:ro
+      - {{ semsar_app_dir }}/infra/prod-generated/nginx-spa.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.semsarout-web.rule=Host(`{{ semsar_domain }}`) || Host(`www.{{ semsar_domain }}`)
+      - traefik.http.routers.semsarout-web.entrypoints=websecure
+      - traefik.http.routers.semsarout-web.tls.certresolver=letsencrypt
+      - traefik.http.routers.semsarout-web.priority=1
+      - traefik.http.services.semsarout-web.loadbalancer.server.port=80
+
+  nginx-m3a-l3achrane:
+    image: nginx:1.27-alpine
+    container_name: semsar-nginx-m3a-l3achrane
+    volumes:
+      - {{ semsar_www_dir }}/m3a-l3achrane:/usr/share/nginx/html:ro
+      - {{ semsar_app_dir }}/infra/prod-generated/nginx-spa.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.m3a-l3achrane-web.rule=Host(`{{ m3a_l3achrane_domain }}`) || Host(`www.{{ m3a_l3achrane_domain }}`)
+      - traefik.http.routers.m3a-l3achrane-web.entrypoints=websecure
+      - traefik.http.routers.m3a-l3achrane-web.tls.certresolver=letsencrypt
+      - traefik.http.routers.m3a-l3achrane-web.priority=1
+      - traefik.http.services.m3a-l3achrane-web.loadbalancer.server.port=80
+
+volumes:
+  traefik_certs:

@@ -1,0 +1,110 @@
+---
+- name: Installer les prérequis Docker
+  ansible.builtin.apt:
+    name: [ca-certificates, curl]
+    state: present
+
+- name: Créer /etc/apt/keyrings
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Télécharger la clé GPG Docker
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: "0644"
+
+- name: Ajouter le dépôt APT Docker
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}
+      signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu
+      {{ ansible_distribution_release }} stable
+    filename: docker
+    state: present
+    update_cache: true
+
+- name: Installer Docker Engine + plugin compose
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+
+- name: S'assurer que Docker est démarré et activé
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Ajouter semsar au groupe docker
+  ansible.builtin.user:
+    name: "{{ semsar_user }}"
+    groups: docker
+    append: true
+
+- name: Créer le dossier des fichiers générés (compose additionnel, config Traefik/nginx)
+  ansible.builtin.file:
+    path: "{{ semsar_app_dir }}/infra/prod-generated"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Générer le compose additionnel prod (Traefik TLS + nginx statique)
+  ansible.builtin.template:
+    src: compose.prod.yml.j2
+    dest: "{{ semsar_app_dir }}/infra/prod-generated/compose.prod.yml"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Générer la config dynamique Traefik (routage BFF /api, /uploads)
+  ansible.builtin.template:
+    src: traefik-dynamic.yml.j2
+    dest: "{{ semsar_app_dir }}/infra/prod-generated/traefik-dynamic.yml"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Générer la config nginx SPA (fallback index.html)
+  ansible.builtin.template:
+    src: nginx-spa.conf.j2
+    dest: "{{ semsar_app_dir }}/infra/prod-generated/nginx-spa.conf"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Créer les répertoires www des deux fronts (montés en lecture seule par nginx)
+  ansible.builtin.file:
+    path: "{{ semsar_www_dir }}/{{ item }}"
+    state: directory
+    owner: "{{ semsar_user }}"
+    group: "{{ semsar_group }}"
+    mode: "0755"
+  loop:
+    - semsarout
+    - m3a-l3achrane
+
+# RabbitMQ, MinIO, OpenSearch (infra/docker-compose.yml du dépôt, PostgreSQL exclu —
+# natif, cf. ADR-0002) + Traefik/nginx (compose additionnel ci-dessus). La stack
+# d'observabilité du compose dev (otel-collector, prometheus, loki, grafana) est
+# volontairement omise de ce premier déploiement prod (poids/risque non justifiés
+# tant qu'aucun dashboard n'est opéré) : elle reste disponible en ne l'ajoutant pas
+# à la liste de services démarrés ci-dessous.
+- name: Démarrer l'infra docker (rabbitmq, minio, opensearch, traefik, nginx)
+  ansible.builtin.command:
+    cmd: >-
+      docker compose
+      -f {{ semsar_app_dir }}/infra/docker-compose.yml
+      -f {{ semsar_app_dir }}/infra/prod-generated/compose.prod.yml
+      --env-file {{ semsar_secrets_file }}
+      up -d rabbitmq minio opensearch traefik nginx-semsarout nginx-m3a-l3achrane
+  args:
+    chdir: "{{ semsar_app_dir }}/infra"
+  changed_when: true

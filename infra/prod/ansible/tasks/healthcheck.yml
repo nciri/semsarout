@@ -1,0 +1,31 @@
+---
+- name: Healthcheck — le BFF répond en local
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ bff_port }}/health"
+    status_code: 200
+  register: semsar_bff_health
+  retries: 10
+  delay: 3
+  until: semsar_bff_health.status == 200
+
+- name: Healthcheck — lister toutes les units systemd du mesh
+  ansible.builtin.set_fact:
+    semsar_mesh_units: >-
+      {{ ['semsar-gateway.service', 'semsar-notification-scheduler.service']
+         + (mesh_apps | map(attribute='name') | map('regex_replace', '^(.*)$', 'semsar-app@\1.service') | list)
+         + (mesh_relays | map('regex_replace', '^(.*)$', 'semsar-relay@\1.service') | list)
+         + (mesh_workers | map('regex_replace', '^(.*)$', 'semsar-worker@\1.service') | list) }}
+
+- name: Healthcheck — chaque unité systemd du mesh est active
+  ansible.builtin.command:
+    cmd: systemctl is-active {{ item }}
+  loop: "{{ semsar_mesh_units }}"
+  register: semsar_unit_status
+  changed_when: false
+  failed_when: semsar_unit_status.stdout != 'active'
+
+- name: Healthcheck — résumé
+  ansible.builtin.debug:
+    msg: >-
+      BFF OK (http://127.0.0.1:{{ bff_port }}/health) —
+      {{ semsar_mesh_units | length }} unités systemd actives.

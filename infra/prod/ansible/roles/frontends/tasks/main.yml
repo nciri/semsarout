@@ -1,0 +1,63 @@
+---
+- name: Installer les prérequis NodeSource
+  ansible.builtin.apt:
+    name: [ca-certificates, curl, gnupg]
+    state: present
+
+- name: Vérifier si Node 20 est déjà installé
+  ansible.builtin.command: node --version
+  register: semsar_node_version
+  changed_when: false
+  failed_when: false
+
+- name: Installer Node.js 20 (NodeSource)
+  ansible.builtin.shell: |
+    set -euo pipefail
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+    apt-get install -y nodejs
+  args:
+    executable: /bin/bash
+  when: semsar_node_version.rc != 0 or not semsar_node_version.stdout is match('^v20\\.')
+
+- name: Builder + déployer chaque frontend
+  vars:
+    semsar_frontends:
+      - src: frontend
+        dest: semsarout
+      - src: frontend-m3a-l3achrane
+        dest: m3a-l3achrane
+  block:
+    - name: npm ci ({{ item.src }})
+      ansible.builtin.command:
+        cmd: npm ci
+        chdir: "{{ semsar_app_dir }}/{{ item.src }}"
+      loop: "{{ semsar_frontends }}"
+      loop_control:
+        label: "{{ item.src }}"
+      become: true
+      become_user: "{{ semsar_user }}"
+      changed_when: true
+
+    - name: npm run build ({{ item.src }})
+      ansible.builtin.command:
+        cmd: npm run build
+        chdir: "{{ semsar_app_dir }}/{{ item.src }}"
+      loop: "{{ semsar_frontends }}"
+      loop_control:
+        label: "{{ item.src }}"
+      become: true
+      become_user: "{{ semsar_user }}"
+      changed_when: true
+
+    - name: Publier le build dans {{ semsar_www_dir }}/<domaine>
+      ansible.builtin.command:
+        cmd: >-
+          rsync -a --delete
+          {{ semsar_app_dir }}/{{ item.src }}/dist/
+          {{ semsar_www_dir }}/{{ item.dest }}/
+      loop: "{{ semsar_frontends }}"
+      loop_control:
+        label: "{{ item.src }} -> {{ item.dest }}"
+      become: true
+      become_user: "{{ semsar_user }}"
+      changed_when: true

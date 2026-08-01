@@ -1,0 +1,4 @@
+## Généré par Ansible — env spécifique au relay outbox {{ item }} (cf. app.relay).
+SERVICE_NAME={{ item }}
+DATABASE_URL=postgresql+psycopg://{{ item | replace('-', '_') }}:{{ semsar_secrets['PG_PASSWORD_' + (item | replace('-', '_') | upper)] }}@localhost:5432/{{ semsar_db_name }}
+PYTHONPATH={{ semsar_app_dir }}/services/{{ item }}

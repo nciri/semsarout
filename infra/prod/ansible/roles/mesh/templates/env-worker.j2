@@ -1,0 +1,6 @@
+## Généré par Ansible — env spécifique au worker {{ item }} (cf. app.worker).
+SERVICE_NAME={{ item }}
+{% if (item | replace('-', '_')) in semsar_db_roles %}
+DATABASE_URL=postgresql+psycopg://{{ item | replace('-', '_') }}:{{ semsar_secrets['PG_PASSWORD_' + (item | replace('-', '_') | upper)] }}@localhost:5432/{{ semsar_db_name }}
+{% endif %}
+PYTHONPATH={{ semsar_app_dir }}/services/{{ item }}

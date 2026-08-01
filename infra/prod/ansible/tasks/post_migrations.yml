@@ -1,0 +1,39 @@
+---
+# Migrations additives — jouées APRÈS le démarrage du mesh (roles/mesh) car elles
+# ALTERent des tables créées par SQLAlchemy au démarrage de chaque service
+# (`init_db()`, cf. services/identity/app/db.py et consorts) : sur un serveur neuf,
+# ces tables n'existent pas tant que le service n'a pas tourné une première fois.
+# Toutes idempotentes (IF NOT EXISTS / DO $$ ... EXCEPTION WHEN duplicate_object).
+#
+# services/*/db/*.sql hors schema.sql et migrate_from_monolith.sql (ce dernier ne
+# s'applique jamais sur une base prod neuve, cf. Global Constraints du plan) :
+#   identity/add_tenant.sql, identity/add_rental_feature.sql,
+#   messaging/migrate_conversation.sql, rental/migrate_particulier_lease.sql,
+#   billing/migrate_commission_invoice.sql
+
+- name: Attendre que les services dont dépendent les migrations additives répondent
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ item }}"
+    timeout: 60
+  loop:
+    - 8501 # identity  -> identity.user_ro (add_tenant, add_rental_feature)
+    - 8508 # billing   -> billing.invoice (migrate_commission_invoice)
+    - 8510 # messaging -> tables créées par CREATE TABLE IF NOT EXISTS, sans dépendance stricte
+    - 8518 # rental    -> rental.lease (migrate_particulier_lease)
+
+- name: Jouer les migrations additives
+  ansible.builtin.command:
+    cmd: psql -v ON_ERROR_STOP=1 -d {{ semsar_db_name }}
+    stdin: "{{ lookup('file', playbook_dir + '/../../../services/' + item.service + '/db/' + item.file) }}"
+  loop:
+    - { service: identity, file: add_tenant.sql }
+    - { service: identity, file: add_rental_feature.sql }
+    - { service: messaging, file: migrate_conversation.sql }
+    - { service: rental, file: migrate_particulier_lease.sql }
+    - { service: billing, file: migrate_commission_invoice.sql }
+  loop_control:
+    label: "{{ item.service }}/{{ item.file }}"
+  become: true
+  become_user: postgres
+  changed_when: true

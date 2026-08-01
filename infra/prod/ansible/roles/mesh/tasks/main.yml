@@ -1,0 +1,175 @@
+---
+- name: Créer le venv applicatif {{ semsar_venv_dir }}
+  ansible.builtin.command:
+    cmd: python3.12 -m venv {{ semsar_venv_dir }}
+    creates: "{{ semsar_venv_dir }}/bin/python"
+  become: true
+  become_user: "{{ semsar_user }}"
+
+- name: Mettre à jour pip/setuptools/wheel dans le venv
+  ansible.builtin.pip:
+    name: [pip, setuptools, wheel]
+    state: latest
+    virtualenv: "{{ semsar_venv_dir }}"
+  become: true
+  become_user: "{{ semsar_user }}"
+
+- name: Installer les libs partagées en éditable
+  ansible.builtin.pip:
+    name: "{{ semsar_app_dir }}/libs/{{ item }}"
+    editable: true
+    virtualenv: "{{ semsar_venv_dir }}"
+  loop:
+    - semsar_common
+    - semsar_auth
+    - semsar_events
+    - semsar_storage
+    - semsar_search
+    - semsar_signing
+  become: true
+  become_user: "{{ semsar_user }}"
+  notify: restart mesh units
+
+- name: Installer le gateway/BFF en éditable
+  ansible.builtin.pip:
+    name: "{{ semsar_app_dir }}/gateway"
+    editable: true
+    virtualenv: "{{ semsar_venv_dir }}"
+  become: true
+  become_user: "{{ semsar_user }}"
+  notify: restart mesh units
+
+- name: Découvrir les services (dossiers avec pyproject.toml, hors _template)
+  ansible.builtin.find:
+    paths: "{{ semsar_app_dir }}/services"
+    file_type: directory
+    excludes: ["_template"]
+  register: semsar_service_dirs
+
+- name: Installer chaque service en éditable
+  ansible.builtin.pip:
+    name: "{{ item.path }}"
+    editable: true
+    virtualenv: "{{ semsar_venv_dir }}"
+  loop: "{{ semsar_service_dirs.files }}"
+  loop_control:
+    label: "{{ item.path | basename }}"
+  become: true
+  become_user: "{{ semsar_user }}"
+  notify: restart mesh units
+
+# --- Fichiers d'environnement par instance ---
+- name: Générer les fichiers d'environnement des services (uvicorn)
+  ansible.builtin.template:
+    src: env-app.j2
+    dest: "{{ semsar_env_dir }}/app-{{ item.name }}.env"
+    owner: root
+    group: root
+    mode: "0600"
+  loop: "{{ mesh_apps }}"
+  loop_control:
+    label: "{{ item.name }}"
+  notify: restart mesh units
+
+- name: Générer les fichiers d'environnement des relais outbox
+  ansible.builtin.template:
+    src: env-relay.j2
+    dest: "{{ semsar_env_dir }}/relay-{{ item }}.env"
+    owner: root
+    group: root
+    mode: "0600"
+  loop: "{{ mesh_relays }}"
+  notify: restart mesh units
+
+- name: Générer les fichiers d'environnement des workers
+  ansible.builtin.template:
+    src: env-worker.j2
+    dest: "{{ semsar_env_dir }}/worker-{{ item }}.env"
+    owner: root
+    group: root
+    mode: "0600"
+  loop: "{{ mesh_workers }}"
+  notify: restart mesh units
+
+- name: Générer l'environnement du gateway/BFF
+  ansible.builtin.template:
+    src: env-gateway.j2
+    dest: "{{ semsar_env_dir }}/gateway.env"
+    owner: root
+    group: root
+    mode: "0600"
+  notify: restart mesh units
+
+- name: Générer l'environnement de l'ordonnanceur notification
+  ansible.builtin.template:
+    src: env-notification-scheduler.j2
+    dest: "{{ semsar_env_dir }}/notification-scheduler.env"
+    owner: root
+    group: root
+    mode: "0600"
+  notify: restart mesh units
+
+# --- Units systemd ---
+- name: Installer les units systemd templates (app@, relay@, worker@)
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - semsar-app@.service
+    - semsar-relay@.service
+    - semsar-worker@.service
+  notify: reload systemd daemon
+
+- name: Installer les units systemd uniques (gateway, scheduler notification)
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - semsar-gateway.service
+    - semsar-notification-scheduler.service
+  notify: reload systemd daemon
+
+- name: Recharger systemd immédiatement (avant enable/start)
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Activer + démarrer les services applicatifs (uvicorn)
+  ansible.builtin.systemd:
+    name: "semsar-app@{{ item.name }}.service"
+    enabled: true
+    state: started
+  loop: "{{ mesh_apps }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Activer + démarrer les relais outbox
+  ansible.builtin.systemd:
+    name: "semsar-relay@{{ item }}.service"
+    enabled: true
+    state: started
+  loop: "{{ mesh_relays }}"
+
+- name: Activer + démarrer les workers événementiels
+  ansible.builtin.systemd:
+    name: "semsar-worker@{{ item }}.service"
+    enabled: true
+    state: started
+  loop: "{{ mesh_workers }}"
+
+- name: Activer + démarrer le gateway/BFF
+  ansible.builtin.systemd:
+    name: semsar-gateway.service
+    enabled: true
+    state: started
+
+- name: Activer + démarrer l'ordonnanceur notification
+  ansible.builtin.systemd:
+    name: semsar-notification-scheduler.service
+    enabled: true
+    state: started

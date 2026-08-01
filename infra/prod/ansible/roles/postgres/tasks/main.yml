@@ -1,0 +1,112 @@
+---
+- name: Installer les prérequis du dépôt PGDG
+  ansible.builtin.apt:
+    name: [ca-certificates, curl, gnupg]
+    state: present
+
+- name: Créer /usr/share/postgresql-common/pgdg (clé PGDG)
+  ansible.builtin.file:
+    path: /usr/share/postgresql-common/pgdg
+    state: directory
+    mode: "0755"
+
+- name: Télécharger la clé de signature PGDG
+  ansible.builtin.get_url:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    dest: /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+    mode: "0644"
+
+- name: Ajouter le dépôt APT PGDG
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc]
+      https://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main
+    filename: pgdg
+    state: present
+    update_cache: true
+
+- name: Installer PostgreSQL {{ semsar_pg_version }} + extensions (postgis, pgvector)
+  ansible.builtin.apt:
+    name:
+      - "postgresql-{{ semsar_pg_version }}"
+      - "postgresql-client-{{ semsar_pg_version }}"
+      - "postgresql-contrib-{{ semsar_pg_version }}"
+      - "postgresql-{{ semsar_pg_version }}-postgis-3"
+      - "postgresql-{{ semsar_pg_version }}-pgvector"
+      - python3-psycopg2
+    state: present
+    update_cache: true
+
+- name: S'assurer que PostgreSQL est démarré et activé
+  ansible.builtin.systemd:
+    name: postgresql
+    state: started
+    enabled: true
+
+- name: Créer la base applicative {{ semsar_db_name }}
+  ansible.builtin.command:
+    cmd: >-
+      psql -tAc "SELECT 1 FROM pg_database WHERE datname = '{{ semsar_db_name }}'"
+  register: semsar_db_exists
+  changed_when: false
+  become: true
+  become_user: postgres
+
+- name: (création) base {{ semsar_db_name }}
+  ansible.builtin.command:
+    cmd: createdb "{{ semsar_db_name }}"
+  become: true
+  become_user: postgres
+  when: semsar_db_exists.stdout is not search('1')
+
+- name: Activer les extensions communes (pgcrypto, pg_trgm, postgis, pgvector)
+  ansible.builtin.command:
+    cmd: >-
+      psql -v ON_ERROR_STOP=1 -d {{ semsar_db_name }}
+      -c "CREATE EXTENSION IF NOT EXISTS {{ item }};"
+  loop:
+    - pgcrypto
+    - pg_trgm
+    - postgis
+    - vector
+  become: true
+  become_user: postgres
+  changed_when: true
+
+# Rôle + schéma par service — idempotent : la ligne `CREATE ROLE x LOGIN PASSWORD
+# 'x'` (mot de passe d'exemple = nom du rôle, cf. services/*/db/schema.sql) est
+# réécrite à la volée en un bloc DO idempotent qui crée le rôle avec le VRAI mot de
+# passe généré côté serveur (roles/base) s'il n'existe pas encore, ou remet ce même
+# mot de passe à jour sinon (rejouable sans dérive). Le reste du schema.sql (schéma,
+# search_path, grants — déjà idempotents via IF NOT EXISTS) est exécuté tel quel.
+- name: Provisionner rôle + schéma PostgreSQL par service (idempotent)
+  vars:
+    pg_role: "{{ item }}"
+    pg_service_dir: "{{ item | replace('_', '-') }}"
+    pg_password: "{{ semsar_secrets['PG_PASSWORD_' + (item | upper)] }}"
+    pg_schema_raw: "{{ lookup('file', playbook_dir + '/../../../services/' + pg_service_dir + '/db/schema.sql') }}"
+    pg_role_literal: "CREATE ROLE {{ pg_role }} LOGIN PASSWORD '{{ pg_role }}';"
+    pg_role_idempotent: |-
+      DO $do$
+      BEGIN
+         IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '{{ pg_role }}') THEN
+            CREATE ROLE {{ pg_role }} LOGIN PASSWORD '{{ pg_password }}';
+         ELSE
+            ALTER ROLE {{ pg_role }} WITH PASSWORD '{{ pg_password }}';
+         END IF;
+      END
+      $do$;
+    pg_schema_sql: "{{ pg_schema_raw | replace(pg_role_literal, pg_role_idempotent) }}"
+  ansible.builtin.command:
+    cmd: psql -v ON_ERROR_STOP=1 -d {{ semsar_db_name }}
+    stdin: "{{ pg_schema_sql }}"
+  become: true
+  become_user: postgres
+  changed_when: true
+  loop: "{{ semsar_db_roles }}"
+
+# Les migrations additives (add_tenant.sql, migrate_particulier_lease.sql, ...) ALTERent
+# des tables créées par SQLAlchemy (`init_db()` au démarrage de chaque service — cf.
+# services/identity/app/db.py) : elles ne peuvent PAS s'exécuter ici (base encore
+# vide sur un serveur neuf). Elles sont jouées après le démarrage du mesh, cf.
+# tasks/post_migrations.yml importé par playbook.yml.
