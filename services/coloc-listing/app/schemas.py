@@ -81,6 +81,12 @@ class HouseRuleIn(BaseModel):
     code: str = Field(max_length=40)
     value: str = Field(max_length=120)
 
+    @field_validator("value")
+    @classmethod
+    def _known(cls, v: str, info):
+        # La validation croisée code+valeur se fait dans la route (erreur legacy 400).
+        return v
+
 
 class HouseRulesIn(BaseModel):
     rules: list[HouseRuleIn]

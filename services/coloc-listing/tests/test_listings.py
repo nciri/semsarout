@@ -52,6 +52,9 @@ def test_full_lifecycle_publishes_events(client, db_session):
     events = db_session.scalars(select(OutboxEvent.event_type)).all()
     assert "coloc.listing_published" in events
     assert events.count("coloc.listing_status_changed") == 2  # submit + approve
+    published = db_session.scalars(select(OutboxEvent).where(
+        OutboxEvent.event_type == "coloc.listing_published")).first()
+    assert published.payload["house_rules"] == {}  # dict {code: valeur} présent
 
 
 def test_owner_only_updates(client):
@@ -78,9 +81,13 @@ def test_invalid_transition(client):
 def test_house_rules_media_roommates(client):
     lid = _create(client)
     resp = client.put(f"/listings/{lid}/house-rules",
-                      json={"rules": [{"code": "fumeur", "value": "Non-fumeur"}]},
+                      json={"rules": [{"code": "tabac", "value": "non_fumeur"}]},
                       headers=headers())
     assert resp.status_code == 200
+    resp = client.put(f"/listings/{lid}/house-rules",
+                      json={"rules": [{"code": "inconnu", "value": "x"}]},
+                      headers=headers())
+    assert resp.status_code == 400  # hors référentiel
     resp = client.post(f"/listings/{lid}/media",
                        json={"url": "/uploads/photos/x.jpg", "position": 0,
                              "media_type": "CHAMBRE"}, headers=headers())

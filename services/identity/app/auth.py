@@ -31,7 +31,7 @@ def _user_event_doc(u: UserRO) -> dict:
     def iso(v):
         return v.isoformat() if v else None
     return {
-        "id": u.id, "email": u.email, "password_hash": u.password_hash,
+        "id": u.id, "email": u.email, "tenant": u.tenant, "password_hash": u.password_hash,
         "first_name": u.first_name, "last_name": u.last_name, "phone": u.phone,
         "avatar_url": u.avatar_url, "user_type": u.user_type, "account_role": u.account_role,
         "interest": u.interest, "is_active": u.is_active, "is_verified": u.is_verified,

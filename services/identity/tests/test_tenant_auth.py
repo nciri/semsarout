@@ -46,3 +46,14 @@ def test_refresh_rejects_cross_tenant(client):
     assert _decode(ok.json()["access_token"])["tenant"] == "m3a-l3achrane"
     ko = client.post("/auth/refresh", headers={"authorization": f"Bearer {refresh_token}"})
     assert ko.status_code == 403
+
+
+def test_user_event_carries_tenant(client, db_session):
+    from semsar_events import OutboxEvent
+    from sqlalchemy import select
+
+    client.post("/auth/register", json=_REG, headers=_M3A)
+    row = db_session.scalars(select(OutboxEvent).where(
+        OutboxEvent.event_type == "user.created")).first()
+    assert row is not None
+    assert row.payload["tenant"] == "m3a-l3achrane"
