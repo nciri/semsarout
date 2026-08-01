@@ -91,7 +91,7 @@ sleep 6
 
 echo "== 4. BFF (:$BFF_PORT, auth locale) =="
 kill_port "$BFF_PORT"; sleep 1
-env UPSTREAM_URL="$MONO" JWT_SECRET_KEY="$JWT" INTERNAL_TOKEN="$ITOK" \
+env UPSTREAM_URL="$MONO" JWT_SECRET_KEY="$JWT" INTERNAL_TOKEN="$ITOK" TENANT_DEV_HEADER=true \
   CATALOG_URL=http://localhost:8009 DIRECTORY_URL=http://localhost:8011 LISTING_URL=http://localhost:8012 \
   SEARCH_URL=http://localhost:8103 CRM_URL=http://localhost:8013 MARKETPLACE_URL=http://localhost:8010 \
   GEO_URL=http://localhost:8509 MESSAGING_URL=http://localhost:8510 TRUST_SAFETY_URL=http://localhost:8511 \

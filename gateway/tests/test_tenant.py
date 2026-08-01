@@ -10,7 +10,7 @@ def test_parse_tenant_hosts():
 def test_resolve_tenant_by_host(monkeypatch):
     import app.main as m
     monkeypatch.setattr(m, "_TENANT_HOSTS", {"m3a-l3achrane.ma": "m3a-l3achrane"})
-    monkeypatch.setattr(m.settings, "environment", "prod")
+    monkeypatch.setattr(m.settings, "tenant_dev_header", False)
     assert _resolve_tenant({}, "m3a-l3achrane.ma:443") == "m3a-l3achrane"
     assert _resolve_tenant({}, "semsarout.ma") == "semsar"
     # En prod, l'en-tête x-tenant est IGNORÉ (anti-usurpation).
@@ -20,7 +20,7 @@ def test_resolve_tenant_by_host(monkeypatch):
 def test_resolve_tenant_dev_header(monkeypatch):
     import app.main as m
     monkeypatch.setattr(m, "_TENANT_HOSTS", {})
-    monkeypatch.setattr(m.settings, "environment", "dev")
+    monkeypatch.setattr(m.settings, "tenant_dev_header", True)
     assert _resolve_tenant({"x-tenant": "m3a-l3achrane"}, "localhost:8099") == "m3a-l3achrane"
     assert _resolve_tenant({"x-tenant": "hack"}, "localhost:8099") == "semsar"  # inconnu → défaut
     assert _resolve_tenant({}, "localhost:8099") == "semsar"

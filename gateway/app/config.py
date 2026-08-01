@@ -31,6 +31,9 @@ class GatewaySettings(BaseSettings):
     # Multi-tenant (M3a-L3achrane) : "host=tenant,host2=tenant2". En dev, l'en-tête
     # x-tenant (posé par le proxy Vite du front) est honoré ; en prod seul Host compte.
     tenant_hosts: str = ""
+    # Opt-in DEV uniquement : honorer l'en-tête x-tenant entrant (posé par le proxy Vite).
+    # Défaut False = fail-safe : en prod, seul Host compte même si ENVIRONMENT est mal posé.
+    tenant_dev_header: bool = False
 
     # Services extraits (routage strangler). Vide = tout part au monolithe.
     identity_url: str | None = None

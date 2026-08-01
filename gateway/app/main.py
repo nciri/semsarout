@@ -46,8 +46,9 @@ _TENANT_HOSTS = _parse_tenant_hosts(settings.tenant_hosts)
 
 
 def _resolve_tenant(headers, host: str) -> str:
-    """Tenant de la requête : en-tête x-tenant en dev (proxy Vite), sinon table Host."""
-    if settings.environment == "dev":
+    """Tenant de la requête : en-tête x-tenant honoré uniquement si tenant_dev_header
+    (opt-in dev), sinon table Host."""
+    if settings.tenant_dev_header:
         wanted = headers.get("x-tenant")
         if wanted in _KNOWN_TENANTS:
             return wanted
