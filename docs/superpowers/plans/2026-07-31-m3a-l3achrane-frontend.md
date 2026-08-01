@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a standalone `frontend-m3a-l3chrane/` Vite SPA that reproduces the M3a-L3chrane roommate-marketplace design across three surfaces (public web, seeker app, partner portal) on mock data, with a semsar-shaped API seam for later live wiring.
+**Goal:** Build a standalone `frontend-m3a-l3achrane/` Vite SPA that reproduces the M3a-L3chrane roommate-marketplace design across three surfaces (public web, seeker app, partner portal) on mock data, with a semsar-shaped API seam for later live wiring.
 
 **Architecture:** One Vite + React 18 app at repo root. Design tokens are ported verbatim from the Claude Design project; DS components are ported near-verbatim (they are already inline-style + CSS-variable ES modules — only `Icon` changes from CDN Lucide to `lucide-react`). UI-kit screens are ported into route-based surfaces, each lazy-loaded. Surfaces read data through async service functions that resolve to mock fixtures today and to the shared gateway later via one env flag.
 
@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- **Location:** `frontend-m3a-l3chrane/` at repo root. Own `package.json` / `node_modules`. No imports to/from the existing `frontend/`.
+- **Location:** `frontend-m3a-l3achrane/` at repo root. Own `package.json` / `node_modules`. No imports to/from the existing `frontend/`.
 - **Dev port:** `5610` (semsar uses `5600`; both must run side by side).
 - **Dev proxy:** `/api` and `/uploads` → `http://localhost:8099` (same gateway as semsar).
 - **Mock flag:** `VITE_USE_MOCK`, default `true`. Surfaces call async service functions only — never fixtures directly.
@@ -28,16 +28,16 @@
 ### Task 1: Scaffold the app
 
 **Files:**
-- Create: `frontend-m3a-l3chrane/package.json`
-- Create: `frontend-m3a-l3chrane/vite.config.js`
-- Create: `frontend-m3a-l3chrane/postcss.config.js`
-- Create: `frontend-m3a-l3chrane/tailwind.config.js`
-- Create: `frontend-m3a-l3chrane/.eslintrc.cjs`
-- Create: `frontend-m3a-l3chrane/.gitignore`
-- Create: `frontend-m3a-l3chrane/index.html`
-- Create: `frontend-m3a-l3chrane/.env.development`
-- Create: `frontend-m3a-l3chrane/src/main.jsx`
-- Create: `frontend-m3a-l3chrane/src/App.jsx` (temporary hello page, replaced in Task 11)
+- Create: `frontend-m3a-l3achrane/package.json`
+- Create: `frontend-m3a-l3achrane/vite.config.js`
+- Create: `frontend-m3a-l3achrane/postcss.config.js`
+- Create: `frontend-m3a-l3achrane/tailwind.config.js`
+- Create: `frontend-m3a-l3achrane/.eslintrc.cjs`
+- Create: `frontend-m3a-l3achrane/.gitignore`
+- Create: `frontend-m3a-l3achrane/index.html`
+- Create: `frontend-m3a-l3achrane/.env.development`
+- Create: `frontend-m3a-l3achrane/src/main.jsx`
+- Create: `frontend-m3a-l3achrane/src/App.jsx` (temporary hello page, replaced in Task 11)
 - Modify: root `Makefile` (add m3a targets)
 - Modify: root `.gitignore` (ignore the new app's node_modules/dist)
 
@@ -214,21 +214,21 @@ export default function App() {
 Read the existing root `Makefile` first to match its style, then append:
 ```makefile
 m3a-install:
-	cd frontend-m3a-l3chrane && npm install
+	cd frontend-m3a-l3achrane && npm install
 
 m3a-dev:
-	cd frontend-m3a-l3chrane && npm run dev
+	cd frontend-m3a-l3achrane && npm run dev
 
 m3a-build:
-	cd frontend-m3a-l3chrane && npm run build
+	cd frontend-m3a-l3achrane && npm run build
 
 m3a-lint:
-	cd frontend-m3a-l3chrane && npm run lint
+	cd frontend-m3a-l3achrane && npm run lint
 ```
 
 - [ ] **Step 12: Install and boot**
 
-Run: `cd frontend-m3a-l3chrane && npm install && npm run build`
+Run: `cd frontend-m3a-l3achrane && npm install && npm run build`
 Expected: install succeeds; `vite build` produces `dist/` with no errors.
 
 Run: `npm run dev` (background), then `curl -s -o /dev/null -w "%{http_code}" http://localhost:5610/`
@@ -237,7 +237,7 @@ Expected: `200`. Stop the dev server.
 - [ ] **Step 13: Commit**
 
 ```bash
-git add frontend-m3a-l3chrane Makefile .gitignore
+git add frontend-m3a-l3achrane Makefile .gitignore
 git commit -m "chore(m3a): scaffold frontend Vite + configs + Makefile targets"
 ```
 
@@ -246,12 +246,12 @@ git commit -m "chore(m3a): scaffold frontend Vite + configs + Makefile targets"
 ### Task 2: Port design tokens (verbatim)
 
 **Files:**
-- Create: `frontend-m3a-l3chrane/src/styles/tokens/fonts.css`
-- Create: `frontend-m3a-l3chrane/src/styles/tokens/colors.css`
-- Create: `frontend-m3a-l3chrane/src/styles/tokens/typography.css`
-- Create: `frontend-m3a-l3chrane/src/styles/tokens/spacing.css`
-- Create: `frontend-m3a-l3chrane/src/styles/tokens/effects.css`
-- Modify: `frontend-m3a-l3chrane/src/styles/styles.css`
+- Create: `frontend-m3a-l3achrane/src/styles/tokens/fonts.css`
+- Create: `frontend-m3a-l3achrane/src/styles/tokens/colors.css`
+- Create: `frontend-m3a-l3achrane/src/styles/tokens/typography.css`
+- Create: `frontend-m3a-l3achrane/src/styles/tokens/spacing.css`
+- Create: `frontend-m3a-l3achrane/src/styles/tokens/effects.css`
+- Modify: `frontend-m3a-l3achrane/src/styles/styles.css`
 
 **Interfaces:**
 - Produces: all CSS custom properties (`--brand-primary`, `--gold-500`, `--radius-sm`, `--shadow-xs`, `--font-display`, `--dur-fast`, `--ease-standard`, …) available globally. Every DS component depends on these.
@@ -292,7 +292,7 @@ Run `npm run dev`, load `http://localhost:5610/`, confirm the box renders navy (
 - [ ] **Step 4: Commit**
 
 ```bash
-git add frontend-m3a-l3chrane/src/styles
+git add frontend-m3a-l3achrane/src/styles
 git commit -m "feat(m3a): tokens de design portés verbatim (couleurs, type, espacement, effets)"
 ```
 
@@ -301,9 +301,9 @@ git commit -m "feat(m3a): tokens de design portés verbatim (couleurs, type, esp
 ### Task 3: Port core DS components
 
 **Files:**
-- Create: `frontend-m3a-l3chrane/src/ds/core/Icon.jsx` (converted)
-- Create: `frontend-m3a-l3chrane/src/ds/core/{Button,IconButton,Badge,Chip,Avatar,Card,Input,Select,Tabs}.jsx` (near-verbatim)
-- Create: `frontend-m3a-l3chrane/src/ds/core/index.js`
+- Create: `frontend-m3a-l3achrane/src/ds/core/Icon.jsx` (converted)
+- Create: `frontend-m3a-l3achrane/src/ds/core/{Button,IconButton,Badge,Chip,Avatar,Card,Input,Select,Tabs}.jsx` (near-verbatim)
+- Create: `frontend-m3a-l3achrane/src/ds/core/index.js`
 
 **Interfaces:**
 - Produces: `Button`, `IconButton`, `Icon`, `Badge`, `Chip`, `Avatar`, `Card`, `Input`, `Select`, `Tabs` as named ES exports. `Icon` prop contract stays `{ name, size, strokeWidth, color, style }` (Lucide icon names, kebab-case, e.g. `"map-pin"`).
@@ -383,7 +383,7 @@ Run `npm run dev`, load `/`, confirm buttons/badge/icon/card render with navy+go
 - [ ] **Step 5: Commit**
 
 ```bash
-git add frontend-m3a-l3chrane/src/ds/core
+git add frontend-m3a-l3achrane/src/ds/core
 git commit -m "feat(m3a): composants DS core portés (Icon → lucide-react)"
 ```
 
@@ -392,11 +392,11 @@ git commit -m "feat(m3a): composants DS core portés (Icon → lucide-react)"
 ### Task 4: Port trust, listing, and nav DS components
 
 **Files:**
-- Create: `frontend-m3a-l3chrane/src/ds/trust/{VerifiedBadge,MatchScore,CompatibilityRing,FeatureItem}.jsx`
-- Create: `frontend-m3a-l3chrane/src/ds/listing/{ListingCard,PriceTag,AmenityChip}.jsx`
-- Create: `frontend-m3a-l3chrane/src/ds/nav/{SidebarNav,TopBar}.jsx`
-- Create: `frontend-m3a-l3chrane/src/ds/trust/index.js`, `.../listing/index.js`, `.../nav/index.js`
-- Create: `frontend-m3a-l3chrane/src/ds/index.js` (top barrel)
+- Create: `frontend-m3a-l3achrane/src/ds/trust/{VerifiedBadge,MatchScore,CompatibilityRing,FeatureItem}.jsx`
+- Create: `frontend-m3a-l3achrane/src/ds/listing/{ListingCard,PriceTag,AmenityChip}.jsx`
+- Create: `frontend-m3a-l3achrane/src/ds/nav/{SidebarNav,TopBar}.jsx`
+- Create: `frontend-m3a-l3achrane/src/ds/trust/index.js`, `.../listing/index.js`, `.../nav/index.js`
+- Create: `frontend-m3a-l3achrane/src/ds/index.js` (top barrel)
 
 **Interfaces:**
 - Consumes: `src/ds/core/*` (these components import from `../core`).
@@ -443,7 +443,7 @@ Temporarily import a `ListingCard`, `CompatibilityRing`, and `TopBar` into `App.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add frontend-m3a-l3chrane/src/ds
+git add frontend-m3a-l3achrane/src/ds
 git commit -m "feat(m3a): composants DS trust/listing/nav + barrels"
 ```
 
@@ -452,9 +452,9 @@ git commit -m "feat(m3a): composants DS trust/listing/nav + barrels"
 ### Task 5: Formatting helpers (`lib/format.js`) — TDD
 
 **Files:**
-- Create: `frontend-m3a-l3chrane/src/lib/format.js`
-- Create: `frontend-m3a-l3chrane/src/lib/format.test.mjs`
-- Modify: `frontend-m3a-l3chrane/package.json` (add a `test` script using Node's built-in test runner)
+- Create: `frontend-m3a-l3achrane/src/lib/format.js`
+- Create: `frontend-m3a-l3achrane/src/lib/format.test.mjs`
+- Modify: `frontend-m3a-l3achrane/package.json` (add a `test` script using Node's built-in test runner)
 
 **Interfaces:**
 - Produces:
@@ -499,7 +499,7 @@ test('matchTone strong at >= 80', () => {
 
 - [ ] **Step 3: Run tests, verify they fail**
 
-Run: `cd frontend-m3a-l3chrane && npm test`
+Run: `cd frontend-m3a-l3achrane && npm test`
 Expected: FAIL — `format.js` has no such exports.
 
 - [ ] **Step 4: Implement `src/lib/format.js`**
@@ -524,13 +524,13 @@ export function matchTone(pct) {
 
 - [ ] **Step 5: Run tests, verify they pass**
 
-Run: `cd frontend-m3a-l3chrane && npm test`
+Run: `cd frontend-m3a-l3achrane && npm test`
 Expected: PASS (4 tests).
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add frontend-m3a-l3chrane/src/lib frontend-m3a-l3chrane/package.json
+git add frontend-m3a-l3achrane/src/lib frontend-m3a-l3achrane/package.json
 git commit -m "feat(m3a): helpers format MAD + ponctuation française (TDD)"
 ```
 
@@ -539,10 +539,10 @@ git commit -m "feat(m3a): helpers format MAD + ponctuation française (TDD)"
 ### Task 6: Data seam — API client, services, mock fixtures
 
 **Files:**
-- Create: `frontend-m3a-l3chrane/src/services/api.js`
-- Create: `frontend-m3a-l3chrane/src/services/index.js`
-- Create: `frontend-m3a-l3chrane/src/data/{listings,profiles,partners,messages}.js`
-- Create: `frontend-m3a-l3chrane/src/data/index.js`
+- Create: `frontend-m3a-l3achrane/src/services/api.js`
+- Create: `frontend-m3a-l3achrane/src/services/index.js`
+- Create: `frontend-m3a-l3achrane/src/data/{listings,profiles,partners,messages}.js`
+- Create: `frontend-m3a-l3achrane/src/data/index.js`
 
 **Interfaces:**
 - Produces async service functions (always return Promises, whether mock or live):
@@ -646,13 +646,13 @@ export async function listThreads() {
 
 - [ ] **Step 4: Verify**
 
-Run: `cd frontend-m3a-l3chrane && npm run build`
+Run: `cd frontend-m3a-l3achrane && npm run build`
 Expected: build succeeds (imports resolve, no unused-var lint failures under build). Run `npm run lint` — clean.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add frontend-m3a-l3chrane/src/services frontend-m3a-l3chrane/src/data
+git add frontend-m3a-l3achrane/src/services frontend-m3a-l3achrane/src/data
 git commit -m "feat(m3a): seam data (api.js semsar-shaped) + services mock + fixtures"
 ```
 
@@ -661,8 +661,8 @@ git commit -m "feat(m3a): seam data (api.js semsar-shaped) + services mock + fix
 ### Task 7: Web surface — layout shell + Landing
 
 **Files:**
-- Create: `frontend-m3a-l3chrane/src/surfaces/web/WebLayout.jsx`
-- Create: `frontend-m3a-l3chrane/src/surfaces/web/Landing.jsx`
+- Create: `frontend-m3a-l3achrane/src/surfaces/web/WebLayout.jsx`
+- Create: `frontend-m3a-l3achrane/src/surfaces/web/Landing.jsx`
 
 **Interfaces:**
 - Consumes: `TopBar` from `ds/nav`, `Button`/`Card`/`Icon`/`Badge` from `ds/core`, `FeatureItem` from `ds/trust`, `formatMad` from `lib/format`. React Router `<Outlet>`, `<Link>`.
@@ -715,7 +715,7 @@ Temporarily set `App.jsx` to render `<BrowserRouter><WebLayout/> with Landing` (
 - [ ] **Step 4: Commit**
 
 ```bash
-git add frontend-m3a-l3chrane/src/surfaces/web
+git add frontend-m3a-l3achrane/src/surfaces/web
 git commit -m "feat(m3a): surface web — WebLayout + Landing"
 ```
 
@@ -724,8 +724,8 @@ git commit -m "feat(m3a): surface web — WebLayout + Landing"
 ### Task 8: Web surface — SearchResults + ListingDetail
 
 **Files:**
-- Create: `frontend-m3a-l3chrane/src/surfaces/web/SearchResults.jsx`
-- Create: `frontend-m3a-l3chrane/src/surfaces/web/ListingDetail.jsx`
+- Create: `frontend-m3a-l3achrane/src/surfaces/web/SearchResults.jsx`
+- Create: `frontend-m3a-l3achrane/src/surfaces/web/ListingDetail.jsx`
 
 **Interfaces:**
 - Consumes: `listListings`, `getListing` from `services`; `ListingCard`, `AmenityChip`, `PriceTag` from `ds/listing`; `VerifiedBadge`, `MatchScore` from `ds/trust`; `Button`, `Card`, `Avatar`, `Icon` from `ds/core`; `formatMad` from `lib/format`; router `useParams`, `useNavigate`, `Link`.
@@ -764,7 +764,7 @@ Temporarily wire routes `/recherche` and `/annonce/:id`, run `npm run dev`, clic
 - [ ] **Step 4: Commit**
 
 ```bash
-git add frontend-m3a-l3chrane/src/surfaces/web
+git add frontend-m3a-l3achrane/src/surfaces/web
 git commit -m "feat(m3a): surface web — SearchResults + ListingDetail"
 ```
 
@@ -773,9 +773,9 @@ git commit -m "feat(m3a): surface web — SearchResults + ListingDetail"
 ### Task 9: Seeker app surface — layout + Dashboard + Messaging
 
 **Files:**
-- Create: `frontend-m3a-l3chrane/src/surfaces/app/AppLayout.jsx`
-- Create: `frontend-m3a-l3chrane/src/surfaces/app/Dashboard.jsx`
-- Create: `frontend-m3a-l3chrane/src/surfaces/app/Messaging.jsx`
+- Create: `frontend-m3a-l3achrane/src/surfaces/app/AppLayout.jsx`
+- Create: `frontend-m3a-l3achrane/src/surfaces/app/Dashboard.jsx`
+- Create: `frontend-m3a-l3achrane/src/surfaces/app/Messaging.jsx`
 
 **Interfaces:**
 - Consumes: `SidebarNav` from `ds/nav`; `getCurrentProfile`, `listListings`, `listThreads` from `services`; `CompatibilityRing`, `MatchScore`, `VerifiedBadge` from `ds/trust`; `ListingCard` from `ds/listing`; core components; router `<Outlet>`, `<Link>`, `useLocation`.
@@ -829,7 +829,7 @@ Temporarily wire `/espace` and `/espace/messages`, run `npm run dev`, confirm th
 - [ ] **Step 5: Commit**
 
 ```bash
-git add frontend-m3a-l3chrane/src/surfaces/app
+git add frontend-m3a-l3achrane/src/surfaces/app
 git commit -m "feat(m3a): surface app — AppLayout + Dashboard + Messaging"
 ```
 
@@ -838,8 +838,8 @@ git commit -m "feat(m3a): surface app — AppLayout + Dashboard + Messaging"
 ### Task 10: Partner surface — layout + PartnerPortal
 
 **Files:**
-- Create: `frontend-m3a-l3chrane/src/surfaces/partner/PartnerLayout.jsx`
-- Create: `frontend-m3a-l3chrane/src/surfaces/partner/PartnerPortal.jsx`
+- Create: `frontend-m3a-l3achrane/src/surfaces/partner/PartnerLayout.jsx`
+- Create: `frontend-m3a-l3achrane/src/surfaces/partner/PartnerPortal.jsx`
 
 **Interfaces:**
 - Consumes: `SidebarNav`/`TopBar` per the partner kit; `listPartners` from `services`; `VerifiedBadge`, `Badge`, `Card`, `Tabs`, `Avatar` from DS.
@@ -862,7 +862,7 @@ Temporarily wire `/partenaire`, run `npm run dev`, confirm the portal renders wi
 - [ ] **Step 4: Commit**
 
 ```bash
-git add frontend-m3a-l3chrane/src/surfaces/partner
+git add frontend-m3a-l3achrane/src/surfaces/partner
 git commit -m "feat(m3a): surface partner — PartnerLayout + PartnerPortal"
 ```
 
@@ -871,10 +871,10 @@ git commit -m "feat(m3a): surface partner — PartnerLayout + PartnerPortal"
 ### Task 11: Router wiring, surface switcher, 404, final gate
 
 **Files:**
-- Modify: `frontend-m3a-l3chrane/src/App.jsx` (replace scaffold with the real router)
-- Create: `frontend-m3a-l3chrane/src/surfaces/NotFound.jsx`
-- Create: `frontend-m3a-l3chrane/src/surfaces/SurfaceSwitcher.jsx`
-- Create: `frontend-m3a-l3chrane/README.md`
+- Modify: `frontend-m3a-l3achrane/src/App.jsx` (replace scaffold with the real router)
+- Create: `frontend-m3a-l3achrane/src/surfaces/NotFound.jsx`
+- Create: `frontend-m3a-l3achrane/src/surfaces/SurfaceSwitcher.jsx`
+- Create: `frontend-m3a-l3achrane/README.md`
 
 **Interfaces:**
 - Consumes: all layouts + screens (lazy). Produces the mounted app.
@@ -949,7 +949,7 @@ Document: what the app is, `npm install`/`npm run dev` (port 5610), `VITE_USE_MO
 - [ ] **Step 5: Full verification gate**
 
 Run all and confirm each:
-- `cd frontend-m3a-l3chrane && npm run lint` → clean (0 warnings).
+- `cd frontend-m3a-l3achrane && npm run lint` → clean (0 warnings).
 - `npm test` → 4 passing (format helpers).
 - `npm run build` → succeeds; inspect `dist/assets` shows multiple JS chunks (lazy split per surface).
 - `npm run dev` (background), then check each route returns 200 and renders without console errors:
@@ -959,7 +959,7 @@ Run all and confirm each:
 - [ ] **Step 6: Commit**
 
 ```bash
-git add frontend-m3a-l3chrane/src/App.jsx frontend-m3a-l3chrane/src/surfaces/NotFound.jsx frontend-m3a-l3chrane/src/surfaces/SurfaceSwitcher.jsx frontend-m3a-l3chrane/README.md
+git add frontend-m3a-l3achrane/src/App.jsx frontend-m3a-l3achrane/src/surfaces/NotFound.jsx frontend-m3a-l3achrane/src/surfaces/SurfaceSwitcher.jsx frontend-m3a-l3achrane/README.md
 git commit -m "feat(m3a): routeur lazy 3 surfaces + 404 + switcher + README"
 ```
 

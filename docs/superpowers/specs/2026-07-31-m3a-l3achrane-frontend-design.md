@@ -48,11 +48,11 @@ swapped for live gateway calls later by flipping one flag, with no change to the
 (Vite 7, React 18, Tailwind 3, `react-router-dom` 6). Three surfaces are **route-based**, each
 lazy-loaded so a surface's code is not shipped until visited.
 
-Location: **`frontend-m3a-l3chrane/`** at repo root (sibling of `frontend/`). Own
+Location: **`frontend-m3a-l3achrane/`** at repo root (sibling of `frontend/`). Own
 `package.json` / `node_modules` — zero coupling to the semsar app.
 
 ```
-frontend-m3a-l3chrane/
+frontend-m3a-l3achrane/
   index.html
   vite.config.js  tailwind.config.js  postcss.config.js  package.json
   .eslintrc.cjs   .gitignore
@@ -194,7 +194,7 @@ Per the repo's testing-protocol:
   the backend work is tracked separately.
 - Add a **root `Makefile`** target group (e.g. `m3a-dev`, `m3a-build`, `m3a-lint`) mirroring the
   existing frontend targets, so the new app joins the standard gate without disturbing semsar.
-- `.gitignore` covers `frontend-m3a-l3chrane/node_modules` and `dist`.
+- `.gitignore` covers `frontend-m3a-l3achrane/node_modules` and `dist`.
 - No changes to `services/`, `gateway/`, `backend/`, or the existing `frontend/` in this build.
 
 ## 7. Non-negotiables

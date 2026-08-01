@@ -1,5 +1,5 @@
 # Fondations plateforme v2 — raccourcis (cf. PLATFORM.md)
-.PHONY: infra-up infra-down libs-install gateway-run gateway-test m3a-install m3a-dev m3a-build m3a-lint
+.PHONY: infra-up infra-down libs-install gateway-run gateway-test m3a-l3achrane-install m3a-l3achrane-dev m3a-l3achrane-build m3a-l3achrane-lint
 
 infra-up:            ## Démarre l'infra plateforme (RabbitMQ, MinIO, OTel, Prometheus, Grafana, Loki)
 	docker compose -f infra/docker-compose.yml up -d
@@ -16,14 +16,14 @@ gateway-run:         ## Lance le BFF/gateway sur :8080
 gateway-test:        ## Tests du gateway
 	pytest gateway/tests
 
-m3a-install:         ## Installe dépendances frontend-m3a-l3chrane
-	cd frontend-m3a-l3chrane && npm install
+m3a-l3achrane-install: ## Installe dépendances frontend-m3a-l3achrane
+	cd frontend-m3a-l3achrane && npm install
 
-m3a-dev:             ## Lance frontend-m3a-l3chrane sur :5610
-	cd frontend-m3a-l3chrane && npm run dev
+m3a-l3achrane-dev:     ## Lance frontend-m3a-l3achrane sur :5610
+	cd frontend-m3a-l3achrane && npm run dev
 
-m3a-build:           ## Build frontend-m3a-l3chrane
-	cd frontend-m3a-l3chrane && npm run build
+m3a-l3achrane-build:   ## Build frontend-m3a-l3achrane
+	cd frontend-m3a-l3achrane && npm run build
 
-m3a-lint:            ## Lint frontend-m3a-l3chrane
-	cd frontend-m3a-l3chrane && npm run lint
+m3a-l3achrane-lint:    ## Lint frontend-m3a-l3achrane
+	cd frontend-m3a-l3achrane && npm run lint
