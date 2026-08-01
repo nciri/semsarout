@@ -21,6 +21,7 @@ jobs:
           - services/analytics
           - services/billing
           - services/catalog
+          - services/coloc-listing
           - services/commission
           - services/contract
           - services/crm
