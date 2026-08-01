@@ -1,5 +1,5 @@
 [project]
-name = "semsar-search"
+name = "semsar-search-service"
 version = "0.1.0"
 description = "SemsarOut — service search (projection OpenSearch : indexation + requêtes)."
 requires-python = ">=3.11"
