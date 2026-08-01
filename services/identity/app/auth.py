@@ -55,6 +55,15 @@ def _err(msg: str, code: int) -> JSONResponse:
     return JSONResponse({"error": msg}, status_code=code)
 
 
+_KNOWN_TENANTS = {"semsar", "m3a-l3achrane"}
+
+
+def _tenant(request: Request) -> str:
+    """Tenant de la requête, posé par le BFF (x-semsar-tenant). Défaut : semsar."""
+    t = request.headers.get("x-semsar-tenant", "semsar")
+    return t if t in _KNOWN_TENANTS else "semsar"
+
+
 async def _json(request: Request) -> dict:
     try:
         data = await request.json()
@@ -76,6 +85,7 @@ def _claims(db: Session, user: UserRO) -> dict:
         "is_superadmin": any(r.slug == "superadmin" for r in user.roles),
         "account_role": user.account_role,
         "features": _features(db, user.agency_id),
+        "tenant": user.tenant,
     }
 
 
@@ -111,7 +121,8 @@ async def login(request: Request, db: Session = Depends(get_db)):
     data = await _json(request)
     if not data.get("email") or not data.get("password"):
         return _err("Email and password are required", 400)
-    user = db.query(UserRO).filter(UserRO.email == data["email"]).first()
+    user = db.query(UserRO).filter(UserRO.email == data["email"],
+                                   UserRO.tenant == _tenant(request)).first()
     if not user or not check_password_hash(user.password_hash, data["password"]):
         return _err("Invalid email or password", 401)
     if not user.is_active:
@@ -126,7 +137,7 @@ async def login(request: Request, db: Session = Depends(get_db)):
     return {
         "user": user.to_dict(),
         "access_token": _token(user.id, ACCESS_TTL, "access", claims),
-        "refresh_token": _token(user.id, REFRESH_TTL, "refresh"),
+        "refresh_token": _token(user.id, REFRESH_TTL, "refresh", {"tenant": user.tenant}),
     }
 
 
@@ -145,7 +156,8 @@ async def register(request: Request, db: Session = Depends(get_db)):
     for field in ("email", "password", "first_name", "last_name"):
         if not data.get(field):
             return _err(f"{field} is required", 400)
-    if db.query(UserRO).filter(UserRO.email == data["email"]).first():
+    tenant = _tenant(request)
+    if db.query(UserRO).filter(UserRO.email == data["email"], UserRO.tenant == tenant).first():
         return _err("Email already registered", 409)
     interest = data.get("interest") if data.get("interest") in _VALID_INTERESTS else None
     user = UserRO(
@@ -153,6 +165,7 @@ async def register(request: Request, db: Session = Depends(get_db)):
         first_name=data["first_name"], last_name=data["last_name"], phone=data.get("phone"),
         user_type=data.get("user_type", "particular"), account_role="buyer",
         interest=interest, is_active=True, is_verified=False, created_at=datetime.utcnow(),
+        tenant=tenant,
     )
     db.add(user)
     db.flush()  # obtenir l'id
@@ -162,7 +175,7 @@ async def register(request: Request, db: Session = Depends(get_db)):
     return {
         "message": "User registered successfully", "user": user.to_dict(),
         "access_token": _token(user.id, ACCESS_TTL, "access", claims),
-        "refresh_token": _token(user.id, REFRESH_TTL, "refresh"),
+        "refresh_token": _token(user.id, REFRESH_TTL, "refresh", {"tenant": user.tenant}),
     }
 
 
@@ -263,7 +276,8 @@ async def forgot_password(request: Request, db: Session = Depends(get_db)):
     generic = {"message": "Si un compte existe avec cet email, un lien de réinitialisation a été envoyé."}
     if not email:
         return _err("Email requis", 400)
-    user = db.query(UserRO).filter(UserRO.email == email).first()
+    user = db.query(UserRO).filter(UserRO.email == email,
+                                   UserRO.tenant == _tenant(request)).first()
     if user is None:
         return generic  # ne révèle pas l'existence du compte
     token = secrets.token_urlsafe(32)
@@ -316,6 +330,8 @@ async def refresh(request: Request, db: Session = Depends(get_db)):
     user = db.get(UserRO, int(uid)) if uid and str(uid).isdigit() else None
     if not user:
         return _err("User not found", 404)
+    if user.tenant != _tenant(request):
+        return _err("Tenant mismatch", 403)
     blocked = _login_blocked(db, user)
     if blocked:
         return _err(blocked, 403)
