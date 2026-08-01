@@ -9,7 +9,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from semsar_common import get_settings, install_error_handlers, setup_logging, setup_tracing
 from semsar_search import ensure_index, os_client, search_listings, search_properties, suggest
 
-from . import moderation
+from . import coloc_index, moderation
 
 settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
@@ -31,6 +31,7 @@ _client = os_client(settings.opensearch_url)
 def _startup() -> None:
     try:
         ensure_index(_client)
+        coloc_index.ensure_coloc_index(_client)
     except Exception:  # noqa: BLE001 — OpenSearch peut ne pas être prêt au boot
         pass
 
@@ -159,3 +160,28 @@ def search(
         "property_type": property_type,
     }
     return search_properties(_client, q=q, filters=filters, page=page, per_page=per_page)
+
+
+@app.get("/listings")
+def coloc_listings(
+    city: str | None = None,
+    neighborhood: str | None = None,
+    housing_gender: str | None = None,
+    kind: str | None = None,
+    min_rent: float | None = None,
+    max_rent: float | None = None,
+    q: str | None = None,
+    sort: str = "relevance",
+    limit: int = 20,
+    offset: int = 0,
+):
+    """Recherche publique d'annonces de colocation M3a-L3achrane (index coloc_listings)."""
+    limit = max(1, min(int(limit), 100))
+    offset = max(0, int(offset))
+    if housing_gender not in (None, "FEMININ", "MASCULIN"):
+        housing_gender = None
+    return coloc_index.search_coloc(
+        _client, city=city, neighborhood=neighborhood, housing_gender=housing_gender,
+        kind=kind, min_rent=min_rent, max_rent=max_rent, q=q, sort=sort,
+        limit=limit, offset=offset,
+    )

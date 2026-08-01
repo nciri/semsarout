@@ -365,6 +365,16 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path.startswith("/api/v1/invoices/")  # factures (liste + PDF)
     ):
         return app.state.billing, path.replace("/api/v1", "", 1)
+    # M3a-L3achrane (coloc) : la liste publique vient de la projection search ;
+    # tout le reste (détail, CRUD, cycle de vie) va au service coloc-listing.
+    if settings.search_url and method == "GET" and path == "/api/v1/listings":
+        return app.state.search, "/listings"
+    if settings.coloc_listing_url and (
+        path == "/api/v1/listings"
+        or path.startswith("/api/v1/listings/")
+        or path == "/api/v1/me/listings"
+    ):
+        return app.state.coloc_listing, path.replace("/api/v1", "", 1)
     # Monolithe décommissionné : plus de repli. Toute route non mappée → 404 (client None).
     return None, path
 
@@ -402,6 +412,7 @@ async def lifespan(app: FastAPI):
     app.state.audit = _client_or_none(settings.audit_url)
     app.state.commission = _client_or_none(settings.commission_url)
     app.state.selling = _client_or_none(settings.selling_url)
+    app.state.coloc_listing = _client_or_none(settings.coloc_listing_url)
     yield
     for client in (
         app.state.monolith, app.state.identity, app.state.search,
@@ -411,7 +422,7 @@ async def lifespan(app: FastAPI):
         app.state.rental,
         app.state.buyer, app.state.programs, app.state.staymanager, app.state.geo,
         app.state.messaging, app.state.trust_safety, app.state.agency, app.state.audit,
-        app.state.commission, app.state.selling,
+        app.state.commission, app.state.selling, app.state.coloc_listing,
     ):
         if client is not None:
             await client.aclose()
