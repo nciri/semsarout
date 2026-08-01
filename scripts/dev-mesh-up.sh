@@ -8,7 +8,10 @@ LOG="${TMPDIR:-/tmp}/semsar-mesh"; mkdir -p "$LOG"
 DBHOST="localhost:5432/semsar_dev"
 ADMIN="postgresql://postgres:postgres@localhost:5432/semsar_dev"
 RMQ="amqp://semsar:semsar@localhost:5672/"; EX="semsar.events"
-JWT="PURGED-DEV-SECRET"; ITOK="change-me-internal"; MONO="http://localhost:7000"
+# Secrets locaux : jamais en dur ici — JWT_SECRET_KEY vient de l'environnement ou de .env (gitignoré, cf. .env.example).
+[ -f .env ] && set -a && . ./.env && set +a
+JWT="${JWT_SECRET_KEY:?JWT_SECRET_KEY manquant — exporte-le ou renseigne .env (voir .env.example)}"
+ITOK="${INTERNAL_TOKEN:-change-me-internal}"; MONO="http://localhost:7000"
 OS="http://localhost:9200"; BFF_PORT=8099
 
 role() { echo "${1/-/_}"; }                                   # trust-safety -> trust_safety
