@@ -15,11 +15,6 @@ jobs:
     # sont portés par l'environnement GitHub `production` : le job doit le déclarer pour y accéder.
     environment: production
     runs-on: ubuntu-latest
-    # Credentials du backend S3 (Object Storage) au niveau JOB : init, validate, apply
-    # ET output touchent tous au state distant et ont donc besoin de ces variables.
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.TF_BACKEND_ACCESS_KEY }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_BACKEND_SECRET_KEY }}
     outputs:
       server_ip: ${{ steps.output.outputs.server_ip }}
     defaults:
@@ -52,6 +47,9 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Terraform init
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.TF_BACKEND_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_BACKEND_SECRET_KEY }}
         run: |
           set -euo pipefail
           terraform init \
@@ -69,14 +67,49 @@ jobs:
       - name: Terraform validate
         run: terraform validate
 
+      # La clé SSH de déploiement peut déjà exister dans le projet Hetzner (Hetzner
+      # refuse une clé publique en double). Si présente, on l'importe dans l'état au
+      # lieu de la recréer — idempotent, et sans effet si elle n'existe pas encore.
+      - name: Import pre-existing SSH key if present
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.TF_BACKEND_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_BACKEND_SECRET_KEY }}
+          HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
+          PUB_KEY: ${{ steps.ssh_key.outputs.pub_key }}
+        run: |
+          set -euo pipefail
+          if terraform state list 2>/dev/null | grep -qx 'hcloud_ssh_key.deploy'; then
+            echo "Clé déjà dans l'état — rien à importer."; exit 0
+          fi
+          mine="$(printf '%s' "$PUB_KEY" | awk '{print $1" "$2}')"
+          id="$(curl -fsS -H "Authorization: Bearer $HCLOUD_TOKEN" \
+            'https://api.hetzner.cloud/v1/ssh_keys?per_page=50' \
+            | jq -r --arg m "$mine" \
+              '.ssh_keys[] | select((.public_key | split(" ")[0:2] | join(" ")) == $m) | .id' \
+            | head -n1)"
+          if [ -n "${id:-}" ]; then
+            echo "Clé SSH déjà dans Hetzner (id=$id) → import dans l'état."
+            terraform import \
+              -var="hcloud_token=$HCLOUD_TOKEN" \
+              -var="ssh_public_key=$PUB_KEY" \
+              hcloud_ssh_key.deploy "$id"
+          else
+            echo "Pas de clé existante — Terraform la créera."
+          fi
+
       - name: Terraform apply
         env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.TF_BACKEND_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_BACKEND_SECRET_KEY }}
           TF_VAR_hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
           TF_VAR_ssh_public_key: ${{ steps.ssh_key.outputs.pub_key }}
         run: terraform apply -auto-approve
 
       - name: Read server_ip output
         id: output
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.TF_BACKEND_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_BACKEND_SECRET_KEY }}
         run: |
           set -euo pipefail
           echo "server_ip=$(terraform output -raw server_ip)" >> "$GITHUB_OUTPUT"
