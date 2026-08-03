@@ -14,21 +14,21 @@ from .models import ColocProperty, CurrentRoommates, HouseRule, Listing, Listing
 
 DEMO = [
     ("Chambre lumineuse à Gauthier", "Casablanca", "Gauthier", "APPARTEMENT",
-     "CHAMBRE_INDIVIDUELLE", "FEMININ", Decimal("2200.00"), True, 3, ["Non-fumeur", "Calme"]),
+     "CHAMBRE_INDIVIDUELLE", "FEMININ", Decimal("2200.00"), True, 3, [("tabac", "non_fumeur"), ("menage", "frequent")]),
     ("Chambre dans villa avec jardin", "Casablanca", "Californie", "VILLA",
-     "CHAMBRE_INDIVIDUELLE", "MIXTE_FAMILIAL", Decimal("2800.00"), True, 4, ["Animaux acceptés"]),
+     "CHAMBRE_INDIVIDUELLE", "MIXTE_FAMILIAL", Decimal("2800.00"), True, 4, [("animaux", "acceptes")]),
     ("Studio meublé proche fac", "Rabat", "Agdal", "STUDIO",
-     "STUDIO_ENTIER", "FEMININ", Decimal("3200.00"), True, 1, ["Non-fumeur"]),
+     "STUDIO_ENTIER", "FEMININ", Decimal("3200.00"), True, 1, [("tabac", "non_fumeur")]),
     ("Chambre étudiante à Agdal", "Rabat", "Agdal", "APPARTEMENT",
-     "CHAMBRE_INDIVIDUELLE", "MASCULIN", Decimal("1800.00"), False, 3, ["Étudiants uniquement"]),
+     "CHAMBRE_INDIVIDUELLE", "MASCULIN", Decimal("1800.00"), False, 3, [("invites", "rarement")]),
     ("Colocation moderne à Hay Riad", "Rabat", "Hay Riad", "APPARTEMENT",
-     "CHAMBRE_INDIVIDUELLE", "FEMININ", Decimal("2500.00"), True, 2, ["Non-fumeur", "Wifi fibre"]),
+     "CHAMBRE_INDIVIDUELLE", "FEMININ", Decimal("2500.00"), True, 2, [("tabac", "non_fumeur"), ("coucher", "tot")]),
     ("Chambre en résidence étudiante", "Marrakech", "Guéliz", "RESIDENCE_ETUDIANTE",
-     "CHAMBRE_INDIVIDUELLE", "FEMININ", Decimal("1500.00"), True, 6, ["Résidence sécurisée"]),
+     "CHAMBRE_INDIVIDUELLE", "FEMININ", Decimal("1500.00"), True, 6, [("invites", "rarement"), ("menage", "frequent")]),
     ("Chambre partagée centre-ville", "Marrakech", "Médina", "MAISON",
-     "CHAMBRE_PARTAGEE", "MASCULIN", Decimal("950.00"), False, 4, ["Court séjour ok"]),
+     "CHAMBRE_PARTAGEE", "MASCULIN", Decimal("950.00"), False, 4, [("invites", "souvent")]),
     ("Grande chambre à Maârif", "Casablanca", "Maârif", "APPARTEMENT",
-     "CHAMBRE_INDIVIDUELLE", "MASCULIN", Decimal("2400.00"), True, 3, ["Non-fumeur"]),
+     "CHAMBRE_INDIVIDUELLE", "MASCULIN", Decimal("2400.00"), True, 3, [("tabac", "non_fumeur")]),
 ]
 
 _OWNER_ID = 1  # compte de démo
@@ -67,9 +67,8 @@ def seed() -> int:
             for pos in range(2):
                 db.add(ListingMedia(listing_id=listing.id, position=pos, media_type="CHAMBRE",
                                     url=f"/uploads/photos/coloc-demo-{i}-{pos}.jpg"))
-            for rule in rules:
-                db.add(HouseRule(listing_id=listing.id, code=rule.lower().replace(" ", "_")[:40],
-                                 value=rule))
+            for code, value in rules:
+                db.add(HouseRule(listing_id=listing.id, code=code, value=value))
             db.add(CurrentRoommates(listing_id=listing.id, total=cap - 1,
                                     women=cap - 1 if gender == "FEMININ" else 0,
                                     men=cap - 1 if gender == "MASCULIN" else 0))

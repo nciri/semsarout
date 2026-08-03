@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { mapListingDetail, mapListingHit, mapSearchFilters } from './mappers.js'
+import { mapListingDetail, mapListingHit, mapProfile, mapSearchFilters } from './mappers.js'
 
 const HIT = {
   listing_id: 'abc', title: 'Chambre à Gauthier', description: 'Belle chambre.',
@@ -47,4 +47,34 @@ test('mapSearchFilters traduit les filtres français en params API', () => {
     { city: 'Rabat', max_rent: 2500, housing_gender: 'FEMININ', kind: 'chambre', sort: 'rent_asc' },
   )
   assert.deepEqual(mapSearchFilters({}), {})
+})
+
+test('mapProfile traduit le profil backend en clés françaises', () => {
+  const p = mapProfile({
+    user_id: 7, display_name: 'Sara', is_verified: true, gender: 'FEMME',
+    city: 'Casablanca', bio: null, budget_min: 1000, budget_max: 2500,
+    move_in_date: '2026-09-01',
+    lifestyle: [
+      { question_code: 'tabac', value: 'non_fumeur', importance: 'DECISIF' },
+      { question_code: 'coucher', value: 'tot', importance: 'PREFERENCE' },
+    ],
+  })
+  assert.equal(p.prenom, 'Sara')
+  assert.equal(p.verifiee, true)
+  assert.deepEqual(p.lifestyle, ['Non-fumeur', 'Couche-tôt'])
+  assert.deepEqual(p.recherche, { ville: 'Casablanca', budgetMad: 2500, dispo: '01/09/2026' })
+})
+
+test('mapProfile tolère le profil vide', () => {
+  const p = mapProfile({ user_id: 7, display_name: null, is_verified: false,
+                         gender: null, city: null, budget_min: null, budget_max: null,
+                         move_in_date: null, lifestyle: [] })
+  assert.equal(p.prenom, '')
+  assert.deepEqual(p.lifestyle, [])
+  assert.deepEqual(p.recherche, { ville: '', budgetMad: null, dispo: '' })
+})
+
+test('buildChips affiche les règles canoniques en français', () => {
+  const l = mapListingHit({ ...HIT, rules: ['non_fumeur'], amenities: [] })
+  assert.ok(l.chips.includes('Non-fumeur'))
 })

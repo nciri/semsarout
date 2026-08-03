@@ -50,7 +50,7 @@ echo "== 3. Services (uvicorn) =="
 SVCS="identity:8501 notification:8502 analytics:8504 contract:8505 legal:8506 payment:8507 billing:8508 \
 catalog:8009 marketplace:8010 directory:8011 listing:8012 crm:8013 search:8103 geo:8509 \
 messaging:8510 trust-safety:8511 agency:8512 audit:8513 transactions:8514 buyer:8515 programs:8516 staymanager:8517 \
-rental:8518 commission:8519 selling:8520 coloc-listing:8521"
+rental:8518 commission:8519 selling:8520 coloc-listing:8521 coloc-profile:8522 matching:8523"
 S3="S3_ENDPOINT_URL=http://localhost:9000 S3_ACCESS_KEY=semsar S3_SECRET_KEY=semsar-secret AWS_ACCESS_KEY_ID=semsar AWS_SECRET_ACCESS_KEY=semsar-secret"
 # Masquage (§6) : listing/search lisent les comptes cachés depuis trust-safety (souverain),
 # plus le monolithe — prérequis au décommissionnement.
@@ -103,7 +103,8 @@ env UPSTREAM_URL="$MONO" JWT_SECRET_KEY="$JWT" INTERNAL_TOKEN="$ITOK" TENANT_DEV
   PAYMENT_URL=http://localhost:8507 BILLING_URL=http://localhost:8508 TRANSACTIONS_URL=http://localhost:8514 \
   BUYER_URL=http://localhost:8515 PROGRAMS_URL=http://localhost:8516 STAYMANAGER_URL=http://localhost:8517 \
   RENTAL_URL=http://localhost:8518 COMMISSION_URL=http://localhost:8519 SELLING_URL=http://localhost:8520 \
-  COLOC_LISTING_URL=http://localhost:8521 \
+  COLOC_LISTING_URL=http://localhost:8521 COLOC_PROFILE_URL=http://localhost:8522 \
+  MATCHING_URL=http://localhost:8523 \
   nohup python3 -m uvicorn app.main:app --app-dir gateway --host 127.0.0.1 --port "$BFF_PORT" \
   > "$LOG/bff.log" 2>&1 &
 sleep 4
@@ -115,8 +116,8 @@ relay() { env SERVICE_NAME="$1" DATABASE_URL="$(dburl "$1")" RABBITMQ_URL="$RMQ"
 worker() { env SERVICE_NAME="$1" DATABASE_URL="$(dburl "$1")" RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" \
   OPENSEARCH_URL="$OS" MONOLITH_URL="$MONO" INTERNAL_TOKEN="$ITOK" \
   PYTHONPATH="services/$1" nohup python3 -m app.worker > "$LOG/$1-worker.log" 2>&1 & }
-for r in listing catalog identity contract payment billing transactions programs agency crm directory rental commission selling coloc-listing; do relay "$r"; done
-for w in search crm marketplace geo agency messaging analytics billing notification identity audit transactions legal contract rental commission; do worker "$w"; done
+for r in listing catalog identity contract payment billing transactions programs agency crm directory rental commission selling coloc-listing coloc-profile; do relay "$r"; done
+for w in search crm marketplace geo agency messaging analytics billing notification identity audit transactions legal contract rental commission coloc-profile matching; do worker "$w"; done
 # Ordonnanceur (Vague 2) : emails temporels (rappels de visite J-1, …).
 env SERVICE_NAME=notification DATABASE_URL="$(dburl notification)" RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" \
   OPENSEARCH_URL="$OS" INTERNAL_TOKEN="$ITOK" CRM_URL=http://localhost:8013 BILLING_URL=http://localhost:8508 \
@@ -132,7 +133,7 @@ for e in "monolithe:7000:/api/v1/properties?per_page=1" "BFF:$BFF_PORT:/health" 
   identity:8501 catalog:8009 marketplace:8010 directory:8011 listing:8012 crm:8013 search:8103 \
   geo:8509 messaging:8510 trust-safety:8511 agency:8512 audit:8513 notification:8502 analytics:8504 \
   contract:8505 legal:8506 payment:8507 billing:8508 transactions:8514 buyer:8515 programs:8516 staymanager:8517 \
-  rental:8518 commission:8519 selling:8520 coloc-listing:8521; do
+  rental:8518 commission:8519 selling:8520 coloc-listing:8521 coloc-profile:8522 matching:8523; do
   n="${e%%:*}"; rest="${e#*:}"; p="${rest%%:*}"; path="${rest#*:}"; [ "$path" = "$p" ] && path="/health"
   printf "   %-13s -> %s\n" "$n" "$(curl -s -o /dev/null -w '%{http_code}' -m3 "http://localhost:$p$path")"
 done

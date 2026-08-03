@@ -5,17 +5,19 @@ from app.main import _resolve_upstream
 
 
 def _app(**states):
-    defaults = {name: None for name in ("search", "coloc_listing")}
+    defaults = {name: None for name in ("search", "coloc_listing", "coloc_profile")}
     defaults.update(states)
     return SimpleNamespace(state=SimpleNamespace(**defaults))
 
 
-def test_get_listings_routes_to_search(monkeypatch):
-    monkeypatch.setattr(m.settings, "search_url", "http://s")
-    monkeypatch.setattr(m.settings, "coloc_listing_url", "http://c")
-    fake = _app(search="SEARCH", coloc_listing="COLOC")
-    client, path = _resolve_upstream(fake, "/api/v1/listings", "GET")
-    assert client == "SEARCH" and path == "/listings"
+def test_profile_routes_to_coloc_profile(monkeypatch):
+    monkeypatch.setattr(m.settings, "coloc_profile_url", "http://p")
+    fake = SimpleNamespace(state=SimpleNamespace(coloc_profile="PROFILE"))
+    assert _resolve_upstream(fake, "/api/v1/me/profile", "GET") == ("PROFILE", "/me/profile")
+    assert _resolve_upstream(fake, "/api/v1/me/lifestyle", "PUT") == ("PROFILE", "/me/lifestyle")
+    assert _resolve_upstream(fake, "/api/v1/me/favorites", "POST") == ("PROFILE", "/me/favorites")
+    assert _resolve_upstream(fake, "/api/v1/me/favorites/abc", "DELETE") == (
+        "PROFILE", "/me/favorites/abc")
 
 
 def test_listings_writes_and_detail_route_to_coloc_listing(monkeypatch):

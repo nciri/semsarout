@@ -96,6 +96,7 @@ def _search_doc(listing: Listing) -> dict:
         "published_at": listing.published_at.isoformat() if listing.published_at else None,
         "media_urls": [m.url for m in listing.media],
         "rules": [r.value for r in listing.house_rules],
+        "house_rules": {r.code: r.value for r in listing.house_rules},
         "amenities": [k for k, v in (p.amenities or {}).items() if v],
         "status": listing.status,
     }
@@ -193,9 +194,15 @@ def update_listing(listing_id: str, body: ListingUpdateIn,
 @router.put("/listings/{listing_id}/house-rules")
 def put_house_rules(listing_id: str, body: HouseRulesIn,
                     principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    from semsar_common.coloc_referential import LIFESTYLE_QUESTIONS
+
     listing, err = _owned_editable(db, listing_id, principal, editable_only=True)
     if err is not None:
         return err
+    for rule in body.rules:
+        allowed = LIFESTYLE_QUESTIONS.get(rule.code)
+        if allowed is None or rule.value not in allowed:
+            return _err(f"Règle de vie hors référentiel : {rule.code}={rule.value}", 400)
     db.query(HouseRule).filter(HouseRule.listing_id == listing.id).delete()
     for rule in body.rules:
         db.add(HouseRule(listing_id=listing.id, code=rule.code, value=rule.value))

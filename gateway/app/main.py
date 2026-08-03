@@ -12,6 +12,7 @@ from contextlib import asynccontextmanager
 import httpx
 import jwt as pyjwt
 from fastapi import FastAPI, Request, Response
+from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from semsar_common import install_error_handlers, setup_logging, setup_tracing
@@ -365,16 +366,20 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path.startswith("/api/v1/invoices/")  # factures (liste + PDF)
     ):
         return app.state.billing, path.replace("/api/v1", "", 1)
-    # M3a-L3achrane (coloc) : la liste publique vient de la projection search ;
-    # tout le reste (détail, CRUD, cycle de vie) va au service coloc-listing.
-    if settings.search_url and method == "GET" and path == "/api/v1/listings":
-        return app.state.search, "/listings"
+    # M3a-L3achrane (coloc) : GET /api/v1/listings est désormais l'endpoint composite
+    # (voir `coloc_listings_composite`, déclaré avant le catch-all `proxy()`) ; tout le
+    # reste (détail, CRUD, cycle de vie) va au service coloc-listing.
     if settings.coloc_listing_url and (
         path == "/api/v1/listings"
         or path.startswith("/api/v1/listings/")
         or path == "/api/v1/me/listings"
     ):
         return app.state.coloc_listing, path.replace("/api/v1", "", 1)
+    if settings.coloc_profile_url and (
+        path in ("/api/v1/me/profile", "/api/v1/me/lifestyle", "/api/v1/me/favorites")
+        or path.startswith("/api/v1/me/favorites/")
+    ):
+        return app.state.coloc_profile, path.replace("/api/v1", "", 1)
     # Monolithe décommissionné : plus de repli. Toute route non mappée → 404 (client None).
     return None, path
 
@@ -413,6 +418,8 @@ async def lifespan(app: FastAPI):
     app.state.commission = _client_or_none(settings.commission_url)
     app.state.selling = _client_or_none(settings.selling_url)
     app.state.coloc_listing = _client_or_none(settings.coloc_listing_url)
+    app.state.coloc_profile = _client_or_none(settings.coloc_profile_url)
+    app.state.matching = _client_or_none(settings.matching_url)
     yield
     for client in (
         app.state.monolith, app.state.identity, app.state.search,
@@ -423,6 +430,7 @@ async def lifespan(app: FastAPI):
         app.state.buyer, app.state.programs, app.state.staymanager, app.state.geo,
         app.state.messaging, app.state.trust_safety, app.state.agency, app.state.audit,
         app.state.commission, app.state.selling, app.state.coloc_listing,
+        app.state.coloc_profile, app.state.matching,
     ):
         if client is not None:
             await client.aclose()
@@ -443,6 +451,54 @@ Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_sch
 @app.get("/health", include_in_schema=False)
 async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
+
+
+def _merge_match_scores(items: list, scores: dict) -> None:
+    """Injecte match_pct quand un score existe ; null/absent → clé absente (front masque)."""
+    for item in items:
+        score = scores.get(item.get("listing_id"))
+        if score is not None:
+            item["match_pct"] = score
+
+
+@app.get("/api/v1/listings", include_in_schema=False)
+async def coloc_listings_composite(request: Request) -> Response:
+    """Unique endpoint composite du BFF : recherche coloc + scores de compatibilité.
+
+    Anonyme → résultats sans score. Authentifié (tenant m3a-l3achrane) → enrichit
+    chaque annonce d'un match_pct via l'API interne matching. matching indisponible
+    → dégradation : résultats SANS score, jamais d'échec de la recherche (spec §8).
+    """
+    app_ = request.app
+    if app_.state.search is None:
+        return Response(content=b'{"error":"Not found"}', status_code=404,
+                        media_type="application/json")
+    tenant = _resolve_tenant(request.headers, request.headers.get("host", ""))
+    ident = await _resolve_identity(app_, request.headers.get("authorization"))
+    if ident and ident.get("tenant", "semsar") != tenant:
+        return Response(content=b'{"error":"Tenant mismatch"}', status_code=403,
+                        media_type="application/json")
+    url = "/listings" + (f"?{request.url.query}" if request.url.query else "")
+    upstream = await app_.state.search.request(
+        "GET", url, headers={"x-semsar-tenant": tenant})
+    if upstream.status_code != 200 or ident is None or app_.state.matching is None:
+        return Response(content=upstream.content, status_code=upstream.status_code,
+                        media_type="application/json")
+    data = upstream.json()
+    ids = [i.get("listing_id") for i in data.get("items", []) if i.get("listing_id")]
+    scores: dict = {}
+    if ids:
+        try:
+            r = await app_.state.matching.request(
+                "POST", "/internal/scores",
+                json={"user_id": ident["user_id"], "listing_ids": ids},
+                headers={"x-internal-token": settings.internal_token})
+            if r.status_code == 200:
+                scores = r.json().get("scores", {})
+        except Exception:  # noqa: BLE001 — dégradation sans score
+            scores = {}
+    _merge_match_scores(data.get("items", []), scores)
+    return JSONResponse(data)
 
 
 @app.api_route(

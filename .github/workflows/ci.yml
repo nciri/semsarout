@@ -22,6 +22,7 @@ jobs:
           - services/billing
           - services/catalog
           - services/coloc-listing
+          - services/coloc-profile
           - services/commission
           - services/contract
           - services/crm
@@ -30,6 +31,7 @@ jobs:
           - services/legal
           - services/listing
           - services/marketplace
+          - services/matching
           - services/messaging
           - services/notification
           - services/payment

@@ -6,6 +6,7 @@ const WebLayout = lazy(() => import('./surfaces/web/WebLayout.jsx'))
 const Landing = lazy(() => import('./surfaces/web/Landing.jsx'))
 const SearchResults = lazy(() => import('./surfaces/web/SearchResults.jsx'))
 const ListingDetail = lazy(() => import('./surfaces/web/ListingDetail.jsx'))
+const Connexion = lazy(() => import('./surfaces/web/Connexion.jsx'))
 const AppLayout = lazy(() => import('./surfaces/app/AppLayout.jsx'))
 const Dashboard = lazy(() => import('./surfaces/app/Dashboard.jsx'))
 const Messaging = lazy(() => import('./surfaces/app/Messaging.jsx'))
@@ -22,6 +23,7 @@ export default function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/recherche" element={<SearchResults />} />
             <Route path="/annonce/:id" element={<ListingDetail />} />
+            <Route path="/connexion" element={<Connexion />} />
           </Route>
           <Route path="/espace" element={<AppLayout />}>
             <Route index element={<Dashboard />} />

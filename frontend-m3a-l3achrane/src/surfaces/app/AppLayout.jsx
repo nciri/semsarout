@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { SidebarNav } from '../../ds/index.js'
 
@@ -12,6 +13,14 @@ export default function AppLayout() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const active = pathname.startsWith('/espace/messages') ? 'msg' : 'dash'
+
+  useEffect(() => {
+    let token = null
+    try {
+      token = JSON.parse(localStorage.getItem('auth-storage'))?.state?.accessToken ?? null
+    } catch { /* stockage corrompu = non connecté */ }
+    if (!token) navigate('/connexion', { replace: true })
+  }, [navigate])
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>

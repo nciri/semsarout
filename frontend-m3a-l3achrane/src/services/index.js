@@ -1,12 +1,12 @@
 import api from './api.js'
 import { listings, currentProfile, partners, threads } from '../data/index.js'
-import { mapListingDetail, mapListingHit, mapSearchFilters } from './mappers.js'
+import { mapListingDetail, mapListingHit, mapProfile, mapSearchFilters } from './mappers.js'
 
 // Bascule mock/live PAR DOMAINE : VITE_USE_MOCK=true force tout en mock (dev hors-ligne) ;
 // sinon, seuls les domaines encore sans backend restent mockés (retirés au fil des plans C/D).
 const ALL_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 const MOCK_DOMAINS = new Set(
-  (import.meta.env.VITE_MOCK_DOMAINS ?? 'profile,partners,messages').split(','),
+  (import.meta.env.VITE_MOCK_DOMAINS ?? 'partners,messages').split(','),
 )
 const isMocked = (domain) => ALL_MOCK || MOCK_DOMAINS.has(domain)
 const delay = (v) => new Promise((r) => setTimeout(() => r(v), 120)) // mimic async
@@ -30,7 +30,7 @@ export async function getListing(id) {
 export async function getCurrentProfile() {
   if (isMocked('profile')) return delay(currentProfile)
   const { data } = await api.get('/me/profile')
-  return data
+  return mapProfile(data)
 }
 
 export async function listPartners() {

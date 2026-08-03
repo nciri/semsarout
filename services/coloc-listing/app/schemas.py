@@ -78,6 +78,7 @@ class ListingUpdateIn(BaseModel):
 
 
 class HouseRuleIn(BaseModel):
+    # La validation croisée code+valeur (référentiel lifestyle) se fait dans la route.
     code: str = Field(max_length=40)
     value: str = Field(max_length=120)
 
