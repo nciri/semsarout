@@ -9,6 +9,7 @@ import useAuthStore from '../store/authStore'
 import api from '../services/api'
 import StayManagerWordmark from '../components/common/StayManagerWordmark'
 import { SERVICE_OPTIONS, isValidService, STAYMANAGER_REGISTER_URL } from '../constants/services'
+import { CONTACT } from '../constants/contact'
 
 function Contact() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -326,13 +327,13 @@ function Contact() {
               <div className="card p-6 mb-6">
                 <h3 className="font-semibold mb-4">Nous joindre directement</h3>
                 <div className="space-y-4 text-sm">
-                  <a href="tel:+212600000000" className="flex items-center text-gray-700 hover:text-primary-600">
+                  <a href={`tel:${CONTACT.phoneTel}`} className="flex items-center text-gray-700 hover:text-primary-600">
                     <FiPhone className="w-5 h-5 mr-3 text-primary-600" />
-                    +212 6 00 00 00 00
+                    {CONTACT.phone}
                   </a>
-                  <a href="mailto:contact@semsarout.ma" className="flex items-center text-gray-700 hover:text-primary-600">
+                  <a href={`mailto:${CONTACT.email}`} className="flex items-center text-gray-700 hover:text-primary-600">
                     <FiMail className="w-5 h-5 mr-3 text-primary-600" />
-                    contact@semsarout.ma
+                    {CONTACT.email}
                   </a>
                   <div className="flex items-center text-gray-700">
                     <FiClock className="w-5 h-5 mr-3 text-primary-600" />
