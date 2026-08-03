@@ -11,6 +11,9 @@ permissions:
 jobs:
   terraform:
     name: Terraform apply
+    # Les secrets (HCLOUD_TOKEN, TF_BACKEND_*, JWT_SECRET_KEY_PROD, DEPLOY_SSH_PRIVATE_KEY)
+    # sont portés par l'environnement GitHub `production` : le job doit le déclarer pour y accéder.
+    environment: production
     runs-on: ubuntu-latest
     outputs:
       server_ip: ${{ steps.output.outputs.server_ip }}
@@ -79,6 +82,7 @@ jobs:
   deploy:
     name: Ansible deploy
     needs: terraform
+    environment: production
     runs-on: ubuntu-latest
     env:
       SERVER_IP: ${{ needs.terraform.outputs.server_ip }}
