@@ -7,13 +7,15 @@ import {
 } from 'react-icons/fi'
 import { DIRHAM_SYMBOL } from '../utils/currency'
 import StayManagerWordmark from '../components/common/StayManagerWordmark'
+import { CONTACT } from '../constants/contact'
+import { PRICING, priceLabel, priceWithSymbol } from '../constants/pricing'
 
 const SERVICES = {
   vente: {
     title: 'Forfait Vente',
     subtitle: 'Service d\'agence en ligne',
-    price: '4 900',
-    priceNote: `${DIRHAM_SYMBOL} TTC - Tarif fixe`,
+    price: priceLabel(PRICING.agencyForfait),
+    priceNote: 'TTC - Tarif fixe',
     description: 'Un accompagnement complet pour vendre votre bien au meilleur prix, sans les commissions exorbitantes des agences traditionnelles.',
     features: [
       'Estimation gratuite de votre bien par un expert',
@@ -33,9 +35,9 @@ const SERVICES = {
         'Livraison sous 48h'
       ],
       options: [
-        { name: 'Visite virtuelle 360°', price: `+500 ${DIRHAM_SYMBOL}` },
-        { name: 'Prises de vue drone', price: `+800 ${DIRHAM_SYMBOL}` },
-        { name: 'Vidéo de présentation', price: `+1 200 ${DIRHAM_SYMBOL}` }
+        { name: 'Visite virtuelle 360°', price: `+${priceWithSymbol(PRICING.addons.virtualTour360)}` },
+        { name: 'Prises de vue drone', price: `+${priceWithSymbol(PRICING.addons.drone)}` },
+        { name: 'Vidéo de présentation', price: `+${priceWithSymbol(PRICING.addons.video)}` }
       ]
     },
     notIncluded: [
@@ -120,8 +122,8 @@ const SERVICES = {
         'Livraison sous 48h'
       ],
       options: [
-        { name: 'Visite virtuelle 360°', price: `+500 ${DIRHAM_SYMBOL}` },
-        { name: 'Vidéo de présentation', price: `+1 200 ${DIRHAM_SYMBOL}` }
+        { name: 'Visite virtuelle 360°', price: `+${priceWithSymbol(PRICING.addons.virtualTour360)}` },
+        { name: 'Vidéo de présentation', price: `+${priceWithSymbol(PRICING.addons.video)}` }
       ]
     },
     notIncluded: [
@@ -152,9 +154,9 @@ const SERVICES = {
     ],
     optionsTitle: 'Formules StayManager.ma',
     options: [
-      { name: 'Manage', price: `179 ${DIRHAM_SYMBOL}/bien/mois` },
-      { name: 'Automate', price: `299 ${DIRHAM_SYMBOL}/bien/mois` },
-      { name: 'Optimize', price: `449 ${DIRHAM_SYMBOL}/bien/mois` }
+      { name: 'Manage', price: `${PRICING.staymanager.manage} ${DIRHAM_SYMBOL}/bien/mois` },
+      { name: 'Automate', price: `${PRICING.staymanager.automate} ${DIRHAM_SYMBOL}/bien/mois` },
+      { name: 'Optimize', price: `${PRICING.staymanager.optimize} ${DIRHAM_SYMBOL}/bien/mois` }
     ],
     partnership: {
       name: 'StayManager.ma',
@@ -587,11 +589,11 @@ function Services() {
                     </div>
 
                     <a
-                      href="tel:+212600000000"
+                      href={`tel:${CONTACT.phoneTel}`}
                       className="flex items-center justify-center text-gray-700 hover:text-primary-600"
                     >
                       <FiPhone className="w-5 h-5 mr-2" />
-                      +212 6 00 00 00 00
+                      {CONTACT.phone}
                     </a>
                   </div>
                 </div>
@@ -735,9 +737,9 @@ function Services() {
                 <FiMail className="w-4 h-4 mr-2" />
                 Nous contacter
               </Link>
-              <a href="tel:+212600000000" className="btn border-2 border-white text-white hover:bg-white/10">
+              <a href={`tel:${CONTACT.phoneTel}`} className="btn border-2 border-white text-white hover:bg-white/10">
                 <FiPhone className="w-4 h-4 mr-2" />
-                +212 6 00 00 00 00
+                {CONTACT.phone}
               </a>
             </div>
           </div>

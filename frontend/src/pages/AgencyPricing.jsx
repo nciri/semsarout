@@ -4,6 +4,8 @@ import { useQuery } from 'react-query'
 import { FiCheck, FiX, FiArrowRight, FiZap, FiPhone } from 'react-icons/fi'
 import api from '../services/api'
 import { DIRHAM_SYMBOL, formatPrice } from '../utils/currency'
+import { CONTACT } from '../constants/contact'
+import { PRICING } from '../constants/pricing'
 
 function AgencyPricing() {
   const [billingCycle, setBillingCycle] = useState('yearly')
@@ -28,8 +30,8 @@ function AgencyPricing() {
       has_analytics: false,
       has_priority_support: false,
       has_dedicated_account_manager: false,
-      price_monthly: 299,
-      price_yearly: 2990
+      price_monthly: PRICING.plans.starter.monthly,
+      price_yearly: PRICING.plans.starter.yearly
     },
     {
       name: 'Pro',
@@ -45,8 +47,8 @@ function AgencyPricing() {
       has_analytics: true,
       has_priority_support: false,
       has_dedicated_account_manager: false,
-      price_monthly: 799,
-      price_yearly: 7990,
+      price_monthly: PRICING.plans.pro.monthly,
+      price_yearly: PRICING.plans.pro.yearly,
       popular: true
     },
     {
@@ -63,8 +65,8 @@ function AgencyPricing() {
       has_analytics: true,
       has_priority_support: true,
       has_dedicated_account_manager: true,
-      price_monthly: 1999,
-      price_yearly: 19990
+      price_monthly: PRICING.plans.enterprise.monthly,
+      price_yearly: PRICING.plans.enterprise.yearly
     }
   ]
 
@@ -438,9 +440,9 @@ function AgencyPricing() {
               <Link to="/contact" className="btn bg-white text-primary-600 hover:bg-gray-100">
                 Nous contacter
               </Link>
-              <a href="tel:+212600000000" className="btn border-2 border-white text-white hover:bg-white/10">
+              <a href={`tel:${CONTACT.phoneTel}`} className="btn border-2 border-white text-white hover:bg-white/10">
                 <FiPhone className="w-4 h-4 mr-2" />
-                +212 6 00 00 00 00
+                {CONTACT.phone}
               </a>
             </div>
           </div>
