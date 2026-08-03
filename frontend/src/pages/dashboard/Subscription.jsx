@@ -11,6 +11,7 @@ import { toast } from 'react-toastify'
 import useAuthStore from '../../store/authStore'
 import { formatPrice } from '../../utils/currency'
 import api from '../../services/api'
+import { CONTACT } from '../../constants/contact'
 
 // Generate invoice PDF
 const generateInvoicePDF = (invoice, user) => {
@@ -157,7 +158,7 @@ const generateInvoicePDF = (invoice, user) => {
   doc.setFontSize(8)
   doc.setFont('helvetica', 'normal')
   doc.text('SemsarOut SARL - RC: 123456 - IF: 12345678 - ICE: 001234567000012', pageWidth / 2, yPos, { align: 'center' })
-  doc.text('Pour toute question concernant cette facture, contactez-nous à facturation@semsarout.com', pageWidth / 2, yPos + 6, { align: 'center' })
+  doc.text(`Pour toute question concernant cette facture, contactez-nous à ${CONTACT.billingEmail}`, pageWidth / 2, yPos + 6, { align: 'center' })
 
   return doc
 }

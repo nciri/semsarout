@@ -1,6 +1,8 @@
 import {
   FiHome, FiKey, FiUsers, FiCalendar, FiDollarSign, FiHelpCircle
 } from 'react-icons/fi'
+import { DIRHAM_SYMBOL } from '../utils/currency'
+import { PRICING, priceLabel } from './pricing'
 
 /**
  * Référentiel des services proposés — clés partagées entre la page Services,
@@ -10,7 +12,7 @@ export const SERVICE_OPTIONS = {
   vente: {
     label: 'Vendre mon bien',
     shortLabel: 'Forfait Vente',
-    description: 'Forfait fixe 4 900 Đh, sans commission',
+    description: `Forfait fixe ${priceLabel(PRICING.agencyForfait)} ${DIRHAM_SYMBOL}, sans commission`,
     icon: FiHome
   },
   'mise-en-location': {
@@ -28,7 +30,7 @@ export const SERVICE_OPTIONS = {
   'courte-duree': {
     label: 'Location courte durée',
     shortLabel: 'Location Courte Durée',
-    description: 'Plateforme StayManager.ma, dès 179 Đh/bien/mois',
+    description: `Plateforme StayManager.ma, dès ${PRICING.staymanager.manage} ${DIRHAM_SYMBOL}/bien/mois`,
     icon: FiCalendar
   },
   estimation: {
