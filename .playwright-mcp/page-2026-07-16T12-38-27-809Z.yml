@@ -1,0 +1,145 @@
+- generic [ref=f12e3]:
+  - banner [ref=f12e4]:
+    - generic [ref=f12e6]:
+      - link "Semsar Out" [ref=f12e7] [cursor=pointer]:
+        - /url: /
+        - generic [ref=f12e8]:
+          - generic [ref=f12e9]: Semsar
+          - generic [ref=f12e10]: Out
+      - navigation [ref=f12e11]:
+        - generic [ref=f12e12]:
+          - link "Acheter" [ref=f12e13] [cursor=pointer]:
+            - /url: /annonces?transaction_type=sale
+          - link "Louer" [ref=f12e14] [cursor=pointer]:
+            - /url: /annonces?transaction_type=rent
+        - link "Programmes neufs" [ref=f12e16] [cursor=pointer]:
+          - /url: /programmes
+        - generic [ref=f12e18]:
+          - link "Agences" [ref=f12e19] [cursor=pointer]:
+            - /url: /agences
+          - link "Nos Services" [ref=f12e20] [cursor=pointer]:
+            - /url: /nos-services
+      - button "Menu utilisateur" [ref=f12e23] [cursor=pointer]
+  - main [ref=f12e27]:
+    - generic [ref=f12e28]:
+      - generic [ref=f12e33]:
+        - generic [ref=f12e34]:
+          - button "Acheter" [ref=f12e35] [cursor=pointer]
+          - button "Louer" [ref=f12e36] [cursor=pointer]
+        - combobox "Ville, quartier..." [ref=f12e41]
+        - combobox [ref=f12e42]:
+          - option "Type de bien" [selected]
+          - option "Appartement"
+          - option "Maison"
+          - option "Villa"
+          - option "Riad"
+          - option "Terrain"
+          - option "Local commercial"
+          - option "Bureau"
+          - option "Garage/Parking"
+        - button "Filtres" [ref=f12e43] [cursor=pointer]
+        - button "Rechercher" [ref=f12e48] [cursor=pointer]
+      - generic [ref=f12e54]:
+        - generic [ref=f12e55]:
+          - heading "Annonces immobilières" [level=1] [ref=f12e56]
+          - paragraph [ref=f12e57]: Chargement...
+        - generic [ref=f12e58]:
+          - combobox [ref=f12e59]:
+            - option "Plus récentes" [selected]
+            - option "Plus anciennes"
+            - option "Prix croissant"
+            - option "Prix décroissant"
+            - option "Surface décroissante"
+            - option "Plus de pièces"
+          - generic [ref=f12e60]:
+            - button "Vue grille" [ref=f12e61] [cursor=pointer]
+            - button "Vue liste" [ref=f12e67] [cursor=pointer]
+            - button "Vue carte" [ref=f12e69] [cursor=pointer]
+            - button "Vue mixte" [ref=f12e72] [cursor=pointer]
+  - contentinfo [ref=f12e125]:
+    - generic [ref=f12e126]:
+      - generic [ref=f12e127]:
+        - generic [ref=f12e128]:
+          - link "Semsar Out" [ref=f12e129] [cursor=pointer]:
+            - /url: /
+            - generic [ref=f12e130]:
+              - generic [ref=f12e131]: Semsar
+              - generic [ref=f12e132]: Out
+          - paragraph [ref=f12e133]: L'immobilier sans les intermédiaires douteux. Vendez, louez et gérez votre bien à tarif fixe, sans commission, avec un accompagnement professionnel.
+          - generic [ref=f12e134]:
+            - link "Facebook" [ref=f12e135] [cursor=pointer]:
+              - /url: "#"
+            - link "Instagram" [ref=f12e138] [cursor=pointer]:
+              - /url: "#"
+            - link "LinkedIn" [ref=f12e142] [cursor=pointer]:
+              - /url: "#"
+            - link "Twitter" [ref=f12e147] [cursor=pointer]:
+              - /url: "#"
+            - link "YouTube" [ref=f12e150] [cursor=pointer]:
+              - /url: "#"
+        - generic [ref=f12e154]:
+          - heading "Vente" [level=4] [ref=f12e155]
+          - list [ref=f12e156]:
+            - listitem [ref=f12e157]:
+              - link "Forfait Vente (4.900 Đh)" [ref=f12e158] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f12e159]:
+              - link "Photos Professionnelles" [ref=f12e160] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f12e161]:
+              - link "Estimation Gratuite" [ref=f12e162] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f12e163]:
+              - link "Acheter un bien" [ref=f12e164] [cursor=pointer]:
+                - /url: /annonces?transaction_type=sale
+        - generic [ref=f12e165]:
+          - heading "Location" [level=4] [ref=f12e166]
+          - list [ref=f12e167]:
+            - listitem [ref=f12e168]:
+              - link "Mise en Location" [ref=f12e169] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f12e170]:
+              - link "Gestion Locative Complète" [ref=f12e171] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f12e172]:
+              - link "Location Courte DuréeStayManager" [ref=f12e173] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f12e174]:
+              - link "Louer un bien" [ref=f12e175] [cursor=pointer]:
+                - /url: /annonces?transaction_type=rent
+        - generic [ref=f12e176]:
+          - heading "Professionnels" [level=4] [ref=f12e177]
+          - list [ref=f12e178]:
+            - listitem [ref=f12e179]:
+              - link "Agences partenaires" [ref=f12e180] [cursor=pointer]:
+                - /url: /agences
+            - listitem [ref=f12e181]:
+              - link "Devenir partenaire" [ref=f12e182] [cursor=pointer]:
+                - /url: /agences/inscription
+            - listitem [ref=f12e183]:
+              - link "Tarifs agences" [ref=f12e184] [cursor=pointer]:
+                - /url: /agences/tarifs
+          - heading "À propos" [level=4] [ref=f12e185]
+          - list [ref=f12e186]:
+            - listitem [ref=f12e187]:
+              - link "Qui sommes-nous" [ref=f12e188] [cursor=pointer]:
+                - /url: /a-propos
+            - listitem [ref=f12e189]:
+              - link "Nous contacter" [ref=f12e190] [cursor=pointer]:
+                - /url: /contact
+            - listitem [ref=f12e191]:
+              - link "StayManager.ma↗" [ref=f12e192] [cursor=pointer]:
+                - /url: https://www.staymanager.ma
+                - generic [ref=f12e193]: StayManager.ma
+                - text: ↗
+      - generic [ref=f12e195]:
+        - paragraph [ref=f12e196]: © 2026 SemsarOut. Tous droits réservés.
+        - generic [ref=f12e197]:
+          - link "Mentions légales" [ref=f12e198] [cursor=pointer]:
+            - /url: "#"
+          - link "CGU" [ref=f12e199] [cursor=pointer]:
+            - /url: "#"
+          - link "Politique de confidentialité" [ref=f12e200] [cursor=pointer]:
+            - /url: "#"
+          - link "Cookies" [ref=f12e201] [cursor=pointer]:
+            - /url: "#"

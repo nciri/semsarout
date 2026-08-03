@@ -173,3 +173,37 @@ class CalendarEvent(db.Model):
 
     def __repr__(self):
         return f'<CalendarEvent {self.title}>'
+
+
+class AgentAvailability(db.Model):
+    """Weekly recurring availability window for an agent, used to compute
+    self-service visit booking slots on a property's public detail page."""
+    __tablename__ = 'agent_availabilities'
+
+    id = db.Column(db.Integer, primary_key=True)
+    agent_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+
+    # 0 = Monday ... 6 = Sunday (Python's date.weekday())
+    weekday = db.Column(db.Integer, nullable=False)
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
+    slot_minutes = db.Column(db.Integer, default=30)
+
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    agent = db.relationship('User')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'agent_id': self.agent_id,
+            'weekday': self.weekday,
+            'start_time': self.start_time.strftime('%H:%M') if self.start_time else None,
+            'end_time': self.end_time.strftime('%H:%M') if self.end_time else None,
+            'slot_minutes': self.slot_minutes,
+            'is_active': self.is_active
+        }
+
+    def __repr__(self):
+        return f'<AgentAvailability agent={self.agent_id} weekday={self.weekday}>'

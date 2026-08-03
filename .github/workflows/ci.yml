@@ -1,0 +1,92 @@
+# CI SemsarOut / M3a-L3achrane — tests exigés sur les PR vers develop et main,
+# et revalidation à chaque push sur develop. La CD (déploiement production) est
+# dans deploy.yml et se déclenche au merge develop → main.
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop]
+
+jobs:
+  backend:
+    name: pytest ${{ matrix.dir }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir:
+          - gateway
+          - services/analytics
+          - services/billing
+          - services/catalog
+          - services/coloc-listing
+          - services/coloc-profile
+          - services/commission
+          - services/contract
+          - services/crm
+          - services/directory
+          - services/identity
+          - services/legal
+          - services/listing
+          - services/marketplace
+          - services/matching
+          - services/messaging
+          - services/notification
+          - services/payment
+          - services/rental
+          - services/search
+          - services/selling
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            libs/*/pyproject.toml
+            ${{ matrix.dir }}/pyproject.toml
+      - name: Installer les libs partagées
+        run: >
+          pip install -e libs/semsar_common -e libs/semsar_auth -e libs/semsar_events
+          -e libs/semsar_storage -e libs/semsar_search -e libs/semsar_signing
+      - name: Installer le service
+        run: pip install -e "${{ matrix.dir }}[test]"
+      - name: Tests
+        working-directory: ${{ matrix.dir }}
+        run: python -m pytest tests/ -v
+
+  frontend-m3a-l3achrane:
+    name: front m3a-l3achrane (lint + test + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend-m3a-l3achrane
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend-m3a-l3achrane/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  frontend-semsarout:
+    name: front semsarout (build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run build

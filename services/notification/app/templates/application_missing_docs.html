@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from "_components.html" import lucide with context %}
+{% block subject %}Complétez votre dossier de candidature{% endblock %}
+{% block preheader %}Il manque des pièces à votre dossier — ajoutez-les pour poursuivre l'étude.{% endblock %}
+{% block badge %}{{ lucide("paperclip") }}{% endblock %}
+{% block hero_title %}Pièces manquantes{% endblock %}
+{% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}, votre dossier est incomplet.</p>{% endblock %}
+{% block content %}
+<p style="text-align:left; color:{{ brand.ink }};">Pour que nous puissions étudier votre candidature, il nous manque vos pièces justificatives (pièce d'identité, justificatifs de revenus, éventuellement garant). Merci de les déposer depuis votre espace SemsarOut.</p>
+<p style="margin-top:18px; font-size:13px; color:{{ brand.muted }}; text-align:left;">Une question&nbsp;? <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
+{% endblock %}

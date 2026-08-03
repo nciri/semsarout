@@ -47,5 +47,17 @@ export const propertyService = {
   contactProperty: async (propertyId, data) => {
     const response = await api.post(`/properties/${propertyId}/contact`, data)
     return response.data
+  },
+
+  // Reveal owner/agency phone number
+  revealPhone: async (propertyId, data = {}) => {
+    const response = await api.post(`/properties/${propertyId}/reveal-phone`, data)
+    return response.data
+  },
+
+  // Price positioning within the neighborhood (for the gauge)
+  getPricePosition: async (propertyId) => {
+    const response = await api.get(`/properties/${propertyId}/price-position`)
+    return response.data
   }
 }

@@ -1,0 +1,77 @@
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; color: #111; }
+  h1 { color: #1e3a5f; font-size: 15pt; text-align: center; }
+  h2 { color: #1e3a5f; font-size: 12pt; margin-top: 14px; }
+  p { line-height: 1.4; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 8px; }
+  td, th { border: 1px solid #ccc; padding: 4px; text-align: left; }
+  .warning { border: 1px solid #b00; padding: 8px; margin-bottom: 12px; color: #b00; }
+  ul { margin: 4px 0; padding-left: 18px; }
+</style>
+</head>
+<body>
+
+<h1>Compromis de vente immobilière (projet préparatoire)</h1>
+
+<div class="warning">
+  Le présent document est un projet préparatoire à visée documentaire. Conformément au
+  Code des droits réels (loi 39-08, réforme entrée en vigueur le 22 août 2024), il ne
+  vaut engagement définitif qu'après <strong>réitération par acte authentique</strong>
+  établi par un <strong>notaire</strong> ou des <strong>adoul</strong> (ou, le cas
+  échéant, par un acte à date certaine établi par un avocat agréé près la Cour de
+  cassation). Il ne se substitue pas à cet acte authentique et doit lui être soumis.
+</div>
+
+<h2>1. Parties</h2>
+<table>
+  <tr><th>Rôle</th><th>Nom</th><th>CIN</th><th>Adresse</th></tr>
+  <tr><td>Vendeur</td><td>{{vendeur_nom}}</td><td>{{vendeur_cin}}</td><td>{{vendeur_adresse}}</td></tr>
+  <tr><td>Acheteur</td><td>{{acheteur_nom}}</td><td>{{acheteur_cin}}</td><td>{{acheteur_adresse}}</td></tr>
+</table>
+
+<h2>2. Désignation du bien et origine de propriété</h2>
+<p>
+  Titre foncier n° {{titre_foncier}} — Consistance : {{consistance}} — Superficie :
+  {{superficie}} — Situation : {{situation}}.
+</p>
+<p>Origine de propriété : {{origine_propriete}}.</p>
+
+<h2>3. Prix, arrhes et échéancier</h2>
+<p>
+  Prix de vente : {{prix_montant}} MAD. Arrhes/acompte versé(s) à la signature :
+  {{prix_arrhes}} MAD, conformément à l'article 290 du DOC. Échéancier de paiement :
+  {{prix_echeancier}}.
+</p>
+
+<h2>4. Conditions suspensives</h2>
+<ul>
+{{conditions_suspensives}}
+</ul>
+
+<h2>5. Situation hypothécaire</h2>
+<p>{{situation_hypothecaire}}</p>
+
+<h2>6. Réitération par acte authentique (notaire/adoul)</h2>
+<p>
+  Les parties s'engagent à réitérer la présente vente par acte authentique devant
+  {{reiteration_acte}} dans un délai de {{reiteration_delai}} jours à compter de la
+  réalisation de l'ensemble des conditions suspensives visées à la section 4.
+</p>
+
+<h2>7. Frais et fiscalité (TPI, enregistrement, conservation foncière)</h2>
+<table>
+  <tr><th>Taxe sur le Profit Immobilier (TPI)</th><td>{{frais_tpi}}</td></tr>
+  <tr><th>Droits d'enregistrement</th><td>{{frais_enregistrement}}</td></tr>
+  <tr><th>Conservation foncière</th><td>{{frais_conservation}}</td></tr>
+</table>
+
+<h2>8. Clause pénale, élection de domicile et droit applicable</h2>
+<p>Clause pénale : {{clause_penale}}.</p>
+<p>Élection de domicile : {{election_domicile}}.</p>
+<p>Droit applicable et juridiction compétente : {{droit_applicable}}.</p>
+
+</body>
+</html>

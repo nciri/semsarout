@@ -1,20 +1,102 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiSettings, FiCreditCard } from 'react-icons/fi'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useQuery } from 'react-query'
+import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiLink, FiTrendingUp, FiInbox, FiShield, FiBriefcase, FiClipboard, FiSearch, FiMail, FiCalendar } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
+import { leadService } from '../../services/leadService'
+import Wordmark from '../common/Wordmark'
 
 function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const { isAuthenticated, user, logout } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const userMenuRef = useRef(null)
+
+  // Item du menu correspondant à la page courante (fond distinct)
+  const isActivePath = (to) => (to === '/dashboard' ? location.pathname === '/dashboard' : location.pathname.startsWith(to))
 
   const handleLogout = () => {
     logout()
     setIsUserMenuOpen(false)
     navigate('/')
   }
+
+  const isAdmin = user?.user_type === 'admin' || user?.account_role === 'admin'
+
+  // Compteur de demandes non lues (badge + point sur l'avatar)
+  const { data: leadsSummary } = useQuery(
+    'leads-summary',
+    leadService.getSummary,
+    { enabled: isAuthenticated, refetchInterval: 60000, refetchOnWindowFocus: true }
+  )
+  const unreadLeads = leadsSummary?.unread_count || 0
+
+  // Groupes métier du menu compte (voir proposition de réorganisation)
+  const menuSections = [
+    {
+      title: 'Activité',
+      items: [
+        { to: '/dashboard', label: user?.agency_id ? 'Tour de contrôle' : 'Mon espace', icon: FiGrid },
+        { to: '/dashboard/annonces', label: 'Mes annonces', icon: FiFileText },
+        { to: '/dashboard/candidatures', label: 'Mes candidatures', icon: FiClipboard },
+        { to: '/dashboard/leads', label: 'Demandes / Leads', icon: FiInbox }
+      ]
+    },
+    ...(!user?.agency_id
+      ? [{
+          title: 'Recherche',
+          items: [
+            { to: '/dashboard/mes-recherches', label: 'Mes recherches', icon: FiSearch },
+            { to: '/dashboard/mes-messages', label: 'Mes messages', icon: FiMail }
+          ]
+        }]
+      : []),
+    ...(user?.agency_id
+      ? [{
+          title: null,
+          items: [
+            { to: '/backoffice', label: "Gestion de l'agence", icon: FiBriefcase }
+          ]
+        }, {
+          title: 'Relation client',
+          items: [
+            { to: '/dashboard/messages', label: 'Messagerie', icon: FiMail },
+            { to: '/dashboard/disponibilites', label: 'Disponibilités', icon: FiCalendar }
+          ]
+        }]
+      : []),
+    {
+      title: 'Location courte durée',
+      items: [
+        { to: '/dashboard/staymanager', label: 'StayManager', icon: FiLink }
+      ]
+    },
+    ...(isAdmin
+      ? [{
+          title: 'Administration',
+          items: [
+            { to: '/dashboard/prix-marche', label: 'Prix de référence', icon: FiTrendingUp }
+          ]
+        }]
+      : []),
+    ...(user?.is_superadmin
+      ? [{
+          title: 'Super-admin',
+          items: [
+            { to: '/admin', label: 'Plateforme', icon: FiShield }
+          ]
+        }]
+      : []),
+    {
+      // Les 3 pages (agence / abonnement / paramètres) sont des onglets d'une même page
+      title: null,
+      items: [
+        { to: '/dashboard/compte', label: 'Mon compte', icon: FiUser }
+      ]
+    }
+  ]
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -28,18 +110,12 @@ function Header() {
   }, [])
 
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-50">
+    <header className="sticky top-0 z-50 bg-white/[.92] backdrop-blur-md border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-[68px]">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-terracotta-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">S</span>
-            </div>
-            <div className="flex items-baseline">
-              <span className="font-display font-bold text-xl text-gray-900">Semsar</span>
-              <span className="font-display font-bold text-xl text-primary-600">Out</span>
-            </div>
+          <Link to="/" className="flex items-center">
+            <Wordmark />
           </Link>
 
           {/* Desktop Navigation */}
@@ -48,32 +124,43 @@ function Header() {
             <div className="flex items-center space-x-6">
               <Link
                 to="/annonces?transaction_type=sale"
-                className="text-gray-700 hover:text-primary-600 font-medium transition-colors"
+                className="text-slate-700 hover:text-midnight font-semibold text-[15px] transition-colors"
               >
                 Acheter
               </Link>
               <Link
                 to="/annonces?transaction_type=rent"
-                className="text-gray-700 hover:text-primary-600 font-medium transition-colors"
+                className="text-slate-700 hover:text-midnight font-semibold text-[15px] transition-colors"
               >
                 Louer
               </Link>
             </div>
 
             {/* Separator */}
-            <div className="mx-8 h-6 w-px bg-gray-200"></div>
+            <div className="mx-6 h-6 w-px bg-gray-200"></div>
 
-            {/* Secondary nav - Agences (different color) */}
+            {/* Programmes neufs - Highlighted */}
+            <Link
+              to="/programmes"
+              className="px-4 py-1.5 bg-midnight text-ivory font-semibold rounded-full hover:bg-slate-800 transition-all shadow-ds-sm hover:shadow-ds-md"
+            >
+              Programmes neufs
+            </Link>
+
+            {/* Separator */}
+            <div className="mx-10 h-6 w-px bg-gray-200"></div>
+
+            {/* Secondary nav - Agences & Services */}
             <div className="flex items-center space-x-6">
               <Link
                 to="/agences"
-                className="text-terracotta-600 hover:text-terracotta-700 font-medium transition-colors"
+                className="text-emerald-500 hover:text-emerald-600 font-semibold text-[15px] transition-colors"
               >
                 Agences
               </Link>
               <Link
                 to="/nos-services"
-                className="text-terracotta-600 hover:text-terracotta-700 font-medium transition-colors"
+                className="text-emerald-500 hover:text-emerald-600 font-semibold text-[15px] transition-colors"
               >
                 Nos Services
               </Link>
@@ -106,6 +193,12 @@ function Header() {
                 ) : (
                   <FiUser className="w-5 h-5 text-gray-600" />
                 )}
+                {/* Pastille : demandes non lues, visible menu fermé */}
+                {isAuthenticated && unreadLeads > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-red-600 text-white text-[10px] font-bold ring-2 ring-white">
+                    {unreadLeads > 9 ? '9+' : unreadLeads}
+                  </span>
+                )}
               </button>
 
               {/* Dropdown Menu */}
@@ -119,40 +212,36 @@ function Header() {
                         <p className="text-sm text-gray-500">{user?.email}</p>
                       </div>
 
-                      {/* Menu items */}
-                      <div className="py-2">
-                        <Link
-                          to="/dashboard"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        >
-                          <FiGrid className="w-4 h-4 mr-3 text-gray-400" />
-                          Tableau de bord
-                        </Link>
-                        <Link
-                          to="/dashboard/annonces"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        >
-                          <FiFileText className="w-4 h-4 mr-3 text-gray-400" />
-                          Mes annonces
-                        </Link>
-                        <Link
-                          to="/dashboard/abonnement"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        >
-                          <FiCreditCard className="w-4 h-4 mr-3 text-gray-400" />
-                          Mon abonnement
-                        </Link>
-                        <Link
-                          to="/dashboard/parametres"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        >
-                          <FiSettings className="w-4 h-4 mr-3 text-gray-400" />
-                          Paramètres
-                        </Link>
+                      {/* Menu items regroupés par domaine métier */}
+                      <div className="py-1 max-h-[70vh] overflow-y-auto">
+                        {menuSections.map((section) => (
+                          <div key={section.title || section.items[0].to} className="py-1">
+                            {section.title && (
+                              <p className="px-4 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                                {section.title}
+                              </p>
+                            )}
+                            {section.items.map(({ to, label, icon: Icon }) => {
+                              const active = isActivePath(to)
+                              return (
+                              <Link
+                                key={to}
+                                to={to}
+                                onClick={() => setIsUserMenuOpen(false)}
+                                className={`flex items-center px-4 py-2 ${active ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                              >
+                                <Icon className={`w-4 h-4 mr-3 ${active ? 'text-primary-600' : 'text-gray-400'}`} />
+                                <span className="flex-1">{label}</span>
+                                {to === '/dashboard/leads' && unreadLeads > 0 && (
+                                  <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-600 text-white text-xs font-semibold">
+                                    {unreadLeads > 99 ? '99+' : unreadLeads}
+                                  </span>
+                                )}
+                              </Link>
+                              )
+                            })}
+                          </div>
+                        ))}
                       </div>
 
                       {/* Logout */}
@@ -171,35 +260,6 @@ function Header() {
                       {/* Login Form Preview */}
                       <div className="p-4">
                         <h3 className="font-semibold text-gray-900 mb-4">Connexion</h3>
-
-                        {/* Social Login Buttons */}
-                        <div className="space-y-2 mb-4">
-                          <button className="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                            <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
-                              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                            </svg>
-                            Continuer avec Google
-                          </button>
-
-                          <button className="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                            <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                            </svg>
-                            Continuer avec Apple
-                          </button>
-                        </div>
-
-                        <div className="relative mb-4">
-                          <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-200"></div>
-                          </div>
-                          <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-white text-gray-500">ou</span>
-                          </div>
-                        </div>
 
                         {/* Email Login Link */}
                         <Link
@@ -258,15 +318,23 @@ function Header() {
               </Link>
               <div className="h-px bg-gray-200 my-2"></div>
               <Link
+                to="/programmes"
+                className="inline-block my-2 px-4 py-2 bg-gradient-to-r from-terracotta-500 to-terracotta-600 text-white font-semibold rounded-full"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Programmes neufs
+              </Link>
+              <div className="h-px bg-gray-200 my-2"></div>
+              <Link
                 to="/agences"
-                className="py-2 text-terracotta-600 font-medium"
+                className="py-2 text-gray-600 font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Agences
               </Link>
               <Link
                 to="/nos-services"
-                className="py-2 text-terracotta-600 font-medium"
+                className="py-2 text-gray-600 font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Nos Services
@@ -274,33 +342,40 @@ function Header() {
               <div className="h-px bg-gray-200 my-2"></div>
               {isAuthenticated ? (
                 <>
-                  <Link
-                    to="/dashboard"
-                    className="py-2 text-gray-600"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Tableau de bord
-                  </Link>
-                  <Link
-                    to="/dashboard/annonces"
-                    className="py-2 text-gray-600"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Mes annonces
-                  </Link>
-                  <Link
-                    to="/dashboard/abonnement"
-                    className="py-2 text-gray-600"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Mon abonnement
-                  </Link>
+                  {menuSections.map((section) => (
+                    <div key={section.title || section.items[0].to}>
+                      {section.title && (
+                        <p className="pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                          {section.title}
+                        </p>
+                      )}
+                      {section.items.map(({ to, label, icon: Icon }) => {
+                        const active = isActivePath(to)
+                        return (
+                        <Link
+                          key={to}
+                          to={to}
+                          className={`flex items-center gap-3 px-3 py-2 rounded-lg ${active ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-600'}`}
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <Icon className={`w-4 h-4 ${active ? 'text-primary-600' : 'text-gray-400'}`} />
+                          <span className="flex-1">{label}</span>
+                          {to === '/dashboard/leads' && unreadLeads > 0 && (
+                            <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-600 text-white text-xs font-semibold">
+                              {unreadLeads > 99 ? '99+' : unreadLeads}
+                            </span>
+                          )}
+                        </Link>
+                        )
+                      })}
+                    </div>
+                  ))}
                   <button
                     onClick={() => {
                       handleLogout()
                       setIsMenuOpen(false)
                     }}
-                    className="py-2 text-left text-red-600"
+                    className="py-2 mt-2 text-left text-red-600 border-t border-gray-200"
                   >
                     Déconnexion
                   </button>

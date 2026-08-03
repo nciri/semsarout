@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { FiMail, FiPhone, FiMessageSquare, FiChevronDown } from 'react-icons/fi'
@@ -151,12 +151,12 @@ function MyLeads() {
                     {format(new Date(lead.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
                   </p>
                   {lead.property_id && (
-                    <a
-                      href={`/annonces/${lead.property_id}`}
+                    <Link
+                      to={`/annonces/${lead.property_id}`}
                       className="text-primary-600 hover:underline"
                     >
                       Voir l'annonce
-                    </a>
+                    </Link>
                   )}
                 </div>
               </div>

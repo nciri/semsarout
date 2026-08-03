@@ -23,6 +23,14 @@ class SubscriptionPlan(db.Model):
     has_lead_contact = db.Column(db.Boolean, default=True)
     has_analytics = db.Column(db.Boolean, default=False)
     has_priority_support = db.Column(db.Boolean, default=False)
+    has_dedicated_account_manager = db.Column(db.Boolean, default=False)
+    has_programs = db.Column(db.Boolean, default=False)  # Can create programs
+    max_programs = db.Column(db.Integer, default=0)  # -1 = unlimited
+    has_contracts = db.Column(db.Boolean, default=False)
+    has_legal = db.Column(db.Boolean, default=False)
+    has_artisans = db.Column(db.Boolean, default=False)
+    max_seats = db.Column(db.Integer, default=0)   # invited members beyond owner; -1 = unlimited
+    max_teams = db.Column(db.Integer, default=0)   # team labels; -1 = unlimited
 
     # Pricing (MAD - Dirham marocain)
     price_monthly = db.Column(db.Numeric(10, 2), nullable=False)
@@ -50,6 +58,14 @@ class SubscriptionPlan(db.Model):
             'has_lead_contact': self.has_lead_contact,
             'has_analytics': self.has_analytics,
             'has_priority_support': self.has_priority_support,
+            'has_dedicated_account_manager': self.has_dedicated_account_manager,
+            'has_programs': self.has_programs,
+            'max_programs': self.max_programs,
+            'has_contracts': self.has_contracts,
+            'has_legal': self.has_legal,
+            'has_artisans': self.has_artisans,
+            'max_seats': self.max_seats,
+            'max_teams': self.max_teams,
             'price_monthly': float(self.price_monthly),
             'price_yearly': float(self.price_yearly) if self.price_yearly else None
         }

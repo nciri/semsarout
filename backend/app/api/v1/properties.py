@@ -1,11 +1,13 @@
 import uuid
+import math
 from datetime import datetime
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from sqlalchemy import or_, and_, func
+from sqlalchemy import or_, and_, func, cast
 from app import db
 from app.api.v1 import api_v1_bp
 from app.models import Property, PropertyImage, User
+from app.services.moderation import exclude_moderated_properties as _exclude_moderated
 
 
 class SearchQuery(db.Model):
@@ -39,6 +41,7 @@ def list_properties():
 
     # Base query - only active properties for public
     query = Property.query.filter(Property.status == 'active')
+    query = _exclude_moderated(query)
 
     # === Basic Filters ===
     if request.args.get('transaction_type'):
@@ -124,8 +127,11 @@ def list_properties():
     if request.args.get('features'):
         features = request.args.get('features').split(',')
         for feature in features:
-            # Use PostgreSQL JSON contains operator
-            query = query.filter(Property.features.contains([feature]))
+            # Use case-insensitive text search on JSON array
+            # This handles both capitalized and lowercase feature values
+            query = query.filter(
+                func.lower(cast(Property.features, db.Text)).contains(feature.lower())
+            )
 
     # === Agency/Owner Filters ===
     if request.args.get('agency_id'):
@@ -149,24 +155,28 @@ def list_properties():
         # Properties with at least one image
         query = query.filter(Property.images.any())
 
-    if request.args.get('with_virtual_tour') == 'true':
-        query = query.filter(Property.virtual_tour_url.isnot(None))
-
     # === Geo Filters ===
     if request.args.get('lat') and request.args.get('lng') and request.args.get('radius'):
-        # Simple bounding box filter (for precise distance, use PostGIS)
-        lat = float(request.args.get('lat'))
-        lng = float(request.args.get('lng'))
-        radius_km = float(request.args.get('radius'))
-        # Approximate: 1 degree ≈ 111 km
-        lat_delta = radius_km / 111.0
-        lng_delta = radius_km / (111.0 * abs(func.cos(func.radians(lat))))
-        query = query.filter(
-            and_(
-                Property.latitude.between(lat - lat_delta, lat + lat_delta),
-                Property.longitude.between(lng - lng_delta, lng + lng_delta)
+        # Simple bounding box filter (for precise distance, use PostGIS).
+        # Use Python math (lat/lng/radius are plain floats) — mixing them with
+        # SQL func.cos() previously produced an invalid expression and 500s.
+        try:
+            lat = float(request.args.get('lat'))
+            lng = float(request.args.get('lng'))
+            radius_km = float(request.args.get('radius'))
+        except (TypeError, ValueError):
+            lat = lng = radius_km = None
+        if lat is not None and lng is not None and radius_km:
+            # Approximate: 1 degree of latitude ≈ 111 km
+            lat_delta = radius_km / 111.0
+            cos_lat = max(abs(math.cos(math.radians(lat))), 0.01)  # avoid /0 near poles
+            lng_delta = radius_km / (111.0 * cos_lat)
+            query = query.filter(
+                and_(
+                    Property.latitude.between(lat - lat_delta, lat + lat_delta),
+                    Property.longitude.between(lng - lng_delta, lng + lng_delta)
+                )
             )
-        )
 
     # === Text Search ===
     if request.args.get('q'):
@@ -200,10 +210,11 @@ def list_properties():
     elif sort == 'rooms_desc':
         query = query.order_by(Property.rooms.desc())
 
-    # Featured/urgent first (secondary sort)
+    # Featured/urgent first (secondary sort), puis id desc (départage déterministe / pagination stable)
     query = query.order_by(
         Property.is_featured.desc(),
-        Property.is_urgent.desc()
+        Property.is_urgent.desc(),
+        Property.id.desc()
     )
 
     # Execute query
@@ -259,6 +270,7 @@ def advanced_search():
 
     # Build query with provided filters
     query = Property.query.filter(Property.status == 'active')
+    query = _exclude_moderated(query)
 
     # Apply standard filters from POST body
     if filters.get('transaction_type'):
@@ -301,7 +313,9 @@ def advanced_search():
 
     if filters.get('required_features'):
         for feature in filters['required_features']:
-            query = query.filter(Property.features.contains([feature]))
+            query = query.filter(
+                func.lower(cast(Property.features, db.Text)).contains(feature.lower())
+            )
 
     if filters.get('energy_classes'):
         query = query.filter(Property.energy_class.in_(filters['energy_classes']))
@@ -319,7 +333,9 @@ def advanced_search():
         elif prefs.get('high_floor'):
             query = query.filter(Property.floor >= 3)
         if prefs.get('with_elevator'):
-            query = query.filter(Property.features.contains(['ascenseur']))
+            query = query.filter(
+                func.lower(cast(Property.features, db.Text)).contains('ascenseur')
+            )
 
     if filters.get('owner_type'):
         if filters['owner_type'] == 'agency':
@@ -353,6 +369,9 @@ def advanced_search():
         query = query.order_by(Property.price.asc())
     elif sort == 'price_desc':
         query = query.order_by(Property.price.desc())
+
+    # id desc en départage déterministe (pagination stable / parité search)
+    query = query.order_by(Property.id.desc())
 
     # Pagination
     page = data.get('page', 1)
@@ -418,6 +437,18 @@ def get_search_suggestions():
 def get_property(property_id):
     """Get a single property by ID."""
     property = Property.query.get_or_404(property_id)
+
+    # Hide listings from moderated owners/agencies from the public (spec §6).
+    # This route has no auth requirement (purely public detail view), so a
+    # blanket 404 is safe here — it never masks an authenticated owner's own view.
+    from app.models import User as _User, Agency as _Agency
+    owner = _User.query.get(property.owner_id)
+    if owner is None or owner.is_suspended or owner.deleted_at is not None:
+        return jsonify({'error': 'Not found'}), 404
+    if property.agency_id:
+        ag = _Agency.query.get(property.agency_id)
+        if ag is not None and (ag.is_suspended or ag.deleted_at is not None):
+            return jsonify({'error': 'Not found'}), 404
 
     # Increment view count
     property.views_count += 1
@@ -572,6 +603,10 @@ def my_properties():
     # Filter by status
     if request.args.get('status'):
         query = query.filter(Property.status == request.args.get('status'))
+
+    # Filter by transaction type (vente / location longue durée)
+    if request.args.get('transaction_type'):
+        query = query.filter(Property.transaction_type == request.args.get('transaction_type'))
 
     query = query.order_by(Property.created_at.desc())
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)

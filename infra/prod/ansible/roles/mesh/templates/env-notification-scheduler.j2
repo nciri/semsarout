@@ -1,0 +1,4 @@
+## Généré par Ansible — env de l'ordonnanceur notification (cf. app.scheduler).
+SERVICE_NAME=notification
+DATABASE_URL=postgresql+psycopg://notification:{{ semsar_secrets['PG_PASSWORD_NOTIFICATION'] }}@localhost:5432/{{ semsar_db_name }}
+PYTHONPATH={{ semsar_app_dir }}/services/notification

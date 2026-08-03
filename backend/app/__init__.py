@@ -29,9 +29,31 @@ def create_app(config_name='default'):
     from app.api.v1 import api_v1_bp
     app.register_blueprint(api_v1_bp, url_prefix='/api/v1')
 
+    # Register CLI commands (e.g. `flask send-search-alerts`, run from a cron)
+    from app.cli import register_cli
+    register_cli(app)
+
     # Health check route
     @app.route('/health')
     def health_check():
         return {'status': 'healthy', 'service': 'semsar-api'}
+
+    # Serve listing photos only. Sensitive documents (title deeds, ID cards)
+    # live in uploads/documents/ and are served exclusively through the
+    # authenticated /api/v1/documents/<id> endpoint with an ownership check.
+    # The <string> converter rejects slashes, preventing subpath escapes.
+    @app.route('/uploads/photos/<string:filename>')
+    def uploaded_photo(filename):
+        import os
+        from flask import send_from_directory
+        uploads = app.config.get(
+            'UPLOAD_FOLDER', os.path.join(app.root_path, '..', 'uploads')
+        )
+        return send_from_directory(
+            os.path.abspath(os.path.join(uploads, 'photos')), filename
+        )
+
+    from app.commands import register_commands
+    register_commands(app)
 
     return app

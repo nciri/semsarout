@@ -1,0 +1,42 @@
+export const partners = [
+  {
+    id: 1,
+    nom: 'Université Mohammed V',
+    type: 'Université',
+    logo: '/uploads/partner-1.jpg',
+    verifies: 340,
+    quota: 500,
+  },
+  {
+    id: 2,
+    nom: 'ENSA Casablanca',
+    type: 'École',
+    logo: '/uploads/partner-2.jpg',
+    verifies: 128,
+    quota: 200,
+  },
+  {
+    id: 3,
+    nom: 'OCP Group',
+    type: 'Employeur',
+    logo: '/uploads/partner-3.jpg',
+    verifies: 76,
+    quota: 150,
+  },
+  {
+    id: 4,
+    nom: 'Université Hassan II',
+    type: 'Université',
+    logo: '/uploads/partner-4.jpg',
+    verifies: 210,
+    quota: 400,
+  },
+  {
+    id: 5,
+    nom: 'École Centrale Casablanca',
+    type: 'École',
+    logo: '/uploads/partner-5.jpg',
+    verifies: 54,
+    quota: 100,
+  },
+]

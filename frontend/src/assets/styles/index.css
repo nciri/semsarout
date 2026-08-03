@@ -8,41 +8,65 @@
   }
 
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-ivory text-slate-700 antialiased;
+  }
+
+  h1, h2, h3, h4, h5 {
+    @apply font-display text-midnight tracking-tight;
+  }
+
+  /* Évite que les <select> héritent d'un texte clair sur fond sombre
+     (ex. barre de recherche sur le hero). Les champs .input gardent text-midnight. */
+  select {
+    color: #334155;
+  }
+
+  select option {
+    color: #000000;
+    background-color: #ffffff;
+  }
+
+  select option:first-child {
+    color: #666666;
   }
 }
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center px-4 py-2 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center px-5 py-[11px] font-semibold text-sm rounded-ds-md whitespace-nowrap transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary-400/50 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98];
   }
 
+  /* Bouton primaire = or, texte midnight, glow doré au survol */
   .btn-primary {
-    @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
+    @apply btn bg-primary-400 text-midnight hover:bg-primary-600 hover:shadow-gold;
   }
 
   .btn-secondary {
-    @apply btn bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500;
+    @apply btn bg-white text-midnight border-[1.5px] border-slate-300 hover:bg-slate-50 hover:border-slate-400;
   }
 
   .btn-outline {
-    @apply btn border-2 border-primary-600 text-primary-600 hover:bg-primary-50 focus:ring-primary-500;
+    @apply btn border-[1.5px] border-primary-400 text-primary-700 hover:bg-primary-50 hover:border-primary-600;
+  }
+
+  .btn-danger {
+    @apply btn bg-redcard-500 text-white hover:bg-redcard-600 hover:shadow-red;
   }
 
   .input {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    @apply w-full px-4 py-[11px] text-sm text-midnight bg-white border-[1.5px] border-slate-300 rounded-ds-sm focus:outline-none focus:border-primary-400 focus:ring-[3px] focus:ring-primary-400/40 transition-colors;
   }
 
   .label {
-    @apply block text-sm font-medium text-gray-700 mb-1;
+    @apply block text-[13px] font-semibold text-midnight mb-1.5;
   }
 
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden;
+    @apply bg-white rounded-ds-lg shadow-ds-md border border-slate-200 overflow-hidden;
   }
 
   .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold;
   }
 
   .badge-primary {
@@ -50,15 +74,15 @@
   }
 
   .badge-success {
-    @apply badge bg-green-100 text-green-800;
+    @apply badge bg-emerald-50 text-emerald-600;
   }
 
   .badge-warning {
-    @apply badge bg-yellow-100 text-yellow-800;
+    @apply badge bg-primary-50 text-primary-700;
   }
 
   .badge-urgent {
-    @apply badge bg-red-100 text-red-800;
+    @apply badge bg-redcard-50 text-redcard-600;
   }
 }
 
@@ -125,4 +149,34 @@
 
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-gray-400;
+}
+
+/* Premium property glow animation */
+@keyframes premiumGlow {
+  0%, 100% {
+    box-shadow:
+      0 0 20px rgba(217, 119, 6, 0.3),
+      0 0 40px rgba(217, 119, 6, 0.15),
+      inset 0 0 20px rgba(217, 119, 6, 0.05);
+  }
+  50% {
+    box-shadow:
+      0 0 30px rgba(217, 119, 6, 0.5),
+      0 0 60px rgba(217, 119, 6, 0.25),
+      inset 0 0 20px rgba(217, 119, 6, 0.1);
+  }
+}
+
+.premium-border {
+  border: 2px solid #d97706;
+  animation: premiumGlow 3s ease-in-out infinite;
+}
+
+.premium-price {
+  @apply text-primary-700 font-bold;
+  animation: premiumGlow 3s ease-in-out infinite;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }

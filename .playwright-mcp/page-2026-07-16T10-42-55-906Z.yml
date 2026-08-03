@@ -1,0 +1,280 @@
+- generic [ref=f1e3]:
+  - banner [ref=f1e4]:
+    - generic [ref=f1e6]:
+      - link "Semsar Out" [ref=f1e7] [cursor=pointer]:
+        - /url: /
+        - generic [ref=f1e8]:
+          - generic [ref=f1e9]: Semsar
+          - generic [ref=f1e10]: Out
+      - navigation [ref=f1e11]:
+        - generic [ref=f1e12]:
+          - link "Acheter" [ref=f1e13] [cursor=pointer]:
+            - /url: /annonces?transaction_type=sale
+          - link "Louer" [ref=f1e14] [cursor=pointer]:
+            - /url: /annonces?transaction_type=rent
+        - link "Programmes neufs" [ref=f1e16] [cursor=pointer]:
+          - /url: /programmes
+        - generic [ref=f1e18]:
+          - link "Agences" [ref=f1e19] [cursor=pointer]:
+            - /url: /agences
+          - link "Nos Services" [ref=f1e20] [cursor=pointer]:
+            - /url: /nos-services
+      - button "Menu utilisateur" [ref=f1e23] [cursor=pointer]
+  - main [ref=f1e27]:
+    - generic [ref=f1e28]:
+      - generic [ref=f1e31]:
+        - heading "Nos Services" [level=1] [ref=f1e32]
+        - paragraph [ref=f1e33]: "Une agence immobilière en ligne complète : vente, location longue durée et gestion locative. Des tarifs transparents, un service de qualité professionnelle."
+        - generic [ref=f1e34]:
+          - generic [ref=f1e35]: Tarifs transparents
+          - generic [ref=f1e39]: Zéro surprise
+          - generic [ref=f1e43]: Réponse sous 24h
+      - generic [ref=f1e51]:
+        - button "Forfait Vente" [ref=f1e52] [cursor=pointer]
+        - button "Gestion Locative Complète" [ref=f1e57] [cursor=pointer]
+        - button "Mise en Location" [ref=f1e61] [cursor=pointer]
+        - button "Location Courte Durée" [ref=f1e68] [cursor=pointer]
+        - button "Estimation Gratuite" [ref=f1e72] [cursor=pointer]
+      - generic [ref=f1e78]:
+        - generic [ref=f1e79]:
+          - generic [ref=f1e80]:
+            - generic [ref=f1e81]: Service d'agence en ligne
+            - heading "Forfait Vente" [level=2] [ref=f1e85]
+            - paragraph [ref=f1e86]: Un accompagnement complet pour vendre votre bien au meilleur prix, sans les commissions exorbitantes des agences traditionnelles.
+          - generic [ref=f1e87]:
+            - heading "Ce qui est inclus" [level=3] [ref=f1e88]
+            - list [ref=f1e89]:
+              - listitem [ref=f1e90]:
+                - generic [ref=f1e93]: Estimation gratuite de votre bien par un expert
+              - listitem [ref=f1e94]:
+                - generic [ref=f1e97]: Rédaction d'une annonce optimisée
+              - listitem [ref=f1e98]:
+                - generic [ref=f1e101]: Diffusion premium sur SemsarOut
+              - listitem [ref=f1e102]:
+                - generic [ref=f1e105]: Gestion des demandes de contact
+              - listitem [ref=f1e106]:
+                - generic [ref=f1e109]: Organisation des visites
+              - listitem [ref=f1e110]:
+                - generic [ref=f1e113]: Accompagnement jusqu'à la signature
+              - listitem [ref=f1e114]:
+                - generic [ref=f1e117]: Conseils juridiques de base
+          - generic [ref=f1e118]:
+            - generic [ref=f1e124]:
+              - heading "Photos Professionnelles incluses" [level=3] [ref=f1e125]
+              - text: Service inclus
+            - list [ref=f1e126]:
+              - listitem [ref=f1e127]:
+                - generic [ref=f1e130]: Photographe professionnel à domicile
+              - listitem [ref=f1e131]:
+                - generic [ref=f1e134]: 15-20 photos HD retouchées
+              - listitem [ref=f1e135]:
+                - generic [ref=f1e138]: Mise en valeur optimale des espaces
+              - listitem [ref=f1e139]:
+                - generic [ref=f1e142]: Livraison sous 48h
+            - generic [ref=f1e143]:
+              - paragraph [ref=f1e144]: "Options supplémentaires :"
+              - generic [ref=f1e145]:
+                - generic [ref=f1e146]:
+                  - generic [ref=f1e147]: Visite virtuelle 360°
+                  - generic [ref=f1e148]: +500 Đh
+                - generic [ref=f1e149]:
+                  - generic [ref=f1e150]: Prises de vue drone
+                  - generic [ref=f1e151]: +800 Đh
+                - generic [ref=f1e152]:
+                  - generic [ref=f1e153]: Vidéo de présentation
+                  - generic [ref=f1e154]: +1 200 Đh
+          - generic [ref=f1e155]:
+            - heading "Non inclus" [level=3] [ref=f1e156]
+            - list [ref=f1e157]:
+              - listitem [ref=f1e158]:
+                - generic [ref=f1e159]: "-"
+                - generic [ref=f1e160]: Frais de notaire (à la charge de l'acheteur)
+              - listitem [ref=f1e161]:
+                - generic [ref=f1e162]: "-"
+                - generic [ref=f1e163]: Diagnostics immobiliers obligatoires
+          - generic [ref=f1e164]:
+            - heading "Comment ça marche ?" [level=3] [ref=f1e165]
+            - generic [ref=f1e166]:
+              - generic [ref=f1e167]:
+                - generic [ref=f1e168]: "1"
+                - generic [ref=f1e169]:
+                  - generic [ref=f1e170]: Contactez-nous
+                  - generic [ref=f1e171]: Remplissez le formulaire ou appelez-nous pour discuter de votre projet.
+              - generic [ref=f1e172]:
+                - generic [ref=f1e173]: "2"
+                - generic [ref=f1e174]:
+                  - generic [ref=f1e175]: Visite et évaluation
+                  - generic [ref=f1e176]: Un expert se déplace pour évaluer votre bien et vos besoins.
+              - generic [ref=f1e177]:
+                - generic [ref=f1e178]: "3"
+                - generic [ref=f1e179]:
+                  - generic [ref=f1e180]: Mise en place
+                  - generic [ref=f1e181]: Nous mettons en œuvre le service choisi avec transparence.
+              - generic [ref=f1e182]:
+                - generic [ref=f1e183]: "4"
+                - generic [ref=f1e184]:
+                  - generic [ref=f1e185]: Suivi personnalisé
+                  - generic [ref=f1e186]: Vous restez informé à chaque étape via votre espace client.
+        - generic [ref=f1e188]:
+          - generic [ref=f1e189]:
+            - generic [ref=f1e190]:
+              - generic [ref=f1e191]: Service d'agence en ligne
+              - generic [ref=f1e196]:
+                - generic [ref=f1e197]: 4 900
+                - generic [ref=f1e198]: Đh
+              - generic [ref=f1e199]: Đh TTC - Tarif fixe
+            - generic [ref=f1e200]:
+              - link "Démarrer ma vente en ligne" [ref=f1e201] [cursor=pointer]:
+                - /url: /vendre
+              - generic [ref=f1e204]: ou appelez-nous
+              - link "+212 6 00 00 00 00" [ref=f1e205] [cursor=pointer]:
+                - /url: tel:+212600000000
+          - generic [ref=f1e208]:
+            - generic [ref=f1e209]: Ils nous font confiance
+            - generic [ref=f1e210]:
+              - generic [ref=f1e211]:
+                - generic [ref=f1e212]: 500+
+                - generic [ref=f1e213]: Biens gérés
+              - generic [ref=f1e214]:
+                - generic [ref=f1e215]: 98%
+                - generic [ref=f1e216]: Satisfaits
+              - generic [ref=f1e217]:
+                - generic [ref=f1e218]: 24h
+                - generic [ref=f1e219]: Réactivité
+      - generic [ref=f1e221]:
+        - heading "Tous nos services en un coup d'œil" [level=2] [ref=f1e222]
+        - generic [ref=f1e223]:
+          - button "Forfait Vente Service d'agence en ligne 4 900 Đh" [ref=f1e224] [cursor=pointer]:
+            - heading "Forfait Vente" [level=3] [ref=f1e229]
+            - paragraph [ref=f1e230]: Service d'agence en ligne
+            - generic [ref=f1e231]: 4 900 Đh
+          - button "Gestion Locative Complète Location longue durée - Sérénité totale 5%" [ref=f1e232] [cursor=pointer]:
+            - heading "Gestion Locative Complète" [level=3] [ref=f1e236]
+            - paragraph [ref=f1e237]: Location longue durée - Sérénité totale
+            - generic [ref=f1e238]: 5%
+          - button "Mise en Location Trouvez le locataire idéal 1 mois" [ref=f1e239] [cursor=pointer]:
+            - heading "Mise en Location" [level=3] [ref=f1e246]
+            - paragraph [ref=f1e247]: Trouvez le locataire idéal
+            - generic [ref=f1e248]: 1 mois
+          - button "Location Courte Durée En partenariat avec StayManager.ma 179 Đh" [ref=f1e249] [cursor=pointer]:
+            - heading "Location Courte Durée" [level=3] [ref=f1e253]
+            - paragraph [ref=f1e254]: En partenariat avec StayManager.ma
+            - generic [ref=f1e255]: 179 Đh
+          - button "Estimation Gratuite Connaissez la valeur de votre bien Gratuit" [ref=f1e256] [cursor=pointer]:
+            - heading "Estimation Gratuite" [level=3] [ref=f1e260]
+            - paragraph [ref=f1e261]: Connaissez la valeur de votre bien
+            - generic [ref=f1e262]: Gratuit
+      - generic [ref=f1e264]:
+        - heading "Questions fréquentes" [level=2] [ref=f1e265]
+        - generic [ref=f1e266]:
+          - group [ref=f1e267]:
+            - generic "Comment fonctionne la gestion locative ? ▼" [ref=f1e268] [cursor=pointer]:
+              - text: Comment fonctionne la gestion locative ?
+              - generic [ref=f1e269]: ▼
+          - group [ref=f1e270]:
+            - generic "Qu'est-ce que le partenariat avec StayManager ? ▼" [ref=f1e271] [cursor=pointer]:
+              - text: Qu'est-ce que le partenariat avec StayManager ?
+              - generic [ref=f1e272]: ▼
+          - group [ref=f1e273]:
+            - generic "Quels sont les frais de gestion locative ? ▼" [ref=f1e274] [cursor=pointer]:
+              - text: Quels sont les frais de gestion locative ?
+              - generic [ref=f1e275]: ▼
+          - group [ref=f1e276]:
+            - generic "Comment sont sélectionnés les locataires ? ▼" [ref=f1e277] [cursor=pointer]:
+              - text: Comment sont sélectionnés les locataires ?
+              - generic [ref=f1e278]: ▼
+      - generic [ref=f1e281]:
+        - heading "Besoin d'un conseil personnalisé ?" [level=2] [ref=f1e282]
+        - paragraph [ref=f1e283]: Nos experts sont à votre disposition pour vous accompagner dans votre projet immobilier, que ce soit pour vendre, louer ou gérer votre bien.
+        - generic [ref=f1e284]:
+          - link "Nous contacter" [ref=f1e285] [cursor=pointer]:
+            - /url: /contact
+          - link "+212 6 00 00 00 00" [ref=f1e289] [cursor=pointer]:
+            - /url: tel:+212600000000
+  - contentinfo [ref=f1e292]:
+    - generic [ref=f1e293]:
+      - generic [ref=f1e294]:
+        - generic [ref=f1e295]:
+          - link "Semsar Out" [ref=f1e296] [cursor=pointer]:
+            - /url: /
+            - generic [ref=f1e297]:
+              - generic [ref=f1e298]: Semsar
+              - generic [ref=f1e299]: Out
+          - paragraph [ref=f1e300]: L'immobilier sans les intermédiaires douteux. Vendez, louez et gérez votre bien à tarif fixe, sans commission, avec un accompagnement professionnel.
+          - generic [ref=f1e301]:
+            - link "Facebook" [ref=f1e302] [cursor=pointer]:
+              - /url: "#"
+            - link "Instagram" [ref=f1e305] [cursor=pointer]:
+              - /url: "#"
+            - link "LinkedIn" [ref=f1e309] [cursor=pointer]:
+              - /url: "#"
+            - link "Twitter" [ref=f1e314] [cursor=pointer]:
+              - /url: "#"
+            - link "YouTube" [ref=f1e317] [cursor=pointer]:
+              - /url: "#"
+        - generic [ref=f1e321]:
+          - heading "Vente" [level=4] [ref=f1e322]
+          - list [ref=f1e323]:
+            - listitem [ref=f1e324]:
+              - link "Forfait Vente (4.900 Đh)" [ref=f1e325] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f1e326]:
+              - link "Photos Professionnelles" [ref=f1e327] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f1e328]:
+              - link "Estimation Gratuite" [ref=f1e329] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f1e330]:
+              - link "Acheter un bien" [ref=f1e331] [cursor=pointer]:
+                - /url: /annonces?transaction_type=sale
+        - generic [ref=f1e332]:
+          - heading "Location" [level=4] [ref=f1e333]
+          - list [ref=f1e334]:
+            - listitem [ref=f1e335]:
+              - link "Mise en Location" [ref=f1e336] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f1e337]:
+              - link "Gestion Locative Complète" [ref=f1e338] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f1e339]:
+              - link "Location Courte DuréeStayManager" [ref=f1e340] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f1e341]:
+              - link "Louer un bien" [ref=f1e342] [cursor=pointer]:
+                - /url: /annonces?transaction_type=rent
+        - generic [ref=f1e343]:
+          - heading "Professionnels" [level=4] [ref=f1e344]
+          - list [ref=f1e345]:
+            - listitem [ref=f1e346]:
+              - link "Agences partenaires" [ref=f1e347] [cursor=pointer]:
+                - /url: /agences
+            - listitem [ref=f1e348]:
+              - link "Devenir partenaire" [ref=f1e349] [cursor=pointer]:
+                - /url: /agences/inscription
+            - listitem [ref=f1e350]:
+              - link "Tarifs agences" [ref=f1e351] [cursor=pointer]:
+                - /url: /agences/tarifs
+          - heading "À propos" [level=4] [ref=f1e352]
+          - list [ref=f1e353]:
+            - listitem [ref=f1e354]:
+              - link "Qui sommes-nous" [ref=f1e355] [cursor=pointer]:
+                - /url: /a-propos
+            - listitem [ref=f1e356]:
+              - link "Nous contacter" [ref=f1e357] [cursor=pointer]:
+                - /url: /contact
+            - listitem [ref=f1e358]:
+              - link "StayManager.ma↗" [ref=f1e359] [cursor=pointer]:
+                - /url: https://www.staymanager.ma
+                - generic [ref=f1e360]: StayManager.ma
+                - text: ↗
+      - generic [ref=f1e362]:
+        - paragraph [ref=f1e363]: © 2026 SemsarOut. Tous droits réservés.
+        - generic [ref=f1e364]:
+          - link "Mentions légales" [ref=f1e365] [cursor=pointer]:
+            - /url: "#"
+          - link "CGU" [ref=f1e366] [cursor=pointer]:
+            - /url: "#"
+          - link "Politique de confidentialité" [ref=f1e367] [cursor=pointer]:
+            - /url: "#"
+          - link "Cookies" [ref=f1e368] [cursor=pointer]:
+            - /url: "#"

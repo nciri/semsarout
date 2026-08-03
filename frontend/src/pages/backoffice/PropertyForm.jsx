@@ -1,47 +1,26 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
+import { toast } from 'react-toastify'
 import {
   FiArrowLeft, FiSave, FiUpload, FiX, FiHome, FiMapPin,
-  FiDollarSign, FiGrid, FiImage
+  FiDollarSign, FiGrid, FiImage, FiInfo
 } from 'react-icons/fi'
+import { DIRHAM_SYMBOL } from '../../utils/currency'
+import api from '../../services/api'
 
 const backofficeService = {
   getProperty: async (id) => {
-    const response = await fetch(`/api/v1/backoffice/properties/${id}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to fetch property')
-    return response.json()
+    const { data } = await api.get(`/backoffice/properties/${id}`)
+    return data
   },
   createProperty: async (data) => {
-    const response = await fetch('/api/v1/backoffice/properties', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId'),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to create property')
-    return response.json()
+    const { data: res } = await api.post('/backoffice/properties', data)
+    return res
   },
   updateProperty: async ({ id, data }) => {
-    const response = await fetch(`/api/v1/backoffice/properties/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId'),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to update property')
-    return response.json()
+    const { data: res } = await api.put(`/backoffice/properties/${id}`, data)
+    return res
   }
 }
 
@@ -90,7 +69,8 @@ export default function BackofficePropertyForm() {
     latitude: '',
     longitude: '',
     features: [],
-    status: 'draft'
+    status: 'draft',
+    is_featured: false
   })
 
   const [images, setImages] = useState([])
@@ -124,7 +104,8 @@ export default function BackofficePropertyForm() {
         latitude: propertyData.latitude || '',
         longitude: propertyData.longitude || '',
         features: propertyData.features || [],
-        status: propertyData.status || 'draft'
+        status: propertyData.status || 'draft',
+        is_featured: propertyData.is_featured || false
       })
       if (propertyData.images) {
         setImages(propertyData.images)
@@ -153,13 +134,19 @@ export default function BackofficePropertyForm() {
     if (!formData.price) newErrors.price = 'Le prix est requis'
     if (!formData.city) newErrors.city = 'La ville est requise'
     if (!formData.surface) newErrors.surface = 'La surface est requise'
+    if (images.length === 0) newErrors.images = 'Ajoutez au moins une photo'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!validate()) return
+    if (!validate()) {
+      if (images.length === 0) {
+        toast.error('Ajoutez au moins une photo.')
+      }
+      return
+    }
 
     const data = {
       ...formData,
@@ -232,20 +219,53 @@ export default function BackofficePropertyForm() {
           </h2>
 
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Titre de l'annonce <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                  errors.title ? 'border-red-500' : 'border-gray-200'
-                }`}
-                placeholder="Ex: Appartement 3 pièces avec vue mer"
-              />
-              {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Titre de l'annonce <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                    errors.title ? 'border-red-500' : 'border-gray-200'
+                  }`}
+                  placeholder="Ex: Appartement 3 pièces avec vue mer"
+                />
+                {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
+              </div>
+
+              <div className="flex items-center gap-2 sm:pt-6 shrink-0">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={formData.is_featured}
+                  onClick={() => setFormData({ ...formData, is_featured: !formData.is_featured })}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 ${
+                    formData.is_featured ? 'bg-primary-500' : 'bg-gray-200'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                      formData.is_featured ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <span className="text-sm font-medium text-gray-700">Mettre à la une</span>
+                <span
+                  className="relative group inline-flex items-center text-gray-400 hover:text-gray-600 cursor-help"
+                  tabIndex={0}
+                >
+                  <FiInfo
+                    className="w-4 h-4"
+                    title="Les biens à la une sont mis en avant sur la page d'accueil et en tête des résultats de recherche."
+                  />
+                  <span className="pointer-events-none absolute right-0 bottom-full mb-2 hidden w-56 rounded-lg bg-gray-900 px-3 py-2 text-xs text-white shadow-lg group-hover:block group-focus:block z-10">
+                    Les biens à la une sont mis en avant sur la page d'accueil et en tête des résultats de recherche.
+                  </span>
+                </span>
+              </div>
             </div>
 
             <div>
@@ -320,7 +340,7 @@ export default function BackofficePropertyForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Prix (DH) <span className="text-red-500">*</span>
+                Prix ({DIRHAM_SYMBOL}) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -504,10 +524,12 @@ export default function BackofficePropertyForm() {
 
         {/* Images */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
             <FiImage className="w-5 h-5 text-gray-400" />
-            Photos
+            Photos <span className="text-red-500">*</span>
           </h2>
+          <p className="text-xs text-gray-400 mb-4">Au moins une photo est requise, quel que soit le type d'annonce.</p>
+          {errors.images && <p className="text-red-500 text-xs mb-4">{errors.images}</p>}
 
           {images.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">

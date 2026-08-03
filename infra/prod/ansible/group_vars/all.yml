@@ -1,0 +1,57 @@
+---
+# Variables non sensibles du provisioning prod. Les secrets (mots de passe PG,
+# RabbitMQ, MinIO, jeton interne) sont générés sur le serveur lui-même par le
+# rôle `base` (jamais ici, jamais dans le dépôt).
+
+semsar_app_dir: /opt/semsar/app
+semsar_venv_dir: /opt/semsar/venv
+semsar_www_dir: /opt/semsar/www
+semsar_secrets_file: /etc/semsar/secrets.env
+semsar_env_dir: /etc/semsar/env
+semsar_user: semsar
+semsar_group: semsar
+
+semsar_git_repo: https://github.com/nciri/semsarout.git
+semsar_git_branch: main
+
+semsar_db_name: semsar_prod
+semsar_pg_version: "16"
+
+# Extra-vars attendues depuis deploy.yml (valeurs par défaut de secours pour
+# `--syntax-check` / exécutions locales ; toujours écrasées par --extra-vars en CI).
+jwt_secret_key: ""
+semsar_domain: semsarout.com
+m3a_l3achrane_domain: m3a-l3achrane.ma
+letsencrypt_email: "devops@{{ semsar_domain }}"
+
+# Ports internes (identiques à scripts/dev-mesh-up.sh).
+bff_port: 8099
+
+# Un rôle PostgreSQL + schéma par service disposant d'un services/<x>/db/schema.sql
+# (le service `search` n'a pas de base propre : projections OpenSearch uniquement).
+semsar_db_roles:
+  - identity
+  - notification
+  - analytics
+  - contract
+  - legal
+  - payment
+  - billing
+  - catalog
+  - marketplace
+  - directory
+  - listing
+  - crm
+  - geo
+  - messaging
+  - trust_safety
+  - agency
+  - audit
+  - transactions
+  - buyer
+  - programs
+  - staymanager
+  - rental
+  - commission
+  - selling
+

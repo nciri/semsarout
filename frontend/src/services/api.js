@@ -7,9 +7,15 @@ const api = axios.create({
   }
 })
 
+// Endpoints d'authentification : ne jamais y attacher un token (un token périmé
+// ferait échouer la connexion elle-même) ni tenter de refresh/redirect sur leur 401.
+const AUTH_PATHS = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/forgot-password', '/auth/reset-password']
+const isAuthPath = (url = '') => AUTH_PATHS.some((p) => url.includes(p))
+
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
+    if (isAuthPath(config.url)) return config
     const authStorage = localStorage.getItem('auth-storage')
     if (authStorage) {
       const { state } = JSON.parse(authStorage)
@@ -28,8 +34,9 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
-    // Handle 401 and try to refresh token
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Handle 401 and try to refresh token (jamais pour les routes d'auth :
+    // un 401 de /auth/login = mauvais identifiants, à remonter tel quel)
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthPath(originalRequest.url)) {
       originalRequest._retry = true
 
       const authStorage = localStorage.getItem('auth-storage')

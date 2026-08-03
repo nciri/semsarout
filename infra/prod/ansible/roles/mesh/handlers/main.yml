@@ -1,0 +1,16 @@
+---
+- name: reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+  listen: reload systemd daemon
+
+- name: restart mesh units
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: restarted
+  loop: >-
+    {{ ['semsar-gateway.service', 'semsar-notification-scheduler.service']
+       + (mesh_apps | map(attribute='name') | map('regex_replace', '^(.*)$', 'semsar-app@\1.service') | list)
+       + (mesh_relays | map('regex_replace', '^(.*)$', 'semsar-relay@\1.service') | list)
+       + (mesh_workers | map('regex_replace', '^(.*)$', 'semsar-worker@\1.service') | list) }}
+  listen: restart mesh units

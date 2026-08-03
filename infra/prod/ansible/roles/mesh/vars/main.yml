@@ -1,0 +1,71 @@
+---
+# Transcription fidèle de scripts/dev-mesh-up.sh : un uvicorn par service (mesh_apps),
+# un consumer relay/outbox par service qui en émet (mesh_relays), un worker par
+# service qui projette/consomme (mesh_workers), + le scheduler notification.
+#
+# Les URLs inter-services et buckets S3 sont diffusés à TOUS les process via le
+# fichier commun /etc/semsar/secrets.env (cf. roles/base) : chaque process ne lit
+# que les variables qu'il connaît (Settings pydantic extra="ignore", ou
+# os.environ.get avec défaut) — le surplus est inerte, exactement comme en dev où
+# dev-mesh-up.sh les distribue déjà de façon non strictement cloisonnée.
+
+mesh_apps:
+  - { name: identity, port: 8501 }
+  - { name: notification, port: 8502 }
+  - { name: analytics, port: 8504 }
+  - { name: contract, port: 8505 }
+  - { name: legal, port: 8506 }
+  - { name: payment, port: 8507 }
+  - { name: billing, port: 8508 }
+  - { name: catalog, port: 8009 }
+  - { name: marketplace, port: 8010 }
+  - { name: directory, port: 8011 }
+  - { name: listing, port: 8012 }
+  - { name: crm, port: 8013 }
+  - { name: search, port: 8103, no_db: true }
+  - { name: geo, port: 8509 }
+  - { name: messaging, port: 8510 }
+  - { name: trust-safety, port: 8511 }
+  - { name: agency, port: 8512 }
+  - { name: audit, port: 8513 }
+  - { name: transactions, port: 8514 }
+  - { name: buyer, port: 8515 }
+  - { name: programs, port: 8516 }
+  - { name: staymanager, port: 8517 }
+  - { name: rental, port: 8518 }
+  - { name: commission, port: 8519 }
+  - { name: selling, port: 8520 }
+
+mesh_relays:
+  - listing
+  - catalog
+  - identity
+  - contract
+  - payment
+  - billing
+  - transactions
+  - programs
+  - agency
+  - crm
+  - directory
+  - rental
+  - commission
+  - selling
+
+mesh_workers:
+  - search
+  - crm
+  - marketplace
+  - geo
+  - agency
+  - messaging
+  - analytics
+  - billing
+  - notification
+  - identity
+  - audit
+  - transactions
+  - legal
+  - contract
+  - rental
+  - commission

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from 'react-query'
 import { FiCheck, FiX, FiArrowRight, FiZap, FiPhone } from 'react-icons/fi'
 import api from '../services/api'
+import { DIRHAM_SYMBOL, formatPrice } from '../utils/currency'
 
 function AgencyPricing() {
   const [billingCycle, setBillingCycle] = useState('yearly')
@@ -26,6 +27,7 @@ function AgencyPricing() {
       has_lead_contact: true,
       has_analytics: false,
       has_priority_support: false,
+      has_dedicated_account_manager: false,
       price_monthly: 299,
       price_yearly: 2990
     },
@@ -38,10 +40,11 @@ function AgencyPricing() {
       max_urgent: 5,
       has_api_access: true,
       has_csv_import: true,
-      has_staymanager_sync: false,
+      has_staymanager_sync: true,
       has_lead_contact: true,
       has_analytics: true,
       has_priority_support: false,
+      has_dedicated_account_manager: false,
       price_monthly: 799,
       price_yearly: 7990,
       popular: true
@@ -59,6 +62,7 @@ function AgencyPricing() {
       has_lead_contact: true,
       has_analytics: true,
       has_priority_support: true,
+      has_dedicated_account_manager: true,
       price_monthly: 1999,
       price_yearly: 19990
     }
@@ -157,14 +161,14 @@ function AgencyPricing() {
                       <span className="text-4xl font-bold text-gray-900">
                         {getMonthlyEquivalent(plan).toLocaleString()}
                       </span>
-                      <span className="text-gray-600 ml-2">Đ/mois</span>
+                      <span className="text-gray-600 ml-2">{DIRHAM_SYMBOL}/mois</span>
                     </div>
                     {billingCycle === 'yearly' && (
                       <p className="text-sm text-gray-500 mt-1">
-                        Facturé ~{(getPrice(plan)+10).toLocaleString()} Đ/an
+                        Facturé ~{formatPrice(getPrice(plan)+10)}/an
                         {getSavings(plan) > 0 && (
                           <span className="text-green-600 ml-2">
-                            (économisez {getSavings(plan).toLocaleString()} Đ)
+                            (économisez {formatPrice(getSavings(plan))})
                           </span>
                         )}
                       </p>
@@ -172,7 +176,7 @@ function AgencyPricing() {
                   </div>
 
                   <Link
-                    to={`/agences/inscription?plan=${plan.slug}`}
+                    to={`/dashboard/agence?plan=${plan.slug}`}
                     className={`btn w-full justify-center mb-8 ${
                       plan.popular
                         ? 'bg-primary-600 text-white hover:bg-primary-700'
@@ -261,6 +265,16 @@ function AgencyPricing() {
                         Support prioritaire
                       </span>
                     </li>
+                    <li className="flex items-center text-sm">
+                      {plan.has_dedicated_account_manager ? (
+                        <FiCheck className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                      ) : (
+                        <FiX className="w-5 h-5 text-gray-300 mr-3 flex-shrink-0" />
+                      )}
+                      <span className={!plan.has_dedicated_account_manager ? 'text-gray-400' : ''}>
+                        Account manager dédié
+                      </span>
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -341,6 +355,12 @@ function AgencyPricing() {
                   <td className="p-4 text-center bg-primary-50"><FiX className="w-5 h-5 text-gray-300 mx-auto" /></td>
                   <td className="p-4 text-center"><FiCheck className="w-5 h-5 text-green-500 mx-auto" /></td>
                 </tr>
+                <tr>
+                  <td className="p-4 text-gray-900">Account manager dédié</td>
+                  <td className="p-4 text-center"><FiX className="w-5 h-5 text-gray-300 mx-auto" /></td>
+                  <td className="p-4 text-center bg-primary-50"><FiX className="w-5 h-5 text-gray-300 mx-auto" /></td>
+                  <td className="p-4 text-center"><FiCheck className="w-5 h-5 text-green-500 mx-auto" /></td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -375,7 +395,6 @@ function AgencyPricing() {
               <p className="mt-4 text-gray-600">
                 La facturation s'effectue au début de chaque période (mensuelle ou annuelle).
                 Vous recevez une facture par email et pouvez la télécharger depuis votre tableau de bord.
-                Nous acceptons les cartes bancaires et les virements bancaires.
               </p>
             </details>
 

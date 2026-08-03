@@ -69,6 +69,30 @@ def create_roles_and_permissions():
                 db.session.add(perm)
                 permissions.append(perm)
 
+    # Extra permission outside the module/action grid: team management
+    manage_perm = Permission.query.filter_by(slug='team.manage').first()
+    if not manage_perm:
+        manage_perm = Permission(
+            name="Gérer l'équipe",
+            slug='team.manage',
+            module='team',
+            description="Permission to manage team members and seats"
+        )
+        db.session.add(manage_perm)
+        permissions.append(manage_perm)
+
+    # Extra permission outside the module/action grid: analytics visibility
+    analytics_perm = Permission.query.filter_by(slug='analytics.view_all').first()
+    if not analytics_perm:
+        analytics_perm = Permission(
+            name="Voir toutes les analyses",
+            slug='analytics.view_all',
+            module='analytics',
+            description="Permission to view agency-wide analytics (not just own)"
+        )
+        db.session.add(analytics_perm)
+        permissions.append(analytics_perm)
+
     db.session.commit()
     all_permissions = Permission.query.all()
 
@@ -79,7 +103,8 @@ def create_roles_and_permissions():
         {'name': 'Agent', 'slug': 'agent', 'level': 50, 'permissions': [p for p in all_permissions if p.module in ['dashboard', 'properties', 'clients', 'leads', 'visits', 'transactions'] and p.slug.endswith('.view') or p.slug.endswith('.create') or p.slug.endswith('.edit')]},
         {'name': 'Marketing', 'slug': 'marketing', 'level': 40, 'permissions': [p for p in all_permissions if p.module in ['dashboard', 'leads', 'stats']]},
         {'name': 'Comptable', 'slug': 'accountant', 'level': 30, 'permissions': [p for p in all_permissions if p.module in ['dashboard', 'transactions', 'stats']]},
-        {'name': 'Lecture seule', 'slug': 'readonly', 'level': 10, 'permissions': [p for p in all_permissions if p.slug.endswith('.view')]}
+        {'name': 'Lecture seule', 'slug': 'readonly', 'level': 10, 'permissions': [p for p in all_permissions if p.slug.endswith('.view')]},
+        {'name': 'Super Admin', 'slug': 'superadmin', 'level': 200, 'permissions': all_permissions},
     ]
 
     created_roles = {}
@@ -158,6 +183,17 @@ def create_users(agency, roles):
 
     db.session.commit()
     print(f"  Created {len(users_data)} users")
+
+    # Assign the platform super-admin role to SUPERADMIN_EMAIL
+    import os
+    sa_email = os.environ.get('SUPERADMIN_EMAIL', 'admin@semsarout.ma')
+    sa_role = Role.query.filter_by(slug='superadmin').first()
+    sa_user = User.query.filter_by(email=sa_email).first()
+    if sa_role and sa_user and sa_role not in sa_user.roles:
+        sa_user.roles.append(sa_role)
+        print(f"  Assigned superadmin to {sa_email}")
+    db.session.commit()
+
     return created_users
 
 
@@ -602,6 +638,110 @@ def create_activity_logs(agency, users):
     print(f"  Created 50 activity logs")
 
 
+def seed_contract_templates():
+    """Seed the 4 global built-in contract templates and flag pro/enterprise plans with has_contracts."""
+    from app.models import ContractTemplate, SubscriptionPlan
+    print("Seeding contract templates...")
+    BUILTINS = {
+        'mandate_sale': ('Mandat de vente', """<h2>MANDAT DE VENTE</h2>
+<p>Entre l'agence <strong>{{agency_name}}</strong>, sise {{agency_address}} (n° d'agrément {{agency_license}}),
+et <strong>{{client_name}}</strong> (le Mandant), demeurant, tél. {{client_phone}}.</p>
+<p>Le Mandant confie à l'agence la vente du bien situé <strong>{{property_address}}</strong>, {{property_city}}
+(réf. {{property_reference}}), d'une surface de {{property_surface}}, au prix de <strong>{{property_price}}</strong>.</p>
+<p>Commission d'agence : {{commission_rate}}.</p>
+<p>Fait le {{date}}. Signatures :</p>"""),
+        'mandate_rental': ('Mandat de location / gestion', """<h2>MANDAT DE LOCATION / GESTION</h2>
+<p>Entre <strong>{{agency_name}}</strong>, {{agency_address}}, et <strong>{{client_name}}</strong> (le Mandant).</p>
+<p>Objet : mise en location / gestion du bien {{property_address}}, {{property_city}} ({{property_type}},
+{{property_surface}}).</p><p>Fait le {{date}}.</p>"""),
+        'compromise': ('Compromis de vente', """<h2>COMPROMIS DE VENTE</h2>
+<p>Entre le vendeur et l'acquéreur <strong>{{client_name}}</strong>, concernant le bien
+<strong>{{property_address}}</strong>, {{property_city}} (réf. {{property_reference}}).</p>
+<p>Prix de vente : <strong>{{property_price}}</strong>. Référence dossier : {{transaction_reference}}.</p>
+<p>Fait le {{date}} à {{property_city}}.</p>"""),
+        'lease': ('Contrat de bail (habitation)', """<h2>CONTRAT DE BAIL À USAGE D'HABITATION</h2>
+<p>Entre le bailleur et le locataire <strong>{{client_name}}</strong> (tél. {{client_phone}}).</p>
+<p>Bien loué : <strong>{{property_address}}</strong>, {{property_city}} ({{property_surface}}, {{property_rooms}} pièces).</p>
+<p>Fait le {{date}}.</p>"""),
+    }
+    for dt, (name, body) in BUILTINS.items():
+        existing = ContractTemplate.query.filter_by(document_type=dt, agency_id=None, is_builtin=True).first()
+        if not existing:
+            db.session.add(ContractTemplate(agency_id=None, document_type=dt, name=name,
+                                            body_html=body, is_builtin=True))
+    for slug in ('pro', 'enterprise'):
+        plan = SubscriptionPlan.query.filter_by(slug=slug).first()
+        if plan:
+            plan.has_contracts = True
+    db.session.commit()
+    print("  Seeded contract templates + has_contracts flag")
+
+
+def seed_legal():
+    """Flag pro/enterprise plans with has_legal and seed a demo notary per agency."""
+    from app.models import SubscriptionPlan, Notary, Agency
+    print("Seeding legal (has_legal flag + demo notaries)...")
+    for slug in ('pro', 'enterprise'):
+        plan = SubscriptionPlan.query.filter_by(slug=slug).first()
+        if plan:
+            plan.has_legal = True
+    for agency in Agency.query.all():
+        if Notary.query.filter_by(agency_id=agency.id).first():
+            continue
+        db.session.add(Notary(agency_id=agency.id, name='Me Fatima Alaoui',
+                              office='Étude notariale Alaoui', city=agency.city or 'Casablanca',
+                              phone='+212 522 00 00 00', email='contact@notaire-alaoui.ma'))
+    db.session.commit()
+    print("  Seeded has_legal flag + demo notaries")
+
+
+def seed_artisans():
+    """Flag pro/enterprise plans with has_artisans and seed demo shared/private artisans."""
+    from app.models import SubscriptionPlan, Artisan, Agency
+    print("Seeding artisans (has_artisans flag + demo artisans)...")
+    for slug in ('pro', 'enterprise'):
+        plan = SubscriptionPlan.query.filter_by(slug=slug).first()
+        if plan:
+            plan.has_artisans = True
+    SHARED = [('plombier', 'Plomberie Atlas', 'Casablanca'),
+              ('electricien', 'Élec Express', 'Rabat'),
+              ('menage', 'Clean Home', 'Casablanca'),
+              ('peintre', 'Couleurs & Co', 'Marrakech')]
+    if Artisan.query.filter_by(agency_id=None).count() == 0:
+        for trade, name, city in SHARED:
+            db.session.add(Artisan(agency_id=None, trade=trade, name=name, company=name, city=city))
+    for agency in Agency.query.all():
+        if Artisan.query.filter_by(agency_id=agency.id).first():
+            continue
+        db.session.add(Artisan(agency_id=agency.id, trade='menuisier',
+                              name='Menuiserie du coin', city=agency.city or 'Casablanca'))
+    db.session.commit()
+    print("  Seeded has_artisans flag + demo artisans")
+
+
+def seed_products():
+    """Seed demo marketplace products (furniture + appliances)."""
+    from app.models import Product
+    if Product.query.count() > 0:
+        return
+    print("Seeding marketplace demo products...")
+    DEMO = [
+        ('lit', 'Lit double 160x200', 2500, 12),
+        ('canape', "Canapé d'angle 4 places", 4800, 6),
+        ('table', 'Table à manger 6 personnes', 1900, 9),
+        ('armoire', 'Armoire 3 portes', 3200, 5),
+        ('refrigerateur', 'Réfrigérateur combiné 300L', 4500, 8),
+        ('lave_linge', 'Lave-linge 8kg', 3900, 7),
+        ('four', 'Four encastrable', 2800, 4),
+        ('television', 'Télévision LED 50"', 3500, 10),
+    ]
+    from app.services.product_categories import group_of
+    for cat, name, price, stock in DEMO:
+        db.session.add(Product(category=cat, group=group_of(cat), name=name, price=price, stock=stock, is_active=True))
+    db.session.commit()
+    print("  Seeded demo marketplace products")
+
+
 def seed_all():
     """Run all seed functions."""
     with app.app_context():
@@ -620,6 +760,10 @@ def seed_all():
         create_transactions(agency, users, clients, properties)
         create_calendar_events(agency, users)
         create_activity_logs(agency, users)
+        seed_contract_templates()
+        seed_legal()
+        seed_artisans()
+        seed_products()
 
         print("\n" + "="*50)
         print("SEEDING COMPLETE!")

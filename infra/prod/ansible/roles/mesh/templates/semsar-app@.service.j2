@@ -1,0 +1,20 @@
+[Unit]
+Description=SemsarOut — service %i (uvicorn)
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User={{ semsar_user }}
+Group={{ semsar_group }}
+WorkingDirectory={{ semsar_app_dir }}/services/%i
+EnvironmentFile={{ semsar_secrets_file }}
+EnvironmentFile={{ semsar_env_dir }}/app-%i.env
+ExecStart={{ semsar_venv_dir }}/bin/python -m uvicorn app.main:app --app-dir {{ semsar_app_dir }}/services/%i --host 127.0.0.1 --port ${PORT}
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

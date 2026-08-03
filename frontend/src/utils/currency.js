@@ -3,10 +3,9 @@
  */
 
 /**
- * The Dirham symbol - D with vertical bar (like $ but with D)
- * Using Unicode combining character for the strikethrough effect
+ * The Dirham symbol - single source of truth for the whole site
  */
-export const DIRHAM_SYMBOL = 'Đ'
+export const DIRHAM_SYMBOL = 'Đh'
 
 /**
  * Format a number as currency (without symbol)
@@ -59,7 +58,6 @@ export function formatPrice(amount, options = {}) {
     formatted = formatNumber(num, showDecimals)
   }
 
-  // Return with Dirham symbol (Đ - D with stroke)
   return suffix ? `${formatted}${unit} ${DIRHAM_SYMBOL}` : `${formatted}${unit}`
 }
 

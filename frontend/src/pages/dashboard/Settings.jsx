@@ -1,6 +1,21 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import { FiUser, FiLock, FiBell, FiShield, FiSave, FiCamera, FiCheck, FiAlertCircle } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
+import api from '../../services/api'
+
+const NOTIFICATIONS_STORAGE_KEY = 'semsarout-notification-prefs'
+const PRIVACY_STORAGE_KEY = 'semsarout-privacy-prefs'
+
+const loadPrefs = (key, defaults) => {
+  try {
+    const stored = localStorage.getItem(key)
+    return stored ? { ...defaults, ...JSON.parse(stored) } : defaults
+  } catch {
+    return defaults
+  }
+}
 
 const TABS = [
   { id: 'profile', label: 'Profil', icon: FiUser },
@@ -9,19 +24,41 @@ const TABS = [
   { id: 'privacy', label: 'Confidentialité', icon: FiShield },
 ]
 
+const DEFAULT_NOTIFICATIONS = {
+  email_new_lead: true,
+  email_messages: true,
+  email_property_updates: false,
+  email_newsletter: true,
+  push_new_lead: true,
+  push_messages: true,
+  push_reminders: true,
+}
+
+const DEFAULT_PRIVACY = {
+  profile_visible: true,
+  show_phone: false,
+  show_email: true,
+  allow_contact: true,
+}
+
 export default function Settings() {
-  const { user } = useAuthStore()
+  const { user, updateUser, logout } = useAuthStore()
+  const navigate = useNavigate()
+  const avatarInputRef = useRef(null)
   const [activeTab, setActiveTab] = useState('profile')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteError, setDeleteError] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   // Profile form state
   const [profileForm, setProfileForm] = useState({
     first_name: user?.first_name || '',
     last_name: user?.last_name || '',
-    email: user?.email || '',
     phone: user?.phone || '',
-    bio: '',
   })
 
   // Security form state
@@ -31,32 +68,98 @@ export default function Settings() {
     confirm_password: '',
   })
 
-  // Notification settings
-  const [notifications, setNotifications] = useState({
-    email_new_lead: true,
-    email_messages: true,
-    email_property_updates: false,
-    email_newsletter: true,
-    push_new_lead: true,
-    push_messages: true,
-    push_reminders: true,
-  })
+  // Notification settings (persisted locally - no server-side notification engine yet)
+  const [notifications, setNotifications] = useState(() => loadPrefs(NOTIFICATIONS_STORAGE_KEY, DEFAULT_NOTIFICATIONS))
 
-  // Privacy settings
-  const [privacy, setPrivacy] = useState({
-    profile_visible: true,
-    show_phone: false,
-    show_email: true,
-    allow_contact: true,
-  })
+  // Privacy settings (persisted locally - no server-side enforcement yet)
+  const [privacy, setPrivacy] = useState(() => loadPrefs(PRIVACY_STORAGE_KEY, DEFAULT_PRIVACY))
+
+  const handleAvatarClick = () => avatarInputRef.current?.click()
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingAvatar(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('kind', 'photo')
+      const uploadRes = await api.post('/uploads', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      const avatarUrl = uploadRes.data.url
+      const meRes = await api.put('/auth/me', { avatar_url: avatarUrl })
+      updateUser(meRes.data.user)
+      toast.success('Photo de profil mise à jour')
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Erreur lors du téléchargement')
+    } finally {
+      setUploadingAvatar(false)
+      e.target.value = ''
+    }
+  }
 
   const handleSave = async () => {
     setSaving(true)
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 3000)
+    try {
+      if (activeTab === 'profile') {
+        const response = await api.put('/auth/me', {
+          first_name: profileForm.first_name,
+          last_name: profileForm.last_name,
+          phone: profileForm.phone
+        })
+        updateUser(response.data.user)
+      } else if (activeTab === 'security') {
+        if (securityForm.new_password || securityForm.current_password) {
+          if (securityForm.new_password !== securityForm.confirm_password) {
+            toast.error('Les mots de passe ne correspondent pas')
+            setSaving(false)
+            return
+          }
+          if (securityForm.new_password.length < 8) {
+            toast.error('Le mot de passe doit contenir au moins 8 caractères')
+            setSaving(false)
+            return
+          }
+          await api.post('/auth/change-password', {
+            current_password: securityForm.current_password,
+            new_password: securityForm.new_password
+          })
+          setSecurityForm({ current_password: '', new_password: '', confirm_password: '' })
+        }
+      } else if (activeTab === 'notifications') {
+        localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications))
+      } else if (activeTab === 'privacy') {
+        localStorage.setItem(PRIVACY_STORAGE_KEY, JSON.stringify(privacy))
+      }
+
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Erreur lors de l\'enregistrement')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    setDeleteError('')
+    if (!deletePassword) {
+      setDeleteError('Mot de passe requis')
+      return
+    }
+    setDeleting(true)
+    try {
+      await api.delete('/auth/me', { data: { password: deletePassword } })
+      logout()
+      navigate('/')
+      toast.success('Votre compte a été supprimé')
+    } catch (error) {
+      setDeleteError(error.response?.data?.error || 'Erreur lors de la suppression')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   const renderProfileTab = () => (
@@ -64,12 +167,27 @@ export default function Settings() {
       {/* Avatar */}
       <div className="flex items-center gap-6">
         <div className="relative">
-          <div className="w-24 h-24 rounded-full bg-primary-100 flex items-center justify-center">
-            <span className="text-3xl font-bold text-primary-600">
-              {user?.first_name?.[0]}{user?.last_name?.[0]}
-            </span>
+          <div className="w-24 h-24 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden">
+            {user?.avatar_url ? (
+              <img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-3xl font-bold text-primary-600">
+                {user?.first_name?.[0]}{user?.last_name?.[0]}
+              </span>
+            )}
           </div>
-          <button className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg border border-gray-200 hover:bg-gray-50">
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={handleAvatarChange}
+          />
+          <button
+            onClick={handleAvatarClick}
+            disabled={uploadingAvatar}
+            className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+          >
             <FiCamera className="w-4 h-4 text-gray-600" />
           </button>
         </div>
@@ -106,10 +224,11 @@ export default function Settings() {
           <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
           <input
             type="email"
-            value={profileForm.email}
-            onChange={e => setProfileForm({ ...profileForm, email: e.target.value })}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            value={user?.email || ''}
+            disabled
+            className="w-full px-4 py-2.5 border border-gray-200 bg-gray-50 text-gray-500 rounded-lg cursor-not-allowed"
           />
+          <p className="text-xs text-gray-400 mt-1">L'email ne peut pas être modifié pour le moment</p>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Téléphone</label>
@@ -119,16 +238,6 @@ export default function Settings() {
             onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })}
             placeholder="+212 6XX XXX XXX"
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          />
-        </div>
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
-          <textarea
-            value={profileForm.bio}
-            onChange={e => setProfileForm({ ...profileForm, bio: e.target.value })}
-            rows={4}
-            placeholder="Présentez-vous en quelques mots..."
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
           />
         </div>
       </div>
@@ -192,7 +301,7 @@ export default function Settings() {
               </div>
               <div>
                 <p className="font-medium text-gray-900">Session actuelle</p>
-                <p className="text-sm text-gray-500">Chrome sur macOS - Casablanca, Maroc</p>
+                <p className="text-sm text-gray-500">Cet appareil</p>
               </div>
             </div>
             <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Active</span>
@@ -302,7 +411,10 @@ export default function Settings() {
               <p className="font-medium text-red-800">Supprimer mon compte</p>
               <p className="text-sm text-red-600">Cette action est irréversible</p>
             </div>
-            <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
               Supprimer
             </button>
           </div>
@@ -312,7 +424,7 @@ export default function Settings() {
   )
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Paramètres</h1>
         <p className="text-gray-600 mt-1">Gérez vos informations personnelles et préférences</p>
@@ -368,6 +480,45 @@ export default function Settings() {
           </button>
         </div>
       </div>
+
+      {/* Delete account confirmation modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full">
+            <h3 className="font-semibold text-lg text-gray-900 mb-2">Supprimer votre compte</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Cette action est irréversible. Confirmez votre mot de passe pour supprimer définitivement votre compte.
+            </p>
+            {deleteError && (
+              <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+                {deleteError}
+              </div>
+            )}
+            <input
+              type="password"
+              value={deletePassword}
+              onChange={e => setDeletePassword(e.target.value)}
+              placeholder="Mot de passe"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent mb-4"
+            />
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => { setShowDeleteModal(false); setDeletePassword(''); setDeleteError('') }}
+                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+              >
+                {deleting ? 'Suppression...' : 'Confirmer la suppression'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

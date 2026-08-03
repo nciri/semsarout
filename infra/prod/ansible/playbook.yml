@@ -1,0 +1,27 @@
+---
+# Provisioning complet du serveur prod SemsarOut/M3a-L3achrane (Hetzner).
+# Appelé par .github/workflows/deploy.yml :
+#   ansible-playbook infra/prod/ansible/playbook.yml -i <inventaire> -u root
+#     --extra-vars "jwt_secret_key=... semsar_domain=semsarout.com m3a_l3achrane_domain=m3a-l3achrane.ma"
+#
+# Idempotent : rejouable sur un serveur déjà provisionné sans rien casser (secrets
+# générés une seule fois, rôles PostgreSQL réconciliés plutôt que recréés, systemd
+# enable+start plutôt que restart aveugle, migrations additives idempotentes).
+- name: Provisioning serveur prod SemsarOut
+  hosts: prod
+  become: true
+  gather_facts: true
+
+  roles:
+    - base
+    - postgres
+    - docker_infra
+    - mesh
+    - frontends
+
+  post_tasks:
+    - name: Migrations additives (post-démarrage mesh)
+      ansible.builtin.import_tasks: tasks/post_migrations.yml
+
+    - name: Healthcheck final
+      ansible.builtin.import_tasks: tasks/healthcheck.yml

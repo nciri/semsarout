@@ -1,0 +1,20 @@
+# Généré par Ansible (roles/docker_infra) — SPA statique (React Router : fallback
+# vers index.html pour toute route inconnue côté client). /api et /uploads ne
+# passent jamais ici : Traefik les route directement vers le BFF (priorité 100 sur
+# le routeur file provider, cf. traefik-dynamic.yml.j2).
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location ~* \.(?:css|js|svg|png|jpg|jpeg|gif|ico|woff2?)$ {
+        expires 30d;
+        access_log off;
+        try_files $uri =404;
+    }
+}

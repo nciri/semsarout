@@ -5,53 +5,29 @@ import {
   FiArrowLeft, FiSave, FiUser, FiMail, FiPhone, FiMapPin,
   FiDollarSign, FiTag, FiFileText, FiX, FiPlus
 } from 'react-icons/fi'
+import { DIRHAM_SYMBOL } from '../../utils/currency'
+import api from '../../services/api'
 
 const backofficeService = {
   getClient: async (id) => {
-    const response = await fetch(`/api/v1/backoffice/clients/${id}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to fetch client')
-    return response.json()
+    const { data } = await api.get(`/backoffice/clients/${id}`)
+    return data
   },
   createClient: async (data) => {
-    const response = await fetch('/api/v1/backoffice/clients', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId'),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to create client')
-    return response.json()
+    const { data: responseData } = await api.post('/backoffice/clients', data)
+    return responseData
   },
   updateClient: async ({ id, data }) => {
-    const response = await fetch(`/api/v1/backoffice/clients/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId'),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to update client')
-    return response.json()
+    const { data: responseData } = await api.put(`/backoffice/clients/${id}`, data)
+    return responseData
   },
   getAgents: async () => {
-    const response = await fetch('/api/v1/backoffice/users?role=agent', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) return { users: [] }
-    return response.json()
+    try {
+      const { data } = await api.get('/backoffice/users?role=agent')
+      return data
+    } catch {
+      return { users: [] }
+    }
   }
 }
 
@@ -427,7 +403,7 @@ export default function BackofficeClientForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Budget minimum (DH)
+                  Budget minimum ({DIRHAM_SYMBOL})
                 </label>
                 <input
                   type="number"
@@ -439,7 +415,7 @@ export default function BackofficeClientForm() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Budget maximum (DH)
+                  Budget maximum ({DIRHAM_SYMBOL})
                 </label>
                 <input
                   type="number"

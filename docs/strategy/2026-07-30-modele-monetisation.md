@@ -1,0 +1,331 @@
+# Spec — Modèle économique & monétisation SemsarOut
+
+> **Statut :** point de départ (v1, 2026-07-30). Document de cadrage stratégique + produit, à
+> itérer. Il fixe les segments, les deux configurations de marché (B2B2B2C / B2B2C), le modèle de
+> monétisation, les écarts techniques à combler et les décisions ouvertes. Chaque chantier qui en
+> découle aura ensuite son propre spec → plan → exécution.
+>
+> **Non couvert ici :** l'implémentation détaillée (endpoints, UI). Ce doc décide *quoi* et *pourquoi*,
+> pas *comment* ligne à ligne.
+
+---
+
+## 1. Problème à résoudre
+
+Le modèle de comptes actuel comporte un **trou de revenus** : un utilisateur « particulier » (compte
+gratuit) peut **publier des annonces sans limite ni contrôle**. Si des professionnels (agences,
+promoteurs) s'aperçoivent qu'ils peuvent diffuser gratuitement via des comptes particuliers, ils ne
+souscriront jamais d'offre payante → **manque à gagner** et **cannibalisation** des offres pros.
+
+Ce document définit comment **segmenter, plafonner et monétiser** pour que :
+1. le gratuit reste utile au vrai particulier (vendre/louer *son* bien, chercher, candidater) ;
+2. tout usage **professionnel** (volume, outillage, projets neufs) bascule naturellement en payant ;
+3. la plateforme capte de la valeur **au-delà de l'abonnement** (boosts, leads, transactions, service).
+
+---
+
+## 2. État des lieux technique (ce qui existe déjà)
+
+Beaucoup d'infrastructure est **déjà en place** — le manque est surtout dans l'**application** des
+règles, pas dans les fondations.
+
+### 2.1 Paliers d'abonnement (`backend/app/models/subscription.py`, seed `seed_plans`)
+Modèle `SubscriptionPlan` riche. Paliers actuels (MAD/mois) :
+
+| Plan | Prix/mois | Prix/an | max_listings | featured / urgent | programs (max) | seats / teams | Divers |
+|---|---|---|---|---|---|---|---|
+| **Starter** | 299 | 2990 | 10 | 1 / 1 | ✗ | 0 / 0 | lead_contact |
+| **Pro** | 799 | 7990 | 50 | 5 / 5 | ✓ (10) | 5 / 1 | API, CSV, StayManager, analytics |
+| **Enterprise** | 1999 | 19990 | -1 (illimité) | 20 / 20 | ✓ (-1) | -1 / -1 | support prioritaire, KAM dédié |
+
+**Champs de capacité déjà modélisés** : `max_listings`, `max_featured`, `max_urgent`, `has_api_access`,
+`has_csv_import`, `has_staymanager_sync`, `has_lead_contact`, `has_analytics`, `has_priority_support`,
+`has_dedicated_account_manager`, `has_programs`, `max_programs`, `has_contracts`, `has_legal`,
+`has_artisans`, `max_seats`, `max_teams`, `price_monthly`, `price_yearly` (`-1` = illimité).
+
+### 2.2 Gating par capacité
+- Les features sont dérivées du plan (`backend/app/api/v1/auth.py` construit la liste `features` :
+  `artisans`, `contracts`, `legal`, + `rental` pour la gestion locative).
+- Le module **Programmes** est déjà gaté « Pro+ » (`programs.py:require_programs_feature`,
+  `subscription.plan.has_programs`) et rattaché à une **agence** (`Program.agency_id`) → un particulier
+  ne peut pas en créer.
+- Back-office (CRM, gestion locative, contrats, legal, artisans, boutique) déjà cloisonné par feature.
+
+### 2.3 Leviers de monétisation déjà amorcés
+- **Mise en avant** : `Property.is_featured` (« à la une ») + `max_featured` / `max_urgent` par plan.
+- **Leads** : `Lead.is_charged` (facturation de lead amorcée), `has_lead_contact` par plan,
+  scoping correct (`owner_id` pour un particulier, `agency_id` pour une agence).
+- **Paiement** : intégration **Stripe** (`StripeConfig`, page `Subscription`), boutique/commandes.
+- **Outillage métier livré** (ce que les pros achètent réellement) : CRM (clients/pipeline/leads/
+  visites), **gestion locative complète** (mandats, baux, quittancement, CRG, candidatures, EDL,
+  décompte de caution, **signature électronique 3a9dSign**), contrats, legal/notaires, artisans,
+  **programmes** (promoteurs), équipe/sièges, analytics, StayManager.
+
+### 2.4 Les écarts (le « trou ») — relecture 2026-07-30
+Décision : le particulier **n'est plus plafonné** en annonces ; le trou se comble par
+**interception de la demande + commission à la transaction** (voir §5.4). Écarts à construire :
+- ❌ **Interception de la demande** sur les annonces de particuliers : candidatures (location) et
+  demandes d'achat (vente) **médiées par la plateforme**.
+- ❌ **Moteur de commission** : suivi de **conclusion** (bail signé / vente actée) + facturation d'un
+  **forfait configurable** (défaut **4 999 MAD**) + compteur « 1re affaire offerte » par compte.
+- ❌ **Parcours « demande d'achat → vente actée »** (la location est déjà tracée via candidatures → bail).
+- ❌ **Palier Promoteur dédié** + application de `max_programs`.
+- ❌ **Boosts à la carte** + politique d'expiration/renouvellement.
+- ❌ **Réglages admin** (montant de commission par type, prix des boosts).
+
+---
+
+## 3. Segments & personas
+
+| Segment | A une agence ? | Ce qu'il fait | Ce pour quoi il paie |
+|---|---|---|---|
+| **Particulier** (gratuit) | non | Vend/loue **son** bien (1–3), cherche, candidate, consulte ses documents | Rien (base) — mais **boosts à la carte** et **déblocage de contact** possibles |
+| **Agence** | oui | Gère un portefeuille de biens + clients (transaction & gestion locative) | **L'outillage métier** (CRM, gestion locative, contrats, équipe, analytics) + volume d'annonces |
+| **Promoteur** | oui (ou statut dédié) | Commercialise des **programmes neufs** (multi-lots, VEFA) | **Le module Programmes** (page-projet, lots, plans, statut chantier) + volume de programmes |
+| **Plateforme = agence en ligne** | — | SemsarOut joue le rôle d'agence pour le particulier/promoteur (mandat en ligne, gestion locative déléguée, signature) | Modèle **service** : abonnement service ou **commission** sur loyers/ventes |
+| **Superadmin** | non | Exploitation plateforme | — |
+
+> **Note produit** : un « particulier » n'est pas seulement chercheur — il peut être **propriétaire-
+> annonceur** (d'où les onglets « Mes annonces » / « Demandes-Leads » légitimes dans son espace).
+> C'est précisément pourquoi le plafond `max_listings` bas (et non « 0 ») est le bon curseur.
+
+---
+
+## 4. Les deux configurations de marché
+
+SemsarOut peut opérer **deux modèles simultanément**, selon le client servi.
+
+### 4.1 Configuration A — B2B2B2C : SaaS pour agences (les agences intermédient les promoteurs)
+```
+Promoteur ──(confie la commercialisation)──▶ Agence ──(utilise SemsarOut SaaS)──▶ Consommateur
+                                                │
+                                        SemsarOut = éditeur SaaS
+```
+- SemsarOut **vend un abonnement** à l'agence ; l'agence gère les programmes du promoteur *pour lui*.
+- Revenu SemsarOut = **abonnement agence** (Pro/Enterprise avec `has_programs`) + boosts.
+- L'agence garde la relation promoteur & consommateur ; SemsarOut est « invisible » côté client final.
+
+### 4.2 Configuration B — B2B2C : SemsarOut « agence en ligne » (court-circuite l'agence)
+```
+Promoteur / Propriétaire ──(mandat en ligne)──▶ SemsarOut (agence en ligne) ──▶ Consommateur
+```
+- SemsarOut **joue lui-même le rôle d'agence** : mandat en ligne, diffusion, gestion locative
+  déléguée (quittancement, CRG, EDL, décompte), **signature électronique** — **tout est déjà construit**.
+- Revenu SemsarOut = modèle **service** : **abonnement service** *ou* **commission** (sur loyers
+  gérés / sur ventes conclues) — **décision ouverte (§9)**.
+- Positionnement : moins cher / plus simple qu'une agence traditionnelle pour le promoteur ou le
+  bailleur particulier qui veut déléguer sans payer 5–8 % à une agence classique.
+
+### 4.3 Coexistence
+Les deux ne s'excluent pas : la même plateforme est **éditeur SaaS** pour les agences **et**
+**opérateur agence-en-ligne** en direct. Risque à gérer : **conflit de canal** (une agence cliente
+peut percevoir l'offre directe comme concurrente). Atténuations possibles : cibler l'agence-en-ligne
+sur les segments **non couverts** par les agences (petits bailleurs, gestion locative déléguée,
+promoteurs sans réseau d'agences), tarification/marque distincte. **Décision ouverte (§9).**
+
+---
+
+## 5. Modèle de monétisation
+
+### 5.1 Principe directeur
+**On ne vend pas « le droit de publier ». On vend (a) du volume, (b) de l'outillage métier,
+(c) de la visibilité, (d) de la mise en relation / du service.** Le particulier garde une porte
+d'entrée gratuite crédible ; le professionnel bascule dès qu'il a besoin de volume, d'outils ou de
+projets.
+
+### 5.2 Paliers d'abonnement (proposition)
+> Curseurs chiffrés = **décisions ouvertes** ; valeurs ci-dessous = point de départ à valider.
+
+| Palier | Cible | Annonces | Programmes | Outillage | Prix (piste) |
+|---|---|---|---|---|---|
+| **Gratuit / Particulier** | vendeur/bailleur particulier, chercheur | **illimitées, gratuites** | ✗ | espace perso (annonces, candidatures, documents, recherches) | 0 + **commission dès la 2e affaire** (défaut 4 999 MAD/transaction, 1re offerte) |
+| **Agence Starter** | petite agence | 10 | ✗ | CRM de base, gestion locative selon option | 299 |
+| **Agence Pro** | agence en croissance | 50 | ✓ (10) | CRM complet, gestion locative, contrats, analytics, équipe | 799 |
+| **Agence Enterprise** | grande agence / réseau | -1 | ✓ (-1) | tout + support/KAM | 1999 |
+| **Promoteur** *(palier dédié — décision §9)* | promoteur neuf | selon | ✓ (n) | module Programmes + lots + plans + statut chantier | à définir (piste 1 499–2 499/mois) |
+
+> **Facturation des pros (Agences & Promoteurs) : abonnement ANNUEL obligatoire** (engagement
+> 12 mois, facturé sur `price_yearly`), précédé de **14 jours d'essai gratuit**. Les montants du
+> tableau sont l'**équivalent mensuel** — le prélèvement est **à l'année**. Pas d'option mensuelle
+> pour les pros.
+>
+> Le mode **« agence en ligne » (B2B2C)** n'est pas un palier d'abonnement : c'est le **modèle
+> commission** appliqué au particulier (et au promoteur en direct) — voir §5.4 / §5.7.
+
+### 5.3 Gating par capacité (rappel des interrupteurs déjà modélisés)
+`max_listings`, `max_featured`, `max_urgent`, `max_programs`, `max_seats`, `max_teams`,
+`has_programs`, `has_contracts`, `has_legal`, `has_artisans`, `has_analytics`, `has_api_access`,
+`has_csv_import`, `has_staymanager_sync`, `has_lead_contact`, `has_priority_support`,
+`has_dedicated_account_manager`. **La brique existe — il faut surtout l'APPLIQUER.**
+
+### 5.4 Levier décisif #1 — modèle particulier : annonces gratuites + interception + commission (décision 2026-07-30)
+On **ne plafonne pas** les annonces du particulier — il publie **gratuitement et sans limite**. La
+valeur est captée **à la transaction**, pas à la publication :
+
+- **Interception de la demande** : *toutes* les candidatures (location) et *toutes* les demandes
+  d'achat (vente) sur une annonce de particulier passent **par la plateforme** (mise en relation
+  médiée). SemsarOut agit de facto comme **agence en ligne** du particulier → visibilité sur la
+  formation des affaires et capacité à facturer à la conclusion.
+- **1re affaire offerte, puis commission — comptage en AFFAIRES CONCLUES** (pas en annonces) : la
+  **1re** transaction conclue du compte (bail signé / vente actée, tous biens confondus) est
+  **gratuite** (accroche freemium). **Dès la 2e affaire conclue** (et les suivantes), une
+  **commission** est due **à la conclusion**. Un bailleur d'un seul bien qui reloue plusieurs fois
+  paie donc dès sa **2e location conclue** (compteur par compte, pas par annonce). L'UI informe le
+  particulier de ce basculement au plus tard à la création d'une 2e annonce.
+- **Commission = forfait fixe configurable** : **4 999 MAD par transaction conclue** par défaut,
+  **paramétrable** (réglage admin ; adaptable par type location/vente et évolutif dans le temps).
+  Facturée à l'**événement de conclusion** via Stripe.
+- **Enforcement** : l'interception des contacts est le garde-fou (le particulier ne récupère pas la
+  relation en clair hors plateforme). La conclusion est tracée par les modules existants
+  (candidatures → bail signé, côté **location**) ; côté **vente**, un parcours « demande d'achat →
+  vente actée » reste à construire. Risque de conclusion hors plateforme à mitiger — voir §7.
+
+> `max_listings` / `max_programs` restent utiles côté **agences/promoteurs** (volume de portefeuille),
+> mais ne sont **pas** le levier du particulier.
+
+### 5.4bis — `max_programs` côté promoteur
+Le **palier Promoteur** (décision : palier dédié) applique `max_programs` à la création de programme
+(volume de projets), en plus du prix d'abonnement.
+
+### 5.5 Levier #2 — boosts à la carte (transverse, y compris gratuit)
+Monétiser les **particuliers** aussi, sans exiger un compte pro. Paiement **unitaire** via Stripe :
+- **Mise à la une** (`is_featured`, déjà là) ; **badge urgent** (`is_urgent`) ; **remontée en tête**
+  de recherche ; **durée de publication + renouvellement payant** (expiration → « rebump ») ; **pack
+  photos/vidéo/visite 3D** ; au niveau **programme** : page-projet mise en avant, campagne de lancement.
+
+### 5.6 Levier #3 — leads & transactions
+- **Déblocage de contact** : le gratuit voit qu'il a des leads mais **paie pour les coordonnées**
+  (ou l'inverse selon UX) — s'appuie sur `has_lead_contact` / `is_charged`.
+- **Pay-per-lead qualifié** (surtout neuf/haut de gamme, où un lead vaut cher).
+- **Commission / success-fee** sur transaction conclue via la plateforme (cœur du mode B2B2C).
+
+### 5.7 Levier #4 — le service « agence en ligne » (B2B2C)
+SemsarOut délègue-t-il ? Non : **il opère**. Modèle retenu = **commission forfaitaire configurable**
+(le même moteur que §5.4), **défaut 4 999 MAD par transaction conclue**, prélevée à la conclusion
+(bail signé / vente actée). Pas d'abonnement service pour ce mode — la valeur est **à l'affaire**.
+Ce que la plateforme fournit est **déjà construit** : mandat en ligne, diffusion, quittancement, CRG,
+EDL entrée/sortie, décompte de caution, **signature électronique** → time-to-market court. Le
+particulier (§5.4) et le promoteur en direct partagent ce moteur de commission.
+
+---
+
+## 6. Les deux paywalls professionnels
+
+| | **Agence** | **Promoteur** |
+|---|---|---|
+| Achète | le **workflow** (transaction + gestion) | le **projet multi-lots** |
+| Module clé | CRM + gestion locative + contrats + équipe | **Programmes** (`has_programs`/`max_programs`) |
+| Pourquoi il ne contourne pas | volume + besoin d'outils/équipe | l'alternative gratuite (N annonces éparses) **ne fait pas le job** : ni page-projet, ni inventaire de lots (`ProgramUnit`), ni plans/typologies (`ProgramPlan`), ni statut chantier, ni commercialisation progressive, ni lead→lot |
+| Défendabilité | forte (volume + outils) | **très forte** (produit gratuit inutilisable pour lui) |
+
+> Le paywall **Programmes** est le plus solide : il ne repose pas sur une limite artificielle mais sur
+> le fait que le produit gratuit est structurellement inadapté au neuf multi-lots.
+
+**Décision** : le Promoteur est un **palier d'abonnement dédié** (et non un add-on `Programmes` sur un
+plan agence) — offre et tarification lisibles pour ce segment, avec son propre `max_programs`.
+
+---
+
+## 7. Anti-contournement & conformité
+- **Plafond `max_listings`** = premier filtre automatique (un pro déguisé en particulier heurte vite
+  la limite).
+- **Détection d'usage pro** : volume/cadence de publication, langage commercial, réutilisation de
+  coordonnées → nudge/obligation d'upgrade.
+- **Statut professionnel (CGU + KYC pro)** : au-delà d'un seuil, compte pro obligatoire (mandat, RC
+  pro). Aligne avec les obligations légales du courtage/gestion.
+- **Vérification / badges** (KYC déjà présent côté identité) : « agence vérifiée », « promoteur
+  vérifié » → conversion + confiance, valeur payante.
+
+---
+
+## 8. Écarts techniques à combler (backlog priorisé)
+1. **Interception de la demande** : candidatures (location) + demandes d'achat (vente) sur annonces
+   de particuliers **médiées par la plateforme** (le contact ne transite pas en clair). *Prérequis P1.*
+2. **Moteur de commission** : suivi de **conclusion** (bail signé / vente actée) + **compteur « 1re
+   affaire offerte » par compte** + **facturation forfait configurable** (défaut 4 999 MAD) via Stripe.
+3. **Parcours vente « demande d'achat → vente actée »** (traçage de la conclusion côté vente ; la
+   location est déjà couverte par candidatures → bail signé).
+4. **Facturation pro : abonnement ANNUEL + essai 14 jours** — souscription sur `price_yearly`
+   uniquement, période d'essai gratuite gérée côté Stripe (pas d'option mensuelle pour les pros).
+5. **Palier Promoteur dédié** + module Programmes gaté + **application de `max_programs`**.
+6. **Boosts à la carte** (à la une / urgent / renouvellement) : catalogue + paiement Stripe unitaire
+   + **expiration 60 j** / rebump.
+7. **Réglages admin configurables** : montant de commission (par type location/vente), prix des boosts.
+8. **Anti-contournement & garde-fous** : conclusion hors plateforme, détection d'usage pro, CGU/KYC ;
+   marque/segments distincts si conflit agences ↔ offre directe.
+9. *(Optionnel)* **Monétisation lead** : déblocage de contact payant (`is_charged`/`has_lead_contact`).
+
+---
+
+## 9. Décisions (mises à jour 2026-07-30)
+
+### Tranché
+1. **Particulier** : annonces **gratuites et illimitées** ; **interception** de toutes les
+   candidatures (location) / demandes d'achat (vente) ; **1re affaire offerte**, puis **commission
+   dès la 2e affaire conclue**, due **à la conclusion** (bail signé / vente actée). Cf. §5.4.
+2. **Promoteur = palier d'abonnement dédié** (pas un add-on sur plan agence).
+3. **Commission = forfait fixe configurable**, **défaut 4 999 MAD** par transaction conclue,
+   paramétrable (par type et dans le temps).
+4. **Comptage en affaires conclues, par compte** (pas par annonce) : 1re transaction conclue offerte,
+   commission à partir de la 2e — y compris un même bien reloué plusieurs fois.
+5. **Agences & Promoteurs : abonnement ANNUEL obligatoire** (engagement 12 mois, facturé
+   `price_yearly`), précédé de **14 jours d'essai gratuit**. Aucune option mensuelle pour les pros.
+
+### Recommandations (à confirmer)
+4. **Conflit de canal** — *ce que c'était* : SemsarOut vend un logiciel **aux** agences (SaaS) tout en
+   servant **en direct** les propriétaires (commission) → il **concurrence ses propres clients**.
+   *Reco* : risque **gérable** car les cibles se recoupent peu — l'offre directe vise le **DIY / petit
+   bailleur / propriétaire qui ne serait jamais passé par une agence** ; les agences SaaS visent la
+   délégation full-service. Garde-fous : positionnement/parcours **distincts** (voire marque ou label
+   « SemsarOut Direct »), **ne pas démarcher** les propriétaires déjà suivis par une agence cliente,
+   et **surveiller** le churn agences. On peut lancer les deux et ajuster.
+5. **Grille / expiration / migration** (oui aux trois) :
+   - **Prix** : garder Agences **299 / 799 / 1999** ; **Promoteur** dédié (piste **1 499–2 499
+     MAD/mois** selon `max_programs`) ; particulier **0 + commission 4 999/affaire** ; **boosts** à la
+     carte (piste : à la une **199** MAD/annonce, urgent **99**, renouvellement **49**).
+   - **Expiration** : annonces particulier valables **60 jours**, **renouvellement gratuit** en 1 clic
+     (bump payant optionnel) — garde l'inventaire frais sans dégrader le gratuit.
+   - **Migration** : comptes existants **grandfathered** ; le compteur « 1re affaire offerte » démarre
+     **à la mise en production** (les prochaines affaires conclues comptent). Aucun blocage rétroactif.
+
+### Restant à trancher
+Montant exact de commission **par type** (location vs vente ; éventuel barème par valeur du bien),
+prix Promoteur et prix des boosts, modalité de **prélèvement** de la commission (à la conclusion :
+carte enregistrée / facture / mandat SEPA), et **TVA/facturation**.
+
+---
+
+## 10. Découpage en sous-projets (chacun → son spec → plan → exécution)
+- **P1 — Interception de la demande + moteur de commission** (particulier / agence-en-ligne) :
+  candidatures & demandes d'achat **médiées**, suivi de **conclusion** (bail signé / vente actée),
+  **compteur « 1re affaire offerte »** par compte, **facturation forfait configurable** (défaut
+  4 999) via Stripe. *Prioritaire — c'est le cœur du modèle.*
+- **P2 — Parcours vente « demande d'achat → vente actée »** (trace la conclusion côté vente ; la
+  location est déjà couverte par candidatures → bail).
+- **P3 — Palier Promoteur dédié** + module Programmes gaté + application `max_programs` + tarification.
+- **P4 — Boosts à la carte** (à la une / urgent / renouvellement) + **expiration 60 j** + Stripe unitaire.
+- **P5 — Réglages admin configurables** (montant de commission par type, prix des boosts) — back-office.
+- **P6 — Anti-contournement & statut pro** (conclusion hors plateforme, détection d'usage pro, CGU/KYC).
+
+---
+
+## 11. Indicateurs de succès (à instrumenter)
+- Taux de conversion gratuit → payant ; part des comptes heurtant le plafond `max_listings`.
+- ARPU par segment (particulier boosts / agence / promoteur / agence-en-ligne).
+- Revenu boosts par annonce ; revenu commission par transaction gérée.
+- Nombre de programmes actifs payants ; nombre de biens en gestion déléguée (B2B2C).
+- Fuite : comptes particuliers au comportement « pro » détectés / convertis.
+
+---
+
+## 12. Résumé exécutif
+Le particulier garde des **annonces gratuites et illimitées** (acquisition maximale), mais la
+plateforme **intercepte la demande** (candidatures / demandes d'achat) et devient de facto son
+**agence en ligne** : **1re affaire offerte**, puis **commission forfaitaire configurable
+(défaut 4 999 MAD)** à chaque transaction conclue dès la 2e annonce. En parallèle, les **agences**
+paient l'**outillage métier** (abonnements 299/799/1999) et les **promoteurs** un **palier dédié**
+pour le module **Programmes**. On obtient trois flux : **commission à l'affaire** (particuliers +
+direct), **abonnements pros**, **boosts à la carte**. La plateforme opère en **double modèle** —
+SaaS pour agences (B2B2B2C) **et** agence-en-ligne directe (B2B2C) — en s'appuyant sur la gestion
+locative déjà construite (mandat, quittancement, EDL, décompte, signature). Le cœur à construire :
+**l'interception de la demande + le moteur de commission** (sous-projet P1).

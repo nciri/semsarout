@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { FiLock, FiCheck, FiCreditCard, FiArrowLeft } from 'react-icons/fi'
 import useAuthStore from '../store/authStore'
 import api from '../services/api'
+import { formatPrice } from '../utils/currency'
 
 const SERVICES = {
   'forfait-vente': {
@@ -41,6 +42,7 @@ function Checkout() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState('card')
   const [step, setStep] = useState(1)
+  const [paymentError, setPaymentError] = useState('')
 
   const serviceId = searchParams.get('service')
   const planId = searchParams.get('plan')
@@ -73,6 +75,7 @@ function Checkout() {
 
   const onSubmit = async (data) => {
     setIsProcessing(true)
+    setPaymentError('')
 
     try {
       // Create payment intent on backend
@@ -98,10 +101,14 @@ function Checkout() {
         navigate('/checkout/confirmation', {
           state: { paymentId: response.data.payment_id, method: 'transfer' }
         })
+      } else {
+        navigate('/checkout/confirmation', {
+          state: { paymentId: response.data.payment_id, method: 'card' }
+        })
       }
     } catch (error) {
       console.error('Payment error:', error)
-      alert('Une erreur est survenue. Veuillez réessayer.')
+      setPaymentError(error.response?.data?.error || 'Une erreur est survenue. Veuillez réessayer.')
     } finally {
       setIsProcessing(false)
     }
@@ -130,6 +137,12 @@ function Checkout() {
               <h1 className="font-display text-2xl font-bold text-gray-900 mb-8">
                 Finaliser votre commande
               </h1>
+
+              {paymentError && (
+                <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg text-sm">
+                  {paymentError}
+                </div>
+              )}
 
               {/* Steps */}
               <div className="flex items-center mb-8">
@@ -320,9 +333,9 @@ function Checkout() {
                       />
                       <span className="text-sm text-gray-600">
                         J'accepte les{' '}
-                        <a href="#" className="text-primary-600 underline">conditions générales de vente</a>
+                        <Link to="/cgu" target="_blank" className="text-primary-600 underline">conditions générales de vente</Link>
                         {' '}et la{' '}
-                        <a href="#" className="text-primary-600 underline">politique de confidentialité</a>
+                        <Link to="/politique-de-confidentialite" target="_blank" className="text-primary-600 underline">politique de confidentialité</Link>
                       </span>
                     </div>
 
@@ -336,7 +349,7 @@ function Checkout() {
                       ) : (
                         <>
                           <FiLock className="w-4 h-4 mr-2" />
-                          Payer {price.toLocaleString()} Đ
+                          Payer {formatPrice(price)}
                         </>
                       )}
                     </button>
@@ -364,7 +377,7 @@ function Checkout() {
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Sous-total</span>
-                  <span>{price.toLocaleString()} Đ</span>
+                  <span>{formatPrice(price)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">TVA (20%)</span>
@@ -375,7 +388,7 @@ function Checkout() {
               <div className="border-t border-gray-100 pt-4">
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total TTC</span>
-                  <span className="text-primary-600">{price.toLocaleString()} Đ</span>
+                  <span className="text-primary-600">{formatPrice(price)}</span>
                 </div>
               </div>
 

@@ -1,8 +1,20 @@
+from datetime import datetime, timedelta
+
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.api.v1 import api_v1_bp
-from app.models import Lead, Property, User
+from app.models import Lead, Property, User, Agency
+
+# Un lead non lu devient "en retard" au-delà de ce délai (jours)
+LEAD_OVERDUE_DAYS = 3
+
+
+def _leads_query_for(user):
+    """Base query scoping leads to the current user (agency or individual owner)."""
+    if user.agency_id:
+        return Lead.query.filter(Lead.agency_id == user.agency_id)
+    return Lead.query.filter(Lead.owner_id == user.id)
 
 
 @api_v1_bp.route('/properties/<int:property_id>/contact', methods=['POST'])
@@ -41,6 +53,82 @@ def create_lead(property_id):
     }), 201
 
 
+@api_v1_bp.route('/properties/<int:property_id>/reveal-phone', methods=['POST'])
+def reveal_phone(property_id):
+    """Reveal the contact phone number for a property and log it as a lead."""
+    property = Property.query.get_or_404(property_id)
+
+    phone = None
+    if property.agency_id:
+        agency = Agency.query.get(property.agency_id)
+        phone = agency.phone if agency else None
+    else:
+        owner = User.query.get(property.owner_id)
+        phone = owner.phone if owner else None
+
+    if not phone:
+        return jsonify({'error': 'Aucun numéro de téléphone disponible pour ce bien'}), 404
+
+    data = request.get_json(silent=True) or {}
+
+    lead = Lead(
+        name=data.get('name', 'Visiteur'),
+        email=data.get('email', 'non-renseigne@semsarout.ma'),
+        phone=data.get('phone'),
+        message='Demande de numéro de téléphone',
+        source='phone_reveal',
+        property_id=property.id,
+        agency_id=property.agency_id,
+        owner_id=property.owner_id if not property.agency_id else None,
+        ip_address=request.remote_addr,
+        user_agent=request.user_agent.string[:255] if request.user_agent else None
+    )
+
+    property.contacts_count += 1
+    db.session.add(lead)
+    db.session.commit()
+
+    return jsonify({'phone': phone})
+
+
+VALID_SERVICES = {
+    'vente', 'mise-en-location', 'gestion-locative',
+    'courte-duree', 'estimation', 'autre'
+}
+
+
+@api_v1_bp.route('/contact', methods=['POST'])
+def create_service_request():
+    """Create a service request lead from the public contact page."""
+    data = request.get_json() or {}
+
+    if not data.get('name') or not data.get('email'):
+        return jsonify({'error': 'Name and email are required'}), 400
+
+    service = data.get('service')
+    if service and service not in VALID_SERVICES:
+        return jsonify({'error': 'Invalid service'}), 400
+
+    lead = Lead(
+        name=data['name'],
+        email=data['email'],
+        phone=data.get('phone'),
+        message=data.get('message'),
+        source='service_request',
+        service=service,
+        ip_address=request.remote_addr,
+        user_agent=request.user_agent.string[:255] if request.user_agent else None
+    )
+
+    db.session.add(lead)
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Service request sent successfully',
+        'lead_id': lead.id
+    }), 201
+
+
 @api_v1_bp.route('/my-leads', methods=['GET'])
 @jwt_required()
 def my_leads():
@@ -48,15 +136,13 @@ def my_leads():
     current_user_id = int(get_jwt_identity()) if get_jwt_identity() else None
     user = User.query.get(current_user_id)
 
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
 
-    if user.agency_id:
-        # Agency leads
-        query = Lead.query.filter(Lead.agency_id == user.agency_id)
-    else:
-        # Individual owner leads
-        query = Lead.query.filter(Lead.owner_id == user.id)
+    query = _leads_query_for(user)
 
     # Filter by status
     if request.args.get('status'):
@@ -73,12 +159,39 @@ def my_leads():
     })
 
 
+@api_v1_bp.route('/my-leads/summary', methods=['GET'])
+@jwt_required()
+def my_leads_summary():
+    """Lightweight counters for the leads badge and the dashboard alert."""
+    current_user_id = int(get_jwt_identity()) if get_jwt_identity() else None
+    user = User.query.get(current_user_id)
+
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    base = _leads_query_for(user)
+    unread = base.filter(Lead.is_read.is_(False))
+    unread_count = unread.count()
+
+    overdue_cutoff = datetime.utcnow() - timedelta(days=LEAD_OVERDUE_DAYS)
+    overdue_count = unread.filter(Lead.created_at < overdue_cutoff).count()
+
+    return jsonify({
+        'unread_count': unread_count,
+        'overdue_count': overdue_count,
+        'overdue_days': LEAD_OVERDUE_DAYS
+    })
+
+
 @api_v1_bp.route('/leads/<int:lead_id>', methods=['GET'])
 @jwt_required()
 def get_lead(lead_id):
     """Get lead details."""
     current_user_id = int(get_jwt_identity()) if get_jwt_identity() else None
     user = User.query.get(current_user_id)
+
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
 
     lead = Lead.query.get_or_404(lead_id)
 
@@ -89,6 +202,12 @@ def get_lead(lead_id):
     else:
         if lead.owner_id != user.id:
             return jsonify({'error': 'Unauthorized'}), 403
+
+    # Opening the detail marks the lead as read
+    if not lead.is_read:
+        lead.is_read = True
+        lead.read_at = datetime.utcnow()
+        db.session.commit()
 
     return jsonify({'lead': lead.to_dict()})
 

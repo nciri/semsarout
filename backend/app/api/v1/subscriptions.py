@@ -27,6 +27,9 @@ def my_subscription():
     current_user_id = int(get_jwt_identity()) if get_jwt_identity() else None
     user = User.query.get(current_user_id)
 
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
     if not user.agency_id:
         return jsonify({'error': 'You do not belong to an agency'}), 404
 
@@ -44,6 +47,9 @@ def subscribe():
     """Subscribe to a plan."""
     current_user_id = int(get_jwt_identity()) if get_jwt_identity() else None
     user = User.query.get(current_user_id)
+
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
 
     if not user.agency_id:
         return jsonify({'error': 'You need to create an agency first'}), 400
@@ -102,6 +108,9 @@ def cancel_subscription():
     """Cancel current subscription."""
     current_user_id = int(get_jwt_identity()) if get_jwt_identity() else None
     user = User.query.get(current_user_id)
+
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
 
     if not user.agency_id:
         return jsonify({'error': 'You do not belong to an agency'}), 404

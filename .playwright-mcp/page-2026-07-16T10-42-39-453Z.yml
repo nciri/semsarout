@@ -1,0 +1,116 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - link "Semsar Out" [ref=e7] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e8]:
+          - generic [ref=e9]: Semsar
+          - generic [ref=e10]: Out
+      - navigation [ref=e11]:
+        - generic [ref=e12]:
+          - link "Acheter" [ref=e13] [cursor=pointer]:
+            - /url: /annonces?transaction_type=sale
+          - link "Louer" [ref=e14] [cursor=pointer]:
+            - /url: /annonces?transaction_type=rent
+        - link "Programmes neufs" [ref=e16] [cursor=pointer]:
+          - /url: /programmes
+        - generic [ref=e18]:
+          - link "Agences" [ref=e19] [cursor=pointer]:
+            - /url: /agences
+          - link "Nos Services" [ref=e20] [cursor=pointer]:
+            - /url: /nos-services
+      - button "Menu utilisateur" [ref=e23] [cursor=pointer]
+  - main [ref=e27]:
+    - generic [ref=e29]:
+      - heading "404" [level=1] [ref=e30]
+      - heading "Page non trouvée" [level=2] [ref=e31]
+      - paragraph [ref=e32]: La page que vous recherchez n'existe pas ou a été déplacée.
+      - link "Retour à l'accueil" [ref=e33] [cursor=pointer]:
+        - /url: /
+  - contentinfo [ref=e37]:
+    - generic [ref=e38]:
+      - generic [ref=e39]:
+        - generic [ref=e40]:
+          - link "Semsar Out" [ref=e41] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e42]:
+              - generic [ref=e43]: Semsar
+              - generic [ref=e44]: Out
+          - paragraph [ref=e45]: L'immobilier sans les intermédiaires douteux. Vendez, louez et gérez votre bien à tarif fixe, sans commission, avec un accompagnement professionnel.
+          - generic [ref=e46]:
+            - link "Facebook" [ref=e47] [cursor=pointer]:
+              - /url: "#"
+            - link "Instagram" [ref=e50] [cursor=pointer]:
+              - /url: "#"
+            - link "LinkedIn" [ref=e54] [cursor=pointer]:
+              - /url: "#"
+            - link "Twitter" [ref=e59] [cursor=pointer]:
+              - /url: "#"
+            - link "YouTube" [ref=e62] [cursor=pointer]:
+              - /url: "#"
+        - generic [ref=e66]:
+          - heading "Vente" [level=4] [ref=e67]
+          - list [ref=e68]:
+            - listitem [ref=e69]:
+              - link "Forfait Vente (4.900 Đh)" [ref=e70] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=e71]:
+              - link "Photos Professionnelles" [ref=e72] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=e73]:
+              - link "Estimation Gratuite" [ref=e74] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=e75]:
+              - link "Acheter un bien" [ref=e76] [cursor=pointer]:
+                - /url: /annonces?transaction_type=sale
+        - generic [ref=e77]:
+          - heading "Location" [level=4] [ref=e78]
+          - list [ref=e79]:
+            - listitem [ref=e80]:
+              - link "Mise en Location" [ref=e81] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=e82]:
+              - link "Gestion Locative Complète" [ref=e83] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=e84]:
+              - link "Location Courte DuréeStayManager" [ref=e85] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=e86]:
+              - link "Louer un bien" [ref=e87] [cursor=pointer]:
+                - /url: /annonces?transaction_type=rent
+        - generic [ref=e88]:
+          - heading "Professionnels" [level=4] [ref=e89]
+          - list [ref=e90]:
+            - listitem [ref=e91]:
+              - link "Agences partenaires" [ref=e92] [cursor=pointer]:
+                - /url: /agences
+            - listitem [ref=e93]:
+              - link "Devenir partenaire" [ref=e94] [cursor=pointer]:
+                - /url: /agences/inscription
+            - listitem [ref=e95]:
+              - link "Tarifs agences" [ref=e96] [cursor=pointer]:
+                - /url: /agences/tarifs
+          - heading "À propos" [level=4] [ref=e97]
+          - list [ref=e98]:
+            - listitem [ref=e99]:
+              - link "Qui sommes-nous" [ref=e100] [cursor=pointer]:
+                - /url: /a-propos
+            - listitem [ref=e101]:
+              - link "Nous contacter" [ref=e102] [cursor=pointer]:
+                - /url: /contact
+            - listitem [ref=e103]:
+              - link "StayManager.ma↗" [ref=e104] [cursor=pointer]:
+                - /url: https://www.staymanager.ma
+                - generic [ref=e105]: StayManager.ma
+                - text: ↗
+      - generic [ref=e107]:
+        - paragraph [ref=e108]: © 2026 SemsarOut. Tous droits réservés.
+        - generic [ref=e109]:
+          - link "Mentions légales" [ref=e110] [cursor=pointer]:
+            - /url: "#"
+          - link "CGU" [ref=e111] [cursor=pointer]:
+            - /url: "#"
+          - link "Politique de confidentialité" [ref=e112] [cursor=pointer]:
+            - /url: "#"
+          - link "Cookies" [ref=e113] [cursor=pointer]:
+            - /url: "#"

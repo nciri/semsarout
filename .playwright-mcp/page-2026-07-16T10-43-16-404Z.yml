@@ -1,0 +1,279 @@
+- generic [ref=f2e3]:
+  - banner [ref=f2e4]:
+    - generic [ref=f2e6]:
+      - link "Semsar Out" [ref=f2e7] [cursor=pointer]:
+        - /url: /
+        - generic [ref=f2e8]:
+          - generic [ref=f2e9]: Semsar
+          - generic [ref=f2e10]: Out
+      - navigation [ref=f2e11]:
+        - generic [ref=f2e12]:
+          - link "Acheter" [ref=f2e13] [cursor=pointer]:
+            - /url: /annonces?transaction_type=sale
+          - link "Louer" [ref=f2e14] [cursor=pointer]:
+            - /url: /annonces?transaction_type=rent
+        - link "Programmes neufs" [ref=f2e16] [cursor=pointer]:
+          - /url: /programmes
+        - generic [ref=f2e18]:
+          - link "Agences" [ref=f2e19] [cursor=pointer]:
+            - /url: /agences
+          - link "Nos Services" [ref=f2e20] [cursor=pointer]:
+            - /url: /nos-services
+      - button "Menu utilisateur" [ref=f2e23] [cursor=pointer]
+  - main [ref=f2e27]:
+    - generic [ref=f2e28]:
+      - generic [ref=f2e31]:
+        - heading "Nos Services" [level=1] [ref=f2e32]
+        - paragraph [ref=f2e33]: "Une agence immobilière en ligne complète : vente, location longue durée et gestion locative. Des tarifs transparents, un service de qualité professionnelle."
+        - generic [ref=f2e34]:
+          - generic [ref=f2e35]: Tarifs transparents
+          - generic [ref=f2e39]: Zéro surprise
+          - generic [ref=f2e43]: Réponse sous 24h
+      - generic [ref=f2e51]:
+        - button "Forfait Vente" [ref=f2e52] [cursor=pointer]
+        - button "Gestion Locative Complète" [ref=f2e57] [cursor=pointer]
+        - button "Mise en Location" [ref=f2e61] [cursor=pointer]
+        - button "Location Courte Durée" [ref=f2e68] [cursor=pointer]
+        - button "Estimation Gratuite" [ref=f2e72] [cursor=pointer]
+      - generic [ref=f2e78]:
+        - generic [ref=f2e79]:
+          - generic [ref=f2e80]:
+            - generic [ref=f2e81]: Location longue durée - Sérénité totale
+            - heading "Gestion Locative Complète" [level=2] [ref=f2e84]
+            - paragraph [ref=f2e85]: Déléguez entièrement la gestion de votre bien locatif. De la recherche du locataire idéal jusqu'à son départ, nous gérons tout pour vous. Plusieurs formules adaptées à vos besoins.
+          - generic [ref=f2e86]:
+            - heading "Notre accompagnement de A à Z" [level=3] [ref=f2e87]
+            - generic [ref=f2e88]:
+              - generic [ref=f2e89]:
+                - generic [ref=f2e90]: "1"
+                - heading "Mise en location" [level=4] [ref=f2e91]
+                - list [ref=f2e92]:
+                  - listitem [ref=f2e93]: Estimation du loyer
+                  - listitem [ref=f2e96]: Photos professionnelles
+                  - listitem [ref=f2e99]: Diffusion multicanale
+                  - listitem [ref=f2e102]: Visites qualifiées
+              - generic [ref=f2e105]:
+                - generic [ref=f2e106]: "2"
+                - heading "Entrée du locataire" [level=4] [ref=f2e107]
+                - list [ref=f2e108]:
+                  - listitem [ref=f2e109]: Sélection du dossier
+                  - listitem [ref=f2e112]: Rédaction du bail
+                  - listitem [ref=f2e115]: État des lieux
+                  - listitem [ref=f2e118]: Remise des clés
+              - generic [ref=f2e121]:
+                - generic [ref=f2e122]: "3"
+                - heading "Vie du bail" [level=4] [ref=f2e123]
+                - list [ref=f2e124]:
+                  - listitem [ref=f2e125]: Encaissement loyers
+                  - listitem [ref=f2e128]: Quittances
+                  - listitem [ref=f2e131]: Travaux
+                  - listitem [ref=f2e134]: Médiation
+              - generic [ref=f2e137]:
+                - generic [ref=f2e138]: "4"
+                - heading "Sortie du locataire" [level=4] [ref=f2e139]
+                - list [ref=f2e140]:
+                  - listitem [ref=f2e141]: Préavis
+                  - listitem [ref=f2e144]: État des lieux sortie
+                  - listitem [ref=f2e147]: Dépôt de garantie
+                  - listitem [ref=f2e150]: Relocation
+          - generic [ref=f2e153]:
+            - heading "Ce qui est inclus" [level=3] [ref=f2e154]
+            - list [ref=f2e155]:
+              - listitem [ref=f2e156]:
+                - generic [ref=f2e159]: Recherche et sélection rigoureuse des locataires
+              - listitem [ref=f2e160]:
+                - generic [ref=f2e163]: Vérification approfondie des dossiers (revenus, garants)
+              - listitem [ref=f2e164]:
+                - generic [ref=f2e167]: Rédaction du bail conforme à la législation
+              - listitem [ref=f2e168]:
+                - generic [ref=f2e171]: État des lieux d'entrée détaillé avec photos
+              - listitem [ref=f2e172]:
+                - generic [ref=f2e175]: Encaissement et suivi des loyers
+              - listitem [ref=f2e176]:
+                - generic [ref=f2e179]: Gestion des charges et régularisations
+              - listitem [ref=f2e180]:
+                - generic [ref=f2e183]: Interface propriétaire avec reporting mensuel
+              - listitem [ref=f2e184]:
+                - generic [ref=f2e187]: Gestion des sinistres et assurances
+              - listitem [ref=f2e188]:
+                - generic [ref=f2e191]: Coordination des travaux et réparations
+              - listitem [ref=f2e192]:
+                - generic [ref=f2e195]: Médiation et gestion des litiges
+              - listitem [ref=f2e196]:
+                - generic [ref=f2e199]: État des lieux de sortie
+              - listitem [ref=f2e200]:
+                - generic [ref=f2e203]: Restitution du dépôt de garantie
+          - generic [ref=f2e204]:
+            - heading "Nos formules de gestion locative" [level=3] [ref=f2e205]
+            - generic [ref=f2e206]:
+              - generic [ref=f2e207]:
+                - generic [ref=f2e208]: Gestion Essentielle
+                - generic [ref=f2e209]: 3% du loyer / min. 300 Đh
+              - generic [ref=f2e210]:
+                - generic [ref=f2e211]: Gestion Complète
+                - generic [ref=f2e212]: 5% du loyer / min. 500 Đh
+              - generic [ref=f2e213]:
+                - generic [ref=f2e214]: Gestion Premium
+                - generic [ref=f2e215]: 7% du loyer / min. 700 Đh
+        - generic [ref=f2e217]:
+          - generic [ref=f2e218]:
+            - generic [ref=f2e219]:
+              - generic [ref=f2e220]: Location longue durée - Sérénité totale
+              - generic [ref=f2e224]: À partir de
+              - generic [ref=f2e225]: 5%
+              - generic [ref=f2e227]: du loyer mensuel (tarif minimum 500 Đh/mois)
+            - generic [ref=f2e228]:
+              - link "Demander un devis" [ref=f2e229] [cursor=pointer]:
+                - /url: /contact?service=gestion-locative
+              - generic [ref=f2e232]: ou appelez-nous
+              - link "+212 6 00 00 00 00" [ref=f2e233] [cursor=pointer]:
+                - /url: tel:+212600000000
+          - generic [ref=f2e236]:
+            - generic [ref=f2e237]: Ils nous font confiance
+            - generic [ref=f2e238]:
+              - generic [ref=f2e239]:
+                - generic [ref=f2e240]: 500+
+                - generic [ref=f2e241]: Biens gérés
+              - generic [ref=f2e242]:
+                - generic [ref=f2e243]: 98%
+                - generic [ref=f2e244]: Satisfaits
+              - generic [ref=f2e245]:
+                - generic [ref=f2e246]: 24h
+                - generic [ref=f2e247]: Réactivité
+      - generic [ref=f2e249]:
+        - heading "Tous nos services en un coup d'œil" [level=2] [ref=f2e250]
+        - generic [ref=f2e251]:
+          - button "Forfait Vente Service d'agence en ligne 4 900 Đh" [ref=f2e252] [cursor=pointer]:
+            - heading "Forfait Vente" [level=3] [ref=f2e257]
+            - paragraph [ref=f2e258]: Service d'agence en ligne
+            - generic [ref=f2e259]: 4 900 Đh
+          - button "Gestion Locative Complète Location longue durée - Sérénité totale 5%" [ref=f2e260] [cursor=pointer]:
+            - heading "Gestion Locative Complète" [level=3] [ref=f2e264]
+            - paragraph [ref=f2e265]: Location longue durée - Sérénité totale
+            - generic [ref=f2e266]: 5%
+          - button "Mise en Location Trouvez le locataire idéal 1 mois" [ref=f2e267] [cursor=pointer]:
+            - heading "Mise en Location" [level=3] [ref=f2e274]
+            - paragraph [ref=f2e275]: Trouvez le locataire idéal
+            - generic [ref=f2e276]: 1 mois
+          - button "Location Courte Durée En partenariat avec StayManager.ma 179 Đh" [ref=f2e277] [cursor=pointer]:
+            - heading "Location Courte Durée" [level=3] [ref=f2e281]
+            - paragraph [ref=f2e282]: En partenariat avec StayManager.ma
+            - generic [ref=f2e283]: 179 Đh
+          - button "Estimation Gratuite Connaissez la valeur de votre bien Gratuit" [ref=f2e284] [cursor=pointer]:
+            - heading "Estimation Gratuite" [level=3] [ref=f2e288]
+            - paragraph [ref=f2e289]: Connaissez la valeur de votre bien
+            - generic [ref=f2e290]: Gratuit
+      - generic [ref=f2e292]:
+        - heading "Questions fréquentes" [level=2] [ref=f2e293]
+        - generic [ref=f2e294]:
+          - group [ref=f2e295]:
+            - generic "Comment fonctionne la gestion locative ? ▼" [ref=f2e296] [cursor=pointer]:
+              - text: Comment fonctionne la gestion locative ?
+              - generic [ref=f2e297]: ▼
+          - group [ref=f2e298]:
+            - generic "Qu'est-ce que le partenariat avec StayManager ? ▼" [ref=f2e299] [cursor=pointer]:
+              - text: Qu'est-ce que le partenariat avec StayManager ?
+              - generic [ref=f2e300]: ▼
+          - group [ref=f2e301]:
+            - generic "Quels sont les frais de gestion locative ? ▼" [ref=f2e302] [cursor=pointer]:
+              - text: Quels sont les frais de gestion locative ?
+              - generic [ref=f2e303]: ▼
+          - group [ref=f2e304]:
+            - generic "Comment sont sélectionnés les locataires ? ▼" [ref=f2e305] [cursor=pointer]:
+              - text: Comment sont sélectionnés les locataires ?
+              - generic [ref=f2e306]: ▼
+      - generic [ref=f2e309]:
+        - heading "Besoin d'un conseil personnalisé ?" [level=2] [ref=f2e310]
+        - paragraph [ref=f2e311]: Nos experts sont à votre disposition pour vous accompagner dans votre projet immobilier, que ce soit pour vendre, louer ou gérer votre bien.
+        - generic [ref=f2e312]:
+          - link "Nous contacter" [ref=f2e313] [cursor=pointer]:
+            - /url: /contact
+          - link "+212 6 00 00 00 00" [ref=f2e317] [cursor=pointer]:
+            - /url: tel:+212600000000
+  - contentinfo [ref=f2e320]:
+    - generic [ref=f2e321]:
+      - generic [ref=f2e322]:
+        - generic [ref=f2e323]:
+          - link "Semsar Out" [ref=f2e324] [cursor=pointer]:
+            - /url: /
+            - generic [ref=f2e325]:
+              - generic [ref=f2e326]: Semsar
+              - generic [ref=f2e327]: Out
+          - paragraph [ref=f2e328]: L'immobilier sans les intermédiaires douteux. Vendez, louez et gérez votre bien à tarif fixe, sans commission, avec un accompagnement professionnel.
+          - generic [ref=f2e329]:
+            - link "Facebook" [ref=f2e330] [cursor=pointer]:
+              - /url: "#"
+            - link "Instagram" [ref=f2e333] [cursor=pointer]:
+              - /url: "#"
+            - link "LinkedIn" [ref=f2e337] [cursor=pointer]:
+              - /url: "#"
+            - link "Twitter" [ref=f2e342] [cursor=pointer]:
+              - /url: "#"
+            - link "YouTube" [ref=f2e345] [cursor=pointer]:
+              - /url: "#"
+        - generic [ref=f2e349]:
+          - heading "Vente" [level=4] [ref=f2e350]
+          - list [ref=f2e351]:
+            - listitem [ref=f2e352]:
+              - link "Forfait Vente (4.900 Đh)" [ref=f2e353] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f2e354]:
+              - link "Photos Professionnelles" [ref=f2e355] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f2e356]:
+              - link "Estimation Gratuite" [ref=f2e357] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f2e358]:
+              - link "Acheter un bien" [ref=f2e359] [cursor=pointer]:
+                - /url: /annonces?transaction_type=sale
+        - generic [ref=f2e360]:
+          - heading "Location" [level=4] [ref=f2e361]
+          - list [ref=f2e362]:
+            - listitem [ref=f2e363]:
+              - link "Mise en Location" [ref=f2e364] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f2e365]:
+              - link "Gestion Locative Complète" [ref=f2e366] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f2e367]:
+              - link "Location Courte DuréeStayManager" [ref=f2e368] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f2e369]:
+              - link "Louer un bien" [ref=f2e370] [cursor=pointer]:
+                - /url: /annonces?transaction_type=rent
+        - generic [ref=f2e371]:
+          - heading "Professionnels" [level=4] [ref=f2e372]
+          - list [ref=f2e373]:
+            - listitem [ref=f2e374]:
+              - link "Agences partenaires" [ref=f2e375] [cursor=pointer]:
+                - /url: /agences
+            - listitem [ref=f2e376]:
+              - link "Devenir partenaire" [ref=f2e377] [cursor=pointer]:
+                - /url: /agences/inscription
+            - listitem [ref=f2e378]:
+              - link "Tarifs agences" [ref=f2e379] [cursor=pointer]:
+                - /url: /agences/tarifs
+          - heading "À propos" [level=4] [ref=f2e380]
+          - list [ref=f2e381]:
+            - listitem [ref=f2e382]:
+              - link "Qui sommes-nous" [ref=f2e383] [cursor=pointer]:
+                - /url: /a-propos
+            - listitem [ref=f2e384]:
+              - link "Nous contacter" [ref=f2e385] [cursor=pointer]:
+                - /url: /contact
+            - listitem [ref=f2e386]:
+              - link "StayManager.ma↗" [ref=f2e387] [cursor=pointer]:
+                - /url: https://www.staymanager.ma
+                - generic [ref=f2e388]: StayManager.ma
+                - text: ↗
+      - generic [ref=f2e390]:
+        - paragraph [ref=f2e391]: © 2026 SemsarOut. Tous droits réservés.
+        - generic [ref=f2e392]:
+          - link "Mentions légales" [ref=f2e393] [cursor=pointer]:
+            - /url: "#"
+          - link "CGU" [ref=f2e394] [cursor=pointer]:
+            - /url: "#"
+          - link "Politique de confidentialité" [ref=f2e395] [cursor=pointer]:
+            - /url: "#"
+          - link "Cookies" [ref=f2e396] [cursor=pointer]:
+            - /url: "#"

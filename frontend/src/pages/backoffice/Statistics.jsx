@@ -5,40 +5,23 @@ import {
   FiCalendar, FiBarChart2, FiPieChart, FiDownload
 } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
+import api from '../../services/api'
 
 const backofficeService = {
   getStats: async (params) => {
     const searchParams = new URLSearchParams(params)
-    const response = await fetch(`/api/v1/backoffice/stats/overview?${searchParams}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to fetch stats')
-    return response.json()
+    const { data } = await api.get(`/backoffice/stats/overview?${searchParams}`)
+    return data
   },
   getAgentPerformance: async (params) => {
     const searchParams = new URLSearchParams(params)
-    const response = await fetch(`/api/v1/backoffice/stats/agent-performance?${searchParams}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to fetch agent performance')
-    return response.json()
+    const { data } = await api.get(`/backoffice/stats/agent-performance?${searchParams}`)
+    return data
   },
   exportStats: async (params) => {
     const searchParams = new URLSearchParams(params)
-    const response = await fetch(`/api/v1/backoffice/stats/export?${searchParams}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'X-User-Id': localStorage.getItem('userId')
-      }
-    })
-    if (!response.ok) throw new Error('Failed to export')
-    return response.blob()
+    const { data } = await api.get(`/backoffice/stats/export?${searchParams}`, { responseType: 'blob' })
+    return data
   }
 }
 

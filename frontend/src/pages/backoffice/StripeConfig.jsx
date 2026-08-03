@@ -238,7 +238,7 @@ export default function StripeConfig() {
                   onChange={e => setConfig({ ...config, currency: e.target.value })}
                   className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white"
                 >
-                  <option value="MAD">Dirham Marocain (MAD)</option>
+                  <option value="MAD">Dirham marocain (Đh)</option>
                   <option value="EUR">Euro (EUR)</option>
                   <option value="USD">Dollar US (USD)</option>
                 </select>

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_components.html" import button, card, lucide with context %}
+{% set won = status == "won" %}
+{% block subject %}{% if won %}Félicitations, votre transaction est conclue{% else %}Mise à jour de votre dossier{% endif %} — SemsarOut{% endblock %}
+{% block preheader %}{% if won %}Votre transaction {{ reference }} est finalisée.{% else %}Votre dossier {{ reference }} a évolué.{% endif %}{% endblock %}
+{% block badge %}{{ lucide("circle-check" if won else "info") }}{% endblock %}
+{% block hero_title %}{% if won %}Transaction conclue 🎉{% else %}Mise à jour de votre dossier{% endif %}{% endblock %}
+{% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}.</p>{% endblock %}
+{% block content %}
+{% if won %}
+<p style="text-align:left; color:{{ brand.ink }};">Excellente nouvelle : votre transaction{% if transaction_type == "rent" %} de location{% else %} d'achat{% endif %} est désormais <strong>finalisée</strong>. Toute l'équipe SemsarOut vous félicite&nbsp;!</p>
+{% else %}
+<p style="text-align:left; color:{{ brand.ink }};">Votre dossier a été mis à jour. Votre conseiller reste à votre disposition pour la suite ou pour vous proposer d'autres biens.</p>
+{% endif %}
+{{ card(([("Référence", reference)] if reference else []) + [("Statut", "Conclue" if won else "Clôturée")]) }}
+<table role="presentation" width="100%"><tr><td align="center">{{ button(app.base_url ~ "/recherche", "Explorer d'autres biens") }}</td></tr></table>
+<p style="margin-top:22px; font-size:13px; color:{{ brand.muted }}; text-align:left;">Merci de votre confiance — l'équipe SemsarOut.</p>
+{% endblock %}

@@ -1,0 +1,26 @@
+[project]
+name = "semsar-identity"
+version = "0.1.0"
+description = "SemsarOut — service identity (auth · JWT RS256 · RBAC · KYC/CIN)."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "prometheus-fastapi-instrumentator>=7.0",
+    "SQLAlchemy>=2.0",
+    "psycopg[binary]>=3.1",
+    "semsar-common",
+    "semsar-auth",
+    "semsar-events",
+    "werkzeug>=3.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0", "httpx>=0.27"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["app"]

@@ -1,0 +1,9 @@
+## Généré par Ansible — env spécifique à l'instance {{ item.name }} (app uvicorn).
+## Combiné avec /etc/semsar/secrets.env (URLs inter-services, secrets communs) via
+## systemd EnvironmentFile= (deux fichiers, celui-ci prioritaire).
+SERVICE_NAME={{ item.name }}
+PORT={{ item.port }}
+TRUST_GATEWAY_HEADERS=true
+{% if not item.no_db | default(false) %}
+DATABASE_URL=postgresql+psycopg://{{ item.name | replace('-', '_') }}:{{ semsar_secrets['PG_PASSWORD_' + (item.name | replace('-', '_') | upper)] }}@localhost:5432/{{ semsar_db_name }}
+{% endif %}

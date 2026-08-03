@@ -1,0 +1,394 @@
+- generic [ref=f6e3]:
+  - banner [ref=f6e4]:
+    - generic [ref=f6e6]:
+      - link "Semsar Out" [ref=f6e7] [cursor=pointer]:
+        - /url: /
+        - generic [ref=f6e8]:
+          - generic [ref=f6e9]: Semsar
+          - generic [ref=f6e10]: Out
+      - navigation [ref=f6e11]:
+        - generic [ref=f6e12]:
+          - link "Acheter" [ref=f6e13] [cursor=pointer]:
+            - /url: /annonces?transaction_type=sale
+          - link "Louer" [ref=f6e14] [cursor=pointer]:
+            - /url: /annonces?transaction_type=rent
+        - link "Programmes neufs" [ref=f6e16] [cursor=pointer]:
+          - /url: /programmes
+        - generic [ref=f6e18]:
+          - link "Agences" [ref=f6e19] [cursor=pointer]:
+            - /url: /agences
+          - link "Nos Services" [ref=f6e20] [cursor=pointer]:
+            - /url: /nos-services
+      - button "Menu utilisateur" [ref=f6e23] [cursor=pointer]
+  - main [ref=f6e27]:
+    - generic [ref=f6e28]:
+      - generic [ref=f6e32]:
+        - generic [ref=f6e33]:
+          - generic [ref=f6e34]:
+            - button "Acheter" [ref=f6e35] [cursor=pointer]
+            - button "Louer" [ref=f6e36] [cursor=pointer]
+          - combobox "Ville, quartier..." [ref=f6e41]
+          - combobox [ref=f6e42]:
+            - option "Type de bien" [selected]
+            - option "Appartement"
+            - option "Maison"
+            - option "Villa"
+            - option "Riad"
+            - option "Terrain"
+            - option "Local commercial"
+            - option "Bureau"
+            - option "Garage/Parking"
+          - button "Filtres" [active] [ref=f6e43] [cursor=pointer]
+          - button "Rechercher" [ref=f6e48] [cursor=pointer]
+        - generic [ref=f6e554]:
+          - generic [ref=f6e555]:
+            - generic [ref=f6e556]:
+              - generic [ref=f6e557]: Prix min
+              - spinbutton "Min" [ref=f6e560]
+            - generic [ref=f6e561]:
+              - generic [ref=f6e562]: Prix max
+              - spinbutton "Max" [ref=f6e563]
+            - generic [ref=f6e564]:
+              - generic [ref=f6e565]: Surface min (m²)
+              - spinbutton "Min" [ref=f6e568]
+            - generic [ref=f6e569]:
+              - generic [ref=f6e570]: Surface max (m²)
+              - spinbutton "Max" [ref=f6e571]
+          - generic [ref=f6e572]:
+            - generic [ref=f6e573]:
+              - generic [ref=f6e574]: Chambres min
+              - combobox [ref=f6e579]:
+                - option "-" [selected]
+                - option "1+"
+                - option "2+"
+                - option "3+"
+                - option "4+"
+                - option "5+"
+            - generic [ref=f6e580]:
+              - generic [ref=f6e581]: Pièces min
+              - combobox [ref=f6e582]:
+                - option "-" [selected]
+                - option "1+"
+                - option "2+"
+                - option "3+"
+                - option "4+"
+                - option "5+"
+                - option "6+"
+                - option "7+"
+                - option "8+"
+            - generic [ref=f6e583]:
+              - generic [ref=f6e584]: Sdb min
+              - combobox [ref=f6e587]:
+                - option "-" [selected]
+                - option "1+"
+                - option "2+"
+                - option "3+"
+                - option "4+"
+            - generic [ref=f6e588]:
+              - generic [ref=f6e589]: Type vendeur
+              - combobox [ref=f6e590]:
+                - option "Tous" [selected]
+                - option "Particuliers"
+                - option "Agences"
+          - generic [ref=f6e591]:
+            - generic [ref=f6e592]: Équipements
+            - generic [ref=f6e595]:
+              - button "Parking" [ref=f6e596] [cursor=pointer]
+              - button "Garage" [ref=f6e597] [cursor=pointer]
+              - button "Jardin" [ref=f6e598] [cursor=pointer]
+              - button "Terrasse" [ref=f6e599] [cursor=pointer]
+              - button "Balcon" [ref=f6e600] [cursor=pointer]
+              - button "Piscine" [ref=f6e601] [cursor=pointer]
+              - button "Ascenseur" [ref=f6e602] [cursor=pointer]
+              - button "Gardien" [ref=f6e603] [cursor=pointer]
+              - button "Climatisation" [ref=f6e604] [cursor=pointer]
+              - button "Chauffage" [ref=f6e605] [cursor=pointer]
+              - button "Meublé" [ref=f6e606] [cursor=pointer]
+              - button "Cuisine équipée" [ref=f6e607] [cursor=pointer]
+          - generic [ref=f6e608]:
+            - generic [ref=f6e609] [cursor=pointer]:
+              - checkbox "Avec photos" [ref=f6e610]
+              - generic [ref=f6e611]: Avec photos
+            - generic [ref=f6e612] [cursor=pointer]:
+              - checkbox "À la une" [ref=f6e613]
+              - generic [ref=f6e614]: À la une
+            - generic [ref=f6e621] [cursor=pointer]:
+              - checkbox "RDC" [ref=f6e622]
+              - generic [ref=f6e623]: RDC
+            - generic [ref=f6e624] [cursor=pointer]:
+              - checkbox "Dernier étage" [ref=f6e625]
+              - generic [ref=f6e626]: Dernier étage
+          - button "Réinitialiser les filtres" [ref=f6e628] [cursor=pointer]
+      - generic [ref=f6e53]:
+        - generic [ref=f6e54]:
+          - generic [ref=f6e55]:
+            - heading "Annonces immobilières" [level=1] [ref=f6e56]
+            - paragraph [ref=f6e57]: 56 annonces trouvées
+          - generic [ref=f6e58]:
+            - combobox [ref=f6e59]:
+              - option "Plus récentes" [selected]
+              - option "Plus anciennes"
+              - option "Prix croissant"
+              - option "Prix décroissant"
+              - option "Surface décroissante"
+              - option "Plus de pièces"
+            - generic [ref=f6e60]:
+              - button "Vue grille" [ref=f6e61] [cursor=pointer]
+              - button "Vue liste" [ref=f6e67] [cursor=pointer]
+              - button "Vue carte" [ref=f6e69] [cursor=pointer]
+              - button "Vue mixte" [ref=f6e72] [cursor=pointer]
+        - generic [ref=f6e202]:
+          - link "Vente Favori Duplex spacieux en centre-ville - Malabata Tanger — Malabata 304 m² 5 2 pièces 3.270.000Đh" [ref=f6e203] [cursor=pointer]:
+            - /url: /annonces/179
+            - generic [ref=f6e204]:
+              - generic [ref=f6e209]: Vente
+              - button "Favori" [ref=f6e211]
+            - generic [ref=f6e214]:
+              - heading "Duplex spacieux en centre-ville - Malabata" [level=3] [ref=f6e215]
+              - generic [ref=f6e216]: Tanger — Malabata
+              - generic [ref=f6e221]:
+                - generic [ref=f6e222]: 304 m²
+                - generic [ref=f6e225]: "5"
+                - generic [ref=f6e229]: 2 pièces
+              - generic [ref=f6e230]: 3.270.000Đh
+          - link "Location Favori Duplex spacieux en centre-ville - Médina Meknès — Médina 219 m² 4 3 pièces 22.000Đh/mois" [ref=f6e231] [cursor=pointer]:
+            - /url: /annonces/172
+            - generic [ref=f6e232]:
+              - generic [ref=f6e237]: Location
+              - button "Favori" [ref=f6e239]
+            - generic [ref=f6e242]:
+              - heading "Duplex spacieux en centre-ville - Médina" [level=3] [ref=f6e243]
+              - generic [ref=f6e244]: Meknès — Médina
+              - generic [ref=f6e249]:
+                - generic [ref=f6e250]: 219 m²
+                - generic [ref=f6e253]: "4"
+                - generic [ref=f6e257]: 3 pièces
+              - generic [ref=f6e258]: 22.000Đh/mois
+          - link "Vente Favori Villa de luxe avec piscine - Californie Casablanca — Californie 303 m² 2 2 pièces 4.930.000Đh" [ref=f6e259] [cursor=pointer]:
+            - /url: /annonces/189
+            - generic [ref=f6e260]:
+              - generic [ref=f6e265]: Vente
+              - button "Favori" [ref=f6e267]
+            - generic [ref=f6e270]:
+              - heading "Villa de luxe avec piscine - Californie" [level=3] [ref=f6e271]
+              - generic [ref=f6e272]: Casablanca — Californie
+              - generic [ref=f6e277]:
+                - generic [ref=f6e278]: 303 m²
+                - generic [ref=f6e281]: "2"
+                - generic [ref=f6e285]: 2 pièces
+              - generic [ref=f6e286]: 4.930.000Đh
+          - link "Vente Favori Villa de luxe avec piscine - Ville Nouvelle Meknès — Ville Nouvelle 196 m² 4 5 pièces 840.000Đh" [ref=f6e287] [cursor=pointer]:
+            - /url: /annonces/176
+            - generic [ref=f6e288]:
+              - generic [ref=f6e293]: Vente
+              - button "Favori" [ref=f6e295]
+            - generic [ref=f6e298]:
+              - heading "Villa de luxe avec piscine - Ville Nouvelle" [level=3] [ref=f6e299]
+              - generic [ref=f6e300]: Meknès — Ville Nouvelle
+              - generic [ref=f6e305]:
+                - generic [ref=f6e306]: 196 m²
+                - generic [ref=f6e309]: "4"
+                - generic [ref=f6e313]: 5 pièces
+              - generic [ref=f6e314]: 840.000Đh
+          - link "Vente Favori Loft industriel rénové - Cap Spartel Tanger — Cap Spartel 79 m² 2 3 pièces 6.080.000Đh" [ref=f6e315] [cursor=pointer]:
+            - /url: /annonces/169
+            - generic [ref=f6e316]:
+              - generic [ref=f6e321]: Vente
+              - button "Favori" [ref=f6e323]
+            - generic [ref=f6e326]:
+              - heading "Loft industriel rénové - Cap Spartel" [level=3] [ref=f6e327]
+              - generic [ref=f6e328]: Tanger — Cap Spartel
+              - generic [ref=f6e333]:
+                - generic [ref=f6e334]: 79 m²
+                - generic [ref=f6e337]: "2"
+                - generic [ref=f6e341]: 3 pièces
+              - generic [ref=f6e342]: 6.080.000Đh
+          - link "Vente Favori Villa de luxe avec piscine - Bir Rami Kénitra — Bir Rami 232 m² 5 8 pièces 5.570.000Đh" [ref=f6e343] [cursor=pointer]:
+            - /url: /annonces/174
+            - generic [ref=f6e344]:
+              - generic [ref=f6e349]: Vente
+              - button "Favori" [ref=f6e351]
+            - generic [ref=f6e354]:
+              - heading "Villa de luxe avec piscine - Bir Rami" [level=3] [ref=f6e355]
+              - generic [ref=f6e356]: Kénitra — Bir Rami
+              - generic [ref=f6e361]:
+                - generic [ref=f6e362]: 232 m²
+                - generic [ref=f6e365]: "5"
+                - generic [ref=f6e369]: 8 pièces
+              - generic [ref=f6e370]: 5.570.000Đh
+          - link "Vente Favori Riad authentique dans la médina - Iberia Tanger — Iberia 198 m² 2 6 pièces 4.630.000Đh" [ref=f6e371] [cursor=pointer]:
+            - /url: /annonces/177
+            - generic [ref=f6e372]:
+              - generic [ref=f6e377]: Vente
+              - button "Favori" [ref=f6e379]
+            - generic [ref=f6e382]:
+              - heading "Riad authentique dans la médina - Iberia" [level=3] [ref=f6e383]
+              - generic [ref=f6e384]: Tanger — Iberia
+              - generic [ref=f6e389]:
+                - generic [ref=f6e390]: 198 m²
+                - generic [ref=f6e393]: "2"
+                - generic [ref=f6e397]: 6 pièces
+              - generic [ref=f6e398]: 4.630.000Đh
+          - link "Vente Favori Villa de luxe avec piscine - Charaf Agadir — Charaf 334 m² 1 3 pièces 5.790.000Đh" [ref=f6e399] [cursor=pointer]:
+            - /url: /annonces/180
+            - generic [ref=f6e400]:
+              - generic [ref=f6e405]: Vente
+              - button "Favori" [ref=f6e407]
+            - generic [ref=f6e410]:
+              - heading "Villa de luxe avec piscine - Charaf" [level=3] [ref=f6e411]
+              - generic [ref=f6e412]: Agadir — Charaf
+              - generic [ref=f6e417]:
+                - generic [ref=f6e418]: 334 m²
+                - generic [ref=f6e421]: "1"
+                - generic [ref=f6e425]: 3 pièces
+              - generic [ref=f6e426]: 5.790.000Đh
+          - link "Vente Favori Studio meublé proche commodités - Mimosas Kénitra — Mimosas 144 m² 3 3 pièces 1.370.000Đh" [ref=f6e427] [cursor=pointer]:
+            - /url: /annonces/181
+            - generic [ref=f6e428]:
+              - generic [ref=f6e433]: Vente
+              - button "Favori" [ref=f6e435]
+            - generic [ref=f6e438]:
+              - heading "Studio meublé proche commodités - Mimosas" [level=3] [ref=f6e439]
+              - generic [ref=f6e440]: Kénitra — Mimosas
+              - generic [ref=f6e445]:
+                - generic [ref=f6e446]: 144 m²
+                - generic [ref=f6e449]: "3"
+                - generic [ref=f6e453]: 3 pièces
+              - generic [ref=f6e454]: 1.370.000Đh
+          - link "Vente Favori Appartement familial 4 chambres - Les Orangers Rabat — Les Orangers 207 m² 5 3 pièces 1.900.000Đh" [ref=f6e455] [cursor=pointer]:
+            - /url: /annonces/182
+            - generic [ref=f6e456]:
+              - generic [ref=f6e461]: Vente
+              - button "Favori" [ref=f6e463]
+            - generic [ref=f6e466]:
+              - heading "Appartement familial 4 chambres - Les Orangers" [level=3] [ref=f6e467]
+              - generic [ref=f6e468]: Rabat — Les Orangers
+              - generic [ref=f6e473]:
+                - generic [ref=f6e474]: 207 m²
+                - generic [ref=f6e477]: "5"
+                - generic [ref=f6e481]: 3 pièces
+              - generic [ref=f6e482]: 1.900.000Đh
+          - link "Location Favori Penthouse avec terrasse panoramique - Ville Nouvelle Meknès — Ville Nouvelle 92 m² 4 7 pièces 25.000Đh/mois" [ref=f6e483] [cursor=pointer]:
+            - /url: /annonces/185
+            - generic [ref=f6e484]:
+              - generic [ref=f6e489]: Location
+              - button "Favori" [ref=f6e491]
+            - generic [ref=f6e494]:
+              - heading "Penthouse avec terrasse panoramique - Ville Nouvelle" [level=3] [ref=f6e495]
+              - generic [ref=f6e496]: Meknès — Ville Nouvelle
+              - generic [ref=f6e501]:
+                - generic [ref=f6e502]: 92 m²
+                - generic [ref=f6e505]: "4"
+                - generic [ref=f6e509]: 7 pièces
+              - generic [ref=f6e510]: 25.000Đh/mois
+          - link "Bel appartement F2 Marshan Location Favori Bel appartement F2 Marshan Tanger — Marshan 127 m² 1 2 pièces 4.900Đh/mois" [ref=f6e511] [cursor=pointer]:
+            - /url: /annonces/115
+            - generic [ref=f6e512]:
+              - img "Bel appartement F2 Marshan" [ref=f6e513]
+              - generic [ref=f6e514]: Location
+              - button "Favori" [ref=f6e516]
+            - generic [ref=f6e519]:
+              - heading "Bel appartement F2 Marshan" [level=3] [ref=f6e520]
+              - generic [ref=f6e521]: Tanger — Marshan
+              - generic [ref=f6e526]:
+                - generic [ref=f6e527]: 127 m²
+                - generic [ref=f6e530]: "1"
+                - generic [ref=f6e534]: 2 pièces
+              - generic [ref=f6e535]: 4.900Đh/mois
+        - generic [ref=f6e536]:
+          - button "Précédent" [disabled] [ref=f6e537]
+          - generic [ref=f6e541]:
+            - button "1" [ref=f6e542] [cursor=pointer]
+            - button "2" [ref=f6e543] [cursor=pointer]
+            - button "3" [ref=f6e544] [cursor=pointer]
+            - button "4" [ref=f6e545] [cursor=pointer]
+            - button "5" [ref=f6e546] [cursor=pointer]
+          - button "Suivant" [ref=f6e547] [cursor=pointer]
+        - paragraph [ref=f6e551]: Affichage 1 - 12 sur 56 résultats
+  - contentinfo [ref=f6e125]:
+    - generic [ref=f6e126]:
+      - generic [ref=f6e127]:
+        - generic [ref=f6e128]:
+          - link "Semsar Out" [ref=f6e129] [cursor=pointer]:
+            - /url: /
+            - generic [ref=f6e130]:
+              - generic [ref=f6e131]: Semsar
+              - generic [ref=f6e132]: Out
+          - paragraph [ref=f6e133]: L'immobilier sans les intermédiaires douteux. Vendez, louez et gérez votre bien à tarif fixe, sans commission, avec un accompagnement professionnel.
+          - generic [ref=f6e134]:
+            - link "Facebook" [ref=f6e135] [cursor=pointer]:
+              - /url: "#"
+            - link "Instagram" [ref=f6e138] [cursor=pointer]:
+              - /url: "#"
+            - link "LinkedIn" [ref=f6e142] [cursor=pointer]:
+              - /url: "#"
+            - link "Twitter" [ref=f6e147] [cursor=pointer]:
+              - /url: "#"
+            - link "YouTube" [ref=f6e150] [cursor=pointer]:
+              - /url: "#"
+        - generic [ref=f6e154]:
+          - heading "Vente" [level=4] [ref=f6e155]
+          - list [ref=f6e156]:
+            - listitem [ref=f6e157]:
+              - link "Forfait Vente (4.900 Đh)" [ref=f6e158] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f6e159]:
+              - link "Photos Professionnelles" [ref=f6e160] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f6e161]:
+              - link "Estimation Gratuite" [ref=f6e162] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f6e163]:
+              - link "Acheter un bien" [ref=f6e164] [cursor=pointer]:
+                - /url: /annonces?transaction_type=sale
+        - generic [ref=f6e165]:
+          - heading "Location" [level=4] [ref=f6e166]
+          - list [ref=f6e167]:
+            - listitem [ref=f6e168]:
+              - link "Mise en Location" [ref=f6e169] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f6e170]:
+              - link "Gestion Locative Complète" [ref=f6e171] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f6e172]:
+              - link "Location Courte DuréeStayManager" [ref=f6e173] [cursor=pointer]:
+                - /url: /nos-services
+            - listitem [ref=f6e174]:
+              - link "Louer un bien" [ref=f6e175] [cursor=pointer]:
+                - /url: /annonces?transaction_type=rent
+        - generic [ref=f6e176]:
+          - heading "Professionnels" [level=4] [ref=f6e177]
+          - list [ref=f6e178]:
+            - listitem [ref=f6e179]:
+              - link "Agences partenaires" [ref=f6e180] [cursor=pointer]:
+                - /url: /agences
+            - listitem [ref=f6e181]:
+              - link "Devenir partenaire" [ref=f6e182] [cursor=pointer]:
+                - /url: /agences/inscription
+            - listitem [ref=f6e183]:
+              - link "Tarifs agences" [ref=f6e184] [cursor=pointer]:
+                - /url: /agences/tarifs
+          - heading "À propos" [level=4] [ref=f6e185]
+          - list [ref=f6e186]:
+            - listitem [ref=f6e187]:
+              - link "Qui sommes-nous" [ref=f6e188] [cursor=pointer]:
+                - /url: /a-propos
+            - listitem [ref=f6e189]:
+              - link "Nous contacter" [ref=f6e190] [cursor=pointer]:
+                - /url: /contact
+            - listitem [ref=f6e191]:
+              - link "StayManager.ma↗" [ref=f6e192] [cursor=pointer]:
+                - /url: https://www.staymanager.ma
+                - generic [ref=f6e193]: StayManager.ma
+                - text: ↗
+      - generic [ref=f6e195]:
+        - paragraph [ref=f6e196]: © 2026 SemsarOut. Tous droits réservés.
+        - generic [ref=f6e197]:
+          - link "Mentions légales" [ref=f6e198] [cursor=pointer]:
+            - /url: "#"
+          - link "CGU" [ref=f6e199] [cursor=pointer]:
+            - /url: "#"
+          - link "Politique de confidentialité" [ref=f6e200] [cursor=pointer]:
+            - /url: "#"
+          - link "Cookies" [ref=f6e201] [cursor=pointer]:
+            - /url: "#"

@@ -6,6 +6,12 @@ import {
   FiDroplet, FiSun, FiStar, FiZap
 } from 'react-icons/fi'
 import { HiSparkles } from 'react-icons/hi2'
+import { DIRHAM_SYMBOL } from '../../utils/currency'
+import MultiSelectDropdown from './MultiSelectDropdown'
+
+// Normalise une valeur de type de bien (tableau, chaîne "a,b" ou vide) en tableau
+const toTypeArray = (v) =>
+  Array.isArray(v) ? v : (v ? String(v).split(',').filter(Boolean) : [])
 
 const PROPERTY_TYPES = [
   { value: 'apartment', label: 'Appartement' },
@@ -47,18 +53,18 @@ const ENERGY_CLASSES = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
 
 const PRICE_RANGES = {
   sale: [
-    { min: 0, max: 500000, label: '< 500 000 Đ' },
-    { min: 500000, max: 1000000, label: '500 000 - 1 000 000 Đ' },
-    { min: 1000000, max: 2000000, label: '1 000 000 - 2 000 000 Đ' },
-    { min: 2000000, max: 5000000, label: '2 000 000 - 5 000 000 Đ' },
-    { min: 5000000, max: null, label: '> 5 000 000 Đ' }
+    { min: 0, max: 500000, label: `< 500 000 ${DIRHAM_SYMBOL}` },
+    { min: 500000, max: 1000000, label: `500 000 - 1 000 000 ${DIRHAM_SYMBOL}` },
+    { min: 1000000, max: 2000000, label: `1 000 000 - 2 000 000 ${DIRHAM_SYMBOL}` },
+    { min: 2000000, max: 5000000, label: `2 000 000 - 5 000 000 ${DIRHAM_SYMBOL}` },
+    { min: 5000000, max: null, label: `> 5 000 000 ${DIRHAM_SYMBOL}` }
   ],
   rent: [
-    { min: 0, max: 3000, label: '< 3 000 Đ/mois' },
-    { min: 3000, max: 5000, label: '3 000 - 5 000 Đ/mois' },
-    { min: 5000, max: 10000, label: '5 000 - 10 000 Đ/mois' },
-    { min: 10000, max: 20000, label: '10 000 - 20 000 Đ/mois' },
-    { min: 20000, max: null, label: '> 20 000 Đ/mois' }
+    { min: 0, max: 3000, label: `< 3 000 ${DIRHAM_SYMBOL}/mois` },
+    { min: 3000, max: 5000, label: `3 000 - 5 000 ${DIRHAM_SYMBOL}/mois` },
+    { min: 5000, max: 10000, label: `5 000 - 10 000 ${DIRHAM_SYMBOL}/mois` },
+    { min: 10000, max: 20000, label: `10 000 - 20 000 ${DIRHAM_SYMBOL}/mois` },
+    { min: 20000, max: null, label: `> 20 000 ${DIRHAM_SYMBOL}/mois` }
   ]
 }
 
@@ -73,7 +79,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
   // Filter state
   const [filters, setFilters] = useState({
     transaction_type: initialFilters.transaction_type || searchParams.get('transaction_type') || 'sale',
-    property_type: initialFilters.property_type || searchParams.get('property_type') || '',
+    property_type: toTypeArray(initialFilters.property_type ?? searchParams.get('property_type')),
     city: initialFilters.city || searchParams.get('city') || '',
     neighborhood: initialFilters.neighborhood || searchParams.get('neighborhood') || '',
     min_price: initialFilters.min_price || searchParams.get('min_price') || '',
@@ -97,6 +103,15 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }))
+  }
+
+  const handlePropertyTypeToggle = (value) => {
+    setFilters(prev => ({
+      ...prev,
+      property_type: prev.property_type.includes(value)
+        ? prev.property_type.filter(t => t !== value)
+        : [...prev.property_type, value]
+    }))
   }
 
   const handleFeatureToggle = (feature) => {
@@ -158,7 +173,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
   const resetFilters = () => {
     setFilters({
       transaction_type: 'sale',
-      property_type: '',
+      property_type: [],
       city: '',
       neighborhood: '',
       min_price: '',
@@ -191,107 +206,306 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
 
   if (variant === 'compact') {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-4">
-        <form onSubmit={handleSearch} className="flex gap-4">
-          {/* Transaction type toggle */}
-          <div className="flex bg-gray-100 rounded-lg p-1">
-            <button
-              type="button"
-              onClick={() => handleFilterChange('transaction_type', 'sale')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                filters.transaction_type === 'sale'
-                  ? 'bg-white text-primary-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Acheter
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFilterChange('transaction_type', 'rent')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                filters.transaction_type === 'rent'
-                  ? 'bg-white text-primary-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Louer
-            </button>
-          </div>
+      <div className="bg-white rounded-xl shadow-lg">
+        <form onSubmit={handleSearch} className="p-4">
+          <div className="flex flex-wrap gap-4">
+            {/* Transaction type toggle */}
+            <div className="flex bg-gray-100 rounded-lg p-1">
+              <button
+                type="button"
+                onClick={() => handleFilterChange('transaction_type', 'sale')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  filters.transaction_type === 'sale'
+                    ? 'bg-white text-primary-600 shadow-sm'
+                    : 'text-gray-600 hover:text-black'
+                }`}
+              >
+                Acheter
+              </button>
+              <button
+                type="button"
+                onClick={() => handleFilterChange('transaction_type', 'rent')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  filters.transaction_type === 'rent'
+                    ? 'bg-white text-primary-600 shadow-sm'
+                    : 'text-gray-600 hover:text-black'
+                }`}
+              >
+                Louer
+              </button>
+            </div>
 
-          {/* City input */}
-          <div className="flex-1 relative">
-            <FiMapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Ville, quartier..."
-              value={filters.city}
-              onChange={(e) => handleFilterChange('city', e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              list="city-suggestions"
+            {/* City input */}
+            <div className="flex-1 min-w-[200px] relative">
+              <FiMapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Ville, quartier..."
+                value={filters.city}
+                onChange={(e) => handleFilterChange('city', e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                list="city-suggestions"
+              />
+              <datalist id="city-suggestions">
+                {MOROCCAN_CITIES.map(city => (
+                  <option key={city} value={city} />
+                ))}
+              </datalist>
+            </div>
+
+            {/* Property type (multi-sélection) */}
+            <MultiSelectDropdown
+              label="Type de bien"
+              options={PROPERTY_TYPES}
+              selected={filters.property_type}
+              onToggle={handlePropertyTypeToggle}
+              className="min-w-[170px]"
             />
-            <datalist id="city-suggestions">
-              {MOROCCAN_CITIES.map(city => (
-                <option key={city} value={city} />
-              ))}
-            </datalist>
+
+            {/* Advanced filters button */}
+            <button
+              type="button"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${
+                showAdvanced
+                  ? 'bg-primary-50 border-primary-500 text-primary-700'
+                  : 'text-gray-600 hover:text-black border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              <FiSliders />
+              <span>Filtres</span>
+              {activeFiltersCount > 0 && (
+                <span className="bg-primary-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {activeFiltersCount}
+                </span>
+              )}
+              {showAdvanced ? <FiChevronUp className="w-4 h-4" /> : <FiChevronDown className="w-4 h-4" />}
+            </button>
+
+            {/* Search button */}
+            <button
+              type="submit"
+              className="flex items-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            >
+              <FiSearch />
+              <span>Rechercher</span>
+            </button>
           </div>
 
-          {/* Property type */}
-          <select
-            value={filters.property_type}
-            onChange={(e) => handleFilterChange('property_type', e.target.value)}
-            className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          >
-            <option value="">Type de bien</option>
-            {PROPERTY_TYPES.map(type => (
-              <option key={type.value} value={type.value}>{type.label}</option>
-            ))}
-          </select>
+          {/* Advanced filters panel for compact variant */}
+          {showAdvanced && (
+            <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
+              {/* Price range */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <FiDollarSign className="inline w-4 h-4 mr-1" />
+                    Prix min
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    value={filters.min_price}
+                    onChange={(e) => handleFilterChange('min_price', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Prix max</label>
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={filters.max_price}
+                    onChange={(e) => handleFilterChange('max_price', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <FiMaximize className="inline w-4 h-4 mr-1" />
+                    Surface min (m²)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    value={filters.min_surface}
+                    onChange={(e) => handleFilterChange('min_surface', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Surface max (m²)</label>
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={filters.max_surface}
+                    onChange={(e) => handleFilterChange('max_surface', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
 
-          {/* Advanced filters button */}
-          <button
-            type="button"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg hover:bg-gray-50"
-          >
-            <FiSliders />
-            <span>Filtres</span>
-            {activeFiltersCount > 0 && (
-              <span className="bg-primary-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                {activeFiltersCount}
-              </span>
-            )}
-          </button>
+              {/* Rooms */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <FiLayers className="inline w-4 h-4 mr-1" />
+                    Chambres min
+                  </label>
+                  <select
+                    value={filters.min_bedrooms}
+                    onChange={(e) => handleFilterChange('min_bedrooms', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="">-</option>
+                    {[1,2,3,4,5].map(n => (
+                      <option key={n} value={n}>{n}+</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Pièces min</label>
+                  <select
+                    value={filters.min_rooms}
+                    onChange={(e) => handleFilterChange('min_rooms', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="">-</option>
+                    {[1,2,3,4,5,6,7,8].map(n => (
+                      <option key={n} value={n}>{n}+</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <FiDroplet className="inline w-4 h-4 mr-1" />
+                    Sdb min
+                  </label>
+                  <select
+                    value={filters.min_bathrooms}
+                    onChange={(e) => handleFilterChange('min_bathrooms', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="">-</option>
+                    {[1,2,3,4].map(n => (
+                      <option key={n} value={n}>{n}+</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Type vendeur</label>
+                  <select
+                    value={filters.owner_type}
+                    onChange={(e) => handleFilterChange('owner_type', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="">Tous</option>
+                    <option value="particular">Particuliers</option>
+                    <option value="agency">Agences</option>
+                  </select>
+                </div>
+              </div>
 
-          {/* Search button */}
-          <button
-            type="submit"
-            className="flex items-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            <FiSearch />
-            <span>Rechercher</span>
-          </button>
+              {/* Features */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <FiStar className="inline w-4 h-4 mr-1" />
+                  Équipements
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {FEATURES.slice(0, 12).map(feature => (
+                    <button
+                      key={feature.value}
+                      type="button"
+                      onClick={() => handleFeatureToggle(feature.value)}
+                      className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                        filters.features.includes(feature.value)
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {feature.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Options */}
+              <div className="flex flex-wrap gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.has_photos}
+                    onChange={(e) => handleFilterChange('has_photos', e.target.checked)}
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm text-gray-700">Avec photos</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.is_featured}
+                    onChange={(e) => handleFilterChange('is_featured', e.target.checked)}
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm text-gray-700">
+                    <FiSun className="inline w-4 h-4 mr-1 text-yellow-500" />
+                    À la une
+                  </span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.ground_floor}
+                    onChange={(e) => handleFilterChange('ground_floor', e.target.checked)}
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm text-gray-700">RDC</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.last_floor}
+                    onChange={(e) => handleFilterChange('last_floor', e.target.checked)}
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm text-gray-700">Dernier étage</span>
+                </label>
+              </div>
+
+              {/* Reset button */}
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm"
+                >
+                  <FiX className="w-4 h-4" />
+                  Réinitialiser les filtres
+                </button>
+              </div>
+            </div>
+          )}
         </form>
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-      {/* AI Search Section (V2 Preview) */}
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4">
+    <div className="bg-white rounded-ds-xl shadow-ds-xl overflow-hidden">
+      {/* AI Search Section (V2 Preview) — panneau midnight (design system) */}
+      <div className="p-4" style={{ background: 'linear-gradient(120deg, #0B1220, #16233b)' }}>
         <div className="flex items-center gap-2 mb-2">
-          <HiSparkles className="text-yellow-300 w-5 h-5" />
-          <span className="text-white font-semibold">Recherche IA</span>
-          <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">Bientôt disponible</span>
+          <HiSparkles className="text-primary-400 w-5 h-5" />
+          <span className="text-ivory font-semibold">Recherche IA</span>
+          <span className="bg-white/[.12] text-ivory text-xs px-2 py-0.5 rounded-full">Bientôt disponible</span>
         </div>
         <div className="relative">
           <input
             type="text"
             value={aiQuery}
             onChange={(e) => setAiQuery(e.target.value)}
-            placeholder="Ex: Appartement 3 chambres avec terrasse à Casablanca, proche des écoles, budget max 1.5M Đ..."
+            placeholder={`Ex: Appartement 3 chambres avec terrasse à Casablanca, proche des écoles, budget max 1.5M ${DIRHAM_SYMBOL}...`}
             className="w-full px-4 py-3 pr-12 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/60 focus:ring-2 focus:ring-white/50 focus:border-transparent"
             onFocus={() => setShowAiTooltip(true)}
             onBlur={() => setTimeout(() => setShowAiTooltip(false), 200)}
@@ -319,10 +533,10 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
             <button
               type="button"
               onClick={() => handleFilterChange('transaction_type', 'sale')}
-              className={`px-8 py-3 rounded-lg text-sm font-semibold transition-all ${
+              className={`px-8 py-3 rounded-lg text-sm font-bold transition-all ${
                 filters.transaction_type === 'sale'
-                  ? 'bg-white text-primary-600 shadow-md'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white text-midnight shadow-ds-sm border-b-2 border-primary-400'
+                  : 'text-slate-500 hover:text-midnight'
               }`}
             >
               Acheter
@@ -330,10 +544,10 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
             <button
               type="button"
               onClick={() => handleFilterChange('transaction_type', 'rent')}
-              className={`px-8 py-3 rounded-lg text-sm font-semibold transition-all ${
+              className={`px-8 py-3 rounded-lg text-sm font-bold transition-all ${
                 filters.transaction_type === 'rent'
-                  ? 'bg-white text-primary-600 shadow-md'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white text-midnight shadow-ds-sm border-b-2 border-primary-400'
+                  : 'text-slate-500 hover:text-midnight'
               }`}
             >
               Louer
@@ -370,16 +584,12 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
               <FiHome className="inline w-4 h-4 mr-1" />
               Type de bien
             </label>
-            <select
-              value={filters.property_type}
-              onChange={(e) => handleFilterChange('property_type', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">Tous les types</option>
-              {PROPERTY_TYPES.map(type => (
-                <option key={type.value} value={type.value}>{type.label}</option>
-              ))}
-            </select>
+            <MultiSelectDropdown
+              label="Tous les types"
+              options={PROPERTY_TYPES}
+              selected={filters.property_type}
+              onToggle={handlePropertyTypeToggle}
+            />
           </div>
 
           {/* Price range */}
@@ -477,7 +687,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                 <select
                   value={filters.min_rooms}
                   onChange={(e) => handleFilterChange('min_rooms', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-black"
                 >
                   <option value="">-</option>
                   {[1,2,3,4,5,6,7,8].map(n => (
@@ -490,7 +700,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                 <select
                   value={filters.max_rooms}
                   onChange={(e) => handleFilterChange('max_rooms', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-black"
                 >
                   <option value="">-</option>
                   {[1,2,3,4,5,6,7,8,9,10].map(n => (
@@ -506,7 +716,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                 <select
                   value={filters.min_bathrooms}
                   onChange={(e) => handleFilterChange('min_bathrooms', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-black"
                 >
                   <option value="">-</option>
                   {[1,2,3,4].map(n => (
@@ -548,32 +758,6 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                   />
                   <span className="text-sm text-gray-700">Dernier étage</span>
                 </label>
-              </div>
-            </div>
-
-            {/* Energy class */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <FiZap className="inline w-4 h-4 mr-1" />
-                Classe énergétique (DPE)
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {ENERGY_CLASSES.map(cls => (
-                  <button
-                    key={cls}
-                    type="button"
-                    onClick={() => handleEnergyToggle(cls)}
-                    className={`w-10 h-10 rounded-lg font-semibold transition-colors ${
-                      filters.energy_class.includes(cls)
-                        ? cls <= 'B' ? 'bg-green-500 text-white' :
-                          cls <= 'D' ? 'bg-yellow-500 text-white' :
-                          'bg-red-500 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {cls}
-                  </button>
-                ))}
               </div>
             </div>
 

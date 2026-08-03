@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_components.html" import card, lucide with context %}
+{% block subject %}Votre mandat de gestion est signé{% endblock %}
+{% block preheader %}SemsarOut gère désormais votre bien — voici le récapitulatif de votre mandat.{% endblock %}
+{% block badge %}{{ lucide("handshake") }}{% endblock %}
+{% block hero_title %}Mandat de gestion signé{% endblock %}
+{% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if name %} {{ name }}{% endif %}, merci de votre confiance.</p>{% endblock %}
+{% block content %}
+<p style="text-align:left; color:{{ brand.ink }};">Votre mandat de gestion est désormais actif. Notre équipe prend en charge la gestion locative de votre bien : recherche de locataire, quittancement, suivi et compte-rendu de gestion.</p>
+{{ card(([("Référence", reference)] if reference else [])
+  + ([("Type", "Gestion" if mandate_type == "gestion" else "Location")] if mandate_type else [])
+  + ([("Honoraires", (fee_percent|string) ~ " %")] if fee_percent else [])) }}
+<p style="margin-top:18px; font-size:13px; color:{{ brand.muted }}; text-align:left;">Une question sur votre mandat&nbsp;? Écrivez-nous à <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
+{% endblock %}
