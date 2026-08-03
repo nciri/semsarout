@@ -1,8 +1,12 @@
-name: Deploy prod (Hetzner)
+name: Deploy prod (Hetzner) — DÉSACTIVÉ
 
+# Chemin « serveur dédié Terraform/Hetzner » NEUTRALISÉ : la production tourne en
+# co-location sur le serveur existant (déploiement manuel par rsync + systemd, cf.
+# memory/prod-colocation-tabiblib.md). On retire le déclencheur push:main pour qu'un
+# merge vers main ne provisionne plus de serveur Hetzner par accident. Le pipeline de
+# déploiement co-location (tests CI puis rsync/restart) reste à construire.
+# Conservé lançable manuellement uniquement.
 on:
-  push:
-    branches: [main]
   workflow_dispatch: {}
 
 permissions:
