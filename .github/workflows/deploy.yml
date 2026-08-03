@@ -15,6 +15,11 @@ jobs:
     # sont portés par l'environnement GitHub `production` : le job doit le déclarer pour y accéder.
     environment: production
     runs-on: ubuntu-latest
+    # Credentials du backend S3 (Object Storage) au niveau JOB : init, validate, apply
+    # ET output touchent tous au state distant et ont donc besoin de ces variables.
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.TF_BACKEND_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_BACKEND_SECRET_KEY }}
     outputs:
       server_ip: ${{ steps.output.outputs.server_ip }}
     defaults:
@@ -47,9 +52,6 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Terraform init
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.TF_BACKEND_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_BACKEND_SECRET_KEY }}
         run: |
           set -euo pipefail
           terraform init \
