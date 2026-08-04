@@ -30,16 +30,22 @@ echo "== 2. redémarrage du mesh (create_all au boot = migrations légères) =="
 systemctl daemon-reload
 systemctl restart 'semsar-*.service'
 
-echo "== 3. santé =="
-sleep 6
+echo "== 3. santé (attente de convergence du mesh) =="
+# 64 unités redémarrent : on laisse converger, puis on vérifie le gateway (poll) et les unités.
+code=000
+for _ in $(seq 1 40); do
+  code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8099/health 2>/dev/null || true)
+  [ "$code" = "200" ] && break
+  sleep 3
+done
+echo "  gateway/BFF health: ${code:-000}"
 FAIL=0
+[ "$code" = "200" ] || FAIL=1
+sleep 3  # laisser les dernières unités finir leur démarrage
 while read -r unit; do
   state=$(systemctl is-active "$unit" 2>/dev/null || true)
   [ "$state" = "active" ] || { echo "  ✗ $unit -> $state"; FAIL=1; }
 done < <(systemctl list-units 'semsar-*.service' --no-legend --plain | awk '{print $1}')
-code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8099/health || echo 000)
-echo "  gateway/BFF health: $code"
-[ "$code" = "200" ] || FAIL=1
 if [ "$FAIL" -ne 0 ]; then
   echo "DÉPLOIEMENT: au moins une unité KO ou gateway non-200." >&2
   exit 1
