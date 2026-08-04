@@ -47,6 +47,7 @@ const PROPERTY_TYPES = {
 
 function PropertyCard({ property, onDelete, viewMode }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const txHref = `/backoffice/transactions/nouveau?property_id=${property.id}&type=${property.listing_type === 'rent' ? 'rent' : 'sale'}`
 
   if (viewMode === 'list') {
     return (
@@ -113,6 +114,12 @@ function PropertyCard({ property, onDelete, viewMode }) {
               >
                 <FiEdit2 className="w-4 h-4" /> Modifier
               </Link>
+              <Link
+                to={txHref}
+                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                <FiPlus className="w-4 h-4" /> Nouvelle transaction
+              </Link>
               <button
                 onClick={() => {
                   setMenuOpen(false)
@@ -167,6 +174,12 @@ function PropertyCard({ property, onDelete, viewMode }) {
                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
               >
                 <FiEdit2 className="w-4 h-4" /> Modifier
+              </Link>
+              <Link
+                to={txHref}
+                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                <FiPlus className="w-4 h-4" /> Nouvelle transaction
               </Link>
               <button
                 onClick={() => {
