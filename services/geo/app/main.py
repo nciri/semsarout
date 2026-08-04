@@ -70,6 +70,7 @@ def internal_neighborhood_prices(x_internal_token: str = Header(default=""),
         return _err("Forbidden", 403)
     rows = db.query(NeighborhoodPriceRef).all()
     return {"refs": [{"city": r.city, "neighborhood": r.neighborhood,
+                      "transaction_type": r.transaction_type,
                       "avg_price_sqm": float(r.avg_price_sqm) if r.avg_price_sqm is not None else None}
                      for r in rows]}
 
