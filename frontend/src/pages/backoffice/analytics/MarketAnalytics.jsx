@@ -1,6 +1,6 @@
 import { useQuery } from 'react-query'
 import { analyticsService } from '../../../services/analyticsService'
-import { useRange } from './AnalyticsLayout'
+import { useFilters } from './AnalyticsLayout'
 import KpiTile from '../../../components/analytics/KpiTile'
 import ChartCard from '../../../components/analytics/ChartCard'
 import BarsChart from '../../../components/analytics/BarsChart'
@@ -8,8 +8,8 @@ import DonutChart from '../../../components/analytics/DonutChart'
 import { fmtMAD, fmtNum, fmtPct } from '../../../components/analytics/palette'
 
 function MarketAnalytics() {
-  const range = useRange()
-  const { data, isLoading, isError } = useQuery(['analytics', 'market', range], () => analyticsService.getMarket(range))
+  const filters = useFilters()
+  const { data, isLoading, isError } = useQuery(['analytics', 'market', filters], () => analyticsService.getMarket(filters))
   if (isLoading) return <p>Chargement…</p>
   if (isError || !data) return <p className="text-gray-500">Aucune donnée d'analyse disponible.</p>
   const s = data.summary, d = data.detail
