@@ -1,0 +1,4 @@
+{
+  "language": { "fr": "Français", "ar": "العربية" },
+  "actions": { "search": "Rechercher...", "logout": "Déconnexion" }
+}
