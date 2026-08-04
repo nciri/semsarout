@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { FiLock, FiPlus, FiHome } from 'react-icons/fi'
 import { rentalService } from '../../../services/rentalService'
+import SearchableSelect from '../../../components/common/SearchableSelect'
+import api from '../../../services/api'
 import { StatCard, DataTable, StatusBadge, EmptyState, GatedNotice, Modal, Field, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
 
 const STATUS = {
@@ -19,6 +21,11 @@ function LeasesList() {
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({ mandate_id: '', tenant_client_id: '', rent_amount: '', charges_amount: '', deposit_amount: '', payment_day: '1' })
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
+  const setVal = (k) => (v) => setForm((f) => ({ ...f, [k]: v }))
+  const { data: mandatesData } = useQuery('rental-mandates', () => rentalService.listMandates())
+  const { data: clientsData } = useQuery('bo-clients-min', async () => (await api.get('/backoffice/clients?per_page=100')).data)
+  const mandates = mandatesData?.mandates || []
+  const clients = clientsData?.clients || []
 
   const create = useMutation(() => rentalService.createLease({
     mandate_id: Number(form.mandate_id), tenant_client_id: Number(form.tenant_client_id),
@@ -58,8 +65,26 @@ function LeasesList() {
           <button onClick={() => setOpen(false)} className={SECONDARY_BTN}>Annuler</button>
           <button disabled={!form.mandate_id || !form.tenant_client_id || !form.rent_amount || create.isLoading} onClick={() => create.mutate()} className={PRIMARY_BTN}>Créer</button>
         </>}>
-        <Field label="ID du mandat" type="number" value={form.mandate_id} onChange={set('mandate_id')} />
-        <Field label="ID du client locataire" type="number" value={form.tenant_client_id} onChange={set('tenant_client_id')} />
+        <div className="mb-3">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Mandat</label>
+          <SearchableSelect
+            value={form.mandate_id}
+            onChange={setVal('mandate_id')}
+            options={mandates.map((m) => ({ value: m.id, label: m.reference, description: m.mandate_type === 'gestion' ? 'Gestion' : 'Location' }))}
+            placeholder="Choisir un mandat…"
+            searchPlaceholder="Rechercher un mandat…"
+          />
+        </div>
+        <div className="mb-3">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Client locataire</label>
+          <SearchableSelect
+            value={form.tenant_client_id}
+            onChange={setVal('tenant_client_id')}
+            options={clients.map((c) => ({ value: c.id, label: `${c.first_name} ${c.last_name}`, description: c.email || c.phone }))}
+            placeholder="Choisir un client…"
+            searchPlaceholder="Rechercher un client…"
+          />
+        </div>
         <Field label="Loyer (Đh)" type="number" value={form.rent_amount} onChange={set('rent_amount')} />
         <Field label="Charges (Đh)" type="number" value={form.charges_amount} onChange={set('charges_amount')} />
         <Field label="Dépôt de garantie (Đh)" type="number" value={form.deposit_amount} onChange={set('deposit_amount')} />
