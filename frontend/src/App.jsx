@@ -61,12 +61,15 @@ import BackofficeProperties from './pages/backoffice/Properties'
 import BackofficePropertyForm from './pages/backoffice/PropertyForm'
 import BackofficeClients from './pages/backoffice/Clients'
 import BackofficeClientForm from './pages/backoffice/ClientForm'
+import BackofficeClientDetail from './pages/backoffice/ClientDetail'
 import BackofficeLeads from './pages/backoffice/Leads'
 import BackofficeVisits from './pages/backoffice/Visits'
 import BackofficePipeline from './pages/backoffice/Pipeline'
 import BackofficeTransactions from './pages/backoffice/Transactions'
+import TransactionCreate from './pages/backoffice/TransactionCreate'
+import BackofficeTransactionDetail from './pages/backoffice/TransactionDetail'
 import BackofficeTeam from './pages/backoffice/Team'
-import BackofficeStats from './pages/backoffice/Statistics'
+import OverviewAnalytics from './pages/backoffice/analytics/OverviewAnalytics'
 import BackofficeSettings from './pages/backoffice/Settings'
 import SettingsHub from './pages/backoffice/SettingsHub'
 import BackofficeStripeConfig from './pages/backoffice/StripeConfig'
@@ -204,15 +207,17 @@ function App() {
           <Route path="biens/:id" element={<BackofficePropertyForm />} />
           <Route path="clients" element={<BackofficeClients />} />
           <Route path="clients/nouveau" element={<BackofficeClientForm />} />
-          <Route path="clients/:id" element={<BackofficeClientForm />} />
+          <Route path="clients/:id" element={<BackofficeClientDetail />} />
+          <Route path="clients/:id/modifier" element={<BackofficeClientForm />} />
           <Route path="leads" element={<BackofficeLeads />} />
           <Route path="visites" element={<BackofficeVisits />} />
           <Route path="visites/nouvelle" element={<BackofficeVisits />} />
           <Route path="pipeline" element={<BackofficePipeline />} />
           <Route path="transactions" element={<BackofficeTransactions />} />
-          <Route path="transactions/:id" element={<BackofficeTransactions />} />
+          <Route path="transactions/nouveau" element={<TransactionCreate />} />
+          <Route path="transactions/:id" element={<BackofficeTransactionDetail />} />
           <Route path="equipe" element={<BackofficeTeam />} />
-          <Route path="statistiques" element={<BackofficeStats />} />
+          <Route path="statistiques" element={<Navigate to="/backoffice/analyses" replace />} />
           <Route path="parametres" element={<SettingsHub />} />
           <Route path="stripe" element={<BackofficeStripeConfig />} />
           <Route path="contrats" element={<ContractsList />} />
@@ -253,7 +258,8 @@ function App() {
           <Route path="mes-commandes" element={<OrdersList />} />
           <Route path="mes-commandes/:id" element={<OrderDetail />} />
           <Route path="analyses" element={<AnalyticsLayout />}>
-            <Route index element={<FinancialAnalytics />} />
+            <Route index element={<OverviewAnalytics />} />
+            <Route path="finance" element={<FinancialAnalytics />} />
             <Route path="marche" element={<MarketAnalytics />} />
             <Route path="pipeline" element={<PipelineAnalytics />} />
             <Route path="equipe" element={<TeamAnalytics />} />
