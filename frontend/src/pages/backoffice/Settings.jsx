@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import {
   FiSave, FiUpload, FiGlobe, FiMail, FiPhone, FiMapPin,
-  FiDollarSign, FiBell, FiShield, FiDatabase, FiKey
+  FiDollarSign, FiBell, FiShield, FiDatabase, FiKey, FiCreditCard
 } from 'react-icons/fi'
 import api from '../../services/api'
+import useAuthStore from '../../store/authStore'
+import StripeConfig from './StripeConfig'
 
 const backofficeService = {
   getSettings: async () => {
@@ -33,6 +35,7 @@ function SettingsSection({ title, icon: Icon, children }) {
 
 export default function BackofficeSettings() {
   const queryClient = useQueryClient()
+  const { user } = useAuthStore()
   const [activeTab, setActiveTab] = useState('general')
   const [formData, setFormData] = useState({
     agency_name: '',
@@ -80,10 +83,10 @@ export default function BackofficeSettings() {
   const tabs = [
     { id: 'general', label: 'Général', icon: FiGlobe },
     { id: 'notifications', label: 'Notifications', icon: FiBell },
-    { id: 'commission', label: 'Commission', icon: FiDollarSign },
+    { id: 'stripe', label: 'Stripe', icon: FiCreditCard, adminOnly: true },
     { id: 'integrations', label: 'Intégrations', icon: FiDatabase },
     { id: 'security', label: 'Sécurité', icon: FiShield }
-  ]
+  ].filter((t) => !t.adminOnly || user?.role === 'admin')
 
   if (isLoading) {
     return (
@@ -127,6 +130,11 @@ export default function BackofficeSettings() {
           ))}
         </div>
 
+        {activeTab === 'stripe' ? (
+          <div className="p-6">
+            <StripeConfig />
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="p-6">
           {/* General settings */}
           {activeTab === 'general' && (
@@ -308,49 +316,6 @@ export default function BackofficeSettings() {
                   <option value={24}>24 heures</option>
                   <option value={48}>48 heures</option>
                 </select>
-              </div>
-            </div>
-          )}
-
-          {/* Commission */}
-          {activeTab === 'commission' && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Taux de commission par défaut (%)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    value={formData.default_commission_rate}
-                    onChange={(e) => setFormData({ ...formData, default_commission_rate: parseFloat(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Devise
-                  </label>
-                  <select
-                    value={formData.currency}
-                    onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    <option value="MAD">Dirham marocain (Đh)</option>
-                    <option value="EUR">Euro (EUR)</option>
-                    <option value="USD">Dollar US (USD)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-800">
-                  Le taux de commission par défaut sera appliqué aux nouvelles transactions.
-                  Vous pouvez modifier le taux individuellement pour chaque transaction.
-                </p>
               </div>
             </div>
           )}
@@ -616,6 +581,7 @@ export default function BackofficeSettings() {
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   )

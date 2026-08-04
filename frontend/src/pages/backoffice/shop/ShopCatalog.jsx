@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { FiShoppingCart, FiPlus, FiShoppingBag } from 'react-icons/fi'
+import { FiShoppingCart, FiPlus, FiShoppingBag, FiPackage } from 'react-icons/fi'
 import { shopService } from '../../../services/shopService'
 import { PageHeader, Toolbar, Select, SearchInput, EmptyState } from '../../../components/backoffice/ui'
 
@@ -38,12 +38,17 @@ function ShopCatalog() {
   return (
     <div className="space-y-6">
       <PageHeader title="Boutique" subtitle="Mobilier et électroménager pour équiper vos biens en location">
-        <Link to="/backoffice/panier" className="relative inline-flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-          <FiShoppingCart className="w-5 h-5" /> Panier
-          {cartCount > 0 && (
-            <span className="absolute -top-2 -right-2 bg-primary-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">{cartCount}</span>
-          )}
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link to="/backoffice/mes-commandes" className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+            <FiPackage className="w-5 h-5" /> Mes commandes
+          </Link>
+          <Link to="/backoffice/panier" className="relative inline-flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+            <FiShoppingCart className="w-5 h-5" /> Panier
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-primary-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">{cartCount}</span>
+            )}
+          </Link>
+        </div>
       </PageHeader>
 
       <Toolbar>

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
-import { FiCheckCircle, FiCircle, FiTrash2, FiPlus, FiArrowLeft } from 'react-icons/fi'
+import { FiCheckCircle, FiCircle, FiTrash2, FiPlus, FiArrowLeft, FiXCircle } from 'react-icons/fi'
 import { legalService } from '../../../services/legalService'
 
 const NEXT = { todo: 'in_progress', in_progress: 'done', done: 'todo' }
@@ -41,7 +41,19 @@ function LegalCaseDetail() {
       </Link>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-        <h1 className="text-2xl font-bold text-gray-900">{c.title}</h1>
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="text-2xl font-bold text-gray-900">{c.title}</h1>
+          {pct === 0 && c.status !== 'closed' && (
+            <button
+              onClick={() => setStatus.mutate('closed')}
+              disabled={setStatus.isLoading}
+              title="Fermer ce dossier (aucune étape traitée)"
+              className="flex-shrink-0 inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-200 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors disabled:opacity-50"
+            >
+              <FiXCircle className="w-4 h-4" /> Fermer le dossier
+            </button>
+          )}
+        </div>
         <div className="flex flex-wrap items-center gap-3 mt-3">
           <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
             {c.case_type === 'sale' ? 'Vente' : 'Location'}

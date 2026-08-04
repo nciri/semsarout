@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { FiTrash2, FiArrowLeft, FiShoppingCart } from 'react-icons/fi'
 import { shopService } from '../../../services/shopService'
+import SearchableSelect from '../../../components/common/SearchableSelect'
 import api from '../../../services/api'
 import { PageHeader, EmptyState } from '../../../components/backoffice/ui'
 
@@ -83,14 +84,14 @@ function Cart() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Livrer vers un bien (optionnel)</label>
-              <select
+              <SearchableSelect
                 value={propertyId}
-                onChange={(e) => setPropertyId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="">— Adresse libre —</option>
-                {properties.map((p) => <option key={p.id} value={p.id}>{p.title || p.reference}</option>)}
-              </select>
+                onChange={setPropertyId}
+                options={properties.map((p) => ({ value: p.id, label: p.title || p.reference, description: p.city }))}
+                placeholder="— Adresse libre —"
+                searchPlaceholder="Rechercher un bien…"
+                clearable
+              />
             </div>
             {!propertyId && (
               <div>

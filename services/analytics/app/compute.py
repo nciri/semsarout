@@ -51,10 +51,17 @@ def _mk(dt) -> str:
     return dt.strftime("%Y-%m")
 
 
+def _won_date(t: dict):
+    # Date de réalisation d'un gain : closing_date si renseignée, sinon repli sur
+    # closed_at — un deal gagné sans date de clôture explicite compte quand même
+    # (symétrique du traitement des deals perdus, qui retombent déjà sur closed_at).
+    return t["closing_date"] or t["closed_at"]
+
+
 def financial(txns: list[dict], scope: dict, rng: str, names: dict) -> dict:
     start = range_start(rng)
     base = _scoped(txns, scope)
-    won = [t for t in base if t["status"] == "won" and t["closing_date"] and _pd(t["closing_date"]) >= start]
+    won = [t for t in base if t["status"] == "won" and _won_date(t) and _pd(_won_date(t)) >= start]
     lost = [t for t in base if t["status"] == "lost"
             and (t["closed_at"] or t["updated_at"]) and _pd(t["closed_at"] or t["updated_at"]) >= start]
     open_deals = [t for t in base if t["status"] == "active"]
@@ -63,15 +70,14 @@ def financial(txns: list[dict], scope: dict, rng: str, names: dict) -> dict:
     revenue_weighted = sum(_commission_estimate(t) * _stage_probability(t) for t in open_deals)
     final_prices = [float(t["final_price"]) for t in won if t["final_price"]]
     avg_deal = round(sum(final_prices) / len(final_prices), 2) if final_prices else 0
-    cycles = [(_pd(t["closing_date"]) - _pd(t["contact_date"])).days
-              for t in won if t["closing_date"] and t["contact_date"]]
+    cycles = [(_pd(_won_date(t)) - _pd(t["contact_date"])).days
+              for t in won if t["contact_date"]]
     avg_cycle = round(sum(cycles) / len(cycles), 1) if cycles else 0
 
     months: dict = {}
     for t in won:
-        if t["closing_date"]:
-            k = _mk(_pd(t["closing_date"]))
-            months[k] = months.get(k, 0.0) + float(t["commission_amount"] or 0)
+        k = _mk(_pd(_won_date(t)))
+        months[k] = months.get(k, 0.0) + float(t["commission_amount"] or 0)
     revenue_trend = [{"month": k, "realized": round(v, 2)} for k, v in sorted(months.items())]
 
     comm_by_agent: dict = {}
@@ -83,9 +89,8 @@ def financial(txns: list[dict], scope: dict, rng: str, names: dict) -> dict:
 
     win_loss: dict = {}
     for t in won:
-        if t["closing_date"]:
-            k = _mk(_pd(t["closing_date"]))
-            win_loss.setdefault(k, {"won": 0, "lost": 0})["won"] += 1
+        k = _mk(_pd(_won_date(t)))
+        win_loss.setdefault(k, {"won": 0, "lost": 0})["won"] += 1
     for t in lost:
         d = t["closed_at"] or t["updated_at"]
         if d:
@@ -124,7 +129,7 @@ def pipeline(txns: list[dict], leads: list[dict], scope: dict, rng: str) -> dict
     n_qualified = sum(1 for l in lscoped if l["qualified_at"])
 
     open_txn = [t for t in base if t["status"] == "active"]
-    won_txn = [t for t in base if t["status"] == "won" and t["closing_date"] and _pd(t["closing_date"]) >= start]
+    won_txn = [t for t in base if t["status"] == "won" and _won_date(t) and _pd(_won_date(t)) >= start]
     txn_pool = open_txn + won_txn
     reached_visit = sum(1 for t in txn_pool
                         if t["visit_date"] or t["offer_date"] or t["closing_date"] or t["status"] == "won")
@@ -165,7 +170,7 @@ def pipeline(txns: list[dict], leads: list[dict], scope: dict, rng: str) -> dict
     stage_velocity_days = [
         {"stage": "Contact→Visite", "days": avg_days([(_pd(t["contact_date"]), _pd(t["visit_date"])) for t in won_txn])},
         {"stage": "Visite→Offre", "days": avg_days([(_pd(t["visit_date"]), _pd(t["offer_date"])) for t in won_txn])},
-        {"stage": "Offre→Clôture", "days": avg_days([(_pd(t["offer_date"]), _pd(t["closing_date"])) for t in won_txn])},
+        {"stage": "Offre→Clôture", "days": avg_days([(_pd(t["offer_date"]), _pd(_won_date(t))) for t in won_txn])},
     ]
 
     tl: dict = {}
@@ -197,7 +202,13 @@ def _prop_scoped(props: list[dict], scope: dict) -> list[dict]:
 
 def market(props: list[dict], refs: list[dict], scope: dict) -> dict:
     scoped = _prop_scoped(props, scope)
-    ref_map = {(r["city"], r["neighborhood"]): r["avg_price_sqm"] for r in refs}
+    # Référence indexée par (ville, quartier, type de transaction) : un bien à vendre
+    # se compare au prix/m² de vente du quartier, un bien à louer au prix locatif.
+    ref_map = {(r["city"], r["neighborhood"], r.get("transaction_type")): r["avg_price_sqm"] for r in refs}
+
+    def _ref(p):
+        return ref_map.get((p["city"], p["neighborhood"], p.get("transaction_type")))
+
     active = [p for p in scoped if p["status"] == "active"]
     sold = [p for p in scoped if p["status"] in ("sold", "rented")]
 
@@ -206,7 +217,7 @@ def market(props: list[dict], refs: list[dict], scope: dict) -> dict:
 
     market_vals = []
     for p in active:
-        av = ref_map.get((p["city"], p["neighborhood"]))
+        av = _ref(p)
         if av:
             market_vals.append(float(av))
     market_avg = round(sum(market_vals) / len(market_vals), 2) if market_vals else 0
@@ -224,8 +235,8 @@ def market(props: list[dict], refs: list[dict], scope: dict) -> dict:
         by_nb.setdefault(key, {"portfolio": [], "market": None})
         if p["price_per_sqm"]:
             by_nb[key]["portfolio"].append(float(p["price_per_sqm"]))
-        av = ref_map.get((p["city"], p["neighborhood"]))
-        if (p["city"], p["neighborhood"]) in ref_map:
+        if (p["city"], p["neighborhood"], p.get("transaction_type")) in ref_map:
+            av = _ref(p)
             by_nb[key]["market"] = float(av) if av is not None else None
     price_sqm_by_neighborhood = [
         {"area": k, "portfolio": round(sum(v["portfolio"]) / len(v["portfolio"]), 2) if v["portfolio"] else 0,
@@ -340,7 +351,7 @@ def team(txns: list[dict], leads: list[dict], scope: dict, rng: str, names: dict
 def _financial_summary(txns: list[dict], scope: dict) -> dict:
     start = range_start("12m")
     base = _scoped(txns, scope)
-    won = [t for t in base if t["status"] == "won" and t["closing_date"] and _pd(t["closing_date"]) >= start]
+    won = [t for t in base if t["status"] == "won" and _won_date(t) and _pd(_won_date(t)) >= start]
     open_deals = [t for t in base if t["status"] == "active"]
     return {
         "revenue_realized": round(sum(float(t["commission_amount"] or 0) for t in won), 2),

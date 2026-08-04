@@ -1,0 +1,42 @@
+city,neighborhood,transaction_type,property_type,avg_price_sqm,min_price_sqm,max_price_sqm,source
+Casablanca,Ain Diab,sale,,28000,22000,38000,seed-indicatif-2026
+Casablanca,Bourgogne,sale,,16000,13000,20000,seed-indicatif-2026
+Casablanca,Bouskoura,sale,,11000,8500,14000,seed-indicatif-2026
+Casablanca,Californie,sale,,18000,14000,24000,seed-indicatif-2026
+Casablanca,Gauthier,sale,,22000,18000,28000,seed-indicatif-2026
+Casablanca,Maarif,sale,,19000,15000,24000,seed-indicatif-2026
+Casablanca,Californie,rent,,130,90,180,seed-indicatif-2026
+Casablanca,Maarif,rent,,140,100,190,seed-indicatif-2026
+Rabat,Hassan,sale,,17000,13000,22000,seed-indicatif-2026
+Rabat,Les Orangers,sale,,20000,16000,26000,seed-indicatif-2026
+Rabat,Agdal,rent,,150,110,200,seed-indicatif-2026
+Tanger,Centre-ville,sale,,13000,10000,17000,seed-indicatif-2026
+Tanger,Iberia,sale,,12000,9000,16000,seed-indicatif-2026
+Tanger,Centre Ville,rent,,90,65,120,seed-indicatif-2026
+Tanger,Malabata,rent,,110,80,150,seed-indicatif-2026
+Tanger,Marshan,rent,,100,70,140,seed-indicatif-2026
+Tanger,Boukhalef,rent,,70,50,95,seed-indicatif-2026
+Marrakech,Amelkis,sale,,16000,12000,22000,seed-indicatif-2026
+Marrakech,Guéliz,sale,,15000,11000,20000,seed-indicatif-2026
+Marrakech,Palmeraie,sale,,14000,10000,20000,seed-indicatif-2026
+Marrakech,Targa,sale,,11000,8000,15000,seed-indicatif-2026
+Marrakech,Amelkis,rent,,120,85,170,seed-indicatif-2026
+Marrakech,Guéliz,rent,,110,80,150,seed-indicatif-2026
+Marrakech,Targa,rent,,80,55,110,seed-indicatif-2026
+Agadir,Charaf,sale,,10000,7500,13000,seed-indicatif-2026
+Agadir,Founty,sale,,14000,11000,18000,seed-indicatif-2026
+Agadir,Hay Mohammadi,sale,,9000,7000,12000,seed-indicatif-2026
+Agadir,Sonaba,sale,,11000,8500,14000,seed-indicatif-2026
+Agadir,Talborjt,rent,,75,55,100,seed-indicatif-2026
+Fès,Médina,sale,,7000,5000,9500,seed-indicatif-2026
+Fès,Mont Fleuri,sale,,9000,7000,12000,seed-indicatif-2026
+Fès,Narjiss,sale,,8000,6000,10500,seed-indicatif-2026
+Fès,Saiss,sale,,8500,6500,11000,seed-indicatif-2026
+Fès,Ville Nouvelle,sale,,10000,7500,13000,seed-indicatif-2026
+Fès,Médina,rent,,55,40,75,seed-indicatif-2026
+Fès,Mont Fleuri,rent,,65,45,90,seed-indicatif-2026
+Kénitra,Bir Rami,sale,,6000,4500,8000,seed-indicatif-2026
+Meknès,Hamria,sale,,8000,6000,10500,seed-indicatif-2026
+Meknès,Médina,sale,,6000,4500,8000,seed-indicatif-2026
+Meknès,Zitoune,sale,,7000,5000,9500,seed-indicatif-2026
+Meknès,Zitoune,rent,,60,45,85,seed-indicatif-2026

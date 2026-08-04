@@ -50,6 +50,42 @@ def _scope(principal: Principal) -> dict | None:
     return sources.scope(principal.agency_id, _uid(principal))
 
 
+# --- Filtres d'analyse (agent / type de transaction / ville), appliqués aux lignes
+# sources avant compute pour recalculer KPIs ET graphiques. Chaque filtre ne s'applique
+# qu'aux entités qui le portent (ville → biens uniquement).
+def _filters(request: Request) -> tuple[int | None, str | None, str | None]:
+    agent = request.query_params.get("agent")
+    aid = int(agent) if agent and agent.isdigit() else None
+    ttype = request.query_params.get("type")
+    ttype = ttype if ttype in ("sale", "rent") else None
+    city = request.query_params.get("city") or None
+    return aid, ttype, city
+
+
+def _filter_txns(txns: list[dict], aid: int | None, ttype: str | None) -> list[dict]:
+    if aid is not None:
+        txns = [t for t in txns if t.get("agent_id") == aid]
+    if ttype:
+        txns = [t for t in txns if t.get("transaction_type") == ttype]
+    return txns
+
+
+def _filter_leads(leads: list[dict], aid: int | None) -> list[dict]:
+    if aid is not None:
+        leads = [x for x in leads if x.get("assigned_to_id") == aid]
+    return leads
+
+
+def _filter_props(props: list[dict], aid: int | None, ttype: str | None, city: str | None) -> list[dict]:
+    if aid is not None:
+        props = [p for p in props if p.get("owner_id") == aid]
+    if ttype:
+        props = [p for p in props if p.get("transaction_type") == ttype]
+    if city:
+        props = [p for p in props if p.get("city") == city]
+    return props
+
+
 @app.get("/health", include_in_schema=False)
 async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
@@ -162,7 +198,8 @@ def analytics_financial(request: Request, principal: Principal = Depends(get_pri
     if scope is None:
         return err("Aucune agence", 400)
     rng = request.query_params.get("range", "12m")
-    txns = sources.transactions(principal.agency_id)
+    aid, ttype, _ = _filters(request)
+    txns = _filter_txns(sources.transactions(principal.agency_id), aid, ttype)
     names = sources.agent_names(principal.agency_id)
     return compute.financial(txns, scope, rng, names)
 
@@ -173,8 +210,9 @@ def analytics_pipeline(request: Request, principal: Principal = Depends(get_prin
     if scope is None:
         return err("Aucune agence", 400)
     rng = request.query_params.get("range", "12m")
-    txns = sources.transactions(principal.agency_id)
-    leads = sources.leads(principal.agency_id)
+    aid, ttype, _ = _filters(request)
+    txns = _filter_txns(sources.transactions(principal.agency_id), aid, ttype)
+    leads = _filter_leads(sources.leads(principal.agency_id), aid)
     return compute.pipeline(txns, leads, scope, rng)
 
 
@@ -183,7 +221,8 @@ def analytics_market(request: Request, principal: Principal = Depends(get_princi
     scope = _scope(principal)
     if scope is None:
         return err("Aucune agence", 400)
-    props = sources.properties(principal.agency_id)
+    aid, ttype, city = _filters(request)
+    props = _filter_props(sources.properties(principal.agency_id), aid, ttype, city)
     refs = sources.neighborhood_refs()
     return compute.market(props, refs, scope)
 
@@ -194,8 +233,11 @@ def analytics_team(request: Request, principal: Principal = Depends(get_principa
     if scope is None:
         return err("Aucune agence", 400)
     rng = request.query_params.get("range", "12m")
-    aid = principal.agency_id
-    return compute.team(sources.transactions(aid), sources.leads(aid), scope, rng, sources.agent_names(aid))
+    agency_id = principal.agency_id
+    aid, ttype, _ = _filters(request)
+    txns = _filter_txns(sources.transactions(agency_id), aid, ttype)
+    leads = _filter_leads(sources.leads(agency_id), aid)
+    return compute.team(txns, leads, scope, rng, sources.agent_names(agency_id))
 
 
 @app.get("/analytics/overview")

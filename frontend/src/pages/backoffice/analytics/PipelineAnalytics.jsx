@@ -1,6 +1,6 @@
 import { useQuery } from 'react-query'
 import { analyticsService } from '../../../services/analyticsService'
-import { useRange } from './AnalyticsLayout'
+import { useFilters } from './AnalyticsLayout'
 import KpiTile from '../../../components/analytics/KpiTile'
 import ChartCard from '../../../components/analytics/ChartCard'
 import FunnelBars from '../../../components/analytics/FunnelBars'
@@ -8,8 +8,8 @@ import BarsChart from '../../../components/analytics/BarsChart'
 import { fmtMAD, fmtPct } from '../../../components/analytics/palette'
 
 function PipelineAnalytics() {
-  const range = useRange()
-  const { data, isLoading, isError } = useQuery(['analytics', 'pipeline', range], () => analyticsService.getPipeline(range))
+  const filters = useFilters()
+  const { data, isLoading, isError } = useQuery(['analytics', 'pipeline', filters], () => analyticsService.getPipeline(filters))
   if (isLoading) return <p>Chargement…</p>
   if (isError || !data) return <p className="text-gray-500">Aucune donnée d'analyse disponible.</p>
   const s = data.summary, d = data.detail

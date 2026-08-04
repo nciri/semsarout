@@ -6,6 +6,7 @@ import {
   FiCalendar, FiPhone, FiMail, FiEdit2, FiTrash2, FiChevronDown
 } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
+import SearchableSelect from '../../components/common/SearchableSelect'
 import api from '../../services/api'
 
 const backofficeService = {
@@ -55,7 +56,16 @@ function TransactionCard({ transaction, onDragStart, onDragEnd }) {
       className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-2 cursor-move hover:shadow-md transition-shadow"
     >
       <div className="flex items-start justify-between mb-2">
-        <span className="text-xs font-mono text-gray-500">{transaction.reference}</span>
+        <Link
+          to={`/backoffice/transactions/${transaction.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="text-xs font-mono text-primary-600 hover:text-primary-700 hover:underline"
+          title="Ouvrir le détail dans un nouvel onglet"
+        >
+          {transaction.reference}
+        </Link>
         <div className="relative">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
@@ -136,7 +146,7 @@ function PipelineColumn({ stage, transactions, onDragOver, onDrop }) {
 
   return (
     <div
-      className="flex-shrink-0 w-72"
+      className="flex-1 min-w-0"
       onDragOver={onDragOver}
       onDrop={(e) => onDrop(e, stage.id)}
     >
@@ -243,7 +253,7 @@ export default function BackofficePipeline() {
             Vue liste
           </Link>
           <Link
-            to="/backoffice/biens/nouveau"
+            to="/backoffice/transactions/nouveau"
             className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
           >
             <FiPlus className="w-5 h-5" />
@@ -280,18 +290,15 @@ export default function BackofficePipeline() {
           </div>
 
           {/* Agent filter */}
-          <select
+          <SearchableSelect
             value={filters.agent_id}
-            onChange={(e) => setFilters({ ...filters, agent_id: e.target.value })}
-            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="">Tous les agents</option>
-            {agentsData?.users?.map(agent => (
-              <option key={agent.id} value={agent.id}>
-                {agent.first_name} {agent.last_name}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => setFilters({ ...filters, agent_id: v })}
+            options={(agentsData?.users || []).map((agent) => ({ value: agent.id, label: `${agent.first_name} ${agent.last_name}`, description: agent.email }))}
+            placeholder="Tous les agents"
+            searchPlaceholder="Rechercher un agent…"
+            clearable
+            className="min-w-[12rem]"
+          />
 
           {/* Summary */}
           <div className="ml-auto flex items-center gap-6 text-sm">
@@ -309,16 +316,16 @@ export default function BackofficePipeline() {
 
       {/* Kanban board */}
       {isLoading ? (
-        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+        <div className="flex gap-3 pb-4">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="flex-shrink-0 w-72">
+            <div key={i} className="flex-1 min-w-0">
               <div className="bg-gray-200 rounded-t-lg h-16 animate-pulse"></div>
               <div className="bg-gray-100 rounded-b-lg h-96"></div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="flex gap-4 pb-4 -mx-4 px-4 overflow-x-auto" style={{ minWidth: '100%', overflowX: 'scroll' }}>
+        <div className="flex gap-3 pb-4">
           {data?.pipeline?.map(stage => (
             <PipelineColumn
               key={stage.id}

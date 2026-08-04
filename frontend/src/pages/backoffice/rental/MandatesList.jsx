@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { FiLock, FiPlus, FiFileText } from 'react-icons/fi'
 import { rentalService } from '../../../services/rentalService'
+import SearchableSelect from '../../../components/common/SearchableSelect'
+import api from '../../../services/api'
 import { StatCard, DataTable, StatusBadge, EmptyState, GatedNotice, Modal, Field, Select, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
 
 const STATUS = {
@@ -19,6 +21,11 @@ function MandatesList() {
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({ property_id: '', landlord_client_id: '', mandate_type: 'gestion', fee_percent: '' })
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
+  const setVal = (k) => (v) => setForm((f) => ({ ...f, [k]: v }))
+  const { data: propsData } = useQuery('bo-properties-min', async () => (await api.get('/backoffice/properties?per_page=100')).data)
+  const { data: clientsData } = useQuery('bo-clients-min', async () => (await api.get('/backoffice/clients?per_page=100')).data)
+  const properties = propsData?.properties || []
+  const clients = clientsData?.clients || []
 
   const create = useMutation(() => rentalService.createMandate({
     property_id: Number(form.property_id), landlord_client_id: Number(form.landlord_client_id),
@@ -66,8 +73,26 @@ function MandatesList() {
           <button onClick={() => setOpen(false)} className={SECONDARY_BTN}>Annuler</button>
           <button disabled={!form.property_id || !form.landlord_client_id || create.isLoading} onClick={() => create.mutate()} className={PRIMARY_BTN}>Créer</button>
         </>}>
-        <Field label="ID du bien" type="number" value={form.property_id} onChange={set('property_id')} placeholder="ex. 12" />
-        <Field label="ID du client bailleur" type="number" value={form.landlord_client_id} onChange={set('landlord_client_id')} placeholder="ex. 5" />
+        <div className="mb-3">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Bien</label>
+          <SearchableSelect
+            value={form.property_id}
+            onChange={setVal('property_id')}
+            options={properties.map((p) => ({ value: p.id, label: p.title || p.reference, description: p.city }))}
+            placeholder="Choisir un bien…"
+            searchPlaceholder="Rechercher un bien…"
+          />
+        </div>
+        <div className="mb-3">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Client bailleur</label>
+          <SearchableSelect
+            value={form.landlord_client_id}
+            onChange={setVal('landlord_client_id')}
+            options={clients.map((c) => ({ value: c.id, label: `${c.first_name} ${c.last_name}`, description: c.email || c.phone }))}
+            placeholder="Choisir un client…"
+            searchPlaceholder="Rechercher un client…"
+          />
+        </div>
         <div className="mb-3">
           <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
           <Select value={form.mandate_type} onChange={set('mandate_type')} className="w-full">
