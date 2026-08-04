@@ -390,7 +390,7 @@ export default function BackofficeLeads() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <SortHeader label="Date" field="created_at" currentSort={sort} onSort={handleSort} />
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -458,7 +458,7 @@ export default function BackofficeLeads() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="flex items-center justify-start gap-1">
                           {/* View details */}
                           <button
                             onClick={() => setSelectedLead(lead)}

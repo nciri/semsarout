@@ -3,7 +3,7 @@ import { useQuery } from 'react-query'
 import { Link } from 'react-router-dom'
 import {
   FiPlus, FiSearch, FiFilter, FiGrid, FiList, FiDollarSign,
-  FiCalendar, FiUser, FiHome, FiMoreVertical
+  FiCalendar, FiUser, FiHome, FiMoreVertical, FiEye
 } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
 import api from '../../services/api'
@@ -81,7 +81,7 @@ export default function BackofficeTransactions() {
             Vue Pipeline
           </Link>
           <Link
-            to="/backoffice/biens/nouveau"
+            to="/backoffice/transactions/nouveau"
             className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
           >
             <FiPlus className="w-5 h-5" />
@@ -230,9 +230,10 @@ export default function BackofficeTransactions() {
                     <td className="px-4 py-3">
                       <Link
                         to={`/backoffice/transactions/${tx.id}`}
-                        className="text-primary-600 hover:text-primary-700 text-sm"
+                        className="inline-flex p-1.5 text-gray-400 hover:text-primary-600 rounded-lg hover:bg-primary-50"
+                        title="Voir"
                       >
-                        Voir
+                        <FiEye className="w-4 h-4" />
                       </Link>
                     </td>
                   </tr>
