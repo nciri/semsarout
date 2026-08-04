@@ -10,7 +10,6 @@ import {
 import useAuthStore from '../../../store/authStore'
 import Wordmark from '../../../components/common/Wordmark'
 import LanguageSwitcher from '../../../components/common/LanguageSwitcher'
-import DirIcon from '../../../components/common/DirIcon'
 
 const MENU_ITEMS = [
   {
