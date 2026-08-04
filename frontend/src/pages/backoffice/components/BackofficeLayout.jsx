@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, Outlet, Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   FiHome, FiUsers, FiFileText, FiCalendar, FiDollarSign,
   FiSettings, FiMenu, FiX, FiBriefcase,
@@ -8,46 +9,49 @@ import {
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
 import Wordmark from '../../../components/common/Wordmark'
+import LanguageSwitcher from '../../../components/common/LanguageSwitcher'
+import DirIcon from '../../../components/common/DirIcon'
 
 const MENU_ITEMS = [
   {
-    section: 'Principal',
+    sectionKey: 'nav.sections.main',
     items: [
-      { path: '/backoffice', icon: FiHome, label: 'Tableau de bord', exact: true },
-      { path: '/backoffice/biens', icon: FiFileText, label: 'Biens immobiliers' },
-      { path: '/backoffice/pipeline', icon: FiGrid, label: 'Pipeline' },
+      { path: '/backoffice', icon: FiHome, labelKey: 'nav.dashboard', exact: true },
+      { path: '/backoffice/biens', icon: FiFileText, labelKey: 'nav.properties' },
+      { path: '/backoffice/pipeline', icon: FiGrid, labelKey: 'nav.pipeline' },
     ]
   },
   {
-    section: 'CRM',
+    sectionKey: 'nav.sections.crm',
     items: [
-      { path: '/backoffice/clients', icon: FiUsers, label: 'Clients' },
-      { path: '/backoffice/leads', icon: FiMail, label: 'Leads' },
-      { path: '/backoffice/visites', icon: FiCalendar, label: 'Visites & RDV' },
+      { path: '/backoffice/clients', icon: FiUsers, labelKey: 'nav.clients' },
+      { path: '/backoffice/leads', icon: FiMail, labelKey: 'nav.leads' },
+      { path: '/backoffice/visites', icon: FiCalendar, labelKey: 'nav.visits' },
     ]
   },
   {
-    section: 'Finance',
+    sectionKey: 'nav.sections.finance',
     items: [
-      { path: '/backoffice/transactions', icon: FiBriefcase, label: 'Transactions' },
-      { path: '/backoffice/contrats', icon: FiFileText, label: 'Contrats' },
-      { path: '/backoffice/notaires', icon: FiBriefcase, label: 'Notaires' },
-      { path: '/backoffice/artisans', icon: FiTool, label: 'Artisans' },
-      { path: '/backoffice/gestion-locative', icon: FiKey, label: 'Gestion locative' },
-      { path: '/backoffice/boutique', icon: FiShoppingBag, label: 'Boutique' },
+      { path: '/backoffice/transactions', icon: FiBriefcase, labelKey: 'nav.transactions' },
+      { path: '/backoffice/contrats', icon: FiFileText, labelKey: 'nav.contracts' },
+      { path: '/backoffice/notaires', icon: FiBriefcase, labelKey: 'nav.notaries' },
+      { path: '/backoffice/artisans', icon: FiTool, labelKey: 'nav.artisans' },
+      { path: '/backoffice/gestion-locative', icon: FiKey, labelKey: 'nav.rental' },
+      { path: '/backoffice/boutique', icon: FiShoppingBag, labelKey: 'nav.shop' },
     ]
   },
   {
-    section: 'Administration',
+    sectionKey: 'nav.sections.admin',
     items: [
-      { path: '/backoffice/equipe', icon: FiUserCheck, label: 'Équipe' },
-      { path: '/backoffice/analyses', icon: FiTrendingUp, label: 'Analyses' },
-      { path: '/backoffice/parametres', icon: FiSettings, label: 'Paramètres' },
+      { path: '/backoffice/equipe', icon: FiUserCheck, labelKey: 'nav.team' },
+      { path: '/backoffice/analyses', icon: FiTrendingUp, labelKey: 'nav.analytics' },
+      { path: '/backoffice/parametres', icon: FiSettings, labelKey: 'nav.settings' },
     ]
   }
 ]
 
 export default function BackofficeLayout() {
+  const { t } = useTranslation('backoffice')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -78,7 +82,7 @@ export default function BackofficeLayout() {
         }`}
       >
         <Icon className={`w-5 h-5 ${active ? 'text-primary-600' : 'text-gray-400'}`} />
-        {sidebarOpen && <span>{item.label}</span>}
+        {sidebarOpen && <span>{t(item.labelKey)}</span>}
       </Link>
     )
   }
@@ -86,7 +90,7 @@ export default function BackofficeLayout() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 py-3">
+      <div className="lg:hidden fixed top-0 start-0 end-0 z-50 bg-white border-b border-gray-200 px-4 py-3">
         <div className="flex items-center justify-between">
           <button
             onClick={() => setMobileMenuOpen(true)}
@@ -100,7 +104,7 @@ export default function BackofficeLayout() {
           <div className="flex items-center gap-2">
             <button className="p-2 text-gray-500 hover:text-gray-700 relative">
               <FiBell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              <span className="absolute top-1 end-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
           </div>
         </div>
@@ -110,7 +114,7 @@ export default function BackofficeLayout() {
       {mobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setMobileMenuOpen(false)}>
           <div
-            className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-xl"
+            className="absolute start-0 top-0 bottom-0 w-72 bg-white shadow-xl"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 border-b">
@@ -127,9 +131,9 @@ export default function BackofficeLayout() {
                 const filteredItems = section.items.filter(item => !item.adminOnly || user?.role === 'admin')
                 if (filteredItems.length === 0) return null
                 return (
-                  <div key={section.section}>
+                  <div key={section.sectionKey}>
                     <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                      {section.section}
+                      {t(section.sectionKey)}
                     </p>
                     <div className="space-y-1">
                       {filteredItems.map(item => (
@@ -146,7 +150,7 @@ export default function BackofficeLayout() {
 
       {/* Desktop sidebar */}
       <aside
-        className={`hidden lg:flex flex-col fixed left-0 top-0 bottom-0 z-40 bg-white border-r border-gray-200 transition-all duration-300 ${
+        className={`hidden lg:flex flex-col fixed start-0 top-0 bottom-0 z-40 bg-white border-e border-gray-200 transition-all duration-300 ${
           sidebarOpen ? 'w-64' : 'w-20'
         }`}
       >
@@ -175,10 +179,10 @@ export default function BackofficeLayout() {
             const filteredItems = section.items.filter(item => !item.adminOnly || user?.role === 'admin')
             if (filteredItems.length === 0) return null
             return (
-              <div key={section.section}>
+              <div key={section.sectionKey}>
                 {sidebarOpen && (
                   <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                    {section.section}
+                    {t(section.sectionKey)}
                   </p>
                 )}
                 <div className="space-y-1">
@@ -214,32 +218,33 @@ export default function BackofficeLayout() {
               className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <FiLogOut className="w-4 h-4" />
-              <span>Déconnexion</span>
+              <span>{t('common:actions.logout')}</span>
             </button>
           )}
         </div>
       </aside>
 
       {/* Main content */}
-      <main className={`lg:transition-all lg:duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
+      <main className={`lg:transition-all lg:duration-300 ${sidebarOpen ? 'lg:ms-64' : 'lg:ms-20'}`}>
         {/* Top bar */}
         <header className="hidden lg:flex items-center justify-between h-16 px-6 bg-white border-b border-gray-200">
           <div className="flex items-center gap-4">
             <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <FiSearch className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Rechercher..."
-                className="pl-10 pr-4 py-2 w-64 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder={t('common:actions.search')}
+                className="ps-10 pe-4 py-2 w-64 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <LanguageSwitcher />
             <button className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
               <FiBell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              <span className="absolute top-1 end-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
-            <div className="relative flex items-center gap-2 pl-4 border-l border-gray-200">
+            <div className="relative flex items-center gap-2 ps-4 border-s border-gray-200">
               <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
                 <span className="text-xs font-semibold text-primary-600">
                   {user?.first_name?.[0]}{user?.last_name?.[0]}
@@ -257,7 +262,7 @@ export default function BackofficeLayout() {
               {userMenuOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
-                  <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                  <div className="absolute end-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
                     <div className="px-4 py-3 border-b border-gray-100">
                       <p className="font-medium text-gray-900">{user?.first_name} {user?.last_name}</p>
                       <p className="text-sm text-gray-500 truncate">{user?.email}</p>
@@ -289,7 +294,7 @@ export default function BackofficeLayout() {
                         className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                       >
                         <FiLogOut className="w-4 h-4" />
-                        Déconnexion
+                        {t('common:actions.logout')}
                       </button>
                     </div>
                   </div>
