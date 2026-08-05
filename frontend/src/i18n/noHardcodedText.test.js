@@ -46,6 +46,21 @@ const MIGRATED_FILES = [
   'src/pages/Services.jsx',
   'src/pages/PropertyDetail.jsx',
   'src/pages/SellProperty.jsx',
+  'src/components/layout/Header.jsx',
+  'src/components/layout/Footer.jsx',
+  'src/components/admin/ImpersonationBanner.jsx',
+  'src/components/common/PropertyCard.jsx',
+  'src/components/search/AdvancedSearch.jsx',
+  'src/components/common/SearchForm.jsx',
+  'src/components/common/SearchableSelect.jsx',
+  'src/components/search/MultiSelectDropdown.jsx',
+  'src/components/common/BookVisitWidget.jsx',
+  'src/components/common/LotPlanViewer.jsx',
+  'src/components/common/PriceGauge.jsx',
+  'src/components/common/PhotoLightbox.jsx',
+  'src/components/dashboard/widgets/index.jsx',
+  'src/components/backoffice/SignaturePanel.jsx',
+  'src/components/backoffice/ui.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {

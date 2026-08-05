@@ -92,7 +92,7 @@ function Dashboard() {
                   </button>
                 </div>
               )}
-              <Widget title={def.title} to={editing ? null : def.to}>{def.render(overview)}</Widget>
+              <Widget titleKey={w.id} to={editing ? null : def.to}>{def.render(overview)}</Widget>
             </div>
           )
         })}

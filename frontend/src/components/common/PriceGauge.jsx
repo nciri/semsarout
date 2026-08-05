@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { FiInfo } from 'react-icons/fi'
 
 const BAND_COLOR = {
@@ -16,6 +17,7 @@ const fmt = (v) => Math.round(v).toLocaleString('fr-FR')
  * Renders nothing when the position isn't available (no surface / not enough data).
  */
 export default function PriceGauge({ data }) {
+  const { t } = useTranslation(['common'])
   if (!data?.available) return null
 
   const {
@@ -25,21 +27,21 @@ export default function PriceGauge({ data }) {
   } = data
 
   const color = BAND_COLOR[band] || '#64748b'
-  const unit = transaction_type === 'rent' ? 'Dh/m²/mois' : 'Dh/m²'
+  const unit = t(transaction_type === 'rent' ? 'common:priceGauge.unitRent' : 'common:priceGauge.unitSale')
   const pct = Math.round(Math.abs(percent_vs_market))
-  const sense = percent_vs_market > 1 ? 'au-dessus' : percent_vs_market < -1 ? 'en dessous' : 'dans'
+  const sense = percent_vs_market > 1 ? 'above' : percent_vs_market < -1 ? 'below' : 'in'
   const cursor = `${Math.max(2, Math.min(98, position * 100))}%`
 
   const note = source === 'manual'
-    ? 'Prix de référence du quartier'
-    : `Estimé sur ${sample_size} bien${sample_size > 1 ? 's' : ''} · ${scope_label}`
+    ? t('common:priceGauge.referenceNote')
+    : t('common:priceGauge.estimatedNote', { count: sample_size, scope: scope_label })
 
   return (
     <div className="rounded-xl border border-gray-200 p-4 bg-white">
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
-          Positionnement du prix dans le quartier
-          <span title="Position du prix au m² de ce bien par rapport aux biens comparables du quartier (source: annonces SemsarOut et/ou prix de référence saisis). Estimation indicative.">
+          {t('common:priceGauge.title')}
+          <span title={t('common:priceGauge.tooltip')}>
             <FiInfo className="w-3.5 h-3.5 text-gray-400" />
           </span>
         </h3>
@@ -62,19 +64,25 @@ export default function PriceGauge({ data }) {
 
       <div className="flex justify-between text-[11px] text-gray-400 mb-3">
         <span>{fmt(low_price_sqm)}</span>
-        <span>moy. {fmt(reference_price_sqm)} {unit}</span>
+        <span>{t('common:priceGauge.avgLabel', { price: fmt(reference_price_sqm), unit })}</span>
         <span>{fmt(high_price_sqm)}</span>
       </div>
 
       <div className="flex items-baseline justify-between">
         <div className="text-sm">
           <span className="font-bold text-gray-900">{fmt(property_price_sqm)} {unit}</span>
-          <span className="text-gray-500"> pour ce bien</span>
+          <span className="text-gray-500"> {t('common:priceGauge.forThisProperty')}</span>
         </div>
         <span className="text-sm font-medium" style={{ color }}>{label}</span>
       </div>
       <p className="text-[11px] text-gray-400 mt-1">
-        {pct === 0 ? 'Dans la moyenne du quartier' : `${pct}% ${sense} de la moyenne`} · {note}
+        <span>
+          {pct === 0
+            ? t('common:priceGauge.inAverage')
+            : t('common:priceGauge.pctVsAverage', { percent: pct, sense: t(`common:priceGauge.sense.${sense}`) })}
+        </span>
+        {' · '}
+        <span>{note}</span>
       </p>
     </div>
   )
