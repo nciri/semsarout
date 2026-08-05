@@ -732,6 +732,7 @@
   },
   "propertyDetail": {
     "notFound": "الإعلان غير موجود",
+    "urgentBadge": "عاجل",
     "breadcrumbListing": "الإعلانات",
     "noImage": "لا توجد صورة",
     "zoomTitle": "عرض بحجم أكبر",

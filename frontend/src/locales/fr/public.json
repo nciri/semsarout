@@ -732,6 +732,7 @@
   },
   "propertyDetail": {
     "notFound": "Annonce non trouvée",
+    "urgentBadge": "URGENT",
     "breadcrumbListing": "Annonces",
     "noImage": "Aucune image",
     "zoomTitle": "Voir en grand",

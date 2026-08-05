@@ -322,7 +322,7 @@ function PropertyDetail() {
                 {property.is_urgent && (
                   <div className="absolute top-0 end-0 w-32 h-32 overflow-hidden">
                     <div className="absolute top-2 -end-10 w-40 h-12 bg-red-600 text-white font-bold text-center rotate-45 flex items-center justify-center shadow-lg">
-                      URGENT
+                      {t('public:propertyDetail.urgentBadge')}
                     </div>
                   </div>
                 )}
