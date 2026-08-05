@@ -12,6 +12,26 @@
     "confirmButton": "Confirmer le paiement",
     "processing": "Traitement..."
   },
+  "about": {
+    "heroTitle": "Qui sommes-nous ?",
+    "heroSubtitle": "SemsarOut réinvente l'immobilier au Maroc : sans intermédiaires douteux, à tarif fixe, avec un accompagnement professionnel du début à la fin.",
+    "missionTitle": "Notre mission",
+    "missionParagraph1": "Trop souvent, vendre, louer ou gérer un bien immobilier rime avec commissions opaques et démarches longues. SemsarOut a été créé pour changer cela : nous proposons des services à tarif fixe et transparent, que vous soyez un particulier qui vend son bien ou une agence qui souhaite digitaliser sa gestion locative.",
+    "missionParagraph2": "Grâce à notre plateforme et à notre intégration StayManager pour la location courte durée, nous accompagnons les propriétaires et les professionnels de l'immobilier avec des outils modernes et un service humain de qualité.",
+    "values": {
+      "transparencyTitle": "Transparence",
+      "transparencyDescription": "Des tarifs fixes, sans commission cachée. Vous savez exactement ce que vous payez.",
+      "efficiencyTitle": "Efficacité",
+      "efficiencyDescription": "Un accompagnement professionnel à chaque étape, sans intermédiaires inutiles.",
+      "proximityTitle": "Proximité",
+      "proximityDescription": "Une équipe à l'écoute de vos besoins, que vous soyez particulier ou agence.",
+      "innovationTitle": "Innovation",
+      "innovationDescription": "Des outils modernes (StayManager, estimation en ligne) pour simplifier l'immobilier."
+    },
+    "ctaTitle": "Prêt à démarrer votre projet immobilier ?",
+    "ctaSubtitle": "Que vous souhaitiez vendre, louer, gérer votre bien ou rejoindre notre réseau d'agences partenaires, notre équipe vous accompagne.",
+    "ctaButton": "Nous contacter"
+  },
   "checkoutConfirmation": {
     "successTitle": "Paiement confirmé",
     "successMessage": "Merci ! Votre paiement a bien été enregistré (référence {{paymentId}}).",

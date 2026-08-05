@@ -24,6 +24,7 @@ const MIGRATED_FILES = [
   'src/pages/LegalPage.jsx',
   'src/pages/PaymentGateway.jsx',
   'src/pages/CheckoutConfirmation.jsx',
+  'src/pages/About.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {
