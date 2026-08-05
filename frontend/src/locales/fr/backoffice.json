@@ -39,6 +39,7 @@
     "addProperty": "Ajouter un bien",
     "newClient": "Nouveau client",
     "planVisit": "Planifier visite",
-    "viewPipeline": "Voir le pipeline"
+    "viewPipeline": "Voir le pipeline",
+    "viewAll": "Voir tout"
   }
 }

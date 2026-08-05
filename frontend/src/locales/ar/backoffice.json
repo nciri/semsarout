@@ -39,6 +39,7 @@
     "addProperty": "إضافة عقار",
     "newClient": "عميل جديد",
     "planVisit": "برمجة زيارة",
-    "viewPipeline": "عرض مسار الصفقات"
+    "viewPipeline": "عرض مسار الصفقات",
+    "viewAll": "عرض الكل"
   }
 }

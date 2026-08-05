@@ -5,6 +5,7 @@ import {
 } from 'react-icons/fi'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import DirIcon from '../../components/common/DirIcon'
 import { formatPrice } from '../../utils/currency'
 import api from '../../services/api'
 
@@ -189,7 +190,7 @@ export default function BackofficeDashboard() {
           <div className="flex items-center justify-between p-4 border-b border-gray-100">
             <h2 className="font-semibold text-gray-900">{t('dashboard.latestLeads')}</h2>
             <Link to="/backoffice/leads" className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1">
-              Voir tout <FiArrowRight className="w-4 h-4" />
+              {t('dashboard.viewAll')} <DirIcon icon={FiArrowRight} className="w-4 h-4" />
             </Link>
           </div>
           <div className="p-4">
@@ -208,7 +209,7 @@ export default function BackofficeDashboard() {
           <div className="flex items-center justify-between p-4 border-b border-gray-100">
             <h2 className="font-semibold text-gray-900">{t('dashboard.upcomingVisits')}</h2>
             <Link to="/backoffice/visites" className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1">
-              Voir tout <FiArrowRight className="w-4 h-4" />
+              {t('dashboard.viewAll')} <DirIcon icon={FiArrowRight} className="w-4 h-4" />
             </Link>
           </div>
           <div className="p-4">
