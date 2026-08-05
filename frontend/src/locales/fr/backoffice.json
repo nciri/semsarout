@@ -1,6 +1,11 @@
 {
   "nav": {
-    "sections": { "main": "Principal", "crm": "CRM", "finance": "Finance", "admin": "Administration" },
+    "sections": {
+      "main": "Principal",
+      "crm": "CRM",
+      "finance": "Finance",
+      "admin": "Administration"
+    },
     "dashboard": "Tableau de bord",
     "properties": "Biens immobiliers",
     "pipeline": "Pipeline",
@@ -552,5 +557,77 @@
   },
   "ui": {
     "viewOffers": "Voir les offres Pro & Entreprise"
+  },
+  "artisans": {
+    "shared": {
+      "pageTitle": "Artisans",
+      "loading": "Chargement…",
+      "back": "Retour",
+      "notFound": "Élément introuvable.",
+      "loadError": "Une erreur est survenue lors du chargement. Réessayez plus tard."
+    },
+    "layout": {
+      "subtitle": "Votre référentiel d'artisans et le suivi des interventions sur vos biens",
+      "tabs": {
+        "directory": "Annuaire",
+        "interventions": "Interventions"
+      }
+    },
+    "directory": {
+      "stats": {
+        "total": "Artisans",
+        "shared": "Partagés",
+        "private": "Mon agence"
+      },
+      "filters": {
+        "allTrades": "Tous les métiers",
+        "cityPlaceholder": "Ville"
+      },
+      "searchPlaceholder": "Rechercher un artisan…",
+      "addButton": "Ajouter",
+      "gated": {
+        "message": "Le référentiel artisans est réservé aux plans Pro et Entreprise."
+      },
+      "columns": {
+        "name": "Nom",
+        "trade": "Métier",
+        "city": "Ville",
+        "contact": "Contact"
+      },
+      "badge": {
+        "shared": "Partagé",
+        "private": "Mon agence",
+        "readOnly": "Lecture seule"
+      },
+      "actions": {
+        "edit": "Modifier",
+        "delete": "Supprimer"
+      },
+      "empty": {
+        "title": "Aucun artisan",
+        "description": "Ajustez vos filtres ou ajoutez votre premier artisan privé.",
+        "addButton": "Ajouter un artisan"
+      },
+      "modal": {
+        "editTitle": "Modifier l'artisan",
+        "createTitle": "Ajouter un artisan",
+        "tradeLabel": "Métier",
+        "fields": {
+          "name": "Nom *",
+          "company": "Société",
+          "city": "Ville",
+          "phone": "Téléphone",
+          "email": "Email"
+        },
+        "cancel": "Annuler",
+        "save": "Enregistrer",
+        "create": "Ajouter"
+      },
+      "toasts": {
+        "updated": "Artisan modifié",
+        "created": "Artisan ajouté",
+        "deleted": "Artisan supprimé"
+      }
+    }
   }
 }

@@ -1,6 +1,11 @@
 {
   "nav": {
-    "sections": { "main": "الرئيسية", "crm": "إدارة العملاء", "finance": "المالية", "admin": "الإدارة" },
+    "sections": {
+      "main": "الرئيسية",
+      "crm": "إدارة العملاء",
+      "finance": "المالية",
+      "admin": "الإدارة"
+    },
     "dashboard": "لوحة التحكم",
     "properties": "العقارات",
     "pipeline": "مسار الصفقات",
@@ -552,5 +557,77 @@
   },
   "ui": {
     "viewOffers": "عرض عروض Pro والمؤسسات"
+  },
+  "artisans": {
+    "shared": {
+      "pageTitle": "الحرفيون",
+      "loading": "جارٍ التحميل…",
+      "back": "رجوع",
+      "notFound": "العنصر غير موجود.",
+      "loadError": "حدث خطأ أثناء التحميل. حاول مرة أخرى لاحقًا."
+    },
+    "layout": {
+      "subtitle": "سجلّ الحرفيين الخاص بكم ومتابعة التدخلات على عقاراتكم",
+      "tabs": {
+        "directory": "الدليل",
+        "interventions": "التدخلات"
+      }
+    },
+    "directory": {
+      "stats": {
+        "total": "الحرفيون",
+        "shared": "مشتركون",
+        "private": "وكالتي"
+      },
+      "filters": {
+        "allTrades": "جميع المهن",
+        "cityPlaceholder": "المدينة"
+      },
+      "searchPlaceholder": "البحث عن حرفي…",
+      "addButton": "إضافة",
+      "gated": {
+        "message": "دليل الحرفيين مخصص لخطتي Pro وEntreprise."
+      },
+      "columns": {
+        "name": "الاسم",
+        "trade": "المهنة",
+        "city": "المدينة",
+        "contact": "التواصل"
+      },
+      "badge": {
+        "shared": "مشترك",
+        "private": "وكالتي",
+        "readOnly": "للقراءة فقط"
+      },
+      "actions": {
+        "edit": "تعديل",
+        "delete": "حذف"
+      },
+      "empty": {
+        "title": "لا يوجد حرفيون",
+        "description": "عدّلوا عوامل التصفية أو أضيفوا أول حرفي خاص بكم.",
+        "addButton": "إضافة حرفي"
+      },
+      "modal": {
+        "editTitle": "تعديل الحرفي",
+        "createTitle": "إضافة حرفي",
+        "tradeLabel": "المهنة",
+        "fields": {
+          "name": "الاسم *",
+          "company": "الشركة",
+          "city": "المدينة",
+          "phone": "الهاتف",
+          "email": "البريد الإلكتروني"
+        },
+        "cancel": "إلغاء",
+        "save": "حفظ",
+        "create": "إضافة"
+      },
+      "toasts": {
+        "updated": "تم تعديل الحرفي",
+        "created": "تمت إضافة الحرفي",
+        "deleted": "تم حذف الحرفي"
+      }
+    }
   }
 }
