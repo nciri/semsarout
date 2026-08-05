@@ -679,5 +679,60 @@
       },
       "autoSaveNote": "Les modifications sont enregistrées automatiquement."
     }
+  },
+  "contracts": {
+    "shared": {
+      "backToList": "Contrats"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "finalized": "Finalisé",
+      "signed": "Signé"
+    },
+    "docType": {
+      "mandate_sale": "Mandat de vente",
+      "mandate_rental": "Mandat location/gestion",
+      "compromise": "Compromis",
+      "lease": "Bail",
+      "other": "Autre"
+    },
+    "list": {
+      "pageTitle": "Contrats",
+      "subtitle": "Rédigez et gérez les contrats de vos transactions",
+      "templatesButton": "Modèles",
+      "newButton": "Nouveau contrat",
+      "gated": {
+        "title": "Contrats",
+        "message": "L'édition de contrats est réservée aux plans Pro et Entreprise."
+      },
+      "stats": {
+        "total": "Total",
+        "draft": "Brouillons",
+        "finalized": "Finalisés",
+        "signed": "Signés"
+      },
+      "columns": {
+        "title": "Titre",
+        "type": "Type",
+        "status": "Statut",
+        "createdAt": "Créé le"
+      },
+      "empty": {
+        "title": "Aucun contrat",
+        "description": "Créez votre premier contrat à partir d'un modèle ou d'une page vierge."
+      }
+    },
+    "editor": {
+      "save": "Enregistrer",
+      "finalize": "Finaliser",
+      "downloadPdf": "Télécharger PDF",
+      "markSigned": "Marquer signé",
+      "locked": "Contrat {{status}} — édition verrouillée.",
+      "toasts": {
+        "saved": "Enregistré",
+        "finalized": "Contrat finalisé",
+        "signed": "Marqué signé"
+      }
+    }
   }
 }

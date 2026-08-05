@@ -679,5 +679,60 @@
       },
       "autoSaveNote": "يتم حفظ التعديلات تلقائياً."
     }
+  },
+  "contracts": {
+    "shared": {
+      "backToList": "العقود"
+    },
+    "status": {
+      "draft": "مسودة",
+      "finalized": "نهائي",
+      "signed": "موقّع"
+    },
+    "docType": {
+      "mandate_sale": "وكالة بيع",
+      "mandate_rental": "وكالة كراء/تدبير",
+      "compromise": "وعد بالبيع",
+      "lease": "عقد كراء",
+      "other": "أخرى"
+    },
+    "list": {
+      "pageTitle": "العقود",
+      "subtitle": "حرّر وأدِر عقود معاملاتك",
+      "templatesButton": "النماذج",
+      "newButton": "عقد جديد",
+      "gated": {
+        "title": "العقود",
+        "message": "تحرير العقود متاح لباقتَي Pro وEntreprise فقط."
+      },
+      "stats": {
+        "total": "الإجمالي",
+        "draft": "مسودات",
+        "finalized": "نهائية",
+        "signed": "موقّعة"
+      },
+      "columns": {
+        "title": "العنوان",
+        "type": "النوع",
+        "status": "الحالة",
+        "createdAt": "أُنشئ في"
+      },
+      "empty": {
+        "title": "لا يوجد أي عقد",
+        "description": "أنشئ عقدك الأول انطلاقًا من نموذج أو صفحة فارغة."
+      }
+    },
+    "editor": {
+      "save": "حفظ",
+      "finalize": "إنهاء",
+      "downloadPdf": "تحميل PDF",
+      "markSigned": "تعليم كموقّع",
+      "locked": "عقد {{status}} — التحرير مقفل.",
+      "toasts": {
+        "saved": "تم الحفظ",
+        "finalized": "تم إنهاء العقد",
+        "signed": "تم التعليم كموقّع"
+      }
+    }
   }
 }
