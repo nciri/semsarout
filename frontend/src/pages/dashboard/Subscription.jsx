@@ -85,10 +85,10 @@ const generateInvoicePDF = (invoice, user, t) => {
 
   // Company info (right side)
   doc.setFont('helvetica', 'bold')
-  doc.text('SemsarOut SARL', pageWidth - 25, yPos + 5, { align: 'right' })
+  doc.text(t('dashboard:subscription.invoicePdf.companyName'), pageWidth - 25, yPos + 5, { align: 'right' })
   doc.setFont('helvetica', 'normal')
-  doc.text('123 Boulevard Mohammed V', pageWidth - 25, yPos + 14, { align: 'right' })
-  doc.text('Casablanca, Maroc', pageWidth - 25, yPos + 22, { align: 'right' })
+  doc.text(t('dashboard:subscription.invoicePdf.companyAddress'), pageWidth - 25, yPos + 14, { align: 'right' })
+  doc.text(t('dashboard:subscription.invoicePdf.companyCity'), pageWidth - 25, yPos + 22, { align: 'right' })
 
   // Invoice items table
   yPos += 50
@@ -178,7 +178,6 @@ const INDIVIDUAL_PLANS = [
   {
     id: 'free',
     price: 0,
-    period: '',
     icon: FiStar,
     color: 'gray',
     featuresIncluded: [true, true, true, true, false, false, false],
@@ -187,7 +186,6 @@ const INDIVIDUAL_PLANS = [
   {
     id: 'basic',
     price: 99,
-    period: '/mois',
     icon: FiZap,
     color: 'blue',
     featuresIncluded: [true, true, true, true, true, false, false],
@@ -196,7 +194,6 @@ const INDIVIDUAL_PLANS = [
   {
     id: 'premium',
     price: 199,
-    period: '/mois',
     icon: FiAward,
     color: 'purple',
     featuresIncluded: [true, true, true, true, true, true, true],
@@ -209,7 +206,6 @@ const AGENCY_PLANS = [
   {
     id: 'starter',
     price: 299,
-    period: '/mois',
     icon: FiStar,
     color: 'gray',
     featuresIncluded: [true, true, true, true, false, false, false, false, false],
@@ -218,7 +214,6 @@ const AGENCY_PLANS = [
   {
     id: 'pro',
     price: 799,
-    period: '/mois',
     icon: FiZap,
     color: 'blue',
     featuresIncluded: [true, true, true, true, true, true, true, true, false, false],
@@ -227,7 +222,6 @@ const AGENCY_PLANS = [
   {
     id: 'enterprise',
     price: 1999,
-    period: '/mois',
     icon: FiAward,
     color: 'purple',
     featuresIncluded: [true, true, true, true, true, true, true, true, true, true],
@@ -291,7 +285,7 @@ function PlanCard({ plan, planGroup, isCurrentPlan, onSelect }) {
           <span className="text-4xl font-bold text-gray-900">
             {plan.price === 0 ? t('dashboard:subscription.free') : formatPrice(plan.price)}
           </span>
-          {plan.period && <span className="text-gray-500">{plan.period}</span>}
+          {plan.price > 0 && <span className="text-gray-500">{t('dashboard:subscription.perMonth')}</span>}
         </div>
       </div>
 
