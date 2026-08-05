@@ -809,5 +809,71 @@
         "deleted": "Modèle supprimé"
       }
     }
+  },
+  "legal": {
+    "shared": {
+      "caseType": {
+        "sale": "Vente",
+        "rental": "Location"
+      },
+      "status": {
+        "open": "Ouvert",
+        "in_progress": "En cours",
+        "closed": "Clôturé"
+      },
+      "caseCreatedToast": "Dossier créé"
+    },
+    "layout": {
+      "title": "Notaires & juridique",
+      "subtitle": "Vos notaires partenaires et le suivi de vos dossiers juridiques",
+      "tabs": {
+        "notaries": "Notaires",
+        "cases": "Dossiers"
+      }
+    },
+    "notaries": {
+      "gated": {
+        "title": "Notaires",
+        "message": "L'annuaire des notaires est réservé aux plans Pro et Entreprise."
+      },
+      "searchPlaceholder": "Rechercher un notaire, une étude, une ville…",
+      "addButton": "Ajouter un notaire",
+      "columns": {
+        "name": "Nom",
+        "office": "Étude",
+        "city": "Ville",
+        "contact": "Contact"
+      },
+      "actions": {
+        "createCase": "Créer un dossier avec ce notaire",
+        "edit": "Modifier",
+        "delete": "Supprimer"
+      },
+      "empty": {
+        "title": "Aucun notaire",
+        "description": "Ajoutez votre premier notaire partenaire pour le mobiliser sur vos dossiers.",
+        "addButton": "Ajouter un notaire"
+      },
+      "modal": {
+        "editTitle": "Modifier le notaire",
+        "createTitle": "Ajouter un notaire",
+        "cancel": "Annuler",
+        "save": "Enregistrer",
+        "create": "Ajouter"
+      },
+      "fields": {
+        "name": "Nom *",
+        "office": "Étude",
+        "city": "Ville",
+        "phone": "Téléphone",
+        "email": "Email",
+        "license_number": "N° agrément"
+      },
+      "toasts": {
+        "updated": "Notaire modifié",
+        "created": "Notaire ajouté",
+        "deleted": "Notaire supprimé"
+      }
+    }
   }
 }

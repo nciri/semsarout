@@ -809,5 +809,71 @@
         "deleted": "تم حذف النموذج"
       }
     }
+  },
+  "legal": {
+    "shared": {
+      "caseType": {
+        "sale": "بيع",
+        "rental": "كراء"
+      },
+      "status": {
+        "open": "مفتوح",
+        "in_progress": "قيد الإنجاز",
+        "closed": "مُغلق"
+      },
+      "caseCreatedToast": "تم إنشاء الملف"
+    },
+    "layout": {
+      "title": "الموثّقون والشؤون القانونية",
+      "subtitle": "موثّقوك الشركاء ومتابعة ملفاتك القانونية",
+      "tabs": {
+        "notaries": "الموثّقون",
+        "cases": "الملفات"
+      }
+    },
+    "notaries": {
+      "gated": {
+        "title": "الموثّقون",
+        "message": "دليل الموثّقين متاح لباقتَي Pro وEntreprise فقط."
+      },
+      "searchPlaceholder": "ابحث عن موثّق أو مكتب أو مدينة…",
+      "addButton": "إضافة موثّق",
+      "columns": {
+        "name": "الاسم",
+        "office": "المكتب",
+        "city": "المدينة",
+        "contact": "التواصل"
+      },
+      "actions": {
+        "createCase": "إنشاء ملف مع هذا الموثّق",
+        "edit": "تعديل",
+        "delete": "حذف"
+      },
+      "empty": {
+        "title": "لا يوجد أي موثّق",
+        "description": "أضف موثّقك الشريك الأول لإشراكه في ملفاتك.",
+        "addButton": "إضافة موثّق"
+      },
+      "modal": {
+        "editTitle": "تعديل الموثّق",
+        "createTitle": "إضافة موثّق",
+        "cancel": "إلغاء",
+        "save": "حفظ",
+        "create": "إضافة"
+      },
+      "fields": {
+        "name": "الاسم *",
+        "office": "المكتب",
+        "city": "المدينة",
+        "phone": "الهاتف",
+        "email": "البريد الإلكتروني",
+        "license_number": "رقم الاعتماد"
+      },
+      "toasts": {
+        "updated": "تم تعديل الموثّق",
+        "created": "تمت إضافة الموثّق",
+        "deleted": "تم حذف الموثّق"
+      }
+    }
   }
 }
