@@ -706,6 +706,7 @@
         "الامتثال التنظيمي (التعريف بالمسافرين)"
       ],
       "optionsTitle": "صيغ StayManager.ma",
+      "optionPrice": "{{amount}} {{currency}}/عقار/شهر",
       "options": {
         "manage": "Manage",
         "automate": "Automate",

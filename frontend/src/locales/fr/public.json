@@ -706,6 +706,7 @@
         "Conformité réglementaire (identification des voyageurs)"
       ],
       "optionsTitle": "Formules StayManager.ma",
+      "optionPrice": "{{amount}} {{currency}}/bien/mois",
       "options": {
         "manage": "Manage",
         "automate": "Automate",

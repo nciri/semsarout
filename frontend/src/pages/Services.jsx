@@ -81,9 +81,9 @@ function buildServices(t) {
       features: t('public:services.courte-duree.features', { returnObjects: true }),
       optionsTitle: t('public:services.courte-duree.optionsTitle'),
       options: [
-        { name: t('public:services.courte-duree.options.manage'), price: `${PRICING.staymanager.manage} ${DIRHAM_SYMBOL}/bien/mois` },
-        { name: t('public:services.courte-duree.options.automate'), price: `${PRICING.staymanager.automate} ${DIRHAM_SYMBOL}/bien/mois` },
-        { name: t('public:services.courte-duree.options.optimize'), price: `${PRICING.staymanager.optimize} ${DIRHAM_SYMBOL}/bien/mois` }
+        { name: t('public:services.courte-duree.options.manage'), price: t('public:services.courte-duree.optionPrice', { amount: PRICING.staymanager.manage, currency: DIRHAM_SYMBOL }) },
+        { name: t('public:services.courte-duree.options.automate'), price: t('public:services.courte-duree.optionPrice', { amount: PRICING.staymanager.automate, currency: DIRHAM_SYMBOL }) },
+        { name: t('public:services.courte-duree.options.optimize'), price: t('public:services.courte-duree.optionPrice', { amount: PRICING.staymanager.optimize, currency: DIRHAM_SYMBOL }) }
       ],
       partnership: {
         name: 'StayManager.ma',
