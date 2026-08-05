@@ -175,5 +175,15 @@
       "vueMontagne": "إطلالة على الجبل",
       "duplex": "دوبلكس"
     }
+  },
+  "search": {
+    "allTypes": "جميع الأنواع",
+    "allCities": "جميع المدن",
+    "cityLabel": "المدينة",
+    "cityNeighborhoodPlaceholder": "المدينة، الحي...",
+    "select": "اختر…",
+    "searchPlaceholder": "ابحث…",
+    "noResults": "لا توجد نتائج",
+    "selectedCount": "{{count}} محدد"
   }
 }

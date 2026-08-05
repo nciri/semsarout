@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FiChevronDown, FiCheck } from 'react-icons/fi'
 
 // Menu déroulant à cases à cocher (multi-sélection), compact comme un <select>.
 export default function MultiSelectDropdown({ label, options, selected, onToggle, className = '' }) {
+  const { t } = useTranslation(['common'])
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -20,7 +22,7 @@ export default function MultiSelectDropdown({ label, options, selected, onToggle
       ? label
       : count === 1
         ? options.find(o => o.value === selected[0])?.label || label
-        : `${count} sélectionnés`
+        : t('common:search.selectedCount', { count })
 
   return (
     <div className={`relative ${className}`} ref={ref}>

@@ -175,5 +175,15 @@
       "vueMontagne": "Vue montagne",
       "duplex": "Duplex"
     }
+  },
+  "search": {
+    "allTypes": "Tous types",
+    "allCities": "Toutes les villes",
+    "cityLabel": "Ville",
+    "cityNeighborhoodPlaceholder": "Ville, quartier...",
+    "select": "Sélectionner…",
+    "searchPlaceholder": "Rechercher…",
+    "noResults": "Aucun résultat",
+    "selectedCount": "{{count}} sélectionnés"
   }
 }

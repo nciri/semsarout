@@ -51,6 +51,9 @@ const MIGRATED_FILES = [
   'src/components/admin/ImpersonationBanner.jsx',
   'src/components/common/PropertyCard.jsx',
   'src/components/search/AdvancedSearch.jsx',
+  'src/components/common/SearchForm.jsx',
+  'src/components/common/SearchableSelect.jsx',
+  'src/components/search/MultiSelectDropdown.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {
