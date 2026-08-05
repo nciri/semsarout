@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
+import { useTranslation } from 'react-i18next'
 import {
   FiArrowLeft, FiSave, FiUser, FiMail, FiPhone, FiMapPin,
   FiDollarSign, FiTag, FiFileText, FiX, FiPlus
 } from 'react-icons/fi'
 import { DIRHAM_SYMBOL } from '../../utils/currency'
 import SearchableSelect from '../../components/common/SearchableSelect'
+import DirIcon from '../../components/common/DirIcon'
 import api from '../../services/api'
 
 const backofficeService = {
@@ -32,14 +34,8 @@ const backofficeService = {
   }
 }
 
-const PROPERTY_TYPES = [
-  { value: 'apartment', label: 'Appartement' },
-  { value: 'house', label: 'Maison' },
-  { value: 'villa', label: 'Villa' },
-  { value: 'land', label: 'Terrain' },
-  { value: 'commercial', label: 'Commercial' },
-  { value: 'office', label: 'Bureau' }
-]
+// Libellés via t('backoffice:crm.shared.propertyTypes.<value>'), keyés sur l'enum API.
+const PROPERTY_TYPES = ['apartment', 'house', 'villa', 'land', 'commercial', 'office']
 
 const CITIES = [
   'Casablanca', 'Rabat', 'Marrakech', 'Tanger', 'Fès', 'Agadir',
@@ -47,6 +43,7 @@ const CITIES = [
 ]
 
 export default function BackofficeClientForm() {
+  const { t } = useTranslation(['backoffice', 'common'])
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -128,13 +125,13 @@ export default function BackofficeClientForm() {
 
   const validate = () => {
     const newErrors = {}
-    if (!formData.first_name) newErrors.first_name = 'Le prénom est requis'
-    if (!formData.last_name) newErrors.last_name = 'Le nom est requis'
+    if (!formData.first_name) newErrors.first_name = t('common:validation.firstNameRequired')
+    if (!formData.last_name) newErrors.last_name = t('common:validation.lastNameRequired')
     if (!formData.email && !formData.phone) {
-      newErrors.contact = 'Email ou téléphone requis'
+      newErrors.contact = t('backoffice:crm.clients.form.validation.contactRequired')
     }
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Email invalide'
+      newErrors.email = t('common:validation.emailInvalid')
     }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -169,7 +166,7 @@ export default function BackofficeClientForm() {
   }
 
   const handleRemoveTag = (tag) => {
-    setFormData({ ...formData, tags: formData.tags.filter(t => t !== tag) })
+    setFormData({ ...formData, tags: formData.tags.filter(tg => tg !== tag) })
   }
 
   const togglePropertyType = (type) => {
@@ -202,14 +199,14 @@ export default function BackofficeClientForm() {
           onClick={() => navigate(backTo)}
           className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
         >
-          <FiArrowLeft className="w-5 h-5" />
+          <DirIcon icon={FiArrowLeft} className="w-5 h-5" />
         </button>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {isEditing ? 'Modifier le client' : 'Nouveau client'}
+            {isEditing ? t('backoffice:crm.clients.form.titleEdit') : t('backoffice:crm.clients.form.titleNew')}
           </h1>
           <p className="text-gray-500">
-            {isEditing ? 'Mettez à jour les informations du client' : 'Ajoutez un nouveau client à votre base'}
+            {isEditing ? t('backoffice:crm.clients.form.subtitleEdit') : t('backoffice:crm.clients.form.subtitleNew')}
           </p>
         </div>
       </div>
@@ -219,13 +216,13 @@ export default function BackofficeClientForm() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <FiUser className="w-5 h-5 text-gray-400" />
-            Informations personnelles
+            {t('backoffice:crm.clients.form.sections.personalInfo')}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Prénom <span className="text-red-500">*</span>
+                {t('backoffice:crm.clients.form.fields.firstName')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -240,7 +237,7 @@ export default function BackofficeClientForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nom <span className="text-red-500">*</span>
+                {t('backoffice:crm.clients.form.fields.lastName')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -255,15 +252,15 @@ export default function BackofficeClientForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
+                {t('backoffice:crm.clients.form.fields.email')}
               </label>
               <div className="relative">
-                <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <FiMail className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                  className={`w-full ps-10 pe-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
                     errors.email ? 'border-red-500' : 'border-gray-200'
                   }`}
                 />
@@ -273,81 +270,81 @@ export default function BackofficeClientForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Téléphone principal
+                {t('backoffice:crm.clients.form.fields.phonePrimary')}
               </label>
               <div className="relative">
-                <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <FiPhone className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full ps-10 pe-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Téléphone secondaire
+                {t('backoffice:crm.clients.form.fields.phoneSecondary')}
               </label>
               <div className="relative">
-                <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <FiPhone className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="tel"
                   value={formData.secondary_phone}
                   onChange={(e) => setFormData({ ...formData, secondary_phone: e.target.value })}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full ps-10 pe-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Type de client
+                {t('backoffice:crm.clients.form.fields.clientType')}
               </label>
               <select
                 value={formData.client_type}
                 onChange={(e) => setFormData({ ...formData, client_type: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <option value="buyer">Acheteur</option>
-                <option value="seller">Vendeur</option>
-                <option value="landlord">Propriétaire</option>
-                <option value="tenant">Locataire</option>
-                <option value="investor">Investisseur</option>
+                <option value="buyer">{t('backoffice:crm.shared.clientTypes.buyer')}</option>
+                <option value="seller">{t('backoffice:crm.shared.clientTypes.seller')}</option>
+                <option value="landlord">{t('backoffice:crm.shared.clientTypes.landlord')}</option>
+                <option value="tenant">{t('backoffice:crm.shared.clientTypes.tenant')}</option>
+                <option value="investor">{t('backoffice:crm.shared.clientTypes.investor')}</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Statut
+                {t('backoffice:crm.clients.form.fields.status')}
               </label>
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <option value="active">Actif</option>
-                <option value="prospect">Prospect</option>
-                <option value="inactive">Inactif</option>
+                <option value="active">{t('backoffice:crm.shared.status.active')}</option>
+                <option value="prospect">{t('backoffice:crm.shared.status.prospect')}</option>
+                <option value="inactive">{t('backoffice:crm.shared.status.inactive')}</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Source
+                {t('backoffice:crm.clients.form.fields.source')}
               </label>
               <select
                 value={formData.source}
                 onChange={(e) => setFormData({ ...formData, source: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <option value="direct">Direct</option>
-                <option value="website">Site web</option>
-                <option value="referral">Recommandation</option>
-                <option value="social">Réseaux sociaux</option>
-                <option value="advertising">Publicité</option>
-                <option value="partner">Partenaire</option>
+                <option value="direct">{t('backoffice:crm.clients.form.sourceOptions.direct')}</option>
+                <option value="website">{t('backoffice:crm.clients.form.sourceOptions.website')}</option>
+                <option value="referral">{t('backoffice:crm.clients.form.sourceOptions.referral')}</option>
+                <option value="social">{t('backoffice:crm.clients.form.sourceOptions.social')}</option>
+                <option value="advertising">{t('backoffice:crm.clients.form.sourceOptions.advertising')}</option>
+                <option value="partner">{t('backoffice:crm.clients.form.sourceOptions.partner')}</option>
               </select>
             </div>
           </div>
@@ -361,13 +358,13 @@ export default function BackofficeClientForm() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <FiMapPin className="w-5 h-5 text-gray-400" />
-            Adresse
+            {t('backoffice:crm.clients.form.sections.address')}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Adresse
+                {t('backoffice:crm.clients.form.fields.address')}
               </label>
               <input
                 type="text"
@@ -379,14 +376,14 @@ export default function BackofficeClientForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ville
+                {t('backoffice:crm.clients.form.fields.city')}
               </label>
               <select
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <option value="">Sélectionner une ville</option>
+                <option value="">{t('backoffice:crm.clients.form.fields.selectCity')}</option>
                 {CITIES.map(city => (
                   <option key={city} value={city}>{city}</option>
                 ))}
@@ -400,13 +397,13 @@ export default function BackofficeClientForm() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <FiDollarSign className="w-5 h-5 text-gray-400" />
-              Critères de recherche
+              {t('backoffice:crm.clients.form.sections.searchCriteria')}
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Budget minimum ({DIRHAM_SYMBOL})
+                  {t('backoffice:crm.clients.form.fields.budgetMin', { currency: DIRHAM_SYMBOL })}
                 </label>
                 <input
                   type="number"
@@ -418,7 +415,7 @@ export default function BackofficeClientForm() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Budget maximum ({DIRHAM_SYMBOL})
+                  {t('backoffice:crm.clients.form.fields.budgetMax', { currency: DIRHAM_SYMBOL })}
                 </label>
                 <input
                   type="number"
@@ -431,21 +428,21 @@ export default function BackofficeClientForm() {
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Types de biens recherchés
+                {t('backoffice:crm.clients.form.fields.propertyTypesWanted')}
               </label>
               <div className="flex flex-wrap gap-2">
                 {PROPERTY_TYPES.map(type => (
                   <button
-                    key={type.value}
+                    key={type}
                     type="button"
-                    onClick={() => togglePropertyType(type.value)}
+                    onClick={() => togglePropertyType(type)}
                     className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-                      formData.preferred_property_types.includes(type.value)
+                      formData.preferred_property_types.includes(type)
                         ? 'bg-primary-100 text-primary-700 border border-primary-300'
                         : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
                     }`}
                   >
-                    {type.label}
+                    {t(`backoffice:crm.shared.propertyTypes.${type}`)}
                   </button>
                 ))}
               </div>
@@ -453,7 +450,7 @@ export default function BackofficeClientForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Villes préférées
+                {t('backoffice:crm.clients.form.fields.preferredCities')}
               </label>
               <div className="flex flex-wrap gap-2">
                 {CITIES.map(city => (
@@ -479,7 +476,7 @@ export default function BackofficeClientForm() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <FiTag className="w-5 h-5 text-gray-400" />
-            Tags
+            {t('backoffice:crm.clients.form.sections.tags')}
           </h2>
 
           <div className="flex flex-wrap gap-2 mb-3">
@@ -506,7 +503,7 @@ export default function BackofficeClientForm() {
               value={newTag}
               onChange={(e) => setNewTag(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-              placeholder="Ajouter un tag..."
+              placeholder={t('backoffice:crm.clients.form.tagsPlaceholder')}
               className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
             <button
@@ -523,34 +520,34 @@ export default function BackofficeClientForm() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <FiFileText className="w-5 h-5 text-gray-400" />
-            Notes et assignation
+            {t('backoffice:crm.clients.form.sections.notes')}
           </h2>
 
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Agent assigné
+                {t('backoffice:crm.clients.form.fields.agentAssigned')}
               </label>
               <SearchableSelect
                 value={formData.assigned_agent_id}
                 onChange={(v) => setFormData({ ...formData, assigned_agent_id: v })}
                 options={(agentsData?.users || []).map((agent) => ({ value: agent.id, label: `${agent.first_name} ${agent.last_name}`, description: agent.email }))}
-                placeholder="Non assigné"
-                searchPlaceholder="Rechercher un agent…"
+                placeholder={t('backoffice:crm.clients.form.fields.agentPlaceholder')}
+                searchPlaceholder={t('backoffice:crm.clients.form.fields.agentSearchPlaceholder')}
                 clearable
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Notes
+                {t('backoffice:crm.clients.form.fields.notes')}
               </label>
               <textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 rows={4}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="Notes internes sur le client..."
+                placeholder={t('backoffice:crm.clients.form.fields.notesPlaceholder')}
               />
             </div>
 
@@ -563,7 +560,7 @@ export default function BackofficeClientForm() {
                 className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
               />
               <label htmlFor="gdpr_consent" className="text-sm text-gray-700">
-                Le client a donné son consentement pour le traitement de ses données (RGPD)
+                {t('backoffice:crm.clients.form.fields.gdprConsent')}
               </label>
             </div>
           </div>
@@ -576,7 +573,7 @@ export default function BackofficeClientForm() {
             onClick={() => navigate(backTo)}
             className="px-6 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            Annuler
+            {t('backoffice:crm.clients.form.cancelButton')}
           </button>
           <button
             type="submit"
@@ -584,7 +581,7 @@ export default function BackofficeClientForm() {
             className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             <FiSave className="w-5 h-5" />
-            {isEditing ? 'Mettre à jour' : 'Créer le client'}
+            {isEditing ? t('backoffice:crm.clients.form.updateButton') : t('backoffice:crm.clients.form.createButton')}
           </button>
         </div>
       </form>
