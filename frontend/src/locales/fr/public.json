@@ -41,5 +41,23 @@
     "copied": "Copié !",
     "transferNote": "Votre commande sera activée dès réception du virement (délai habituel : 1 à 3 jours ouvrés). Un email de confirmation vous sera envoyé.",
     "goToDashboard": "Accéder à mon espace"
+  },
+  "compare": {
+    "backToListings": "Retour aux annonces",
+    "title": "Comparer les biens",
+    "emptyMessage": "Aucun bien sélectionné pour la comparaison.",
+    "rows": {
+      "price": "Prix",
+      "pricePerSqm": "Prix / m²",
+      "surface": "Surface",
+      "rooms": "Pièces",
+      "bedrooms": "Chambres",
+      "bathrooms": "Salles de bain",
+      "floor": "Étage",
+      "groundFloor": "RC",
+      "city": "Ville",
+      "neighborhood": "Quartier",
+      "constructionYear": "Année construction"
+    }
   }
 }
