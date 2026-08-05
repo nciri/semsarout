@@ -111,6 +111,13 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/StripeConfig.jsx',
   'src/pages/backoffice/Dashboard.jsx',
   'src/pages/backoffice/components/BackofficeLayout.jsx',
+  'src/pages/dashboard/MonEspace.jsx',
+  'src/pages/dashboard/AccountTabs.jsx',
+  'src/pages/dashboard/Settings.jsx',
+  'src/pages/dashboard/Subscription.jsx',
+  'src/pages/dashboard/Availability.jsx',
+  'src/pages/dashboard/SavedSearches.jsx',
+  'src/pages/dashboard/Dashboard.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {

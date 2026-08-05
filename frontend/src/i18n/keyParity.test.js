@@ -7,6 +7,8 @@ import frAuth from '../locales/fr/auth.json'
 import arAuth from '../locales/ar/auth.json'
 import frPublic from '../locales/fr/public.json'
 import arPublic from '../locales/ar/public.json'
+import frDashboard from '../locales/fr/dashboard.json'
+import arDashboard from '../locales/ar/dashboard.json'
 
 function flatKeys(obj, prefix = '') {
   return Object.entries(obj).flatMap(([k, v]) => {
@@ -21,6 +23,7 @@ describe('parité des clés FR/AR', () => {
     ['backoffice', frBackoffice, arBackoffice],
     ['auth', frAuth, arAuth],
     ['public', frPublic, arPublic],
+    ['dashboard', frDashboard, arDashboard],
   ])('%s a les mêmes clés en FR et AR', (_ns, fr, ar) => {
     expect(flatKeys(ar).sort()).toEqual(flatKeys(fr).sort())
   })

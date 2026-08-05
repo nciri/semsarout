@@ -10,12 +10,14 @@ import frAuth from '../locales/fr/auth.json'
 import arAuth from '../locales/ar/auth.json'
 import frPublic from '../locales/fr/public.json'
 import arPublic from '../locales/ar/public.json'
+import frDashboard from '../locales/fr/dashboard.json'
+import arDashboard from '../locales/ar/dashboard.json'
 
 export const SUPPORTED_LANGS = ['fr', 'ar']
 
 const resources = {
-  fr: { common: frCommon, backoffice: frBackoffice, auth: frAuth, public: frPublic },
-  ar: { common: arCommon, backoffice: arBackoffice, auth: arAuth, public: arPublic },
+  fr: { common: frCommon, backoffice: frBackoffice, auth: frAuth, public: frPublic, dashboard: frDashboard },
+  ar: { common: arCommon, backoffice: arBackoffice, auth: arAuth, public: arPublic, dashboard: arDashboard },
 }
 
 i18n
@@ -25,7 +27,7 @@ i18n
     resources,
     fallbackLng: 'fr',
     supportedLngs: SUPPORTED_LANGS,
-    ns: ['common', 'backoffice', 'auth', 'public'],
+    ns: ['common', 'backoffice', 'auth', 'public', 'dashboard'],
     defaultNS: 'common',
     interpolation: { escapeValue: false },
     detection: {
