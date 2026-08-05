@@ -1,6 +1,14 @@
+@import '@fontsource/noto-sans-arabic/400.css';
+@import '@fontsource/noto-sans-arabic/600.css';
+@import '@fontsource/noto-sans-arabic/700.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+html[lang='ar'] {
+  font-family: 'Noto Sans Arabic', sans-serif;
+}
 
 @layer base {
   html {

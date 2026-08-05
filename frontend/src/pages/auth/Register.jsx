@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { FiUser, FiMail, FiLock, FiPhone, FiEye, FiEyeOff } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
 import { SERVICE_OPTIONS, isValidService } from '../../constants/services'
 
 function Register() {
+  const { t } = useTranslation(['auth', 'common'])
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
@@ -47,22 +49,22 @@ function Register() {
       <div className="max-w-4xl w-full">
         <div className="text-center mb-8">
           <h1 className="font-display text-2xl font-bold text-gray-900">
-            Créer un compte
+            {t('auth:register.title')}
           </h1>
           <p className="text-gray-600 mt-2">
-            Rejoignez Semsar et accédez à toutes les fonctionnalités
+            {t('auth:register.subtitle')}
           </p>
         </div>
 
         {/* Contexte service : l'utilisateur arrive depuis une page service/contact */}
         {serviceMeta && (
           <div className="mb-6 p-4 bg-primary-50 border border-primary-100 rounded-xl flex items-center">
-            <serviceMeta.icon className="w-5 h-5 text-primary-600 mr-3 flex-shrink-0" />
+            <serviceMeta.icon className="w-5 h-5 text-primary-600 me-3 flex-shrink-0" />
             <div className="text-sm">
-              <span className="text-gray-600">Vous êtes intéressé par :</span>{' '}
+              <span className="text-gray-600">{t('auth:register.interestedIn')}</span>{' '}
               <span className="font-semibold text-primary-700">{serviceMeta.shortLabel}</span>
               <div className="text-gray-500 text-xs mt-0.5">
-                Après l'inscription, nous vous guiderons pour cette demande.
+                {t('auth:register.serviceFollowUp')}
               </div>
             </div>
           </div>
@@ -78,7 +80,7 @@ function Register() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* User Type */}
             <div>
-              <label className="label">Type de compte</label>
+              <label className="label">{t('auth:register.accountTypeLabel')}</label>
               <div className="grid grid-cols-2 gap-4">
                 <label className={`flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
                   userType === 'particular' ? 'border-primary-600 bg-primary-50' : 'border-gray-200'
@@ -90,7 +92,7 @@ function Register() {
                     className="sr-only"
                   />
                   <span className={userType === 'particular' ? 'text-primary-600' : 'text-gray-600'}>
-                    Particulier
+                    {t('auth:register.particular')}
                   </span>
                 </label>
                 <label className={`flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
@@ -103,7 +105,7 @@ function Register() {
                     className="sr-only"
                   />
                   <span className={userType === 'professional' ? 'text-primary-600' : 'text-gray-600'}>
-                    Professionnel
+                    {t('auth:register.professional')}
                   </span>
                 </label>
               </div>
@@ -111,7 +113,7 @@ function Register() {
 
             {/* Account Role */}
             <div>
-              <label className="label">Vous êtes plutôt...</label>
+              <label className="label">{t('auth:register.accountRoleLabel')}</label>
               <div className="grid grid-cols-2 gap-4">
                 <label className={`flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
                   accountRole === 'buyer' ? 'border-primary-600 bg-primary-50' : 'border-gray-200'
@@ -124,9 +126,9 @@ function Register() {
                   />
                   <div className="text-center">
                     <div className={accountRole === 'buyer' ? 'text-primary-600 font-semibold' : 'text-gray-600'}>
-                      🔍 Acheteur/Chercheur
+                      {t('auth:register.buyerRole')}
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">Je recherche une propriété</div>
+                    <div className="text-xs text-gray-500 mt-1">{t('auth:register.buyerRoleDescription')}</div>
                   </div>
                 </label>
                 <label className={`flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
@@ -140,9 +142,9 @@ function Register() {
                   />
                   <div className="text-center">
                     <div className={accountRole === 'agent' ? 'text-primary-600 font-semibold' : 'text-gray-600'}>
-                      🏢 Agent/Vendeur
+                      {t('auth:register.agentRole')}
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">Je vends des propriétés</div>
+                    <div className="text-xs text-gray-500 mt-1">{t('auth:register.agentRoleDescription')}</div>
                   </div>
                 </label>
               </div>
@@ -150,7 +152,7 @@ function Register() {
 
             {/* Intent */}
             <div>
-              <label className="label">Qu'est-ce qui vous amène ? <span className="text-gray-400 font-normal">(optionnel)</span></label>
+              <label className="label">{t('auth:register.intentLabel')} <span className="text-gray-400 font-normal">{t('auth:register.optional')}</span></label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {Object.entries(SERVICE_OPTIONS).map(([key, opt]) => {
                   const OptIcon = opt.icon
@@ -168,7 +170,7 @@ function Register() {
                         {...register('interest')}
                         className="sr-only"
                       />
-                      <OptIcon className={`w-4 h-4 mr-2 flex-shrink-0 ${active ? 'text-primary-600' : 'text-gray-400'}`} />
+                      <OptIcon className={`w-4 h-4 me-2 flex-shrink-0 ${active ? 'text-primary-600' : 'text-gray-400'}`} />
                       {opt.label}
                     </label>
                   )
@@ -179,13 +181,13 @@ function Register() {
             {/* Name */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="label">Prénom</label>
+                <label className="label">{t('auth:register.firstNameLabel')}</label>
                 <div className="relative">
-                  <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <FiUser className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
-                    {...register('first_name', { required: 'Prénom requis' })}
-                    className="input pl-10"
-                    placeholder="Prénom"
+                    {...register('first_name', { required: t('common:validation.firstNameRequired') })}
+                    className="input ps-10"
+                    placeholder={t('auth:register.firstNamePlaceholder')}
                   />
                 </div>
                 {errors.first_name && (
@@ -193,11 +195,11 @@ function Register() {
                 )}
               </div>
               <div>
-                <label className="label">Nom</label>
+                <label className="label">{t('auth:register.lastNameLabel')}</label>
                 <input
-                  {...register('last_name', { required: 'Nom requis' })}
+                  {...register('last_name', { required: t('common:validation.lastNameRequired') })}
                   className="input"
-                  placeholder="Nom"
+                  placeholder={t('auth:register.lastNamePlaceholder')}
                 />
                 {errors.last_name && (
                   <p className="text-red-500 text-sm mt-1">{errors.last_name.message}</p>
@@ -208,20 +210,20 @@ function Register() {
             {/* Email + Phone */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="label">Email</label>
+                <label className="label">{t('auth:register.emailLabel')}</label>
                 <div className="relative">
-                  <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <FiMail className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="email"
                     {...register('email', {
-                      required: 'Email requis',
+                      required: t('common:validation.emailRequired'),
                       pattern: {
                         value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: 'Email invalide'
+                        message: t('common:validation.emailInvalid')
                       }
                     })}
-                    className="input pl-10"
-                    placeholder="votre@email.com"
+                    className="input ps-10"
+                    placeholder={t('auth:register.emailPlaceholder')}
                   />
                 </div>
                 {errors.email && (
@@ -229,13 +231,13 @@ function Register() {
                 )}
               </div>
               <div>
-                <label className="label">Téléphone</label>
+                <label className="label">{t('auth:register.phoneLabel')}</label>
                 <div className="relative">
-                  <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <FiPhone className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     {...register('phone')}
-                    className="input pl-10"
-                    placeholder="+212 6XX XXX XXX"
+                    className="input ps-10"
+                    placeholder={t('auth:register.phonePlaceholder')}
                   />
                 </div>
               </div>
@@ -243,25 +245,25 @@ function Register() {
 
             {/* Password */}
             <div>
-              <label className="label">Mot de passe</label>
+              <label className="label">{t('auth:register.passwordLabel')}</label>
               <div className="relative">
-                <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <FiLock className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   {...register('password', {
-                    required: 'Mot de passe requis',
+                    required: t('common:validation.passwordRequired'),
                     minLength: {
                       value: 8,
-                      message: 'Minimum 8 caractères'
+                      message: t('common:validation.passwordMin8')
                     }
                   })}
-                  className="input pl-10 pr-10"
+                  className="input ps-10 pe-10"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-400"
                 >
                   {showPassword ? <FiEyeOff /> : <FiEye />}
                 </button>
@@ -276,14 +278,14 @@ function Register() {
               <label className="flex items-start">
                 <input
                   type="checkbox"
-                  {...register('terms', { required: 'Vous devez accepter les conditions' })}
-                  className="mt-1 rounded border-gray-300 text-primary-600 mr-2"
+                  {...register('terms', { required: t('auth:register.termsRequired') })}
+                  className="mt-1 rounded border-gray-300 text-primary-600 me-2"
                 />
                 <span className="text-sm text-gray-600">
-                  J'accepte les{' '}
-                  <Link to="/cgu" target="_blank" className="text-primary-600">conditions d'utilisation</Link>
-                  {' '}et la{' '}
-                  <Link to="/politique-de-confidentialite" target="_blank" className="text-primary-600">politique de confidentialité</Link>
+                  {t('auth:register.termsPrefix')}{' '}
+                  <Link to="/cgu" target="_blank" className="text-primary-600">{t('auth:register.termsLink')}</Link>
+                  {' '}{t('auth:register.termsAnd')}{' '}
+                  <Link to="/politique-de-confidentialite" target="_blank" className="text-primary-600">{t('auth:register.privacyLink')}</Link>
                 </span>
               </label>
               {errors.terms && (
@@ -296,14 +298,14 @@ function Register() {
               disabled={isLoading}
               className="btn-primary w-full"
             >
-              {isLoading ? 'Inscription...' : 'Créer mon compte'}
+              {isLoading ? t('auth:register.submitting') : t('auth:register.submit')}
             </button>
           </form>
 
           <div className="mt-6 text-center text-sm text-gray-600">
-            Déjà un compte ?{' '}
+            {t('auth:register.hasAccount')}{' '}
             <Link to={loginLink} className="text-primary-600 hover:text-primary-700 font-medium">
-              Connectez-vous
+              {t('auth:register.loginLink')}
             </Link>
           </div>
         </div>

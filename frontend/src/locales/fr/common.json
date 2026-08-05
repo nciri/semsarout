@@ -1,0 +1,18 @@
+{
+  "language": { "fr": "Français", "ar": "العربية" },
+  "actions": { "search": "Rechercher...", "logout": "Déconnexion" },
+  "validation": {
+    "emailRequired": "Email requis",
+    "emailInvalid": "Email invalide",
+    "passwordRequired": "Mot de passe requis",
+    "passwordMin8": "Minimum 8 caractères",
+    "passwordsMismatch": "Les mots de passe ne correspondent pas",
+    "firstNameRequired": "Prénom requis",
+    "lastNameRequired": "Nom requis",
+    "confirmationRequired": "Confirmation requise"
+  },
+  "errors": {
+    "generic": "Une erreur est survenue",
+    "short": "Erreur"
+  }
+}

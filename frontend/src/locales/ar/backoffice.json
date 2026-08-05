@@ -1,0 +1,45 @@
+{
+  "nav": {
+    "sections": { "main": "الرئيسية", "crm": "إدارة العملاء", "finance": "المالية", "admin": "الإدارة" },
+    "dashboard": "لوحة التحكم",
+    "properties": "العقارات",
+    "pipeline": "مسار الصفقات",
+    "clients": "العملاء",
+    "leads": "العملاء المحتملون",
+    "visits": "الزيارات والمواعيد",
+    "transactions": "المعاملات",
+    "contracts": "العقود",
+    "notaries": "الموثقون",
+    "artisans": "الحرفيون",
+    "rental": "التسيير الكرائي",
+    "shop": "المتجر",
+    "team": "الفريق",
+    "analytics": "التحليلات",
+    "settings": "الإعدادات"
+  },
+  "dashboard": {
+    "title": "لوحة التحكم",
+    "subtitle": "نظرة عامة على نشاطك",
+    "stats": {
+      "activeProperties": "العقارات النشطة",
+      "newLeads": "عملاء محتملون جدد",
+      "plannedVisits": "زيارات مبرمجة",
+      "activePipeline": "مسار نشط"
+    },
+    "latestLeads": "آخر العملاء المحتملين",
+    "noRecentLead": "لا يوجد عميل محتمل حديث",
+    "upcomingVisits": "الزيارات القادمة",
+    "noPlannedVisit": "لا توجد زيارة مبرمجة",
+    "monthSummary": "ملخص الشهر",
+    "revenue": "رقم المعاملات",
+    "soldProperties": "عقارات مباعة",
+    "newClients": "عملاء جدد",
+    "activeTransactions": "معاملات نشطة",
+    "quickActions": "إجراءات سريعة",
+    "addProperty": "إضافة عقار",
+    "newClient": "عميل جديد",
+    "planVisit": "برمجة زيارة",
+    "viewPipeline": "عرض مسار الصفقات",
+    "viewAll": "عرض الكل"
+  }
+}

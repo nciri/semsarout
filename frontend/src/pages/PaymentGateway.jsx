@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { FiCreditCard, FiAlertTriangle } from 'react-icons/fi'
 import { formatPrice } from '../utils/currency'
 
@@ -10,6 +11,7 @@ import { formatPrice } from '../utils/currency'
  * during development.
  */
 function PaymentGateway() {
+  const { t } = useTranslation(['public', 'common'])
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const [processing, setProcessing] = useState(false)
@@ -39,22 +41,22 @@ function PaymentGateway() {
       <div className="max-w-md w-full card p-8 text-center">
         <div className="flex items-center justify-center gap-2 mb-4 text-yellow-600 bg-yellow-50 rounded-lg py-2 px-3 text-xs">
           <FiAlertTriangle className="w-4 h-4 flex-shrink-0" />
-          Passerelle de paiement en mode démo (intégration CMI à venir)
+          {t('public:payment.demoNotice')}
         </div>
         <FiCreditCard className="w-12 h-12 text-primary-600 mx-auto mb-4" />
         <h1 className="font-display text-xl font-bold text-gray-900 mb-2">
-          Confirmer le paiement
+          {t('public:payment.title')}
         </h1>
         <p className="text-gray-600 mb-6">
-          Référence <span className="font-mono">{reference}</span>
-          {amount && <> — Montant : {formatPrice(parseFloat(amount))}</>}
+          {t('public:payment.referenceLabel')} <span className="font-mono">{reference}</span>
+          {amount && <> — {t('public:payment.amountLabel')} {formatPrice(parseFloat(amount))}</>}
         </p>
         <button
           onClick={handleConfirm}
           disabled={processing}
           className="btn-primary w-full justify-center"
         >
-          {processing ? 'Traitement...' : 'Confirmer le paiement'}
+          {processing ? t('public:payment.processing') : t('public:payment.confirmButton')}
         </button>
       </div>
     </div>

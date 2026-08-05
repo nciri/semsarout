@@ -4,6 +4,8 @@ import {
   FiTrendingDown, FiDollarSign, FiEye, FiArrowRight, FiClock
 } from 'react-icons/fi'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import DirIcon from '../../components/common/DirIcon'
 import { formatPrice } from '../../utils/currency'
 import api from '../../services/api'
 
@@ -36,7 +38,7 @@ function StatCard({ title, value, change, icon: Icon, color = 'primary', suffix 
           </p>
           {change !== undefined && (
             <div className={`flex items-center mt-2 text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-              {isPositive ? <FiTrendingUp className="w-4 h-4 mr-1" /> : <FiTrendingDown className="w-4 h-4 mr-1" />}
+              {isPositive ? <FiTrendingUp className="w-4 h-4 me-1" /> : <FiTrendingDown className="w-4 h-4 me-1" />}
               <span>{Math.abs(change)}% vs mois dernier</span>
             </div>
           )}
@@ -69,7 +71,7 @@ function RecentLeadCard({ lead }) {
           <p className="text-sm text-gray-500">{lead.email}</p>
         </div>
       </div>
-      <div className="text-right">
+      <div className="text-end">
         <span className={`text-xs px-2 py-1 rounded-full ${sourceColors[lead.source] || 'bg-gray-100 text-gray-700'}`}>
           {lead.source === 'contact_form' ? 'Formulaire' : lead.source === 'phone_reveal' ? 'Téléphone' : lead.source}
         </span>
@@ -114,6 +116,7 @@ function UpcomingVisitCard({ visit }) {
 }
 
 export default function BackofficeDashboard() {
+  const { t } = useTranslation('backoffice')
   const { data, isLoading } = useQuery('backoffice-dashboard', backofficeService.getDashboard, {
     refetchInterval: 60000 // Refresh every minute
   })
@@ -138,8 +141,8 @@ export default function BackofficeDashboard() {
       {/* Page header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tableau de bord</h1>
-          <p className="text-gray-500">Vue d'ensemble de votre activité</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('dashboard.title')}</h1>
+          <p className="text-gray-500">{t('dashboard.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <select className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm">
@@ -153,27 +156,27 @@ export default function BackofficeDashboard() {
       {/* Stats grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Biens actifs"
+          title={t('dashboard.stats.activeProperties')}
           value={data?.properties?.active || 0}
           change={12}
           icon={FiHome}
           color="primary"
         />
         <StatCard
-          title="Nouveaux leads"
+          title={t('dashboard.stats.newLeads')}
           value={data?.leads?.this_week || 0}
           change={data?.leads?.conversion_rate}
           icon={FiMail}
           color="blue"
         />
         <StatCard
-          title="Visites planifiées"
+          title={t('dashboard.stats.plannedVisits')}
           value={data?.visits?.this_week || 0}
           icon={FiCalendar}
           color="green"
         />
         <StatCard
-          title="Pipeline actif"
+          title={t('dashboard.stats.activePipeline')}
           value={formatPrice(data?.transactions?.pipeline_value || 0)}
           icon={FiDollarSign}
           color="purple"
@@ -185,9 +188,9 @@ export default function BackofficeDashboard() {
         {/* Recent leads */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="flex items-center justify-between p-4 border-b border-gray-100">
-            <h2 className="font-semibold text-gray-900">Derniers leads</h2>
+            <h2 className="font-semibold text-gray-900">{t('dashboard.latestLeads')}</h2>
             <Link to="/backoffice/leads" className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1">
-              Voir tout <FiArrowRight className="w-4 h-4" />
+              {t('dashboard.viewAll')} <DirIcon icon={FiArrowRight} className="w-4 h-4" />
             </Link>
           </div>
           <div className="p-4">
@@ -196,7 +199,7 @@ export default function BackofficeDashboard() {
                 <RecentLeadCard key={lead.id} lead={lead} />
               ))
             ) : (
-              <p className="text-gray-500 text-center py-4">Aucun lead récent</p>
+              <p className="text-gray-500 text-center py-4">{t('dashboard.noRecentLead')}</p>
             )}
           </div>
         </div>
@@ -204,9 +207,9 @@ export default function BackofficeDashboard() {
         {/* Upcoming visits */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="flex items-center justify-between p-4 border-b border-gray-100">
-            <h2 className="font-semibold text-gray-900">Prochaines visites</h2>
+            <h2 className="font-semibold text-gray-900">{t('dashboard.upcomingVisits')}</h2>
             <Link to="/backoffice/visites" className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1">
-              Voir tout <FiArrowRight className="w-4 h-4" />
+              {t('dashboard.viewAll')} <DirIcon icon={FiArrowRight} className="w-4 h-4" />
             </Link>
           </div>
           <div className="p-4">
@@ -215,21 +218,21 @@ export default function BackofficeDashboard() {
                 <UpcomingVisitCard key={visit.id} visit={visit} />
               ))
             ) : (
-              <p className="text-gray-500 text-center py-4">Aucune visite planifiée</p>
+              <p className="text-gray-500 text-center py-4">{t('dashboard.noPlannedVisit')}</p>
             )}
           </div>
         </div>
 
         {/* Quick stats */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <h2 className="font-semibold text-gray-900 mb-4">Résumé du mois</h2>
+          <h2 className="font-semibold text-gray-900 mb-4">{t('dashboard.monthSummary')}</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-100 rounded-lg">
                   <FiDollarSign className="w-5 h-5 text-green-600" />
                 </div>
-                <span className="text-gray-600">Chiffre d'affaires</span>
+                <span className="text-gray-600">{t('dashboard.revenue')}</span>
               </div>
               <span className="font-bold text-gray-900">{formatPrice(data?.revenue?.this_month || 0)}</span>
             </div>
@@ -238,7 +241,7 @@ export default function BackofficeDashboard() {
                 <div className="p-2 bg-blue-100 rounded-lg">
                   <FiHome className="w-5 h-5 text-blue-600" />
                 </div>
-                <span className="text-gray-600">Biens vendus</span>
+                <span className="text-gray-600">{t('dashboard.soldProperties')}</span>
               </div>
               <span className="font-bold text-gray-900">{data?.properties?.sold_this_month || 0}</span>
             </div>
@@ -247,7 +250,7 @@ export default function BackofficeDashboard() {
                 <div className="p-2 bg-purple-100 rounded-lg">
                   <FiUsers className="w-5 h-5 text-purple-600" />
                 </div>
-                <span className="text-gray-600">Nouveaux clients</span>
+                <span className="text-gray-600">{t('dashboard.newClients')}</span>
               </div>
               <span className="font-bold text-gray-900">{data?.clients?.new_this_month || 0}</span>
             </div>
@@ -256,7 +259,7 @@ export default function BackofficeDashboard() {
                 <div className="p-2 bg-yellow-100 rounded-lg">
                   <FiEye className="w-5 h-5 text-yellow-600" />
                 </div>
-                <span className="text-gray-600">Transactions actives</span>
+                <span className="text-gray-600">{t('dashboard.activeTransactions')}</span>
               </div>
               <span className="font-bold text-gray-900">{data?.transactions?.active || 0}</span>
             </div>
@@ -266,35 +269,35 @@ export default function BackofficeDashboard() {
 
       {/* Quick actions */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Actions rapides</h2>
+        <h2 className="font-semibold text-gray-900 mb-4">{t('dashboard.quickActions')}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Link
             to="/backoffice/biens/nouveau"
             className="flex flex-col items-center p-4 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors"
           >
             <FiHome className="w-8 h-8 text-primary-600 mb-2" />
-            <span className="text-sm font-medium text-primary-700">Ajouter un bien</span>
+            <span className="text-sm font-medium text-primary-700">{t('dashboard.addProperty')}</span>
           </Link>
           <Link
             to="/backoffice/clients/nouveau"
             className="flex flex-col items-center p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors"
           >
             <FiUsers className="w-8 h-8 text-blue-600 mb-2" />
-            <span className="text-sm font-medium text-blue-700">Nouveau client</span>
+            <span className="text-sm font-medium text-blue-700">{t('dashboard.newClient')}</span>
           </Link>
           <Link
             to="/backoffice/visites/nouvelle"
             className="flex flex-col items-center p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-colors"
           >
             <FiCalendar className="w-8 h-8 text-green-600 mb-2" />
-            <span className="text-sm font-medium text-green-700">Planifier visite</span>
+            <span className="text-sm font-medium text-green-700">{t('dashboard.planVisit')}</span>
           </Link>
           <Link
             to="/backoffice/pipeline"
             className="flex flex-col items-center p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors"
           >
             <FiTrendingUp className="w-8 h-8 text-purple-600 mb-2" />
-            <span className="text-sm font-medium text-purple-700">Voir le pipeline</span>
+            <span className="text-sm font-medium text-purple-700">{t('dashboard.viewPipeline')}</span>
           </Link>
         </div>
       </div>

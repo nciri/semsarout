@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import {
   FiArrowLeft, FiPlus, FiTrash2, FiSave, FiX, FiImage,
-  FiEdit3, FiMousePointer, FiCheck, FiRotateCcw, FiZoomIn, FiZoomOut
+  FiEdit3, FiMousePointer, FiCheck, FiRotateCcw, FiZoomIn, FiZoomOut, FiCopy
 } from 'react-icons/fi'
 import { lotPlanService, LOT_STATUS } from '../../services/lotPlanService'
 
@@ -29,6 +29,18 @@ const svgPoints = (zone) => (zone || []).map(p => `${p.x * 1000},${p.y * 1000}`)
 const num = (v) => (v === '' || v === null || v === undefined ? null : Number(v))
 const clamp01 = (v) => Math.min(1, Math.max(0, v))
 const cloneZone = (zone) => (zone || []).map(p => ({ x: p.x, y: p.y }))
+
+// Duplication d'un lot : référence suffixée, zone légèrement décalée (à repositionner),
+// statut remis à "available" (un nouveau lot physique est disponible).
+const DUP_OFFSET = 0.03
+export const nextReference = (ref) => `${ref || 'LOT'}-copie`
+export const offsetZone = (zone) => (zone || []).map(p => ({ x: clamp01(p.x + DUP_OFFSET), y: clamp01(p.y + DUP_OFFSET) }))
+export const duplicateLotPayload = (lot) => ({
+  reference: nextReference(lot.reference), title: lot.title || '', lot_type: lot.lot_type || 'apartment',
+  surface: lot.surface ?? null, rooms: lot.rooms ?? null, bedrooms: lot.bedrooms ?? null,
+  bathrooms: lot.bathrooms ?? null, floor: lot.floor ?? null, price: lot.price ?? null,
+  status: 'available', description: lot.description || '', zone: offsetZone(lot.zone),
+})
 
 function eventToNorm(e, el) {
   const rect = el.getBoundingClientRect()
@@ -265,7 +277,7 @@ export default function ProgramPlanEditor() {
       if (creating) {
         const lot = await lotPlanService.createLot(programId, { ...payload, plan_id: activePlan.id, zone: draft })
         upsertLotLocal(activePlan.id, lot); recomputeCounts(activePlan.id)
-        setDraft([]); setCreating(false); selectLot(lot)
+        setDraft([]); resetSelection()
         pushHistory(async () => {
           await lotPlanService.deleteLot(programId, lot.id)
           removeLotLocal(activePlan.id, lot.id); recomputeCounts(activePlan.id); resetSelection()
@@ -291,13 +303,14 @@ export default function ProgramPlanEditor() {
     } finally { setSaving(false) }
   }
 
-  const handleDeleteLot = async () => {
-    if (!selectedLot) return
+  const handleDeleteLot = async (lot) => {
+    if (!lot) return
     if (!window.confirm('Supprimer ce lot ?')) return
-    const before = { ...selectedLot, zone: cloneZone(selectedLot.zone) }
+    const before = { ...lot, zone: cloneZone(lot.zone) }
     try {
-      await lotPlanService.deleteLot(programId, selectedLot.id)
-      removeLotLocal(activePlan.id, selectedLot.id); recomputeCounts(activePlan.id); resetSelection()
+      await lotPlanService.deleteLot(programId, lot.id)
+      removeLotLocal(activePlan.id, lot.id); recomputeCounts(activePlan.id)
+      if (selectedLotId === lot.id) resetSelection()
       pushHistory(async () => {
         const re = await lotPlanService.createLot(programId, {
           plan_id: activePlan.id, zone: before.zone, reference: before.reference, title: before.title,
@@ -307,7 +320,25 @@ export default function ProgramPlanEditor() {
         })
         upsertLotLocal(activePlan.id, re); recomputeCounts(activePlan.id)
       })
-    } catch (err) { toast.error(err.response?.data?.error || 'Erreur') }
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Erreur lors de la suppression')
+    }
+  }
+
+  const handleDuplicateLot = async (lot) => {
+    try {
+      const created = await lotPlanService.createLot(programId, {
+        ...duplicateLotPayload(lot), plan_id: activePlan.id,
+      })
+      upsertLotLocal(activePlan.id, created); recomputeCounts(activePlan.id)
+      pushHistory(async () => {
+        await lotPlanService.deleteLot(programId, created.id)
+        removeLotLocal(activePlan.id, created.id); recomputeCounts(activePlan.id)
+      })
+      toast.success('Lot dupliqué')
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Erreur lors de la duplication')
+    }
   }
 
   const iconBtn = (active) =>
@@ -512,7 +543,7 @@ export default function ProgramPlanEditor() {
                     <FiSave className="w-4 h-4 mr-2" /> {saving ? '...' : 'Enregistrer'}
                   </button>
                   {selectedLot && (
-                    <button onClick={handleDeleteLot} className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg"><FiTrash2 className="w-4 h-4" /></button>
+                    <button onClick={() => handleDeleteLot(selectedLot)} className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg"><FiTrash2 className="w-4 h-4" /></button>
                   )}
                 </div>
               </div>
@@ -526,6 +557,49 @@ export default function ProgramPlanEditor() {
                   <li>Outil flèche : cliquez un lot pour l'éditer, glissez-le pour le déplacer, ou glissez ses points.</li>
                   <li>Zoom +/− pour affiner, flèche retour ↺ pour annuler.</li>
                 </ol>
+              </div>
+            )}
+
+            {/* Liste des lots du plan actif */}
+            {lots.length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-200 p-4 mt-4">
+                <h3 className="font-semibold text-gray-900 mb-3">Lots ({lots.length})</h3>
+                <div className="space-y-2 max-h-72 overflow-y-auto">
+                  {lots.map(lot => {
+                    const st = LOT_STATUS[lot.status] || LOT_STATUS.available
+                    const typeLabel = LOT_TYPES.find(t => t.value === lot.lot_type)?.label || lot.lot_type
+                    return (
+                      <div
+                        key={lot.id}
+                        className={`flex items-center justify-between gap-2 p-2 rounded-lg ${lot.id === selectedLotId ? 'bg-primary-50 border border-primary-200' : 'bg-gray-50'}`}
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {lot.reference || '—'}{lot.title ? ` · ${lot.title}` : ''}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {typeLabel}{lot.surface ? ` · ${lot.surface} m²` : ''}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${st.bg} ${st.text}`}>{st.label}</span>
+                          <button title="Modifier" onClick={() => selectLot(lot)}
+                            className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-gray-200 rounded-lg">
+                            <FiEdit3 className="w-4 h-4" />
+                          </button>
+                          <button title="Dupliquer" onClick={() => handleDuplicateLot(lot)}
+                            className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-gray-200 rounded-lg">
+                            <FiCopy className="w-4 h-4" />
+                          </button>
+                          <button title="Supprimer" onClick={() => handleDeleteLot(lot)}
+                            className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-100 rounded-lg">
+                            <FiTrash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             )}
           </div>

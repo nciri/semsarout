@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
+import { Trans, useTranslation } from 'react-i18next'
 import {
   FiCheck, FiCheckCircle, FiMail, FiPhone, FiClock, FiArrowRight,
   FiUser, FiMapPin, FiExternalLink
@@ -8,10 +9,12 @@ import {
 import useAuthStore from '../store/authStore'
 import api from '../services/api'
 import StayManagerWordmark from '../components/common/StayManagerWordmark'
+import DirIcon from '../components/common/DirIcon'
 import { SERVICE_OPTIONS, isValidService, STAYMANAGER_REGISTER_URL } from '../constants/services'
 import { CONTACT } from '../constants/contact'
 
 function Contact() {
+  const { t } = useTranslation(['public', 'common'])
   const [searchParams, setSearchParams] = useSearchParams()
   const { user, isAuthenticated } = useAuthStore()
 
@@ -62,7 +65,7 @@ function Contact() {
       setSubmitted(true)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (err) {
-      setSubmitError(err.response?.data?.error || 'Une erreur est survenue, veuillez réessayer.')
+      setSubmitError(err.response?.data?.error || t('common:errors.generic'))
     } finally {
       setIsSending(false)
     }
@@ -80,37 +83,42 @@ function Contact() {
             <FiCheckCircle className="w-8 h-8 text-green-600" />
           </div>
           <h1 className="font-display text-2xl font-bold text-gray-900 mb-3">
-            Demande envoyée !
+            {t('public:contact.successTitle')}
           </h1>
           <p className="text-gray-600 mb-8">
-            Nous avons bien reçu votre demande
-            {serviceMeta ? <> concernant <strong>{serviceMeta.shortLabel}</strong></> : null}.
-            Un conseiller vous recontactera sous 24h ouvrées.
+            {serviceMeta
+              ? (
+                <Trans
+                  i18nKey="public:contact.successMessageWithService"
+                  values={{ service: serviceMeta.shortLabel }}
+                  components={{ b: <strong /> }}
+                />
+              )
+              : t('public:contact.successMessage')}
           </p>
 
           {isAuthenticated ? (
             <div className="space-y-3">
               <Link to="/dashboard" className="btn-primary w-full justify-center">
-                Aller à mon tableau de bord
-                <FiArrowRight className="w-4 h-4 ml-2" />
+                {t('public:contact.dashboardButton')}
+                <DirIcon icon={FiArrowRight} className="w-4 h-4 ms-2" />
               </Link>
               <Link to="/" className="btn border border-gray-200 text-gray-700 hover:bg-gray-50 w-full justify-center">
-                Retour à l'accueil
+                {t('public:contact.backHome')}
               </Link>
             </div>
           ) : (
-            <div className="card p-6 text-left">
-              <h2 className="font-semibold text-gray-900 mb-2">Suivez votre demande en ligne</h2>
+            <div className="card p-6 text-start">
+              <h2 className="font-semibold text-gray-900 mb-2">{t('public:contact.trackOnlineTitle')}</h2>
               <p className="text-sm text-gray-600 mb-4">
-                Créez votre compte gratuit pour suivre l'avancement de votre demande,
-                échanger avec votre conseiller et accéder à tous nos services.
+                {t('public:contact.trackOnlineMessage')}
               </p>
               <Link to={registerLink} className="btn-primary w-full justify-center mb-2">
-                Créer mon compte gratuitement
-                <FiArrowRight className="w-4 h-4 ml-2" />
+                {t('public:contact.createAccountButton')}
+                <DirIcon icon={FiArrowRight} className="w-4 h-4 ms-2" />
               </Link>
               <Link to="/" className="btn border border-gray-200 text-gray-700 hover:bg-gray-50 w-full justify-center">
-                Retour à l'accueil
+                {t('public:contact.backHome')}
               </Link>
             </div>
           )}
@@ -126,11 +134,10 @@ function Contact() {
       <section className="bg-gradient-to-br from-gray-900 to-gray-800 text-white py-14">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="font-display text-3xl lg:text-4xl font-bold mb-4">
-            Contactez-nous
+            {t('public:contact.title')}
           </h1>
           <p className="text-lg text-gray-300 max-w-2xl">
-            Dites-nous ce qui vous amène : nous vous répondons sous 24h ouvrées,
-            sans engagement.
+            {t('public:contact.subtitle')}
           </p>
         </div>
       </section>
@@ -143,7 +150,7 @@ function Contact() {
               {/* Étape 1 : choix du service */}
               <div className="mb-8">
                 <h2 className="font-semibold text-lg mb-4">
-                  1. Quel service vous intéresse ?
+                  {t('public:contact.step1Title')}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {Object.entries(SERVICE_OPTIONS).map(([key, opt]) => {
@@ -154,7 +161,7 @@ function Contact() {
                         key={key}
                         type="button"
                         onClick={() => selectService(key)}
-                        className={`text-left p-4 rounded-xl border-2 transition-all ${
+                        className={`text-start p-4 rounded-xl border-2 transition-all ${
                           active
                             ? 'border-primary-600 bg-primary-50'
                             : 'border-gray-200 bg-white hover:border-gray-300'
@@ -175,19 +182,17 @@ function Contact() {
               {selectedService === 'vente' && (
                 <div className="mb-8 p-6 rounded-xl bg-primary-50 border border-primary-100">
                   <h3 className="font-semibold text-gray-900 mb-1">
-                    Gagnez du temps : vendez 100% en ligne
+                    {t('public:contact.saleBannerTitle')}
                   </h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    Décrivez votre bien, recevez une estimation instantanée, ajoutez photos et
-                    documents : votre dossier de vente est constitué en 10 minutes, sans attendre
-                    un rappel téléphonique.
+                    {t('public:contact.saleBannerText')}
                   </p>
                   <Link to="/vendre" className="btn-primary">
-                    Démarrer ma vente en ligne
-                    <FiArrowRight className="w-4 h-4 ml-2" />
+                    {t('public:contact.saleBannerButton')}
+                    <DirIcon icon={FiArrowRight} className="w-4 h-4 ms-2" />
                   </Link>
                   <p className="text-xs text-gray-500 mt-4">
-                    Vous préférez d'abord échanger avec un conseiller ? Utilisez le formulaire ci-dessous.
+                    {t('public:contact.saleBannerFooter')}
                   </p>
                 </div>
               )}
@@ -200,9 +205,7 @@ function Contact() {
                     <StayManagerWordmark className="text-lg" />
                   </div>
                   <p className="text-sm text-gray-700 mb-4">
-                    La location courte durée est opérée par notre partenaire StayManager.ma,
-                    une plateforme en libre-service : créez votre compte, ajoutez vos biens
-                    et démarrez avec 14 jours d'essai gratuit — sans attendre un conseiller.
+                    {t('public:contact.shortTermText')}
                   </p>
                   <div className="flex flex-wrap gap-3">
                     <a
@@ -211,19 +214,18 @@ function Contact() {
                       rel="noopener noreferrer"
                       className="btn bg-gradient-to-r from-[#1F3D34] to-[#2E5E4E] text-white hover:opacity-90"
                     >
-                      Créer votre compte StayManager
-                      <FiExternalLink className="w-4 h-4 ml-2" />
+                      {t('public:contact.shortTermCreateAccountButton')}
+                      <FiExternalLink className="w-4 h-4 ms-2" />
                     </a>
                     <Link
                       to="/nos-services/courte-duree"
                       className="btn border border-[#2E5E4E] text-[#2E5E4E] hover:bg-[#ECF4EF]"
                     >
-                      En savoir plus sur l'offre
+                      {t('public:contact.shortTermLearnMoreButton')}
                     </Link>
                   </div>
                   <p className="text-xs text-gray-500 mt-4">
-                    Vous préférez être accompagné ? Laissez-nous un message ci-dessous
-                    et un conseiller vous guidera.
+                    {t('public:contact.shortTermFooter')}
                   </p>
                 </div>
               )}
@@ -231,12 +233,12 @@ function Contact() {
               {/* Étape 2 : formulaire */}
               <div className="card p-6 sm:p-8">
                 <h2 className="font-semibold text-lg mb-1">
-                  2. Vos coordonnées
+                  {t('public:contact.step2Title')}
                 </h2>
                 <p className="text-sm text-gray-500 mb-6">
                   {isAuthenticated
-                    ? 'Vos informations de compte sont pré-remplies.'
-                    : 'Pas besoin de compte pour nous écrire.'}
+                    ? t('public:contact.step2SubtitleAuth')
+                    : t('public:contact.step2SubtitleGuest')}
                 </p>
 
                 {submitError && (
@@ -248,13 +250,13 @@ function Contact() {
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="label">Nom complet</label>
+                      <label className="label">{t('public:contact.nameLabel')}</label>
                       <div className="relative">
-                        <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <FiUser className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
-                          {...register('name', { required: 'Nom requis' })}
-                          className="input pl-10"
-                          placeholder="Votre nom"
+                          {...register('name', { required: t('public:contact.nameRequired') })}
+                          className="input ps-10"
+                          placeholder={t('public:contact.namePlaceholder')}
                         />
                       </div>
                       {errors.name && (
@@ -262,33 +264,33 @@ function Contact() {
                       )}
                     </div>
                     <div>
-                      <label className="label">Téléphone</label>
+                      <label className="label">{t('public:contact.phoneLabel')}</label>
                       <div className="relative">
-                        <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <FiPhone className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                           {...register('phone')}
-                          className="input pl-10"
-                          placeholder="+212 6XX XXX XXX"
+                          className="input ps-10"
+                          placeholder={t('public:contact.phonePlaceholder')}
                         />
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="label">Email</label>
+                    <label className="label">{t('public:contact.emailLabel')}</label>
                     <div className="relative">
-                      <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <FiMail className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                       <input
                         type="email"
                         {...register('email', {
-                          required: 'Email requis',
+                          required: t('public:contact.emailRequired'),
                           pattern: {
                             value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                            message: 'Email invalide'
+                            message: t('public:contact.emailInvalid')
                           }
                         })}
-                        className="input pl-10"
-                        placeholder="votre@email.com"
+                        className="input ps-10"
+                        placeholder={t('public:contact.emailPlaceholder')}
                       />
                     </div>
                     {errors.email && (
@@ -297,15 +299,15 @@ function Contact() {
                   </div>
 
                   <div>
-                    <label className="label">Votre message</label>
+                    <label className="label">{t('public:contact.messageLabel')}</label>
                     <textarea
                       {...register('message')}
                       rows={5}
                       className="input resize-none"
                       placeholder={
                         serviceMeta
-                          ? `Parlez-nous de votre projet (${serviceMeta.label.toLowerCase()}) : type de bien, ville, délais...`
-                          : 'Parlez-nous de votre projet : type de bien, ville, délais...'
+                          ? t('public:contact.messagePlaceholderWithService', { service: serviceMeta.label.toLowerCase() })
+                          : t('public:contact.messagePlaceholder')
                       }
                     />
                   </div>
@@ -315,8 +317,8 @@ function Contact() {
                     disabled={isSending}
                     className="btn-primary w-full justify-center"
                   >
-                    {isSending ? 'Envoi en cours...' : 'Envoyer ma demande'}
-                    {!isSending && <FiArrowRight className="w-4 h-4 ml-2" />}
+                    {isSending ? t('public:contact.submitting') : t('public:contact.submitButton')}
+                    {!isSending && <DirIcon icon={FiArrowRight} className="w-4 h-4 ms-2" />}
                   </button>
                 </form>
               </div>
@@ -325,48 +327,48 @@ function Contact() {
             {/* Sidebar */}
             <div className="lg:col-span-1">
               <div className="card p-6 mb-6">
-                <h3 className="font-semibold mb-4">Nous joindre directement</h3>
+                <h3 className="font-semibold mb-4">{t('public:contact.directContactTitle')}</h3>
                 <div className="space-y-4 text-sm">
                   <a href={`tel:${CONTACT.phoneTel}`} className="flex items-center text-gray-700 hover:text-primary-600">
-                    <FiPhone className="w-5 h-5 mr-3 text-primary-600" />
+                    <FiPhone className="w-5 h-5 me-3 text-primary-600" />
                     {CONTACT.phone}
                   </a>
                   <a href={`mailto:${CONTACT.email}`} className="flex items-center text-gray-700 hover:text-primary-600">
-                    <FiMail className="w-5 h-5 mr-3 text-primary-600" />
+                    <FiMail className="w-5 h-5 me-3 text-primary-600" />
                     {CONTACT.email}
                   </a>
                   <div className="flex items-center text-gray-700">
-                    <FiClock className="w-5 h-5 mr-3 text-primary-600" />
-                    Lun - Sam : 9h - 19h
+                    <FiClock className="w-5 h-5 me-3 text-primary-600" />
+                    {t('public:contact.hoursText')}
                   </div>
                 </div>
               </div>
 
               <div className="card p-6 bg-gray-50">
-                <h3 className="font-semibold mb-4">Pourquoi SemsarOut ?</h3>
+                <h3 className="font-semibold mb-4">{t('public:contact.whyUsTitle')}</h3>
                 <ul className="space-y-3 text-sm text-gray-600">
                   <li className="flex items-start">
-                    <FiCheck className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                    Tarifs fixes et transparents, zéro commission surprise
+                    <FiCheck className="w-4 h-4 text-green-500 me-2 mt-0.5 flex-shrink-0" />
+                    {t('public:contact.reason1')}
                   </li>
                   <li className="flex items-start">
-                    <FiCheck className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                    Réponse garantie sous 24h ouvrées
+                    <FiCheck className="w-4 h-4 text-green-500 me-2 mt-0.5 flex-shrink-0" />
+                    {t('public:contact.reason2')}
                   </li>
                   <li className="flex items-start">
-                    <FiCheck className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                    Accompagnement par des experts locaux
+                    <FiCheck className="w-4 h-4 text-green-500 me-2 mt-0.5 flex-shrink-0" />
+                    {t('public:contact.reason3')}
                   </li>
                   <li className="flex items-start">
-                    <FiCheck className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                    Sans engagement
+                    <FiCheck className="w-4 h-4 text-green-500 me-2 mt-0.5 flex-shrink-0" />
+                    {t('public:contact.reason4')}
                   </li>
                 </ul>
               </div>
 
               <div className="mt-6 text-center text-sm text-gray-500">
-                <FiMapPin className="inline w-4 h-4 mr-1" />
-                Casablanca, Maroc
+                <FiMapPin className="inline w-4 h-4 me-1" />
+                {t('public:contact.location')}
               </div>
             </div>
           </div>

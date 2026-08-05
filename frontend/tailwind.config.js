@@ -92,6 +92,7 @@ export default {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         display: ['Manrope', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+        arabic: ['"Noto Sans Arabic"', 'sans-serif'],
       },
       borderRadius: {
         'ds-sm': '8px',   // inputs, badges, petits boutons
