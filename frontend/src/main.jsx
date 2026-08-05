@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ToastContainer } from 'react-toastify'
 import App from './App'
+import './i18n'
 import './assets/styles/index.css'
 import 'react-toastify/dist/ReactToastify.css'
 

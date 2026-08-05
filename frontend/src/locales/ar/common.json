@@ -1,0 +1,18 @@
+{
+  "language": { "fr": "الفرنسية", "ar": "العربية" },
+  "actions": { "search": "بحث...", "logout": "تسجيل الخروج" },
+  "validation": {
+    "emailRequired": "البريد الإلكتروني مطلوب",
+    "emailInvalid": "بريد إلكتروني غير صالح",
+    "passwordRequired": "كلمة المرور مطلوبة",
+    "passwordMin8": "8 أحرف على الأقل",
+    "passwordsMismatch": "كلمتا المرور غير متطابقتين",
+    "firstNameRequired": "الاسم الأول مطلوب",
+    "lastNameRequired": "اسم العائلة مطلوب",
+    "confirmationRequired": "التأكيد مطلوب"
+  },
+  "errors": {
+    "generic": "حدث خطأ ما",
+    "short": "خطأ"
+  }
+}

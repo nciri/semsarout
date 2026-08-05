@@ -1,4 +1,7 @@
+import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { applyDirection } from './i18n/rtl'
 import Layout from './components/layout/Layout'
 import Home from './pages/Home'
 import PropertyList from './pages/PropertyList'
@@ -109,6 +112,14 @@ import DashboardSettings from './pages/dashboard/Settings'
 import ImpersonationBanner from './components/admin/ImpersonationBanner'
 
 function App() {
+  const { i18n } = useTranslation()
+  useEffect(() => {
+    applyDirection(i18n.language)
+    const onChange = (lng) => applyDirection(lng)
+    i18n.on('languageChanged', onChange)
+    return () => i18n.off('languageChanged', onChange)
+  }, [i18n])
+
   return (
     <>
       <ImpersonationBanner />

@@ -1,0 +1,45 @@
+{
+  "nav": {
+    "sections": { "main": "Principal", "crm": "CRM", "finance": "Finance", "admin": "Administration" },
+    "dashboard": "Tableau de bord",
+    "properties": "Biens immobiliers",
+    "pipeline": "Pipeline",
+    "clients": "Clients",
+    "leads": "Leads",
+    "visits": "Visites & RDV",
+    "transactions": "Transactions",
+    "contracts": "Contrats",
+    "notaries": "Notaires",
+    "artisans": "Artisans",
+    "rental": "Gestion locative",
+    "shop": "Boutique",
+    "team": "Équipe",
+    "analytics": "Analyses",
+    "settings": "Paramètres"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "subtitle": "Vue d'ensemble de votre activité",
+    "stats": {
+      "activeProperties": "Biens actifs",
+      "newLeads": "Nouveaux leads",
+      "plannedVisits": "Visites planifiées",
+      "activePipeline": "Pipeline actif"
+    },
+    "latestLeads": "Derniers leads",
+    "noRecentLead": "Aucun lead récent",
+    "upcomingVisits": "Prochaines visites",
+    "noPlannedVisit": "Aucune visite planifiée",
+    "monthSummary": "Résumé du mois",
+    "revenue": "Chiffre d'affaires",
+    "soldProperties": "Biens vendus",
+    "newClients": "Nouveaux clients",
+    "activeTransactions": "Transactions actives",
+    "quickActions": "Actions rapides",
+    "addProperty": "Ajouter un bien",
+    "newClient": "Nouveau client",
+    "planVisit": "Planifier visite",
+    "viewPipeline": "Voir le pipeline",
+    "viewAll": "Voir tout"
+  }
+}

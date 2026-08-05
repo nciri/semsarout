@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from 'react-query'
+import { useTranslation } from 'react-i18next'
 import { FiMapPin, FiPhone, FiMail, FiGlobe, FiArrowRight, FiSend } from 'react-icons/fi'
 import PropertyCard from '../components/common/PropertyCard'
+import DirIcon from '../components/common/DirIcon'
 import { agencyService } from '../services/agencyService'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
 
 function AgencyDetail() {
+  const { t } = useTranslation(['public', 'common'])
   const { slug } = useParams()
   const [contactForm, setContactForm] = useState({
     project_type: 'acheter',
@@ -31,6 +34,12 @@ function AgencyDetail() {
     { enabled: !!agency }
   )
 
+  const projectTypeOptions = [
+    { value: 'acheter', label: t('public:agencyDetail.projectTypeBuy') },
+    { value: 'louer', label: t('public:agencyDetail.projectTypeRent') },
+    { value: 'vendre', label: t('public:agencyDetail.projectTypeSell') }
+  ]
+
   const handleContactChange = (e) => {
     const { name, value } = e.target
     setContactForm(prev => ({ ...prev, [name]: value }))
@@ -50,7 +59,7 @@ function AgencyDetail() {
       })
 
       if (!response.ok) {
-        throw new Error('Erreur lors de l\'envoi du message')
+        throw new Error(t('public:agencyDetail.sendError'))
       }
 
       setSubmitSuccess(true)
@@ -62,7 +71,7 @@ function AgencyDetail() {
         message: ''
       })
     } catch (error) {
-      setSubmitError(error.message || 'Une erreur est survenue')
+      setSubmitError(error.message || t('public:agencyDetail.genericError'))
     } finally {
       setSubmitting(false)
     }
@@ -83,7 +92,7 @@ function AgencyDetail() {
   if (!agency) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8 text-center">
-        <p className="text-gray-500">Agence non trouvée</p>
+        <p className="text-gray-500">{t('public:agencyDetail.notFound')}</p>
       </div>
     )
   }
@@ -98,10 +107,10 @@ function AgencyDetail() {
               <img
                 src={agency.logo_url}
                 alt={agency.name}
-                className="w-24 h-24 rounded-xl object-cover mr-6"
+                className="w-24 h-24 rounded-xl object-cover me-6"
               />
             ) : (
-              <div className="w-24 h-24 bg-gradient-to-br from-primary-500 to-terracotta-500 rounded-xl flex items-center justify-center mr-6">
+              <div className="w-24 h-24 bg-gradient-to-br from-primary-500 to-terracotta-500 rounded-xl flex items-center justify-center me-6">
                 <span className="text-4xl font-bold text-white">
                   {agency.name.charAt(0)}
                 </span>
@@ -110,11 +119,11 @@ function AgencyDetail() {
             <div>
               <h1 className="font-display text-3xl font-bold mb-2">{agency.name}</h1>
               <div className="flex items-center text-gray-300">
-                <FiMapPin className="w-4 h-4 mr-1" />
+                <FiMapPin className="w-4 h-4 me-1" />
                 <span>{agency.city}{agency.address && `, ${agency.address}`}</span>
               </div>
               {agency.is_verified && (
-                <span className="mt-2 inline-block badge-success">Agence vérifiée</span>
+                <span className="mt-2 inline-block badge-success">{t('public:agencyDetail.verifiedBadge')}</span>
               )}
             </div>
           </div>
@@ -128,7 +137,7 @@ function AgencyDetail() {
             {/* Description */}
             {agency.description && (
               <div className="mb-8">
-                <h2 className="font-semibold text-lg mb-4">À propos</h2>
+                <h2 className="font-semibold text-lg mb-4">{t('public:agencyDetail.aboutTitle')}</h2>
                 <p className="text-gray-600">{agency.description}</p>
               </div>
             )}
@@ -136,13 +145,15 @@ function AgencyDetail() {
             {/* Properties */}
             <div>
               <div className="flex justify-between items-center mb-6">
-                <h2 className="font-semibold text-lg">Annonces ({propertiesData?.total || 0})</h2>
+                <h2 className="font-semibold text-lg">
+                  {t('public:agencyDetail.listingsTitle', { count: propertiesData?.total || 0 })}
+                </h2>
                 {propertiesData?.total > 6 && (
                   <Link
                     to={`/annonces?agency_id=${agency.id}`}
                     className="text-primary-600 hover:text-primary-700 flex items-center text-sm"
                   >
-                    Voir toutes <FiArrowRight className="ml-1" />
+                    {t('public:agencyDetail.viewAll')} <DirIcon icon={FiArrowRight} className="ms-1" />
                   </Link>
                 )}
               </div>
@@ -167,7 +178,7 @@ function AgencyDetail() {
                 </div>
               ) : (
                 <p className="text-gray-500 text-center py-8">
-                  Aucune annonce active pour le moment.
+                  {t('public:agencyDetail.emptyProperties')}
                 </p>
               )}
             </div>
@@ -176,7 +187,7 @@ function AgencyDetail() {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="card p-6 sticky top-24">
-              <h3 className="font-semibold mb-4">Contact</h3>
+              <h3 className="font-semibold mb-4">{t('public:agencyDetail.contactTitle')}</h3>
 
               <div className="space-y-4">
                 {agency.phone && (
@@ -184,7 +195,7 @@ function AgencyDetail() {
                     href={`tel:${agency.phone}`}
                     className="flex items-center text-gray-600 hover:text-primary-600"
                   >
-                    <FiPhone className="w-5 h-5 mr-3" />
+                    <FiPhone className="w-5 h-5 me-3" />
                     <span>{agency.phone}</span>
                   </a>
                 )}
@@ -193,7 +204,7 @@ function AgencyDetail() {
                     href={`mailto:${agency.email}`}
                     className="flex items-center text-gray-600 hover:text-primary-600"
                   >
-                    <FiMail className="w-5 h-5 mr-3" />
+                    <FiMail className="w-5 h-5 me-3" />
                     <span>{agency.email}</span>
                   </a>
                 )}
@@ -204,15 +215,15 @@ function AgencyDetail() {
                     rel="noopener noreferrer"
                     className="flex items-center text-gray-600 hover:text-primary-600"
                   >
-                    <FiGlobe className="w-5 h-5 mr-3" />
-                    <span>Site web</span>
+                    <FiGlobe className="w-5 h-5 me-3" />
+                    <span>{t('public:agencyDetail.websiteLabel')}</span>
                   </a>
                 )}
               </div>
 
               {agency.address && (
                 <div className="mt-6 pt-6 border-t">
-                  <h4 className="font-medium text-sm text-gray-500 mb-2">Adresse</h4>
+                  <h4 className="font-medium text-sm text-gray-500 mb-2">{t('public:agencyDetail.addressTitle')}</h4>
                   <p className="text-gray-700">
                     {agency.address}
                     {agency.postal_code && <br />}
@@ -223,11 +234,11 @@ function AgencyDetail() {
 
               {/* Contact Form */}
               <div className="mt-6 pt-6 border-t">
-                <h3 className="font-semibold text-lg mb-4">Contacter l'agence</h3>
+                <h3 className="font-semibold text-lg mb-4">{t('public:agencyDetail.contactAgencyTitle')}</h3>
 
                 {submitSuccess ? (
                   <div className="bg-green-50 text-green-700 p-4 rounded-lg mb-4">
-                    Votre message a été envoyé avec succès. L'agence vous contactera bientôt.
+                    {t('public:agencyDetail.successMessage')}
                   </div>
                 ) : (
                   <form onSubmit={handleContactSubmit} className="space-y-4">
@@ -240,14 +251,10 @@ function AgencyDetail() {
                     {/* Type de projet */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Type de projet
+                        {t('public:agencyDetail.projectTypeLabel')}
                       </label>
                       <div className="flex flex-wrap gap-2">
-                        {[
-                          { value: 'acheter', label: 'Acheter' },
-                          { value: 'louer', label: 'Louer' },
-                          { value: 'vendre', label: 'Vendre' }
-                        ].map(option => (
+                        {projectTypeOptions.map(option => (
                           <label
                             key={option.value}
                             className={`flex items-center px-4 py-2 rounded-lg border cursor-pointer transition-colors ${
@@ -273,7 +280,7 @@ function AgencyDetail() {
                     {/* Nom */}
                     <div>
                       <label htmlFor="contact-name" className="block text-sm font-medium text-gray-700 mb-1">
-                        Nom
+                        {t('public:agencyDetail.nameLabel')}
                       </label>
                       <input
                         type="text"
@@ -283,14 +290,14 @@ function AgencyDetail() {
                         onChange={handleContactChange}
                         required
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        placeholder="Votre nom"
+                        placeholder={t('public:agencyDetail.namePlaceholder')}
                       />
                     </div>
 
                     {/* E-mail */}
                     <div>
                       <label htmlFor="contact-email" className="block text-sm font-medium text-gray-700 mb-1">
-                        E-mail
+                        {t('public:agencyDetail.emailLabel')}
                       </label>
                       <input
                         type="email"
@@ -300,14 +307,14 @@ function AgencyDetail() {
                         onChange={handleContactChange}
                         required
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        placeholder="votre@email.com"
+                        placeholder={t('public:agencyDetail.emailPlaceholder')}
                       />
                     </div>
 
                     {/* Téléphone */}
                     <div>
                       <label htmlFor="contact-phone" className="block text-sm font-medium text-gray-700 mb-1">
-                        Téléphone
+                        {t('public:agencyDetail.phoneLabel')}
                       </label>
                       <input
                         type="tel"
@@ -316,14 +323,14 @@ function AgencyDetail() {
                         value={contactForm.phone}
                         onChange={handleContactChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        placeholder="06 00 00 00 00"
+                        placeholder={t('public:agencyDetail.phonePlaceholder')}
                       />
                     </div>
 
                     {/* Description */}
                     <div>
                       <label htmlFor="contact-message" className="block text-sm font-medium text-gray-700 mb-1">
-                        Description de votre projet
+                        {t('public:agencyDetail.messageLabel')}
                       </label>
                       <textarea
                         id="contact-message"
@@ -333,7 +340,7 @@ function AgencyDetail() {
                         required
                         rows={4}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
-                        placeholder="Décrivez votre projet immobilier..."
+                        placeholder={t('public:agencyDetail.messagePlaceholder')}
                       />
                     </div>
 
@@ -346,12 +353,12 @@ function AgencyDetail() {
                       {submitting ? (
                         <>
                           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Envoi...
+                          {t('public:agencyDetail.sending')}
                         </>
                       ) : (
                         <>
-                          <FiSend className="w-4 h-4" />
-                          Contacter l'agence
+                          <DirIcon icon={FiSend} className="w-4 h-4" />
+                          {t('public:agencyDetail.contactAgencyTitle')}
                         </>
                       )}
                     </button>
