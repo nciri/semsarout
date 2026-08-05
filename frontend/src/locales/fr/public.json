@@ -190,5 +190,24 @@
     "reason3": "Accompagnement par des experts locaux",
     "reason4": "Sans engagement",
     "location": "Casablanca, Maroc"
+  },
+  "agencyList": {
+    "title": "Agences immobilières au Maroc",
+    "verifiedCount_one": "{{count}} agence vérifiée",
+    "verifiedCount_other": "{{count}} agences vérifiées",
+    "viewGrid": "Vue liste",
+    "viewMap": "Vue carte",
+    "viewSplit": "Vue mixte",
+    "searchPlaceholder": "Rechercher une agence...",
+    "allCities": "Toutes",
+    "otherCities": "Autres villes",
+    "listingsCount_one": "{{count}} annonce",
+    "listingsCount_other": "{{count}} annonces",
+    "verifiedShort": "Vérifié",
+    "verifiedFull": "Vérifiée",
+    "empty": "Aucune agence trouvée.",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "pageOf": "Page {{page}} sur {{pages}}"
   }
 }

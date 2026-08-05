@@ -190,5 +190,24 @@
     "reason3": "مرافقة من طرف خبراء محليين",
     "reason4": "دون أي التزام",
     "location": "الدار البيضاء، المغرب"
+  },
+  "agencyList": {
+    "title": "وكالات عقارية في المغرب",
+    "verifiedCount_one": "وكالة واحدة موثقة",
+    "verifiedCount_other": "{{count}} وكالة موثقة",
+    "viewGrid": "عرض القائمة",
+    "viewMap": "عرض الخريطة",
+    "viewSplit": "عرض مزدوج",
+    "searchPlaceholder": "ابحثوا عن وكالة...",
+    "allCities": "الكل",
+    "otherCities": "مدن أخرى",
+    "listingsCount_one": "إعلان واحد",
+    "listingsCount_other": "{{count}} إعلان",
+    "verifiedShort": "موثقة",
+    "verifiedFull": "موثقة",
+    "empty": "لم يتم العثور على أي وكالة.",
+    "previous": "السابق",
+    "next": "التالي",
+    "pageOf": "صفحة {{page}} من {{pages}}"
   }
 }

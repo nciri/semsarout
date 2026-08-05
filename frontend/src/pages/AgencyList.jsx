@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { useQuery } from 'react-query'
+import { useTranslation } from 'react-i18next'
 import { FiMapPin, FiHome, FiSearch, FiChevronLeft, FiChevronRight, FiMap, FiGrid, FiList } from 'react-icons/fi'
 import { agencyService } from '../services/agencyService'
 import AgencyMap from '../components/map/AgencyMap'
+import DirIcon from '../components/common/DirIcon'
 
 const MOROCCAN_CITIES = [
   'Casablanca', 'Rabat', 'Marrakech', 'Fès', 'Tanger',
@@ -17,6 +19,7 @@ const VIEW_MODES = {
 }
 
 function AgencyList() {
+  const { t } = useTranslation(['public', 'common'])
   const [searchParams, setSearchParams] = useSearchParams()
   const [search, setSearch] = useState(searchParams.get('q') || '')
   const [viewMode, setViewMode] = useState(VIEW_MODES.GRID)
@@ -72,10 +75,10 @@ function AgencyList() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h1 className="font-display text-2xl font-bold text-gray-900">
-                Agences immobilières au Maroc
+                {t('public:agencyList.title')}
               </h1>
               <p className="text-gray-600">
-                {data?.total || 0} agences vérifiées
+                {t('public:agencyList.verifiedCount', { count: data?.total || 0 })}
               </p>
             </div>
 
@@ -89,7 +92,7 @@ function AgencyList() {
                       ? 'bg-white text-primary-600 shadow-sm'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
-                  title="Vue liste"
+                  title={t('public:agencyList.viewGrid')}
                 >
                   <FiGrid className="w-5 h-5" />
                 </button>
@@ -100,7 +103,7 @@ function AgencyList() {
                       ? 'bg-white text-primary-600 shadow-sm'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
-                  title="Vue carte"
+                  title={t('public:agencyList.viewMap')}
                 >
                   <FiMap className="w-5 h-5" />
                 </button>
@@ -111,7 +114,7 @@ function AgencyList() {
                       ? 'bg-white text-primary-600 shadow-sm'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
-                  title="Vue mixte"
+                  title={t('public:agencyList.viewSplit')}
                 >
                   <FiList className="w-5 h-5" />
                 </button>
@@ -123,13 +126,13 @@ function AgencyList() {
           <div className="mt-4 flex flex-col sm:flex-row gap-4">
             <form onSubmit={handleSearch} className="flex gap-2 flex-grow max-w-md">
               <div className="relative flex-grow">
-                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <FiSearch className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Rechercher une agence..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder={t('public:agencyList.searchPlaceholder')}
+                  className="w-full ps-10 pe-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
               <button type="submit" className="btn-primary px-4">
@@ -147,7 +150,7 @@ function AgencyList() {
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                Toutes
+                {t('public:agencyList.allCities')}
               </button>
               {MOROCCAN_CITIES.slice(0, 5).map(c => (
                 <button
@@ -167,7 +170,7 @@ function AgencyList() {
                 onChange={(e) => handleCityFilter(e.target.value)}
                 className="px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-600 border-0 focus:ring-2 focus:ring-primary-500"
               >
-                <option value="">Autres villes</option>
+                <option value="">{t('public:agencyList.otherCities')}</option>
                 {MOROCCAN_CITIES.slice(5).map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
@@ -184,7 +187,7 @@ function AgencyList() {
             {[...Array(6)].map((_, i) => (
               <div key={i} className="bg-white rounded-xl p-6 animate-pulse">
                 <div className="flex items-center mb-4">
-                  <div className="w-16 h-16 bg-gray-200 rounded-lg mr-4"></div>
+                  <div className="w-16 h-16 bg-gray-200 rounded-lg me-4"></div>
                   <div className="flex-grow">
                     <div className="h-5 bg-gray-200 rounded w-2/3 mb-2"></div>
                     <div className="h-4 bg-gray-200 rounded w-1/2"></div>
@@ -210,7 +213,7 @@ function AgencyList() {
             {viewMode === VIEW_MODES.SPLIT && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* List side */}
-                <div className="space-y-4 max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
+                <div className="space-y-4 max-h-[calc(100vh-280px)] overflow-y-auto pe-2">
                   {data?.agencies?.map(agency => (
                     <div
                       key={agency.id}
@@ -226,10 +229,10 @@ function AgencyList() {
                           <img
                             src={agency.logo_url}
                             alt={agency.name}
-                            className="w-14 h-14 rounded-lg object-cover mr-4"
+                            className="w-14 h-14 rounded-lg object-cover me-4"
                           />
                         ) : (
-                          <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-terracotta-500 rounded-lg flex items-center justify-center mr-4">
+                          <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-terracotta-500 rounded-lg flex items-center justify-center me-4">
                             <span className="text-xl font-bold text-white">
                               {agency.name.charAt(0)}
                             </span>
@@ -238,16 +241,16 @@ function AgencyList() {
                         <div className="flex-grow">
                           <h3 className="font-semibold text-gray-900">{agency.name}</h3>
                           <div className="flex items-center text-gray-500 text-sm">
-                            <FiMapPin className="w-3 h-3 mr-1" />
+                            <FiMapPin className="w-3 h-3 me-1" />
                             <span>{agency.city}</span>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-end">
                           <div className="text-sm font-medium text-gray-900">
-                            {agency.properties_count} annonces
+                            {t('public:agencyList.listingsCount', { count: agency.properties_count })}
                           </div>
                           {agency.is_verified && (
-                            <span className="text-xs text-green-600">Vérifié</span>
+                            <span className="text-xs text-green-600">{t('public:agencyList.verifiedShort')}</span>
                           )}
                         </div>
                       </div>
@@ -284,10 +287,10 @@ function AgencyList() {
                               <img
                                 src={agency.logo_url}
                                 alt={agency.name}
-                                className="w-16 h-16 rounded-lg object-cover mr-4"
+                                className="w-16 h-16 rounded-lg object-cover me-4"
                               />
                             ) : (
-                              <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-terracotta-500 rounded-lg flex items-center justify-center mr-4">
+                              <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-terracotta-500 rounded-lg flex items-center justify-center me-4">
                                 <span className="text-2xl font-bold text-white">
                                   {agency.name.charAt(0)}
                                 </span>
@@ -296,7 +299,7 @@ function AgencyList() {
                             <div>
                               <h3 className="font-semibold text-gray-900">{agency.name}</h3>
                               <div className="flex items-center text-gray-500 text-sm">
-                                <FiMapPin className="w-3 h-3 mr-1" />
+                                <FiMapPin className="w-3 h-3 me-1" />
                                 <span>{agency.city}</span>
                               </div>
                             </div>
@@ -310,11 +313,11 @@ function AgencyList() {
 
                           <div className="flex items-center justify-between text-sm">
                             <div className="flex items-center text-gray-500">
-                              <FiHome className="w-4 h-4 mr-1" />
-                              <span>{agency.properties_count} annonces</span>
+                              <FiHome className="w-4 h-4 me-1" />
+                              <span>{t('public:agencyList.listingsCount', { count: agency.properties_count })}</span>
                             </div>
                             {agency.is_verified && (
-                              <span className="badge-success">Vérifiée</span>
+                              <span className="badge-success">{t('public:agencyList.verifiedFull')}</span>
                             )}
                           </div>
                         </div>
@@ -324,7 +327,7 @@ function AgencyList() {
                 ) : (
                   <div className="text-center py-12">
                     <FiMapPin className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">Aucune agence trouvée.</p>
+                    <p className="text-gray-500">{t('public:agencyList.empty')}</p>
                   </div>
                 )}
 
@@ -336,12 +339,12 @@ function AgencyList() {
                       disabled={page === 1}
                       className="flex items-center gap-1 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <FiChevronLeft className="w-4 h-4" />
-                      <span className="hidden sm:inline">Précédent</span>
+                      <DirIcon icon={FiChevronLeft} className="w-4 h-4" />
+                      <span className="hidden sm:inline">{t('public:agencyList.previous')}</span>
                     </button>
 
                     <span className="px-4 py-2 text-sm text-gray-600">
-                      Page {page} sur {data.pages}
+                      {t('public:agencyList.pageOf', { page, pages: data.pages })}
                     </span>
 
                     <button
@@ -349,8 +352,8 @@ function AgencyList() {
                       disabled={page === data.pages}
                       className="flex items-center gap-1 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <span className="hidden sm:inline">Suivant</span>
-                      <FiChevronRight className="w-4 h-4" />
+                      <span className="hidden sm:inline">{t('public:agencyList.next')}</span>
+                      <DirIcon icon={FiChevronRight} className="w-4 h-4" />
                     </button>
                   </div>
                 )}
