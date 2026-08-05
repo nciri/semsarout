@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import {
   FiArrowLeft, FiPlus, FiTrash2, FiSave, FiX, FiImage,
-  FiEdit3, FiMousePointer, FiCheck, FiRotateCcw, FiZoomIn, FiZoomOut
+  FiEdit3, FiMousePointer, FiCheck, FiRotateCcw, FiZoomIn, FiZoomOut, FiCopy
 } from 'react-icons/fi'
 import { lotPlanService, LOT_STATUS } from '../../services/lotPlanService'
 
@@ -557,6 +557,49 @@ export default function ProgramPlanEditor() {
                   <li>Outil flèche : cliquez un lot pour l'éditer, glissez-le pour le déplacer, ou glissez ses points.</li>
                   <li>Zoom +/− pour affiner, flèche retour ↺ pour annuler.</li>
                 </ol>
+              </div>
+            )}
+
+            {/* Liste des lots du plan actif */}
+            {lots.length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-200 p-4 mt-4">
+                <h3 className="font-semibold text-gray-900 mb-3">Lots ({lots.length})</h3>
+                <div className="space-y-2 max-h-72 overflow-y-auto">
+                  {lots.map(lot => {
+                    const st = LOT_STATUS[lot.status] || LOT_STATUS.available
+                    const typeLabel = LOT_TYPES.find(t => t.value === lot.lot_type)?.label || lot.lot_type
+                    return (
+                      <div
+                        key={lot.id}
+                        className={`flex items-center justify-between gap-2 p-2 rounded-lg ${lot.id === selectedLotId ? 'bg-primary-50 border border-primary-200' : 'bg-gray-50'}`}
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {lot.reference || '—'}{lot.title ? ` · ${lot.title}` : ''}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {typeLabel}{lot.surface ? ` · ${lot.surface} m²` : ''}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${st.bg} ${st.text}`}>{st.label}</span>
+                          <button title="Modifier" onClick={() => selectLot(lot)}
+                            className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-gray-200 rounded-lg">
+                            <FiEdit3 className="w-4 h-4" />
+                          </button>
+                          <button title="Dupliquer" onClick={() => handleDuplicateLot(lot)}
+                            className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-gray-200 rounded-lg">
+                            <FiCopy className="w-4 h-4" />
+                          </button>
+                          <button title="Supprimer" onClick={() => handleDeleteLot(lot)}
+                            className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-100 rounded-lg">
+                            <FiTrash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             )}
           </div>
