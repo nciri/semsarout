@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation, Outlet, Navigate } from 'react-router-dom'
 import {
   FiHome, FiUsers, FiFileText, FiCalendar, FiDollarSign,
-  FiSettings, FiBarChart2, FiMenu, FiX, FiBriefcase,
+  FiSettings, FiMenu, FiX, FiBriefcase,
   FiUserCheck, FiGrid, FiMail, FiLogOut, FiBell, FiSearch,
   FiChevronDown, FiExternalLink, FiTrendingUp, FiShield, FiTool, FiClipboard, FiShoppingBag, FiPackage, FiKey
 } from 'react-icons/fi'
@@ -35,7 +35,6 @@ const MENU_ITEMS = [
       { path: '/backoffice/artisans', icon: FiTool, label: 'Artisans' },
       { path: '/backoffice/gestion-locative', icon: FiKey, label: 'Gestion locative' },
       { path: '/backoffice/boutique', icon: FiShoppingBag, label: 'Boutique' },
-      { path: '/backoffice/mes-commandes', icon: FiPackage, label: 'Mes commandes' },
     ]
   },
   {
@@ -43,9 +42,7 @@ const MENU_ITEMS = [
     items: [
       { path: '/backoffice/equipe', icon: FiUserCheck, label: 'Équipe' },
       { path: '/backoffice/analyses', icon: FiTrendingUp, label: 'Analyses' },
-      { path: '/backoffice/statistiques', icon: FiBarChart2, label: 'Statistiques' },
       { path: '/backoffice/parametres', icon: FiSettings, label: 'Paramètres' },
-      { path: '/backoffice/stripe', icon: FiDollarSign, label: 'Stripe', adminOnly: true },
     ]
   }
 ]

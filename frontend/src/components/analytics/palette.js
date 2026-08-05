@@ -30,10 +30,12 @@ function isDarkMode() {
   return false
 }
 
-// Read at render time (not memoized) so components pick up a theme change
-// on their next render rather than needing a global theme context.
+// Le backoffice est en thème clair uniquement (aucun bascule sombre ailleurs) :
+// les blocs d'analyse restent clairs, donc les graphiques utilisent toujours la
+// palette claire — sinon la grille claire deviendrait invisible sur fond clair
+// quand l'OS est en mode sombre. `isDarkMode` est conservé pour un futur toggle.
 export function useChartTheme() {
-  return isDarkMode() ? PALETTE.dark : PALETTE.light
+  return PALETTE.light
 }
 
 export const AXIS = 'currentColor'

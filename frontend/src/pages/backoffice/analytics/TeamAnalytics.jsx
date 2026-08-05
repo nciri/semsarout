@@ -1,14 +1,14 @@
 import { useQuery } from 'react-query'
 import { analyticsService } from '../../../services/analyticsService'
-import { useRange } from './AnalyticsLayout'
+import { useFilters } from './AnalyticsLayout'
 import KpiTile from '../../../components/analytics/KpiTile'
 import ChartCard from '../../../components/analytics/ChartCard'
 import BarsChart from '../../../components/analytics/BarsChart'
 import { fmtMAD, fmtNum } from '../../../components/analytics/palette'
 
 function TeamAnalytics() {
-  const range = useRange()
-  const { data, isLoading, isError } = useQuery(['analytics', 'team', range], () => analyticsService.getTeam(range))
+  const filters = useFilters()
+  const { data, isLoading, isError } = useQuery(['analytics', 'team', filters], () => analyticsService.getTeam(filters))
   if (isLoading) return <p>Chargement…</p>
   if (isError || !data) return <p className="text-gray-500">Aucune donnée d'analyse disponible.</p>
   const s = data.summary, d = data.detail

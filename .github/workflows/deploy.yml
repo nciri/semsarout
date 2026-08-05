@@ -1,177 +1,84 @@
-name: Deploy prod (Hetzner) — DÉSACTIVÉ
+name: Deploy prod (co-location Hetzner)
 
-# Chemin « serveur dédié Terraform/Hetzner » NEUTRALISÉ : la production tourne en
-# co-location sur le serveur existant (déploiement manuel par rsync + systemd, cf.
-# memory/prod-colocation-tabiblib.md). On retire le déclencheur push:main pour qu'un
-# merge vers main ne provisionne plus de serveur Hetzner par accident. Le pipeline de
-# déploiement co-location (tests CI puis rsync/restart) reste à construire.
-# Conservé lançable manuellement uniquement.
+# Déploiement de la production co-localisée (46.62.203.126), déclenché au push sur main.
+# main n'avance que par PR develop → main dont la CI (ci.yml) est un check requis :
+# arriver ici implique donc « CI verte ». Lancement manuel possible (workflow_dispatch).
+#
+# Fait : build des 2 fronts sur le runner → rsync du code + des dist vers le serveur →
+# réinstall éditable du venv + redémarrage du mesh (infra/prod/deploy-remote.sh).
+# Le chemin « serveur dédié Terraform » est abandonné (co-location, cf.
+# memory/prod-colocation-tabiblib.md).
+
 on:
+  push:
+    branches: [main]
   workflow_dispatch: {}
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
 
 permissions:
   contents: read
 
+env:
+  DEPLOY_HOST: 46.62.203.126
+  DEPLOY_USER: root
+  APP_DIR: /opt/semsar
+
 jobs:
-  terraform:
-    name: Terraform apply
-    # Les secrets (HCLOUD_TOKEN, TF_BACKEND_*, JWT_SECRET_KEY_PROD, DEPLOY_SSH_PRIVATE_KEY)
-    # sont portés par l'environnement GitHub `production` : le job doit le déclarer pour y accéder.
-    environment: production
-    runs-on: ubuntu-latest
-    outputs:
-      server_ip: ${{ steps.output.outputs.server_ip }}
-    defaults:
-      run:
-        working-directory: infra/prod/terraform
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "~1.6"
-
-      - name: Derive SSH public key from deploy key
-        id: ssh_key
-        env:
-          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
-        run: |
-          set -euo pipefail
-          umask 077
-          key_file="$(mktemp)"
-          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > "$key_file"
-          pub_key="$(ssh-keygen -y -f "$key_file")"
-          rm -f "$key_file"
-          {
-            echo "pub_key<<SSH_PUB_KEY_EOF"
-            echo "$pub_key"
-            echo "SSH_PUB_KEY_EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Terraform init
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.TF_BACKEND_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_BACKEND_SECRET_KEY }}
-        run: |
-          set -euo pipefail
-          terraform init \
-            -backend-config="endpoint=https://fsn1.your-objectstorage.com" \
-            -backend-config="bucket=semsarout-tfstate" \
-            -backend-config="key=semsarout/prod.tfstate" \
-            -backend-config="region=fsn1" \
-            -backend-config="skip_credentials_validation=true" \
-            -backend-config="skip_region_validation=true" \
-            -backend-config="skip_requesting_account_id=true" \
-            -backend-config="skip_metadata_api_check=true" \
-            -backend-config="skip_s3_checksum=true" \
-            -backend-config="use_path_style=true"
-
-      - name: Terraform validate
-        run: terraform validate
-
-      # La clé SSH de déploiement peut déjà exister dans le projet Hetzner (Hetzner
-      # refuse une clé publique en double). Si présente, on l'importe dans l'état au
-      # lieu de la recréer — idempotent, et sans effet si elle n'existe pas encore.
-      - name: Import pre-existing SSH key if present
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.TF_BACKEND_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_BACKEND_SECRET_KEY }}
-          HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
-          PUB_KEY: ${{ steps.ssh_key.outputs.pub_key }}
-        run: |
-          set -euo pipefail
-          if terraform state list 2>/dev/null | grep -qx 'hcloud_ssh_key.deploy'; then
-            echo "Clé déjà dans l'état — rien à importer."; exit 0
-          fi
-          mine="$(printf '%s' "$PUB_KEY" | awk '{print $1" "$2}')"
-          id="$(curl -fsS -H "Authorization: Bearer $HCLOUD_TOKEN" \
-            'https://api.hetzner.cloud/v1/ssh_keys?per_page=50' \
-            | jq -r --arg m "$mine" \
-              '.ssh_keys[] | select((.public_key | split(" ")[0:2] | join(" ")) == $m) | .id' \
-            | head -n1)"
-          if [ -n "${id:-}" ]; then
-            echo "Clé SSH déjà dans Hetzner (id=$id) → import dans l'état."
-            terraform import \
-              -var="hcloud_token=$HCLOUD_TOKEN" \
-              -var="ssh_public_key=$PUB_KEY" \
-              hcloud_ssh_key.deploy "$id"
-          else
-            echo "Pas de clé existante — Terraform la créera."
-          fi
-
-      - name: Terraform apply
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.TF_BACKEND_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_BACKEND_SECRET_KEY }}
-          TF_VAR_hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
-          TF_VAR_ssh_public_key: ${{ steps.ssh_key.outputs.pub_key }}
-        run: terraform apply -auto-approve
-
-      - name: Read server_ip output
-        id: output
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.TF_BACKEND_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_BACKEND_SECRET_KEY }}
-        run: |
-          set -euo pipefail
-          echo "server_ip=$(terraform output -raw server_ip)" >> "$GITHUB_OUTPUT"
-
   deploy:
-    name: Ansible deploy
-    needs: terraform
-    environment: production
+    name: Build + rsync + restart mesh
     runs-on: ubuntu-latest
-    env:
-      SERVER_IP: ${{ needs.terraform.outputs.server_ip }}
+    # Les secrets (DEPLOY_SSH_PRIVATE_KEY) sont portés par l'environnement `production`.
+    environment: production
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          python-version: "3.12"
+          node-version: 20
 
-      - name: Install Ansible
-        run: pip install ansible-core
-
-      - name: Write SSH deploy key
-        env:
-          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+      - name: Build frontend semsarout
+        working-directory: frontend
         run: |
-          set -euo pipefail
-          umask 077
-          mkdir -p "$RUNNER_TEMP/ssh"
-          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > "$RUNNER_TEMP/ssh/deploy_key"
-          chmod 600 "$RUNNER_TEMP/ssh/deploy_key"
+          npm ci
+          npm run build
 
-      - name: Write inventory
+      - name: Build frontend m3a-l3achrane
+        working-directory: frontend-m3a-l3achrane
         run: |
-          set -euo pipefail
-          printf '[prod]\n%s ansible_user=root ansible_ssh_private_key_file=%s/ssh/deploy_key\n' \
-            "$SERVER_IP" "$RUNNER_TEMP" > "$RUNNER_TEMP/inventory.ini"
+          npm ci
+          npm run build
 
-      - name: Write extra-vars file
-        env:
-          JWT_SECRET_KEY_PROD: ${{ secrets.JWT_SECRET_KEY_PROD }}
+      - name: Configurer la clé SSH
         run: |
-          set -euo pipefail
-          umask 077
-          cat > "$RUNNER_TEMP/vars.yml" <<EOF
-          jwt_secret_key: "${JWT_SECRET_KEY_PROD}"
-          semsar_domain: semsarout.com
-          m3a_l3achrane_domain: m3a-l3achrane.ma
-          EOF
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Run playbook
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: "False"
+      - name: Rsync du code backend
         run: |
-          set -euo pipefail
-          ansible-playbook infra/prod/ansible/playbook.yml \
-            -i "$RUNNER_TEMP/inventory.ini" \
-            -u root \
-            --private-key "$RUNNER_TEMP/ssh/deploy_key" \
-            --extra-vars "@$RUNNER_TEMP/vars.yml"
+          rsync -az --no-perms --no-owner --no-group \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            --exclude='.git' --exclude='node_modules' --exclude='dist' \
+            --exclude='__pycache__' --exclude='*.pyc' --exclude='.pytest_cache' \
+            --exclude='venv' --exclude='www' --exclude='*.env' --exclude='.env' \
+            --exclude='frontend/' --exclude='frontend-m3a-l3achrane/' \
+            ./ "$DEPLOY_USER@$DEPLOY_HOST:$APP_DIR/"
+
+      - name: Rsync des fronts (dist)
+        run: |
+          rsync -az --no-perms --no-owner --no-group -e "ssh -i ~/.ssh/deploy_key" \
+            frontend/dist/ "$DEPLOY_USER@$DEPLOY_HOST:$APP_DIR/www/semsarout/"
+          rsync -az --no-perms --no-owner --no-group -e "ssh -i ~/.ssh/deploy_key" \
+            frontend-m3a-l3achrane/dist/ "$DEPLOY_USER@$DEPLOY_HOST:$APP_DIR/www/m3a-l3achrane/"
+
+      - name: Réinstall venv + migrations + restart mesh
+        run: |
+          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
+            "bash $APP_DIR/infra/prod/deploy-remote.sh"

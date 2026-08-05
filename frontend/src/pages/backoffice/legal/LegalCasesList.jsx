@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { FiLock, FiPlus, FiShield } from 'react-icons/fi'
+import { FiLock, FiPlus, FiShield, FiAlertCircle } from 'react-icons/fi'
 import { legalService } from '../../../services/legalService'
 import { StatCard, Toolbar, Select, DataTable, StatusBadge, EmptyState, GatedNotice } from '../../../components/backoffice/ui'
 
@@ -17,6 +17,7 @@ const PRIMARY_BTN = 'inline-flex items-center gap-2 px-4 py-2 bg-primary-600 tex
 function LegalCasesList() {
   const qc = useQueryClient()
   const { data, isLoading, error } = useQuery('legal-cases', () => legalService.listCases())
+  const { data: notariesData } = useQuery('notaries', () => legalService.listNotaries())
   const [title, setTitle] = useState('')
   const [type, setType] = useState('sale')
 
@@ -26,6 +27,8 @@ function LegalCasesList() {
   })
 
   const cases = data?.cases || []
+  const notaries = notariesData?.notaries || []
+  const noNotary = notaries.length === 0
   const stats = useMemo(() => ({
     total: cases.length,
     open: cases.filter((c) => c.status === 'open').length,
@@ -66,6 +69,14 @@ function LegalCasesList() {
         <StatCard label="Clôturés" value={stats.closed} tone="green" />
       </div>
 
+      {noNotary && (
+        <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
+          <FiAlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span>Aucun notaire configuré. Ajoutez un notaire dans l’onglet{' '}
+            <Link to="/backoffice/notaires" className="underline font-medium">Notaires</Link>{' '}pour pouvoir créer un dossier.</span>
+        </div>
+      )}
+
       <Toolbar>
         <input
           value={title}
@@ -77,7 +88,12 @@ function LegalCasesList() {
           <option value="sale">Vente</option>
           <option value="rental">Location</option>
         </Select>
-        <button onClick={() => create.mutate()} disabled={create.isLoading} className={PRIMARY_BTN}>
+        <button
+          onClick={() => create.mutate()}
+          disabled={create.isLoading || noNotary}
+          title={noNotary ? 'Configurez d’abord un notaire (onglet Notaires)' : undefined}
+          className={PRIMARY_BTN}
+        >
           <FiPlus className="w-5 h-5" /> Nouveau dossier
         </button>
       </Toolbar>

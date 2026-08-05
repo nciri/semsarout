@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { FiLock, FiInbox, FiPlus, FiX, FiHome, FiStar } from 'react-icons/fi'
 import { rentalService } from '../../../services/rentalService'
+import SearchableSelect from '../../../components/common/SearchableSelect'
 import { DOC_TYPES } from '../../dashboard/applicationStatus'
 import { StatCard, DataTable, StatusBadge, EmptyState, GatedNotice, Modal, Field, Select, SearchInput, Toolbar, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
 
@@ -147,10 +148,15 @@ function ApplicationsList() {
             <option value="">Tous les statuts</option>
             {Object.entries(STATUS).map(([value, [labelText]]) => <option key={value} value={value}>{labelText}</option>)}
           </Select>
-          <Select value={propertyFilter} onChange={(e) => setPropertyFilter(e.target.value)}>
-            <option value="">Tous les biens</option>
-            {properties.map((p) => <option key={p.id} value={String(p.id)}>{p.title}</option>)}
-          </Select>
+          <SearchableSelect
+            value={propertyFilter}
+            onChange={setPropertyFilter}
+            options={properties.map((p) => ({ value: String(p.id), label: p.title, description: p.city }))}
+            placeholder="Tous les biens"
+            searchPlaceholder="Rechercher un bien…"
+            clearable
+            className="min-w-[12rem]"
+          />
         </Toolbar>
       )}
 

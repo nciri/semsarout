@@ -7,6 +7,7 @@ import {
   FiCalendar, FiChevronDown, FiChevronRight
 } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
+import { transactionTypeForClient } from '../../utils/clients'
 import api from '../../services/api'
 
 const backofficeService = {
@@ -105,7 +106,7 @@ function ClientCard({ client, onDelete }) {
             <FiEye className="w-4 h-4" />
           </Link>
           <Link
-            to={`/backoffice/clients/${client.id}`}
+            to={`/backoffice/clients/${client.id}/modifier`}
             className="p-1.5 text-gray-400 hover:text-primary-600 rounded-lg hover:bg-primary-50"
           >
             <FiEdit2 className="w-4 h-4" />
@@ -141,6 +142,16 @@ function ClientCard({ client, onDelete }) {
           </p>
         </div>
       )}
+
+      <div className="mt-3 pt-3 border-t border-gray-100 flex justify-end">
+        <Link
+          to={`/backoffice/transactions/nouveau?client_id=${client.id}&type=${transactionTypeForClient(client.client_type)}`}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
+        >
+          <FiPlus className="w-3.5 h-3.5" />
+          Nouvelle transaction
+        </Link>
+      </div>
     </div>
   )
 }

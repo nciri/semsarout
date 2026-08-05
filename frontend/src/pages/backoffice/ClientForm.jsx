@@ -6,6 +6,7 @@ import {
   FiDollarSign, FiTag, FiFileText, FiX, FiPlus
 } from 'react-icons/fi'
 import { DIRHAM_SYMBOL } from '../../utils/currency'
+import SearchableSelect from '../../components/common/SearchableSelect'
 import api from '../../services/api'
 
 const backofficeService = {
@@ -119,9 +120,11 @@ export default function BackofficeClientForm() {
     onSuccess: () => {
       queryClient.invalidateQueries('backoffice-clients')
       queryClient.invalidateQueries(['backoffice-client', id])
-      navigate('/backoffice/clients')
+      navigate(`/backoffice/clients/${id}`)
     }
   })
+
+  const backTo = isEditing ? `/backoffice/clients/${id}` : '/backoffice/clients'
 
   const validate = () => {
     const newErrors = {}
@@ -196,7 +199,7 @@ export default function BackofficeClientForm() {
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <button
-          onClick={() => navigate('/backoffice/clients')}
+          onClick={() => navigate(backTo)}
           className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
         >
           <FiArrowLeft className="w-5 h-5" />
@@ -528,18 +531,14 @@ export default function BackofficeClientForm() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Agent assigné
               </label>
-              <select
+              <SearchableSelect
                 value={formData.assigned_agent_id}
-                onChange={(e) => setFormData({ ...formData, assigned_agent_id: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="">Non assigné</option>
-                {agentsData?.users?.map(agent => (
-                  <option key={agent.id} value={agent.id}>
-                    {agent.first_name} {agent.last_name}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => setFormData({ ...formData, assigned_agent_id: v })}
+                options={(agentsData?.users || []).map((agent) => ({ value: agent.id, label: `${agent.first_name} ${agent.last_name}`, description: agent.email }))}
+                placeholder="Non assigné"
+                searchPlaceholder="Rechercher un agent…"
+                clearable
+              />
             </div>
 
             <div>
@@ -574,7 +573,7 @@ export default function BackofficeClientForm() {
         <div className="flex items-center justify-end gap-4">
           <button
             type="button"
-            onClick={() => navigate('/backoffice/clients')}
+            onClick={() => navigate(backTo)}
             className="px-6 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
           >
             Annuler
