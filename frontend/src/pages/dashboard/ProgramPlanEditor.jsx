@@ -30,6 +30,18 @@ const num = (v) => (v === '' || v === null || v === undefined ? null : Number(v)
 const clamp01 = (v) => Math.min(1, Math.max(0, v))
 const cloneZone = (zone) => (zone || []).map(p => ({ x: p.x, y: p.y }))
 
+// Duplication d'un lot : référence suffixée, zone légèrement décalée (à repositionner),
+// statut remis à "available" (un nouveau lot physique est disponible).
+const DUP_OFFSET = 0.03
+export const nextReference = (ref) => `${ref || 'LOT'}-copie`
+export const offsetZone = (zone) => (zone || []).map(p => ({ x: clamp01(p.x + DUP_OFFSET), y: clamp01(p.y + DUP_OFFSET) }))
+export const duplicateLotPayload = (lot) => ({
+  reference: nextReference(lot.reference), title: lot.title || '', lot_type: lot.lot_type || 'apartment',
+  surface: lot.surface ?? null, rooms: lot.rooms ?? null, bedrooms: lot.bedrooms ?? null,
+  bathrooms: lot.bathrooms ?? null, floor: lot.floor ?? null, price: lot.price ?? null,
+  status: 'available', description: lot.description || '', zone: offsetZone(lot.zone),
+})
+
 function eventToNorm(e, el) {
   const rect = el.getBoundingClientRect()
   return {
@@ -265,7 +277,7 @@ export default function ProgramPlanEditor() {
       if (creating) {
         const lot = await lotPlanService.createLot(programId, { ...payload, plan_id: activePlan.id, zone: draft })
         upsertLotLocal(activePlan.id, lot); recomputeCounts(activePlan.id)
-        setDraft([]); setCreating(false); selectLot(lot)
+        setDraft([]); resetSelection()
         pushHistory(async () => {
           await lotPlanService.deleteLot(programId, lot.id)
           removeLotLocal(activePlan.id, lot.id); recomputeCounts(activePlan.id); resetSelection()
@@ -291,13 +303,14 @@ export default function ProgramPlanEditor() {
     } finally { setSaving(false) }
   }
 
-  const handleDeleteLot = async () => {
-    if (!selectedLot) return
+  const handleDeleteLot = async (lot) => {
+    if (!lot) return
     if (!window.confirm('Supprimer ce lot ?')) return
-    const before = { ...selectedLot, zone: cloneZone(selectedLot.zone) }
+    const before = { ...lot, zone: cloneZone(lot.zone) }
     try {
-      await lotPlanService.deleteLot(programId, selectedLot.id)
-      removeLotLocal(activePlan.id, selectedLot.id); recomputeCounts(activePlan.id); resetSelection()
+      await lotPlanService.deleteLot(programId, lot.id)
+      removeLotLocal(activePlan.id, lot.id); recomputeCounts(activePlan.id)
+      if (selectedLotId === lot.id) resetSelection()
       pushHistory(async () => {
         const re = await lotPlanService.createLot(programId, {
           plan_id: activePlan.id, zone: before.zone, reference: before.reference, title: before.title,
@@ -307,7 +320,25 @@ export default function ProgramPlanEditor() {
         })
         upsertLotLocal(activePlan.id, re); recomputeCounts(activePlan.id)
       })
-    } catch (err) { toast.error(err.response?.data?.error || 'Erreur') }
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Erreur lors de la suppression')
+    }
+  }
+
+  const handleDuplicateLot = async (lot) => {
+    try {
+      const created = await lotPlanService.createLot(programId, {
+        ...duplicateLotPayload(lot), plan_id: activePlan.id,
+      })
+      upsertLotLocal(activePlan.id, created); recomputeCounts(activePlan.id)
+      pushHistory(async () => {
+        await lotPlanService.deleteLot(programId, created.id)
+        removeLotLocal(activePlan.id, created.id); recomputeCounts(activePlan.id)
+      })
+      toast.success('Lot dupliqué')
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Erreur lors de la duplication')
+    }
   }
 
   const iconBtn = (active) =>
@@ -512,7 +543,7 @@ export default function ProgramPlanEditor() {
                     <FiSave className="w-4 h-4 mr-2" /> {saving ? '...' : 'Enregistrer'}
                   </button>
                   {selectedLot && (
-                    <button onClick={handleDeleteLot} className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg"><FiTrash2 className="w-4 h-4" /></button>
+                    <button onClick={() => handleDeleteLot(selectedLot)} className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg"><FiTrash2 className="w-4 h-4" /></button>
                   )}
                 </div>
               </div>
