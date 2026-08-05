@@ -1794,6 +1794,12 @@
         "saving": "Sauvegarde...",
         "button": "Sauvegarder"
       }
+    },
+    "hub": {
+      "tabs": {
+        "agency": "Agence",
+        "account": "Mon compte"
+      }
     }
   }
 }
