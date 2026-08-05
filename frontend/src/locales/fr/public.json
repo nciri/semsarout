@@ -3,5 +3,23 @@
     "title": "Page non trouvée",
     "message": "La page que vous recherchez n'existe pas ou a été déplacée.",
     "backHome": "Retour à l'accueil"
+  },
+  "payment": {
+    "demoNotice": "Passerelle de paiement en mode démo (intégration CMI à venir)",
+    "title": "Confirmer le paiement",
+    "referenceLabel": "Référence",
+    "amountLabel": "Montant :",
+    "confirmButton": "Confirmer le paiement",
+    "processing": "Traitement..."
+  },
+  "checkoutConfirmation": {
+    "successTitle": "Paiement confirmé",
+    "successMessage": "Merci ! Votre paiement a bien été enregistré (référence {{paymentId}}).",
+    "transferTitle": "Commande enregistrée",
+    "transferMessage": "Merci ! Votre commande a bien été enregistrée. Pour la finaliser, veuillez effectuer un virement bancaire en indiquant la référence ci-dessous dans le libellé du virement.",
+    "copyReferenceTitle": "Copier la référence",
+    "copied": "Copié !",
+    "transferNote": "Votre commande sera activée dès réception du virement (délai habituel : 1 à 3 jours ouvrés). Un email de confirmation vous sera envoyé.",
+    "goToDashboard": "Accéder à mon espace"
   }
 }
