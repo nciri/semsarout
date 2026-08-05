@@ -19,7 +19,7 @@ export function findHardcodedText(source) {
 }
 
 // Fichiers migrés à garder propres. AJOUTER chaque page ici après sa migration.
-const MIGRATED_FILES = []
+const MIGRATED_FILES = ['src/pages/NotFound.jsx', 'src/pages/LegalPage.jsx']
 
 describe('noHardcodedText (garde-fou heuristique)', () => {
   it('détecte le français JSX non enveloppé', () => {
