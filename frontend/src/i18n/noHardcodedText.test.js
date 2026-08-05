@@ -90,6 +90,8 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/analytics/AnalyticsLayout.jsx',
   'src/components/analytics/ChartCard.jsx',
   'src/pages/backoffice/analytics/OverviewAnalytics.jsx',
+  'src/pages/backoffice/analytics/FinancialAnalytics.jsx',
+  'src/pages/backoffice/analytics/PipelineAnalytics.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {

@@ -997,6 +997,37 @@
         "rent": "Location",
         "autre": "Autre"
       }
+    },
+    "financial": {
+      "kpis": {
+        "revenueRealized": "CA réalisé",
+        "weightedPipeline": "Pipeline pondéré",
+        "dealsWon": "Deals gagnés",
+        "avgCycle": "Cycle moyen (j)"
+      },
+      "charts": {
+        "revenueTrend": "Tendance du CA réalisé",
+        "commissionByAgent": "Commission par agent"
+      },
+      "series": {
+        "realized": "CA réalisé",
+        "commission": "Commission"
+      }
+    },
+    "pipeline": {
+      "kpis": {
+        "globalConversion": "Conversion globale",
+        "openPipeline": "Pipeline ouvert",
+        "closings30d": "Clôtures 30j",
+        "closed": "Clôturés"
+      },
+      "charts": {
+        "funnel": "Entonnoir",
+        "velocityByStage": "Vélocité par étape (j)"
+      },
+      "series": {
+        "days": "Jours"
+      }
     }
   }
 }

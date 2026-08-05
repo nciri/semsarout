@@ -997,6 +997,37 @@
         "rent": "كراء",
         "autre": "أخرى"
       }
+    },
+    "financial": {
+      "kpis": {
+        "revenueRealized": "الإيرادات المُحقّقة",
+        "weightedPipeline": "المسار المُرجَّح",
+        "dealsWon": "الصفقات الرابحة",
+        "avgCycle": "متوسّط الدورة (ي)"
+      },
+      "charts": {
+        "revenueTrend": "اتجاه الإيرادات المُحقّقة",
+        "commissionByAgent": "العمولة حسب الوكيل"
+      },
+      "series": {
+        "realized": "الإيرادات المُحقّقة",
+        "commission": "العمولة"
+      }
+    },
+    "pipeline": {
+      "kpis": {
+        "globalConversion": "التحويل الإجمالي",
+        "openPipeline": "المسار المفتوح",
+        "closings30d": "إغلاقات 30 ي",
+        "closed": "مُغلقة"
+      },
+      "charts": {
+        "funnel": "القمع",
+        "velocityByStage": "السرعة حسب المرحلة (ي)"
+      },
+      "series": {
+        "days": "أيام"
+      }
     }
   }
 }
