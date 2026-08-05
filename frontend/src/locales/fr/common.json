@@ -263,6 +263,12 @@
       "alerts": "Alertes"
     },
     "seeMore": "voir plus",
-    "noAlerts": "Rien à signaler"
+    "noAlerts": "Rien à signaler",
+    "pipelineWeighted": "Pipeline pondéré {{amount}}",
+    "dealsOpen": "{{count}} deals ouverts",
+    "leadsOverdue": "{{count}} en retard",
+    "listingsViews": "{{count}} vues",
+    "marketDaysOnMarket": "{{count}} j sur le marché",
+    "teamSeats": "Sièges {{used}}/{{limit}}"
   }
 }

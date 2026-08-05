@@ -243,7 +243,7 @@
     "estimatedNote_other": "مُقدَّر بناءً على {{count}} عقارات · {{scope}}"
   },
   "lightbox": {
-    "close": "إغلاق (Échap)",
+    "close": "إغلاق (Esc)",
     "zoomOut": "تصغير",
     "zoomIn": "تكبير",
     "previous": "الصورة السابقة (←)",
@@ -263,6 +263,12 @@
       "alerts": "التنبيهات"
     },
     "seeMore": "المزيد",
-    "noAlerts": "لا يوجد ما يستدعي الإشارة إليه"
+    "noAlerts": "لا يوجد ما يستدعي الإشارة إليه",
+    "pipelineWeighted": "خط المبيعات المرجّح {{amount}}",
+    "dealsOpen": "{{count}} صفقة مفتوحة",
+    "leadsOverdue": "{{count}} متأخر",
+    "listingsViews": "{{count}} مشاهدة",
+    "marketDaysOnMarket": "{{count}} يوم في السوق",
+    "teamSeats": "المقاعد {{used}}/{{limit}}"
   }
 }

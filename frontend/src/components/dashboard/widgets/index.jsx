@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { FiArrowRight } from 'react-icons/fi'
 import { fmtMAD, fmtNum, fmtPct } from '../../analytics/palette'
 import DirIcon from '../../common/DirIcon'
+import i18n from '../../../i18n'
 
 // `titleKey` is the stable widget id, looked up in common:widgets.titles.<id>.
 function Widget({ titleKey, to, children }) {
@@ -22,26 +23,30 @@ function Widget({ titleKey, to, children }) {
   )
 }
 
+function WidgetBody({ children }) {
+  return <div className="text-xs text-gray-400">{children}</div>
+}
+
 // registry: id -> { to, render(overview) } — title is resolved from common:widgets.titles.<id> by Widget.
 export const WIDGETS = {
   financial: { to: '/backoffice/analyses', render: (o) => (
     <div><div className="text-2xl font-bold text-gray-900">{fmtMAD(o.financial?.revenue_realized)}</div>
-      <div className="text-xs text-gray-400">Pipeline pondéré {fmtMAD(o.financial?.revenue_pipeline_weighted)}</div></div>) },
+      <WidgetBody>{i18n.t('common:widgets.pipelineWeighted', { amount: fmtMAD(o.financial?.revenue_pipeline_weighted) })}</WidgetBody></div>) },
   pipeline: { to: '/backoffice/analyses/pipeline', render: (o) => (
     <div><div className="text-2xl font-bold text-gray-900">{fmtMAD(o.pipeline?.pipeline_value_open)}</div>
-      <div className="text-xs text-gray-400">{fmtNum(o.pipeline?.open_deals)} deals ouverts</div></div>) },
+      <WidgetBody>{i18n.t('common:widgets.dealsOpen', { count: fmtNum(o.pipeline?.open_deals) })}</WidgetBody></div>) },
   hot_leads: { to: '/backoffice/leads', render: (o) => (
     <div><div className="text-2xl font-bold text-gray-900">{fmtNum(o.hot_leads?.unread)}</div>
-      <div className="text-xs text-red-500">{fmtNum(o.hot_leads?.overdue)} en retard</div></div>) },
+      <div className="text-xs text-red-500">{i18n.t('common:widgets.leadsOverdue', { count: fmtNum(o.hot_leads?.overdue) })}</div></div>) },
   listings: { to: '/dashboard/annonces', render: (o) => (
     <div><div className="text-2xl font-bold text-gray-900">{fmtNum(o.listings?.active)}</div>
-      <div className="text-xs text-gray-400">{fmtNum(o.listings?.views)} vues</div></div>) },
+      <WidgetBody>{i18n.t('common:widgets.listingsViews', { count: fmtNum(o.listings?.views) })}</WidgetBody></div>) },
   market: { to: '/backoffice/analyses/marche', render: (o) => (
     <div><div className="text-2xl font-bold text-gray-900">{fmtMAD(o.market?.portfolio_avg_price_sqm)}/m²</div>
-      <div className="text-xs text-gray-400">{fmtNum(o.market?.avg_days_on_market)} j sur le marché</div></div>) },
+      <WidgetBody>{i18n.t('common:widgets.marketDaysOnMarket', { count: fmtNum(o.market?.avg_days_on_market) })}</WidgetBody></div>) },
   team_seats: { to: '/backoffice/equipe', render: (o) => (
     <div><div className="text-2xl font-bold text-gray-900">{fmtNum(o.team?.members)}</div>
-      <div className="text-xs text-gray-400">Sièges {o.seats?.used}/{o.seats?.limit === -1 ? '∞' : o.seats?.limit}</div></div>) },
+      <WidgetBody>{i18n.t('common:widgets.teamSeats', { used: o.seats?.used, limit: o.seats?.limit === -1 ? '∞' : o.seats?.limit })}</WidgetBody></div>) },
   subscription: { to: '/dashboard/compte/abonnement', render: (o) => (
     <div><div className="text-lg font-bold text-gray-900">{o.subscription?.plan || '—'}</div>
       <div className="text-xs text-gray-400">{o.subscription?.status || ''}</div></div>) },
