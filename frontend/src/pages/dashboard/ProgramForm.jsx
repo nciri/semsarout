@@ -8,7 +8,7 @@ import {
 import { DIRHAM_SYMBOL, formatPrice } from '../../utils/currency'
 import api from '../../services/api'
 import SpecFields from '../../components/common/SpecFields'
-import { TYPOLOGY_OPTIONS, unitTypesForTypology, DETAIL_SECTIONS } from './programSpecsConfig'
+import { TYPOLOGY_OPTIONS, unitTypesForTypology, DETAIL_SECTIONS, UNIT_SPEC_FIELDS, UNIT_HIDE_ROOMS } from './programSpecsConfig'
 
 // Route through the shared axios instance: it reads accessToken from
 // auth-storage and auto-refreshes on 401, avoiding the stale-token desync that
@@ -103,7 +103,8 @@ function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
     price_from: '',
     price_to: '',
     total_count: '',
-    available_count: ''
+    available_count: '',
+    specs: unit?.specs || {}
   })
 
   const handleSubmit = (e) => {
@@ -112,6 +113,8 @@ function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
   }
 
   const types = (allowedTypes && allowedTypes.length) ? UNIT_TYPES.filter(t => allowedTypes.includes(t.value)) : UNIT_TYPES
+  const hideRooms = UNIT_HIDE_ROOMS.includes(formData.unit_type)
+  const unitSpecFields = UNIT_SPEC_FIELDS[formData.unit_type] || []
 
   return (
     <form onSubmit={handleSubmit} className="bg-gray-50 rounded-lg p-4 space-y-4">
@@ -160,24 +163,37 @@ function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Pièces</label>
-          <input
-            type="number"
-            value={formData.rooms}
-            onChange={(e) => setFormData({ ...formData, rooms: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Chambres</label>
-          <input
-            type="number"
-            value={formData.bedrooms}
-            onChange={(e) => setFormData({ ...formData, bedrooms: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          />
-        </div>
+        {!hideRooms && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Pièces</label>
+              <input
+                type="number"
+                value={formData.rooms}
+                onChange={(e) => setFormData({ ...formData, rooms: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Chambres</label>
+              <input
+                type="number"
+                value={formData.bedrooms}
+                onChange={(e) => setFormData({ ...formData, bedrooms: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Salles de bain</label>
+              <input
+                type="number"
+                value={formData.bathrooms}
+                onChange={(e) => setFormData({ ...formData, bathrooms: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -218,6 +234,17 @@ function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
           />
         </div>
       </div>
+
+      {unitSpecFields.length > 0 && (
+        <div className="border-t border-gray-200 pt-4">
+          <h4 className="text-sm font-semibold text-gray-900 mb-3">Caractéristiques</h4>
+          <SpecFields
+            fields={unitSpecFields}
+            values={formData.specs || {}}
+            onChange={(vals) => setFormData({ ...formData, specs: vals })}
+          />
+        </div>
+      )}
 
       <div className="flex justify-end gap-2">
         <button
