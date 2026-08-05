@@ -1220,6 +1220,184 @@
           "sale": "vente"
         }
       }
+    },
+    "pipeline": {
+      "leads": {
+        "list": {
+          "pageTitle": "Leads",
+          "subtitle": "Gérez vos prospects et convertissez-les en clients",
+          "stats": {
+            "total": "Total leads",
+            "new": "Nouveaux",
+            "qualified": "Qualifiés",
+            "converted": "Convertis"
+          },
+          "searchPlaceholder": "Rechercher par nom, email...",
+          "filtersButton": "Filtres",
+          "filterStatusLabel": "Statut",
+          "filterStatusAll": "Tous les statuts",
+          "filterSourceLabel": "Source",
+          "filterSourceAll": "Toutes les sources",
+          "resetFilters": "Réinitialiser",
+          "columns": {
+            "contact": "Contact",
+            "contactInfo": "Coordonnées",
+            "source": "Source",
+            "status": "Statut",
+            "property": "Bien associé",
+            "date": "Date",
+            "actions": "Actions"
+          },
+          "viewDetails": "Voir les détails",
+          "markLost": "Marquer comme perdu",
+          "paginationInfo": "Affichage de {{from}} à {{to}} sur {{total}} leads",
+          "prev": "Précédent",
+          "next": "Suivant",
+          "empty": {
+            "title": "Aucun lead trouvé",
+            "filtered": "Aucun lead ne correspond à vos critères.",
+            "default": "Les leads apparaîtront ici lorsque des prospects vous contacteront."
+          }
+        },
+        "detail": {
+          "title": "Détails du lead",
+          "contactInfo": "Coordonnées",
+          "message": "Message",
+          "internalNotes": "Notes internes",
+          "source": "Source",
+          "createdAt": "Date de création",
+          "property": "Bien associé",
+          "assignedTo": "Assigné à"
+        },
+        "status": {
+          "new": "Nouveau",
+          "contacted": "Contacté",
+          "qualified": "Qualifié",
+          "converted": "Converti",
+          "lost": "Perdu"
+        },
+        "source": {
+          "contact_form": "Formulaire",
+          "phone_reveal": "Téléphone",
+          "callback_request": "Rappel",
+          "website": "Site web",
+          "manual": "Manuel",
+          "other": "Autre"
+        },
+        "nextAction": {
+          "new": "Marquer comme contacté",
+          "contacted": "Marquer comme qualifié",
+          "qualified": "Convertir en client"
+        },
+        "confirm": {
+          "convert": "Voulez-vous convertir \"{{name}}\" en client ?",
+          "markStatus": "Voulez-vous marquer \"{{name}}\" comme {{status}} ?",
+          "lost": "Voulez-vous marquer \"{{name}}\" comme perdu ?"
+        }
+      },
+      "pipeline": {
+        "list": {
+          "pageTitle": "Pipeline",
+          "subtitle": "Gérez vos transactions en cours",
+          "listViewLink": "Vue liste",
+          "newButton": "Nouvelle transaction",
+          "typeSale": "Ventes",
+          "typeRent": "Locations",
+          "agentPlaceholder": "Tous les agents",
+          "agentSearchPlaceholder": "Rechercher un agent…",
+          "totalTransactions": "Total transactions:",
+          "totalValue": "Valeur totale:",
+          "priorityLegend": "Légende des priorités"
+        },
+        "card": {
+          "openDetail": "Ouvrir le détail dans un nouvel onglet",
+          "edit": "Modifier",
+          "archive": "Archiver",
+          "noPropertyTitle": "Bien sans titre",
+          "noClient": "Client non défini",
+          "agent": "Agent : {{name}}"
+        },
+        "column": {
+          "empty": "Aucune transaction"
+        },
+        "priority": {
+          "low": "Basse",
+          "medium": "Moyenne",
+          "high": "Haute",
+          "urgent": "Urgent"
+        }
+      },
+      "visits": {
+        "list": {
+          "pageTitle": "Visites & RDV",
+          "subtitle": "Gérez vos visites et rendez-vous",
+          "newButton": "Planifier une visite",
+          "viewToggleCalendar": "Calendrier",
+          "viewToggleList": "Liste",
+          "today": "Aujourd'hui",
+          "filterStatusAll": "Tous les statuts",
+          "daysHeader": {
+            "mon": "Lun",
+            "tue": "Mar",
+            "wed": "Mer",
+            "thu": "Jeu",
+            "fri": "Ven",
+            "sat": "Sam",
+            "sun": "Dim"
+          },
+          "moreCount": "+{{count}} autres",
+          "empty": {
+            "title": "Aucune visite",
+            "description": "Planifiez votre première visite."
+          },
+          "legend": "Légende des statuts"
+        },
+        "status": {
+          "scheduled": "Planifié",
+          "confirmed": "Confirmé",
+          "completed": "Effectuée",
+          "cancelled": "Annulée",
+          "no_show": "No-show"
+        },
+        "modal": {
+          "title": "Détails de la visite",
+          "noProperty": "Bien non défini",
+          "duration": "- {{minutes}} min",
+          "noVisitor": "Visiteur non défini",
+          "reportLabel": "Rapport de visite",
+          "reportPlaceholder": "Commentaires sur la visite...",
+          "feedbackLabel": "Feedback client",
+          "feedbackOptions": {
+            "select": "Sélectionner...",
+            "very_interested": "Très intéressé",
+            "interested": "Intéressé",
+            "neutral": "Neutre",
+            "not_interested": "Pas intéressé"
+          },
+          "confirmButton": "Confirmer",
+          "cancelButton": "Annuler",
+          "submitReportButton": "Valider le rapport",
+          "markCompletedButton": "Marquer effectuée",
+          "closeButton": "Fermer"
+        },
+        "newModal": {
+          "title": "Planifier une visite",
+          "visitorNameLabel": "Nom du visiteur *",
+          "emailLabel": "Email",
+          "phoneLabel": "Téléphone",
+          "dateTimeLabel": "Date et heure *",
+          "durationLabel": "Durée (minutes)",
+          "duration15": "15 min",
+          "duration30": "30 min",
+          "duration45": "45 min",
+          "duration60": "1 heure",
+          "duration90": "1h30",
+          "notesLabel": "Notes",
+          "notesPlaceholder": "Informations supplémentaires...",
+          "cancelButton": "Annuler",
+          "submitButton": "Planifier"
+        }
+      }
     }
   }
 }

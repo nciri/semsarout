@@ -1220,6 +1220,184 @@
           "sale": "بيع"
         }
       }
+    },
+    "pipeline": {
+      "leads": {
+        "list": {
+          "pageTitle": "العملاء المحتملون",
+          "subtitle": "أدر عملاءك المحتملين وحوّلهم إلى عملاء",
+          "stats": {
+            "total": "إجمالي العملاء المحتملين",
+            "new": "جديد",
+            "qualified": "مؤهّل",
+            "converted": "محوّل"
+          },
+          "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني...",
+          "filtersButton": "التصفية",
+          "filterStatusLabel": "الحالة",
+          "filterStatusAll": "جميع الحالات",
+          "filterSourceLabel": "المصدر",
+          "filterSourceAll": "جميع المصادر",
+          "resetFilters": "إعادة تعيين",
+          "columns": {
+            "contact": "جهة الاتصال",
+            "contactInfo": "بيانات التواصل",
+            "source": "المصدر",
+            "status": "الحالة",
+            "property": "العقار المرتبط",
+            "date": "التاريخ",
+            "actions": "الإجراءات"
+          },
+          "viewDetails": "عرض التفاصيل",
+          "markLost": "تحديد كمفقود",
+          "paginationInfo": "عرض {{from}} إلى {{to}} من أصل {{total}} عميل محتمل",
+          "prev": "السابق",
+          "next": "التالي",
+          "empty": {
+            "title": "لم يتم العثور على أي عميل محتمل",
+            "filtered": "لا يوجد عميل محتمل يطابق معايير البحث.",
+            "default": "ستظهر العملاء المحتملون هنا عندما يتواصل معك المهتمون."
+          }
+        },
+        "detail": {
+          "title": "تفاصيل العميل المحتمل",
+          "contactInfo": "بيانات التواصل",
+          "message": "الرسالة",
+          "internalNotes": "ملاحظات داخلية",
+          "source": "المصدر",
+          "createdAt": "تاريخ الإنشاء",
+          "property": "العقار المرتبط",
+          "assignedTo": "مسند إلى"
+        },
+        "status": {
+          "new": "جديد",
+          "contacted": "تم التواصل",
+          "qualified": "مؤهّل",
+          "converted": "محوّل",
+          "lost": "مفقود"
+        },
+        "source": {
+          "contact_form": "نموذج التواصل",
+          "phone_reveal": "الهاتف",
+          "callback_request": "طلب اتصال",
+          "website": "الموقع الإلكتروني",
+          "manual": "يدوي",
+          "other": "أخرى"
+        },
+        "nextAction": {
+          "new": "وضع علامة \"تم التواصل\"",
+          "contacted": "وضع علامة \"مؤهّل\"",
+          "qualified": "تحويل إلى عميل"
+        },
+        "confirm": {
+          "convert": "هل تريد تحويل \"{{name}}\" إلى عميل؟",
+          "markStatus": "هل تريد تحديد حالة \"{{name}}\" كـ{{status}}؟",
+          "lost": "هل تريد تحديد \"{{name}}\" كمفقود؟"
+        }
+      },
+      "pipeline": {
+        "list": {
+          "pageTitle": "مسار الصفقات",
+          "subtitle": "أدر معاملاتك الجارية",
+          "listViewLink": "عرض القائمة",
+          "newButton": "معاملة جديدة",
+          "typeSale": "البيع",
+          "typeRent": "الإيجار",
+          "agentPlaceholder": "جميع الوكلاء",
+          "agentSearchPlaceholder": "البحث عن وكيل…",
+          "totalTransactions": "إجمالي المعاملات:",
+          "totalValue": "القيمة الإجمالية:",
+          "priorityLegend": "دليل الأولويات"
+        },
+        "card": {
+          "openDetail": "فتح التفاصيل في تبويب جديد",
+          "edit": "تعديل",
+          "archive": "أرشفة",
+          "noPropertyTitle": "عقار بدون عنوان",
+          "noClient": "عميل غير محدد",
+          "agent": "الوكيل: {{name}}"
+        },
+        "column": {
+          "empty": "لا توجد معاملات"
+        },
+        "priority": {
+          "low": "منخفضة",
+          "medium": "متوسطة",
+          "high": "عالية",
+          "urgent": "عاجلة"
+        }
+      },
+      "visits": {
+        "list": {
+          "pageTitle": "الزيارات والمواعيد",
+          "subtitle": "أدر زياراتك ومواعيدك",
+          "newButton": "جدولة زيارة",
+          "viewToggleCalendar": "التقويم",
+          "viewToggleList": "قائمة",
+          "today": "اليوم",
+          "filterStatusAll": "جميع الحالات",
+          "daysHeader": {
+            "mon": "إثنين",
+            "tue": "ثلاثاء",
+            "wed": "أربعاء",
+            "thu": "خميس",
+            "fri": "جمعة",
+            "sat": "سبت",
+            "sun": "أحد"
+          },
+          "moreCount": "+{{count}} أخرى",
+          "empty": {
+            "title": "لا توجد زيارات",
+            "description": "خطط لزيارتك الأولى."
+          },
+          "legend": "دليل الحالات"
+        },
+        "status": {
+          "scheduled": "مجدولة",
+          "confirmed": "مؤكدة",
+          "completed": "منجزة",
+          "cancelled": "ملغاة",
+          "no_show": "عدم حضور"
+        },
+        "modal": {
+          "title": "تفاصيل الزيارة",
+          "noProperty": "عقار غير محدد",
+          "duration": "- {{minutes}} د",
+          "noVisitor": "زائر غير محدد",
+          "reportLabel": "تقرير الزيارة",
+          "reportPlaceholder": "ملاحظات حول الزيارة...",
+          "feedbackLabel": "ملاحظات العميل",
+          "feedbackOptions": {
+            "select": "اختر...",
+            "very_interested": "مهتم جدًا",
+            "interested": "مهتم",
+            "neutral": "محايد",
+            "not_interested": "غير مهتم"
+          },
+          "confirmButton": "تأكيد",
+          "cancelButton": "إلغاء",
+          "submitReportButton": "تأكيد التقرير",
+          "markCompletedButton": "التعليم كمنجزة",
+          "closeButton": "إغلاق"
+        },
+        "newModal": {
+          "title": "جدولة زيارة",
+          "visitorNameLabel": "اسم الزائر *",
+          "emailLabel": "البريد الإلكتروني",
+          "phoneLabel": "الهاتف",
+          "dateTimeLabel": "التاريخ والوقت *",
+          "durationLabel": "المدة (دقائق)",
+          "duration15": "15 د",
+          "duration30": "30 د",
+          "duration45": "45 د",
+          "duration60": "ساعة واحدة",
+          "duration90": "ساعة و30 د",
+          "notesLabel": "ملاحظات",
+          "notesPlaceholder": "معلومات إضافية...",
+          "cancelButton": "إلغاء",
+          "submitButton": "جدولة"
+        }
+      }
     }
   }
 }
