@@ -74,6 +74,79 @@
         "leases": "عقود الكراء",
         "applications": "الطلبات"
       }
+    },
+    "mandate": {
+      "gated": {
+        "message": "التسيير الكرائي مخصص لباقتي Pro والمؤسسات."
+      },
+      "backToList": "الرجوع إلى عقود التسيير",
+      "status": {
+        "draft": "مسودة",
+        "active": "نشط",
+        "expired": "منتهي الصلاحية",
+        "terminated": "مفسوخ"
+      },
+      "type": {
+        "gestion": "تسيير",
+        "location": "كراء"
+      },
+      "stats": {
+        "total": "إجمالي العقود",
+        "active": "نشطة",
+        "draft": "مسودات"
+      },
+      "newButton": "عقد تسيير جديد",
+      "empty": {
+        "title": "لا يوجد عقد تسيير",
+        "description": "أنشئ عقد تسيير لمالك وعقار."
+      },
+      "columns": {
+        "reference": "المرجع",
+        "type": "النوع",
+        "fees": "الأتعاب",
+        "status": "الحالة"
+      },
+      "modal": {
+        "title": "عقد تسيير جديد",
+        "propertyLabel": "العقار",
+        "propertyPlaceholder": "اختر عقارًا…",
+        "propertySearchPlaceholder": "البحث عن عقار…",
+        "landlordLabel": "العميل المالك",
+        "landlordPlaceholder": "اختر عميلاً…",
+        "landlordSearchPlaceholder": "البحث عن عميل…",
+        "typeLabel": "النوع",
+        "feesLabel": "الأتعاب (%)",
+        "feesPlaceholder": "مثال: 8",
+        "cancel": "إلغاء",
+        "create": "إنشاء"
+      },
+      "toasts": {
+        "created": "تم إنشاء العقد"
+      },
+      "detail": {
+        "title": "عقد التسيير {{reference}}",
+        "pdfButton": "PDF",
+        "signButton": "توقيع",
+        "signedToast": "تم توقيع العقد",
+        "fields": {
+          "status": "الحالة",
+          "type": "النوع",
+          "fees": "الأتعاب",
+          "propertyId": "العقار (المعرف)",
+          "landlordId": "المالك (العميل)"
+        }
+      },
+      "crg": {
+        "panelTitle": "التقارير الدورية للتسيير (CRG)",
+        "period": "الفترة",
+        "collected": "المحصّل",
+        "net": "الصافي المحوّل",
+        "pdf": "PDF",
+        "empty": {
+          "title": "لا يوجد تقرير",
+          "description": "تظهر التقارير الشهرية هنا بعد تحصيل الإيجارات."
+        }
+      }
     }
   },
   "ui": {

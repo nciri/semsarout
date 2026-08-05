@@ -74,6 +74,79 @@
         "leases": "Baux",
         "applications": "Candidatures"
       }
+    },
+    "mandate": {
+      "gated": {
+        "message": "La gestion locative est réservée aux plans Pro et Entreprise."
+      },
+      "backToList": "Retour aux mandats",
+      "status": {
+        "draft": "Brouillon",
+        "active": "Actif",
+        "expired": "Échu",
+        "terminated": "Résilié"
+      },
+      "type": {
+        "gestion": "Gestion",
+        "location": "Location"
+      },
+      "stats": {
+        "total": "Total mandats",
+        "active": "Actifs",
+        "draft": "Brouillons"
+      },
+      "newButton": "Nouveau mandat",
+      "empty": {
+        "title": "Aucun mandat",
+        "description": "Créez un mandat de gestion pour un propriétaire et un bien."
+      },
+      "columns": {
+        "reference": "Référence",
+        "type": "Type",
+        "fees": "Honoraires",
+        "status": "Statut"
+      },
+      "modal": {
+        "title": "Nouveau mandat de gestion",
+        "propertyLabel": "Bien",
+        "propertyPlaceholder": "Choisir un bien…",
+        "propertySearchPlaceholder": "Rechercher un bien…",
+        "landlordLabel": "Client bailleur",
+        "landlordPlaceholder": "Choisir un client…",
+        "landlordSearchPlaceholder": "Rechercher un client…",
+        "typeLabel": "Type",
+        "feesLabel": "Honoraires (%)",
+        "feesPlaceholder": "ex. 8",
+        "cancel": "Annuler",
+        "create": "Créer"
+      },
+      "toasts": {
+        "created": "Mandat créé"
+      },
+      "detail": {
+        "title": "Mandat {{reference}}",
+        "pdfButton": "PDF",
+        "signButton": "Signer",
+        "signedToast": "Mandat signé",
+        "fields": {
+          "status": "Statut",
+          "type": "Type",
+          "fees": "Honoraires",
+          "propertyId": "Bien (ID)",
+          "landlordId": "Bailleur (client)"
+        }
+      },
+      "crg": {
+        "panelTitle": "Comptes-rendus de gestion (CRG)",
+        "period": "Période",
+        "collected": "Encaissé",
+        "net": "Net reversé",
+        "pdf": "PDF",
+        "empty": {
+          "title": "Aucun CRG",
+          "description": "Les comptes-rendus mensuels apparaissent ici une fois les loyers encaissés."
+        }
+      }
     }
   },
   "ui": {
