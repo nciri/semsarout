@@ -417,6 +417,40 @@
         "photoAdded": "Photo ajoutée",
         "finalized": "État des lieux finalisé"
       }
+    },
+    "settlement": {
+      "pageTitle": "Décompte de caution",
+      "comparisonTitle": "Comparaison entrée ↔ sortie",
+      "degradedLabel": "dégradé",
+      "noExit": {
+        "title": "Pas d'état des lieux de sortie",
+        "description": "Réalisez l'EDL de sortie pour comparer et justifier les retenues."
+      },
+      "empty": {
+        "title": "Aucun décompte",
+        "description": "Créez le décompte pour saisir les retenues sur la caution."
+      },
+      "createButton": "Créer le décompte",
+      "noLines": "Aucune retenue.",
+      "form": {
+        "labelLabel": "Libellé de la retenue",
+        "labelPlaceholder": "ex. Plan de travail brûlé",
+        "amountLabel": "Montant (Đh)",
+        "itemPlaceholder": "Élément (facultatif)",
+        "addButton": "Ajouter"
+      },
+      "totals": {
+        "deposit": "Dépôt",
+        "totalDeductions": "Total retenues",
+        "refunded": "Caution restituée",
+        "balanceDue": "Solde à réclamer"
+      },
+      "balanceWarning": "Les dégâts dépassent la caution : un solde reste à la charge du locataire (recouvrement à traiter hors plateforme).",
+      "toasts": {
+        "created": "Décompte créé",
+        "lineAdded": "Retenue ajoutée",
+        "finalized": "Décompte finalisé — email envoyé au locataire"
+      }
     }
   },
   "ui": {
