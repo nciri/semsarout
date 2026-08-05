@@ -317,6 +317,14 @@
         "guarantorNameLabel": "Nom du garant",
         "guarantorIncomeLabel": "Revenu du garant (Đh)",
         "docsLabel": "Pièces justificatives",
+        "docType": {
+          "cin": "Pièce d'identité (CIN)",
+          "bulletin_salaire": "Bulletin de salaire",
+          "contrat_travail": "Contrat de travail",
+          "avis_impot": "Avis d'imposition",
+          "garant": "Pièce du garant",
+          "autre": "Autre"
+        },
         "addButton": "Ajouter",
         "cancel": "Annuler",
         "submit": "Déposer le dossier"

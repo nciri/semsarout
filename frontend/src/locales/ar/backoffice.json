@@ -317,6 +317,14 @@
         "guarantorNameLabel": "اسم الضامن",
         "guarantorIncomeLabel": "دخل الضامن (Đh)",
         "docsLabel": "الوثائق المثبتة",
+        "docType": {
+          "cin": "بطاقة التعريف الوطنية (CIN)",
+          "bulletin_salaire": "كشف الراتب",
+          "contrat_travail": "عقد العمل",
+          "avis_impot": "الإشعار الضريبي",
+          "garant": "وثيقة الضامن",
+          "autre": "أخرى"
+        },
         "addButton": "إضافة",
         "cancel": "إلغاء",
         "submit": "إيداع الملف"

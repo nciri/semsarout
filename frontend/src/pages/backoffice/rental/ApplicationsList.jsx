@@ -200,7 +200,7 @@ function ApplicationsList() {
           <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:rental.application.modal.docsLabel')}</label>
           <div className="flex items-center gap-2">
             <Select value={pendingDocType} onChange={(e) => setPendingDocType(e.target.value)} className="flex-1">
-              {DOC_TYPES.map(([value, labelText]) => <option key={value} value={value}>{labelText}</option>)}
+              {DOC_TYPES.map(([value]) => <option key={value} value={value}>{t(`backoffice:rental.application.modal.docType.${value}`)}</option>)}
             </Select>
             <label className={`${SECONDARY_BTN} cursor-pointer`}>
               <FiPlus className="w-4 h-4" /> {t('backoffice:rental.application.modal.addButton')}
@@ -212,7 +212,7 @@ function ApplicationsList() {
               {docs.map((doc, index) => (
                 <li key={`${doc.file.name}-${index}`} className="flex items-center justify-between text-sm bg-gray-50 rounded-lg px-3 py-2">
                   <span className="text-gray-700 truncate">
-                    {DOC_TYPES.find(([value]) => value === doc.docType)?.[1] || doc.docType}{' — '}{doc.file.name}
+                    {t(`backoffice:rental.application.modal.docType.${doc.docType}`, { defaultValue: doc.docType })}{' — '}{doc.file.name}
                   </span>
                   <button onClick={() => removeDoc(index)} className="p-1 text-gray-400 hover:text-gray-600"><FiX className="w-4 h-4" /></button>
                 </li>
