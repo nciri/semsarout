@@ -3,10 +3,13 @@ import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import {
   FiArrowLeft, FiArrowRight, FiCheck, FiPlus, FiTrash2, FiMapPin,
-  FiHome, FiImage, FiFile, FiVideo, FiSave, FiEye, FiX
+  FiHome, FiImage, FiFile, FiVideo, FiSave, FiEye, FiX, FiEdit2
 } from 'react-icons/fi'
 import { DIRHAM_SYMBOL, formatPrice } from '../../utils/currency'
 import api from '../../services/api'
+import SpecFields from '../../components/common/SpecFields'
+import AddressAutocomplete from '../../components/common/AddressAutocomplete'
+import { TYPOLOGY_OPTIONS, unitTypesForTypology, DETAIL_SECTIONS, UNIT_SPEC_FIELDS, UNIT_HIDE_ROOMS } from './programSpecsConfig'
 
 // Route through the shared axios instance: it reads accessToken from
 // auth-storage and auto-refreshes on 401, avoiding the stale-token desync that
@@ -42,8 +45,8 @@ const programsService = {
 const STEPS = [
   { id: 1, title: 'Informations', icon: FiFile },
   { id: 2, title: 'Localisation', icon: FiMapPin },
-  { id: 3, title: 'Détails', icon: FiHome },
-  { id: 4, title: 'Types de biens', icon: FiPlus },
+  { id: 3, title: 'Types de biens', icon: FiPlus },
+  { id: 4, title: 'Détails', icon: FiHome },
   { id: 5, title: 'Médias', icon: FiImage }
 ]
 
@@ -65,6 +68,7 @@ const UNIT_TYPES = [
   { value: 'duplex', label: 'Duplex' },
   { value: 'villa', label: 'Villa' },
   { value: 'penthouse', label: 'Penthouse' },
+  { value: 'land', label: 'Terrain' },
   { value: 'commercial', label: 'Local commercial' }
 ]
 
@@ -88,7 +92,7 @@ const IMAGE_TYPES = [
   { value: 'plan', label: 'Plan' }
 ]
 
-function UnitForm({ unit, onSave, onCancel, isNew = false }) {
+function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
   const [formData, setFormData] = useState(unit || {
     name: '',
     unit_type: 'apartment',
@@ -100,13 +104,18 @@ function UnitForm({ unit, onSave, onCancel, isNew = false }) {
     price_from: '',
     price_to: '',
     total_count: '',
-    available_count: ''
+    available_count: '',
+    specs: unit?.specs || {}
   })
 
   const handleSubmit = (e) => {
     e.preventDefault()
     onSave(formData)
   }
+
+  const types = (allowedTypes && allowedTypes.length) ? UNIT_TYPES.filter(t => allowedTypes.includes(t.value)) : UNIT_TYPES
+  const hideRooms = UNIT_HIDE_ROOMS.includes(formData.unit_type)
+  const unitSpecFields = UNIT_SPEC_FIELDS[formData.unit_type] || []
 
   return (
     <form onSubmit={handleSubmit} className="bg-gray-50 rounded-lg p-4 space-y-4">
@@ -129,7 +138,7 @@ function UnitForm({ unit, onSave, onCancel, isNew = false }) {
             onChange={(e) => setFormData({ ...formData, unit_type: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
-            {UNIT_TYPES.map(type => (
+            {types.map(type => (
               <option key={type.value} value={type.value}>{type.label}</option>
             ))}
           </select>
@@ -155,24 +164,37 @@ function UnitForm({ unit, onSave, onCancel, isNew = false }) {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Pièces</label>
-          <input
-            type="number"
-            value={formData.rooms}
-            onChange={(e) => setFormData({ ...formData, rooms: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Chambres</label>
-          <input
-            type="number"
-            value={formData.bedrooms}
-            onChange={(e) => setFormData({ ...formData, bedrooms: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          />
-        </div>
+        {!hideRooms && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Pièces</label>
+              <input
+                type="number"
+                value={formData.rooms}
+                onChange={(e) => setFormData({ ...formData, rooms: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Chambres</label>
+              <input
+                type="number"
+                value={formData.bedrooms}
+                onChange={(e) => setFormData({ ...formData, bedrooms: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Salles de bain</label>
+              <input
+                type="number"
+                value={formData.bathrooms}
+                onChange={(e) => setFormData({ ...formData, bathrooms: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -214,6 +236,17 @@ function UnitForm({ unit, onSave, onCancel, isNew = false }) {
         </div>
       </div>
 
+      {unitSpecFields.length > 0 && (
+        <div className="border-t border-gray-200 pt-4">
+          <h4 className="text-sm font-semibold text-gray-900 mb-3">Caractéristiques</h4>
+          <SpecFields
+            fields={unitSpecFields}
+            values={formData.specs || {}}
+            onChange={(vals) => setFormData({ ...formData, specs: vals })}
+          />
+        </div>
+      )}
+
       <div className="flex justify-end gap-2">
         <button
           type="button"
@@ -254,7 +287,8 @@ export default function DashboardProgramForm() {
     amenities: [],
     cover_image_url: '',
     brochure_url: '',
-    video_url: ''
+    video_url: '',
+    specs: {}
   })
   const [units, setUnits] = useState([])
   const [images, setImages] = useState([])
@@ -288,7 +322,8 @@ export default function DashboardProgramForm() {
             amenities: data.amenities || [],
             cover_image_url: data.cover_image_url || '',
             brochure_url: data.brochure_url || '',
-            video_url: data.video_url || ''
+            video_url: data.video_url || '',
+            specs: data.specs || {}
           })
           setUnits(data.units || [])
           setImages(data.images || [])
@@ -653,18 +688,13 @@ export default function DashboardProgramForm() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Adresse complète
-              </label>
-              <input
-                type="text"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="Adresse du projet"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-            </div>
+            <AddressAutocomplete
+              value={formData.address}
+              onChange={(address) => setFormData({ ...formData, address })}
+              onSelect={({ address, lat, lng }) =>
+                setFormData({ ...formData, address, latitude: lat ?? null, longitude: lng ?? null })
+              }
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -697,8 +727,8 @@ export default function DashboardProgramForm() {
           </div>
         )}
 
-        {/* Step 3: Project Details */}
-        {currentStep === 3 && (
+        {/* Step 4: Project Details */}
+        {currentStep === 4 && (
           <div className="space-y-6">
             <h2 className="text-lg font-semibold text-gray-900">Détails du projet</h2>
 
@@ -751,12 +781,56 @@ export default function DashboardProgramForm() {
                 ))}
               </div>
             </div>
+
+            {(formData.specs?.typology || []).map((typ) => {
+              const section = DETAIL_SECTIONS[typ]
+              if (!section) return null
+              return (
+                <div key={typ} className="border-t border-gray-100 pt-4">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">{section.label}</h3>
+                  <SpecFields
+                    fields={section.fields}
+                    values={formData.specs?.[typ] || {}}
+                    onChange={(vals) => setFormData({ ...formData, specs: { ...formData.specs, [typ]: vals } })}
+                  />
+                </div>
+              )
+            })}
+            {(!formData.specs?.typology || formData.specs.typology.length === 0) && (
+              <p className="text-sm text-gray-400">Sélectionnez une typologie à l'étape « Types de biens » pour afficher les détails spécifiques.</p>
+            )}
           </div>
         )}
 
-        {/* Step 4: Units */}
-        {currentStep === 4 && (
+        {/* Step 3: Units */}
+        {currentStep === 3 && (
           <div className="space-y-6">
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Typologie du programme *</label>
+              <div className="flex flex-wrap gap-2">
+                {TYPOLOGY_OPTIONS.map((opt) => {
+                  const selected = (formData.specs?.typology || []).includes(opt.value)
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        const cur = formData.specs?.typology || []
+                        const next = selected ? cur.filter((t) => t !== opt.value) : [...cur, opt.value]
+                        setFormData({ ...formData, specs: { ...formData.specs, typology: next } })
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                        selected ? 'bg-primary-100 text-primary-700 border-primary-300' : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  )
+                })}
+              </div>
+              <p className="text-xs text-gray-400 mt-1">Détermine les détails du programme et les types d'unité disponibles.</p>
+            </div>
+
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900">Types de biens</h2>
               {!showUnitForm && !editingUnit && (
@@ -776,6 +850,7 @@ export default function DashboardProgramForm() {
                 isNew
                 onSave={handleAddUnit}
                 onCancel={() => setShowUnitForm(false)}
+                allowedTypes={unitTypesForTypology(formData.specs?.typology || [])}
               />
             )}
 
@@ -784,6 +859,7 @@ export default function DashboardProgramForm() {
                 unit={editingUnit}
                 onSave={handleUpdateUnit}
                 onCancel={() => setEditingUnit(null)}
+                allowedTypes={unitTypesForTypology(formData.specs?.typology || [])}
               />
             )}
 

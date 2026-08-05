@@ -36,7 +36,8 @@ NUMERIC_UNIT_FIELDS = {
     "price_from": float, "price_to": float, "total_count": int, "available_count": int,
 }
 _UNIT_FIELDS = ["name", "unit_type", "surface_min", "surface_max", "rooms", "bedrooms", "bathrooms",
-                "price_from", "price_to", "total_count", "available_count", "features", "floor_plan_url"]
+                "price_from", "price_to", "total_count", "available_count", "features", "specs",
+                "floor_plan_url"]
 _LOT_EDITABLE = ["reference", "title", "lot_type", "surface", "rooms", "bedrooms", "bathrooms",
                  "floor", "price", "status", "zone", "description", "image_url"]
 
@@ -97,7 +98,7 @@ def _unit_dict(db: Session, u: ProgramUnit, include_images: bool = False) -> dic
          "surface_min": u.surface_min, "surface_max": u.surface_max, "rooms": u.rooms,
          "bedrooms": u.bedrooms, "bathrooms": u.bathrooms, "price_from": num(u.price_from),
          "price_to": num(u.price_to), "total_count": u.total_count,
-         "available_count": u.available_count, "features": u.features,
+         "available_count": u.available_count, "features": u.features, "specs": u.specs,
          "floor_plan_url": u.floor_plan_url, "created_at": iso(u.created_at),
          "updated_at": iso(u.updated_at)}
     if include_images:
@@ -136,7 +137,7 @@ def _prog_dict(db: Session, p: Program, include_units: bool = False, include_ima
          "longitude": p.longitude, "total_units": p.total_units, "available_units": p.available_units,
          "min_price": num(p.min_price), "max_price": num(p.max_price),
          "delivery_date": p.delivery_date.isoformat() if p.delivery_date else None,
-         "construction_status": p.construction_status, "amenities": p.amenities,
+         "construction_status": p.construction_status, "amenities": p.amenities, "specs": p.specs,
          "cover_image_url": p.cover_image_url, "brochure_url": p.brochure_url,
          "video_url": p.video_url, "status": p.status, "agency_id": p.agency_id,
          "agency_name": ag.name if ag else None, "agency_phone": ag.phone if ag else None,
@@ -294,6 +295,7 @@ async def create_program(request: Request, principal: Principal = Depends(get_pr
         construction_status=data.get("construction_status", "planning"),
         amenities=data.get("amenities", []), cover_image_url=data.get("cover_image_url"),
         brochure_url=data.get("brochure_url"), video_url=data.get("video_url"),
+        specs=data.get("specs"),
         status="draft", agency_id=aid, created_by_id=_uid(principal),
     )
     db.add(p)
@@ -303,7 +305,7 @@ async def create_program(request: Request, principal: Principal = Depends(get_pr
 
 _PROG_UPDATABLE = ["name", "description", "program_type", "address", "city", "neighborhood",
                    "latitude", "longitude", "total_units", "available_units", "min_price",
-                   "max_price", "construction_status", "amenities", "cover_image_url",
+                   "max_price", "construction_status", "amenities", "specs", "cover_image_url",
                    "brochure_url", "video_url", "status"]
 
 
@@ -389,6 +391,7 @@ async def add_unit(program_id: int, request: Request, principal: Principal = Dep
         total_count=to_number(data.get("total_count"), int) or 0,
         available_count=to_number(data.get("available_count"), int) or 0,
         features=data.get("features", []), floor_plan_url=data.get("floor_plan_url"),
+        specs=data.get("specs"),
     )
     db.add(u)
     db.commit()
