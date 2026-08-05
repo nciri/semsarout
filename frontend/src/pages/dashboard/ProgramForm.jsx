@@ -65,6 +65,7 @@ const UNIT_TYPES = [
   { value: 'duplex', label: 'Duplex' },
   { value: 'villa', label: 'Villa' },
   { value: 'penthouse', label: 'Penthouse' },
+  { value: 'land', label: 'Terrain' },
   { value: 'commercial', label: 'Local commercial' }
 ]
 
@@ -254,7 +255,8 @@ export default function DashboardProgramForm() {
     amenities: [],
     cover_image_url: '',
     brochure_url: '',
-    video_url: ''
+    video_url: '',
+    specs: {}
   })
   const [units, setUnits] = useState([])
   const [images, setImages] = useState([])
@@ -288,7 +290,8 @@ export default function DashboardProgramForm() {
             amenities: data.amenities || [],
             cover_image_url: data.cover_image_url || '',
             brochure_url: data.brochure_url || '',
-            video_url: data.video_url || ''
+            video_url: data.video_url || '',
+            specs: data.specs || {}
           })
           setUnits(data.units || [])
           setImages(data.images || [])
