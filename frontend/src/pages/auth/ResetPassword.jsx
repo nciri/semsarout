@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { FiLock, FiEye, FiEyeOff, FiCheckCircle } from 'react-icons/fi'
 import api from '../../services/api'
 
 function ResetPassword() {
+  const { t } = useTranslation(['auth', 'common'])
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token')
@@ -27,7 +29,7 @@ function ResetPassword() {
       setSuccess(true)
       setTimeout(() => navigate('/connexion'), 2500)
     } catch (err) {
-      setError(err.response?.data?.error || 'Une erreur est survenue')
+      setError(err.response?.data?.error || t('common:errors.generic'))
     } finally {
       setIsLoading(false)
     }
@@ -38,10 +40,10 @@ function ResetPassword() {
       <div className="min-h-[calc(100vh-200px)] flex items-center justify-center py-12 px-4">
         <div className="max-w-md w-full text-center card p-8">
           <p className="text-gray-600 mb-4">
-            Lien de réinitialisation invalide ou manquant.
+            {t('auth:reset.invalidTitle')}
           </p>
           <Link to="/mot-de-passe-oublie" className="text-primary-600 hover:text-primary-700 font-medium text-sm">
-            Demander un nouveau lien
+            {t('auth:reset.requestNewLink')}
           </Link>
         </div>
       </div>
@@ -53,10 +55,10 @@ function ResetPassword() {
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <h1 className="font-display text-2xl font-bold text-gray-900">
-            Nouveau mot de passe
+            {t('auth:reset.title')}
           </h1>
           <p className="text-gray-600 mt-2">
-            Choisissez un nouveau mot de passe pour votre compte
+            {t('auth:reset.subtitle')}
           </p>
         </div>
 
@@ -64,9 +66,9 @@ function ResetPassword() {
           {success ? (
             <div className="text-center py-4">
               <FiCheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-              <h2 className="font-semibold text-gray-900 mb-2">Mot de passe réinitialisé</h2>
+              <h2 className="font-semibold text-gray-900 mb-2">{t('auth:reset.doneTitle')}</h2>
               <p className="text-sm text-gray-600">
-                Redirection vers la page de connexion...
+                {t('auth:reset.redirecting')}
               </p>
             </div>
           ) : (
@@ -79,22 +81,22 @@ function ResetPassword() {
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <div>
-                  <label className="label">Nouveau mot de passe</label>
+                  <label className="label">{t('auth:reset.newPasswordLabel')}</label>
                   <div className="relative">
-                    <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <FiLock className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       {...register('new_password', {
-                        required: 'Mot de passe requis',
-                        minLength: { value: 8, message: 'Minimum 8 caractères' }
+                        required: t('common:validation.passwordRequired'),
+                        minLength: { value: 8, message: t('common:validation.passwordMin8') }
                       })}
-                      className="input pl-10 pr-10"
+                      className="input ps-10 pe-10"
                       placeholder="••••••••"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                      className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-400"
                     >
                       {showPassword ? <FiEyeOff /> : <FiEye />}
                     </button>
@@ -105,12 +107,12 @@ function ResetPassword() {
                 </div>
 
                 <div>
-                  <label className="label">Confirmer le mot de passe</label>
+                  <label className="label">{t('auth:reset.confirmLabel')}</label>
                   <input
                     type={showPassword ? 'text' : 'password'}
                     {...register('confirm_password', {
-                      required: 'Confirmation requise',
-                      validate: (value) => value === newPassword || 'Les mots de passe ne correspondent pas'
+                      required: t('common:validation.confirmationRequired'),
+                      validate: (value) => value === newPassword || t('common:validation.passwordsMismatch')
                     })}
                     className="input"
                     placeholder="••••••••"
@@ -125,7 +127,7 @@ function ResetPassword() {
                   disabled={isLoading}
                   className="btn-primary w-full justify-center"
                 >
-                  {isLoading ? 'Réinitialisation...' : 'Réinitialiser le mot de passe'}
+                  {isLoading ? t('auth:reset.submitting') : t('auth:reset.submit')}
                 </button>
               </form>
             </>
