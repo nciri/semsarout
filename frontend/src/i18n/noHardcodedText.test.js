@@ -105,6 +105,7 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/Transactions.jsx',
   'src/pages/backoffice/TransactionCreate.jsx',
   'src/pages/backoffice/TransactionDetail.jsx',
+  'src/pages/backoffice/Team.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {

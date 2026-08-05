@@ -1624,5 +1624,54 @@
         "updateButton": "Mettre à jour"
       }
     }
+  },
+  "settings": {
+    "team": {
+      "pageTitle": "Équipe",
+      "subtitle": "Gérez les membres, invitations et équipes.",
+      "seatGauge": {
+        "label": "Sièges",
+        "unlimited": "{{count}} membre(s) · illimité",
+        "limited": "{{used}} / {{limit}} sièges"
+      },
+      "invite": {
+        "title": "Inviter un membre",
+        "emailPlaceholder": "email@exemple.com",
+        "noTeam": "Sans équipe",
+        "button": "Inviter"
+      },
+      "pendingInvitations": {
+        "title": "Invitations en attente",
+        "resend": "Relancer",
+        "revoke": "Révoquer"
+      },
+      "teams": {
+        "title": "Équipes",
+        "newPlaceholder": "Nouvelle équipe",
+        "create": "Créer",
+        "limitReached": "Limite d'équipes atteinte — passez à un plan supérieur.",
+        "empty": "Aucune équipe."
+      },
+      "members": {
+        "title": "Membres",
+        "columns": {
+          "name": "Nom",
+          "email": "Email",
+          "team": "Équipe"
+        },
+        "owner": "(propriétaire)",
+        "noTeam": "—",
+        "remove": "Retirer"
+      },
+      "toast": {
+        "linkCopied": "Lien d'invitation copié",
+        "inviteCreated": "Invitation créée",
+        "inviteResent": "Invitation relancée",
+        "inviteRevoked": "Invitation révoquée",
+        "teamCreated": "Équipe créée",
+        "teamDeleted": "Équipe supprimée",
+        "memberRemoved": "Membre retiré"
+      }
+    }
   }
 }

@@ -1624,5 +1624,54 @@
         "updateButton": "تحديث"
       }
     }
+  },
+  "settings": {
+    "team": {
+      "pageTitle": "الفريق",
+      "subtitle": "إدارة الأعضاء والدعوات والفرق.",
+      "seatGauge": {
+        "label": "المقاعد",
+        "unlimited": "{{count}} عضو · غير محدود",
+        "limited": "{{used}} / {{limit}} مقعدًا"
+      },
+      "invite": {
+        "title": "دعوة عضو",
+        "emailPlaceholder": "email@exemple.com",
+        "noTeam": "بدون فريق",
+        "button": "دعوة"
+      },
+      "pendingInvitations": {
+        "title": "دعوات قيد الانتظار",
+        "resend": "إعادة الإرسال",
+        "revoke": "إلغاء"
+      },
+      "teams": {
+        "title": "الفرق",
+        "newPlaceholder": "فريق جديد",
+        "create": "إنشاء",
+        "limitReached": "تم بلوغ الحد الأقصى للفرق — قم بالترقية إلى خطة أعلى.",
+        "empty": "لا يوجد أي فريق."
+      },
+      "members": {
+        "title": "الأعضاء",
+        "columns": {
+          "name": "الاسم",
+          "email": "البريد الإلكتروني",
+          "team": "الفريق"
+        },
+        "owner": "(المالك)",
+        "noTeam": "—",
+        "remove": "إزالة"
+      },
+      "toast": {
+        "linkCopied": "تم نسخ رابط الدعوة",
+        "inviteCreated": "تم إنشاء الدعوة",
+        "inviteResent": "تمت إعادة إرسال الدعوة",
+        "inviteRevoked": "تم إلغاء الدعوة",
+        "teamCreated": "تم إنشاء الفريق",
+        "teamDeleted": "تم حذف الفريق",
+        "memberRemoved": "تمت إزالة العضو"
+      }
+    }
   }
 }
