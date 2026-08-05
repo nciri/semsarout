@@ -185,5 +185,38 @@
     "searchPlaceholder": "Rechercher…",
     "noResults": "Aucun résultat",
     "selectedCount": "{{count}} sélectionnés"
+  },
+  "visit": {
+    "heading": "Réserver une visite",
+    "confirmedTitle": "Visite confirmée",
+    "confirmedDateTime": "Le {{date}} à {{time}}",
+    "loadingSlots": "Chargement des créneaux...",
+    "noSlotsAvailable": "Aucun créneau disponible ce jour-là",
+    "bookButtonLoading": "Réservation...",
+    "bookButtonConfirm": "Confirmer la visite",
+    "bookButtonLogin": "Se connecter pour réserver",
+    "toastBooked": "Visite réservée !",
+    "toastError": "Erreur lors de la réservation"
+  },
+  "lotPlan": {
+    "heading": "Plan des lots",
+    "description": "Cliquez sur un lot disponible pour le sélectionner et demander des informations.",
+    "clearButton": "Effacer",
+    "requestInfoButton": "Demander des infos",
+    "modalTitle": "Demande d'information",
+    "lotsLabel": "Lots :",
+    "lotsCount_one": "{{count}} lot",
+    "lotsCount_other": "{{count}} lots",
+    "selectedSuffix_one": "sélectionné",
+    "selectedSuffix_other": "sélectionnés",
+    "namePlaceholder": "Votre nom *",
+    "phonePlaceholder": "Téléphone *",
+    "emailPlaceholder": "Email",
+    "messagePlaceholder": "Votre message",
+    "sendButton": "Envoyer ma demande",
+    "sendingButton": "Envoi...",
+    "validationNameAndPhone": "Nom et téléphone requis",
+    "sentMessage": "Votre demande a bien été envoyée. Le promoteur vous recontactera.",
+    "lotFallback": "Lot"
   }
 }

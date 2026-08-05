@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'react-toastify'
 import { FiMapPin, FiX, FiCheck } from 'react-icons/fi'
 import { lotPlanService, LOT_STATUS } from '../../services/lotPlanService'
@@ -13,6 +14,7 @@ const centroid = (zone) => {
 }
 
 export default function LotPlanViewer({ programId, programName }) {
+  const { t } = useTranslation(['common'])
   const { user, isAuthenticated } = useAuthStore()
   const [plans, setPlans] = useState([])
   const [activePlanId, setActivePlanId] = useState(null)
@@ -61,7 +63,7 @@ export default function LotPlanViewer({ programId, programName }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.name || !form.phone) {
-      toast.error('Nom et téléphone requis')
+      toast.error(t('common:lotPlan.validationNameAndPhone'))
       return
     }
     setSending(true)
@@ -75,7 +77,7 @@ export default function LotPlanViewer({ programId, programName }) {
       setShowForm(false)
       setSelected([])
     } catch (err) {
-      toast.error(err.response?.data?.error || "Erreur lors de l'envoi")
+      toast.error(err.response?.data?.error || t('common:errors.generic'))
     } finally {
       setSending(false)
     }
@@ -84,10 +86,10 @@ export default function LotPlanViewer({ programId, programName }) {
   return (
     <div>
       <h2 className="text-xl font-semibold text-gray-900 mb-1 flex items-center gap-2">
-        <FiMapPin className="w-5 h-5 text-primary-600" /> Plan des lots
+        <FiMapPin className="w-5 h-5 text-primary-600" /> {t('common:lotPlan.heading')}
       </h2>
       <p className="text-sm text-gray-500 mb-4">
-        Cliquez sur un lot disponible pour le sélectionner et demander des informations.
+        {t('common:lotPlan.description')}
       </p>
 
       {/* Plan selector */}
@@ -162,7 +164,7 @@ export default function LotPlanViewer({ programId, programName }) {
         {hovered && (
           <div className="absolute z-10 pointer-events-none bg-midnight text-white text-xs rounded-lg px-3 py-2 shadow-lg"
             style={{ left: hovered.x + 12, top: hovered.y + 12, maxWidth: 200 }}>
-            <div className="font-bold">{hovered.lot.reference || 'Lot'}</div>
+            <div className="font-bold">{hovered.lot.reference || t('common:lotPlan.lotFallback')}</div>
             <div className="opacity-80">{LOT_STATUS[hovered.lot.status]?.label}</div>
             {hovered.lot.surface > 0 && <div>{hovered.lot.surface} m²</div>}
             {hovered.lot.price > 0 && <div className="text-primary-300 font-semibold">{formatPrice(hovered.lot.price)}</div>}
@@ -172,7 +174,7 @@ export default function LotPlanViewer({ programId, programName }) {
 
       {sent && (
         <div className="mt-3 p-3 bg-green-50 text-green-700 rounded-lg text-sm flex items-center gap-2">
-          <FiCheck className="w-4 h-4" /> Votre demande a bien été envoyée. Le promoteur vous recontactera.
+          <FiCheck className="w-4 h-4" /> {t('common:lotPlan.sentMessage')}
         </div>
       )}
 
@@ -180,12 +182,13 @@ export default function LotPlanViewer({ programId, programName }) {
       {selected.length > 0 && !showForm && (
         <div className="mt-3 flex items-center justify-between gap-3 p-3 bg-primary-50 border border-primary-100 rounded-lg">
           <div className="text-sm text-gray-700">
-            <span className="font-semibold">{selected.length} lot{selected.length > 1 ? 's' : ''}</span> sélectionné{selected.length > 1 ? 's' : ''} :{' '}
+            <span className="font-semibold">{t('common:lotPlan.lotsCount', { count: selected.length })}</span>{' '}
+            {t('common:lotPlan.selectedSuffix', { count: selected.length })} :{' '}
             {selected.map(l => l.reference || `#${l.id}`).join(', ')}
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={() => setSelected([])} className="text-sm text-gray-500 hover:text-gray-700">Effacer</button>
-            <button onClick={() => setShowForm(true)} className="btn-primary text-sm py-2">Demander des infos</button>
+            <button onClick={() => setSelected([])} className="text-sm text-gray-500 hover:text-gray-700">{t('common:lotPlan.clearButton')}</button>
+            <button onClick={() => setShowForm(true)} className="btn-primary text-sm py-2">{t('common:lotPlan.requestInfoButton')}</button>
           </div>
         </div>
       )}
@@ -195,21 +198,21 @@ export default function LotPlanViewer({ programId, programName }) {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <form onSubmit={handleSubmit} className="bg-white rounded-xl p-6 max-w-md w-full">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-lg">Demande d'information</h3>
+              <h3 className="font-semibold text-lg">{t('common:lotPlan.modalTitle')}</h3>
               <button type="button" onClick={() => setShowForm(false)} className="p-1 text-gray-400 hover:text-gray-600"><FiX className="w-5 h-5" /></button>
             </div>
             <p className="text-sm text-gray-500 mb-4">
-              Lots : <span className="font-medium text-gray-700">{selected.map(l => l.reference || `#${l.id}`).join(', ')}</span>
+              {t('common:lotPlan.lotsLabel')} <span className="font-medium text-gray-700">{selected.map(l => l.reference || `#${l.id}`).join(', ')}</span>
             </p>
             <div className="space-y-3">
-              <input className="input" placeholder="Votre nom *" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
-              <input className="input" placeholder="Téléphone *" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} required />
-              <input className="input" type="email" placeholder="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-              <textarea className="input" rows={3} placeholder="Votre message"
+              <input className="input" placeholder={t('common:lotPlan.namePlaceholder')} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+              <input className="input" placeholder={t('common:lotPlan.phonePlaceholder')} value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} required />
+              <input className="input" type="email" placeholder={t('common:lotPlan.emailPlaceholder')} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+              <textarea className="input" rows={3} placeholder={t('common:lotPlan.messagePlaceholder')}
                 value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} />
             </div>
             <button type="submit" disabled={sending} className="btn-primary w-full justify-center mt-4">
-              {sending ? 'Envoi...' : 'Envoyer ma demande'}
+              {sending ? t('common:lotPlan.sendingButton') : t('common:lotPlan.sendButton')}
             </button>
           </form>
         </div>

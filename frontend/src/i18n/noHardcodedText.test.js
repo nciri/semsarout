@@ -54,6 +54,8 @@ const MIGRATED_FILES = [
   'src/components/common/SearchForm.jsx',
   'src/components/common/SearchableSelect.jsx',
   'src/components/search/MultiSelectDropdown.jsx',
+  'src/components/common/BookVisitWidget.jsx',
+  'src/components/common/LotPlanViewer.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {
