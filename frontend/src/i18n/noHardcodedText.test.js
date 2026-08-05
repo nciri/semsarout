@@ -34,6 +34,7 @@ const MIGRATED_FILES = [
   'src/pages/About.jsx',
   'src/pages/CompareProperties.jsx',
   'src/pages/MortgageSimulator.jsx',
+  'src/pages/Home.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {
