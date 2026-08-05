@@ -79,6 +79,14 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/artisans/ArtisansDirectory.jsx',
   'src/pages/backoffice/artisans/WorkOrdersList.jsx',
   'src/pages/backoffice/artisans/WorkOrderDetail.jsx',
+  'src/pages/backoffice/contracts/ContractsList.jsx',
+  'src/pages/backoffice/contracts/ContractEditor.jsx',
+  'src/pages/backoffice/contracts/ContractCreate.jsx',
+  'src/pages/backoffice/contracts/TemplatesManager.jsx',
+  'src/pages/backoffice/legal/NotairesLayout.jsx',
+  'src/pages/backoffice/legal/NotariesDirectory.jsx',
+  'src/pages/backoffice/legal/LegalCasesList.jsx',
+  'src/pages/backoffice/legal/LegalCaseDetail.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {
