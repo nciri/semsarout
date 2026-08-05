@@ -491,5 +491,243 @@
     "previous": "Précédent",
     "next": "Suivant",
     "resultsInfo": "Affichage {{from}} - {{to}} sur {{total}} résultats"
+  },
+  "services": {
+    "title": "Nos Services",
+    "subtitle": "Une agence immobilière en ligne complète : vente, location longue durée et gestion locative. Des tarifs transparents, un service de qualité professionnelle.",
+    "badges": {
+      "transparentPricing": "Tarifs transparents",
+      "noSurprise": "Zéro surprise",
+      "response24h": "Réponse sous 24h"
+    },
+    "includedTitle": "Ce qui est inclus",
+    "notIncludedTitle": "Non inclus",
+    "optionsDefaultTitle": "Options disponibles",
+    "photoServiceBadge": "Service inclus",
+    "photoServiceOptionsLabel": "Options supplémentaires :",
+    "partnershipPrefix": "En partenariat avec",
+    "learnMore": "En savoir plus",
+    "orCallUs": "ou appelez-nous",
+    "requestEstimateLabel": "Demander une estimation",
+    "requestQuoteLabel": "Demander un devis",
+    "createStayManagerAccount": "Créer votre compte StayManager",
+    "trust": {
+      "title": "Ils nous font confiance",
+      "propertiesManaged": "Biens gérés",
+      "satisfied": "Satisfaits",
+      "responsiveness": "Réactivité"
+    },
+    "howItWorks": {
+      "title": "Comment ça marche ?",
+      "step1Title": "Contactez-nous",
+      "step1Text": "Remplissez le formulaire ou appelez-nous pour discuter de votre projet.",
+      "step2Title": "Visite et évaluation",
+      "step2Text": "Un expert se déplace pour évaluer votre bien et vos besoins.",
+      "step3Title": "Mise en place",
+      "step3Text": "Nous mettons en œuvre le service choisi avec transparence.",
+      "step4Title": "Suivi personnalisé",
+      "step4Text": "Vous restez informé à chaque étape via votre espace client."
+    },
+    "aToZTitle": "Notre accompagnement de A à Z",
+    "overviewTitle": "Tous nos services en un coup d'œil",
+    "faqTitle": "Questions fréquentes",
+    "faq": {
+      "q1Question": "Comment fonctionne la gestion locative ?",
+      "q1Answer": "Nous prenons en charge l'intégralité de la gestion de votre bien : recherche de locataires, vérification des dossiers, rédaction du bail, états des lieux, encaissement des loyers, gestion des travaux et des litiges, jusqu'à la sortie du locataire. Vous recevez un reporting mensuel détaillé.",
+      "q2Question": "Qu'est-ce que le partenariat avec StayManager ?",
+      "q2Answer": "StayManager.ma est la plateforme marocaine de gestion et de sécurisation des locations courte durée. Grâce à notre partenariat, vous pilotez vos biens en toute sécurité : vérification d'identité des voyageurs, serrures connectées, synchronisation des calendriers (Airbnb, Booking), messages automatisés, contrats digitaux et gestion d'équipe.",
+      "q3Question": "Quels sont les frais de gestion locative ?",
+      "q3Answer": "Nos frais de gestion locative sont de 5% du loyer mensuel (charges comprises). Pour la mise en location seule (sans gestion), nous facturons l'équivalent d'un mois de loyer. Pour la location courte durée, la plateforme StayManager.ma propose des formules à partir de 179 {{symbol}} par bien et par mois, avec 14 jours d'essai gratuit.",
+      "q4Question": "Comment sont sélectionnés les locataires ?",
+      "q4Answer": "Nous appliquons une sélection rigoureuse : vérification des revenus (minimum 3x le loyer), contrôle des pièces justificatives, analyse de la situation professionnelle, vérification des garants le cas échéant, et contact avec les anciens propriétaires si possible."
+    },
+    "ctaTitle": "Besoin d'un conseil personnalisé ?",
+    "ctaSubtitle": "Nos experts sont à votre disposition pour vous accompagner dans votre projet immobilier, que ce soit pour vendre, louer ou gérer votre bien.",
+    "ctaContact": "Nous contacter",
+    "vente": {
+      "title": "Forfait Vente",
+      "subtitle": "Service d'agence en ligne",
+      "priceNote": "TTC - Tarif fixe",
+      "description": "Un accompagnement complet pour vendre votre bien au meilleur prix, sans les commissions exorbitantes des agences traditionnelles.",
+      "features": [
+        "Estimation gratuite de votre bien par un expert",
+        "Rédaction d'une annonce optimisée",
+        "Diffusion premium sur SemsarOut",
+        "Gestion des demandes de contact",
+        "Organisation des visites",
+        "Accompagnement jusqu'à la signature",
+        "Conseils juridiques de base"
+      ],
+      "photoService": {
+        "title": "Photos Professionnelles incluses",
+        "features": [
+          "Photographe professionnel à domicile",
+          "15-20 photos HD retouchées",
+          "Mise en valeur optimale des espaces",
+          "Livraison sous 48h"
+        ],
+        "options": {
+          "virtualTour360": "Visite virtuelle 360°",
+          "drone": "Prises de vue drone",
+          "video": "Vidéo de présentation"
+        }
+      },
+      "notIncluded": [
+        "Frais de notaire (à la charge de l'acheteur)",
+        "Diagnostics immobiliers obligatoires"
+      ],
+      "ctaLabel": "Démarrer ma vente en ligne"
+    },
+    "gestion-locative": {
+      "title": "Gestion Locative Complète",
+      "subtitle": "Location longue durée - Sérénité totale",
+      "pricePrefix": "À partir de",
+      "priceNote": "du loyer mensuel (tarif minimum 500 Đh/mois)",
+      "description": "Déléguez entièrement la gestion de votre bien locatif. De la recherche du locataire idéal jusqu'à son départ, nous gérons tout pour vous. Plusieurs formules adaptées à vos besoins.",
+      "features": [
+        "Recherche et sélection rigoureuse des locataires",
+        "Vérification approfondie des dossiers (revenus, garants)",
+        "Rédaction du bail conforme à la législation",
+        "État des lieux d'entrée détaillé avec photos",
+        "Encaissement et suivi des loyers",
+        "Gestion des charges et régularisations",
+        "Interface propriétaire avec reporting mensuel",
+        "Gestion des sinistres et assurances",
+        "Coordination des travaux et réparations",
+        "Médiation et gestion des litiges",
+        "État des lieux de sortie",
+        "Restitution du dépôt de garantie"
+      ],
+      "optionsTitle": "Nos formules de gestion locative",
+      "options": [
+        {
+          "name": "Gestion Essentielle",
+          "price": "3% du loyer / min. 300 Đh"
+        },
+        {
+          "name": "Gestion Complète",
+          "price": "5% du loyer / min. 500 Đh"
+        },
+        {
+          "name": "Gestion Premium",
+          "price": "7% du loyer / min. 700 Đh"
+        }
+      ],
+      "phases": [
+        {
+          "title": "Mise en location",
+          "items": [
+            "Estimation du loyer",
+            "Photos professionnelles",
+            "Diffusion multicanale",
+            "Visites qualifiées"
+          ]
+        },
+        {
+          "title": "Entrée du locataire",
+          "items": [
+            "Sélection du dossier",
+            "Rédaction du bail",
+            "État des lieux",
+            "Remise des clés"
+          ]
+        },
+        {
+          "title": "Vie du bail",
+          "items": [
+            "Encaissement loyers",
+            "Quittances",
+            "Travaux",
+            "Médiation"
+          ]
+        },
+        {
+          "title": "Sortie du locataire",
+          "items": [
+            "Préavis",
+            "État des lieux sortie",
+            "Dépôt de garantie",
+            "Relocation"
+          ]
+        }
+      ]
+    },
+    "mise-en-location": {
+      "title": "Mise en Location",
+      "subtitle": "Trouvez le locataire idéal",
+      "priceLabel": "1 mois",
+      "priceNote": "de loyer (une seule fois)",
+      "description": "Nous trouvons le locataire parfait pour votre bien : sélection rigoureuse, vérification des dossiers, et accompagnement jusqu'à la signature du bail.",
+      "features": [
+        "Estimation du loyer optimal",
+        "Annonce premium sur SemsarOut et partenaires",
+        "Réception et tri des candidatures",
+        "Vérification approfondie des dossiers",
+        "Organisation des visites",
+        "Sélection du meilleur profil",
+        "Rédaction du contrat de bail",
+        "État des lieux d'entrée",
+        "Remise des clés"
+      ],
+      "photoService": {
+        "title": "Photos Professionnelles incluses",
+        "features": [
+          "Photographe professionnel à domicile",
+          "10-15 photos HD retouchées",
+          "Mise en valeur optimale des espaces",
+          "Livraison sous 48h"
+        ],
+        "options": {
+          "virtualTour360": "Visite virtuelle 360°",
+          "video": "Vidéo de présentation"
+        }
+      },
+      "notIncluded": [
+        "Gestion locative courante (en option)",
+        "Garantie loyers impayés (en option)"
+      ]
+    },
+    "courte-duree": {
+      "title": "Location Courte Durée",
+      "subtitle": "En partenariat avec StayManager.ma",
+      "pricePrefix": "À partir de",
+      "priceNote": "par bien / mois - Essai gratuit de 14 jours",
+      "description": "Sécurisez et automatisez vos locations saisonnières avec la plateforme StayManager.ma : vérification d'identité des voyageurs, serrures connectées, réservations et messagerie automatisée. Tout votre workflow d'hôte en un seul outil.",
+      "features": [
+        "Vérification d'identité automatisée des voyageurs",
+        "OCR des pièces d'identité",
+        "Serrures connectées : accès automatique pour les voyageurs vérifiés",
+        "Synchronisation des calendriers (iCal) avec Airbnb, Booking, etc.",
+        "Gestion centralisée des réservations",
+        "Automatisation des messages aux voyageurs",
+        "Contrats de location et signature digitale",
+        "Gestion d'équipe : ménage, maintenance, co-hôtes",
+        "Notifications en temps réel : arrivées, vérifications, accès",
+        "Conformité réglementaire (identification des voyageurs)"
+      ],
+      "optionsTitle": "Formules StayManager.ma",
+      "options": {
+        "manage": "Manage",
+        "automate": "Automate",
+        "optimize": "Optimize"
+      },
+      "partnership": {
+        "description": "La plateforme de gestion et de sécurisation des locations courte durée au Maroc"
+      }
+    },
+    "estimation": {
+      "title": "Estimation Gratuite",
+      "subtitle": "Connaissez la valeur de votre bien",
+      "priceLabel": "Gratuit",
+      "priceNote": "Sans engagement",
+      "description": "Obtenez une estimation précise de votre bien basée sur les données du marché et l'expertise de nos agents.",
+      "features": [
+        "Analyse comparative du marché local",
+        "Prise en compte des caractéristiques du bien",
+        "Rapport d'estimation détaillé",
+        "Conseils pour optimiser la valeur",
+        "Sans engagement de vente"
+      ]
+    }
   }
 }
