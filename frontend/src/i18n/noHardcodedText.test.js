@@ -61,6 +61,7 @@ const MIGRATED_FILES = [
   'src/components/dashboard/widgets/index.jsx',
   'src/components/backoffice/SignaturePanel.jsx',
   'src/components/backoffice/ui.jsx',
+  'src/pages/backoffice/rental/RentalLayout.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {

@@ -59,6 +59,23 @@
     "downloadSignedPdf": "Télécharger le PDF signé",
     "signedByAll": "Signé par toutes les parties."
   },
+  "rental": {
+    "shared": {
+      "pageTitle": "Gestion locative",
+      "loading": "Chargement…",
+      "back": "Retour",
+      "notFound": "Élément introuvable.",
+      "loadError": "Une erreur est survenue lors du chargement. Réessayez plus tard."
+    },
+    "layout": {
+      "subtitle": "Mandats de gestion, baux & quittancement, candidatures locatives",
+      "tabs": {
+        "mandates": "Mandats",
+        "leases": "Baux",
+        "applications": "Candidatures"
+      }
+    }
+  },
   "ui": {
     "viewOffers": "Voir les offres Pro & Entreprise"
   }
