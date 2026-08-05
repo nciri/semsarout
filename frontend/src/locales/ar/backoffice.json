@@ -509,6 +509,45 @@
       "toasts": {
         "orderCreated": "تم إنشاء الطلب"
       }
+    },
+    "order": {
+      "pageTitle": "طلباتي",
+      "subtitle": "تتبع طلباتك من الأثاث والأجهزة الكهرومنزلية",
+      "shopButton": "المتجر",
+      "stats": {
+        "total": "المجموع",
+        "pending": "قيد الانتظار",
+        "inProgress": "قيد التنفيذ",
+        "delivered": "تم التسليم"
+      },
+      "columns": {
+        "reference": "المرجع",
+        "items": "العناصر",
+        "total": "المجموع",
+        "status": "الحالة",
+        "date": "التاريخ"
+      },
+      "status": {
+        "pending": "قيد الانتظار",
+        "paid": "مدفوعة",
+        "preparing": "قيد التحضير",
+        "shipped": "تم الشحن",
+        "delivered": "تم التسليم",
+        "cancelled": "ملغاة"
+      },
+      "empty": {
+        "title": "لا توجد طلبات",
+        "description": "ستظهر هنا طلباتك المنجزة من المتجر.",
+        "action": "الانتقال إلى المتجر"
+      },
+      "backToList": "طلباتي",
+      "notFound": "الطلب غير موجود.",
+      "payButton": "الدفع الآن",
+      "paymentReference": "مرجع الدفع: {{reference}}",
+      "toasts": {
+        "paymentSuccess": "تم الدفع بنجاح",
+        "paymentError": "خطأ"
+      }
     }
   },
   "ui": {

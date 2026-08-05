@@ -509,6 +509,45 @@
       "toasts": {
         "orderCreated": "Commande créée"
       }
+    },
+    "order": {
+      "pageTitle": "Mes commandes",
+      "subtitle": "Suivez vos commandes de mobilier et d'électroménager",
+      "shopButton": "Boutique",
+      "stats": {
+        "total": "Total",
+        "pending": "En attente",
+        "inProgress": "En cours",
+        "delivered": "Livrées"
+      },
+      "columns": {
+        "reference": "Référence",
+        "items": "Articles",
+        "total": "Total",
+        "status": "Statut",
+        "date": "Date"
+      },
+      "status": {
+        "pending": "En attente",
+        "paid": "Payée",
+        "preparing": "Préparation",
+        "shipped": "Expédiée",
+        "delivered": "Livrée",
+        "cancelled": "Annulée"
+      },
+      "empty": {
+        "title": "Aucune commande",
+        "description": "Vos commandes passées depuis la boutique apparaîtront ici.",
+        "action": "Aller à la boutique"
+      },
+      "backToList": "Mes commandes",
+      "notFound": "Commande introuvable.",
+      "payButton": "Payer maintenant",
+      "paymentReference": "Réf. paiement : {{reference}}",
+      "toasts": {
+        "paymentSuccess": "Paiement effectué",
+        "paymentError": "Erreur"
+      }
     }
   },
   "ui": {
