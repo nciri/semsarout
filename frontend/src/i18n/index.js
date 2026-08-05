@@ -6,12 +6,14 @@ import frCommon from '../locales/fr/common.json'
 import arCommon from '../locales/ar/common.json'
 import frBackoffice from '../locales/fr/backoffice.json'
 import arBackoffice from '../locales/ar/backoffice.json'
+import frAuth from '../locales/fr/auth.json'
+import arAuth from '../locales/ar/auth.json'
 
 export const SUPPORTED_LANGS = ['fr', 'ar']
 
 const resources = {
-  fr: { common: frCommon, backoffice: frBackoffice },
-  ar: { common: arCommon, backoffice: arBackoffice },
+  fr: { common: frCommon, backoffice: frBackoffice, auth: frAuth },
+  ar: { common: arCommon, backoffice: arBackoffice, auth: arAuth },
 }
 
 i18n
@@ -21,7 +23,7 @@ i18n
     resources,
     fallbackLng: 'fr',
     supportedLngs: SUPPORTED_LANGS,
-    ns: ['common', 'backoffice'],
+    ns: ['common', 'backoffice', 'auth'],
     defaultNS: 'common',
     interpolation: { escapeValue: false },
     detection: {
