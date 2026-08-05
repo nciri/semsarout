@@ -177,7 +177,7 @@ function Checkout() {
                       <div>
                         <label className="label">{t('public:checkout.nameLabel')}</label>
                         <input
-                          {...register('name', { required: t('public:checkout.nameRequired') })}
+                          {...register('name', { required: t('common:validation.lastNameRequired') })}
                           className="input"
                           placeholder={t('public:checkout.namePlaceholder')}
                         />
@@ -189,7 +189,7 @@ function Checkout() {
                         <label className="label">{t('public:checkout.emailLabel')}</label>
                         <input
                           type="email"
-                          {...register('email', { required: t('public:checkout.emailRequired') })}
+                          {...register('email', { required: t('common:validation.emailRequired') })}
                           className="input"
                           placeholder={t('public:checkout.emailPlaceholder')}
                         />
