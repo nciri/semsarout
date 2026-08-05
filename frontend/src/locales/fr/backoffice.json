@@ -20,7 +20,11 @@
     "shop": "Boutique",
     "team": "Équipe",
     "analytics": "Analyses",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "userMenu": {
+      "agencySettings": "Paramètres agence",
+      "backToSite": "Retour au site"
+    }
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -45,7 +49,14 @@
     "newClient": "Nouveau client",
     "planVisit": "Planifier visite",
     "viewPipeline": "Voir le pipeline",
-    "viewAll": "Voir tout"
+    "viewAll": "Voir tout",
+    "vsLastMonth": "{{value}}% vs mois dernier",
+    "visitFallback": "Visite",
+    "period": {
+      "last7": "7 derniers jours",
+      "last30": "30 derniers jours",
+      "last90": "3 derniers mois"
+    }
   },
   "signature": {
     "title": "Signature électronique",

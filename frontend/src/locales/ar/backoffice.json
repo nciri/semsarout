@@ -20,7 +20,11 @@
     "shop": "المتجر",
     "team": "الفريق",
     "analytics": "التحليلات",
-    "settings": "الإعدادات"
+    "settings": "الإعدادات",
+    "userMenu": {
+      "agencySettings": "إعدادات الوكالة",
+      "backToSite": "العودة إلى الموقع"
+    }
   },
   "dashboard": {
     "title": "لوحة التحكم",
@@ -45,7 +49,14 @@
     "newClient": "عميل جديد",
     "planVisit": "برمجة زيارة",
     "viewPipeline": "عرض مسار الصفقات",
-    "viewAll": "عرض الكل"
+    "viewAll": "عرض الكل",
+    "vsLastMonth": "{{value}}% مقارنة بالشهر الماضي",
+    "visitFallback": "زيارة",
+    "period": {
+      "last7": "آخر 7 أيام",
+      "last30": "آخر 30 يومًا",
+      "last90": "آخر 3 أشهر"
+    }
   },
   "signature": {
     "title": "التوقيع الإلكتروني",
