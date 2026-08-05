@@ -41,5 +41,25 @@
     "planVisit": "Planifier visite",
     "viewPipeline": "Voir le pipeline",
     "viewAll": "Voir tout"
+  },
+  "signature": {
+    "title": "Signature électronique",
+    "status": {
+      "pending": "En attente",
+      "sent": "Envoyé en signature",
+      "in_progress": "Signature en cours",
+      "completed": "Signé",
+      "declined": "Refusé",
+      "voided": "Annulé",
+      "expired": "Expiré"
+    },
+    "pdfUnavailable": "PDF indisponible",
+    "notSent": "Ce document n'a pas encore été envoyé en signature.",
+    "sendButton": "Envoyer en signature",
+    "downloadSignedPdf": "Télécharger le PDF signé",
+    "signedByAll": "Signé par toutes les parties."
+  },
+  "ui": {
+    "viewOffers": "Voir les offres Pro & Entreprise"
   }
 }

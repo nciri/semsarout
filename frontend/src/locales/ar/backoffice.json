@@ -41,5 +41,25 @@
     "planVisit": "برمجة زيارة",
     "viewPipeline": "عرض مسار الصفقات",
     "viewAll": "عرض الكل"
+  },
+  "signature": {
+    "title": "التوقيع الإلكتروني",
+    "status": {
+      "pending": "قيد الانتظار",
+      "sent": "أُرسل للتوقيع",
+      "in_progress": "التوقيع جارٍ",
+      "completed": "تم التوقيع",
+      "declined": "مرفوض",
+      "voided": "ملغى",
+      "expired": "منتهي الصلاحية"
+    },
+    "pdfUnavailable": "ملف PDF غير متوفر",
+    "notSent": "لم يُرسل هذا المستند للتوقيع بعد.",
+    "sendButton": "إرسال للتوقيع",
+    "downloadSignedPdf": "تحميل PDF الموقَّع",
+    "signedByAll": "تم التوقيع من قبل جميع الأطراف."
+  },
+  "ui": {
+    "viewOffers": "عرض عروض Pro والمؤسسات"
   }
 }
