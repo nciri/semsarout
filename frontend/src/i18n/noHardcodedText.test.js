@@ -70,6 +70,7 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/rental/ApplicationDetail.jsx',
   'src/pages/backoffice/rental/InventoryEditor.jsx',
   'src/pages/backoffice/rental/SettlementEditor.jsx',
+  'src/pages/backoffice/shop/ShopCatalog.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {

@@ -453,6 +453,38 @@
       }
     }
   },
+  "shop": {
+    "shared": {
+      "pageTitle": "Boutique",
+      "loading": "Chargement…",
+      "back": "Retour",
+      "notFound": "Élément introuvable.",
+      "loadError": "Une erreur est survenue lors du chargement. Réessayez plus tard."
+    },
+    "catalog": {
+      "subtitle": "Mobilier et électroménager pour équiper vos biens en location",
+      "myOrders": "Mes commandes",
+      "cart": "Panier",
+      "filters": {
+        "allGroups": "Tous les groupes",
+        "group": {
+          "furniture": "Meubles",
+          "appliance": "Électroménager"
+        },
+        "allCategories": "Toutes les catégories"
+      },
+      "searchPlaceholder": "Rechercher un produit…",
+      "empty": {
+        "title": "Aucun produit",
+        "description": "Aucun article ne correspond à vos filtres pour le moment."
+      },
+      "outOfStock": "Rupture",
+      "addButton": "Ajouter",
+      "toasts": {
+        "added": "Ajouté au panier"
+      }
+    }
+  },
   "ui": {
     "viewOffers": "Voir les offres Pro & Entreprise"
   }
