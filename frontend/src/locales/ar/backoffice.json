@@ -1,6 +1,11 @@
 {
   "nav": {
-    "sections": { "main": "الرئيسية", "crm": "إدارة العملاء", "finance": "المالية", "admin": "الإدارة" },
+    "sections": {
+      "main": "الرئيسية",
+      "crm": "إدارة العملاء",
+      "finance": "المالية",
+      "admin": "الإدارة"
+    },
     "dashboard": "لوحة التحكم",
     "properties": "العقارات",
     "pipeline": "مسار الصفقات",
@@ -453,7 +458,226 @@
       }
     }
   },
+  "shop": {
+    "shared": {
+      "pageTitle": "المتجر",
+      "loading": "جارٍ التحميل…",
+      "back": "رجوع",
+      "notFound": "العنصر غير موجود.",
+      "loadError": "حدث خطأ أثناء التحميل. حاول مرة أخرى لاحقًا."
+    },
+    "catalog": {
+      "subtitle": "أثاث وأجهزة كهرومنزلية لتجهيز عقاراتك الكرائية",
+      "myOrders": "طلباتي",
+      "cart": "السلة",
+      "filters": {
+        "allGroups": "كل الفئات",
+        "group": {
+          "furniture": "أثاث",
+          "appliance": "أجهزة كهرومنزلية"
+        },
+        "allCategories": "كل الأصناف"
+      },
+      "searchPlaceholder": "ابحث عن منتج…",
+      "empty": {
+        "title": "لا يوجد منتج",
+        "description": "لا يوجد عنصر مطابق لعوامل التصفية حاليًا."
+      },
+      "outOfStock": "غير متوفر",
+      "addButton": "إضافة",
+      "toasts": {
+        "added": "تمت الإضافة إلى السلة"
+      }
+    },
+    "product": {
+      "notFound": "المنتج غير موجود.",
+      "notFoundBack": "العودة إلى المتجر",
+      "outOfStock": "غير متوفر في المخزون",
+      "inStock": "{{n}} متوفر في المخزون",
+      "addButton": "إضافة إلى السلة"
+    },
+    "cart": {
+      "backToShop": "متابعة التسوق",
+      "pageTitle": "سلتي",
+      "empty": {
+        "title": "سلتك فارغة",
+        "description": "تصفح المتجر لإضافة الأثاث والأجهزة الكهرومنزلية.",
+        "action": "الانتقال إلى المتجر"
+      },
+      "removeTitle": "إزالة",
+      "total": "المجموع",
+      "deliverToProperty": "التوصيل إلى عقار (اختياري)",
+      "freeAddressPlaceholder": "— عنوان حر —",
+      "propertySearchPlaceholder": "ابحث عن عقار…",
+      "deliveryAddress": "عنوان التوصيل",
+      "orderButton": "إتمام الطلب",
+      "toasts": {
+        "orderCreated": "تم إنشاء الطلب"
+      }
+    },
+    "order": {
+      "pageTitle": "طلباتي",
+      "subtitle": "تتبع طلباتك من الأثاث والأجهزة الكهرومنزلية",
+      "shopButton": "المتجر",
+      "stats": {
+        "total": "المجموع",
+        "pending": "قيد الانتظار",
+        "inProgress": "قيد التنفيذ",
+        "delivered": "تم التسليم"
+      },
+      "columns": {
+        "reference": "المرجع",
+        "items": "العناصر",
+        "total": "المجموع",
+        "status": "الحالة",
+        "date": "التاريخ"
+      },
+      "status": {
+        "pending": "قيد الانتظار",
+        "paid": "مدفوعة",
+        "preparing": "قيد التحضير",
+        "shipped": "تم الشحن",
+        "delivered": "تم التسليم",
+        "cancelled": "ملغاة"
+      },
+      "empty": {
+        "title": "لا توجد طلبات",
+        "description": "ستظهر هنا طلباتك المنجزة من المتجر.",
+        "action": "الانتقال إلى المتجر"
+      },
+      "backToList": "طلباتي",
+      "notFound": "الطلب غير موجود.",
+      "payButton": "الدفع الآن",
+      "paymentReference": "مرجع الدفع: {{reference}}",
+      "toasts": {
+        "paymentSuccess": "تم الدفع بنجاح",
+        "paymentError": "خطأ"
+      }
+    }
+  },
   "ui": {
     "viewOffers": "عرض عروض Pro والمؤسسات"
+  },
+  "artisans": {
+    "shared": {
+      "pageTitle": "الحرفيون",
+      "loading": "جارٍ التحميل…",
+      "back": "رجوع",
+      "notFound": "العنصر غير موجود.",
+      "loadError": "حدث خطأ أثناء التحميل. حاول مرة أخرى لاحقًا."
+    },
+    "layout": {
+      "subtitle": "سجلّ الحرفيين الخاص بكم ومتابعة التدخلات على عقاراتكم",
+      "tabs": {
+        "directory": "الدليل",
+        "interventions": "التدخلات"
+      }
+    },
+    "directory": {
+      "stats": {
+        "total": "الحرفيون",
+        "shared": "مشتركون",
+        "private": "وكالتي"
+      },
+      "filters": {
+        "allTrades": "جميع المهن",
+        "cityPlaceholder": "المدينة"
+      },
+      "searchPlaceholder": "البحث عن حرفي…",
+      "addButton": "إضافة",
+      "gated": {
+        "message": "دليل الحرفيين مخصص لخطتي Pro وEntreprise."
+      },
+      "columns": {
+        "name": "الاسم",
+        "trade": "المهنة",
+        "city": "المدينة",
+        "contact": "التواصل"
+      },
+      "badge": {
+        "shared": "مشترك",
+        "private": "وكالتي",
+        "readOnly": "للقراءة فقط"
+      },
+      "actions": {
+        "edit": "تعديل",
+        "delete": "حذف"
+      },
+      "empty": {
+        "title": "لا يوجد حرفيون",
+        "description": "عدّلوا عوامل التصفية أو أضيفوا أول حرفي خاص بكم.",
+        "addButton": "إضافة حرفي"
+      },
+      "modal": {
+        "editTitle": "تعديل الحرفي",
+        "createTitle": "إضافة حرفي",
+        "tradeLabel": "المهنة",
+        "fields": {
+          "name": "الاسم *",
+          "company": "الشركة",
+          "city": "المدينة",
+          "phone": "الهاتف",
+          "email": "البريد الإلكتروني"
+        },
+        "cancel": "إلغاء",
+        "save": "حفظ",
+        "create": "إضافة"
+      },
+      "toasts": {
+        "updated": "تم تعديل الحرفي",
+        "created": "تمت إضافة الحرفي",
+        "deleted": "تم حذف الحرفي"
+      }
+    },
+    "workOrder": {
+      "gated": {
+        "title": "أوامر العمل",
+        "message": "متابعة التدخلات مخصصة لخطتي Pro وEntreprise."
+      },
+      "stats": {
+        "total": "المجموع",
+        "scheduled": "مبرمجة",
+        "inProgress": "قيد التنفيذ",
+        "done": "منتهية"
+      },
+      "form": {
+        "titlePlaceholder": "عنوان التدخل",
+        "newButton": "جديد"
+      },
+      "columns": {
+        "title": "العنوان",
+        "trade": "المهنة",
+        "artisan": "الحرفي",
+        "costFinal": "التكلفة النهائية",
+        "status": "الحالة"
+      },
+      "status": {
+        "requested": "مطلوب",
+        "scheduled": "مبرمج",
+        "in_progress": "قيد التنفيذ",
+        "done": "منتهي",
+        "cancelled": "ملغى"
+      },
+      "empty": {
+        "title": "لا يوجد أمر عمل",
+        "description": "أنشئوا تدخلاً أعلاه، ثم عيّنوا له حرفياً وعقاراً."
+      },
+      "toasts": {
+        "created": "تم إنشاء أمر العمل",
+        "saved": "تم الحفظ"
+      },
+      "backToList": "التدخلات",
+      "notFound": "أمر العمل غير موجود.",
+      "fields": {
+        "status": "الحالة",
+        "artisan": "الحرفي",
+        "noneOption": "بدون",
+        "sharedSuffix": " (مشترك)",
+        "costEstimate": "التكلفة التقديرية (Đh)",
+        "costFinal": "التكلفة النهائية (Đh)",
+        "notes": "ملاحظات"
+      },
+      "autoSaveNote": "يتم حفظ التعديلات تلقائياً."
+    }
   }
 }

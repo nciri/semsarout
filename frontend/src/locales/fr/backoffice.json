@@ -1,6 +1,11 @@
 {
   "nav": {
-    "sections": { "main": "Principal", "crm": "CRM", "finance": "Finance", "admin": "Administration" },
+    "sections": {
+      "main": "Principal",
+      "crm": "CRM",
+      "finance": "Finance",
+      "admin": "Administration"
+    },
     "dashboard": "Tableau de bord",
     "properties": "Biens immobiliers",
     "pipeline": "Pipeline",
@@ -453,7 +458,226 @@
       }
     }
   },
+  "shop": {
+    "shared": {
+      "pageTitle": "Boutique",
+      "loading": "Chargement…",
+      "back": "Retour",
+      "notFound": "Élément introuvable.",
+      "loadError": "Une erreur est survenue lors du chargement. Réessayez plus tard."
+    },
+    "catalog": {
+      "subtitle": "Mobilier et électroménager pour équiper vos biens en location",
+      "myOrders": "Mes commandes",
+      "cart": "Panier",
+      "filters": {
+        "allGroups": "Tous les groupes",
+        "group": {
+          "furniture": "Meubles",
+          "appliance": "Électroménager"
+        },
+        "allCategories": "Toutes les catégories"
+      },
+      "searchPlaceholder": "Rechercher un produit…",
+      "empty": {
+        "title": "Aucun produit",
+        "description": "Aucun article ne correspond à vos filtres pour le moment."
+      },
+      "outOfStock": "Rupture",
+      "addButton": "Ajouter",
+      "toasts": {
+        "added": "Ajouté au panier"
+      }
+    },
+    "product": {
+      "notFound": "Produit introuvable.",
+      "notFoundBack": "Retour à la boutique",
+      "outOfStock": "En rupture de stock",
+      "inStock": "{{n}} en stock",
+      "addButton": "Ajouter au panier"
+    },
+    "cart": {
+      "backToShop": "Continuer mes achats",
+      "pageTitle": "Mon panier",
+      "empty": {
+        "title": "Votre panier est vide",
+        "description": "Parcourez la boutique pour ajouter du mobilier et de l'électroménager.",
+        "action": "Aller à la boutique"
+      },
+      "removeTitle": "Retirer",
+      "total": "Total",
+      "deliverToProperty": "Livrer vers un bien (optionnel)",
+      "freeAddressPlaceholder": "— Adresse libre —",
+      "propertySearchPlaceholder": "Rechercher un bien…",
+      "deliveryAddress": "Adresse de livraison",
+      "orderButton": "Commander",
+      "toasts": {
+        "orderCreated": "Commande créée"
+      }
+    },
+    "order": {
+      "pageTitle": "Mes commandes",
+      "subtitle": "Suivez vos commandes de mobilier et d'électroménager",
+      "shopButton": "Boutique",
+      "stats": {
+        "total": "Total",
+        "pending": "En attente",
+        "inProgress": "En cours",
+        "delivered": "Livrées"
+      },
+      "columns": {
+        "reference": "Référence",
+        "items": "Articles",
+        "total": "Total",
+        "status": "Statut",
+        "date": "Date"
+      },
+      "status": {
+        "pending": "En attente",
+        "paid": "Payée",
+        "preparing": "Préparation",
+        "shipped": "Expédiée",
+        "delivered": "Livrée",
+        "cancelled": "Annulée"
+      },
+      "empty": {
+        "title": "Aucune commande",
+        "description": "Vos commandes passées depuis la boutique apparaîtront ici.",
+        "action": "Aller à la boutique"
+      },
+      "backToList": "Mes commandes",
+      "notFound": "Commande introuvable.",
+      "payButton": "Payer maintenant",
+      "paymentReference": "Réf. paiement : {{reference}}",
+      "toasts": {
+        "paymentSuccess": "Paiement effectué",
+        "paymentError": "Erreur"
+      }
+    }
+  },
   "ui": {
     "viewOffers": "Voir les offres Pro & Entreprise"
+  },
+  "artisans": {
+    "shared": {
+      "pageTitle": "Artisans",
+      "loading": "Chargement…",
+      "back": "Retour",
+      "notFound": "Élément introuvable.",
+      "loadError": "Une erreur est survenue lors du chargement. Réessayez plus tard."
+    },
+    "layout": {
+      "subtitle": "Votre référentiel d'artisans et le suivi des interventions sur vos biens",
+      "tabs": {
+        "directory": "Annuaire",
+        "interventions": "Interventions"
+      }
+    },
+    "directory": {
+      "stats": {
+        "total": "Artisans",
+        "shared": "Partagés",
+        "private": "Mon agence"
+      },
+      "filters": {
+        "allTrades": "Tous les métiers",
+        "cityPlaceholder": "Ville"
+      },
+      "searchPlaceholder": "Rechercher un artisan…",
+      "addButton": "Ajouter",
+      "gated": {
+        "message": "Le référentiel artisans est réservé aux plans Pro et Entreprise."
+      },
+      "columns": {
+        "name": "Nom",
+        "trade": "Métier",
+        "city": "Ville",
+        "contact": "Contact"
+      },
+      "badge": {
+        "shared": "Partagé",
+        "private": "Mon agence",
+        "readOnly": "Lecture seule"
+      },
+      "actions": {
+        "edit": "Modifier",
+        "delete": "Supprimer"
+      },
+      "empty": {
+        "title": "Aucun artisan",
+        "description": "Ajustez vos filtres ou ajoutez votre premier artisan privé.",
+        "addButton": "Ajouter un artisan"
+      },
+      "modal": {
+        "editTitle": "Modifier l'artisan",
+        "createTitle": "Ajouter un artisan",
+        "tradeLabel": "Métier",
+        "fields": {
+          "name": "Nom *",
+          "company": "Société",
+          "city": "Ville",
+          "phone": "Téléphone",
+          "email": "Email"
+        },
+        "cancel": "Annuler",
+        "save": "Enregistrer",
+        "create": "Ajouter"
+      },
+      "toasts": {
+        "updated": "Artisan modifié",
+        "created": "Artisan ajouté",
+        "deleted": "Artisan supprimé"
+      }
+    },
+    "workOrder": {
+      "gated": {
+        "title": "Bons de travaux",
+        "message": "Le suivi des interventions est réservé aux plans Pro et Entreprise."
+      },
+      "stats": {
+        "total": "Total",
+        "scheduled": "Planifiés",
+        "inProgress": "En cours",
+        "done": "Terminés"
+      },
+      "form": {
+        "titlePlaceholder": "Intitulé de l'intervention",
+        "newButton": "Nouveau"
+      },
+      "columns": {
+        "title": "Intitulé",
+        "trade": "Métier",
+        "artisan": "Artisan",
+        "costFinal": "Coût final",
+        "status": "Statut"
+      },
+      "status": {
+        "requested": "Demandé",
+        "scheduled": "Planifié",
+        "in_progress": "En cours",
+        "done": "Terminé",
+        "cancelled": "Annulé"
+      },
+      "empty": {
+        "title": "Aucun bon de travaux",
+        "description": "Créez une intervention ci-dessus, puis assignez-lui un artisan et un bien."
+      },
+      "toasts": {
+        "created": "Bon de travaux créé",
+        "saved": "Enregistré"
+      },
+      "backToList": "Interventions",
+      "notFound": "Bon de travaux introuvable.",
+      "fields": {
+        "status": "Statut",
+        "artisan": "Artisan",
+        "noneOption": "Aucun",
+        "sharedSuffix": " (partagé)",
+        "costEstimate": "Coût estimé (Đh)",
+        "costFinal": "Coût final (Đh)",
+        "notes": "Notes"
+      },
+      "autoSaveNote": "Les modifications sont enregistrées automatiquement."
+    }
   }
 }
