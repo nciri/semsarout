@@ -59,6 +59,400 @@
     "downloadSignedPdf": "تحميل PDF الموقَّع",
     "signedByAll": "تم التوقيع من قبل جميع الأطراف."
   },
+  "rental": {
+    "shared": {
+      "pageTitle": "التسيير الكرائي",
+      "loading": "جارٍ التحميل…",
+      "back": "رجوع",
+      "notFound": "العنصر غير موجود.",
+      "loadError": "حدث خطأ أثناء التحميل. حاول مرة أخرى لاحقًا."
+    },
+    "layout": {
+      "subtitle": "عقود التسيير، عقود الكراء والمخالصات، طلبات الكراء",
+      "tabs": {
+        "mandates": "عقود التسيير",
+        "leases": "عقود الكراء",
+        "applications": "الطلبات"
+      }
+    },
+    "mandate": {
+      "gated": {
+        "message": "التسيير الكرائي مخصص لباقتي Pro والمؤسسات."
+      },
+      "backToList": "الرجوع إلى عقود التسيير",
+      "status": {
+        "draft": "مسودة",
+        "active": "نشط",
+        "expired": "منتهي الصلاحية",
+        "terminated": "مفسوخ"
+      },
+      "type": {
+        "gestion": "تسيير",
+        "location": "كراء"
+      },
+      "stats": {
+        "total": "إجمالي العقود",
+        "active": "نشطة",
+        "draft": "مسودات"
+      },
+      "newButton": "عقد تسيير جديد",
+      "empty": {
+        "title": "لا يوجد عقد تسيير",
+        "description": "أنشئ عقد تسيير لمالك وعقار."
+      },
+      "columns": {
+        "reference": "المرجع",
+        "type": "النوع",
+        "fees": "الأتعاب",
+        "status": "الحالة"
+      },
+      "modal": {
+        "title": "عقد تسيير جديد",
+        "propertyLabel": "العقار",
+        "propertyPlaceholder": "اختر عقارًا…",
+        "propertySearchPlaceholder": "البحث عن عقار…",
+        "landlordLabel": "العميل المالك",
+        "landlordPlaceholder": "اختر عميلاً…",
+        "landlordSearchPlaceholder": "البحث عن عميل…",
+        "typeLabel": "النوع",
+        "feesLabel": "الأتعاب (%)",
+        "feesPlaceholder": "مثال: 8",
+        "cancel": "إلغاء",
+        "create": "إنشاء"
+      },
+      "toasts": {
+        "created": "تم إنشاء العقد"
+      },
+      "detail": {
+        "title": "عقد التسيير {{reference}}",
+        "pdfButton": "PDF",
+        "signButton": "توقيع",
+        "signedToast": "تم توقيع العقد",
+        "fields": {
+          "status": "الحالة",
+          "type": "النوع",
+          "fees": "الأتعاب",
+          "propertyId": "العقار (المعرف)",
+          "landlordId": "المالك (العميل)"
+        }
+      },
+      "crg": {
+        "panelTitle": "التقارير الدورية للتسيير (CRG)",
+        "period": "الفترة",
+        "collected": "المحصّل",
+        "net": "الصافي المحوّل",
+        "pdf": "PDF",
+        "empty": {
+          "title": "لا يوجد تقرير",
+          "description": "تظهر التقارير الشهرية هنا بعد تحصيل الإيجارات."
+        }
+      }
+    },
+    "lease": {
+      "gated": {
+        "message": "التسيير الكرائي مخصص لباقتي Pro والمؤسسات."
+      },
+      "status": {
+        "draft": "مسودة",
+        "active": "نشط",
+        "ended": "منتهٍ",
+        "terminated": "مفسوخ"
+      },
+      "stats": {
+        "total": "إجمالي عقود الكراء",
+        "active": "نشطة"
+      },
+      "newButton": "عقد كراء جديد",
+      "empty": {
+        "title": "لا يوجد عقد كراء",
+        "description": "أنشئ عقد كراء مرتبطًا بعقد تسيير."
+      },
+      "columns": {
+        "reference": "المرجع",
+        "rent": "الإيجار",
+        "charges": "التكاليف",
+        "status": "الحالة"
+      },
+      "modal": {
+        "title": "عقد كراء جديد",
+        "mandateLabel": "عقد التسيير",
+        "mandatePlaceholder": "اختر عقد تسيير…",
+        "mandateSearchPlaceholder": "البحث عن عقد تسيير…",
+        "tenantLabel": "العميل المستأجر",
+        "tenantPlaceholder": "اختر عميلاً…",
+        "tenantSearchPlaceholder": "البحث عن عميل…",
+        "rentLabel": "الإيجار (Đh)",
+        "chargesLabel": "التكاليف (Đh)",
+        "depositLabel": "وديعة الضمان (Đh)",
+        "paymentDayLabel": "يوم الاستحقاق (1-28)",
+        "cancel": "إلغاء",
+        "create": "إنشاء"
+      },
+      "toasts": {
+        "created": "تم إنشاء عقد الكراء",
+        "signed": "تم توقيع عقد الكراء",
+        "revised": "تمت مراجعة الإيجار",
+        "depositReturned": "تم استرجاع الوديعة",
+        "paymentRecorded": "تم تسجيل الدفعة",
+        "inventoryCreated": "تم إنشاء محضر الحالة"
+      },
+      "backToList": "الرجوع إلى عقود الكراء",
+      "detail": {
+        "title": "عقد الكراء {{reference}}",
+        "pdfButton": "PDF",
+        "signButton": "توقيع",
+        "reviseButton": "مراجعة الإيجار",
+        "returnDepositButton": "استرجاع الوديعة",
+        "fields": {
+          "status": "الحالة",
+          "rent": "الإيجار",
+          "charges": "التكاليف",
+          "deposit": "الوديعة"
+        }
+      },
+      "rentPeriods": {
+        "panelTitle": "المخالصات",
+        "columns": {
+          "period": "الفترة",
+          "due": "المستحق",
+          "status": "الحالة"
+        },
+        "status": {
+          "pending": "قيد التسديد",
+          "late": "متأخر",
+          "partial": "جزئي",
+          "paid": "مدفوع"
+        },
+        "receiptButton": "المخالصة",
+        "recordPaymentButton": "تسجيل دفعة",
+        "empty": {
+          "title": "لا توجد مستحقات",
+          "description": "تُولَّد مستحقات الإيجار شهريًا آليًا."
+        }
+      },
+      "inventories": {
+        "panelTitle": "محاضر الحالة",
+        "outStatementLink": "كشف حساب الخروج",
+        "entryLabel": "محضر حالة الدخول",
+        "exitLabel": "محضر حالة الخروج",
+        "openButton": "فتح",
+        "createEntryButton": "إنشاء محضر الدخول",
+        "createExitButton": "إنشاء محضر الخروج"
+      },
+      "payModal": {
+        "title": "تسجيل دفعة — {{period}}",
+        "amountLabel": "المبلغ (Đh)",
+        "methodLabel": "طريقة الدفع",
+        "methods": {
+          "virement": "تحويل بنكي",
+          "cheque": "شيك",
+          "especes": "نقدًا",
+          "carte": "بطاقة"
+        },
+        "cancel": "إلغاء",
+        "submit": "تسجيل"
+      },
+      "reviseModal": {
+        "title": "مراجعة الإيجار",
+        "newRentLabel": "الإيجار الجديد (Đh)",
+        "cancel": "إلغاء",
+        "apply": "تطبيق"
+      }
+    },
+    "application": {
+      "gated": {
+        "message": "التسيير الكرائي مخصص لباقتي Pro والمؤسسات."
+      },
+      "pageTitle": "الطلبات",
+      "status": {
+        "received": "مستلَم",
+        "reviewing": "قيد الدراسة",
+        "shortlist": "في القائمة المختصرة",
+        "accepted": "مقبول",
+        "rejected": "مرفوض",
+        "withdrawn": "مسحوب"
+      },
+      "stats": {
+        "total": "الإجمالي",
+        "new": "جديدة",
+        "accepted": "مقبولة"
+      },
+      "newButton": "إيداع ملف لعميل",
+      "badges": {
+        "submittedByAgency": "أودعته الوكالة"
+      },
+      "filters": {
+        "searchPlaceholder": "البحث عن مترشح (الاسم، البريد الإلكتروني)…",
+        "allStatuses": "كل الحالات",
+        "allProperties": "كل العقارات",
+        "propertySearchPlaceholder": "البحث عن عقار…"
+      },
+      "columns": {
+        "candidate": "المترشح",
+        "submittedAt": "تاريخ الإيداع",
+        "monthlyIncome": "الدخل الشهري",
+        "status": "الحالة"
+      },
+      "actions": {
+        "shortlist": "إدراج في القائمة المختصرة"
+      },
+      "propertyFallback": "عقار #{{id}}",
+      "groupCount_one": "· {{count}} طلب",
+      "groupCount_other": "· {{count}} طلبات",
+      "empty": {
+        "noApplications": {
+          "title": "لا يوجد طلب",
+          "description": "تظهر هنا الملفات التي يودعها المترشحون على عقاراتكم، مجمّعة حسب العقار."
+        },
+        "noResults": {
+          "title": "لا توجد نتيجة",
+          "description": "لا يوجد طلب يطابق عوامل التصفية الخاصة بكم."
+        }
+      },
+      "modal": {
+        "title": "إيداع ملف لعميل",
+        "propertyIdLabel": "معرّف العقار",
+        "clientIdLabel": "معرّف العميل",
+        "monthlyIncomeLabel": "الدخل الشهري (Đh)",
+        "guarantorNameLabel": "اسم الضامن",
+        "guarantorIncomeLabel": "دخل الضامن (Đh)",
+        "docsLabel": "الوثائق المثبتة",
+        "docType": {
+          "cin": "بطاقة التعريف الوطنية (CIN)",
+          "bulletin_salaire": "كشف الراتب",
+          "contrat_travail": "عقد العمل",
+          "avis_impot": "الإشعار الضريبي",
+          "garant": "وثيقة الضامن",
+          "autre": "أخرى"
+        },
+        "addButton": "إضافة",
+        "cancel": "إلغاء",
+        "submit": "إيداع الملف"
+      },
+      "toasts": {
+        "created": "تم إيداع الملف",
+        "shortlisted": "تمت إضافة الطلب إلى القائمة المختصرة",
+        "fileTooLarge": "الملف كبير جدًا (الحد الأقصى 10 ميغابايت)",
+        "uploadFailed": "فشل إرسال « {{filename}} »"
+      },
+      "detail": {
+        "backToList": "الرجوع إلى الطلبات",
+        "title": "طلب {{name}}",
+        "actions": {
+          "shortlist": "إدراج في القائمة المختصرة",
+          "accept": "قبول",
+          "reject": "رفض"
+        },
+        "fields": {
+          "status": "الحالة",
+          "email": "البريد الإلكتروني",
+          "phone": "الهاتف",
+          "monthlyIncome": "الدخل الشهري",
+          "guarantor": "الضامن",
+          "property": "العقار"
+        },
+        "docs": {
+          "panelTitle": "الوثائق المثبتة",
+          "status": {
+            "received": "مستلَمة",
+            "validated": "مصادَق عليها",
+            "rejected": "مرفوضة"
+          },
+          "columns": {
+            "type": "النوع",
+            "file": "الملف",
+            "status": "الحالة"
+          },
+          "validateButton": "مصادقة",
+          "rejectButton": "رفض",
+          "empty": {
+            "title": "لا توجد وثيقة",
+            "description": "لم يودع المترشح أي وثيقة بعد."
+          },
+          "toast": "تم تحديث الوثيقة"
+        },
+        "rejectModal": {
+          "title": "رفض الطلب",
+          "reasonLabel": "السبب (اختياري، يُبلَّغ به المترشح)",
+          "reasonPlaceholder": "مثال: ملف غير مكتمل",
+          "cancel": "إلغاء",
+          "submit": "تأكيد الرفض"
+        },
+        "toasts": {
+          "decided": "تم تسجيل القرار"
+        }
+      }
+    },
+    "inventory": {
+      "gated": {
+        "message": "التسيير الكرائي مخصص لباقتي Pro والمؤسسات."
+      },
+      "pageTitle": "محضر الحالة",
+      "backToLease": "الرجوع إلى العقد",
+      "panelTitle": {
+        "entry": "محضر الحالة عند الدخول",
+        "exit": "محضر الحالة عند الخروج"
+      },
+      "status": {
+        "draft": "مسودة",
+        "finalized": "مُنجَز",
+        "signed": "مُوقَّع"
+      },
+      "condition": {
+        "bon": "جيد",
+        "moyen": "متوسط",
+        "mauvais": "سيئ"
+      },
+      "pdfButton": "PDF",
+      "finalizeButton": "إنهاء",
+      "lockNotice": "محضر الحالة هذا منتهٍ ومقفل (للقراءة فقط).",
+      "commentPlaceholder": "تعليق",
+      "newRoomPlaceholder": "غرفة جديدة",
+      "addRoomButton": "إضافة غرفة",
+      "addItemPlaceholder": "إضافة عنصر",
+      "addItemButton": "عنصر",
+      "toasts": {
+        "roomAdded": "تمت إضافة الغرفة",
+        "itemAdded": "تمت إضافة العنصر",
+        "photoAdded": "تمت إضافة الصورة",
+        "finalized": "تم إنهاء محضر الحالة"
+      }
+    },
+    "settlement": {
+      "pageTitle": "تصفية الضمان",
+      "comparisonTitle": "مقارنة الدخول ↔ الخروج",
+      "degradedLabel": "متضرر",
+      "noExit": {
+        "title": "لا يوجد محضر حالة عند الخروج",
+        "description": "أنجزوا محضر الحالة عند الخروج للمقارنة وتبرير الاقتطاعات."
+      },
+      "empty": {
+        "title": "لا توجد تصفية",
+        "description": "أنشئوا تصفية الضمان لتسجيل الاقتطاعات."
+      },
+      "createButton": "إنشاء تصفية الضمان",
+      "noLines": "لا توجد اقتطاعات.",
+      "form": {
+        "labelLabel": "بيان الاقتطاع",
+        "labelPlaceholder": "مثال: طاولة عمل محروقة",
+        "amountLabel": "المبلغ (Đh)",
+        "itemPlaceholder": "عنصر (اختياري)",
+        "addButton": "إضافة"
+      },
+      "totals": {
+        "deposit": "الضمان",
+        "totalDeductions": "مجموع الاقتطاعات",
+        "refunded": "الضمان المسترجع",
+        "balanceDue": "الرصيد المستحق"
+      },
+      "balanceWarning": "تتجاوز الأضرار مبلغ الضمان: يبقى رصيد على عاتق المستأجر (يُعالج التحصيل خارج المنصة).",
+      "toasts": {
+        "created": "تم إنشاء التصفية",
+        "lineAdded": "تمت إضافة الاقتطاع",
+        "finalized": "تم إنهاء التصفية — تم إرسال بريد إلكتروني إلى المستأجر"
+      }
+    }
+  },
   "ui": {
     "viewOffers": "عرض عروض Pro والمؤسسات"
   }

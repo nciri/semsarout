@@ -61,6 +61,15 @@ const MIGRATED_FILES = [
   'src/components/dashboard/widgets/index.jsx',
   'src/components/backoffice/SignaturePanel.jsx',
   'src/components/backoffice/ui.jsx',
+  'src/pages/backoffice/rental/RentalLayout.jsx',
+  'src/pages/backoffice/rental/MandatesList.jsx',
+  'src/pages/backoffice/rental/MandateDetail.jsx',
+  'src/pages/backoffice/rental/LeasesList.jsx',
+  'src/pages/backoffice/rental/LeaseDetail.jsx',
+  'src/pages/backoffice/rental/ApplicationsList.jsx',
+  'src/pages/backoffice/rental/ApplicationDetail.jsx',
+  'src/pages/backoffice/rental/InventoryEditor.jsx',
+  'src/pages/backoffice/rental/SettlementEditor.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {

@@ -59,6 +59,400 @@
     "downloadSignedPdf": "Télécharger le PDF signé",
     "signedByAll": "Signé par toutes les parties."
   },
+  "rental": {
+    "shared": {
+      "pageTitle": "Gestion locative",
+      "loading": "Chargement…",
+      "back": "Retour",
+      "notFound": "Élément introuvable.",
+      "loadError": "Une erreur est survenue lors du chargement. Réessayez plus tard."
+    },
+    "layout": {
+      "subtitle": "Mandats de gestion, baux & quittancement, candidatures locatives",
+      "tabs": {
+        "mandates": "Mandats",
+        "leases": "Baux",
+        "applications": "Candidatures"
+      }
+    },
+    "mandate": {
+      "gated": {
+        "message": "La gestion locative est réservée aux plans Pro et Entreprise."
+      },
+      "backToList": "Retour aux mandats",
+      "status": {
+        "draft": "Brouillon",
+        "active": "Actif",
+        "expired": "Échu",
+        "terminated": "Résilié"
+      },
+      "type": {
+        "gestion": "Gestion",
+        "location": "Location"
+      },
+      "stats": {
+        "total": "Total mandats",
+        "active": "Actifs",
+        "draft": "Brouillons"
+      },
+      "newButton": "Nouveau mandat",
+      "empty": {
+        "title": "Aucun mandat",
+        "description": "Créez un mandat de gestion pour un propriétaire et un bien."
+      },
+      "columns": {
+        "reference": "Référence",
+        "type": "Type",
+        "fees": "Honoraires",
+        "status": "Statut"
+      },
+      "modal": {
+        "title": "Nouveau mandat de gestion",
+        "propertyLabel": "Bien",
+        "propertyPlaceholder": "Choisir un bien…",
+        "propertySearchPlaceholder": "Rechercher un bien…",
+        "landlordLabel": "Client bailleur",
+        "landlordPlaceholder": "Choisir un client…",
+        "landlordSearchPlaceholder": "Rechercher un client…",
+        "typeLabel": "Type",
+        "feesLabel": "Honoraires (%)",
+        "feesPlaceholder": "ex. 8",
+        "cancel": "Annuler",
+        "create": "Créer"
+      },
+      "toasts": {
+        "created": "Mandat créé"
+      },
+      "detail": {
+        "title": "Mandat {{reference}}",
+        "pdfButton": "PDF",
+        "signButton": "Signer",
+        "signedToast": "Mandat signé",
+        "fields": {
+          "status": "Statut",
+          "type": "Type",
+          "fees": "Honoraires",
+          "propertyId": "Bien (ID)",
+          "landlordId": "Bailleur (client)"
+        }
+      },
+      "crg": {
+        "panelTitle": "Comptes-rendus de gestion (CRG)",
+        "period": "Période",
+        "collected": "Encaissé",
+        "net": "Net reversé",
+        "pdf": "PDF",
+        "empty": {
+          "title": "Aucun CRG",
+          "description": "Les comptes-rendus mensuels apparaissent ici une fois les loyers encaissés."
+        }
+      }
+    },
+    "lease": {
+      "gated": {
+        "message": "La gestion locative est réservée aux plans Pro et Entreprise."
+      },
+      "status": {
+        "draft": "Brouillon",
+        "active": "Actif",
+        "ended": "Terminé",
+        "terminated": "Résilié"
+      },
+      "stats": {
+        "total": "Total baux",
+        "active": "Actifs"
+      },
+      "newButton": "Nouveau bail",
+      "empty": {
+        "title": "Aucun bail",
+        "description": "Créez un bail rattaché à un mandat de gestion."
+      },
+      "columns": {
+        "reference": "Référence",
+        "rent": "Loyer",
+        "charges": "Charges",
+        "status": "Statut"
+      },
+      "modal": {
+        "title": "Nouveau bail",
+        "mandateLabel": "Mandat",
+        "mandatePlaceholder": "Choisir un mandat…",
+        "mandateSearchPlaceholder": "Rechercher un mandat…",
+        "tenantLabel": "Client locataire",
+        "tenantPlaceholder": "Choisir un client…",
+        "tenantSearchPlaceholder": "Rechercher un client…",
+        "rentLabel": "Loyer (Đh)",
+        "chargesLabel": "Charges (Đh)",
+        "depositLabel": "Dépôt de garantie (Đh)",
+        "paymentDayLabel": "Jour d'échéance (1-28)",
+        "cancel": "Annuler",
+        "create": "Créer"
+      },
+      "toasts": {
+        "created": "Bail créé",
+        "signed": "Bail signé",
+        "revised": "Loyer révisé",
+        "depositReturned": "Dépôt restitué",
+        "paymentRecorded": "Paiement enregistré",
+        "inventoryCreated": "État des lieux créé"
+      },
+      "backToList": "Retour aux baux",
+      "detail": {
+        "title": "Bail {{reference}}",
+        "pdfButton": "PDF",
+        "signButton": "Signer",
+        "reviseButton": "Réviser le loyer",
+        "returnDepositButton": "Restituer le dépôt",
+        "fields": {
+          "status": "Statut",
+          "rent": "Loyer",
+          "charges": "Charges",
+          "deposit": "Dépôt"
+        }
+      },
+      "rentPeriods": {
+        "panelTitle": "Quittancement",
+        "columns": {
+          "period": "Période",
+          "due": "Dû",
+          "status": "Statut"
+        },
+        "status": {
+          "pending": "À régler",
+          "late": "En retard",
+          "partial": "Partiel",
+          "paid": "Payé"
+        },
+        "receiptButton": "Quittance",
+        "recordPaymentButton": "Enregistrer paiement",
+        "empty": {
+          "title": "Aucune échéance",
+          "description": "Les échéances de loyer sont générées mensuellement par l'ordonnanceur."
+        }
+      },
+      "inventories": {
+        "panelTitle": "États des lieux",
+        "outStatementLink": "Décompte de sortie",
+        "entryLabel": "État des lieux d'entrée",
+        "exitLabel": "État des lieux de sortie",
+        "openButton": "Ouvrir",
+        "createEntryButton": "Créer l'EDL d'entrée",
+        "createExitButton": "Créer l'EDL de sortie"
+      },
+      "payModal": {
+        "title": "Enregistrer un paiement — {{period}}",
+        "amountLabel": "Montant (Đh)",
+        "methodLabel": "Méthode",
+        "methods": {
+          "virement": "Virement",
+          "cheque": "Chèque",
+          "especes": "Espèces",
+          "carte": "Carte"
+        },
+        "cancel": "Annuler",
+        "submit": "Enregistrer"
+      },
+      "reviseModal": {
+        "title": "Réviser le loyer",
+        "newRentLabel": "Nouveau loyer (Đh)",
+        "cancel": "Annuler",
+        "apply": "Appliquer"
+      }
+    },
+    "application": {
+      "gated": {
+        "message": "La gestion locative est réservée aux plans Pro et Entreprise."
+      },
+      "pageTitle": "Candidatures",
+      "status": {
+        "received": "Reçue",
+        "reviewing": "En étude",
+        "shortlist": "Présélectionné",
+        "accepted": "Acceptée",
+        "rejected": "Refusée",
+        "withdrawn": "Retirée"
+      },
+      "stats": {
+        "total": "Total",
+        "new": "Nouvelles",
+        "accepted": "Acceptées"
+      },
+      "newButton": "Déposer un dossier pour un client",
+      "badges": {
+        "submittedByAgency": "Déposé par l'agence"
+      },
+      "filters": {
+        "searchPlaceholder": "Rechercher un candidat (nom, email)…",
+        "allStatuses": "Tous les statuts",
+        "allProperties": "Tous les biens",
+        "propertySearchPlaceholder": "Rechercher un bien…"
+      },
+      "columns": {
+        "candidate": "Candidat",
+        "submittedAt": "Déposée le",
+        "monthlyIncome": "Revenu mensuel",
+        "status": "Statut"
+      },
+      "actions": {
+        "shortlist": "Présélectionner"
+      },
+      "propertyFallback": "Bien #{{id}}",
+      "groupCount_one": "· {{count}} candidature",
+      "groupCount_other": "· {{count}} candidatures",
+      "empty": {
+        "noApplications": {
+          "title": "Aucune candidature",
+          "description": "Les dossiers déposés par les candidats sur vos biens apparaissent ici, regroupés par bien."
+        },
+        "noResults": {
+          "title": "Aucun résultat",
+          "description": "Aucune candidature ne correspond à vos filtres."
+        }
+      },
+      "modal": {
+        "title": "Déposer un dossier pour un client",
+        "propertyIdLabel": "ID du bien",
+        "clientIdLabel": "ID du client",
+        "monthlyIncomeLabel": "Revenu mensuel (Đh)",
+        "guarantorNameLabel": "Nom du garant",
+        "guarantorIncomeLabel": "Revenu du garant (Đh)",
+        "docsLabel": "Pièces justificatives",
+        "docType": {
+          "cin": "Pièce d'identité (CIN)",
+          "bulletin_salaire": "Bulletin de salaire",
+          "contrat_travail": "Contrat de travail",
+          "avis_impot": "Avis d'imposition",
+          "garant": "Pièce du garant",
+          "autre": "Autre"
+        },
+        "addButton": "Ajouter",
+        "cancel": "Annuler",
+        "submit": "Déposer le dossier"
+      },
+      "toasts": {
+        "created": "Dossier déposé",
+        "shortlisted": "Candidature présélectionnée",
+        "fileTooLarge": "Fichier trop volumineux (max 10 Mo)",
+        "uploadFailed": "Échec de l'envoi de « {{filename}} »"
+      },
+      "detail": {
+        "backToList": "Retour aux candidatures",
+        "title": "Candidature {{name}}",
+        "actions": {
+          "shortlist": "Présélectionner",
+          "accept": "Accepter",
+          "reject": "Refuser"
+        },
+        "fields": {
+          "status": "Statut",
+          "email": "Email",
+          "phone": "Téléphone",
+          "monthlyIncome": "Revenu mensuel",
+          "guarantor": "Garant",
+          "property": "Bien"
+        },
+        "docs": {
+          "panelTitle": "Pièces justificatives",
+          "status": {
+            "received": "Reçue",
+            "validated": "Validée",
+            "rejected": "Refusée"
+          },
+          "columns": {
+            "type": "Type",
+            "file": "Fichier",
+            "status": "Statut"
+          },
+          "validateButton": "Valider",
+          "rejectButton": "Refuser",
+          "empty": {
+            "title": "Aucune pièce",
+            "description": "Le candidat n'a pas encore déposé de pièces."
+          },
+          "toast": "Pièce mise à jour"
+        },
+        "rejectModal": {
+          "title": "Refuser la candidature",
+          "reasonLabel": "Motif (facultatif, communiqué au candidat)",
+          "reasonPlaceholder": "ex. dossier incomplet",
+          "cancel": "Annuler",
+          "submit": "Confirmer le refus"
+        },
+        "toasts": {
+          "decided": "Décision enregistrée"
+        }
+      }
+    },
+    "inventory": {
+      "gated": {
+        "message": "La gestion locative est réservée aux plans Pro et Entreprise."
+      },
+      "pageTitle": "État des lieux",
+      "backToLease": "Retour au bail",
+      "panelTitle": {
+        "entry": "État des lieux d'entrée",
+        "exit": "État des lieux de sortie"
+      },
+      "status": {
+        "draft": "Brouillon",
+        "finalized": "Finalisé",
+        "signed": "Signé"
+      },
+      "condition": {
+        "bon": "Bon",
+        "moyen": "Moyen",
+        "mauvais": "Mauvais"
+      },
+      "pdfButton": "PDF",
+      "finalizeButton": "Finaliser",
+      "lockNotice": "Cet état des lieux est finalisé et verrouillé (lecture seule).",
+      "commentPlaceholder": "commentaire",
+      "newRoomPlaceholder": "Nouvelle pièce",
+      "addRoomButton": "Ajouter une pièce",
+      "addItemPlaceholder": "Ajouter un élément",
+      "addItemButton": "Élément",
+      "toasts": {
+        "roomAdded": "Pièce ajoutée",
+        "itemAdded": "Élément ajouté",
+        "photoAdded": "Photo ajoutée",
+        "finalized": "État des lieux finalisé"
+      }
+    },
+    "settlement": {
+      "pageTitle": "Décompte de caution",
+      "comparisonTitle": "Comparaison entrée ↔ sortie",
+      "degradedLabel": "dégradé",
+      "noExit": {
+        "title": "Pas d'état des lieux de sortie",
+        "description": "Réalisez l'EDL de sortie pour comparer et justifier les retenues."
+      },
+      "empty": {
+        "title": "Aucun décompte",
+        "description": "Créez le décompte pour saisir les retenues sur la caution."
+      },
+      "createButton": "Créer le décompte",
+      "noLines": "Aucune retenue.",
+      "form": {
+        "labelLabel": "Libellé de la retenue",
+        "labelPlaceholder": "ex. Plan de travail brûlé",
+        "amountLabel": "Montant (Đh)",
+        "itemPlaceholder": "Élément (facultatif)",
+        "addButton": "Ajouter"
+      },
+      "totals": {
+        "deposit": "Dépôt",
+        "totalDeductions": "Total retenues",
+        "refunded": "Caution restituée",
+        "balanceDue": "Solde à réclamer"
+      },
+      "balanceWarning": "Les dégâts dépassent la caution : un solde reste à la charge du locataire (recouvrement à traiter hors plateforme).",
+      "toasts": {
+        "created": "Décompte créé",
+        "lineAdded": "Retenue ajoutée",
+        "finalized": "Décompte finalisé — email envoyé au locataire"
+      }
+    }
+  },
   "ui": {
     "viewOffers": "Voir les offres Pro & Entreprise"
   }
