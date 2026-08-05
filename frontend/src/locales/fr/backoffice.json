@@ -930,7 +930,9 @@
       "noData": "Aucune donnée d'analyse disponible.",
       "noDataShort": "Aucune donnée",
       "propertyCount_one": "{{count}} bien",
-      "propertyCount_other": "{{count}} biens"
+      "propertyCount_other": "{{count}} biens",
+      "transactionCount_one": "{{count}} transaction",
+      "transactionCount_other": "{{count}} transactions"
     },
     "layout": {
       "title": "Analyses",
@@ -957,6 +959,44 @@
       "agentSearch": "Rechercher un agent…",
       "cityAll": "Toutes les villes",
       "citySearch": "Rechercher une ville…"
+    },
+    "overview": {
+      "subtitle": "Vue d'ensemble des performances de l'agence",
+      "exportButton": "Exporter (biens)",
+      "stats": {
+        "revenue": "Chiffre d'affaires",
+        "dealsWon": "Transactions gagnées",
+        "newClients": "Nouveaux clients",
+        "visits": "Visites effectuées"
+      },
+      "changeVsPrev": "{{pct}}% vs période précédente",
+      "charts": {
+        "revenueByMonth": "Chiffre d'affaires par mois",
+        "commissionByTxType": "Commission par type de transaction"
+      },
+      "topAgents": "Top Agents",
+      "commissionLabel": "commission",
+      "propertiesByCity": "Biens par ville",
+      "funnel": {
+        "title": "Tunnel de conversion",
+        "leads": "Leads",
+        "qualified": "Qualifiés",
+        "visits": "Visites",
+        "offers": "Offres",
+        "closed": "Clôturés"
+      },
+      "kpis": {
+        "title": "Indicateurs clés",
+        "conversionRate": "Taux de conversion",
+        "avgCloseDays": "Jours moyen de clôture",
+        "avgDealValue": "Valeur moyenne transaction",
+        "weightedPipeline": "Pipeline pondéré"
+      },
+      "txTypeLabels": {
+        "sale": "Vente",
+        "rent": "Location",
+        "autre": "Autre"
+      }
     }
   }
 }

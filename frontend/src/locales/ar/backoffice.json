@@ -930,7 +930,9 @@
       "noData": "لا تتوفّر أي بيانات تحليلية.",
       "noDataShort": "لا توجد بيانات",
       "propertyCount_one": "{{count}} عقار",
-      "propertyCount_other": "{{count}} عقارات"
+      "propertyCount_other": "{{count}} عقارات",
+      "transactionCount_one": "{{count}} معاملة",
+      "transactionCount_other": "{{count}} معاملات"
     },
     "layout": {
       "title": "التحليلات",
@@ -957,6 +959,44 @@
       "agentSearch": "ابحث عن وكيل…",
       "cityAll": "كل المدن",
       "citySearch": "ابحث عن مدينة…"
+    },
+    "overview": {
+      "subtitle": "نظرة عامة على أداء الوكالة",
+      "exportButton": "تصدير (العقارات)",
+      "stats": {
+        "revenue": "الإيرادات",
+        "dealsWon": "الصفقات المُنجَزة",
+        "newClients": "عملاء جدد",
+        "visits": "الزيارات المُنجَزة"
+      },
+      "changeVsPrev": "{{pct}}% مقارنةً بالفترة السابقة",
+      "charts": {
+        "revenueByMonth": "الإيرادات حسب الشهر",
+        "commissionByTxType": "العمولة حسب نوع المعاملة"
+      },
+      "topAgents": "أفضل الوكلاء",
+      "commissionLabel": "عمولة",
+      "propertiesByCity": "العقارات حسب المدينة",
+      "funnel": {
+        "title": "قمع التحويل",
+        "leads": "عملاء محتملون",
+        "qualified": "مؤهَّلون",
+        "visits": "زيارات",
+        "offers": "عروض",
+        "closed": "مُغلقة"
+      },
+      "kpis": {
+        "title": "المؤشرات الرئيسية",
+        "conversionRate": "معدّل التحويل",
+        "avgCloseDays": "متوسّط أيام الإغلاق",
+        "avgDealValue": "متوسّط قيمة الصفقة",
+        "weightedPipeline": "المسار المُرجَّح"
+      },
+      "txTypeLabels": {
+        "sale": "بيع",
+        "rent": "كراء",
+        "autre": "أخرى"
+      }
     }
   }
 }

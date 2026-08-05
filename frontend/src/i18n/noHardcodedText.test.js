@@ -89,6 +89,7 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/legal/LegalCaseDetail.jsx',
   'src/pages/backoffice/analytics/AnalyticsLayout.jsx',
   'src/components/analytics/ChartCard.jsx',
+  'src/pages/backoffice/analytics/OverviewAnalytics.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {
