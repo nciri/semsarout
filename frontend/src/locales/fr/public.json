@@ -59,5 +59,19 @@
       "neighborhood": "Quartier",
       "constructionYear": "Année construction"
     }
+  },
+  "mortgage": {
+    "title": "Simulateur de crédit immobilier",
+    "subtitle": "Estimez votre mensualité en quelques secondes. Simulation indicative, hors assurance et frais de dossier.",
+    "priceLabel": "Prix du bien",
+    "downPaymentLabel": "Apport personnel : {{pct}}% ({{amount}})",
+    "rateLabel": "Taux d'intérêt annuel : {{rate}}%",
+    "durationLabel": "Durée du prêt : {{years}} ans",
+    "estimatedPaymentLabel": "Mensualité estimée",
+    "perMonth": "/mois",
+    "principalLabel": "Montant emprunté",
+    "totalInterestLabel": "Coût total du crédit",
+    "totalPaidLabel": "Total remboursé",
+    "disclaimer": "Simulation à titre indicatif. Les conditions réelles dépendent de votre banque et de votre profil."
   }
 }

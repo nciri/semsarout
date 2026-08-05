@@ -59,5 +59,19 @@
       "neighborhood": "الحي",
       "constructionYear": "سنة البناء"
     }
+  },
+  "mortgage": {
+    "title": "محاكي القرض العقاري",
+    "subtitle": "قدّروا قسطكم الشهري في ثوانٍ معدودة. محاكاة إرشادية، دون احتساب التأمين ورسوم الملف.",
+    "priceLabel": "سعر العقار",
+    "downPaymentLabel": "الدفعة الأولى: {{pct}}% ({{amount}})",
+    "rateLabel": "معدل الفائدة السنوي: {{rate}}%",
+    "durationLabel": "مدة القرض: {{years}} سنة",
+    "estimatedPaymentLabel": "القسط الشهري المقدر",
+    "perMonth": "/شهر",
+    "principalLabel": "المبلغ المقترض",
+    "totalInterestLabel": "التكلفة الإجمالية للقرض",
+    "totalPaidLabel": "المبلغ الإجمالي المسدد",
+    "disclaimer": "محاكاة إرشادية فقط. الشروط الفعلية تعتمد على بنككم وملفكم."
   }
 }

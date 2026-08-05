@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { FiPercent, FiCalendar, FiDollarSign } from 'react-icons/fi'
 import { formatPrice } from '../utils/currency'
 
@@ -18,6 +19,7 @@ function computeMonthlyPayment(principal, annualRatePct, years) {
 }
 
 function MortgageSimulator() {
+  const { t } = useTranslation(['public', 'common'])
   const [searchParams] = useSearchParams()
   const [price, setPrice] = useState(Number(searchParams.get('price')) || 1500000)
   const [downPaymentPct, setDownPaymentPct] = useState(20)
@@ -36,10 +38,10 @@ function MortgageSimulator() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-8 text-center">
         <h1 className="font-display text-3xl font-bold text-gray-900 mb-3">
-          Simulateur de crédit immobilier
+          {t('public:mortgage.title')}
         </h1>
         <p className="text-gray-600">
-          Estimez votre mensualité en quelques secondes. Simulation indicative, hors assurance et frais de dossier.
+          {t('public:mortgage.subtitle')}
         </p>
       </div>
 
@@ -48,7 +50,7 @@ function MortgageSimulator() {
         <div className="card p-6 space-y-6">
           <div>
             <label className="label flex items-center gap-2">
-              <FiDollarSign className="w-4 h-4" /> Prix du bien
+              <FiDollarSign className="w-4 h-4" /> {t('public:mortgage.priceLabel')}
             </label>
             <input
               type="number"
@@ -60,7 +62,7 @@ function MortgageSimulator() {
 
           <div>
             <label className="label">
-              Apport personnel : {downPaymentPct}% ({formatPrice(downPayment)})
+              {t('public:mortgage.downPaymentLabel', { pct: downPaymentPct, amount: formatPrice(downPayment) })}
             </label>
             <input
               type="range"
@@ -74,7 +76,7 @@ function MortgageSimulator() {
 
           <div>
             <label className="label flex items-center gap-2">
-              <FiPercent className="w-4 h-4" /> Taux d'intérêt annuel : {rate}%
+              <FiPercent className="w-4 h-4" /> {t('public:mortgage.rateLabel', { rate })}
             </label>
             <input
               type="range"
@@ -89,7 +91,7 @@ function MortgageSimulator() {
 
           <div>
             <label className="label flex items-center gap-2">
-              <FiCalendar className="w-4 h-4" /> Durée du prêt : {years} ans
+              <FiCalendar className="w-4 h-4" /> {t('public:mortgage.durationLabel', { years })}
             </label>
             <input
               type="range"
@@ -104,29 +106,29 @@ function MortgageSimulator() {
 
         {/* Result */}
         <div className="card p-6 bg-gradient-to-br from-midnight to-[#1a2740] text-white flex flex-col justify-center">
-          <p className="text-ivory/70 text-sm mb-2">Mensualité estimée</p>
+          <p className="text-ivory/70 text-sm mb-2">{t('public:mortgage.estimatedPaymentLabel')}</p>
           <p className="font-display text-4xl font-extrabold mb-6 text-primary-400">
             {formatPrice(Math.round(result.monthlyPayment))}
-            <span className="text-lg font-normal text-ivory/70">/mois</span>
+            <span className="text-lg font-normal text-ivory/70">{t('public:mortgage.perMonth')}</span>
           </p>
 
           <div className="space-y-3 text-sm border-t border-white/10 pt-4">
             <div className="flex justify-between">
-              <span className="text-ivory/70">Montant emprunté</span>
+              <span className="text-ivory/70">{t('public:mortgage.principalLabel')}</span>
               <span className="font-semibold">{formatPrice(principal)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-ivory/70">Coût total du crédit</span>
+              <span className="text-ivory/70">{t('public:mortgage.totalInterestLabel')}</span>
               <span className="font-semibold">{formatPrice(Math.round(result.totalInterest))}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-ivory/70">Total remboursé</span>
+              <span className="text-ivory/70">{t('public:mortgage.totalPaidLabel')}</span>
               <span className="font-semibold">{formatPrice(Math.round(result.totalPaid))}</span>
             </div>
           </div>
 
           <p className="text-xs text-ivory/50 mt-6">
-            Simulation à titre indicatif. Les conditions réelles dépendent de votre banque et de votre profil.
+            {t('public:mortgage.disclaimer')}
           </p>
         </div>
       </div>
