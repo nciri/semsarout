@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from 'react-query'
+import { useTranslation } from 'react-i18next'
 import { FiCheck, FiX, FiArrowRight, FiZap, FiPhone } from 'react-icons/fi'
 import api from '../services/api'
 import { DIRHAM_SYMBOL, formatPrice } from '../utils/currency'
 import { CONTACT } from '../constants/contact'
 import { PRICING } from '../constants/pricing'
+import DirIcon from '../components/common/DirIcon'
 
 function AgencyPricing() {
+  const { t } = useTranslation(['public'])
   const [billingCycle, setBillingCycle] = useState('yearly')
 
   const { data: plans } = useQuery('subscription-plans', async () => {
@@ -17,9 +20,9 @@ function AgencyPricing() {
 
   const defaultPlans = [
     {
-      name: 'Starter',
+      name: t('public:agencyPricing.plans.starter.name'),
       slug: 'starter',
-      description: 'Idéal pour démarrer',
+      description: t('public:agencyPricing.plans.starter.description'),
       max_listings: 10,
       max_featured: 1,
       max_urgent: 1,
@@ -34,9 +37,9 @@ function AgencyPricing() {
       price_yearly: PRICING.plans.starter.yearly
     },
     {
-      name: 'Pro',
+      name: t('public:agencyPricing.plans.pro.name'),
       slug: 'pro',
-      description: 'Pour les agences en croissance',
+      description: t('public:agencyPricing.plans.pro.description'),
       max_listings: 50,
       max_featured: 5,
       max_urgent: 5,
@@ -52,9 +55,9 @@ function AgencyPricing() {
       popular: true
     },
     {
-      name: 'Enterprise',
+      name: t('public:agencyPricing.plans.enterprise.name'),
       slug: 'enterprise',
-      description: 'Solution complète',
+      description: t('public:agencyPricing.plans.enterprise.description'),
       max_listings: -1,
       max_featured: 20,
       max_urgent: 20,
@@ -98,11 +101,10 @@ function AgencyPricing() {
       <section className="bg-gradient-to-br from-gray-900 to-gray-800 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="font-display text-4xl lg:text-5xl font-bold mb-6">
-            Tarifs Agences Partenaires
+            {t('public:agencyPricing.title')}
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-8">
-            Développez votre activité avec SemsarOut. Des outils puissants pour gérer
-            vos annonces et générer plus de leads qualifiés.
+            {t('public:agencyPricing.subtitle')}
           </p>
 
           {/* Billing Toggle */}
@@ -115,7 +117,7 @@ function AgencyPricing() {
                   : 'text-gray-400 hover:text-white'
               }`}
             >
-              Mensuel
+              {t('public:agencyPricing.billing.monthly')}
             </button>
             <button
               onClick={() => setBillingCycle('yearly')}
@@ -125,9 +127,9 @@ function AgencyPricing() {
                   : 'text-gray-400 hover:text-white'
               }`}
             >
-              Annuel
-              <span className="ml-2 text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">
-                -17%
+              {t('public:agencyPricing.billing.yearly')}
+              <span className="ms-2 text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">
+                {t('public:agencyPricing.billing.yearlyDiscount')}
               </span>
             </button>
           </div>
@@ -147,8 +149,8 @@ function AgencyPricing() {
               >
                 {plan.popular && (
                   <div className="absolute top-0 left-0 right-0 bg-primary-600 text-white text-center py-1 text-sm font-medium">
-                    <FiZap className="inline w-4 h-4 mr-1" />
-                    Le plus populaire
+                    <FiZap className="inline w-4 h-4 me-1" />
+                    {t('public:agencyPricing.popularBadge')}
                   </div>
                 )}
 
@@ -163,14 +165,16 @@ function AgencyPricing() {
                       <span className="text-4xl font-bold text-gray-900">
                         {getMonthlyEquivalent(plan).toLocaleString()}
                       </span>
-                      <span className="text-gray-600 ml-2">{DIRHAM_SYMBOL}/mois</span>
+                      <span className="text-gray-600 ms-2">
+                        {DIRHAM_SYMBOL}{t('public:agencyPricing.perMonthSuffix')}
+                      </span>
                     </div>
                     {billingCycle === 'yearly' && (
                       <p className="text-sm text-gray-500 mt-1">
-                        Facturé ~{formatPrice(getPrice(plan)+10)}/an
+                        {t('public:agencyPricing.billedYearly', { price: formatPrice(getPrice(plan) + 10) })}
                         {getSavings(plan) > 0 && (
-                          <span className="text-green-600 ml-2">
-                            (économisez {formatPrice(getSavings(plan))})
+                          <span className="text-green-600 ms-2">
+                            {t('public:agencyPricing.savings', { amount: formatPrice(getSavings(plan)) })}
                           </span>
                         )}
                       </p>
@@ -185,96 +189,96 @@ function AgencyPricing() {
                         : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
                     }`}
                   >
-                    Commencer maintenant
-                    <FiArrowRight className="w-4 h-4 ml-2" />
+                    {t('public:agencyPricing.ctaButton')}
+                    <DirIcon icon={FiArrowRight} className="w-4 h-4 ms-2" />
                   </Link>
 
                   {/* Features */}
                   <ul className="space-y-3">
                     <li className="flex items-center text-sm">
-                      <FiCheck className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                      <FiCheck className="w-5 h-5 text-green-500 me-3 flex-shrink-0" />
                       <span>
                         {plan.max_listings === -1
-                          ? 'Annonces illimitées'
-                          : `${plan.max_listings} annonces actives`}
+                          ? t('public:agencyPricing.features.listingsUnlimited')
+                          : t('public:agencyPricing.features.listingsCount', { n: plan.max_listings })}
                       </span>
                     </li>
                     <li className="flex items-center text-sm">
-                      <FiCheck className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                      <span>{plan.max_featured} annonces mises en avant/mois</span>
+                      <FiCheck className="w-5 h-5 text-green-500 me-3 flex-shrink-0" />
+                      <span>{t('public:agencyPricing.features.featuredCount', { n: plan.max_featured })}</span>
                     </li>
                     <li className="flex items-center text-sm">
-                      <FiCheck className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                      <span>{plan.max_urgent} badges "Urgent"/mois</span>
+                      <FiCheck className="w-5 h-5 text-green-500 me-3 flex-shrink-0" />
+                      <span>{t('public:agencyPricing.features.urgentCount', { n: plan.max_urgent })}</span>
                     </li>
                     <li className="flex items-center text-sm">
                       {plan.has_lead_contact ? (
-                        <FiCheck className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                        <FiCheck className="w-5 h-5 text-green-500 me-3 flex-shrink-0" />
                       ) : (
-                        <FiX className="w-5 h-5 text-gray-300 mr-3 flex-shrink-0" />
+                        <FiX className="w-5 h-5 text-gray-300 me-3 flex-shrink-0" />
                       )}
                       <span className={!plan.has_lead_contact ? 'text-gray-400' : ''}>
-                        Accès aux contacts
+                        {t('public:agencyPricing.features.leadContact')}
                       </span>
                     </li>
                     <li className="flex items-center text-sm">
                       {plan.has_api_access ? (
-                        <FiCheck className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                        <FiCheck className="w-5 h-5 text-green-500 me-3 flex-shrink-0" />
                       ) : (
-                        <FiX className="w-5 h-5 text-gray-300 mr-3 flex-shrink-0" />
+                        <FiX className="w-5 h-5 text-gray-300 me-3 flex-shrink-0" />
                       )}
                       <span className={!plan.has_api_access ? 'text-gray-400' : ''}>
-                        Accès API REST
+                        {t('public:agencyPricing.features.apiAccess')}
                       </span>
                     </li>
                     <li className="flex items-center text-sm">
                       {plan.has_csv_import ? (
-                        <FiCheck className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                        <FiCheck className="w-5 h-5 text-green-500 me-3 flex-shrink-0" />
                       ) : (
-                        <FiX className="w-5 h-5 text-gray-300 mr-3 flex-shrink-0" />
+                        <FiX className="w-5 h-5 text-gray-300 me-3 flex-shrink-0" />
                       )}
                       <span className={!plan.has_csv_import ? 'text-gray-400' : ''}>
-                        Import CSV
+                        {t('public:agencyPricing.features.csvImport')}
                       </span>
                     </li>
                     <li className="flex items-center text-sm">
                       {plan.has_analytics ? (
-                        <FiCheck className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                        <FiCheck className="w-5 h-5 text-green-500 me-3 flex-shrink-0" />
                       ) : (
-                        <FiX className="w-5 h-5 text-gray-300 mr-3 flex-shrink-0" />
+                        <FiX className="w-5 h-5 text-gray-300 me-3 flex-shrink-0" />
                       )}
                       <span className={!plan.has_analytics ? 'text-gray-400' : ''}>
-                        Tableau de bord analytics
+                        {t('public:agencyPricing.features.analytics')}
                       </span>
                     </li>
                     <li className="flex items-center text-sm">
                       {plan.has_staymanager_sync ? (
-                        <FiCheck className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                        <FiCheck className="w-5 h-5 text-green-500 me-3 flex-shrink-0" />
                       ) : (
-                        <FiX className="w-5 h-5 text-gray-300 mr-3 flex-shrink-0" />
+                        <FiX className="w-5 h-5 text-gray-300 me-3 flex-shrink-0" />
                       )}
                       <span className={!plan.has_staymanager_sync ? 'text-gray-400' : ''}>
-                        Sync StayManager
+                        {t('public:agencyPricing.features.staymanagerSync')}
                       </span>
                     </li>
                     <li className="flex items-center text-sm">
                       {plan.has_priority_support ? (
-                        <FiCheck className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                        <FiCheck className="w-5 h-5 text-green-500 me-3 flex-shrink-0" />
                       ) : (
-                        <FiX className="w-5 h-5 text-gray-300 mr-3 flex-shrink-0" />
+                        <FiX className="w-5 h-5 text-gray-300 me-3 flex-shrink-0" />
                       )}
                       <span className={!plan.has_priority_support ? 'text-gray-400' : ''}>
-                        Support prioritaire
+                        {t('public:agencyPricing.features.prioritySupport')}
                       </span>
                     </li>
                     <li className="flex items-center text-sm">
                       {plan.has_dedicated_account_manager ? (
-                        <FiCheck className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                        <FiCheck className="w-5 h-5 text-green-500 me-3 flex-shrink-0" />
                       ) : (
-                        <FiX className="w-5 h-5 text-gray-300 mr-3 flex-shrink-0" />
+                        <FiX className="w-5 h-5 text-gray-300 me-3 flex-shrink-0" />
                       )}
                       <span className={!plan.has_dedicated_account_manager ? 'text-gray-400' : ''}>
-                        Account manager dédié
+                        {t('public:agencyPricing.features.dedicatedManager')}
                       </span>
                     </li>
                   </ul>
@@ -289,76 +293,76 @@ function AgencyPricing() {
       <section className="bg-gray-50 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="font-display text-2xl font-bold text-gray-900 text-center mb-12">
-            Comparatif détaillé
+            {t('public:agencyPricing.comparison.title')}
           </h2>
 
           <div className="overflow-x-auto">
             <table className="w-full bg-white rounded-xl shadow-sm">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left p-4 font-medium text-gray-600">Fonctionnalité</th>
-                  <th className="p-4 text-center font-medium text-gray-600">Starter</th>
-                  <th className="p-4 text-center font-medium text-gray-600 bg-primary-50">Pro</th>
-                  <th className="p-4 text-center font-medium text-gray-600">Enterprise</th>
+                  <th className="text-start p-4 font-medium text-gray-600">{t('public:agencyPricing.comparison.feature')}</th>
+                  <th className="p-4 text-center font-medium text-gray-600">{t('public:agencyPricing.plans.starter.name')}</th>
+                  <th className="p-4 text-center font-medium text-gray-600 bg-primary-50">{t('public:agencyPricing.plans.pro.name')}</th>
+                  <th className="p-4 text-center font-medium text-gray-600">{t('public:agencyPricing.plans.enterprise.name')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 <tr>
-                  <td className="p-4 text-gray-900">Annonces actives</td>
+                  <td className="p-4 text-gray-900">{t('public:agencyPricing.comparison.activeListings')}</td>
                   <td className="p-4 text-center">10</td>
                   <td className="p-4 text-center bg-primary-50">50</td>
-                  <td className="p-4 text-center">Illimité</td>
+                  <td className="p-4 text-center">{t('public:agencyPricing.comparison.unlimited')}</td>
                 </tr>
                 <tr>
-                  <td className="p-4 text-gray-900">Photos par annonce</td>
+                  <td className="p-4 text-gray-900">{t('public:agencyPricing.comparison.photosPerListing')}</td>
                   <td className="p-4 text-center">10</td>
                   <td className="p-4 text-center bg-primary-50">20</td>
                   <td className="p-4 text-center">30</td>
                 </tr>
                 <tr>
-                  <td className="p-4 text-gray-900">Mises en avant/mois</td>
+                  <td className="p-4 text-gray-900">{t('public:agencyPricing.comparison.featuredPerMonth')}</td>
                   <td className="p-4 text-center">1</td>
                   <td className="p-4 text-center bg-primary-50">5</td>
                   <td className="p-4 text-center">20</td>
                 </tr>
                 <tr>
-                  <td className="p-4 text-gray-900">Import CSV</td>
+                  <td className="p-4 text-gray-900">{t('public:agencyPricing.comparison.csvImport')}</td>
                   <td className="p-4 text-center"><FiX className="w-5 h-5 text-gray-300 mx-auto" /></td>
                   <td className="p-4 text-center bg-primary-50"><FiCheck className="w-5 h-5 text-green-500 mx-auto" /></td>
                   <td className="p-4 text-center"><FiCheck className="w-5 h-5 text-green-500 mx-auto" /></td>
                 </tr>
                 <tr>
-                  <td className="p-4 text-gray-900">API REST</td>
+                  <td className="p-4 text-gray-900">{t('public:agencyPricing.comparison.apiRest')}</td>
                   <td className="p-4 text-center"><FiX className="w-5 h-5 text-gray-300 mx-auto" /></td>
                   <td className="p-4 text-center bg-primary-50"><FiCheck className="w-5 h-5 text-green-500 mx-auto" /></td>
                   <td className="p-4 text-center"><FiCheck className="w-5 h-5 text-green-500 mx-auto" /></td>
                 </tr>
                 <tr>
-                  <td className="p-4 text-gray-900">Analytics avancés</td>
+                  <td className="p-4 text-gray-900">{t('public:agencyPricing.comparison.advancedAnalytics')}</td>
                   <td className="p-4 text-center"><FiX className="w-5 h-5 text-gray-300 mx-auto" /></td>
                   <td className="p-4 text-center bg-primary-50"><FiCheck className="w-5 h-5 text-green-500 mx-auto" /></td>
                   <td className="p-4 text-center"><FiCheck className="w-5 h-5 text-green-500 mx-auto" /></td>
                 </tr>
                 <tr>
-                  <td className="p-4 text-gray-900">Sync StayManager</td>
+                  <td className="p-4 text-gray-900">{t('public:agencyPricing.comparison.staymanagerSync')}</td>
                   <td className="p-4 text-center"><FiX className="w-5 h-5 text-gray-300 mx-auto" /></td>
                   <td className="p-4 text-center bg-primary-50"><FiX className="w-5 h-5 text-gray-300 mx-auto" /></td>
                   <td className="p-4 text-center"><FiCheck className="w-5 h-5 text-green-500 mx-auto" /></td>
                 </tr>
                 <tr>
-                  <td className="p-4 text-gray-900">Support prioritaire</td>
+                  <td className="p-4 text-gray-900">{t('public:agencyPricing.comparison.prioritySupport')}</td>
                   <td className="p-4 text-center"><FiX className="w-5 h-5 text-gray-300 mx-auto" /></td>
                   <td className="p-4 text-center bg-primary-50"><FiX className="w-5 h-5 text-gray-300 mx-auto" /></td>
                   <td className="p-4 text-center"><FiCheck className="w-5 h-5 text-green-500 mx-auto" /></td>
                 </tr>
                 <tr>
-                  <td className="p-4 text-gray-900">Account manager dédié</td>
+                  <td className="p-4 text-gray-900">{t('public:agencyPricing.comparison.dedicatedManager')}</td>
                   <td className="p-4 text-center"><FiX className="w-5 h-5 text-gray-300 mx-auto" /></td>
                   <td className="p-4 text-center bg-primary-50"><FiX className="w-5 h-5 text-gray-300 mx-auto" /></td>
                   <td className="p-4 text-center"><FiCheck className="w-5 h-5 text-green-500 mx-auto" /></td>
                 </tr>
                 <tr>
-                  <td className="p-4 text-gray-900">Account manager dédié</td>
+                  <td className="p-4 text-gray-900">{t('public:agencyPricing.comparison.dedicatedManager')}</td>
                   <td className="p-4 text-center"><FiX className="w-5 h-5 text-gray-300 mx-auto" /></td>
                   <td className="p-4 text-center bg-primary-50"><FiX className="w-5 h-5 text-gray-300 mx-auto" /></td>
                   <td className="p-4 text-center"><FiCheck className="w-5 h-5 text-green-500 mx-auto" /></td>
@@ -373,52 +377,47 @@ function AgencyPricing() {
       <section className="py-20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="font-display text-2xl font-bold text-gray-900 text-center mb-12">
-            Questions fréquentes
+            {t('public:agencyPricing.faq.title')}
           </h2>
 
           <div className="space-y-4">
             <details className="bg-white rounded-xl p-6 shadow-sm group">
               <summary className="font-medium text-gray-900 cursor-pointer flex justify-between items-center">
-                Puis-je changer de plan à tout moment ?
+                {t('public:agencyPricing.faq.q1Question')}
                 <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
               </summary>
               <p className="mt-4 text-gray-600">
-                Oui, vous pouvez upgrader votre plan à tout moment. Le changement est effectif immédiatement
-                et vous ne payez que la différence au prorata. Pour downgrader, le changement prendra effet
-                à la fin de votre période de facturation en cours.
+                {t('public:agencyPricing.faq.q1Answer')}
               </p>
             </details>
 
             <details className="bg-white rounded-xl p-6 shadow-sm group">
               <summary className="font-medium text-gray-900 cursor-pointer flex justify-between items-center">
-                Comment fonctionne la facturation ?
+                {t('public:agencyPricing.faq.q2Question')}
                 <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
               </summary>
               <p className="mt-4 text-gray-600">
-                La facturation s'effectue au début de chaque période (mensuelle ou annuelle).
-                Vous recevez une facture par email et pouvez la télécharger depuis votre tableau de bord.
+                {t('public:agencyPricing.faq.q2Answer')}
               </p>
             </details>
 
             <details className="bg-white rounded-xl p-6 shadow-sm group">
               <summary className="font-medium text-gray-900 cursor-pointer flex justify-between items-center">
-                Y a-t-il un engagement minimum ?
+                {t('public:agencyPricing.faq.q3Question')}
                 <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
               </summary>
               <p className="mt-4 text-gray-600">
-                Non, aucun engagement minimum. Vous pouvez annuler votre abonnement à tout moment.
-                Pour les abonnements annuels, vous bénéficiez d'une garantie satisfait ou remboursé de 30 jours.
+                {t('public:agencyPricing.faq.q3Answer')}
               </p>
             </details>
 
             <details className="bg-white rounded-xl p-6 shadow-sm group">
               <summary className="font-medium text-gray-900 cursor-pointer flex justify-between items-center">
-                Comment fonctionne l'API ?
+                {t('public:agencyPricing.faq.q4Question')}
                 <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
               </summary>
               <p className="mt-4 text-gray-600">
-                Notre API REST vous permet de synchroniser automatiquement vos annonces avec votre logiciel métier.
-                Vous recevez une clé API unique dans votre tableau de bord, accompagnée d'une documentation complète.
+                {t('public:agencyPricing.faq.q4Answer')}
               </p>
             </details>
           </div>
@@ -430,18 +429,17 @@ function AgencyPricing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-gradient-to-r from-primary-600 to-terracotta-600 rounded-2xl p-8 lg:p-12 text-white text-center">
             <h2 className="font-display text-2xl lg:text-3xl font-bold mb-4">
-              Besoin d'une offre sur mesure ?
+              {t('public:agencyPricing.cta.title')}
             </h2>
             <p className="text-white/90 mb-8 max-w-2xl mx-auto">
-              Nous proposons des solutions personnalisées pour les réseaux d'agences,
-              promoteurs et grands comptes. Contactez-nous pour discuter de vos besoins.
+              {t('public:agencyPricing.cta.text')}
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link to="/contact" className="btn bg-white text-primary-600 hover:bg-gray-100">
-                Nous contacter
+                {t('public:agencyPricing.cta.contactButton')}
               </Link>
               <a href={`tel:${CONTACT.phoneTel}`} className="btn border-2 border-white text-white hover:bg-white/10">
-                <FiPhone className="w-4 h-4 mr-2" />
+                <FiPhone className="w-4 h-4 me-2" />
                 {CONTACT.phone}
               </a>
             </div>

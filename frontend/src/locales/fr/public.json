@@ -322,5 +322,76 @@
       "commercial": "Commercial",
       "mixed": "Mixte"
     }
+  },
+  "agencyPricing": {
+    "title": "Tarifs Agences Partenaires",
+    "subtitle": "Développez votre activité avec SemsarOut. Des outils puissants pour gérer vos annonces et générer plus de leads qualifiés.",
+    "billing": {
+      "monthly": "Mensuel",
+      "yearly": "Annuel",
+      "yearlyDiscount": "-17%"
+    },
+    "popularBadge": "Le plus populaire",
+    "perMonthSuffix": "/mois",
+    "billedYearly": "Facturé ~{{price}}/an",
+    "savings": "(économisez {{amount}})",
+    "ctaButton": "Commencer maintenant",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "description": "Idéal pour démarrer"
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Pour les agences en croissance"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "description": "Solution complète"
+      }
+    },
+    "features": {
+      "listingsUnlimited": "Annonces illimitées",
+      "listingsCount": "{{n}} annonces actives",
+      "featuredCount": "{{n}} annonces mises en avant/mois",
+      "urgentCount": "{{n}} badges \"Urgent\"/mois",
+      "leadContact": "Accès aux contacts",
+      "apiAccess": "Accès API REST",
+      "csvImport": "Import CSV",
+      "analytics": "Tableau de bord analytics",
+      "staymanagerSync": "Sync StayManager",
+      "prioritySupport": "Support prioritaire",
+      "dedicatedManager": "Account manager dédié"
+    },
+    "comparison": {
+      "title": "Comparatif détaillé",
+      "feature": "Fonctionnalité",
+      "activeListings": "Annonces actives",
+      "photosPerListing": "Photos par annonce",
+      "featuredPerMonth": "Mises en avant/mois",
+      "csvImport": "Import CSV",
+      "apiRest": "API REST",
+      "advancedAnalytics": "Analytics avancés",
+      "staymanagerSync": "Sync StayManager",
+      "prioritySupport": "Support prioritaire",
+      "dedicatedManager": "Account manager dédié",
+      "unlimited": "Illimité"
+    },
+    "faq": {
+      "title": "Questions fréquentes",
+      "q1Question": "Puis-je changer de plan à tout moment ?",
+      "q1Answer": "Oui, vous pouvez upgrader votre plan à tout moment. Le changement est effectif immédiatement et vous ne payez que la différence au prorata. Pour downgrader, le changement prendra effet à la fin de votre période de facturation en cours.",
+      "q2Question": "Comment fonctionne la facturation ?",
+      "q2Answer": "La facturation s'effectue au début de chaque période (mensuelle ou annuelle). Vous recevez une facture par email et pouvez la télécharger depuis votre tableau de bord.",
+      "q3Question": "Y a-t-il un engagement minimum ?",
+      "q3Answer": "Non, aucun engagement minimum. Vous pouvez annuler votre abonnement à tout moment. Pour les abonnements annuels, vous bénéficiez d'une garantie satisfait ou remboursé de 30 jours.",
+      "q4Question": "Comment fonctionne l'API ?",
+      "q4Answer": "Notre API REST vous permet de synchroniser automatiquement vos annonces avec votre logiciel métier. Vous recevez une clé API unique dans votre tableau de bord, accompagnée d'une documentation complète."
+    },
+    "cta": {
+      "title": "Besoin d'une offre sur mesure ?",
+      "text": "Nous proposons des solutions personnalisées pour les réseaux d'agences, promoteurs et grands comptes. Contactez-nous pour discuter de vos besoins.",
+      "contactButton": "Nous contacter"
+    }
   }
 }
