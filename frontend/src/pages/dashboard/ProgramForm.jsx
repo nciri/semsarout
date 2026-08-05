@@ -8,6 +8,7 @@ import {
 import { DIRHAM_SYMBOL, formatPrice } from '../../utils/currency'
 import api from '../../services/api'
 import SpecFields from '../../components/common/SpecFields'
+import AddressAutocomplete from '../../components/common/AddressAutocomplete'
 import { TYPOLOGY_OPTIONS, unitTypesForTypology, DETAIL_SECTIONS, UNIT_SPEC_FIELDS, UNIT_HIDE_ROOMS } from './programSpecsConfig'
 
 // Route through the shared axios instance: it reads accessToken from
@@ -687,18 +688,13 @@ export default function DashboardProgramForm() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Adresse complète
-              </label>
-              <input
-                type="text"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="Adresse du projet"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-            </div>
+            <AddressAutocomplete
+              value={formData.address}
+              onChange={(address) => setFormData({ ...formData, address })}
+              onSelect={({ address, lat, lng }) =>
+                setFormData({ ...formData, address, latitude: lat ?? null, longitude: lng ?? null })
+              }
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
