@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { FiLock, FiCheck, FiCreditCard, FiArrowLeft } from 'react-icons/fi'
 import useAuthStore from '../store/authStore'
 import api from '../services/api'
 import { formatPrice } from '../utils/currency'
+import DirIcon from '../components/common/DirIcon'
 
 const SERVICES = {
   'forfait-vente': {
@@ -36,6 +38,7 @@ const SUBSCRIPTION_PLANS = {
 }
 
 function Checkout() {
+  const { t } = useTranslation(['public', 'common'])
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { user } = useAuthStore()
@@ -108,7 +111,7 @@ function Checkout() {
       }
     } catch (error) {
       console.error('Payment error:', error)
-      setPaymentError(error.response?.data?.error || 'Une erreur est survenue. Veuillez réessayer.')
+      setPaymentError(error.response?.data?.error || t('public:checkout.genericError'))
     } finally {
       setIsProcessing(false)
     }
@@ -126,8 +129,8 @@ function Checkout() {
           to={serviceId ? '/nos-services' : '/agences/tarifs'}
           className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-8"
         >
-          <FiArrowLeft className="w-4 h-4 mr-2" />
-          Retour
+          <DirIcon icon={FiArrowLeft} className="w-4 h-4 me-2" />
+          {t('public:checkout.backLink')}
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -135,7 +138,7 @@ function Checkout() {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-sm p-8">
               <h1 className="font-display text-2xl font-bold text-gray-900 mb-8">
-                Finaliser votre commande
+                {t('public:checkout.title')}
               </h1>
 
               {paymentError && (
@@ -152,7 +155,7 @@ function Checkout() {
                   }`}>
                     {step > 1 ? <FiCheck className="w-4 h-4" /> : '1'}
                   </div>
-                  <span className="ml-2 font-medium">Informations</span>
+                  <span className="ms-2 font-medium">{t('public:checkout.stepInfoLabel')}</span>
                 </div>
                 <div className="flex-1 h-px bg-gray-200 mx-4"></div>
                 <div className={`flex items-center ${step >= 2 ? 'text-primary-600' : 'text-gray-400'}`}>
@@ -161,34 +164,34 @@ function Checkout() {
                   }`}>
                     2
                   </div>
-                  <span className="ml-2 font-medium">Paiement</span>
+                  <span className="ms-2 font-medium">{t('public:checkout.stepPaymentLabel')}</span>
                 </div>
               </div>
 
               <form onSubmit={handleSubmit(onSubmit)}>
                 {step === 1 && (
                   <div className="space-y-6">
-                    <h2 className="font-semibold text-lg">Vos informations</h2>
+                    <h2 className="font-semibold text-lg">{t('public:checkout.step1Title')}</h2>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="label">Nom complet *</label>
+                        <label className="label">{t('public:checkout.nameLabel')}</label>
                         <input
-                          {...register('name', { required: 'Nom requis' })}
+                          {...register('name', { required: t('public:checkout.nameRequired') })}
                           className="input"
-                          placeholder="Votre nom"
+                          placeholder={t('public:checkout.namePlaceholder')}
                         />
                         {errors.name && (
                           <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
                         )}
                       </div>
                       <div>
-                        <label className="label">Email *</label>
+                        <label className="label">{t('public:checkout.emailLabel')}</label>
                         <input
                           type="email"
-                          {...register('email', { required: 'Email requis' })}
+                          {...register('email', { required: t('public:checkout.emailRequired') })}
                           className="input"
-                          placeholder="votre@email.com"
+                          placeholder={t('public:checkout.emailPlaceholder')}
                         />
                         {errors.email && (
                           <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
@@ -197,11 +200,11 @@ function Checkout() {
                     </div>
 
                     <div>
-                      <label className="label">Téléphone *</label>
+                      <label className="label">{t('public:checkout.phoneLabel')}</label>
                       <input
-                        {...register('phone', { required: 'Téléphone requis' })}
+                        {...register('phone', { required: t('public:checkout.phoneRequired') })}
                         className="input"
-                        placeholder="+212 6XX XXX XXX"
+                        placeholder={t('public:checkout.phonePlaceholder')}
                       />
                       {errors.phone && (
                         <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
@@ -210,19 +213,19 @@ function Checkout() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="label">Adresse</label>
+                        <label className="label">{t('public:checkout.addressLabel')}</label>
                         <input
                           {...register('address')}
                           className="input"
-                          placeholder="Adresse"
+                          placeholder={t('public:checkout.addressPlaceholder')}
                         />
                       </div>
                       <div>
-                        <label className="label">Ville</label>
+                        <label className="label">{t('public:checkout.cityLabel')}</label>
                         <input
                           {...register('city')}
                           className="input"
-                          placeholder="Ville"
+                          placeholder={t('public:checkout.cityPlaceholder')}
                         />
                       </div>
                     </div>
@@ -232,7 +235,7 @@ function Checkout() {
                       onClick={() => setStep(2)}
                       className="btn-primary w-full justify-center"
                     >
-                      Continuer vers le paiement
+                      {t('public:checkout.continueButton')}
                     </button>
                   </div>
                 )}
@@ -242,12 +245,13 @@ function Checkout() {
                     <button
                       type="button"
                       onClick={() => setStep(1)}
-                      className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                      className="text-primary-600 hover:text-primary-700 text-sm font-medium inline-flex items-center"
                     >
-                      ← Modifier mes informations
+                      <DirIcon icon={FiArrowLeft} className="w-3.5 h-3.5 me-1.5" />
+                      {t('public:checkout.editInfoButton')}
                     </button>
 
-                    <h2 className="font-semibold text-lg">Mode de paiement</h2>
+                    <h2 className="font-semibold text-lg">{t('public:checkout.paymentMethodTitle')}</h2>
 
                     {/* Payment Methods */}
                     <div className="space-y-3">
@@ -266,10 +270,10 @@ function Checkout() {
                           onChange={(e) => setPaymentMethod(e.target.value)}
                           className="sr-only"
                         />
-                        <FiCreditCard className="w-6 h-6 text-gray-600 mr-4" />
+                        <FiCreditCard className="w-6 h-6 text-gray-600 me-4" />
                         <div className="flex-1">
-                          <div className="font-medium">Carte bancaire</div>
-                          <div className="text-sm text-gray-500">Visa, Mastercard, CMI</div>
+                          <div className="font-medium">{t('public:checkout.cardMethodLabel')}</div>
+                          <div className="text-sm text-gray-500">{t('public:checkout.cardMethodNote')}</div>
                         </div>
                         <div className="flex items-center space-x-2">
                           <img src="/visa.svg" alt="Visa" className="h-6" />
@@ -292,12 +296,12 @@ function Checkout() {
                           onChange={(e) => setPaymentMethod(e.target.value)}
                           className="sr-only"
                         />
-                        <div className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center mr-4">
-                          <span className="text-xs font-bold">VIR</span>
+                        <div className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center me-4">
+                          <span className="text-xs font-bold">{t('public:checkout.transferMethodShort')}</span>
                         </div>
                         <div className="flex-1">
-                          <div className="font-medium">Virement bancaire</div>
-                          <div className="text-sm text-gray-500">Activation après réception</div>
+                          <div className="font-medium">{t('public:checkout.transferMethodLabel')}</div>
+                          <div className="text-sm text-gray-500">{t('public:checkout.transferMethodNote')}</div>
                         </div>
                       </label>
                     </div>
@@ -306,8 +310,7 @@ function Checkout() {
                     {paymentMethod === 'card' && (
                       <div className="bg-gray-50 rounded-xl p-6">
                         <p className="text-sm text-gray-600 text-center">
-                          Vous serez redirigé vers notre partenaire de paiement sécurisé
-                          pour finaliser votre transaction.
+                          {t('public:checkout.cardRedirectNote')}
                         </p>
                       </div>
                     )}
@@ -315,11 +318,10 @@ function Checkout() {
                     {paymentMethod === 'transfer' && (
                       <div className="bg-blue-50 rounded-xl p-6">
                         <h3 className="font-medium text-blue-900 mb-2">
-                          Instructions de virement
+                          {t('public:checkout.transferInstructionsTitle')}
                         </h3>
                         <p className="text-sm text-blue-800">
-                          Après validation, vous recevrez les coordonnées bancaires par email.
-                          Votre service sera activé dès réception du virement.
+                          {t('public:checkout.transferInstructionsText')}
                         </p>
                       </div>
                     )}
@@ -329,13 +331,13 @@ function Checkout() {
                       <input
                         type="checkbox"
                         {...register('terms', { required: true })}
-                        className="mt-1 rounded border-gray-300 text-primary-600 mr-2"
+                        className="mt-1 rounded border-gray-300 text-primary-600 me-2"
                       />
                       <span className="text-sm text-gray-600">
-                        J'accepte les{' '}
-                        <Link to="/cgu" target="_blank" className="text-primary-600 underline">conditions générales de vente</Link>
-                        {' '}et la{' '}
-                        <Link to="/politique-de-confidentialite" target="_blank" className="text-primary-600 underline">politique de confidentialité</Link>
+                        {t('public:checkout.termsPrefix')}{' '}
+                        <Link to="/cgu" target="_blank" className="text-primary-600 underline">{t('public:checkout.termsLink')}</Link>
+                        {' '}{t('public:checkout.termsAnd')}{' '}
+                        <Link to="/politique-de-confidentialite" target="_blank" className="text-primary-600 underline">{t('public:checkout.privacyLink')}</Link>
                       </span>
                     </div>
 
@@ -345,11 +347,11 @@ function Checkout() {
                       className="btn-primary w-full justify-center"
                     >
                       {isProcessing ? (
-                        'Traitement en cours...'
+                        t('public:checkout.processing')
                       ) : (
                         <>
-                          <FiLock className="w-4 h-4 mr-2" />
-                          Payer {formatPrice(price)}
+                          <FiLock className="w-4 h-4 me-2" />
+                          {t('public:checkout.payButton', { price: formatPrice(price) })}
                         </>
                       )}
                     </button>
@@ -362,32 +364,34 @@ function Checkout() {
           {/* Order Summary */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-sm p-6 sticky top-24">
-              <h2 className="font-semibold text-lg mb-4">Récapitulatif</h2>
+              <h2 className="font-semibold text-lg mb-4">{t('public:checkout.summaryTitle')}</h2>
 
               <div className="border-b border-gray-100 pb-4 mb-4">
                 <div className="font-medium text-gray-900">{item.name}</div>
                 <div className="text-sm text-gray-500">{item.description || ''}</div>
                 {planId && (
                   <div className="text-sm text-gray-500">
-                    Facturation {billingCycle === 'yearly' ? 'annuelle' : 'mensuelle'}
+                    {billingCycle === 'yearly'
+                      ? t('public:checkout.billingYearly')
+                      : t('public:checkout.billingMonthly')}
                   </div>
                 )}
               </div>
 
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Sous-total</span>
+                  <span className="text-gray-600">{t('public:checkout.subtotalLabel')}</span>
                   <span>{formatPrice(price)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">TVA (20%)</span>
-                  <span>Incluse</span>
+                  <span className="text-gray-600">{t('public:checkout.vatLabel')}</span>
+                  <span>{t('public:checkout.vatIncluded')}</span>
                 </div>
               </div>
 
               <div className="border-t border-gray-100 pt-4">
                 <div className="flex justify-between text-lg font-bold">
-                  <span>Total TTC</span>
+                  <span>{t('public:checkout.totalLabel')}</span>
                   <span className="text-primary-600">{formatPrice(price)}</span>
                 </div>
               </div>
@@ -395,8 +399,8 @@ function Checkout() {
               {/* Security badges */}
               <div className="mt-6 pt-6 border-t border-gray-100">
                 <div className="flex items-center justify-center text-sm text-gray-500 mb-4">
-                  <FiLock className="w-4 h-4 mr-2" />
-                  Paiement 100% sécurisé
+                  <FiLock className="w-4 h-4 me-2" />
+                  {t('public:checkout.securePaymentNote')}
                 </div>
                 <div className="flex justify-center space-x-4 opacity-50">
                   <img src="/visa.svg" alt="Visa" className="h-6" />
