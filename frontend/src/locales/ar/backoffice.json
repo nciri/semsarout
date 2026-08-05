@@ -874,6 +874,54 @@
         "created": "تمت إضافة الموثّق",
         "deleted": "تم حذف الموثّق"
       }
+    },
+    "cases": {
+      "stats": {
+        "total": "الإجمالي",
+        "open": "مفتوحة",
+        "in_progress": "قيد الإنجاز",
+        "closed": "مُغلقة"
+      },
+      "gated": {
+        "title": "الملفات القانونية",
+        "message": "المتابعة القانونية متاحة لباقتَي Pro وEntreprise فقط."
+      },
+      "noNotary": "لم يتم إعداد أي موثّق. أضف موثّقًا من تبويب <notariesLink>الموثّقون</notariesLink> لتتمكّن من إنشاء ملف.",
+      "columns": {
+        "title": "العنوان",
+        "type": "النوع",
+        "notary": "الموثّق",
+        "progress": "التقدّم",
+        "status": "الحالة"
+      },
+      "toolbar": {
+        "titlePlaceholder": "عنوان الملف (اختياري)",
+        "newButton": "ملف جديد",
+        "noNotaryTooltip": "أعدّ موثّقًا أولًا (تبويب الموثّقون)"
+      },
+      "empty": {
+        "title": "لا يوجد أي ملف",
+        "description": "أنشئ ملفًا أعلاه لتوليد قائمة مراحله القانونية تلقائيًا."
+      }
+    },
+    "caseDetail": {
+      "notFound": {
+        "text": "الملف غير موجود.",
+        "link": "العودة إلى الملفات"
+      },
+      "back": "الملفات القانونية",
+      "closeCase": "إغلاق الملف",
+      "closeCaseTooltip": "إغلاق هذا الملف (لم تُعالَج أي مرحلة)",
+      "statusLabel": "الحالة",
+      "notaryLabel": "الموثّق",
+      "notaryNone": "لا شيء",
+      "progress": "التقدّم",
+      "tasksTitle": "مراحل الملف",
+      "taskToggleTooltip": "تغيير الحالة",
+      "taskDeleteTooltip": "حذف",
+      "tasksEmpty": "لا توجد أي مرحلة حاليًا.",
+      "addTaskPlaceholder": "إضافة مرحلة…",
+      "addButton": "إضافة"
     }
   }
 }

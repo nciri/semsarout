@@ -85,6 +85,8 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/contracts/TemplatesManager.jsx',
   'src/pages/backoffice/legal/NotairesLayout.jsx',
   'src/pages/backoffice/legal/NotariesDirectory.jsx',
+  'src/pages/backoffice/legal/LegalCasesList.jsx',
+  'src/pages/backoffice/legal/LegalCaseDetail.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {

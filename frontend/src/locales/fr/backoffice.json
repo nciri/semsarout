@@ -874,6 +874,54 @@
         "created": "Notaire ajouté",
         "deleted": "Notaire supprimé"
       }
+    },
+    "cases": {
+      "stats": {
+        "total": "Total",
+        "open": "Ouverts",
+        "in_progress": "En cours",
+        "closed": "Clôturés"
+      },
+      "gated": {
+        "title": "Dossiers juridiques",
+        "message": "Le suivi juridique est réservé aux plans Pro et Entreprise."
+      },
+      "noNotary": "Aucun notaire configuré. Ajoutez un notaire dans l'onglet <notariesLink>Notaires</notariesLink> pour pouvoir créer un dossier.",
+      "columns": {
+        "title": "Titre",
+        "type": "Type",
+        "notary": "Notaire",
+        "progress": "Progression",
+        "status": "Statut"
+      },
+      "toolbar": {
+        "titlePlaceholder": "Titre du dossier (optionnel)",
+        "newButton": "Nouveau dossier",
+        "noNotaryTooltip": "Configurez d'abord un notaire (onglet Notaires)"
+      },
+      "empty": {
+        "title": "Aucun dossier",
+        "description": "Créez un dossier ci-dessus pour générer automatiquement sa liste d'étapes juridiques."
+      }
+    },
+    "caseDetail": {
+      "notFound": {
+        "text": "Dossier introuvable.",
+        "link": "Retour aux dossiers"
+      },
+      "back": "Dossiers juridiques",
+      "closeCase": "Fermer le dossier",
+      "closeCaseTooltip": "Fermer ce dossier (aucune étape traitée)",
+      "statusLabel": "Statut",
+      "notaryLabel": "Notaire",
+      "notaryNone": "Aucun",
+      "progress": "Progression",
+      "tasksTitle": "Étapes du dossier",
+      "taskToggleTooltip": "Changer le statut",
+      "taskDeleteTooltip": "Supprimer",
+      "tasksEmpty": "Aucune étape pour l'instant.",
+      "addTaskPlaceholder": "Ajouter une étape…",
+      "addButton": "Ajouter"
     }
   }
 }
