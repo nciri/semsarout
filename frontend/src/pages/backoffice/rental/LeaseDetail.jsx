@@ -109,7 +109,7 @@ function LeaseDetail() {
                 <div className="flex items-center gap-3">
                   <FiFileText className="w-5 h-5 text-gray-300" />
                   <span className="text-gray-700">{label}</span>
-                  {found && <StatusBadge label={found.status} />}
+                  {found && <StatusBadge label={t(`backoffice:rental.inventory.status.${found.status}`, { defaultValue: found.status })} />}
                 </div>
                 {found ? (
                   <Link to={`/backoffice/gestion-locative/etats-des-lieux/${found.id}`} className="text-primary-600 hover:text-primary-700 font-medium">{t('backoffice:rental.lease.inventories.openButton')}</Link>

@@ -382,6 +382,41 @@
           "decided": "تم تسجيل القرار"
         }
       }
+    },
+    "inventory": {
+      "gated": {
+        "message": "التسيير الكرائي مخصص لباقتي Pro والمؤسسات."
+      },
+      "pageTitle": "محضر الحالة",
+      "backToLease": "الرجوع إلى العقد",
+      "panelTitle": {
+        "entry": "محضر الحالة عند الدخول",
+        "exit": "محضر الحالة عند الخروج"
+      },
+      "status": {
+        "draft": "مسودة",
+        "finalized": "مُنجَز",
+        "signed": "مُوقَّع"
+      },
+      "condition": {
+        "bon": "جيد",
+        "moyen": "متوسط",
+        "mauvais": "سيئ"
+      },
+      "pdfButton": "PDF",
+      "finalizeButton": "إنهاء",
+      "lockNotice": "محضر الحالة هذا منتهٍ ومقفل (للقراءة فقط).",
+      "commentPlaceholder": "تعليق",
+      "newRoomPlaceholder": "غرفة جديدة",
+      "addRoomButton": "إضافة غرفة",
+      "addItemPlaceholder": "إضافة عنصر",
+      "addItemButton": "عنصر",
+      "toasts": {
+        "roomAdded": "تمت إضافة الغرفة",
+        "itemAdded": "تمت إضافة العنصر",
+        "photoAdded": "تمت إضافة الصورة",
+        "finalized": "تم إنهاء محضر الحالة"
+      }
     }
   },
   "ui": {

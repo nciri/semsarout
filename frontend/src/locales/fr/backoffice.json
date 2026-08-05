@@ -382,6 +382,41 @@
           "decided": "Décision enregistrée"
         }
       }
+    },
+    "inventory": {
+      "gated": {
+        "message": "La gestion locative est réservée aux plans Pro et Entreprise."
+      },
+      "pageTitle": "État des lieux",
+      "backToLease": "Retour au bail",
+      "panelTitle": {
+        "entry": "État des lieux d'entrée",
+        "exit": "État des lieux de sortie"
+      },
+      "status": {
+        "draft": "Brouillon",
+        "finalized": "Finalisé",
+        "signed": "Signé"
+      },
+      "condition": {
+        "bon": "Bon",
+        "moyen": "Moyen",
+        "mauvais": "Mauvais"
+      },
+      "pdfButton": "PDF",
+      "finalizeButton": "Finaliser",
+      "lockNotice": "Cet état des lieux est finalisé et verrouillé (lecture seule).",
+      "commentPlaceholder": "commentaire",
+      "newRoomPlaceholder": "Nouvelle pièce",
+      "addRoomButton": "Ajouter une pièce",
+      "addItemPlaceholder": "Ajouter un élément",
+      "addItemButton": "Élément",
+      "toasts": {
+        "roomAdded": "Pièce ajoutée",
+        "itemAdded": "Élément ajouté",
+        "photoAdded": "Photo ajoutée",
+        "finalized": "État des lieux finalisé"
+      }
     }
   },
   "ui": {
