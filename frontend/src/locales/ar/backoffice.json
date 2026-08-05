@@ -1028,6 +1028,48 @@
       "series": {
         "days": "أيام"
       }
+    },
+    "market": {
+      "kpis": {
+        "portfolioPriceSqm": "السعر/م² للمحفظة",
+        "marketPriceSqm": "السعر/م² للسوق",
+        "gapVsMarket": "الفارق مقابل السوق",
+        "daysOnMarket": "أيام في السوق"
+      },
+      "charts": {
+        "priceSqmByNeighborhood": "السعر/م² حسب الحي (المحفظة مقابل السوق)",
+        "daysOnMarket": "أيام في السوق",
+        "valuationByCity": "التقييم حسب المدينة"
+      },
+      "series": {
+        "portfolio": "المحفظة",
+        "market": "السوق",
+        "listings": "الإعلانات"
+      }
+    },
+    "team": {
+      "kpis": {
+        "costPerLead": "التكلفة لكل عميل محتمل",
+        "bestSource": "أفضل مصدر",
+        "agents": "الوكلاء",
+        "sources": "المصادر"
+      },
+      "charts": {
+        "commissionByAgent": "العمولة حسب الوكيل",
+        "conversionBySource": "التحويل حسب المصدر",
+        "roiBySource": "العائد حسب المصدر"
+      },
+      "series": {
+        "commission": "العمولة",
+        "conversionPct": "نسبة التحويل"
+      },
+      "table": {
+        "source": "المصدر",
+        "leads": "عملاء محتملون",
+        "converted": "مُحوَّلون",
+        "cost": "التكلفة",
+        "conversion": "التحويل"
+      }
     }
   }
 }

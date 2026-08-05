@@ -1028,6 +1028,48 @@
       "series": {
         "days": "Jours"
       }
+    },
+    "market": {
+      "kpis": {
+        "portfolioPriceSqm": "Prix/m² portefeuille",
+        "marketPriceSqm": "Prix/m² marché",
+        "gapVsMarket": "Écart vs marché",
+        "daysOnMarket": "Jours sur le marché"
+      },
+      "charts": {
+        "priceSqmByNeighborhood": "Prix/m² par quartier (portefeuille vs marché)",
+        "daysOnMarket": "Jours sur le marché",
+        "valuationByCity": "Valorisation par ville"
+      },
+      "series": {
+        "portfolio": "Portefeuille",
+        "market": "Marché",
+        "listings": "Annonces"
+      }
+    },
+    "team": {
+      "kpis": {
+        "costPerLead": "Coût par lead",
+        "bestSource": "Meilleure source",
+        "agents": "Agents",
+        "sources": "Sources"
+      },
+      "charts": {
+        "commissionByAgent": "Commission par agent",
+        "conversionBySource": "Conversion par source",
+        "roiBySource": "ROI par source"
+      },
+      "series": {
+        "commission": "Commission",
+        "conversionPct": "Conversion %"
+      },
+      "table": {
+        "source": "Source",
+        "leads": "Leads",
+        "converted": "Convertis",
+        "cost": "Coût",
+        "conversion": "Conv."
+      }
     }
   }
 }
