@@ -238,5 +238,45 @@
     "sending": "Envoi...",
     "sendError": "Erreur lors de l'envoi du message",
     "genericError": "Une erreur est survenue"
+  },
+  "programList": {
+    "title": "Programmes immobiliers neufs",
+    "subtitle": "Découvrez les projets immobiliers neufs au Maroc. Appartements, villas et résidences de standing.",
+    "searchPlaceholder": "Rechercher un programme, une ville...",
+    "searchButton": "Rechercher",
+    "allCities": "Toutes les villes",
+    "allStatuses": "État de construction",
+    "moreFilters": "Plus de filtres",
+    "reset": "Réinitialiser",
+    "resultsCount_one": "{{count}} programme trouvé",
+    "resultsCount_other": "{{count}} programmes trouvés",
+    "minPriceLabel": "Prix min ({{symbol}})",
+    "maxPriceLabel": "Prix max ({{symbol}})",
+    "minPricePlaceholder": "Ex: 500000",
+    "maxPricePlaceholder": "Ex: 2000000",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "pageOf": "Page {{page}} sur {{pages}}",
+    "emptyTitle": "Aucun programme trouvé",
+    "emptyWithFilters": "Aucun programme ne correspond à vos critères de recherche.",
+    "emptyNoFilters": "Aucun programme immobilier n'est disponible pour le moment.",
+    "resetFilters": "Réinitialiser les filtres",
+    "deliveryDate": "Livraison {{date}}",
+    "fromPrice": "À partir de",
+    "priceOnRequest": "Prix sur demande",
+    "available": "Disponibles",
+    "unitsCount_one": "{{count}} unité",
+    "unitsCount_other": "{{count}} unités",
+    "status": {
+      "planning": "En projet",
+      "under_construction": "En construction",
+      "delivered": "Livré"
+    },
+    "types": {
+      "all": "Tous les types",
+      "residential": "Résidentiel",
+      "commercial": "Commercial",
+      "mixed": "Mixte"
+    }
   }
 }

@@ -238,5 +238,45 @@
     "sending": "جارٍ الإرسال...",
     "sendError": "حدث خطأ أثناء إرسال الرسالة",
     "genericError": "حدث خطأ ما"
+  },
+  "programList": {
+    "title": "مشاريع عقارية جديدة",
+    "subtitle": "اكتشفوا المشاريع العقارية الجديدة في المغرب. شقق وفيلات وإقامات راقية.",
+    "searchPlaceholder": "ابحثوا عن مشروع أو مدينة...",
+    "searchButton": "بحث",
+    "allCities": "جميع المدن",
+    "allStatuses": "حالة البناء",
+    "moreFilters": "المزيد من الفلاتر",
+    "reset": "إعادة تعيين",
+    "resultsCount_one": "مشروع واحد موجود",
+    "resultsCount_other": "{{count}} مشروع موجود",
+    "minPriceLabel": "السعر الأدنى ({{symbol}})",
+    "maxPriceLabel": "السعر الأقصى ({{symbol}})",
+    "minPricePlaceholder": "مثال: 500000",
+    "maxPricePlaceholder": "مثال: 2000000",
+    "previous": "السابق",
+    "next": "التالي",
+    "pageOf": "صفحة {{page}} من {{pages}}",
+    "emptyTitle": "لم يتم العثور على أي مشروع",
+    "emptyWithFilters": "لا يوجد أي مشروع يطابق معايير بحثكم.",
+    "emptyNoFilters": "لا يوجد حاليا أي مشروع عقاري متاح.",
+    "resetFilters": "إعادة تعيين الفلاتر",
+    "deliveryDate": "التسليم {{date}}",
+    "fromPrice": "ابتداء من",
+    "priceOnRequest": "السعر عند الطلب",
+    "available": "متاحة",
+    "unitsCount_one": "وحدة واحدة",
+    "unitsCount_other": "{{count}} وحدة",
+    "status": {
+      "planning": "قيد الدراسة",
+      "under_construction": "قيد الإنجاز",
+      "delivered": "مُسلَّم"
+    },
+    "types": {
+      "all": "جميع الأنواع",
+      "residential": "سكني",
+      "commercial": "تجاري",
+      "mixed": "مختلط"
+    }
   }
 }
