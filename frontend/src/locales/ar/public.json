@@ -828,5 +828,193 @@
       "applicationSent": "تم إرسال الترشح مع الملفات.",
       "fileTooLarge": "الملف كبير جدًا (10 ميغا كحد أقصى)"
     }
+  },
+  "sellProperty": {
+    "title": "بيع عقارك عبر الإنترنت",
+    "subtitle": "صف عقارك، احصل على تقدير، أعد ملفك: إعلانك جاهز للنشر. باقة ثابتة {{price}}، تُدفع بعد التحقق.",
+    "steps": {
+      "bien": "عقارك",
+      "prix": "التقدير والسعر",
+      "photos": "الصور",
+      "documents": "المستندات",
+      "recap": "الملخص"
+    },
+    "errors": {
+      "chooseType": "اختر نوع العقار",
+      "cityRequired": "حدد المدينة",
+      "surfaceRequired": "حدد المساحة السكنية",
+      "priceRequired": "حدد سعر البيع الخاص بك",
+      "accountRequiredPhotos": "أنشئ حسابك لإضافة صورك",
+      "photosRequired": "أضف صورة واحدة على الأقل، أو اختر التصوير الاحترافي",
+      "consentRequired": "يرجى قبول الشروط لإرسال ملفك",
+      "uploadPhotoFailed": "فشل إرسال إحدى الصور",
+      "uploadDocumentFailed": "فشل إرسال المستند",
+      "submitFailed": "حدث خطأ، يرجى إعادة المحاولة"
+    },
+    "step1": {
+      "propertyTypeLabel": "نوع العقار",
+      "cityLabel": "المدينة",
+      "cityPlaceholder": "مثال: الدار البيضاء",
+      "neighborhoodLabel": "الحي",
+      "neighborhoodPlaceholder": "مثال: المعاريف",
+      "addressLabel": "العنوان",
+      "addressPlaceholder": "لن يُنشر في الإعلان",
+      "surfaceLabel": "المساحة (م²)",
+      "surfacePlaceholder": "85",
+      "roomsLabel": "الغرف",
+      "roomsPlaceholder": "3",
+      "bedroomsLabel": "غرف النوم",
+      "bedroomsPlaceholder": "2",
+      "bathroomsLabel": "الحمامات",
+      "bathroomsPlaceholder": "1",
+      "floorLabel": "الطابق",
+      "floorPlaceholder": "2",
+      "totalFloorsLabel": "عدد طوابق المبنى",
+      "totalFloorsPlaceholder": "5",
+      "constructionYearLabel": "سنة البناء",
+      "constructionYearPlaceholder": "2010",
+      "featuresLabel": "المزايا",
+      "descriptionLabel": "وصف حر",
+      "descriptionPlaceholder": "نقاط القوة، الأشغال الحديثة، المحيط... سيقوم خبراؤنا بصقل نص الإعلان."
+    },
+    "propertyTypes": {
+      "apartment": "شقة",
+      "house": "منزل",
+      "villa": "فيلا",
+      "riad": "رياض",
+      "land": "أرض",
+      "commercial": "محل تجاري",
+      "office": "مكتب",
+      "garage": "مرآب/موقف سيارات"
+    },
+    "features": {
+      "parking": "موقف سيارات",
+      "garage": "مرآب",
+      "jardin": "حديقة",
+      "terrasse": "شرفة",
+      "balcon": "بلكونة",
+      "piscine": "مسبح",
+      "ascenseur": "مصعد",
+      "gardien": "حارس",
+      "climatisation": "تكييف",
+      "chauffage": "تدفئة",
+      "meuble": "مفروش",
+      "cuisineEquipee": "مطبخ مجهز",
+      "cave": "قبو",
+      "vueMer": "إطلالة على البحر",
+      "vueMontagne": "إطلالة على الجبل",
+      "duplex": "دوبلكس"
+    },
+    "step2": {
+      "estimationTitle": "تقدير قيمة عقارك",
+      "estimationLoading": "جارٍ تحليل العقارات المماثلة...",
+      "rangeLow": "الحد الأدنى",
+      "recommendedPrice": "السعر الموصى به",
+      "rangeHigh": "الحد الأعلى",
+      "comparablesBasisCityAndType": "استنادًا إلى {{count}} عقار(ات) مماثل(ة) ({{type}} في {{city}}) — أي حوالي {{price}}/م². سيقوم خبير بتدقيق هذا التقدير عند التحقق من ملفك.",
+      "comparablesBasisCity": "استنادًا إلى {{count}} عقار(ات) مماثل(ة) في {{city}} — أي حوالي {{price}}/م². سيقوم خبير بتدقيق هذا التقدير عند التحقق من ملفك.",
+      "comparablesBasisType": "استنادًا إلى {{count}} عقار(ات) مماثل(ة) من نفس النوع — أي حوالي {{price}}/م². سيقوم خبير بتدقيق هذا التقدير عند التحقق من ملفك.",
+      "noEstimation": "لا توجد عقارات مماثلة كافية لتقدير تلقائي — سيقوم خبير بتقدير عقارك مجانًا عند التحقق من الملف.",
+      "priceTitle": "سعر البيع الخاص بك",
+      "priceLabel": "السعر المطلوب ({{currency}})",
+      "pricePlaceholder": "1 400 000",
+      "priceAboveRangeWarning": "السعر أعلى من الحد الأعلى: قد يستغرق البيع وقتًا أطول.",
+      "priceIndicative": "يبقى هذا السعر إرشاديًا: ستؤكده مع خبيرك قبل النشر."
+    },
+    "step3": {
+      "accountRequiredTitle": "أنشئ حسابك للمتابعة",
+      "accountRequiredText": "سيتم ربط صورك ومستنداتك بحسابك. بياناتك محفوظة: ستتابع تمامًا من هنا.",
+      "createAccountButton": "أنشئ حسابي مجانًا",
+      "haveAccountButton": "لدي حساب بالفعل",
+      "photosTitle": "صور عقارك",
+      "photosHelp": "الصيغ المقبولة JPG وPNG وWebP — 10 ميغا كحد أقصى لكل صورة. الإعلانات المرفقة بصور تحصل على 5 أضعاف عدد التواصلات.",
+      "uploading": "جارٍ الإرسال...",
+      "clickToAdd": "انقر لإضافة صورك",
+      "dragDrop": "أو اسحب وأفلت عدة ملفات",
+      "mainPhotoBadge": "رئيسية",
+      "removePhotoAriaLabel": "حذف الصورة",
+      "proPhotosLabel": "أرغب في جلسة تصوير احترافية",
+      "proPhotosIncluded": "مشمولة في باقة البيع",
+      "proPhotosHelp": "15 إلى 20 صورة عالية الدقة معدّلة بواسطة مصور في منزلك، تُسلّم خلال 48 ساعة. يمكنك رغم ذلك إضافة صورك في انتظار ذلك."
+    },
+    "step4": {
+      "title": "مستندات العقار",
+      "help": "جميعها اختيارية في هذه المرحلة، لكن الملف الكامل يسرّع التحقق ويطمئن المشترين. الصيغ المقبولة PDF أو صورة، 10 ميغا كحد أقصى.",
+      "added": "تمت إضافة المستند",
+      "removeDocumentAriaLabel": "حذف المستند",
+      "addButton": "إضافة"
+    },
+    "docTypes": {
+      "titre_foncier": {
+        "label": "سند الملكية / الرسم العقاري",
+        "description": "ضروري لإتمام البيع لدى الموثق"
+      },
+      "cin": {
+        "label": "بطاقة الهوية (CIN)",
+        "description": "للتحقق من هويتك كمالك"
+      },
+      "plan": {
+        "label": "مخطط العقار",
+        "description": "يساعد المشترين على تصور المكان"
+      },
+      "reglement_copropriete": {
+        "label": "نظام الملكية المشتركة",
+        "description": "للشقق في إطار الملكية المشتركة"
+      },
+      "diagnostic": {
+        "label": "التشخيصات / الشهادات",
+        "description": "الكهرباء، المطابقة... إن وُجدت"
+      },
+      "autre": {
+        "label": "مستند آخر",
+        "description": "أي مستند مفيد للبيع"
+      }
+    },
+    "step5": {
+      "propertyTitle": "عقارك",
+      "editButton": "تعديل",
+      "typeLabel": "النوع",
+      "cityLabel": "المدينة",
+      "surfaceLabel": "المساحة",
+      "roomsLabel": "الغرف",
+      "bedroomsLabel": "غرف النوم",
+      "bathroomsLabel": "الحمامات",
+      "constructionLabel": "البناء",
+      "priceTitle": "السعر",
+      "estimationRange": "التقدير: {{low}} — {{high}}",
+      "photosTitle": "الصور",
+      "photosCount": "{{count}} صورة (صور) مضافة",
+      "proPhotosRequested": "+ تم طلب التصوير الاحترافي",
+      "documentsTitle": "المستندات",
+      "noDocuments": "لا يوجد مستند — سيطلبها منك خبيرك لاحقًا.",
+      "consentText": "أشهد أنني مالك هذا العقار (أو مفوَّض لبيعه) وأوافق على <link>شروط باقة البيع</link>. لا تُفوتر باقة {{price}} إلا بعد التحقق من الملف مع خبيرك."
+    },
+    "successScreen": {
+      "title": "تم إرسال ملف البيع!",
+      "referenceLabel": "مرجع ملفك:",
+      "pendingValidation": "إعلانك في انتظار التحقق من قِبل خبرائنا.",
+      "nextStepsTitle": "الخطوات التالية",
+      "step1Title": "التحقق خلال 24 ساعة عمل",
+      "step1Text": "يتحقق خبير من ملفك وسعرك ومستنداتك، ثم يتواصل معك.",
+      "step2TitlePro": "جلسة تصوير احترافية",
+      "step2TitleOptim": "تحسين إعلانك",
+      "step2TextPro": "سيتواصل معك مصورنا لتحديد موعد الجلسة (مشمولة في باقة البيع).",
+      "step2TextOptim": "تحرير محسّن وإبراز لعقارك.",
+      "step3Title": "النشر والزيارات",
+      "step3Text": "يُنشر إعلانك، ونتولى التواصل وتنظيم الزيارات معك.",
+      "trackButton": "تتبع ملفي",
+      "backHome": "العودة إلى الرئيسية"
+    },
+    "navigation": {
+      "previous": "السابق",
+      "continue": "متابعة",
+      "submitting": "جارٍ إرسال الملف...",
+      "submit": "إرسال ملف البيع"
+    },
+    "reassurance": {
+      "time": "10 دقائق تكفي",
+      "validation": "تحقق من قِبل خبير خلال 24 ساعة",
+      "free": "لا شيء للدفع قبل التحقق"
+    }
   }
 }

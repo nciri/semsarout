@@ -828,5 +828,193 @@
       "applicationSent": "Candidature envoyée avec vos pièces.",
       "fileTooLarge": "Fichier trop volumineux (max 10 Mo)"
     }
+  },
+  "sellProperty": {
+    "title": "Vendez votre bien en ligne",
+    "subtitle": "Décrivez votre bien, obtenez une estimation, constituez votre dossier : votre annonce est prête à être publiée. Forfait fixe {{price}}, payable après validation.",
+    "steps": {
+      "bien": "Votre bien",
+      "prix": "Estimation & prix",
+      "photos": "Photos",
+      "documents": "Documents",
+      "recap": "Récapitulatif"
+    },
+    "errors": {
+      "chooseType": "Choisissez le type de bien",
+      "cityRequired": "Indiquez la ville",
+      "surfaceRequired": "Indiquez la surface habitable",
+      "priceRequired": "Indiquez votre prix de vente",
+      "accountRequiredPhotos": "Créez votre compte pour ajouter vos photos",
+      "photosRequired": "Ajoutez au moins une photo, ou choisissez le shooting professionnel",
+      "consentRequired": "Veuillez accepter les conditions pour envoyer votre dossier",
+      "uploadPhotoFailed": "Échec de l'envoi d'une photo",
+      "uploadDocumentFailed": "Échec de l'envoi du document",
+      "submitFailed": "Une erreur est survenue, veuillez réessayer"
+    },
+    "step1": {
+      "propertyTypeLabel": "Type de bien",
+      "cityLabel": "Ville",
+      "cityPlaceholder": "Ex: Casablanca",
+      "neighborhoodLabel": "Quartier",
+      "neighborhoodPlaceholder": "Ex: Maârif",
+      "addressLabel": "Adresse",
+      "addressPlaceholder": "Non publiée sur l'annonce",
+      "surfaceLabel": "Surface (m²)",
+      "surfacePlaceholder": "85",
+      "roomsLabel": "Pièces",
+      "roomsPlaceholder": "3",
+      "bedroomsLabel": "Chambres",
+      "bedroomsPlaceholder": "2",
+      "bathroomsLabel": "Salles de bain",
+      "bathroomsPlaceholder": "1",
+      "floorLabel": "Étage",
+      "floorPlaceholder": "2",
+      "totalFloorsLabel": "Étages du bâtiment",
+      "totalFloorsPlaceholder": "5",
+      "constructionYearLabel": "Année de construction",
+      "constructionYearPlaceholder": "2010",
+      "featuresLabel": "Caractéristiques",
+      "descriptionLabel": "Description libre",
+      "descriptionPlaceholder": "Points forts, travaux récents, environnement... Nos experts peaufineront le texte de l'annonce."
+    },
+    "propertyTypes": {
+      "apartment": "Appartement",
+      "house": "Maison",
+      "villa": "Villa",
+      "riad": "Riad",
+      "land": "Terrain",
+      "commercial": "Local commercial",
+      "office": "Bureau",
+      "garage": "Garage/Parking"
+    },
+    "features": {
+      "parking": "Parking",
+      "garage": "Garage",
+      "jardin": "Jardin",
+      "terrasse": "Terrasse",
+      "balcon": "Balcon",
+      "piscine": "Piscine",
+      "ascenseur": "Ascenseur",
+      "gardien": "Gardien",
+      "climatisation": "Climatisation",
+      "chauffage": "Chauffage",
+      "meuble": "Meublé",
+      "cuisineEquipee": "Cuisine équipée",
+      "cave": "Cave",
+      "vueMer": "Vue mer",
+      "vueMontagne": "Vue montagne",
+      "duplex": "Duplex"
+    },
+    "step2": {
+      "estimationTitle": "Estimation de votre bien",
+      "estimationLoading": "Analyse des biens comparables en cours...",
+      "rangeLow": "Fourchette basse",
+      "recommendedPrice": "Prix conseillé",
+      "rangeHigh": "Fourchette haute",
+      "comparablesBasisCityAndType": "Basée sur {{count}} bien(s) comparable(s) ({{type}}s à {{city}}) — environ {{price}}/m². Un expert affinera cette estimation lors de la validation de votre dossier.",
+      "comparablesBasisCity": "Basée sur {{count}} bien(s) comparable(s) à {{city}} — environ {{price}}/m². Un expert affinera cette estimation lors de la validation de votre dossier.",
+      "comparablesBasisType": "Basée sur {{count}} bien(s) comparable(s) du même type — environ {{price}}/m². Un expert affinera cette estimation lors de la validation de votre dossier.",
+      "noEstimation": "Pas assez de biens comparables pour une estimation automatique — un expert estimera votre bien gratuitement à la validation du dossier.",
+      "priceTitle": "Votre prix de vente",
+      "priceLabel": "Prix souhaité ({{currency}})",
+      "pricePlaceholder": "1 400 000",
+      "priceAboveRangeWarning": "Prix au-dessus de la fourchette haute : la vente pourrait prendre plus de temps.",
+      "priceIndicative": "Ce prix reste indicatif : vous le validerez avec votre expert avant publication."
+    },
+    "step3": {
+      "accountRequiredTitle": "Créez votre compte pour continuer",
+      "accountRequiredText": "Vos photos et documents seront rattachés à votre compte. Votre saisie est conservée : vous reprendrez exactement ici.",
+      "createAccountButton": "Créer mon compte gratuitement",
+      "haveAccountButton": "J'ai déjà un compte",
+      "photosTitle": "Photos de votre bien",
+      "photosHelp": "Formats JPG, PNG ou WebP — 10 Mo max par photo. Les annonces avec photos reçoivent 5x plus de contacts.",
+      "uploading": "Envoi en cours...",
+      "clickToAdd": "Cliquez pour ajouter vos photos",
+      "dragDrop": "ou glissez-déposez plusieurs fichiers",
+      "mainPhotoBadge": "Principale",
+      "removePhotoAriaLabel": "Supprimer la photo",
+      "proPhotosLabel": "Je souhaite le shooting photo professionnel",
+      "proPhotosIncluded": "Inclus dans le Forfait Vente",
+      "proPhotosHelp": "15-20 photos HD retouchées par un photographe à domicile, livrées sous 48h. Vous pouvez quand même ajouter vos photos en attendant."
+    },
+    "step4": {
+      "title": "Documents du bien",
+      "help": "Tous facultatifs à ce stade, mais un dossier complet accélère la validation et rassure les acheteurs. Formats PDF ou image, 10 Mo max.",
+      "added": "Document ajouté",
+      "removeDocumentAriaLabel": "Supprimer le document",
+      "addButton": "Ajouter"
+    },
+    "docTypes": {
+      "titre_foncier": {
+        "label": "Titre de propriété / titre foncier",
+        "description": "Indispensable pour finaliser la vente chez le notaire"
+      },
+      "cin": {
+        "label": "Pièce d'identité (CIN)",
+        "description": "Pour vérifier votre identité de propriétaire"
+      },
+      "plan": {
+        "label": "Plan du bien",
+        "description": "Aide les acheteurs à se projeter"
+      },
+      "reglement_copropriete": {
+        "label": "Règlement de copropriété",
+        "description": "Pour les appartements en copropriété"
+      },
+      "diagnostic": {
+        "label": "Diagnostics / certificats",
+        "description": "Électricité, conformité... si disponibles"
+      },
+      "autre": {
+        "label": "Autre document",
+        "description": "Tout document utile à la vente"
+      }
+    },
+    "step5": {
+      "propertyTitle": "Votre bien",
+      "editButton": "Modifier",
+      "typeLabel": "Type",
+      "cityLabel": "Ville",
+      "surfaceLabel": "Surface",
+      "roomsLabel": "Pièces",
+      "bedroomsLabel": "Chambres",
+      "bathroomsLabel": "Salles de bain",
+      "constructionLabel": "Construction",
+      "priceTitle": "Prix",
+      "estimationRange": "Estimation : {{low}} — {{high}}",
+      "photosTitle": "Photos",
+      "photosCount": "{{count}} photo(s) ajoutée(s)",
+      "proPhotosRequested": "+ shooting professionnel demandé",
+      "documentsTitle": "Documents",
+      "noDocuments": "Aucun document — votre expert vous les demandera plus tard.",
+      "consentText": "Je certifie être propriétaire de ce bien (ou mandaté pour sa vente) et j'accepte les <link>conditions du Forfait Vente</link>. Le forfait de {{price}} n'est facturé qu'après validation du dossier avec votre expert."
+    },
+    "successScreen": {
+      "title": "Dossier de vente envoyé !",
+      "referenceLabel": "Référence de votre dossier :",
+      "pendingValidation": "Votre annonce est en attente de validation par nos experts.",
+      "nextStepsTitle": "Les prochaines étapes",
+      "step1Title": "Validation sous 24h ouvrées",
+      "step1Text": "Un expert vérifie votre dossier, votre prix et vos documents, puis vous contacte.",
+      "step2TitlePro": "Shooting photo professionnel",
+      "step2TitleOptim": "Optimisation de votre annonce",
+      "step2TextPro": "Notre photographe vous contacte pour planifier la séance (incluse dans le Forfait Vente).",
+      "step2TextOptim": "Rédaction optimisée et mise en valeur de votre bien.",
+      "step3Title": "Publication et visites",
+      "step3Text": "Votre annonce est publiée, nous gérons les contacts et organisons les visites avec vous.",
+      "trackButton": "Suivre mon dossier",
+      "backHome": "Retour à l'accueil"
+    },
+    "navigation": {
+      "previous": "Précédent",
+      "continue": "Continuer",
+      "submitting": "Envoi du dossier...",
+      "submit": "Envoyer mon dossier de vente"
+    },
+    "reassurance": {
+      "time": "10 minutes suffisent",
+      "validation": "Validation par un expert sous 24h",
+      "free": "Rien à payer avant validation"
+    }
   }
 }
