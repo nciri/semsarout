@@ -483,6 +483,32 @@
       "toasts": {
         "added": "Ajouté au panier"
       }
+    },
+    "product": {
+      "notFound": "Produit introuvable.",
+      "notFoundBack": "Retour à la boutique",
+      "outOfStock": "En rupture de stock",
+      "inStock": "{{n}} en stock",
+      "addButton": "Ajouter au panier"
+    },
+    "cart": {
+      "backToShop": "Continuer mes achats",
+      "pageTitle": "Mon panier",
+      "empty": {
+        "title": "Votre panier est vide",
+        "description": "Parcourez la boutique pour ajouter du mobilier et de l'électroménager.",
+        "action": "Aller à la boutique"
+      },
+      "removeTitle": "Retirer",
+      "total": "Total",
+      "deliverToProperty": "Livrer vers un bien (optionnel)",
+      "freeAddressPlaceholder": "— Adresse libre —",
+      "propertySearchPlaceholder": "Rechercher un bien…",
+      "deliveryAddress": "Adresse de livraison",
+      "orderButton": "Commander",
+      "toasts": {
+        "orderCreated": "Commande créée"
+      }
     }
   },
   "ui": {

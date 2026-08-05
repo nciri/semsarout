@@ -483,6 +483,32 @@
       "toasts": {
         "added": "تمت الإضافة إلى السلة"
       }
+    },
+    "product": {
+      "notFound": "المنتج غير موجود.",
+      "notFoundBack": "العودة إلى المتجر",
+      "outOfStock": "غير متوفر في المخزون",
+      "inStock": "{{n}} متوفر في المخزون",
+      "addButton": "إضافة إلى السلة"
+    },
+    "cart": {
+      "backToShop": "متابعة التسوق",
+      "pageTitle": "سلتي",
+      "empty": {
+        "title": "سلتك فارغة",
+        "description": "تصفح المتجر لإضافة الأثاث والأجهزة الكهرومنزلية.",
+        "action": "الانتقال إلى المتجر"
+      },
+      "removeTitle": "إزالة",
+      "total": "المجموع",
+      "deliverToProperty": "التوصيل إلى عقار (اختياري)",
+      "freeAddressPlaceholder": "— عنوان حر —",
+      "propertySearchPlaceholder": "ابحث عن عقار…",
+      "deliveryAddress": "عنوان التوصيل",
+      "orderButton": "إتمام الطلب",
+      "toasts": {
+        "orderCreated": "تم إنشاء الطلب"
+      }
     }
   },
   "ui": {
