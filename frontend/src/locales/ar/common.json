@@ -14,5 +14,39 @@
   "errors": {
     "generic": "حدث خطأ ما",
     "short": "خطأ"
+  },
+  "nav": {
+    "buy": "شراء",
+    "rent": "إيجار",
+    "newPrograms": "برامج جديدة",
+    "agencies": "وكالات",
+    "ourServices": "خدماتنا",
+    "postListing": "نشر إعلان",
+    "userMenuAria": "قائمة المستخدم",
+    "login": "تسجيل الدخول",
+    "loginWithEmail": "تسجيل الدخول عبر البريد الإلكتروني",
+    "noAccountYet": "ليس لديك حساب بعد؟",
+    "createAccount": "إنشاء حساب",
+    "sections": {
+      "activity": "النشاط",
+      "search": "البحث",
+      "clientRelations": "علاقات العملاء",
+      "shortTermRental": "الإيجار قصير المدى",
+      "administration": "الإدارة",
+      "superAdmin": "المشرف العام"
+    },
+    "controlTower": "برج المراقبة",
+    "mySpace": "مساحتي",
+    "myListings": "إعلاناتي",
+    "myApplications": "طلباتي",
+    "leads": "الطلبات / العملاء المحتملون",
+    "mySearches": "عمليات بحثي",
+    "myMessages": "رسائلي",
+    "agencyManagement": "إدارة الوكالة",
+    "messaging": "المراسلة",
+    "availability": "التوفر",
+    "referencePrices": "الأسعار المرجعية",
+    "platform": "المنصة",
+    "myAccount": "حسابي"
   }
 }

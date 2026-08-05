@@ -14,5 +14,39 @@
   "errors": {
     "generic": "Une erreur est survenue",
     "short": "Erreur"
+  },
+  "nav": {
+    "buy": "Acheter",
+    "rent": "Louer",
+    "newPrograms": "Programmes neufs",
+    "agencies": "Agences",
+    "ourServices": "Nos Services",
+    "postListing": "Déposer une annonce",
+    "userMenuAria": "Menu utilisateur",
+    "login": "Connexion",
+    "loginWithEmail": "Se connecter avec email",
+    "noAccountYet": "Pas encore de compte ?",
+    "createAccount": "Créer un compte",
+    "sections": {
+      "activity": "Activité",
+      "search": "Recherche",
+      "clientRelations": "Relation client",
+      "shortTermRental": "Location courte durée",
+      "administration": "Administration",
+      "superAdmin": "Super-admin"
+    },
+    "controlTower": "Tour de contrôle",
+    "mySpace": "Mon espace",
+    "myListings": "Mes annonces",
+    "myApplications": "Mes candidatures",
+    "leads": "Demandes / Leads",
+    "mySearches": "Mes recherches",
+    "myMessages": "Mes messages",
+    "agencyManagement": "Gestion de l'agence",
+    "messaging": "Messagerie",
+    "availability": "Disponibilités",
+    "referencePrices": "Prix de référence",
+    "platform": "Plateforme",
+    "myAccount": "Mon compte"
   }
 }

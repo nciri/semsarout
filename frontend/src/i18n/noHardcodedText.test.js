@@ -46,6 +46,7 @@ const MIGRATED_FILES = [
   'src/pages/Services.jsx',
   'src/pages/PropertyDetail.jsx',
   'src/pages/SellProperty.jsx',
+  'src/components/layout/Header.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {
