@@ -258,6 +258,122 @@
         "cancel": "إلغاء",
         "apply": "تطبيق"
       }
+    },
+    "application": {
+      "gated": {
+        "message": "التسيير الكرائي مخصص لباقتي Pro والمؤسسات."
+      },
+      "pageTitle": "الطلبات",
+      "status": {
+        "received": "مستلَم",
+        "reviewing": "قيد الدراسة",
+        "shortlist": "في القائمة المختصرة",
+        "accepted": "مقبول",
+        "rejected": "مرفوض",
+        "withdrawn": "مسحوب"
+      },
+      "stats": {
+        "total": "الإجمالي",
+        "new": "جديدة",
+        "accepted": "مقبولة"
+      },
+      "newButton": "إيداع ملف لعميل",
+      "badges": {
+        "submittedByAgency": "أودعته الوكالة"
+      },
+      "filters": {
+        "searchPlaceholder": "البحث عن مترشح (الاسم، البريد الإلكتروني)…",
+        "allStatuses": "كل الحالات",
+        "allProperties": "كل العقارات",
+        "propertySearchPlaceholder": "البحث عن عقار…"
+      },
+      "columns": {
+        "candidate": "المترشح",
+        "submittedAt": "تاريخ الإيداع",
+        "monthlyIncome": "الدخل الشهري",
+        "status": "الحالة"
+      },
+      "actions": {
+        "shortlist": "إدراج في القائمة المختصرة"
+      },
+      "propertyFallback": "عقار #{{id}}",
+      "groupCount_one": "· {{count}} طلب",
+      "groupCount_other": "· {{count}} طلبات",
+      "empty": {
+        "noApplications": {
+          "title": "لا يوجد طلب",
+          "description": "تظهر هنا الملفات التي يودعها المترشحون على عقاراتكم، مجمّعة حسب العقار."
+        },
+        "noResults": {
+          "title": "لا توجد نتيجة",
+          "description": "لا يوجد طلب يطابق عوامل التصفية الخاصة بكم."
+        }
+      },
+      "modal": {
+        "title": "إيداع ملف لعميل",
+        "propertyIdLabel": "معرّف العقار",
+        "clientIdLabel": "معرّف العميل",
+        "monthlyIncomeLabel": "الدخل الشهري (Đh)",
+        "guarantorNameLabel": "اسم الضامن",
+        "guarantorIncomeLabel": "دخل الضامن (Đh)",
+        "docsLabel": "الوثائق المثبتة",
+        "addButton": "إضافة",
+        "cancel": "إلغاء",
+        "submit": "إيداع الملف"
+      },
+      "toasts": {
+        "created": "تم إيداع الملف",
+        "shortlisted": "تمت إضافة الطلب إلى القائمة المختصرة",
+        "fileTooLarge": "الملف كبير جدًا (الحد الأقصى 10 ميغابايت)",
+        "uploadFailed": "فشل إرسال « {{filename}} »"
+      },
+      "detail": {
+        "backToList": "الرجوع إلى الطلبات",
+        "title": "طلب {{name}}",
+        "actions": {
+          "shortlist": "إدراج في القائمة المختصرة",
+          "accept": "قبول",
+          "reject": "رفض"
+        },
+        "fields": {
+          "status": "الحالة",
+          "email": "البريد الإلكتروني",
+          "phone": "الهاتف",
+          "monthlyIncome": "الدخل الشهري",
+          "guarantor": "الضامن",
+          "property": "العقار"
+        },
+        "docs": {
+          "panelTitle": "الوثائق المثبتة",
+          "status": {
+            "received": "مستلَمة",
+            "validated": "مصادَق عليها",
+            "rejected": "مرفوضة"
+          },
+          "columns": {
+            "type": "النوع",
+            "file": "الملف",
+            "status": "الحالة"
+          },
+          "validateButton": "مصادقة",
+          "rejectButton": "رفض",
+          "empty": {
+            "title": "لا توجد وثيقة",
+            "description": "لم يودع المترشح أي وثيقة بعد."
+          },
+          "toast": "تم تحديث الوثيقة"
+        },
+        "rejectModal": {
+          "title": "رفض الطلب",
+          "reasonLabel": "السبب (اختياري، يُبلَّغ به المترشح)",
+          "reasonPlaceholder": "مثال: ملف غير مكتمل",
+          "cancel": "إلغاء",
+          "submit": "تأكيد الرفض"
+        },
+        "toasts": {
+          "decided": "تم تسجيل القرار"
+        }
+      }
     }
   },
   "ui": {

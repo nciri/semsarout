@@ -258,6 +258,122 @@
         "cancel": "Annuler",
         "apply": "Appliquer"
       }
+    },
+    "application": {
+      "gated": {
+        "message": "La gestion locative est réservée aux plans Pro et Entreprise."
+      },
+      "pageTitle": "Candidatures",
+      "status": {
+        "received": "Reçue",
+        "reviewing": "En étude",
+        "shortlist": "Présélectionné",
+        "accepted": "Acceptée",
+        "rejected": "Refusée",
+        "withdrawn": "Retirée"
+      },
+      "stats": {
+        "total": "Total",
+        "new": "Nouvelles",
+        "accepted": "Acceptées"
+      },
+      "newButton": "Déposer un dossier pour un client",
+      "badges": {
+        "submittedByAgency": "Déposé par l'agence"
+      },
+      "filters": {
+        "searchPlaceholder": "Rechercher un candidat (nom, email)…",
+        "allStatuses": "Tous les statuts",
+        "allProperties": "Tous les biens",
+        "propertySearchPlaceholder": "Rechercher un bien…"
+      },
+      "columns": {
+        "candidate": "Candidat",
+        "submittedAt": "Déposée le",
+        "monthlyIncome": "Revenu mensuel",
+        "status": "Statut"
+      },
+      "actions": {
+        "shortlist": "Présélectionner"
+      },
+      "propertyFallback": "Bien #{{id}}",
+      "groupCount_one": "· {{count}} candidature",
+      "groupCount_other": "· {{count}} candidatures",
+      "empty": {
+        "noApplications": {
+          "title": "Aucune candidature",
+          "description": "Les dossiers déposés par les candidats sur vos biens apparaissent ici, regroupés par bien."
+        },
+        "noResults": {
+          "title": "Aucun résultat",
+          "description": "Aucune candidature ne correspond à vos filtres."
+        }
+      },
+      "modal": {
+        "title": "Déposer un dossier pour un client",
+        "propertyIdLabel": "ID du bien",
+        "clientIdLabel": "ID du client",
+        "monthlyIncomeLabel": "Revenu mensuel (Đh)",
+        "guarantorNameLabel": "Nom du garant",
+        "guarantorIncomeLabel": "Revenu du garant (Đh)",
+        "docsLabel": "Pièces justificatives",
+        "addButton": "Ajouter",
+        "cancel": "Annuler",
+        "submit": "Déposer le dossier"
+      },
+      "toasts": {
+        "created": "Dossier déposé",
+        "shortlisted": "Candidature présélectionnée",
+        "fileTooLarge": "Fichier trop volumineux (max 10 Mo)",
+        "uploadFailed": "Échec de l'envoi de « {{filename}} »"
+      },
+      "detail": {
+        "backToList": "Retour aux candidatures",
+        "title": "Candidature {{name}}",
+        "actions": {
+          "shortlist": "Présélectionner",
+          "accept": "Accepter",
+          "reject": "Refuser"
+        },
+        "fields": {
+          "status": "Statut",
+          "email": "Email",
+          "phone": "Téléphone",
+          "monthlyIncome": "Revenu mensuel",
+          "guarantor": "Garant",
+          "property": "Bien"
+        },
+        "docs": {
+          "panelTitle": "Pièces justificatives",
+          "status": {
+            "received": "Reçue",
+            "validated": "Validée",
+            "rejected": "Refusée"
+          },
+          "columns": {
+            "type": "Type",
+            "file": "Fichier",
+            "status": "Statut"
+          },
+          "validateButton": "Valider",
+          "rejectButton": "Refuser",
+          "empty": {
+            "title": "Aucune pièce",
+            "description": "Le candidat n'a pas encore déposé de pièces."
+          },
+          "toast": "Pièce mise à jour"
+        },
+        "rejectModal": {
+          "title": "Refuser la candidature",
+          "reasonLabel": "Motif (facultatif, communiqué au candidat)",
+          "reasonPlaceholder": "ex. dossier incomplet",
+          "cancel": "Annuler",
+          "submit": "Confirmer le refus"
+        },
+        "toasts": {
+          "decided": "Décision enregistrée"
+        }
+      }
     }
   },
   "ui": {
