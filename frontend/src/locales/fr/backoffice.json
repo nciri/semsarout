@@ -1398,6 +1398,129 @@
           "submitButton": "Planifier"
         }
       }
+    },
+    "transactions": {
+      "status": {
+        "active": "En cours",
+        "won": "Gagnée",
+        "lost": "Perdue",
+        "on_hold": "En pause"
+      },
+      "stage": {
+        "contact": "Contact initial",
+        "visit": "Visite",
+        "offer": "Offre",
+        "negotiation": "Négociation",
+        "compromise": "Compromis",
+        "final_act": "Acte final",
+        "application": "Candidature",
+        "verification": "Vérification",
+        "lease": "Bail",
+        "move_in": "Entrée"
+      },
+      "type": {
+        "sale": "Vente",
+        "rent": "Location"
+      },
+      "offerStatus": {
+        "pending": "En attente",
+        "accepted": "Acceptée",
+        "rejected": "Refusée",
+        "countered": "Contre-offre",
+        "expired": "Expirée"
+      },
+      "offerParty": {
+        "buyer": "Acheteur",
+        "seller": "Vendeur"
+      },
+      "list": {
+        "pageTitle": "Transactions",
+        "subtitle": "Vue liste de toutes les transactions",
+        "pipelineViewLink": "Vue Pipeline",
+        "newButton": "Nouvelle transaction",
+        "searchPlaceholder": "Rechercher par référence...",
+        "filtersButton": "Filtres",
+        "filterTypeLabel": "Type",
+        "filterTypeAll": "Tous les types",
+        "filterStatusLabel": "Statut",
+        "filterStatusAll": "Tous les statuts",
+        "filterStageLabel": "Étape",
+        "filterStageAll": "Toutes les étapes",
+        "resetFilters": "Réinitialiser",
+        "columns": {
+          "reference": "Référence",
+          "property": "Bien",
+          "client": "Client",
+          "type": "Type",
+          "stage": "Étape",
+          "price": "Prix",
+          "status": "Statut",
+          "agent": "Agent"
+        },
+        "viewDetails": "Voir",
+        "empty": {
+          "title": "Aucune transaction",
+          "filtered": "Aucune transaction ne correspond à vos critères.",
+          "default": "Créez votre première transaction.",
+          "pipelineLink": "Voir le pipeline"
+        },
+        "prev": "Précédent",
+        "next": "Suivant",
+        "pageInfo": "Page {{page}} sur {{total}}"
+      },
+      "create": {
+        "backLink": "Transactions",
+        "pageTitle": "Nouvelle transaction",
+        "subtitle": "Reliez un bien existant à un client. Pour créer un nouveau bien, utilisez la page Biens.",
+        "sectionPropertyClient": "Bien & client",
+        "propertyLabel": "Bien",
+        "propertyPlaceholder": "Choisir un bien…",
+        "propertySearchPlaceholder": "Rechercher un bien…",
+        "clientLabel": "Client",
+        "clientPlaceholder": "Choisir un client…",
+        "clientSearchPlaceholder": "Rechercher un client…",
+        "sectionDetails": "Détails",
+        "typeLabel": "Type",
+        "priceLabel": "Prix demandé (Đh)",
+        "pricePlaceholder": "Ex. 1500000",
+        "closingDateLabel": "Clôture prévue",
+        "priorityLabel": "Priorité",
+        "notesLabel": "Notes",
+        "notesPlaceholder": "Contexte, conditions particulières…",
+        "agentNote": "Vous serez l'agent assigné. La transaction démarre à l'étape « Contact ».",
+        "submitButton": "Créer la transaction",
+        "submitting": "Création…",
+        "toastSuccess": "Transaction créée",
+        "toastError": "Erreur"
+      },
+      "detail": {
+        "notFound": "Transaction introuvable.",
+        "backToList": "Retour à la liste",
+        "pipelineLink": "Voir le pipeline",
+        "propertyPartiesTitle": "Bien & parties",
+        "propertyLabel": "Bien",
+        "clientLabel": "Client",
+        "sellerLabel": "Vendeur / Mandant",
+        "agentLabel": "Agent",
+        "trackingTitle": "Suivi commercial",
+        "stageLabel": "Étape",
+        "priorityLabel": "Priorité",
+        "probabilityLabel": "Probabilité",
+        "firstContactLabel": "Premier contact",
+        "expectedClosingLabel": "Clôture prévue",
+        "actualClosingLabel": "Clôture réelle",
+        "lostReason": "Motif de perte : {{reason}}",
+        "financialTitle": "Financier",
+        "askingPriceLabel": "Prix demandé",
+        "offerPriceLabel": "Prix d'offre",
+        "finalPriceLabel": "Prix final",
+        "commissionRateLabel": "Taux de commission",
+        "commissionAmountLabel": "Montant commission",
+        "offersTitle": "Offres ({{count}})",
+        "offersEmpty": "Aucune offre enregistrée.",
+        "offerCreatedBy": " · {{name}}",
+        "notesTitle": "Notes"
+      }
     }
   }
 }

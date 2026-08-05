@@ -1398,6 +1398,129 @@
           "submitButton": "جدولة"
         }
       }
+    },
+    "transactions": {
+      "status": {
+        "active": "قيد التنفيذ",
+        "won": "فائزة",
+        "lost": "خاسرة",
+        "on_hold": "معلّقة"
+      },
+      "stage": {
+        "contact": "الاتصال الأولي",
+        "visit": "زيارة",
+        "offer": "عرض",
+        "negotiation": "تفاوض",
+        "compromise": "اتفاق مبدئي",
+        "final_act": "العقد النهائي",
+        "application": "طلب الترشح",
+        "verification": "تحقق",
+        "lease": "عقد الكراء",
+        "move_in": "الدخول"
+      },
+      "type": {
+        "sale": "بيع",
+        "rent": "كراء"
+      },
+      "offerStatus": {
+        "pending": "قيد الانتظار",
+        "accepted": "مقبولة",
+        "rejected": "مرفوضة",
+        "countered": "عرض مضاد",
+        "expired": "منتهية الصلاحية"
+      },
+      "offerParty": {
+        "buyer": "مشتري",
+        "seller": "بائع"
+      },
+      "list": {
+        "pageTitle": "المعاملات",
+        "subtitle": "عرض قائمة بكل المعاملات",
+        "pipelineViewLink": "عرض المسار",
+        "newButton": "معاملة جديدة",
+        "searchPlaceholder": "البحث بالمرجع...",
+        "filtersButton": "التصفية",
+        "filterTypeLabel": "النوع",
+        "filterTypeAll": "كل الأنواع",
+        "filterStatusLabel": "الحالة",
+        "filterStatusAll": "كل الحالات",
+        "filterStageLabel": "المرحلة",
+        "filterStageAll": "كل المراحل",
+        "resetFilters": "إعادة التعيين",
+        "columns": {
+          "reference": "المرجع",
+          "property": "العقار",
+          "client": "العميل",
+          "type": "النوع",
+          "stage": "المرحلة",
+          "price": "السعر",
+          "status": "الحالة",
+          "agent": "الوكيل"
+        },
+        "viewDetails": "عرض",
+        "empty": {
+          "title": "لا توجد معاملات",
+          "filtered": "لا توجد معاملة مطابقة لمعاييرك.",
+          "default": "أنشئ أول معاملة.",
+          "pipelineLink": "عرض المسار"
+        },
+        "prev": "السابق",
+        "next": "التالي",
+        "pageInfo": "الصفحة {{page}} من {{total}}"
+      },
+      "create": {
+        "backLink": "المعاملات",
+        "pageTitle": "معاملة جديدة",
+        "subtitle": "اربط عقارًا موجودًا بعميل. لإنشاء عقار جديد، استخدم صفحة العقارات.",
+        "sectionPropertyClient": "العقار والعميل",
+        "propertyLabel": "العقار",
+        "propertyPlaceholder": "اختر عقارًا…",
+        "propertySearchPlaceholder": "البحث عن عقار…",
+        "clientLabel": "العميل",
+        "clientPlaceholder": "اختر عميلًا…",
+        "clientSearchPlaceholder": "البحث عن عميل…",
+        "sectionDetails": "التفاصيل",
+        "typeLabel": "النوع",
+        "priceLabel": "السعر المطلوب (Đh)",
+        "pricePlaceholder": "مثال: 1500000",
+        "closingDateLabel": "تاريخ الإغلاق المتوقع",
+        "priorityLabel": "الأولوية",
+        "notesLabel": "ملاحظات",
+        "notesPlaceholder": "السياق، الشروط الخاصة…",
+        "agentNote": "ستكون أنت الوكيل المكلَّف. تبدأ المعاملة من مرحلة «الاتصال».",
+        "submitButton": "إنشاء المعاملة",
+        "submitting": "جارٍ الإنشاء…",
+        "toastSuccess": "تم إنشاء المعاملة",
+        "toastError": "خطأ"
+      },
+      "detail": {
+        "notFound": "المعاملة غير موجودة.",
+        "backToList": "الرجوع إلى القائمة",
+        "pipelineLink": "عرض المسار",
+        "propertyPartiesTitle": "العقار والأطراف",
+        "propertyLabel": "العقار",
+        "clientLabel": "العميل",
+        "sellerLabel": "البائع / الموكِّل",
+        "agentLabel": "الوكيل",
+        "trackingTitle": "المتابعة التجارية",
+        "stageLabel": "المرحلة",
+        "priorityLabel": "الأولوية",
+        "probabilityLabel": "الاحتمالية",
+        "firstContactLabel": "أول اتصال",
+        "expectedClosingLabel": "تاريخ الإغلاق المتوقع",
+        "actualClosingLabel": "تاريخ الإغلاق الفعلي",
+        "lostReason": "سبب الخسارة: {{reason}}",
+        "financialTitle": "الجانب المالي",
+        "askingPriceLabel": "السعر المطلوب",
+        "offerPriceLabel": "سعر العرض",
+        "finalPriceLabel": "السعر النهائي",
+        "commissionRateLabel": "نسبة العمولة",
+        "commissionAmountLabel": "مبلغ العمولة",
+        "offersTitle": "العروض ({{count}})",
+        "offersEmpty": "لا توجد عروض مسجلة.",
+        "offerCreatedBy": " · {{name}}",
+        "notesTitle": "ملاحظات"
+      }
     }
   }
 }
