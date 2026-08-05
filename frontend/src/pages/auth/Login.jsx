@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
 import { LuLock } from 'react-icons/lu'
 import useAuthStore from '../../store/authStore'
 
 function Login() {
+  const { t } = useTranslation(['auth', 'common'])
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
@@ -46,10 +48,10 @@ function Login() {
             </div>
           </Link>
           <h1 className="font-display text-2xl font-bold text-gray-900">
-            Connexion
+            {t('auth:login.title')}
           </h1>
           <p className="text-gray-600 mt-2">
-            Accédez à votre espace SemsarOut
+            {t('auth:login.subtitle')}
           </p>
         </div>
 
@@ -62,20 +64,20 @@ function Login() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>
-              <label className="label">Email</label>
+              <label className="label">{t('auth:login.emailLabel')}</label>
               <div className="relative">
-                <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <FiMail className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="email"
                   {...register('email', {
-                    required: 'Email requis',
+                    required: t('common:validation.emailRequired'),
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Email invalide'
+                      message: t('common:validation.emailInvalid')
                     }
                   })}
-                  className="input pl-10"
-                  placeholder="votre@email.com"
+                  className="input ps-10"
+                  placeholder={t('auth:login.emailPlaceholder')}
                 />
               </div>
               {errors.email && (
@@ -84,19 +86,19 @@ function Login() {
             </div>
 
             <div>
-              <label className="label">Mot de passe</label>
+              <label className="label">{t('auth:login.passwordLabel')}</label>
               <div className="relative">
-                <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <FiLock className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  {...register('password', { required: 'Mot de passe requis' })}
-                  className="input pl-10 pr-10"
+                  {...register('password', { required: t('common:validation.passwordRequired') })}
+                  className="input ps-10 pe-10"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPassword ? <FiEyeOff /> : <FiEye />}
                 </button>
@@ -108,11 +110,11 @@ function Login() {
 
             <div className="flex items-center justify-between">
               <label className="flex items-center">
-                <input type="checkbox" className="rounded border-gray-300 text-primary-600 mr-2" />
-                <span className="text-sm text-gray-600">Se souvenir de moi</span>
+                <input type="checkbox" className="rounded border-gray-300 text-primary-600 me-2" />
+                <span className="text-sm text-gray-600">{t('auth:login.rememberMe')}</span>
               </label>
               <Link to="/mot-de-passe-oublie" className="text-sm text-primary-600 hover:text-primary-700">
-                Mot de passe oublié ?
+                {t('auth:login.forgotPassword')}
               </Link>
             </div>
 
@@ -121,15 +123,15 @@ function Login() {
               disabled={isLoading}
               className="btn-primary w-full justify-center"
             >
-              {isLoading ? 'Connexion en cours...' : 'Se connecter'}
+              {isLoading ? t('auth:login.submitting') : t('auth:login.submit')}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Pas encore de compte ?{' '}
+              {t('auth:login.noAccount')}{' '}
               <Link to="/inscription" className="text-primary-600 hover:text-primary-700 font-medium">
-                Créer un compte gratuitement
+                {t('auth:login.createAccount')}
               </Link>
             </p>
           </div>
@@ -138,23 +140,23 @@ function Login() {
         {/* Trust indicators */}
         <div className="mt-8 text-center">
           <p className="text-xs text-gray-500 mb-3">
-            En vous connectant, vous acceptez nos{' '}
-            <Link to="/cgu" className="underline">conditions d'utilisation</Link>
-            {' '}et notre{' '}
-            <Link to="/politique-de-confidentialite" className="underline">politique de confidentialité</Link>
+            {t('auth:login.termsPrefix')}{' '}
+            <Link to="/cgu" className="underline">{t('auth:login.termsLink')}</Link>
+            {' '}{t('auth:login.termsAnd')}{' '}
+            <Link to="/politique-de-confidentialite" className="underline">{t('auth:login.privacyLink')}</Link>
           </p>
           <div className="flex justify-center items-center space-x-4 text-xs text-gray-400">
             <span className="flex items-center">
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              Connexion sécurisée
+              {t('auth:login.secureConnection')}
             </span>
             <span className="flex items-center">
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
-              Données protégées
+              {t('auth:login.dataProtected')}
             </span>
           </div>
         </div>
