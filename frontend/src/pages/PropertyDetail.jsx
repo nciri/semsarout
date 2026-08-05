@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient, useMutation } from 'react-query'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
+import { useTranslation } from 'react-i18next'
 import {
   FiMapPin, FiMaximize, FiPhone, FiMail, FiHeart,
   FiShare2, FiChevronLeft, FiChevronRight, FiCheck, FiZoomIn, FiEye, FiFileText,
@@ -17,21 +18,25 @@ import { formatPrice } from '../utils/currency'
 import PhotoLightbox from '../components/common/PhotoLightbox'
 import PriceGauge from '../components/common/PriceGauge'
 import BookVisitWidget from '../components/common/BookVisitWidget'
+import DirIcon from '../components/common/DirIcon'
 import useAuthStore from '../store/authStore'
 import { getAmenityIcon } from '../utils/amenityIcons'
 import { DOC_TYPES } from './dashboard/applicationStatus'
 
 const MAX_DOC_SIZE = 10 * 1024 * 1024
 
-const LEAD_STATUS = {
-  new: ['Nouveau', 'bg-blue-100 text-blue-700'],
-  contacted: ['Contacté', 'bg-yellow-100 text-yellow-700'],
-  qualified: ['Qualifié', 'bg-green-100 text-green-700'],
-  converted: ['Converti', 'bg-purple-100 text-purple-700'],
-  lost: ['Perdu', 'bg-gray-100 text-gray-600'],
+// Couleurs par statut de lead ; le libellé, lui, passe par t() (public:propertyDetail.leadStatus).
+const LEAD_STATUS_COLORS = {
+  new: 'bg-blue-100 text-blue-700',
+  contacted: 'bg-yellow-100 text-yellow-700',
+  qualified: 'bg-green-100 text-green-700',
+  converted: 'bg-purple-100 text-purple-700',
+  lost: 'bg-gray-100 text-gray-600',
 }
 
 function PropertyDetail() {
+  const { t, i18n } = useTranslation(['public', 'common'])
+  const dateLocale = i18n.language === 'ar' ? 'ar' : 'fr-FR'
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -91,21 +96,21 @@ function PropertyDetail() {
     try {
       if (existingFavorite) {
         await buyerService.removeFavorite(existingFavorite.id)
-        toast.success('Retiré des favoris')
+        toast.success(t('public:propertyDetail.toast.removedFavorite'))
       } else {
         await buyerService.addFavorite(id)
-        toast.success('Ajouté aux favoris')
+        toast.success(t('public:propertyDetail.toast.addedFavorite'))
       }
       queryClient.invalidateQueries(['favorites'])
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Une erreur est survenue')
+      toast.error(error.response?.data?.error || t('common:errors.generic'))
     }
   }
 
   const handleShare = async () => {
     const shareData = {
       title: property?.title,
-      text: `Découvrez ce bien sur SemsarOut : ${property?.title}`,
+      text: t('public:propertyDetail.shareText', { title: property?.title }),
       url: window.location.href
     }
     if (navigator.share) {
@@ -116,7 +121,7 @@ function PropertyDetail() {
       }
     } else {
       await navigator.clipboard.writeText(window.location.href)
-      toast.success('Lien copié dans le presse-papier')
+      toast.success(t('public:propertyDetail.toast.linkCopied'))
     }
   }
 
@@ -130,7 +135,7 @@ function PropertyDetail() {
       })
       setRevealedPhone(data.phone)
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Numéro indisponible pour ce bien')
+      toast.error(error.response?.data?.error || t('public:propertyDetail.toast.phoneUnavailable'))
     } finally {
       setIsRevealingPhone(false)
     }
@@ -155,18 +160,18 @@ function PropertyDetail() {
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
 
       if (days > 0) {
-        setTimeRemaining(`${days}j ${hours}h`)
+        setTimeRemaining(t('public:propertyDetail.timeUnits.daysHours', { d: days, h: hours }))
       } else if (hours > 0) {
-        setTimeRemaining(`${hours}h ${minutes}m`)
+        setTimeRemaining(t('public:propertyDetail.timeUnits.hoursMinutes', { h: hours, m: minutes }))
       } else {
-        setTimeRemaining(`${minutes}m`)
+        setTimeRemaining(t('public:propertyDetail.timeUnits.minutes', { m: minutes }))
       }
     }
 
     calculateTimeRemaining()
     const interval = setInterval(calculateTimeRemaining, 60000) // Update every minute
     return () => clearInterval(interval)
-  }, [property?.is_urgent, property?.urgent_until])
+  }, [property?.is_urgent, property?.urgent_until, t])
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm()
 
@@ -177,19 +182,19 @@ function PropertyDetail() {
         name: user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : '',
         email: user?.email || '',
         phone: user?.phone || '',
-        message: `Bonjour, je suis intéressé(e) par votre bien "${property?.title || ''}". Pouvez-vous me contacter ?`
+        message: t('public:propertyDetail.contactDefaultMessage', { title: property?.title || '' })
       })
     }
-  }, [showContact, user, property?.title, reset])
+  }, [showContact, user, property?.title, reset, t])
 
   const onSubmitContact = async (data) => {
     try {
       await propertyService.contactProperty(id, data)
-      toast.success('Votre message a été envoyé avec succès !')
+      toast.success(t('public:propertyDetail.toast.messageSent'))
       reset()
       setShowContact(false)
     } catch (error) {
-      toast.error('Erreur lors de l\'envoi du message')
+      toast.error(t('public:propertyDetail.toast.messageSendError'))
     }
   }
 
@@ -223,7 +228,7 @@ function PropertyDetail() {
             try {
               await applicantService.uploadDocument(created.id, doc.file, doc.docType)
             } catch (err) {
-              toast.error(`Échec de l'envoi de « ${doc.file.name} »`)
+              toast.error(t('public:propertyDetail.toast.docUploadError', { name: doc.file.name }))
             }
           }
         } finally {
@@ -234,12 +239,12 @@ function PropertyDetail() {
     },
     {
       onSuccess: () => {
-        toast.success('Candidature envoyée avec vos pièces.')
+        toast.success(t('public:propertyDetail.toast.applicationSent'))
         setApplyOpen(false)
         setApplyDocs([])
         navigate('/dashboard/candidatures')
       },
-      onError: (error) => toast.error(error.response?.data?.error || 'Une erreur est survenue')
+      onError: (error) => toast.error(error.response?.data?.error || t('common:errors.generic'))
     }
   )
 
@@ -248,7 +253,7 @@ function PropertyDetail() {
     e.target.value = ''
     if (!file) return
     if (file.size > MAX_DOC_SIZE) {
-      toast.error('Fichier trop volumineux (max 10 Mo)')
+      toast.error(t('public:propertyDetail.toast.fileTooLarge'))
       return
     }
     setApplyDocs((docs) => [...docs, { docType: pendingDocType, file }])
@@ -256,15 +261,6 @@ function PropertyDetail() {
 
   const removeApplyDoc = (index) => {
     setApplyDocs((docs) => docs.filter((_, i) => i !== index))
-  }
-
-  const PROPERTY_TYPES = {
-    apartment: 'Appartement',
-    house: 'Maison',
-    villa: 'Villa',
-    land: 'Terrain',
-    commercial: 'Local commercial',
-    office: 'Bureau'
   }
 
   const PREMIUM_FEATURES = [
@@ -291,7 +287,7 @@ function PropertyDetail() {
   if (!property) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8 text-center">
-        <p className="text-gray-500">Annonce non trouvée</p>
+        <p className="text-gray-500">{t('public:propertyDetail.notFound')}</p>
       </div>
     )
   }
@@ -302,7 +298,7 @@ function PropertyDetail() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumb */}
       <nav className="text-sm text-gray-500 mb-4">
-        <Link to="/annonces" className="hover:text-primary-600">Annonces</Link>
+        <Link to="/annonces" className="hover:text-primary-600">{t('public:propertyDetail.breadcrumbListing')}</Link>
         <span className="mx-2">/</span>
         <span>{property.city}</span>
         <span className="mx-2">/</span>
@@ -324,8 +320,8 @@ function PropertyDetail() {
                 />
                 {/* Urgent Badge - Diagonal banner */}
                 {property.is_urgent && (
-                  <div className="absolute top-0 right-0 w-32 h-32 overflow-hidden">
-                    <div className="absolute top-2 -right-10 w-40 h-12 bg-red-600 text-white font-bold text-center rotate-45 flex items-center justify-center shadow-lg">
+                  <div className="absolute top-0 end-0 w-32 h-32 overflow-hidden">
+                    <div className="absolute top-2 -end-10 w-40 h-12 bg-red-600 text-white font-bold text-center rotate-45 flex items-center justify-center shadow-lg">
                       URGENT
                     </div>
                   </div>
@@ -333,21 +329,21 @@ function PropertyDetail() {
                 {/* Zoom indicator */}
                 <button
                   onClick={() => setLightboxOpen(true)}
-                  className="absolute top-4 right-4 bg-black/50 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                  title="Voir en grand"
+                  className="absolute top-4 end-4 bg-black/50 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  title={t('public:propertyDetail.zoomTitle')}
                 >
                   <FiZoomIn className="w-5 h-5" />
                 </button>
                 {/* Favori — même cœur que les cartes d'annonces */}
                 {isBuyer && (
                   <button
-                    aria-label="Favori"
+                    aria-label={t('public:propertyDetail.favoriteAriaLabel')}
                     onClick={(e) => {
                       e.stopPropagation()
                       handleToggleFavorite()
                     }}
-                    className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-white/[.92] shadow-ds-sm flex items-center justify-center z-10 hover:bg-white transition-colors"
-                    title={existingFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                    className="absolute bottom-4 end-4 w-10 h-10 rounded-full bg-white/[.92] shadow-ds-sm flex items-center justify-center z-10 hover:bg-white transition-colors"
+                    title={existingFavorite ? t('public:propertyDetail.removeFromFavoritesTitle') : t('public:propertyDetail.addToFavoritesButton')}
                   >
                     <FiHeart
                       className={`w-5 h-5 ${existingFavorite ? 'text-redcard-500 fill-redcard-500' : 'text-slate-600'}`}
@@ -356,7 +352,7 @@ function PropertyDetail() {
                   </button>
                 )}
                 {/* Image counter */}
-                <div className="absolute top-4 left-4 bg-black/50 text-white text-sm px-3 py-1 rounded-full">
+                <div className="absolute top-4 start-4 bg-black/50 text-white text-sm px-3 py-1 rounded-full">
                   {currentImage + 1} / {images.length}
                 </div>
                 {images.length > 1 && (
@@ -366,18 +362,18 @@ function PropertyDetail() {
                         e.stopPropagation()
                         setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1))
                       }}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 hover:bg-white"
+                      className="absolute start-4 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 hover:bg-white"
                     >
-                      <FiChevronLeft className="w-5 h-5" />
+                      <DirIcon icon={FiChevronLeft} className="w-5 h-5" />
                     </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
                         setCurrentImage((prev) => (prev === images.length - 1 ? 0 : prev + 1))
                       }}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 hover:bg-white"
+                      className="absolute end-4 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 hover:bg-white"
                     >
-                      <FiChevronRight className="w-5 h-5" />
+                      <DirIcon icon={FiChevronRight} className="w-5 h-5" />
                     </button>
                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                       {images.map((_, idx) => (
@@ -398,7 +394,7 @@ function PropertyDetail() {
               </>
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400">
-                Aucune image
+                {t('public:propertyDetail.noImage')}
               </div>
             )}
           </div>
@@ -420,21 +416,21 @@ function PropertyDetail() {
                 </h1>
                 <div className="flex items-center gap-4 text-gray-600">
                   <div className="flex items-center">
-                    <FiMapPin className="w-4 h-4 mr-1" />
+                    <FiMapPin className="w-4 h-4 me-1" />
                     <span>{property.city}{property.neighborhood && `, ${property.neighborhood}`}</span>
                   </div>
                   {property.views_count > 0 && (
                     <div className="flex items-center text-gray-500 text-sm">
-                      <FiEye className="w-4 h-4 mr-1" />
-                      <span>{property.views_count} vue{property.views_count > 1 ? 's' : ''}</span>
+                      <FiEye className="w-4 h-4 me-1" />
+                      <span>{t('public:propertyDetail.viewsCount', { n: property.views_count })}</span>
                     </div>
                   )}
                 </div>
               </div>
-              <div className="text-right">
+              <div className="text-end">
                 <div className={`font-display text-[28px] font-extrabold ${property.is_premium ? 'premium-price' : property.is_urgent ? 'text-red-600' : 'text-midnight'}`}>
                   {formatPrice(property.price)}
-                  {property.transaction_type === 'rent' && <span className="text-sm font-semibold text-slate-500">/mois</span>}
+                  {property.transaction_type === 'rent' && <span className="text-sm font-semibold text-slate-500">{t('public:propertyDetail.perMonth')}</span>}
                 </div>
                 {property.price_per_sqm && (
                   <div className="text-sm text-gray-500">
@@ -443,7 +439,7 @@ function PropertyDetail() {
                 )}
                 {property.is_urgent && timeRemaining && (
                   <div className="mt-2 text-sm font-bold text-red-600 bg-red-50 px-2 py-1 rounded inline-block">
-                    Expire dans: {timeRemaining}
+                    {t('public:propertyDetail.expiresIn', { time: timeRemaining })}
                   </div>
                 )}
                 {property.transaction_type === 'sale' && (
@@ -451,7 +447,7 @@ function PropertyDetail() {
                     to={`/simulateur-credit?price=${property.price}`}
                     className="mt-2 text-sm text-primary-600 hover:underline inline-block"
                   >
-                    Simuler un crédit pour ce bien
+                    {t('public:propertyDetail.simulateCredit')}
                   </Link>
                 )}
               </div>
@@ -471,7 +467,7 @@ function PropertyDetail() {
               <div className="bg-gray-50 rounded-lg p-4 text-center">
                 <FiMaximize className="w-6 h-6 mx-auto text-gray-400 mb-2" />
                 <div className="font-semibold">{property.surface} m²</div>
-                <div className="text-sm text-gray-500">Surface</div>
+                <div className="text-sm text-gray-500">{t('public:propertyDetail.surfaceLabel')}</div>
               </div>
             )}
             {property.rooms != null && (
@@ -483,37 +479,37 @@ function PropertyDetail() {
                   </svg>
                 </div>
                 <div className="font-semibold">{property.rooms}</div>
-                <div className="text-sm text-gray-500">Pièces</div>
+                <div className="text-sm text-gray-500">{t('public:propertyDetail.roomsLabel')}</div>
               </div>
             )}
             {property.bedrooms != null && (
               <div className="bg-gray-50 rounded-lg p-4 text-center">
                 <IoBedOutline className="w-6 h-6 mx-auto text-gray-400 mb-2" />
                 <div className="font-semibold">{property.bedrooms}</div>
-                <div className="text-sm text-gray-500">Chambres</div>
+                <div className="text-sm text-gray-500">{t('public:propertyDetail.bedroomsLabel')}</div>
               </div>
             )}
             {property.bathrooms != null && (
               <div className="bg-gray-50 rounded-lg p-4 text-center">
                 <IoWaterOutline className="w-6 h-6 mx-auto text-gray-400 mb-2" />
                 <div className="font-semibold">{property.bathrooms}</div>
-                <div className="text-sm text-gray-500">SDB</div>
+                <div className="text-sm text-gray-500">{t('public:propertyDetail.bathroomsLabel')}</div>
               </div>
             )}
           </div>
 
           {/* Description */}
           <div className="mb-8">
-            <h2 className="font-semibold text-lg mb-4">Description</h2>
+            <h2 className="font-semibold text-lg mb-4">{t('public:propertyDetail.descriptionTitle')}</h2>
             <p className="text-gray-600 whitespace-pre-line">
-              {property.description || 'Aucune description fournie.'}
+              {property.description || t('public:propertyDetail.noDescription')}
             </p>
           </div>
 
           {/* Features */}
           {property.features?.length > 0 && (
             <div className="mb-8">
-              <h2 className="font-semibold text-lg mb-4">Caractéristiques</h2>
+              <h2 className="font-semibold text-lg mb-4">{t('public:propertyDetail.featuresTitle')}</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {property.features.map((feature, idx) => {
                   const isFeatured = property.is_premium && isPremiumFeature(feature)
@@ -521,9 +517,9 @@ function PropertyDetail() {
                   return (
                     <div key={idx} className={`flex items-center ${isFeatured ? 'text-yellow-700' : 'text-gray-600'}`}>
                       {isFeatured ? (
-                        <span className="text-lg mr-2">⭐</span>
+                        <span className="text-lg me-2">⭐</span>
                       ) : (
-                        <Icon className="w-4 h-4 text-primary-600 mr-2 flex-shrink-0" />
+                        <Icon className="w-4 h-4 text-primary-600 me-2 flex-shrink-0" />
                       )}
                       <span className={isFeatured ? 'font-semibold' : ''}>{feature}</span>
                     </div>
@@ -535,30 +531,30 @@ function PropertyDetail() {
 
           {/* Details */}
           <div className="mb-8">
-            <h2 className="font-semibold text-lg mb-4">Détails</h2>
+            <h2 className="font-semibold text-lg mb-4">{t('public:propertyDetail.detailsTitle')}</h2>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="flex justify-between py-2 border-b">
-                <span className="text-gray-500">Type</span>
-                <span className="font-medium">{PROPERTY_TYPES[property.property_type]}</span>
+                <span className="text-gray-500">{t('public:propertyDetail.typeLabel')}</span>
+                <span className="font-medium">{t(`public:propertyDetail.types.${property.property_type}`, { defaultValue: property.property_type })}</span>
               </div>
               <div className="flex justify-between py-2 border-b">
-                <span className="text-gray-500">Transaction</span>
-                <span className="font-medium">{property.transaction_type === 'sale' ? 'Vente' : 'Location'}</span>
+                <span className="text-gray-500">{t('public:propertyDetail.transactionLabel')}</span>
+                <span className="font-medium">{t(`public:propertyDetail.transactionTypes.${property.transaction_type === 'sale' ? 'sale' : 'rent'}`)}</span>
               </div>
               {property.floor != null && (
                 <div className="flex justify-between py-2 border-b">
-                  <span className="text-gray-500">Étage</span>
-                  <span className="font-medium">{property.floor === 0 ? 'RC' : property.floor}{property.total_floors && ` / ${property.total_floors}`}</span>
+                  <span className="text-gray-500">{t('public:propertyDetail.floorLabel')}</span>
+                  <span className="font-medium">{property.floor === 0 ? t('public:propertyDetail.floorGround') : property.floor}{property.total_floors && ` / ${property.total_floors}`}</span>
                 </div>
               )}
               {property.construction_year && (
                 <div className="flex justify-between py-2 border-b">
-                  <span className="text-gray-500">Année de construction</span>
+                  <span className="text-gray-500">{t('public:propertyDetail.constructionYearLabel')}</span>
                   <span className="font-medium">{property.construction_year}</span>
                 </div>
               )}
               <div className="flex justify-between py-2 border-b">
-                <span className="text-gray-500">Référence</span>
+                <span className="text-gray-500">{t('public:propertyDetail.referenceLabel')}</span>
                 <span className="font-medium">{property.reference}</span>
               </div>
             </div>
@@ -572,21 +568,21 @@ function PropertyDetail() {
             {isOwnerAgency && (
               <div className="card p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold">Contacts intéressés</h3>
+                  <h3 className="font-semibold">{t('public:propertyDetail.interestedContactsTitle')}</h3>
                   <span className="badge-primary">{interestedLeads.length}</span>
                 </div>
                 {interestedLoading ? (
-                  <p className="text-sm text-gray-400">Chargement…</p>
+                  <p className="text-sm text-gray-400">{t('public:propertyDetail.loadingEllipsis')}</p>
                 ) : interestedLeads.length === 0 ? (
-                  <p className="text-sm text-gray-400">Aucun contact intéressé pour l'instant.</p>
+                  <p className="text-sm text-gray-400">{t('public:propertyDetail.noInterestedContacts')}</p>
                 ) : (
-                  <ul className="space-y-3 max-h-[26rem] overflow-y-auto -mr-2 pr-2">
+                  <ul className="space-y-3 max-h-[26rem] overflow-y-auto -me-2 pe-2">
                     {interestedLeads.map((l) => (
                       <li key={l.id} className="border border-gray-100 rounded-lg p-3">
                         <div className="flex items-center justify-between gap-2">
                           <span className="font-medium text-gray-900 text-sm truncate">{l.name}</span>
-                          <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${LEAD_STATUS[l.status]?.[1] || 'bg-gray-100 text-gray-600'}`}>
-                            {LEAD_STATUS[l.status]?.[0] || l.status}
+                          <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${LEAD_STATUS_COLORS[l.status] || 'bg-gray-100 text-gray-600'}`}>
+                            {t(`public:propertyDetail.leadStatus.${l.status}`, { defaultValue: l.status })}
                           </span>
                         </div>
                         <div className="mt-1.5 space-y-1">
@@ -603,58 +599,58 @@ function PropertyDetail() {
                         </div>
                         {l.message && <p className="text-xs text-gray-400 mt-1.5 line-clamp-2">{l.message}</p>}
                         <p className="text-[11px] text-gray-400 mt-1.5">
-                          {l.created_at ? new Date(l.created_at).toLocaleDateString('fr-FR') : ''}
+                          {l.created_at ? new Date(l.created_at).toLocaleDateString(dateLocale) : ''}
                         </p>
                       </li>
                     ))}
                   </ul>
                 )}
                 <Link to="/backoffice/leads" className="block text-center text-sm text-primary-600 hover:text-primary-700 mt-4">
-                  Gérer dans le back-office →
+                  {t('public:propertyDetail.manageInBackoffice')}
                 </Link>
               </div>
             )}
 
             {/* Contact Card */}
             <div className="card p-6 mb-6">
-              <h3 className="font-semibold mb-4">Nous contacter</h3>
+              <h3 className="font-semibold mb-4">{t('public:propertyDetail.contactCardTitle')}</h3>
 
               {showContact ? (
                 <form onSubmit={handleSubmit(onSubmitContact)} className="space-y-4">
                   <div>
-                    <label className="label">Nom *</label>
+                    <label className="label">{t('public:propertyDetail.nameLabel')}</label>
                     <input
-                      {...register('name', { required: 'Nom requis' })}
+                      {...register('name', { required: t('public:propertyDetail.nameRequired') })}
                       className="input"
-                      placeholder="Votre nom"
+                      placeholder={t('public:propertyDetail.namePlaceholder')}
                     />
                     {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
                   </div>
                   <div>
-                    <label className="label">Email *</label>
+                    <label className="label">{t('public:propertyDetail.emailLabel')}</label>
                     <input
-                      {...register('email', { required: 'Email requis' })}
+                      {...register('email', { required: t('public:propertyDetail.emailRequired') })}
                       type="email"
                       className="input"
-                      placeholder="votre@email.com"
+                      placeholder={t('public:propertyDetail.emailPlaceholder')}
                     />
                     {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
                   </div>
                   <div>
-                    <label className="label">Téléphone</label>
+                    <label className="label">{t('public:propertyDetail.phoneLabel')}</label>
                     <input
                       {...register('phone')}
                       className="input"
-                      placeholder="+212 6XX XXX XXX"
+                      placeholder={t('public:propertyDetail.phonePlaceholder')}
                     />
                   </div>
                   <div>
-                    <label className="label">Message</label>
+                    <label className="label">{t('public:propertyDetail.messageLabel')}</label>
                     <textarea
                       {...register('message')}
                       className="input"
                       rows="4"
-                      placeholder="Votre message..."
+                      placeholder={t('public:propertyDetail.messagePlaceholder')}
                     />
                   </div>
                   <button
@@ -662,7 +658,7 @@ function PropertyDetail() {
                     disabled={isSubmitting}
                     className="btn-primary w-full"
                   >
-                    {isSubmitting ? 'Envoi...' : 'Envoyer'}
+                    {isSubmitting ? t('public:propertyDetail.sendingEllipsis') : t('public:propertyDetail.sendButton')}
                   </button>
                 </form>
               ) : (
@@ -671,12 +667,12 @@ function PropertyDetail() {
                     onClick={() => setShowContact(true)}
                     className="btn-primary w-full"
                   >
-                    <FiMail className="w-4 h-4 mr-2" />
-                    Envoyer un message
+                    <FiMail className="w-4 h-4 me-2" />
+                    {t('public:propertyDetail.sendMessageButton')}
                   </button>
                   {revealedPhone ? (
                     <a href={`tel:${revealedPhone}`} className="btn-outline w-full">
-                      <FiPhone className="w-4 h-4 mr-2" />
+                      <FiPhone className="w-4 h-4 me-2" />
                       {revealedPhone}
                     </a>
                   ) : (
@@ -685,8 +681,8 @@ function PropertyDetail() {
                       disabled={isRevealingPhone}
                       className="btn-outline w-full"
                     >
-                      <FiPhone className="w-4 h-4 mr-2" />
-                      {isRevealingPhone ? 'Chargement...' : 'Nous appeler'}
+                      <FiPhone className="w-4 h-4 me-2" />
+                      {isRevealingPhone ? t('public:propertyDetail.revealingPhoneLabel') : t('public:propertyDetail.callUsButton')}
                     </button>
                   )}
                 </div>
@@ -699,7 +695,7 @@ function PropertyDetail() {
                 onClick={() => isAuthenticated ? setApplyOpen(true) : navigate('/connexion', { state: { from: { pathname: `/annonces/${id}` } } })}
                 className="btn-primary w-full flex items-center justify-center gap-2 mb-6"
               >
-                <FiFileText className="w-5 h-5" /> Déposer un dossier de candidature
+                <FiFileText className="w-5 h-5" /> {t('public:propertyDetail.openApplyModalButton')}
               </button>
             )}
             {isBuyer && <div className="mb-6"><BookVisitWidget propertyId={id} /></div>}
@@ -711,13 +707,13 @@ function PropertyDetail() {
                   onClick={handleToggleFavorite}
                   className={`btn-secondary flex-1 ${existingFavorite ? 'text-red-600 border-red-200' : ''}`}
                 >
-                  <FiHeart className={`w-4 h-4 mr-2 ${existingFavorite ? 'fill-current' : ''}`} />
-                  {existingFavorite ? 'En favori' : 'Ajouter aux favoris'}
+                  <FiHeart className={`w-4 h-4 me-2 ${existingFavorite ? 'fill-current' : ''}`} />
+                  {existingFavorite ? t('public:propertyDetail.inFavoritesLabel') : t('public:propertyDetail.addToFavoritesButton')}
                 </button>
               )}
               <button onClick={handleShare} className="btn-secondary flex-1">
-                <FiShare2 className="w-4 h-4 mr-2" />
-                Partager
+                <FiShare2 className="w-4 h-4 me-2" />
+                {t('public:propertyDetail.shareButton')}
               </button>
             </div>
           </div>
@@ -728,43 +724,43 @@ function PropertyDetail() {
       {applyOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto">
-            <h3 className="font-semibold text-lg mb-4">Déposer un dossier de candidature</h3>
+            <h3 className="font-semibold text-lg mb-4">{t('public:propertyDetail.openApplyModalButton')}</h3>
             <form
               onSubmit={(e) => { e.preventDefault(); applyMut.mutate() }}
               className="space-y-4"
             >
               <div>
-                <label className="label">Nom *</label>
+                <label className="label">{t('public:propertyDetail.nameLabel')}</label>
                 <input
                   className="input"
                   value={applyForm.applicant_name}
                   onChange={(e) => setApplyForm((f) => ({ ...f, applicant_name: e.target.value }))}
-                  placeholder="Votre nom"
+                  placeholder={t('public:propertyDetail.namePlaceholder')}
                   required
                 />
               </div>
               <div>
-                <label className="label">Email *</label>
+                <label className="label">{t('public:propertyDetail.emailLabel')}</label>
                 <input
                   type="email"
                   className="input"
                   value={applyForm.applicant_email}
                   onChange={(e) => setApplyForm((f) => ({ ...f, applicant_email: e.target.value }))}
-                  placeholder="votre@email.com"
+                  placeholder={t('public:propertyDetail.emailPlaceholder')}
                   required
                 />
               </div>
               <div>
-                <label className="label">Téléphone</label>
+                <label className="label">{t('public:propertyDetail.phoneLabel')}</label>
                 <input
                   className="input"
                   value={applyForm.applicant_phone}
                   onChange={(e) => setApplyForm((f) => ({ ...f, applicant_phone: e.target.value }))}
-                  placeholder="+212 6XX XXX XXX"
+                  placeholder={t('public:propertyDetail.phonePlaceholder')}
                 />
               </div>
               <div>
-                <label className="label">Revenu mensuel (Đh)</label>
+                <label className="label">{t('public:propertyDetail.monthlyIncomeLabel')}</label>
                 <input
                   type="number"
                   className="input"
@@ -774,40 +770,41 @@ function PropertyDetail() {
                 />
               </div>
               <div>
-                <label className="label">Nom du garant</label>
+                <label className="label">{t('public:propertyDetail.guarantorNameLabel')}</label>
                 <input
                   className="input"
                   value={applyForm.guarantor_name}
                   onChange={(e) => setApplyForm((f) => ({ ...f, guarantor_name: e.target.value }))}
-                  placeholder="Nom du garant (facultatif)"
+                  placeholder={t('public:propertyDetail.guarantorNamePlaceholder')}
                 />
               </div>
               <div>
-                <label className="label">Revenu du garant (Đh)</label>
+                <label className="label">{t('public:propertyDetail.guarantorIncomeLabel')}</label>
                 <input
                   type="number"
                   className="input"
                   value={applyForm.guarantor_income}
                   onChange={(e) => setApplyForm((f) => ({ ...f, guarantor_income: e.target.value }))}
-                  placeholder="Facultatif"
+                  placeholder={t('public:propertyDetail.optionalPlaceholder')}
                 />
               </div>
 
               <div className="border-t border-gray-200 pt-4">
-                <label className="label">Pièces jointes</label>
+                <label className="label">{t('public:propertyDetail.attachmentsLabel')}</label>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <select
                     className="input sm:w-56"
                     value={pendingDocType}
                     onChange={(e) => setPendingDocType(e.target.value)}
                   >
+                    {/* Libellés issus de dashboard/applicationStatus.js, module partagé hors périmètre de cette migration — restent en FR. */}
                     {DOC_TYPES.map(([value, labelText]) => (
                       <option key={value} value={value}>{labelText}</option>
                     ))}
                   </select>
                   <label className="btn-secondary flex-1 justify-center cursor-pointer">
-                    <FiUploadCloud className="w-4 h-4 mr-2" />
-                    Ajouter un fichier
+                    <FiUploadCloud className="w-4 h-4 me-2" />
+                    {t('public:propertyDetail.addFileButton')}
                     <input type="file" className="hidden" onChange={handleAddApplyDoc} />
                   </label>
                 </div>
@@ -827,8 +824,8 @@ function PropertyDetail() {
                         <button
                           type="button"
                           onClick={() => removeApplyDoc(index)}
-                          className="text-gray-400 hover:text-red-600 shrink-0 ml-2"
-                          aria-label="Retirer ce fichier"
+                          className="text-gray-400 hover:text-red-600 shrink-0 ms-2"
+                          aria-label={t('public:propertyDetail.removeFileAriaLabel')}
                         >
                           <FiTrash2 className="w-4 h-4" />
                         </button>
@@ -844,14 +841,14 @@ function PropertyDetail() {
                   onClick={() => { setApplyOpen(false); setApplyDocs([]) }}
                   className="btn-secondary"
                 >
-                  Annuler
+                  {t('public:propertyDetail.cancelButton')}
                 </button>
                 <button
                   type="submit"
                   disabled={applyMut.isLoading || uploadingDocs}
                   className="btn-primary"
                 >
-                  {uploadingDocs ? 'Envoi des pièces...' : applyMut.isLoading ? 'Envoi...' : 'Envoyer ma candidature'}
+                  {uploadingDocs ? t('public:propertyDetail.uploadingDocsLabel') : applyMut.isLoading ? t('public:propertyDetail.sendingEllipsis') : t('public:propertyDetail.submitApplicationButton')}
                 </button>
               </div>
             </form>
