@@ -147,6 +147,117 @@
           "description": "تظهر التقارير الشهرية هنا بعد تحصيل الإيجارات."
         }
       }
+    },
+    "lease": {
+      "gated": {
+        "message": "التسيير الكرائي مخصص لباقتي Pro والمؤسسات."
+      },
+      "status": {
+        "draft": "مسودة",
+        "active": "نشط",
+        "ended": "منتهٍ",
+        "terminated": "مفسوخ"
+      },
+      "stats": {
+        "total": "إجمالي عقود الكراء",
+        "active": "نشطة"
+      },
+      "newButton": "عقد كراء جديد",
+      "empty": {
+        "title": "لا يوجد عقد كراء",
+        "description": "أنشئ عقد كراء مرتبطًا بعقد تسيير."
+      },
+      "columns": {
+        "reference": "المرجع",
+        "rent": "الإيجار",
+        "charges": "التكاليف",
+        "status": "الحالة"
+      },
+      "modal": {
+        "title": "عقد كراء جديد",
+        "mandateLabel": "عقد التسيير",
+        "mandatePlaceholder": "اختر عقد تسيير…",
+        "mandateSearchPlaceholder": "البحث عن عقد تسيير…",
+        "tenantLabel": "العميل المستأجر",
+        "tenantPlaceholder": "اختر عميلاً…",
+        "tenantSearchPlaceholder": "البحث عن عميل…",
+        "rentLabel": "الإيجار (Đh)",
+        "chargesLabel": "التكاليف (Đh)",
+        "depositLabel": "وديعة الضمان (Đh)",
+        "paymentDayLabel": "يوم الاستحقاق (1-28)",
+        "cancel": "إلغاء",
+        "create": "إنشاء"
+      },
+      "toasts": {
+        "created": "تم إنشاء عقد الكراء",
+        "signed": "تم توقيع عقد الكراء",
+        "revised": "تمت مراجعة الإيجار",
+        "depositReturned": "تم استرجاع الوديعة",
+        "paymentRecorded": "تم تسجيل الدفعة",
+        "inventoryCreated": "تم إنشاء محضر الحالة"
+      },
+      "backToList": "الرجوع إلى عقود الكراء",
+      "detail": {
+        "title": "عقد الكراء {{reference}}",
+        "pdfButton": "PDF",
+        "signButton": "توقيع",
+        "reviseButton": "مراجعة الإيجار",
+        "returnDepositButton": "استرجاع الوديعة",
+        "fields": {
+          "status": "الحالة",
+          "rent": "الإيجار",
+          "charges": "التكاليف",
+          "deposit": "الوديعة"
+        }
+      },
+      "rentPeriods": {
+        "panelTitle": "المخالصات",
+        "columns": {
+          "period": "الفترة",
+          "due": "المستحق",
+          "status": "الحالة"
+        },
+        "status": {
+          "pending": "قيد التسديد",
+          "late": "متأخر",
+          "partial": "جزئي",
+          "paid": "مدفوع"
+        },
+        "receiptButton": "المخالصة",
+        "recordPaymentButton": "تسجيل دفعة",
+        "empty": {
+          "title": "لا توجد مستحقات",
+          "description": "تُولَّد مستحقات الإيجار شهريًا آليًا."
+        }
+      },
+      "inventories": {
+        "panelTitle": "محاضر الحالة",
+        "outStatementLink": "كشف حساب الخروج",
+        "entryLabel": "محضر حالة الدخول",
+        "exitLabel": "محضر حالة الخروج",
+        "openButton": "فتح",
+        "createEntryButton": "إنشاء محضر الدخول",
+        "createExitButton": "إنشاء محضر الخروج"
+      },
+      "payModal": {
+        "title": "تسجيل دفعة — {{period}}",
+        "amountLabel": "المبلغ (Đh)",
+        "methodLabel": "طريقة الدفع",
+        "methods": {
+          "virement": "تحويل بنكي",
+          "cheque": "شيك",
+          "especes": "نقدًا",
+          "carte": "بطاقة"
+        },
+        "cancel": "إلغاء",
+        "submit": "تسجيل"
+      },
+      "reviseModal": {
+        "title": "مراجعة الإيجار",
+        "newRentLabel": "الإيجار الجديد (Đh)",
+        "cancel": "إلغاء",
+        "apply": "تطبيق"
+      }
     }
   },
   "ui": {

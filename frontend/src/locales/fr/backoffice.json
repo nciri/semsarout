@@ -147,6 +147,117 @@
           "description": "Les comptes-rendus mensuels apparaissent ici une fois les loyers encaissés."
         }
       }
+    },
+    "lease": {
+      "gated": {
+        "message": "La gestion locative est réservée aux plans Pro et Entreprise."
+      },
+      "status": {
+        "draft": "Brouillon",
+        "active": "Actif",
+        "ended": "Terminé",
+        "terminated": "Résilié"
+      },
+      "stats": {
+        "total": "Total baux",
+        "active": "Actifs"
+      },
+      "newButton": "Nouveau bail",
+      "empty": {
+        "title": "Aucun bail",
+        "description": "Créez un bail rattaché à un mandat de gestion."
+      },
+      "columns": {
+        "reference": "Référence",
+        "rent": "Loyer",
+        "charges": "Charges",
+        "status": "Statut"
+      },
+      "modal": {
+        "title": "Nouveau bail",
+        "mandateLabel": "Mandat",
+        "mandatePlaceholder": "Choisir un mandat…",
+        "mandateSearchPlaceholder": "Rechercher un mandat…",
+        "tenantLabel": "Client locataire",
+        "tenantPlaceholder": "Choisir un client…",
+        "tenantSearchPlaceholder": "Rechercher un client…",
+        "rentLabel": "Loyer (Đh)",
+        "chargesLabel": "Charges (Đh)",
+        "depositLabel": "Dépôt de garantie (Đh)",
+        "paymentDayLabel": "Jour d'échéance (1-28)",
+        "cancel": "Annuler",
+        "create": "Créer"
+      },
+      "toasts": {
+        "created": "Bail créé",
+        "signed": "Bail signé",
+        "revised": "Loyer révisé",
+        "depositReturned": "Dépôt restitué",
+        "paymentRecorded": "Paiement enregistré",
+        "inventoryCreated": "État des lieux créé"
+      },
+      "backToList": "Retour aux baux",
+      "detail": {
+        "title": "Bail {{reference}}",
+        "pdfButton": "PDF",
+        "signButton": "Signer",
+        "reviseButton": "Réviser le loyer",
+        "returnDepositButton": "Restituer le dépôt",
+        "fields": {
+          "status": "Statut",
+          "rent": "Loyer",
+          "charges": "Charges",
+          "deposit": "Dépôt"
+        }
+      },
+      "rentPeriods": {
+        "panelTitle": "Quittancement",
+        "columns": {
+          "period": "Période",
+          "due": "Dû",
+          "status": "Statut"
+        },
+        "status": {
+          "pending": "À régler",
+          "late": "En retard",
+          "partial": "Partiel",
+          "paid": "Payé"
+        },
+        "receiptButton": "Quittance",
+        "recordPaymentButton": "Enregistrer paiement",
+        "empty": {
+          "title": "Aucune échéance",
+          "description": "Les échéances de loyer sont générées mensuellement par l'ordonnanceur."
+        }
+      },
+      "inventories": {
+        "panelTitle": "États des lieux",
+        "outStatementLink": "Décompte de sortie",
+        "entryLabel": "État des lieux d'entrée",
+        "exitLabel": "État des lieux de sortie",
+        "openButton": "Ouvrir",
+        "createEntryButton": "Créer l'EDL d'entrée",
+        "createExitButton": "Créer l'EDL de sortie"
+      },
+      "payModal": {
+        "title": "Enregistrer un paiement — {{period}}",
+        "amountLabel": "Montant (Đh)",
+        "methodLabel": "Méthode",
+        "methods": {
+          "virement": "Virement",
+          "cheque": "Chèque",
+          "especes": "Espèces",
+          "carte": "Carte"
+        },
+        "cancel": "Annuler",
+        "submit": "Enregistrer"
+      },
+      "reviseModal": {
+        "title": "Réviser le loyer",
+        "newRentLabel": "Nouveau loyer (Đh)",
+        "cancel": "Annuler",
+        "apply": "Appliquer"
+      }
     }
   },
   "ui": {

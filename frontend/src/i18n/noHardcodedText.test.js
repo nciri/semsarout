@@ -64,6 +64,8 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/rental/RentalLayout.jsx',
   'src/pages/backoffice/rental/MandatesList.jsx',
   'src/pages/backoffice/rental/MandateDetail.jsx',
+  'src/pages/backoffice/rental/LeasesList.jsx',
+  'src/pages/backoffice/rental/LeaseDetail.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {
