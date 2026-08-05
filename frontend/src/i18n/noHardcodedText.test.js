@@ -94,6 +94,9 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/analytics/PipelineAnalytics.jsx',
   'src/pages/backoffice/analytics/MarketAnalytics.jsx',
   'src/pages/backoffice/analytics/TeamAnalytics.jsx',
+  'src/pages/backoffice/Clients.jsx',
+  'src/pages/backoffice/ClientForm.jsx',
+  'src/pages/backoffice/ClientDetail.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {

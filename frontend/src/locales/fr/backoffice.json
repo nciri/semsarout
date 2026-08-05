@@ -1071,5 +1071,155 @@
         "conversion": "Conv."
       }
     }
+  },
+  "crm": {
+    "shared": {
+      "loading": "Chargement…",
+      "back": "Retour",
+      "notFound": "Élément introuvable.",
+      "loadError": "Une erreur est survenue lors du chargement. Réessayez plus tard.",
+      "status": {
+        "active": "Actif",
+        "prospect": "Prospect",
+        "inactive": "Inactif"
+      },
+      "clientTypes": {
+        "buyer": "Acheteur",
+        "seller": "Vendeur",
+        "landlord": "Propriétaire",
+        "tenant": "Locataire",
+        "investor": "Investisseur"
+      },
+      "propertyTypes": {
+        "apartment": "Appartement",
+        "house": "Maison",
+        "villa": "Villa",
+        "land": "Terrain",
+        "commercial": "Commercial",
+        "office": "Bureau"
+      }
+    },
+    "clients": {
+      "list": {
+        "pageTitle": "Clients",
+        "subtitle": "Gérez votre base de clients et prospects",
+        "newButton": "Nouveau client",
+        "addFirstButton": "Ajouter un client",
+        "searchPlaceholder": "Rechercher par nom, email, téléphone...",
+        "filtersButton": "Filtres",
+        "filterTypeLabel": "Type de client",
+        "filterTypeAll": "Tous les types",
+        "filterStatusLabel": "Statut",
+        "filterStatusAll": "Tous les statuts",
+        "resetFilters": "Réinitialiser",
+        "types": {
+          "buyer": {
+            "label": "Acheteurs",
+            "description": "Clients à la recherche d'un bien à acheter"
+          },
+          "seller": {
+            "label": "Vendeurs",
+            "description": "Propriétaires souhaitant vendre leur bien"
+          },
+          "landlord": {
+            "label": "Propriétaires",
+            "description": "Propriétaires mettant en location"
+          },
+          "tenant": {
+            "label": "Locataires",
+            "description": "Clients cherchant une location"
+          },
+          "investor": {
+            "label": "Investisseurs",
+            "description": "Investisseurs immobiliers"
+          }
+        },
+        "emptyCategory": "Aucun client dans cette catégorie",
+        "newTransaction": "Nouvelle transaction",
+        "budget": "Budget: {{min}} - {{max}}",
+        "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce client ?",
+        "empty": {
+          "title": "Aucun client trouvé",
+          "filtered": "Aucun client ne correspond à vos critères de recherche.",
+          "default": "Commencez par ajouter votre premier client."
+        }
+      },
+      "form": {
+        "titleNew": "Nouveau client",
+        "titleEdit": "Modifier le client",
+        "subtitleNew": "Ajoutez un nouveau client à votre base",
+        "subtitleEdit": "Mettez à jour les informations du client",
+        "sections": {
+          "personalInfo": "Informations personnelles",
+          "address": "Adresse",
+          "searchCriteria": "Critères de recherche",
+          "tags": "Tags",
+          "notes": "Notes et assignation"
+        },
+        "fields": {
+          "firstName": "Prénom",
+          "lastName": "Nom",
+          "email": "Email",
+          "phonePrimary": "Téléphone principal",
+          "phoneSecondary": "Téléphone secondaire",
+          "clientType": "Type de client",
+          "status": "Statut",
+          "source": "Source",
+          "address": "Adresse",
+          "city": "Ville",
+          "selectCity": "Sélectionner une ville",
+          "budgetMin": "Budget minimum ({{currency}})",
+          "budgetMax": "Budget maximum ({{currency}})",
+          "propertyTypesWanted": "Types de biens recherchés",
+          "preferredCities": "Villes préférées",
+          "agentAssigned": "Agent assigné",
+          "agentPlaceholder": "Non assigné",
+          "agentSearchPlaceholder": "Rechercher un agent…",
+          "notes": "Notes",
+          "notesPlaceholder": "Notes internes sur le client...",
+          "gdprConsent": "Le client a donné son consentement pour le traitement de ses données (RGPD)"
+        },
+        "sourceOptions": {
+          "direct": "Direct",
+          "website": "Site web",
+          "referral": "Recommandation",
+          "social": "Réseaux sociaux",
+          "advertising": "Publicité",
+          "partner": "Partenaire"
+        },
+        "tagsPlaceholder": "Ajouter un tag...",
+        "validation": {
+          "contactRequired": "Email ou téléphone requis"
+        },
+        "cancelButton": "Annuler",
+        "createButton": "Créer le client",
+        "updateButton": "Mettre à jour"
+      },
+      "detail": {
+        "editButton": "Modifier",
+        "sections": {
+          "contact": "Coordonnées",
+          "searchCriteria": "Critères de recherche"
+        },
+        "fields": {
+          "email": "Email",
+          "phonePrimary": "Téléphone principal",
+          "phoneSecondary": "Téléphone secondaire",
+          "city": "Ville",
+          "address": "Adresse",
+          "agentAssigned": "Agent assigné",
+          "tags": "Tags",
+          "notes": "Notes"
+        },
+        "budget": "Budget : {{min}} — {{max}}",
+        "propertyTypesWanted": "Types de biens recherchés",
+        "preferredCities": "Villes préférées",
+        "createTransaction": "Créer une transaction ({{type}})",
+        "transactionType": {
+          "rent": "location",
+          "sale": "vente"
+        }
+      }
+    }
   }
 }

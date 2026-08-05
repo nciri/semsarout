@@ -1071,5 +1071,155 @@
         "conversion": "التحويل"
       }
     }
+  },
+  "crm": {
+    "shared": {
+      "loading": "جارٍ التحميل…",
+      "back": "رجوع",
+      "notFound": "العنصر غير موجود.",
+      "loadError": "حدث خطأ أثناء التحميل. حاول مرة أخرى لاحقًا.",
+      "status": {
+        "active": "نشط",
+        "prospect": "عميل محتمل",
+        "inactive": "غير نشط"
+      },
+      "clientTypes": {
+        "buyer": "مشتري",
+        "seller": "بائع",
+        "landlord": "مالك",
+        "tenant": "مستأجر",
+        "investor": "مستثمر"
+      },
+      "propertyTypes": {
+        "apartment": "شقة",
+        "house": "منزل",
+        "villa": "فيلا",
+        "land": "أرض",
+        "commercial": "محل تجاري",
+        "office": "مكتب"
+      }
+    },
+    "clients": {
+      "list": {
+        "pageTitle": "العملاء",
+        "subtitle": "أدر قاعدة عملائك والعملاء المحتملين",
+        "newButton": "عميل جديد",
+        "addFirstButton": "إضافة عميل",
+        "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني أو الهاتف...",
+        "filtersButton": "عوامل التصفية",
+        "filterTypeLabel": "نوع العميل",
+        "filterTypeAll": "جميع الأنواع",
+        "filterStatusLabel": "الحالة",
+        "filterStatusAll": "جميع الحالات",
+        "resetFilters": "إعادة التعيين",
+        "types": {
+          "buyer": {
+            "label": "المشترون",
+            "description": "عملاء يبحثون عن عقار للشراء"
+          },
+          "seller": {
+            "label": "البائعون",
+            "description": "مالكون يرغبون في بيع عقارهم"
+          },
+          "landlord": {
+            "label": "الملاك",
+            "description": "ملاك يعرضون عقارهم للكراء"
+          },
+          "tenant": {
+            "label": "المستأجرون",
+            "description": "عملاء يبحثون عن كراء"
+          },
+          "investor": {
+            "label": "المستثمرون",
+            "description": "مستثمرون عقاريون"
+          }
+        },
+        "emptyCategory": "لا يوجد عميل في هذه الفئة",
+        "newTransaction": "معاملة جديدة",
+        "budget": "الميزانية: {{min}} - {{max}}",
+        "confirmDelete": "هل أنت متأكد من رغبتك في حذف هذا العميل؟",
+        "empty": {
+          "title": "لم يتم العثور على أي عميل",
+          "filtered": "لا يوجد عميل يطابق معايير بحثك.",
+          "default": "ابدأ بإضافة أول عميل لك."
+        }
+      },
+      "form": {
+        "titleNew": "عميل جديد",
+        "titleEdit": "تعديل العميل",
+        "subtitleNew": "أضف عميلاً جديداً إلى قاعدتك",
+        "subtitleEdit": "حدّث معلومات العميل",
+        "sections": {
+          "personalInfo": "المعلومات الشخصية",
+          "address": "العنوان",
+          "searchCriteria": "معايير البحث",
+          "tags": "الوسوم",
+          "notes": "الملاحظات والإسناد"
+        },
+        "fields": {
+          "firstName": "الاسم الشخصي",
+          "lastName": "الاسم العائلي",
+          "email": "البريد الإلكتروني",
+          "phonePrimary": "الهاتف الرئيسي",
+          "phoneSecondary": "الهاتف الثانوي",
+          "clientType": "نوع العميل",
+          "status": "الحالة",
+          "source": "المصدر",
+          "address": "العنوان",
+          "city": "المدينة",
+          "selectCity": "اختر مدينة",
+          "budgetMin": "الميزانية الدنيا ({{currency}})",
+          "budgetMax": "الميزانية القصوى ({{currency}})",
+          "propertyTypesWanted": "أنواع العقارات المطلوبة",
+          "preferredCities": "المدن المفضلة",
+          "agentAssigned": "الوكيل المسند",
+          "agentPlaceholder": "غير مسند",
+          "agentSearchPlaceholder": "البحث عن وكيل…",
+          "notes": "ملاحظات",
+          "notesPlaceholder": "ملاحظات داخلية حول العميل...",
+          "gdprConsent": "منح العميل موافقته على معالجة بياناته (RGPD)"
+        },
+        "sourceOptions": {
+          "direct": "مباشر",
+          "website": "الموقع الإلكتروني",
+          "referral": "توصية",
+          "social": "الشبكات الاجتماعية",
+          "advertising": "إعلان",
+          "partner": "شريك"
+        },
+        "tagsPlaceholder": "إضافة وسم...",
+        "validation": {
+          "contactRequired": "البريد الإلكتروني أو الهاتف مطلوب"
+        },
+        "cancelButton": "إلغاء",
+        "createButton": "إنشاء العميل",
+        "updateButton": "تحديث"
+      },
+      "detail": {
+        "editButton": "تعديل",
+        "sections": {
+          "contact": "معلومات الاتصال",
+          "searchCriteria": "معايير البحث"
+        },
+        "fields": {
+          "email": "البريد الإلكتروني",
+          "phonePrimary": "الهاتف الرئيسي",
+          "phoneSecondary": "الهاتف الثانوي",
+          "city": "المدينة",
+          "address": "العنوان",
+          "agentAssigned": "الوكيل المسند",
+          "tags": "الوسوم",
+          "notes": "ملاحظات"
+        },
+        "budget": "الميزانية: {{min}} — {{max}}",
+        "propertyTypesWanted": "أنواع العقارات المطلوبة",
+        "preferredCities": "المدن المفضلة",
+        "createTransaction": "إنشاء معاملة ({{type}})",
+        "transactionType": {
+          "rent": "كراء",
+          "sale": "بيع"
+        }
+      }
+    }
   }
 }
