@@ -223,5 +223,46 @@
       "reserved": "محجوزة",
       "sold": "مباعة"
     }
+  },
+  "priceGauge": {
+    "title": "موقع السعر ضمن الحي",
+    "tooltip": "موقع سعر المتر المربع لهذا العقار مقارنة بالعقارات المماثلة في الحي (المصدر: إعلانات SemsarOut و/أو الأسعار المرجعية المُدخلة). تقدير إرشادي.",
+    "unitSale": "درهم/م²",
+    "unitRent": "درهم/م²/شهرياً",
+    "avgLabel": "متوسط {{price}} {{unit}}",
+    "forThisProperty": "لهذا العقار",
+    "inAverage": "في متوسط الحي",
+    "pctVsAverage": "{{percent}}% {{sense}} المتوسط",
+    "sense": {
+      "above": "أعلى من",
+      "below": "أقل من",
+      "in": "ضمن"
+    },
+    "referenceNote": "السعر المرجعي للحي",
+    "estimatedNote_one": "مُقدَّر بناءً على {{count}} عقار · {{scope}}",
+    "estimatedNote_other": "مُقدَّر بناءً على {{count}} عقارات · {{scope}}"
+  },
+  "lightbox": {
+    "close": "إغلاق (Échap)",
+    "zoomOut": "تصغير",
+    "zoomIn": "تكبير",
+    "previous": "الصورة السابقة (←)",
+    "next": "الصورة التالية (→)",
+    "photoAlt": "صورة {{index}}",
+    "thumbnailAlt": "صورة مصغرة {{index}}"
+  },
+  "widgets": {
+    "titles": {
+      "financial": "التمويل",
+      "pipeline": "خط المبيعات",
+      "hot_leads": "العملاء المحتملون",
+      "listings": "الإعلانات",
+      "market": "السوق",
+      "team_seats": "الفريق",
+      "subscription": "الاشتراك",
+      "alerts": "التنبيهات"
+    },
+    "seeMore": "المزيد",
+    "noAlerts": "لا يوجد ما يستدعي الإشارة إليه"
   }
 }

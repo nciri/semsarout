@@ -223,5 +223,46 @@
       "reserved": "Réservé",
       "sold": "Vendu"
     }
+  },
+  "priceGauge": {
+    "title": "Positionnement du prix dans le quartier",
+    "tooltip": "Position du prix au m² de ce bien par rapport aux biens comparables du quartier (source: annonces SemsarOut et/ou prix de référence saisis). Estimation indicative.",
+    "unitSale": "Dh/m²",
+    "unitRent": "Dh/m²/mois",
+    "avgLabel": "moy. {{price}} {{unit}}",
+    "forThisProperty": "pour ce bien",
+    "inAverage": "Dans la moyenne du quartier",
+    "pctVsAverage": "{{percent}}% {{sense}} de la moyenne",
+    "sense": {
+      "above": "au-dessus",
+      "below": "en dessous",
+      "in": "dans"
+    },
+    "referenceNote": "Prix de référence du quartier",
+    "estimatedNote_one": "Estimé sur {{count}} bien · {{scope}}",
+    "estimatedNote_other": "Estimé sur {{count}} biens · {{scope}}"
+  },
+  "lightbox": {
+    "close": "Fermer (Échap)",
+    "zoomOut": "Réduire",
+    "zoomIn": "Agrandir",
+    "previous": "Image précédente (←)",
+    "next": "Image suivante (→)",
+    "photoAlt": "Photo {{index}}",
+    "thumbnailAlt": "Miniature {{index}}"
+  },
+  "widgets": {
+    "titles": {
+      "financial": "Finance",
+      "pipeline": "Pipeline",
+      "hot_leads": "Leads",
+      "listings": "Annonces",
+      "market": "Marché",
+      "team_seats": "Équipe",
+      "subscription": "Abonnement",
+      "alerts": "Alertes"
+    },
+    "seeMore": "voir plus",
+    "noAlerts": "Rien à signaler"
   }
 }

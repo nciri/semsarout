@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FiX, FiChevronLeft, FiChevronRight, FiZoomIn, FiZoomOut } from 'react-icons/fi'
+import DirIcon from './DirIcon'
 
 export default function PhotoLightbox({
   images = [],
@@ -7,6 +9,7 @@ export default function PhotoLightbox({
   isOpen = false,
   onClose = () => {}
 }) {
+  const { t } = useTranslation(['common'])
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const [isZoomed, setIsZoomed] = useState(false)
 
@@ -84,7 +87,7 @@ export default function PhotoLightbox({
       <button
         onClick={onClose}
         className="absolute top-4 right-4 z-10 text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors"
-        title="Fermer (Échap)"
+        title={t('common:lightbox.close')}
       >
         <FiX className="w-8 h-8" />
       </button>
@@ -93,7 +96,7 @@ export default function PhotoLightbox({
       <button
         onClick={toggleZoom}
         className="absolute top-4 right-16 z-10 text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors"
-        title={isZoomed ? 'Réduire' : 'Agrandir'}
+        title={isZoomed ? t('common:lightbox.zoomOut') : t('common:lightbox.zoomIn')}
       >
         {isZoomed ? <FiZoomOut className="w-6 h-6" /> : <FiZoomIn className="w-6 h-6" />}
       </button>
@@ -109,16 +112,16 @@ export default function PhotoLightbox({
           <button
             onClick={goToPrevious}
             className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-white/70 hover:text-white p-3 rounded-full hover:bg-white/10 transition-colors"
-            title="Image précédente (←)"
+            title={t('common:lightbox.previous')}
           >
-            <FiChevronLeft className="w-8 h-8" />
+            <DirIcon icon={FiChevronLeft} className="w-8 h-8" />
           </button>
           <button
             onClick={goToNext}
             className="absolute right-4 top-1/2 -translate-y-1/2 z-10 text-white/70 hover:text-white p-3 rounded-full hover:bg-white/10 transition-colors"
-            title="Image suivante (→)"
+            title={t('common:lightbox.next')}
           >
-            <FiChevronRight className="w-8 h-8" />
+            <DirIcon icon={FiChevronRight} className="w-8 h-8" />
           </button>
         </>
       )}
@@ -135,7 +138,7 @@ export default function PhotoLightbox({
       >
         <img
           src={currentImage?.url || currentImage}
-          alt={`Photo ${currentIndex + 1}`}
+          alt={t('common:lightbox.photoAlt', { index: currentIndex + 1 })}
           className={`max-h-[85vh] w-auto object-contain transition-transform duration-200 ${
             isZoomed ? 'scale-150' : 'scale-100'
           }`}
@@ -162,7 +165,7 @@ export default function PhotoLightbox({
             >
               <img
                 src={image?.url || image}
-                alt={`Miniature ${idx + 1}`}
+                alt={t('common:lightbox.thumbnailAlt', { index: idx + 1 })}
                 className="w-full h-full object-cover"
               />
             </button>
