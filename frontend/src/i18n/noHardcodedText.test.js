@@ -109,6 +109,8 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/Settings.jsx',
   'src/pages/backoffice/SettingsHub.jsx',
   'src/pages/backoffice/StripeConfig.jsx',
+  'src/pages/backoffice/Dashboard.jsx',
+  'src/pages/backoffice/components/BackofficeLayout.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {
