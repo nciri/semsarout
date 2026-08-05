@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import {
   FiArrowLeft, FiArrowRight, FiCheck, FiPlus, FiTrash2, FiMapPin,
-  FiHome, FiImage, FiFile, FiVideo, FiSave, FiEye, FiX
+  FiHome, FiImage, FiFile, FiVideo, FiSave, FiEye, FiX, FiEdit2
 } from 'react-icons/fi'
 import { DIRHAM_SYMBOL, formatPrice } from '../../utils/currency'
 import api from '../../services/api'
