@@ -923,5 +923,40 @@
       "addTaskPlaceholder": "إضافة مرحلة…",
       "addButton": "إضافة"
     }
+  },
+  "analytics": {
+    "shared": {
+      "loading": "جارٍ التحميل…",
+      "noData": "لا تتوفّر أي بيانات تحليلية.",
+      "noDataShort": "لا توجد بيانات",
+      "propertyCount_one": "{{count}} عقار",
+      "propertyCount_other": "{{count}} عقارات"
+    },
+    "layout": {
+      "title": "التحليلات",
+      "cityNote": "تنطبق المدينة على تبويب السوق فقط (العقارات).",
+      "ranges": {
+        "30d": "30 ي",
+        "90d": "90 ي",
+        "12m": "12 شهرًا",
+        "ytd": "السنة"
+      },
+      "txTypes": {
+        "all": "كل الأنواع",
+        "sale": "بيع",
+        "rent": "كراء"
+      },
+      "tabs": {
+        "overview": "نظرة عامة",
+        "finance": "المالية",
+        "market": "السوق",
+        "pipeline": "المسار",
+        "team": "الفريق"
+      },
+      "agentAll": "كل الوكلاء",
+      "agentSearch": "ابحث عن وكيل…",
+      "cityAll": "كل المدن",
+      "citySearch": "ابحث عن مدينة…"
+    }
   }
 }
