@@ -51,9 +51,6 @@ function CompareProperties() {
       {ids.length === 0 ? (
         <div className="max-w-3xl mx-auto text-center py-16">
           <p className="text-gray-600 mb-4">{t('public:compare.emptyMessage')}</p>
-          <Link to="/annonces" className="btn-primary inline-flex">
-            <DirIcon icon={FiArrowLeft} className="w-4 h-4 me-2" /> {t('public:compare.backToListings')}
-          </Link>
         </div>
       ) : isLoading ? (
         <div className="animate-pulse h-96 bg-gray-200 rounded-xl"></div>
