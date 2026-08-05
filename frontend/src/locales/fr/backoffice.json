@@ -733,6 +733,81 @@
         "finalized": "Contrat finalisé",
         "signed": "Marqué signé"
       }
+    },
+    "create": {
+      "pageTitle": "Nouveau contrat",
+      "submit": "Créer le contrat",
+      "submitting": "Création…",
+      "hint": "Le contenu détaillé se peaufine ensuite dans l'éditeur de contrat.",
+      "sections": {
+        "template": "Modèle",
+        "attach": "Rattachement",
+        "details": "Détails du contrat"
+      },
+      "fields": {
+        "template": "Modèle",
+        "templatePlaceholder": "Choisir un modèle…",
+        "customSuffix": " (personnalisé)",
+        "title": "Titre du contrat",
+        "titlePlaceholder": "Ex. Mandat de vente — Villa Anfa",
+        "property": "Bien",
+        "client": "Client",
+        "transaction": "Transaction liée",
+        "seller": "Vendeur / Mandant",
+        "sellerPlaceholder": "Nom du vendeur",
+        "buyer": "Acheteur / Locataire",
+        "buyerPlaceholder": "Nom de l'acheteur",
+        "amount": "Montant (Đh)",
+        "amountPlaceholder": "Ex. 1500000",
+        "signDate": "Date de signature",
+        "effectDate": "Prise d'effet",
+        "notes": "Notes / clauses particulières",
+        "notesPlaceholder": "Conditions suspensives, clauses spécifiques…"
+      },
+      "search": {
+        "property": "Rechercher un bien…",
+        "client": "Rechercher un client…",
+        "transaction": "Rechercher une transaction…"
+      },
+      "select": {
+        "none": "—",
+        "noneTransaction": "— Aucune"
+      },
+      "fallback": {
+        "property": "Bien"
+      },
+      "preview": {
+        "title": "Aperçu du modèle",
+        "empty": "Sélectionnez un modèle pour afficher son aperçu.",
+        "noContent": "Ce modèle n'a pas de contenu de prévisualisation."
+      }
+    },
+    "templates": {
+      "pageTitle": "Modèles de contrats",
+      "subtitle": "Créez vos propres trames réutilisables pour générer des contrats",
+      "gated": {
+        "title": "Modèles personnalisés",
+        "message": "Les modèles personnalisés sont réservés au plan Entreprise.",
+        "cta": "Voir les offres"
+      },
+      "myTemplates": "Mes modèles personnalisés",
+      "empty": {
+        "title": "Aucun modèle personnalisé",
+        "description": "Créez votre premier modèle depuis le formulaire à droite."
+      },
+      "newTemplate": "Nouveau modèle",
+      "fields": {
+        "name": "Nom du modèle",
+        "namePlaceholder": "Ex. Mandat de vente standard",
+        "type": "Type de document"
+      },
+      "mergeFields": "Champs de fusion :",
+      "submit": "Créer le modèle",
+      "delete": "Supprimer",
+      "toasts": {
+        "created": "Modèle créé",
+        "deleted": "Modèle supprimé"
+      }
     }
   }
 }

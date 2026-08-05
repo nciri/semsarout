@@ -81,6 +81,8 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/artisans/WorkOrderDetail.jsx',
   'src/pages/backoffice/contracts/ContractsList.jsx',
   'src/pages/backoffice/contracts/ContractEditor.jsx',
+  'src/pages/backoffice/contracts/ContractCreate.jsx',
+  'src/pages/backoffice/contracts/TemplatesManager.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {

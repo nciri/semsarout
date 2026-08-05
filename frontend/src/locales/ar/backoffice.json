@@ -733,6 +733,81 @@
         "finalized": "تم إنهاء العقد",
         "signed": "تم التعليم كموقّع"
       }
+    },
+    "create": {
+      "pageTitle": "عقد جديد",
+      "submit": "إنشاء العقد",
+      "submitting": "جارٍ الإنشاء…",
+      "hint": "يُنقّح المحتوى المفصّل لاحقًا في محرّر العقد.",
+      "sections": {
+        "template": "النموذج",
+        "attach": "الربط",
+        "details": "تفاصيل العقد"
+      },
+      "fields": {
+        "template": "النموذج",
+        "templatePlaceholder": "اختر نموذجًا…",
+        "customSuffix": " (مخصّص)",
+        "title": "عنوان العقد",
+        "titlePlaceholder": "مثال: وكالة بيع — فيلا أنفا",
+        "property": "العقار",
+        "client": "العميل",
+        "transaction": "المعاملة المرتبطة",
+        "seller": "البائع / الموكِّل",
+        "sellerPlaceholder": "اسم البائع",
+        "buyer": "المشتري / المكتري",
+        "buyerPlaceholder": "اسم المشتري",
+        "amount": "المبلغ (Đh)",
+        "amountPlaceholder": "مثال: 1500000",
+        "signDate": "تاريخ التوقيع",
+        "effectDate": "تاريخ السريان",
+        "notes": "ملاحظات / بنود خاصة",
+        "notesPlaceholder": "شروط واقفة، بنود خاصة…"
+      },
+      "search": {
+        "property": "ابحث عن عقار…",
+        "client": "ابحث عن عميل…",
+        "transaction": "ابحث عن معاملة…"
+      },
+      "select": {
+        "none": "—",
+        "noneTransaction": "— لا شيء"
+      },
+      "fallback": {
+        "property": "عقار"
+      },
+      "preview": {
+        "title": "معاينة النموذج",
+        "empty": "اختر نموذجًا لعرض معاينته.",
+        "noContent": "لا يحتوي هذا النموذج على محتوى للمعاينة."
+      }
+    },
+    "templates": {
+      "pageTitle": "نماذج العقود",
+      "subtitle": "أنشئ قوالبك القابلة لإعادة الاستعمال لتوليد العقود",
+      "gated": {
+        "title": "النماذج المخصّصة",
+        "message": "النماذج المخصّصة متاحة لباقة Entreprise فقط.",
+        "cta": "عرض الباقات"
+      },
+      "myTemplates": "نماذجي المخصّصة",
+      "empty": {
+        "title": "لا يوجد أي نموذج مخصّص",
+        "description": "أنشئ نموذجك الأول من الاستمارة المجاورة."
+      },
+      "newTemplate": "نموذج جديد",
+      "fields": {
+        "name": "اسم النموذج",
+        "namePlaceholder": "مثال: وكالة بيع نموذجية",
+        "type": "نوع الوثيقة"
+      },
+      "mergeFields": "حقول الدمج:",
+      "submit": "إنشاء النموذج",
+      "delete": "حذف",
+      "toasts": {
+        "created": "تم إنشاء النموذج",
+        "deleted": "تم حذف النموذج"
+      }
     }
   }
 }
