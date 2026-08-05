@@ -7,7 +7,8 @@ import {
 } from 'react-icons/fi'
 import { DIRHAM_SYMBOL, formatPrice } from '../../utils/currency'
 import api from '../../services/api'
-import { TYPOLOGY_OPTIONS, unitTypesForTypology } from './programSpecsConfig'
+import SpecFields from '../../components/common/SpecFields'
+import { TYPOLOGY_OPTIONS, unitTypesForTypology, DETAIL_SECTIONS } from './programSpecsConfig'
 
 // Route through the shared axios instance: it reads accessToken from
 // auth-storage and auto-refreshes on 401, avoiding the stale-token desync that
@@ -757,6 +758,24 @@ export default function DashboardProgramForm() {
                 ))}
               </div>
             </div>
+
+            {(formData.specs?.typology || []).map((typ) => {
+              const section = DETAIL_SECTIONS[typ]
+              if (!section) return null
+              return (
+                <div key={typ} className="border-t border-gray-100 pt-4">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">{section.label}</h3>
+                  <SpecFields
+                    fields={section.fields}
+                    values={formData.specs?.[typ] || {}}
+                    onChange={(vals) => setFormData({ ...formData, specs: { ...formData.specs, [typ]: vals } })}
+                  />
+                </div>
+              )
+            })}
+            {(!formData.specs?.typology || formData.specs.typology.length === 0) && (
+              <p className="text-sm text-gray-400">Sélectionnez une typologie à l'étape « Types de biens » pour afficher les détails spécifiques.</p>
+            )}
           </div>
         )}
 
