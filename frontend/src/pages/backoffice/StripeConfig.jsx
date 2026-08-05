@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   FiCreditCard, FiKey, FiCheck, FiAlertCircle, FiEye, FiEyeOff,
   FiRefreshCw, FiExternalLink, FiSettings, FiDollarSign, FiPercent,
@@ -19,6 +20,7 @@ const StripeLogo = ({ className }) => (
 )
 
 export default function StripeConfig() {
+  const { t } = useTranslation(['backoffice'])
   const { user } = useAuthStore()
   const [showSecretKey, setShowSecretKey] = useState(false)
   const [showWebhookSecret, setShowWebhookSecret] = useState(false)
@@ -49,7 +51,7 @@ export default function StripeConfig() {
     setSaving(true)
     await new Promise(resolve => setTimeout(resolve, 1500))
     setSaving(false)
-    alert('Configuration Stripe enregistrée avec succès!')
+    alert(t('backoffice:settings.stripe.save.successAlert'))
   }
 
   const testConnection = async () => {
@@ -73,10 +75,10 @@ export default function StripeConfig() {
           <div className="flex items-center gap-3 mb-2">
             <StripeLogo className="h-8 text-indigo-600" />
             <span className="text-xs font-medium px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full">
-              Admin uniquement
+              {t('backoffice:settings.shared.adminOnly')}
             </span>
           </div>
-          <p className="text-gray-500">Configurez les paramètres de paiement Stripe pour votre plateforme</p>
+          <p className="text-gray-500">{t('backoffice:settings.stripe.subtitle')}</p>
         </div>
         <a
           href="https://dashboard.stripe.com"
@@ -85,7 +87,7 @@ export default function StripeConfig() {
           className="flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
         >
           <FiExternalLink className="w-4 h-4" />
-          Dashboard Stripe
+          {t('backoffice:settings.stripe.dashboardLink')}
         </a>
       </div>
 
@@ -100,12 +102,12 @@ export default function StripeConfig() {
         </div>
         <div className="flex-1">
           <h3 className={`font-semibold ${config.liveMode ? 'text-green-800' : 'text-yellow-800'}`}>
-            Mode {config.liveMode ? 'Production' : 'Test'}
+            {config.liveMode ? t('backoffice:settings.stripe.statusBanner.mode.production') : t('backoffice:settings.stripe.statusBanner.mode.test')}
           </h3>
           <p className={`text-sm ${config.liveMode ? 'text-green-600' : 'text-yellow-600'}`}>
             {config.liveMode
-              ? 'Les paiements réels sont activés. Les clients seront facturés.'
-              : 'Les paiements sont simulés. Utilisez les cartes de test Stripe.'}
+              ? t('backoffice:settings.stripe.statusBanner.description.production')
+              : t('backoffice:settings.stripe.statusBanner.description.test')}
           </p>
         </div>
         <button
@@ -116,7 +118,7 @@ export default function StripeConfig() {
               : 'bg-yellow-600 text-white hover:bg-yellow-700'
           }`}
         >
-          {config.liveMode ? 'Passer en test' : 'Passer en production'}
+          {config.liveMode ? t('backoffice:settings.stripe.statusBanner.switchToTest') : t('backoffice:settings.stripe.statusBanner.switchToProduction')}
         </button>
       </div>
 
@@ -127,15 +129,15 @@ export default function StripeConfig() {
             <FiKey className="w-5 h-5 text-indigo-600" />
           </div>
           <div>
-            <h2 className="font-semibold text-gray-900">Clés API</h2>
-            <p className="text-sm text-gray-500">Clés d'accès à l'API Stripe</p>
+            <h2 className="font-semibold text-gray-900">{t('backoffice:settings.stripe.apiKeys.title')}</h2>
+            <p className="text-sm text-gray-500">{t('backoffice:settings.stripe.apiKeys.subtitle')}</p>
           </div>
         </div>
 
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Clé publique (Publishable Key)
+              {t('backoffice:settings.stripe.apiKeys.publishableKey')}
             </label>
             <div className="relative">
               <input
@@ -143,15 +145,15 @@ export default function StripeConfig() {
                 value={config.publishableKey}
                 onChange={e => setConfig({ ...config, publishableKey: e.target.value })}
                 placeholder="pk_test_..."
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm"
+                className="w-full ps-12 pe-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm"
               />
-              <FiKey className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <FiKey className="absolute start-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Clé secrète (Secret Key)
+              {t('backoffice:settings.stripe.apiKeys.secretKey')}
             </label>
             <div className="relative">
               <input
@@ -159,26 +161,26 @@ export default function StripeConfig() {
                 value={config.secretKey}
                 onChange={e => setConfig({ ...config, secretKey: e.target.value })}
                 placeholder="sk_test_..."
-                className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm"
+                className="w-full ps-12 pe-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm"
               />
-              <FiKey className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <FiKey className="absolute start-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <button
                 type="button"
                 onClick={() => setShowSecretKey(!showSecretKey)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute end-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 {showSecretKey ? <FiEyeOff className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
               </button>
             </div>
             <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
               <FiAlertCircle className="w-3 h-3" />
-              Ne partagez jamais cette clé
+              {t('backoffice:settings.stripe.apiKeys.secretKeyWarning')}
             </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Secret Webhook
+              {t('backoffice:settings.stripe.apiKeys.webhookSecret')}
             </label>
             <div className="relative">
               <input
@@ -186,13 +188,13 @@ export default function StripeConfig() {
                 value={config.webhookSecret}
                 onChange={e => setConfig({ ...config, webhookSecret: e.target.value })}
                 placeholder="whsec_..."
-                className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm"
+                className="w-full ps-12 pe-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm"
               />
-              <FiKey className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <FiKey className="absolute start-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <button
                 type="button"
                 onClick={() => setShowWebhookSecret(!showWebhookSecret)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute end-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 {showWebhookSecret ? <FiEyeOff className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
               </button>
@@ -206,12 +208,12 @@ export default function StripeConfig() {
               className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
               <FiRefreshCw className={`w-4 h-4 ${testingConnection ? 'animate-spin' : ''}`} />
-              {testingConnection ? 'Test en cours...' : 'Tester la connexion'}
+              {testingConnection ? t('backoffice:settings.stripe.apiKeys.testingConnection') : t('backoffice:settings.stripe.apiKeys.testConnection')}
             </button>
             {connectionStatus === 'success' && (
               <span className="flex items-center gap-2 text-green-600">
                 <FiCheck className="w-5 h-5" />
-                Connexion réussie
+                {t('backoffice:settings.stripe.apiKeys.connectionSuccess')}
               </span>
             )}
           </div>
@@ -225,8 +227,8 @@ export default function StripeConfig() {
             <FiSettings className="w-5 h-5 text-green-600" />
           </div>
           <div>
-            <h2 className="font-semibold text-gray-900">Paramètres de paiement</h2>
-            <p className="text-sm text-gray-500">Configurez les options de facturation</p>
+            <h2 className="font-semibold text-gray-900">{t('backoffice:settings.stripe.paymentSettings.title')}</h2>
+            <p className="text-sm text-gray-500">{t('backoffice:settings.stripe.paymentSettings.subtitle')}</p>
           </div>
         </div>
 
@@ -234,25 +236,25 @@ export default function StripeConfig() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Devise
+                {t('backoffice:settings.stripe.paymentSettings.currency')}
               </label>
               <div className="relative">
                 <select
                   value={config.currency}
                   onChange={e => setConfig({ ...config, currency: e.target.value })}
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white"
+                  className="w-full ps-12 pe-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white"
                 >
-                  <option value="MAD">Dirham marocain (Đh)</option>
-                  <option value="EUR">Euro (EUR)</option>
-                  <option value="USD">Dollar US (USD)</option>
+                  <option value="MAD">{t('backoffice:settings.stripe.paymentSettings.currencyOptions.mad')}</option>
+                  <option value="EUR">{t('backoffice:settings.stripe.paymentSettings.currencyOptions.eur')}</option>
+                  <option value="USD">{t('backoffice:settings.stripe.paymentSettings.currencyOptions.usd')}</option>
                 </select>
-                <FiDollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <FiDollarSign className="absolute start-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Commission plateforme (%)
+                {t('backoffice:settings.stripe.paymentSettings.commissionRate')}
               </label>
               <div className="relative">
                 <input
@@ -262,17 +264,17 @@ export default function StripeConfig() {
                   step="0.1"
                   value={config.commissionRate}
                   onChange={e => setConfig({ ...config, commissionRate: parseFloat(e.target.value) })}
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full ps-12 pe-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
-                <FiPercent className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <FiPercent className="absolute start-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               </div>
             </div>
           </div>
 
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div>
-              <p className="font-medium text-gray-900">Capture automatique</p>
-              <p className="text-sm text-gray-500">Capturer automatiquement les paiements lors de la facturation</p>
+              <p className="font-medium text-gray-900">{t('backoffice:settings.stripe.paymentSettings.autoCapture.title')}</p>
+              <p className="text-sm text-gray-500">{t('backoffice:settings.stripe.paymentSettings.autoCapture.description')}</p>
             </div>
             <button
               onClick={() => setConfig({ ...config, autoCapture: !config.autoCapture })}
@@ -298,8 +300,8 @@ export default function StripeConfig() {
               </svg>
             </div>
             <div>
-              <h2 className="font-semibold text-gray-900">PayPal</h2>
-              <p className="text-sm text-gray-500">Accepter les paiements PayPal</p>
+              <h2 className="font-semibold text-gray-900">{t('backoffice:settings.stripe.paypal.title')}</h2>
+              <p className="text-sm text-gray-500">{t('backoffice:settings.stripe.paypal.subtitle')}</p>
             </div>
           </div>
           <button
@@ -318,7 +320,7 @@ export default function StripeConfig() {
           <div className="space-y-4 pt-4 border-t border-gray-200">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Client ID
+                {t('backoffice:settings.stripe.paypal.clientId')}
               </label>
               <input
                 type="text"
@@ -330,7 +332,7 @@ export default function StripeConfig() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Client Secret
+                {t('backoffice:settings.stripe.paypal.clientSecret')}
               </label>
               <input
                 type="password"
@@ -352,7 +354,7 @@ export default function StripeConfig() {
           className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
         >
           <FiSave className="w-5 h-5" />
-          {saving ? 'Enregistrement...' : 'Enregistrer la configuration'}
+          {saving ? t('backoffice:settings.stripe.save.saving') : t('backoffice:settings.stripe.save.button')}
         </button>
       </div>
     </div>

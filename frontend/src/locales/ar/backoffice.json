@@ -1800,6 +1800,62 @@
         "agency": "الوكالة",
         "account": "حسابي"
       }
+    },
+    "shared": {
+      "adminOnly": "للمشرفين فقط"
+    },
+    "stripe": {
+      "subtitle": "قم بتكوين إعدادات الدفع Stripe لمنصتك",
+      "dashboardLink": "لوحة تحكم Stripe",
+      "statusBanner": {
+        "mode": {
+          "production": "وضع الإنتاج",
+          "test": "وضع الاختبار"
+        },
+        "description": {
+          "production": "المدفوعات الحقيقية مفعّلة. سيتم إصدار فواتير للعملاء.",
+          "test": "المدفوعات محاكاة. استخدم بطاقات اختبار Stripe."
+        },
+        "switchToTest": "التبديل إلى وضع الاختبار",
+        "switchToProduction": "التبديل إلى وضع الإنتاج"
+      },
+      "apiKeys": {
+        "title": "مفاتيح API",
+        "subtitle": "مفاتيح الوصول إلى واجهة برمجة تطبيقات Stripe",
+        "publishableKey": "المفتاح العام (Publishable Key)",
+        "secretKey": "المفتاح السري (Secret Key)",
+        "secretKeyWarning": "لا تشارك هذا المفتاح أبدًا",
+        "webhookSecret": "سر Webhook",
+        "testConnection": "اختبار الاتصال",
+        "testingConnection": "جارٍ الاختبار...",
+        "connectionSuccess": "تم الاتصال بنجاح"
+      },
+      "paymentSettings": {
+        "title": "إعدادات الدفع",
+        "subtitle": "قم بتكوين خيارات الفوترة",
+        "currency": "العملة",
+        "currencyOptions": {
+          "mad": "درهم مغربي (Đh)",
+          "eur": "يورو (EUR)",
+          "usd": "دولار أمريكي (USD)"
+        },
+        "commissionRate": "عمولة المنصة (%)",
+        "autoCapture": {
+          "title": "التحصيل التلقائي",
+          "description": "تحصيل المدفوعات تلقائيًا عند الفوترة"
+        }
+      },
+      "paypal": {
+        "title": "PayPal",
+        "subtitle": "قبول الدفع عبر PayPal",
+        "clientId": "معرّف العميل (Client ID)",
+        "clientSecret": "سر العميل (Client Secret)"
+      },
+      "save": {
+        "saving": "جارٍ الحفظ...",
+        "button": "حفظ إعدادات Stripe",
+        "successAlert": "تم حفظ إعدادات Stripe بنجاح!"
+      }
     }
   }
 }

@@ -1800,6 +1800,62 @@
         "agency": "Agence",
         "account": "Mon compte"
       }
+    },
+    "shared": {
+      "adminOnly": "Admin uniquement"
+    },
+    "stripe": {
+      "subtitle": "Configurez les paramètres de paiement Stripe pour votre plateforme",
+      "dashboardLink": "Dashboard Stripe",
+      "statusBanner": {
+        "mode": {
+          "production": "Mode Production",
+          "test": "Mode Test"
+        },
+        "description": {
+          "production": "Les paiements réels sont activés. Les clients seront facturés.",
+          "test": "Les paiements sont simulés. Utilisez les cartes de test Stripe."
+        },
+        "switchToTest": "Passer en test",
+        "switchToProduction": "Passer en production"
+      },
+      "apiKeys": {
+        "title": "Clés API",
+        "subtitle": "Clés d'accès à l'API Stripe",
+        "publishableKey": "Clé publique (Publishable Key)",
+        "secretKey": "Clé secrète (Secret Key)",
+        "secretKeyWarning": "Ne partagez jamais cette clé",
+        "webhookSecret": "Secret Webhook",
+        "testConnection": "Tester la connexion",
+        "testingConnection": "Test en cours...",
+        "connectionSuccess": "Connexion réussie"
+      },
+      "paymentSettings": {
+        "title": "Paramètres de paiement",
+        "subtitle": "Configurez les options de facturation",
+        "currency": "Devise",
+        "currencyOptions": {
+          "mad": "Dirham marocain (Đh)",
+          "eur": "Euro (EUR)",
+          "usd": "Dollar US (USD)"
+        },
+        "commissionRate": "Commission plateforme (%)",
+        "autoCapture": {
+          "title": "Capture automatique",
+          "description": "Capturer automatiquement les paiements lors de la facturation"
+        }
+      },
+      "paypal": {
+        "title": "PayPal",
+        "subtitle": "Accepter les paiements PayPal",
+        "clientId": "Client ID",
+        "clientSecret": "Client Secret"
+      },
+      "save": {
+        "saving": "Enregistrement...",
+        "button": "Enregistrer la configuration",
+        "successAlert": "Configuration Stripe enregistrée avec succès!"
+      }
     }
   }
 }
