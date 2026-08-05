@@ -1672,6 +1672,128 @@
         "teamDeleted": "Équipe supprimée",
         "memberRemoved": "Membre retiré"
       }
+    },
+    "general": {
+      "pageTitle": "Paramètres",
+      "subtitle": "Configurez les paramètres de votre agence",
+      "savedNotice": "Paramètres sauvegardés avec succès",
+      "tabs": {
+        "general": "Général",
+        "notifications": "Notifications",
+        "stripe": "Stripe",
+        "integrations": "Intégrations",
+        "security": "Sécurité"
+      },
+      "fields": {
+        "agencyName": "Nom de l'agence",
+        "website": "Site web",
+        "email": "Email",
+        "phone": "Téléphone",
+        "address": "Adresse",
+        "city": "Ville",
+        "timezone": "Fuseau horaire",
+        "description": "Description de l'agence",
+        "descriptionPlaceholder": "Décrivez votre agence..."
+      },
+      "timezoneOptions": {
+        "casablanca": "Africa/Casablanca (GMT+1)",
+        "paris": "Europe/Paris (GMT+1)"
+      },
+      "notifications": {
+        "email": {
+          "title": "Notifications par email",
+          "description": "Recevoir les notifications par email"
+        },
+        "sms": {
+          "title": "Notifications SMS",
+          "description": "Recevoir les notifications par SMS"
+        },
+        "leadAutoAssign": {
+          "title": "Assignation auto des leads",
+          "description": "Assigner automatiquement les nouveaux leads aux agents"
+        },
+        "visitReminder": {
+          "label": "Rappel de visite (heures avant)",
+          "hours_one": "{{count}} heure",
+          "hours_other": "{{count}} heures"
+        }
+      },
+      "integrations": {
+        "smtp": {
+          "title": "Configuration SMTP",
+          "description": "Configurez votre serveur SMTP pour l'envoi d'emails",
+          "host": "Serveur SMTP",
+          "hostPlaceholder": "smtp.exemple.com",
+          "port": "Port",
+          "portPlaceholder": "587",
+          "user": "Utilisateur",
+          "password": "Mot de passe"
+        },
+        "api": {
+          "title": "API & Webhooks",
+          "description": "Clés API et webhooks pour les intégrations externes",
+          "keyLabel": "Clé API",
+          "regenerate": "Régénérer"
+        },
+        "erp": {
+          "title": "Intégrations ERP",
+          "description": "Connectez votre système de gestion d'entreprise",
+          "odoo": {
+            "name": "Odoo",
+            "description": "Synchronisation des contacts et factures"
+          },
+          "sap": {
+            "name": "SAP Business One",
+            "description": "Intégration comptable et gestion"
+          }
+        },
+        "crm": {
+          "title": "Intégrations CRM",
+          "description": "Connectez votre CRM externe pour synchroniser les données",
+          "salesforce": {
+            "name": "Salesforce",
+            "description": "Synchronisation bidirectionnelle des leads et contacts"
+          },
+          "hubspot": {
+            "name": "HubSpot",
+            "description": "Gestion des contacts et automatisation marketing"
+          },
+          "zoho": {
+            "name": "Zoho CRM",
+            "description": "Import et export des données clients"
+          }
+        },
+        "status": {
+          "notConnected": "Non connecté"
+        },
+        "actions": {
+          "configure": "Configurer",
+          "connect": "Connecter"
+        }
+      },
+      "security": {
+        "twoFactor": {
+          "title": "Authentification à deux facteurs",
+          "description": "Ajoutez une couche de sécurité supplémentaire à votre compte",
+          "button": "Configurer 2FA"
+        },
+        "sessions": {
+          "title": "Sessions actives",
+          "description": "Gérez les appareils connectés à votre compte",
+          "chromeMacos": "Chrome sur MacOS",
+          "currentSession": "Session actuelle",
+          "active": "Actif"
+        },
+        "dangerZone": {
+          "title": "Zone de danger",
+          "description": "Ces actions sont irréversibles",
+          "deleteAccount": "Supprimer le compte"
+        }
+      },
+      "save": {
+        "saving": "Sauvegarde...",
+        "button": "Sauvegarder"
+      }
     }
   }
 }

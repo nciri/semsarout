@@ -1672,6 +1672,128 @@
         "teamDeleted": "تم حذف الفريق",
         "memberRemoved": "تمت إزالة العضو"
       }
+    },
+    "general": {
+      "pageTitle": "الإعدادات",
+      "subtitle": "قم بتكوين إعدادات وكالتك",
+      "savedNotice": "تم حفظ الإعدادات بنجاح",
+      "tabs": {
+        "general": "عام",
+        "notifications": "الإشعارات",
+        "stripe": "Stripe",
+        "integrations": "التكاملات",
+        "security": "الأمان"
+      },
+      "fields": {
+        "agencyName": "اسم الوكالة",
+        "website": "الموقع الإلكتروني",
+        "email": "البريد الإلكتروني",
+        "phone": "الهاتف",
+        "address": "العنوان",
+        "city": "المدينة",
+        "timezone": "المنطقة الزمنية",
+        "description": "وصف الوكالة",
+        "descriptionPlaceholder": "صف وكالتك..."
+      },
+      "timezoneOptions": {
+        "casablanca": "أفريقيا/الدار البيضاء (GMT+1)",
+        "paris": "أوروبا/باريس (GMT+1)"
+      },
+      "notifications": {
+        "email": {
+          "title": "إشعارات البريد الإلكتروني",
+          "description": "تلقي الإشعارات عبر البريد الإلكتروني"
+        },
+        "sms": {
+          "title": "إشعارات الرسائل القصيرة",
+          "description": "تلقي الإشعارات عبر الرسائل القصيرة"
+        },
+        "leadAutoAssign": {
+          "title": "الإسناد التلقائي للعملاء المحتملين",
+          "description": "إسناد العملاء المحتملين الجدد تلقائيًا إلى الوكلاء"
+        },
+        "visitReminder": {
+          "label": "تذكير الزيارة (عدد الساعات قبل)",
+          "hours_one": "ساعة واحدة",
+          "hours_other": "{{count}} ساعات"
+        }
+      },
+      "integrations": {
+        "smtp": {
+          "title": "إعداد SMTP",
+          "description": "قم بتكوين خادم SMTP الخاص بك لإرسال البريد الإلكتروني",
+          "host": "خادم SMTP",
+          "hostPlaceholder": "smtp.exemple.com",
+          "port": "المنفذ",
+          "portPlaceholder": "587",
+          "user": "المستخدم",
+          "password": "كلمة المرور"
+        },
+        "api": {
+          "title": "واجهة برمجة التطبيقات والـ Webhooks",
+          "description": "مفاتيح API وwebhooks للتكاملات الخارجية",
+          "keyLabel": "مفتاح API",
+          "regenerate": "إعادة التوليد"
+        },
+        "erp": {
+          "title": "تكاملات ERP",
+          "description": "اربط نظام إدارة المؤسسة الخاص بك",
+          "odoo": {
+            "name": "Odoo",
+            "description": "مزامنة جهات الاتصال والفواتير"
+          },
+          "sap": {
+            "name": "SAP Business One",
+            "description": "تكامل المحاسبة والإدارة"
+          }
+        },
+        "crm": {
+          "title": "تكاملات CRM",
+          "description": "اربط نظام CRM الخارجي الخاص بك لمزامنة البيانات",
+          "salesforce": {
+            "name": "Salesforce",
+            "description": "مزامنة ثنائية الاتجاه للعملاء المحتملين وجهات الاتصال"
+          },
+          "hubspot": {
+            "name": "HubSpot",
+            "description": "إدارة جهات الاتصال وأتمتة التسويق"
+          },
+          "zoho": {
+            "name": "Zoho CRM",
+            "description": "استيراد وتصدير بيانات العملاء"
+          }
+        },
+        "status": {
+          "notConnected": "غير متصل"
+        },
+        "actions": {
+          "configure": "تكوين",
+          "connect": "ربط"
+        }
+      },
+      "security": {
+        "twoFactor": {
+          "title": "المصادقة الثنائية",
+          "description": "أضف طبقة أمان إضافية إلى حسابك",
+          "button": "تفعيل المصادقة الثنائية"
+        },
+        "sessions": {
+          "title": "الجلسات النشطة",
+          "description": "إدارة الأجهزة المتصلة بحسابك",
+          "chromeMacos": "Chrome على MacOS",
+          "currentSession": "الجلسة الحالية",
+          "active": "نشط"
+        },
+        "dangerZone": {
+          "title": "منطقة الخطر",
+          "description": "هذه الإجراءات لا رجعة فيها",
+          "deleteAccount": "حذف الحساب"
+        }
+      },
+      "save": {
+        "saving": "جارٍ الحفظ...",
+        "button": "حفظ"
+      }
     }
   }
 }
