@@ -9,11 +9,18 @@ const FR_HINT = /[àâäéèêëîïôöùûüÿçÀÂÄÉÈÊËÎÏÔÖÙÛÜŸ
 
 export function findHardcodedText(source) {
   const hits = []
-  const re = />([^<>{}]+)</g
+  // 1) Nœuds de texte JSX entre > et < (hors accolades).
+  const textRe = />([^<>{}]+)</g
   let m
-  while ((m = re.exec(source)) !== null) {
+  while ((m = textRe.exec(source)) !== null) {
     const text = m[1].replace(/\s+/g, ' ').trim()
     if (text && FR_HINT.test(text)) hits.push(text)
+  }
+  // 2) Attributs statiques title/placeholder/aria-label="..." (dynamiques ={t()} ignorés).
+  const attrRe = /\b(?:title|placeholder|aria-label)="([^"]*)"/g
+  while ((m = attrRe.exec(source)) !== null) {
+    const val = m[1].replace(/\s+/g, ' ').trim()
+    if (val && FR_HINT.test(val)) hits.push(val)
   }
   return hits
 }
@@ -36,6 +43,14 @@ describe('noHardcodedText (garde-fou heuristique)', () => {
 
   it("ignore le texte enveloppé dans t()", () => {
     expect(findHardcodedText("<div>{t('public:notFound.title')}</div>")).toEqual([])
+  })
+
+  it('détecte le français dans un attribut statique', () => {
+    expect(findHardcodedText('<input placeholder="Rechercher" />')).toEqual(['Rechercher'])
+  })
+
+  it('ignore un attribut dynamique {t()}', () => {
+    expect(findHardcodedText("<input placeholder={t('public:x.search')} />")).toEqual([])
   })
 
   it('les fichiers migrés ne contiennent pas de français JSX non traduit', () => {
