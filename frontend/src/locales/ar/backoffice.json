@@ -628,6 +628,56 @@
         "created": "تمت إضافة الحرفي",
         "deleted": "تم حذف الحرفي"
       }
+    },
+    "workOrder": {
+      "gated": {
+        "title": "أوامر العمل",
+        "message": "متابعة التدخلات مخصصة لخطتي Pro وEntreprise."
+      },
+      "stats": {
+        "total": "المجموع",
+        "scheduled": "مبرمجة",
+        "inProgress": "قيد التنفيذ",
+        "done": "منتهية"
+      },
+      "form": {
+        "titlePlaceholder": "عنوان التدخل",
+        "newButton": "جديد"
+      },
+      "columns": {
+        "title": "العنوان",
+        "trade": "المهنة",
+        "artisan": "الحرفي",
+        "costFinal": "التكلفة النهائية",
+        "status": "الحالة"
+      },
+      "status": {
+        "requested": "مطلوب",
+        "scheduled": "مبرمج",
+        "in_progress": "قيد التنفيذ",
+        "done": "منتهي",
+        "cancelled": "ملغى"
+      },
+      "empty": {
+        "title": "لا يوجد أمر عمل",
+        "description": "أنشئوا تدخلاً أعلاه، ثم عيّنوا له حرفياً وعقاراً."
+      },
+      "toasts": {
+        "created": "تم إنشاء أمر العمل",
+        "saved": "تم الحفظ"
+      },
+      "backToList": "التدخلات",
+      "notFound": "أمر العمل غير موجود.",
+      "fields": {
+        "status": "الحالة",
+        "artisan": "الحرفي",
+        "noneOption": "بدون",
+        "sharedSuffix": " (مشترك)",
+        "costEstimate": "التكلفة التقديرية (Đh)",
+        "costFinal": "التكلفة النهائية (Đh)",
+        "notes": "ملاحظات"
+      },
+      "autoSaveNote": "يتم حفظ التعديلات تلقائياً."
     }
   }
 }

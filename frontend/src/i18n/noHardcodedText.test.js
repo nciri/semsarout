@@ -77,6 +77,8 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/shop/OrderDetail.jsx',
   'src/pages/backoffice/artisans/ArtisansLayout.jsx',
   'src/pages/backoffice/artisans/ArtisansDirectory.jsx',
+  'src/pages/backoffice/artisans/WorkOrdersList.jsx',
+  'src/pages/backoffice/artisans/WorkOrderDetail.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {

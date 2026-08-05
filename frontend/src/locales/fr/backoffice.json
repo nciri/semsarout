@@ -628,6 +628,56 @@
         "created": "Artisan ajouté",
         "deleted": "Artisan supprimé"
       }
+    },
+    "workOrder": {
+      "gated": {
+        "title": "Bons de travaux",
+        "message": "Le suivi des interventions est réservé aux plans Pro et Entreprise."
+      },
+      "stats": {
+        "total": "Total",
+        "scheduled": "Planifiés",
+        "inProgress": "En cours",
+        "done": "Terminés"
+      },
+      "form": {
+        "titlePlaceholder": "Intitulé de l'intervention",
+        "newButton": "Nouveau"
+      },
+      "columns": {
+        "title": "Intitulé",
+        "trade": "Métier",
+        "artisan": "Artisan",
+        "costFinal": "Coût final",
+        "status": "Statut"
+      },
+      "status": {
+        "requested": "Demandé",
+        "scheduled": "Planifié",
+        "in_progress": "En cours",
+        "done": "Terminé",
+        "cancelled": "Annulé"
+      },
+      "empty": {
+        "title": "Aucun bon de travaux",
+        "description": "Créez une intervention ci-dessus, puis assignez-lui un artisan et un bien."
+      },
+      "toasts": {
+        "created": "Bon de travaux créé",
+        "saved": "Enregistré"
+      },
+      "backToList": "Interventions",
+      "notFound": "Bon de travaux introuvable.",
+      "fields": {
+        "status": "Statut",
+        "artisan": "Artisan",
+        "noneOption": "Aucun",
+        "sharedSuffix": " (partagé)",
+        "costEstimate": "Coût estimé (Đh)",
+        "costFinal": "Coût final (Đh)",
+        "notes": "Notes"
+      },
+      "autoSaveNote": "Les modifications sont enregistrées automatiquement."
     }
   }
 }
