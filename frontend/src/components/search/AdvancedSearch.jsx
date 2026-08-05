@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   FiSearch, FiSliders, FiX, FiChevronDown, FiChevronUp,
   FiMapPin, FiHome, FiDollarSign, FiMaximize, FiLayers,
@@ -13,34 +14,27 @@ import MultiSelectDropdown from './MultiSelectDropdown'
 const toTypeArray = (v) =>
   Array.isArray(v) ? v : (v ? String(v).split(',').filter(Boolean) : [])
 
-const PROPERTY_TYPES = [
-  { value: 'apartment', label: 'Appartement' },
-  { value: 'house', label: 'Maison' },
-  { value: 'villa', label: 'Villa' },
-  { value: 'riad', label: 'Riad' },
-  { value: 'land', label: 'Terrain' },
-  { value: 'commercial', label: 'Local commercial' },
-  { value: 'office', label: 'Bureau' },
-  { value: 'garage', label: 'Garage/Parking' }
-]
+// Valeurs stables (envoyées à l'API) — les libellés sont résolus via t() au rendu.
+const PROPERTY_TYPE_VALUES = ['apartment', 'house', 'villa', 'riad', 'land', 'commercial', 'office', 'garage']
 
-const FEATURES = [
-  { value: 'parking', label: 'Parking' },
-  { value: 'garage', label: 'Garage' },
-  { value: 'jardin', label: 'Jardin' },
-  { value: 'terrasse', label: 'Terrasse' },
-  { value: 'balcon', label: 'Balcon' },
-  { value: 'piscine', label: 'Piscine' },
-  { value: 'ascenseur', label: 'Ascenseur' },
-  { value: 'gardien', label: 'Gardien' },
-  { value: 'climatisation', label: 'Climatisation' },
-  { value: 'chauffage', label: 'Chauffage' },
-  { value: 'meublé', label: 'Meublé' },
-  { value: 'cuisine équipée', label: 'Cuisine équipée' },
-  { value: 'cave', label: 'Cave' },
-  { value: 'vue mer', label: 'Vue mer' },
-  { value: 'vue montagne', label: 'Vue montagne' },
-  { value: 'duplex', label: 'Duplex' }
+// { value: valeur envoyée à l'API (peut contenir des accents/espaces), key: clé i18n stable }
+const FEATURE_DEFS = [
+  { value: 'parking', key: 'parking' },
+  { value: 'garage', key: 'garage' },
+  { value: 'jardin', key: 'jardin' },
+  { value: 'terrasse', key: 'terrasse' },
+  { value: 'balcon', key: 'balcon' },
+  { value: 'piscine', key: 'piscine' },
+  { value: 'ascenseur', key: 'ascenseur' },
+  { value: 'gardien', key: 'gardien' },
+  { value: 'climatisation', key: 'climatisation' },
+  { value: 'chauffage', key: 'chauffage' },
+  { value: 'meublé', key: 'meuble' },
+  { value: 'cuisine équipée', key: 'cuisineEquipee' },
+  { value: 'cave', key: 'cave' },
+  { value: 'vue mer', key: 'vueMer' },
+  { value: 'vue montagne', key: 'vueMontagne' },
+  { value: 'duplex', key: 'duplex' }
 ]
 
 const MOROCCAN_CITIES = [
@@ -69,8 +63,18 @@ const PRICE_RANGES = {
 }
 
 export default function AdvancedSearch({ onSearch, initialFilters = {}, variant = 'full' }) {
+  const { t } = useTranslation(['common'])
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+
+  const PROPERTY_TYPES = PROPERTY_TYPE_VALUES.map(value => ({
+    value,
+    label: t(`common:advancedSearch.propertyTypes.${value}`)
+  }))
+  const FEATURES = FEATURE_DEFS.map(({ value, key }) => ({
+    value,
+    label: t(`common:advancedSearch.features.${key}`)
+  }))
 
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [aiQuery, setAiQuery] = useState('')
@@ -220,7 +224,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                     : 'text-gray-600 hover:text-black'
                 }`}
               >
-                Acheter
+                {t('common:advancedSearch.buy')}
               </button>
               <button
                 type="button"
@@ -231,7 +235,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                     : 'text-gray-600 hover:text-black'
                 }`}
               >
-                Louer
+                {t('common:advancedSearch.rent')}
               </button>
             </div>
 
@@ -240,7 +244,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
               <FiMapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Ville, quartier..."
+                placeholder={t('common:advancedSearch.cityPlaceholderCompact')}
                 value={filters.city}
                 onChange={(e) => handleFilterChange('city', e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -255,7 +259,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
 
             {/* Property type (multi-sélection) */}
             <MultiSelectDropdown
-              label="Type de bien"
+              label={t('common:advancedSearch.propertyType')}
               options={PROPERTY_TYPES}
               selected={filters.property_type}
               onToggle={handlePropertyTypeToggle}
@@ -273,7 +277,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
               }`}
             >
               <FiSliders />
-              <span>Filtres</span>
+              <span>{t('common:advancedSearch.filtersButton')}</span>
               {activeFiltersCount > 0 && (
                 <span className="bg-primary-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {activeFiltersCount}
@@ -288,7 +292,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
               className="flex items-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
             >
               <FiSearch />
-              <span>Rechercher</span>
+              <span>{t('common:advancedSearch.search')}</span>
             </button>
           </div>
 
@@ -300,7 +304,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     <FiDollarSign className="inline w-4 h-4 mr-1" />
-                    Prix min
+                    {t('common:advancedSearch.priceMin')}
                   </label>
                   <input
                     type="number"
@@ -311,7 +315,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Prix max</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('common:advancedSearch.priceMax')}</label>
                   <input
                     type="number"
                     placeholder="Max"
@@ -323,7 +327,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     <FiMaximize className="inline w-4 h-4 mr-1" />
-                    Surface min (m²)
+                    {t('common:advancedSearch.surfaceMin')}
                   </label>
                   <input
                     type="number"
@@ -334,7 +338,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Surface max (m²)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('common:advancedSearch.surfaceMax')}</label>
                   <input
                     type="number"
                     placeholder="Max"
@@ -350,7 +354,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     <FiLayers className="inline w-4 h-4 mr-1" />
-                    Chambres min
+                    {t('common:advancedSearch.bedroomsMinCompact')}
                   </label>
                   <select
                     value={filters.min_bedrooms}
@@ -364,7 +368,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Pièces min</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('common:advancedSearch.roomsMin')}</label>
                   <select
                     value={filters.min_rooms}
                     onChange={(e) => handleFilterChange('min_rooms', e.target.value)}
@@ -379,7 +383,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     <FiDroplet className="inline w-4 h-4 mr-1" />
-                    Sdb min
+                    {t('common:advancedSearch.bathroomsMin')}
                   </label>
                   <select
                     value={filters.min_bathrooms}
@@ -393,15 +397,15 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type vendeur</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('common:advancedSearch.sellerType')}</label>
                   <select
                     value={filters.owner_type}
                     onChange={(e) => handleFilterChange('owner_type', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   >
-                    <option value="">Tous</option>
-                    <option value="particular">Particuliers</option>
-                    <option value="agency">Agences</option>
+                    <option value="">{t('common:advancedSearch.sellerAll')}</option>
+                    <option value="particular">{t('common:advancedSearch.sellerParticularCompact')}</option>
+                    <option value="agency">{t('common:advancedSearch.sellerAgencyCompact')}</option>
                   </select>
                 </div>
               </div>
@@ -410,7 +414,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <FiStar className="inline w-4 h-4 mr-1" />
-                  Équipements
+                  {t('common:advancedSearch.equipmentsCompact')}
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {FEATURES.slice(0, 12).map(feature => (
@@ -439,7 +443,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                     onChange={(e) => handleFilterChange('has_photos', e.target.checked)}
                     className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                   />
-                  <span className="text-sm text-gray-700">Avec photos</span>
+                  <span className="text-sm text-gray-700">{t('common:advancedSearch.hasPhotosCompact')}</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -450,7 +454,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                   />
                   <span className="text-sm text-gray-700">
                     <FiSun className="inline w-4 h-4 mr-1 text-yellow-500" />
-                    À la une
+                    {t('common:advancedSearch.featuredCompact')}
                   </span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -460,7 +464,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                     onChange={(e) => handleFilterChange('ground_floor', e.target.checked)}
                     className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                   />
-                  <span className="text-sm text-gray-700">RDC</span>
+                  <span className="text-sm text-gray-700">{t('common:advancedSearch.groundFloorCompact')}</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -469,7 +473,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                     onChange={(e) => handleFilterChange('last_floor', e.target.checked)}
                     className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                   />
-                  <span className="text-sm text-gray-700">Dernier étage</span>
+                  <span className="text-sm text-gray-700">{t('common:advancedSearch.lastFloor')}</span>
                 </label>
               </div>
 
@@ -481,7 +485,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                   className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm"
                 >
                   <FiX className="w-4 h-4" />
-                  Réinitialiser les filtres
+                  {t('common:advancedSearch.resetFilters')}
                 </button>
               </div>
             </div>
@@ -497,15 +501,15 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
       <div className="p-4" style={{ background: 'linear-gradient(120deg, #0B1220, #16233b)' }}>
         <div className="flex items-center gap-2 mb-2">
           <HiSparkles className="text-primary-400 w-5 h-5" />
-          <span className="text-ivory font-semibold">Recherche IA</span>
-          <span className="bg-white/[.12] text-ivory text-xs px-2 py-0.5 rounded-full">Bientôt disponible</span>
+          <span className="text-ivory font-semibold">{t('common:advancedSearch.aiSearchTitle')}</span>
+          <span className="bg-white/[.12] text-ivory text-xs px-2 py-0.5 rounded-full">{t('common:advancedSearch.aiComingSoon')}</span>
         </div>
         <div className="relative">
           <input
             type="text"
             value={aiQuery}
             onChange={(e) => setAiQuery(e.target.value)}
-            placeholder={`Ex: Appartement 3 chambres avec terrasse à Casablanca, proche des écoles, budget max 1.5M ${DIRHAM_SYMBOL}...`}
+            placeholder={t('common:advancedSearch.aiPlaceholder', { currency: DIRHAM_SYMBOL })}
             className="w-full px-4 py-3 pr-12 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/60 focus:ring-2 focus:ring-white/50 focus:border-transparent"
             onFocus={() => setShowAiTooltip(true)}
             onBlur={() => setTimeout(() => setShowAiTooltip(false), 200)}
@@ -520,7 +524,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
         </div>
         {showAiTooltip && (
           <div className="mt-2 text-white/80 text-sm">
-            Dans la v2, l'IA comprendra votre demande en langage naturel et trouvera les biens correspondants.
+            {t('common:advancedSearch.aiTooltip')}
           </div>
         )}
       </div>
@@ -539,7 +543,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                   : 'text-slate-500 hover:text-midnight'
               }`}
             >
-              Acheter
+              {t('common:advancedSearch.buy')}
             </button>
             <button
               type="button"
@@ -550,7 +554,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                   : 'text-slate-500 hover:text-midnight'
               }`}
             >
-              Louer
+              {t('common:advancedSearch.rent')}
             </button>
           </div>
         </div>
@@ -561,11 +565,11 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               <FiMapPin className="inline w-4 h-4 mr-1" />
-              Localisation
+              {t('common:advancedSearch.location')}
             </label>
             <input
               type="text"
-              placeholder="Ville ou quartier"
+              placeholder={t('common:advancedSearch.cityPlaceholderFull')}
               value={filters.city}
               onChange={(e) => handleFilterChange('city', e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -582,10 +586,10 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               <FiHome className="inline w-4 h-4 mr-1" />
-              Type de bien
+              {t('common:advancedSearch.propertyType')}
             </label>
             <MultiSelectDropdown
-              label="Tous les types"
+              label={t('common:advancedSearch.allTypesOption')}
               options={PROPERTY_TYPES}
               selected={filters.property_type}
               onToggle={handlePropertyTypeToggle}
@@ -596,7 +600,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               <FiDollarSign className="inline w-4 h-4 mr-1" />
-              Budget
+              {t('common:advancedSearch.budget')}
             </label>
             <div className="flex gap-2">
               <input
@@ -620,14 +624,14 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               <FiLayers className="inline w-4 h-4 mr-1" />
-              Chambres
+              {t('common:advancedSearch.bedrooms')}
             </label>
             <select
               value={filters.min_bedrooms}
               onChange={(e) => handleFilterChange('min_bedrooms', e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
-              <option value="">Peu importe</option>
+              <option value="">{t('common:advancedSearch.noneOption')}</option>
               <option value="1">1+</option>
               <option value="2">2+</option>
               <option value="3">3+</option>
@@ -644,10 +648,10 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
           className="flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium mb-4"
         >
           <FiSliders />
-          <span>Filtres avancés</span>
+          <span>{t('common:advancedSearch.filtersAdvanced')}</span>
           {activeFiltersCount > 0 && (
             <span className="bg-primary-100 text-primary-700 text-xs px-2 py-0.5 rounded-full">
-              {activeFiltersCount} actif{activeFiltersCount > 1 ? 's' : ''}
+              {t('common:advancedSearch.filtersActiveCount', { count: activeFiltersCount })}
             </span>
           )}
           {showAdvanced ? <FiChevronUp /> : <FiChevronDown />}
@@ -660,7 +664,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <FiMaximize className="inline w-4 h-4 mr-1" />
-                Surface (m²)
+                {t('common:advancedSearch.surface')}
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <input
@@ -683,7 +687,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
             {/* Rooms & Bathrooms */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Pièces min</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('common:advancedSearch.roomsMin')}</label>
                 <select
                   value={filters.min_rooms}
                   onChange={(e) => handleFilterChange('min_rooms', e.target.value)}
@@ -696,7 +700,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Pièces max</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('common:advancedSearch.roomsMax')}</label>
                 <select
                   value={filters.max_rooms}
                   onChange={(e) => handleFilterChange('max_rooms', e.target.value)}
@@ -711,7 +715,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <FiDroplet className="inline w-4 h-4 mr-1" />
-                  Sdb min
+                  {t('common:advancedSearch.bathroomsMin')}
                 </label>
                 <select
                   value={filters.min_bathrooms}
@@ -725,10 +729,10 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Année construction</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('common:advancedSearch.constructionYear')}</label>
                 <input
                   type="number"
-                  placeholder="Après..."
+                  placeholder={t('common:advancedSearch.constructionYearPlaceholder')}
                   value={filters.min_construction_year}
                   onChange={(e) => handleFilterChange('min_construction_year', e.target.value)}
                   className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500"
@@ -738,7 +742,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
 
             {/* Floor preferences */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Étage</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('common:advancedSearch.floor')}</label>
               <div className="flex flex-wrap gap-3">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -747,7 +751,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                     onChange={(e) => handleFilterChange('ground_floor', e.target.checked)}
                     className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                   />
-                  <span className="text-sm text-gray-700">Rez-de-chaussée</span>
+                  <span className="text-sm text-gray-700">{t('common:advancedSearch.groundFloor')}</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -756,7 +760,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                     onChange={(e) => handleFilterChange('last_floor', e.target.checked)}
                     className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                   />
-                  <span className="text-sm text-gray-700">Dernier étage</span>
+                  <span className="text-sm text-gray-700">{t('common:advancedSearch.lastFloor')}</span>
                 </label>
               </div>
             </div>
@@ -765,7 +769,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <FiStar className="inline w-4 h-4 mr-1" />
-                Équipements & caractéristiques
+                {t('common:advancedSearch.equipmentsFull')}
               </label>
               <div className="flex flex-wrap gap-2">
                 {FEATURES.map(feature => (
@@ -788,15 +792,15 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
             {/* Owner type & other options */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Type de vendeur</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('common:advancedSearch.sellerTypeFull')}</label>
                 <select
                   value={filters.owner_type}
                   onChange={(e) => handleFilterChange('owner_type', e.target.value)}
                   className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500"
                 >
-                  <option value="">Tous</option>
-                  <option value="particular">Particuliers uniquement</option>
-                  <option value="agency">Agences uniquement</option>
+                  <option value="">{t('common:advancedSearch.sellerAll')}</option>
+                  <option value="particular">{t('common:advancedSearch.sellerParticularFull')}</option>
+                  <option value="agency">{t('common:advancedSearch.sellerAgencyFull')}</option>
                 </select>
               </div>
               <div className="flex items-end">
@@ -807,7 +811,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                     onChange={(e) => handleFilterChange('has_photos', e.target.checked)}
                     className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                   />
-                  <span className="text-sm text-gray-700">Avec photos uniquement</span>
+                  <span className="text-sm text-gray-700">{t('common:advancedSearch.hasPhotosFull')}</span>
                 </label>
               </div>
               <div className="flex items-end">
@@ -820,7 +824,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                   />
                   <span className="text-sm text-gray-700">
                     <FiSun className="inline w-4 h-4 mr-1 text-yellow-500" />
-                    Annonces à la une
+                    {t('common:advancedSearch.featuredFull')}
                   </span>
                 </label>
               </div>
@@ -836,14 +840,14 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
             className="flex items-center gap-2 text-gray-500 hover:text-gray-700"
           >
             <FiX />
-            <span>Réinitialiser</span>
+            <span>{t('common:advancedSearch.reset')}</span>
           </button>
           <button
             type="submit"
             className="flex items-center gap-2 px-8 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold"
           >
             <FiSearch />
-            <span>Rechercher</span>
+            <span>{t('common:advancedSearch.search')}</span>
           </button>
         </div>
       </form>

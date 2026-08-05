@@ -50,6 +50,7 @@ const MIGRATED_FILES = [
   'src/components/layout/Footer.jsx',
   'src/components/admin/ImpersonationBanner.jsx',
   'src/components/common/PropertyCard.jsx',
+  'src/components/search/AdvancedSearch.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {
