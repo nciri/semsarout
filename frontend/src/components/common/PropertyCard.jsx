@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
+import { useTranslation } from 'react-i18next'
 import { FiMapPin, FiMaximize, FiHome, FiHeart, FiBarChart2, FiCheck } from 'react-icons/fi'
 import { IoBedOutline } from 'react-icons/io5'
 import { formatPrice, DIRHAM_SYMBOL } from '../../utils/currency'
@@ -9,6 +10,7 @@ import { buyerService } from '../../services/buyerService'
 import useCompareStore, { MAX_COMPARE_PROPERTIES } from '../../store/compareStore'
 
 function PropertyCard({ property, variant = 'vertical' }) {
+  const { t } = useTranslation(['common'])
   const { isAuthenticated } = useAuthStore()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -28,16 +30,16 @@ function PropertyCard({ property, variant = 'vertical' }) {
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['favorites'])
-        toast.success(favorite ? 'Retiré des favoris' : 'Ajouté aux favoris')
+        toast.success(favorite ? t('common:propertyCard.removedFromFavorites') : t('common:propertyCard.addedToFavorites'))
       },
-      onError: () => toast.error('Une erreur est survenue')
+      onError: () => toast.error(t('common:errors.generic'))
     }
   )
 
   const handleFav = (e) => {
     e.preventDefault()
     if (!isAuthenticated) {
-      toast.info('Connectez-vous pour ajouter aux favoris')
+      toast.info(t('common:propertyCard.loginToFavorite'))
       navigate('/connexion')
       return
     }
@@ -47,14 +49,14 @@ function PropertyCard({ property, variant = 'vertical' }) {
   const badges = (
     <div className="absolute top-3 left-3 flex gap-2">
       {property.is_urgent && (
-        <span className="text-[11px] font-bold px-[10px] py-[5px] rounded-full bg-redcard-500 text-white">Urgent</span>
+        <span className="text-[11px] font-bold px-[10px] py-[5px] rounded-full bg-redcard-500 text-white">{t('common:propertyCard.urgent')}</span>
       )}
       {property.is_premium && (
-        <span className="text-[11px] font-bold px-[10px] py-[5px] rounded-full bg-primary-400 text-midnight">Premium</span>
+        <span className="text-[11px] font-bold px-[10px] py-[5px] rounded-full bg-primary-400 text-midnight">{t('common:propertyCard.premium')}</span>
       )}
       {!property.is_urgent && !property.is_premium && (
         <span className="text-[11px] font-bold px-[10px] py-[5px] rounded-full bg-midnight text-ivory">
-          {property.transaction_type === 'sale' ? 'Vente' : 'Location'}
+          {t(property.transaction_type === 'sale' ? 'common:propertyCard.sale' : 'common:propertyCard.rent')}
         </span>
       )}
     </div>
@@ -67,15 +69,15 @@ function PropertyCard({ property, variant = 'vertical' }) {
     e.preventDefault()
     const ok = toggle(property.id)
     if (!ok) {
-      toast.info(`Vous pouvez comparer ${MAX_COMPARE_PROPERTIES} biens maximum`)
+      toast.info(t('common:propertyCard.maxCompare', { max: MAX_COMPARE_PROPERTIES }))
     }
   }
 
   const favButton = (
     <div className="absolute top-2.5 right-2.5 flex gap-2">
       <button
-        aria-label="Comparer"
-        title="Ajouter au comparateur"
+        aria-label={t('common:propertyCard.compareAria')}
+        title={t('common:propertyCard.compareTitle')}
         onClick={handleToggleCompare}
         className={`w-[34px] h-[34px] rounded-full shadow-ds-sm flex items-center justify-center ${compared ? 'bg-primary-600' : 'bg-white/[.92]'}`}
       >
@@ -86,7 +88,7 @@ function PropertyCard({ property, variant = 'vertical' }) {
         )}
       </button>
       <button
-        aria-label="Favori"
+        aria-label={t('common:propertyCard.favoriteAria')}
         onClick={handleFav}
         className="w-[34px] h-[34px] rounded-full bg-white/[.92] shadow-ds-sm flex items-center justify-center"
       >
@@ -112,7 +114,7 @@ function PropertyCard({ property, variant = 'vertical' }) {
           {property.bedrooms}
         </span>
       )}
-      {property.rooms && <span>{property.rooms} pièces</span>}
+      {property.rooms && <span>{t('common:propertyCard.rooms', { count: property.rooms })}</span>}
     </div>
   )
 
@@ -120,7 +122,7 @@ function PropertyCard({ property, variant = 'vertical' }) {
     <div className="font-display font-extrabold text-[20px] text-midnight">
       {formatPrice(property.price, { suffix: false })}
       <span className="text-[13px] font-semibold text-slate-500 ml-1">
-        {property.transaction_type === 'rent' ? `${DIRHAM_SYMBOL}/mois` : DIRHAM_SYMBOL}
+        {property.transaction_type === 'rent' ? `${DIRHAM_SYMBOL}${t('common:propertyCard.perMonth')}` : DIRHAM_SYMBOL}
       </span>
     </div>
   )

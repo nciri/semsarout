@@ -29,6 +29,21 @@
     "privacyPolicy": "سياسة الخصوصية",
     "cookies": "ملفات تعريف الارتباط"
   },
+  "propertyCard": {
+    "addedToFavorites": "أُضيف إلى المفضلة",
+    "removedFromFavorites": "أُزيل من المفضلة",
+    "loginToFavorite": "سجّل الدخول لإضافة العقار إلى المفضلة",
+    "urgent": "عاجل",
+    "premium": "مميز",
+    "sale": "بيع",
+    "rent": "إيجار",
+    "compareAria": "مقارنة",
+    "compareTitle": "إضافة إلى المقارنة",
+    "favoriteAria": "مفضلة",
+    "maxCompare": "يمكنك مقارنة {{max}} عقارات كحد أقصى",
+    "rooms": "{{count}} غرف",
+    "perMonth": "/شهرياً"
+  },
   "impersonation": {
     "loggedInAs": "مسجل الدخول باسم {{name}} (انتحال هوية)",
     "defaultUser": "مستخدم",

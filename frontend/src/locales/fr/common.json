@@ -29,6 +29,21 @@
     "privacyPolicy": "Politique de confidentialité",
     "cookies": "Cookies"
   },
+  "propertyCard": {
+    "addedToFavorites": "Ajouté aux favoris",
+    "removedFromFavorites": "Retiré des favoris",
+    "loginToFavorite": "Connectez-vous pour ajouter aux favoris",
+    "urgent": "Urgent",
+    "premium": "Premium",
+    "sale": "Vente",
+    "rent": "Location",
+    "compareAria": "Comparer",
+    "compareTitle": "Ajouter au comparateur",
+    "favoriteAria": "Favori",
+    "maxCompare": "Vous pouvez comparer {{max}} biens maximum",
+    "rooms": "{{count}} pièces",
+    "perMonth": "/mois"
+  },
   "impersonation": {
     "loggedInAs": "Connecté en tant que {{name}} (impersonation)",
     "defaultUser": "utilisateur",
