@@ -39,6 +39,13 @@ const MIGRATED_FILES = [
   'src/pages/AgencyList.jsx',
   'src/pages/AgencyDetail.jsx',
   'src/pages/ProgramList.jsx',
+  'src/pages/Checkout.jsx',
+  'src/pages/AgencyPricing.jsx',
+  'src/pages/PropertyList.jsx',
+  'src/pages/ProgramDetail.jsx',
+  'src/pages/Services.jsx',
+  'src/pages/PropertyDetail.jsx',
+  'src/pages/SellProperty.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {
