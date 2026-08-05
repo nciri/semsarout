@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fi'
 import { DIRHAM_SYMBOL } from '../utils/currency'
 import StayManagerWordmark from '../components/common/StayManagerWordmark'
+import DirIcon from '../components/common/DirIcon'
 import { CONTACT } from '../constants/contact'
 import { PRICING, priceLabel, priceWithSymbol } from '../constants/pricing'
 
@@ -282,7 +283,7 @@ function Services() {
                       className="btn bg-gradient-to-r from-[#1F3D34] via-[#2E5E4E] to-[#2E5E4E] text-white hover:opacity-90 transition-opacity"
                     >
                       {t('public:services.learnMore')}
-                      <FiArrowRight className="w-4 h-4 ms-2" />
+                      <DirIcon icon={FiArrowRight} className="w-4 h-4 ms-2" />
                     </a>
                   </div>
                 </div>
@@ -474,7 +475,7 @@ function Services() {
                         className={`btn ${colors.bgGradient || colors.bg} text-white ${colors.bgGradient ? 'hover:opacity-90' : colors.hover} w-full justify-center mb-4`}
                       >
                         {service.cta.label}
-                        <FiArrowRight className="w-4 h-4 ms-2" />
+                        <DirIcon icon={FiArrowRight} className="w-4 h-4 ms-2" />
                       </Link>
                     ) : service.partnership?.registerUrl ? (
                       <a
@@ -484,7 +485,7 @@ function Services() {
                         className={`btn ${colors.bgGradient || colors.bg} text-white hover:opacity-90 w-full justify-center mb-4`}
                       >
                         {t('public:services.createStayManagerAccount')}
-                        <FiArrowRight className="w-4 h-4 ms-2" />
+                        <DirIcon icon={FiArrowRight} className="w-4 h-4 ms-2" />
                       </a>
                     ) : (
                       <Link
@@ -492,7 +493,7 @@ function Services() {
                         className={`btn ${colors.bgGradient || colors.bg} text-white ${colors.bgGradient ? 'hover:opacity-90' : colors.hover} w-full justify-center mb-4`}
                       >
                         {service.isFree ? t('public:services.requestEstimateLabel') : t('public:services.requestQuoteLabel')}
-                        <FiArrowRight className="w-4 h-4 ms-2" />
+                        <DirIcon icon={FiArrowRight} className="w-4 h-4 ms-2" />
                       </Link>
                     )}
 
