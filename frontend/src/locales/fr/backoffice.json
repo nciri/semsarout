@@ -923,5 +923,153 @@
       "addTaskPlaceholder": "Ajouter une étape…",
       "addButton": "Ajouter"
     }
+  },
+  "analytics": {
+    "shared": {
+      "loading": "Chargement…",
+      "noData": "Aucune donnée d'analyse disponible.",
+      "noDataShort": "Aucune donnée",
+      "propertyCount_one": "{{count}} bien",
+      "propertyCount_other": "{{count}} biens",
+      "transactionCount_one": "{{count}} transaction",
+      "transactionCount_other": "{{count}} transactions"
+    },
+    "layout": {
+      "title": "Analyses",
+      "cityNote": "La ville ne s'applique qu'à l'onglet Marché (biens).",
+      "ranges": {
+        "30d": "30 j",
+        "90d": "90 j",
+        "12m": "12 mois",
+        "ytd": "Année"
+      },
+      "txTypes": {
+        "all": "Tous types",
+        "sale": "Vente",
+        "rent": "Location"
+      },
+      "tabs": {
+        "overview": "Vue d'ensemble",
+        "finance": "Finance",
+        "market": "Marché",
+        "pipeline": "Pipeline",
+        "team": "Équipe"
+      },
+      "agentAll": "Tous les agents",
+      "agentSearch": "Rechercher un agent…",
+      "cityAll": "Toutes les villes",
+      "citySearch": "Rechercher une ville…"
+    },
+    "overview": {
+      "subtitle": "Vue d'ensemble des performances de l'agence",
+      "exportButton": "Exporter (biens)",
+      "stats": {
+        "revenue": "Chiffre d'affaires",
+        "dealsWon": "Transactions gagnées",
+        "newClients": "Nouveaux clients",
+        "visits": "Visites effectuées"
+      },
+      "changeVsPrev": "{{pct}}% vs période précédente",
+      "charts": {
+        "revenueByMonth": "Chiffre d'affaires par mois",
+        "commissionByTxType": "Commission par type de transaction"
+      },
+      "topAgents": "Top Agents",
+      "commissionLabel": "commission",
+      "propertiesByCity": "Biens par ville",
+      "funnel": {
+        "title": "Tunnel de conversion",
+        "leads": "Leads",
+        "qualified": "Qualifiés",
+        "visits": "Visites",
+        "offers": "Offres",
+        "closed": "Clôturés"
+      },
+      "kpis": {
+        "title": "Indicateurs clés",
+        "conversionRate": "Taux de conversion",
+        "avgCloseDays": "Jours moyen de clôture",
+        "avgDealValue": "Valeur moyenne transaction",
+        "weightedPipeline": "Pipeline pondéré"
+      },
+      "txTypeLabels": {
+        "sale": "Vente",
+        "rent": "Location",
+        "autre": "Autre"
+      }
+    },
+    "financial": {
+      "kpis": {
+        "revenueRealized": "CA réalisé",
+        "weightedPipeline": "Pipeline pondéré",
+        "dealsWon": "Deals gagnés",
+        "avgCycle": "Cycle moyen (j)"
+      },
+      "charts": {
+        "revenueTrend": "Tendance du CA réalisé",
+        "commissionByAgent": "Commission par agent"
+      },
+      "series": {
+        "realized": "CA réalisé",
+        "commission": "Commission"
+      }
+    },
+    "pipeline": {
+      "kpis": {
+        "globalConversion": "Conversion globale",
+        "openPipeline": "Pipeline ouvert",
+        "closings30d": "Clôtures 30j",
+        "closed": "Clôturés"
+      },
+      "charts": {
+        "funnel": "Entonnoir",
+        "velocityByStage": "Vélocité par étape (j)"
+      },
+      "series": {
+        "days": "Jours"
+      }
+    },
+    "market": {
+      "kpis": {
+        "portfolioPriceSqm": "Prix/m² portefeuille",
+        "marketPriceSqm": "Prix/m² marché",
+        "gapVsMarket": "Écart vs marché",
+        "daysOnMarket": "Jours sur le marché"
+      },
+      "charts": {
+        "priceSqmByNeighborhood": "Prix/m² par quartier (portefeuille vs marché)",
+        "daysOnMarket": "Jours sur le marché",
+        "valuationByCity": "Valorisation par ville"
+      },
+      "series": {
+        "portfolio": "Portefeuille",
+        "market": "Marché",
+        "listings": "Annonces"
+      }
+    },
+    "team": {
+      "kpis": {
+        "costPerLead": "Coût par lead",
+        "bestSource": "Meilleure source",
+        "agents": "Agents",
+        "sources": "Sources"
+      },
+      "charts": {
+        "commissionByAgent": "Commission par agent",
+        "conversionBySource": "Conversion par source",
+        "roiBySource": "ROI par source"
+      },
+      "series": {
+        "commission": "Commission",
+        "conversionPct": "Conversion %"
+      },
+      "table": {
+        "source": "Source",
+        "leads": "Leads",
+        "converted": "Convertis",
+        "cost": "Coût",
+        "conversion": "Conv."
+      }
+    }
   }
 }

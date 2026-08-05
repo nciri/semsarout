@@ -87,6 +87,13 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/legal/NotariesDirectory.jsx',
   'src/pages/backoffice/legal/LegalCasesList.jsx',
   'src/pages/backoffice/legal/LegalCaseDetail.jsx',
+  'src/pages/backoffice/analytics/AnalyticsLayout.jsx',
+  'src/components/analytics/ChartCard.jsx',
+  'src/pages/backoffice/analytics/OverviewAnalytics.jsx',
+  'src/pages/backoffice/analytics/FinancialAnalytics.jsx',
+  'src/pages/backoffice/analytics/PipelineAnalytics.jsx',
+  'src/pages/backoffice/analytics/MarketAnalytics.jsx',
+  'src/pages/backoffice/analytics/TeamAnalytics.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {
