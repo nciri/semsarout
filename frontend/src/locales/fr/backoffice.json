@@ -1097,6 +1097,10 @@
         "land": "Terrain",
         "commercial": "Commercial",
         "office": "Bureau"
+      },
+      "listingTypes": {
+        "sale": "Vente",
+        "rent": "Location"
       }
     },
     "clients": {
@@ -1520,6 +1524,104 @@
         "offersEmpty": "Aucune offre enregistrée.",
         "offerCreatedBy": " · {{name}}",
         "notesTitle": "Notes"
+      }
+    },
+    "properties": {
+      "list": {
+        "pageTitle": "Biens immobiliers",
+        "subtitle": "Gérez votre portefeuille de biens",
+        "newButton": "Ajouter un bien",
+        "addFirstButton": "Ajouter un bien",
+        "searchPlaceholder": "Rechercher par titre, ville...",
+        "filtersButton": "Filtres",
+        "filterStatusLabel": "Statut",
+        "filterStatusAll": "Tous les statuts",
+        "filterTypeLabel": "Type de bien",
+        "filterTypeAll": "Tous les types",
+        "resetFilters": "Réinitialiser",
+        "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce bien ?",
+        "viewOnline": "Voir en ligne",
+        "edit": "Modifier",
+        "newTransaction": "Nouvelle transaction",
+        "delete": "Supprimer",
+        "viewsCount_one": "{{count}} vue",
+        "viewsCount_other": "{{count}} vues",
+        "previous": "Précédent",
+        "next": "Suivant",
+        "pageOf": "Page {{page}} sur {{pages}}",
+        "empty": {
+          "title": "Aucun bien trouvé",
+          "filtered": "Aucun bien ne correspond à vos critères.",
+          "default": "Commencez par ajouter votre premier bien."
+        }
+      },
+      "status": {
+        "active": "En ligne",
+        "pending": "En attente",
+        "sold": "Vendu",
+        "rented": "Loué",
+        "draft": "Brouillon"
+      },
+      "form": {
+        "titleNew": "Nouveau bien",
+        "titleEdit": "Modifier le bien",
+        "subtitleNew": "Ajoutez un nouveau bien à votre portefeuille",
+        "subtitleEdit": "Mettez à jour les informations du bien",
+        "sections": {
+          "generalInfo": "Informations générales",
+          "priceSurface": "Prix et surface",
+          "features": "Caractéristiques",
+          "location": "Localisation",
+          "photos": "Photos"
+        },
+        "fields": {
+          "title": "Titre de l'annonce",
+          "titlePlaceholder": "Ex: Appartement 3 pièces avec vue mer",
+          "featured": "Mettre à la une",
+          "featuredTooltip": "Les biens à la une sont mis en avant sur la page d'accueil et en tête des résultats de recherche.",
+          "description": "Description",
+          "descriptionPlaceholder": "Décrivez le bien en détail...",
+          "propertyType": "Type de bien",
+          "listingType": "Type d'annonce",
+          "status": "Statut",
+          "price": "Prix ({{currency}})",
+          "surface": "Surface (m²)",
+          "rooms": "Pièces",
+          "bedrooms": "Chambres",
+          "bathrooms": "Salles de bain",
+          "yearBuilt": "Année de construction",
+          "floor": "Étage",
+          "totalFloors": "Nombre d'étages",
+          "featuresLabel": "Équipements",
+          "address": "Adresse",
+          "city": "Ville",
+          "selectCity": "Sélectionner une ville",
+          "neighborhood": "Quartier",
+          "latitude": "Latitude",
+          "longitude": "Longitude",
+          "latitudePlaceholder": "Ex: 33.5731",
+          "longitudePlaceholder": "Ex: -7.5898",
+          "photosHint": "Au moins une photo est requise, quel que soit le type d'annonce.",
+          "dragImages": "Glissez vos images ici ou",
+          "browse": "Parcourir",
+          "uploadHint": "PNG, JPG jusqu'à 10MB"
+        },
+        "statusOptions": {
+          "draft": "Brouillon",
+          "active": "Publié",
+          "pending": "En attente"
+        },
+        "validation": {
+          "titleRequired": "Le titre est requis",
+          "priceRequired": "Le prix est requis",
+          "cityRequired": "La ville est requise",
+          "surfaceRequired": "La surface est requise",
+          "imagesRequired": "Ajoutez au moins une photo"
+        },
+        "toastImagesRequired": "Ajoutez au moins une photo.",
+        "cancelButton": "Annuler",
+        "createButton": "Créer le bien",
+        "updateButton": "Mettre à jour"
       }
     }
   }

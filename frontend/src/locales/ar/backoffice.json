@@ -1097,6 +1097,10 @@
         "land": "أرض",
         "commercial": "محل تجاري",
         "office": "مكتب"
+      },
+      "listingTypes": {
+        "sale": "بيع",
+        "rent": "كراء"
       }
     },
     "clients": {
@@ -1520,6 +1524,104 @@
         "offersEmpty": "لا توجد عروض مسجلة.",
         "offerCreatedBy": " · {{name}}",
         "notesTitle": "ملاحظات"
+      }
+    },
+    "properties": {
+      "list": {
+        "pageTitle": "العقارات",
+        "subtitle": "أدر محفظة عقاراتك",
+        "newButton": "إضافة عقار",
+        "addFirstButton": "إضافة عقار",
+        "searchPlaceholder": "ابحث بالعنوان، المدينة...",
+        "filtersButton": "الفلاتر",
+        "filterStatusLabel": "الحالة",
+        "filterStatusAll": "جميع الحالات",
+        "filterTypeLabel": "نوع العقار",
+        "filterTypeAll": "جميع الأنواع",
+        "resetFilters": "إعادة التصفير",
+        "confirmDelete": "هل أنت متأكد من حذف هذا العقار؟",
+        "viewOnline": "عرض على الموقع",
+        "edit": "تعديل",
+        "newTransaction": "معاملة جديدة",
+        "delete": "حذف",
+        "viewsCount_one": "{{count}} مشاهدة",
+        "viewsCount_other": "{{count}} مشاهدة",
+        "previous": "السابق",
+        "next": "التالي",
+        "pageOf": "صفحة {{page}} من {{pages}}",
+        "empty": {
+          "title": "لا يوجد أي عقار",
+          "filtered": "لا يوجد عقار يطابق معايير البحث.",
+          "default": "ابدأ بإضافة عقارك الأول."
+        }
+      },
+      "status": {
+        "active": "منشور",
+        "pending": "قيد الانتظار",
+        "sold": "مُباع",
+        "rented": "مُكترى",
+        "draft": "مسودة"
+      },
+      "form": {
+        "titleNew": "عقار جديد",
+        "titleEdit": "تعديل العقار",
+        "subtitleNew": "أضف عقارًا جديدًا إلى محفظتك",
+        "subtitleEdit": "حدّث معلومات العقار",
+        "sections": {
+          "generalInfo": "معلومات عامة",
+          "priceSurface": "السعر والمساحة",
+          "features": "الخصائص",
+          "location": "الموقع",
+          "photos": "الصور"
+        },
+        "fields": {
+          "title": "عنوان الإعلان",
+          "titlePlaceholder": "مثال: شقة من 3 غرف بإطلالة على البحر",
+          "featured": "وضعه في الواجهة",
+          "featuredTooltip": "تُعرض العقارات المميزة في الصفحة الرئيسية وفي مقدمة نتائج البحث.",
+          "description": "الوصف",
+          "descriptionPlaceholder": "صف العقار بالتفصيل...",
+          "propertyType": "نوع العقار",
+          "listingType": "نوع الإعلان",
+          "status": "الحالة",
+          "price": "السعر ({{currency}})",
+          "surface": "المساحة (م²)",
+          "rooms": "الغرف",
+          "bedrooms": "غرف النوم",
+          "bathrooms": "الحمامات",
+          "yearBuilt": "سنة البناء",
+          "floor": "الطابق",
+          "totalFloors": "عدد الطوابق",
+          "featuresLabel": "التجهيزات",
+          "address": "العنوان",
+          "city": "المدينة",
+          "selectCity": "اختر مدينة",
+          "neighborhood": "الحي",
+          "latitude": "خط العرض",
+          "longitude": "خط الطول",
+          "latitudePlaceholder": "مثال: 33.5731",
+          "longitudePlaceholder": "مثال: -7.5898",
+          "photosHint": "صورة واحدة على الأقل مطلوبة، مهما كان نوع الإعلان.",
+          "dragImages": "اسحب صورك هنا أو",
+          "browse": "تصفح",
+          "uploadHint": "PNG أو JPG بحد أقصى 10 ميغابايت"
+        },
+        "statusOptions": {
+          "draft": "مسودة",
+          "active": "منشور",
+          "pending": "قيد الانتظار"
+        },
+        "validation": {
+          "titleRequired": "العنوان مطلوب",
+          "priceRequired": "السعر مطلوب",
+          "cityRequired": "المدينة مطلوبة",
+          "surfaceRequired": "المساحة مطلوبة",
+          "imagesRequired": "أضف صورة واحدة على الأقل"
+        },
+        "toastImagesRequired": "أضف صورة واحدة على الأقل.",
+        "cancelButton": "إلغاء",
+        "createButton": "إنشاء العقار",
+        "updateButton": "تحديث"
       }
     }
   }
