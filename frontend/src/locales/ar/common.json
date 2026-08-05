@@ -217,6 +217,11 @@
     "sendingButton": "جارٍ الإرسال...",
     "validationNameAndPhone": "الاسم والهاتف مطلوبان",
     "sentMessage": "تم إرسال طلبك بنجاح. سيتواصل معك المطوّر.",
-    "lotFallback": "قطعة"
+    "lotFallback": "قطعة",
+    "status": {
+      "available": "متاحة",
+      "reserved": "محجوزة",
+      "sold": "مباعة"
+    }
   }
 }

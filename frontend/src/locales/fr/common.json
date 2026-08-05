@@ -217,6 +217,11 @@
     "sendingButton": "Envoi...",
     "validationNameAndPhone": "Nom et téléphone requis",
     "sentMessage": "Votre demande a bien été envoyée. Le promoteur vous recontactera.",
-    "lotFallback": "Lot"
+    "lotFallback": "Lot",
+    "status": {
+      "available": "Disponible",
+      "reserved": "Réservé",
+      "sold": "Vendu"
+    }
   }
 }

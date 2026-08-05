@@ -111,7 +111,7 @@ export default function LotPlanViewer({ programId, programName }) {
         {Object.entries(LOT_STATUS).map(([k, v]) => (
           <span key={k} className="inline-flex items-center gap-1.5 text-gray-600">
             <span className="w-3 h-3 rounded" style={{ backgroundColor: v.color }} />
-            {v.label} ({activePlan?.status_counts?.[k] ?? 0})
+            {t(`common:lotPlan.status.${k}`)} ({activePlan?.status_counts?.[k] ?? 0})
           </span>
         ))}
       </div>
@@ -165,7 +165,7 @@ export default function LotPlanViewer({ programId, programName }) {
           <div className="absolute z-10 pointer-events-none bg-midnight text-white text-xs rounded-lg px-3 py-2 shadow-lg"
             style={{ left: hovered.x + 12, top: hovered.y + 12, maxWidth: 200 }}>
             <div className="font-bold">{hovered.lot.reference || t('common:lotPlan.lotFallback')}</div>
-            <div className="opacity-80">{LOT_STATUS[hovered.lot.status]?.label}</div>
+            <div className="opacity-80">{t(`common:lotPlan.status.${hovered.lot.status}`)}</div>
             {hovered.lot.surface > 0 && <div>{hovered.lot.surface} m²</div>}
             {hovered.lot.price > 0 && <div className="text-primary-300 font-semibold">{formatPrice(hovered.lot.price)}</div>}
           </div>
