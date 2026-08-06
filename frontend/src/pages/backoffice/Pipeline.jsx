@@ -9,6 +9,7 @@ import {
 import { formatPrice } from '../../utils/currency'
 import SearchableSelect from '../../components/common/SearchableSelect'
 import api from '../../services/api'
+import { useFormat } from '../../utils/format'
 
 const backofficeService = {
   getPipeline: async (params) => {
@@ -48,6 +49,7 @@ const PRIORITY_COLORS = {
 
 function TransactionCard({ transaction, onDragStart, onDragEnd, t }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { fmtDate } = useFormat()
   const priorityKey = transaction.priority in PRIORITY_COLORS ? transaction.priority : 'medium'
 
   return (
@@ -128,7 +130,7 @@ function TransactionCard({ transaction, onDragStart, onDragEnd, t }) {
         {transaction.expected_closing_date && (
           <span className="text-xs text-gray-500 flex items-center gap-1">
             <FiCalendar className="w-3 h-3" />
-            {new Date(transaction.expected_closing_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+            {fmtDate(transaction.expected_closing_date, { day: 'numeric', month: 'short' })}
           </span>
         )}
       </div>

@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fi'
 import DirIcon from '../../components/common/DirIcon'
 import api from '../../services/api'
+import { useFormat } from '../../utils/format'
 
 const backofficeService = {
   getVisits: async (params) => {
@@ -47,6 +48,7 @@ const STATUS_COLORS = {
 }
 
 function VisitModal({ visit, onClose, onConfirm, onComplete, onCancel, t }) {
+  const { fmtDate, fmtTime } = useFormat()
   const [showCompleteForm, setShowCompleteForm] = useState(false)
   const [report, setReport] = useState('')
   const [feedback, setFeedback] = useState('')
@@ -88,7 +90,7 @@ function VisitModal({ visit, onClose, onConfirm, onComplete, onCancel, t }) {
             <FiCalendar className="w-5 h-5 text-gray-400" />
             <div>
               <p className="font-medium text-gray-900">
-                {new Date(visit.scheduled_at).toLocaleDateString('fr-FR', {
+                {fmtDate(visit.scheduled_at, {
                   weekday: 'long',
                   day: 'numeric',
                   month: 'long',
@@ -96,7 +98,7 @@ function VisitModal({ visit, onClose, onConfirm, onComplete, onCancel, t }) {
                 })}
               </p>
               <p className="text-sm text-gray-500">
-                {new Date(visit.scheduled_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                {fmtTime(visit.scheduled_at)}
                 {visit.duration_minutes && ` ${t('backoffice:crm.pipeline.visits.modal.duration', { minutes: visit.duration_minutes })}`}
               </p>
             </div>
@@ -335,6 +337,7 @@ function NewVisitModal({ onClose, onCreate, t }) {
 }
 
 function CalendarDay({ date, visits, isCurrentMonth, isToday, onVisitClick, t }) {
+  const { fmtTime } = useFormat()
   return (
     <div className={`min-h-[100px] border-e border-b border-gray-100 p-1 ${
       !isCurrentMonth ? 'bg-gray-50' : ''
@@ -351,7 +354,7 @@ function CalendarDay({ date, visits, isCurrentMonth, isToday, onVisitClick, t })
             onClick={() => onVisitClick(visit)}
             className={`w-full text-start px-1.5 py-0.5 rounded text-xs truncate ${STATUS_COLORS[visit.status]?.bg} ${STATUS_COLORS[visit.status]?.text}`}
           >
-            {new Date(visit.scheduled_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+            {fmtTime(visit.scheduled_at)}
             {' '}{visit.visitor_name || visit.contact_name}
           </button>
         ))}
@@ -365,6 +368,7 @@ function CalendarDay({ date, visits, isCurrentMonth, isToday, onVisitClick, t })
 
 export default function BackofficeVisits() {
   const { t } = useTranslation(['backoffice', 'common'])
+  const { fmtDate, fmtTime } = useFormat()
   const queryClient = useQueryClient()
   const [view, setView] = useState('calendar')
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -532,7 +536,7 @@ export default function BackofficeVisits() {
                 <DirIcon icon={FiChevronLeft} className="w-5 h-5" />
               </button>
               <span className="text-lg font-semibold text-gray-900 min-w-[180px] text-center">
-                {currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+                {fmtDate(currentDate, { month: 'long', year: 'numeric' })}
               </span>
               <button
                 onClick={() => navigateMonth(1)}
@@ -622,14 +626,14 @@ export default function BackofficeVisits() {
                           {new Date(visit.scheduled_at).getDate()}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {new Date(visit.scheduled_at).toLocaleDateString('fr-FR', { month: 'short' })}
+                          {fmtDate(visit.scheduled_at, { month: 'short' })}
                         </p>
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">{visit.visitor_name || visit.contact_name}</p>
                         <p className="text-sm text-gray-500">
                           <FiClock className="inline w-3 h-3 me-1" />
-                          {new Date(visit.scheduled_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                          {fmtTime(visit.scheduled_at)}
                           {visit.property_title && ` - ${visit.property_title}`}
                         </p>
                       </div>

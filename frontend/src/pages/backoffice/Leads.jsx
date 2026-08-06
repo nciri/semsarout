@@ -6,6 +6,7 @@ import {
   FiChevronDown, FiCheck, FiX, FiEye, FiUserPlus, FiCalendar, FiMessageSquare
 } from 'react-icons/fi'
 import api from '../../services/api'
+import { useFormat } from '../../utils/format'
 
 const backofficeService = {
   getLeads: async (params) => {
@@ -58,6 +59,7 @@ function SortHeader({ label, field, currentSort, onSort }) {
 }
 
 function LeadDetailModal({ lead, onClose, t }) {
+  const { fmtDate } = useFormat()
   if (!lead) return null
 
   return (
@@ -135,7 +137,7 @@ function LeadDetailModal({ lead, onClose, t }) {
               <h4 className="text-sm font-medium text-gray-500">{t('backoffice:crm.pipeline.leads.detail.createdAt')}</h4>
               <p className="text-gray-900 flex items-center gap-2">
                 <FiCalendar className="w-4 h-4 text-gray-400" />
-                {new Date(lead.created_at).toLocaleDateString('fr-FR', {
+                {fmtDate(lead.created_at, {
                   day: '2-digit',
                   month: 'long',
                   year: 'numeric'
@@ -163,6 +165,7 @@ function LeadDetailModal({ lead, onClose, t }) {
 
 export default function BackofficeLeads() {
   const { t } = useTranslation(['backoffice', 'common'])
+  const { fmtDate } = useFormat()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState({
@@ -434,7 +437,7 @@ export default function BackofficeLeads() {
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-sm text-gray-600">
-                          {new Date(lead.created_at).toLocaleDateString('fr-FR', {
+                          {fmtDate(lead.created_at, {
                             day: '2-digit',
                             month: 'short',
                             year: 'numeric'

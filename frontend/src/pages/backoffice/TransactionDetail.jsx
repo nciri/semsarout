@@ -7,6 +7,7 @@ import {
 } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
 import api from '../../services/api'
+import { useFormat } from '../../utils/format'
 
 const STATUS_BADGE = {
   active: 'bg-blue-100 text-blue-700',
@@ -14,8 +15,6 @@ const STATUS_BADGE = {
   lost: 'bg-red-100 text-red-700',
   on_hold: 'bg-yellow-100 text-yellow-700',
 }
-
-const fmtDate = (v) => (v ? new Date(v).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—')
 
 function Field({ icon: Icon, label, children }) {
   return (
@@ -31,6 +30,8 @@ function Field({ icon: Icon, label, children }) {
 
 export default function BackofficeTransactionDetail() {
   const { t } = useTranslation(['backoffice', 'common'])
+  const { fmtDate: fmtDateBase } = useFormat()
+  const fmtDate = (v) => (v ? fmtDateBase(v, { day: '2-digit', month: 'short', year: 'numeric' }) : '—')
   const { id } = useParams()
   const { data: tx, isLoading, isError } = useQuery(
     ['bo-transaction', id],
