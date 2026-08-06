@@ -1,0 +1,42 @@
+{
+  "meta": {
+    "title": "مساحتي"
+  },
+  "dashboard": {
+    "greeting": "مرحبًا {{prenom}}",
+    "subtitle": "إليك نظرة عامة على بحثك",
+    "notifications": "الإشعارات",
+    "studentSubtitle": "طالب",
+    "stats": {
+      "verifiedProfileLabel": "ملف شخصي موثّق",
+      "verifiedProfileValueVerified": "موثّق",
+      "verifiedProfileValuePending": "قيد الانتظار",
+      "verifiedProfileSub": "البطاقة الوطنية + الحالة",
+      "avgCompatibilityLabel": "متوسط التوافق",
+      "avgCompatibilitySubExcellent": "ممتاز",
+      "avgCompatibilitySubSoon": "قريبًا",
+      "applicationsLabel": "الطلبات",
+      "applicationsSub": "قيد المعالجة"
+    },
+    "recommendationsTitle": "توصيات لك",
+    "seeAll": "عرض الكل",
+    "activityTitle": "النشاط الأخير",
+    "activityViewedBy": "تمت مشاهدة طلبك من طرف {{name}}",
+    "activityNewMessage": "رسالة جديدة من {{name}}",
+    "activityContractReady": "العقد جاهز للتوقيع",
+    "nextStepTitle": "الخطوة التالية",
+    "nextStepVisitScheduled": "زيارة مبرمجة",
+    "nextStepVisitDetails": "السبت 24 ماي الساعة 10:00 · أكدال، الرباط",
+    "nextStepViewDetail": "عرض التفاصيل"
+  },
+  "messaging": {
+    "title": "المراسلة",
+    "searchPlaceholder": "البحث عن محادثة",
+    "call": "اتصال",
+    "video": "مكالمة فيديو",
+    "attach": "إرفاق",
+    "inputPlaceholder": "اكتب رسالة…",
+    "send": "إرسال",
+    "now": "الآن"
+  }
+}

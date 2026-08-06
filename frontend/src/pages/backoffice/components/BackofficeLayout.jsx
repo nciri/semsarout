@@ -273,7 +273,7 @@ export default function BackofficeLayout() {
                         className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                       >
                         <FiSettings className="w-4 h-4 text-gray-400" />
-                        Paramètres agence
+                        {t('nav.userMenu.agencySettings')}
                       </Link>
                       <Link
                         to="/"
@@ -281,7 +281,7 @@ export default function BackofficeLayout() {
                         className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                       >
                         <FiHome className="w-4 h-4 text-gray-400" />
-                        Retour au site
+                        {t('nav.userMenu.backToSite')}
                       </Link>
                     </div>
                     <div className="border-t border-gray-100 pt-2">

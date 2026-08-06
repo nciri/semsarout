@@ -1,18 +1,20 @@
 import { useEffect } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { SidebarNav } from '../../ds/index.js'
-
-const ITEMS = [
-  { icon: 'layout-dashboard', label: 'Tableau de bord', value: 'dash' },
-  { icon: 'message-circle', label: 'Messages', value: 'msg' },
-]
 
 const ROUTES = { dash: '/espace', msg: '/espace/messages' }
 
 export default function AppLayout() {
+  const { t } = useTranslation('common')
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const active = pathname.startsWith('/espace/messages') ? 'msg' : 'dash'
+
+  const items = [
+    { icon: 'layout-dashboard', label: t('nav.dashboard'), value: 'dash' },
+    { icon: 'message-circle', label: t('nav.messages'), value: 'msg' },
+  ]
 
   useEffect(() => {
     let token = null
@@ -24,7 +26,7 @@ export default function AppLayout() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-      <SidebarNav items={ITEMS} active={active} onSelect={(value) => navigate(ROUTES[value])} />
+      <SidebarNav items={items} active={active} onSelect={(value) => navigate(ROUTES[value])} />
       <Outlet />
     </div>
   )

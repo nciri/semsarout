@@ -1,19 +1,21 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { FiBriefcase, FiCreditCard } from 'react-icons/fi'
 
 const TABS = [
-  { to: 'agence', label: 'Agence', icon: FiBriefcase },
-  { to: 'abonnement', label: 'Abonnement', icon: FiCreditCard }
+  { to: 'agence', key: 'agency', icon: FiBriefcase },
+  { to: 'abonnement', key: 'subscription', icon: FiCreditCard }
 ]
 
 // Regroupe agence / abonnement / paramètres sous une seule entrée « Mon compte »
 export default function AccountTabs() {
+  const { t } = useTranslation('dashboard')
   return (
     <div>
       <div className="border-b border-gray-200 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex gap-1 -mb-px overflow-x-auto">
-            {TABS.map(({ to, label, icon: Icon }) => (
+            {TABS.map(({ to, key, icon: Icon }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -26,7 +28,7 @@ export default function AccountTabs() {
                 }
               >
                 <Icon className="w-4 h-4" />
-                {label}
+                {t(`account.tabs.${key}`)}
               </NavLink>
             ))}
           </nav>

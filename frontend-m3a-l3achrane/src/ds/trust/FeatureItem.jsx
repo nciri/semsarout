@@ -5,7 +5,7 @@ export function FeatureItem({ icon = "shield-check", title, subtitle, layout = "
   const chip = { navy: { bg: "var(--navy-50)", fg: "var(--navy-700)" }, green: { bg: "var(--green-50)", fg: "var(--green-600)" }, gold: { bg: "var(--gold-100)", fg: "var(--gold-700)" } }[tone];
   const col = layout === "col";
   return (
-    <div style={{ display: "flex", flexDirection: col ? "column" : "row", alignItems: col ? "flex-start" : "flex-start", gap: 12, textAlign: "left", ...style }}>
+    <div style={{ display: "flex", flexDirection: col ? "column" : "row", alignItems: col ? "flex-start" : "flex-start", gap: 12, textAlign: "start", ...style }}>
       <span style={{ flex: "none", display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: "var(--radius-md)", background: chip.bg, color: chip.fg }}>
         <Icon name={icon} size={22} strokeWidth={2} />
       </span>

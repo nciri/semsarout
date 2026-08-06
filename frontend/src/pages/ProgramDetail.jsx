@@ -12,6 +12,7 @@ import { getAmenityIcon } from '../utils/amenityIcons'
 import LotPlanViewer from '../components/common/LotPlanViewer'
 import DirIcon from '../components/common/DirIcon'
 import useAuthStore from '../store/authStore'
+import { useFormat } from '../utils/format'
 
 const programsService = {
   getProgram: async (slug) => {
@@ -344,8 +345,8 @@ function ContactForm({ program }) {
 }
 
 export default function ProgramDetail() {
-  const { t, i18n } = useTranslation(['public'])
-  const dateLocale = i18n.language === 'ar' ? 'ar' : 'fr-FR'
+  const { t } = useTranslation(['public'])
+  const { fmtDate } = useFormat()
   const { slug } = useParams()
 
   const { data, isLoading, error } = useQuery(
@@ -437,7 +438,7 @@ export default function ProgramDetail() {
                   <span className="flex items-center gap-1.5 text-sm text-gray-500">
                     <FiCalendar className="w-4 h-4" />
                     {t('public:programDetail.deliveryDate', {
-                      date: new Date(program.delivery_date).toLocaleDateString(dateLocale, { month: 'long', year: 'numeric' })
+                      date: fmtDate(program.delivery_date, { month: 'long', year: 'numeric' })
                     })}
                   </span>
                 )}

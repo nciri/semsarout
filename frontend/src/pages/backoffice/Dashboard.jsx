@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import DirIcon from '../../components/common/DirIcon'
 import { formatPrice } from '../../utils/currency'
 import api from '../../services/api'
+import { useFormat } from '../../utils/format'
 
 // Mock service - replace with actual API service
 const backofficeService = {
@@ -18,6 +19,7 @@ const backofficeService = {
 }
 
 function StatCard({ title, value, change, icon: Icon, color = 'primary', suffix = '' }) {
+  const { t } = useTranslation('backoffice')
   const isPositive = change >= 0
 
   const colorClasses = {
@@ -39,7 +41,7 @@ function StatCard({ title, value, change, icon: Icon, color = 'primary', suffix 
           {change !== undefined && (
             <div className={`flex items-center mt-2 text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
               {isPositive ? <FiTrendingUp className="w-4 h-4 me-1" /> : <FiTrendingDown className="w-4 h-4 me-1" />}
-              <span>{Math.abs(change)}% vs mois dernier</span>
+              <span>{t('dashboard.vsLastMonth', { value: Math.abs(change) })}</span>
             </div>
           )}
         </div>
@@ -52,6 +54,8 @@ function StatCard({ title, value, change, icon: Icon, color = 'primary', suffix 
 }
 
 function RecentLeadCard({ lead }) {
+  const { t } = useTranslation('backoffice')
+  const { fmtDate } = useFormat()
   const sourceColors = {
     contact_form: 'bg-blue-100 text-blue-700',
     phone_reveal: 'bg-green-100 text-green-700',
@@ -73,10 +77,10 @@ function RecentLeadCard({ lead }) {
       </div>
       <div className="text-end">
         <span className={`text-xs px-2 py-1 rounded-full ${sourceColors[lead.source] || 'bg-gray-100 text-gray-700'}`}>
-          {lead.source === 'contact_form' ? 'Formulaire' : lead.source === 'phone_reveal' ? 'Téléphone' : lead.source}
+          {t(`crm.pipeline.leads.source.${lead.source}`, { defaultValue: lead.source })}
         </span>
         <p className="text-xs text-gray-400 mt-1">
-          {new Date(lead.created_at).toLocaleDateString('fr-FR')}
+          {fmtDate(lead.created_at)}
         </p>
       </div>
     </div>
@@ -84,6 +88,8 @@ function RecentLeadCard({ lead }) {
 }
 
 function UpcomingVisitCard({ visit }) {
+  const { t } = useTranslation('backoffice')
+  const { fmtDate, fmtTime } = useFormat()
   const statusColors = {
     scheduled: 'bg-gray-100 text-gray-700',
     confirmed: 'bg-blue-100 text-blue-700'
@@ -94,22 +100,22 @@ function UpcomingVisitCard({ visit }) {
       <div className="flex items-center gap-3">
         <div className="text-center bg-primary-50 rounded-lg p-2 min-w-[50px]">
           <p className="text-xs text-primary-600 font-medium">
-            {new Date(visit.scheduled_at).toLocaleDateString('fr-FR', { weekday: 'short' })}
+            {fmtDate(visit.scheduled_at, { weekday: 'short' })}
           </p>
           <p className="text-lg font-bold text-primary-700">
             {new Date(visit.scheduled_at).getDate()}
           </p>
         </div>
         <div>
-          <p className="font-medium text-gray-900 line-clamp-1">{visit.property_title || 'Visite'}</p>
+          <p className="font-medium text-gray-900 line-clamp-1">{visit.property_title || t('dashboard.visitFallback')}</p>
           <p className="text-sm text-gray-500">
-            {new Date(visit.scheduled_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+            {fmtTime(visit.scheduled_at)}
             {' - '}{visit.contact_name}
           </p>
         </div>
       </div>
       <span className={`text-xs px-2 py-1 rounded-full ${statusColors[visit.status] || 'bg-gray-100'}`}>
-        {visit.status === 'confirmed' ? 'Confirmé' : 'Planifié'}
+        {t(`crm.pipeline.visits.status.${visit.status}`, { defaultValue: visit.status })}
       </span>
     </div>
   )
@@ -146,9 +152,9 @@ export default function BackofficeDashboard() {
         </div>
         <div className="flex items-center gap-3">
           <select className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm">
-            <option value="30">30 derniers jours</option>
-            <option value="7">7 derniers jours</option>
-            <option value="90">3 derniers mois</option>
+            <option value="30">{t('dashboard.period.last30')}</option>
+            <option value="7">{t('dashboard.period.last7')}</option>
+            <option value="90">{t('dashboard.period.last90')}</option>
           </select>
         </div>
       </div>

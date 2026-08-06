@@ -1,21 +1,24 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FiBriefcase, FiUser } from 'react-icons/fi'
 import BackofficeSettings from './Settings'
 import DashboardSettings from '../dashboard/Settings'
 
-const TABS = [
-  { id: 'agence', label: 'Agence', icon: FiBriefcase },
-  { id: 'compte', label: 'Mon compte', icon: FiUser },
+const TAB_IDS = [
+  { id: 'agence', labelKey: 'backoffice:settings.hub.tabs.agency', icon: FiBriefcase },
+  { id: 'compte', labelKey: 'backoffice:settings.hub.tabs.account', icon: FiUser },
 ]
 
 // Regroupe en un seul endroit (back-office) les réglages de l'agence
 // et ceux du compte personnel, pour lever la redondance avec l'espace site.
 export default function SettingsHub() {
+  const { t } = useTranslation(['backoffice'])
   const [tab, setTab] = useState('agence')
+  const tabs = TAB_IDS.map(({ id, labelKey, icon }) => ({ id, label: t(labelKey), icon }))
   return (
     <div className="space-y-6">
       <nav className="flex gap-1 border-b border-gray-200">
-        {TABS.map(({ id, label, icon: Icon }) => (
+        {tabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setTab(id)}

@@ -1,0 +1,181 @@
+{
+  "shared": {
+    "title": "Super-admin",
+    "nav": {
+      "overview": "Vue d'ensemble",
+      "accounts": "Comptes",
+      "activity": "Activité",
+      "sharedArtisans": "Artisans partagés",
+      "products": "Produits",
+      "orders": "Commandes"
+    },
+    "loading": "Chargement…",
+    "back": "Retour"
+  },
+  "overview": {
+    "title": "Vue d'ensemble",
+    "kpi": {
+      "users": "Utilisateurs",
+      "agencies": "Agences",
+      "mrrEstimate": "MRR estimé (Đh)",
+      "signups30d": "Inscriptions 30j",
+      "suspended": "Comptes suspendus",
+      "pendingPurge": "En attente de purge"
+    },
+    "activeSubscriptions": "Abonnements actifs",
+    "none": "Aucun."
+  },
+  "accounts": {
+    "title": "Comptes",
+    "searchPlaceholder": "Rechercher…",
+    "filterType": {
+      "all": "Tous types",
+      "user": "Utilisateurs",
+      "agency": "Agences"
+    },
+    "filterStatus": {
+      "all": "Tous statuts",
+      "active": "Actifs",
+      "suspended": "Suspendus",
+      "deleted": "Supprimés"
+    },
+    "table": {
+      "name": "Nom",
+      "type": "Type",
+      "plan": "Plan",
+      "listings": "Annonces",
+      "status": "Statut"
+    },
+    "typeLabel": {
+      "user": "Utilisateur",
+      "agency": "Agence"
+    },
+    "status": {
+      "active": "Actif",
+      "suspended": "Suspendu",
+      "deleted": "Supprimé"
+    }
+  },
+  "accountDetail": {
+    "back": "Retour",
+    "statusPrefix": "statut :",
+    "deletedNotice": "Supprimé le {{date}} — restaurable 90 jours.",
+    "impersonateButton": "Se connecter en tant que cet utilisateur",
+    "dangerZone": {
+      "title": "Zone danger",
+      "suspend": "Suspendre",
+      "unsuspend": "Réactiver",
+      "delete": "Supprimer",
+      "restore": "Restaurer",
+      "anonymize": "Anonymiser (RGPD)"
+    },
+    "toasts": {
+      "suspended": "Suspendu",
+      "reactivated": "Réactivé",
+      "deleted": "Supprimé",
+      "restored": "Restauré",
+      "anonymized": "Anonymisé",
+      "error": "Erreur"
+    },
+    "activity": {
+      "title": "Activité",
+      "empty": "Aucune activité."
+    }
+  },
+  "orders": {
+    "title": "Commandes",
+    "table": {
+      "reference": "Référence",
+      "agency": "Agence",
+      "total": "Total",
+      "status": "Statut"
+    },
+    "empty": "Aucune commande.",
+    "toasts": {
+      "updated": "Statut mis à jour",
+      "error": "Erreur"
+    },
+    "status": {
+      "pending": "En attente",
+      "paid": "Payée",
+      "preparing": "En préparation",
+      "shipped": "Expédiée",
+      "delivered": "Livrée",
+      "cancelled": "Annulée"
+    }
+  },
+  "products": {
+    "title": "Catalogue produits",
+    "table": {
+      "name": "Nom",
+      "price": "Prix",
+      "stock": "Stock",
+      "active": "Actif"
+    },
+    "empty": "Aucun produit.",
+    "addTitle": "Ajouter un produit",
+    "fields": {
+      "name": "Nom *",
+      "price": "Prix (Đh)",
+      "stock": "Stock",
+      "imageUrl": "URL image",
+      "description": "Description"
+    },
+    "addButton": "Ajouter",
+    "toasts": {
+      "added": "Produit ajouté",
+      "deleted": "Supprimé",
+      "error": "Erreur"
+    },
+    "categories": {
+      "lit": "Lit",
+      "canape": "Canapé",
+      "table": "Table",
+      "armoire": "Armoire",
+      "chaise": "Chaise",
+      "bureau": "Bureau",
+      "refrigerateur": "Réfrigérateur",
+      "lave_linge": "Lave-linge",
+      "four": "Four",
+      "micro_ondes": "Micro-ondes",
+      "climatiseur": "Climatiseur",
+      "television": "Télévision"
+    }
+  },
+  "sharedArtisans": {
+    "title": "Catalogue d'artisans partagé",
+    "table": {
+      "name": "Nom",
+      "trade": "Métier",
+      "city": "Ville"
+    },
+    "empty": "Aucun artisan partagé.",
+    "addTitle": "Ajouter au catalogue",
+    "fields": {
+      "name": "Nom *",
+      "company": "Société",
+      "city": "Ville",
+      "phone": "Téléphone",
+      "email": "Email"
+    },
+    "addButton": "Ajouter",
+    "toasts": {
+      "added": "Artisan partagé ajouté",
+      "deleted": "Supprimé",
+      "error": "Erreur"
+    },
+    "trades": {
+      "plombier": "Plombier",
+      "electricien": "Électricien",
+      "menage": "Ménage",
+      "menuisier": "Menuisier",
+      "peintre": "Peintre",
+      "archi_interieur": "Architecte d'intérieur",
+      "macon": "Maçon",
+      "chauffagiste": "Chauffagiste",
+      "serrurier": "Serrurier",
+      "jardinier": "Jardinier",
+      "autre": "Autre"
+    }
+  }
+}
