@@ -130,6 +130,7 @@ const MIGRATED_FILES = [
   'src/pages/dashboard/MyLeads.jsx',
   'src/pages/dashboard/BuyerMessages.jsx',
   'src/pages/dashboard/AgencyMessages.jsx',
+  'src/pages/dashboard/MyAgency.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {

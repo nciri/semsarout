@@ -970,5 +970,56 @@
       "archived": "Archivé"
     },
     "selectPrompt": "Sélectionnez un message pour voir la conversation"
+  },
+  "myAgency": {
+    "create": {
+      "title": "Créer votre espace agence",
+      "subtitle": "Remplissez les informations de votre agence pour accéder aux fonctionnalités pro",
+      "submitting": "Création...",
+      "submit": "Créer l'agence"
+    },
+    "edit": {
+      "title": "Mon agence",
+      "subtitle": "Gérez les informations de votre agence",
+      "generalInfo": "Informations générales",
+      "saving": "Enregistrement..."
+    },
+    "fields": {
+      "name": "Nom de l'agence",
+      "email": "Email professionnel",
+      "emailShort": "Email",
+      "phone": "Téléphone",
+      "city": "Ville",
+      "website": "Site web",
+      "address": "Adresse",
+      "description": "Description"
+    },
+    "placeholders": {
+      "name": "Ex: Agence Immobilière Excellence",
+      "email": "contact@agence.ma",
+      "phone": "+212 5XX XXX XXX",
+      "city": "Casablanca",
+      "website": "https://www.votre-agence.ma",
+      "address": "123 Boulevard Mohammed V",
+      "description": "Présentez votre agence..."
+    },
+    "validation": {
+      "nameRequired": "Nom requis",
+      "emailRequired": "Email requis"
+    },
+    "api": {
+      "title": "Accès API",
+      "description": "Utilisez cette clé API pour synchroniser vos annonces depuis vos logiciels métiers.",
+      "copy": "Copier",
+      "regenerate": "Régénérer"
+    },
+    "toasts": {
+      "created": "Agence créée avec succès",
+      "createError": "Erreur lors de la création",
+      "updated": "Agence mise à jour",
+      "updateError": "Erreur lors de la mise à jour",
+      "keyRegenerated": "Clé API régénérée",
+      "keyCopied": "Clé API copiée"
+    }
   }
 }

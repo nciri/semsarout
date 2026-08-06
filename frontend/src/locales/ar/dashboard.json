@@ -970,5 +970,56 @@
       "archived": "مؤرشفة"
     },
     "selectPrompt": "اختر رسالة لعرض المحادثة"
+  },
+  "myAgency": {
+    "create": {
+      "title": "أنشئ فضاء وكالتك",
+      "subtitle": "املأ معلومات وكالتك للوصول إلى الميزات الاحترافية",
+      "submitting": "جارٍ الإنشاء...",
+      "submit": "إنشاء الوكالة"
+    },
+    "edit": {
+      "title": "وكالتي",
+      "subtitle": "أدِر معلومات وكالتك",
+      "generalInfo": "معلومات عامة",
+      "saving": "جارٍ الحفظ..."
+    },
+    "fields": {
+      "name": "اسم الوكالة",
+      "email": "البريد الإلكتروني المهني",
+      "emailShort": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "city": "المدينة",
+      "website": "الموقع الإلكتروني",
+      "address": "العنوان",
+      "description": "الوصف"
+    },
+    "placeholders": {
+      "name": "مثال: وكالة إكسيلانس العقارية",
+      "email": "contact@agence.ma",
+      "phone": "+212 5XX XXX XXX",
+      "city": "الدار البيضاء",
+      "website": "https://www.votre-agence.ma",
+      "address": "123 شارع محمد الخامس",
+      "description": "قدّم وكالتك..."
+    },
+    "validation": {
+      "nameRequired": "الاسم مطلوب",
+      "emailRequired": "البريد الإلكتروني مطلوب"
+    },
+    "api": {
+      "title": "الوصول إلى API",
+      "description": "استخدم مفتاح API هذا لمزامنة إعلاناتك من برامجك المهنية.",
+      "copy": "نسخ",
+      "regenerate": "إعادة التوليد"
+    },
+    "toasts": {
+      "created": "تم إنشاء الوكالة بنجاح",
+      "createError": "خطأ أثناء الإنشاء",
+      "updated": "تم تحديث الوكالة",
+      "updateError": "خطأ أثناء التحديث",
+      "keyRegenerated": "تمت إعادة توليد مفتاح API",
+      "keyCopied": "تم نسخ مفتاح API"
+    }
   }
 }
