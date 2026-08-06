@@ -18,6 +18,7 @@
     "signUp": "S'inscrire"
   },
   "nav": {
+    "home": "Accueil",
     "dashboard": "Tableau de bord",
     "messages": "Messages",
     "messaging": "Messagerie",
