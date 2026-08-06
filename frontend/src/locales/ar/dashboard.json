@@ -100,6 +100,80 @@
       "updateError": "خطأ أثناء التحديث"
     }
   },
+  "programPlanEditor": {
+    "title": "مخطط تفاعلي للوحدات",
+    "subtitle": "ضع وأدر وحداتك مباشرة على المخطط.",
+    "addPlan": "إضافة مخطط",
+    "newPlan": "مخطط جديد",
+    "create": "إنشاء",
+    "noPlanYet": "أنشئ مخططًا أول للبدء في وضع وحداتك.",
+    "uploadHint": "حمّل صورة مخطط للبدء",
+    "drawHint": "انقر على المخطط لوضع رؤوس الوحدة، ثم أكّد بـ ✓.",
+    "newLot": "وحدة جديدة",
+    "lotWithReference": "الوحدة {{reference}}",
+    "lotsCount": "الوحدات ({{count}})",
+    "toolbar": {
+      "select": "تحديد / نقل",
+      "draw": "رسم وحدة",
+      "finishDraft": "إنهاء الرسم ({{count}} نقاط)",
+      "undo": "التراجع عن آخر إجراء (Ctrl+Z)",
+      "zoomOut": "تصغير",
+      "zoomIn": "تكبير",
+      "changeImage": "تغيير صورة المخطط",
+      "uploadImage": "تحميل صورة مخطط",
+      "deletePlan": "حذف المخطط"
+    },
+    "form": {
+      "reference": "المرجع",
+      "titleOptional": "العنوان (اختياري)",
+      "surface": "المساحة م²",
+      "price": "السعر (Dh)",
+      "rooms": "الغرف",
+      "bedrooms": "غرف النوم",
+      "bathrooms": "الحمامات",
+      "floor": "الطابق",
+      "status": "الحالة",
+      "descriptionOptional": "الوصف (اختياري)",
+      "planNamePlaceholder": "الاسم (مثال: مخطط عام، الطابق 3)"
+    },
+    "lotTypes": {
+      "apartment": "شقة",
+      "villa": "فيلا",
+      "duplex": "دوبلكس",
+      "studio": "استوديو",
+      "terrain": "أرض",
+      "commercial": "محل تجاري",
+      "office": "مكتب"
+    },
+    "actions": {
+      "edit": "تعديل",
+      "duplicate": "تكرار"
+    },
+    "howTo": {
+      "title": "كيف تفعل ذلك؟",
+      "step1": "حمّل صورة المخطط (أيقونة الصورة).",
+      "step2": "أداة القلم، انقر على الرؤوس، أكّد بـ ✓.",
+      "step3": "املأ المعلومات واختر الحالة.",
+      "step4": "أداة السهم: انقر على وحدة لتعديلها، اسحبها لنقلها، أو اسحب نقاطها.",
+      "step5": "التكبير/التصغير للضبط الدقيق، سهم الرجوع ↺ للتراجع."
+    },
+    "confirms": {
+      "deletePlan": "حذف المخطط « {{name}} » ووحداته؟",
+      "deleteLot": "حذف هذه الوحدة؟"
+    },
+    "toasts": {
+      "loadError": "خطأ أثناء تحميل المخططات",
+      "undoError": "تعذر التراجع عن هذا الإجراء",
+      "uploadError": "خطأ أثناء التحميل",
+      "needThreePoints": "ضع 3 نقاط على الأقل لرسم وحدة",
+      "moveError": "خطأ أثناء النقل",
+      "lotAdded": "تمت إضافة الوحدة",
+      "lotUpdated": "تم تحديث الوحدة",
+      "deleteError": "خطأ أثناء الحذف",
+      "lotDuplicated": "تم تكرار الوحدة",
+      "duplicateError": "خطأ أثناء التكرار"
+    }
+  },
   "programForm": {
     "titleCreate": "برنامج جديد",
     "titleEdit": "تعديل البرنامج",

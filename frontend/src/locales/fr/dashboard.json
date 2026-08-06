@@ -100,6 +100,80 @@
       "updateError": "Erreur lors de la mise à jour"
     }
   },
+  "programPlanEditor": {
+    "title": "Plan interactif des lots",
+    "subtitle": "Placez et gérez vos lots directement sur le plan.",
+    "addPlan": "Ajouter un plan",
+    "newPlan": "Nouveau plan",
+    "create": "Créer",
+    "noPlanYet": "Créez un premier plan pour commencer à placer vos lots.",
+    "uploadHint": "Chargez une image de plan pour commencer",
+    "drawHint": "Cliquez sur le plan pour poser les sommets du lot, puis validez avec ✓.",
+    "newLot": "Nouveau lot",
+    "lotWithReference": "Lot {{reference}}",
+    "lotsCount": "Lots ({{count}})",
+    "toolbar": {
+      "select": "Sélectionner / déplacer",
+      "draw": "Dessiner un lot",
+      "finishDraft": "Terminer le tracé ({{count}} points)",
+      "undo": "Annuler la dernière action (Ctrl+Z)",
+      "zoomOut": "Dézoomer",
+      "zoomIn": "Zoomer",
+      "changeImage": "Changer l'image du plan",
+      "uploadImage": "Charger une image de plan",
+      "deletePlan": "Supprimer le plan"
+    },
+    "form": {
+      "reference": "Référence",
+      "titleOptional": "Titre (optionnel)",
+      "surface": "Surface m²",
+      "price": "Prix (Dh)",
+      "rooms": "Pièces",
+      "bedrooms": "Chambres",
+      "bathrooms": "SDB",
+      "floor": "Étage",
+      "status": "Statut",
+      "descriptionOptional": "Description (optionnel)",
+      "planNamePlaceholder": "Nom (ex: Plan de masse, Étage 3)"
+    },
+    "lotTypes": {
+      "apartment": "Appartement",
+      "villa": "Villa",
+      "duplex": "Duplex",
+      "studio": "Studio",
+      "terrain": "Terrain",
+      "commercial": "Local commercial",
+      "office": "Bureau"
+    },
+    "actions": {
+      "edit": "Modifier",
+      "duplicate": "Dupliquer"
+    },
+    "howTo": {
+      "title": "Comment faire ?",
+      "step1": "Chargez l'image du plan (icône image).",
+      "step2": "Outil crayon, cliquez les sommets, validez avec ✓.",
+      "step3": "Remplissez les infos et choisissez le statut.",
+      "step4": "Outil flèche : cliquez un lot pour l'éditer, glissez-le pour le déplacer, ou glissez ses points.",
+      "step5": "Zoom +/− pour affiner, flèche retour ↺ pour annuler."
+    },
+    "confirms": {
+      "deletePlan": "Supprimer le plan « {{name}} » et ses lots ?",
+      "deleteLot": "Supprimer ce lot ?"
+    },
+    "toasts": {
+      "loadError": "Erreur lors du chargement des plans",
+      "undoError": "Impossible d'annuler cette action",
+      "uploadError": "Erreur lors du téléchargement",
+      "needThreePoints": "Placez au moins 3 points pour dessiner un lot",
+      "moveError": "Erreur lors du déplacement",
+      "lotAdded": "Lot ajouté",
+      "lotUpdated": "Lot mis à jour",
+      "deleteError": "Erreur lors de la suppression",
+      "lotDuplicated": "Lot dupliqué",
+      "duplicateError": "Erreur lors de la duplication"
+    }
+  },
   "programForm": {
     "titleCreate": "Nouveau programme",
     "titleEdit": "Modifier le programme",

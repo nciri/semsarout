@@ -123,6 +123,7 @@ const MIGRATED_FILES = [
   'src/pages/dashboard/Programs.jsx',
   'src/pages/dashboard/CreateProperty.jsx',
   'src/pages/dashboard/ProgramForm.jsx',
+  'src/pages/dashboard/ProgramPlanEditor.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {
