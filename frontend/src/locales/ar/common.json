@@ -270,5 +270,26 @@
     "listingsViews": "{{count}} مشاهدة",
     "marketDaysOnMarket": "{{count}} يوم في السوق",
     "teamSeats": "المقاعد {{used}}/{{limit}}"
+  },
+  "applicationStatus": {
+    "received": "مستلَم",
+    "reviewing": "قيد الدراسة",
+    "shortlist": "في القائمة المختصرة",
+    "accepted": "مقبول",
+    "rejected": "مرفوض",
+    "withdrawn": "مسحوب"
+  },
+  "docStatus": {
+    "received": "مستلَمة",
+    "validated": "مصادَق عليها",
+    "rejected": "مرفوضة"
+  },
+  "docTypes": {
+    "cin": "بطاقة التعريف الوطنية (CIN)",
+    "bulletin_salaire": "كشف الراتب",
+    "contrat_travail": "عقد العمل",
+    "avis_impot": "الإشعار الضريبي",
+    "garant": "وثيقة الضامن",
+    "autre": "أخرى"
   }
 }

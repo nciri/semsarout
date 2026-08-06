@@ -270,5 +270,26 @@
     "listingsViews": "{{count}} vues",
     "marketDaysOnMarket": "{{count}} j sur le marché",
     "teamSeats": "Sièges {{used}}/{{limit}}"
+  },
+  "applicationStatus": {
+    "received": "Reçue",
+    "reviewing": "En étude",
+    "shortlist": "Présélectionné",
+    "accepted": "Acceptée",
+    "rejected": "Refusée",
+    "withdrawn": "Retirée"
+  },
+  "docStatus": {
+    "received": "Reçue",
+    "validated": "Validée",
+    "rejected": "Refusée"
+  },
+  "docTypes": {
+    "cin": "Pièce d'identité (CIN)",
+    "bulletin_salaire": "Bulletin de salaire",
+    "contrat_travail": "Contrat de travail",
+    "avis_impot": "Avis d'imposition",
+    "garant": "Pièce du garant",
+    "autre": "Autre"
   }
 }

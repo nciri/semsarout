@@ -797,9 +797,8 @@ function PropertyDetail() {
                     value={pendingDocType}
                     onChange={(e) => setPendingDocType(e.target.value)}
                   >
-                    {/* Libellés issus de dashboard/applicationStatus.js, module partagé hors périmètre de cette migration — restent en FR. */}
-                    {DOC_TYPES.map(([value, labelText]) => (
-                      <option key={value} value={value}>{labelText}</option>
+                    {DOC_TYPES.map(([value, labelKey]) => (
+                      <option key={value} value={value}>{t(`common:${labelKey}`)}</option>
                     ))}
                   </select>
                   <label className="btn-secondary flex-1 justify-center cursor-pointer">
@@ -817,7 +816,10 @@ function PropertyDetail() {
                       >
                         <span className="truncate">
                           <span className="font-medium">
-                            {DOC_TYPES.find(([value]) => value === doc.docType)?.[1] || doc.docType}
+                            {(() => {
+                              const labelKey = DOC_TYPES.find(([value]) => value === doc.docType)?.[1]
+                              return labelKey ? t(`common:${labelKey}`) : doc.docType
+                            })()}
                           </span>
                           {' — '}{doc.file.name}
                         </span>
