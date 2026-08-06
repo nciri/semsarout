@@ -22,6 +22,7 @@ import DirIcon from '../components/common/DirIcon'
 import useAuthStore from '../store/authStore'
 import { getAmenityIcon } from '../utils/amenityIcons'
 import { DOC_TYPES } from './dashboard/applicationStatus'
+import { useFormat } from '../utils/format'
 
 const MAX_DOC_SIZE = 10 * 1024 * 1024
 
@@ -35,8 +36,8 @@ const LEAD_STATUS_COLORS = {
 }
 
 function PropertyDetail() {
-  const { t, i18n } = useTranslation(['public', 'common'])
-  const dateLocale = i18n.language === 'ar' ? 'ar' : 'fr-FR'
+  const { t } = useTranslation(['public', 'common'])
+  const { fmtDate } = useFormat()
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -599,7 +600,7 @@ function PropertyDetail() {
                         </div>
                         {l.message && <p className="text-xs text-gray-400 mt-1.5 line-clamp-2">{l.message}</p>}
                         <p className="text-[11px] text-gray-400 mt-1.5">
-                          {l.created_at ? new Date(l.created_at).toLocaleDateString(dateLocale) : ''}
+                          {l.created_at ? fmtDate(l.created_at) : ''}
                         </p>
                       </li>
                     ))}
