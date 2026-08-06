@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button, Card, Chip } from '../../ds/index.js'
 import { IMPORTANCE_LEVELS, lifestyleQuestionnaireSteps } from '../../data/lifestyleQuestionnaireSteps.js'
-import { hasLifestyleProfile, loadLifestyleProfile, saveLifestyleProfile } from '../../lib/lifestyleProfile.js'
+import { getCurrentProfile, saveLifestyle } from '../../services/index.js'
 
 const MODE = 'optional' // 'optional' | 'mandatory'
 
@@ -93,9 +93,23 @@ export default function Questionnaire() {
   const { t } = useTranslation(['app', 'common'])
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
-  const [answers, setAnswers] = useState(() => loadLifestyleProfile()?.answers || {})
-  const [importance, setImportance] = useState(() => loadLifestyleProfile()?.importance || {})
-  const [hadExistingProfile] = useState(() => hasLifestyleProfile())
+  const [answers, setAnswers] = useState({})
+  const [importance, setImportance] = useState({})
+  const [hadExistingProfile, setHadExistingProfile] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    getCurrentProfile()
+      .then((profile) => {
+        if (cancelled) return
+        const existingAnswers = profile.lifestyleAnswers || {}
+        setAnswers(existingAnswers)
+        setImportance(profile.lifestyleImportance || {})
+        setHadExistingProfile(Object.keys(existingAnswers).length > 0)
+      })
+      .catch(() => {}) // pré-remplissage best-effort : le questionnaire reste utilisable vide
+    return () => { cancelled = true }
+  }, [])
 
   const mandatory = MODE === 'mandatory'
   const total = lifestyleQuestionnaireSteps.length
@@ -108,8 +122,13 @@ export default function Questionnaire() {
   const pickImportance = (cle, value) => setImportance((prev) => ({ ...prev, [cle]: value }))
   const goBack = () => setStep((s) => Math.max(0, s - 1))
   const goNext = () => setStep((s) => Math.min(total - 1, s + 1))
-  const finish = () => {
-    saveLifestyleProfile({ answers, importance })
+  const finish = async () => {
+    try {
+      await saveLifestyle(answers, importance)
+    } catch (err) {
+      console.error('Failed to save lifestyle questionnaire', err)
+      return
+    }
     navigate('/recherche')
   }
 

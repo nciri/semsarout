@@ -2,16 +2,21 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button, Card, Chip, Icon, Input, ListingCard, Select } from '../../ds/index.js'
-import { listListings } from '../../services/index.js'
-import { loadLifestyleProfile } from '../../lib/lifestyleProfile.js'
+import { getCurrentProfile, listListings } from '../../services/index.js'
 
 export default function SearchResults() {
   const { t } = useTranslation(['web', 'common'])
   const [items, setItems] = useState(null)
   const [verifiedOnly, setVerifiedOnly] = useState(true)
   const [view, setView] = useState('liste')
-  const [lifestyleProfile] = useState(() => loadLifestyleProfile())
+  const [hasLifestyleProfile, setHasLifestyleProfile] = useState(false)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    getCurrentProfile()
+      .then((profile) => setHasLifestyleProfile(Object.keys(profile.lifestyleAnswers || {}).length > 0))
+      .catch(() => {})
+  }, [])
 
   const typeFilters = t('web:search.typeFilters', { returnObjects: true })
   const lifestyleChips = t('web:search.lifestyleChips', { returnObjects: true })
@@ -164,19 +169,19 @@ export default function SearchResults() {
               borderRadius: 'var(--radius-md, 10px)', background: 'var(--navy-50)', border: '1px solid var(--navy-100)',
             }}
           >
-            <Icon name={lifestyleProfile ? 'user-check' : 'sliders'} size={16} color="var(--navy-700)" />
+            <Icon name={hasLifestyleProfile ? 'user-check' : 'sliders'} size={16} color="var(--navy-700)" />
             <a
               href="/espace/questionnaire"
               onClick={(e) => { e.preventDefault(); navigate('/espace/questionnaire') }}
               style={{
                 font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)',
-                color: lifestyleProfile ? 'var(--text-heading)' : 'var(--link)',
+                color: hasLifestyleProfile ? 'var(--text-heading)' : 'var(--link)',
                 flex: 1, textDecoration: 'none',
               }}
             >
-              {lifestyleProfile ? t('web:search.lifestyleProfileBanner.withProfile') : t('web:search.lifestyleProfileBanner.withoutProfile')}
+              {hasLifestyleProfile ? t('web:search.lifestyleProfileBanner.withProfile') : t('web:search.lifestyleProfileBanner.withoutProfile')}
             </a>
-            {lifestyleProfile && (
+            {hasLifestyleProfile && (
               <a
                 href="/espace/questionnaire"
                 onClick={(e) => { e.preventDefault(); navigate('/espace/questionnaire') }}

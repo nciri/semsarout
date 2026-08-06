@@ -55,13 +55,15 @@ test('mapProfile traduit le profil backend en clés françaises', () => {
     city: 'Casablanca', bio: null, budget_min: 1000, budget_max: 2500,
     move_in_date: '2026-09-01',
     lifestyle: [
-      { question_code: 'tabac', value: 'non_fumeur', importance: 'DECISIF' },
-      { question_code: 'coucher', value: 'tot', importance: 'PREFERENCE' },
+      { question_code: 'tabac', value: 'non-fumeur', importance: 'DECISIF' },
+      { question_code: 'coucher', value: 'avant22', importance: 'PREFERENCE' },
     ],
   })
   assert.equal(p.prenom, 'Sara')
   assert.equal(p.verifiee, true)
   assert.deepEqual(p.lifestyle, ['Non-fumeur', 'Couche-tôt'])
+  assert.deepEqual(p.lifestyleAnswers, { tabac: 'non-fumeur', coucher: 'avant22' })
+  assert.deepEqual(p.lifestyleImportance, { tabac: 'decisive', coucher: 'preference' })
   assert.deepEqual(p.recherche, { ville: 'Casablanca', budgetMad: 2500, dispo: '01/09/2026' })
 })
 
@@ -71,10 +73,12 @@ test('mapProfile tolère le profil vide', () => {
                          move_in_date: null, lifestyle: [] })
   assert.equal(p.prenom, '')
   assert.deepEqual(p.lifestyle, [])
+  assert.deepEqual(p.lifestyleAnswers, {})
+  assert.deepEqual(p.lifestyleImportance, {})
   assert.deepEqual(p.recherche, { ville: '', budgetMad: null, dispo: '' })
 })
 
 test('buildChips affiche les règles canoniques en français', () => {
-  const l = mapListingHit({ ...HIT, rules: ['non_fumeur'], amenities: [] })
+  const l = mapListingHit({ ...HIT, rules: ['non-fumeur'], amenities: [] })
   assert.ok(l.chips.includes('Non-fumeur'))
 })
