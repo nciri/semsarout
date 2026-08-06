@@ -288,7 +288,8 @@ function MyAgency() {
             </div>
           </div>
 
-          {/* API Access */}
+          {/* API Access — visible/gérable seulement par le propriétaire/admin d'agence */}
+          {agency?.can_manage && (
           <div className="card p-6">
             <h2 className="font-semibold mb-4">{t('dashboard:myAgency.api.title')}</h2>
             <p className="text-sm text-gray-600 mb-4">
@@ -330,6 +331,7 @@ function MyAgency() {
               </button>
             </div>
           </div>
+          )}
         </div>
       </form>
     </div>
