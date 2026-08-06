@@ -928,5 +928,28 @@
       "withdrawn": "تم سحب طلب الترشح",
       "fileTooLarge": "الملف كبير جداً (الحد الأقصى 10 ميغابايت)."
     }
+  },
+  "myLeads": {
+    "title": "جهات الاتصال",
+    "subtitle": "{{count}} جهة اتصال مستلمة",
+    "filters": {
+      "all": "الكل"
+    },
+    "status": {
+      "new": "جديد",
+      "contacted": "تم التواصل",
+      "qualified": "مؤهَّل",
+      "converted": "محوَّل",
+      "lost": "مفقود"
+    },
+    "viewListing": "عرض الإعلان",
+    "empty": {
+      "title": "لا توجد جهة اتصال مستلمة",
+      "message": "ستظهر طلبات التواصل هنا"
+    },
+    "toasts": {
+      "statusUpdated": "تم تحديث الحالة",
+      "updateError": "خطأ أثناء التحديث"
+    }
   }
 }

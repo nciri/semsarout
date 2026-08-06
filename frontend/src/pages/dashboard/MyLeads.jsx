@@ -1,12 +1,23 @@
 import { useSearchParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
+import { useTranslation } from 'react-i18next'
 import { FiMail, FiPhone, FiMessageSquare, FiChevronDown } from 'react-icons/fi'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import api from '../../services/api'
 
+const STATUS_TONE = {
+  new: 'badge-primary',
+  contacted: 'badge-warning',
+  qualified: 'bg-blue-100 text-blue-800',
+  converted: 'badge-success',
+  lost: 'bg-gray-100 text-gray-600',
+}
+const STATUS_VALUES = ['new', 'contacted', 'qualified', 'converted', 'lost']
+
 function MyLeads() {
+  const { t } = useTranslation(['dashboard', 'common'])
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
 
@@ -27,43 +38,34 @@ function MyLeads() {
     ({ leadId, newStatus }) => api.put(`/leads/${leadId}/status`, { status: newStatus }),
     {
       onSuccess: () => {
-        toast.success('Statut mis à jour')
+        toast.success(t('dashboard:myLeads.toasts.statusUpdated'))
         queryClient.invalidateQueries('my-leads')
       },
       onError: () => {
-        toast.error('Erreur lors de la mise à jour')
+        toast.error(t('dashboard:myLeads.toasts.updateError'))
       }
     }
   )
 
-  const STATUS_OPTIONS = [
-    { value: 'new', label: 'Nouveau', class: 'badge-primary' },
-    { value: 'contacted', label: 'Contacté', class: 'badge-warning' },
-    { value: 'qualified', label: 'Qualifié', class: 'bg-blue-100 text-blue-800' },
-    { value: 'converted', label: 'Converti', class: 'badge-success' },
-    { value: 'lost', label: 'Perdu', class: 'bg-gray-100 text-gray-600' }
-  ]
+  const statusLabel = (value) => t(`dashboard:myLeads.status.${value}`, { defaultValue: value })
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="font-display text-2xl font-bold text-gray-900">Mes contacts</h1>
-        <p className="text-gray-600">{data?.total || 0} contacts reçus</p>
+        <h1 className="font-display text-2xl font-bold text-gray-900">{t('dashboard:myLeads.title')}</h1>
+        <p className="text-gray-600">{t('dashboard:myLeads.subtitle', { count: data?.total || 0 })}</p>
       </div>
 
       {/* Filters */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-        {[
-          { value: '', label: 'Tous' },
-          ...STATUS_OPTIONS
-        ].map(filter => (
+        {['', ...STATUS_VALUES].map(value => (
           <button
-            key={filter.value}
+            key={value}
             onClick={() => {
               const newParams = new URLSearchParams(searchParams)
-              if (filter.value) {
-                newParams.set('status', filter.value)
+              if (value) {
+                newParams.set('status', value)
               } else {
                 newParams.delete('status')
               }
@@ -71,12 +73,12 @@ function MyLeads() {
               setSearchParams(newParams)
             }}
             className={`px-4 py-2 rounded-lg text-sm whitespace-nowrap ${
-              status === filter.value
+              status === value
                 ? 'bg-primary-600 text-white'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            {filter.label}
+            {value ? statusLabel(value) : t('dashboard:myLeads.filters.all')}
           </button>
         ))}
       </div>
@@ -101,22 +103,22 @@ function MyLeads() {
                     <h3 className="font-semibold text-gray-900">{lead.name}</h3>
                     <div className="relative group">
                       <button className={`badge ${
-                        STATUS_OPTIONS.find(s => s.value === lead.status)?.class || 'bg-gray-100'
+                        STATUS_TONE[lead.status] || 'bg-gray-100'
                       } cursor-pointer`}>
-                        {STATUS_OPTIONS.find(s => s.value === lead.status)?.label || lead.status}
-                        <FiChevronDown className="ml-1 w-3 h-3" />
+                        {statusLabel(lead.status)}
+                        <FiChevronDown className="ms-1 w-3 h-3" />
                       </button>
-                      <div className="absolute left-0 mt-1 bg-white rounded-lg shadow-lg border py-1 hidden group-hover:block z-10">
-                        {STATUS_OPTIONS.map(option => (
+                      <div className="absolute start-0 mt-1 bg-white rounded-lg shadow-lg border py-1 hidden group-hover:block z-10">
+                        {STATUS_VALUES.map(value => (
                           <button
-                            key={option.value}
+                            key={value}
                             onClick={() => updateStatusMutation.mutate({
                               leadId: lead.id,
-                              newStatus: option.value
+                              newStatus: value
                             })}
-                            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                            className="block w-full text-start px-4 py-2 text-sm hover:bg-gray-50"
                           >
-                            {option.label}
+                            {statusLabel(value)}
                           </button>
                         ))}
                       </div>
@@ -125,12 +127,12 @@ function MyLeads() {
 
                   <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                     <a href={`mailto:${lead.email}`} className="flex items-center hover:text-primary-600">
-                      <FiMail className="w-4 h-4 mr-1" />
+                      <FiMail className="w-4 h-4 me-1" />
                       {lead.email}
                     </a>
                     {lead.phone && (
                       <a href={`tel:${lead.phone}`} className="flex items-center hover:text-primary-600">
-                        <FiPhone className="w-4 h-4 mr-1" />
+                        <FiPhone className="w-4 h-4 me-1" />
                         {lead.phone}
                       </a>
                     )}
@@ -139,14 +141,14 @@ function MyLeads() {
                   {lead.message && (
                     <div className="mt-3 p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-start">
-                        <FiMessageSquare className="w-4 h-4 mr-2 mt-0.5 text-gray-400" />
+                        <FiMessageSquare className="w-4 h-4 me-2 mt-0.5 text-gray-400" />
                         <p className="text-sm text-gray-600">{lead.message}</p>
                       </div>
                     </div>
                   )}
                 </div>
 
-                <div className="text-sm text-gray-500 md:text-right shrink-0">
+                <div className="text-sm text-gray-500 md:text-end shrink-0">
                   <p>
                     {format(new Date(lead.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
                   </p>
@@ -155,7 +157,7 @@ function MyLeads() {
                       to={`/annonces/${lead.property_id}`}
                       className="text-primary-600 hover:underline"
                     >
-                      Voir l'annonce
+                      {t('dashboard:myLeads.viewListing')}
                     </Link>
                   )}
                 </div>
@@ -166,9 +168,9 @@ function MyLeads() {
       ) : (
         <div className="card p-12 text-center">
           <FiMessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">Aucun contact reçu</p>
+          <p className="text-gray-500">{t('dashboard:myLeads.empty.title')}</p>
           <p className="text-sm text-gray-400 mt-1">
-            Les demandes de contact apparaîtront ici
+            {t('dashboard:myLeads.empty.message')}
           </p>
         </div>
       )}

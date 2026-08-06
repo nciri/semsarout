@@ -928,5 +928,28 @@
       "withdrawn": "Candidature retirée",
       "fileTooLarge": "Fichier trop volumineux (max 10 Mo)."
     }
+  },
+  "myLeads": {
+    "title": "Mes contacts",
+    "subtitle": "{{count}} contacts reçus",
+    "filters": {
+      "all": "Tous"
+    },
+    "status": {
+      "new": "Nouveau",
+      "contacted": "Contacté",
+      "qualified": "Qualifié",
+      "converted": "Converti",
+      "lost": "Perdu"
+    },
+    "viewListing": "Voir l'annonce",
+    "empty": {
+      "title": "Aucun contact reçu",
+      "message": "Les demandes de contact apparaîtront ici"
+    },
+    "toasts": {
+      "statusUpdated": "Statut mis à jour",
+      "updateError": "Erreur lors de la mise à jour"
+    }
   }
 }
