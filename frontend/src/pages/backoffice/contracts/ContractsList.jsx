@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { FiFilePlus, FiLock, FiFileText, FiLayout } from 'react-icons/fi'
 import { contractService } from '../../../services/contractService'
 import { PageHeader, StatCard, DataTable, StatusBadge, EmptyState, GatedNotice } from '../../../components/backoffice/ui'
+import { useFormat } from '../../../utils/format'
 
 const STATUS_TONE = {
   draft: 'bg-gray-100 text-gray-700',
@@ -16,6 +17,7 @@ const PRIMARY_BTN = 'inline-flex items-center gap-2 px-4 py-2 bg-primary-600 tex
 
 function ContractsList() {
   const { t } = useTranslation(['backoffice', 'common'])
+  const { fmtDate } = useFormat()
   const { data, isLoading, error } = useQuery('contracts', () => contractService.list())
   const rows = data?.contracts || []
   const stats = useMemo(() => ({
@@ -41,7 +43,7 @@ function ContractsList() {
     ) },
     { header: t('backoffice:contracts.list.columns.type'), cell: (c) => <span className="text-gray-600">{c.document_type}</span> },
     { header: t('backoffice:contracts.list.columns.status'), cell: (c) => <StatusBadge label={t(`backoffice:contracts.status.${c.status}`, { defaultValue: c.status })} className={STATUS_TONE[c.status]} /> },
-    { header: t('backoffice:contracts.list.columns.createdAt'), cell: (c) => <span className="text-gray-500">{c.created_at ? new Date(c.created_at).toLocaleDateString('fr-FR') : '—'}</span> },
+    { header: t('backoffice:contracts.list.columns.createdAt'), cell: (c) => <span className="text-gray-500">{c.created_at ? fmtDate(c.created_at) : '—'}</span> },
   ]
 
   return (
