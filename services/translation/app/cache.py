@@ -8,6 +8,8 @@ mis en cache. La réponse recompose l'ordre d'entrée.
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from semsar_common import Problem
+
 from .azure_client import AzureTranslatorClient
 from .models import TranslationCache, hash_source
 
@@ -21,26 +23,30 @@ def translate_batch(
 ) -> list[dict]:
     hashes = [hash_source(t) for t in texts]
 
-    cache_hit: dict[tuple[str, str | None], TranslationCache] = {}
+    # Toutes les entrées de cache existantes pour ces hash+target, groupées par hash.
+    rows_by_hash: dict[str, list[TranslationCache]] = {}
     if hashes:
         query = db.query(TranslationCache).filter(
             TranslationCache.target_lang == target, TranslationCache.source_hash.in_(set(hashes))
         )
-        if source:
-            query = query.filter(TranslationCache.source_lang == source)
         for row in query.all():
-            # Sans `source` explicite, plusieurs entrées peuvent partager le hash (langues
-            # source différentes) — on garde la plus récente.
-            key = (row.source_hash, None)
-            if key not in cache_hit or row.created_at >= cache_hit[key].created_at:
-                cache_hit[key] = row
-            if source:
-                cache_hit[(row.source_hash, source)] = row
+            rows_by_hash.setdefault(row.source_hash, []).append(row)
 
     def _lookup(h: str) -> TranslationCache | None:
+        rows = rows_by_hash.get(h, [])
         if source:
-            return cache_hit.get((h, source))
-        return cache_hit.get((h, None))
+            # Clé complète connue : lookup exact, aucune ambiguïté possible.
+            return next((r for r in rows if r.source_lang == source), None)
+        # Sans `source` explicite, plusieurs entrées peuvent partager le hash (textes
+        # identiques traduits depuis des langues source différentes, ex. un mot commun
+        # fr/ar). Un hit n'est renvoyé QUE si une seule `source_lang` existe pour ce
+        # hash+target — sinon on ne peut pas savoir laquelle s'applique, on retraduit
+        # (ré-appel Azure avec autodétection) plutôt que de risquer une traduction
+        # renvoyée pour la mauvaise langue source.
+        distinct_langs = {r.source_lang for r in rows}
+        if len(distinct_langs) == 1:
+            return rows[0]
+        return None
 
     # Textes manquants, dédupliqués par hash (un seul appel Azure pour le lot).
     missing_by_hash: dict[str, str] = {}
@@ -77,6 +83,17 @@ def translate_batch(
                     )
                     .first()
                 )
+                if row is None:
+                    # Conflit signalé par Postgres mais la ligne concurrente est
+                    # introuvable (rollback d'un tiers, etc.) : pas de traduction
+                    # exploitable — erreur maîtrisée plutôt qu'un AttributeError sur
+                    # `row.translated_text` plus bas.
+                    raise Problem(
+                        500,
+                        "Internal Server Error",
+                        "Conflit de cache de traduction non résolu "
+                        f"(source_hash={h}, source_lang={resolved_source}, target_lang={target}).",
+                    ) from None
             fetched[h] = row
         db.commit()
 

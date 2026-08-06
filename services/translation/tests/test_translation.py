@@ -1,4 +1,6 @@
-from app.models import TranslationCache
+from sqlalchemy.exc import IntegrityError
+
+from app.models import TranslationCache, hash_source
 
 
 def test_health_ok(client):
@@ -88,3 +90,85 @@ def test_translate_over_char_budget_returns_422(client):
         "/v1/translate", json={"texts": ["x" * 50_001], "target": "ar"}
     )
     assert resp.status_code == 422
+
+
+# --- Fix round 1 : FINDING 1 (race IntegrityError -> row introuvable) ---
+
+
+def test_translate_unresolved_integrity_conflict_returns_controlled_500(
+    client, db_session, monkeypatch
+):
+    """Si `db.flush()` lève IntegrityError et que la relecture qui suit ne retrouve
+    aucune ligne (conflit signalé mais rien à lire — cas dégénéré), le service doit
+    renvoyer une erreur maîtrisée (Problem 500), jamais un AttributeError sur un `row`
+    resté `None`."""
+
+    def _boom():
+        raise IntegrityError("INSERT", {}, Exception("duplicate key"))
+
+    monkeypatch.setattr(db_session, "flush", _boom)
+
+    resp = client.post(
+        "/v1/translate", json={"texts": ["Bonjour"], "target": "ar", "source": "fr"}
+    )
+    assert resp.status_code == 500
+    assert resp.json()["status"] == 500
+
+
+# --- Fix round 1 : FINDING 2 (lookup sans `source` ignorait source_lang) ---
+
+
+def test_translate_no_source_ambiguous_cache_is_not_cross_contaminated(
+    client, db_session, fake_azure
+):
+    """Deux entrées de cache pour le même (hash, target) mais des `source_lang`
+    différentes : sans `source` explicite dans la requête, impossible de savoir
+    laquelle s'applique -> pas de hit, on retraduit plutôt que de renvoyer la
+    traduction de la mauvaise langue source.
+
+    Les deux `source_lang` pré-seedées (`ar`/`es`) sont volontairement différentes de
+    celle que `FakeAzureClient` détecte pour ce lot (`fr`, cf. conftest) : le nouveau
+    résultat s'insère donc sans reprendre par accident une des deux lignes ambiguës via
+    le chemin de retry IntegrityError (couvert séparément par le test du FINDING 1)."""
+    h = hash_source("Salam")
+    db_session.add_all(
+        [
+            TranslationCache(
+                source_hash=h, source_lang="ar", target_lang="ar",
+                source_text="Salam", translated_text="depuis-ar",
+            ),
+            TranslationCache(
+                source_hash=h, source_lang="es", target_lang="ar",
+                source_text="Salam", translated_text="depuis-es",
+            ),
+        ]
+    )
+    db_session.commit()
+
+    resp = client.post("/v1/translate", json={"texts": ["Salam"], "target": "ar"})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["translations"][0]["cached"] is False
+    assert body["translations"][0]["translated"] not in ("depuis-ar", "depuis-es")
+    assert len(fake_azure.calls) == 1
+
+
+def test_translate_no_source_unambiguous_cache_is_hit(client, db_session, fake_azure):
+    """Un seul `source_lang` connu pour ce (hash, target) sans ambiguïté -> hit valide,
+    aucun appel Azure."""
+    h = hash_source("Salam")
+    db_session.add(
+        TranslationCache(
+            source_hash=h, source_lang="fr", target_lang="ar",
+            source_text="Salam", translated_text="depuis-fr",
+        )
+    )
+    db_session.commit()
+
+    resp = client.post("/v1/translate", json={"texts": ["Salam"], "target": "ar"})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["translations"][0] == {
+        "source": "Salam", "translated": "depuis-fr", "cached": True
+    }
+    assert len(fake_azure.calls) == 0
