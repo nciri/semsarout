@@ -19,6 +19,11 @@
       "land": "Terrain",
       "commercial": "Local commercial",
       "office": "Bureau"
+    },
+    "mesBiensTabs": {
+      "sale": "En vente",
+      "rent": "En location",
+      "programs": "Programmes immobiliers"
     }
   },
   "monEspace": {
@@ -1020,6 +1025,218 @@
       "updateError": "Erreur lors de la mise à jour",
       "keyRegenerated": "Clé API régénérée",
       "keyCopied": "Clé API copiée"
+    }
+  },
+  "stayManager": {
+    "tabs": {
+      "connection": "Connexion",
+      "properties": "Biens synchronisés",
+      "reservations": "Réservations",
+      "lockedHint": "Connectez votre compte StayManager pour accéder à cet onglet"
+    },
+    "overview": {
+      "upgradeTitle": "Intégration StayManager",
+      "upgradeDescription": "Synchronisez vos propriétés avec StayManager.ma pour gérer vos réservations, calendriers et vérifications de clients en un seul endroit.",
+      "upgradePlanNotice": "Cette fonctionnalité est disponible avec le plan Pro ou supérieur.",
+      "upgradeCta": "Passer au plan Pro",
+      "partnerLabel": "En partenariat avec",
+      "partnerDescription": "La plateforme de gestion et de sécurisation des locations courte durée au Maroc",
+      "connectionStatusTitle": "Statut de connexion",
+      "connected": "Connecté",
+      "disconnected": "Non connecté",
+      "fieldEmail": "Email",
+      "fieldLinkedProperties": "Biens liés",
+      "fieldLastSync": "Dernière sync",
+      "fieldAutoSync": "Auto-sync",
+      "autoSyncEnabled": "Activé",
+      "autoSyncDisabled": "Désactivé",
+      "never": "Jamais",
+      "disconnect": "Déconnecter",
+      "confirmDisconnect": "Êtes-vous sûr de vouloir déconnecter StayManager ? Toutes les données synchronisées seront conservées.",
+      "apiKeyLabel": "Clé API StayManager",
+      "apiKeyHelp": "Depuis StayManager &gt; Intégrations &amp; API, créez une clé avec au minimum les droits <mono1>properties:read</mono1>, <mono2>reservations:read</mono2> et <mono3>webhooks:manage</mono3>. La clé (<mono4>sk_live_...</mono4>) ne s'affiche qu'une seule fois : copiez-la immédiatement.",
+      "connecting": "Connexion...",
+      "connect": "Connecter",
+      "connectCta": "Connecter...",
+      "connectPrompt": "Connectez votre compte <wordmark></wordmark> pour synchroniser vos propriétés et réservations.",
+      "settingsTitle": "Paramètres de synchronisation",
+      "autoSyncTitle": "Synchronisation automatique",
+      "autoSyncDescription": "Synchroniser les réservations périodiquement",
+      "frequencyLabel": "Fréquence de synchronisation",
+      "frequencyHourly": "Toutes les heures",
+      "frequencyEvery3h": "Toutes les 3 heures",
+      "frequencyEvery6h": "Toutes les 6 heures",
+      "frequencyEvery12h": "Toutes les 12 heures",
+      "frequencyDaily": "Une fois par jour",
+      "saveSettings": "Sauvegarder les paramètres",
+      "propertyLinksTitle": "Biens liés ({{count}})",
+      "manageLinks": "Gérer les liens",
+      "propertyLinksEmpty": "Aucun bien lié pour le moment",
+      "linkProperty": "Lier un bien",
+      "propertyFallbackTitle": "Bien #{{id}}",
+      "reservationsCount": "{{count}} réservations",
+      "viewAllProperties": "Voir tous les biens ({{count}})",
+      "syncTooltip": "Synchroniser",
+      "syncStatus": {
+        "synced": "Synchronisé",
+        "error": "Erreur",
+        "pending": "En attente"
+      },
+      "messages": {
+        "connectSuccess": "Connexion StayManager réussie !",
+        "disconnectSuccess": "StayManager déconnecté",
+        "settingsUpdated": "Paramètres mis à jour",
+        "syncComplete": "Synchronisation terminée : {{created}} créés, {{updated}} mis à jour"
+      },
+      "errors": {
+        "upgradeRequired": "Cette fonctionnalité nécessite le plan Pro ou supérieur",
+        "loadFailed": "Erreur lors du chargement",
+        "connectFailed": "Erreur de connexion",
+        "disconnectFailed": "Erreur lors de la déconnexion",
+        "settingsUpdateFailed": "Erreur lors de la mise à jour",
+        "syncFailed": "Erreur de synchronisation",
+        "syncFailedGeneric": "Erreur lors de la synchronisation"
+      },
+      "features": {
+        "calendarTitle": "Calendrier synchronisé",
+        "calendarDescription": "Synchronisez automatiquement vos calendriers entre SemsarOut et StayManager.",
+        "verificationTitle": "Vérification des clients",
+        "verificationDescription": "Visualisez le statut de vérification KYC de vos clients directement dans SemsarOut.",
+        "locksTitle": "Serrures connectées",
+        "locksDescription": "Gérez les codes d'accès de vos serrures intelligentes depuis votre tableau de bord."
+      }
+    },
+    "properties": {
+      "back": "Retour aux paramètres",
+      "title": "Biens liés à StayManager",
+      "subtitle": "Gérez les liens entre vos biens SemsarOut et StayManager",
+      "linkProperty": "Lier un bien",
+      "fallbackTitle": "Bien #{{id}}",
+      "linkedTo": "Lié à :",
+      "never": "Jamais",
+      "confirmUnlink": "Êtes-vous sûr de vouloir supprimer ce lien ? Les réservations déjà synchronisées seront conservées.",
+      "modal": {
+        "title": "Lier un bien",
+        "semsarLabel": "Bien SemsarOut",
+        "semsarPlaceholder": "Sélectionnez un bien",
+        "stayManagerLabel": "Propriété StayManager",
+        "stayManagerPlaceholder": "Sélectionnez une propriété",
+        "linking": "Liaison...",
+        "link": "Lier"
+      },
+      "empty": {
+        "title": "Aucun bien lié",
+        "description": "Commencez par lier un de vos biens à une propriété StayManager."
+      },
+      "stats": {
+        "reservations": "Réservations",
+        "lastSync": "Dernière sync",
+        "ical": "iCal",
+        "icalAvailable": "Disponible",
+        "icalUnavailable": "Non disponible"
+      },
+      "status": {
+        "synced": "Synchronisé",
+        "syncing": "En cours...",
+        "error": "Erreur",
+        "pending": "En attente"
+      },
+      "actions": {
+        "sync": "Synchroniser",
+        "viewReservations": "Voir les réservations",
+        "unlink": "Supprimer le lien"
+      },
+      "info": {
+        "allLinked": "<strong>Tous vos biens sont liés.</strong> Pour lier d'autres biens, ajoutez de nouvelles propriétés en location dans votre tableau de bord.",
+        "noneAvailable": "<strong>Aucune propriété StayManager disponible.</strong> Toutes vos propriétés StayManager sont déjà liées ou vous n'avez pas encore ajouté de propriétés dans StayManager."
+      },
+      "messages": {
+        "linked": "Bien lié avec succès",
+        "unlinked": "Lien supprimé",
+        "syncComplete": "Synchronisation terminée : {{created}} créés, {{updated}} mis à jour"
+      },
+      "errors": {
+        "loadFailed": "Erreur lors du chargement des données",
+        "selectBoth": "Veuillez sélectionner les deux propriétés",
+        "linkFailed": "Erreur lors du lien",
+        "unlinkFailed": "Erreur lors de la suppression",
+        "syncFailed": "Erreur de synchronisation",
+        "syncFailedGeneric": "Erreur lors de la synchronisation"
+      }
+    },
+    "reservations": {
+      "back": "Retour aux paramètres",
+      "title": "Réservations StayManager",
+      "subtitle": "Toutes les réservations synchronisées depuis StayManager",
+      "refresh": "Actualiser",
+      "filters": {
+        "label": "Filtres :",
+        "allProperties": "Tous les biens",
+        "allStatuses": "Tous les statuts",
+        "upcomingOnly": "À venir uniquement",
+        "status": {
+          "confirmed": "Confirmées",
+          "cancelled": "Annulées",
+          "blocked": "Bloquées",
+          "pending": "En attente"
+        }
+      },
+      "status": {
+        "confirmed": "Confirmée",
+        "cancelled": "Annulée",
+        "blocked": "Bloquée",
+        "pending": "En attente"
+      },
+      "platform": {
+        "airbnb": "Airbnb",
+        "booking": "Booking.com",
+        "vrbo": "VRBO",
+        "direct": "Direct"
+      },
+      "empty": {
+        "title": "Aucune réservation",
+        "upcoming": "Aucune réservation à venir.",
+        "filtered": "Aucune réservation trouvée avec ces filtres."
+      },
+      "card": {
+        "guestFallback": "Client",
+        "verified": "Vérifié",
+        "accessCode": "Code",
+        "nights_one": "({{count}} nuit)",
+        "nights_other": "({{count}} nuits)",
+        "guestCount_one": "{{count}} voyageur",
+        "guestCount_other": "{{count}} voyageurs"
+      },
+      "detail": {
+        "title": "Détails de la réservation",
+        "guest": "Client",
+        "verified": "Vérifié",
+        "notVerified": "Non vérifié",
+        "dates": "Dates",
+        "checkin": "Arrivée",
+        "checkout": "Départ",
+        "nights_one": "{{count}} nuit",
+        "nights_other": "{{count}} nuits",
+        "status": "Statut",
+        "price": "Prix total",
+        "accessCode": "Code d'accès",
+        "accessCodeGenerated": "Généré",
+        "contract": "Contrat",
+        "notes": "Notes",
+        "idLabel": "ID : {{id}}",
+        "externalIdLabel": " | Externe : {{id}}",
+        "lastSync": "Dernière sync : {{date}}",
+        "unknown": "Inconnue",
+        "contractStatus": {
+          "signed": "Signé",
+          "sent": "Envoyé",
+          "generated": "Généré",
+          "none": "Non généré"
+        }
+      },
+      "errors": {
+        "loadFailed": "Erreur lors du chargement des réservations"
+      }
     }
   }
 }

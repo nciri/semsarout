@@ -19,6 +19,11 @@
       "land": "أرض",
       "commercial": "محل تجاري",
       "office": "مكتب"
+    },
+    "mesBiensTabs": {
+      "sale": "للبيع",
+      "rent": "للكراء",
+      "programs": "برامج عقارية"
     }
   },
   "monEspace": {
@@ -1020,6 +1025,218 @@
       "updateError": "خطأ أثناء التحديث",
       "keyRegenerated": "تمت إعادة توليد مفتاح API",
       "keyCopied": "تم نسخ مفتاح API"
+    }
+  },
+  "stayManager": {
+    "tabs": {
+      "connection": "الاتصال",
+      "properties": "العقارات المتزامنة",
+      "reservations": "الحجوزات",
+      "lockedHint": "اربط حسابك في StayManager للوصول إلى هذا التبويب"
+    },
+    "overview": {
+      "upgradeTitle": "تكامل StayManager",
+      "upgradeDescription": "زامِن عقاراتك مع StayManager.ma لإدارة حجوزاتك وتقاويمك والتحقق من هوية عملائك في مكان واحد.",
+      "upgradePlanNotice": "هذه الميزة متاحة بدءًا من الباقة Pro.",
+      "upgradeCta": "الترقية إلى الباقة Pro",
+      "partnerLabel": "بشراكة مع",
+      "partnerDescription": "منصة إدارة وتأمين الإيجارات قصيرة المدة في المغرب",
+      "connectionStatusTitle": "حالة الاتصال",
+      "connected": "متصل",
+      "disconnected": "غير متصل",
+      "fieldEmail": "البريد الإلكتروني",
+      "fieldLinkedProperties": "العقارات المرتبطة",
+      "fieldLastSync": "آخر مزامنة",
+      "fieldAutoSync": "المزامنة التلقائية",
+      "autoSyncEnabled": "مفعّلة",
+      "autoSyncDisabled": "معطّلة",
+      "never": "أبدًا",
+      "disconnect": "قطع الاتصال",
+      "confirmDisconnect": "هل أنت متأكد من رغبتك في قطع الاتصال بـ StayManager؟ سيتم الاحتفاظ بجميع البيانات المتزامنة.",
+      "apiKeyLabel": "مفتاح API الخاص بـ StayManager",
+      "apiKeyHelp": "من StayManager &gt; التكاملات و API، أنشئ مفتاحًا بصلاحيات لا تقل عن <mono1>properties:read</mono1>، <mono2>reservations:read</mono2> و<mono3>webhooks:manage</mono3>. المفتاح (<mono4>sk_live_...</mono4>) لا يظهر إلا مرة واحدة: انسخه فورًا.",
+      "connecting": "جارٍ الاتصال...",
+      "connect": "اتصال",
+      "connectCta": "اتصال...",
+      "connectPrompt": "اربط حسابك <wordmark></wordmark> لمزامنة عقاراتك وحجوزاتك.",
+      "settingsTitle": "إعدادات المزامنة",
+      "autoSyncTitle": "المزامنة التلقائية",
+      "autoSyncDescription": "مزامنة الحجوزات بشكل دوري",
+      "frequencyLabel": "تردد المزامنة",
+      "frequencyHourly": "كل ساعة",
+      "frequencyEvery3h": "كل 3 ساعات",
+      "frequencyEvery6h": "كل 6 ساعات",
+      "frequencyEvery12h": "كل 12 ساعة",
+      "frequencyDaily": "مرة واحدة يوميًا",
+      "saveSettings": "حفظ الإعدادات",
+      "propertyLinksTitle": "العقارات المرتبطة ({{count}})",
+      "manageLinks": "إدارة الروابط",
+      "propertyLinksEmpty": "لا يوجد أي عقار مرتبط حاليًا",
+      "linkProperty": "ربط عقار",
+      "propertyFallbackTitle": "عقار #{{id}}",
+      "reservationsCount": "{{count}} حجوزات",
+      "viewAllProperties": "عرض جميع العقارات ({{count}})",
+      "syncTooltip": "مزامنة",
+      "syncStatus": {
+        "synced": "متزامن",
+        "error": "خطأ",
+        "pending": "قيد الانتظار"
+      },
+      "messages": {
+        "connectSuccess": "تم الاتصال بـ StayManager بنجاح !",
+        "disconnectSuccess": "تم قطع الاتصال بـ StayManager",
+        "settingsUpdated": "تم تحديث الإعدادات",
+        "syncComplete": "اكتملت المزامنة: {{created}} تم إنشاؤها، {{updated}} تم تحديثها"
+      },
+      "errors": {
+        "upgradeRequired": "هذه الميزة تتطلب الباقة Pro أو أعلى",
+        "loadFailed": "خطأ أثناء التحميل",
+        "connectFailed": "خطأ في الاتصال",
+        "disconnectFailed": "خطأ أثناء قطع الاتصال",
+        "settingsUpdateFailed": "خطأ أثناء التحديث",
+        "syncFailed": "خطأ في المزامنة",
+        "syncFailedGeneric": "خطأ أثناء المزامنة"
+      },
+      "features": {
+        "calendarTitle": "تقويم متزامن",
+        "calendarDescription": "زامِن تقاويمك تلقائيًا بين SemsarOut وStayManager.",
+        "verificationTitle": "التحقق من العملاء",
+        "verificationDescription": "اطّلع على حالة التحقق من هوية عملائك مباشرة داخل SemsarOut.",
+        "locksTitle": "أقفال متصلة",
+        "locksDescription": "أدر رموز الدخول لأقفالك الذكية من لوحة التحكم الخاصة بك."
+      }
+    },
+    "properties": {
+      "back": "العودة إلى الإعدادات",
+      "title": "العقارات المرتبطة بـ StayManager",
+      "subtitle": "أدر الروابط بين عقاراتك في SemsarOut وStayManager",
+      "linkProperty": "ربط عقار",
+      "fallbackTitle": "عقار #{{id}}",
+      "linkedTo": "مرتبط بـ:",
+      "never": "أبدًا",
+      "confirmUnlink": "هل أنت متأكد من رغبتك في حذف هذا الرابط؟ سيتم الاحتفاظ بالحجوزات المتزامنة مسبقًا.",
+      "modal": {
+        "title": "ربط عقار",
+        "semsarLabel": "عقار SemsarOut",
+        "semsarPlaceholder": "اختر عقارًا",
+        "stayManagerLabel": "عقار StayManager",
+        "stayManagerPlaceholder": "اختر عقارًا",
+        "linking": "جارٍ الربط...",
+        "link": "ربط"
+      },
+      "empty": {
+        "title": "لا يوجد أي عقار مرتبط",
+        "description": "ابدأ بربط أحد عقاراتك بعقار في StayManager."
+      },
+      "stats": {
+        "reservations": "الحجوزات",
+        "lastSync": "آخر مزامنة",
+        "ical": "iCal",
+        "icalAvailable": "متوفر",
+        "icalUnavailable": "غير متوفر"
+      },
+      "status": {
+        "synced": "متزامن",
+        "syncing": "جارٍ...",
+        "error": "خطأ",
+        "pending": "قيد الانتظار"
+      },
+      "actions": {
+        "sync": "مزامنة",
+        "viewReservations": "عرض الحجوزات",
+        "unlink": "حذف الرابط"
+      },
+      "info": {
+        "allLinked": "<strong>جميع عقاراتك مرتبطة.</strong> لربط عقارات أخرى، أضف عقارات جديدة للإيجار في لوحة التحكم الخاصة بك.",
+        "noneAvailable": "<strong>لا يوجد أي عقار متاح في StayManager.</strong> جميع عقاراتك في StayManager مرتبطة بالفعل أو لم تُضِف بعد أي عقار في StayManager."
+      },
+      "messages": {
+        "linked": "تم ربط العقار بنجاح",
+        "unlinked": "تم حذف الرابط",
+        "syncComplete": "اكتملت المزامنة: {{created}} تم إنشاؤها، {{updated}} تم تحديثها"
+      },
+      "errors": {
+        "loadFailed": "خطأ أثناء تحميل البيانات",
+        "selectBoth": "يرجى اختيار كلا العقارين",
+        "linkFailed": "خطأ أثناء الربط",
+        "unlinkFailed": "خطأ أثناء الحذف",
+        "syncFailed": "خطأ في المزامنة",
+        "syncFailedGeneric": "خطأ أثناء المزامنة"
+      }
+    },
+    "reservations": {
+      "back": "العودة إلى الإعدادات",
+      "title": "حجوزات StayManager",
+      "subtitle": "جميع الحجوزات المتزامنة من StayManager",
+      "refresh": "تحديث",
+      "filters": {
+        "label": "التصفية:",
+        "allProperties": "جميع العقارات",
+        "allStatuses": "جميع الحالات",
+        "upcomingOnly": "القادمة فقط",
+        "status": {
+          "confirmed": "مؤكدة",
+          "cancelled": "ملغاة",
+          "blocked": "محجوبة",
+          "pending": "قيد الانتظار"
+        }
+      },
+      "status": {
+        "confirmed": "مؤكدة",
+        "cancelled": "ملغاة",
+        "blocked": "محجوبة",
+        "pending": "قيد الانتظار"
+      },
+      "platform": {
+        "airbnb": "Airbnb",
+        "booking": "Booking.com",
+        "vrbo": "VRBO",
+        "direct": "مباشر"
+      },
+      "empty": {
+        "title": "لا يوجد أي حجز",
+        "upcoming": "لا يوجد أي حجز قادم.",
+        "filtered": "لم يُعثر على أي حجز بهذه المرشحات."
+      },
+      "card": {
+        "guestFallback": "عميل",
+        "verified": "موثّق",
+        "accessCode": "رمز",
+        "nights_one": "({{count}} ليلة)",
+        "nights_other": "({{count}} ليالٍ)",
+        "guestCount_one": "{{count}} مسافر",
+        "guestCount_other": "{{count}} مسافرين"
+      },
+      "detail": {
+        "title": "تفاصيل الحجز",
+        "guest": "العميل",
+        "verified": "موثّق",
+        "notVerified": "غير موثّق",
+        "dates": "التواريخ",
+        "checkin": "الوصول",
+        "checkout": "المغادرة",
+        "nights_one": "{{count}} ليلة",
+        "nights_other": "{{count}} ليالٍ",
+        "status": "الحالة",
+        "price": "السعر الإجمالي",
+        "accessCode": "رمز الدخول",
+        "accessCodeGenerated": "تم الإنشاء",
+        "contract": "العقد",
+        "notes": "ملاحظات",
+        "idLabel": "المعرف: {{id}}",
+        "externalIdLabel": " | خارجي: {{id}}",
+        "lastSync": "آخر مزامنة: {{date}}",
+        "unknown": "غير معروف",
+        "contractStatus": {
+          "signed": "موقّع",
+          "sent": "مُرسَل",
+          "generated": "تم الإنشاء",
+          "none": "لم يُنشأ بعد"
+        }
+      },
+      "errors": {
+        "loadFailed": "خطأ أثناء تحميل الحجوزات"
+      }
     }
   }
 }

@@ -138,6 +138,16 @@ const MIGRATED_FILES = [
   'src/pages/admin/AdminOrders.jsx',
   'src/pages/admin/AdminProducts.jsx',
   'src/pages/admin/AdminSharedArtisans.jsx',
+  'src/pages/dashboard/integrations/StayManager.jsx',
+  'src/pages/dashboard/integrations/StayManagerProperties.jsx',
+  'src/pages/dashboard/integrations/StayManagerReservations.jsx',
+  'src/pages/dashboard/integrations/StayManagerTabs.jsx',
+  'src/components/messaging/MessageThread.jsx',
+  'src/components/common/AddressAutocomplete.jsx',
+  'src/components/map/AgencyMap.jsx',
+  'src/components/map/PropertyMap.jsx',
+  'src/components/dashboard/MesBiensTabs.jsx',
+  'src/components/common/CompareBar.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {
