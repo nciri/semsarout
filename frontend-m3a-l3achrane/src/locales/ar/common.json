@@ -9,5 +9,12 @@
     "label": "تغيير اللغة",
     "fr": "FR",
     "ar": "AR"
+  },
+  "topbar": {
+    "howItWorks": "كيف يعمل",
+    "discover": "اكتشف",
+    "about": "من نحن",
+    "signIn": "تسجيل الدخول",
+    "signUp": "إنشاء حساب"
   }
 }

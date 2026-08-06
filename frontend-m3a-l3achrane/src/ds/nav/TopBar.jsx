@@ -1,11 +1,13 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "../core/Button.jsx";
 import { LanguageSwitcher } from "./LanguageSwitcher.jsx";
 
 /** TopBar — public site navy header: brand, links, language, auth actions. */
 export function TopBar({
-  links = ["Comment ça marche", "Découvrir", "À propos"],
-  onSignIn, onSignUp, style,
+  links, onSignIn, onSignUp, style,
 }) {
+  const { t } = useTranslation();
+  const navLinks = links ?? [t("topbar.howItWorks"), t("topbar.discover"), t("topbar.about")];
   return (
     <header style={{ display: "flex", alignItems: "center", gap: 28, padding: "0 40px", height: 68, background: "var(--surface-navy)", boxShadow: "var(--shadow-nav)", ...style }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -18,11 +20,11 @@ export function TopBar({
         </span>
       </div>
       <nav style={{ display: "flex", gap: 22, flex: 1 }}>
-        {links.map((l) => <a key={l} href="#" style={{ color: "var(--text-on-navy-muted)", font: "var(--fw-medium) var(--fs-body) var(--font-display)" }}>{l}</a>)}
+        {navLinks.map((l) => <a key={l} href="#" style={{ color: "var(--text-on-navy-muted)", font: "var(--fw-medium) var(--fs-body) var(--font-display)" }}>{l}</a>)}
       </nav>
       <LanguageSwitcher />
-      <a href="#" onClick={onSignIn} style={{ color: "#fff", font: "var(--fw-medium) var(--fs-body) var(--font-display)" }}>Se connecter</a>
-      <Button variant="accent" size="sm" onClick={onSignUp}>S&apos;inscrire</Button>
+      <a href="#" onClick={onSignIn} style={{ color: "#fff", font: "var(--fw-medium) var(--fs-body) var(--font-display)" }}>{t("topbar.signIn")}</a>
+      <Button variant="accent" size="sm" onClick={onSignUp}>{t("topbar.signUp")}</Button>
     </header>
   );
 }
