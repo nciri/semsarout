@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button, Card, Chip } from '../../ds/index.js'
 import { IMPORTANCE_LEVELS, lifestyleQuestionnaireSteps } from '../../data/lifestyleQuestionnaireSteps.js'
@@ -89,6 +90,7 @@ function QuestionCard({ stepId, question, answer, importance, onPick, onPickImpo
 
 export default function Questionnaire() {
   const { t } = useTranslation(['app', 'common'])
+  const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState({})
   const [importance, setImportance] = useState({})
@@ -105,12 +107,12 @@ export default function Questionnaire() {
   const goBack = () => setStep((s) => Math.max(0, s - 1))
   const goNext = () => setStep((s) => Math.min(total - 1, s + 1))
   const finish = () => {
-    // Le câblage réel (soumission + redirection) sera fait lors de l'intégration.
+    navigate('/recherche')
   }
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)' }}>
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '44px 24px 64px', display: 'flex', flexDirection: 'column', gap: 26 }}>
+      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '44px 24px 64px', display: 'flex', flexDirection: 'column', gap: 26 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
             <div style={{ font: 'var(--fw-bold) 13px var(--font-body)', color: 'var(--text-muted)' }}>
