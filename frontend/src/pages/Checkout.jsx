@@ -275,7 +275,7 @@ function Checkout() {
                           <div className="font-medium">{t('public:checkout.cardMethodLabel')}</div>
                           <div className="text-sm text-gray-500">{t('public:checkout.cardMethodNote')}</div>
                         </div>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center gap-2">
                           <img src="/visa.svg" alt="Visa" className="h-6" />
                           <img src="/mastercard.svg" alt="Mastercard" className="h-6" />
                         </div>
@@ -402,7 +402,7 @@ function Checkout() {
                   <FiLock className="w-4 h-4 me-2" />
                   {t('public:checkout.securePaymentNote')}
                 </div>
-                <div className="flex justify-center space-x-4 opacity-50">
+                <div className="flex justify-center gap-4 opacity-50">
                   <img src="/visa.svg" alt="Visa" className="h-6" />
                   <img src="/mastercard.svg" alt="Mastercard" className="h-6" />
                   <img src="/cmi.svg" alt="CMI" className="h-6" />

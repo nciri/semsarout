@@ -838,7 +838,7 @@ function SellProperty() {
                     {form.wants_pro_photos && <span className="block text-terracotta-600 mt-1">{t('public:sellProperty.step5.proPhotosRequested')}</span>}
                   </p>
                   {form.photos.length > 0 && (
-                    <div className="flex -space-x-2 mt-3">
+                    <div className="flex -space-x-2 rtl:space-x-reverse mt-3">
                       {form.photos.slice(0, 5).map((p) => (
                         <img key={p.url} src={p.url} alt="" className="w-10 h-10 rounded-lg object-cover border-2 border-white" />
                       ))}

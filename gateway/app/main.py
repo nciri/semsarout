@@ -284,6 +284,9 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         return app.state.payment, path.replace("/api/v1/payment", "/payment", 1)
     if settings.billing_url and path.startswith("/api/v1/billing"):
         return app.state.billing, path.replace("/api/v1/billing", "/billing", 1)
+    # translation : cache Postgres devant Azure Translator, endpoint unique /v1/translate.
+    if settings.translation_url and path == "/api/v1/translate":
+        return app.state.translation, path.replace("/api/v1", "", 1)
     # Extraction du domaine boutique : routes EXISTANTES reroutées (préfixe /api/v1 retiré).
     if settings.catalog_url and (
         path.startswith("/api/v1/backoffice/shop/products")
@@ -420,6 +423,7 @@ async def lifespan(app: FastAPI):
     app.state.coloc_listing = _client_or_none(settings.coloc_listing_url)
     app.state.coloc_profile = _client_or_none(settings.coloc_profile_url)
     app.state.matching = _client_or_none(settings.matching_url)
+    app.state.translation = _client_or_none(settings.translation_url)
     yield
     for client in (
         app.state.monolith, app.state.identity, app.state.search,
@@ -430,7 +434,7 @@ async def lifespan(app: FastAPI):
         app.state.buyer, app.state.programs, app.state.staymanager, app.state.geo,
         app.state.messaging, app.state.trust_safety, app.state.agency, app.state.audit,
         app.state.commission, app.state.selling, app.state.coloc_listing,
-        app.state.coloc_profile, app.state.matching,
+        app.state.coloc_profile, app.state.matching, app.state.translation,
     ):
         if client is not None:
             await client.aclose()

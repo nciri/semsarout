@@ -12,7 +12,7 @@ export function Avatar({ src, name = "", size = 40, verified = false, subtitle, 
       </span>
       {verified && (
         <span style={{
-          position: "absolute", right: -1, bottom: -1, width: size * 0.36, height: size * 0.36,
+          position: "absolute", insetInlineEnd: -1, bottom: -1, width: size * 0.36, height: size * 0.36,
           background: "var(--green-500)", borderRadius: "var(--radius-pill)", border: "2px solid #fff",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>

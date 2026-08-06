@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
+import { useTranslation } from 'react-i18next'
 import { FiSave, FiRefreshCw, FiCopy, FiEye, FiEyeOff } from 'react-icons/fi'
 import { agencyService } from '../../services/agencyService'
 import useAuthStore from '../../store/authStore'
 
 function MyAgency() {
+  const { t } = useTranslation(['dashboard', 'common'])
   const { user, updateUser } = useAuthStore()
   const queryClient = useQueryClient()
   const [showApiKey, setShowApiKey] = useState(false)
@@ -23,12 +25,12 @@ function MyAgency() {
     (data) => agencyService.createAgency(data),
     {
       onSuccess: (response) => {
-        toast.success('Agence créée avec succès')
+        toast.success(t('dashboard:myAgency.toasts.created'))
         updateUser({ agency_id: response.agency.id })
         queryClient.invalidateQueries('my-agency')
       },
       onError: (error) => {
-        toast.error(error.response?.data?.error || 'Erreur lors de la création')
+        toast.error(error.response?.data?.error || t('dashboard:myAgency.toasts.createError'))
       }
     }
   )
@@ -37,11 +39,11 @@ function MyAgency() {
     (data) => agencyService.updateAgency(agency.slug, data),
     {
       onSuccess: () => {
-        toast.success('Agence mise à jour')
+        toast.success(t('dashboard:myAgency.toasts.updated'))
         queryClient.invalidateQueries('my-agency')
       },
       onError: (error) => {
-        toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour')
+        toast.error(error.response?.data?.error || t('dashboard:myAgency.toasts.updateError'))
       }
     }
   )
@@ -57,14 +59,14 @@ function MyAgency() {
           setShowApiKey(true)
         }
         queryClient.invalidateQueries('my-agency')
-        toast.success('Clé API régénérée')
+        toast.success(t('dashboard:myAgency.toasts.keyRegenerated'))
       }
     }
   )
 
   const copyApiKey = () => {
     navigator.clipboard.writeText(agency.api_key)
-    toast.success('Clé API copiée')
+    toast.success(t('dashboard:myAgency.toasts.keyCopied'))
   }
 
   const onSubmit = (data) => {
@@ -96,10 +98,10 @@ function MyAgency() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="font-display text-2xl font-bold text-gray-900">
-            Créer votre espace agence
+            {t('dashboard:myAgency.create.title')}
           </h1>
           <p className="text-gray-600">
-            Remplissez les informations de votre agence pour accéder aux fonctionnalités pro
+            {t('dashboard:myAgency.create.subtitle')}
           </p>
         </div>
 
@@ -107,69 +109,69 @@ function MyAgency() {
           <div className="card p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="label">Nom de l'agence *</label>
+                <label className="label">{t('dashboard:myAgency.fields.name')} *</label>
                 <input
-                  {...register('name', { required: 'Nom requis' })}
+                  {...register('name', { required: t('dashboard:myAgency.validation.nameRequired') })}
                   className="input"
-                  placeholder="Ex: Agence Immobilière Excellence"
+                  placeholder={t('dashboard:myAgency.placeholders.name')}
                 />
                 {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
               </div>
 
               <div>
-                <label className="label">Email professionnel *</label>
+                <label className="label">{t('dashboard:myAgency.fields.email')} *</label>
                 <input
                   type="email"
-                  {...register('email', { required: 'Email requis' })}
+                  {...register('email', { required: t('dashboard:myAgency.validation.emailRequired') })}
                   className="input"
-                  placeholder="contact@agence.ma"
+                  placeholder={t('dashboard:myAgency.placeholders.email')}
                 />
                 {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
               </div>
 
               <div>
-                <label className="label">Téléphone</label>
+                <label className="label">{t('dashboard:myAgency.fields.phone')}</label>
                 <input
                   {...register('phone')}
                   className="input"
-                  placeholder="+212 5XX XXX XXX"
+                  placeholder={t('dashboard:myAgency.placeholders.phone')}
                 />
               </div>
 
               <div>
-                <label className="label">Ville</label>
+                <label className="label">{t('dashboard:myAgency.fields.city')}</label>
                 <input
                   {...register('city')}
                   className="input"
-                  placeholder="Casablanca"
+                  placeholder={t('dashboard:myAgency.placeholders.city')}
                 />
               </div>
 
               <div>
-                <label className="label">Site web</label>
+                <label className="label">{t('dashboard:myAgency.fields.website')}</label>
                 <input
                   {...register('website')}
                   className="input"
-                  placeholder="https://www.votre-agence.ma"
+                  placeholder={t('dashboard:myAgency.placeholders.website')}
                 />
               </div>
 
               <div className="md:col-span-2">
-                <label className="label">Adresse</label>
+                <label className="label">{t('dashboard:myAgency.fields.address')}</label>
                 <input
                   {...register('address')}
                   className="input"
-                  placeholder="123 Boulevard Mohammed V"
+                  placeholder={t('dashboard:myAgency.placeholders.address')}
                 />
               </div>
 
               <div className="md:col-span-2">
-                <label className="label">Description</label>
+                <label className="label">{t('dashboard:myAgency.fields.description')}</label>
                 <textarea
                   {...register('description')}
                   className="input"
                   rows="3"
-                  placeholder="Présentez votre agence..."
+                  placeholder={t('dashboard:myAgency.placeholders.description')}
                 />
               </div>
             </div>
@@ -180,8 +182,8 @@ function MyAgency() {
                 disabled={createMutation.isLoading}
                 className="btn-primary"
               >
-                <FiSave className="w-4 h-4 mr-2" />
-                {createMutation.isLoading ? 'Création...' : 'Créer l\'agence'}
+                <FiSave className="w-4 h-4 me-2" />
+                {createMutation.isLoading ? t('dashboard:myAgency.create.submitting') : t('dashboard:myAgency.create.submit')}
               </button>
             </div>
           </div>
@@ -195,10 +197,10 @@ function MyAgency() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="font-display text-2xl font-bold text-gray-900">
-          Mon agence
+          {t('dashboard:myAgency.edit.title')}
         </h1>
         <p className="text-gray-600">
-          Gérez les informations de votre agence
+          {t('dashboard:myAgency.edit.subtitle')}
         </p>
       </div>
 
@@ -206,10 +208,10 @@ function MyAgency() {
         <div className="space-y-6">
           {/* Basic Info */}
           <div className="card p-6">
-            <h2 className="font-semibold mb-4">Informations générales</h2>
+            <h2 className="font-semibold mb-4">{t('dashboard:myAgency.edit.generalInfo')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="label">Nom de l'agence</label>
+                <label className="label">{t('dashboard:myAgency.fields.name')}</label>
                 <input
                   {...register('name')}
                   defaultValue={agency?.name}
@@ -218,7 +220,7 @@ function MyAgency() {
               </div>
 
               <div>
-                <label className="label">Email</label>
+                <label className="label">{t('dashboard:myAgency.fields.emailShort')}</label>
                 <input
                   type="email"
                   {...register('email')}
@@ -228,7 +230,7 @@ function MyAgency() {
               </div>
 
               <div>
-                <label className="label">Téléphone</label>
+                <label className="label">{t('dashboard:myAgency.fields.phone')}</label>
                 <input
                   {...register('phone')}
                   defaultValue={agency?.phone}
@@ -237,7 +239,7 @@ function MyAgency() {
               </div>
 
               <div>
-                <label className="label">Site web</label>
+                <label className="label">{t('dashboard:myAgency.fields.website')}</label>
                 <input
                   {...register('website')}
                   defaultValue={agency?.website}
@@ -246,7 +248,7 @@ function MyAgency() {
               </div>
 
               <div>
-                <label className="label">Ville</label>
+                <label className="label">{t('dashboard:myAgency.fields.city')}</label>
                 <input
                   {...register('city')}
                   defaultValue={agency?.city}
@@ -255,7 +257,7 @@ function MyAgency() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="label">Adresse</label>
+                <label className="label">{t('dashboard:myAgency.fields.address')}</label>
                 <input
                   {...register('address')}
                   defaultValue={agency?.address}
@@ -264,7 +266,7 @@ function MyAgency() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="label">Description</label>
+                <label className="label">{t('dashboard:myAgency.fields.description')}</label>
                 <textarea
                   {...register('description')}
                   defaultValue={agency?.description}
@@ -280,17 +282,17 @@ function MyAgency() {
                 disabled={updateMutation.isLoading}
                 className="btn-primary"
               >
-                <FiSave className="w-4 h-4 mr-2" />
-                {updateMutation.isLoading ? 'Enregistrement...' : 'Enregistrer'}
+                <FiSave className="w-4 h-4 me-2" />
+                {updateMutation.isLoading ? t('dashboard:myAgency.edit.saving') : t('dashboard:shared.actions.save')}
               </button>
             </div>
           </div>
 
           {/* API Access */}
           <div className="card p-6">
-            <h2 className="font-semibold mb-4">Accès API</h2>
+            <h2 className="font-semibold mb-4">{t('dashboard:myAgency.api.title')}</h2>
             <p className="text-sm text-gray-600 mb-4">
-              Utilisez cette clé API pour synchroniser vos annonces depuis vos logiciels métiers.
+              {t('dashboard:myAgency.api.description')}
             </p>
 
             <div className="flex items-center gap-2">
@@ -299,12 +301,12 @@ function MyAgency() {
                   type={showApiKey ? 'text' : 'password'}
                   value={agency?.api_key || ''}
                   readOnly
-                  className="input pr-20 font-mono text-sm"
+                  className="input pe-20 font-mono text-sm"
                 />
                 <button
                   type="button"
                   onClick={() => setShowApiKey(!showApiKey)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
+                  className="absolute end-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
                 >
                   {showApiKey ? <FiEyeOff /> : <FiEye />}
                 </button>
@@ -313,7 +315,7 @@ function MyAgency() {
                 type="button"
                 onClick={copyApiKey}
                 className="btn-secondary p-2"
-                title="Copier"
+                title={t('dashboard:myAgency.api.copy')}
               >
                 <FiCopy className="w-5 h-5" />
               </button>
@@ -322,7 +324,7 @@ function MyAgency() {
                 onClick={() => regenerateKeyMutation.mutate()}
                 disabled={regenerateKeyMutation.isLoading}
                 className="btn-secondary p-2"
-                title="Régénérer"
+                title={t('dashboard:myAgency.api.regenerate')}
               >
                 <FiRefreshCw className={`w-5 h-5 ${regenerateKeyMutation.isLoading ? 'animate-spin' : ''}`} />
               </button>

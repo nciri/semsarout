@@ -7,7 +7,7 @@
 @tailwind utilities;
 
 html[lang='ar'] {
-  font-family: 'Noto Sans Arabic', sans-serif;
+  @apply font-arabic;
 }
 
 @layer base {

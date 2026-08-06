@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { Trans, useTranslation } from 'react-i18next'
 import {
   FiLink,
   FiRefreshCw,
@@ -17,6 +18,8 @@ import {
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
 import StayManagerWordmark from '../../../components/common/StayManagerWordmark'
+import DirIcon from '../../../components/common/DirIcon'
+import { useFormat } from '../../../utils/format'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
 
@@ -31,13 +34,16 @@ const SM_COLORS = {
 }
 
 export default function StayManager() {
+  const { t } = useTranslation(['dashboard', 'common'])
   const { token } = useAuthStore()
+  const { fmtDateTime } = useFormat()
   const [loading, setLoading] = useState(true)
   const [connecting, setConnecting] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [integration, setIntegration] = useState(null)
   const [propertyLinks, setPropertyLinks] = useState([])
   const [error, setError] = useState(null)
+  const [upgradeRequired, setUpgradeRequired] = useState(false)
   const [success, setSuccess] = useState(null)
   const [showConnectForm, setShowConnectForm] = useState(false)
   const [apiKey, setApiKey] = useState('')
@@ -63,7 +69,8 @@ export default function StayManager() {
       })
 
       if (response.status === 403) {
-        setError('Cette fonctionnalite necessite le plan Pro ou superieur')
+        setError(t('dashboard:stayManager.overview.errors.upgradeRequired'))
+        setUpgradeRequired(true)
         setLoading(false)
         return
       }
@@ -82,7 +89,7 @@ export default function StayManager() {
         fetchPropertyLinks()
       }
     } catch (err) {
-      setError('Erreur lors du chargement')
+      setError(t('dashboard:stayManager.overview.errors.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -121,11 +128,12 @@ export default function StayManager() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur de connexion')
+        throw new Error(data.error || t('dashboard:stayManager.overview.errors.connectFailed'))
       }
 
       setIntegration(data.integration)
-      setSuccess(data.warning ? `Connexion StayManager reussie ! ${data.warning}` : 'Connexion StayManager reussie!')
+      const connectSuccess = t('dashboard:stayManager.overview.messages.connectSuccess')
+      setSuccess(data.warning ? `${connectSuccess} ${data.warning}` : connectSuccess)
       setShowConnectForm(false)
       setApiKey('')
       fetchPropertyLinks()
@@ -137,7 +145,7 @@ export default function StayManager() {
   }
 
   const handleDisconnect = async () => {
-    if (!confirm('Etes-vous sur de vouloir deconnecter StayManager? Toutes les donnees synchronisees seront conservees.')) {
+    if (!confirm(t('dashboard:stayManager.overview.confirmDisconnect'))) {
       return
     }
 
@@ -153,10 +161,10 @@ export default function StayManager() {
       if (response.ok) {
         setIntegration(null)
         setPropertyLinks([])
-        setSuccess('StayManager deconnecte')
+        setSuccess(t('dashboard:stayManager.overview.messages.disconnectSuccess'))
       }
     } catch (err) {
-      setError('Erreur lors de la deconnexion')
+      setError(t('dashboard:stayManager.overview.errors.disconnectFailed'))
     }
   }
 
@@ -172,10 +180,10 @@ export default function StayManager() {
       })
 
       if (response.ok) {
-        setSuccess('Parametres mis a jour')
+        setSuccess(t('dashboard:stayManager.overview.messages.settingsUpdated'))
       }
     } catch (err) {
-      setError('Erreur lors de la mise a jour')
+      setError(t('dashboard:stayManager.overview.errors.settingsUpdateFailed'))
     }
   }
 
@@ -193,13 +201,16 @@ export default function StayManager() {
       const data = await response.json()
 
       if (response.ok) {
-        setSuccess(`Synchronisation terminee: ${data.items_created} crees, ${data.items_updated} mis a jour`)
+        setSuccess(t('dashboard:stayManager.overview.messages.syncComplete', {
+          created: data.items_created,
+          updated: data.items_updated
+        }))
         fetchPropertyLinks()
       } else {
-        setError(data.error || 'Erreur de synchronisation')
+        setError(data.error || t('dashboard:stayManager.overview.errors.syncFailed'))
       }
     } catch (err) {
-      setError('Erreur lors de la synchronisation')
+      setError(t('dashboard:stayManager.overview.errors.syncFailedGeneric'))
     } finally {
       setSyncing(false)
     }
@@ -214,11 +225,11 @@ export default function StayManager() {
   }, [success])
 
   useEffect(() => {
-    if (error && !error.includes('plan Pro')) {
+    if (error && !upgradeRequired) {
       const timer = setTimeout(() => setError(null), 5000)
       return () => clearTimeout(timer)
     }
-  }, [error])
+  }, [error, upgradeRequired])
 
   if (loading) {
     return (
@@ -229,7 +240,7 @@ export default function StayManager() {
   }
 
   // Upgrade required
-  if (error && error.includes('plan Pro')) {
+  if (error && upgradeRequired) {
     return (
       <div className="max-w-2xl mx-auto">
         <div className="bg-gradient-to-br from-terracotta-50 to-orange-50 rounded-2xl p-8 text-center">
@@ -237,21 +248,20 @@ export default function StayManager() {
             <FiZap className="w-8 h-8 text-terracotta-600" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-3">
-            Integration StayManager
+            {t('dashboard:stayManager.overview.upgradeTitle')}
           </h2>
           <p className="text-gray-600 mb-6">
-            Synchronisez vos proprietes avec StayManager.ma pour gerer vos reservations,
-            calendriers et verifications de clients en un seul endroit.
+            {t('dashboard:stayManager.overview.upgradeDescription')}
           </p>
           <p className="text-sm text-terracotta-700 mb-6">
-            Cette fonctionnalite est disponible avec le plan Pro ou superieur.
+            {t('dashboard:stayManager.overview.upgradePlanNotice')}
           </p>
           <Link
             to="/dashboard/compte/abonnement"
             className="inline-flex items-center gap-2 px-6 py-3 bg-terracotta-600 text-white rounded-lg hover:bg-terracotta-700 transition-colors"
           >
-            Passer au plan Pro
-            <FiChevronRight className="w-4 h-4" />
+            {t('dashboard:stayManager.overview.upgradeCta')}
+            <DirIcon icon={FiChevronRight} className="w-4 h-4" />
           </Link>
         </div>
       </div>
@@ -275,10 +285,10 @@ export default function StayManager() {
             <img src="/staymanager-logo.png" alt="StayManager.ma" className="h-10" />
             <StayManagerWordmark className="text-2xl" />
           </a>
-          <div className="sm:ml-2">
-            <p className="text-sm" style={{ color: SM_COLORS.secondary }}>En partenariat avec</p>
+          <div className="sm:ms-2">
+            <p className="text-sm" style={{ color: SM_COLORS.secondary }}>{t('dashboard:stayManager.overview.partnerLabel')}</p>
             <p className="text-gray-600 text-sm">
-              La plateforme de gestion et de sécurisation des locations courte durée au Maroc
+              {t('dashboard:stayManager.overview.partnerDescription')}
             </p>
           </div>
         </div>
@@ -292,7 +302,7 @@ export default function StayManager() {
         </div>
       )}
 
-      {error && !error.includes('plan Pro') && (
+      {error && !upgradeRequired && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
           <FiAlertCircle className="w-5 h-5 text-red-600" />
           <p className="text-red-800">{error}</p>
@@ -302,16 +312,16 @@ export default function StayManager() {
       {/* Connection Status Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Statut de connexion</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('dashboard:stayManager.overview.connectionStatusTitle')}</h2>
           {integration?.status === 'connected' ? (
             <span className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
               <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-              Connecte
+              {t('dashboard:stayManager.overview.connected')}
             </span>
           ) : (
             <span className="flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm font-medium">
               <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
-              Non connecte
+              {t('dashboard:stayManager.overview.disconnected')}
             </span>
           )}
         </div>
@@ -320,25 +330,27 @@ export default function StayManager() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Email</p>
+                <p className="text-sm text-gray-500 mb-1">{t('dashboard:stayManager.overview.fieldEmail')}</p>
                 <p className="font-medium text-gray-900">{integration.staymanager_email || '-'}</p>
               </div>
               <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Biens lies</p>
+                <p className="text-sm text-gray-500 mb-1">{t('dashboard:stayManager.overview.fieldLinkedProperties')}</p>
                 <p className="font-medium text-gray-900">{integration.linked_properties_count || 0}</p>
               </div>
               <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Derniere sync</p>
+                <p className="text-sm text-gray-500 mb-1">{t('dashboard:stayManager.overview.fieldLastSync')}</p>
                 <p className="font-medium text-gray-900">
                   {integration.last_sync_at
-                    ? new Date(integration.last_sync_at).toLocaleString('fr-FR')
-                    : 'Jamais'}
+                    ? fmtDateTime(integration.last_sync_at, { second: '2-digit' })
+                    : t('dashboard:stayManager.overview.never')}
                 </p>
               </div>
               <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Auto-sync</p>
+                <p className="text-sm text-gray-500 mb-1">{t('dashboard:stayManager.overview.fieldAutoSync')}</p>
                 <p className="font-medium text-gray-900">
-                  {integration.auto_sync_enabled ? 'Active' : 'Desactive'}
+                  {integration.auto_sync_enabled
+                    ? t('dashboard:stayManager.overview.autoSyncEnabled')
+                    : t('dashboard:stayManager.overview.autoSyncDisabled')}
                 </p>
               </div>
             </div>
@@ -349,7 +361,7 @@ export default function StayManager() {
                 className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               >
                 <FiX className="w-4 h-4" />
-                Deconnecter
+                {t('dashboard:stayManager.overview.disconnect')}
               </button>
             </div>
           </div>
@@ -359,7 +371,7 @@ export default function StayManager() {
               <form onSubmit={handleConnect} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Cle API StayManager
+                    {t('dashboard:stayManager.overview.apiKeyLabel')}
                   </label>
                   <input
                     type="password"
@@ -370,12 +382,15 @@ export default function StayManager() {
                     required
                   />
                   <p className="mt-2 text-sm text-gray-500">
-                    Depuis StayManager &gt; Integrations &amp; API, creez une cle avec au minimum les
-                    droits <span className="font-mono text-xs">properties:read</span>,{' '}
-                    <span className="font-mono text-xs">reservations:read</span> et{' '}
-                    <span className="font-mono text-xs">webhooks:manage</span>. La cle (
-                    <span className="font-mono text-xs">sk_live_...</span>) ne s'affiche qu'une
-                    seule fois : copiez-la immediatement.
+                    <Trans
+                      i18nKey="dashboard:stayManager.overview.apiKeyHelp"
+                      components={{
+                        mono1: <span className="font-mono text-xs" />,
+                        mono2: <span className="font-mono text-xs" />,
+                        mono3: <span className="font-mono text-xs" />,
+                        mono4: <span className="font-mono text-xs" />
+                      }}
+                    />
                   </p>
                 </div>
                 <div className="flex gap-3">
@@ -387,12 +402,12 @@ export default function StayManager() {
                     {connecting ? (
                       <>
                         <FiRefreshCw className="w-4 h-4 animate-spin" />
-                        Connexion...
+                        {t('dashboard:stayManager.overview.connecting')}
                       </>
                     ) : (
                       <>
                         <FiLink className="w-4 h-4" />
-                        Connecter
+                        {t('dashboard:stayManager.overview.connect')}
                       </>
                     )}
                   </button>
@@ -401,26 +416,31 @@ export default function StayManager() {
                     onClick={() => setShowConnectForm(false)}
                     className="px-6 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                   >
-                    Annuler
+                    {t('dashboard:shared.actions.cancel')}
                   </button>
                 </div>
               </form>
             ) : (
               <div className="text-center py-6">
                 <p className="text-gray-600 mb-6 flex items-center justify-center gap-1.5 flex-wrap">
-                  Connectez votre compte
-                  <span className="inline-flex items-center gap-1">
-                    <img src="/staymanager-logo.png" alt="" className="h-4" />
-                    <StayManagerWordmark className="text-base" />
-                  </span>
-                  pour synchroniser vos proprietes et reservations.
+                  <Trans
+                    i18nKey="dashboard:stayManager.overview.connectPrompt"
+                    components={{
+                      wordmark: (
+                        <span className="inline-flex items-center gap-1">
+                          <img src="/staymanager-logo.png" alt="" className="h-4" />
+                          <StayManagerWordmark className="text-base" />
+                        </span>
+                      )
+                    }}
+                  />
                 </p>
                 <button
                   onClick={() => setShowConnectForm(true)}
                   className="inline-flex items-center gap-2 px-6 py-3 text-white rounded-lg transition-opacity hover:opacity-90 bg-gradient-to-r from-[#1F3D34] via-[#2E5E4E] to-[#2E5E4E]"
                 >
                   <FiLink className="w-5 h-5" />
-                  Connecter...
+                  {t('dashboard:stayManager.overview.connectCta')}
                 </button>
               </div>
             )}
@@ -432,15 +452,15 @@ export default function StayManager() {
       {integration?.status === 'connected' && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">
-            <FiSettings className="w-5 h-5 inline-block mr-2" />
-            Parametres de synchronisation
+            <FiSettings className="w-5 h-5 inline-block me-2" />
+            {t('dashboard:stayManager.overview.settingsTitle')}
           </h2>
 
           <div className="space-y-6">
             <label className="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
               <div>
-                <p className="font-medium text-gray-900">Synchronisation automatique</p>
-                <p className="text-sm text-gray-500">Synchroniser les reservations periodiquement</p>
+                <p className="font-medium text-gray-900">{t('dashboard:stayManager.overview.autoSyncTitle')}</p>
+                <p className="text-sm text-gray-500">{t('dashboard:stayManager.overview.autoSyncDescription')}</p>
               </div>
               <div className="relative">
                 <input
@@ -461,18 +481,18 @@ export default function StayManager() {
             {settings.auto_sync_enabled && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Frequence de synchronisation
+                  {t('dashboard:stayManager.overview.frequencyLabel')}
                 </label>
                 <select
                   value={settings.sync_frequency_hours}
                   onChange={e => setSettings({ ...settings, sync_frequency_hours: parseInt(e.target.value) })}
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
-                  <option value={1}>Toutes les heures</option>
-                  <option value={3}>Toutes les 3 heures</option>
-                  <option value={6}>Toutes les 6 heures</option>
-                  <option value={12}>Toutes les 12 heures</option>
-                  <option value={24}>Une fois par jour</option>
+                  <option value={1}>{t('dashboard:stayManager.overview.frequencyHourly')}</option>
+                  <option value={3}>{t('dashboard:stayManager.overview.frequencyEvery3h')}</option>
+                  <option value={6}>{t('dashboard:stayManager.overview.frequencyEvery6h')}</option>
+                  <option value={12}>{t('dashboard:stayManager.overview.frequencyEvery12h')}</option>
+                  <option value={24}>{t('dashboard:stayManager.overview.frequencyDaily')}</option>
                 </select>
               </div>
             )}
@@ -482,7 +502,7 @@ export default function StayManager() {
               className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
             >
               <FiCheck className="w-4 h-4" />
-              Sauvegarder les parametres
+              {t('dashboard:stayManager.overview.saveSettings')}
             </button>
           </div>
         </div>
@@ -493,29 +513,29 @@ export default function StayManager() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-gray-900">
-              <FiHome className="w-5 h-5 inline-block mr-2" />
-              Biens lies ({propertyLinks.length})
+              <FiHome className="w-5 h-5 inline-block me-2" />
+              {t('dashboard:stayManager.overview.propertyLinksTitle', { count: propertyLinks.length })}
             </h2>
             <Link
               to="/dashboard/staymanager/biens"
               className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors"
               style={{ color: SM_COLORS.primary }}
             >
-              Gerer les liens
-              <FiChevronRight className="w-4 h-4" />
+              {t('dashboard:stayManager.overview.manageLinks')}
+              <DirIcon icon={FiChevronRight} className="w-4 h-4" />
             </Link>
           </div>
 
           {propertyLinks.length === 0 ? (
             <div className="text-center py-8">
               <FiHome className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600 mb-4">Aucun bien lie pour le moment</p>
+              <p className="text-gray-600 mb-4">{t('dashboard:stayManager.overview.propertyLinksEmpty')}</p>
               <Link
                 to="/dashboard/staymanager/biens"
                 className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-opacity hover:opacity-90 bg-gradient-to-r from-[#1F3D34] via-[#2E5E4E] to-[#2E5E4E]"
               >
                 <FiLink className="w-4 h-4" />
-                Lier un bien
+                {t('dashboard:stayManager.overview.linkProperty')}
               </Link>
             </div>
           ) : (
@@ -530,11 +550,13 @@ export default function StayManager() {
                       <FiHome className="w-5 h-5" style={{ color: SM_COLORS.primary }} />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{link.property?.title || `Bien #${link.property_id}`}</p>
+                      <p className="font-medium text-gray-900">
+                        {link.property?.title || t('dashboard:stayManager.overview.propertyFallbackTitle', { id: link.property_id })}
+                      </p>
                       <p className="text-sm text-gray-500">
                         {link.staymanager_property_name}
                         {' '}&bull;{' '}
-                        {link.reservations_count || 0} reservations
+                        {t('dashboard:stayManager.overview.reservationsCount', { count: link.reservations_count || 0 })}
                       </p>
                     </div>
                   </div>
@@ -546,15 +568,14 @@ export default function StayManager() {
                         ? 'bg-red-100 text-red-700'
                         : 'bg-yellow-100 text-yellow-700'
                     }`}>
-                      {link.sync_status === 'synced' ? 'Synchronise' :
-                       link.sync_status === 'error' ? 'Erreur' : 'En attente'}
+                      {t(`dashboard:stayManager.overview.syncStatus.${link.sync_status === 'synced' ? 'synced' : link.sync_status === 'error' ? 'error' : 'pending'}`)}
                     </span>
                     <button
                       onClick={() => handleSyncProperty(link.property_id)}
                       disabled={syncing}
                       className="p-2 text-gray-500 hover:bg-white rounded-lg transition-colors"
                       style={{ '--hover-color': SM_COLORS.secondary }}
-                      title="Synchroniser"
+                      title={t('dashboard:stayManager.overview.syncTooltip')}
                     >
                       <FiRefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} style={{ color: syncing ? SM_COLORS.secondary : undefined }} />
                     </button>
@@ -568,7 +589,7 @@ export default function StayManager() {
                   className="block text-center py-3 font-medium hover:underline"
                   style={{ color: SM_COLORS.primary }}
                 >
-                  Voir tous les biens ({propertyLinks.length})
+                  {t('dashboard:stayManager.overview.viewAllProperties', { count: propertyLinks.length })}
                 </Link>
               )}
             </div>
@@ -586,9 +607,9 @@ export default function StayManager() {
             >
               <FiCalendar className="w-6 h-6" style={{ color: SM_COLORS.primary }} />
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Calendrier synchronise</h3>
+            <h3 className="font-semibold text-gray-900 mb-2">{t('dashboard:stayManager.overview.features.calendarTitle')}</h3>
             <p className="text-sm text-gray-600">
-              Synchronisez automatiquement vos calendriers entre SemsarOut et StayManager.
+              {t('dashboard:stayManager.overview.features.calendarDescription')}
             </p>
           </div>
 
@@ -599,9 +620,9 @@ export default function StayManager() {
             >
               <FiUsers className="w-6 h-6" style={{ color: SM_COLORS.secondary }} />
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Verification des clients</h3>
+            <h3 className="font-semibold text-gray-900 mb-2">{t('dashboard:stayManager.overview.features.verificationTitle')}</h3>
             <p className="text-sm text-gray-600">
-              Visualisez le statut de verification KYC de vos clients directement dans SemsarOut.
+              {t('dashboard:stayManager.overview.features.verificationDescription')}
             </p>
           </div>
 
@@ -612,9 +633,9 @@ export default function StayManager() {
             >
               <FiKey className="w-6 h-6" style={{ color: SM_COLORS.primary }} />
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Serrures connectees</h3>
+            <h3 className="font-semibold text-gray-900 mb-2">{t('dashboard:stayManager.overview.features.locksTitle')}</h3>
             <p className="text-sm text-gray-600">
-              Gerez les codes d'acces de vos serrures intelligentes depuis votre tableau de bord.
+              {t('dashboard:stayManager.overview.features.locksDescription')}
             </p>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import api from '../../services/api.js'
 import { Button, Card, Input } from '../../ds/index.js'
@@ -14,6 +15,7 @@ function persistSession(data) {
 }
 
 export default function Connexion() {
+  const { t } = useTranslation(['web', 'common'])
   const navigate = useNavigate()
   const [mode, setMode] = useState('login') // login | register
   const [form, setForm] = useState({ email: '', password: '', first_name: '', last_name: '' })
@@ -33,7 +35,7 @@ export default function Connexion() {
       persistSession(data)
       navigate('/espace')
     } catch (err) {
-      setError(err.response?.data?.error ?? 'Connexion impossible — réessayez.')
+      setError(err.response?.data?.error ?? t('web:auth.genericError'))
     } finally {
       setBusy(false)
     }
@@ -43,21 +45,21 @@ export default function Connexion() {
     <div style={{ maxWidth: 420, margin: '48px auto', padding: '0 16px' }}>
       <Card>
         <h1 style={{ marginTop: 0, font: 'var(--fw-bold) var(--fs-h2) var(--font-display)', color: 'var(--navy-700)' }}>
-          {mode === 'login' ? 'Connexion' : 'Créer un compte'}
+          {mode === 'login' ? t('web:auth.loginTitle') : t('web:auth.registerTitle')}
         </h1>
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {mode === 'register' && (
             <>
               <Input
                 id="first_name"
-                label={<>Prénom{requiredStar}</>}
+                label={<>{t('web:auth.firstNameLabel')}{requiredStar}</>}
                 value={form.first_name}
                 onChange={set('first_name')}
                 required
               />
               <Input
                 id="last_name"
-                label={<>Nom{requiredStar}</>}
+                label={<>{t('web:auth.lastNameLabel')}{requiredStar}</>}
                 value={form.last_name}
                 onChange={set('last_name')}
                 required
@@ -66,7 +68,7 @@ export default function Connexion() {
           )}
           <Input
             id="email"
-            label={<>Email{requiredStar}</>}
+            label={<>{t('web:auth.emailLabel')}{requiredStar}</>}
             type="email"
             value={form.email}
             onChange={set('email')}
@@ -74,7 +76,7 @@ export default function Connexion() {
           />
           <Input
             id="password"
-            label={<>Mot de passe{requiredStar}</>}
+            label={<>{t('web:auth.passwordLabel')}{requiredStar}</>}
             type="password"
             value={form.password}
             onChange={set('password')}
@@ -82,7 +84,7 @@ export default function Connexion() {
           />
           {error && <p role="alert" style={{ color: 'var(--red-600)' }}>{error}</p>}
           <Button type="submit" disabled={busy} fullWidth>
-            {mode === 'login' ? 'Se connecter' : "S'inscrire"}
+            {mode === 'login' ? t('web:auth.loginCta') : t('web:auth.registerCta')}
           </Button>
         </form>
         <button
@@ -94,8 +96,7 @@ export default function Connexion() {
             color: 'var(--text-muted)',
           }}
         >
-          {mode === 'login' ? 'Pas encore de compte ? Créer un compte'
-                            : 'Déjà un compte ? Se connecter'}
+          {mode === 'login' ? t('web:auth.switchToRegister') : t('web:auth.switchToLogin')}
         </button>
       </Card>
     </div>

@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { FiInfo } from 'react-icons/fi'
+import { useFormat } from '../../utils/format'
 
 const BAND_COLOR = {
   very_low: '#16a34a',
@@ -9,8 +10,6 @@ const BAND_COLOR = {
   very_high: '#dc2626'
 }
 
-const fmt = (v) => Math.round(v).toLocaleString('fr-FR')
-
 /**
  * Colored gauge showing where a property's price/m² sits within its
  * neighborhood. `data` is the payload from GET /properties/:id/price-position.
@@ -18,6 +17,8 @@ const fmt = (v) => Math.round(v).toLocaleString('fr-FR')
  */
 export default function PriceGauge({ data }) {
   const { t } = useTranslation(['common'])
+  const { fmtNumber } = useFormat()
+  const fmt = (v) => fmtNumber(Math.round(v))
   if (!data?.available) return null
 
   const {

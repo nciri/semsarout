@@ -1,9 +1,11 @@
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { FiLayers } from 'react-icons/fi'
 
 // Barre d'onglets partagée entre « Mes annonces » (vente/location) et « Programmes immobiliers ».
 // L'onglet Programmes a un contour doré pour le distinguer.
 export default function MesBiensTabs() {
+  const { t } = useTranslation(['dashboard'])
   const location = useLocation()
   const [params] = useSearchParams()
 
@@ -22,10 +24,10 @@ export default function MesBiensTabs() {
     <div className="border-b border-gray-200 mb-4">
       <nav className="flex items-end gap-1 -mb-px">
         <Link to="/dashboard/annonces?transaction_type=sale" className={`${tab} ${isSale ? active : idle}`}>
-          En vente
+          {t('dashboard:shared.mesBiensTabs.sale')}
         </Link>
         <Link to="/dashboard/annonces?transaction_type=rent" className={`${tab} ${isRent ? active : idle}`}>
-          En location
+          {t('dashboard:shared.mesBiensTabs.rent')}
         </Link>
         <Link
           to="/dashboard/programmes"
@@ -34,7 +36,7 @@ export default function MesBiensTabs() {
           }`}
         >
           <FiLayers className="w-4 h-4" />
-          Programmes immobiliers
+          {t('dashboard:shared.mesBiensTabs.programs')}
         </Link>
       </nav>
     </div>

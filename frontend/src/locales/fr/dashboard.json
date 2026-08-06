@@ -1,0 +1,1242 @@
+{
+  "shared": {
+    "actions": {
+      "save": "Enregistrer",
+      "saving": "Enregistrement...",
+      "cancel": "Annuler",
+      "delete": "Supprimer",
+      "deleting": "Suppression...",
+      "add": "Ajouter",
+      "retry": "Réessayer",
+      "reconnect": "Se reconnecter",
+      "confirm": "Confirmer"
+    },
+    "loading": "Chargement…",
+    "propertyTypes": {
+      "apartment": "Appartement",
+      "house": "Maison",
+      "villa": "Villa",
+      "land": "Terrain",
+      "commercial": "Local commercial",
+      "office": "Bureau"
+    },
+    "mesBiensTabs": {
+      "sale": "En vente",
+      "rent": "En location",
+      "programs": "Programmes immobiliers"
+    }
+  },
+  "monEspace": {
+    "greeting": "Bonjour 👋",
+    "greetingWithName": "Bonjour {{name}} 👋",
+    "subtitle": "Bienvenue dans votre espace SemsarOut.",
+    "cards": {
+      "search": {
+        "title": "Rechercher un bien",
+        "desc": "Parcourez les annonces à louer ou à acheter."
+      },
+      "applications": {
+        "title": "Mes candidatures",
+        "desc": "Déposez vos dossiers et suivez leur avancement."
+      },
+      "myListings": {
+        "title": "Mes annonces",
+        "desc": "Publiez et gérez les biens que vous proposez."
+      },
+      "leads": {
+        "title": "Demandes reçues",
+        "desc": "Retrouvez les contacts intéressés par vos biens."
+      },
+      "account": {
+        "title": "Mon compte",
+        "desc": "Coordonnées, sécurité et préférences."
+      }
+    }
+  },
+  "account": {
+    "tabs": {
+      "agency": "Agence",
+      "subscription": "Abonnement"
+    }
+  },
+  "createProperty": {
+    "titleCreate": "Créer une annonce",
+    "titleEdit": "Modifier l'annonce",
+    "subtitle": "Remplissez les informations de votre bien immobilier",
+    "sections": {
+      "transactionType": "Type de transaction",
+      "generalInfo": "Informations générales",
+      "priceAndSurface": "Prix et surface",
+      "characteristics": "Caractéristiques",
+      "location": "Localisation"
+    },
+    "transactionType": {
+      "sale": "Vente",
+      "rent": "Location"
+    },
+    "fields": {
+      "listingTitle": "Titre de l'annonce *",
+      "listingTitlePlaceholder": "Ex: Appartement 3 pièces avec vue mer",
+      "propertyType": "Type de bien *",
+      "description": "Description",
+      "descriptionPlaceholder": "Décrivez votre bien en détail...",
+      "price": "Prix ({{currency}}) *",
+      "perMonth": "/ mois",
+      "pricePlaceholder": "Ex: 1500000",
+      "surface": "Surface (m²)",
+      "rooms": "Pièces",
+      "bedrooms": "Chambres",
+      "bathrooms": "Salles de bain",
+      "floor": "Étage",
+      "features": "Équipements",
+      "city": "Ville *",
+      "neighborhood": "Quartier",
+      "address": "Adresse"
+    },
+    "validation": {
+      "titleRequired": "Titre requis",
+      "priceRequired": "Prix requis",
+      "cityRequired": "Ville requise"
+    },
+    "toasts": {
+      "created": "Annonce créée avec succès",
+      "createError": "Erreur lors de la création",
+      "updated": "Annonce mise à jour avec succès",
+      "updateError": "Erreur lors de la mise à jour"
+    }
+  },
+  "programPlanEditor": {
+    "title": "Plan interactif des lots",
+    "subtitle": "Placez et gérez vos lots directement sur le plan.",
+    "addPlan": "Ajouter un plan",
+    "newPlan": "Nouveau plan",
+    "create": "Créer",
+    "noPlanYet": "Créez un premier plan pour commencer à placer vos lots.",
+    "uploadHint": "Chargez une image de plan pour commencer",
+    "drawHint": "Cliquez sur le plan pour poser les sommets du lot, puis validez avec ✓.",
+    "newLot": "Nouveau lot",
+    "lotWithReference": "Lot {{reference}}",
+    "lotsCount": "Lots ({{count}})",
+    "toolbar": {
+      "select": "Sélectionner / déplacer",
+      "draw": "Dessiner un lot",
+      "finishDraft": "Terminer le tracé ({{count}} points)",
+      "undo": "Annuler la dernière action (Ctrl+Z)",
+      "zoomOut": "Dézoomer",
+      "zoomIn": "Zoomer",
+      "changeImage": "Changer l'image du plan",
+      "uploadImage": "Charger une image de plan",
+      "deletePlan": "Supprimer le plan"
+    },
+    "form": {
+      "reference": "Référence",
+      "titleOptional": "Titre (optionnel)",
+      "surface": "Surface m²",
+      "price": "Prix (Dh)",
+      "rooms": "Pièces",
+      "bedrooms": "Chambres",
+      "bathrooms": "SDB",
+      "floor": "Étage",
+      "status": "Statut",
+      "descriptionOptional": "Description (optionnel)",
+      "planNamePlaceholder": "Nom (ex: Plan de masse, Étage 3)"
+    },
+    "lotTypes": {
+      "apartment": "Appartement",
+      "villa": "Villa",
+      "duplex": "Duplex",
+      "studio": "Studio",
+      "terrain": "Terrain",
+      "commercial": "Local commercial",
+      "office": "Bureau"
+    },
+    "actions": {
+      "edit": "Modifier",
+      "duplicate": "Dupliquer"
+    },
+    "howTo": {
+      "title": "Comment faire ?",
+      "step1": "Chargez l'image du plan (icône image).",
+      "step2": "Outil crayon, cliquez les sommets, validez avec ✓.",
+      "step3": "Remplissez les infos et choisissez le statut.",
+      "step4": "Outil flèche : cliquez un lot pour l'éditer, glissez-le pour le déplacer, ou glissez ses points.",
+      "step5": "Zoom +/− pour affiner, flèche retour ↺ pour annuler."
+    },
+    "confirms": {
+      "deletePlan": "Supprimer le plan « {{name}} » et ses lots ?",
+      "deleteLot": "Supprimer ce lot ?"
+    },
+    "toasts": {
+      "loadError": "Erreur lors du chargement des plans",
+      "undoError": "Impossible d'annuler cette action",
+      "uploadError": "Erreur lors du téléchargement",
+      "needThreePoints": "Placez au moins 3 points pour dessiner un lot",
+      "moveError": "Erreur lors du déplacement",
+      "lotAdded": "Lot ajouté",
+      "lotUpdated": "Lot mis à jour",
+      "deleteError": "Erreur lors de la suppression",
+      "lotDuplicated": "Lot dupliqué",
+      "duplicateError": "Erreur lors de la duplication"
+    }
+  },
+  "programForm": {
+    "titleCreate": "Nouveau programme",
+    "titleEdit": "Modifier le programme",
+    "subtitle": "Créez un nouveau projet immobilier",
+    "interactivePlan": "Plan interactif des lots",
+    "publishButton": "Publier le programme",
+    "characteristics": "Caractéristiques",
+    "addUnitType": "Ajouter un type",
+    "noUnitType": "Aucun type de bien ajouté",
+    "noUnitTypeHint": "Ajoutez les différents types de biens disponibles dans ce programme",
+    "noGalleryImage": "Aucune image dans la galerie",
+    "selectTypologyHint": "Sélectionnez une typologie à l'étape « Types de biens » pour afficher les détails spécifiques.",
+    "typologyHint": "Détermine les détails du programme et les types d'unité disponibles.",
+    "availableOfTotal": "{{available}}/{{total}} disponibles",
+    "steps": {
+      "info": "Informations",
+      "location": "Localisation",
+      "units": "Types de biens",
+      "details": "Détails",
+      "media": "Médias"
+    },
+    "sections": {
+      "generalInfo": "Informations générales",
+      "location": "Localisation",
+      "details": "Détails du projet",
+      "units": "Types de biens",
+      "media": "Médias"
+    },
+    "fields": {
+      "programName": "Nom du programme *",
+      "programNamePlaceholder": "Ex: Résidence Les Jardins de Casablanca",
+      "programType": "Type de programme",
+      "description": "Description",
+      "descriptionPlaceholder": "Décrivez votre programme immobilier...",
+      "city": "Ville *",
+      "neighborhood": "Quartier",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "deliveryDate": "Date de livraison prévue",
+      "constructionStatus": "État de construction",
+      "amenities": "Équipements et services",
+      "typology": "Typologie du programme *",
+      "coverImage": "Image de couverture",
+      "coverImagePlaceholder": "URL de l'image de couverture",
+      "gallery": "Galerie d'images",
+      "imageUrlPlaceholder": "URL de l'image",
+      "brochure": "Brochure (URL PDF)",
+      "brochurePlaceholder": "URL de la brochure PDF",
+      "video": "Vidéo (URL YouTube)",
+      "videoPlaceholder": "URL de la vidéo"
+    },
+    "amenities": {
+      "pool": "Piscine",
+      "gym": "Salle de sport",
+      "security": "Sécurité 24h",
+      "parking": "Parking",
+      "garden": "Jardin",
+      "playground": "Aire de jeux",
+      "concierge": "Conciergerie",
+      "elevator": "Ascenseur",
+      "terrace": "Terrasse",
+      "spa": "Spa"
+    },
+    "imageTypes": {
+      "exterior": "Extérieur",
+      "interior": "Intérieur",
+      "amenity": "Équipements",
+      "plan": "Plan"
+    },
+    "unitTypes": {
+      "studio": "Studio",
+      "apartment": "Appartement",
+      "duplex": "Duplex",
+      "villa": "Villa",
+      "penthouse": "Penthouse",
+      "land": "Terrain",
+      "commercial": "Local commercial"
+    },
+    "unitForm": {
+      "name": "Nom du type *",
+      "namePlaceholder": "Ex: Appartement T3",
+      "unitType": "Type de bien",
+      "surfaceMin": "Surface min (m²)",
+      "surfaceMax": "Surface max (m²)",
+      "rooms": "Pièces",
+      "bedrooms": "Chambres",
+      "bathrooms": "Salles de bain",
+      "priceFrom": "Prix à partir de ({{currency}})",
+      "priceTo": "Prix jusqu'à ({{currency}})",
+      "totalCount": "Nombre total",
+      "availableCount": "Disponibles"
+    },
+    "errors": {
+      "nameRequired": "Le nom du programme est requis",
+      "saveBasicFirst": "Veuillez d'abord sauvegarder les informations de base",
+      "saveProgramFirst": "Veuillez d'abord sauvegarder le programme",
+      "agencyRequired": "Vous devez d'abord créer votre agence pour publier un programme.",
+      "createAgencyLink": "Créer mon agence",
+      "viewSubscriptionsLink": "Voir les abonnements",
+      "createFailed": "Erreur lors de la création du programme",
+      "updateFailed": "Erreur lors de la mise à jour du programme",
+      "addUnitFailed": "Erreur lors de l'ajout du type de bien",
+      "updateUnitFailed": "Erreur lors de la mise à jour du type de bien",
+      "deleteFailed": "Erreur lors de la suppression",
+      "addImageFailed": "Erreur lors de l'ajout de l'image",
+      "deleteImageFailed": "Erreur lors de la suppression de l'image",
+      "publishFailed": "Erreur lors de la publication"
+    },
+    "confirms": {
+      "deleteUnit": "Supprimer ce type de bien ?",
+      "deleteImage": "Supprimer cette image ?"
+    },
+    "specs": {
+      "typology": {
+        "apartments": "Appartements",
+        "villas": "Villas",
+        "land": "Terrains",
+        "commercial": "Commercial"
+      },
+      "sections": {
+        "apartments": {
+          "fields": {
+            "buildingsCount": "Nombre de bâtiments",
+            "floorsCount": "Nombre d'étages",
+            "hasElevator": "Ascenseur",
+            "monthlyCharges": "Charges/syndic estimées (Đh/mois)"
+          }
+        },
+        "villas": {
+          "fields": {
+            "landSurfaceMin": "Superficie terrain min (m²)",
+            "landSurfaceMax": "Superficie terrain max (m²)",
+            "levels": "Niveaux (ex. R+1)",
+            "style": "Style architectural",
+            "hasGarage": "Garage",
+            "hasPool": "Piscine"
+          }
+        },
+        "land": {
+          "fields": {
+            "servicedWater": "Eau",
+            "servicedElectricity": "Électricité",
+            "servicedSewage": "Assainissement",
+            "servicedRoad": "Voirie",
+            "titleType": "Type de titre foncier",
+            "buildability": "Constructibilité (COS/CUS ou R+n)",
+            "subdivisionAllowed": "Lotissement autorisé"
+          }
+        },
+        "commercial": {
+          "fields": {
+            "localType": "Type de local",
+            "allowedUse": "Usage autorisé",
+            "standing": "Standing"
+          }
+        }
+      },
+      "localType": {
+        "office": "Bureau",
+        "shop": "Commerce",
+        "warehouse": "Entrepôt"
+      },
+      "unitFields": {
+        "apartmentUnit": {
+          "floor": "Étage",
+          "orientation": "Orientation",
+          "hasBalcony": "Balcon",
+          "hasTerrace": "Terrasse"
+        },
+        "villaUnit": {
+          "landSurface": "Superficie terrain (m²)",
+          "livingSurface": "Superficie habitable (m²)",
+          "levels": "Niveaux",
+          "hasGarden": "Jardin",
+          "hasPool": "Piscine",
+          "garageSpots": "Places de garage"
+        },
+        "landUnit": {
+          "lotSurface": "Superficie lot (m²)",
+          "pricePerSqm": "Prix/m² (Đh)",
+          "frontage": "Façade (ml)",
+          "buildable": "Constructible",
+          "shape": "Forme"
+        },
+        "commercialUnit": {
+          "floor": "Étage",
+          "allowedUse": "Usage"
+        }
+      }
+    }
+  },
+  "programs": {
+    "title": "Mes annonces",
+    "managedCount_one": "{{count}} programme géré",
+    "managedCount_other": "{{count}} programmes gérés",
+    "outOf": "sur {{limit}}",
+    "newProgram": "Nouveau programme",
+    "searchPlaceholder": "Rechercher par nom, ville...",
+    "filters": "Filtres",
+    "reset": "Réinitialiser",
+    "archiveConfirm": "Êtes-vous sûr de vouloir archiver ce programme ?",
+    "status": {
+      "label": "Statut",
+      "all": "Tous les statuts",
+      "active": "En ligne",
+      "draft": "Brouillon",
+      "completed": "Livré",
+      "archived": "Archivé"
+    },
+    "constructionStatus": {
+      "planning": "En projet",
+      "under_construction": "En construction",
+      "delivered": "Livré"
+    },
+    "type": {
+      "residential": "Résidentiel",
+      "commercial": "Commercial",
+      "mixed": "Mixte"
+    },
+    "startingFrom": "À partir de {{price}}",
+    "viewsCount_one": "{{count}} vue",
+    "viewsCount_other": "{{count}} vues",
+    "priceUndefined": "Prix non défini",
+    "menu": {
+      "viewOnline": "Voir en ligne",
+      "edit": "Modifier",
+      "publish": "Publier",
+      "unpublish": "Mettre en brouillon",
+      "archive": "Archiver"
+    },
+    "pagination": {
+      "previous": "Précédent",
+      "next": "Suivant",
+      "pageOf": "Page {{page}} sur {{total}}"
+    },
+    "empty": {
+      "title": "Aucun programme trouvé",
+      "noMatch": "Aucun programme ne correspond à vos critères.",
+      "getStarted": "Commencez par créer votre premier programme immobilier.",
+      "createButton": "Créer un programme"
+    },
+    "upgrade": {
+      "title": "Programmes immobiliers",
+      "description": "Publiez vos projets immobiliers neufs avec plusieurs types de biens (appartements, villas, etc.). Cette fonctionnalité est disponible à partir du plan Pro.",
+      "cta": "Passer au plan Pro"
+    }
+  },
+  "marketPrices": {
+    "title": "Prix de référence par quartier",
+    "subtitle": "Ces prix/m² alimentent la jauge de positionnement sur les annonces (prioritaires sur le calcul automatique).",
+    "adminOnly": "Cette page est réservée aux administrateurs.",
+    "requiredFields": "Ville, quartier et prix/m² moyen requis",
+    "form": {
+      "city": "Ville *",
+      "neighborhood": "Quartier *",
+      "avgPrice": "Prix/m² moyen *",
+      "minPrice": "Min /m²",
+      "maxPrice": "Max /m²"
+    },
+    "transactionType": {
+      "sale": "Vente",
+      "rent": "Location"
+    },
+    "lotTypes": {
+      "all": "Tous types",
+      "apartment": "Appartement",
+      "villa": "Villa",
+      "house": "Maison",
+      "land": "Terrain",
+      "commercial": "Local commercial",
+      "office": "Bureau"
+    },
+    "empty": "Aucune référence. Ajoutez-en une ci-dessus.",
+    "columns": {
+      "city": "Ville",
+      "neighborhood": "Quartier",
+      "transaction": "Transaction",
+      "type": "Type",
+      "avgPrice": "Moy. /m²",
+      "minMax": "Min–Max",
+      "source": "Source"
+    },
+    "toasts": {
+      "added": "Référence ajoutée",
+      "deleted": "Supprimée"
+    }
+  },
+  "myProperties": {
+    "title": "Mes annonces",
+    "totalCount_one": "{{count}} annonce au total",
+    "totalCount_other": "{{count}} annonces au total",
+    "favoritesCount_one": "{{count}} favori",
+    "favoritesCount_other": "{{count}} favoris",
+    "favorites": "Favoris",
+    "statusFilters": {
+      "all": "Tous statuts",
+      "active": "Actives",
+      "draft": "Brouillons",
+      "sold": "Vendues",
+      "rented": "Louées"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "active": "Active",
+      "pending": "En attente",
+      "sold": "Vendu",
+      "rented": "Loué",
+      "archived": "Archivé"
+    },
+    "columns": {
+      "listing": "Annonce",
+      "price": "Prix",
+      "status": "Statut",
+      "views": "Vues",
+      "contacts": "Contacts",
+      "actions": "Actions"
+    },
+    "actions": {
+      "view": "Voir",
+      "removeFavorite": "Retirer des favoris",
+      "edit": "Modifier",
+      "publish": "Publier"
+    },
+    "empty": "Aucune annonce trouvée",
+    "emptyFavorites": "Aucun favori pour cet onglet. Cliquez sur le ❤ d'une annonce pour l'enregistrer.",
+    "createFirst": "Créer ma première annonce",
+    "deleteModal": {
+      "title": "Supprimer l'annonce ?",
+      "message": "Cette action est irréversible. L'annonce sera définitivement supprimée."
+    },
+    "toasts": {
+      "deleted": "Annonce supprimée",
+      "deleteError": "Erreur lors de la suppression",
+      "favRemoved": "Retiré des favoris",
+      "published": "Annonce publiée",
+      "publishError": "Erreur lors de la publication"
+    }
+  },
+  "home": {
+    "title": "Tour de contrôle",
+    "toasts": {
+      "saved": "Tableau de bord enregistré"
+    },
+    "error": {
+      "title": "Impossible de charger le tableau de bord.",
+      "subtitle": "Votre session a peut-être expiré."
+    },
+    "customize": "Personnaliser",
+    "show": "Afficher",
+    "hide": "Masquer"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "subtitle": "Gérez vos informations personnelles et préférences",
+    "tabs": {
+      "profile": "Profil",
+      "security": "Sécurité",
+      "notifications": "Notifications",
+      "privacy": "Confidentialité"
+    },
+    "profile": {
+      "accountType": {
+        "professional": "Compte Professionnel",
+        "individual": "Compte Particulier"
+      },
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "Email",
+      "emailNote": "L'email ne peut pas être modifié pour le moment",
+      "phone": "Téléphone",
+      "phonePlaceholder": "+212 6XX XXX XXX",
+      "avatarUpdated": "Photo de profil mise à jour",
+      "avatarUploadError": "Erreur lors du téléchargement"
+    },
+    "security": {
+      "bannerTitle": "Sécurisez votre compte",
+      "bannerMessage": "Utilisez un mot de passe fort avec au moins 8 caractères, incluant des lettres, chiffres et symboles.",
+      "changePassword": "Changer le mot de passe",
+      "currentPassword": "Mot de passe actuel",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "sessionsTitle": "Sessions actives",
+      "currentSession": "Session actuelle",
+      "currentDevice": "Cet appareil",
+      "active": "Active",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères"
+    },
+    "notifications": {
+      "emailTitle": "Notifications par email",
+      "pushTitle": "Notifications push",
+      "items": {
+        "emailNewLead": {
+          "label": "Nouveaux leads",
+          "desc": "Recevoir un email à chaque nouveau lead"
+        },
+        "emailMessages": {
+          "label": "Messages",
+          "desc": "Notifications des nouveaux messages"
+        },
+        "emailPropertyUpdates": {
+          "label": "Mises à jour annonces",
+          "desc": "Changements de statut de vos annonces"
+        },
+        "emailNewsletter": {
+          "label": "Newsletter",
+          "desc": "Actualités et conseils immobiliers"
+        },
+        "pushNewLead": {
+          "label": "Nouveaux leads",
+          "desc": "Notification instantanée"
+        },
+        "pushMessages": {
+          "label": "Messages",
+          "desc": "Notifications des nouveaux messages"
+        },
+        "pushReminders": {
+          "label": "Rappels",
+          "desc": "Rappels de visites et rendez-vous"
+        }
+      }
+    },
+    "privacy": {
+      "items": {
+        "profileVisible": {
+          "label": "Profil visible",
+          "desc": "Rendre votre profil visible aux autres utilisateurs"
+        },
+        "showPhone": {
+          "label": "Afficher le téléphone",
+          "desc": "Permettre aux visiteurs de voir votre numéro"
+        },
+        "showEmail": {
+          "label": "Afficher l'email",
+          "desc": "Permettre aux visiteurs de voir votre email"
+        },
+        "allowContact": {
+          "label": "Autoriser les contacts",
+          "desc": "Recevoir des demandes de contact"
+        }
+      },
+      "dangerZone": "Zone de danger",
+      "deleteAccountTitle": "Supprimer mon compte",
+      "deleteAccountDesc": "Cette action est irréversible"
+    },
+    "saved": "Modifications enregistrées",
+    "saveError": "Erreur lors de l'enregistrement",
+    "deleteModal": {
+      "title": "Supprimer votre compte",
+      "message": "Cette action est irréversible. Confirmez votre mot de passe pour supprimer définitivement votre compte.",
+      "passwordPlaceholder": "Mot de passe",
+      "passwordRequired": "Mot de passe requis",
+      "confirmButton": "Confirmer la suppression",
+      "confirming": "Suppression..."
+    },
+    "toasts": {
+      "accountDeleted": "Votre compte a été supprimé",
+      "deleteError": "Erreur lors de la suppression"
+    }
+  },
+  "availability": {
+    "title": "Mes disponibilités",
+    "subtitle": "Les acheteurs pourront réserver une visite en ligne sur vos annonces, dans ces créneaux.",
+    "empty": "Aucun créneau défini — la réservation en ligne est désactivée sur vos annonces.",
+    "weekdays": {
+      "0": "Lundi",
+      "1": "Mardi",
+      "2": "Mercredi",
+      "3": "Jeudi",
+      "4": "Vendredi",
+      "5": "Samedi",
+      "6": "Dimanche"
+    },
+    "to": "à",
+    "slotDuration": {
+      "15": "Créneaux de 15 min",
+      "30": "Créneaux de 30 min",
+      "60": "Créneaux de 1h"
+    },
+    "addSlot": "Ajouter un créneau",
+    "toasts": {
+      "saved": "Disponibilités enregistrées"
+    }
+  },
+  "savedSearches": {
+    "title": "Mes recherches sauvegardées",
+    "subtitle": "Vous êtes alerté(e) par email dès qu'un nouveau bien correspond à vos critères.",
+    "empty": "Aucune recherche sauvegardée pour le moment",
+    "startSearch": "Lancer une recherche",
+    "sale": "Vente",
+    "rent": "Location",
+    "anyProperty": "Tous les biens",
+    "alertsActive": "Alertes actives",
+    "alertsOff": "Alertes coupées",
+    "viewResults": "Voir les résultats",
+    "deleteTooltip": "Supprimer",
+    "toasts": {
+      "deleted": "Recherche supprimée"
+    }
+  },
+  "subscription": {
+    "title": "Mon abonnement",
+    "subtitleAgency": "Gérez votre abonnement agence et accédez à plus de fonctionnalités",
+    "subtitleIndividual": "Publiez plus d'annonces et boostez votre visibilité",
+    "tabs": {
+      "plans": "Plans & Tarifs",
+      "billing": "Facturation"
+    },
+    "loading": "Chargement...",
+    "free": "Gratuit",
+    "perMonth": "/mois",
+    "popular": "Populaire",
+    "currentPlan": "Plan actuel",
+    "plans": {
+      "individual": {
+        "free": {
+          "name": "Gratuit",
+          "description": "Pour publier votre premier bien",
+          "cta": "Plan actuel",
+          "features": [
+            "1 annonce active",
+            "Photos (max 5)",
+            "Durée 30 jours",
+            "Statistiques basiques",
+            "Badge Premium",
+            "Mise en avant",
+            "Support prioritaire"
+          ]
+        },
+        "basic": {
+          "name": "Basic",
+          "description": "Pour les vendeurs actifs",
+          "cta": "Choisir Basic",
+          "features": [
+            "5 annonces actives",
+            "Photos illimitées",
+            "Durée 60 jours",
+            "Statistiques détaillées",
+            "1 Badge Premium/mois",
+            "Mise en avant",
+            "Support prioritaire"
+          ]
+        },
+        "premium": {
+          "name": "Premium",
+          "description": "Visibilité maximale",
+          "cta": "Choisir Premium",
+          "features": [
+            "Annonces illimitées",
+            "Photos illimitées",
+            "Durée illimitée",
+            "Statistiques avancées",
+            "Badges Premium illimités",
+            "3 mises en avant/mois",
+            "Support prioritaire"
+          ]
+        }
+      },
+      "agency": {
+        "starter": {
+          "name": "Starter",
+          "description": "Pour démarrer votre activité",
+          "cta": "Choisir Starter",
+          "features": [
+            "10 annonces actives",
+            "Photos illimitées",
+            "1 utilisateur",
+            "Statistiques basiques",
+            "Import CSV",
+            "API & Intégrations",
+            "Programmes immobiliers",
+            "StayManager sync",
+            "CRM & Pipeline"
+          ]
+        },
+        "pro": {
+          "name": "Pro",
+          "description": "Pour les agences en croissance",
+          "cta": "Choisir Pro",
+          "features": [
+            "50 annonces actives",
+            "Photos illimitées",
+            "5 utilisateurs",
+            "Statistiques avancées",
+            "Import CSV",
+            "API & Intégrations",
+            "Programmes immobiliers (10 max)",
+            "StayManager sync illimité",
+            "Support prioritaire",
+            "Account manager dédié"
+          ]
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "description": "Solution complète pour grandes agences",
+          "cta": "Contacter les ventes",
+          "features": [
+            "Annonces illimitées",
+            "Photos illimitées",
+            "Utilisateurs illimités",
+            "Analytics personnalisés",
+            "Import CSV avancé",
+            "API complète & Webhooks",
+            "Programmes illimités",
+            "StayManager sync illimité",
+            "Support prioritaire 24/7",
+            "Account manager dédié"
+          ]
+        }
+      }
+    },
+    "currentPlanBadge": "Plan {{name}}",
+    "active": "Actif",
+    "nextPayment": "Prochain paiement le {{date}}",
+    "manage": "Gérer l'abonnement",
+    "viewBilling": "Voir la facturation",
+    "cancelSubscription": "Annuler l'abonnement",
+    "cancelling": "Annulation...",
+    "cancelConfirm": "Êtes-vous sûr de vouloir annuler votre abonnement ?",
+    "cancelledToast": "Abonnement annulé",
+    "cancelError": "Erreur lors de l'annulation",
+    "genericPlanLabel": "Abonnement",
+    "faq": {
+      "title": "Questions fréquentes",
+      "q1": {
+        "question": "Puis-je changer de plan à tout moment ?",
+        "answer": "Oui, vous pouvez passer à un plan supérieur à tout moment. Le changement prend effet immédiatement et la différence est calculée au prorata."
+      },
+      "q2": {
+        "question": "Comment fonctionne la période d'essai ?",
+        "answer": "Tous les plans payants bénéficient d'une période d'essai de 14 jours. Vous ne serez facturé qu'à la fin de cette période."
+      },
+      "q3": {
+        "question": "Quels moyens de paiement acceptez-vous ?",
+        "answer": "Nous acceptons les cartes bancaires (Visa, Mastercard) et les virements bancaires pour les plans Enterprise."
+      }
+    },
+    "paymentMethods": {
+      "title": "Moyens de paiement",
+      "addCard": "Carte",
+      "addPaypal": "PayPal",
+      "empty": "Aucun moyen de paiement enregistré",
+      "emptyHint": "Ajoutez une carte bancaire ou liez votre compte PayPal",
+      "addCardButton": "Ajouter une carte",
+      "default": "Par défaut",
+      "setDefault": "Définir par défaut",
+      "expires": "Expire {{expiry}} · {{name}}",
+      "deleteConfirm": "Supprimer ce moyen de paiement ?"
+    },
+    "invoices": {
+      "title": "Historique des factures",
+      "empty": {
+        "title": "Aucune facture",
+        "description": "Vos factures apparaîtront ici une fois que vous aurez souscrit à un plan payant"
+      },
+      "columns": {
+        "reference": "Référence",
+        "period": "Période",
+        "date": "Date",
+        "amount": "Montant",
+        "status": "Statut",
+        "actions": "Actions"
+      },
+      "status": {
+        "paid": "Payée",
+        "pending": "En attente",
+        "overdue": "En retard"
+      },
+      "downloadPdf": "PDF"
+    },
+    "addPaymentModal": {
+      "titleCard": "Ajouter une carte bancaire",
+      "titlePaypal": "Lier un compte PayPal",
+      "cardNumber": "Numéro de carte",
+      "cardName": "Nom sur la carte",
+      "expiryDate": "Date d'expiration",
+      "cvv": "CVV",
+      "securePayment": "Paiement sécurisé par Stripe",
+      "paypalDesc": "Liez votre compte PayPal pour des paiements rapides",
+      "paypalEmail": "Email PayPal",
+      "paypalRedirectNote": "Vous serez redirigé vers PayPal pour autoriser la connexion",
+      "genericError": "Une erreur est survenue"
+    },
+    "confirmModal": {
+      "title": "Confirmer l'abonnement",
+      "subscribeToPrefix": "Vous allez souscrire au plan",
+      "plan": "Plan {{name}}",
+      "paymentMethod": "Moyen de paiement",
+      "totalToday": "Total aujourd'hui",
+      "trialNote": "Essai gratuit de 14 jours, puis {{price}}/mois",
+      "confirming": "Traitement...",
+      "termsNote": "En confirmant, vous acceptez nos conditions générales de vente",
+      "planChangeError": "Une erreur est survenue lors du changement de plan"
+    },
+    "successToast": {
+      "title": "Abonnement activé !",
+      "message": "Votre plan a été mis à jour avec succès"
+    },
+    "invoicePdf": {
+      "invoiceTitle": "FACTURE",
+      "billingDate": "Date de facturation:",
+      "period": "Période:",
+      "billedTo": "Facturé à:",
+      "client": "Client",
+      "companyName": "SemsarOut SARL",
+      "companyAddress": "123 Boulevard Mohammed V",
+      "companyCity": "Casablanca, Maroc",
+      "descriptionCol": "Description",
+      "quantityCol": "Quantité",
+      "unitPriceCol": "Prix unitaire",
+      "totalCol": "Total",
+      "subscriptionLine": "Abonnement {{plan}} - {{period}}",
+      "subtotalHt": "Sous-total HT:",
+      "vat": "TVA (20%):",
+      "totalTtc": "Total TTC:",
+      "paid": "✓ PAYÉE",
+      "footerLegal": "SemsarOut SARL - RC: 123456 - IF: 12345678 - ICE: 001234567000012",
+      "footerContact": "Pour toute question concernant cette facture, contactez-nous à {{email}}",
+      "defaultPlanName": "Premium"
+    }
+  },
+  "myApplications": {
+    "title": "Mes candidatures",
+    "subtitle": "Suivez l'état de vos dossiers de location.",
+    "empty": {
+      "title": "Aucune candidature",
+      "message": "Trouvez un bien en location et déposez votre dossier depuis l'annonce.",
+      "cta": "Voir les locations"
+    },
+    "propertyFallback": "Bien #{{id}}",
+    "submittedOn": "Déposée le {{date}}",
+    "incomeSuffix": " · revenus {{amount}}"
+  },
+  "applicationDetail": {
+    "back": "Retour",
+    "backList": "Mes candidatures",
+    "notFound": "Candidature introuvable.",
+    "title": "Candidature — {{property}}",
+    "propertyFallback": "bien #{{id}}",
+    "submittedOn": "Déposée le {{date}}",
+    "rejectionReason": "Motif : {{reason}}",
+    "acceptedNote": "Félicitations, votre dossier a été retenu — l'agence vous recontactera.",
+    "documents": {
+      "title": "Pièces justificatives",
+      "empty": "Aucune pièce déposée. Ajoutez vos justificatifs (CIN, revenus, garant…).",
+      "filenameSuffix": " — {{filename}}"
+    },
+    "withdrawButton": "Retirer ma candidature",
+    "toasts": {
+      "fileUnavailable": "Fichier indisponible",
+      "docAdded": "Pièce ajoutée",
+      "withdrawn": "Candidature retirée",
+      "fileTooLarge": "Fichier trop volumineux (max 10 Mo)."
+    }
+  },
+  "myLeads": {
+    "title": "Mes contacts",
+    "subtitle": "{{count}} contacts reçus",
+    "filters": {
+      "all": "Tous"
+    },
+    "status": {
+      "new": "Nouveau",
+      "contacted": "Contacté",
+      "qualified": "Qualifié",
+      "converted": "Converti",
+      "lost": "Perdu"
+    },
+    "viewListing": "Voir l'annonce",
+    "empty": {
+      "title": "Aucun contact reçu",
+      "message": "Les demandes de contact apparaîtront ici"
+    },
+    "toasts": {
+      "statusUpdated": "Statut mis à jour",
+      "updateError": "Erreur lors de la mise à jour"
+    }
+  },
+  "messages": {
+    "buyer": {
+      "title": "Mes messages",
+      "subtitle": "Vos échanges avec les agences et propriétaires",
+      "empty": "Aucun message pour le moment"
+    },
+    "agency": {
+      "title": "Messages reçus",
+      "subtitle": "Les demandes envoyées par les acheteurs sur vos annonces",
+      "empty": "Aucun message reçu pour le moment"
+    },
+    "status": {
+      "new": "Nouveau",
+      "read": "Lu",
+      "replied": "Répondu",
+      "archived": "Archivé"
+    },
+    "selectPrompt": "Sélectionnez un message pour voir la conversation"
+  },
+  "myAgency": {
+    "create": {
+      "title": "Créer votre espace agence",
+      "subtitle": "Remplissez les informations de votre agence pour accéder aux fonctionnalités pro",
+      "submitting": "Création...",
+      "submit": "Créer l'agence"
+    },
+    "edit": {
+      "title": "Mon agence",
+      "subtitle": "Gérez les informations de votre agence",
+      "generalInfo": "Informations générales",
+      "saving": "Enregistrement..."
+    },
+    "fields": {
+      "name": "Nom de l'agence",
+      "email": "Email professionnel",
+      "emailShort": "Email",
+      "phone": "Téléphone",
+      "city": "Ville",
+      "website": "Site web",
+      "address": "Adresse",
+      "description": "Description"
+    },
+    "placeholders": {
+      "name": "Ex: Agence Immobilière Excellence",
+      "email": "contact@agence.ma",
+      "phone": "+212 5XX XXX XXX",
+      "city": "Casablanca",
+      "website": "https://www.votre-agence.ma",
+      "address": "123 Boulevard Mohammed V",
+      "description": "Présentez votre agence..."
+    },
+    "validation": {
+      "nameRequired": "Nom requis",
+      "emailRequired": "Email requis"
+    },
+    "api": {
+      "title": "Accès API",
+      "description": "Utilisez cette clé API pour synchroniser vos annonces depuis vos logiciels métiers.",
+      "copy": "Copier",
+      "regenerate": "Régénérer"
+    },
+    "toasts": {
+      "created": "Agence créée avec succès",
+      "createError": "Erreur lors de la création",
+      "updated": "Agence mise à jour",
+      "updateError": "Erreur lors de la mise à jour",
+      "keyRegenerated": "Clé API régénérée",
+      "keyCopied": "Clé API copiée"
+    }
+  },
+  "stayManager": {
+    "tabs": {
+      "connection": "Connexion",
+      "properties": "Biens synchronisés",
+      "reservations": "Réservations",
+      "lockedHint": "Connectez votre compte StayManager pour accéder à cet onglet"
+    },
+    "overview": {
+      "upgradeTitle": "Intégration StayManager",
+      "upgradeDescription": "Synchronisez vos propriétés avec StayManager.ma pour gérer vos réservations, calendriers et vérifications de clients en un seul endroit.",
+      "upgradePlanNotice": "Cette fonctionnalité est disponible avec le plan Pro ou supérieur.",
+      "upgradeCta": "Passer au plan Pro",
+      "partnerLabel": "En partenariat avec",
+      "partnerDescription": "La plateforme de gestion et de sécurisation des locations courte durée au Maroc",
+      "connectionStatusTitle": "Statut de connexion",
+      "connected": "Connecté",
+      "disconnected": "Non connecté",
+      "fieldEmail": "Email",
+      "fieldLinkedProperties": "Biens liés",
+      "fieldLastSync": "Dernière sync",
+      "fieldAutoSync": "Auto-sync",
+      "autoSyncEnabled": "Activé",
+      "autoSyncDisabled": "Désactivé",
+      "never": "Jamais",
+      "disconnect": "Déconnecter",
+      "confirmDisconnect": "Êtes-vous sûr de vouloir déconnecter StayManager ? Toutes les données synchronisées seront conservées.",
+      "apiKeyLabel": "Clé API StayManager",
+      "apiKeyHelp": "Depuis StayManager &gt; Intégrations &amp; API, créez une clé avec au minimum les droits <mono1>properties:read</mono1>, <mono2>reservations:read</mono2> et <mono3>webhooks:manage</mono3>. La clé (<mono4>sk_live_...</mono4>) ne s'affiche qu'une seule fois : copiez-la immédiatement.",
+      "connecting": "Connexion...",
+      "connect": "Connecter",
+      "connectCta": "Connecter...",
+      "connectPrompt": "Connectez votre compte <wordmark></wordmark> pour synchroniser vos propriétés et réservations.",
+      "settingsTitle": "Paramètres de synchronisation",
+      "autoSyncTitle": "Synchronisation automatique",
+      "autoSyncDescription": "Synchroniser les réservations périodiquement",
+      "frequencyLabel": "Fréquence de synchronisation",
+      "frequencyHourly": "Toutes les heures",
+      "frequencyEvery3h": "Toutes les 3 heures",
+      "frequencyEvery6h": "Toutes les 6 heures",
+      "frequencyEvery12h": "Toutes les 12 heures",
+      "frequencyDaily": "Une fois par jour",
+      "saveSettings": "Sauvegarder les paramètres",
+      "propertyLinksTitle": "Biens liés ({{count}})",
+      "manageLinks": "Gérer les liens",
+      "propertyLinksEmpty": "Aucun bien lié pour le moment",
+      "linkProperty": "Lier un bien",
+      "propertyFallbackTitle": "Bien #{{id}}",
+      "reservationsCount": "{{count}} réservations",
+      "viewAllProperties": "Voir tous les biens ({{count}})",
+      "syncTooltip": "Synchroniser",
+      "syncStatus": {
+        "synced": "Synchronisé",
+        "error": "Erreur",
+        "pending": "En attente"
+      },
+      "messages": {
+        "connectSuccess": "Connexion StayManager réussie !",
+        "disconnectSuccess": "StayManager déconnecté",
+        "settingsUpdated": "Paramètres mis à jour",
+        "syncComplete": "Synchronisation terminée : {{created}} créés, {{updated}} mis à jour"
+      },
+      "errors": {
+        "upgradeRequired": "Cette fonctionnalité nécessite le plan Pro ou supérieur",
+        "loadFailed": "Erreur lors du chargement",
+        "connectFailed": "Erreur de connexion",
+        "disconnectFailed": "Erreur lors de la déconnexion",
+        "settingsUpdateFailed": "Erreur lors de la mise à jour",
+        "syncFailed": "Erreur de synchronisation",
+        "syncFailedGeneric": "Erreur lors de la synchronisation"
+      },
+      "features": {
+        "calendarTitle": "Calendrier synchronisé",
+        "calendarDescription": "Synchronisez automatiquement vos calendriers entre SemsarOut et StayManager.",
+        "verificationTitle": "Vérification des clients",
+        "verificationDescription": "Visualisez le statut de vérification KYC de vos clients directement dans SemsarOut.",
+        "locksTitle": "Serrures connectées",
+        "locksDescription": "Gérez les codes d'accès de vos serrures intelligentes depuis votre tableau de bord."
+      }
+    },
+    "properties": {
+      "back": "Retour aux paramètres",
+      "title": "Biens liés à StayManager",
+      "subtitle": "Gérez les liens entre vos biens SemsarOut et StayManager",
+      "linkProperty": "Lier un bien",
+      "fallbackTitle": "Bien #{{id}}",
+      "linkedTo": "Lié à :",
+      "never": "Jamais",
+      "confirmUnlink": "Êtes-vous sûr de vouloir supprimer ce lien ? Les réservations déjà synchronisées seront conservées.",
+      "modal": {
+        "title": "Lier un bien",
+        "semsarLabel": "Bien SemsarOut",
+        "semsarPlaceholder": "Sélectionnez un bien",
+        "stayManagerLabel": "Propriété StayManager",
+        "stayManagerPlaceholder": "Sélectionnez une propriété",
+        "linking": "Liaison...",
+        "link": "Lier"
+      },
+      "empty": {
+        "title": "Aucun bien lié",
+        "description": "Commencez par lier un de vos biens à une propriété StayManager."
+      },
+      "stats": {
+        "reservations": "Réservations",
+        "lastSync": "Dernière sync",
+        "ical": "iCal",
+        "icalAvailable": "Disponible",
+        "icalUnavailable": "Non disponible"
+      },
+      "status": {
+        "synced": "Synchronisé",
+        "syncing": "En cours...",
+        "error": "Erreur",
+        "pending": "En attente"
+      },
+      "actions": {
+        "sync": "Synchroniser",
+        "viewReservations": "Voir les réservations",
+        "unlink": "Supprimer le lien"
+      },
+      "info": {
+        "allLinked": "<strong>Tous vos biens sont liés.</strong> Pour lier d'autres biens, ajoutez de nouvelles propriétés en location dans votre tableau de bord.",
+        "noneAvailable": "<strong>Aucune propriété StayManager disponible.</strong> Toutes vos propriétés StayManager sont déjà liées ou vous n'avez pas encore ajouté de propriétés dans StayManager."
+      },
+      "messages": {
+        "linked": "Bien lié avec succès",
+        "unlinked": "Lien supprimé",
+        "syncComplete": "Synchronisation terminée : {{created}} créés, {{updated}} mis à jour"
+      },
+      "errors": {
+        "loadFailed": "Erreur lors du chargement des données",
+        "selectBoth": "Veuillez sélectionner les deux propriétés",
+        "linkFailed": "Erreur lors du lien",
+        "unlinkFailed": "Erreur lors de la suppression",
+        "syncFailed": "Erreur de synchronisation",
+        "syncFailedGeneric": "Erreur lors de la synchronisation"
+      }
+    },
+    "reservations": {
+      "back": "Retour aux paramètres",
+      "title": "Réservations StayManager",
+      "subtitle": "Toutes les réservations synchronisées depuis StayManager",
+      "refresh": "Actualiser",
+      "filters": {
+        "label": "Filtres :",
+        "allProperties": "Tous les biens",
+        "allStatuses": "Tous les statuts",
+        "upcomingOnly": "À venir uniquement",
+        "status": {
+          "confirmed": "Confirmées",
+          "cancelled": "Annulées",
+          "blocked": "Bloquées",
+          "pending": "En attente"
+        }
+      },
+      "status": {
+        "confirmed": "Confirmée",
+        "cancelled": "Annulée",
+        "blocked": "Bloquée",
+        "pending": "En attente"
+      },
+      "platform": {
+        "airbnb": "Airbnb",
+        "booking": "Booking.com",
+        "vrbo": "VRBO",
+        "direct": "Direct"
+      },
+      "empty": {
+        "title": "Aucune réservation",
+        "upcoming": "Aucune réservation à venir.",
+        "filtered": "Aucune réservation trouvée avec ces filtres."
+      },
+      "card": {
+        "guestFallback": "Client",
+        "verified": "Vérifié",
+        "accessCode": "Code",
+        "nights_one": "({{count}} nuit)",
+        "nights_other": "({{count}} nuits)",
+        "guestCount_one": "{{count}} voyageur",
+        "guestCount_other": "{{count}} voyageurs"
+      },
+      "detail": {
+        "title": "Détails de la réservation",
+        "guest": "Client",
+        "verified": "Vérifié",
+        "notVerified": "Non vérifié",
+        "dates": "Dates",
+        "checkin": "Arrivée",
+        "checkout": "Départ",
+        "nights_one": "{{count}} nuit",
+        "nights_other": "{{count}} nuits",
+        "status": "Statut",
+        "price": "Prix total",
+        "accessCode": "Code d'accès",
+        "accessCodeGenerated": "Généré",
+        "contract": "Contrat",
+        "notes": "Notes",
+        "idLabel": "ID : {{id}}",
+        "externalIdLabel": " | Externe : {{id}}",
+        "lastSync": "Dernière sync : {{date}}",
+        "unknown": "Inconnue",
+        "contractStatus": {
+          "signed": "Signé",
+          "sent": "Envoyé",
+          "generated": "Généré",
+          "none": "Non généré"
+        }
+      },
+      "errors": {
+        "loadFailed": "Erreur lors du chargement des réservations"
+      }
+    }
+  }
+}

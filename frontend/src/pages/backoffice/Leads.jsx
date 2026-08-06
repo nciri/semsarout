@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
+import { useTranslation } from 'react-i18next'
 import {
   FiMail, FiPhone, FiFilter, FiSearch, FiChevronUp,
   FiChevronDown, FiCheck, FiX, FiEye, FiUserPlus, FiCalendar, FiMessageSquare
 } from 'react-icons/fi'
 import api from '../../services/api'
+import { useFormat } from '../../utils/format'
 
 const backofficeService = {
   getLeads: async (params) => {
@@ -30,33 +32,12 @@ const STATUS_COLORS = {
   lost: 'bg-gray-100 text-gray-700'
 }
 
-const STATUS_LABELS = {
-  new: 'Nouveau',
-  contacted: 'Contacté',
-  qualified: 'Qualifié',
-  converted: 'Converti',
-  lost: 'Perdu'
-}
-
-const SOURCE_LABELS = {
-  contact_form: 'Formulaire',
-  phone_reveal: 'Téléphone',
-  callback_request: 'Rappel',
-  website: 'Site web',
-  manual: 'Manuel',
-  other: 'Autre'
-}
+const SOURCE_KEYS = ['contact_form', 'phone_reveal', 'callback_request', 'website', 'manual', 'other']
 
 const NEXT_STATUS = {
   new: 'contacted',
   contacted: 'qualified',
   qualified: 'converted'
-}
-
-const NEXT_STATUS_LABELS = {
-  new: 'Marquer comme contacté',
-  contacted: 'Marquer comme qualifié',
-  qualified: 'Convertir en client'
 }
 
 function SortHeader({ label, field, currentSort, onSort }) {
@@ -77,7 +58,8 @@ function SortHeader({ label, field, currentSort, onSort }) {
   )
 }
 
-function LeadDetailModal({ lead, onClose }) {
+function LeadDetailModal({ lead, onClose, t }) {
+  const { fmtDate } = useFormat()
   if (!lead) return null
 
   return (
@@ -86,7 +68,7 @@ function LeadDetailModal({ lead, onClose }) {
       <div className="relative bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Détails du lead</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('backoffice:crm.pipeline.leads.detail.title')}</h2>
           <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
             <FiX className="w-5 h-5" />
           </button>
@@ -104,14 +86,14 @@ function LeadDetailModal({ lead, onClose }) {
             <div className="flex-1">
               <h3 className="text-xl font-semibold text-gray-900">{lead.name}</h3>
               <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium mt-1 ${STATUS_COLORS[lead.status]}`}>
-                {STATUS_LABELS[lead.status]}
+                {t(`backoffice:crm.pipeline.leads.status.${lead.status}`, { defaultValue: lead.status })}
               </span>
             </div>
           </div>
 
           {/* Coordonnées */}
           <div className="space-y-3">
-            <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Coordonnées</h4>
+            <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider">{t('backoffice:crm.pipeline.leads.detail.contactInfo')}</h4>
             {lead.email && (
               <a href={`mailto:${lead.email}`} className="flex items-center gap-3 text-gray-700 hover:text-primary-600">
                 <FiMail className="w-5 h-5 text-gray-400" />
@@ -129,7 +111,7 @@ function LeadDetailModal({ lead, onClose }) {
           {/* Message */}
           {lead.message && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Message</h4>
+              <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider">{t('backoffice:crm.pipeline.leads.detail.message')}</h4>
               <div className="flex items-start gap-3">
                 <FiMessageSquare className="w-5 h-5 text-gray-400 mt-0.5" />
                 <p className="text-gray-700 whitespace-pre-wrap">{lead.message}</p>
@@ -140,7 +122,7 @@ function LeadDetailModal({ lead, onClose }) {
           {/* Notes */}
           {lead.notes && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Notes internes</h4>
+              <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider">{t('backoffice:crm.pipeline.leads.detail.internalNotes')}</h4>
               <p className="text-gray-700 bg-gray-50 rounded-lg p-3 whitespace-pre-wrap">{lead.notes}</p>
             </div>
           )}
@@ -148,14 +130,14 @@ function LeadDetailModal({ lead, onClose }) {
           {/* Infos supplémentaires */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <h4 className="text-sm font-medium text-gray-500">Source</h4>
-              <p className="text-gray-900">{SOURCE_LABELS[lead.source] || lead.source}</p>
+              <h4 className="text-sm font-medium text-gray-500">{t('backoffice:crm.pipeline.leads.detail.source')}</h4>
+              <p className="text-gray-900">{t(`backoffice:crm.pipeline.leads.source.${lead.source}`, { defaultValue: lead.source })}</p>
             </div>
             <div className="space-y-1">
-              <h4 className="text-sm font-medium text-gray-500">Date de création</h4>
+              <h4 className="text-sm font-medium text-gray-500">{t('backoffice:crm.pipeline.leads.detail.createdAt')}</h4>
               <p className="text-gray-900 flex items-center gap-2">
                 <FiCalendar className="w-4 h-4 text-gray-400" />
-                {new Date(lead.created_at).toLocaleDateString('fr-FR', {
+                {fmtDate(lead.created_at, {
                   day: '2-digit',
                   month: 'long',
                   year: 'numeric'
@@ -164,13 +146,13 @@ function LeadDetailModal({ lead, onClose }) {
             </div>
             {lead.property_title && (
               <div className="col-span-2 space-y-1">
-                <h4 className="text-sm font-medium text-gray-500">Bien associé</h4>
+                <h4 className="text-sm font-medium text-gray-500">{t('backoffice:crm.pipeline.leads.detail.property')}</h4>
                 <p className="text-gray-900">{lead.property_title}</p>
               </div>
             )}
             {lead.assigned_to_name && (
               <div className="space-y-1">
-                <h4 className="text-sm font-medium text-gray-500">Assigné à</h4>
+                <h4 className="text-sm font-medium text-gray-500">{t('backoffice:crm.pipeline.leads.detail.assignedTo')}</h4>
                 <p className="text-gray-900">{lead.assigned_to_name}</p>
               </div>
             )}
@@ -182,6 +164,8 @@ function LeadDetailModal({ lead, onClose }) {
 }
 
 export default function BackofficeLeads() {
+  const { t } = useTranslation(['backoffice', 'common'])
+  const { fmtDate } = useFormat()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState({
@@ -222,8 +206,11 @@ export default function BackofficeLeads() {
     if (!nextStatus) return
 
     const message = lead.status === 'qualified'
-      ? `Voulez-vous convertir "${lead.name}" en client ?`
-      : `Voulez-vous marquer "${lead.name}" comme ${STATUS_LABELS[nextStatus].toLowerCase()} ?`
+      ? t('backoffice:crm.pipeline.leads.confirm.convert', { name: lead.name })
+      : t('backoffice:crm.pipeline.leads.confirm.markStatus', {
+          name: lead.name,
+          status: t(`backoffice:crm.pipeline.leads.status.${nextStatus}`).toLowerCase()
+        })
 
     if (window.confirm(message)) {
       if (lead.status === 'qualified') {
@@ -235,7 +222,7 @@ export default function BackofficeLeads() {
   }
 
   const handleMarkLost = (lead) => {
-    if (window.confirm(`Voulez-vous marquer "${lead.name}" comme perdu ?`)) {
+    if (window.confirm(t('backoffice:crm.pipeline.leads.confirm.lost', { name: lead.name }))) {
       updateMutation.mutate({ id: lead.id, data: { status: 'lost' } })
     }
   }
@@ -259,27 +246,27 @@ export default function BackofficeLeads() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
-          <p className="text-gray-500">Gérez vos prospects et convertissez-les en clients</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('backoffice:crm.pipeline.leads.list.pageTitle')}</h1>
+          <p className="text-gray-500">{t('backoffice:crm.pipeline.leads.list.subtitle')}</p>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <p className="text-sm text-gray-500">Total leads</p>
+          <p className="text-sm text-gray-500">{t('backoffice:crm.pipeline.leads.list.stats.total')}</p>
           <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <p className="text-sm text-gray-500">Nouveaux</p>
+          <p className="text-sm text-gray-500">{t('backoffice:crm.pipeline.leads.list.stats.new')}</p>
           <p className="text-2xl font-bold text-blue-600">{stats.new}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <p className="text-sm text-gray-500">Qualifiés</p>
+          <p className="text-sm text-gray-500">{t('backoffice:crm.pipeline.leads.list.stats.qualified')}</p>
           <p className="text-2xl font-bold text-green-600">{stats.qualified}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <p className="text-sm text-gray-500">Convertis</p>
+          <p className="text-sm text-gray-500">{t('backoffice:crm.pipeline.leads.list.stats.converted')}</p>
           <p className="text-2xl font-bold text-purple-600">{stats.converted}</p>
         </div>
       </div>
@@ -288,13 +275,13 @@ export default function BackofficeLeads() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <FiSearch className="absolute start-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Rechercher par nom, email..."
+              placeholder={t('backoffice:crm.pipeline.leads.list.searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full ps-10 pe-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
           <button
@@ -304,7 +291,7 @@ export default function BackofficeLeads() {
             }`}
           >
             <FiFilter className="w-5 h-5" />
-            Filtres
+            {t('backoffice:crm.pipeline.leads.list.filtersButton')}
             {(filters.status || filters.source) && (
               <span className="w-2 h-2 bg-primary-500 rounded-full"></span>
             )}
@@ -314,28 +301,28 @@ export default function BackofficeLeads() {
         {showFilters && (
           <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.pipeline.leads.list.filterStatusLabel')}</label>
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <option value="">Tous les statuts</option>
-                {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
+                <option value="">{t('backoffice:crm.pipeline.leads.list.filterStatusAll')}</option>
+                {Object.keys(STATUS_COLORS).map((statusKey) => (
+                  <option key={statusKey} value={statusKey}>{t(`backoffice:crm.pipeline.leads.status.${statusKey}`)}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Source</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.pipeline.leads.list.filterSourceLabel')}</label>
               <select
                 value={filters.source}
                 onChange={(e) => setFilters({ ...filters, source: e.target.value, page: 1 })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <option value="">Toutes les sources</option>
-                {Object.entries(SOURCE_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
+                <option value="">{t('backoffice:crm.pipeline.leads.list.filterSourceAll')}</option>
+                {SOURCE_KEYS.map((sourceKey) => (
+                  <option key={sourceKey} value={sourceKey}>{t(`backoffice:crm.pipeline.leads.source.${sourceKey}`)}</option>
                 ))}
               </select>
             </div>
@@ -344,7 +331,7 @@ export default function BackofficeLeads() {
                 onClick={() => setFilters({ status: '', source: '', page: 1 })}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
               >
-                Réinitialiser
+                {t('backoffice:crm.pipeline.leads.list.resetFilters')}
               </button>
             </div>
           </div>
@@ -372,26 +359,26 @@ export default function BackofficeLeads() {
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <SortHeader label="Contact" field="name" currentSort={sort} onSort={handleSort} />
+                    <th className="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <SortHeader label={t('backoffice:crm.pipeline.leads.list.columns.contact')} field="name" currentSort={sort} onSort={handleSort} />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Coordonnées
+                    <th className="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('backoffice:crm.pipeline.leads.list.columns.contactInfo')}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <SortHeader label="Source" field="source" currentSort={sort} onSort={handleSort} />
+                    <th className="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <SortHeader label={t('backoffice:crm.pipeline.leads.list.columns.source')} field="source" currentSort={sort} onSort={handleSort} />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <SortHeader label="Statut" field="status" currentSort={sort} onSort={handleSort} />
+                    <th className="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <SortHeader label={t('backoffice:crm.pipeline.leads.list.columns.status')} field="status" currentSort={sort} onSort={handleSort} />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Bien associé
+                    <th className="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('backoffice:crm.pipeline.leads.list.columns.property')}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <SortHeader label="Date" field="created_at" currentSort={sort} onSort={handleSort} />
+                    <th className="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <SortHeader label={t('backoffice:crm.pipeline.leads.list.columns.date')} field="created_at" currentSort={sort} onSort={handleSort} />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
+                    <th className="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('backoffice:crm.pipeline.leads.list.columns.actions')}
                     </th>
                   </tr>
                 </thead>
@@ -431,12 +418,12 @@ export default function BackofficeLeads() {
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-sm text-gray-600">
-                          {SOURCE_LABELS[lead.source] || lead.source}
+                          {t(`backoffice:crm.pipeline.leads.source.${lead.source}`, { defaultValue: lead.source })}
                         </span>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[lead.status]}`}>
-                          {STATUS_LABELS[lead.status]}
+                          {t(`backoffice:crm.pipeline.leads.status.${lead.status}`, { defaultValue: lead.status })}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -450,7 +437,7 @@ export default function BackofficeLeads() {
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-sm text-gray-600">
-                          {new Date(lead.created_at).toLocaleDateString('fr-FR', {
+                          {fmtDate(lead.created_at, {
                             day: '2-digit',
                             month: 'short',
                             year: 'numeric'
@@ -463,7 +450,7 @@ export default function BackofficeLeads() {
                           <button
                             onClick={() => setSelectedLead(lead)}
                             className="p-2 text-gray-400 hover:text-primary-600 rounded-lg hover:bg-primary-50 transition-colors"
-                            title="Voir les détails"
+                            title={t('backoffice:crm.pipeline.leads.list.viewDetails')}
                           >
                             <FiEye className="w-4 h-4" />
                           </button>
@@ -478,7 +465,7 @@ export default function BackofficeLeads() {
                                     ? 'text-purple-500 hover:text-purple-700 hover:bg-purple-50'
                                     : 'text-green-500 hover:text-green-700 hover:bg-green-50'
                                 }`}
-                                title={NEXT_STATUS_LABELS[lead.status]}
+                                title={t(`backoffice:crm.pipeline.leads.nextAction.${lead.status}`)}
                               >
                                 {lead.status === 'qualified' ? (
                                   <FiUserPlus className="w-4 h-4" />
@@ -491,7 +478,7 @@ export default function BackofficeLeads() {
                               <button
                                 onClick={() => handleMarkLost(lead)}
                                 className="p-2 text-red-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
-                                title="Marquer comme perdu"
+                                title={t('backoffice:crm.pipeline.leads.list.markLost')}
                               >
                                 <FiX className="w-4 h-4" />
                               </button>
@@ -509,7 +496,11 @@ export default function BackofficeLeads() {
             {data.pages > 1 && (
               <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
                 <p className="text-sm text-gray-500">
-                  Affichage de {((filters.page - 1) * 20) + 1} à {Math.min(filters.page * 20, data.total)} sur {data.total} leads
+                  {t('backoffice:crm.pipeline.leads.list.paginationInfo', {
+                    from: ((filters.page - 1) * 20) + 1,
+                    to: Math.min(filters.page * 20, data.total),
+                    total: data.total
+                  })}
                 </p>
                 <div className="flex items-center gap-2">
                   <button
@@ -517,7 +508,7 @@ export default function BackofficeLeads() {
                     disabled={filters.page === 1}
                     className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                   >
-                    Précédent
+                    {t('backoffice:crm.pipeline.leads.list.prev')}
                   </button>
                   <span className="text-sm text-gray-600">
                     {filters.page} / {data.pages}
@@ -527,7 +518,7 @@ export default function BackofficeLeads() {
                     disabled={filters.page === data.pages}
                     className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                   >
-                    Suivant
+                    {t('backoffice:crm.pipeline.leads.list.next')}
                   </button>
                 </div>
               </div>
@@ -536,11 +527,11 @@ export default function BackofficeLeads() {
         ) : (
           <div className="p-12 text-center">
             <FiMail className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun lead trouvé</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('backoffice:crm.pipeline.leads.list.empty.title')}</h3>
             <p className="text-gray-500">
               {search || filters.status || filters.source
-                ? 'Aucun lead ne correspond à vos critères.'
-                : 'Les leads apparaîtront ici lorsque des prospects vous contacteront.'}
+                ? t('backoffice:crm.pipeline.leads.list.empty.filtered')
+                : t('backoffice:crm.pipeline.leads.list.empty.default')}
             </p>
           </div>
         )}
@@ -551,6 +542,7 @@ export default function BackofficeLeads() {
         <LeadDetailModal
           lead={selectedLead}
           onClose={() => setSelectedLead(null)}
+          t={t}
         />
       )}
     </div>

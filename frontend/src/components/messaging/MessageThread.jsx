@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { fr, ar } from 'date-fns/locale'
+import { useTranslation } from 'react-i18next'
 import { FiSend } from 'react-icons/fi'
 
 /**
@@ -8,6 +9,8 @@ import { FiSend } from 'react-icons/fi'
  * `viewerRole` is 'buyer' or 'agent' — determines which side messages appear on.
  */
 function MessageThread({ message, viewerRole, onReply, isReplying }) {
+  const { t, i18n } = useTranslation(['common'])
+  const dateFnsLocale = i18n.language === 'ar' ? ar : fr
   const [body, setBody] = useState('')
 
   if (!message) return null
@@ -43,7 +46,7 @@ function MessageThread({ message, viewerRole, onReply, isReplying }) {
               }`}>
                 <p className="text-sm whitespace-pre-line">{b.body}</p>
                 <p className={`text-xs mt-1 ${isMine ? 'text-white/70' : 'text-gray-400'}`}>
-                  {b.created_at && format(new Date(b.created_at), 'dd MMM à HH:mm', { locale: fr })}
+                  {b.created_at && format(new Date(b.created_at), 'dd MMM à HH:mm', { locale: dateFnsLocale })}
                 </p>
               </div>
             </div>
@@ -55,7 +58,7 @@ function MessageThread({ message, viewerRole, onReply, isReplying }) {
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          placeholder="Écrire une réponse..."
+          placeholder={t('common:messaging.replyPlaceholder')}
           rows={2}
           className="input flex-1 resize-none"
         />
