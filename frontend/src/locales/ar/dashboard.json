@@ -894,5 +894,17 @@
       "footerContact": "لأي استفسار بخصوص هذه الفاتورة، تواصل معنا عبر {{email}}",
       "defaultPlanName": "Premium"
     }
+  },
+  "myApplications": {
+    "title": "طلبات الترشح",
+    "subtitle": "تابع حالة ملفات الكراء الخاصة بك.",
+    "empty": {
+      "title": "لا يوجد طلب ترشح",
+      "message": "ابحث عن عقار للكراء وأودع ملفك من صفحة الإعلان.",
+      "cta": "عرض عقارات الكراء"
+    },
+    "propertyFallback": "عقار رقم {{id}}",
+    "submittedOn": "أُودع بتاريخ {{date}}",
+    "incomeSuffix": " · الدخل {{amount}}"
   }
 }

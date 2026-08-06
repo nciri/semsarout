@@ -894,5 +894,17 @@
       "footerContact": "Pour toute question concernant cette facture, contactez-nous à {{email}}",
       "defaultPlanName": "Premium"
     }
+  },
+  "myApplications": {
+    "title": "Mes candidatures",
+    "subtitle": "Suivez l'état de vos dossiers de location.",
+    "empty": {
+      "title": "Aucune candidature",
+      "message": "Trouvez un bien en location et déposez votre dossier depuis l'annonce.",
+      "cta": "Voir les locations"
+    },
+    "propertyFallback": "Bien #{{id}}",
+    "submittedOn": "Déposée le {{date}}",
+    "incomeSuffix": " · revenus {{amount}}"
   }
 }
