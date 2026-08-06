@@ -84,6 +84,7 @@
     "answeredCount": "{{answered}}/{{total}} répondues sur cette page",
     "continueApplication": "Continuer ma candidature",
     "finishAndSeeRecommendations": "Terminer et voir mes recommandations",
+    "updateAndSeeRecommendations": "Mettre à jour et voir mes recommandations",
     "next": "Suivant",
     "importanceLabel": "Importance",
     "importance": {

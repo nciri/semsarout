@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button, Card, Chip, Icon, Input, ListingCard, Select } from '../../ds/index.js'
 import { listListings } from '../../services/index.js'
+import { loadLifestyleProfile } from '../../lib/lifestyleProfile.js'
 
 export default function SearchResults() {
   const { t } = useTranslation(['web', 'common'])
   const [items, setItems] = useState(null)
   const [verifiedOnly, setVerifiedOnly] = useState(true)
   const [view, setView] = useState('liste')
+  const [lifestyleProfile] = useState(() => loadLifestyleProfile())
   const navigate = useNavigate()
 
   const typeFilters = t('web:search.typeFilters', { returnObjects: true })
@@ -156,6 +158,35 @@ export default function SearchResults() {
         </aside>
 
         <section style={{ display: 'flex', flexDirection: 'column', gap: 18, minWidth: 0 }}>
+          <div
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+              borderRadius: 'var(--radius-md, 10px)', background: 'var(--navy-50)', border: '1px solid var(--navy-100)',
+            }}
+          >
+            <Icon name={lifestyleProfile ? 'user-check' : 'sliders'} size={16} color="var(--navy-700)" />
+            <a
+              href="/espace/questionnaire"
+              onClick={(e) => { e.preventDefault(); navigate('/espace/questionnaire') }}
+              style={{
+                font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)',
+                color: lifestyleProfile ? 'var(--text-heading)' : 'var(--link)',
+                flex: 1, textDecoration: 'none',
+              }}
+            >
+              {lifestyleProfile ? t('web:search.lifestyleProfileBanner.withProfile') : t('web:search.lifestyleProfileBanner.withoutProfile')}
+            </a>
+            {lifestyleProfile && (
+              <a
+                href="/espace/questionnaire"
+                onClick={(e) => { e.preventDefault(); navigate('/espace/questionnaire') }}
+                style={{ font: 'var(--fw-bold) var(--fs-sm) var(--font-body)', color: 'var(--link)', whiteSpace: 'nowrap' }}
+              >
+                {t('web:search.lifestyleProfileBanner.editLink')}
+              </a>
+            )}
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               <h1 style={{ margin: 0, font: 'var(--fw-bold) 24px var(--font-display)', color: 'var(--text-heading)', letterSpacing: '-0.02em' }}>

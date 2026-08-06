@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button, Card, Chip } from '../../ds/index.js'
 import { IMPORTANCE_LEVELS, lifestyleQuestionnaireSteps } from '../../data/lifestyleQuestionnaireSteps.js'
+import { hasLifestyleProfile, loadLifestyleProfile, saveLifestyleProfile } from '../../lib/lifestyleProfile.js'
 
 const MODE = 'optional' // 'optional' | 'mandatory'
 
@@ -92,8 +93,9 @@ export default function Questionnaire() {
   const { t } = useTranslation(['app', 'common'])
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
-  const [answers, setAnswers] = useState({})
-  const [importance, setImportance] = useState({})
+  const [answers, setAnswers] = useState(() => loadLifestyleProfile()?.answers || {})
+  const [importance, setImportance] = useState(() => loadLifestyleProfile()?.importance || {})
+  const [hadExistingProfile] = useState(() => hasLifestyleProfile())
 
   const mandatory = MODE === 'mandatory'
   const total = lifestyleQuestionnaireSteps.length
@@ -107,6 +109,7 @@ export default function Questionnaire() {
   const goBack = () => setStep((s) => Math.max(0, s - 1))
   const goNext = () => setStep((s) => Math.min(total - 1, s + 1))
   const finish = () => {
+    saveLifestyleProfile({ answers, importance })
     navigate('/recherche')
   }
 
@@ -163,7 +166,11 @@ export default function Questionnaire() {
           </div>
           {isLast ? (
             <Button variant="accent" onClick={finish}>
-              {mandatory ? t('app:questionnaire.continueApplication') : t('app:questionnaire.finishAndSeeRecommendations')}
+              {mandatory
+                ? t('app:questionnaire.continueApplication')
+                : hadExistingProfile
+                  ? t('app:questionnaire.updateAndSeeRecommendations')
+                  : t('app:questionnaire.finishAndSeeRecommendations')}
             </Button>
           ) : (
             <Button variant="primary" onClick={goNext}>{t('app:questionnaire.next')}</Button>

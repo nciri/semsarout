@@ -209,7 +209,12 @@
     "verifiedFilterChip": "الملفات الموثقة",
     "mapComingSoon": "عرض الخريطة قريبًا",
     "loadMore": "عرض المزيد من السكنات",
-    "locationDefault": "الدار البيضاء، المعاريف"
+    "locationDefault": "الدار البيضاء، المعاريف",
+    "lifestyleProfileBanner": {
+      "withProfile": "توصيات بناءً على ملف التوافق الخاص بك",
+      "withoutProfile": "أجب عن الاستبيان للحصول على توصيات مخصصة ←",
+      "editLink": "تعديل"
+    }
   },
   "listing": {
     "notFoundTitle": "الإعلان غير موجود",

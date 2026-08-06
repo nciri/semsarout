@@ -84,6 +84,7 @@
     "answeredCount": "{{answered}}/{{total}} تمت الإجابة عنها في هذه الصفحة",
     "continueApplication": "متابعة طلبي",
     "finishAndSeeRecommendations": "إنهاء ومشاهدة توصياتي",
+    "updateAndSeeRecommendations": "تحديث ومشاهدة توصياتي",
     "next": "التالي",
     "importanceLabel": "الأهمية",
     "importance": {
