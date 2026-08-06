@@ -906,5 +906,27 @@
     "propertyFallback": "عقار رقم {{id}}",
     "submittedOn": "أُودع بتاريخ {{date}}",
     "incomeSuffix": " · الدخل {{amount}}"
+  },
+  "applicationDetail": {
+    "back": "رجوع",
+    "backList": "طلبات الترشح",
+    "notFound": "طلب الترشح غير موجود.",
+    "title": "طلب ترشح — {{property}}",
+    "propertyFallback": "عقار رقم {{id}}",
+    "submittedOn": "أُودع بتاريخ {{date}}",
+    "rejectionReason": "السبب: {{reason}}",
+    "acceptedNote": "تهانينا، تم قبول ملفكم — ستتواصل معكم الوكالة قريباً.",
+    "documents": {
+      "title": "الوثائق المثبتة",
+      "empty": "لم يتم إيداع أي وثيقة. أضيفوا وثائقكم (بطاقة التعريف، الدخل، الضامن…).",
+      "filenameSuffix": " — {{filename}}"
+    },
+    "withdrawButton": "سحب طلب الترشح",
+    "toasts": {
+      "fileUnavailable": "الملف غير متوفر",
+      "docAdded": "تمت إضافة الوثيقة",
+      "withdrawn": "تم سحب طلب الترشح",
+      "fileTooLarge": "الملف كبير جداً (الحد الأقصى 10 ميغابايت)."
+    }
   }
 }

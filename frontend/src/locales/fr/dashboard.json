@@ -906,5 +906,27 @@
     "propertyFallback": "Bien #{{id}}",
     "submittedOn": "Déposée le {{date}}",
     "incomeSuffix": " · revenus {{amount}}"
+  },
+  "applicationDetail": {
+    "back": "Retour",
+    "backList": "Mes candidatures",
+    "notFound": "Candidature introuvable.",
+    "title": "Candidature — {{property}}",
+    "propertyFallback": "bien #{{id}}",
+    "submittedOn": "Déposée le {{date}}",
+    "rejectionReason": "Motif : {{reason}}",
+    "acceptedNote": "Félicitations, votre dossier a été retenu — l'agence vous recontactera.",
+    "documents": {
+      "title": "Pièces justificatives",
+      "empty": "Aucune pièce déposée. Ajoutez vos justificatifs (CIN, revenus, garant…).",
+      "filenameSuffix": " — {{filename}}"
+    },
+    "withdrawButton": "Retirer ma candidature",
+    "toasts": {
+      "fileUnavailable": "Fichier indisponible",
+      "docAdded": "Pièce ajoutée",
+      "withdrawn": "Candidature retirée",
+      "fileTooLarge": "Fichier trop volumineux (max 10 Mo)."
+    }
   }
 }
