@@ -41,7 +41,7 @@ export default function Messaging() {
   return (
     <div style={{ flex: 1, display: 'flex', minHeight: 0, background: '#fff' }}>
       {/* liste des conversations */}
-      <div style={{ width: 320, borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ width: 320, borderInlineEnd: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '20px 20px 12px' }}>
           <div style={{ font: 'var(--fw-bold) var(--fs-h2) var(--font-display)', color: 'var(--navy-700)', marginBottom: 12 }}>{t('app:messaging.title')}</div>
           <Input icon="search" placeholder={t('app:messaging.searchPlaceholder')} />
