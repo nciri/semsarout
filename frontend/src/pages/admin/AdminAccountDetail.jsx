@@ -6,9 +6,11 @@ import { FiArrowLeft } from 'react-icons/fi'
 import { adminService } from '../../services/adminService'
 import useAuthStore from '../../store/authStore'
 import DirIcon from '../../components/common/DirIcon'
+import { useFormat } from '../../utils/format'
 
 function AdminAccountDetail() {
   const { t } = useTranslation(['admin', 'common'])
+  const { fmtDate, fmtDateTime } = useFormat()
   const { kind, id } = useParams()   // kind: 'user' | 'agence'
   const isUser = kind === 'user'
   const navigate = useNavigate()
@@ -83,7 +85,7 @@ function AdminAccountDetail() {
       </p>
       {entity.deleted_at && (
         <p className="text-red-600 text-sm mt-2">
-          {t('admin:accountDetail.deletedNotice', { date: new Date(entity.deleted_at).toLocaleDateString('fr-FR') })}
+          {t('admin:accountDetail.deletedNotice', { date: fmtDate(entity.deleted_at) })}
         </p>
       )}
 
@@ -121,7 +123,7 @@ function AdminAccountDetail() {
           {(data.activity || []).map((a) => (
             <li key={a.id} className="text-sm text-slate-600 border-b border-slate-100 pb-2">
               <span className="font-medium">{a.action}</span> — {a.created_at
-                ? new Date(a.created_at).toLocaleString('fr-FR') : ''}
+                ? fmtDateTime(a.created_at) : ''}
             </li>
           ))}
           {(data.activity || []).length === 0 && <li className="text-slate-400 text-sm">{t('admin:accountDetail.activity.empty')}</li>}
