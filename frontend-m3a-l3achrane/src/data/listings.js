@@ -4,14 +4,15 @@ export const listings = [
     titre: 'Chambre lumineuse dans F4 rénové',
     ville: 'Casablanca',
     quartier: 'Maârif',
+    logementGenre: 'Logement féminin',
     prixMad: 2300,
     photos: ['/uploads/placeholder-1.jpg', '/uploads/placeholder-2.jpg', '/uploads/placeholder-3.jpg'],
     matchPct: 88,
     verifiee: true,
     chips: ['Wifi', 'Meublé', 'Calme'],
     colocataires: [
-      { nom: 'Yassine', avatar: '/uploads/avatar-1.jpg' },
-      { nom: 'Karim', avatar: '/uploads/avatar-2.jpg' },
+      { nom: 'Yassine', avatar: '/uploads/avatar-1.jpg', depuis: 'janvier 2025' },
+      { nom: 'Karim', avatar: '/uploads/avatar-2.jpg', depuis: 'mars 2025' },
     ],
     description:
       "Chambre spacieuse et lumineuse au cœur de Maârif. L'appartement est calme, entretenu avec soin, et vous y trouverez tout le nécessaire dès votre arrivée.",
@@ -20,6 +21,17 @@ export const listings = [
       { label: 'Chambres', value: '3' },
       { label: 'Surface', value: '85 m²' },
       { label: 'Étage', value: '4e avec ascenseur' },
+    ],
+    reglement: [
+      { label: 'Invités ponctuels acceptés', ok: true },
+      { label: 'Ménage des parties communes tournant', ok: true },
+      { label: 'Tabac à l’intérieur', ok: false },
+      { label: 'Animaux acceptés', ok: false },
+    ],
+    proximite: [
+      { label: 'ENCG Casablanca', distance: '1,8 km' },
+      { label: 'Arrêt tramway Maârif', distance: '350 m' },
+      { label: 'Supermarché', distance: '400 m' },
     ],
   },
   {
@@ -32,7 +44,7 @@ export const listings = [
     matchPct: 91,
     verifiee: true,
     chips: ['Proche fac', 'Wifi', 'Non-fumeur'],
-    colocataires: [{ nom: 'Salma', avatar: '/uploads/avatar-3.jpg' }],
+    colocataires: [{ nom: 'Salma', avatar: '/uploads/avatar-3.jpg', depuis: 'septembre 2024' }],
     description:
       "Studio indépendant à deux pas de la faculté. Idéal pour étudiants recherchant calme et autonomie, avec un accès facile aux transports.",
     equipements: ['Wifi', 'Cuisine équipée', 'Machine à laver'],
@@ -40,6 +52,17 @@ export const listings = [
       { label: 'Chambres', value: '1' },
       { label: 'Surface', value: '28 m²' },
       { label: 'Étage', value: '2e' },
+    ],
+    reglement: [
+      { label: 'Silence après 22h en semaine', ok: true },
+      { label: 'Ménage individuel des espaces communs', ok: true },
+      { label: 'Tabac à l’intérieur', ok: false },
+      { label: 'Invités pour la nuit', ok: false },
+    ],
+    proximite: [
+      { label: 'Université Mohammed V', distance: '900 m' },
+      { label: 'Arrêt tramway Agdal', distance: '250 m' },
+      { label: 'Pharmacie', distance: '300 m' },
     ],
   },
   {
@@ -53,9 +76,9 @@ export const listings = [
     verifiee: false,
     chips: ['Invités OK', 'Meublé', 'Wifi'],
     colocataires: [
-      { nom: 'Nadia', avatar: '/uploads/avatar-4.jpg' },
-      { nom: 'Amine', avatar: '/uploads/avatar-5.jpg' },
-      { nom: 'Rania', avatar: '/uploads/avatar-6.jpg' },
+      { nom: 'Nadia', avatar: '/uploads/avatar-4.jpg', depuis: 'juin 2024' },
+      { nom: 'Amine', avatar: '/uploads/avatar-5.jpg', depuis: 'novembre 2024' },
+      { nom: 'Rania', avatar: '/uploads/avatar-6.jpg', depuis: 'février 2025' },
     ],
     description:
       "Belle villa partagée avec jardin, à quelques minutes de Guéliz. Ambiance conviviale, colocataires accueillants et respectueux des espaces communs.",
@@ -64,6 +87,17 @@ export const listings = [
       { label: 'Chambres', value: '4' },
       { label: 'Surface', value: '140 m²' },
       { label: 'Étage', value: 'Rez-de-jardin' },
+    ],
+    reglement: [
+      { label: 'Invités ponctuels acceptés', ok: true },
+      { label: 'Animaux acceptés', ok: true },
+      { label: 'Fêtes en semaine', ok: false },
+      { label: 'Tabac dans le jardin uniquement', ok: false },
+    ],
+    proximite: [
+      { label: 'Guéliz centre', distance: '600 m' },
+      { label: 'Arrêt de bus', distance: '150 m' },
+      { label: 'Épicerie', distance: '200 m' },
     ],
   },
   {
@@ -76,7 +110,7 @@ export const listings = [
     matchPct: 69,
     verifiee: true,
     chips: ['Calme', 'Non-fumeur', 'Wifi'],
-    colocataires: [{ nom: 'Hicham', avatar: '/uploads/avatar-7.jpg' }],
+    colocataires: [{ nom: 'Hicham', avatar: '/uploads/avatar-7.jpg', depuis: 'avril 2025' }],
     description:
       "Chambre au calme avec vue dégagée, dans un appartement familial bien tenu. Quartier résidentiel proche des commerces.",
     equipements: ['Wifi', 'Machine à laver'],
@@ -84,6 +118,17 @@ export const listings = [
       { label: 'Chambres', value: '2' },
       { label: 'Surface', value: '70 m²' },
       { label: 'Étage', value: '3e' },
+    ],
+    reglement: [
+      { label: 'Silence après 21h', ok: true },
+      { label: 'Ménage des parties communes tournant', ok: true },
+      { label: 'Tabac à l’intérieur', ok: false },
+      { label: 'Invités pour la nuit', ok: false },
+    ],
+    proximite: [
+      { label: 'Plage de Malabata', distance: '1,1 km' },
+      { label: 'Arrêt de bus', distance: '300 m' },
+      { label: 'Commerces de proximité', distance: '250 m' },
     ],
   },
   {
@@ -97,8 +142,8 @@ export const listings = [
     verifiee: true,
     chips: ['Wifi', 'Proche fac', 'Cuisine équipée'],
     colocataires: [
-      { nom: 'Othmane', avatar: '/uploads/avatar-8.jpg' },
-      { nom: 'Imane', avatar: '/uploads/avatar-9.jpg' },
+      { nom: 'Othmane', avatar: '/uploads/avatar-8.jpg', depuis: 'octobre 2024' },
+      { nom: 'Imane', avatar: '/uploads/avatar-9.jpg', depuis: 'janvier 2025' },
     ],
     description:
       "Appartement rénové à proximité immédiate de la gare, pensé pour les étudiants et jeunes actifs. Cuisine partagée entièrement équipée.",
@@ -107,6 +152,17 @@ export const listings = [
       { label: 'Chambres', value: '3' },
       { label: 'Surface', value: '95 m²' },
       { label: 'Étage', value: '1er' },
+    ],
+    reglement: [
+      { label: 'Invités ponctuels acceptés', ok: true },
+      { label: 'Ménage des parties communes tournant', ok: true },
+      { label: 'Alcool dans le logement', ok: false },
+      { label: 'Tabac à l’intérieur', ok: false },
+    ],
+    proximite: [
+      { label: 'Gare de Fès', distance: '450 m' },
+      { label: 'Faculté des sciences', distance: '2,1 km' },
+      { label: 'Supermarché', distance: '300 m' },
     ],
   },
   {
@@ -119,7 +175,7 @@ export const listings = [
     matchPct: 62,
     verifiee: false,
     chips: ['Wifi', 'Non-fumeur'],
-    colocataires: [{ nom: 'Yassir', avatar: '/uploads/avatar-10.jpg' }],
+    colocataires: [{ nom: 'Yassir', avatar: '/uploads/avatar-10.jpg', depuis: 'mai 2025' }],
     description:
       "Petite chambre simple et fonctionnelle, idéale pour un budget serré. Proche des commerces et des arrêts de bus.",
     equipements: ['Wifi'],
@@ -127,6 +183,17 @@ export const listings = [
       { label: 'Chambres', value: '2' },
       { label: 'Surface', value: '55 m²' },
       { label: 'Étage', value: 'Rez-de-chaussée' },
+    ],
+    reglement: [
+      { label: 'Ménage individuel des espaces communs', ok: true },
+      { label: 'Invités ponctuels acceptés', ok: true },
+      { label: 'Tabac à l’intérieur', ok: false },
+      { label: 'Animaux acceptés', ok: false },
+    ],
+    proximite: [
+      { label: 'Gare de Kénitra', distance: '1,3 km' },
+      { label: 'Arrêt de bus', distance: '200 m' },
+      { label: 'Marché central', distance: '500 m' },
     ],
   },
   {
@@ -140,8 +207,8 @@ export const listings = [
     verifiee: true,
     chips: ['Wifi', 'Balcon', 'Invités OK'],
     colocataires: [
-      { nom: 'Meryem', avatar: '/uploads/avatar-11.jpg' },
-      { nom: 'Anas', avatar: '/uploads/avatar-12.jpg' },
+      { nom: 'Meryem', avatar: '/uploads/avatar-11.jpg', depuis: 'juillet 2024' },
+      { nom: 'Anas', avatar: '/uploads/avatar-12.jpg', depuis: 'décembre 2024' },
     ],
     description:
       "Bel appartement avec grande terrasse commune, quartier vivant et bien desservi. Colocataires organisés et ouverts d'esprit.",
@@ -151,18 +218,30 @@ export const listings = [
       { label: 'Surface', value: '100 m²' },
       { label: 'Étage', value: '5e avec ascenseur' },
     ],
+    reglement: [
+      { label: 'Invités ponctuels acceptés', ok: true },
+      { label: 'Animaux acceptés', ok: true },
+      { label: 'Fêtes en semaine', ok: false },
+      { label: 'Tabac à l’intérieur', ok: false },
+    ],
+    proximite: [
+      { label: 'Quartier Bourgogne', distance: '300 m' },
+      { label: 'Arrêt tramway', distance: '400 m' },
+      { label: 'Supermarché', distance: '350 m' },
+    ],
   },
   {
     id: 8,
     titre: 'Chambre meublée proche campus',
     ville: 'Rabat',
     quartier: 'Hay Riad',
+    logementGenre: 'Logement féminin',
     prixMad: 2600,
     photos: ['/uploads/placeholder-19.jpg', '/uploads/placeholder-20.jpg'],
     matchPct: 80,
     verifiee: true,
     chips: ['Proche fac', 'Meublé', 'Calme'],
-    colocataires: [{ nom: 'Zineb', avatar: '/uploads/avatar-13.jpg' }],
+    colocataires: [{ nom: 'Zineb', avatar: '/uploads/avatar-13.jpg', depuis: 'septembre 2024' }],
     description:
       "Chambre entièrement meublée à distance de marche du campus. Immeuble sécurisé et environnement studieux.",
     equipements: ['Wifi', 'Cuisine équipée'],
@@ -170,6 +249,17 @@ export const listings = [
       { label: 'Chambres', value: '2' },
       { label: 'Surface', value: '65 m²' },
       { label: 'Étage', value: '2e' },
+    ],
+    reglement: [
+      { label: 'Silence après 23h en semaine', ok: true },
+      { label: 'Ménage des parties communes tournant', ok: true },
+      { label: 'Tabac à l’intérieur', ok: false },
+      { label: 'Alcool dans le logement', ok: false },
+    ],
+    proximite: [
+      { label: 'Campus Hay Riad', distance: '700 m' },
+      { label: 'Arrêt de bus', distance: '200 m' },
+      { label: 'Pharmacie', distance: '350 m' },
     ],
   },
   {
@@ -183,8 +273,8 @@ export const listings = [
     verifiee: true,
     chips: ['Wifi', 'Meublé', 'Invités OK', 'Calme'],
     colocataires: [
-      { nom: 'Fatima-Zahra', avatar: '/uploads/avatar-14.jpg' },
-      { nom: 'Youssef', avatar: '/uploads/avatar-15.jpg' },
+      { nom: 'Fatima-Zahra', avatar: '/uploads/avatar-14.jpg', depuis: 'mars 2024' },
+      { nom: 'Youssef', avatar: '/uploads/avatar-15.jpg', depuis: 'août 2024' },
     ],
     description:
       "Grande chambre dans un riad soigneusement rénové, quartier calme et recherché. Prestations haut de gamme et espaces communs élégants.",
@@ -193,6 +283,17 @@ export const listings = [
       { label: 'Chambres', value: '4' },
       { label: 'Surface', value: '160 m²' },
       { label: 'Étage', value: 'Rez-de-chaussée' },
+    ],
+    reglement: [
+      { label: 'Invités ponctuels acceptés', ok: true },
+      { label: 'Ménage assuré par le personnel', ok: true },
+      { label: 'Tabac à l’intérieur', ok: false },
+      { label: 'Animaux acceptés', ok: false },
+    ],
+    proximite: [
+      { label: 'Hivernage centre', distance: '400 m' },
+      { label: 'Jardin Majorelle', distance: '1,5 km' },
+      { label: 'Supérette', distance: '250 m' },
     ],
   },
 ]
