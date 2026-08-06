@@ -58,6 +58,7 @@ const MIGRATED_FILES = [
   'src/components/common/LotPlanViewer.jsx',
   'src/components/common/PriceGauge.jsx',
   'src/components/common/PhotoLightbox.jsx',
+  'src/components/common/SpecFields.jsx',
   'src/components/dashboard/widgets/index.jsx',
   'src/components/backoffice/SignaturePanel.jsx',
   'src/components/backoffice/ui.jsx',

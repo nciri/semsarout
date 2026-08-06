@@ -762,7 +762,7 @@ export default function DashboardProgramForm() {
               if (!section) return null
               return (
                 <div key={typ} className="border-t border-gray-100 pt-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">{section.label}</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">{t(`dashboard:${section.labelKey}`)}</h3>
                   <SpecFields
                     fields={section.fields}
                     values={formData.specs?.[typ] || {}}
@@ -798,7 +798,7 @@ export default function DashboardProgramForm() {
                         selected ? 'bg-primary-100 text-primary-700 border-primary-300' : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
                       }`}
                     >
-                      {opt.label}
+                      {t(`dashboard:${opt.labelKey}`)}
                     </button>
                   )
                 })}

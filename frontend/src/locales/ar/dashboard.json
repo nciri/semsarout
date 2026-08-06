@@ -285,6 +285,84 @@
     "confirms": {
       "deleteUnit": "حذف نوع العقار هذا؟",
       "deleteImage": "حذف هذه الصورة؟"
+    },
+    "specs": {
+      "typology": {
+        "apartments": "شقق",
+        "villas": "فيلات",
+        "land": "أراضٍ",
+        "commercial": "تجاري"
+      },
+      "sections": {
+        "apartments": {
+          "fields": {
+            "buildingsCount": "عدد المباني",
+            "floorsCount": "عدد الطوابق",
+            "hasElevator": "مصعد",
+            "monthlyCharges": "الأعباء/رسوم النقابة المقدّرة (درهم/شهر)"
+          }
+        },
+        "villas": {
+          "fields": {
+            "landSurfaceMin": "المساحة الدنيا للأرض (م²)",
+            "landSurfaceMax": "المساحة القصوى للأرض (م²)",
+            "levels": "الطوابق (مثال: أرضي+1)",
+            "style": "الطراز المعماري",
+            "hasGarage": "مرآب",
+            "hasPool": "مسبح"
+          }
+        },
+        "land": {
+          "fields": {
+            "servicedWater": "الماء",
+            "servicedElectricity": "الكهرباء",
+            "servicedSewage": "الصرف الصحي",
+            "servicedRoad": "الطريق",
+            "titleType": "نوع السند العقاري",
+            "buildability": "قابلية البناء (COS/CUS أو R+n)",
+            "subdivisionAllowed": "التجزئة مسموحة"
+          }
+        },
+        "commercial": {
+          "fields": {
+            "localType": "نوع المحل",
+            "allowedUse": "الاستعمال المسموح",
+            "standing": "المستوى"
+          }
+        }
+      },
+      "localType": {
+        "office": "مكتب",
+        "shop": "محل تجاري",
+        "warehouse": "مستودع"
+      },
+      "unitFields": {
+        "apartmentUnit": {
+          "floor": "الطابق",
+          "orientation": "التوجيه",
+          "hasBalcony": "شرفة",
+          "hasTerrace": "تراس"
+        },
+        "villaUnit": {
+          "landSurface": "مساحة الأرض (م²)",
+          "livingSurface": "المساحة المعيشية (م²)",
+          "levels": "الطوابق",
+          "hasGarden": "حديقة",
+          "hasPool": "مسبح",
+          "garageSpots": "أماكن المرآب"
+        },
+        "landUnit": {
+          "lotSurface": "مساحة القطعة (م²)",
+          "pricePerSqm": "السعر/م² (درهم)",
+          "frontage": "الواجهة (م.ط)",
+          "buildable": "قابلة للبناء",
+          "shape": "الشكل"
+        },
+        "commercialUnit": {
+          "floor": "الطابق",
+          "allowedUse": "الاستعمال"
+        }
+      }
     }
   },
   "programs": {

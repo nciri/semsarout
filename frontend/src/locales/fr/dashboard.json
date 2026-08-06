@@ -285,6 +285,84 @@
     "confirms": {
       "deleteUnit": "Supprimer ce type de bien ?",
       "deleteImage": "Supprimer cette image ?"
+    },
+    "specs": {
+      "typology": {
+        "apartments": "Appartements",
+        "villas": "Villas",
+        "land": "Terrains",
+        "commercial": "Commercial"
+      },
+      "sections": {
+        "apartments": {
+          "fields": {
+            "buildingsCount": "Nombre de bâtiments",
+            "floorsCount": "Nombre d'étages",
+            "hasElevator": "Ascenseur",
+            "monthlyCharges": "Charges/syndic estimées (Đh/mois)"
+          }
+        },
+        "villas": {
+          "fields": {
+            "landSurfaceMin": "Superficie terrain min (m²)",
+            "landSurfaceMax": "Superficie terrain max (m²)",
+            "levels": "Niveaux (ex. R+1)",
+            "style": "Style architectural",
+            "hasGarage": "Garage",
+            "hasPool": "Piscine"
+          }
+        },
+        "land": {
+          "fields": {
+            "servicedWater": "Eau",
+            "servicedElectricity": "Électricité",
+            "servicedSewage": "Assainissement",
+            "servicedRoad": "Voirie",
+            "titleType": "Type de titre foncier",
+            "buildability": "Constructibilité (COS/CUS ou R+n)",
+            "subdivisionAllowed": "Lotissement autorisé"
+          }
+        },
+        "commercial": {
+          "fields": {
+            "localType": "Type de local",
+            "allowedUse": "Usage autorisé",
+            "standing": "Standing"
+          }
+        }
+      },
+      "localType": {
+        "office": "Bureau",
+        "shop": "Commerce",
+        "warehouse": "Entrepôt"
+      },
+      "unitFields": {
+        "apartmentUnit": {
+          "floor": "Étage",
+          "orientation": "Orientation",
+          "hasBalcony": "Balcon",
+          "hasTerrace": "Terrasse"
+        },
+        "villaUnit": {
+          "landSurface": "Superficie terrain (m²)",
+          "livingSurface": "Superficie habitable (m²)",
+          "levels": "Niveaux",
+          "hasGarden": "Jardin",
+          "hasPool": "Piscine",
+          "garageSpots": "Places de garage"
+        },
+        "landUnit": {
+          "lotSurface": "Superficie lot (m²)",
+          "pricePerSqm": "Prix/m² (Đh)",
+          "frontage": "Façade (ml)",
+          "buildable": "Constructible",
+          "shape": "Forme"
+        },
+        "commercialUnit": {
+          "floor": "Étage",
+          "allowedUse": "Usage"
+        }
+      }
     }
   },
   "programs": {
