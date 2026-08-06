@@ -6,9 +6,11 @@ import { applicantService } from '../../services/rentalService'
 import { formatPrice } from '../../utils/currency'
 import DirIcon from '../../components/common/DirIcon'
 import { APP_STATUS } from './applicationStatus'
+import { useFormat } from '../../utils/format'
 
 function MyApplications() {
   const { t } = useTranslation(['dashboard', 'common'])
+  const { fmtDate } = useFormat()
   const { data, isLoading } = useQuery('my-applications', () => applicantService.myApplications())
   const apps = data?.applications || []
 
@@ -33,7 +35,7 @@ function MyApplications() {
               <div>
                 <p className="font-semibold text-gray-900">{a.property_title || t('dashboard:myApplications.propertyFallback', { id: a.property_id })}</p>
                 <p className="text-sm text-gray-500">
-                  {t('dashboard:myApplications.submittedOn', { date: a.submitted_at ? new Date(a.submitted_at).toLocaleDateString('fr-FR') : '—' })}
+                  {t('dashboard:myApplications.submittedOn', { date: a.submitted_at ? fmtDate(a.submitted_at) : '—' })}
                   {a.monthly_income ? t('dashboard:myApplications.incomeSuffix', { amount: formatPrice(a.monthly_income) }) : ''}
                 </p>
               </div>

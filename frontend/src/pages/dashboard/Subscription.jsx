@@ -14,6 +14,7 @@ import { formatPrice } from '../../utils/currency'
 import api from '../../services/api'
 import { CONTACT } from '../../constants/contact'
 import DirIcon from '../../components/common/DirIcon'
+import { useFormat } from '../../utils/format'
 
 // Generate invoice PDF (t: fonction de traduction i18n, injectée par l'appelant)
 const generateInvoicePDF = (invoice, user, t) => {
@@ -525,6 +526,7 @@ function AddPaymentModal({ isOpen, onClose, onAdd, type }) {
 
 export default function Subscription() {
   const { t } = useTranslation(['dashboard', 'common'])
+  const { fmtDate } = useFormat()
   const { user } = useAuthStore()
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState('plans')
@@ -836,7 +838,7 @@ export default function Subscription() {
                   </p>
                   {activeSubscription?.end_date && (
                     <p className="opacity-80 text-sm mt-1">
-                      {t('dashboard:subscription.nextPayment', { date: new Date(activeSubscription.end_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) })}
+                      {t('dashboard:subscription.nextPayment', { date: fmtDate(activeSubscription.end_date, { day: 'numeric', month: 'long', year: 'numeric' }) })}
                     </p>
                   )}
                 </div>
@@ -1074,7 +1076,7 @@ export default function Subscription() {
                             {period}
                           </td>
                           <td className="px-6 py-4 text-gray-600">
-                            {new Date(date).toLocaleDateString('fr-FR')}
+                            {fmtDate(date)}
                           </td>
                           <td className="px-6 py-4">
                             <span className="font-semibold text-gray-900">

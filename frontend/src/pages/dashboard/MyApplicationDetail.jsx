@@ -8,6 +8,7 @@ import api from '../../services/api'
 import { applicantService } from '../../services/rentalService'
 import DirIcon from '../../components/common/DirIcon'
 import { APP_STATUS, DOC_STATUS, DOC_TYPES } from './applicationStatus'
+import { useFormat } from '../../utils/format'
 
 async function openDoc(url, t) {
   try {
@@ -20,6 +21,7 @@ async function openDoc(url, t) {
 
 function MyApplicationDetail() {
   const { t } = useTranslation(['dashboard', 'common'])
+  const { fmtDate } = useFormat()
   const { id } = useParams()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -55,7 +57,7 @@ function MyApplicationDetail() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-xl font-bold text-gray-900">{t('dashboard:applicationDetail.title', { property: a.property_title || t('dashboard:applicationDetail.propertyFallback', { id: a.property_id }) })}</h1>
-            <p className="text-sm text-gray-500 mt-1">{t('dashboard:applicationDetail.submittedOn', { date: a.submitted_at ? new Date(a.submitted_at).toLocaleDateString('fr-FR') : '—' })}</p>
+            <p className="text-sm text-gray-500 mt-1">{t('dashboard:applicationDetail.submittedOn', { date: a.submitted_at ? fmtDate(a.submitted_at) : '—' })}</p>
           </div>
           <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${APP_STATUS[a.status]?.className || 'bg-gray-100 text-gray-700'}`}>
             {APP_STATUS[a.status] ? t(`common:${APP_STATUS[a.status].labelKey}`) : a.status}

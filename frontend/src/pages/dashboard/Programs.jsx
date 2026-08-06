@@ -10,6 +10,7 @@ import {
 import DirIcon from '../../components/common/DirIcon'
 import useAuthStore from '../../store/authStore'
 import { formatPrice } from '../../utils/currency'
+import { useFormat } from '../../utils/format'
 import MesBiensTabs from '../../components/dashboard/MesBiensTabs'
 import api from '../../services/api'
 
@@ -50,6 +51,7 @@ const CONSTRUCTION_STATUS_META = {
 
 function ProgramCard({ program, onDelete, onPublish, onUnpublish, viewMode }) {
   const { t } = useTranslation(['dashboard', 'common'])
+  const { fmtDate } = useFormat()
   const [menuOpen, setMenuOpen] = useState(false)
   const constructionStatusMeta = CONSTRUCTION_STATUS_META[program.construction_status] || CONSTRUCTION_STATUS_META.planning
   const constructionStatus = {
@@ -273,7 +275,7 @@ function ProgramCard({ program, onDelete, onPublish, onUnpublish, viewMode }) {
           {program.delivery_date && (
             <span className="flex items-center gap-1 text-xs text-gray-500">
               <FiCalendar className="w-3 h-3" />
-              {new Date(program.delivery_date).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+              {fmtDate(program.delivery_date, { month: 'long', year: 'numeric' })}
             </span>
           )}
         </div>

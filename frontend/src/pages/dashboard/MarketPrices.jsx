@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { FiPlus, FiTrash2, FiTrendingUp } from 'react-icons/fi'
 import { marketService } from '../../services/marketService'
 import useAuthStore from '../../store/authStore'
+import { useFormat } from '../../utils/format'
 
 const LOT_TYPES = [
   { value: '', labelKey: 'all' },
@@ -23,6 +24,7 @@ const EMPTY = {
 
 export default function MarketPrices() {
   const { t } = useTranslation(['dashboard', 'common'])
+  const { fmtNumber } = useFormat()
   const { user } = useAuthStore()
   const queryClient = useQueryClient()
   const [form, setForm] = useState(EMPTY)
@@ -121,9 +123,9 @@ export default function MarketPrices() {
                   <td className="px-4 py-3">{r.neighborhood}</td>
                   <td className="px-4 py-3">{r.transaction_type === 'rent' ? t('dashboard:marketPrices.transactionType.rent') : t('dashboard:marketPrices.transactionType.sale')}</td>
                   <td className="px-4 py-3">{t(`dashboard:marketPrices.lotTypes.${LOT_TYPES.find(lt => lt.value === (r.property_type || ''))?.labelKey}`, { defaultValue: r.property_type })}</td>
-                  <td className="px-4 py-3 text-end font-medium">{Math.round(r.avg_price_sqm).toLocaleString('fr-FR')}</td>
+                  <td className="px-4 py-3 text-end font-medium">{fmtNumber(Math.round(r.avg_price_sqm))}</td>
                   <td className="px-4 py-3 text-end text-gray-500">
-                    {r.min_price_sqm ? Math.round(r.min_price_sqm).toLocaleString('fr-FR') : '—'} – {r.max_price_sqm ? Math.round(r.max_price_sqm).toLocaleString('fr-FR') : '—'}
+                    {r.min_price_sqm ? fmtNumber(Math.round(r.min_price_sqm)) : '—'} – {r.max_price_sqm ? fmtNumber(Math.round(r.max_price_sqm)) : '—'}
                   </td>
                   <td className="px-4 py-3 text-gray-500">{r.source}</td>
                   <td className="px-4 py-3 text-end">
