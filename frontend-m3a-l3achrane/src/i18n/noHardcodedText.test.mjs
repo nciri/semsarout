@@ -24,6 +24,7 @@ export const MIGRATED_FILES = [
   'src/ds/trust/CompatibilityRing.jsx',
   'src/ds/listing/PriceTag.jsx',
   'src/ds/listing/ListingCard.jsx',
+  'src/surfaces/app/Dashboard.jsx',
 ]
 
 const FRENCH_ACCENTS = /[àâäéèêëîïôöùûüçœÀÂÄÉÈÊËÎÏÔÖÙÛÜÇŒ]/
