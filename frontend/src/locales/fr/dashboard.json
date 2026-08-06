@@ -46,6 +46,62 @@
       "subscription": "Abonnement"
     }
   },
+  "programs": {
+    "title": "Mes annonces",
+    "managedCount_one": "{{count}} programme géré",
+    "managedCount_other": "{{count}} programmes gérés",
+    "outOf": "sur {{limit}}",
+    "newProgram": "Nouveau programme",
+    "searchPlaceholder": "Rechercher par nom, ville...",
+    "filters": "Filtres",
+    "reset": "Réinitialiser",
+    "archiveConfirm": "Êtes-vous sûr de vouloir archiver ce programme ?",
+    "status": {
+      "label": "Statut",
+      "all": "Tous les statuts",
+      "active": "En ligne",
+      "draft": "Brouillon",
+      "completed": "Livré",
+      "archived": "Archivé"
+    },
+    "constructionStatus": {
+      "planning": "En projet",
+      "under_construction": "En construction",
+      "delivered": "Livré"
+    },
+    "type": {
+      "residential": "Résidentiel",
+      "commercial": "Commercial",
+      "mixed": "Mixte"
+    },
+    "startingFrom": "À partir de {{price}}",
+    "viewsCount_one": "{{count}} vue",
+    "viewsCount_other": "{{count}} vues",
+    "priceUndefined": "Prix non défini",
+    "menu": {
+      "viewOnline": "Voir en ligne",
+      "edit": "Modifier",
+      "publish": "Publier",
+      "unpublish": "Mettre en brouillon",
+      "archive": "Archiver"
+    },
+    "pagination": {
+      "previous": "Précédent",
+      "next": "Suivant",
+      "pageOf": "Page {{page}} sur {{total}}"
+    },
+    "empty": {
+      "title": "Aucun programme trouvé",
+      "noMatch": "Aucun programme ne correspond à vos critères.",
+      "getStarted": "Commencez par créer votre premier programme immobilier.",
+      "createButton": "Créer un programme"
+    },
+    "upgrade": {
+      "title": "Programmes immobiliers",
+      "description": "Publiez vos projets immobiliers neufs avec plusieurs types de biens (appartements, villas, etc.). Cette fonctionnalité est disponible à partir du plan Pro.",
+      "cta": "Passer au plan Pro"
+    }
+  },
   "marketPrices": {
     "title": "Prix de référence par quartier",
     "subtitle": "Ces prix/m² alimentent la jauge de positionnement sur les annonces (prioritaires sur le calcul automatique).",

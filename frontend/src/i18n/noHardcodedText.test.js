@@ -120,6 +120,7 @@ const MIGRATED_FILES = [
   'src/pages/dashboard/Dashboard.jsx',
   'src/pages/dashboard/MyProperties.jsx',
   'src/pages/dashboard/MarketPrices.jsx',
+  'src/pages/dashboard/Programs.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {

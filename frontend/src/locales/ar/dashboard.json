@@ -46,6 +46,62 @@
       "subscription": "الاشتراك"
     }
   },
+  "programs": {
+    "title": "إعلاناتي",
+    "managedCount_one": "{{count}} برنامج مُدار",
+    "managedCount_other": "{{count}} برامج مُدارة",
+    "outOf": "من أصل {{limit}}",
+    "newProgram": "برنامج جديد",
+    "searchPlaceholder": "ابحث بالاسم، المدينة...",
+    "filters": "التصفية",
+    "reset": "إعادة التعيين",
+    "archiveConfirm": "هل أنت متأكد أنك تريد أرشفة هذا البرنامج؟",
+    "status": {
+      "label": "الحالة",
+      "all": "كل الحالات",
+      "active": "منشور",
+      "draft": "مسودة",
+      "completed": "مُسلَّم",
+      "archived": "مؤرشف"
+    },
+    "constructionStatus": {
+      "planning": "قيد التخطيط",
+      "under_construction": "قيد الإنشاء",
+      "delivered": "مُسلَّم"
+    },
+    "type": {
+      "residential": "سكني",
+      "commercial": "تجاري",
+      "mixed": "مختلط"
+    },
+    "startingFrom": "ابتداءً من {{price}}",
+    "viewsCount_one": "{{count}} مشاهدة",
+    "viewsCount_other": "{{count}} مشاهدات",
+    "priceUndefined": "السعر غير محدد",
+    "menu": {
+      "viewOnline": "عرض على الموقع",
+      "edit": "تعديل",
+      "publish": "نشر",
+      "unpublish": "تحويل إلى مسودة",
+      "archive": "أرشفة"
+    },
+    "pagination": {
+      "previous": "السابق",
+      "next": "التالي",
+      "pageOf": "صفحة {{page}} من {{total}}"
+    },
+    "empty": {
+      "title": "لم يتم العثور على أي برنامج",
+      "noMatch": "لا يوجد برنامج يطابق معاييرك.",
+      "getStarted": "ابدأ بإنشاء أول برنامج عقاري لك.",
+      "createButton": "إنشاء برنامج"
+    },
+    "upgrade": {
+      "title": "البرامج العقارية",
+      "description": "انشر مشاريعك العقارية الجديدة بأنواع متعددة من العقارات (شقق، فيلات، إلخ). هذه الميزة متاحة ابتداءً من باقة Pro.",
+      "cta": "الترقية إلى باقة Pro"
+    }
+  },
   "marketPrices": {
     "title": "أسعار مرجعية حسب الحي",
     "subtitle": "تُستخدم هذه الأسعار/م² في مؤشر تموضع السعر على الإعلانات (لها الأولوية على الحساب التلقائي).",
