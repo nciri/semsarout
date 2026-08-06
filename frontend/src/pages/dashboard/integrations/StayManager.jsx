@@ -459,8 +459,8 @@ export default function StayManager() {
           <div className="space-y-6">
             <label className="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
               <div>
-                <p className="font-medium text-gray-900">Synchronisation automatique</p>
-                <p className="text-sm text-gray-500">Synchroniser les reservations periodiquement</p>
+                <p className="font-medium text-gray-900">{t('dashboard:stayManager.overview.autoSyncTitle')}</p>
+                <p className="text-sm text-gray-500">{t('dashboard:stayManager.overview.autoSyncDescription')}</p>
               </div>
               <div className="relative">
                 <input
