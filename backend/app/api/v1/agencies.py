@@ -213,4 +213,4 @@ def my_agency():
         return jsonify({'error': 'You do not belong to an agency'}), 404
 
     agency = Agency.query.get(user.agency_id)
-    return jsonify({'agency': agency.to_dict(include_members=True)})
+    return jsonify({'agency': agency.to_dict(include_members=True, include_api_key=True)})
