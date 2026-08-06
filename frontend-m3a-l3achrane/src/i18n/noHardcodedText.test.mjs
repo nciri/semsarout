@@ -12,6 +12,7 @@ const REPO_ROOT = path.resolve(__dirname, '../..')
 export const MIGRATED_FILES = [
   'src/surfaces/NotFound.jsx',
   'src/surfaces/web/WebLayout.jsx',
+  'src/surfaces/web/Landing.jsx',
 ]
 
 const FRENCH_ACCENTS = /[àâäéèêëîïôöùûüçœÀÂÄÉÈÊËÎÏÔÖÙÛÜÇŒ]/
