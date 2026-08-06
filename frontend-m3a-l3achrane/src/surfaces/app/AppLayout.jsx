@@ -3,17 +3,33 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { SidebarNav } from '../../ds/index.js'
 
-const ROUTES = { dash: '/espace', msg: '/espace/messages' }
+const ROUTES = {
+  dash: '/espace',
+  msg: '/espace/messages',
+  inbox: '/espace/candidatures',
+  apply: '/espace/candidature',
+  quiz: '/espace/questionnaire',
+  pay: '/espace/paiement',
+  security: '/espace/securite',
+}
 
 export default function AppLayout() {
   const { t } = useTranslation('common')
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const active = pathname.startsWith('/espace/messages') ? 'msg' : 'dash'
+  // Route active = plus long préfixe correspondant (candidatures avant candidature avant espace).
+  const active = Object.entries(ROUTES)
+    .sort((a, b) => b[1].length - a[1].length)
+    .find(([, route]) => pathname === route || pathname.startsWith(`${route}/`) || (route !== '/espace' && pathname.startsWith(route)))?.[0] ?? 'dash'
 
   const items = [
     { icon: 'layout-dashboard', label: t('nav.dashboard'), value: 'dash' },
     { icon: 'message-circle', label: t('nav.messages'), value: 'msg' },
+    { icon: 'file-text', label: t('nav.inbox'), value: 'inbox' },
+    { icon: 'file-signature', label: t('nav.apply'), value: 'apply' },
+    { icon: 'list-checks', label: t('nav.quiz'), value: 'quiz' },
+    { icon: 'credit-card', label: t('nav.payments'), value: 'pay' },
+    { icon: 'shield', label: t('nav.security'), value: 'security' },
   ]
 
   useEffect(() => {

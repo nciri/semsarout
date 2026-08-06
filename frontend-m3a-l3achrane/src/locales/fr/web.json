@@ -17,8 +17,19 @@
       "cityLabel": "Ville ou quartier",
       "budgetLabel": "Budget max",
       "cta": "Rechercher",
-      "cities": ["Casablanca", "Rabat", "Marrakech", "Fès", "Tanger", "Agadir"],
-      "budgets": ["1 500 MAD", "2 500 MAD", "4 000 MAD"]
+      "cities": [
+        "Casablanca",
+        "Rabat",
+        "Marrakech",
+        "Fès",
+        "Tanger",
+        "Agadir"
+      ],
+      "budgets": [
+        "1 500 MAD",
+        "2 500 MAD",
+        "4 000 MAD"
+      ]
     },
     "hero": {
       "titlePrefix": "Trouvez votre colocation idéale en toute",
@@ -41,26 +52,60 @@
     "trustBand": {
       "title": "La confiance, au cœur de M3a-L3chrane",
       "items": [
-        { "title": "Identité vérifiée", "sub": "CIN vérifiée" },
-        { "title": "Statut vérifié", "sub": "Étudiant ou employé" },
-        { "title": "Annonces modérées", "sub": "Contrôle qualité" },
-        { "title": "Paiement sécurisé", "sub": "Séquestre jusqu'à l'état des lieux" }
+        {
+          "title": "Identité vérifiée",
+          "sub": "CIN vérifiée"
+        },
+        {
+          "title": "Statut vérifié",
+          "sub": "Étudiant ou employé"
+        },
+        {
+          "title": "Annonces modérées",
+          "sub": "Contrôle qualité"
+        },
+        {
+          "title": "Paiement sécurisé",
+          "sub": "Séquestre jusqu'à l'état des lieux"
+        }
       ]
     },
     "howItWorks": {
       "eyebrow": "Comment ça marche",
       "title": "Cinq étapes, en toute sérénité",
       "steps": [
-        { "title": "Créez votre profil", "sub": "Vérification d'identité et de statut" },
-        { "title": "Recherchez & filtrez", "sub": "Trouvez les colocations compatibles" },
-        { "title": "Échangez", "sub": "Discutez en toute sécurité" },
-        { "title": "Visitez & choisissez", "sub": "Rencontrez vos futurs colocataires" },
-        { "title": "Signez & emménagez", "sub": "Contrat en ligne, paiement sécurisé" }
+        {
+          "title": "Créez votre profil",
+          "sub": "Vérification d'identité et de statut"
+        },
+        {
+          "title": "Recherchez & filtrez",
+          "sub": "Trouvez les colocations compatibles"
+        },
+        {
+          "title": "Échangez",
+          "sub": "Discutez en toute sécurité"
+        },
+        {
+          "title": "Visitez & choisissez",
+          "sub": "Rencontrez vos futurs colocataires"
+        },
+        {
+          "title": "Signez & emménagez",
+          "sub": "Contrat en ligne, paiement sécurisé"
+        }
       ]
     },
     "partnersBand": {
       "title": "Ils nous font confiance",
-      "names": ["UM6P", "Univ. Mohammed V", "INPT", "OFPPT", "Maroc Telecom", "Société Générale"]
+      "names": [
+        "UM6P",
+        "Univ. Mohammed V",
+        "INPT",
+        "OFPPT",
+        "Maroc Telecom",
+        "Société Générale"
+      ]
     },
     "partnerCta": {
       "eyebrow": "Partenaires institutions",
@@ -77,18 +122,93 @@
     "cityLabel": "Ville ou quartier",
     "budgetLabel": "Budget max",
     "typeLabel": "Type",
-    "typeOptions": ["Tout", "Chambre", "Studio"],
+    "typeOptions": [
+      "Tout",
+      "Chambre",
+      "Studio"
+    ],
     "genderLabel": "Genre",
-    "genderOptions": ["Tout", "Féminin", "Masculin"],
-    "budgetOptions": ["2 500 MAD", "4 000 MAD"],
+    "genderOptions": [
+      "Tout",
+      "Féminin",
+      "Masculin"
+    ],
+    "budgetOptions": [
+      "2 500 MAD",
+      "4 000 MAD"
+    ],
     "cta": "Rechercher",
     "title": "Colocations disponibles",
     "resultCount_one": "{{count}} annonce",
     "resultCount_other": "{{count}} annonces",
     "sortBy": "Trier par",
-    "sortOptions": ["Pertinence", "Prix croissant", "Date", "Distance"],
-    "filterChips": ["Non-fumeur", "Meublé", "Wifi", "Féminin", "Proche fac", "Court séjour"],
-    "empty": "Aucune annonce ne correspond à votre recherche."
+    "sortOptions": [
+      "Pertinence",
+      "Prix croissant",
+      "Date",
+      "Distance"
+    ],
+    "filterChips": [
+      "Non-fumeur",
+      "Meublé",
+      "Wifi",
+      "Féminin",
+      "Proche fac",
+      "Court séjour"
+    ],
+    "empty": "Aucune annonce ne correspond à votre recherche.",
+    "filtersTitle": "Filtres",
+    "resetFilters": "Réinitialiser",
+    "monthlyBudgetLabel": "Budget mensuel",
+    "budgetUnitNote": "MAD / mois, charges comprises",
+    "housingTypeLabel": "Type de logement",
+    "typeFilters": [
+      {
+        "label": "Chambre en colocation",
+        "count": 31
+      },
+      {
+        "label": "Appartement entier",
+        "count": 9
+      },
+      {
+        "label": "Studio partagé",
+        "count": 6
+      },
+      {
+        "label": "Résidence partenaire",
+        "count": 2
+      }
+    ],
+    "lifestyleLabel": "Mode de vie",
+    "lifestyleChips": [
+      "Non-fumeur",
+      "Calme",
+      "Invités OK",
+      "Animaux OK",
+      "Colocation féminine",
+      "Colocation masculine"
+    ],
+    "trustLabel": "Confiance",
+    "verifiedOnlyLabel": "Profils vérifiés uniquement",
+    "institutionalPartnerLabel": "Partenaire institutionnel",
+    "onlineContractLabel": "Contrat en ligne disponible",
+    "resultsTitle": "Colocations à Casablanca, Maârif",
+    "resultsSubtitle_one": "{{count}} logement — trié par compatibilité avec votre profil",
+    "resultsSubtitle_other": "{{count}} logements — triés par compatibilité avec votre profil",
+    "sortOptionsDetailed": [
+      "Compatibilité",
+      "Prix croissant",
+      "Prix décroissant",
+      "Plus récentes"
+    ],
+    "viewListLabel": "Liste",
+    "viewMapLabel": "Carte",
+    "activeFiltersLabel": "Filtres actifs :",
+    "verifiedFilterChip": "Profils vérifiés",
+    "mapComingSoon": "Vue carte à venir",
+    "loadMore": "Afficher plus de logements",
+    "locationDefault": "Casablanca, Maârif"
   },
   "listing": {
     "notFoundTitle": "Annonce introuvable",
@@ -103,7 +223,29 @@
     "addFavorite": "Ajouter aux favoris",
     "securePaymentTitle": "Paiement sécurisé",
     "securePaymentBody": "Caution et premier loyer sous séquestre jusqu'à l'état des lieux d'entrée. Un cadre clair pour tous.",
-    "learnMore": "En savoir plus"
+    "learnMore": "En savoir plus",
+    "amenitiesTitle": "Équipements",
+    "houseRulesTitle": "Règles de la maison",
+    "sinceLabel": "Depuis",
+    "proximityTitle": "Proximité",
+    "proximityConnector": " · à {{distance}} de {{label}}",
+    "locationTitle": "Localisation",
+    "locationApproxNote": "Position approximative (rayon 300 m) — l'adresse exacte est révélée après acceptation de votre candidature.",
+    "priceUnitPeriod": "mois, charges comprises",
+    "matchPercentLabel": "{{pct}}% de compatibilité avec votre profil",
+    "matchDetailsBase": "Même rythme de sommeil · non-fumeur",
+    "applyCta": "Postuler pour cette chambre",
+    "contactRoommateCta": "Contacter le·la colocataire",
+    "applicationRequirementNote": "La candidature nécessite d'avoir complété votre questionnaire de mode de vie.",
+    "ownerRoleLabel": "Propriétaire",
+    "ownerTrustNote": "Identité vérifiée · répond en moins de 2h",
+    "morePhotosOverlay": "+{{count}} photos",
+    "houseRules": {
+      "guests": "Invités ponctuels acceptés",
+      "cleaning": "Ménage des parties communes tournant",
+      "smoking": "Tabac à l’intérieur",
+      "pets": "Animaux acceptés"
+    }
   },
   "auth": {
     "loginTitle": "Connexion",
@@ -116,6 +258,113 @@
     "registerCta": "S'inscrire",
     "switchToRegister": "Pas encore de compte ? Créer un compte",
     "switchToLogin": "Déjà un compte ? Se connecter",
-    "genericError": "Connexion impossible — réessayez."
+    "genericError": "Connexion impossible — réessayez.",
+    "taglinePrefix": "Retrouvez votre colocation,",
+    "taglineHighlight": "en toute confiance.",
+    "trustFeatures": [
+      {
+        "title": "Profils vérifiés",
+        "desc": "CIN, statut étudiant ou employeur"
+      },
+      {
+        "title": "Compatibilité mesurée",
+        "desc": "Un score de mode de vie, pas un hasard"
+      },
+      {
+        "title": "Un cadre clair pour tous",
+        "desc": "Contrat signé en ligne, dépôt sécurisé"
+      }
+    ],
+    "dataResidencyNotice": "Données hébergées au Maroc — conforme CNDP",
+    "emailTab": "E-mail",
+    "phoneTab": "Téléphone",
+    "phonePlaceholder": "Connexion par téléphone bientôt disponible.",
+    "noAccountPrompt": "Pas encore de compte ? ",
+    "hasAccountPrompt": "Déjà un compte ? ",
+    "rememberMe": "Rester connecté sur cet appareil",
+    "forgotPassword": "Mot de passe oublié ?",
+    "orDivider": "ou",
+    "continueWithGoogle": "Continuer avec Google",
+    "continueWithInstitution": "Continuer avec mon établissement",
+    "termsPrefix": "En continuant, vous acceptez nos",
+    "termsLink": "conditions d'utilisation",
+    "termsAnd": "et notre",
+    "privacyLink": "politique de confidentialité"
+  },
+  "registration": {
+    "title": "Créez votre profil",
+    "subtitle": "Trois étapes courtes. Vos informations restent privées jusqu'à ce que vous contactiez une colocation.",
+    "steps": {
+      "profile": "Profil",
+      "verification": "Vérification",
+      "lifestyle": "Mode de vie"
+    },
+    "iAmLabel": "Je suis",
+    "roles": {
+      "student": {
+        "title": "Étudiant·e",
+        "desc": "Inscrit dans un établissement"
+      },
+      "worker": {
+        "title": "Jeune actif",
+        "desc": "En poste ou en stage"
+      },
+      "host": {
+        "title": "Je propose un logement",
+        "desc": "Propriétaire ou colocataire"
+      }
+    },
+    "cityOptions": [
+      "Casablanca",
+      "Rabat",
+      "Marrakech",
+      "Tanger",
+      "Fès"
+    ],
+    "form": {
+      "firstNameLabel": "Prénom",
+      "firstNamePlaceholder": "Yassine",
+      "lastNameLabel": "Nom",
+      "lastNamePlaceholder": "Benali",
+      "emailLabel": "Adresse e-mail",
+      "emailPlaceholder": "prenom.nom@exemple.ma",
+      "phoneLabel": "Téléphone",
+      "phonePlaceholder": "+212 6 12 34 56 78",
+      "cityLabel": "Ville",
+      "orgLabel": "Établissement ou employeur",
+      "orgPlaceholder": "Université Hassan II",
+      "passwordLabel": "Mot de passe",
+      "passwordPlaceholder": "8 caractères minimum",
+      "passwordHint": "Au moins 8 caractères, dont un chiffre."
+    },
+    "nextStepTitle": "Prochaine étape : la vérification",
+    "nextStepDesc": "Vous téléverserez votre CIN et votre justificatif de statut. Rien n'est visible par les autres membres — seul le badge « Vérifié » apparaît sur votre profil.",
+    "agreementPrefix": "J'accepte les",
+    "agreementTermsLink": "conditions d'utilisation",
+    "agreementMiddle": "et le traitement de mes données conformément à la",
+    "agreementPrivacyLink": "politique de confidentialité",
+    "agreementSuffix": "(CNDP).",
+    "saveLaterCta": "Enregistrer et reprendre plus tard",
+    "continueCta": "Continuer"
+  },
+  "reviews": {
+    "title": "Évaluer votre séjour",
+    "subtitle": "Avec {{partner}} — {{listing}} · terminé le {{date}}",
+    "publishNotice": "Votre évaluation ne sera publiée que lorsque les deux parties auront évalué — ou automatiquement 14 jours après la fin du séjour.",
+    "criteria": {
+      "respect": "Respect des horaires et des règles",
+      "proprete": "Propreté des parties communes",
+      "communication": "Communication",
+      "conformite": "Conformité avec l'annonce"
+    },
+    "commentLabel": "Commentaire (visible après publication)",
+    "commentPlaceholder": "Décrivez votre expérience de cohabitation…",
+    "submitCta": "Publier mon évaluation",
+    "submittedCta": "Évaluation envoyée",
+    "receivedTitle": "Vos évaluations reçues",
+    "starAriaLabel_one": "{{count}} étoile",
+    "starAriaLabel_other": "{{count}} étoiles",
+    "pendingNotice_one": "{{count}} évaluation en attente de publication — visible dans {{days}} jours ou dès que l'autre partie aura évalué.",
+    "pendingNotice_other": "{{count}} évaluations en attente de publication — visibles dans {{days}} jours ou dès que l'autre partie aura évalué."
   }
 }

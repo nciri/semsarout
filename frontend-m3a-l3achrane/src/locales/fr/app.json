@@ -37,6 +37,219 @@
     "attach": "Joindre",
     "inputPlaceholder": "Écrire un message…",
     "send": "Envoyer",
-    "now": "maintenant"
+    "now": "maintenant",
+    "viewListing": "Voir l’annonce",
+    "privacyBanner": "Vos numéros et e-mails restent masqués tant que la mise en relation n’est pas acceptée.",
+    "phoneDetectedWarning": "Numéro de téléphone détecté et masqué — restez sur la messagerie interne jusqu’à la vérification."
+  },
+  "candidature": {
+    "sentTitle": "Candidature envoyée",
+    "sentMessage": "{{host}} a été notifiée. Vous recevrez une réponse sous 48h — suivez son statut dans vos candidatures ou continuez la conversation.",
+    "viewConversation": "Voir la conversation",
+    "continueSearch": "Continuer la recherche",
+    "title": "Postuler pour cette chambre",
+    "listingSubtitle": "{{titre}} — {{quartier}}, {{ville}} · {{prix}} MAD/mois",
+    "matchTitle": "{{pct}}% de compatibilité avec ce logement",
+    "messageLabel": "Message au·à la colocataire",
+    "messagePlaceholder": "Présentez-vous en quelques lignes : votre situation, vos disponibilités, pourquoi ce logement vous intéresse…",
+    "slotsLabel": "Créneaux de visite qui vous conviennent",
+    "verifiedNotice": "Votre profil est vérifié et votre questionnaire de mode de vie est complet — le·la propriétaire verra votre score de compatibilité dès réception.",
+    "submit": "Envoyer ma candidature"
+  },
+  "candidatures": {
+    "title": "Candidatures reçues",
+    "filters": {
+      "all": "Toutes",
+      "pending": "En attente",
+      "accepted": "Acceptées",
+      "waiting": "Mises en attente"
+    },
+    "actions": {
+      "accept": "Accepter",
+      "wait": "Mettre en attente",
+      "refuse": "Refuser"
+    },
+    "statusBadge": {
+      "waiting": "En attente — vous répondrez après les autres visites",
+      "refused": "Refusée — le candidat a été notifié"
+    },
+    "acceptedPickSlot": "Candidature acceptée — proposez un créneau de visite",
+    "empty": "Aucune candidature dans cette catégorie."
+  },
+  "questionnaire": {
+    "stepIndicator": "Étape {{step}} / {{total}}",
+    "skipForNow": "Passer pour l’instant →",
+    "requiredNotice": "Requis avant de postuler",
+    "back": "Précédent",
+    "answeredCount": "{{answered}}/{{total}} répondues sur cette page",
+    "continueApplication": "Continuer ma candidature",
+    "finishAndSeeRecommendations": "Terminer et voir mes recommandations",
+    "next": "Suivant",
+    "importanceLabel": "Importance",
+    "importance": {
+      "neutral": "Indifférent",
+      "preference": "Préférence",
+      "decisive": "Décisif"
+    },
+    "steps": {
+      "rythme": {
+        "title": "Votre rythme de vie",
+        "intro": "Ça aide à trouver des colocataires sur le même tempo.",
+        "questions": {
+          "coucher": {
+            "label": "Vous vous couchez plutôt…",
+            "options": { "avant22": "Avant 22h", "22h-minuit": "22h–minuit", "apres-minuit": "Après minuit" }
+          },
+          "travail": {
+            "label": "Votre semaine type",
+            "options": { "jour": "Cours/travail le jour", "decale": "Horaires décalés", "teletravail": "Télétravail fréquent" }
+          },
+          "weekend": {
+            "label": "Le week-end, vous êtes plutôt",
+            "options": { "maison": "À la maison", "sorti": "Souvent sorti", "ca-depend": "Ça dépend" }
+          }
+        }
+      },
+      "proprete": {
+        "title": "Propreté et organisation",
+        "intro": "La première source de friction en colocation.",
+        "questions": {
+          "menage": {
+            "label": "Fréquence de ménage des parties communes",
+            "options": { "quotidien": "Quotidien", "2-3-semaine": "2–3×/semaine", "hebdomadaire": "Hebdomadaire" }
+          },
+          "vaisselle": {
+            "label": "La vaisselle, vous la faites",
+            "options": { "immediat": "Immédiatement", "jour-meme": "Le jour même", "beaucoup": "Quand il y en a beaucoup" }
+          }
+        }
+      },
+      "tabac-alcool": {
+        "title": "Tabac et alcool",
+        "intro": "Des critères souvent décisifs, à préciser clairement.",
+        "questions": {
+          "tabac": {
+            "label": "Tabac",
+            "options": { "non-fumeur": "Non-fumeur", "balcon": "Fume au balcon", "interieur": "Fume à l’intérieur" }
+          },
+          "alcool": {
+            "label": "Alcool dans le logement",
+            "options": { "jamais": "Jamais", "occasionnel": "Occasionnellement", "regulier": "Régulièrement" }
+          }
+        }
+      },
+      "invites-bruit": {
+        "title": "Invités et bruit",
+        "intro": "Pour anticiper les attentes sur les parties communes.",
+        "questions": {
+          "invites": {
+            "label": "Invités à la maison",
+            "options": { "rarement": "Rarement", "mensuel": "Quelques fois/mois", "souvent": "Souvent" }
+          },
+          "bruit": {
+            "label": "Musique / appels dans le logement",
+            "options": { "casque": "Casque uniquement", "modere": "Volume modéré", "sans-contrainte": "Pas de contrainte" }
+          }
+        }
+      },
+      "cuisine": {
+        "title": "Cuisine et partage",
+        "intro": "Séparé ou en commun — puis comment les charges se répartissent.",
+        "questions": {
+          "cuisine": {
+            "label": "Cuisine",
+            "options": { "separee": "Séparée", "parfois": "Partagée parfois", "ensemble": "On cuisine ensemble" }
+          },
+          "charges": {
+            "label": "Courses et charges communes",
+            "options": { "chacun": "Chacun le sien", "commune": "Caisse commune", "a-definir": "À définir ensemble" }
+          }
+        }
+      },
+      "sociabilite": {
+        "title": "Sociabilité et langue du foyer",
+        "intro": "Dernière étape avant votre profil de compatibilité.",
+        "questions": {
+          "social": {
+            "label": "Vous cherchez plutôt des colocataires",
+            "options": { "amis": "Amis proches", "voisinage": "Bon voisinage", "peu-importe": "Peu importe" }
+          },
+          "langue": {
+            "label": "Langue de communication au foyer",
+            "options": { "darija": "Darija", "francais": "Français", "indifferent": "Indifférent" }
+          }
+        }
+      }
+    }
+  },
+  "paiement": {
+    "title": "Sécuriser votre place",
+    "subtitle": "{{titre}} · Entrée le {{entree}}",
+    "escrowStatusTitle": "Statut du séquestre",
+    "steps": {
+      "depot": "Fonds déposés",
+      "contrat": "Contrat signé",
+      "etat_lieux": "État des lieux",
+      "liberation": "Fonds libérés"
+    },
+    "escrowNotice": "Les fonds sont conservés sous séquestre et libérés au propriétaire uniquement après confirmation de l’état des lieux d’entrée, ou à l’expiration du délai de rétractation.",
+    "amountDetailTitle": "Détail du montant",
+    "lines": {
+      "loyer": "Premier loyer",
+      "charges": "Charges incluses",
+      "caution": "Caution (1 mois)",
+      "frais_service": "Frais de service (1,5%)"
+    },
+    "totalLabel": "Total à sécuriser",
+    "paymentMethodTitle": "Mode de paiement",
+    "cardTab": "Carte (CMI)",
+    "cashTab": "Espèces",
+    "cardNumberPlaceholder": "Numéro de carte",
+    "expiryPlaceholder": "MM/AA",
+    "cvcPlaceholder": "CVC",
+    "securePaymentNotice": "Paiement sécurisé par CMI — aucune donnée de carte n’est stockée sur la plateforme.",
+    "payButton": "Payer {{amount}} MAD",
+    "cashNotice": "Le propriétaire déclare l’encaissement en espèces ; vous confirmez ensuite pour recevoir une quittance numérique. Aucun montant ne transite par la plateforme.",
+    "cashConfirmedBadge": "Réception confirmée — quittance envoyée",
+    "confirmCashReceipt": "Confirmer la réception de l’encaissement",
+    "cashReceiptConfirmed": "Réception confirmée"
+  },
+  "securite": {
+    "title": "Centre de sécurité",
+    "subtitle": "Signalez un comportement suspect, gérez vos blocages, retrouvez nos conseils.",
+    "reportTitle": "Faire un signalement",
+    "reportTargetQuestion": "Que souhaitez-vous signaler ?",
+    "targets": {
+      "profil": "Un profil",
+      "annonce": "Une annonce",
+      "message": "Un message"
+    },
+    "reasonLabel": "Motif",
+    "reasons": {
+      "avance": "Demande d’avance avant visite",
+      "photo": "Annonce ou photo suspecte",
+      "comportement": "Comportement déplacé",
+      "sortie-plateforme": "Tentative de sortie de la plateforme",
+      "discrimination": "Contenu discriminatoire",
+      "autre": "Autre"
+    },
+    "detailsLabel": "Détails",
+    "detailsPlaceholder": "Décrivez ce qui s’est passé…",
+    "submitReport": "Envoyer le signalement",
+    "reportSent": "Signalement envoyé",
+    "blockedUsersTitle": "Utilisateurs bloqués",
+    "noBlockedUsers": "Aucun utilisateur bloqué.",
+    "unblock": "Débloquer",
+    "safetyTipsTitle": "Conseils de sécurité",
+    "tips": {
+      "tip-avance": "Ne versez jamais d’argent avant d’avoir visité le logement en personne.",
+      "tip-messagerie": "Restez sur la messagerie interne jusqu’à ce que l’identité soit vérifiée des deux côtés.",
+      "tip-badge": "Vérifiez le badge « Vérifié » et l’ancienneté du profil avant d’échanger des informations sensibles.",
+      "tip-paiement": "Signalez toute demande de paiement en dehors du parcours contrat et séquestre."
+    },
+    "verifiedBadgeLabel": "Badge « Vérifié »",
+    "helpTitle": "Besoin d’aide immédiate ?",
+    "helpText": "Notre équipe support répond sous 24h ouvrées.",
+    "contactSupport": "Contacter le support →"
   }
 }

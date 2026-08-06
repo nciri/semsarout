@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Avatar, IconButton, Input } from '../../ds/index.js'
+import { Avatar, Button, Input } from '../../ds/index.js'
 import { listThreads } from '../../services/index.js'
 
 export default function Messaging() {
@@ -23,7 +23,7 @@ export default function Messaging() {
 
   if (!threads) {
     return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', font: 'var(--fw-medium) var(--fs-body) var(--font-body)', color: 'var(--text-muted)' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-card)', font: 'var(--fw-medium) var(--fs-body) var(--font-body)', color: 'var(--text-muted)' }}>
         {t('common:loading')}
       </div>
     )
@@ -39,68 +39,106 @@ export default function Messaging() {
   }
 
   return (
-    <div style={{ flex: 1, display: 'flex', minHeight: 0, background: '#fff' }}>
+    <div style={{ flex: 1, display: 'flex', minHeight: 0, background: 'var(--surface-card)' }}>
       {/* liste des conversations */}
-      <div style={{ width: 320, borderInlineEnd: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '20px 20px 12px' }}>
-          <div style={{ font: 'var(--fw-bold) var(--fs-h2) var(--font-display)', color: 'var(--navy-700)', marginBottom: 12 }}>{t('app:messaging.title')}</div>
-          <Input icon="search" placeholder={t('app:messaging.searchPlaceholder')} />
+      <aside style={{ width: 328, borderInlineEnd: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        <div style={{ padding: '16px 18px 12px', font: 'var(--fw-bold) var(--fs-body) var(--font-display)', color: 'var(--text-heading)' }}>
+          {t('common:nav.messages')}
         </div>
-        <div style={{ overflowY: 'auto', flex: 1 }}>
-          {threads.map((th) => (
+        {threads.map((th) => {
+          const isActive = th.id === active?.id
+          return (
             <button
               key={th.id}
               onClick={() => setActiveId(th.id)}
-              style={{ display: 'flex', gap: 12, alignItems: 'center', width: '100%', padding: '12px 20px', background: th.id === active?.id ? 'var(--navy-50)' : 'transparent', border: 'none', borderBottom: '1px solid var(--gray-100)', cursor: 'pointer', textAlign: 'start' }}
+              style={{
+                textAlign: 'start',
+                border: 0,
+                borderInlineStart: isActive ? '3px solid var(--navy-700)' : '3px solid transparent',
+                background: isActive ? 'var(--navy-50)' : 'transparent',
+                padding: '12px 16px',
+                display: 'flex',
+                gap: 11,
+                cursor: 'pointer',
+                width: '100%',
+                boxSizing: 'border-box',
+              }}
             >
-              <Avatar src={th.avatar} name={th.nom} size={42} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ font: 'var(--fw-semibold) var(--fs-body) var(--font-display)', color: 'var(--text-strong)' }}>{th.nom}</span>
-                  <span style={{ font: 'var(--fw-regular) var(--fs-xs) var(--font-body)', color: 'var(--text-muted)' }}>{th.heure}</span>
+              <Avatar src={th.avatar} name={th.nom} size={38} />
+              <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
+                  <span style={{ font: 'var(--fw-bold) var(--fs-sm) var(--font-display)', color: 'var(--text-heading)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{th.nom}</span>
+                  <span style={{ font: 'var(--fw-regular) var(--fs-xs) var(--font-body)', color: 'var(--text-muted)', flex: 'none' }}>{th.heure}</span>
                 </div>
-                <div style={{ font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{th.dernier}</div>
+                <div style={{ font: 'var(--fw-regular) var(--fs-xs) var(--font-body)', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{th.dernier}</div>
+                {th.annonce && (
+                  <div style={{ font: 'var(--fw-regular) 11.5px var(--font-body)', color: 'var(--text-muted)' }}>{th.annonce}</div>
+                )}
               </div>
             </button>
-          ))}
-        </div>
-      </div>
+          )
+        })}
+      </aside>
       {/* fil de discussion */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <section style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         {active && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 24px', borderBottom: '1px solid var(--border-subtle)' }}>
-              <Avatar src={active.avatar} name={active.nom} showLabel size={40} />
-              <div style={{ display: 'flex', gap: 8 }}>
-                <IconButton icon="phone" label={t('app:messaging.call')} variant="ghost" round />
-                <IconButton icon="video" label={t('app:messaging.video')} variant="ghost" round />
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Avatar src={active.avatar} name={active.nom} size={36} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <div style={{ font: 'var(--fw-bold) var(--fs-sm) var(--font-display)', color: 'var(--text-heading)' }}>{active.nom}</div>
+                {active.annonce && (
+                  <div style={{ font: 'var(--fw-regular) var(--fs-xs) var(--font-body)', color: 'var(--text-muted)' }}>{active.annonce}</div>
+                )}
+              </div>
+              <div style={{ marginInlineStart: 'auto' }}>
+                <Button variant="secondary" size="sm">{t('app:messaging.viewListing')}</Button>
               </div>
             </div>
-            <div style={{ flex: 1, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 12, background: 'var(--bg-page)' }}>
-              {active.messages.map((m, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: m.mine ? 'flex-end' : 'flex-start' }}>
-                  <div style={{ maxWidth: '68%', padding: '10px 14px', borderRadius: m.mine ? '16px 16px 4px 16px' : '16px 16px 16px 4px', background: m.mine ? 'var(--navy-700)' : '#fff', color: m.mine ? '#fff' : 'var(--text-body)', border: m.mine ? 'none' : '1px solid var(--border-subtle)', font: 'var(--fw-regular) var(--fs-body)/1.45 var(--font-body)', boxShadow: 'var(--shadow-xs)' }}>
-                    {m.texte}
-                    <div style={{ font: 'var(--fw-regular) 10px var(--font-body)', color: m.mine ? 'rgba(255,255,255,.6)' : 'var(--text-muted)', textAlign: 'end', marginTop: 4 }}>{m.heure}</div>
+            <div style={{ padding: '10px 20px', background: 'var(--navy-50)', borderBottom: '1px solid var(--navy-100)', font: 'var(--fw-regular) var(--fs-xs) var(--font-body)', color: 'var(--text-body)' }}>
+              🔒 {t('app:messaging.privacyBanner')}
+            </div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12, padding: 20, overflowY: 'auto', minHeight: 360 }}>
+              {active.messages.map((m, i) =>
+                m.flag ? (
+                  <div
+                    key={i}
+                    style={{ alignSelf: 'center', padding: '8px 14px', borderRadius: 10, background: 'var(--amber-100)', color: 'var(--gold-700)', font: 'var(--fw-bold) var(--fs-xs) var(--font-body)', textAlign: 'center', maxWidth: '80%' }}
+                  >
+                    ⚠ {t('app:messaging.phoneDetectedWarning')}
                   </div>
-                </div>
-              ))}
+                ) : (
+                  <div
+                    key={i}
+                    style={{
+                      alignSelf: m.mine ? 'flex-end' : 'flex-start',
+                      maxWidth: '62%',
+                      padding: '11px 14px',
+                      borderRadius: m.mine ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+                      background: m.mine ? 'var(--navy-700)' : 'var(--surface-sunken)',
+                      color: m.mine ? '#fff' : 'var(--text-heading)',
+                      font: 'var(--fw-regular) var(--fs-body)/1.5 var(--font-body)',
+                    }}
+                  >
+                    {m.texte}
+                  </div>
+                ),
+              )}
               <div ref={endRef} />
             </div>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '14px 24px', borderTop: '1px solid var(--border-subtle)' }}>
-              <IconButton icon="plus" label={t('app:messaging.attach')} variant="soft" round />
-              <input
+            <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border-subtle)', display: 'flex', gap: 10 }}>
+              <Input
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && send()}
                 placeholder={t('app:messaging.inputPlaceholder')}
-                style={{ flex: 1, height: 44, padding: '0 16px', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-pill)', outline: 'none', font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-strong)' }}
+                containerStyle={{ flex: 1 }}
               />
-              <IconButton icon="send" label={t('app:messaging.send')} variant="navy" round onClick={send} />
+              <Button onClick={send}>{t('app:messaging.send')}</Button>
             </div>
           </>
         )}
-      </div>
+      </section>
     </div>
   )
 }

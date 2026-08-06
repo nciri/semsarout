@@ -1,17 +1,49 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Button, Chip, Input, ListingCard, Select } from '../../ds/index.js'
+import { Button, Card, Chip, Icon, Input, ListingCard, Select } from '../../ds/index.js'
 import { listListings } from '../../services/index.js'
 
 export default function SearchResults() {
   const { t } = useTranslation(['web', 'common'])
   const [items, setItems] = useState(null)
+  const [verifiedOnly, setVerifiedOnly] = useState(true)
+  const [view, setView] = useState('liste')
   const navigate = useNavigate()
+
+  const typeFilters = t('web:search.typeFilters', { returnObjects: true })
+  const lifestyleChips = t('web:search.lifestyleChips', { returnObjects: true })
+  const sortOptionsDetailed = t('web:search.sortOptionsDetailed', { returnObjects: true })
+  const verifiedFilterChip = t('web:search.verifiedFilterChip')
+
+  const [activeType, setActiveType] = useState(typeFilters[0].label)
+  const [lifestyle, setLifestyle] = useState(() => new Set([lifestyleChips[0], lifestyleChips[1]]))
 
   useEffect(() => {
     listListings().then(setItems)
   }, [])
+
+  const activeFilters = useMemo(() => {
+    const filters = []
+    if (activeType) filters.push(activeType)
+    if (verifiedOnly) filters.push(verifiedFilterChip)
+    filters.push(...lifestyle)
+    return filters
+  }, [activeType, lifestyle, verifiedOnly, verifiedFilterChip])
+
+  const toggleLifestyle = (label) => {
+    setLifestyle((prev) => {
+      const next = new Set(prev)
+      if (next.has(label)) next.delete(label)
+      else next.add(label)
+      return next
+    })
+  }
+
+  const visibleItems = useMemo(() => {
+    if (!items) return items
+    return verifiedOnly ? items.filter((it) => it.verifiee) : items
+  }, [items, verifiedOnly])
 
   if (items === null) {
     return (
@@ -21,54 +53,202 @@ export default function SearchResults() {
     )
   }
 
-  const filterChips = t('web:search.filterChips', { returnObjects: true })
-
   return (
     <div style={{ background: 'var(--bg-page)', minHeight: '100%' }}>
       <div style={{ background: '#fff', borderBottom: '1px solid var(--border-subtle)', padding: '18px 40px' }}>
         <div style={{ maxWidth: 'var(--container-max)', margin: '0 auto', display: 'flex', gap: 12, alignItems: 'end', flexWrap: 'wrap' }}>
-          <div style={{ width: 220 }}><Input label={t('web:search.cityLabel')} icon="map-pin" defaultValue="Casablanca" /></div>
+          <div style={{ width: 220 }}><Input label={t('web:search.cityLabel')} icon="map-pin" defaultValue={t('web:search.locationDefault')} /></div>
           <div style={{ width: 160 }}><Select label={t('web:search.budgetLabel')} options={t('web:search.budgetOptions', { returnObjects: true })} /></div>
           <div style={{ width: 150 }}><Select label={t('web:search.typeLabel')} options={t('web:search.typeOptions', { returnObjects: true })} /></div>
           <div style={{ width: 150 }}><Select label={t('web:search.genderLabel')} options={t('web:search.genderOptions', { returnObjects: true })} /></div>
           <Button variant="primary" style={{ height: 44 }}>{t('web:search.cta')}</Button>
         </div>
       </div>
-      <div style={{ maxWidth: 'var(--container-max)', margin: '0 auto', padding: '24px 40px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-          <div>
-            <h1 style={{ font: 'var(--fw-bold) 24px var(--font-display)', color: 'var(--navy-700)', margin: 0 }}>{t('web:search.title')}</h1>
-            <span style={{ font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-muted)' }}>{t('web:search.resultCount', { count: items.length })}</span>
+
+      <div
+        style={{
+          maxWidth: 'var(--container-max)',
+          margin: '0 auto',
+          padding: '24px 40px 56px',
+          display: 'grid',
+          gridTemplateColumns: '276px minmax(0,1fr)',
+          gap: 28,
+          alignItems: 'start',
+        }}
+      >
+        <aside style={{ position: 'sticky', top: 20 }}>
+          <Card style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ font: 'var(--fw-extrabold) var(--fs-body) var(--font-body)', color: 'var(--text-heading)' }}>{t('web:search.filtersTitle')}</span>
+              <button
+                type="button"
+                onClick={() => { setActiveType(typeFilters[0].label); setLifestyle(new Set()); setVerifiedOnly(false) }}
+                style={{ border: 0, background: 'transparent', color: 'var(--link)', font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)', cursor: 'pointer', padding: 0 }}
+              >
+                {t('web:search.resetFilters')}
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ font: 'var(--fw-extrabold) 12.5px var(--font-body)', letterSpacing: '.02em', color: 'var(--text-heading)' }}>{t('web:search.monthlyBudgetLabel')}</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Input defaultValue="1 500" containerStyle={{ flex: 1 }} />
+                <Input defaultValue="3 000" containerStyle={{ flex: 1 }} />
+              </div>
+              <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>{t('web:search.budgetUnitNote')}</div>
+            </div>
+
+            <div style={{ height: 1, background: 'var(--border-subtle)' }} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ font: 'var(--fw-extrabold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>{t('web:search.housingTypeLabel')}</div>
+              {typeFilters.map((f) => (
+                <label key={f.label} style={{ display: 'flex', gap: 10, alignItems: 'center', font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-body)', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={activeType === f.label}
+                    onChange={() => setActiveType(activeType === f.label ? null : f.label)}
+                    style={{ width: 15, height: 15, accentColor: 'var(--navy-700)' }}
+                  />
+                  {f.label}
+                  <span style={{ marginLeft: 'auto', font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>{f.count}</span>
+                </label>
+              ))}
+            </div>
+
+            <div style={{ height: 1, background: 'var(--border-subtle)' }} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ font: 'var(--fw-extrabold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>{t('web:search.lifestyleLabel')}</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {lifestyleChips.map((label) => (
+                  <Chip key={label} selected={lifestyle.has(label)} onClick={() => toggleLifestyle(label)}>
+                    {label}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ height: 1, background: 'var(--border-subtle)' }} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ font: 'var(--fw-extrabold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>{t('web:search.trustLabel')}</div>
+              <label style={{ display: 'flex', gap: 10, alignItems: 'center', font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-body)', cursor: 'pointer' }}>
+                <input type="checkbox" checked={verifiedOnly} onChange={(e) => setVerifiedOnly(e.target.checked)} style={{ width: 15, height: 15, accentColor: 'var(--navy-700)' }} />
+                {t('web:search.verifiedOnlyLabel')}
+              </label>
+              <label style={{ display: 'flex', gap: 10, alignItems: 'center', font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-body)', cursor: 'pointer' }}>
+                <input type="checkbox" style={{ width: 15, height: 15, accentColor: 'var(--navy-700)' }} />
+                {t('web:search.institutionalPartnerLabel')}
+              </label>
+              <label style={{ display: 'flex', gap: 10, alignItems: 'center', font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-body)', cursor: 'pointer' }}>
+                <input type="checkbox" style={{ width: 15, height: 15, accentColor: 'var(--navy-700)' }} />
+                {t('web:search.onlineContractLabel')}
+              </label>
+            </div>
+          </Card>
+        </aside>
+
+        <section style={{ display: 'flex', flexDirection: 'column', gap: 18, minWidth: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <h1 style={{ margin: 0, font: 'var(--fw-bold) 24px var(--font-display)', color: 'var(--text-heading)', letterSpacing: '-0.02em' }}>
+                {t('web:search.resultsTitle')}
+              </h1>
+              <span style={{ font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-body)' }}>
+                {t('web:search.resultsSubtitle', { count: visibleItems.length })}
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <div style={{ width: 180 }}><Select options={sortOptionsDetailed} /></div>
+              <div style={{ display: 'flex', background: 'var(--surface-sunken)', borderRadius: 8, padding: 3, gap: 3 }}>
+                <button
+                  type="button"
+                  onClick={() => setView('liste')}
+                  style={{
+                    padding: '7px 14px', border: 0, borderRadius: 6, cursor: 'pointer',
+                    background: view === 'liste' ? '#fff' : 'transparent',
+                    color: view === 'liste' ? 'var(--text-heading)' : 'var(--text-muted)',
+                    boxShadow: view === 'liste' ? 'var(--shadow-sm)' : 'none',
+                    font: view === 'liste' ? 'var(--fw-bold) 13.5px var(--font-body)' : 'var(--fw-semibold) 13.5px var(--font-body)',
+                  }}
+                >
+                  {t('web:search.viewListLabel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setView('carte')}
+                  style={{
+                    padding: '7px 14px', border: 0, borderRadius: 6, cursor: 'pointer',
+                    background: view === 'carte' ? '#fff' : 'transparent',
+                    color: view === 'carte' ? 'var(--text-heading)' : 'var(--text-muted)',
+                    boxShadow: view === 'carte' ? 'var(--shadow-sm)' : 'none',
+                    font: view === 'carte' ? 'var(--fw-bold) 13.5px var(--font-body)' : 'var(--fw-semibold) 13.5px var(--font-body)',
+                  }}
+                >
+                  {t('web:search.viewMapLabel')}
+                </button>
+              </div>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <span style={{ font: 'var(--fw-medium) var(--fs-sm) var(--font-body)', color: 'var(--text-muted)' }}>{t('web:search.sortBy')}</span>
-            <div style={{ width: 180 }}><Select options={t('web:search.sortOptions', { returnObjects: true })} /></div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-          {filterChips.map((f, i) => <Chip key={f} selected={i === 0}>{f}</Chip>)}
-        </div>
-        {items.length === 0 ? (
-          <div style={{ padding: '64px 0', textAlign: 'center', font: 'var(--fw-medium) var(--fs-body) var(--font-body)', color: 'var(--text-muted)' }}>
-            {t('web:search.empty')}
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
-            {items.map((it) => (
-              <ListingCard
-                key={it.id}
-                image={it.photos?.[0]}
-                match={it.matchPct}
-                verified={it.verifiee}
-                title={it.titre}
-                city={`${it.quartier}, ${it.ville}`}
-                price={it.prixMad}
-                amenities={it.chips?.map((label) => ({ icon: 'check', label }))}
-                onClick={() => navigate(`/annonce/${it.id}`)}
-              />
-            ))}
-          </div>
-        )}
+
+          {activeFilters.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-muted)' }}>{t('web:search.activeFiltersLabel')}</span>
+              {activeFilters.map((label) => (
+                <span
+                  key={label}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 10px 6px 12px',
+                    borderRadius: 'var(--radius-pill)', background: 'var(--navy-50)', border: '1px solid var(--navy-100)',
+                    color: 'var(--text-heading)', font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)',
+                  }}
+                >
+                  {label}
+                  <span style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>×</span>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {view === 'carte' ? (
+            <div
+              style={{
+                height: 420, borderRadius: 'var(--radius-lg)', background: 'var(--gray-150)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                font: 'var(--fw-medium) var(--fs-body) var(--font-body)', color: 'var(--text-muted)',
+              }}
+            >
+              <Icon name="map" size={20} />
+              {t('web:search.mapComingSoon')}
+            </div>
+          ) : visibleItems.length === 0 ? (
+            <div style={{ padding: '64px 0', textAlign: 'center', font: 'var(--fw-medium) var(--fs-body) var(--font-body)', color: 'var(--text-muted)' }}>
+              {t('web:search.empty')}
+            </div>
+          ) : (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(288px, 1fr))', gap: 20 }}>
+                {visibleItems.map((it) => (
+                  <ListingCard
+                    key={it.id}
+                    image={it.photos?.[0]}
+                    match={it.matchPct}
+                    verified={it.verifiee}
+                    title={it.titre}
+                    city={`${it.quartier}, ${it.ville}`}
+                    price={it.prixMad}
+                    amenities={it.chips?.map((label) => ({ icon: 'check', label }))}
+                    onClick={() => navigate(`/annonce/${it.id}`)}
+                  />
+                ))}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 8 }}>
+                <Button variant="secondary">{t('web:search.loadMore')}</Button>
+              </div>
+            </>
+          )}
+        </section>
       </div>
     </div>
   )

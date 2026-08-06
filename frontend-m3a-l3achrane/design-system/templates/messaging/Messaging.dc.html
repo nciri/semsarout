@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Messagerie" description="Messagerie interne — liste de conversations, fil de discussion, numéros masqués et alerte anti-contournement" -->
+<helmet><script src="./ds-base.js"></script><style>html,body{margin:0}body{font-family:var(--font-body);background:var(--bg-page)}a{color:var(--link);text-decoration:none}</style></helmet>
+<div style="min-height:100vh;background:var(--bg-page);display:flex;flex-direction:column">
+<header style="background:var(--surface-navy);color:var(--text-on-navy);padding:14px 32px;display:flex;align-items:center;gap:24px">
+<div style="font-size:18px;font-weight:800;letter-spacing:-0.02em">M3a-L3chrane</div>
+<a href="../search-results/SearchResults.dc.html" style="color:var(--text-on-navy-muted);font-size:14px">← Recherche</a>
+<a href="../security-center/SecurityCenter.dc.html" style="margin-left:auto;color:var(--text-on-navy-muted);font-size:14px">Centre de sécurité</a>
+</header>
+<div style="flex:1;display:grid;grid-template-columns:328px minmax(0,1fr);max-width:1180px;margin:0 auto;width:100%;box-shadow:var(--shadow-sm);background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:0 0 16px 16px;overflow:hidden">
+<aside style="border-right:1px solid var(--border-subtle);display:flex;flex-direction:column;overflow-y:auto">
+<div style="padding:16px 18px 12px;font-size:15px;font-weight:800;color:var(--text-heading)">Messages</div>
+<sc-for list="{{ convos }}" as="c" hint-placeholder-count="5">
+<sc-if value="{{ c.on }}"><button onClick="{{ c.select }}" style="text-align:left;border:0;background:var(--navy-50);border-left:3px solid var(--navy-700);padding:12px 16px;display:flex;gap:11px;cursor:pointer;width:100%;box-sizing:border-box">
+<div style="width:38px;height:38px;border-radius:50%;background:var(--navy-500);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex:none">{{ c.initials }}</div>
+<div style="min-width:0;display:flex;flex-direction:column;gap:2px;flex:1"><div style="display:flex;justify-content:space-between;gap:6px"><span style="font-size:14px;font-weight:800;color:var(--text-heading);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.name }}</span><span style="font-size:11.5px;color:var(--text-muted);flex:none">{{ c.time }}</span></div><div style="font-size:12.5px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.preview }}</div><div style="font-size:11.5px;color:var(--text-muted)">{{ c.listing }}</div></div>
+</button></sc-if>
+<sc-if value="{{ c.off }}" hint-placeholder-val="{{ true }}"><button onClick="{{ c.select }}" style="text-align:left;border:0;border-left:3px solid transparent;background:transparent;padding:12px 16px;display:flex;gap:11px;cursor:pointer;width:100%;box-sizing:border-box" style-hover="background:var(--gray-100)">
+<div style="width:38px;height:38px;border-radius:50%;background:var(--navy-100);color:var(--navy-700);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex:none">{{ c.initials }}</div>
+<div style="min-width:0;display:flex;flex-direction:column;gap:2px;flex:1"><div style="display:flex;justify-content:space-between;gap:6px"><span style="font-size:14px;font-weight:700;color:var(--text-heading);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.name }}</span><span style="font-size:11.5px;color:var(--text-muted);flex:none">{{ c.time }}</span></div><div style="font-size:12.5px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.preview }}</div><div style="font-size:11.5px;color:var(--text-muted)">{{ c.listing }}</div></div>
+</button></sc-if>
+</sc-for>
+</aside>
+<section style="display:flex;flex-direction:column;min-width:0">
+<div style="padding:14px 20px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:12px">
+<div style="width:36px;height:36px;border-radius:50%;background:var(--navy-500);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:800">{{ active.initials }}</div>
+<div style="display:flex;flex-direction:column;gap:1px"><div style="font-size:14.5px;font-weight:800;color:var(--text-heading)">{{ active.name }}</div><div style="font-size:12px;color:var(--text-muted)">{{ active.listing }}</div></div>
+<div style="margin-left:auto;display:flex;gap:8px">
+<a href="../listing-detail/ListingDetail.dc.html" style="padding:7px 12px;border:1px solid var(--border-subtle);border-radius:8px;font-size:12.5px;font-weight:700;color:var(--text-heading)">Voir l'annonce</a>
+</div>
+</div>
+<div style="padding:10px 20px;background:var(--navy-50);border-bottom:1px solid var(--navy-100);font-size:12.5px;color:var(--text-body)">🔒 Vos numéros et e-mails restent masqués tant que la mise en relation n'est pas acceptée.</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;padding:20px;overflow-y:auto;min-height:360px">
+<sc-for list="{{ messages }}" as="m" hint-placeholder-count="5">
+<sc-if value="{{ m.mine }}"><div style="align-self:flex-end;max-width:62%;padding:11px 14px;border-radius:14px 14px 4px 14px;background:var(--navy-700);color:#fff;font-size:14px;line-height:1.5">{{ m.text }}</div></sc-if>
+<sc-if value="{{ m.theirs }}" hint-placeholder-val="{{ true }}"><div style="align-self:flex-start;max-width:62%;padding:11px 14px;border-radius:14px 14px 14px 4px;background:var(--surface-sunken);color:var(--text-heading);font-size:14px;line-height:1.5">{{ m.text }}</div></sc-if>
+<sc-if value="{{ m.flag }}"><div style="align-self:center;padding:8px 14px;border-radius:10px;background:var(--amber-100);color:#7a5613;font-size:12.5px;font-weight:700;text-align:center;max-width:80%">⚠ Numéro de téléphone détecté et masqué — restez sur la messagerie interne jusqu'à la vérification.</div></sc-if>
+</sc-for>
+</div>
+<div style="padding:14px 20px;border-top:1px solid var(--border-subtle);display:flex;gap:10px">
+<input value="Écrivez votre message…" style="flex:1;padding:12px 14px;border:1px solid var(--border-subtle);border-radius:9px;font-size:14.5px;color:var(--text-heading);outline:none" style-focus="border-color:var(--border-focus)">
+<button style="padding:12px 20px;border:0;border-radius:9px;background:var(--navy-700);color:#fff;font-size:14px;font-weight:800;cursor:pointer" style-hover="background:var(--navy-600)">Envoyer</button>
+</div>
+</section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const CONVOS = [
+  { initials: 'HB', name: 'Hajar B.', preview: 'Bien sûr, la visite est possible samedi', listing: 'Chambre — Maârif, Casablanca', time: '14:02' },
+  { initials: 'YB', name: 'Yasmine Berrada', preview: 'Merci pour votre candidature !', listing: 'Villa Anfa — coloc 5 chambres', time: '11:20' },
+  { initials: 'RA', name: 'Rachid Amrani', preview: 'Vous : Le loyer inclut bien internet ?', listing: 'Résidence Al Manar', time: 'Hier' },
+  { initials: 'SO', name: 'Salma Ouazzani', preview: 'Parfait, à bientôt alors', listing: 'Chambre — ISCAE, Casablanca', time: 'Lun.' },
+  { initials: 'MB', name: 'Mme Bennani (partenaire)', preview: 'Votre statut étudiant a été vérifié', listing: 'Vérification affiliation', time: '02/08' }
+];
+const THREAD = [
+  { text: 'Bonjour, votre chambre est-elle toujours disponible pour le 1er septembre ?', theirs: false, mine: true },
+  { text: 'Bonjour ! Oui tout à fait, elle est libre à partir du 1er septembre.', mine: false, theirs: true },
+  { text: 'Vous pouvez me joindre au 06XXXXXXXX pour en discuter ?', mine: false, theirs: true, flag: true },
+  { text: 'Je préfère qu’on continue ici pour l’instant, c’est plus simple pour le suivi 🙂 Une visite samedi serait possible ?', theirs: false, mine: true },
+  { text: 'Bien sûr, la visite est possible samedi, je vous propose 15h.', mine: false, theirs: true }
+];
+class Component extends DCLogic {
+  state = { sel: 0 };
+  renderVals() {
+    const { sel } = this.state;
+    return {
+      convos: CONVOS.map((c, i) => ({ ...c, on: i === sel, off: i !== sel, select: () => this.setState({ sel: i }) })),
+      active: CONVOS[sel],
+      messages: THREAD.map(m => ({ ...m, flag: !!m.flag }))
+    };
+  }
+}
+</script>
+</body>
+</html>

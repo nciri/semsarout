@@ -1,0 +1,85 @@
+/* Colors — derived from uploads/layout.png.
+   Navy is the trust anchor, gold is the single warm accent, green is verification. */
+:root {
+  /* Brand navy scale */
+  --navy-900: #0f1a38;
+  --navy-800: #14203f;
+  --navy-700: #1b2a52;   /* primary brand navy (header, primary buttons) */
+  --navy-600: #24356a;
+  --navy-500: #33478a;
+  --navy-400: #5568a5;
+  --navy-300: #8593bd;
+  --navy-200: #bcc5dc;
+  --navy-100: #e4e8f2;
+  --navy-50:  #f2f4fa;
+
+  /* Gold accent scale */
+  --gold-700: #c98a1e;
+  --gold-600: #e0a233;
+  --gold-500: #efb24d;   /* primary accent (S'inscrire, highlight word) */
+  --gold-400: #f4c470;
+  --gold-200: #fbe6bd;
+  --gold-100: #fdf3dd;
+
+  /* Semantic — success / verified (green) */
+  --green-700: #1c9460;
+  --green-600: #23a86e;
+  --green-500: #2bb673;  /* verified badge, compatibility ring */
+  --green-100: #dcf4e8;
+  --green-50:  #eef9f3;
+
+  /* Semantic — warning / danger / info */
+  --amber-500: #e79b2b;
+  --amber-100: #fbeccf;
+  --red-600:   #d64545;
+  --red-500:   #e05656;
+  --red-100:   #fbe0e0;
+  --info-500:  #3b7fd4;
+  --info-100:  #dfeaf9;
+
+  /* Neutrals */
+  --white: #ffffff;
+  --gray-50:  #f7f8fb;
+  --gray-100: #f1f3f7;
+  --gray-150: #eaedf3;
+  --gray-200: #e3e7ef;
+  --gray-300: #d3d9e4;
+  --gray-400: #b0b8c9;
+  --gray-500: #8a93a6;
+  --gray-600: #626c80;
+  --gray-700: #4a5568;
+  --gray-800: #2f3a52;
+  --gray-900: #1a2338;
+
+  /* ---- Semantic aliases ---- */
+  --brand-primary: var(--navy-700);
+  --brand-primary-hover: var(--navy-800);
+  --brand-accent: var(--gold-500);
+  --brand-accent-hover: var(--gold-600);
+
+  --bg-page: var(--gray-50);
+  --bg-page-alt: var(--navy-50);
+  --surface-card: var(--white);
+  --surface-sunken: var(--gray-100);
+  --surface-navy: var(--navy-700);
+  --surface-navy-deep: var(--navy-900);
+
+  --text-strong: var(--navy-700);
+  --text-heading: var(--navy-700);
+  --text-body: var(--gray-700);
+  --text-muted: var(--gray-500);
+  --text-on-navy: #ffffff;
+  --text-on-navy-muted: #b9c3dd;
+  --text-on-accent: var(--navy-800);
+
+  --border-subtle: var(--gray-200);
+  --border-default: var(--gray-300);
+  --border-strong: var(--gray-400);
+  --border-focus: var(--navy-500);
+
+  --verified: var(--green-500);
+  --verified-bg: var(--green-100);
+
+  --link: var(--navy-600);
+  --link-hover: var(--navy-800);
+}

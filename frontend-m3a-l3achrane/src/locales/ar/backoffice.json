@@ -1,0 +1,218 @@
+{
+  "sidebar": {
+    "brand": "معا لعشران",
+    "brandTag": "الإدارة الخلفية",
+    "nav": {
+      "overview": { "label": "نظرة عامة", "title": "نظرة عامة", "subtitle": "نشاط المنصة — آخر 30 يومًا" },
+      "verif": { "label": "التحقّقات", "title": "التحقّق من الهوية", "subtitle": "قائمة التحقّق — بطاقة التعريف، الصفة الطلابية، شهادة العمل" },
+      "listings": { "label": "الإعلانات", "title": "مراقبة الإعلانات", "subtitle": "مراقبة الجودة ومطابقة السكنات المنشورة" },
+      "users": { "label": "المستخدمون", "title": "المستخدمون", "subtitle": "الباحثون والمضيفون والشركاء المؤسسيون" },
+      "contracts": { "label": "العقود والمدفوعات", "title": "العقود والمدفوعات", "subtitle": "عقود موقّعة عبر الإنترنت وودائع ضمان محفوظة" },
+      "reports": { "label": "البلاغات", "title": "البلاغات", "subtitle": "النزاعات والمحتوى المُبلّغ عنه من المجتمع" },
+      "settings": { "label": "الإعدادات", "title": "الإعدادات", "subtitle": "قواعد المطابقة، الفريق والصلاحيات" }
+    },
+    "queueNote": {
+      "title": "قائمة التحقّق",
+      "body": "متوسط مدة المعالجة: 4 س 12 د. الهدف الداخلي أقل من 6 س."
+    }
+  },
+  "header": {
+    "searchPlaceholder": "ابحث عن ملف شخصي أو إعلان أو عقد…",
+    "export": "تصدير",
+    "newAction": "إجراء جديد"
+  },
+  "kpi": {
+    "vsPeriod": "مقارنة بـ 30 يومًا"
+  },
+  "overview": {
+    "kpis": {
+      "verified-profiles": "الملفات الموثّقة",
+      "active-listings": "الإعلانات النشطة",
+      "matches": "المطابقات",
+      "verif-delay": "مدة التحقّق"
+    },
+    "matchesCard": {
+      "title": "المطابقات المؤكَّدة",
+      "period": "آخر 12 أسبوعًا"
+    },
+    "todoCard": {
+      "title": "للمعالجة اليوم",
+      "open": "فتح"
+    },
+    "activityLog": {
+      "title": "سجلّ النشاط",
+      "timezoneNote": "التوقيت UTC+1 — الدار البيضاء"
+    },
+    "status": {
+      "validated": "مصادَق عليه",
+      "rejected": "مرفوض",
+      "in_progress": "قيد المعالجة"
+    }
+  },
+  "verif": {
+    "tabs": {
+      "pending": "قيد الانتظار",
+      "relaunched": "معاد إرسالها",
+      "rejected": "مرفوضة",
+      "validated": "مصادَق عليها"
+    },
+    "pendingCount_one": "ملف واحد قيد الانتظار",
+    "pendingCount_other": "{{count}} ملفات قيد الانتظار",
+    "documentPreview": "معاينة الوثيقة — {{doc}}",
+    "documentPreviewNote": "(وثيقة مشفَّرة، تظهر لمدة 15 دقيقة)",
+    "notePlaceholder": "ملاحظة داخلية (مرئية لفريق المطابقة فقط)",
+    "validate": "تصديق الملف الشخصي",
+    "reject": "رفض",
+    "checks": {
+      "c1": "وضوح الوثيقة",
+      "c2": "تطابق الاسم واللقب",
+      "c3": "الصلاحية (تاريخ الانتهاء)",
+      "c4": "تطابق الصورة الذاتية"
+    },
+    "checkStatus": {
+      "ok": "مطابق",
+      "warn": "يستوجب التحقّق"
+    }
+  },
+  "listings": {
+    "columns": {
+      "listing": "الإعلان",
+      "city": "المدينة",
+      "rent": "الإيجار",
+      "host": "المضيف",
+      "status": "الحالة",
+      "action": "إجراء"
+    },
+    "review": "مراجعة",
+    "pagination": "1 – {{shown}} من أصل {{total}} إعلانًا",
+    "prev": "السابق",
+    "next": "التالي",
+    "status": {
+      "published": "منشورة",
+      "review": "قيد المراجعة",
+      "unpublished": "غير منشورة"
+    }
+  },
+  "users": {
+    "stats": {
+      "active-accounts": "الحسابات النشطة",
+      "seekers": "الباحثون",
+      "hosts": "المضيفون",
+      "partners": "الشركاء"
+    },
+    "columns": {
+      "user": "المستخدم",
+      "role": "الصفة",
+      "joined": "تاريخ التسجيل",
+      "verification": "التحقّق",
+      "flags": "البلاغات",
+      "action": "إجراء"
+    },
+    "openProfile": "الملف",
+    "verification": {
+      "verified": "موثّق",
+      "pending": "قيد الانتظار",
+      "suspended": "موقوف"
+    }
+  },
+  "contracts": {
+    "money": {
+      "escrow": "الودائع المحفوظة",
+      "commissions": "عمولات الشهر",
+      "disputes": "النزاعات المفتوحة"
+    },
+    "columns": {
+      "contract": "العقد",
+      "parties": "الأطراف",
+      "period": "المدة",
+      "deposit": "الوديعة",
+      "status": "الحالة",
+      "action": "إجراء"
+    },
+    "detail": "التفاصيل",
+    "status": {
+      "active": "نشط",
+      "signature": "بانتظار التوقيع",
+      "litigation": "نزاع",
+      "closed": "مُنهى"
+    }
+  },
+  "reports": {
+    "reportedBy": "تم الإبلاغ من طرف {{name}}",
+    "dismiss": "تصنيف",
+    "process": "معالجة",
+    "priority": {
+      "urgent": "ذو أولوية",
+      "normal": "عادي"
+    }
+  },
+  "settings": {
+    "matchingRulesTitle": "قواعد المطابقة",
+    "teamTitle": "الفريق والصلاحيات",
+    "inviteMember": "دعوة عضو",
+    "rules": {
+      "rule-min-score": { "label": "الحد الأدنى لدرجة التوافق", "desc": "إخفاء الإعلانات التي تقل نسبة توافقها عن 55% من نتائج الباحث." },
+      "rule-verif-required": { "label": "التحقّق إلزامي قبل التواصل", "desc": "يجب أن يتوفّر الباحث على بطاقة تعريف مصادَق عليها لفتح محادثة." },
+      "rule-auto-publish": { "label": "النشر التلقائي للإعلانات", "desc": "النشر دون مراجعة بشرية إذا كان لدى المضيف 3 عقود مُنهاة دون نزاع." },
+      "rule-escrow": { "label": "حجز وديعة الضمان", "desc": "حجز الوديعة إلى حين تأكيد حالة السكن من الطرفين." }
+    }
+  },
+  "roomAssignment": {
+    "kicker": "التسيير الإيجاري",
+    "title": "توزيع الغرف",
+    "export": "تصدير المخطط",
+    "autoFill": "توزيع تلقائي",
+    "occupied": "{{count}}/{{total}} مشغولة",
+    "kpis": {
+      "occupation": "الإشغال",
+      "occupationNote_one": "غرفة واحدة شاغرة",
+      "occupationNote_other": "{{count}} غرف شاغرة",
+      "avgCompatibility": "متوسط التوافق",
+      "avgCompatibilityNote": "على الأماكن الموزَّعة",
+      "avgCommute": "متوسط مدة التنقّل",
+      "avgCommuteValue": "16 د",
+      "avgCommuteNote": "نحو المدرسة أو الجامعة أو الشركة",
+      "waitingCandidates": "المترشّحون في الانتظار",
+      "waitingCandidatesNote": "ملفات موثّقة"
+    },
+    "planTitle": "مخطط العقار",
+    "planHintSelected": "تم اختيار {{name}} — كل غرفة تعرض درجة توافقها",
+    "planHintEmpty": "اختر مترشّحًا لعرض درجات التوافق حسب الغرفة",
+    "candidatesTitle": "المترشّحون المقترَحون",
+    "candidatesHint": "مرتّبون حسب متوسط التوافق مع هذا العقار والقرب من {{anchor}}.",
+    "sorts": {
+      "compatibility": "التوافق",
+      "proximity": "القرب",
+      "name": "الاسم"
+    },
+    "room": {
+      "perMonth": "/ شهريًا",
+      "freeRoomLine1": "غرفة شاغرة",
+      "freeRoomLine2": "اختر مترشّحًا على اليمين",
+      "bestCandidate": "أفضل مترشّح: {{name}} ({{score}}%)",
+      "noCandidateAvailable": "لا يوجد مترشّح متاح",
+      "compatibilityBadge": "توافق بنسبة {{score}}%",
+      "releaseRoom": "تحرير الغرفة",
+      "bestSuggestion": "أفضل اقتراح",
+      "placeHere": "التنصيب هنا",
+      "withCandidate": "مع {{name}}",
+      "reasonHigh": "نمط حياة وميزانية متوافقان، ومسافة قصيرة نحو {{anchor}}.",
+      "reasonMid": "توافق عام جيد؛ فارق طفيف في الميزانية أو التوقيت.",
+      "reasonLow": "توافق ضعيف: نمط الحياة أو مدة التنقّل غير مناسبين."
+    },
+    "candidateCard": {
+      "placed": "تم التنصيب · {{room}}",
+      "commuteBudget": "{{commute}} · الميزانية {{budget}}",
+      "chooseRoom": "اختر غرفة من المخطط ←"
+    },
+    "sidebarNav": {
+      "dashboard": "لوحة التحكّم",
+      "verifications": "التحقّقات",
+      "listings": "الإعلانات",
+      "assignments": "التوزيعات",
+      "users": "المستخدمون",
+      "contracts": "العقود",
+      "reports": "البلاغات"
+    }
+  }
+}
