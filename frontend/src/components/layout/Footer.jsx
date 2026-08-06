@@ -27,7 +27,7 @@ function Footer() {
             <p className="text-sm mb-4 max-w-xs">
               {t('common:footer.tagline')}
             </p>
-            <div className="flex space-x-4">
+            <div className="flex gap-4">
               {SOCIAL_NETWORKS.map(({ icon: Icon, name }) => (
                 <span
                   key={name}

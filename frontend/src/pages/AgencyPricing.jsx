@@ -8,9 +8,11 @@ import { DIRHAM_SYMBOL, formatPrice } from '../utils/currency'
 import { CONTACT } from '../constants/contact'
 import { PRICING } from '../constants/pricing'
 import DirIcon from '../components/common/DirIcon'
+import { useFormat } from '../utils/format'
 
 function AgencyPricing() {
   const { t } = useTranslation(['public'])
+  const { fmtNumber } = useFormat()
   const [billingCycle, setBillingCycle] = useState('yearly')
 
   const { data: plans } = useQuery('subscription-plans', async () => {
@@ -163,7 +165,7 @@ function AgencyPricing() {
                   <div className="mb-6">
                     <div className="flex items-baseline">
                       <span className="text-4xl font-bold text-gray-900">
-                        {getMonthlyEquivalent(plan).toLocaleString()}
+                        {fmtNumber(getMonthlyEquivalent(plan))}
                       </span>
                       <span className="text-gray-600 ms-2">
                         {DIRHAM_SYMBOL}{t('public:agencyPricing.perMonthSuffix')}

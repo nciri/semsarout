@@ -1,0 +1,181 @@
+{
+  "shared": {
+    "title": "المشرف العام",
+    "nav": {
+      "overview": "نظرة عامة",
+      "accounts": "الحسابات",
+      "activity": "النشاط",
+      "sharedArtisans": "الحرفيون المشتركون",
+      "products": "المنتجات",
+      "orders": "الطلبات"
+    },
+    "loading": "جارٍ التحميل…",
+    "back": "رجوع"
+  },
+  "overview": {
+    "title": "نظرة عامة",
+    "kpi": {
+      "users": "المستخدمون",
+      "agencies": "الوكالات",
+      "mrrEstimate": "الإيراد الشهري المقدر (درهم)",
+      "signups30d": "التسجيلات خلال 30 يومًا",
+      "suspended": "الحسابات الموقوفة",
+      "pendingPurge": "بانتظار الحذف النهائي"
+    },
+    "activeSubscriptions": "الاشتراكات النشطة",
+    "none": "لا يوجد."
+  },
+  "accounts": {
+    "title": "الحسابات",
+    "searchPlaceholder": "بحث…",
+    "filterType": {
+      "all": "جميع الأنواع",
+      "user": "المستخدمون",
+      "agency": "الوكالات"
+    },
+    "filterStatus": {
+      "all": "جميع الحالات",
+      "active": "نشطة",
+      "suspended": "موقوفة",
+      "deleted": "محذوفة"
+    },
+    "table": {
+      "name": "الاسم",
+      "type": "النوع",
+      "plan": "الباقة",
+      "listings": "الإعلانات",
+      "status": "الحالة"
+    },
+    "typeLabel": {
+      "user": "مستخدم",
+      "agency": "وكالة"
+    },
+    "status": {
+      "active": "نشط",
+      "suspended": "موقوف",
+      "deleted": "محذوف"
+    }
+  },
+  "accountDetail": {
+    "back": "رجوع",
+    "statusPrefix": "الحالة:",
+    "deletedNotice": "تم الحذف في {{date}} — قابل للاستعادة لمدة 90 يومًا.",
+    "impersonateButton": "الدخول باسم هذا المستخدم",
+    "dangerZone": {
+      "title": "منطقة الخطر",
+      "suspend": "إيقاف",
+      "unsuspend": "إعادة التفعيل",
+      "delete": "حذف",
+      "restore": "استعادة",
+      "anonymize": "إخفاء الهوية (RGPD)"
+    },
+    "toasts": {
+      "suspended": "تم الإيقاف",
+      "reactivated": "تمت إعادة التفعيل",
+      "deleted": "تم الحذف",
+      "restored": "تمت الاستعادة",
+      "anonymized": "تم إخفاء الهوية",
+      "error": "خطأ"
+    },
+    "activity": {
+      "title": "النشاط",
+      "empty": "لا يوجد نشاط."
+    }
+  },
+  "orders": {
+    "title": "الطلبات",
+    "table": {
+      "reference": "المرجع",
+      "agency": "الوكالة",
+      "total": "المجموع",
+      "status": "الحالة"
+    },
+    "empty": "لا توجد طلبات.",
+    "toasts": {
+      "updated": "تم تحديث الحالة",
+      "error": "خطأ"
+    },
+    "status": {
+      "pending": "قيد الانتظار",
+      "paid": "مدفوعة",
+      "preparing": "قيد التحضير",
+      "shipped": "تم الشحن",
+      "delivered": "تم التسليم",
+      "cancelled": "ملغاة"
+    }
+  },
+  "products": {
+    "title": "كتالوج المنتجات",
+    "table": {
+      "name": "الاسم",
+      "price": "السعر",
+      "stock": "المخزون",
+      "active": "نشط"
+    },
+    "empty": "لا توجد منتجات.",
+    "addTitle": "إضافة منتج",
+    "fields": {
+      "name": "الاسم *",
+      "price": "السعر (درهم)",
+      "stock": "المخزون",
+      "imageUrl": "رابط الصورة",
+      "description": "الوصف"
+    },
+    "addButton": "إضافة",
+    "toasts": {
+      "added": "تمت إضافة المنتج",
+      "deleted": "تم الحذف",
+      "error": "خطأ"
+    },
+    "categories": {
+      "lit": "سرير",
+      "canape": "أريكة",
+      "table": "طاولة",
+      "armoire": "خزانة",
+      "chaise": "كرسي",
+      "bureau": "مكتب",
+      "refrigerateur": "ثلاجة",
+      "lave_linge": "غسالة",
+      "four": "فرن",
+      "micro_ondes": "ميكروويف",
+      "climatiseur": "مكيف هواء",
+      "television": "تلفاز"
+    }
+  },
+  "sharedArtisans": {
+    "title": "كتالوج الحرفيين المشترك",
+    "table": {
+      "name": "الاسم",
+      "trade": "المهنة",
+      "city": "المدينة"
+    },
+    "empty": "لا يوجد حرفيون مشتركون.",
+    "addTitle": "إضافة إلى الكتالوج",
+    "fields": {
+      "name": "الاسم *",
+      "company": "الشركة",
+      "city": "المدينة",
+      "phone": "الهاتف",
+      "email": "البريد الإلكتروني"
+    },
+    "addButton": "إضافة",
+    "toasts": {
+      "added": "تمت إضافة الحرفي المشترك",
+      "deleted": "تم الحذف",
+      "error": "خطأ"
+    },
+    "trades": {
+      "plombier": "سباك",
+      "electricien": "كهربائي",
+      "menage": "تنظيف",
+      "menuisier": "نجار",
+      "peintre": "دهان",
+      "archi_interieur": "مهندس ديكور داخلي",
+      "macon": "بناء",
+      "chauffagiste": "فني تدفئة",
+      "serrurier": "قفال",
+      "jardinier": "بستاني",
+      "autre": "أخرى"
+    }
+  }
+}

@@ -1,7 +1,10 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 /** CompatibilityRing — animated circular gauge for the compatibility score. */
-export function CompatibilityRing({ value = 85, size = 140, stroke = 12, label = "Excellente compatibilité", style }) {
+export function CompatibilityRing({ value = 85, size = 140, stroke = 12, label, style }) {
+  const { t } = useTranslation();
+  const ringLabel = label ?? t("trust.compatibility");
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
   const [shown, setShown] = React.useState(0);
@@ -21,7 +24,7 @@ export function CompatibilityRing({ value = 85, size = 140, stroke = 12, label =
           <span style={{ font: `var(--fw-extrabold) ${Math.round(size * 0.26)}px/1 var(--font-display)`, color: "var(--text-strong)" }}>{value}%</span>
         </div>
       </div>
-      {label && <span style={{ font: "var(--fw-semibold) var(--fs-body) var(--font-display)", color: "var(--text-strong)", textAlign: "center" }}>{label}</span>}
+      {ringLabel && <span style={{ font: "var(--fw-semibold) var(--fs-body) var(--font-display)", color: "var(--text-strong)", textAlign: "center" }}>{ringLabel}</span>}
     </div>
   );
 }

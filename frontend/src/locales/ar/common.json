@@ -1,6 +1,12 @@
 {
-  "language": { "fr": "الفرنسية", "ar": "العربية" },
-  "actions": { "search": "بحث...", "logout": "تسجيل الخروج" },
+  "language": {
+    "fr": "الفرنسية",
+    "ar": "العربية"
+  },
+  "actions": {
+    "search": "بحث...",
+    "logout": "تسجيل الخروج"
+  },
   "footer": {
     "tagline": "العقارات دون وسطاء مشبوهين. بيعوا واستأجروا وأدروا عقاركم بسعر ثابت، دون عمولة، بمرافقة احترافية.",
     "comingSoon": "قريباً",
@@ -11,10 +17,10 @@
     "freeEstimate": "تقييم مجاني",
     "buyProperty": "شراء عقار",
     "mortgageSimulator": "محاكي القرض العقاري",
-    "rentTitle": "إيجار",
-    "listForRent": "عرض للإيجار",
-    "fullPropertyManagement": "إدارة إيجارية كاملة",
-    "shortTermRental": "إيجار قصير المدى",
+    "rentTitle": "كراء",
+    "listForRent": "عرض للكراء",
+    "fullPropertyManagement": "إدارة كرائية كاملة",
+    "shortTermRental": "كراء قصير المدى",
     "rentProperty": "استئجار عقار",
     "professionalsTitle": "محترفون",
     "partnerAgencies": "وكالات شريكة",
@@ -36,7 +42,7 @@
     "urgent": "عاجل",
     "premium": "مميز",
     "sale": "بيع",
-    "rent": "إيجار",
+    "rent": "كراء",
     "compareAria": "مقارنة",
     "compareTitle": "إضافة إلى المقارنة",
     "favoriteAria": "مفضلة",
@@ -65,7 +71,7 @@
   },
   "nav": {
     "buy": "شراء",
-    "rent": "إيجار",
+    "rent": "كراء",
     "newPrograms": "برامج جديدة",
     "agencies": "وكالات",
     "ourServices": "خدماتنا",
@@ -79,7 +85,7 @@
       "activity": "النشاط",
       "search": "البحث",
       "clientRelations": "علاقات العملاء",
-      "shortTermRental": "الإيجار قصير المدى",
+      "shortTermRental": "الكراء قصير المدى",
       "administration": "الإدارة",
       "superAdmin": "المشرف العام"
     },
@@ -103,7 +109,7 @@
     "aiPlaceholder": "مثال: شقة من 3 غرف مع تراس في الدار البيضاء، قريبة من المدارس، بميزانية أقصاها 1.5 مليون {{currency}}...",
     "aiTooltip": "في الإصدار 2، سيفهم الذكاء الاصطناعي طلبك بلغة طبيعية ويجد العقارات المطابقة.",
     "buy": "شراء",
-    "rent": "إيجار",
+    "rent": "كراء",
     "cityPlaceholderCompact": "المدينة، الحي...",
     "cityPlaceholderFull": "المدينة أو الحي",
     "location": "الموقع",
@@ -254,7 +260,7 @@
   "widgets": {
     "titles": {
       "financial": "التمويل",
-      "pipeline": "خط المبيعات",
+      "pipeline": "مسار الصفقات",
       "hot_leads": "العملاء المحتملون",
       "listings": "الإعلانات",
       "market": "السوق",
@@ -264,11 +270,66 @@
     },
     "seeMore": "المزيد",
     "noAlerts": "لا يوجد ما يستدعي الإشارة إليه",
-    "pipelineWeighted": "خط المبيعات المرجّح {{amount}}",
+    "pipelineWeighted": "المسار المُرجَّح {{amount}}",
     "dealsOpen": "{{count}} صفقة مفتوحة",
     "leadsOverdue": "{{count}} متأخر",
     "listingsViews": "{{count}} مشاهدة",
     "marketDaysOnMarket": "{{count}} يوم في السوق",
     "teamSeats": "المقاعد {{used}}/{{limit}}"
+  },
+  "applicationStatus": {
+    "received": "مستلَم",
+    "reviewing": "قيد الدراسة",
+    "shortlist": "في القائمة المختصرة",
+    "accepted": "مقبول",
+    "rejected": "مرفوض",
+    "withdrawn": "مسحوب"
+  },
+  "docStatus": {
+    "received": "مستلَمة",
+    "validated": "مصادَق عليها",
+    "rejected": "مرفوضة"
+  },
+  "docTypes": {
+    "cin": "بطاقة التعريف الوطنية (CIN)",
+    "bulletin_salaire": "كشف الراتب",
+    "contrat_travail": "عقد العمل",
+    "avis_impot": "الإشعار الضريبي",
+    "garant": "وثيقة الضامن",
+    "autre": "أخرى"
+  },
+  "messaging": {
+    "replyPlaceholder": "اكتب ردًا..."
+  },
+  "address": {
+    "label": "العنوان الكامل",
+    "placeholder": "عنوان المشروع"
+  },
+  "map": {
+    "agency": {
+      "empty": "لا توجد وكالة تتوفر على إحداثيات جغرافية",
+      "verified": "موثّقة",
+      "viewAgency": "عرض الوكالة",
+      "count_one": "{{count}} وكالة على الخريطة",
+      "count_other": "{{count}} وكالات على الخريطة",
+      "activeListings_one": "{{count}} إعلان نشط",
+      "activeListings_other": "{{count}} إعلانات نشطة"
+    },
+    "property": {
+      "empty": "لا يوجد أي إعلان يتوفر على إحداثيات جغرافية",
+      "sale": "بيع",
+      "rent": "كراء",
+      "perMonth": "/شهر",
+      "count_one": "{{count}} عقار على الخريطة",
+      "count_other": "{{count}} عقارات على الخريطة",
+      "bedroomsAbbr": "غرف"
+    }
+  },
+  "compareBar": {
+    "selectedCount_one": "{{count}} عقار محدد",
+    "selectedCount_other": "{{count}} عقارات محددة",
+    "max": " (بحد أقصى {{count}})",
+    "clear": "مسح",
+    "compare": "مقارنة"
   }
 }

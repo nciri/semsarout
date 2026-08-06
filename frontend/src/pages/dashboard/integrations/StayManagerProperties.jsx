@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { Trans, useTranslation } from 'react-i18next'
 import {
   FiArrowLeft,
   FiLink,
@@ -13,11 +14,15 @@ import {
   FiChevronDown
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
+import DirIcon from '../../../components/common/DirIcon'
+import { useFormat } from '../../../utils/format'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
 
 export default function StayManagerProperties() {
+  const { t } = useTranslation(['dashboard', 'common'])
   const { token } = useAuthStore()
+  const { fmtDate } = useFormat()
   const [loading, setLoading] = useState(true)
   const [propertyLinks, setPropertyLinks] = useState([])
   const [availableProperties, setAvailableProperties] = useState([])
@@ -71,7 +76,7 @@ export default function StayManagerProperties() {
       setMyProperties(propertiesData.properties || [])
 
     } catch (err) {
-      setError('Erreur lors du chargement des donnees')
+      setError(t('dashboard:stayManager.properties.errors.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -80,7 +85,7 @@ export default function StayManagerProperties() {
   const handleLink = async (e) => {
     e.preventDefault()
     if (!selectedSemsarProperty || !selectedStayManagerProperty) {
-      setError('Veuillez selectionner les deux proprietes')
+      setError(t('dashboard:stayManager.properties.errors.selectBoth'))
       return
     }
 
@@ -102,10 +107,10 @@ export default function StayManagerProperties() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors du lien')
+        throw new Error(data.error || t('dashboard:stayManager.properties.errors.linkFailed'))
       }
 
-      setSuccess('Bien lie avec succes')
+      setSuccess(t('dashboard:stayManager.properties.messages.linked'))
       setShowLinkForm(false)
       setSelectedSemsarProperty('')
       setSelectedStayManagerProperty('')
@@ -118,7 +123,7 @@ export default function StayManagerProperties() {
   }
 
   const handleUnlink = async (propertyId) => {
-    if (!confirm('Etes-vous sur de vouloir supprimer ce lien? Les reservations deja synchronisees seront conservees.')) {
+    if (!confirm(t('dashboard:stayManager.properties.confirmUnlink'))) {
       return
     }
 
@@ -132,11 +137,11 @@ export default function StayManagerProperties() {
       })
 
       if (response.ok) {
-        setSuccess('Lien supprime')
+        setSuccess(t('dashboard:stayManager.properties.messages.unlinked'))
         fetchData()
       }
     } catch (err) {
-      setError('Erreur lors de la suppression')
+      setError(t('dashboard:stayManager.properties.errors.unlinkFailed'))
     }
   }
 
@@ -154,13 +159,16 @@ export default function StayManagerProperties() {
       const data = await response.json()
 
       if (response.ok) {
-        setSuccess(`Synchronisation terminee: ${data.items_created} crees, ${data.items_updated} mis a jour`)
+        setSuccess(t('dashboard:stayManager.properties.messages.syncComplete', {
+          created: data.items_created,
+          updated: data.items_updated
+        }))
         fetchData()
       } else {
-        setError(data.error || 'Erreur de synchronisation')
+        setError(data.error || t('dashboard:stayManager.properties.errors.syncFailed'))
       }
     } catch (err) {
-      setError('Erreur lors de la synchronisation')
+      setError(t('dashboard:stayManager.properties.errors.syncFailedGeneric'))
     } finally {
       setSyncing(null)
     }
@@ -201,13 +209,13 @@ export default function StayManagerProperties() {
           to="/dashboard/staymanager"
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
         >
-          <FiArrowLeft className="w-4 h-4" />
-          Retour aux parametres
+          <DirIcon icon={FiArrowLeft} className="w-4 h-4" />
+          {t('dashboard:stayManager.properties.back')}
         </Link>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Biens lies a StayManager</h1>
-            <p className="text-gray-600 mt-1">Gerez les liens entre vos biens SemsarOut et StayManager</p>
+            <h1 className="text-2xl font-bold text-gray-900">{t('dashboard:stayManager.properties.title')}</h1>
+            <p className="text-gray-600 mt-1">{t('dashboard:stayManager.properties.subtitle')}</p>
           </div>
           <button
             onClick={() => setShowLinkForm(true)}
@@ -215,7 +223,7 @@ export default function StayManagerProperties() {
             className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <FiLink className="w-4 h-4" />
-            Lier un bien
+            {t('dashboard:stayManager.properties.linkProperty')}
           </button>
         </div>
       </div>
@@ -239,12 +247,12 @@ export default function StayManagerProperties() {
       {showLinkForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Lier un bien</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard:stayManager.properties.modal.title')}</h3>
 
             <form onSubmit={handleLink} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Bien SemsarOut
+                  {t('dashboard:stayManager.properties.modal.semsarLabel')}
                 </label>
                 <select
                   value={selectedSemsarProperty}
@@ -252,7 +260,7 @@ export default function StayManagerProperties() {
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   required
                 >
-                  <option value="">Selectionnez un bien</option>
+                  <option value="">{t('dashboard:stayManager.properties.modal.semsarPlaceholder')}</option>
                   {unlinkableProperties.map(p => (
                     <option key={p.id} value={p.id}>
                       {p.title} - {p.city}
@@ -263,7 +271,7 @@ export default function StayManagerProperties() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Propriete StayManager
+                  {t('dashboard:stayManager.properties.modal.stayManagerLabel')}
                 </label>
                 <select
                   value={selectedStayManagerProperty}
@@ -271,7 +279,7 @@ export default function StayManagerProperties() {
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   required
                 >
-                  <option value="">Selectionnez une propriete</option>
+                  <option value="">{t('dashboard:stayManager.properties.modal.stayManagerPlaceholder')}</option>
                   {availableProperties.map(p => (
                     <option key={p.id} value={p.id}>
                       {p.name}
@@ -289,12 +297,12 @@ export default function StayManagerProperties() {
                   {linking ? (
                     <>
                       <FiRefreshCw className="w-4 h-4 animate-spin" />
-                      Liaison...
+                      {t('dashboard:stayManager.properties.modal.linking')}
                     </>
                   ) : (
                     <>
                       <FiLink className="w-4 h-4" />
-                      Lier
+                      {t('dashboard:stayManager.properties.modal.link')}
                     </>
                   )}
                 </button>
@@ -307,7 +315,7 @@ export default function StayManagerProperties() {
                   }}
                   className="px-4 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  Annuler
+                  {t('dashboard:shared.actions.cancel')}
                 </button>
               </div>
             </form>
@@ -320,9 +328,9 @@ export default function StayManagerProperties() {
         {propertyLinks.length === 0 ? (
           <div className="text-center py-12">
             <FiLink className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun bien lie</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('dashboard:stayManager.properties.empty.title')}</h3>
             <p className="text-gray-600 mb-6">
-              Commencez par lier un de vos biens a une propriete StayManager.
+              {t('dashboard:stayManager.properties.empty.description')}
             </p>
             {unlinkableProperties.length > 0 && availableProperties.length > 0 && (
               <button
@@ -330,7 +338,7 @@ export default function StayManagerProperties() {
                 className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
               >
                 <FiLink className="w-4 h-4" />
-                Lier un bien
+                {t('dashboard:stayManager.properties.linkProperty')}
               </button>
             )}
           </div>
@@ -345,10 +353,10 @@ export default function StayManagerProperties() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-900">
-                        {link.property?.title || `Bien #${link.property_id}`}
+                        {link.property?.title || t('dashboard:stayManager.properties.fallbackTitle', { id: link.property_id })}
                       </h3>
                       <p className="text-sm text-gray-500">
-                        Lie a: <span className="font-medium">{link.staymanager_property_name}</span>
+                        {t('dashboard:stayManager.properties.linkedTo')} <span className="font-medium">{link.staymanager_property_name}</span>
                       </p>
                     </div>
                   </div>
@@ -362,9 +370,7 @@ export default function StayManagerProperties() {
                         ? 'bg-red-100 text-red-700'
                         : 'bg-yellow-100 text-yellow-700'
                     }`}>
-                      {link.sync_status === 'synced' ? 'Synchronise' :
-                       link.sync_status === 'syncing' ? 'En cours...' :
-                       link.sync_status === 'error' ? 'Erreur' : 'En attente'}
+                      {t(`dashboard:stayManager.properties.status.${['synced', 'syncing', 'error'].includes(link.sync_status) ? link.sync_status : 'pending'}`)}
                     </span>
                   </div>
                 </div>
@@ -372,21 +378,23 @@ export default function StayManagerProperties() {
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-4 mb-4">
                   <div className="p-3 bg-gray-50 rounded-lg">
-                    <p className="text-xs text-gray-500 mb-1">Reservations</p>
+                    <p className="text-xs text-gray-500 mb-1">{t('dashboard:stayManager.properties.stats.reservations')}</p>
                     <p className="font-semibold text-gray-900">{link.reservations_count || 0}</p>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-lg">
-                    <p className="text-xs text-gray-500 mb-1">Derniere sync</p>
+                    <p className="text-xs text-gray-500 mb-1">{t('dashboard:stayManager.properties.stats.lastSync')}</p>
                     <p className="font-semibold text-gray-900 text-sm">
                       {link.last_reservation_sync
-                        ? new Date(link.last_reservation_sync).toLocaleDateString('fr-FR')
-                        : 'Jamais'}
+                        ? fmtDate(link.last_reservation_sync)
+                        : t('dashboard:stayManager.properties.never')}
                     </p>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-lg">
-                    <p className="text-xs text-gray-500 mb-1">iCal</p>
+                    <p className="text-xs text-gray-500 mb-1">{t('dashboard:stayManager.properties.stats.ical')}</p>
                     <p className="font-semibold text-gray-900 text-sm">
-                      {link.ical_url ? 'Disponible' : 'Non disponible'}
+                      {link.ical_url
+                        ? t('dashboard:stayManager.properties.stats.icalAvailable')
+                        : t('dashboard:stayManager.properties.stats.icalUnavailable')}
                     </p>
                   </div>
                 </div>
@@ -406,21 +414,21 @@ export default function StayManagerProperties() {
                     className="flex items-center gap-2 px-4 py-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                   >
                     <FiRefreshCw className={`w-4 h-4 ${syncing === link.property_id ? 'animate-spin' : ''}`} />
-                    Synchroniser
+                    {t('dashboard:stayManager.properties.actions.sync')}
                   </button>
                   <Link
                     to={`/dashboard/staymanager/reservations?property_id=${link.property_id}`}
                     className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                   >
                     <FiCalendar className="w-4 h-4" />
-                    Voir les reservations
+                    {t('dashboard:stayManager.properties.actions.viewReservations')}
                   </Link>
                   <button
                     onClick={() => handleUnlink(link.property_id)}
-                    className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-auto"
+                    className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors ms-auto"
                   >
                     <FiX className="w-4 h-4" />
-                    Supprimer le lien
+                    {t('dashboard:stayManager.properties.actions.unlink')}
                   </button>
                 </div>
               </div>
@@ -433,8 +441,10 @@ export default function StayManagerProperties() {
       {unlinkableProperties.length === 0 && propertyLinks.length > 0 && (
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-sm text-blue-800">
-            <strong>Tous vos biens sont lies.</strong> Pour lier d'autres biens, ajoutez de nouvelles proprietes
-            en location dans votre tableau de bord.
+            <Trans
+              i18nKey="dashboard:stayManager.properties.info.allLinked"
+              components={{ strong: <strong /> }}
+            />
           </p>
         </div>
       )}
@@ -442,8 +452,10 @@ export default function StayManagerProperties() {
       {availableProperties.length === 0 && (
         <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p className="text-sm text-yellow-800">
-            <strong>Aucune propriete StayManager disponible.</strong> Toutes vos proprietes StayManager sont
-            deja liees ou vous n'avez pas encore ajoute de proprietes dans StayManager.
+            <Trans
+              i18nKey="dashboard:stayManager.properties.info.noneAvailable"
+              components={{ strong: <strong /> }}
+            />
           </p>
         </div>
       )}

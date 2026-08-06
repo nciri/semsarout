@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   FiPlus, FiFilter, FiMoreVertical, FiUser, FiHome, FiDollarSign,
   FiCalendar, FiPhone, FiMail, FiEdit2, FiTrash2, FiChevronDown
@@ -8,6 +9,7 @@ import {
 import { formatPrice } from '../../utils/currency'
 import SearchableSelect from '../../components/common/SearchableSelect'
 import api from '../../services/api'
+import { useFormat } from '../../utils/format'
 
 const backofficeService = {
   getPipeline: async (params) => {
@@ -45,8 +47,10 @@ const PRIORITY_COLORS = {
   urgent: 'bg-red-100 text-red-600'
 }
 
-function TransactionCard({ transaction, onDragStart, onDragEnd }) {
+function TransactionCard({ transaction, onDragStart, onDragEnd, t }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { fmtDate } = useFormat()
+  const priorityKey = transaction.priority in PRIORITY_COLORS ? transaction.priority : 'medium'
 
   return (
     <div
@@ -62,7 +66,7 @@ function TransactionCard({ transaction, onDragStart, onDragEnd }) {
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
           className="text-xs font-mono text-primary-600 hover:text-primary-700 hover:underline"
-          title="Ouvrir le détail dans un nouvel onglet"
+          title={t('backoffice:crm.pipeline.pipeline.card.openDetail')}
         >
           {transaction.reference}
         </Link>
@@ -74,17 +78,17 @@ function TransactionCard({ transaction, onDragStart, onDragEnd }) {
             <FiMoreVertical className="w-4 h-4" />
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-10">
+            <div className="absolute end-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-10">
               <Link
                 to={`/backoffice/transactions/${transaction.id}`}
                 className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
               >
-                <FiEdit2 className="w-4 h-4" /> Modifier
+                <FiEdit2 className="w-4 h-4" /> {t('backoffice:crm.pipeline.pipeline.card.edit')}
               </Link>
               <button
                 className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 w-full"
               >
-                <FiTrash2 className="w-4 h-4" /> Archiver
+                <FiTrash2 className="w-4 h-4" /> {t('backoffice:crm.pipeline.pipeline.card.archive')}
               </button>
             </div>
           )}
@@ -94,7 +98,7 @@ function TransactionCard({ transaction, onDragStart, onDragEnd }) {
       {/* Property info */}
       <div className="mb-2">
         <p className="font-medium text-gray-900 text-sm line-clamp-1">
-          {transaction.property_title || 'Bien sans titre'}
+          {transaction.property_title || t('backoffice:crm.pipeline.pipeline.card.noPropertyTitle')}
         </p>
         {transaction.property_city && (
           <p className="text-xs text-gray-500 flex items-center gap-1">
@@ -107,7 +111,7 @@ function TransactionCard({ transaction, onDragStart, onDragEnd }) {
       {/* Client info */}
       <div className="flex items-center gap-2 mb-2 text-xs text-gray-600">
         <FiUser className="w-3 h-3" />
-        <span className="truncate">{transaction.client_name || 'Client non défini'}</span>
+        <span className="truncate">{transaction.client_name || t('backoffice:crm.pipeline.pipeline.card.noClient')}</span>
       </div>
 
       {/* Price */}
@@ -121,12 +125,12 @@ function TransactionCard({ transaction, onDragStart, onDragEnd }) {
       {/* Footer */}
       <div className="flex items-center justify-between pt-2 border-t border-gray-100">
         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${PRIORITY_COLORS[transaction.priority] || PRIORITY_COLORS.medium}`}>
-          {transaction.priority === 'urgent' ? 'Urgent' : transaction.priority === 'high' ? 'Haute' : transaction.priority === 'low' ? 'Basse' : 'Moyenne'}
+          {t(`backoffice:crm.pipeline.pipeline.priority.${priorityKey}`)}
         </span>
         {transaction.expected_closing_date && (
           <span className="text-xs text-gray-500 flex items-center gap-1">
             <FiCalendar className="w-3 h-3" />
-            {new Date(transaction.expected_closing_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+            {fmtDate(transaction.expected_closing_date, { day: 'numeric', month: 'short' })}
           </span>
         )}
       </div>
@@ -134,15 +138,15 @@ function TransactionCard({ transaction, onDragStart, onDragEnd }) {
       {/* Agent */}
       {transaction.agent_name && (
         <div className="mt-2 pt-2 border-t border-gray-100">
-          <span className="text-xs text-gray-500">Agent: {transaction.agent_name}</span>
+          <span className="text-xs text-gray-500">{t('backoffice:crm.pipeline.pipeline.card.agent', { name: transaction.agent_name })}</span>
         </div>
       )}
     </div>
   )
 }
 
-function PipelineColumn({ stage, transactions, onDragOver, onDrop }) {
-  const totalValue = transactions.reduce((sum, t) => sum + (parseFloat(t.asking_price) || 0), 0)
+function PipelineColumn({ stage, transactions, onDragOver, onDrop, t }) {
+  const totalValue = transactions.reduce((sum, tx) => sum + (parseFloat(tx.asking_price) || 0), 0)
 
   return (
     <div
@@ -167,16 +171,17 @@ function PipelineColumn({ stage, transactions, onDragOver, onDrop }) {
           <TransactionCard
             key={transaction.id}
             transaction={transaction}
-            onDragStart={(e, t) => {
-              e.dataTransfer.setData('transaction', JSON.stringify(t))
+            onDragStart={(e, tx) => {
+              e.dataTransfer.setData('transaction', JSON.stringify(tx))
             }}
             onDragEnd={() => {}}
+            t={t}
           />
         ))}
 
         {transactions.length === 0 && (
           <div className="text-center py-8 text-gray-400 text-sm">
-            Aucune transaction
+            {t('backoffice:crm.pipeline.pipeline.column.empty')}
           </div>
         )}
       </div>
@@ -185,6 +190,7 @@ function PipelineColumn({ stage, transactions, onDragOver, onDrop }) {
 }
 
 export default function BackofficePipeline() {
+  const { t } = useTranslation(['backoffice', 'common'])
   const queryClient = useQueryClient()
   const [filters, setFilters] = useState({
     type: 'sale',
@@ -235,29 +241,29 @@ export default function BackofficePipeline() {
   // Calculate totals
   const totalTransactions = data?.pipeline?.reduce((sum, stage) => sum + stage.transactions.length, 0) || 0
   const totalValue = data?.pipeline?.reduce((sum, stage) =>
-    sum + stage.transactions.reduce((s, t) => s + (parseFloat(t.asking_price) || 0), 0), 0) || 0
+    sum + stage.transactions.reduce((s, tx) => s + (parseFloat(tx.asking_price) || 0), 0), 0) || 0
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Pipeline</h1>
-          <p className="text-gray-500">Gérez vos transactions en cours</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('backoffice:crm.pipeline.pipeline.list.pageTitle')}</h1>
+          <p className="text-gray-500">{t('backoffice:crm.pipeline.pipeline.list.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <Link
             to="/backoffice/transactions"
             className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            Vue liste
+            {t('backoffice:crm.pipeline.pipeline.list.listViewLink')}
           </Link>
           <Link
             to="/backoffice/transactions/nouveau"
             className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
           >
             <FiPlus className="w-5 h-5" />
-            Nouvelle transaction
+            {t('backoffice:crm.pipeline.pipeline.list.newButton')}
           </Link>
         </div>
       </div>
@@ -275,7 +281,7 @@ export default function BackofficePipeline() {
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              Ventes
+              {t('backoffice:crm.pipeline.pipeline.list.typeSale')}
             </button>
             <button
               onClick={() => setFilters({ ...filters, type: 'rent' })}
@@ -285,7 +291,7 @@ export default function BackofficePipeline() {
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              Locations
+              {t('backoffice:crm.pipeline.pipeline.list.typeRent')}
             </button>
           </div>
 
@@ -294,21 +300,21 @@ export default function BackofficePipeline() {
             value={filters.agent_id}
             onChange={(v) => setFilters({ ...filters, agent_id: v })}
             options={(agentsData?.users || []).map((agent) => ({ value: agent.id, label: `${agent.first_name} ${agent.last_name}`, description: agent.email }))}
-            placeholder="Tous les agents"
-            searchPlaceholder="Rechercher un agent…"
+            placeholder={t('backoffice:crm.pipeline.pipeline.list.agentPlaceholder')}
+            searchPlaceholder={t('backoffice:crm.pipeline.pipeline.list.agentSearchPlaceholder')}
             clearable
             className="min-w-[12rem]"
           />
 
           {/* Summary */}
-          <div className="ml-auto flex items-center gap-6 text-sm">
+          <div className="ms-auto flex items-center gap-6 text-sm">
             <div>
-              <span className="text-gray-500">Total transactions:</span>
-              <span className="ml-2 font-semibold text-gray-900">{totalTransactions}</span>
+              <span className="text-gray-500">{t('backoffice:crm.pipeline.pipeline.list.totalTransactions')}</span>
+              <span className="ms-2 font-semibold text-gray-900">{totalTransactions}</span>
             </div>
             <div>
-              <span className="text-gray-500">Valeur totale:</span>
-              <span className="ml-2 font-semibold text-gray-900">{formatPrice(totalValue)}</span>
+              <span className="text-gray-500">{t('backoffice:crm.pipeline.pipeline.list.totalValue')}</span>
+              <span className="ms-2 font-semibold text-gray-900">{formatPrice(totalValue)}</span>
             </div>
           </div>
         </div>
@@ -333,6 +339,7 @@ export default function BackofficePipeline() {
               transactions={stage.transactions}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
+              t={t}
             />
           ))}
         </div>
@@ -340,12 +347,12 @@ export default function BackofficePipeline() {
 
       {/* Legend */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Légende des priorités</h3>
+        <h3 className="text-sm font-medium text-gray-700 mb-3">{t('backoffice:crm.pipeline.pipeline.list.priorityLegend')}</h3>
         <div className="flex flex-wrap gap-4">
-          {Object.entries(PRIORITY_COLORS).map(([key, color]) => (
+          {Object.keys(PRIORITY_COLORS).map((key) => (
             <div key={key} className="flex items-center gap-2">
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${color}`}>
-                {key === 'urgent' ? 'Urgent' : key === 'high' ? 'Haute' : key === 'low' ? 'Basse' : 'Moyenne'}
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${PRIORITY_COLORS[key]}`}>
+                {t(`backoffice:crm.pipeline.pipeline.priority.${key}`)}
               </span>
             </div>
           ))}

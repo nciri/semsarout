@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   FiPlus, FiSearch, FiFilter, FiMoreVertical, FiEdit2, FiTrash2,
   FiEye, FiHome, FiMapPin, FiDollarSign, FiGrid, FiList
@@ -20,7 +21,9 @@ const backofficeService = {
   }
 }
 
-const STATUS_COLORS = {
+// Couleur (tone) par statut d'API ; libellé via
+// t('backoffice:crm.properties.status') keyé sur l'enum brut.
+const STATUS_TONE = {
   active: 'bg-green-100 text-green-700',
   pending: 'bg-yellow-100 text-yellow-700',
   sold: 'bg-blue-100 text-blue-700',
@@ -28,24 +31,10 @@ const STATUS_COLORS = {
   draft: 'bg-gray-100 text-gray-700'
 }
 
-const STATUS_LABELS = {
-  active: 'En ligne',
-  pending: 'En attente',
-  sold: 'Vendu',
-  rented: 'Loué',
-  draft: 'Brouillon'
-}
+// Libellés via t('backoffice:crm.shared.propertyTypes'), keyés sur l'enum API.
+const PROPERTY_TYPES = ['apartment', 'house', 'villa', 'land', 'commercial', 'office']
 
-const PROPERTY_TYPES = {
-  apartment: 'Appartement',
-  house: 'Maison',
-  villa: 'Villa',
-  land: 'Terrain',
-  commercial: 'Commercial',
-  office: 'Bureau'
-}
-
-function PropertyCard({ property, onDelete, viewMode }) {
+function PropertyCard({ property, onDelete, viewMode, t }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const txHref = `/backoffice/transactions/nouveau?property_id=${property.id}&type=${property.listing_type === 'rent' ? 'rent' : 'sale'}`
 
@@ -80,16 +69,16 @@ function PropertyCard({ property, onDelete, viewMode }) {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[property.status]}`}>
-                {STATUS_LABELS[property.status]}
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_TONE[property.status]}`}>
+                {t(`backoffice:crm.properties.status.${property.status}`, { defaultValue: property.status })}
               </span>
             </div>
           </div>
           <div className="flex items-center gap-4 mt-2 text-sm">
-            <span className="text-gray-600">{PROPERTY_TYPES[property.property_type]}</span>
+            <span className="text-gray-600">{t(`backoffice:crm.shared.propertyTypes.${property.property_type}`, { defaultValue: property.property_type })}</span>
             <span className="font-semibold text-gray-900">{formatPrice(property.price)}</span>
             {property.surface && <span className="text-gray-500">{property.surface} m²</span>}
-            <span className="text-gray-400">{property.views_count || 0} vues</span>
+            <span className="text-gray-400">{t('backoffice:crm.properties.list.viewsCount', { count: property.views_count || 0 })}</span>
           </div>
         </div>
         <div className="relative">
@@ -100,25 +89,25 @@ function PropertyCard({ property, onDelete, viewMode }) {
             <FiMoreVertical className="w-5 h-5" />
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-10">
+            <div className="absolute end-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-10">
               <Link
                 to={`/annonces/${property.id}`}
                 target="_blank"
                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
               >
-                <FiEye className="w-4 h-4" /> Voir en ligne
+                <FiEye className="w-4 h-4" /> {t('backoffice:crm.properties.list.viewOnline')}
               </Link>
               <Link
                 to={`/backoffice/biens/${property.id}`}
                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
               >
-                <FiEdit2 className="w-4 h-4" /> Modifier
+                <FiEdit2 className="w-4 h-4" /> {t('backoffice:crm.properties.list.edit')}
               </Link>
               <Link
                 to={txHref}
                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
               >
-                <FiPlus className="w-4 h-4" /> Nouvelle transaction
+                <FiPlus className="w-4 h-4" /> {t('backoffice:crm.properties.list.newTransaction')}
               </Link>
               <button
                 onClick={() => {
@@ -127,7 +116,7 @@ function PropertyCard({ property, onDelete, viewMode }) {
                 }}
                 className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full"
               >
-                <FiTrash2 className="w-4 h-4" /> Supprimer
+                <FiTrash2 className="w-4 h-4" /> {t('backoffice:crm.properties.list.delete')}
               </button>
             </div>
           )}
@@ -150,10 +139,10 @@ function PropertyCard({ property, onDelete, viewMode }) {
             <FiHome className="w-12 h-12 text-gray-400" />
           </div>
         )}
-        <span className={`absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[property.status]}`}>
-          {STATUS_LABELS[property.status]}
+        <span className={`absolute top-2 start-2 px-2 py-1 rounded-full text-xs font-medium ${STATUS_TONE[property.status]}`}>
+          {t(`backoffice:crm.properties.status.${property.status}`, { defaultValue: property.status })}
         </span>
-        <div className="absolute top-2 right-2">
+        <div className="absolute top-2 end-2">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="p-2 bg-white/90 text-gray-600 hover:bg-white rounded-lg shadow"
@@ -161,25 +150,25 @@ function PropertyCard({ property, onDelete, viewMode }) {
             <FiMoreVertical className="w-4 h-4" />
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-10">
+            <div className="absolute end-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-10">
               <Link
                 to={`/annonces/${property.id}`}
                 target="_blank"
                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
               >
-                <FiEye className="w-4 h-4" /> Voir en ligne
+                <FiEye className="w-4 h-4" /> {t('backoffice:crm.properties.list.viewOnline')}
               </Link>
               <Link
                 to={`/backoffice/biens/${property.id}`}
                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
               >
-                <FiEdit2 className="w-4 h-4" /> Modifier
+                <FiEdit2 className="w-4 h-4" /> {t('backoffice:crm.properties.list.edit')}
               </Link>
               <Link
                 to={txHref}
                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
               >
-                <FiPlus className="w-4 h-4" /> Nouvelle transaction
+                <FiPlus className="w-4 h-4" /> {t('backoffice:crm.properties.list.newTransaction')}
               </Link>
               <button
                 onClick={() => {
@@ -188,7 +177,7 @@ function PropertyCard({ property, onDelete, viewMode }) {
                 }}
                 className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full"
               >
-                <FiTrash2 className="w-4 h-4" /> Supprimer
+                <FiTrash2 className="w-4 h-4" /> {t('backoffice:crm.properties.list.delete')}
               </button>
             </div>
           )}
@@ -207,7 +196,7 @@ function PropertyCard({ property, onDelete, viewMode }) {
         </p>
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
           <span className="text-lg font-bold text-gray-900">{formatPrice(property.price)}</span>
-          <span className="text-sm text-gray-500">{property.views_count || 0} vues</span>
+          <span className="text-sm text-gray-500">{t('backoffice:crm.properties.list.viewsCount', { count: property.views_count || 0 })}</span>
         </div>
       </div>
     </div>
@@ -215,6 +204,7 @@ function PropertyCard({ property, onDelete, viewMode }) {
 }
 
 export default function BackofficeProperties() {
+  const { t } = useTranslation(['backoffice', 'common'])
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [viewMode, setViewMode] = useState('grid')
@@ -238,7 +228,7 @@ export default function BackofficeProperties() {
   })
 
   const handleDelete = (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce bien ?')) {
+    if (window.confirm(t('backoffice:crm.properties.list.confirmDelete'))) {
       deleteMutation.mutate(id)
     }
   }
@@ -248,15 +238,15 @@ export default function BackofficeProperties() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Biens immobiliers</h1>
-          <p className="text-gray-500">Gérez votre portefeuille de biens</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('backoffice:crm.properties.list.pageTitle')}</h1>
+          <p className="text-gray-500">{t('backoffice:crm.properties.list.subtitle')}</p>
         </div>
         <Link
           to="/backoffice/biens/nouveau"
           className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
         >
           <FiPlus className="w-5 h-5" />
-          Ajouter un bien
+          {t('backoffice:crm.properties.list.newButton')}
         </Link>
       </div>
 
@@ -264,13 +254,13 @@ export default function BackofficeProperties() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <FiSearch className="absolute start-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Rechercher par titre, ville..."
+              placeholder={t('backoffice:crm.properties.list.searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full ps-10 pe-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -299,7 +289,7 @@ export default function BackofficeProperties() {
               }`}
             >
               <FiFilter className="w-5 h-5" />
-              Filtres
+              {t('backoffice:crm.properties.list.filtersButton')}
             </button>
           </div>
         </div>
@@ -307,28 +297,28 @@ export default function BackofficeProperties() {
         {showFilters && (
           <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.properties.list.filterStatusLabel')}</label>
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <option value="">Tous les statuts</option>
-                {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
+                <option value="">{t('backoffice:crm.properties.list.filterStatusAll')}</option>
+                {Object.keys(STATUS_TONE).map((key) => (
+                  <option key={key} value={key}>{t(`backoffice:crm.properties.status.${key}`, { defaultValue: key })}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Type de bien</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.properties.list.filterTypeLabel')}</label>
               <select
                 value={filters.property_type}
                 onChange={(e) => setFilters({ ...filters, property_type: e.target.value, page: 1 })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <option value="">Tous les types</option>
-                {Object.entries(PROPERTY_TYPES).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
+                <option value="">{t('backoffice:crm.properties.list.filterTypeAll')}</option>
+                {PROPERTY_TYPES.map((key) => (
+                  <option key={key} value={key}>{t(`backoffice:crm.shared.propertyTypes.${key}`)}</option>
                 ))}
               </select>
             </div>
@@ -337,7 +327,7 @@ export default function BackofficeProperties() {
                 onClick={() => setFilters({ status: '', property_type: '', page: 1 })}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
               >
-                Réinitialiser
+                {t('backoffice:crm.properties.list.resetFilters')}
               </button>
             </div>
           </div>
@@ -360,13 +350,13 @@ export default function BackofficeProperties() {
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {data.properties.map(property => (
-                <PropertyCard key={property.id} property={property} onDelete={handleDelete} viewMode={viewMode} />
+                <PropertyCard key={property.id} property={property} onDelete={handleDelete} viewMode={viewMode} t={t} />
               ))}
             </div>
           ) : (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               {data.properties.map(property => (
-                <PropertyCard key={property.id} property={property} onDelete={handleDelete} viewMode={viewMode} />
+                <PropertyCard key={property.id} property={property} onDelete={handleDelete} viewMode={viewMode} t={t} />
               ))}
             </div>
           )}
@@ -379,17 +369,17 @@ export default function BackofficeProperties() {
                 disabled={filters.page === 1}
                 className="px-4 py-2 border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
-                Précédent
+                {t('backoffice:crm.properties.list.previous')}
               </button>
               <span className="text-gray-600">
-                Page {filters.page} sur {data.pages}
+                {t('backoffice:crm.properties.list.pageOf', { page: filters.page, pages: data.pages })}
               </span>
               <button
                 onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
                 disabled={filters.page === data.pages}
                 className="px-4 py-2 border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
-                Suivant
+                {t('backoffice:crm.properties.list.next')}
               </button>
             </div>
           )}
@@ -397,18 +387,18 @@ export default function BackofficeProperties() {
       ) : (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
           <FiHome className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun bien trouvé</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">{t('backoffice:crm.properties.list.empty.title')}</h3>
           <p className="text-gray-500 mb-4">
             {search || filters.status || filters.property_type
-              ? 'Aucun bien ne correspond à vos critères.'
-              : 'Commencez par ajouter votre premier bien.'}
+              ? t('backoffice:crm.properties.list.empty.filtered')
+              : t('backoffice:crm.properties.list.empty.default')}
           </p>
           <Link
             to="/backoffice/biens/nouveau"
             className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
           >
             <FiPlus className="w-5 h-5" />
-            Ajouter un bien
+            {t('backoffice:crm.properties.list.addFirstButton')}
           </Link>
         </div>
       )}

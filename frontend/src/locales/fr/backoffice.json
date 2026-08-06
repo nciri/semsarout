@@ -20,7 +20,11 @@
     "shop": "Boutique",
     "team": "Équipe",
     "analytics": "Analyses",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "userMenu": {
+      "agencySettings": "Paramètres agence",
+      "backToSite": "Retour au site"
+    }
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -45,7 +49,14 @@
     "newClient": "Nouveau client",
     "planVisit": "Planifier visite",
     "viewPipeline": "Voir le pipeline",
-    "viewAll": "Voir tout"
+    "viewAll": "Voir tout",
+    "vsLastMonth": "{{value}}% vs mois dernier",
+    "visitFallback": "Visite",
+    "period": {
+      "last7": "7 derniers jours",
+      "last30": "30 derniers jours",
+      "last90": "3 derniers mois"
+    }
   },
   "signature": {
     "title": "Signature électronique",
@@ -1069,6 +1080,792 @@
         "converted": "Convertis",
         "cost": "Coût",
         "conversion": "Conv."
+      }
+    }
+  },
+  "crm": {
+    "shared": {
+      "loading": "Chargement…",
+      "back": "Retour",
+      "notFound": "Élément introuvable.",
+      "loadError": "Une erreur est survenue lors du chargement. Réessayez plus tard.",
+      "status": {
+        "active": "Actif",
+        "prospect": "Prospect",
+        "inactive": "Inactif"
+      },
+      "clientTypes": {
+        "buyer": "Acheteur",
+        "seller": "Vendeur",
+        "landlord": "Propriétaire",
+        "tenant": "Locataire",
+        "investor": "Investisseur"
+      },
+      "propertyTypes": {
+        "apartment": "Appartement",
+        "house": "Maison",
+        "villa": "Villa",
+        "land": "Terrain",
+        "commercial": "Commercial",
+        "office": "Bureau"
+      },
+      "listingTypes": {
+        "sale": "Vente",
+        "rent": "Location"
+      }
+    },
+    "clients": {
+      "list": {
+        "pageTitle": "Clients",
+        "subtitle": "Gérez votre base de clients et prospects",
+        "newButton": "Nouveau client",
+        "addFirstButton": "Ajouter un client",
+        "searchPlaceholder": "Rechercher par nom, email, téléphone...",
+        "filtersButton": "Filtres",
+        "filterTypeLabel": "Type de client",
+        "filterTypeAll": "Tous les types",
+        "filterStatusLabel": "Statut",
+        "filterStatusAll": "Tous les statuts",
+        "resetFilters": "Réinitialiser",
+        "types": {
+          "buyer": {
+            "label": "Acheteurs",
+            "description": "Clients à la recherche d'un bien à acheter"
+          },
+          "seller": {
+            "label": "Vendeurs",
+            "description": "Propriétaires souhaitant vendre leur bien"
+          },
+          "landlord": {
+            "label": "Propriétaires",
+            "description": "Propriétaires mettant en location"
+          },
+          "tenant": {
+            "label": "Locataires",
+            "description": "Clients cherchant une location"
+          },
+          "investor": {
+            "label": "Investisseurs",
+            "description": "Investisseurs immobiliers"
+          }
+        },
+        "emptyCategory": "Aucun client dans cette catégorie",
+        "newTransaction": "Nouvelle transaction",
+        "budget": "Budget: {{min}} - {{max}}",
+        "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce client ?",
+        "empty": {
+          "title": "Aucun client trouvé",
+          "filtered": "Aucun client ne correspond à vos critères de recherche.",
+          "default": "Commencez par ajouter votre premier client."
+        }
+      },
+      "form": {
+        "titleNew": "Nouveau client",
+        "titleEdit": "Modifier le client",
+        "subtitleNew": "Ajoutez un nouveau client à votre base",
+        "subtitleEdit": "Mettez à jour les informations du client",
+        "sections": {
+          "personalInfo": "Informations personnelles",
+          "address": "Adresse",
+          "searchCriteria": "Critères de recherche",
+          "tags": "Tags",
+          "notes": "Notes et assignation"
+        },
+        "fields": {
+          "firstName": "Prénom",
+          "lastName": "Nom",
+          "email": "Email",
+          "phonePrimary": "Téléphone principal",
+          "phoneSecondary": "Téléphone secondaire",
+          "clientType": "Type de client",
+          "status": "Statut",
+          "source": "Source",
+          "address": "Adresse",
+          "city": "Ville",
+          "selectCity": "Sélectionner une ville",
+          "budgetMin": "Budget minimum ({{currency}})",
+          "budgetMax": "Budget maximum ({{currency}})",
+          "propertyTypesWanted": "Types de biens recherchés",
+          "preferredCities": "Villes préférées",
+          "agentAssigned": "Agent assigné",
+          "agentPlaceholder": "Non assigné",
+          "agentSearchPlaceholder": "Rechercher un agent…",
+          "notes": "Notes",
+          "notesPlaceholder": "Notes internes sur le client...",
+          "gdprConsent": "Le client a donné son consentement pour le traitement de ses données (RGPD)"
+        },
+        "sourceOptions": {
+          "direct": "Direct",
+          "website": "Site web",
+          "referral": "Recommandation",
+          "social": "Réseaux sociaux",
+          "advertising": "Publicité",
+          "partner": "Partenaire"
+        },
+        "tagsPlaceholder": "Ajouter un tag...",
+        "validation": {
+          "contactRequired": "Email ou téléphone requis"
+        },
+        "cancelButton": "Annuler",
+        "createButton": "Créer le client",
+        "updateButton": "Mettre à jour"
+      },
+      "detail": {
+        "editButton": "Modifier",
+        "sections": {
+          "contact": "Coordonnées",
+          "searchCriteria": "Critères de recherche"
+        },
+        "fields": {
+          "email": "Email",
+          "phonePrimary": "Téléphone principal",
+          "phoneSecondary": "Téléphone secondaire",
+          "city": "Ville",
+          "address": "Adresse",
+          "agentAssigned": "Agent assigné",
+          "tags": "Tags",
+          "notes": "Notes"
+        },
+        "budget": "Budget : {{min}} — {{max}}",
+        "propertyTypesWanted": "Types de biens recherchés",
+        "preferredCities": "Villes préférées",
+        "createTransaction": "Créer une transaction ({{type}})",
+        "transactionType": {
+          "rent": "location",
+          "sale": "vente"
+        }
+      }
+    },
+    "pipeline": {
+      "leads": {
+        "list": {
+          "pageTitle": "Leads",
+          "subtitle": "Gérez vos prospects et convertissez-les en clients",
+          "stats": {
+            "total": "Total leads",
+            "new": "Nouveaux",
+            "qualified": "Qualifiés",
+            "converted": "Convertis"
+          },
+          "searchPlaceholder": "Rechercher par nom, email...",
+          "filtersButton": "Filtres",
+          "filterStatusLabel": "Statut",
+          "filterStatusAll": "Tous les statuts",
+          "filterSourceLabel": "Source",
+          "filterSourceAll": "Toutes les sources",
+          "resetFilters": "Réinitialiser",
+          "columns": {
+            "contact": "Contact",
+            "contactInfo": "Coordonnées",
+            "source": "Source",
+            "status": "Statut",
+            "property": "Bien associé",
+            "date": "Date",
+            "actions": "Actions"
+          },
+          "viewDetails": "Voir les détails",
+          "markLost": "Marquer comme perdu",
+          "paginationInfo": "Affichage de {{from}} à {{to}} sur {{total}} leads",
+          "prev": "Précédent",
+          "next": "Suivant",
+          "empty": {
+            "title": "Aucun lead trouvé",
+            "filtered": "Aucun lead ne correspond à vos critères.",
+            "default": "Les leads apparaîtront ici lorsque des prospects vous contacteront."
+          }
+        },
+        "detail": {
+          "title": "Détails du lead",
+          "contactInfo": "Coordonnées",
+          "message": "Message",
+          "internalNotes": "Notes internes",
+          "source": "Source",
+          "createdAt": "Date de création",
+          "property": "Bien associé",
+          "assignedTo": "Assigné à"
+        },
+        "status": {
+          "new": "Nouveau",
+          "contacted": "Contacté",
+          "qualified": "Qualifié",
+          "converted": "Converti",
+          "lost": "Perdu"
+        },
+        "source": {
+          "contact_form": "Formulaire",
+          "phone_reveal": "Téléphone",
+          "callback_request": "Rappel",
+          "website": "Site web",
+          "manual": "Manuel",
+          "other": "Autre"
+        },
+        "nextAction": {
+          "new": "Marquer comme contacté",
+          "contacted": "Marquer comme qualifié",
+          "qualified": "Convertir en client"
+        },
+        "confirm": {
+          "convert": "Voulez-vous convertir \"{{name}}\" en client ?",
+          "markStatus": "Voulez-vous marquer \"{{name}}\" comme {{status}} ?",
+          "lost": "Voulez-vous marquer \"{{name}}\" comme perdu ?"
+        }
+      },
+      "pipeline": {
+        "list": {
+          "pageTitle": "Pipeline",
+          "subtitle": "Gérez vos transactions en cours",
+          "listViewLink": "Vue liste",
+          "newButton": "Nouvelle transaction",
+          "typeSale": "Ventes",
+          "typeRent": "Locations",
+          "agentPlaceholder": "Tous les agents",
+          "agentSearchPlaceholder": "Rechercher un agent…",
+          "totalTransactions": "Total transactions:",
+          "totalValue": "Valeur totale:",
+          "priorityLegend": "Légende des priorités"
+        },
+        "card": {
+          "openDetail": "Ouvrir le détail dans un nouvel onglet",
+          "edit": "Modifier",
+          "archive": "Archiver",
+          "noPropertyTitle": "Bien sans titre",
+          "noClient": "Client non défini",
+          "agent": "Agent : {{name}}"
+        },
+        "column": {
+          "empty": "Aucune transaction"
+        },
+        "priority": {
+          "low": "Basse",
+          "medium": "Moyenne",
+          "high": "Haute",
+          "urgent": "Urgent"
+        }
+      },
+      "visits": {
+        "list": {
+          "pageTitle": "Visites & RDV",
+          "subtitle": "Gérez vos visites et rendez-vous",
+          "newButton": "Planifier une visite",
+          "viewToggleCalendar": "Calendrier",
+          "viewToggleList": "Liste",
+          "today": "Aujourd'hui",
+          "filterStatusAll": "Tous les statuts",
+          "daysHeader": {
+            "mon": "Lun",
+            "tue": "Mar",
+            "wed": "Mer",
+            "thu": "Jeu",
+            "fri": "Ven",
+            "sat": "Sam",
+            "sun": "Dim"
+          },
+          "moreCount": "+{{count}} autres",
+          "empty": {
+            "title": "Aucune visite",
+            "description": "Planifiez votre première visite."
+          },
+          "legend": "Légende des statuts"
+        },
+        "status": {
+          "scheduled": "Planifié",
+          "confirmed": "Confirmé",
+          "completed": "Effectuée",
+          "cancelled": "Annulée",
+          "no_show": "No-show"
+        },
+        "modal": {
+          "title": "Détails de la visite",
+          "noProperty": "Bien non défini",
+          "duration": "- {{minutes}} min",
+          "noVisitor": "Visiteur non défini",
+          "reportLabel": "Rapport de visite",
+          "reportPlaceholder": "Commentaires sur la visite...",
+          "feedbackLabel": "Feedback client",
+          "feedbackOptions": {
+            "select": "Sélectionner...",
+            "very_interested": "Très intéressé",
+            "interested": "Intéressé",
+            "neutral": "Neutre",
+            "not_interested": "Pas intéressé"
+          },
+          "confirmButton": "Confirmer",
+          "cancelButton": "Annuler",
+          "submitReportButton": "Valider le rapport",
+          "markCompletedButton": "Marquer effectuée",
+          "closeButton": "Fermer"
+        },
+        "newModal": {
+          "title": "Planifier une visite",
+          "visitorNameLabel": "Nom du visiteur *",
+          "emailLabel": "Email",
+          "phoneLabel": "Téléphone",
+          "dateTimeLabel": "Date et heure *",
+          "durationLabel": "Durée (minutes)",
+          "duration15": "15 min",
+          "duration30": "30 min",
+          "duration45": "45 min",
+          "duration60": "1 heure",
+          "duration90": "1h30",
+          "notesLabel": "Notes",
+          "notesPlaceholder": "Informations supplémentaires...",
+          "cancelButton": "Annuler",
+          "submitButton": "Planifier"
+        }
+      }
+    },
+    "transactions": {
+      "status": {
+        "active": "En cours",
+        "won": "Gagnée",
+        "lost": "Perdue",
+        "on_hold": "En pause"
+      },
+      "stage": {
+        "contact": "Contact initial",
+        "visit": "Visite",
+        "offer": "Offre",
+        "negotiation": "Négociation",
+        "compromise": "Compromis",
+        "final_act": "Acte final",
+        "application": "Candidature",
+        "verification": "Vérification",
+        "lease": "Bail",
+        "move_in": "Entrée"
+      },
+      "type": {
+        "sale": "Vente",
+        "rent": "Location"
+      },
+      "offerStatus": {
+        "pending": "En attente",
+        "accepted": "Acceptée",
+        "rejected": "Refusée",
+        "countered": "Contre-offre",
+        "expired": "Expirée"
+      },
+      "offerParty": {
+        "buyer": "Acheteur",
+        "seller": "Vendeur"
+      },
+      "list": {
+        "pageTitle": "Transactions",
+        "subtitle": "Vue liste de toutes les transactions",
+        "pipelineViewLink": "Vue Pipeline",
+        "newButton": "Nouvelle transaction",
+        "searchPlaceholder": "Rechercher par référence...",
+        "filtersButton": "Filtres",
+        "filterTypeLabel": "Type",
+        "filterTypeAll": "Tous les types",
+        "filterStatusLabel": "Statut",
+        "filterStatusAll": "Tous les statuts",
+        "filterStageLabel": "Étape",
+        "filterStageAll": "Toutes les étapes",
+        "resetFilters": "Réinitialiser",
+        "columns": {
+          "reference": "Référence",
+          "property": "Bien",
+          "client": "Client",
+          "type": "Type",
+          "stage": "Étape",
+          "price": "Prix",
+          "status": "Statut",
+          "agent": "Agent"
+        },
+        "viewDetails": "Voir",
+        "empty": {
+          "title": "Aucune transaction",
+          "filtered": "Aucune transaction ne correspond à vos critères.",
+          "default": "Créez votre première transaction.",
+          "pipelineLink": "Voir le pipeline"
+        },
+        "prev": "Précédent",
+        "next": "Suivant",
+        "pageInfo": "Page {{page}} sur {{total}}"
+      },
+      "create": {
+        "backLink": "Transactions",
+        "pageTitle": "Nouvelle transaction",
+        "subtitle": "Reliez un bien existant à un client. Pour créer un nouveau bien, utilisez la page Biens.",
+        "sectionPropertyClient": "Bien & client",
+        "propertyLabel": "Bien",
+        "propertyPlaceholder": "Choisir un bien…",
+        "propertySearchPlaceholder": "Rechercher un bien…",
+        "clientLabel": "Client",
+        "clientPlaceholder": "Choisir un client…",
+        "clientSearchPlaceholder": "Rechercher un client…",
+        "sectionDetails": "Détails",
+        "typeLabel": "Type",
+        "priceLabel": "Prix demandé (Đh)",
+        "pricePlaceholder": "Ex. 1500000",
+        "closingDateLabel": "Clôture prévue",
+        "priorityLabel": "Priorité",
+        "notesLabel": "Notes",
+        "notesPlaceholder": "Contexte, conditions particulières…",
+        "agentNote": "Vous serez l'agent assigné. La transaction démarre à l'étape « Contact ».",
+        "submitButton": "Créer la transaction",
+        "submitting": "Création…",
+        "toastSuccess": "Transaction créée",
+        "toastError": "Erreur"
+      },
+      "detail": {
+        "notFound": "Transaction introuvable.",
+        "backToList": "Retour à la liste",
+        "pipelineLink": "Voir le pipeline",
+        "propertyPartiesTitle": "Bien & parties",
+        "propertyLabel": "Bien",
+        "clientLabel": "Client",
+        "sellerLabel": "Vendeur / Mandant",
+        "agentLabel": "Agent",
+        "trackingTitle": "Suivi commercial",
+        "stageLabel": "Étape",
+        "priorityLabel": "Priorité",
+        "probabilityLabel": "Probabilité",
+        "firstContactLabel": "Premier contact",
+        "expectedClosingLabel": "Clôture prévue",
+        "actualClosingLabel": "Clôture réelle",
+        "lostReason": "Motif de perte : {{reason}}",
+        "financialTitle": "Financier",
+        "askingPriceLabel": "Prix demandé",
+        "offerPriceLabel": "Prix d'offre",
+        "finalPriceLabel": "Prix final",
+        "commissionRateLabel": "Taux de commission",
+        "commissionAmountLabel": "Montant commission",
+        "offersTitle": "Offres ({{count}})",
+        "offersEmpty": "Aucune offre enregistrée.",
+        "offerCreatedBy": " · {{name}}",
+        "notesTitle": "Notes"
+      }
+    },
+    "properties": {
+      "list": {
+        "pageTitle": "Biens immobiliers",
+        "subtitle": "Gérez votre portefeuille de biens",
+        "newButton": "Ajouter un bien",
+        "addFirstButton": "Ajouter un bien",
+        "searchPlaceholder": "Rechercher par titre, ville...",
+        "filtersButton": "Filtres",
+        "filterStatusLabel": "Statut",
+        "filterStatusAll": "Tous les statuts",
+        "filterTypeLabel": "Type de bien",
+        "filterTypeAll": "Tous les types",
+        "resetFilters": "Réinitialiser",
+        "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce bien ?",
+        "viewOnline": "Voir en ligne",
+        "edit": "Modifier",
+        "newTransaction": "Nouvelle transaction",
+        "delete": "Supprimer",
+        "viewsCount_one": "{{count}} vue",
+        "viewsCount_other": "{{count}} vues",
+        "previous": "Précédent",
+        "next": "Suivant",
+        "pageOf": "Page {{page}} sur {{pages}}",
+        "empty": {
+          "title": "Aucun bien trouvé",
+          "filtered": "Aucun bien ne correspond à vos critères.",
+          "default": "Commencez par ajouter votre premier bien."
+        }
+      },
+      "status": {
+        "active": "En ligne",
+        "pending": "En attente",
+        "sold": "Vendu",
+        "rented": "Loué",
+        "draft": "Brouillon"
+      },
+      "form": {
+        "titleNew": "Nouveau bien",
+        "titleEdit": "Modifier le bien",
+        "subtitleNew": "Ajoutez un nouveau bien à votre portefeuille",
+        "subtitleEdit": "Mettez à jour les informations du bien",
+        "sections": {
+          "generalInfo": "Informations générales",
+          "priceSurface": "Prix et surface",
+          "features": "Caractéristiques",
+          "location": "Localisation",
+          "photos": "Photos"
+        },
+        "fields": {
+          "title": "Titre de l'annonce",
+          "titlePlaceholder": "Ex: Appartement 3 pièces avec vue mer",
+          "featured": "Mettre à la une",
+          "featuredTooltip": "Les biens à la une sont mis en avant sur la page d'accueil et en tête des résultats de recherche.",
+          "description": "Description",
+          "descriptionPlaceholder": "Décrivez le bien en détail...",
+          "propertyType": "Type de bien",
+          "listingType": "Type d'annonce",
+          "status": "Statut",
+          "price": "Prix ({{currency}})",
+          "surface": "Surface (m²)",
+          "rooms": "Pièces",
+          "bedrooms": "Chambres",
+          "bathrooms": "Salles de bain",
+          "yearBuilt": "Année de construction",
+          "floor": "Étage",
+          "totalFloors": "Nombre d'étages",
+          "featuresLabel": "Équipements",
+          "address": "Adresse",
+          "city": "Ville",
+          "selectCity": "Sélectionner une ville",
+          "neighborhood": "Quartier",
+          "latitude": "Latitude",
+          "longitude": "Longitude",
+          "latitudePlaceholder": "Ex: 33.5731",
+          "longitudePlaceholder": "Ex: -7.5898",
+          "photosHint": "Au moins une photo est requise, quel que soit le type d'annonce.",
+          "dragImages": "Glissez vos images ici ou",
+          "browse": "Parcourir",
+          "uploadHint": "PNG, JPG jusqu'à 10MB"
+        },
+        "statusOptions": {
+          "draft": "Brouillon",
+          "active": "Publié",
+          "pending": "En attente"
+        },
+        "validation": {
+          "titleRequired": "Le titre est requis",
+          "priceRequired": "Le prix est requis",
+          "cityRequired": "La ville est requise",
+          "surfaceRequired": "La surface est requise",
+          "imagesRequired": "Ajoutez au moins une photo"
+        },
+        "toastImagesRequired": "Ajoutez au moins une photo.",
+        "cancelButton": "Annuler",
+        "createButton": "Créer le bien",
+        "updateButton": "Mettre à jour"
+      }
+    }
+  },
+  "settings": {
+    "team": {
+      "pageTitle": "Équipe",
+      "subtitle": "Gérez les membres, invitations et équipes.",
+      "seatGauge": {
+        "label": "Sièges",
+        "unlimited": "{{count}} membre(s) · illimité",
+        "limited": "{{used}} / {{limit}} sièges"
+      },
+      "invite": {
+        "title": "Inviter un membre",
+        "emailPlaceholder": "email@exemple.com",
+        "noTeam": "Sans équipe",
+        "button": "Inviter"
+      },
+      "pendingInvitations": {
+        "title": "Invitations en attente",
+        "resend": "Relancer",
+        "revoke": "Révoquer"
+      },
+      "teams": {
+        "title": "Équipes",
+        "newPlaceholder": "Nouvelle équipe",
+        "create": "Créer",
+        "limitReached": "Limite d'équipes atteinte — passez à un plan supérieur.",
+        "empty": "Aucune équipe."
+      },
+      "members": {
+        "title": "Membres",
+        "columns": {
+          "name": "Nom",
+          "email": "Email",
+          "team": "Équipe"
+        },
+        "owner": "(propriétaire)",
+        "noTeam": "—",
+        "remove": "Retirer"
+      },
+      "toast": {
+        "linkCopied": "Lien d'invitation copié",
+        "inviteCreated": "Invitation créée",
+        "inviteResent": "Invitation relancée",
+        "inviteRevoked": "Invitation révoquée",
+        "teamCreated": "Équipe créée",
+        "teamDeleted": "Équipe supprimée",
+        "memberRemoved": "Membre retiré"
+      }
+    },
+    "general": {
+      "pageTitle": "Paramètres",
+      "subtitle": "Configurez les paramètres de votre agence",
+      "savedNotice": "Paramètres sauvegardés avec succès",
+      "tabs": {
+        "general": "Général",
+        "notifications": "Notifications",
+        "stripe": "Stripe",
+        "integrations": "Intégrations",
+        "security": "Sécurité"
+      },
+      "fields": {
+        "agencyName": "Nom de l'agence",
+        "website": "Site web",
+        "email": "Email",
+        "phone": "Téléphone",
+        "address": "Adresse",
+        "city": "Ville",
+        "timezone": "Fuseau horaire",
+        "description": "Description de l'agence",
+        "descriptionPlaceholder": "Décrivez votre agence..."
+      },
+      "timezoneOptions": {
+        "casablanca": "Africa/Casablanca (GMT+1)",
+        "paris": "Europe/Paris (GMT+1)"
+      },
+      "notifications": {
+        "email": {
+          "title": "Notifications par email",
+          "description": "Recevoir les notifications par email"
+        },
+        "sms": {
+          "title": "Notifications SMS",
+          "description": "Recevoir les notifications par SMS"
+        },
+        "leadAutoAssign": {
+          "title": "Assignation auto des leads",
+          "description": "Assigner automatiquement les nouveaux leads aux agents"
+        },
+        "visitReminder": {
+          "label": "Rappel de visite (heures avant)",
+          "hours_one": "{{count}} heure",
+          "hours_other": "{{count}} heures"
+        }
+      },
+      "integrations": {
+        "smtp": {
+          "title": "Configuration SMTP",
+          "description": "Configurez votre serveur SMTP pour l'envoi d'emails",
+          "host": "Serveur SMTP",
+          "hostPlaceholder": "smtp.exemple.com",
+          "port": "Port",
+          "portPlaceholder": "587",
+          "user": "Utilisateur",
+          "password": "Mot de passe"
+        },
+        "api": {
+          "title": "API & Webhooks",
+          "description": "Clés API et webhooks pour les intégrations externes",
+          "keyLabel": "Clé API",
+          "regenerate": "Régénérer"
+        },
+        "erp": {
+          "title": "Intégrations ERP",
+          "description": "Connectez votre système de gestion d'entreprise",
+          "odoo": {
+            "name": "Odoo",
+            "description": "Synchronisation des contacts et factures"
+          },
+          "sap": {
+            "name": "SAP Business One",
+            "description": "Intégration comptable et gestion"
+          }
+        },
+        "crm": {
+          "title": "Intégrations CRM",
+          "description": "Connectez votre CRM externe pour synchroniser les données",
+          "salesforce": {
+            "name": "Salesforce",
+            "description": "Synchronisation bidirectionnelle des leads et contacts"
+          },
+          "hubspot": {
+            "name": "HubSpot",
+            "description": "Gestion des contacts et automatisation marketing"
+          },
+          "zoho": {
+            "name": "Zoho CRM",
+            "description": "Import et export des données clients"
+          }
+        },
+        "status": {
+          "notConnected": "Non connecté"
+        },
+        "actions": {
+          "configure": "Configurer",
+          "connect": "Connecter"
+        }
+      },
+      "security": {
+        "twoFactor": {
+          "title": "Authentification à deux facteurs",
+          "description": "Ajoutez une couche de sécurité supplémentaire à votre compte",
+          "button": "Configurer 2FA"
+        },
+        "sessions": {
+          "title": "Sessions actives",
+          "description": "Gérez les appareils connectés à votre compte",
+          "chromeMacos": "Chrome sur MacOS",
+          "currentSession": "Session actuelle",
+          "active": "Actif"
+        },
+        "dangerZone": {
+          "title": "Zone de danger",
+          "description": "Ces actions sont irréversibles",
+          "deleteAccount": "Supprimer le compte"
+        }
+      },
+      "save": {
+        "saving": "Sauvegarde...",
+        "button": "Sauvegarder"
+      }
+    },
+    "hub": {
+      "tabs": {
+        "agency": "Agence",
+        "account": "Mon compte"
+      }
+    },
+    "shared": {
+      "adminOnly": "Admin uniquement"
+    },
+    "stripe": {
+      "subtitle": "Configurez les paramètres de paiement Stripe pour votre plateforme",
+      "dashboardLink": "Dashboard Stripe",
+      "statusBanner": {
+        "mode": {
+          "production": "Mode Production",
+          "test": "Mode Test"
+        },
+        "description": {
+          "production": "Les paiements réels sont activés. Les clients seront facturés.",
+          "test": "Les paiements sont simulés. Utilisez les cartes de test Stripe."
+        },
+        "switchToTest": "Passer en test",
+        "switchToProduction": "Passer en production"
+      },
+      "apiKeys": {
+        "title": "Clés API",
+        "subtitle": "Clés d'accès à l'API Stripe",
+        "publishableKey": "Clé publique (Publishable Key)",
+        "secretKey": "Clé secrète (Secret Key)",
+        "secretKeyWarning": "Ne partagez jamais cette clé",
+        "webhookSecret": "Secret Webhook",
+        "testConnection": "Tester la connexion",
+        "testingConnection": "Test en cours...",
+        "connectionSuccess": "Connexion réussie"
+      },
+      "paymentSettings": {
+        "title": "Paramètres de paiement",
+        "subtitle": "Configurez les options de facturation",
+        "currency": "Devise",
+        "currencyOptions": {
+          "mad": "Dirham marocain (Đh)",
+          "eur": "Euro (EUR)",
+          "usd": "Dollar US (USD)"
+        },
+        "commissionRate": "Commission plateforme (%)",
+        "autoCapture": {
+          "title": "Capture automatique",
+          "description": "Capturer automatiquement les paiements lors de la facturation"
+        }
+      },
+      "paypal": {
+        "title": "PayPal",
+        "subtitle": "Accepter les paiements PayPal",
+        "clientId": "Client ID",
+        "clientSecret": "Client Secret"
+      },
+      "save": {
+        "saving": "Enregistrement...",
+        "button": "Enregistrer la configuration",
+        "successAlert": "Configuration Stripe enregistrée avec succès!"
       }
     }
   }

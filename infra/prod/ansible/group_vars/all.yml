@@ -54,4 +54,5 @@ semsar_db_roles:
   - rental
   - commission
   - selling
+  - translation
 

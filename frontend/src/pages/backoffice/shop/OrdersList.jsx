@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { FiPackage, FiShoppingBag } from 'react-icons/fi'
 import { shopService } from '../../../services/shopService'
 import { PageHeader, StatCard, DataTable, StatusBadge, EmptyState } from '../../../components/backoffice/ui'
+import { useFormat } from '../../../utils/format'
 
 const STATUS_TONE = {
   pending: 'bg-gray-100 text-gray-700',
@@ -19,6 +20,7 @@ const PRIMARY_BTN = 'inline-flex items-center gap-2 px-4 py-2 bg-primary-600 tex
 
 function OrdersList() {
   const { t } = useTranslation(['backoffice', 'common'])
+  const { fmtDate } = useFormat()
   const { data, isLoading } = useQuery('shop-orders', () => shopService.listOrders())
   const orders = data?.orders || []
   const stats = useMemo(() => ({
@@ -35,7 +37,7 @@ function OrdersList() {
     { header: t('backoffice:shop.order.columns.items'), cell: (o) => <span className="text-gray-600">{o.items_count}</span> },
     { header: t('backoffice:shop.order.columns.total'), cell: (o) => <span className="font-medium text-gray-900">{o.total} Đh</span> },
     { header: t('backoffice:shop.order.columns.status'), cell: (o) => <StatusBadge label={t(`backoffice:shop.order.status.${o.status}`, { defaultValue: o.status })} className={STATUS_TONE[o.status]} /> },
-    { header: t('backoffice:shop.order.columns.date'), cell: (o) => <span className="text-gray-500">{o.created_at ? new Date(o.created_at).toLocaleDateString('fr-FR') : '—'}</span> },
+    { header: t('backoffice:shop.order.columns.date'), cell: (o) => <span className="text-gray-500">{o.created_at ? fmtDate(o.created_at) : '—'}</span> },
   ]
 
   return (
