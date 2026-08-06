@@ -16,5 +16,25 @@
     "about": "من نحن",
     "signIn": "تسجيل الدخول",
     "signUp": "إنشاء حساب"
+  },
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "messages": "الرسائل",
+    "messaging": "المراسلة",
+    "search": "البحث",
+    "favorites": "المفضلة",
+    "applications": "طلباتي",
+    "contracts": "عقودي",
+    "payments": "المدفوعات",
+    "profile": "الملف الشخصي",
+    "settings": "الإعدادات",
+    "affiliates": "الشركاء المنتسبون",
+    "verifications": "التحققات",
+    "reservedOffers": "العروض المحجوزة",
+    "grants": "الإعانات",
+    "reporting": "التقارير",
+    "billing": "الفوترة",
+    "apiWebhooks": "واجهة برمجية و webhooks",
+    "help": "بحاجة إلى مساعدة؟"
   }
 }

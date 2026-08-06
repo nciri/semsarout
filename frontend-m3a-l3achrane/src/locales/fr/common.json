@@ -16,5 +16,25 @@
     "about": "À propos",
     "signIn": "Se connecter",
     "signUp": "S'inscrire"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "messages": "Messages",
+    "messaging": "Messagerie",
+    "search": "Rechercher",
+    "favorites": "Mes favoris",
+    "applications": "Mes candidatures",
+    "contracts": "Mes contrats",
+    "payments": "Paiements",
+    "profile": "Profil",
+    "settings": "Paramètres",
+    "affiliates": "Affiliés",
+    "verifications": "Vérifications",
+    "reservedOffers": "Offres réservées",
+    "grants": "Subventions",
+    "reporting": "Reporting",
+    "billing": "Facturation",
+    "apiWebhooks": "API & webhooks",
+    "help": "Besoin d'aide ?"
   }
 }
