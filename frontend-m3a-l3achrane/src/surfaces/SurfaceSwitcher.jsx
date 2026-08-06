@@ -5,6 +5,7 @@ const links = [
   { to: '/recherche', label: 'Recherche' },
   { to: '/espace', label: 'Espace' },
   { to: '/partenaire', label: 'Partenaire' },
+  { to: '/back-office', label: 'Back-office' },
 ]
 
 const linkStyle = ({ isActive }) => ({
