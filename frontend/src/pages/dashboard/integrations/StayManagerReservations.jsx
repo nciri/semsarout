@@ -431,7 +431,7 @@ export default function StayManagerReservations() {
                   {selectedReservation.external_id && ` | Externe: ${selectedReservation.external_id}`}
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
-                  Derniere sync: {selectedReservation.synced_at ? fmtDateTime(selectedReservation.synced_at) : 'Inconnue'}
+                  Derniere sync: {selectedReservation.synced_at ? fmtDateTime(selectedReservation.synced_at, { second: '2-digit' }) : 'Inconnue'}
                 </p>
               </div>
             </div>

@@ -123,7 +123,7 @@ function AdminAccountDetail() {
           {(data.activity || []).map((a) => (
             <li key={a.id} className="text-sm text-slate-600 border-b border-slate-100 pb-2">
               <span className="font-medium">{a.action}</span> — {a.created_at
-                ? fmtDateTime(a.created_at) : ''}
+                ? fmtDateTime(a.created_at, { second: '2-digit' }) : ''}
             </li>
           ))}
           {(data.activity || []).length === 0 && <li className="text-slate-400 text-sm">{t('admin:accountDetail.activity.empty')}</li>}

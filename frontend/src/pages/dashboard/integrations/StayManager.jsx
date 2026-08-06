@@ -333,7 +333,7 @@ export default function StayManager() {
                 <p className="text-sm text-gray-500 mb-1">Derniere sync</p>
                 <p className="font-medium text-gray-900">
                   {integration.last_sync_at
-                    ? fmtDateTime(integration.last_sync_at)
+                    ? fmtDateTime(integration.last_sync_at, { second: '2-digit' })
                     : 'Jamais'}
                 </p>
               </div>
