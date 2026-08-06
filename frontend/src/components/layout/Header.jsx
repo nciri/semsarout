@@ -123,7 +123,7 @@ function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center">
             {/* Primary nav - Acheter/Louer */}
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center gap-6">
               <Link
                 to="/annonces?transaction_type=sale"
                 className="text-slate-700 hover:text-midnight font-semibold text-[15px] transition-colors"
@@ -153,7 +153,7 @@ function Header() {
             <div className="mx-10 h-6 w-px bg-gray-200"></div>
 
             {/* Secondary nav - Agences & Services */}
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center gap-6">
               <Link
                 to="/agences"
                 className="text-emerald-500 hover:text-emerald-600 font-semibold text-[15px] transition-colors"
@@ -170,7 +170,7 @@ function Header() {
           </nav>
 
           {/* Desktop Actions */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center gap-4">
             {isAuthenticated && (
               <Link
                 to="/dashboard/annonces/nouvelle"

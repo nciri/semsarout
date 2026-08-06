@@ -10,12 +10,14 @@ import { Panel, StatusBadge, Field, EmptyState, GatedNotice, PRIMARY_BTN, SECOND
 import SignaturePanel from '../../../components/backoffice/SignaturePanel'
 import DirIcon from '../../../components/common/DirIcon'
 import useAuthStore from '../../../store/authStore'
+import { useFormat } from '../../../utils/format'
 
 const COND_TONE = { bon: 'bg-emerald-50 text-emerald-700', moyen: 'bg-amber-100 text-amber-700', mauvais: 'bg-red-100 text-red-700' }
-const money = (v) => `${Number(v || 0).toLocaleString('fr-FR')} Đh`
 
 function SettlementEditor() {
   const { t } = useTranslation(['backoffice', 'common'])
+  const { fmtNumber } = useFormat()
+  const money = (v) => `${fmtNumber(Number(v || 0))} Đh`
   const { leaseId } = useParams()
   const qc = useQueryClient()
   const { user } = useAuthStore()

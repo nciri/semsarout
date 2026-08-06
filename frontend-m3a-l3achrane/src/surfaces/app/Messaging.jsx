@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Avatar, Button, Input } from '../../ds/index.js'
 import { listThreads } from '../../services/index.js'
 
 export default function Messaging() {
+  const { t } = useTranslation(['app', 'common'])
   const [threads, setThreads] = useState(null)
   const [activeId, setActiveId] = useState(null)
   const [draft, setDraft] = useState('')
@@ -22,17 +24,17 @@ export default function Messaging() {
   if (!threads) {
     return (
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-card)', font: 'var(--fw-medium) var(--fs-body) var(--font-body)', color: 'var(--text-muted)' }}>
-        Chargement…
+        {t('common:loading')}
       </div>
     )
   }
 
-  const active = threads.find((t) => t.id === activeId) || threads[0]
+  const active = threads.find((th) => th.id === activeId) || threads[0]
 
   const send = () => {
     if (!draft.trim() || !active) return
-    const nouveau = { mine: true, texte: draft, heure: 'maintenant' }
-    setThreads(threads.map((t) => (t.id === active.id ? { ...t, messages: [...t.messages, nouveau] } : t)))
+    const nouveau = { mine: true, texte: draft, heure: t('app:messaging.now') }
+    setThreads(threads.map((th) => (th.id === active.id ? { ...th, messages: [...th.messages, nouveau] } : th)))
     setDraft('')
   }
 
@@ -41,14 +43,14 @@ export default function Messaging() {
       {/* liste des conversations */}
       <aside style={{ width: 328, borderInlineEnd: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
         <div style={{ padding: '16px 18px 12px', font: 'var(--fw-bold) var(--fs-body) var(--font-display)', color: 'var(--text-heading)' }}>
-          Messages
+          {t('common:nav.messages')}
         </div>
-        {threads.map((t) => {
-          const isActive = t.id === active?.id
+        {threads.map((th) => {
+          const isActive = th.id === active?.id
           return (
             <button
-              key={t.id}
-              onClick={() => setActiveId(t.id)}
+              key={th.id}
+              onClick={() => setActiveId(th.id)}
               style={{
                 textAlign: 'start',
                 border: 0,
@@ -62,15 +64,15 @@ export default function Messaging() {
                 boxSizing: 'border-box',
               }}
             >
-              <Avatar src={t.avatar} name={t.nom} size={38} />
+              <Avatar src={th.avatar} name={th.nom} size={38} />
               <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
-                  <span style={{ font: 'var(--fw-bold) var(--fs-sm) var(--font-display)', color: 'var(--text-heading)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.nom}</span>
-                  <span style={{ font: 'var(--fw-regular) var(--fs-xs) var(--font-body)', color: 'var(--text-muted)', flex: 'none' }}>{t.heure}</span>
+                  <span style={{ font: 'var(--fw-bold) var(--fs-sm) var(--font-display)', color: 'var(--text-heading)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{th.nom}</span>
+                  <span style={{ font: 'var(--fw-regular) var(--fs-xs) var(--font-body)', color: 'var(--text-muted)', flex: 'none' }}>{th.heure}</span>
                 </div>
-                <div style={{ font: 'var(--fw-regular) var(--fs-xs) var(--font-body)', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.dernier}</div>
-                {t.annonce && (
-                  <div style={{ font: 'var(--fw-regular) 11.5px var(--font-body)', color: 'var(--text-muted)' }}>{t.annonce}</div>
+                <div style={{ font: 'var(--fw-regular) var(--fs-xs) var(--font-body)', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{th.dernier}</div>
+                {th.annonce && (
+                  <div style={{ font: 'var(--fw-regular) 11.5px var(--font-body)', color: 'var(--text-muted)' }}>{th.annonce}</div>
                 )}
               </div>
             </button>
@@ -90,11 +92,11 @@ export default function Messaging() {
                 )}
               </div>
               <div style={{ marginInlineStart: 'auto' }}>
-                <Button variant="secondary" size="sm">Voir l’annonce</Button>
+                <Button variant="secondary" size="sm">{t('app:messaging.viewListing')}</Button>
               </div>
             </div>
             <div style={{ padding: '10px 20px', background: 'var(--navy-50)', borderBottom: '1px solid var(--navy-100)', font: 'var(--fw-regular) var(--fs-xs) var(--font-body)', color: 'var(--text-body)' }}>
-              🔒 Vos numéros et e-mails restent masqués tant que la mise en relation n’est pas acceptée.
+              🔒 {t('app:messaging.privacyBanner')}
             </div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12, padding: 20, overflowY: 'auto', minHeight: 360 }}>
               {active.messages.map((m, i) =>
@@ -103,7 +105,7 @@ export default function Messaging() {
                     key={i}
                     style={{ alignSelf: 'center', padding: '8px 14px', borderRadius: 10, background: 'var(--amber-100)', color: 'var(--gold-700)', font: 'var(--fw-bold) var(--fs-xs) var(--font-body)', textAlign: 'center', maxWidth: '80%' }}
                   >
-                    ⚠ Numéro de téléphone détecté et masqué — restez sur la messagerie interne jusqu’à la vérification.
+                    ⚠ {t('app:messaging.phoneDetectedWarning')}
                   </div>
                 ) : (
                   <div
@@ -129,10 +131,10 @@ export default function Messaging() {
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && send()}
-                placeholder="Écrivez votre message…"
+                placeholder={t('app:messaging.inputPlaceholder')}
                 containerStyle={{ flex: 1 }}
               />
-              <Button onClick={send}>Envoyer</Button>
+              <Button onClick={send}>{t('app:messaging.send')}</Button>
             </div>
           </>
         )}

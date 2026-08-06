@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FiMapPin } from 'react-icons/fi'
 
 /**
@@ -16,29 +17,32 @@ export default function AddressAutocomplete({
   value = '',
   onChange,
   onSelect, // eslint-disable-line no-unused-vars -- point d'entrée Google Places (branchement différé)
-  label = 'Adresse complète',
-  placeholder = 'Adresse du projet',
+  label,
+  placeholder,
   id = 'address-autocomplete',
 }) {
+  const { t } = useTranslation(['common'])
   const inputRef = useRef(null)
+  const resolvedLabel = label ?? t('common:address.label')
+  const resolvedPlaceholder = placeholder ?? t('common:address.placeholder')
 
   return (
     <div>
-      {label && (
+      {resolvedLabel && (
         <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
-          {label}
+          {resolvedLabel}
         </label>
       )}
       <div className="relative">
-        <FiMapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+        <FiMapPin className="absolute start-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
         <input
           id={id}
           ref={inputRef}
           type="text"
           value={value}
           onChange={(e) => onChange?.(e.target.value)}
-          placeholder={placeholder}
-          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          placeholder={resolvedPlaceholder}
+          className="w-full ps-10 pe-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           autoComplete="off"
         />
       </div>

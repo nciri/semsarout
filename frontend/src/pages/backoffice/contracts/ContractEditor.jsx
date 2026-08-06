@@ -4,19 +4,21 @@ import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import ReactQuill from 'react-quill-new'
 import 'react-quill-new/dist/quill.snow.css'
+import { useTranslation } from 'react-i18next'
 import { FiArrowLeft, FiSave, FiCheck, FiDownload, FiEdit3 } from 'react-icons/fi'
 import { contractService } from '../../../services/contractService'
 import { StatusBadge } from '../../../components/backoffice/ui'
 
-const STATUS = {
-  draft: ['Brouillon', 'bg-gray-100 text-gray-700'],
-  finalized: ['Finalisé', 'bg-blue-100 text-blue-700'],
-  signed: ['Signé', 'bg-emerald-50 text-emerald-700'],
+const STATUS_TONE = {
+  draft: 'bg-gray-100 text-gray-700',
+  finalized: 'bg-blue-100 text-blue-700',
+  signed: 'bg-emerald-50 text-emerald-700',
 }
 const SECONDARY_BTN = 'inline-flex items-center gap-2 px-3.5 py-2 border border-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-50 transition-colors'
 const PRIMARY_BTN = 'inline-flex items-center gap-2 px-3.5 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors'
 
 function ContractEditor() {
+  const { t } = useTranslation(['backoffice', 'common'])
   const { id } = useParams()
   const qc = useQueryClient()
   const { data, isLoading } = useQuery(['contract', id], () => contractService.get(id))
@@ -30,14 +32,14 @@ function ContractEditor() {
   const contract = data?.contract
   const readOnly = contract && contract.status !== 'draft'
   const refresh = () => qc.invalidateQueries(['contract', id])
-  const onErr = (e) => toast.error(e.response?.data?.error || 'Erreur')
+  const onErr = (e) => toast.error(e.response?.data?.error || t('common:errors.short'))
 
   const save = useMutation(() => contractService.update(id, { title, body_html: html }),
-    { onSuccess: () => { toast.success('Enregistré'); refresh() }, onError: onErr })
+    { onSuccess: () => { toast.success(t('backoffice:contracts.editor.toasts.saved')); refresh() }, onError: onErr })
   const finalize = useMutation(() => contractService.finalize(id),
-    { onSuccess: () => { toast.success('Contrat finalisé'); refresh() }, onError: onErr })
+    { onSuccess: () => { toast.success(t('backoffice:contracts.editor.toasts.finalized')); refresh() }, onError: onErr })
   const sign = useMutation(() => contractService.markSigned(id),
-    { onSuccess: () => { toast.success('Marqué signé'); refresh() }, onError: onErr })
+    { onSuccess: () => { toast.success(t('backoffice:contracts.editor.toasts.signed')); refresh() }, onError: onErr })
 
   if (isLoading) return <div className="animate-pulse space-y-4"><div className="h-4 w-24 bg-gray-200 rounded" /><div className="h-10 bg-gray-200 rounded w-1/2" /><div className="h-96 bg-gray-100 rounded-xl" /></div>
 
@@ -54,7 +56,7 @@ function ContractEditor() {
   return (
     <div className="space-y-4">
       <Link to="/backoffice/contrats" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
-        <FiArrowLeft className="w-4 h-4" /> Contrats
+        <FiArrowLeft className="w-4 h-4" /> {t('backoffice:contracts.shared.backToList')}
       </Link>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -65,13 +67,13 @@ function ContractEditor() {
             disabled={readOnly}
             className="text-2xl font-bold text-gray-900 bg-transparent border-b-2 border-transparent focus:border-primary-400 outline-none disabled:cursor-default min-w-0"
           />
-          <StatusBadge label={STATUS[contract.status]?.[0]} className={STATUS[contract.status]?.[1]} />
+          <StatusBadge label={t(`backoffice:contracts.status.${contract.status}`, { defaultValue: contract.status })} className={STATUS_TONE[contract.status]} />
         </div>
         <div className="flex flex-wrap gap-2">
-          {!readOnly && <button onClick={() => save.mutate()} className={SECONDARY_BTN}><FiSave className="w-4 h-4" /> Enregistrer</button>}
-          {contract.status === 'draft' && <button onClick={() => finalize.mutate()} className={PRIMARY_BTN}><FiCheck className="w-4 h-4" /> Finaliser</button>}
-          {contract.status !== 'draft' && <button onClick={downloadPdf} className={SECONDARY_BTN}><FiDownload className="w-4 h-4" /> Télécharger PDF</button>}
-          {contract.status === 'finalized' && <button onClick={() => sign.mutate()} className={PRIMARY_BTN}><FiEdit3 className="w-4 h-4" /> Marquer signé</button>}
+          {!readOnly && <button onClick={() => save.mutate()} className={SECONDARY_BTN}><FiSave className="w-4 h-4" /> {t('backoffice:contracts.editor.save')}</button>}
+          {contract.status === 'draft' && <button onClick={() => finalize.mutate()} className={PRIMARY_BTN}><FiCheck className="w-4 h-4" /> {t('backoffice:contracts.editor.finalize')}</button>}
+          {contract.status !== 'draft' && <button onClick={downloadPdf} className={SECONDARY_BTN}><FiDownload className="w-4 h-4" /> {t('backoffice:contracts.editor.downloadPdf')}</button>}
+          {contract.status === 'finalized' && <button onClick={() => sign.mutate()} className={PRIMARY_BTN}><FiEdit3 className="w-4 h-4" /> {t('backoffice:contracts.editor.markSigned')}</button>}
         </div>
       </div>
 
@@ -79,7 +81,7 @@ function ContractEditor() {
         <ReactQuill theme="snow" value={html} onChange={setHtml} readOnly={readOnly} />
       </div>
       {readOnly && (
-        <p className="text-xs text-gray-400">Contrat {STATUS[contract.status]?.[0].toLowerCase()} — édition verrouillée.</p>
+        <p className="text-xs text-gray-400">{t('backoffice:contracts.editor.locked', { status: t(`backoffice:contracts.status.${contract.status}`, { defaultValue: contract.status }).toLowerCase() })}</p>
       )}
     </div>
   )

@@ -1,8 +1,8 @@
 export const TYPOLOGY_OPTIONS = [
-  { value: 'apartments', label: 'Appartements' },
-  { value: 'villas', label: 'Villas' },
-  { value: 'land', label: 'Terrains' },
-  { value: 'commercial', label: 'Commercial' },
+  { value: 'apartments', labelKey: 'programForm.specs.typology.apartments' },
+  { value: 'villas', labelKey: 'programForm.specs.typology.villas' },
+  { value: 'land', labelKey: 'programForm.specs.typology.land' },
+  { value: 'commercial', labelKey: 'programForm.specs.typology.commercial' },
 ]
 
 // Types d'unité proposés par typologie (union quand plusieurs cochées).
@@ -21,43 +21,45 @@ export const unitTypesForTypology = (typology = []) => {
 
 // Champs de l'étape Détails par typologie → formData.specs[typology].
 export const DETAIL_SECTIONS = {
-  apartments: { label: 'Appartements', fields: [
-    { key: 'buildings_count', label: 'Nombre de bâtiments', type: 'number' },
-    { key: 'floors_count', label: "Nombre d'étages", type: 'number' },
-    { key: 'has_elevator', label: 'Ascenseur', type: 'bool' },
-    { key: 'monthly_charges', label: 'Charges/syndic estimées (Đh/mois)', type: 'number' },
+  apartments: { labelKey: 'programForm.specs.typology.apartments', fields: [
+    { key: 'buildings_count', labelKey: 'programForm.specs.sections.apartments.fields.buildingsCount', type: 'number' },
+    { key: 'floors_count', labelKey: 'programForm.specs.sections.apartments.fields.floorsCount', type: 'number' },
+    { key: 'has_elevator', labelKey: 'programForm.specs.sections.apartments.fields.hasElevator', type: 'bool' },
+    { key: 'monthly_charges', labelKey: 'programForm.specs.sections.apartments.fields.monthlyCharges', type: 'number' },
   ] },
-  villas: { label: 'Villas', fields: [
-    { key: 'land_surface_min', label: 'Superficie terrain min (m²)', type: 'number' },
-    { key: 'land_surface_max', label: 'Superficie terrain max (m²)', type: 'number' },
-    { key: 'levels', label: 'Niveaux (ex. R+1)', type: 'text' },
-    { key: 'style', label: 'Style architectural', type: 'text' },
-    { key: 'has_garage', label: 'Garage', type: 'bool' },
-    { key: 'has_pool', label: 'Piscine', type: 'bool' },
+  villas: { labelKey: 'programForm.specs.typology.villas', fields: [
+    { key: 'land_surface_min', labelKey: 'programForm.specs.sections.villas.fields.landSurfaceMin', type: 'number' },
+    { key: 'land_surface_max', labelKey: 'programForm.specs.sections.villas.fields.landSurfaceMax', type: 'number' },
+    { key: 'levels', labelKey: 'programForm.specs.sections.villas.fields.levels', type: 'text' },
+    { key: 'style', labelKey: 'programForm.specs.sections.villas.fields.style', type: 'text' },
+    { key: 'has_garage', labelKey: 'programForm.specs.sections.villas.fields.hasGarage', type: 'bool' },
+    { key: 'has_pool', labelKey: 'programForm.specs.sections.villas.fields.hasPool', type: 'bool' },
   ] },
-  land: { label: 'Terrains', fields: [
-    { key: 'serviced_water', label: 'Eau', type: 'bool' },
-    { key: 'serviced_electricity', label: 'Électricité', type: 'bool' },
-    { key: 'serviced_sewage', label: 'Assainissement', type: 'bool' },
-    { key: 'serviced_road', label: 'Voirie', type: 'bool' },
-    { key: 'title_type', label: 'Type de titre foncier', type: 'text' },
-    { key: 'buildability', label: 'Constructibilité (COS/CUS ou R+n)', type: 'text' },
-    { key: 'subdivision_allowed', label: 'Lotissement autorisé', type: 'bool' },
+  land: { labelKey: 'programForm.specs.typology.land', fields: [
+    { key: 'serviced_water', labelKey: 'programForm.specs.sections.land.fields.servicedWater', type: 'bool' },
+    { key: 'serviced_electricity', labelKey: 'programForm.specs.sections.land.fields.servicedElectricity', type: 'bool' },
+    { key: 'serviced_sewage', labelKey: 'programForm.specs.sections.land.fields.servicedSewage', type: 'bool' },
+    { key: 'serviced_road', labelKey: 'programForm.specs.sections.land.fields.servicedRoad', type: 'bool' },
+    { key: 'title_type', labelKey: 'programForm.specs.sections.land.fields.titleType', type: 'text' },
+    { key: 'buildability', labelKey: 'programForm.specs.sections.land.fields.buildability', type: 'text' },
+    { key: 'subdivision_allowed', labelKey: 'programForm.specs.sections.land.fields.subdivisionAllowed', type: 'bool' },
   ] },
-  commercial: { label: 'Commercial', fields: [
-    { key: 'local_type', label: 'Type de local', type: 'select', options: [
-      { value: 'office', label: 'Bureau' }, { value: 'shop', label: 'Commerce' }, { value: 'warehouse', label: 'Entrepôt' },
+  commercial: { labelKey: 'programForm.specs.typology.commercial', fields: [
+    { key: 'local_type', labelKey: 'programForm.specs.sections.commercial.fields.localType', type: 'select', options: [
+      { value: 'office', labelKey: 'programForm.specs.localType.office' },
+      { value: 'shop', labelKey: 'programForm.specs.localType.shop' },
+      { value: 'warehouse', labelKey: 'programForm.specs.localType.warehouse' },
     ] },
-    { key: 'allowed_use', label: 'Usage autorisé', type: 'text' },
-    { key: 'standing', label: 'Standing', type: 'text' },
+    { key: 'allowed_use', labelKey: 'programForm.specs.sections.commercial.fields.allowedUse', type: 'text' },
+    { key: 'standing', labelKey: 'programForm.specs.sections.commercial.fields.standing', type: 'text' },
   ] },
 }
 
 const APARTMENT_UNIT_FIELDS = [
-  { key: 'floor', label: 'Étage', type: 'number' },
-  { key: 'orientation', label: 'Orientation', type: 'text' },
-  { key: 'has_balcony', label: 'Balcon', type: 'bool' },
-  { key: 'has_terrace', label: 'Terrasse', type: 'bool' },
+  { key: 'floor', labelKey: 'programForm.specs.unitFields.apartmentUnit.floor', type: 'number' },
+  { key: 'orientation', labelKey: 'programForm.specs.unitFields.apartmentUnit.orientation', type: 'text' },
+  { key: 'has_balcony', labelKey: 'programForm.specs.unitFields.apartmentUnit.hasBalcony', type: 'bool' },
+  { key: 'has_terrace', labelKey: 'programForm.specs.unitFields.apartmentUnit.hasTerrace', type: 'bool' },
 ]
 
 // Champs specs par type d'unité → unit.specs.
@@ -67,23 +69,23 @@ export const UNIT_SPEC_FIELDS = {
   duplex: APARTMENT_UNIT_FIELDS,
   penthouse: APARTMENT_UNIT_FIELDS,
   villa: [
-    { key: 'land_surface', label: 'Superficie terrain (m²)', type: 'number' },
-    { key: 'living_surface', label: 'Superficie habitable (m²)', type: 'number' },
-    { key: 'levels', label: 'Niveaux', type: 'text' },
-    { key: 'has_garden', label: 'Jardin', type: 'bool' },
-    { key: 'has_pool', label: 'Piscine', type: 'bool' },
-    { key: 'garage_spots', label: 'Places de garage', type: 'number' },
+    { key: 'land_surface', labelKey: 'programForm.specs.unitFields.villaUnit.landSurface', type: 'number' },
+    { key: 'living_surface', labelKey: 'programForm.specs.unitFields.villaUnit.livingSurface', type: 'number' },
+    { key: 'levels', labelKey: 'programForm.specs.unitFields.villaUnit.levels', type: 'text' },
+    { key: 'has_garden', labelKey: 'programForm.specs.unitFields.villaUnit.hasGarden', type: 'bool' },
+    { key: 'has_pool', labelKey: 'programForm.specs.unitFields.villaUnit.hasPool', type: 'bool' },
+    { key: 'garage_spots', labelKey: 'programForm.specs.unitFields.villaUnit.garageSpots', type: 'number' },
   ],
   land: [
-    { key: 'lot_surface', label: 'Superficie lot (m²)', type: 'number' },
-    { key: 'price_per_sqm', label: 'Prix/m² (Đh)', type: 'number' },
-    { key: 'frontage', label: 'Façade (ml)', type: 'number' },
-    { key: 'buildable', label: 'Constructible', type: 'bool' },
-    { key: 'shape', label: 'Forme', type: 'text' },
+    { key: 'lot_surface', labelKey: 'programForm.specs.unitFields.landUnit.lotSurface', type: 'number' },
+    { key: 'price_per_sqm', labelKey: 'programForm.specs.unitFields.landUnit.pricePerSqm', type: 'number' },
+    { key: 'frontage', labelKey: 'programForm.specs.unitFields.landUnit.frontage', type: 'number' },
+    { key: 'buildable', labelKey: 'programForm.specs.unitFields.landUnit.buildable', type: 'bool' },
+    { key: 'shape', labelKey: 'programForm.specs.unitFields.landUnit.shape', type: 'text' },
   ],
   commercial: [
-    { key: 'floor', label: 'Étage', type: 'number' },
-    { key: 'allowed_use', label: 'Usage', type: 'text' },
+    { key: 'floor', labelKey: 'programForm.specs.unitFields.commercialUnit.floor', type: 'number' },
+    { key: 'allowed_use', labelKey: 'programForm.specs.unitFields.commercialUnit.allowedUse', type: 'text' },
   ],
 }
 

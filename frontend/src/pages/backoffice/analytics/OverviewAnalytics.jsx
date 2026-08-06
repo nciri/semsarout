@@ -4,12 +4,11 @@ import {
   FiTrendingUp, FiTrendingDown, FiDollarSign, FiUsers,
   FiCalendar, FiBarChart2, FiDownload
 } from 'react-icons/fi'
+import { useTranslation } from 'react-i18next'
 import { formatPrice } from '../../../utils/currency'
 import { analyticsService } from '../../../services/analyticsService'
 import { useFilters } from './AnalyticsLayout'
 import api from '../../../services/api'
-
-const TX_TYPE_LABELS = { sale: 'Vente', rent: 'Location', autre: 'Autre' }
 
 // Les endpoints stats/* raisonnent en jours (param `period`) ; les endpoints
 // analytics/* en plages nommées (`range`). On dérive l'un de l'autre.
@@ -32,6 +31,7 @@ const backofficeService = {
 }
 
 function StatCard({ title, value, change, icon: Icon, color = 'primary', loading }) {
+  const { t } = useTranslation(['backoffice'])
   const isPositive = change >= 0
   const colorClasses = {
     primary: 'bg-primary-50 text-primary-600',
@@ -53,7 +53,7 @@ function StatCard({ title, value, change, icon: Icon, color = 'primary', loading
           {change !== undefined && !loading && (
             <div className={`flex items-center mt-2 text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
               {isPositive ? <FiTrendingUp className="w-4 h-4 mr-1" /> : <FiTrendingDown className="w-4 h-4 mr-1" />}
-              <span>{Math.abs(change)}% vs période précédente</span>
+              <span>{t('backoffice:analytics.overview.changeVsPrev', { pct: Math.abs(change) })}</span>
             </div>
           )}
         </div>
@@ -66,6 +66,7 @@ function StatCard({ title, value, change, icon: Icon, color = 'primary', loading
 }
 
 function BarChart({ data, title }) {
+  const { t } = useTranslation(['backoffice'])
   const maxValue = Math.max(...data.map((d) => d.value), 1)
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -81,16 +82,17 @@ function BarChart({ data, title }) {
             <div className="w-24 text-right text-sm font-medium text-gray-900">{item.formatted || item.value}</div>
           </div>
         ))}
-        {data.length === 0 && <p className="text-center text-gray-500 py-4">Aucune donnée</p>}
+        {data.length === 0 && <p className="text-center text-gray-500 py-4">{t('backoffice:analytics.shared.noDataShort')}</p>}
       </div>
     </div>
   )
 }
 
 function AgentLeaderboard({ agents }) {
+  const { t } = useTranslation(['backoffice'])
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <h3 className="font-semibold text-gray-900 mb-4">Top Agents</h3>
+      <h3 className="font-semibold text-gray-900 mb-4">{t('backoffice:analytics.overview.topAgents')}</h3>
       <div className="space-y-3">
         {agents.map((agent, i) => (
           <div key={agent.agent_id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
@@ -103,16 +105,16 @@ function AgentLeaderboard({ agents }) {
             <div className="flex-1 min-w-0">
               <p className="font-medium text-gray-900 truncate">{agent.agent_name || '—'}</p>
               <p className="text-xs text-gray-500">
-                {agent.transactions_won} transaction{agent.transactions_won > 1 ? 's' : ''} · {agent.properties_created} bien{agent.properties_created > 1 ? 's' : ''}
+                {t('backoffice:analytics.shared.transactionCount', { count: agent.transactions_won })} · {t('backoffice:analytics.shared.propertyCount', { count: agent.properties_created })}
               </p>
             </div>
             <div className="text-right">
               <p className="font-semibold text-gray-900">{formatPrice(agent.commission_earned)}</p>
-              <p className="text-xs text-gray-500">commission</p>
+              <p className="text-xs text-gray-500">{t('backoffice:analytics.overview.commissionLabel')}</p>
             </div>
           </div>
         ))}
-        {agents.length === 0 && <p className="text-center text-gray-500 py-4">Aucune donnée</p>}
+        {agents.length === 0 && <p className="text-center text-gray-500 py-4">{t('backoffice:analytics.shared.noDataShort')}</p>}
       </div>
     </div>
   )
@@ -122,6 +124,7 @@ function AgentLeaderboard({ agents }) {
 // Compteurs & top agents viennent de stats/* (portée période) ; CA, tunnel et
 // KPIs de analytics/financial + pipeline (portée période + type + agent).
 function OverviewAnalytics() {
+  const { t } = useTranslation(['backoffice'])
   const filters = useFilters()
   const days = rangeToDays(filters.range)
 
@@ -161,34 +164,34 @@ function OverviewAnalytics() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <p className="text-gray-500">Vue d'ensemble des performances de l'agence</p>
+        <p className="text-gray-500">{t('backoffice:analytics.overview.subtitle')}</p>
         <button onClick={handleExport}
                 className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-          <FiDownload className="w-5 h-5" /> Exporter (biens)
+          <FiDownload className="w-5 h-5" /> {t('backoffice:analytics.overview.exportButton')}
         </button>
       </div>
 
       {/* Main stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Chiffre d'affaires" value={formatPrice(fs.revenue_realized || 0)}
+        <StatCard title={t('backoffice:analytics.overview.stats.revenue')} value={formatPrice(fs.revenue_realized || 0)}
                   icon={FiDollarSign} color="green" loading={loadingFin} />
-        <StatCard title="Transactions gagnées" value={fs.deals_won || 0}
+        <StatCard title={t('backoffice:analytics.overview.stats.dealsWon')} value={fs.deals_won || 0}
                   icon={FiBarChart2} color="purple" loading={loadingFin} />
-        <StatCard title="Nouveaux clients" value={overview?.clients?.count || 0}
+        <StatCard title={t('backoffice:analytics.overview.stats.newClients')} value={overview?.clients?.count || 0}
                   change={overview?.clients?.change} icon={FiUsers} color="blue" loading={loadingOverview} />
-        <StatCard title="Visites effectuées" value={overview?.visits?.count || 0}
+        <StatCard title={t('backoffice:analytics.overview.stats.visits')} value={overview?.visits?.count || 0}
                   change={overview?.visits?.change} icon={FiCalendar} color="yellow" loading={loadingOverview} />
       </div>
 
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <BarChart title="Chiffre d'affaires par mois"
+        <BarChart title={t('backoffice:analytics.overview.charts.revenueByMonth')}
                   data={(fd.revenue_trend || []).map((m) => ({
                     label: m.month, value: m.realized, formatted: formatPrice(m.realized),
                   }))} />
-        <BarChart title="Commission par type de transaction"
-                  data={(fd.deals_by_type || []).map((t) => ({
-                    label: TX_TYPE_LABELS[t.type] || t.type, value: t.commission, formatted: formatPrice(t.commission),
+        <BarChart title={t('backoffice:analytics.overview.charts.commissionByTxType')}
+                  data={(fd.deals_by_type || []).map((d) => ({
+                    label: t(`backoffice:analytics.overview.txTypeLabels.${d.type}`, { defaultValue: d.type }), value: d.commission, formatted: formatPrice(d.commission),
                   }))} />
       </div>
 
@@ -198,7 +201,7 @@ function OverviewAnalytics() {
 
         {/* Biens par ville */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Biens par ville</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">{t('backoffice:analytics.overview.propertiesByCity')}</h3>
           <div className="space-y-3">
             {(citiesData?.cities || []).map((item, i) => (
               <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -207,21 +210,21 @@ function OverviewAnalytics() {
               </div>
             ))}
             {(!citiesData?.cities || citiesData.cities.length === 0) && (
-              <p className="text-center text-gray-500 py-4">Aucune donnée</p>
+              <p className="text-center text-gray-500 py-4">{t('backoffice:analytics.shared.noDataShort')}</p>
             )}
           </div>
         </div>
 
         {/* Tunnel de conversion */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Tunnel de conversion</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">{t('backoffice:analytics.overview.funnel.title')}</h3>
           <div className="space-y-2">
             {[
-              { label: 'Leads', value: funnel.leads || 0, color: 'bg-blue-500' },
-              { label: 'Qualifiés', value: funnel.qualified || 0, color: 'bg-yellow-500' },
-              { label: 'Visites', value: funnel.visits || 0, color: 'bg-orange-500' },
-              { label: 'Offres', value: funnel.offers || 0, color: 'bg-purple-500' },
-              { label: 'Clôturés', value: funnel.closed || 0, color: 'bg-green-500' },
+              { label: t('backoffice:analytics.overview.funnel.leads'), value: funnel.leads || 0, color: 'bg-blue-500' },
+              { label: t('backoffice:analytics.overview.funnel.qualified'), value: funnel.qualified || 0, color: 'bg-yellow-500' },
+              { label: t('backoffice:analytics.overview.funnel.visits'), value: funnel.visits || 0, color: 'bg-orange-500' },
+              { label: t('backoffice:analytics.overview.funnel.offers'), value: funnel.offers || 0, color: 'bg-purple-500' },
+              { label: t('backoffice:analytics.overview.funnel.closed'), value: funnel.closed || 0, color: 'bg-green-500' },
             ].map((step, i) => {
               const maxValue = funnel.leads || 1
               return (
@@ -243,23 +246,23 @@ function OverviewAnalytics() {
 
       {/* KPIs */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h3 className="font-semibold text-gray-900 mb-4">Indicateurs clés</h3>
+        <h3 className="font-semibold text-gray-900 mb-4">{t('backoffice:analytics.overview.kpis.title')}</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <div className="text-center">
             <p className="text-3xl font-bold text-primary-600">{(pipeline?.summary?.conversion_overall_pct || 0).toFixed(1)}%</p>
-            <p className="text-sm text-gray-500 mt-1">Taux de conversion</p>
+            <p className="text-sm text-gray-500 mt-1">{t('backoffice:analytics.overview.kpis.conversionRate')}</p>
           </div>
           <div className="text-center">
             <p className="text-3xl font-bold text-primary-600">{fs.avg_sales_cycle_days || 0}</p>
-            <p className="text-sm text-gray-500 mt-1">Jours moyen de clôture</p>
+            <p className="text-sm text-gray-500 mt-1">{t('backoffice:analytics.overview.kpis.avgCloseDays')}</p>
           </div>
           <div className="text-center">
             <p className="text-3xl font-bold text-primary-600">{formatPrice(fs.avg_deal_size || 0)}</p>
-            <p className="text-sm text-gray-500 mt-1">Valeur moyenne transaction</p>
+            <p className="text-sm text-gray-500 mt-1">{t('backoffice:analytics.overview.kpis.avgDealValue')}</p>
           </div>
           <div className="text-center">
             <p className="text-3xl font-bold text-primary-600">{formatPrice(fs.revenue_pipeline_weighted || 0)}</p>
-            <p className="text-sm text-gray-500 mt-1">Pipeline pondéré</p>
+            <p className="text-sm text-gray-500 mt-1">{t('backoffice:analytics.overview.kpis.weightedPipeline')}</p>
           </div>
         </div>
       </div>

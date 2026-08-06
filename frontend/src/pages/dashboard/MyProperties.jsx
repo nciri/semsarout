@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
+import { useTranslation } from 'react-i18next'
 import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiHeart, FiUploadCloud } from 'react-icons/fi'
 import { propertyService } from '../../services/propertyService'
 import { buyerService } from '../../services/buyerService'
@@ -9,6 +10,7 @@ import { formatPrice } from '../../utils/currency'
 import MesBiensTabs from '../../components/dashboard/MesBiensTabs'
 
 function MyProperties() {
+  const { t } = useTranslation(['dashboard', 'common'])
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const [deleteId, setDeleteId] = useState(null)
@@ -41,12 +43,12 @@ function MyProperties() {
 
   // Statuts pertinents selon l'onglet (Vendues pour la vente, Louées pour la location)
   const statusFilters = [
-    { value: '', label: 'Tous statuts' },
-    { value: 'active', label: 'Actives' },
-    { value: 'draft', label: 'Brouillons' },
+    { value: '', label: t('dashboard:myProperties.statusFilters.all') },
+    { value: 'active', label: t('dashboard:myProperties.statusFilters.active') },
+    { value: 'draft', label: t('dashboard:myProperties.statusFilters.draft') },
     transactionType === 'sale'
-      ? { value: 'sold', label: 'Vendues' }
-      : { value: 'rented', label: 'Louées' }
+      ? { value: 'sold', label: t('dashboard:myProperties.statusFilters.sold') }
+      : { value: 'rented', label: t('dashboard:myProperties.statusFilters.rented') }
   ]
 
   const setStatus = (value) => {
@@ -79,12 +81,12 @@ function MyProperties() {
     (id) => propertyService.deleteProperty(id),
     {
       onSuccess: () => {
-        toast.success('Annonce supprimée')
+        toast.success(t('dashboard:myProperties.toasts.deleted'))
         queryClient.invalidateQueries('my-properties')
         setDeleteId(null)
       },
       onError: () => {
-        toast.error('Erreur lors de la suppression')
+        toast.error(t('dashboard:myProperties.toasts.deleteError'))
       }
     }
   )
@@ -94,9 +96,9 @@ function MyProperties() {
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['favorites'])
-        toast.success('Retiré des favoris')
+        toast.success(t('dashboard:myProperties.toasts.favRemoved'))
       },
-      onError: () => toast.error('Une erreur est survenue')
+      onError: () => toast.error(t('common:errors.generic'))
     }
   )
 
@@ -104,33 +106,33 @@ function MyProperties() {
     (id) => propertyService.publishProperty(id),
     {
       onSuccess: () => {
-        toast.success('Annonce publiée')
+        toast.success(t('dashboard:myProperties.toasts.published'))
         queryClient.invalidateQueries('my-properties')
       },
       onError: () => {
-        toast.error('Erreur lors de la publication')
+        toast.error(t('dashboard:myProperties.toasts.publishError'))
       }
     }
   )
 
   const STATUS_LABELS = {
-    draft: { label: 'Brouillon', class: 'bg-gray-100 text-gray-600' },
-    active: { label: 'Active', class: 'badge-success' },
-    pending: { label: 'En attente', class: 'badge-warning' },
-    sold: { label: 'Vendu', class: 'bg-blue-100 text-blue-800' },
-    rented: { label: 'Loué', class: 'bg-blue-100 text-blue-800' },
-    archived: { label: 'Archivé', class: 'bg-gray-100 text-gray-600' }
+    draft: { label: t('dashboard:myProperties.status.draft'), class: 'bg-gray-100 text-gray-600' },
+    active: { label: t('dashboard:myProperties.status.active'), class: 'badge-success' },
+    pending: { label: t('dashboard:myProperties.status.pending'), class: 'badge-warning' },
+    sold: { label: t('dashboard:myProperties.status.sold'), class: 'bg-blue-100 text-blue-800' },
+    rented: { label: t('dashboard:myProperties.status.rented'), class: 'bg-blue-100 text-blue-800' },
+    archived: { label: t('dashboard:myProperties.status.archived'), class: 'bg-gray-100 text-gray-600' }
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="font-display text-2xl font-bold text-gray-900">Mes annonces</h1>
+        <h1 className="font-display text-2xl font-bold text-gray-900">{t('dashboard:myProperties.title')}</h1>
         <p className="text-gray-600">
           {favoris
-            ? `${totalCount} favori${totalCount > 1 ? 's' : ''}`
-            : `${totalCount} annonces au total`}
+            ? t('dashboard:myProperties.favoritesCount', { count: totalCount })
+            : t('dashboard:myProperties.totalCount', { count: totalCount })}
         </p>
       </div>
 
@@ -159,7 +161,7 @@ function MyProperties() {
             favoris ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          <FiHeart className={`w-4 h-4 ${favoris ? 'fill-current' : ''}`} /> Favoris
+          <FiHeart className={`w-4 h-4 ${favoris ? 'fill-current' : ''}`} /> {t('dashboard:myProperties.favorites')}
         </button>
       </div>
 
@@ -178,12 +180,12 @@ function MyProperties() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b">
                 <tr>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Annonce</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Prix</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Statut</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Vues</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Contacts</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Actions</th>
+                  <th className="text-start px-6 py-4 text-sm font-medium text-gray-500">{t('dashboard:myProperties.columns.listing')}</th>
+                  <th className="text-start px-6 py-4 text-sm font-medium text-gray-500">{t('dashboard:myProperties.columns.price')}</th>
+                  <th className="text-start px-6 py-4 text-sm font-medium text-gray-500">{t('dashboard:myProperties.columns.status')}</th>
+                  <th className="text-start px-6 py-4 text-sm font-medium text-gray-500">{t('dashboard:myProperties.columns.views')}</th>
+                  <th className="text-start px-6 py-4 text-sm font-medium text-gray-500">{t('dashboard:myProperties.columns.contacts')}</th>
+                  <th className="text-start px-6 py-4 text-sm font-medium text-gray-500">{t('dashboard:myProperties.columns.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -210,7 +212,7 @@ function MyProperties() {
                         <Link
                           to={`/annonces/${property.id}`}
                           className="p-2 text-gray-400 hover:text-gray-600"
-                          title="Voir"
+                          title={t('dashboard:myProperties.actions.view')}
                         >
                           <FiEye className="w-4 h-4" />
                         </Link>
@@ -218,7 +220,7 @@ function MyProperties() {
                           <button
                             onClick={() => removeFavMutation.mutate(property.favoriteId)}
                             className="p-2 text-red-500 hover:text-red-700"
-                            title="Retirer des favoris"
+                            title={t('dashboard:myProperties.actions.removeFavorite')}
                           >
                             <FiHeart className="w-4 h-4 fill-current" />
                           </button>
@@ -227,14 +229,14 @@ function MyProperties() {
                             <Link
                               to={`/dashboard/annonces/${property.id}/modifier`}
                               className="p-2 text-gray-400 hover:text-gray-600"
-                              title="Modifier"
+                              title={t('dashboard:myProperties.actions.edit')}
                             >
                               <FiEdit2 className="w-4 h-4" />
                             </Link>
                             <button
                               onClick={() => setDeleteId(property.id)}
                               className="p-2 text-gray-400 hover:text-red-600"
-                              title="Supprimer"
+                              title={t('dashboard:shared.actions.delete')}
                             >
                               <FiTrash2 className="w-4 h-4" />
                             </button>
@@ -243,7 +245,7 @@ function MyProperties() {
                                 onClick={() => publishMutation.mutate(property.id)}
                                 disabled={publishMutation.isLoading}
                                 className="p-2 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded disabled:opacity-50"
-                                title="Publier"
+                                title={t('dashboard:myProperties.actions.publish')}
                               >
                                 <FiUploadCloud className="w-4 h-4" />
                               </button>
@@ -262,13 +264,13 @@ function MyProperties() {
         <div className="card p-12 text-center">
           {favoris ? (
             <p className="text-gray-500">
-              Aucun favori pour cet onglet. Cliquez sur le ❤ d'une annonce pour l'enregistrer.
+              {t('dashboard:myProperties.emptyFavorites')}
             </p>
           ) : (
             <>
-              <p className="text-gray-500 mb-4">Aucune annonce trouvée</p>
+              <p className="text-gray-500 mb-4">{t('dashboard:myProperties.empty')}</p>
               <Link to="/dashboard/annonces/nouvelle" className="btn-primary">
-                Créer ma première annonce
+                {t('dashboard:myProperties.createFirst')}
               </Link>
             </>
           )}
@@ -279,23 +281,23 @@ function MyProperties() {
       {deleteId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
-            <h3 className="font-semibold text-lg mb-2">Supprimer l'annonce ?</h3>
+            <h3 className="font-semibold text-lg mb-2">{t('dashboard:myProperties.deleteModal.title')}</h3>
             <p className="text-gray-600 mb-6">
-              Cette action est irréversible. L'annonce sera définitivement supprimée.
+              {t('dashboard:myProperties.deleteModal.message')}
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setDeleteId(null)}
                 className="btn-secondary"
               >
-                Annuler
+                {t('dashboard:shared.actions.cancel')}
               </button>
               <button
                 onClick={() => deleteMutation.mutate(deleteId)}
                 className="btn bg-red-600 text-white hover:bg-red-700"
                 disabled={deleteMutation.isLoading}
               >
-                {deleteMutation.isLoading ? 'Suppression...' : 'Supprimer'}
+                {deleteMutation.isLoading ? t('dashboard:shared.actions.deleting') : t('dashboard:shared.actions.delete')}
               </button>
             </div>
           </div>

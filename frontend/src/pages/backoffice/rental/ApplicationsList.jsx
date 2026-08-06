@@ -8,6 +8,7 @@ import { rentalService } from '../../../services/rentalService'
 import SearchableSelect from '../../../components/common/SearchableSelect'
 import { DOC_TYPES } from '../../dashboard/applicationStatus'
 import { StatCard, DataTable, StatusBadge, EmptyState, GatedNotice, Modal, Field, Select, SearchInput, Toolbar, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
+import { useFormat } from '../../../utils/format'
 
 const STATUS_TONE = {
   received: 'bg-blue-100 text-blue-700',
@@ -22,6 +23,7 @@ const EMPTY_FORM = { property_id: '', client_id: '', monthly_income: '', guarant
 
 function ApplicationsList() {
   const { t } = useTranslation(['backoffice', 'common'])
+  const { fmtDate } = useFormat()
   const qc = useQueryClient()
   const { data, isLoading, error } = useQuery('rental-applications', () => rentalService.listApplications())
   const [open, setOpen] = useState(false)
@@ -117,7 +119,7 @@ function ApplicationsList() {
         {a.submitted_by_agent_id && <StatusBadge label={t('backoffice:rental.application.badges.submittedByAgency')} className="bg-gray-100 text-gray-600" />}
       </div>
     ) },
-    { header: t('backoffice:rental.application.columns.submittedAt'), cell: (a) => <span className="text-gray-600">{a.submitted_at ? new Date(a.submitted_at).toLocaleDateString('fr-FR') : '—'}</span> },
+    { header: t('backoffice:rental.application.columns.submittedAt'), cell: (a) => <span className="text-gray-600">{a.submitted_at ? fmtDate(a.submitted_at) : '—'}</span> },
     { header: t('backoffice:rental.application.columns.monthlyIncome'), align: 'right', cell: (a) => <span className="text-gray-700">{a.monthly_income != null ? `${a.monthly_income} Đh` : '—'}</span> },
     { header: t('backoffice:rental.application.columns.status'), cell: (a) => <StatusBadge label={t(`backoffice:rental.application.status.${a.status}`, { defaultValue: a.status })} className={STATUS_TONE[a.status]} /> },
     { header: '', cell: (a) => (

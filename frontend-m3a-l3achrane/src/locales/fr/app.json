@@ -1,0 +1,45 @@
+{
+  "meta": {
+    "title": "Mon espace"
+  },
+  "dashboard": {
+    "greeting": "Bonjour {{prenom}}",
+    "subtitle": "Voici un aperçu de votre recherche",
+    "notifications": "Notifications",
+    "studentSubtitle": "Étudiant",
+    "stats": {
+      "verifiedProfileLabel": "Profil vérifié",
+      "verifiedProfileValueVerified": "Vérifié",
+      "verifiedProfileValuePending": "En attente",
+      "verifiedProfileSub": "CIN + statut",
+      "avgCompatibilityLabel": "Compatibilité moyenne",
+      "avgCompatibilitySubExcellent": "Excellent",
+      "avgCompatibilitySubSoon": "Bientôt disponible",
+      "applicationsLabel": "Candidatures",
+      "applicationsSub": "En cours"
+    },
+    "recommendationsTitle": "Recommandations pour vous",
+    "seeAll": "Voir tout",
+    "activityTitle": "Activité récente",
+    "activityViewedBy": "Votre candidature a été vue par {{name}}",
+    "activityNewMessage": "Nouveau message de {{name}}",
+    "activityContractReady": "Contrat prêt à être signé",
+    "nextStepTitle": "Prochaine étape",
+    "nextStepVisitScheduled": "Visite planifiée",
+    "nextStepVisitDetails": "Samedi 24 mai à 10:00 · Agdal, Rabat",
+    "nextStepViewDetail": "Voir le détail"
+  },
+  "messaging": {
+    "title": "Messagerie",
+    "searchPlaceholder": "Rechercher une conversation",
+    "call": "Appeler",
+    "video": "Visio",
+    "attach": "Joindre",
+    "inputPlaceholder": "Écrire un message…",
+    "send": "Envoyer",
+    "now": "maintenant",
+    "viewListing": "Voir l’annonce",
+    "privacyBanner": "Vos numéros et e-mails restent masqués tant que la mise en relation n’est pas acceptée.",
+    "phoneDetectedWarning": "Numéro de téléphone détecté et masqué — restez sur la messagerie interne jusqu’à la vérification."
+  }
+}

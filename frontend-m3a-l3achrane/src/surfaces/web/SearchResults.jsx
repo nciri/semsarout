@@ -1,26 +1,23 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Button, Card, Chip, Icon, Input, ListingCard, Select } from '../../ds/index.js'
 import { listListings } from '../../services/index.js'
 
-const TYPE_FILTERS = [
-  { label: 'Chambre en colocation', count: 31 },
-  { label: 'Appartement entier', count: 9 },
-  { label: 'Studio partagé', count: 6 },
-  { label: 'Résidence partenaire', count: 2 },
-]
-
-const LIFESTYLE_CHIPS = ['Non-fumeur', 'Calme', 'Invités OK', 'Animaux OK', 'Colocation féminine', 'Colocation masculine']
-
-const SORT_OPTIONS = ['Compatibilité', 'Prix croissant', 'Prix décroissant', 'Plus récentes']
-
 export default function SearchResults() {
+  const { t } = useTranslation(['web', 'common'])
   const [items, setItems] = useState(null)
-  const [activeType, setActiveType] = useState(TYPE_FILTERS[0].label)
-  const [lifestyle, setLifestyle] = useState(() => new Set(['Non-fumeur', 'Calme']))
   const [verifiedOnly, setVerifiedOnly] = useState(true)
   const [view, setView] = useState('liste')
   const navigate = useNavigate()
+
+  const typeFilters = t('web:search.typeFilters', { returnObjects: true })
+  const lifestyleChips = t('web:search.lifestyleChips', { returnObjects: true })
+  const sortOptionsDetailed = t('web:search.sortOptionsDetailed', { returnObjects: true })
+  const verifiedFilterChip = t('web:search.verifiedFilterChip')
+
+  const [activeType, setActiveType] = useState(typeFilters[0].label)
+  const [lifestyle, setLifestyle] = useState(() => new Set([lifestyleChips[0], lifestyleChips[1]]))
 
   useEffect(() => {
     listListings().then(setItems)
@@ -29,10 +26,10 @@ export default function SearchResults() {
   const activeFilters = useMemo(() => {
     const filters = []
     if (activeType) filters.push(activeType)
-    if (verifiedOnly) filters.push('Profils vérifiés')
+    if (verifiedOnly) filters.push(verifiedFilterChip)
     filters.push(...lifestyle)
     return filters
-  }, [activeType, lifestyle, verifiedOnly])
+  }, [activeType, lifestyle, verifiedOnly, verifiedFilterChip])
 
   const toggleLifestyle = (label) => {
     setLifestyle((prev) => {
@@ -51,7 +48,7 @@ export default function SearchResults() {
   if (items === null) {
     return (
       <div style={{ padding: 48, maxWidth: 'var(--container-max)', margin: '0 auto', font: 'var(--fw-medium) var(--fs-body) var(--font-body)', color: 'var(--text-muted)' }}>
-        Chargement…
+        {t('common:loading')}
       </div>
     )
   }
@@ -60,11 +57,11 @@ export default function SearchResults() {
     <div style={{ background: 'var(--bg-page)', minHeight: '100%' }}>
       <div style={{ background: '#fff', borderBottom: '1px solid var(--border-subtle)', padding: '18px 40px' }}>
         <div style={{ maxWidth: 'var(--container-max)', margin: '0 auto', display: 'flex', gap: 12, alignItems: 'end', flexWrap: 'wrap' }}>
-          <div style={{ width: 220 }}><Input label="Ville ou quartier" icon="map-pin" defaultValue="Casablanca, Maârif" /></div>
-          <div style={{ width: 160 }}><Select label="Budget max" options={['2 500 MAD', '4 000 MAD']} /></div>
-          <div style={{ width: 150 }}><Select label="Type" options={['Tout', 'Chambre', 'Studio']} /></div>
-          <div style={{ width: 150 }}><Select label="Genre" options={['Tout', 'Féminin', 'Masculin']} /></div>
-          <Button variant="primary" style={{ height: 44 }}>Rechercher</Button>
+          <div style={{ width: 220 }}><Input label={t('web:search.cityLabel')} icon="map-pin" defaultValue={t('web:search.locationDefault')} /></div>
+          <div style={{ width: 160 }}><Select label={t('web:search.budgetLabel')} options={t('web:search.budgetOptions', { returnObjects: true })} /></div>
+          <div style={{ width: 150 }}><Select label={t('web:search.typeLabel')} options={t('web:search.typeOptions', { returnObjects: true })} /></div>
+          <div style={{ width: 150 }}><Select label={t('web:search.genderLabel')} options={t('web:search.genderOptions', { returnObjects: true })} /></div>
+          <Button variant="primary" style={{ height: 44 }}>{t('web:search.cta')}</Button>
         </div>
       </div>
 
@@ -82,30 +79,30 @@ export default function SearchResults() {
         <aside style={{ position: 'sticky', top: 20 }}>
           <Card style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ font: 'var(--fw-extrabold) var(--fs-body) var(--font-body)', color: 'var(--text-heading)' }}>Filtres</span>
+              <span style={{ font: 'var(--fw-extrabold) var(--fs-body) var(--font-body)', color: 'var(--text-heading)' }}>{t('web:search.filtersTitle')}</span>
               <button
                 type="button"
-                onClick={() => { setActiveType(TYPE_FILTERS[0].label); setLifestyle(new Set()); setVerifiedOnly(false) }}
+                onClick={() => { setActiveType(typeFilters[0].label); setLifestyle(new Set()); setVerifiedOnly(false) }}
                 style={{ border: 0, background: 'transparent', color: 'var(--link)', font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)', cursor: 'pointer', padding: 0 }}
               >
-                Réinitialiser
+                {t('web:search.resetFilters')}
               </button>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ font: 'var(--fw-extrabold) 12.5px var(--font-body)', letterSpacing: '.02em', color: 'var(--text-heading)' }}>Budget mensuel</div>
+              <div style={{ font: 'var(--fw-extrabold) 12.5px var(--font-body)', letterSpacing: '.02em', color: 'var(--text-heading)' }}>{t('web:search.monthlyBudgetLabel')}</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <Input defaultValue="1 500" containerStyle={{ flex: 1 }} />
                 <Input defaultValue="3 000" containerStyle={{ flex: 1 }} />
               </div>
-              <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>MAD / mois, charges comprises</div>
+              <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>{t('web:search.budgetUnitNote')}</div>
             </div>
 
             <div style={{ height: 1, background: 'var(--border-subtle)' }} />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ font: 'var(--fw-extrabold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>Type de logement</div>
-              {TYPE_FILTERS.map((f) => (
+              <div style={{ font: 'var(--fw-extrabold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>{t('web:search.housingTypeLabel')}</div>
+              {typeFilters.map((f) => (
                 <label key={f.label} style={{ display: 'flex', gap: 10, alignItems: 'center', font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-body)', cursor: 'pointer' }}>
                   <input
                     type="checkbox"
@@ -122,9 +119,9 @@ export default function SearchResults() {
             <div style={{ height: 1, background: 'var(--border-subtle)' }} />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ font: 'var(--fw-extrabold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>Mode de vie</div>
+              <div style={{ font: 'var(--fw-extrabold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>{t('web:search.lifestyleLabel')}</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {LIFESTYLE_CHIPS.map((label) => (
+                {lifestyleChips.map((label) => (
                   <Chip key={label} selected={lifestyle.has(label)} onClick={() => toggleLifestyle(label)}>
                     {label}
                   </Chip>
@@ -135,18 +132,18 @@ export default function SearchResults() {
             <div style={{ height: 1, background: 'var(--border-subtle)' }} />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ font: 'var(--fw-extrabold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>Confiance</div>
+              <div style={{ font: 'var(--fw-extrabold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>{t('web:search.trustLabel')}</div>
               <label style={{ display: 'flex', gap: 10, alignItems: 'center', font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-body)', cursor: 'pointer' }}>
                 <input type="checkbox" checked={verifiedOnly} onChange={(e) => setVerifiedOnly(e.target.checked)} style={{ width: 15, height: 15, accentColor: 'var(--navy-700)' }} />
-                Profils vérifiés uniquement
+                {t('web:search.verifiedOnlyLabel')}
               </label>
               <label style={{ display: 'flex', gap: 10, alignItems: 'center', font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-body)', cursor: 'pointer' }}>
                 <input type="checkbox" style={{ width: 15, height: 15, accentColor: 'var(--navy-700)' }} />
-                Partenaire institutionnel
+                {t('web:search.institutionalPartnerLabel')}
               </label>
               <label style={{ display: 'flex', gap: 10, alignItems: 'center', font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-body)', cursor: 'pointer' }}>
                 <input type="checkbox" style={{ width: 15, height: 15, accentColor: 'var(--navy-700)' }} />
-                Contrat en ligne disponible
+                {t('web:search.onlineContractLabel')}
               </label>
             </div>
           </Card>
@@ -156,14 +153,14 @@ export default function SearchResults() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               <h1 style={{ margin: 0, font: 'var(--fw-bold) 24px var(--font-display)', color: 'var(--text-heading)', letterSpacing: '-0.02em' }}>
-                Colocations à Casablanca, Maârif
+                {t('web:search.resultsTitle')}
               </h1>
               <span style={{ font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-body)' }}>
-                {visibleItems.length} logements — triés par compatibilité avec votre profil
+                {t('web:search.resultsSubtitle', { count: visibleItems.length })}
               </span>
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              <div style={{ width: 180 }}><Select options={SORT_OPTIONS} /></div>
+              <div style={{ width: 180 }}><Select options={sortOptionsDetailed} /></div>
               <div style={{ display: 'flex', background: 'var(--surface-sunken)', borderRadius: 8, padding: 3, gap: 3 }}>
                 <button
                   type="button"
@@ -176,7 +173,7 @@ export default function SearchResults() {
                     font: view === 'liste' ? 'var(--fw-bold) 13.5px var(--font-body)' : 'var(--fw-semibold) 13.5px var(--font-body)',
                   }}
                 >
-                  Liste
+                  {t('web:search.viewListLabel')}
                 </button>
                 <button
                   type="button"
@@ -189,7 +186,7 @@ export default function SearchResults() {
                     font: view === 'carte' ? 'var(--fw-bold) 13.5px var(--font-body)' : 'var(--fw-semibold) 13.5px var(--font-body)',
                   }}
                 >
-                  Carte
+                  {t('web:search.viewMapLabel')}
                 </button>
               </div>
             </div>
@@ -197,7 +194,7 @@ export default function SearchResults() {
 
           {activeFilters.length > 0 && (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-muted)' }}>Filtres actifs :</span>
+              <span style={{ font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-muted)' }}>{t('web:search.activeFiltersLabel')}</span>
               {activeFilters.map((label) => (
                 <span
                   key={label}
@@ -223,11 +220,11 @@ export default function SearchResults() {
               }}
             >
               <Icon name="map" size={20} />
-              Vue carte à venir
+              {t('web:search.mapComingSoon')}
             </div>
           ) : visibleItems.length === 0 ? (
             <div style={{ padding: '64px 0', textAlign: 'center', font: 'var(--fw-medium) var(--fs-body) var(--font-body)', color: 'var(--text-muted)' }}>
-              Aucune annonce ne correspond à votre recherche.
+              {t('web:search.empty')}
             </div>
           ) : (
             <>
@@ -247,7 +244,7 @@ export default function SearchResults() {
                 ))}
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 8 }}>
-                <Button variant="secondary">Afficher plus de logements</Button>
+                <Button variant="secondary">{t('web:search.loadMore')}</Button>
               </div>
             </>
           )}

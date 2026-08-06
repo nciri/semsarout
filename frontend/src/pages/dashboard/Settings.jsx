@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import { useTranslation } from 'react-i18next'
 import { FiUser, FiLock, FiBell, FiShield, FiSave, FiCamera, FiCheck, FiAlertCircle } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
 import api from '../../services/api'
@@ -18,10 +19,10 @@ const loadPrefs = (key, defaults) => {
 }
 
 const TABS = [
-  { id: 'profile', label: 'Profil', icon: FiUser },
-  { id: 'security', label: 'Sécurité', icon: FiLock },
-  { id: 'notifications', label: 'Notifications', icon: FiBell },
-  { id: 'privacy', label: 'Confidentialité', icon: FiShield },
+  { id: 'profile', key: 'profile', icon: FiUser },
+  { id: 'security', key: 'security', icon: FiLock },
+  { id: 'notifications', key: 'notifications', icon: FiBell },
+  { id: 'privacy', key: 'privacy', icon: FiShield },
 ]
 
 const DEFAULT_NOTIFICATIONS = {
@@ -42,6 +43,7 @@ const DEFAULT_PRIVACY = {
 }
 
 export default function Settings() {
+  const { t } = useTranslation(['dashboard', 'common'])
   const { user, updateUser, logout } = useAuthStore()
   const navigate = useNavigate()
   const avatarInputRef = useRef(null)
@@ -91,9 +93,9 @@ export default function Settings() {
       const avatarUrl = uploadRes.data.url
       const meRes = await api.put('/auth/me', { avatar_url: avatarUrl })
       updateUser(meRes.data.user)
-      toast.success('Photo de profil mise à jour')
+      toast.success(t('dashboard:settings.profile.avatarUpdated'))
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Erreur lors du téléchargement')
+      toast.error(error.response?.data?.error || t('dashboard:settings.profile.avatarUploadError'))
     } finally {
       setUploadingAvatar(false)
       e.target.value = ''
@@ -113,12 +115,12 @@ export default function Settings() {
       } else if (activeTab === 'security') {
         if (securityForm.new_password || securityForm.current_password) {
           if (securityForm.new_password !== securityForm.confirm_password) {
-            toast.error('Les mots de passe ne correspondent pas')
+            toast.error(t('dashboard:settings.security.passwordMismatch'))
             setSaving(false)
             return
           }
           if (securityForm.new_password.length < 8) {
-            toast.error('Le mot de passe doit contenir au moins 8 caractères')
+            toast.error(t('dashboard:settings.security.passwordTooShort'))
             setSaving(false)
             return
           }
@@ -137,7 +139,7 @@ export default function Settings() {
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'enregistrement')
+      toast.error(error.response?.data?.error || t('dashboard:settings.saveError'))
     } finally {
       setSaving(false)
     }
@@ -146,7 +148,7 @@ export default function Settings() {
   const handleDeleteAccount = async () => {
     setDeleteError('')
     if (!deletePassword) {
-      setDeleteError('Mot de passe requis')
+      setDeleteError(t('dashboard:settings.deleteModal.passwordRequired'))
       return
     }
     setDeleting(true)
@@ -154,9 +156,9 @@ export default function Settings() {
       await api.delete('/auth/me', { data: { password: deletePassword } })
       logout()
       navigate('/')
-      toast.success('Votre compte a été supprimé')
+      toast.success(t('dashboard:settings.toasts.accountDeleted'))
     } catch (error) {
-      setDeleteError(error.response?.data?.error || 'Erreur lors de la suppression')
+      setDeleteError(error.response?.data?.error || t('dashboard:settings.toasts.deleteError'))
     } finally {
       setDeleting(false)
     }
@@ -186,7 +188,7 @@ export default function Settings() {
           <button
             onClick={handleAvatarClick}
             disabled={uploadingAvatar}
-            className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+            className="absolute bottom-0 end-0 p-2 bg-white rounded-full shadow-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
           >
             <FiCamera className="w-4 h-4 text-gray-600" />
           </button>
@@ -195,7 +197,7 @@ export default function Settings() {
           <h3 className="font-medium text-gray-900">{user?.first_name} {user?.last_name}</h3>
           <p className="text-sm text-gray-500">{user?.email}</p>
           <p className="text-xs text-gray-400 mt-1">
-            {user?.user_type === 'professional' ? 'Compte Professionnel' : 'Compte Particulier'}
+            {user?.user_type === 'professional' ? t('dashboard:settings.profile.accountType.professional') : t('dashboard:settings.profile.accountType.individual')}
           </p>
         </div>
       </div>
@@ -203,7 +205,7 @@ export default function Settings() {
       {/* Form */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Prénom</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('dashboard:settings.profile.firstName')}</label>
           <input
             type="text"
             value={profileForm.first_name}
@@ -212,7 +214,7 @@ export default function Settings() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Nom</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('dashboard:settings.profile.lastName')}</label>
           <input
             type="text"
             value={profileForm.last_name}
@@ -221,22 +223,22 @@ export default function Settings() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('dashboard:settings.profile.email')}</label>
           <input
             type="email"
             value={user?.email || ''}
             disabled
             className="w-full px-4 py-2.5 border border-gray-200 bg-gray-50 text-gray-500 rounded-lg cursor-not-allowed"
           />
-          <p className="text-xs text-gray-400 mt-1">L'email ne peut pas être modifié pour le moment</p>
+          <p className="text-xs text-gray-400 mt-1">{t('dashboard:settings.profile.emailNote')}</p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Téléphone</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('dashboard:settings.profile.phone')}</label>
           <input
             type="tel"
             value={profileForm.phone}
             onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })}
-            placeholder="+212 6XX XXX XXX"
+            placeholder={t('dashboard:settings.profile.phonePlaceholder')}
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
         </div>
@@ -250,19 +252,19 @@ export default function Settings() {
         <div className="flex gap-3">
           <FiAlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
           <div>
-            <h4 className="font-medium text-yellow-800">Sécurisez votre compte</h4>
+            <h4 className="font-medium text-yellow-800">{t('dashboard:settings.security.bannerTitle')}</h4>
             <p className="text-sm text-yellow-700 mt-1">
-              Utilisez un mot de passe fort avec au moins 8 caractères, incluant des lettres, chiffres et symboles.
+              {t('dashboard:settings.security.bannerMessage')}
             </p>
           </div>
         </div>
       </div>
 
       <div className="space-y-4">
-        <h3 className="font-medium text-gray-900">Changer le mot de passe</h3>
+        <h3 className="font-medium text-gray-900">{t('dashboard:settings.security.changePassword')}</h3>
         <div className="space-y-4 max-w-md">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Mot de passe actuel</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('dashboard:settings.security.currentPassword')}</label>
             <input
               type="password"
               value={securityForm.current_password}
@@ -271,7 +273,7 @@ export default function Settings() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Nouveau mot de passe</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('dashboard:settings.security.newPassword')}</label>
             <input
               type="password"
               value={securityForm.new_password}
@@ -280,7 +282,7 @@ export default function Settings() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Confirmer le mot de passe</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('dashboard:settings.security.confirmPassword')}</label>
             <input
               type="password"
               value={securityForm.confirm_password}
@@ -292,7 +294,7 @@ export default function Settings() {
       </div>
 
       <div className="border-t pt-6">
-        <h3 className="font-medium text-gray-900 mb-4">Sessions actives</h3>
+        <h3 className="font-medium text-gray-900 mb-4">{t('dashboard:settings.security.sessionsTitle')}</h3>
         <div className="space-y-3">
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center gap-3">
@@ -300,11 +302,11 @@ export default function Settings() {
                 <FiShield className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="font-medium text-gray-900">Session actuelle</p>
-                <p className="text-sm text-gray-500">Cet appareil</p>
+                <p className="font-medium text-gray-900">{t('dashboard:settings.security.currentSession')}</p>
+                <p className="text-sm text-gray-500">{t('dashboard:settings.security.currentDevice')}</p>
               </div>
             </div>
-            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Active</span>
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">{t('dashboard:settings.security.active')}</span>
           </div>
         </div>
       </div>
@@ -314,18 +316,18 @@ export default function Settings() {
   const renderNotificationsTab = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="font-medium text-gray-900 mb-4">Notifications par email</h3>
+        <h3 className="font-medium text-gray-900 mb-4">{t('dashboard:settings.notifications.emailTitle')}</h3>
         <div className="space-y-4">
           {[
-            { key: 'email_new_lead', label: 'Nouveaux leads', description: 'Recevoir un email à chaque nouveau lead' },
-            { key: 'email_messages', label: 'Messages', description: 'Notifications des nouveaux messages' },
-            { key: 'email_property_updates', label: 'Mises à jour annonces', description: 'Changements de statut de vos annonces' },
-            { key: 'email_newsletter', label: 'Newsletter', description: 'Actualités et conseils immobiliers' },
+            { key: 'email_new_lead', i18nKey: 'emailNewLead' },
+            { key: 'email_messages', i18nKey: 'emailMessages' },
+            { key: 'email_property_updates', i18nKey: 'emailPropertyUpdates' },
+            { key: 'email_newsletter', i18nKey: 'emailNewsletter' },
           ].map(item => (
             <label key={item.key} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
               <div>
-                <p className="font-medium text-gray-900">{item.label}</p>
-                <p className="text-sm text-gray-500">{item.description}</p>
+                <p className="font-medium text-gray-900">{t(`dashboard:settings.notifications.items.${item.i18nKey}.label`)}</p>
+                <p className="text-sm text-gray-500">{t(`dashboard:settings.notifications.items.${item.i18nKey}.desc`)}</p>
               </div>
               <div className="relative">
                 <input
@@ -344,17 +346,17 @@ export default function Settings() {
       </div>
 
       <div>
-        <h3 className="font-medium text-gray-900 mb-4">Notifications push</h3>
+        <h3 className="font-medium text-gray-900 mb-4">{t('dashboard:settings.notifications.pushTitle')}</h3>
         <div className="space-y-4">
           {[
-            { key: 'push_new_lead', label: 'Nouveaux leads', description: 'Notification instantanée' },
-            { key: 'push_messages', label: 'Messages', description: 'Notifications des nouveaux messages' },
-            { key: 'push_reminders', label: 'Rappels', description: 'Rappels de visites et rendez-vous' },
+            { key: 'push_new_lead', i18nKey: 'pushNewLead' },
+            { key: 'push_messages', i18nKey: 'pushMessages' },
+            { key: 'push_reminders', i18nKey: 'pushReminders' },
           ].map(item => (
             <label key={item.key} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
               <div>
-                <p className="font-medium text-gray-900">{item.label}</p>
-                <p className="text-sm text-gray-500">{item.description}</p>
+                <p className="font-medium text-gray-900">{t(`dashboard:settings.notifications.items.${item.i18nKey}.label`)}</p>
+                <p className="text-sm text-gray-500">{t(`dashboard:settings.notifications.items.${item.i18nKey}.desc`)}</p>
               </div>
               <div className="relative">
                 <input
@@ -378,15 +380,15 @@ export default function Settings() {
     <div className="space-y-6">
       <div className="space-y-4">
         {[
-          { key: 'profile_visible', label: 'Profil visible', description: 'Rendre votre profil visible aux autres utilisateurs' },
-          { key: 'show_phone', label: 'Afficher le téléphone', description: 'Permettre aux visiteurs de voir votre numéro' },
-          { key: 'show_email', label: 'Afficher l\'email', description: 'Permettre aux visiteurs de voir votre email' },
-          { key: 'allow_contact', label: 'Autoriser les contacts', description: 'Recevoir des demandes de contact' },
+          { key: 'profile_visible', i18nKey: 'profileVisible' },
+          { key: 'show_phone', i18nKey: 'showPhone' },
+          { key: 'show_email', i18nKey: 'showEmail' },
+          { key: 'allow_contact', i18nKey: 'allowContact' },
         ].map(item => (
           <label key={item.key} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
             <div>
-              <p className="font-medium text-gray-900">{item.label}</p>
-              <p className="text-sm text-gray-500">{item.description}</p>
+              <p className="font-medium text-gray-900">{t(`dashboard:settings.privacy.items.${item.i18nKey}.label`)}</p>
+              <p className="text-sm text-gray-500">{t(`dashboard:settings.privacy.items.${item.i18nKey}.desc`)}</p>
             </div>
             <div className="relative">
               <input
@@ -404,18 +406,18 @@ export default function Settings() {
       </div>
 
       <div className="border-t pt-6">
-        <h3 className="font-medium text-red-600 mb-4">Zone de danger</h3>
+        <h3 className="font-medium text-red-600 mb-4">{t('dashboard:settings.privacy.dangerZone')}</h3>
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-red-800">Supprimer mon compte</p>
-              <p className="text-sm text-red-600">Cette action est irréversible</p>
+              <p className="font-medium text-red-800">{t('dashboard:settings.privacy.deleteAccountTitle')}</p>
+              <p className="text-sm text-red-600">{t('dashboard:settings.privacy.deleteAccountDesc')}</p>
             </div>
             <button
               onClick={() => setShowDeleteModal(true)}
               className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
             >
-              Supprimer
+              {t('dashboard:shared.actions.delete')}
             </button>
           </div>
         </div>
@@ -426,8 +428,8 @@ export default function Settings() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Paramètres</h1>
-        <p className="text-gray-600 mt-1">Gérez vos informations personnelles et préférences</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('dashboard:settings.title')}</h1>
+        <p className="text-gray-600 mt-1">{t('dashboard:settings.subtitle')}</p>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -447,7 +449,7 @@ export default function Settings() {
                   }`}
                 >
                   <Icon className="w-4 h-4" />
-                  {tab.label}
+                  {t(`dashboard:settings.tabs.${tab.key}`)}
                 </button>
               )
             })}
@@ -467,7 +469,7 @@ export default function Settings() {
           {saved && (
             <span className="flex items-center gap-2 text-green-600">
               <FiCheck className="w-4 h-4" />
-              Modifications enregistrées
+              {t('dashboard:settings.saved')}
             </span>
           )}
           <button
@@ -476,7 +478,7 @@ export default function Settings() {
             className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors"
           >
             <FiSave className="w-4 h-4" />
-            {saving ? 'Enregistrement...' : 'Enregistrer'}
+            {saving ? t('dashboard:shared.actions.saving') : t('dashboard:shared.actions.save')}
           </button>
         </div>
       </div>
@@ -485,9 +487,9 @@ export default function Settings() {
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-6 max-w-md w-full">
-            <h3 className="font-semibold text-lg text-gray-900 mb-2">Supprimer votre compte</h3>
+            <h3 className="font-semibold text-lg text-gray-900 mb-2">{t('dashboard:settings.deleteModal.title')}</h3>
             <p className="text-sm text-gray-600 mb-4">
-              Cette action est irréversible. Confirmez votre mot de passe pour supprimer définitivement votre compte.
+              {t('dashboard:settings.deleteModal.message')}
             </p>
             {deleteError && (
               <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
@@ -498,7 +500,7 @@ export default function Settings() {
               type="password"
               value={deletePassword}
               onChange={e => setDeletePassword(e.target.value)}
-              placeholder="Mot de passe"
+              placeholder={t('dashboard:settings.deleteModal.passwordPlaceholder')}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent mb-4"
             />
             <div className="flex gap-3 justify-end">
@@ -506,14 +508,14 @@ export default function Settings() {
                 onClick={() => { setShowDeleteModal(false); setDeletePassword(''); setDeleteError('') }}
                 className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                Annuler
+                {t('dashboard:shared.actions.cancel')}
               </button>
               <button
                 onClick={handleDeleteAccount}
                 disabled={deleting}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
               >
-                {deleting ? 'Suppression...' : 'Confirmer la suppression'}
+                {deleting ? t('dashboard:settings.deleteModal.confirming') : t('dashboard:settings.deleteModal.confirmButton')}
               </button>
             </div>
           </div>

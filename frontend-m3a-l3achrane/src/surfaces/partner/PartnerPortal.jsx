@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { listPartners } from '../../services/index.js'
 import { Badge, Button, Icon, Input, VerifiedBadge } from '../../ds/index.js'
 
@@ -35,11 +36,11 @@ function fillRatio(partner) {
   return partner.quota > 0 ? partner.verifies / partner.quota : 0
 }
 
-function quotaStatus(partner) {
+function quotaStatus(partner, t) {
   const ratio = fillRatio(partner)
-  if (ratio >= 1) return { label: 'Quota atteint', tone: 'verified' }
-  if (ratio >= 0.7) return { label: 'En bonne voie', tone: 'info' }
-  return { label: 'Sous quota', tone: 'warning' }
+  if (ratio >= 1) return { label: t('partner:portal.quotaStatus.reached'), tone: 'verified' }
+  if (ratio >= 0.7) return { label: t('partner:portal.quotaStatus.onTrack'), tone: 'info' }
+  return { label: t('partner:portal.quotaStatus.underQuota'), tone: 'warning' }
 }
 
 // VerifiedBadge's `level` (full | partial | none) must reflect the real verifies/quota
@@ -63,6 +64,7 @@ function groupByType(partners) {
 }
 
 export default function PartnerPortal() {
+  const { t } = useTranslation(['partner', 'common'])
   const [partners, setPartners] = useState(null)
   const [query, setQuery] = useState('')
 
@@ -72,7 +74,7 @@ export default function PartnerPortal() {
 
   if (!partners) {
     return (
-      <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)', padding: 32 }}>Chargement…</div>
+      <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)', padding: 32 }}>{t('common:loading')}</div>
     )
   }
 
@@ -99,23 +101,23 @@ export default function PartnerPortal() {
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <div style={{ font: 'var(--fw-bold) 12.5px var(--font-body)', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-            Vie étudiante
+            {t('partner:portal.kicker')}
           </div>
           <h1 style={{ margin: 0, font: 'var(--fw-extrabold) 23px var(--font-display)', letterSpacing: '-0.02em', color: 'var(--text-heading)' }}>
-            Tableau de bord logement
+            {t('partner:portal.heading')}
           </h1>
         </div>
         <Button variant="primary" size="sm" iconLeft="upload">
-          Importer un référentiel
+          {t('partner:portal.import')}
         </Button>
       </div>
 
       <div style={{ padding: '22px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-          <Kpi label="Partenaires" value={partners.length} />
-          <Kpi label="Affiliés vérifiés" value={totalVerifies} />
-          <Kpi label="Quota total" value={totalQuota} />
-          <Kpi label="Taux de remplissage" value={`${fillRate}%`} sub="vérifiés / quota" />
+          <Kpi label={t('partner:portal.metrics.partners')} value={partners.length} />
+          <Kpi label={t('partner:portal.metrics.verified')} value={totalVerifies} />
+          <Kpi label={t('partner:portal.metrics.totalQuota')} value={totalQuota} />
+          <Kpi label={t('partner:portal.metrics.fillRate')} value={`${fillRate}%`} sub={t('partner:portal.metrics.fillRateSub')} />
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 18, alignItems: 'start' }}>
@@ -132,7 +134,7 @@ export default function PartnerPortal() {
             }}
           >
             <div style={{ font: 'var(--fw-extrabold) 15px var(--font-display)', color: 'var(--text-heading)' }}>
-              Répartition par type de partenaire
+              {t('partner:portal.breakdown.title')}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
               {typeBreakdown.map((entry) => {
@@ -166,8 +168,7 @@ export default function PartnerPortal() {
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '10px 12px', background: 'var(--navy-50)', borderRadius: 'var(--radius-md)' }}>
               <Icon name="shield" size={16} color="var(--navy-600)" />
               <span style={{ font: 'var(--fw-medium) var(--fs-xs) var(--font-body)', color: 'var(--navy-700)' }}>
-                Reporting anonymisé — agrégats calculés avec un seuil de k-anonymat (k ≥ 5). Aucune adresse ni
-                identité de colocataire n&apos;est exposée.
+                {t('partner:portal.privacyBanner')}
               </span>
             </div>
           </div>
@@ -186,10 +187,10 @@ export default function PartnerPortal() {
               }}
             >
               <div style={{ font: 'var(--fw-extrabold) 14.5px var(--font-display)', color: 'var(--text-heading)' }}>
-                Partenaires à suivre
+                {t('partner:portal.attention.title')}
               </div>
               {attention.map((p) => {
-                const status = quotaStatus(p)
+                const status = quotaStatus(p, t)
                 return (
                   <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
                     <span style={{ font: 'var(--fw-medium) 13.5px var(--font-body)', color: 'var(--text-body)' }}>{p.nom}</span>
@@ -217,13 +218,13 @@ export default function PartnerPortal() {
               }}
             >
               <div style={{ font: 'var(--fw-extrabold) 14.5px var(--font-display)', color: 'var(--text-heading)' }}>
-                Dernier import
+                {t('partner:portal.lastImport.title')}
               </div>
               <div style={{ font: 'var(--fw-regular) 13px var(--font-body)', color: 'var(--text-body)' }}>
-                Aucun référentiel importé pour l&apos;instant
+                {t('partner:portal.lastImport.empty')}
               </div>
               <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
-                Importez un fichier CSV d&apos;affiliés pour lancer les vérifications.
+                {t('partner:portal.lastImport.hint')}
               </div>
             </div>
           </div>
@@ -248,12 +249,12 @@ export default function PartnerPortal() {
             }}
           >
             <h3 style={{ font: 'var(--fw-bold) var(--fs-h3) var(--font-display)', color: 'var(--text-heading)', margin: 0 }}>
-              Tous les partenaires
+              {t('partner:portal.tableTitle')}
             </h3>
             <div style={{ width: 240 }}>
               <Input
                 icon="search"
-                placeholder="Rechercher un partenaire"
+                placeholder={t('partner:portal.searchPlaceholder')}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
@@ -262,7 +263,7 @@ export default function PartnerPortal() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: 'var(--gray-50)' }}>
-                {['Partenaire', 'Type', 'Vérifiés', 'Quota', 'Statut'].map((h) => (
+                {[t('partner:portal.table.partner'), t('partner:portal.table.type'), t('partner:portal.table.verified'), t('partner:portal.table.quota'), t('partner:portal.table.status')].map((h) => (
                   <th
                     key={h}
                     style={{
@@ -283,12 +284,12 @@ export default function PartnerPortal() {
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={5} style={{ padding: '24px 20px', textAlign: 'center', font: 'var(--fw-medium) var(--fs-sm) var(--font-body)', color: 'var(--text-muted)' }}>
-                    Aucun partenaire ne correspond à cette recherche.
+                    {t('partner:portal.table.noResults')}
                   </td>
                 </tr>
               ) : (
                 filtered.map((p) => {
-                  const status = quotaStatus(p)
+                  const status = quotaStatus(p, t)
                   return (
                     <tr key={p.id} style={{ borderTop: '1px solid var(--border-subtle)' }}>
                       <td style={{ padding: '13px 20px' }}>
@@ -315,7 +316,7 @@ export default function PartnerPortal() {
                         <Badge tone="navy">{p.type}</Badge>
                       </td>
                       <td style={{ padding: '13px 20px' }}>
-                        <VerifiedBadge label={`${p.verifies} vérifiés`} level={verifiedLevel(p)} size="sm" />
+                        <VerifiedBadge label={t('partner:portal.table.verifiedCount', { count: p.verifies })} level={verifiedLevel(p)} size="sm" />
                       </td>
                       <td style={{ padding: '13px 20px', font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-body)' }}>
                         {p.quota}

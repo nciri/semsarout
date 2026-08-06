@@ -1,0 +1,58 @@
+{
+  "loading": "جارٍ التحميل…",
+  "notFound": {
+    "title": "الصفحة غير موجودة",
+    "body": "الصفحة التي تبحث عنها غير موجودة.",
+    "backHome": "العودة إلى الصفحة الرئيسية"
+  },
+  "languageSwitcher": {
+    "label": "تغيير اللغة",
+    "fr": "FR",
+    "ar": "AR"
+  },
+  "topbar": {
+    "howItWorks": "كيف يعمل",
+    "discover": "اكتشف",
+    "about": "من نحن",
+    "signIn": "تسجيل الدخول",
+    "signUp": "إنشاء حساب"
+  },
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "messages": "الرسائل",
+    "messaging": "المراسلة",
+    "inbox": "الطلبات الواردة",
+    "apply": "التقديم",
+    "quiz": "الاستبيان",
+    "security": "الأمان",
+    "search": "البحث",
+    "favorites": "المفضلة",
+    "applications": "طلباتي",
+    "contracts": "عقودي",
+    "payments": "المدفوعات",
+    "profile": "الملف الشخصي",
+    "settings": "الإعدادات",
+    "affiliates": "الشركاء المنتسبون",
+    "verifications": "التحققات",
+    "reservedOffers": "العروض المحجوزة",
+    "grants": "الإعانات",
+    "reporting": "التقارير",
+    "billing": "الفوترة",
+    "apiWebhooks": "واجهة برمجية و webhooks",
+    "help": "بحاجة إلى مساعدة؟"
+  },
+  "trust": {
+    "verified": "موثّقة",
+    "compatibility": "توافق ممتاز"
+  },
+  "listingCard": {
+    "defaultTitle": "غرفة في شقة من 4 غرف",
+    "defaultCity": "المعاريف، الدار البيضاء",
+    "amenityRoommates": "3 من السكان",
+    "amenityQuiet": "هادئ",
+    "amenityNoSmoking": "غير مدخن"
+  },
+  "priceTag": {
+    "perMonth": "شهر"
+  }
+}

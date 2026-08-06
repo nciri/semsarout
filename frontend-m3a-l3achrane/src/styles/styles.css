@@ -13,3 +13,13 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
+
+/* RTL (arabe) — bascule de police et de sens portée par [dir] sur <html>,
+   posé par src/i18n/index.js au changement de langue. */
+[dir="rtl"] body {
+  font-family: var(--font-arabic);
+}
+[dir="rtl"] {
+  --font-display: var(--font-arabic);
+  --font-body: var(--font-arabic);
+}

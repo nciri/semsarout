@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 import { FiCalendar, FiCheckCircle, FiClock } from 'react-icons/fi'
 import { availabilityService } from '../../services/availabilityService'
 import useAuthStore from '../../store/authStore'
+import { useFormat } from '../../utils/format'
 
 function nextDays(count) {
   const days = []
@@ -20,6 +21,7 @@ function nextDays(count) {
 
 function BookVisitWidget({ propertyId }) {
   const { t } = useTranslation(['common'])
+  const { fmtDate } = useFormat()
   const navigate = useNavigate()
   const { isAuthenticated } = useAuthStore()
   const days = nextDays(14)
@@ -62,7 +64,7 @@ function BookVisitWidget({ propertyId }) {
         <p className="font-semibold text-gray-900">{t('common:visit.confirmedTitle')}</p>
         <p className="text-sm text-gray-600">
           {t('common:visit.confirmedDateTime', {
-            date: new Date(selectedDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }),
+            date: fmtDate(selectedDate, { weekday: 'long', day: 'numeric', month: 'long' }),
             time: selectedTime
           })}
         </p>
@@ -89,7 +91,7 @@ function BookVisitWidget({ propertyId }) {
                 isSelected ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              <div className="text-xs opacity-80">{d.toLocaleDateString('fr-FR', { weekday: 'short' })}</div>
+              <div className="text-xs opacity-80">{fmtDate(d, { weekday: 'short' })}</div>
               <div className="font-semibold">{d.getDate()}</div>
             </button>
           )

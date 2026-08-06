@@ -35,6 +35,7 @@ mesh_apps:
   - { name: rental, port: 8518 }
   - { name: commission, port: 8519 }
   - { name: selling, port: 8520 }
+  - { name: translation, port: 8524 }
 
 mesh_relays:
   - listing

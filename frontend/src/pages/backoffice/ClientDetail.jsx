@@ -1,20 +1,16 @@
 import { useQuery } from 'react-query'
 import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   FiArrowLeft, FiEdit2, FiMail, FiPhone, FiMapPin, FiUser,
   FiTag, FiFileText, FiDollarSign, FiPlus
 } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
-import {
-  CLIENT_TYPE_LABELS, CLIENT_STATUS_LABELS, transactionTypeForClient,
-} from '../../utils/clients'
+import { transactionTypeForClient } from '../../utils/clients'
+import DirIcon from '../../components/common/DirIcon'
 import api from '../../services/api'
 
-const PROPERTY_TYPE_LABELS = {
-  apartment: 'Appartement', house: 'Maison', villa: 'Villa',
-  land: 'Terrain', commercial: 'Commercial', office: 'Bureau',
-}
-
+// Libellés type/statut/bien via t('backoffice:crm.shared.*'), keyés sur l'enum API.
 const STATUS_BADGE = {
   active: 'bg-green-100 text-green-700',
   prospect: 'bg-blue-100 text-blue-700',
@@ -34,6 +30,7 @@ function Field({ icon: Icon, label, children }) {
 }
 
 export default function BackofficeClientDetail() {
+  const { t } = useTranslation(['backoffice', 'common'])
   const { id } = useParams()
   const navigate = useNavigate()
 
@@ -61,9 +58,9 @@ export default function BackofficeClientDetail() {
   if (!client) {
     return (
       <div className="max-w-4xl mx-auto text-center py-16">
-        <p className="text-gray-500 mb-4">Client introuvable.</p>
+        <p className="text-gray-500 mb-4">{t('backoffice:crm.shared.notFound')}</p>
         <Link to="/backoffice/clients" className="text-primary-600 hover:text-primary-700">
-          Retour à la liste
+          {t('backoffice:crm.shared.back')}
         </Link>
       </div>
     )
@@ -86,7 +83,7 @@ export default function BackofficeClientDetail() {
             onClick={() => navigate('/backoffice/clients')}
             className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
           >
-            <FiArrowLeft className="w-5 h-5" />
+            <DirIcon icon={FiArrowLeft} className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
@@ -100,10 +97,10 @@ export default function BackofficeClientDetail() {
               </h1>
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-sm text-gray-500">
-                  {CLIENT_TYPE_LABELS[client.client_type] || client.client_type}
+                  {t(`backoffice:crm.shared.clientTypes.${client.client_type}`, { defaultValue: client.client_type })}
                 </span>
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[client.status] || STATUS_BADGE.active}`}>
-                  {CLIENT_STATUS_LABELS[client.status] || CLIENT_STATUS_LABELS.active}
+                  {t(`backoffice:crm.shared.status.${client.status}`, { defaultValue: t('backoffice:crm.shared.status.active') })}
                 </span>
               </div>
             </div>
@@ -114,32 +111,32 @@ export default function BackofficeClientDetail() {
           className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors self-start"
         >
           <FiEdit2 className="w-4 h-4" />
-          Modifier
+          {t('backoffice:crm.clients.detail.editButton')}
         </Link>
       </div>
 
       {/* Contact */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Coordonnées</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('backoffice:crm.clients.detail.sections.contact')}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field icon={FiMail} label="Email">
+          <Field icon={FiMail} label={t('backoffice:crm.clients.detail.fields.email')}>
             {client.email
               ? <a href={`mailto:${client.email}`} className="hover:text-primary-600">{client.email}</a>
               : null}
           </Field>
-          <Field icon={FiPhone} label="Téléphone principal">
+          <Field icon={FiPhone} label={t('backoffice:crm.clients.detail.fields.phonePrimary')}>
             {client.phone
               ? <a href={`tel:${client.phone}`} className="hover:text-primary-600">{client.phone}</a>
               : null}
           </Field>
-          <Field icon={FiPhone} label="Téléphone secondaire">
+          <Field icon={FiPhone} label={t('backoffice:crm.clients.detail.fields.phoneSecondary')}>
             {client.secondary_phone
               ? <a href={`tel:${client.secondary_phone}`} className="hover:text-primary-600">{client.secondary_phone}</a>
               : null}
           </Field>
-          <Field icon={FiMapPin} label="Ville">{client.city}</Field>
+          <Field icon={FiMapPin} label={t('backoffice:crm.clients.detail.fields.city')}>{client.city}</Field>
           <div className="md:col-span-2">
-            <Field icon={FiMapPin} label="Adresse">{client.address}</Field>
+            <Field icon={FiMapPin} label={t('backoffice:crm.clients.detail.fields.address')}>{client.address}</Field>
           </div>
         </div>
       </div>
@@ -149,21 +146,21 @@ export default function BackofficeClientDetail() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <FiDollarSign className="w-5 h-5 text-gray-400" />
-            Critères de recherche
+            {t('backoffice:crm.clients.detail.sections.searchCriteria')}
           </h2>
           <div className="space-y-4">
             {(client.budget_min || client.budget_max) && (
               <p className="text-sm text-gray-700">
-                Budget : {formatPrice(client.budget_min || 0)} — {formatPrice(client.budget_max || 0)}
+                {t('backoffice:crm.clients.detail.budget', { min: formatPrice(client.budget_min || 0), max: formatPrice(client.budget_max || 0) })}
               </p>
             )}
             {propertyTypes.length > 0 && (
               <div>
-                <p className="text-xs text-gray-500 mb-2">Types de biens recherchés</p>
+                <p className="text-xs text-gray-500 mb-2">{t('backoffice:crm.clients.detail.propertyTypesWanted')}</p>
                 <div className="flex flex-wrap gap-2">
-                  {propertyTypes.map((t) => (
-                    <span key={t} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                      {PROPERTY_TYPE_LABELS[t] || t}
+                  {propertyTypes.map((pt) => (
+                    <span key={pt} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+                      {t(`backoffice:crm.shared.propertyTypes.${pt}`, { defaultValue: pt })}
                     </span>
                   ))}
                 </div>
@@ -171,7 +168,7 @@ export default function BackofficeClientDetail() {
             )}
             {locations.length > 0 && (
               <div>
-                <p className="text-xs text-gray-500 mb-2">Villes préférées</p>
+                <p className="text-xs text-gray-500 mb-2">{t('backoffice:crm.clients.detail.preferredCities')}</p>
                 <div className="flex flex-wrap gap-2">
                   {locations.map((l) => (
                     <span key={l} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">{l}</span>
@@ -186,10 +183,10 @@ export default function BackofficeClientDetail() {
       {/* Tags & notes */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field icon={FiUser} label="Agent assigné">
+          <Field icon={FiUser} label={t('backoffice:crm.clients.detail.fields.agentAssigned')}>
             {assignedAgent ? `${assignedAgent.first_name} ${assignedAgent.last_name}` : null}
           </Field>
-          <Field icon={FiTag} label="Tags">
+          <Field icon={FiTag} label={t('backoffice:crm.clients.detail.fields.tags')}>
             {client.tags?.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {client.tags.map((tag) => (
@@ -199,7 +196,7 @@ export default function BackofficeClientDetail() {
             ) : null}
           </Field>
         </div>
-        <Field icon={FiFileText} label="Notes">
+        <Field icon={FiFileText} label={t('backoffice:crm.clients.detail.fields.notes')}>
           {client.notes ? <p className="whitespace-pre-wrap">{client.notes}</p> : null}
         </Field>
       </div>
@@ -211,7 +208,7 @@ export default function BackofficeClientDetail() {
           className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
         >
           <FiPlus className="w-4 h-4" />
-          Créer une transaction ({txType === 'rent' ? 'location' : 'vente'})
+          {t('backoffice:crm.clients.detail.createTransaction', { type: t(`backoffice:crm.clients.detail.transactionType.${txType}`) })}
         </Link>
       </div>
     </div>
