@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Centre de sécurité" description="Espace confiance de l'utilisateur — signaler un profil/annonce/message, conseils de sécurité, blocages en cours" -->
+<helmet><script src="./ds-base.js"></script><style>html,body{margin:0}body{font-family:var(--font-body);background:var(--bg-page)}a{color:var(--link);text-decoration:none}</style></helmet>
+<div style="min-height:100vh;background:var(--bg-page)">
+<header style="background:var(--surface-navy);color:var(--text-on-navy);padding:14px 32px;display:flex;align-items:center;gap:24px">
+<div style="font-size:18px;font-weight:800;letter-spacing:-0.02em">M3a-L3chrane</div>
+<a href="../messaging/Messaging.dc.html" style="color:var(--text-on-navy-muted);font-size:14px">← Messages</a>
+</header>
+<main style="max-width:960px;margin:0 auto;padding:34px 24px 64px;display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<h1 style="margin:0;font-size:26px;font-weight:800;color:var(--text-heading);letter-spacing:-0.02em">Centre de sécurité</h1>
+<p style="margin:0;font-size:14.5px;color:var(--text-body)">Signalez un comportement suspect, gérez vos blocages, retrouvez nos conseils.</p>
+</div>
+<div style="display:grid;grid-template-columns:1.2fr 1fr;gap:20px;align-items:start">
+<section style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:22px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:15px;font-weight:800;color:var(--text-heading)">Faire un signalement</div>
+<div style="display:flex;flex-direction:column;gap:7px">
+<span style="font-size:13px;font-weight:700;color:var(--text-heading)">Que souhaitez-vous signaler ?</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{ targets }}" as="t" hint-placeholder-count="3">
+<sc-if value="{{ t.on }}"><button onClick="{{ t.pick }}" style="padding:8px 13px;border-radius:9px;border:1.5px solid var(--navy-700);background:var(--navy-700);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer">{{ t.label }}</button></sc-if>
+<sc-if value="{{ t.off }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t.pick }}" style="padding:8px 13px;border-radius:9px;border:1.5px solid var(--border-subtle);background:var(--white);color:var(--text-body);font-size:13.5px;font-weight:600;cursor:pointer">{{ t.label }}</button></sc-if>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:7px">
+<span style="font-size:13px;font-weight:700;color:var(--text-heading)">Motif</span>
+<select style="padding:11px 13px;border:1px solid var(--border-subtle);border-radius:8px;font-size:14px;color:var(--text-heading);outline:none"><option>Demande d'avance avant visite</option><option>Annonce ou photo suspecte</option><option>Comportement déplacé</option><option>Tentative de sortie de la plateforme</option><option>Contenu discriminatoire</option><option>Autre</option></select>
+</div>
+<label style="display:flex;flex-direction:column;gap:7px"><span style="font-size:13px;font-weight:700;color:var(--text-heading)">Détails (optionnel)</span><textarea rows="4" placeholder="Décrivez ce qui s'est passé…" style="padding:12px 14px;border:1px solid var(--border-subtle);border-radius:8px;font-size:14px;font-family:inherit;color:var(--text-heading);outline:none;resize:vertical"></textarea></label>
+<button style="padding:12px 22px;align-self:flex-start;border:0;border-radius:8px;background:var(--red-600);color:#fff;font-size:14.5px;font-weight:800;cursor:pointer">Envoyer le signalement</button>
+</div>
+<div style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:20px;display:flex;flex-direction:column;gap:12px">
+<div style="font-size:15px;font-weight:800;color:var(--text-heading)">Utilisateurs bloqués</div>
+<sc-for list="{{ blocked }}" as="b" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border-subtle);border-radius:10px">
+<div style="width:32px;height:32px;border-radius:50%;background:var(--gray-200);color:var(--text-heading);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800">{{ b.initials }}</div>
+<div style="flex:1;font-size:13.5px;font-weight:700;color:var(--text-heading)">{{ b.name }}</div>
+<button style="padding:6px 12px;border:1px solid var(--border-subtle);border-radius:7px;background:var(--white);font-size:12.5px;font-weight:700;color:var(--text-body);cursor:pointer">Débloquer</button>
+</div>
+</sc-for>
+</div>
+</section>
+<aside style="display:flex;flex-direction:column;gap:14px">
+<div style="background:var(--navy-50);border:1px solid var(--navy-100);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px">
+<div style="font-size:15px;font-weight:800;color:var(--text-heading)">Conseils de sécurité</div>
+<sc-for list="{{ tips }}" as="t" hint-placeholder-count="4">
+<div style="display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--text-body);line-height:1.5"><span style="color:var(--navy-700);font-weight:800">•</span>{{ t }}</div>
+</sc-for>
+</div>
+<div style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:18px;display:flex;flex-direction:column;gap:8px">
+<div style="font-size:14px;font-weight:800;color:var(--text-heading)">Besoin d'aide immédiate ?</div>
+<div style="font-size:13px;color:var(--text-body);line-height:1.5">Notre équipe support répond sous 24h ouvrées.</div>
+<a href="#" style="font-size:13px;font-weight:700">Contacter le support →</a>
+</div>
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { target: 0 };
+  renderVals() {
+    return {
+      targets: ['Un profil', 'Une annonce', 'Un message'].map((label, i) => ({ label, on: this.state.target === i, off: this.state.target !== i, pick: () => this.setState({ target: i }) })),
+      blocked: [{ initials: 'XZ', name: 'Utilisateur #48213' }, { initials: 'KM', name: 'Utilisateur #51022' }],
+      tips: [
+        'Ne versez jamais d’argent avant d’avoir visité le logement en personne.',
+        'Restez sur la messagerie interne jusqu’à ce que l’identité soit vérifiée des deux côtés.',
+        'Vérifiez le badge « Vérifié » et l’ancienneté du profil avant d’échanger des informations sensibles.',
+        'Signalez toute demande de paiement en dehors du parcours contrat et séquestre.'
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

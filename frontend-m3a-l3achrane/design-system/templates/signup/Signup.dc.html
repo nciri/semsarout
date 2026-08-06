@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Inscription" description="Création de compte en 3 étapes — profil, vérification, mode de vie" -->
+<helmet><script src="./ds-base.js"></script><style>html,body{margin:0}body{font-family:var(--font-body);background:var(--bg-page)}a{color:var(--link);text-decoration:none}a:hover{color:var(--link-hover)}input,select{font:inherit}</style></helmet>
+<div style="min-height:100vh;background:var(--bg-page);display:flex;flex-direction:column">
+<header style="background:var(--surface-navy);color:var(--text-on-navy);padding:16px 40px;display:flex;align-items:center;justify-content:space-between">
+<div style="font-size:18px;font-weight:800;letter-spacing:-0.02em">M3a-L3chrane</div>
+<div style="font-size:14px;color:var(--text-on-navy-muted)">Déjà inscrit ? <a href="#" style="color:var(--gold-500);font-weight:600">Se connecter</a></div>
+</header>
+<main style="flex:1;display:flex;justify-content:center;padding:44px 24px 64px">
+<div style="width:100%;max-width:720px;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<h1 style="margin:0;font-size:30px;font-weight:800;color:var(--text-heading);letter-spacing:-0.02em">Créez votre profil</h1>
+<p style="margin:0;font-size:15px;color:var(--text-body)">Trois étapes courtes. Vos informations restent privées jusqu'à ce que vous contactiez une colocation.</p>
+</div>
+<div style="display:flex;align-items:center;gap:12px">
+<sc-for list="{{ steps }}" as="step" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:12px;flex:1">
+<div style="display:flex;align-items:center;gap:10px;flex:none">
+<sc-if value="{{ step.done }}" hint-placeholder-val="{{ true }}"><div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;background:var(--navy-700);color:#fff">{{ step.num }}</div></sc-if>
+<sc-if value="{{ step.todo }}"><div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;background:var(--gray-150);color:var(--text-muted)">{{ step.num }}</div></sc-if>
+<sc-if value="{{ step.done }}" hint-placeholder-val="{{ true }}"><div style="font-size:13.5px;font-weight:700;color:var(--text-heading)">{{ step.label }}</div></sc-if>
+<sc-if value="{{ step.todo }}"><div style="font-size:13.5px;font-weight:700;color:var(--text-muted)">{{ step.label }}</div></sc-if>
+</div>
+<sc-if value="{{ step.barOn }}"><div style="flex:1;height:2px;background:var(--navy-700);border-radius:2px"></div></sc-if>
+<sc-if value="{{ step.barOff }}" hint-placeholder-val="{{ true }}"><div style="flex:1;height:2px;background:var(--gray-200);border-radius:2px"></div></sc-if>
+</div>
+</sc-for>
+</div>
+<section style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:28px;display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="font-size:13px;font-weight:700;color:var(--text-heading)">Je suis</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+<sc-for list="{{ roles }}" as="role" hint-placeholder-count="3">
+<sc-if value="{{ role.on }}"><button onClick="{{ role.select }}" style="text-align:left;padding:16px;border:1.5px solid var(--navy-700);background:var(--navy-50);border-radius:12px;cursor:pointer;display:flex;flex-direction:column;gap:5px;width:100%;box-sizing:border-box">
+<span style="font-size:15px;font-weight:700;color:var(--text-heading)">{{ role.title }}</span>
+<span style="font-size:13px;color:var(--text-muted);line-height:1.45">{{ role.desc }}</span>
+</button></sc-if>
+<sc-if value="{{ role.off }}" hint-placeholder-val="{{ true }}"><button onClick="{{ role.select }}" style="text-align:left;padding:16px;border:1.5px solid var(--border-subtle);background:var(--white);border-radius:12px;cursor:pointer;display:flex;flex-direction:column;gap:5px;width:100%;box-sizing:border-box" style-hover="border-color:var(--navy-300)">
+<span style="font-size:15px;font-weight:700;color:var(--text-heading)">{{ role.title }}</span>
+<span style="font-size:13px;color:var(--text-muted);line-height:1.45">{{ role.desc }}</span>
+</button></sc-if>
+</sc-for>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<label style="display:flex;flex-direction:column;gap:7px"><span style="font-size:13px;font-weight:700;color:var(--text-heading)">Prénom</span><input placeholder="Yassine" style="padding:12px 14px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--white);font-size:15px;color:var(--text-heading);outline:none" style-focus="border-color:var(--border-focus);box-shadow:0 0 0 3px var(--navy-100)"></label>
+<label style="display:flex;flex-direction:column;gap:7px"><span style="font-size:13px;font-weight:700;color:var(--text-heading)">Nom</span><input placeholder="Benali" style="padding:12px 14px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--white);font-size:15px;color:var(--text-heading);outline:none" style-focus="border-color:var(--border-focus);box-shadow:0 0 0 3px var(--navy-100)"></label>
+<label style="display:flex;flex-direction:column;gap:7px"><span style="font-size:13px;font-weight:700;color:var(--text-heading)">Adresse e-mail</span><input type="email" placeholder="prenom.nom@exemple.ma" style="padding:12px 14px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--white);font-size:15px;color:var(--text-heading);outline:none" style-focus="border-color:var(--border-focus);box-shadow:0 0 0 3px var(--navy-100)"></label>
+<label style="display:flex;flex-direction:column;gap:7px"><span style="font-size:13px;font-weight:700;color:var(--text-heading)">Téléphone</span><input placeholder="+212 6 12 34 56 78" style="padding:12px 14px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--white);font-size:15px;color:var(--text-heading);outline:none" style-focus="border-color:var(--border-focus);box-shadow:0 0 0 3px var(--navy-100)"></label>
+<label style="display:flex;flex-direction:column;gap:7px"><span style="font-size:13px;font-weight:700;color:var(--text-heading)">Ville</span><select style="padding:12px 14px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--white);font-size:15px;color:var(--text-heading);outline:none"><option>Casablanca</option><option>Rabat</option><option>Marrakech</option><option>Tanger</option><option>Fès</option></select></label>
+<label style="display:flex;flex-direction:column;gap:7px"><span style="font-size:13px;font-weight:700;color:var(--text-heading)">Établissement ou employeur</span><input placeholder="Université Hassan II" style="padding:12px 14px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--white);font-size:15px;color:var(--text-heading);outline:none" style-focus="border-color:var(--border-focus);box-shadow:0 0 0 3px var(--navy-100)"></label>
+</div>
+<label style="display:flex;flex-direction:column;gap:7px"><span style="font-size:13px;font-weight:700;color:var(--text-heading)">Mot de passe</span><input type="password" placeholder="8 caractères minimum" style="padding:12px 14px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--white);font-size:15px;color:var(--text-heading);outline:none" style-focus="border-color:var(--border-focus);box-shadow:0 0 0 3px var(--navy-100)"><span style="font-size:12.5px;color:var(--text-muted)">Au moins 8 caractères, dont un chiffre.</span></label>
+<div style="background:var(--navy-50);border:1px solid var(--navy-100);border-radius:12px;padding:16px;display:flex;gap:14px;align-items:flex-start">
+<div style="width:32px;height:32px;border-radius:50%;background:var(--verified-bg);color:var(--verified);display:flex;align-items:center;justify-content:center;font-weight:800;flex:none">✓</div>
+<div style="display:flex;flex-direction:column;gap:4px"><div style="font-size:14.5px;font-weight:700;color:var(--text-heading)">Prochaine étape : la vérification</div><div style="font-size:13.5px;color:var(--text-body);line-height:1.55">Vous téléverserez votre CIN et votre justificatif de statut. Rien n'est visible par les autres membres — seul le badge « Vérifié » apparaît sur votre profil.</div></div>
+</div>
+<label style="display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--text-body);line-height:1.55;cursor:pointer"><input type="checkbox" style="width:16px;height:16px;margin-top:2px;accent-color:var(--navy-700)"><span>J'accepte les <a href="#">conditions d'utilisation</a> et le traitement de mes données conformément à la <a href="#">politique de confidentialité</a> (CNDP).</span></label>
+<div style="display:flex;gap:12px;justify-content:flex-end;align-items:center">
+<button style="padding:12px 18px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--white);color:var(--text-heading);font-size:14.5px;font-weight:600;cursor:pointer">Enregistrer et reprendre plus tard</button>
+<a href="../lifestyle-questionnaire/LifestyleQuestionnaire.dc.html" style="padding:12px 24px;border:0;border-radius:8px;background:var(--brand-accent);color:var(--text-on-accent);font-size:15px;font-weight:800">Continuer</a>
+</div>
+</section>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { role: 0 };
+  renderVals() {
+    const cur = 1;
+    const steps = [
+      { n: 1, label: 'Profil' }, { n: 2, label: 'Vérification' }, { n: 3, label: 'Mode de vie' }
+    ].map((s, i) => ({
+      num: s.n, label: s.label,
+      done: i + 1 <= cur, todo: i + 1 > cur,
+      barOn: i + 1 < cur, barOff: i + 1 >= cur
+    }));
+    const defs = [
+      { title: 'Étudiant·e', desc: 'Inscrit dans un établissement' },
+      { title: 'Jeune actif', desc: 'En poste ou en stage' },
+      { title: 'Je propose un logement', desc: 'Propriétaire ou colocataire' }
+    ];
+    const roles = defs.map((r, i) => ({
+      title: r.title, desc: r.desc,
+      on: this.state.role === i, off: this.state.role !== i,
+      select: () => this.setState({ role: i })
+    }));
+    return { steps, roles };
+  }
+}
+</script>
+</body>
+</html>

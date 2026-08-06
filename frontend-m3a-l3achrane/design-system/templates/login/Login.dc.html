@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Connexion" description="Page de connexion — panneau de confiance navy + formulaire e-mail/téléphone" -->
+<helmet><script src="./ds-base.js"></script><style>html,body{margin:0}body{font-family:var(--font-body);background:var(--bg-page)}a{color:var(--link);text-decoration:none}a:hover{color:var(--link-hover)}input{font:inherit}</style></helmet>
+<div style="min-height:100vh;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);background:var(--bg-page)">
+<aside style="background:var(--surface-navy);color:var(--text-on-navy);padding:56px 64px;display:flex;flex-direction:column;justify-content:space-between;gap:48px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-size:22px;font-weight:800;letter-spacing:-0.02em">M3a-L3chrane</div>
+<div style="font-size:15px;color:var(--text-on-navy-muted)">مع العشران</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:28px;max-width:420px">
+<h1 style="margin:0;font-size:40px;line-height:1.15;font-weight:800;letter-spacing:-0.03em">Retrouvez votre colocation, <span style="color:var(--gold-500)">en toute confiance</span>.</h1>
+<div style="display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;gap:14px;align-items:flex-start">
+<div style="width:34px;height:34px;border-radius:50%;background:rgba(43,182,115,.18);color:var(--green-500);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex:none">✓</div>
+<div style="display:flex;flex-direction:column;gap:3px"><div style="font-size:15px;font-weight:700">Profils vérifiés</div><div style="font-size:14px;color:var(--text-on-navy-muted)">CIN, statut étudiant ou employeur</div></div>
+</div>
+<div style="display:flex;gap:14px;align-items:flex-start">
+<div style="width:34px;height:34px;border-radius:50%;background:rgba(239,178,77,.18);color:var(--gold-500);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex:none">%</div>
+<div style="display:flex;flex-direction:column;gap:3px"><div style="font-size:15px;font-weight:700">Compatibilité mesurée</div><div style="font-size:14px;color:var(--text-on-navy-muted)">Un score de mode de vie, pas un hasard</div></div>
+</div>
+<div style="display:flex;gap:14px;align-items:flex-start">
+<div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex:none">§</div>
+<div style="display:flex;flex-direction:column;gap:3px"><div style="font-size:15px;font-weight:700">Un cadre clair pour tous</div><div style="font-size:14px;color:var(--text-on-navy-muted)">Contrat signé en ligne, dépôt sécurisé</div></div>
+</div>
+</div>
+</div>
+<div style="font-size:13px;color:var(--text-on-navy-muted)">Données hébergées au Maroc — conforme CNDP</div>
+</aside>
+<main style="display:flex;align-items:center;justify-content:center;padding:48px 32px">
+<div style="width:100%;max-width:420px;display:flex;flex-direction:column;gap:26px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<h2 style="margin:0;font-size:28px;font-weight:800;color:var(--text-heading);letter-spacing:-0.02em">Se connecter</h2>
+<p style="margin:0;font-size:15px;color:var(--text-body)">Pas encore de compte ? <a href="../signup/Signup.dc.html" style="font-weight:600">Créer un compte</a></p>
+</div>
+<div style="display:flex;background:var(--surface-sunken);border-radius:var(--radius-sm,8px);padding:4px;gap:4px">
+<button style="flex:1;padding:9px;border:0;border-radius:6px;background:var(--white);color:var(--text-heading);font-size:14px;font-weight:700;box-shadow:var(--shadow-sm);cursor:pointer">E-mail</button>
+<button style="flex:1;padding:9px;border:0;border-radius:6px;background:transparent;color:var(--text-muted);font-size:14px;font-weight:600;cursor:pointer" style-hover="color:var(--text-heading)">Téléphone</button>
+</div>
+<form style="display:flex;flex-direction:column;gap:18px" onSubmit="{{ onSubmit }}">
+<label style="display:flex;flex-direction:column;gap:7px">
+<span style="font-size:13px;font-weight:700;color:var(--text-heading)">Adresse e-mail</span>
+<input type="email" placeholder="prenom.nom@exemple.ma" style="padding:12px 14px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--white);color:var(--text-heading);font-size:15px;outline:none" style-focus="border-color:var(--border-focus);box-shadow:0 0 0 3px var(--navy-100)">
+</label>
+<label style="display:flex;flex-direction:column;gap:7px">
+<span style="display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;color:var(--text-heading)">Mot de passe <a href="#" style="font-weight:600;font-size:13px">Mot de passe oublié ?</a></span>
+<input type="password" placeholder="••••••••" style="padding:12px 14px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--white);color:var(--text-heading);font-size:15px;outline:none" style-focus="border-color:var(--border-focus);box-shadow:0 0 0 3px var(--navy-100)">
+</label>
+<label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--text-body);cursor:pointer"><input type="checkbox" checked style="width:16px;height:16px;accent-color:var(--navy-700)">Rester connecté sur cet appareil</label>
+<button type="submit" style="padding:13px;border:0;border-radius:8px;background:var(--brand-primary);color:var(--text-on-navy);font-size:15px;font-weight:700;cursor:pointer;transition:background 160ms var(--ease-standard,ease)" style-hover="background:var(--brand-primary-hover)">Se connecter</button>
+</form>
+<div style="display:flex;align-items:center;gap:14px;color:var(--text-muted);font-size:13px"><div style="height:1px;background:var(--border-subtle);flex:1"></div>ou<div style="height:1px;background:var(--border-subtle);flex:1"></div></div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<button style="padding:12px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--white);color:var(--text-heading);font-size:14px;font-weight:600;cursor:pointer" style-hover="border-color:var(--border-default)">Continuer avec Google</button>
+<button style="padding:12px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--white);color:var(--text-heading);font-size:14px;font-weight:600;cursor:pointer" style-hover="border-color:var(--border-default)">Continuer avec mon établissement</button>
+</div>
+<p style="margin:0;font-size:12.5px;color:var(--text-muted);line-height:1.6">En continuant, vous acceptez nos <a href="#">conditions d'utilisation</a> et notre <a href="#">politique de confidentialité</a>.</p>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() { return { onSubmit: (e) => e.preventDefault() }; }
+}
+</script>
+</body>
+</html>

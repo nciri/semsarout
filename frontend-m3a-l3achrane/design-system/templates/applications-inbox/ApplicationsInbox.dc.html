@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Gestion des candidatures" description="Le LISTER passe en revue les candidatures reçues par annonce, accepte/refuse/met en attente, et confirme un créneau de visite" -->
+<helmet><script src="./ds-base.js"></script><style>html,body{margin:0}body{font-family:var(--font-body);background:var(--bg-page)}a{color:var(--link);text-decoration:none}::-webkit-scrollbar{width:10px}::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:8px;border:3px solid transparent;background-clip:content-box}</style></helmet>
+<div style="min-height:100vh;background:var(--bg-page)">
+<header style="background:var(--surface-navy);color:var(--text-on-navy);padding:14px 32px;display:flex;align-items:center;gap:24px">
+<div style="font-size:18px;font-weight:800;letter-spacing:-0.02em">M3a-L3chrane</div>
+<a href="../messaging/Messaging.dc.html" style="color:var(--text-on-navy-muted);font-size:14px">Messages</a>
+<a href="../listing-detail/ListingDetail.dc.html" style="color:var(--text-on-navy-muted);font-size:14px">Mon annonce</a>
+</header>
+<main style="max-width:1080px;margin:0 auto;padding:28px 28px 64px;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<h1 style="margin:0;font-size:25px;font-weight:800;color:var(--text-heading);letter-spacing:-0.02em">Candidatures reçues</h1>
+<p style="margin:0;font-size:14px;color:var(--text-body)">Chambre privée — Maârif, Casablanca</p>
+</div>
+<div style="display:flex;gap:8px">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+<sc-if value="{{ t.on }}"><button onClick="{{ t.go }}" style="padding:8px 14px;border-radius:9px;border:1.5px solid var(--navy-700);background:var(--navy-700);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer">{{ t.label }}</button></sc-if>
+<sc-if value="{{ t.off }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t.go }}" style="padding:8px 14px;border-radius:9px;border:1.5px solid var(--border-subtle);background:var(--white);color:var(--text-body);font-size:13.5px;font-weight:600;cursor:pointer">{{ t.label }}</button></sc-if>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<sc-for list="{{ apps }}" as="a" hint-placeholder-count="4">
+<div style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;gap:14px;align-items:flex-start">
+<div style="width:42px;height:42px;border-radius:50%;background:var(--navy-500);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex:none">{{ a.initials }}</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:3px">
+<div style="display:flex;gap:10px;align-items:baseline"><span style="font-size:15.5px;font-weight:800;color:var(--text-heading)">{{ a.name }}</span><span style="font-size:12.5px;color:var(--text-muted)">{{ a.date }}</span></div>
+<div style="font-size:13px;color:var(--text-muted)">{{ a.profile }}</div>
+</div>
+<span style="padding:5px 11px;border-radius:999px;background:var(--green-100);color:var(--green-700);font-size:13px;font-weight:800;flex:none">{{ a.score }}</span>
+</div>
+<div style="font-size:13.5px;color:var(--text-body);line-height:1.55;padding:12px 14px;border-radius:10px;background:var(--surface-sunken)">{{ a.message }}</div>
+<sc-if value="{{ a.pending }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+<button onClick="{{ a.accept }}" style="padding:9px 16px;border:0;border-radius:8px;background:var(--navy-700);color:#fff;font-size:13.5px;font-weight:800;cursor:pointer" style-hover="background:var(--navy-600)">Accepter</button>
+<button onClick="{{ a.wait }}" style="padding:9px 16px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--white);color:var(--text-heading);font-size:13.5px;font-weight:700;cursor:pointer">Mettre en attente</button>
+<button onClick="{{ a.refuse }}" style="padding:9px 16px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--white);color:var(--text-muted);font-size:13.5px;font-weight:700;cursor:pointer" style-hover="color:var(--red-600);border-color:var(--red-100)">Refuser</button>
+</div>
+</sc-if>
+<sc-if value="{{ a.accepted }}">
+<div style="display:flex;flex-direction:column;gap:10px;padding:14px 16px;border-radius:10px;background:var(--navy-50);border:1px solid var(--navy-100)">
+<div style="font-size:13.5px;font-weight:800;color:var(--navy-700)">Candidature acceptée — proposez un créneau de visite</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{ a.slots }}" as="s" hint-placeholder-count="3">
+<sc-if value="{{ s.on }}"><button onClick="{{ s.pick }}" style="padding:7px 12px;border-radius:8px;border:1.5px solid var(--navy-700);background:var(--navy-700);color:#fff;font-size:12.5px;font-weight:700;cursor:pointer">{{ s.label }}</button></sc-if>
+<sc-if value="{{ s.off }}" hint-placeholder-val="{{ true }}"><button onClick="{{ s.pick }}" style="padding:7px 12px;border-radius:8px;border:1.5px solid var(--border-subtle);background:var(--white);color:var(--text-body);font-size:12.5px;font-weight:600;cursor:pointer">{{ s.label }}</button></sc-if>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ a.waiting }}">
+<div style="padding:10px 14px;border-radius:9px;background:var(--amber-100);color:#7a5613;font-size:12.5px;font-weight:700;align-self:flex-start">En attente — vous répondrez après les autres visites</div>
+</sc-if>
+<sc-if value="{{ a.refused }}">
+<div style="padding:10px 14px;border-radius:9px;background:var(--gray-100);color:var(--text-muted);font-size:12.5px;font-weight:700;align-self:flex-start">Refusée — le candidat a été notifié</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const DATA = [
+  { initials: 'YB', name: 'Yasmine Berrada', profile: 'Étudiante M2 · ENCG Casablanca', date: 'Reçue il y a 2h', score: '94%', message: 'Bonjour, je suis très intéressée par la chambre, disponible dès le 1er septembre. Je peux passer samedi si besoin.', status: 'pending', slot: null },
+  { initials: 'SO', name: 'Salma Ouazzani', profile: 'Étudiante 2e année · ISCAE', date: 'Reçue hier', score: '88%', message: 'Bonjour ! Le logement m’intéresse beaucoup, je cherche un cadre calme pour étudier. Dispo ce week-end.', status: 'accepted', slot: 1 },
+  { initials: 'NC', name: 'Nada Chraibi', profile: 'Étudiante 1re année · EMSI', date: 'Reçue il y a 3 jours', score: '69%', message: 'Bonjour, première recherche de coloc pour moi, je suis flexible sur les visites.', status: 'waiting', slot: null },
+  { initials: 'IB', name: 'Ilyas Benjelloun', profile: 'Doctorant · Université Hassan II', date: 'Reçue il y a 5 jours', score: '81%', message: 'Bonsoir, je recherche un logement calme pour la durée de ma thèse, budget aligné.', status: 'refused', slot: null }
+];
+class Component extends DCLogic {
+  state = { tab: 0, apps: DATA.map(a => ({ status: a.status, slot: a.slot })) };
+  setStatus(i, status) { this.setState(s => ({ apps: s.apps.map((a, j) => (j === i ? { ...a, status } : a)) })); }
+  pickSlot(i, slot) { this.setState(s => ({ apps: s.apps.map((a, j) => (j === i ? { ...a, slot } : a)) })); }
+  renderVals() {
+    const counts = { all: DATA.length, pending: 0, accepted: 0, waiting: 0 };
+    this.state.apps.forEach(a => { if (a.status in counts) counts[a.status]++; });
+    const tab = this.state.tab;
+    const filters = ['all', 'pending', 'accepted', 'waiting'];
+    const slotLabels = ['Sam. 9 août, 15h', 'Sam. 9 août, 17h', 'Dim. 10 août, 11h'];
+    const apps = DATA.map((a, i) => {
+      const st = this.state.apps[i];
+      return {
+        initials: a.initials, name: a.name, profile: a.profile, date: a.date, score: a.score, message: a.message,
+        pending: st.status === 'pending', accepted: st.status === 'accepted', waiting: st.status === 'waiting', refused: st.status === 'refused',
+        accept: () => this.setStatus(i, 'accepted'), wait: () => this.setStatus(i, 'waiting'), refuse: () => this.setStatus(i, 'refused'),
+        slots: slotLabels.map((label, k) => ({ label, on: st.slot === k, off: st.slot !== k, pick: () => this.pickSlot(i, k) }))
+      };
+    }).filter((a, i) => filters[tab] === 'all' || this.state.apps[i].status === filters[tab]);
+    return {
+      tabs: [['Toutes', counts.all], ['En attente', counts.pending], ['Acceptées', counts.accepted], ['Mises en attente', counts.waiting]].map(([label, n], i) => ({ label: label + ' (' + n + ')', on: tab === i, off: tab !== i, go: () => this.setState({ tab: i }) })),
+      apps
+    };
+  }
+}
+</script>
+</body>
+</html>
