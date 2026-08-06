@@ -1,5 +1,33 @@
 {
   "meta": {
     "title": "بوابة الشركاء"
+  },
+  "portal": {
+    "title": "لوحة التحكم",
+    "subtitle": "التحققات وحصص شركائكم",
+    "export": "تصدير",
+    "import": "استيراد سجل",
+    "metrics": {
+      "partners": "الشركاء",
+      "verified": "موثّقون",
+      "totalQuota": "إجمالي الحصة",
+      "fillRate": "معدل الإشغال"
+    },
+    "quotaStatus": {
+      "reached": "الحصة مستوفاة",
+      "onTrack": "في مسار جيد",
+      "underQuota": "دون الحصة"
+    },
+    "privacyBanner": "تقارير مجهولة الهوية · التجميعات مخفية تحت عتبة إخفاء الهوية الجماعي (k ≥ 5). لا يتم الكشف عن أي عنوان أو هوية لأحد السكان.",
+    "tableTitle": "سجل الشركاء",
+    "searchPlaceholder": "البحث عن شريك",
+    "table": {
+      "partner": "الشريك",
+      "type": "النوع",
+      "verified": "موثّقون",
+      "quota": "الحصة",
+      "status": "الحالة",
+      "verifiedCount": "{{count}} موثّق"
+    }
   }
 }

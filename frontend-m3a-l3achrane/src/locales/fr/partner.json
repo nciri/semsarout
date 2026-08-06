@@ -1,5 +1,33 @@
 {
   "meta": {
     "title": "Portail partenaire"
+  },
+  "portal": {
+    "title": "Tableau de bord",
+    "subtitle": "Vérifications et quotas de vos partenaires",
+    "export": "Exporter",
+    "import": "Importer un référentiel",
+    "metrics": {
+      "partners": "Partenaires",
+      "verified": "Vérifiés",
+      "totalQuota": "Quota total",
+      "fillRate": "Taux de remplissage"
+    },
+    "quotaStatus": {
+      "reached": "Quota atteint",
+      "onTrack": "En bonne voie",
+      "underQuota": "Sous quota"
+    },
+    "privacyBanner": "Reporting anonymisé · agrégats masqués sous le seuil de k-anonymat (k ≥ 5). Aucune adresse ni identité de colocataire n'est exposée.",
+    "tableTitle": "Référentiel de partenaires",
+    "searchPlaceholder": "Rechercher un partenaire",
+    "table": {
+      "partner": "Partenaire",
+      "type": "Type",
+      "verified": "Vérifiés",
+      "quota": "Quota",
+      "status": "Statut",
+      "verifiedCount": "{{count}} vérifiés"
+    }
   }
 }
