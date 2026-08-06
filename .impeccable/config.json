@@ -1,0 +1,20 @@
+{
+  "detector": {
+    "ignoreRules": [
+      "border-accent-on-rounded",
+      "gray-on-color"
+    ],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "ai-color-palette",
+        "value": "*",
+        "files": [
+          "frontend/src/pages/backoffice/Leads.jsx"
+        ],
+        "createdAt": "2026-08-06T09:10:36.826Z",
+        "reason": "Accent stat convertis intentionnel, coherent avec couleurs semantiques"
+      }
+    ]
+  }
+}
