@@ -67,7 +67,7 @@ export default function Securite() {
 
               <label style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                 <span style={{ font: 'var(--fw-bold) 13px var(--font-body)', color: 'var(--text-heading)' }}>
-                  Détails (optionnel)
+                  Détails
                 </span>
                 <textarea
                   rows={4}
@@ -113,7 +113,7 @@ export default function Securite() {
                     borderRadius: 10,
                   }}
                 >
-                  <Avatar name={b.name} size={32} />
+                  <Avatar name={b.initials.split('').join(' ')} size={32} />
                   <div style={{ flex: 1, font: 'var(--fw-bold) 13.5px var(--font-body)', color: 'var(--text-heading)' }}>
                     {b.name}
                   </div>
