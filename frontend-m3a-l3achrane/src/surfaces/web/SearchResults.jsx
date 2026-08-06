@@ -240,6 +240,7 @@ export default function SearchResults() {
                     price={it.prixMad}
                     amenities={it.chips?.map((label) => ({ icon: 'check', label }))}
                     onClick={() => navigate(`/annonce/${it.id}`)}
+                    onApply={() => navigate('/espace/candidature')}
                   />
                 ))}
               </div>

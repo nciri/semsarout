@@ -50,7 +50,8 @@
     "defaultCity": "Maârif, Casablanca",
     "amenityRoommates": "3 colocs",
     "amenityQuiet": "Calme",
-    "amenityNoSmoking": "Non-fumeur"
+    "amenityNoSmoking": "Non-fumeur",
+    "applyCta": "Candidater"
   },
   "priceTag": {
     "perMonth": "mois"

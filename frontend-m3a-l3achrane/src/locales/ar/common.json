@@ -50,7 +50,8 @@
     "defaultCity": "المعاريف، الدار البيضاء",
     "amenityRoommates": "3 من السكان",
     "amenityQuiet": "هادئ",
-    "amenityNoSmoking": "غير مدخن"
+    "amenityNoSmoking": "غير مدخن",
+    "applyCta": "التقديم"
   },
   "priceTag": {
     "perMonth": "شهر"
