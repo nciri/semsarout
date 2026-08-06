@@ -8,12 +8,12 @@ def _fill(db, *, seeker=True, listings=("l1",)):
     if seeker:
         db.add(CompatibilityProfile(seeker_id=7, gender="FEMME", budget_min=Decimal("1000"),
                                     budget_max=Decimal("2500"), city="Casablanca",
-                                    lifestyle={"tabac": "non_fumeur"},
+                                    lifestyle={"tabac": "non-fumeur"},
                                     importance={"tabac": "DECISIF"}))
     for lid in listings:
         db.add(ListingCriteriaRow(listing_id=lid, housing_gender="FEMININ",
                                   rent=Decimal("2000"), city="Casablanca", capacity=3,
-                                  house_rules={"tabac": "non_fumeur"}))
+                                  house_rules={"tabac": "non-fumeur"}))
     db.commit()
 
 
@@ -59,7 +59,7 @@ def test_multiple_listings_partial_cache(db_session):
     # Deuxième appel avec l3 (nouveau) : lit l1, l2 du cache et calcule l3
     db_session.add(ListingCriteriaRow(listing_id="l3", housing_gender="FEMININ",
                                       rent=Decimal("1500"), city="Casablanca", capacity=2,
-                                      house_rules={"tabac": "non_fumeur"}))
+                                      house_rules={"tabac": "non-fumeur"}))
     db_session.commit()
     scores2 = get_scores(db_session, 7, ["l1", "l2", "l3"])
     assert scores2["l1"] == scores1["l1"] and scores2["l2"] == scores1["l2"]
