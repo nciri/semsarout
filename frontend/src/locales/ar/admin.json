@@ -58,7 +58,7 @@
   },
   "accountDetail": {
     "back": "رجوع",
-    "statusPrefix": "الحالة :",
+    "statusPrefix": "الحالة:",
     "deletedNotice": "تم الحذف في {{date}} — قابل للاستعادة لمدة 90 يومًا.",
     "impersonateButton": "الدخول باسم هذا المستخدم",
     "dangerZone": {
