@@ -4,10 +4,10 @@ from app.models import CompatibilityProfile, ListingCriteriaRow, MatchScore
 from app.worker import _handle_with_session
 
 PROFILE = {"user_id": 7, "gender": "FEMME", "budget_min": 1000.0, "budget_max": 2500.0,
-           "city": "Casablanca", "lifestyle": {"tabac": "non_fumeur"},
+           "city": "Casablanca", "lifestyle": {"tabac": "non-fumeur"},
            "importance": {"tabac": "DECISIF"}, "complete": True}
 PUBLISHED = {"listing_id": "l1", "housing_gender": "FEMININ", "rent": 2000.0,
-             "city": "Casablanca", "capacity": 3, "house_rules": {"tabac": "non_fumeur"},
+             "city": "Casablanca", "capacity": 3, "house_rules": {"tabac": "non-fumeur"},
              "title": "T", "status": "PUBLIEE"}
 
 
@@ -21,7 +21,7 @@ def test_profile_updated_upserts_and_invalidates(db_session):
     _score(db_session)
     _handle_with_session(db_session, "coloc.profile_updated", PROFILE, "m1")
     p = db_session.query(CompatibilityProfile).filter_by(seeker_id=7).one()
-    assert p.city == "Casablanca" and p.lifestyle == {"tabac": "non_fumeur"}
+    assert p.city == "Casablanca" and p.lifestyle == {"tabac": "non-fumeur"}
     assert db_session.query(MatchScore).count() == 0  # cache du chercheur invalidé
     # mise à jour (upsert, pas de doublon)
     _handle_with_session(db_session, "coloc.profile_updated", {**PROFILE, "city": "Rabat"}, "m2")
@@ -40,7 +40,7 @@ def test_listing_published_upserts_and_invalidates(db_session):
     _score(db_session, seeker=8)
     _handle_with_session(db_session, "coloc.listing_published", PUBLISHED, "m1")
     row = db_session.query(ListingCriteriaRow).filter_by(listing_id="l1").one()
-    assert row.rent == Decimal("2000") and row.house_rules == {"tabac": "non_fumeur"}
+    assert row.rent == Decimal("2000") and row.house_rules == {"tabac": "non-fumeur"}
     assert db_session.query(MatchScore).count() == 0  # cache de l'annonce invalidé
 
 

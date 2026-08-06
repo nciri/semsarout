@@ -81,7 +81,7 @@ def test_invalid_transition(client):
 def test_house_rules_media_roommates(client):
     lid = _create(client)
     resp = client.put(f"/listings/{lid}/house-rules",
-                      json={"rules": [{"code": "tabac", "value": "non_fumeur"}]},
+                      json={"rules": [{"code": "tabac", "value": "non-fumeur"}]},
                       headers=headers())
     assert resp.status_code == 200
     resp = client.put(f"/listings/{lid}/house-rules",

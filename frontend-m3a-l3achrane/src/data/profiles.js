@@ -2,7 +2,10 @@ export const currentProfile = {
   prenom: 'Yassine',
   avatar: '/uploads/avatar-1.jpg',
   verifiee: true,
-  lifestyle: ['Non-fumeur', 'Calme', 'Invités OK', 'Pratique religieuse : modérée'],
+  lifestyle: [],
+  // question_code → value / question_code → niveau front — vide tant que le questionnaire n'a pas été rempli.
+  lifestyleAnswers: {},
+  lifestyleImportance: {},
   recherche: {
     ville: 'Casablanca',
     budgetMad: 2500,

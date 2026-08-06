@@ -1,12 +1,16 @@
-import { Outlet, Link } from 'react-router-dom'
+import { Outlet, Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { TopBar } from '../../ds/index.js'
 
 export default function WebLayout() {
   const { t } = useTranslation(['web', 'common'])
+  const navigate = useNavigate()
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <TopBar />
+      <TopBar
+        onSignIn={(e) => { e.preventDefault(); navigate('/connexion') }}
+        onSignUp={() => navigate('/inscription')}
+      />
       <main style={{ flex: 1 }}>
         <Outlet />
       </main>

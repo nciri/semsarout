@@ -4,10 +4,11 @@ import { useTranslation } from 'react-i18next'
 import { SidebarNav } from '../../ds/index.js'
 
 const ROUTES = {
+  home: '/',
+  search: '/recherche',
   dash: '/espace',
   msg: '/espace/messages',
   inbox: '/espace/candidatures',
-  apply: '/espace/candidature',
   quiz: '/espace/questionnaire',
   pay: '/espace/paiement',
   security: '/espace/securite',
@@ -23,10 +24,11 @@ export default function AppLayout() {
     .find(([, route]) => pathname === route || pathname.startsWith(`${route}/`) || (route !== '/espace' && pathname.startsWith(route)))?.[0] ?? 'dash'
 
   const items = [
+    { icon: 'home', label: t('nav.home'), value: 'home' },
+    { icon: 'search', label: t('nav.search'), value: 'search' },
     { icon: 'layout-dashboard', label: t('nav.dashboard'), value: 'dash' },
     { icon: 'message-circle', label: t('nav.messages'), value: 'msg' },
     { icon: 'file-text', label: t('nav.inbox'), value: 'inbox' },
-    { icon: 'file-signature', label: t('nav.apply'), value: 'apply' },
     { icon: 'list-checks', label: t('nav.quiz'), value: 'quiz' },
     { icon: 'credit-card', label: t('nav.payments'), value: 'pay' },
     { icon: 'shield', label: t('nav.security'), value: 'security' },

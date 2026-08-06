@@ -6,41 +6,103 @@ import { applicationsInbox } from '../../data/applicationsInbox.js'
 function buildFilters(t) {
   return [
     { value: 'all', label: t('app:candidatures.filters.all') },
-    { value: 'pending', label: t('app:candidatures.filters.pending') },
+    { value: 'received', label: t('app:candidatures.filters.received') },
+    { value: 'shortlisted', label: t('app:candidatures.filters.shortlisted') },
+    { value: 'pending_roommate', label: t('app:candidatures.filters.pendingRoommate') },
     { value: 'accepted', label: t('app:candidatures.filters.accepted') },
-    { value: 'waiting', label: t('app:candidatures.filters.waiting') },
+    { value: 'refused', label: t('app:candidatures.filters.refused') },
   ]
 }
 
-function ApplicationActions({ app, onAccept, onWait, onRefuse }) {
+function RoommatesInPlace({ colocataires }) {
   const { t } = useTranslation(['app', 'common'])
-  if (app.statut === 'pending') {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex' }}>
+        {colocataires.map((c, i) => (
+          <span
+            key={c.nom}
+            style={{
+              marginInlineStart: i === 0 ? 0 : -8,
+              border: '2px solid var(--surface-page, #fff)',
+              borderRadius: 'var(--radius-pill)',
+              display: 'block',
+            }}
+          >
+            <Avatar name={c.nom} size={26} />
+          </span>
+        ))}
+      </div>
+      <span style={{ font: 'var(--fw-medium) var(--fs-xs) var(--font-body)', color: 'var(--text-muted)' }}>
+        {t('app:candidatures.roommatesInPlace')}
+      </span>
+    </div>
+  )
+}
+
+function ApplicationActions({ app, onShortlist, onShare, onValidate, onRefuse, onMarkRoommateValidated }) {
+  const { t } = useTranslation(['app', 'common'])
+
+  if (app.statut === 'received') {
     return (
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        <Button size="sm" onClick={onAccept}>{t('app:candidatures.actions.accept')}</Button>
-        <Button size="sm" variant="secondary" onClick={onWait}>{t('app:candidatures.actions.wait')}</Button>
+        <Button size="sm" onClick={onShortlist}>{t('app:candidatures.actions.shortlist')}</Button>
         <Button size="sm" variant="ghost" onClick={onRefuse}>{t('app:candidatures.actions.refuse')}</Button>
       </div>
     )
   }
-  if (app.statut === 'waiting') {
+
+  if (app.statut === 'shortlisted') {
     return (
-      <Badge tone="warning">{t('app:candidatures.statusBadge.waiting')}</Badge>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        {app.annonce.chambreDejaLouee ? (
+          <Button size="sm" onClick={onShare}>{t('app:candidatures.actions.share')}</Button>
+        ) : (
+          <Button size="sm" onClick={onValidate}>{t('app:candidatures.actions.validate')}</Button>
+        )}
+        <Button size="sm" variant="ghost" onClick={onRefuse}>{t('app:candidatures.actions.refuse')}</Button>
+      </div>
     )
   }
+
+  if (app.statut === 'pending_roommate') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <Badge tone="warning">{t('app:candidatures.statusBadge.pendingRoommate')}</Badge>
+        <RoommatesInPlace colocataires={app.annonce.colocataires} />
+        <div>
+          <Button size="sm" variant="secondary" onClick={onMarkRoommateValidated}>
+            {t('app:candidatures.actions.markRoommateValidated')}
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (app.statut === 'accepted') {
+    return <Badge tone="verified">{t('app:candidatures.statusBadge.accepted')}</Badge>
+  }
+
   if (app.statut === 'refused') {
-    return (
-      <Badge tone="neutral">{t('app:candidatures.statusBadge.refused')}</Badge>
-    )
+    return <Badge tone="neutral">{t('app:candidatures.statusBadge.refused')}</Badge>
   }
+
   return null
 }
 
 function ApplicationCard({ app, slots, onSetStatus, onPickSlot }) {
   const { t } = useTranslation(['app', 'common'])
+  const { annonce } = app
   return (
     <Card>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ font: 'var(--fw-semibold) var(--fs-xs) var(--font-body)', color: 'var(--text-muted)' }}>
+            {annonce.titre} — {annonce.quartier}, {annonce.ville}
+          </div>
+          {annonce.chambreDejaLouee && <RoommatesInPlace colocataires={annonce.colocataires} />}
+        </div>
+
         <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
           <Avatar name={app.nom} size={42} />
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
@@ -74,9 +136,11 @@ function ApplicationCard({ app, slots, onSetStatus, onPickSlot }) {
 
         <ApplicationActions
           app={app}
-          onAccept={() => onSetStatus(app.id, 'accepted')}
-          onWait={() => onSetStatus(app.id, 'waiting')}
+          onShortlist={() => onSetStatus(app.id, 'shortlisted')}
+          onShare={() => onSetStatus(app.id, 'pending_roommate')}
+          onValidate={() => onSetStatus(app.id, 'accepted')}
           onRefuse={() => onSetStatus(app.id, 'refused')}
+          onMarkRoommateValidated={() => onSetStatus(app.id, 'accepted')}
         />
       </div>
     </Card>
@@ -88,7 +152,7 @@ export default function Candidatures() {
   const FILTERS = buildFilters(t)
   const [applications, setApplications] = useState(applicationsInbox.applications)
   const [filter, setFilter] = useState('all')
-  const { listing, slots } = applicationsInbox
+  const { slots } = applicationsInbox
 
   const setStatus = (id, statut) => {
     setApplications((prev) => prev.map((a) => (a.id === id ? { ...a, statut } : a)))
@@ -111,7 +175,7 @@ export default function Candidatures() {
             {t('app:candidatures.title')}
           </h1>
           <p style={{ margin: 0, font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-body)' }}>
-            {listing.titre} — {listing.quartier}, {listing.ville}
+            {t('app:candidatures.subtitle')}
           </p>
         </div>
 

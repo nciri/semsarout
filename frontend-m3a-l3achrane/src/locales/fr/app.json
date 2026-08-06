@@ -58,21 +58,28 @@
   },
   "candidatures": {
     "title": "Candidatures reçues",
+    "subtitle": "Présélectionnez les profils qui vous intéressent, puis validez-les — directement, ou après accord du ou des colocataires en place.",
     "filters": {
       "all": "Toutes",
-      "pending": "En attente",
+      "received": "Reçues",
+      "shortlisted": "Présélectionnées",
+      "pendingRoommate": "Chez le colocataire",
       "accepted": "Acceptées",
-      "waiting": "Mises en attente"
+      "refused": "Refusées"
     },
     "actions": {
-      "accept": "Accepter",
-      "wait": "Mettre en attente",
-      "refuse": "Refuser"
+      "shortlist": "Présélectionner",
+      "share": "Partager avec le colocataire",
+      "validate": "Valider",
+      "refuse": "Refuser",
+      "markRoommateValidated": "Marquer comme validé par le colocataire"
     },
     "statusBadge": {
-      "waiting": "En attente — vous répondrez après les autres visites",
+      "pendingRoommate": "En attente de validation du colocataire",
+      "accepted": "Validée",
       "refused": "Refusée — le candidat a été notifié"
     },
+    "roommatesInPlace": "Colocataires en place",
     "acceptedPickSlot": "Candidature acceptée — proposez un créneau de visite",
     "empty": "Aucune candidature dans cette catégorie."
   },
@@ -84,6 +91,7 @@
     "answeredCount": "{{answered}}/{{total}} répondues sur cette page",
     "continueApplication": "Continuer ma candidature",
     "finishAndSeeRecommendations": "Terminer et voir mes recommandations",
+    "updateAndSeeRecommendations": "Mettre à jour et voir mes recommandations",
     "next": "Suivant",
     "importanceLabel": "Importance",
     "importance": {

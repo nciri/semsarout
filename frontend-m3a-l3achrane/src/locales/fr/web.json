@@ -205,10 +205,16 @@
     "viewListLabel": "Liste",
     "viewMapLabel": "Carte",
     "activeFiltersLabel": "Filtres actifs :",
+    "removeFilterLabel": "Retirer le filtre {{label}}",
     "verifiedFilterChip": "Profils vérifiés",
     "mapComingSoon": "Vue carte à venir",
     "loadMore": "Afficher plus de logements",
-    "locationDefault": "Casablanca, Maârif"
+    "locationDefault": "Casablanca, Maârif",
+    "lifestyleProfileBanner": {
+      "withProfile": "Recommandations basées sur votre profil de compatibilité",
+      "withoutProfile": "Répondez au questionnaire pour des recommandations personnalisées →",
+      "editLink": "Modifier"
+    }
   },
   "listing": {
     "notFoundTitle": "Annonce introuvable",

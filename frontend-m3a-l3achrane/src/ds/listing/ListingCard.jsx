@@ -10,7 +10,7 @@ import { AmenityChip } from "./AmenityChip.jsx";
 export function ListingCard({
   image, imageTone = "var(--navy-100)", match, verified = true, title,
   city, price = 2300, amenities,
-  onClick, style,
+  onClick, onApply, style,
 }) {
   const { t } = useTranslation();
   const displayTitle = title ?? t("listingCard.defaultTitle");
@@ -44,6 +44,21 @@ export function ListingCard({
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 2 }}>
           {displayAmenities.map((a, i) => <AmenityChip key={i} icon={a.icon}>{a.label}</AmenityChip>)}
         </div>
+        {onApply && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onApply(e); }}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 7, marginTop: 4,
+              padding: "9px 14px", borderRadius: "var(--radius-sm)", border: "1px solid var(--navy-700)",
+              background: "var(--navy-700)", color: "#fff", cursor: "pointer",
+              font: "var(--fw-semibold) var(--fs-sm) var(--font-body)",
+            }}
+          >
+            <Icon name="file-signature" size={15} strokeWidth={2} />
+            {t("listingCard.applyCta")}
+          </button>
+        )}
       </div>
     </div>
   );

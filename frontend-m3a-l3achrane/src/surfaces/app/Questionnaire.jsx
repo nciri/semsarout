@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button, Card, Chip } from '../../ds/index.js'
 import { IMPORTANCE_LEVELS, lifestyleQuestionnaireSteps } from '../../data/lifestyleQuestionnaireSteps.js'
+import { getCurrentProfile, saveLifestyle } from '../../services/index.js'
 
 const MODE = 'optional' // 'optional' | 'mandatory'
 
@@ -89,9 +91,25 @@ function QuestionCard({ stepId, question, answer, importance, onPick, onPickImpo
 
 export default function Questionnaire() {
   const { t } = useTranslation(['app', 'common'])
+  const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState({})
   const [importance, setImportance] = useState({})
+  const [hadExistingProfile, setHadExistingProfile] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    getCurrentProfile()
+      .then((profile) => {
+        if (cancelled) return
+        const existingAnswers = profile.lifestyleAnswers || {}
+        setAnswers(existingAnswers)
+        setImportance(profile.lifestyleImportance || {})
+        setHadExistingProfile(Object.keys(existingAnswers).length > 0)
+      })
+      .catch(() => {}) // pré-remplissage best-effort : le questionnaire reste utilisable vide
+    return () => { cancelled = true }
+  }, [])
 
   const mandatory = MODE === 'mandatory'
   const total = lifestyleQuestionnaireSteps.length
@@ -104,13 +122,19 @@ export default function Questionnaire() {
   const pickImportance = (cle, value) => setImportance((prev) => ({ ...prev, [cle]: value }))
   const goBack = () => setStep((s) => Math.max(0, s - 1))
   const goNext = () => setStep((s) => Math.min(total - 1, s + 1))
-  const finish = () => {
-    // Le câblage réel (soumission + redirection) sera fait lors de l'intégration.
+  const finish = async () => {
+    try {
+      await saveLifestyle(answers, importance)
+    } catch (err) {
+      console.error('Failed to save lifestyle questionnaire', err)
+      return
+    }
+    navigate('/recherche')
   }
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)' }}>
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '44px 24px 64px', display: 'flex', flexDirection: 'column', gap: 26 }}>
+      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '44px 24px 64px', display: 'flex', flexDirection: 'column', gap: 26 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
             <div style={{ font: 'var(--fw-bold) 13px var(--font-body)', color: 'var(--text-muted)' }}>
@@ -161,7 +185,11 @@ export default function Questionnaire() {
           </div>
           {isLast ? (
             <Button variant="accent" onClick={finish}>
-              {mandatory ? t('app:questionnaire.continueApplication') : t('app:questionnaire.finishAndSeeRecommendations')}
+              {mandatory
+                ? t('app:questionnaire.continueApplication')
+                : hadExistingProfile
+                  ? t('app:questionnaire.updateAndSeeRecommendations')
+                  : t('app:questionnaire.finishAndSeeRecommendations')}
             </Button>
           ) : (
             <Button variant="primary" onClick={goNext}>{t('app:questionnaire.next')}</Button>

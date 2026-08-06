@@ -58,21 +58,28 @@
   },
   "candidatures": {
     "title": "الطلبات المستلمة",
+    "subtitle": "رشّح·ي الملفات التي تهمك، ثم صادق·ي عليها — مباشرة، أو بعد موافقة الزميل·ة (الزملاء) الحاليين في السكن.",
     "filters": {
       "all": "الكل",
-      "pending": "قيد الانتظار",
+      "received": "المستلمة",
+      "shortlisted": "المرشَّحة",
+      "pendingRoommate": "لدى الزميل·ة",
       "accepted": "مقبولة",
-      "waiting": "في قائمة الانتظار"
+      "refused": "مرفوضة"
     },
     "actions": {
-      "accept": "قبول",
-      "wait": "وضع في الانتظار",
-      "refuse": "رفض"
+      "shortlist": "ترشيح",
+      "share": "المشاركة مع الزميل·ة",
+      "validate": "الموافقة",
+      "refuse": "رفض",
+      "markRoommateValidated": "تحديد كموافَق عليها من طرف الزميل·ة"
     },
     "statusBadge": {
-      "waiting": "قيد الانتظار — سيتم الرد بعد باقي الزيارات",
+      "pendingRoommate": "بانتظار موافقة الزميل·ة",
+      "accepted": "مقبولة",
       "refused": "مرفوضة — تم إشعار المترشح·ة"
     },
+    "roommatesInPlace": "الزملاء الحاليون في السكن",
     "acceptedPickSlot": "تم قبول الطلب — اقترح·ي موعد زيارة",
     "empty": "لا توجد طلبات في هذه الفئة."
   },
@@ -84,6 +91,7 @@
     "answeredCount": "{{answered}}/{{total}} تمت الإجابة عنها في هذه الصفحة",
     "continueApplication": "متابعة طلبي",
     "finishAndSeeRecommendations": "إنهاء ومشاهدة توصياتي",
+    "updateAndSeeRecommendations": "تحديث ومشاهدة توصياتي",
     "next": "التالي",
     "importanceLabel": "الأهمية",
     "importance": {

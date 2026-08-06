@@ -1,6 +1,9 @@
 import api from './api.js'
 import { listings, currentProfile, partners, threads } from '../data/index.js'
-import { mapListingDetail, mapListingHit, mapProfile, mapSearchFilters } from './mappers.js'
+import { lifestyleLabel, mapListingDetail, mapListingHit, mapProfile, mapSearchFilters } from './mappers.js'
+
+// Mapping importance front (Questionnaire.jsx) <-> backend (coloc-profile référentiel).
+const IMPORTANCE_TO_BACKEND = { neutral: 'INDIFFERENT', preference: 'PREFERENCE', decisive: 'DECISIF' }
 
 // Bascule mock/live PAR DOMAINE : VITE_USE_MOCK=true force tout en mock (dev hors-ligne) ;
 // sinon, seuls les domaines encore sans backend restent mockés (retirés au fil des plans C/D).
@@ -31,6 +34,26 @@ export async function getCurrentProfile() {
   if (isMocked('profile')) return delay(currentProfile)
   const { data } = await api.get('/me/profile')
   return mapProfile(data)
+}
+
+// answers: { [cle]: option }, importance: { [cle]: 'neutral'|'preference'|'decisive' }
+// Persiste au backend (PUT /me/lifestyle) ; en mock, met à jour le profil en mémoire (round-trip de session).
+export async function saveLifestyle(answers, importance) {
+  if (isMocked('profile')) {
+    currentProfile.lifestyleAnswers = { ...answers }
+    currentProfile.lifestyleImportance = { ...importance }
+    currentProfile.lifestyle = Object.values(answers).map(lifestyleLabel)
+    return delay(currentProfile)
+  }
+  const payload = {
+    answers: Object.entries(answers).map(([question_code, value]) => ({
+      question_code,
+      value,
+      importance: IMPORTANCE_TO_BACKEND[importance[question_code]] ?? IMPORTANCE_TO_BACKEND.preference,
+    })),
+  }
+  const { data } = await api.put('/me/lifestyle', payload)
+  return mapProfile({ lifestyle: data })
 }
 
 export async function listPartners() {

@@ -14,21 +14,21 @@ from .models import ColocProperty, CurrentRoommates, HouseRule, Listing, Listing
 
 DEMO = [
     ("Chambre lumineuse à Gauthier", "Casablanca", "Gauthier", "APPARTEMENT",
-     "CHAMBRE_INDIVIDUELLE", "FEMININ", Decimal("2200.00"), True, 3, [("tabac", "non_fumeur"), ("menage", "frequent")]),
+     "CHAMBRE_INDIVIDUELLE", "FEMININ", Decimal("2200.00"), True, 3, [("tabac", "non-fumeur"), ("menage", "quotidien")]),
     ("Chambre dans villa avec jardin", "Casablanca", "Californie", "VILLA",
-     "CHAMBRE_INDIVIDUELLE", "MIXTE_FAMILIAL", Decimal("2800.00"), True, 4, [("animaux", "acceptes")]),
+     "CHAMBRE_INDIVIDUELLE", "MIXTE_FAMILIAL", Decimal("2800.00"), True, 4, [("cuisine", "ensemble")]),
     ("Studio meublé proche fac", "Rabat", "Agdal", "STUDIO",
-     "STUDIO_ENTIER", "FEMININ", Decimal("3200.00"), True, 1, [("tabac", "non_fumeur")]),
+     "STUDIO_ENTIER", "FEMININ", Decimal("3200.00"), True, 1, [("tabac", "non-fumeur")]),
     ("Chambre étudiante à Agdal", "Rabat", "Agdal", "APPARTEMENT",
      "CHAMBRE_INDIVIDUELLE", "MASCULIN", Decimal("1800.00"), False, 3, [("invites", "rarement")]),
     ("Colocation moderne à Hay Riad", "Rabat", "Hay Riad", "APPARTEMENT",
-     "CHAMBRE_INDIVIDUELLE", "FEMININ", Decimal("2500.00"), True, 2, [("tabac", "non_fumeur"), ("coucher", "tot")]),
+     "CHAMBRE_INDIVIDUELLE", "FEMININ", Decimal("2500.00"), True, 2, [("tabac", "non-fumeur"), ("coucher", "avant22")]),
     ("Chambre en résidence étudiante", "Marrakech", "Guéliz", "RESIDENCE_ETUDIANTE",
-     "CHAMBRE_INDIVIDUELLE", "FEMININ", Decimal("1500.00"), True, 6, [("invites", "rarement"), ("menage", "frequent")]),
+     "CHAMBRE_INDIVIDUELLE", "FEMININ", Decimal("1500.00"), True, 6, [("invites", "rarement"), ("menage", "quotidien")]),
     ("Chambre partagée centre-ville", "Marrakech", "Médina", "MAISON",
      "CHAMBRE_PARTAGEE", "MASCULIN", Decimal("950.00"), False, 4, [("invites", "souvent")]),
     ("Grande chambre à Maârif", "Casablanca", "Maârif", "APPARTEMENT",
-     "CHAMBRE_INDIVIDUELLE", "MASCULIN", Decimal("2400.00"), True, 3, [("tabac", "non_fumeur")]),
+     "CHAMBRE_INDIVIDUELLE", "MASCULIN", Decimal("2400.00"), True, 3, [("tabac", "non-fumeur")]),
 ]
 
 _OWNER_ID = 1  # compte de démo

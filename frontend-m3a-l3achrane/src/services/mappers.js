@@ -11,16 +11,41 @@ const SORT_PARAMS = { pertinence: 'relevance', 'prix-asc': 'rent_asc', 'prix-des
 
 const amenityLabel = (code) => AMENITY_LABELS[code] ?? code.replaceAll('_', ' ')
 
-// Valeurs canoniques du référentiel lifestyle (semsar_common.coloc_referential) → libellés FR.
+// Valeurs canoniques du référentiel lifestyle 13 questions (libs/semsar_common/coloc_referential.py)
+// → libellés FR courts. Partagé par les chips d'annonce (house_rules) et le questionnaire (mapProfile).
 const LIFESTYLE_LABELS = {
-  non_fumeur: 'Non-fumeur', fumeur: 'Fumeur accepté',
-  acceptes: 'Animaux acceptés', refuses: 'Sans animaux',
-  souvent: 'Invités bienvenus', rarement: 'Invités occasionnels',
-  tot: 'Couche-tôt', tard: 'Couche-tard',
-  frequent: 'Ménage fréquent', souple: 'Ménage souple',
+  // coucher
+  avant22: 'Couche-tôt', '22h-minuit': 'Couche vers minuit', 'apres-minuit': 'Couche-tard',
+  // travail
+  jour: 'Travail de jour', decale: 'Horaires décalés', teletravail: 'Télétravail',
+  // weekend
+  maison: 'Weekend à la maison', sorti: 'Weekend dehors', 'ca-depend': 'Weekend variable',
+  // menage
+  quotidien: 'Ménage quotidien', '2-3-semaine': 'Ménage 2-3x/semaine', hebdomadaire: 'Ménage hebdomadaire',
+  // vaisselle
+  immediat: 'Vaisselle immédiate', 'jour-meme': 'Vaisselle le jour même', beaucoup: 'Vaisselle en retard',
+  // tabac
+  'non-fumeur': 'Non-fumeur', balcon: 'Fumeur au balcon', interieur: 'Fumeur en intérieur',
+  // alcool
+  jamais: 'Sans alcool', occasionnel: 'Alcool occasionnel', regulier: 'Alcool régulier',
+  // invites
+  rarement: 'Invités occasionnels', mensuel: 'Invités mensuels', souvent: 'Invités fréquents',
+  // bruit
+  casque: 'Calme (casque)', modere: 'Bruit modéré', 'sans-contrainte': 'Bruit sans contrainte',
+  // cuisine
+  separee: 'Cuisine séparée', parfois: 'Cuisine parfois partagée', ensemble: 'Cuisine partagée',
+  // charges
+  chacun: 'Charges séparées', commune: 'Charges communes', 'a-definir': 'Charges à définir',
+  // social
+  amis: 'Sociable entre amis', voisinage: 'Sociable avec le voisinage', 'peu-importe': 'Sociabilité indifférente',
+  // langue
+  darija: 'Darija', francais: 'Français', indifferent: 'Langue indifférente',
 }
 
-const lifestyleLabel = (value) => LIFESTYLE_LABELS[value] ?? value.replaceAll('_', ' ')
+export const lifestyleLabel = (value) => LIFESTYLE_LABELS[value] ?? value.replaceAll('_', ' ')
+
+// Mapping importance backend (coloc-profile) <-> front (Questionnaire.jsx / IMPORTANCE_LEVELS).
+const IMPORTANCE_FROM_BACKEND = { INDIFFERENT: 'neutral', PREFERENCE: 'preference', DECISIF: 'decisive' }
 
 export function buildChips(source) {
   const chips = (source.rules ?? []).map(lifestyleLabel)
@@ -88,11 +113,17 @@ export function mapSearchFilters(filtres = {}) {
 }
 
 export function mapProfile(p) {
+  const lifestyleAnswers = p.lifestyle ?? []
   return {
     prenom: p.display_name ?? '',
     avatar: null,
     verifiee: Boolean(p.is_verified),
-    lifestyle: (p.lifestyle ?? []).map((a) => lifestyleLabel(a.value)),
+    lifestyle: lifestyleAnswers.map((a) => lifestyleLabel(a.value)),
+    // question_code → value / question_code → niveau front, pour pré-remplir le questionnaire.
+    lifestyleAnswers: Object.fromEntries(lifestyleAnswers.map((a) => [a.question_code, a.value])),
+    lifestyleImportance: Object.fromEntries(
+      lifestyleAnswers.map((a) => [a.question_code, IMPORTANCE_FROM_BACKEND[a.importance] ?? 'preference']),
+    ),
     recherche: {
       ville: p.city ?? '',
       budgetMad: p.budget_max != null ? Math.round(p.budget_max) : null,
