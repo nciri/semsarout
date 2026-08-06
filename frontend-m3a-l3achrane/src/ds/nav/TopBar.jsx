@@ -1,9 +1,9 @@
-import { Icon } from "../core/Icon.jsx";
 import { Button } from "../core/Button.jsx";
+import { LanguageSwitcher } from "./LanguageSwitcher.jsx";
 
 /** TopBar — public site navy header: brand, links, language, auth actions. */
 export function TopBar({
-  links = ["Comment ça marche", "Découvrir", "À propos"], lang = "FR",
+  links = ["Comment ça marche", "Découvrir", "À propos"],
   onSignIn, onSignUp, style,
 }) {
   return (
@@ -20,9 +20,7 @@ export function TopBar({
       <nav style={{ display: "flex", gap: 22, flex: 1 }}>
         {links.map((l) => <a key={l} href="#" style={{ color: "var(--text-on-navy-muted)", font: "var(--fw-medium) var(--fs-body) var(--font-display)" }}>{l}</a>)}
       </nav>
-      <button style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "none", border: "none", color: "#fff", cursor: "pointer", font: "var(--fw-medium) var(--fs-body) var(--font-display)" }}>
-        {lang} <Icon name="chevron-down" size={15} />
-      </button>
+      <LanguageSwitcher />
       <a href="#" onClick={onSignIn} style={{ color: "#fff", font: "var(--fw-medium) var(--fs-body) var(--font-display)" }}>Se connecter</a>
       <Button variant="accent" size="sm" onClick={onSignUp}>S&apos;inscrire</Button>
     </header>

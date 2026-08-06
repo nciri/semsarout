@@ -1,0 +1,13 @@
+{
+  "loading": "Chargement…",
+  "notFound": {
+    "title": "Page introuvable",
+    "body": "La page que vous cherchez n’existe pas.",
+    "backHome": "Retour à l’accueil"
+  },
+  "languageSwitcher": {
+    "label": "Changer de langue",
+    "fr": "FR",
+    "ar": "AR"
+  }
+}

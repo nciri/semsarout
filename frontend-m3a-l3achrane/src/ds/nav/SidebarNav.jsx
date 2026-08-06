@@ -1,4 +1,5 @@
 import { Icon } from "../core/Icon.jsx";
+import { LanguageSwitcher } from "./LanguageSwitcher.jsx";
 
 /** SidebarNav — fixed navy app sidebar with brand, nav items, help footer. */
 export function SidebarNav({
@@ -32,7 +33,7 @@ export function SidebarNav({
           return (
             <button key={it.value} onClick={() => onSelect && onSelect(it.value)} style={{
               display: "flex", alignItems: "center", gap: 11, padding: "10px 12px", borderRadius: "var(--radius-sm)",
-              border: "none", cursor: "pointer", textAlign: "left", width: "100%",
+              border: "none", cursor: "pointer", textAlign: "start", width: "100%",
               background: on ? "rgba(255,255,255,0.12)" : "transparent",
               color: on ? "#fff" : "var(--text-on-navy-muted)",
               font: `var(--fw-${on ? "semibold" : "medium"}) var(--fs-body) var(--font-display)`,
@@ -47,7 +48,8 @@ export function SidebarNav({
           );
         })}
       </div>
-      <button style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", marginTop: 12, background: "none", border: "none", color: "var(--text-on-navy-muted)", cursor: "pointer", font: "var(--fw-medium) var(--fs-body) var(--font-display)" }}>
+      <LanguageSwitcher style={{ marginTop: 12, justifyContent: "center" }} />
+      <button style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", marginTop: 8, background: "none", border: "none", color: "var(--text-on-navy-muted)", cursor: "pointer", font: "var(--fw-medium) var(--fs-body) var(--font-display)" }}>
         <Icon name="life-buoy" size={19} strokeWidth={2} /> Besoin d&apos;aide ?
       </button>
     </nav>
