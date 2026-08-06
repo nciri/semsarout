@@ -100,6 +100,119 @@
       "updateError": "Erreur lors de la mise à jour"
     }
   },
+  "programForm": {
+    "titleCreate": "Nouveau programme",
+    "titleEdit": "Modifier le programme",
+    "subtitle": "Créez un nouveau projet immobilier",
+    "interactivePlan": "Plan interactif des lots",
+    "publishButton": "Publier le programme",
+    "characteristics": "Caractéristiques",
+    "addUnitType": "Ajouter un type",
+    "noUnitType": "Aucun type de bien ajouté",
+    "noUnitTypeHint": "Ajoutez les différents types de biens disponibles dans ce programme",
+    "noGalleryImage": "Aucune image dans la galerie",
+    "selectTypologyHint": "Sélectionnez une typologie à l'étape « Types de biens » pour afficher les détails spécifiques.",
+    "typologyHint": "Détermine les détails du programme et les types d'unité disponibles.",
+    "availableOfTotal": "{{available}}/{{total}} disponibles",
+    "steps": {
+      "info": "Informations",
+      "location": "Localisation",
+      "units": "Types de biens",
+      "details": "Détails",
+      "media": "Médias"
+    },
+    "sections": {
+      "generalInfo": "Informations générales",
+      "location": "Localisation",
+      "details": "Détails du projet",
+      "units": "Types de biens",
+      "media": "Médias"
+    },
+    "fields": {
+      "programName": "Nom du programme *",
+      "programNamePlaceholder": "Ex: Résidence Les Jardins de Casablanca",
+      "programType": "Type de programme",
+      "description": "Description",
+      "descriptionPlaceholder": "Décrivez votre programme immobilier...",
+      "city": "Ville *",
+      "neighborhood": "Quartier",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "deliveryDate": "Date de livraison prévue",
+      "constructionStatus": "État de construction",
+      "amenities": "Équipements et services",
+      "typology": "Typologie du programme *",
+      "coverImage": "Image de couverture",
+      "coverImagePlaceholder": "URL de l'image de couverture",
+      "gallery": "Galerie d'images",
+      "imageUrlPlaceholder": "URL de l'image",
+      "brochure": "Brochure (URL PDF)",
+      "brochurePlaceholder": "URL de la brochure PDF",
+      "video": "Vidéo (URL YouTube)",
+      "videoPlaceholder": "URL de la vidéo"
+    },
+    "amenities": {
+      "pool": "Piscine",
+      "gym": "Salle de sport",
+      "security": "Sécurité 24h",
+      "parking": "Parking",
+      "garden": "Jardin",
+      "playground": "Aire de jeux",
+      "concierge": "Conciergerie",
+      "elevator": "Ascenseur",
+      "terrace": "Terrasse",
+      "spa": "Spa"
+    },
+    "imageTypes": {
+      "exterior": "Extérieur",
+      "interior": "Intérieur",
+      "amenity": "Équipements",
+      "plan": "Plan"
+    },
+    "unitTypes": {
+      "studio": "Studio",
+      "apartment": "Appartement",
+      "duplex": "Duplex",
+      "villa": "Villa",
+      "penthouse": "Penthouse",
+      "land": "Terrain",
+      "commercial": "Local commercial"
+    },
+    "unitForm": {
+      "name": "Nom du type *",
+      "namePlaceholder": "Ex: Appartement T3",
+      "unitType": "Type de bien",
+      "surfaceMin": "Surface min (m²)",
+      "surfaceMax": "Surface max (m²)",
+      "rooms": "Pièces",
+      "bedrooms": "Chambres",
+      "bathrooms": "Salles de bain",
+      "priceFrom": "Prix à partir de ({{currency}})",
+      "priceTo": "Prix jusqu'à ({{currency}})",
+      "totalCount": "Nombre total",
+      "availableCount": "Disponibles"
+    },
+    "errors": {
+      "nameRequired": "Le nom du programme est requis",
+      "saveBasicFirst": "Veuillez d'abord sauvegarder les informations de base",
+      "saveProgramFirst": "Veuillez d'abord sauvegarder le programme",
+      "agencyRequired": "Vous devez d'abord créer votre agence pour publier un programme.",
+      "createAgencyLink": "Créer mon agence",
+      "viewSubscriptionsLink": "Voir les abonnements",
+      "createFailed": "Erreur lors de la création du programme",
+      "updateFailed": "Erreur lors de la mise à jour du programme",
+      "addUnitFailed": "Erreur lors de l'ajout du type de bien",
+      "updateUnitFailed": "Erreur lors de la mise à jour du type de bien",
+      "deleteFailed": "Erreur lors de la suppression",
+      "addImageFailed": "Erreur lors de l'ajout de l'image",
+      "deleteImageFailed": "Erreur lors de la suppression de l'image",
+      "publishFailed": "Erreur lors de la publication"
+    },
+    "confirms": {
+      "deleteUnit": "Supprimer ce type de bien ?",
+      "deleteImage": "Supprimer cette image ?"
+    }
+  },
   "programs": {
     "title": "Mes annonces",
     "managedCount_one": "{{count}} programme géré",

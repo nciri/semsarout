@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useNavigate, useParams, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   FiArrowLeft, FiArrowRight, FiCheck, FiPlus, FiTrash2, FiMapPin,
   FiHome, FiImage, FiFile, FiVideo, FiSave, FiEye, FiX, FiEdit2
 } from 'react-icons/fi'
+import DirIcon from '../../components/common/DirIcon'
 import { DIRHAM_SYMBOL, formatPrice } from '../../utils/currency'
 import api from '../../services/api'
 import SpecFields from '../../components/common/SpecFields'
 import AddressAutocomplete from '../../components/common/AddressAutocomplete'
 import { TYPOLOGY_OPTIONS, unitTypesForTypology, DETAIL_SECTIONS, UNIT_SPEC_FIELDS, UNIT_HIDE_ROOMS } from './programSpecsConfig'
+import i18n from '../../i18n'
 
 // Route through the shared axios instance: it reads accessToken from
 // auth-storage and auto-refreshes on 401, avoiding the stale-token desync that
@@ -25,72 +28,40 @@ const programsService = {
     return data.programs.find(p => p.id === parseInt(id))
   },
   createProgram: (data) =>
-    api.post('/programs', data).then(unwrap, asError('Erreur lors de la création du programme')),
+    api.post('/programs', data).then(unwrap, asError(i18n.t('dashboard:programForm.errors.createFailed'))),
   updateProgram: ({ id, data }) =>
-    api.put(`/programs/${id}`, data).then(unwrap, asError('Erreur lors de la mise à jour du programme')),
+    api.put(`/programs/${id}`, data).then(unwrap, asError(i18n.t('dashboard:programForm.errors.updateFailed'))),
   addUnit: ({ programId, data }) =>
-    api.post(`/programs/${programId}/units`, data).then(unwrap, asError("Erreur lors de l'ajout du type de bien")),
+    api.post(`/programs/${programId}/units`, data).then(unwrap, asError(i18n.t('dashboard:programForm.errors.addUnitFailed'))),
   updateUnit: ({ programId, unitId, data }) =>
-    api.put(`/programs/${programId}/units/${unitId}`, data).then(unwrap, asError('Erreur lors de la mise à jour du type de bien')),
+    api.put(`/programs/${programId}/units/${unitId}`, data).then(unwrap, asError(i18n.t('dashboard:programForm.errors.updateUnitFailed'))),
   deleteUnit: ({ programId, unitId }) =>
-    api.delete(`/programs/${programId}/units/${unitId}`).then(unwrap, asError('Erreur lors de la suppression')),
+    api.delete(`/programs/${programId}/units/${unitId}`).then(unwrap, asError(i18n.t('dashboard:programForm.errors.deleteFailed'))),
   addImage: ({ programId, data }) =>
-    api.post(`/programs/${programId}/images`, data).then(unwrap, asError("Erreur lors de l'ajout de l'image")),
+    api.post(`/programs/${programId}/images`, data).then(unwrap, asError(i18n.t('dashboard:programForm.errors.addImageFailed'))),
   deleteImage: ({ programId, imageId }) =>
-    api.delete(`/programs/${programId}/images/${imageId}`).then(unwrap, asError("Erreur lors de la suppression de l'image")),
+    api.delete(`/programs/${programId}/images/${imageId}`).then(unwrap, asError(i18n.t('dashboard:programForm.errors.deleteImageFailed'))),
   publishProgram: (id) =>
-    api.post(`/programs/${id}/publish`).then(unwrap, asError('Erreur lors de la publication'))
+    api.post(`/programs/${id}/publish`).then(unwrap, asError(i18n.t('dashboard:programForm.errors.publishFailed')))
 }
 
-const STEPS = [
-  { id: 1, title: 'Informations', icon: FiFile },
-  { id: 2, title: 'Localisation', icon: FiMapPin },
-  { id: 3, title: 'Types de biens', icon: FiPlus },
-  { id: 4, title: 'Détails', icon: FiHome },
-  { id: 5, title: 'Médias', icon: FiImage }
+const STEP_DEFS = [
+  { id: 1, key: 'info', icon: FiFile },
+  { id: 2, key: 'location', icon: FiMapPin },
+  { id: 3, key: 'units', icon: FiPlus },
+  { id: 4, key: 'details', icon: FiHome },
+  { id: 5, key: 'media', icon: FiImage }
 ]
 
-const PROGRAM_TYPES = [
-  { value: 'residential', label: 'Résidentiel' },
-  { value: 'commercial', label: 'Commercial' },
-  { value: 'mixed', label: 'Mixte' }
-]
+const PROGRAM_TYPE_VALUES = ['residential', 'commercial', 'mixed']
 
-const CONSTRUCTION_STATUSES = [
-  { value: 'planning', label: 'En projet' },
-  { value: 'under_construction', label: 'En construction' },
-  { value: 'delivered', label: 'Livré' }
-]
+const CONSTRUCTION_STATUS_VALUES = ['planning', 'under_construction', 'delivered']
 
-const UNIT_TYPES = [
-  { value: 'studio', label: 'Studio' },
-  { value: 'apartment', label: 'Appartement' },
-  { value: 'duplex', label: 'Duplex' },
-  { value: 'villa', label: 'Villa' },
-  { value: 'penthouse', label: 'Penthouse' },
-  { value: 'land', label: 'Terrain' },
-  { value: 'commercial', label: 'Local commercial' }
-]
+const UNIT_TYPE_VALUES = ['studio', 'apartment', 'duplex', 'villa', 'penthouse', 'land', 'commercial']
 
-const AMENITIES_OPTIONS = [
-  { value: 'pool', label: 'Piscine' },
-  { value: 'gym', label: 'Salle de sport' },
-  { value: 'security', label: 'Sécurité 24h' },
-  { value: 'parking', label: 'Parking' },
-  { value: 'garden', label: 'Jardin' },
-  { value: 'playground', label: 'Aire de jeux' },
-  { value: 'concierge', label: 'Conciergerie' },
-  { value: 'elevator', label: 'Ascenseur' },
-  { value: 'terrace', label: 'Terrasse' },
-  { value: 'spa', label: 'Spa' }
-]
+const AMENITY_VALUES = ['pool', 'gym', 'security', 'parking', 'garden', 'playground', 'concierge', 'elevator', 'terrace', 'spa']
 
-const IMAGE_TYPES = [
-  { value: 'exterior', label: 'Extérieur' },
-  { value: 'interior', label: 'Intérieur' },
-  { value: 'amenity', label: 'Équipements' },
-  { value: 'plan', label: 'Plan' }
-]
+const IMAGE_TYPE_VALUES = ['exterior', 'interior', 'amenity', 'plan']
 
 function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
   const [formData, setFormData] = useState(unit || {
@@ -113,7 +84,8 @@ function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
     onSave(formData)
   }
 
-  const types = (allowedTypes && allowedTypes.length) ? UNIT_TYPES.filter(t => allowedTypes.includes(t.value)) : UNIT_TYPES
+  const { t } = useTranslation(['dashboard', 'common'])
+  const typeValues = (allowedTypes && allowedTypes.length) ? UNIT_TYPE_VALUES.filter(v => allowedTypes.includes(v)) : UNIT_TYPE_VALUES
   const hideRooms = UNIT_HIDE_ROOMS.includes(formData.unit_type)
   const unitSpecFields = UNIT_SPEC_FIELDS[formData.unit_type] || []
 
@@ -121,25 +93,25 @@ function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
     <form onSubmit={handleSubmit} className="bg-gray-50 rounded-lg p-4 space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nom du type *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('dashboard:programForm.unitForm.name')}</label>
           <input
             type="text"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="Ex: Appartement T3"
+            placeholder={t('dashboard:programForm.unitForm.namePlaceholder')}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             required
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Type de bien</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('dashboard:programForm.unitForm.unitType')}</label>
           <select
             value={formData.unit_type}
             onChange={(e) => setFormData({ ...formData, unit_type: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
-            {types.map(type => (
-              <option key={type.value} value={type.value}>{type.label}</option>
+            {typeValues.map(value => (
+              <option key={value} value={value}>{t(`dashboard:programForm.unitTypes.${value}`)}</option>
             ))}
           </select>
         </div>
@@ -147,7 +119,7 @@ function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Surface min (m²)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('dashboard:programForm.unitForm.surfaceMin')}</label>
           <input
             type="number"
             value={formData.surface_min}
@@ -156,7 +128,7 @@ function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Surface max (m²)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('dashboard:programForm.unitForm.surfaceMax')}</label>
           <input
             type="number"
             value={formData.surface_max}
@@ -167,7 +139,7 @@ function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
         {!hideRooms && (
           <>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Pièces</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('dashboard:programForm.unitForm.rooms')}</label>
               <input
                 type="number"
                 value={formData.rooms}
@@ -176,7 +148,7 @@ function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Chambres</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('dashboard:programForm.unitForm.bedrooms')}</label>
               <input
                 type="number"
                 value={formData.bedrooms}
@@ -185,7 +157,7 @@ function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Salles de bain</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('dashboard:programForm.unitForm.bathrooms')}</label>
               <input
                 type="number"
                 value={formData.bathrooms}
@@ -199,7 +171,7 @@ function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Prix à partir de ({DIRHAM_SYMBOL})</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('dashboard:programForm.unitForm.priceFrom', { currency: DIRHAM_SYMBOL })}</label>
           <input
             type="number"
             value={formData.price_from}
@@ -208,7 +180,7 @@ function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Prix jusqu'à ({DIRHAM_SYMBOL})</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('dashboard:programForm.unitForm.priceTo', { currency: DIRHAM_SYMBOL })}</label>
           <input
             type="number"
             value={formData.price_to}
@@ -217,7 +189,7 @@ function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nombre total</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('dashboard:programForm.unitForm.totalCount')}</label>
           <input
             type="number"
             value={formData.total_count}
@@ -226,7 +198,7 @@ function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Disponibles</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('dashboard:programForm.unitForm.availableCount')}</label>
           <input
             type="number"
             value={formData.available_count}
@@ -238,7 +210,7 @@ function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
 
       {unitSpecFields.length > 0 && (
         <div className="border-t border-gray-200 pt-4">
-          <h4 className="text-sm font-semibold text-gray-900 mb-3">Caractéristiques</h4>
+          <h4 className="text-sm font-semibold text-gray-900 mb-3">{t('dashboard:programForm.characteristics')}</h4>
           <SpecFields
             fields={unitSpecFields}
             values={formData.specs || {}}
@@ -253,13 +225,13 @@ function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
           onClick={onCancel}
           className="px-4 py-2 text-gray-600 hover:text-gray-800"
         >
-          Annuler
+          {t('dashboard:shared.actions.cancel')}
         </button>
         <button
           type="submit"
           className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
         >
-          {isNew ? 'Ajouter' : 'Enregistrer'}
+          {isNew ? t('dashboard:shared.actions.add') : t('dashboard:shared.actions.save')}
         </button>
       </div>
     </form>
@@ -267,6 +239,7 @@ function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
 }
 
 export default function DashboardProgramForm() {
+  const { t } = useTranslation(['dashboard', 'common'])
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -410,12 +383,12 @@ export default function DashboardProgramForm() {
 
   const handleNextStep = async () => {
     if (currentStep === 1 && !formData.name) {
-      setError('Le nom du programme est requis')
+      setError(t('dashboard:programForm.errors.nameRequired'))
       return
     }
 
     const success = await handleSaveStep()
-    if (success && currentStep < STEPS.length) {
+    if (success && currentStep < STEP_DEFS.length) {
       setCurrentStep(currentStep + 1)
     }
   }
@@ -428,7 +401,7 @@ export default function DashboardProgramForm() {
 
   const handleAddUnit = async (unitData) => {
     if (!programId) {
-      setError('Veuillez d\'abord sauvegarder les informations de base')
+      setError(t('dashboard:programForm.errors.saveBasicFirst'))
       return
     }
     setError('')
@@ -449,7 +422,7 @@ export default function DashboardProgramForm() {
   }
 
   const handleDeleteUnit = async (unitId) => {
-    if (window.confirm('Supprimer ce type de bien ?')) {
+    if (window.confirm(t('dashboard:programForm.confirms.deleteUnit'))) {
       try {
         await deleteUnitMutation.mutateAsync({ programId, unitId })
       } catch (err) {
@@ -461,7 +434,7 @@ export default function DashboardProgramForm() {
   const handleAddImage = async () => {
     if (!newImageUrl.trim()) return
     if (!programId) {
-      setError('Veuillez d\'abord sauvegarder les informations de base')
+      setError(t('dashboard:programForm.errors.saveBasicFirst'))
       return
     }
     setError('')
@@ -476,7 +449,7 @@ export default function DashboardProgramForm() {
   }
 
   const handleDeleteImage = async (imageId) => {
-    if (window.confirm('Supprimer cette image ?')) {
+    if (window.confirm(t('dashboard:programForm.confirms.deleteImage'))) {
       try {
         await deleteImageMutation.mutateAsync({ programId, imageId })
       } catch (err) {
@@ -487,7 +460,7 @@ export default function DashboardProgramForm() {
 
   const handlePublish = async () => {
     if (!programId) {
-      setError('Veuillez d\'abord sauvegarder le programme')
+      setError(t('dashboard:programForm.errors.saveProgramFirst'))
       return
     }
     try {
@@ -505,6 +478,8 @@ export default function DashboardProgramForm() {
     }
   }
 
+  const isProPlanError = error.includes('nécessite le plan Pro')
+
   if (isEditing && isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -521,36 +496,36 @@ export default function DashboardProgramForm() {
           to="/dashboard/programmes"
           className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
         >
-          <FiArrowLeft className="w-5 h-5" />
+          <DirIcon icon={FiArrowLeft} className="w-5 h-5" />
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {isEditing ? 'Modifier le programme' : 'Nouveau programme'}
+            {isEditing ? t('dashboard:programForm.titleEdit') : t('dashboard:programForm.titleCreate')}
           </h1>
           <p className="text-gray-500">
-            {isEditing ? formData.name : 'Créez un nouveau projet immobilier'}
+            {isEditing ? formData.name : t('dashboard:programForm.subtitle')}
           </p>
         </div>
         {isEditing && (
           <Link
             to={`/dashboard/programmes/${id}/plan`}
-            className="ml-auto btn-secondary inline-flex items-center gap-2"
+            className="ms-auto btn-secondary inline-flex items-center gap-2"
           >
             <FiMapPin className="w-4 h-4" />
-            Plan interactif des lots
+            {t('dashboard:programForm.interactivePlan')}
           </Link>
         )}
       </div>
 
       {/* Step indicator */}
       <div className="flex items-center justify-between mb-8">
-        {STEPS.map((step, index) => {
+        {STEP_DEFS.map((step, index) => {
           const StepIcon = step.icon
           const isActive = currentStep === step.id
           const isCompleted = currentStep > step.id
 
           return (
-            <div key={step.id} className={`flex items-center ${index < STEPS.length - 1 ? 'flex-1' : ''}`}>
+            <div key={step.id} className={`flex items-center ${index < STEP_DEFS.length - 1 ? 'flex-1' : ''}`}>
               <button
                 onClick={() => programId && setCurrentStep(step.id)}
                 disabled={!programId && step.id !== 1}
@@ -571,9 +546,9 @@ export default function DashboardProgramForm() {
                 }`}>
                   {isCompleted ? <FiCheck className="w-4 h-4" /> : <StepIcon className="w-4 h-4" />}
                 </div>
-                <span className="hidden sm:inline font-medium">{step.title}</span>
+                <span className="hidden sm:inline font-medium">{t(`dashboard:programForm.steps.${step.key}`)}</span>
               </button>
-              {index < STEPS.length - 1 && (
+              {index < STEP_DEFS.length - 1 && (
                 <div className={`flex-1 h-0.5 mx-2 ${isCompleted ? 'bg-green-600' : 'bg-gray-200'}`} />
               )}
             </div>
@@ -586,16 +561,16 @@ export default function DashboardProgramForm() {
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
           {error === 'Agence requise' ? (
             <>
-              Vous devez d'abord créer votre agence pour publier un programme.{' '}
+              {t('dashboard:programForm.errors.agencyRequired')}{' '}
               <Link to="/dashboard/agence" className="underline font-medium">
-                Créer mon agence
+                {t('dashboard:programForm.errors.createAgencyLink')}
               </Link>
             </>
-          ) : error.includes('nécessite le plan Pro') ? (
+          ) : isProPlanError ? (
             <>
               {error}{' '}
               <Link to="/dashboard/abonnement" className="underline font-medium">
-                Voir les abonnements
+                {t('dashboard:programForm.errors.viewSubscriptionsLink')}
               </Link>
             </>
           ) : (
@@ -609,17 +584,17 @@ export default function DashboardProgramForm() {
         {/* Step 1: General Info */}
         {currentStep === 1 && (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900">Informations générales</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('dashboard:programForm.sections.generalInfo')}</h2>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nom du programme *
+                {t('dashboard:programForm.fields.programName')}
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Ex: Résidence Les Jardins de Casablanca"
+                placeholder={t('dashboard:programForm.fields.programNamePlaceholder')}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 required
               />
@@ -627,27 +602,27 @@ export default function DashboardProgramForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Type de programme
+                {t('dashboard:programForm.fields.programType')}
               </label>
               <select
                 value={formData.program_type}
                 onChange={(e) => setFormData({ ...formData, program_type: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
-                {PROGRAM_TYPES.map(type => (
-                  <option key={type.value} value={type.value}>{type.label}</option>
+                {PROGRAM_TYPE_VALUES.map(value => (
+                  <option key={value} value={value}>{t(`dashboard:programs.type.${value}`)}</option>
                 ))}
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
+                {t('dashboard:programForm.fields.description')}
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Décrivez votre programme immobilier..."
+                placeholder={t('dashboard:programForm.fields.descriptionPlaceholder')}
                 rows={5}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
@@ -658,12 +633,12 @@ export default function DashboardProgramForm() {
         {/* Step 2: Location */}
         {currentStep === 2 && (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900">Localisation</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('dashboard:programForm.sections.location')}</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Ville *
+                  {t('dashboard:programForm.fields.city')}
                 </label>
                 <input
                   type="text"
@@ -676,7 +651,7 @@ export default function DashboardProgramForm() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Quartier
+                  {t('dashboard:programForm.fields.neighborhood')}
                 </label>
                 <input
                   type="text"
@@ -699,7 +674,7 @@ export default function DashboardProgramForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Latitude
+                  {t('dashboard:programForm.fields.latitude')}
                 </label>
                 <input
                   type="number"
@@ -712,7 +687,7 @@ export default function DashboardProgramForm() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Longitude
+                  {t('dashboard:programForm.fields.longitude')}
                 </label>
                 <input
                   type="number"
@@ -730,12 +705,12 @@ export default function DashboardProgramForm() {
         {/* Step 4: Project Details */}
         {currentStep === 4 && (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900">Détails du projet</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('dashboard:programForm.sections.details')}</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date de livraison prévue
+                  {t('dashboard:programForm.fields.deliveryDate')}
                 </label>
                 <input
                   type="date"
@@ -746,15 +721,15 @@ export default function DashboardProgramForm() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  État de construction
+                  {t('dashboard:programForm.fields.constructionStatus')}
                 </label>
                 <select
                   value={formData.construction_status}
                   onChange={(e) => setFormData({ ...formData, construction_status: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
-                  {CONSTRUCTION_STATUSES.map(status => (
-                    <option key={status.value} value={status.value}>{status.label}</option>
+                  {CONSTRUCTION_STATUS_VALUES.map(value => (
+                    <option key={value} value={value}>{t(`dashboard:programs.constructionStatus.${value}`)}</option>
                   ))}
                 </select>
               </div>
@@ -762,21 +737,21 @@ export default function DashboardProgramForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Équipements et services
+                {t('dashboard:programForm.fields.amenities')}
               </label>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-                {AMENITIES_OPTIONS.map(amenity => (
+                {AMENITY_VALUES.map(value => (
                   <button
-                    key={amenity.value}
+                    key={value}
                     type="button"
-                    onClick={() => toggleAmenity(amenity.value)}
+                    onClick={() => toggleAmenity(value)}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      formData.amenities.includes(amenity.value)
+                      formData.amenities.includes(value)
                         ? 'bg-primary-100 text-primary-700 border-2 border-primary-500'
                         : 'bg-gray-100 text-gray-700 border-2 border-transparent hover:bg-gray-200'
                     }`}
                   >
-                    {amenity.label}
+                    {t(`dashboard:programForm.amenities.${value}`)}
                   </button>
                 ))}
               </div>
@@ -797,7 +772,7 @@ export default function DashboardProgramForm() {
               )
             })}
             {(!formData.specs?.typology || formData.specs.typology.length === 0) && (
-              <p className="text-sm text-gray-400">Sélectionnez une typologie à l'étape « Types de biens » pour afficher les détails spécifiques.</p>
+              <p className="text-sm text-gray-400">{t('dashboard:programForm.selectTypologyHint')}</p>
             )}
           </div>
         )}
@@ -806,7 +781,7 @@ export default function DashboardProgramForm() {
         {currentStep === 3 && (
           <div className="space-y-6">
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Typologie du programme *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('dashboard:programForm.fields.typology')}</label>
               <div className="flex flex-wrap gap-2">
                 {TYPOLOGY_OPTIONS.map((opt) => {
                   const selected = (formData.specs?.typology || []).includes(opt.value)
@@ -816,7 +791,7 @@ export default function DashboardProgramForm() {
                       type="button"
                       onClick={() => {
                         const cur = formData.specs?.typology || []
-                        const next = selected ? cur.filter((t) => t !== opt.value) : [...cur, opt.value]
+                        const next = selected ? cur.filter((tv) => tv !== opt.value) : [...cur, opt.value]
                         setFormData({ ...formData, specs: { ...formData.specs, typology: next } })
                       }}
                       className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
@@ -828,18 +803,18 @@ export default function DashboardProgramForm() {
                   )
                 })}
               </div>
-              <p className="text-xs text-gray-400 mt-1">Détermine les détails du programme et les types d'unité disponibles.</p>
+              <p className="text-xs text-gray-400 mt-1">{t('dashboard:programForm.typologyHint')}</p>
             </div>
 
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Types de biens</h2>
+              <h2 className="text-lg font-semibold text-gray-900">{t('dashboard:programForm.sections.units')}</h2>
               {!showUnitForm && !editingUnit && (
                 <button
                   onClick={() => setShowUnitForm(true)}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
                 >
                   <FiPlus className="w-4 h-4" />
-                  Ajouter un type
+                  {t('dashboard:programForm.addUnitType')}
                 </button>
               )}
             </div>
@@ -875,8 +850,8 @@ export default function DashboardProgramForm() {
                       <p className="font-medium text-gray-900">{unit.name}</p>
                       <p className="text-sm text-gray-500">
                         {unit.surface_min && `${unit.surface_min} - ${unit.surface_max || unit.surface_min} m²`}
-                        {unit.price_from && ` • À partir de ${formatPrice(unit.price_from)}`}
-                        {unit.total_count && ` • ${unit.available_count || 0}/${unit.total_count} disponibles`}
+                        {unit.price_from && ` • ${t('dashboard:programs.startingFrom', { price: formatPrice(unit.price_from) })}`}
+                        {unit.total_count && ` • ${t('dashboard:programForm.availableOfTotal', { available: unit.available_count || 0, total: unit.total_count })}`}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -900,8 +875,8 @@ export default function DashboardProgramForm() {
               !showUnitForm && (
                 <div className="text-center py-8 bg-gray-50 rounded-lg">
                   <FiHome className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">Aucun type de bien ajouté</p>
-                  <p className="text-sm text-gray-400">Ajoutez les différents types de biens disponibles dans ce programme</p>
+                  <p className="text-gray-500">{t('dashboard:programForm.noUnitType')}</p>
+                  <p className="text-sm text-gray-400">{t('dashboard:programForm.noUnitTypeHint')}</p>
                 </div>
               )
             )}
@@ -911,18 +886,18 @@ export default function DashboardProgramForm() {
         {/* Step 5: Media */}
         {currentStep === 5 && (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900">Médias</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('dashboard:programForm.sections.media')}</h2>
 
             {/* Cover image */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Image de couverture
+                {t('dashboard:programForm.fields.coverImage')}
               </label>
               <input
                 type="url"
                 value={formData.cover_image_url}
                 onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })}
-                placeholder="URL de l'image de couverture"
+                placeholder={t('dashboard:programForm.fields.coverImagePlaceholder')}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
               {formData.cover_image_url && (
@@ -935,14 +910,14 @@ export default function DashboardProgramForm() {
             {/* Gallery */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Galerie d'images
+                {t('dashboard:programForm.fields.gallery')}
               </label>
               <div className="flex gap-2 mb-3">
                 <input
                   type="url"
                   value={newImageUrl}
                   onChange={(e) => setNewImageUrl(e.target.value)}
-                  placeholder="URL de l'image"
+                  placeholder={t('dashboard:programForm.fields.imageUrlPlaceholder')}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
                 <select
@@ -950,8 +925,8 @@ export default function DashboardProgramForm() {
                   onChange={(e) => setNewImageType(e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-lg"
                 >
-                  {IMAGE_TYPES.map(type => (
-                    <option key={type.value} value={type.value}>{type.label}</option>
+                  {IMAGE_TYPE_VALUES.map(value => (
+                    <option key={value} value={value}>{t(`dashboard:programForm.imageTypes.${value}`)}</option>
                   ))}
                 </select>
                 <button
@@ -974,12 +949,12 @@ export default function DashboardProgramForm() {
                       />
                       <button
                         onClick={() => handleDeleteImage(image.id)}
-                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-1 end-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <FiX className="w-3 h-3" />
                       </button>
-                      <span className="absolute bottom-1 left-1 text-xs bg-black/50 text-white px-1 rounded">
-                        {IMAGE_TYPES.find(t => t.value === image.image_type)?.label || image.image_type}
+                      <span className="absolute bottom-1 start-1 text-xs bg-black/50 text-white px-1 rounded">
+                        {t(`dashboard:programForm.imageTypes.${image.image_type}`, { defaultValue: image.image_type })}
                       </span>
                     </div>
                   ))}
@@ -987,7 +962,7 @@ export default function DashboardProgramForm() {
               ) : (
                 <div className="text-center py-8 bg-gray-50 rounded-lg">
                   <FiImage className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">Aucune image dans la galerie</p>
+                  <p className="text-gray-500">{t('dashboard:programForm.noGalleryImage')}</p>
                 </div>
               )}
             </div>
@@ -996,27 +971,27 @@ export default function DashboardProgramForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <FiFile className="inline w-4 h-4 mr-1" />
-                  Brochure (URL PDF)
+                  <FiFile className="inline w-4 h-4 me-1" />
+                  {t('dashboard:programForm.fields.brochure')}
                 </label>
                 <input
                   type="url"
                   value={formData.brochure_url}
                   onChange={(e) => setFormData({ ...formData, brochure_url: e.target.value })}
-                  placeholder="URL de la brochure PDF"
+                  placeholder={t('dashboard:programForm.fields.brochurePlaceholder')}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <FiVideo className="inline w-4 h-4 mr-1" />
-                  Vidéo (URL YouTube)
+                  <FiVideo className="inline w-4 h-4 me-1" />
+                  {t('dashboard:programForm.fields.video')}
                 </label>
                 <input
                   type="url"
                   value={formData.video_url}
                   onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-                  placeholder="URL de la vidéo"
+                  placeholder={t('dashboard:programForm.fields.videoPlaceholder')}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
@@ -1031,12 +1006,12 @@ export default function DashboardProgramForm() {
             disabled={currentStep === 1}
             className="inline-flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <FiArrowLeft className="w-5 h-5" />
-            Précédent
+            <DirIcon icon={FiArrowLeft} className="w-5 h-5" />
+            {t('dashboard:programs.pagination.previous')}
           </button>
 
           <div className="flex items-center gap-3">
-            {currentStep === STEPS.length ? (
+            {currentStep === STEP_DEFS.length ? (
               <>
                 <button
                   onClick={handleSaveStep}
@@ -1044,7 +1019,7 @@ export default function DashboardProgramForm() {
                   className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
                 >
                   <FiSave className="w-5 h-5" />
-                  Enregistrer
+                  {t('dashboard:shared.actions.save')}
                 </button>
                 <button
                   onClick={handlePublish}
@@ -1052,7 +1027,7 @@ export default function DashboardProgramForm() {
                   className="inline-flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
                 >
                   <FiEye className="w-5 h-5" />
-                  Publier le programme
+                  {t('dashboard:programForm.publishButton')}
                 </button>
               </>
             ) : (
@@ -1061,8 +1036,8 @@ export default function DashboardProgramForm() {
                 disabled={saving}
                 className="inline-flex items-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
               >
-                {saving ? 'Enregistrement...' : 'Suivant'}
-                <FiArrowRight className="w-5 h-5" />
+                {saving ? t('dashboard:shared.actions.saving') : t('dashboard:programs.pagination.next')}
+                <DirIcon icon={FiArrowRight} className="w-5 h-5" />
               </button>
             )}
           </div>

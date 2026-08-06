@@ -100,6 +100,119 @@
       "updateError": "خطأ أثناء التحديث"
     }
   },
+  "programForm": {
+    "titleCreate": "برنامج جديد",
+    "titleEdit": "تعديل البرنامج",
+    "subtitle": "أنشئ مشروعًا عقاريًا جديدًا",
+    "interactivePlan": "مخطط تفاعلي للوحدات",
+    "publishButton": "نشر البرنامج",
+    "characteristics": "المواصفات",
+    "addUnitType": "إضافة نوع",
+    "noUnitType": "لم تتم إضافة أي نوع عقار",
+    "noUnitTypeHint": "أضف مختلف أنواع العقارات المتوفرة في هذا البرنامج",
+    "noGalleryImage": "لا توجد صور في المعرض",
+    "selectTypologyHint": "اختر نمطًا في خطوة « أنواع العقارات » لعرض التفاصيل الخاصة.",
+    "typologyHint": "يحدد تفاصيل البرنامج وأنواع الوحدات المتاحة.",
+    "availableOfTotal": "{{available}}/{{total}} متاحة",
+    "steps": {
+      "info": "المعلومات",
+      "location": "الموقع",
+      "units": "أنواع العقارات",
+      "details": "التفاصيل",
+      "media": "الوسائط"
+    },
+    "sections": {
+      "generalInfo": "معلومات عامة",
+      "location": "الموقع",
+      "details": "تفاصيل المشروع",
+      "units": "أنواع العقارات",
+      "media": "الوسائط"
+    },
+    "fields": {
+      "programName": "اسم البرنامج *",
+      "programNamePlaceholder": "مثال: إقامة حدائق الدار البيضاء",
+      "programType": "نوع البرنامج",
+      "description": "الوصف",
+      "descriptionPlaceholder": "صف برنامجك العقاري...",
+      "city": "المدينة *",
+      "neighborhood": "الحي",
+      "latitude": "خط العرض",
+      "longitude": "خط الطول",
+      "deliveryDate": "تاريخ التسليم المتوقع",
+      "constructionStatus": "حالة البناء",
+      "amenities": "التجهيزات والخدمات",
+      "typology": "نمط البرنامج *",
+      "coverImage": "صورة الغلاف",
+      "coverImagePlaceholder": "رابط صورة الغلاف",
+      "gallery": "معرض الصور",
+      "imageUrlPlaceholder": "رابط الصورة",
+      "brochure": "الكتيب (رابط PDF)",
+      "brochurePlaceholder": "رابط الكتيب PDF",
+      "video": "الفيديو (رابط YouTube)",
+      "videoPlaceholder": "رابط الفيديو"
+    },
+    "amenities": {
+      "pool": "مسبح",
+      "gym": "قاعة رياضية",
+      "security": "أمن 24/24",
+      "parking": "موقف سيارات",
+      "garden": "حديقة",
+      "playground": "ملعب أطفال",
+      "concierge": "حراسة",
+      "elevator": "مصعد",
+      "terrace": "تراس",
+      "spa": "سبا"
+    },
+    "imageTypes": {
+      "exterior": "خارجي",
+      "interior": "داخلي",
+      "amenity": "تجهيزات",
+      "plan": "مخطط"
+    },
+    "unitTypes": {
+      "studio": "استوديو",
+      "apartment": "شقة",
+      "duplex": "دوبلكس",
+      "villa": "فيلا",
+      "penthouse": "بنتهاوس",
+      "land": "أرض",
+      "commercial": "محل تجاري"
+    },
+    "unitForm": {
+      "name": "اسم النوع *",
+      "namePlaceholder": "مثال: شقة من 3 غرف",
+      "unitType": "نوع العقار",
+      "surfaceMin": "المساحة الدنيا (م²)",
+      "surfaceMax": "المساحة القصوى (م²)",
+      "rooms": "الغرف",
+      "bedrooms": "غرف النوم",
+      "bathrooms": "الحمامات",
+      "priceFrom": "السعر ابتداءً من ({{currency}})",
+      "priceTo": "السعر حتى ({{currency}})",
+      "totalCount": "العدد الإجمالي",
+      "availableCount": "المتاحة"
+    },
+    "errors": {
+      "nameRequired": "اسم البرنامج مطلوب",
+      "saveBasicFirst": "يرجى حفظ المعلومات الأساسية أولاً",
+      "saveProgramFirst": "يرجى حفظ البرنامج أولاً",
+      "agencyRequired": "يجب عليك أولاً إنشاء وكالتك لنشر برنامج.",
+      "createAgencyLink": "إنشاء وكالتي",
+      "viewSubscriptionsLink": "عرض الاشتراكات",
+      "createFailed": "خطأ أثناء إنشاء البرنامج",
+      "updateFailed": "خطأ أثناء تحديث البرنامج",
+      "addUnitFailed": "خطأ أثناء إضافة نوع العقار",
+      "updateUnitFailed": "خطأ أثناء تحديث نوع العقار",
+      "deleteFailed": "خطأ أثناء الحذف",
+      "addImageFailed": "خطأ أثناء إضافة الصورة",
+      "deleteImageFailed": "خطأ أثناء حذف الصورة",
+      "publishFailed": "خطأ أثناء النشر"
+    },
+    "confirms": {
+      "deleteUnit": "حذف نوع العقار هذا؟",
+      "deleteImage": "حذف هذه الصورة؟"
+    }
+  },
   "programs": {
     "title": "إعلاناتي",
     "managedCount_one": "{{count}} برنامج مُدار",
