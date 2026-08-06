@@ -131,6 +131,13 @@ const MIGRATED_FILES = [
   'src/pages/dashboard/BuyerMessages.jsx',
   'src/pages/dashboard/AgencyMessages.jsx',
   'src/pages/dashboard/MyAgency.jsx',
+  'src/pages/admin/AdminLayout.jsx',
+  'src/pages/admin/AdminOverview.jsx',
+  'src/pages/admin/AdminAccounts.jsx',
+  'src/pages/admin/AdminAccountDetail.jsx',
+  'src/pages/admin/AdminOrders.jsx',
+  'src/pages/admin/AdminProducts.jsx',
+  'src/pages/admin/AdminSharedArtisans.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {
