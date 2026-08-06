@@ -46,6 +46,57 @@
       "subscription": "الاشتراك"
     }
   },
+  "myProperties": {
+    "title": "إعلاناتي",
+    "totalCount_one": "{{count}} إعلان بالمجموع",
+    "totalCount_other": "{{count}} إعلانات بالمجموع",
+    "favoritesCount_one": "{{count}} مفضلة",
+    "favoritesCount_other": "{{count}} مفضلات",
+    "favorites": "المفضلة",
+    "statusFilters": {
+      "all": "كل الحالات",
+      "active": "نشطة",
+      "draft": "مسودات",
+      "sold": "مباعة",
+      "rented": "مكتراة"
+    },
+    "status": {
+      "draft": "مسودة",
+      "active": "نشطة",
+      "pending": "قيد الانتظار",
+      "sold": "مباعة",
+      "rented": "مكتراة",
+      "archived": "مؤرشفة"
+    },
+    "columns": {
+      "listing": "الإعلان",
+      "price": "السعر",
+      "status": "الحالة",
+      "views": "المشاهدات",
+      "contacts": "التواصل",
+      "actions": "الإجراءات"
+    },
+    "actions": {
+      "view": "عرض",
+      "removeFavorite": "إزالة من المفضلة",
+      "edit": "تعديل",
+      "publish": "نشر"
+    },
+    "empty": "لم يتم العثور على أي إعلان",
+    "emptyFavorites": "لا توجد مفضلات في هذا التبويب. انقر على ❤ أحد الإعلانات لحفظه.",
+    "createFirst": "إنشاء أول إعلان",
+    "deleteModal": {
+      "title": "حذف الإعلان؟",
+      "message": "هذا الإجراء نهائي. سيتم حذف الإعلان بشكل دائم."
+    },
+    "toasts": {
+      "deleted": "تم حذف الإعلان",
+      "deleteError": "خطأ أثناء الحذف",
+      "favRemoved": "تمت الإزالة من المفضلة",
+      "published": "تم نشر الإعلان",
+      "publishError": "خطأ أثناء النشر"
+    }
+  },
   "home": {
     "title": "برج المراقبة",
     "toasts": {

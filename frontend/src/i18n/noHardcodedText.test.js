@@ -118,6 +118,7 @@ const MIGRATED_FILES = [
   'src/pages/dashboard/Availability.jsx',
   'src/pages/dashboard/SavedSearches.jsx',
   'src/pages/dashboard/Dashboard.jsx',
+  'src/pages/dashboard/MyProperties.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {

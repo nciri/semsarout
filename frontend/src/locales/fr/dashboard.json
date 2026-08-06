@@ -46,6 +46,57 @@
       "subscription": "Abonnement"
     }
   },
+  "myProperties": {
+    "title": "Mes annonces",
+    "totalCount_one": "{{count}} annonce au total",
+    "totalCount_other": "{{count}} annonces au total",
+    "favoritesCount_one": "{{count}} favori",
+    "favoritesCount_other": "{{count}} favoris",
+    "favorites": "Favoris",
+    "statusFilters": {
+      "all": "Tous statuts",
+      "active": "Actives",
+      "draft": "Brouillons",
+      "sold": "Vendues",
+      "rented": "Louées"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "active": "Active",
+      "pending": "En attente",
+      "sold": "Vendu",
+      "rented": "Loué",
+      "archived": "Archivé"
+    },
+    "columns": {
+      "listing": "Annonce",
+      "price": "Prix",
+      "status": "Statut",
+      "views": "Vues",
+      "contacts": "Contacts",
+      "actions": "Actions"
+    },
+    "actions": {
+      "view": "Voir",
+      "removeFavorite": "Retirer des favoris",
+      "edit": "Modifier",
+      "publish": "Publier"
+    },
+    "empty": "Aucune annonce trouvée",
+    "emptyFavorites": "Aucun favori pour cet onglet. Cliquez sur le ❤ d'une annonce pour l'enregistrer.",
+    "createFirst": "Créer ma première annonce",
+    "deleteModal": {
+      "title": "Supprimer l'annonce ?",
+      "message": "Cette action est irréversible. L'annonce sera définitivement supprimée."
+    },
+    "toasts": {
+      "deleted": "Annonce supprimée",
+      "deleteError": "Erreur lors de la suppression",
+      "favRemoved": "Retiré des favoris",
+      "published": "Annonce publiée",
+      "publishError": "Erreur lors de la publication"
+    }
+  },
   "home": {
     "title": "Tour de contrôle",
     "toasts": {
