@@ -28,5 +28,15 @@
     "nextStepVisitScheduled": "زيارة مبرمجة",
     "nextStepVisitDetails": "السبت 24 ماي الساعة 10:00 · أكدال، الرباط",
     "nextStepViewDetail": "عرض التفاصيل"
+  },
+  "messaging": {
+    "title": "المراسلة",
+    "searchPlaceholder": "البحث عن محادثة",
+    "call": "اتصال",
+    "video": "مكالمة فيديو",
+    "attach": "إرفاق",
+    "inputPlaceholder": "اكتب رسالة…",
+    "send": "إرسال",
+    "now": "الآن"
   }
 }

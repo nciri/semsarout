@@ -28,5 +28,15 @@
     "nextStepVisitScheduled": "Visite planifiée",
     "nextStepVisitDetails": "Samedi 24 mai à 10:00 · Agdal, Rabat",
     "nextStepViewDetail": "Voir le détail"
+  },
+  "messaging": {
+    "title": "Messagerie",
+    "searchPlaceholder": "Rechercher une conversation",
+    "call": "Appeler",
+    "video": "Visio",
+    "attach": "Joindre",
+    "inputPlaceholder": "Écrire un message…",
+    "send": "Envoyer",
+    "now": "maintenant"
   }
 }
