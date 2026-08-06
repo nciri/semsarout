@@ -46,6 +46,46 @@
       "subscription": "الاشتراك"
     }
   },
+  "marketPrices": {
+    "title": "أسعار مرجعية حسب الحي",
+    "subtitle": "تُستخدم هذه الأسعار/م² في مؤشر تموضع السعر على الإعلانات (لها الأولوية على الحساب التلقائي).",
+    "adminOnly": "هذه الصفحة مخصصة للمسؤولين فقط.",
+    "requiredFields": "المدينة والحي ومتوسط السعر/م² مطلوبة",
+    "form": {
+      "city": "المدينة *",
+      "neighborhood": "الحي *",
+      "avgPrice": "متوسط السعر/م² *",
+      "minPrice": "الحد الأدنى /م²",
+      "maxPrice": "الحد الأقصى /م²"
+    },
+    "transactionType": {
+      "sale": "بيع",
+      "rent": "كراء"
+    },
+    "lotTypes": {
+      "all": "كل الأنواع",
+      "apartment": "شقة",
+      "villa": "فيلا",
+      "house": "منزل",
+      "land": "أرض",
+      "commercial": "محل تجاري",
+      "office": "مكتب"
+    },
+    "empty": "لا توجد مرجعية. أضف واحدة أعلاه.",
+    "columns": {
+      "city": "المدينة",
+      "neighborhood": "الحي",
+      "transaction": "المعاملة",
+      "type": "النوع",
+      "avgPrice": "المتوسط /م²",
+      "minMax": "الأدنى–الأقصى",
+      "source": "المصدر"
+    },
+    "toasts": {
+      "added": "تمت إضافة المرجعية",
+      "deleted": "تم الحذف"
+    }
+  },
   "myProperties": {
     "title": "إعلاناتي",
     "totalCount_one": "{{count}} إعلان بالمجموع",

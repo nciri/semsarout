@@ -46,6 +46,46 @@
       "subscription": "Abonnement"
     }
   },
+  "marketPrices": {
+    "title": "Prix de référence par quartier",
+    "subtitle": "Ces prix/m² alimentent la jauge de positionnement sur les annonces (prioritaires sur le calcul automatique).",
+    "adminOnly": "Cette page est réservée aux administrateurs.",
+    "requiredFields": "Ville, quartier et prix/m² moyen requis",
+    "form": {
+      "city": "Ville *",
+      "neighborhood": "Quartier *",
+      "avgPrice": "Prix/m² moyen *",
+      "minPrice": "Min /m²",
+      "maxPrice": "Max /m²"
+    },
+    "transactionType": {
+      "sale": "Vente",
+      "rent": "Location"
+    },
+    "lotTypes": {
+      "all": "Tous types",
+      "apartment": "Appartement",
+      "villa": "Villa",
+      "house": "Maison",
+      "land": "Terrain",
+      "commercial": "Local commercial",
+      "office": "Bureau"
+    },
+    "empty": "Aucune référence. Ajoutez-en une ci-dessus.",
+    "columns": {
+      "city": "Ville",
+      "neighborhood": "Quartier",
+      "transaction": "Transaction",
+      "type": "Type",
+      "avgPrice": "Moy. /m²",
+      "minMax": "Min–Max",
+      "source": "Source"
+    },
+    "toasts": {
+      "added": "Référence ajoutée",
+      "deleted": "Supprimée"
+    }
+  },
   "myProperties": {
     "title": "Mes annonces",
     "totalCount_one": "{{count}} annonce au total",
