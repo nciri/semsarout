@@ -2,18 +2,20 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { useTranslation } from 'react-i18next'
 import { FiMail, FiMessageSquare } from 'react-icons/fi'
 import { agencyMessageService } from '../../services/agencyMessageService'
 import MessageThread from '../../components/messaging/MessageThread'
 
-const STATUS_LABELS = {
-  new: { label: 'Nouveau', class: 'bg-blue-100 text-blue-700' },
-  read: { label: 'Lu', class: 'bg-gray-100 text-gray-600' },
-  replied: { label: 'Répondu', class: 'bg-green-100 text-green-700' },
-  archived: { label: 'Archivé', class: 'bg-gray-100 text-gray-500' }
+const STATUS_TONE = {
+  new: 'bg-blue-100 text-blue-700',
+  read: 'bg-gray-100 text-gray-600',
+  replied: 'bg-green-100 text-green-700',
+  archived: 'bg-gray-100 text-gray-500',
 }
 
 function AgencyMessages() {
+  const { t } = useTranslation(['dashboard', 'common'])
   const [selectedId, setSelectedId] = useState(null)
   const queryClient = useQueryClient()
 
@@ -40,8 +42,8 @@ function AgencyMessages() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="font-display text-2xl font-bold text-gray-900">Messages reçus</h1>
-        <p className="text-gray-600">Les demandes envoyées par les acheteurs sur vos annonces</p>
+        <h1 className="font-display text-2xl font-bold text-gray-900">{t('dashboard:messages.agency.title')}</h1>
+        <p className="text-gray-600">{t('dashboard:messages.agency.subtitle')}</p>
       </div>
 
       {isLoading ? (
@@ -49,24 +51,24 @@ function AgencyMessages() {
       ) : messages.length === 0 ? (
         <div className="card p-12 text-center">
           <FiMail className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-600">Aucun message reçu pour le moment</p>
+          <p className="text-gray-600">{t('dashboard:messages.agency.empty')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 card p-0 overflow-hidden" style={{ minHeight: '500px' }}>
           {/* List */}
-          <div className="md:col-span-1 border-r border-gray-100 max-h-[600px] overflow-y-auto">
+          <div className="md:col-span-1 border-e border-gray-100 max-h-[600px] overflow-y-auto">
             {messages.map((m) => (
               <button
                 key={m.id}
                 onClick={() => setSelectedId(m.id)}
-                className={`w-full text-left p-4 border-b border-gray-100 hover:bg-gray-50 ${
+                className={`w-full text-start p-4 border-b border-gray-100 hover:bg-gray-50 ${
                   selectedId === m.id ? 'bg-primary-50' : ''
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-medium text-gray-900 truncate">{m.subject}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ml-2 ${STATUS_LABELS[m.status]?.class}`}>
-                    {STATUS_LABELS[m.status]?.label}
+                  <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ms-2 ${STATUS_TONE[m.status] || 'bg-gray-100 text-gray-600'}`}>
+                    {t(`dashboard:messages.status.${m.status}`, { defaultValue: m.status })}
                   </span>
                 </div>
                 <p className="text-sm text-gray-500 truncate">{m.message}</p>
@@ -90,7 +92,7 @@ function AgencyMessages() {
               <div className="h-full flex items-center justify-center text-gray-400">
                 <div className="text-center">
                   <FiMessageSquare className="w-10 h-10 mx-auto mb-2" />
-                  <p>Sélectionnez un message pour voir la conversation</p>
+                  <p>{t('dashboard:messages.selectPrompt')}</p>
                 </div>
               </div>
             )}
