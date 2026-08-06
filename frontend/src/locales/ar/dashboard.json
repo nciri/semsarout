@@ -11,7 +11,15 @@
       "reconnect": "إعادة تسجيل الدخول",
       "confirm": "تأكيد"
     },
-    "loading": "جارٍ التحميل…"
+    "loading": "جارٍ التحميل…",
+    "propertyTypes": {
+      "apartment": "شقة",
+      "house": "منزل",
+      "villa": "فيلا",
+      "land": "أرض",
+      "commercial": "محل تجاري",
+      "office": "مكتب"
+    }
   },
   "monEspace": {
     "greeting": "مرحبًا 👋",
@@ -44,6 +52,52 @@
     "tabs": {
       "agency": "الوكالة",
       "subscription": "الاشتراك"
+    }
+  },
+  "createProperty": {
+    "titleCreate": "إنشاء إعلان",
+    "titleEdit": "تعديل الإعلان",
+    "subtitle": "املأ معلومات عقارك",
+    "sections": {
+      "transactionType": "نوع المعاملة",
+      "generalInfo": "معلومات عامة",
+      "priceAndSurface": "السعر والمساحة",
+      "characteristics": "المواصفات",
+      "location": "الموقع"
+    },
+    "transactionType": {
+      "sale": "بيع",
+      "rent": "كراء"
+    },
+    "fields": {
+      "listingTitle": "عنوان الإعلان *",
+      "listingTitlePlaceholder": "مثال: شقة 3 غرف بإطلالة على البحر",
+      "propertyType": "نوع العقار *",
+      "description": "الوصف",
+      "descriptionPlaceholder": "صف عقارك بالتفصيل...",
+      "price": "السعر ({{currency}}) *",
+      "perMonth": "/ شهريًا",
+      "pricePlaceholder": "مثال: 1500000",
+      "surface": "المساحة (م²)",
+      "rooms": "الغرف",
+      "bedrooms": "غرف النوم",
+      "bathrooms": "الحمامات",
+      "floor": "الطابق",
+      "features": "التجهيزات",
+      "city": "المدينة *",
+      "neighborhood": "الحي",
+      "address": "العنوان"
+    },
+    "validation": {
+      "titleRequired": "العنوان مطلوب",
+      "priceRequired": "السعر مطلوب",
+      "cityRequired": "المدينة مطلوبة"
+    },
+    "toasts": {
+      "created": "تم إنشاء الإعلان بنجاح",
+      "createError": "خطأ أثناء الإنشاء",
+      "updated": "تم تحديث الإعلان بنجاح",
+      "updateError": "خطأ أثناء التحديث"
     }
   },
   "programs": {

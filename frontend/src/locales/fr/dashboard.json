@@ -11,7 +11,15 @@
       "reconnect": "Se reconnecter",
       "confirm": "Confirmer"
     },
-    "loading": "Chargement…"
+    "loading": "Chargement…",
+    "propertyTypes": {
+      "apartment": "Appartement",
+      "house": "Maison",
+      "villa": "Villa",
+      "land": "Terrain",
+      "commercial": "Local commercial",
+      "office": "Bureau"
+    }
   },
   "monEspace": {
     "greeting": "Bonjour 👋",
@@ -44,6 +52,52 @@
     "tabs": {
       "agency": "Agence",
       "subscription": "Abonnement"
+    }
+  },
+  "createProperty": {
+    "titleCreate": "Créer une annonce",
+    "titleEdit": "Modifier l'annonce",
+    "subtitle": "Remplissez les informations de votre bien immobilier",
+    "sections": {
+      "transactionType": "Type de transaction",
+      "generalInfo": "Informations générales",
+      "priceAndSurface": "Prix et surface",
+      "characteristics": "Caractéristiques",
+      "location": "Localisation"
+    },
+    "transactionType": {
+      "sale": "Vente",
+      "rent": "Location"
+    },
+    "fields": {
+      "listingTitle": "Titre de l'annonce *",
+      "listingTitlePlaceholder": "Ex: Appartement 3 pièces avec vue mer",
+      "propertyType": "Type de bien *",
+      "description": "Description",
+      "descriptionPlaceholder": "Décrivez votre bien en détail...",
+      "price": "Prix ({{currency}}) *",
+      "perMonth": "/ mois",
+      "pricePlaceholder": "Ex: 1500000",
+      "surface": "Surface (m²)",
+      "rooms": "Pièces",
+      "bedrooms": "Chambres",
+      "bathrooms": "Salles de bain",
+      "floor": "Étage",
+      "features": "Équipements",
+      "city": "Ville *",
+      "neighborhood": "Quartier",
+      "address": "Adresse"
+    },
+    "validation": {
+      "titleRequired": "Titre requis",
+      "priceRequired": "Prix requis",
+      "cityRequired": "Ville requise"
+    },
+    "toasts": {
+      "created": "Annonce créée avec succès",
+      "createError": "Erreur lors de la création",
+      "updated": "Annonce mise à jour avec succès",
+      "updateError": "Erreur lors de la mise à jour"
     }
   },
   "programs": {
