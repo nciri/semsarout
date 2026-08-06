@@ -49,9 +49,15 @@ function MyAgency() {
   const regenerateKeyMutation = useMutation(
     () => agencyService.regenerateApiKey(agency.slug),
     {
-      onSuccess: () => {
-        toast.success('Clé API régénérée')
+      onSuccess: (data) => {
+        // La réponse renvoie la nouvelle clé : l'afficher immédiatement (le refetch
+        // /my-agency la renvoie aussi désormais, mais setQueryData évite l'attente).
+        if (data?.api_key) {
+          queryClient.setQueryData('my-agency', (old) => (old ? { ...old, api_key: data.api_key } : old))
+          setShowApiKey(true)
+        }
         queryClient.invalidateQueries('my-agency')
+        toast.success('Clé API régénérée')
       }
     }
   )
