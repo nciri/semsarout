@@ -1,16 +1,18 @@
+// Libellés (cibles de signalement, motifs, conseils de sécurité) vivent dans app.json
+// (namespace app, section securite) ; ce fichier ne garde que les valeurs brutes.
 export const reportTargets = [
-  { value: 'profil', label: 'Un profil' },
-  { value: 'annonce', label: 'Une annonce' },
-  { value: 'message', label: 'Un message' },
+  { value: 'profil' },
+  { value: 'annonce' },
+  { value: 'message' },
 ]
 
 export const reportReasons = [
-  { value: 'avance', label: "Demande d'avance avant visite" },
-  { value: 'photo', label: 'Annonce ou photo suspecte' },
-  { value: 'comportement', label: 'Comportement déplacé' },
-  { value: 'sortie-plateforme', label: 'Tentative de sortie de la plateforme' },
-  { value: 'discrimination', label: 'Contenu discriminatoire' },
-  { value: 'autre', label: 'Autre' },
+  { value: 'avance' },
+  { value: 'photo' },
+  { value: 'comportement' },
+  { value: 'sortie-plateforme' },
+  { value: 'discrimination' },
+  { value: 'autre' },
 ]
 
 export const blockedUsers = [
@@ -19,8 +21,8 @@ export const blockedUsers = [
 ]
 
 export const safetyTips = [
-  { id: 'tip-avance', text: "Ne versez jamais d'argent avant d'avoir visité le logement en personne." },
-  { id: 'tip-messagerie', text: "Restez sur la messagerie interne jusqu'à ce que l'identité soit vérifiée des deux côtés." },
-  { id: 'tip-badge', text: 'Vérifiez le badge « Vérifié » et l’ancienneté du profil avant d’échanger des informations sensibles.' },
-  { id: 'tip-paiement', text: 'Signalez toute demande de paiement en dehors du parcours contrat et séquestre.' },
+  { id: 'tip-avance' },
+  { id: 'tip-messagerie' },
+  { id: 'tip-badge' },
+  { id: 'tip-paiement' },
 ]

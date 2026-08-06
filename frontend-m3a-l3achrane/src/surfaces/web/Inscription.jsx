@@ -1,26 +1,28 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Button, Input, Select } from '../../ds/index.js'
 
 // Règle canonique des formulaires : champ requis ⇒ étoile rouge après le label.
 const requiredStar = <span style={{ color: 'var(--red-500)' }} aria-hidden> *</span>
 
-const STEPS = [
-  { num: 1, label: 'Profil' },
-  { num: 2, label: 'Vérification' },
-  { num: 3, label: 'Mode de vie' },
-]
+const ROLE_KEYS = ['student', 'worker', 'host']
 const CURRENT_STEP = 1
 
-const ROLES = [
-  { key: 'student', title: 'Étudiant·e', desc: 'Inscrit dans un établissement' },
-  { key: 'worker', title: 'Jeune actif', desc: 'En poste ou en stage' },
-  { key: 'host', title: 'Je propose un logement', desc: 'Propriétaire ou colocataire' },
-]
-
-const CITY_OPTIONS = ['Casablanca', 'Rabat', 'Marrakech', 'Tanger', 'Fès']
-
 export default function Inscription() {
+  const { t } = useTranslation(['web', 'common'])
+  const CITY_OPTIONS = t('web:registration.cityOptions', { returnObjects: true })
+  const STEPS = [
+    { num: 1, label: t('web:registration.steps.profile') },
+    { num: 2, label: t('web:registration.steps.verification') },
+    { num: 3, label: t('web:registration.steps.lifestyle') },
+  ]
+  const ROLES = ROLE_KEYS.map((key) => ({
+    key,
+    title: t(`web:registration.roles.${key}.title`),
+    desc: t(`web:registration.roles.${key}.desc`),
+  }))
+
   const [role, setRole] = useState('student')
   const [form, setForm] = useState({
     first_name: '', last_name: '', email: '', phone: '', city: CITY_OPTIONS[0], org: '', password: '',
@@ -38,10 +40,10 @@ export default function Inscription() {
       <div style={{ width: '100%', maxWidth: 720, display: 'flex', flexDirection: 'column', gap: 28 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <h1 style={{ margin: 0, fontSize: 30, fontWeight: 800, color: 'var(--text-heading)', letterSpacing: '-0.02em' }}>
-            Créez votre profil
+            {t('web:registration.title')}
           </h1>
           <p style={{ margin: 0, fontSize: 15, color: 'var(--text-body)' }}>
-            Trois étapes courtes. Vos informations restent privées jusqu&apos;à ce que vous contactiez une colocation.
+            {t('web:registration.subtitle')}
           </p>
         </div>
 
@@ -78,7 +80,7 @@ export default function Inscription() {
           boxShadow: 'var(--shadow-sm)', padding: 28, display: 'flex', flexDirection: 'column', gap: 24,
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-heading)' }}>Je suis</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-heading)' }}>{t('web:registration.iAmLabel')}</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
               {ROLES.map((r) => {
                 const on = role === r.key
@@ -106,48 +108,48 @@ export default function Inscription() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <Input
                 id="first_name"
-                label={<>Prénom{requiredStar}</>}
-                placeholder="Yassine"
+                label={<>{t('web:registration.form.firstNameLabel')}{requiredStar}</>}
+                placeholder={t('web:registration.form.firstNamePlaceholder')}
                 value={form.first_name}
                 onChange={set('first_name')}
                 required
               />
               <Input
                 id="last_name"
-                label={<>Nom{requiredStar}</>}
-                placeholder="Benali"
+                label={<>{t('web:registration.form.lastNameLabel')}{requiredStar}</>}
+                placeholder={t('web:registration.form.lastNamePlaceholder')}
                 value={form.last_name}
                 onChange={set('last_name')}
                 required
               />
               <Input
                 id="email"
-                label={<>Adresse e-mail{requiredStar}</>}
+                label={<>{t('web:registration.form.emailLabel')}{requiredStar}</>}
                 type="email"
-                placeholder="prenom.nom@exemple.ma"
+                placeholder={t('web:registration.form.emailPlaceholder')}
                 value={form.email}
                 onChange={set('email')}
                 required
               />
               <Input
                 id="phone"
-                label={<>Téléphone{requiredStar}</>}
-                placeholder="+212 6 12 34 56 78"
+                label={<>{t('web:registration.form.phoneLabel')}{requiredStar}</>}
+                placeholder={t('web:registration.form.phonePlaceholder')}
                 value={form.phone}
                 onChange={set('phone')}
                 required
               />
               <Select
                 id="city"
-                label={<>Ville{requiredStar}</>}
+                label={<>{t('web:registration.form.cityLabel')}{requiredStar}</>}
                 options={CITY_OPTIONS}
                 value={form.city}
                 onChange={set('city')}
               />
               <Input
                 id="org"
-                label={<>Établissement ou employeur{requiredStar}</>}
-                placeholder="Université Hassan II"
+                label={<>{t('web:registration.form.orgLabel')}{requiredStar}</>}
+                placeholder={t('web:registration.form.orgPlaceholder')}
                 value={form.org}
                 onChange={set('org')}
                 required
@@ -156,10 +158,10 @@ export default function Inscription() {
 
             <Input
               id="password"
-              label={<>Mot de passe{requiredStar}</>}
+              label={<>{t('web:registration.form.passwordLabel')}{requiredStar}</>}
               type="password"
-              placeholder="8 caractères minimum"
-              hint="Au moins 8 caractères, dont un chiffre."
+              placeholder={t('web:registration.form.passwordPlaceholder')}
+              hint={t('web:registration.form.passwordHint')}
               value={form.password}
               onChange={set('password')}
               required
@@ -176,9 +178,9 @@ export default function Inscription() {
                 ✓
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text-heading)' }}>Prochaine étape : la vérification</div>
+                <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text-heading)' }}>{t('web:registration.nextStepTitle')}</div>
                 <div style={{ fontSize: 13.5, color: 'var(--text-body)', lineHeight: 1.55 }}>
-                  Vous téléverserez votre CIN et votre justificatif de statut. Rien n&apos;est visible par les autres membres — seul le badge « Vérifié » apparaît sur votre profil.
+                  {t('web:registration.nextStepDesc')}
                 </div>
               </div>
             </div>
@@ -192,14 +194,14 @@ export default function Inscription() {
                 required
               />
               <span>
-                J&apos;accepte les <a href="#" onClick={(e) => e.preventDefault()}>conditions d&apos;utilisation</a> et le traitement de mes données conformément à la{' '}
-                <a href="#" onClick={(e) => e.preventDefault()}>politique de confidentialité</a> (CNDP).
+                {t('web:registration.agreementPrefix')} <a href="#" onClick={(e) => e.preventDefault()}>{t('web:registration.agreementTermsLink')}</a> {t('web:registration.agreementMiddle')}{' '}
+                <a href="#" onClick={(e) => e.preventDefault()}>{t('web:registration.agreementPrivacyLink')}</a> {t('web:registration.agreementSuffix')}
               </span>
             </label>
 
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', alignItems: 'center' }}>
-              <Button type="button" variant="secondary">Enregistrer et reprendre plus tard</Button>
-              <Button type="submit">Continuer</Button>
+              <Button type="button" variant="secondary">{t('web:registration.saveLaterCta')}</Button>
+              <Button type="submit">{t('web:registration.continueCta')}</Button>
             </div>
           </form>
         </section>

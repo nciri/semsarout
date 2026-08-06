@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Avatar, Badge, Button, Card, Icon, Select, VerifiedBadge } from '../../ds/index.js'
 import { blockedUsers as initialBlockedUsers, reportReasons, reportTargets, safetyTips } from '../../data/securityCenter.js'
 
 export default function Securite() {
+  const { t } = useTranslation(['app', 'common'])
   const [target, setTarget] = useState(reportTargets[0].value)
   const [reason, setReason] = useState(reportReasons[0].value)
   const [details, setDetails] = useState('')
@@ -16,15 +18,17 @@ export default function Securite() {
     setDetails('')
   }
 
+  const reasonOptions = reportReasons.map((r) => ({ value: r.value, label: t(`app:securite.reasons.${r.value}`) }))
+
   return (
     <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)' }}>
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '34px 24px 64px', display: 'flex', flexDirection: 'column', gap: 24 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <h1 style={{ margin: 0, font: 'var(--fw-extrabold) 26px var(--font-display)', color: 'var(--text-heading)', letterSpacing: '-0.02em' }}>
-            Centre de sécurité
+            {t('app:securite.title')}
           </h1>
           <p style={{ margin: 0, font: 'var(--fw-regular) 14.5px var(--font-body)', color: 'var(--text-body)' }}>
-            Signalez un comportement suspect, gérez vos blocages, retrouvez nos conseils.
+            {t('app:securite.subtitle')}
           </p>
         </div>
 
@@ -32,20 +36,20 @@ export default function Securite() {
           <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <Card style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{ font: 'var(--fw-extrabold) 15px var(--font-display)', color: 'var(--text-heading)' }}>
-                Faire un signalement
+                {t('app:securite.reportTitle')}
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                 <span style={{ font: 'var(--fw-bold) 13px var(--font-body)', color: 'var(--text-heading)' }}>
-                  Que souhaitez-vous signaler ?
+                  {t('app:securite.reportTargetQuestion')}
                 </span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {reportTargets.map((t) => {
-                    const active = t.value === target
+                  {reportTargets.map((tg) => {
+                    const active = tg.value === target
                     return (
                       <button
-                        key={t.value}
-                        onClick={() => setTarget(t.value)}
+                        key={tg.value}
+                        onClick={() => setTarget(tg.value)}
                         style={{
                           padding: '8px 13px',
                           borderRadius: 9,
@@ -56,24 +60,24 @@ export default function Securite() {
                           cursor: 'pointer',
                         }}
                       >
-                        {t.label}
+                        {t(`app:securite.targets.${tg.value}`)}
                       </button>
                     )
                   })}
                 </div>
               </div>
 
-              <Select label="Motif" options={reportReasons} value={reason} onChange={(e) => setReason(e.target.value)} />
+              <Select label={t('app:securite.reasonLabel')} options={reasonOptions} value={reason} onChange={(e) => setReason(e.target.value)} />
 
               <label style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                 <span style={{ font: 'var(--fw-bold) 13px var(--font-body)', color: 'var(--text-heading)' }}>
-                  Détails
+                  {t('app:securite.detailsLabel')}
                 </span>
                 <textarea
                   rows={4}
                   value={details}
                   onChange={(e) => setDetails(e.target.value)}
-                  placeholder="Décrivez ce qui s'est passé…"
+                  placeholder={t('app:securite.detailsPlaceholder')}
                   style={{
                     padding: '12px 14px',
                     border: '1px solid var(--border-subtle)',
@@ -87,18 +91,18 @@ export default function Securite() {
               </label>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <Button variant="danger" onClick={submit}>Envoyer le signalement</Button>
-                {sent && <Badge tone="verified" icon="check">Signalement envoyé</Badge>}
+                <Button variant="danger" onClick={submit}>{t('app:securite.submitReport')}</Button>
+                {sent && <Badge tone="verified" icon="check">{t('app:securite.reportSent')}</Badge>}
               </div>
             </Card>
 
             <Card style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ font: 'var(--fw-extrabold) 15px var(--font-display)', color: 'var(--text-heading)' }}>
-                Utilisateurs bloqués
+                {t('app:securite.blockedUsersTitle')}
               </div>
               {blockedUsers.length === 0 && (
                 <div style={{ font: 'var(--fw-regular) 13.5px var(--font-body)', color: 'var(--text-muted)' }}>
-                  Aucun utilisateur bloqué.
+                  {t('app:securite.noBlockedUsers')}
                 </div>
               )}
               {blockedUsers.map((b) => (
@@ -117,7 +121,7 @@ export default function Securite() {
                   <div style={{ flex: 1, font: 'var(--fw-bold) 13.5px var(--font-body)', color: 'var(--text-heading)' }}>
                     {b.name}
                   </div>
-                  <Button variant="secondary" size="sm" onClick={() => unblock(b.id)}>Débloquer</Button>
+                  <Button variant="secondary" size="sm" onClick={() => unblock(b.id)}>{t('app:securite.unblock')}</Button>
                 </div>
               ))}
             </Card>
@@ -126,26 +130,26 @@ export default function Securite() {
           <aside style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ background: 'var(--navy-50)', border: '1px solid var(--navy-100)', borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ font: 'var(--fw-extrabold) 15px var(--font-display)', color: 'var(--text-heading)' }}>
-                Conseils de sécurité
+                {t('app:securite.safetyTipsTitle')}
               </div>
               {safetyTips.map((tip) => (
                 <div key={tip.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', font: 'var(--fw-regular) 13.5px/1.5 var(--font-body)', color: 'var(--text-body)' }}>
                   <Icon name="shield-check" size={15} color="var(--navy-700)" style={{ marginTop: 2, flex: 'none' }} />
-                  <span>{tip.text}</span>
+                  <span>{t(`app:securite.tips.${tip.id}`)}</span>
                 </div>
               ))}
-              <VerifiedBadge label="Badge « Vérifié »" level="full" size="sm" />
+              <VerifiedBadge label={t('app:securite.verifiedBadgeLabel')} level="full" size="sm" />
             </div>
 
             <Card padding={18} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ font: 'var(--fw-extrabold) 14px var(--font-display)', color: 'var(--text-heading)' }}>
-                Besoin d&apos;aide immédiate ?
+                {t('app:securite.helpTitle')}
               </div>
               <div style={{ font: 'var(--fw-regular) 13px/1.5 var(--font-body)', color: 'var(--text-body)' }}>
-                Notre équipe support répond sous 24h ouvrées.
+                {t('app:securite.helpText')}
               </div>
               <a href="#" style={{ font: 'var(--fw-bold) 13px var(--font-body)', color: 'var(--link)' }}>
-                Contacter le support →
+                {t('app:securite.contactSupport')}
               </a>
             </Card>
           </aside>

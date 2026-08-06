@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Badge, Button, Card, Icon, Input, PriceTag } from '../../ds/index.js'
 import { paiementSequestre } from '../../data/paiementSequestre.js'
 
@@ -9,6 +10,7 @@ const STATUT_STYLE = {
 }
 
 function EtapeSequestre({ etape, isLast }) {
+  const { t } = useTranslation(['app', 'common'])
   return (
     <div style={{ display: 'flex', alignItems: 'center', flex: isLast ? 'none' : 1 }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 'none' }}>
@@ -27,7 +29,7 @@ function EtapeSequestre({ etape, isLast }) {
           {etape.mark}
         </div>
         <div style={{ font: 'var(--fw-bold) 11.5px var(--font-body)', color: 'var(--text-heading)', textAlign: 'center', maxWidth: 90 }}>
-          {etape.label}
+          {t(`app:paiement.steps.${etape.id}`)}
         </div>
       </div>
       {!isLast && (
@@ -45,6 +47,7 @@ function EtapeSequestre({ etape, isLast }) {
 }
 
 export default function Paiement() {
+  const { t } = useTranslation(['app', 'common'])
   const { annonce, etapes, lignes, total } = paiementSequestre
   const [mode, setMode] = useState('carte')
   const [confirmeEspeces, setConfirmeEspeces] = useState(false)
@@ -54,16 +57,16 @@ export default function Paiement() {
       <div style={{ maxWidth: 920, margin: '0 auto', padding: '34px 24px 64px', display: 'flex', flexDirection: 'column', gap: 24 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <h1 style={{ margin: 0, font: 'var(--fw-extrabold) 26px var(--font-display)', color: 'var(--text-heading)', letterSpacing: '-0.02em' }}>
-            Sécuriser votre place
+            {t('app:paiement.title')}
           </h1>
           <p style={{ margin: 0, font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-body)' }}>
-            {annonce.titre} · Entrée le {annonce.entree}
+            {t('app:paiement.subtitle', { titre: annonce.titre, entree: annonce.entree })}
           </p>
         </div>
 
         <Card style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div style={{ font: 'var(--fw-extrabold) var(--fs-body-lg) var(--font-display)', color: 'var(--text-heading)' }}>
-            Statut du séquestre
+            {t('app:paiement.escrowStatusTitle')}
           </div>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             {etapes.map((etape, i) => (
@@ -81,26 +84,25 @@ export default function Paiement() {
               lineHeight: 1.55,
             }}
           >
-            Les fonds sont conservés sous séquestre et libérés au propriétaire uniquement après confirmation de
-            l’état des lieux d’entrée, ou à l’expiration du délai de rétractation.
+            {t('app:paiement.escrowNotice')}
           </div>
         </Card>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
           <Card style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ font: 'var(--fw-extrabold) var(--fs-body-lg) var(--font-display)', color: 'var(--text-heading)' }}>
-              Détail du montant
+              {t('app:paiement.amountDetailTitle')}
             </div>
             {lignes.map((ligne) => (
-              <div key={ligne.label} style={{ display: 'flex', justifyContent: 'space-between', font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-body)' }}>
-                <span>{ligne.label}</span>
+              <div key={ligne.id} style={{ display: 'flex', justifyContent: 'space-between', font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-body)' }}>
+                <span>{t(`app:paiement.lines.${ligne.id}`)}</span>
                 <PriceTag amount={ligne.montant} period={null} size="sm" />
               </div>
             ))}
             <div style={{ height: 1, background: 'var(--border-subtle)' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <span style={{ font: 'var(--fw-extrabold) var(--fs-body-lg) var(--font-display)', color: 'var(--text-heading)' }}>
-                Total à sécuriser
+                {t('app:paiement.totalLabel')}
               </span>
               <PriceTag amount={total} period={null} size="md" />
             </div>
@@ -108,7 +110,7 @@ export default function Paiement() {
 
           <Card style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ font: 'var(--fw-extrabold) var(--fs-body-lg) var(--font-display)', color: 'var(--text-heading)' }}>
-              Mode de paiement
+              {t('app:paiement.paymentMethodTitle')}
             </div>
             <div style={{ display: 'flex', background: 'var(--surface-sunken)', borderRadius: 9, padding: 4, gap: 4 }}>
               <button
@@ -125,7 +127,7 @@ export default function Paiement() {
                   cursor: 'pointer',
                 }}
               >
-                Carte (CMI)
+                {t('app:paiement.cardTab')}
               </button>
               <button
                 onClick={() => setMode('especes')}
@@ -141,33 +143,32 @@ export default function Paiement() {
                   cursor: 'pointer',
                 }}
               >
-                Espèces
+                {t('app:paiement.cashTab')}
               </button>
             </div>
 
             {mode === 'carte' ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <Input placeholder="Numéro de carte" icon="credit-card" autoComplete="off" />
+                <Input placeholder={t('app:paiement.cardNumberPlaceholder')} icon="credit-card" autoComplete="off" />
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <Input placeholder="MM/AA" containerStyle={{ flex: 1 }} autoComplete="off" />
-                  <Input placeholder="CVC" containerStyle={{ flex: 1 }} autoComplete="off" />
+                  <Input placeholder={t('app:paiement.expiryPlaceholder')} containerStyle={{ flex: 1 }} autoComplete="off" />
+                  <Input placeholder={t('app:paiement.cvcPlaceholder')} containerStyle={{ flex: 1 }} autoComplete="off" />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, font: 'var(--fw-regular) var(--fs-xs) var(--font-body)', color: 'var(--text-muted)' }}>
                   <Icon name="shield-check" size={14} />
-                  Paiement sécurisé par CMI — aucune donnée de carte n’est stockée sur la plateforme.
+                  {t('app:paiement.securePaymentNotice')}
                 </div>
                 <Button variant="accent" fullWidth>
-                  Payer {new Intl.NumberFormat('fr-MA').format(total).replace(/[\u202f,]/g, ' ')} MAD
+                  {t('app:paiement.payButton', { amount: new Intl.NumberFormat('fr-MA').format(total).replace(/[\u202f,]/g, ' ') })}
                 </Button>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <p style={{ margin: 0, font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-body)', lineHeight: 1.55 }}>
-                  Le propriétaire déclare l’encaissement en espèces ; vous confirmez ensuite pour recevoir une
-                  quittance numérique. Aucun montant ne transite par la plateforme.
+                  {t('app:paiement.cashNotice')}
                 </p>
                 {confirmeEspeces && (
-                  <Badge tone="verified" icon="check">Réception confirmée — quittance envoyée</Badge>
+                  <Badge tone="verified" icon="check">{t('app:paiement.cashConfirmedBadge')}</Badge>
                 )}
                 <Button
                   variant="secondary"
@@ -176,7 +177,7 @@ export default function Paiement() {
                   onClick={() => setConfirmeEspeces(true)}
                   style={{ borderColor: 'var(--navy-700)', background: 'var(--navy-50)', color: 'var(--navy-700)' }}
                 >
-                  {confirmeEspeces ? 'Réception confirmée' : "Confirmer la réception de l'encaissement"}
+                  {confirmeEspeces ? t('app:paiement.cashReceiptConfirmed') : t('app:paiement.confirmCashReceipt')}
                 </Button>
               </div>
             )}

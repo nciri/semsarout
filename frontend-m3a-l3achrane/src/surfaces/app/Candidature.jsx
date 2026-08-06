@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Button, Card, Chip, Icon } from '../../ds/index.js'
 import { applicationHost, applicationListing, applicationMatch, applicationSlots } from '../../data/applicationForm.js'
 
@@ -7,6 +8,7 @@ import { applicationHost, applicationListing, applicationMatch, applicationSlots
 const requiredStar = <span style={{ color: 'var(--red-500)' }} aria-hidden> *</span>
 
 export default function Candidature() {
+  const { t } = useTranslation(['app', 'common'])
   const [sent, setSent] = useState(false)
   const [message, setMessage] = useState('')
   const [slots, setSlots] = useState(applicationSlots)
@@ -32,17 +34,17 @@ export default function Candidature() {
               ✓
             </div>
             <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: 'var(--text-heading)', letterSpacing: '-0.02em' }}>
-              Candidature envoyée
+              {t('app:candidature.sentTitle')}
             </h1>
             <p style={{ margin: 0, maxWidth: 440, fontSize: 14.5, color: 'var(--text-body)', lineHeight: 1.6 }}>
-              {applicationHost.nom} a été notifiée. Vous recevrez une réponse sous 48h — suivez son statut dans vos candidatures ou continuez la conversation.
+              {t('app:candidature.sentMessage', { host: applicationHost.nom })}
             </p>
             <div style={{ display: 'flex', gap: 12 }}>
               <Link to="/espace/messages">
-                <Button variant="secondary">Voir la conversation</Button>
+                <Button variant="secondary">{t('app:candidature.viewConversation')}</Button>
               </Link>
               <Link to="/espace">
-                <Button variant="primary">Continuer la recherche</Button>
+                <Button variant="primary">{t('app:candidature.continueSearch')}</Button>
               </Link>
             </div>
           </div>
@@ -57,10 +59,15 @@ export default function Candidature() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: 'var(--text-heading)', letterSpacing: '-0.02em' }}>
-              Postuler pour cette chambre
+              {t('app:candidature.title')}
             </h1>
             <p style={{ margin: 0, fontSize: 14.5, color: 'var(--text-body)' }}>
-              {applicationListing.titre} — {applicationListing.quartier}, {applicationListing.ville} · {applicationListing.prixMad.toLocaleString('fr-FR')} MAD/mois
+              {t('app:candidature.listingSubtitle', {
+                titre: applicationListing.titre,
+                quartier: applicationListing.quartier,
+                ville: applicationListing.ville,
+                prix: applicationListing.prixMad.toLocaleString('fr-FR'),
+              })}
             </p>
           </div>
 
@@ -69,7 +76,7 @@ export default function Candidature() {
             padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 6,
           }}>
             <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--green-700)' }}>
-              {applicationMatch.pct}% de compatibilité avec ce logement
+              {t('app:candidature.matchTitle', { pct: applicationMatch.pct })}
             </div>
             <div style={{ fontSize: 13.5, color: 'var(--text-body)', lineHeight: 1.55 }}>
               {applicationMatch.raisons.join(' · ')}
@@ -79,14 +86,14 @@ export default function Candidature() {
           <Card padding={22} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <label style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
               <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-heading)' }}>
-                Message au·à la colocataire{requiredStar}
+                {t('app:candidature.messageLabel')}{requiredStar}
               </span>
               <textarea
                 rows={5}
                 required
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Présentez-vous en quelques lignes : votre situation, vos disponibilités, pourquoi ce logement vous intéresse…"
+                placeholder={t('app:candidature.messagePlaceholder')}
                 style={{
                   padding: '12px 14px', border: '1px solid var(--border-subtle)', borderRadius: 8,
                   fontSize: 14, fontFamily: 'inherit', color: 'var(--text-heading)', outline: 'none', resize: 'vertical',
@@ -96,7 +103,7 @@ export default function Candidature() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
               <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-heading)' }}>
-                Créneaux de visite qui vous conviennent
+                {t('app:candidature.slotsLabel')}
               </span>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {slots.map((s) => (
@@ -119,13 +126,13 @@ export default function Candidature() {
                 <Icon name="shield-check" size={16} strokeWidth={2.4} />
               </span>
               <div style={{ fontSize: 13, color: 'var(--text-body)', lineHeight: 1.55 }}>
-                Votre profil est vérifié et votre questionnaire de mode de vie est complet — le·la propriétaire verra votre score de compatibilité dès réception.
+                {t('app:candidature.verifiedNotice')}
               </div>
             </div>
 
             <div style={{ alignSelf: 'flex-end' }}>
               <Button variant="accent" size="lg" onClick={submit} disabled={!message.trim()}>
-                Envoyer ma candidature
+                {t('app:candidature.submit')}
               </Button>
             </div>
           </Card>

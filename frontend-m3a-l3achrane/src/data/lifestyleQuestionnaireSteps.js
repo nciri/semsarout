@@ -1,53 +1,49 @@
-export const IMPORTANCE_LEVELS = ['Indifférent', 'Préférence', 'Décisif']
+// Libellés (titre/intro/label/options) vivent dans app.json (namespace app, section questionnaire) ;
+// seules les valeurs brutes (id/cle/options-key) sont conservées ici.
+export const IMPORTANCE_LEVELS = ['neutral', 'preference', 'decisive']
 
 export const lifestyleQuestionnaireSteps = [
   {
-    titre: 'Votre rythme de vie',
-    intro: 'Ça aide à trouver des colocataires sur le même tempo.',
+    id: 'rythme',
     questions: [
-      { cle: 'coucher', label: 'Vous vous couchez plutôt…', options: ['Avant 22h', '22h–minuit', 'Après minuit'] },
-      { cle: 'travail', label: 'Votre semaine type', options: ['Cours/travail le jour', 'Horaires décalés', 'Télétravail fréquent'] },
-      { cle: 'weekend', label: 'Le week-end, vous êtes plutôt', options: ['À la maison', 'Souvent sorti', 'Ça dépend'] },
+      { cle: 'coucher', options: ['avant22', '22h-minuit', 'apres-minuit'] },
+      { cle: 'travail', options: ['jour', 'decale', 'teletravail'] },
+      { cle: 'weekend', options: ['maison', 'sorti', 'ca-depend'] },
     ],
   },
   {
-    titre: 'Propreté et organisation',
-    intro: 'La première source de friction en colocation.',
+    id: 'proprete',
     questions: [
-      { cle: 'menage', label: 'Fréquence de ménage des parties communes', options: ['Quotidien', '2–3×/semaine', 'Hebdomadaire'] },
-      { cle: 'vaisselle', label: 'La vaisselle, vous la faites', options: ['Immédiatement', 'Le jour même', 'Quand il y en a beaucoup'] },
+      { cle: 'menage', options: ['quotidien', '2-3-semaine', 'hebdomadaire'] },
+      { cle: 'vaisselle', options: ['immediat', 'jour-meme', 'beaucoup'] },
     ],
   },
   {
-    titre: 'Tabac et alcool',
-    intro: 'Des critères souvent décisifs, à préciser clairement.',
+    id: 'tabac-alcool',
     questions: [
-      { cle: 'tabac', label: 'Tabac', options: ['Non-fumeur', 'Fume au balcon', 'Fume à l’intérieur'] },
-      { cle: 'alcool', label: 'Alcool dans le logement', options: ['Jamais', 'Occasionnellement', 'Régulièrement'] },
+      { cle: 'tabac', options: ['non-fumeur', 'balcon', 'interieur'] },
+      { cle: 'alcool', options: ['jamais', 'occasionnel', 'regulier'] },
     ],
   },
   {
-    titre: 'Invités et bruit',
-    intro: 'Pour anticiper les attentes sur les parties communes.',
+    id: 'invites-bruit',
     questions: [
-      { cle: 'invites', label: 'Invités à la maison', options: ['Rarement', 'Quelques fois/mois', 'Souvent'] },
-      { cle: 'bruit', label: 'Musique / appels dans le logement', options: ['Casque uniquement', 'Volume modéré', 'Pas de contrainte'] },
+      { cle: 'invites', options: ['rarement', 'mensuel', 'souvent'] },
+      { cle: 'bruit', options: ['casque', 'modere', 'sans-contrainte'] },
     ],
   },
   {
-    titre: 'Cuisine et partage',
-    intro: 'Séparé ou en commun — puis comment les charges se répartissent.',
+    id: 'cuisine',
     questions: [
-      { cle: 'cuisine', label: 'Cuisine', options: ['Séparée', 'Partagée parfois', 'On cuisine ensemble'] },
-      { cle: 'charges', label: 'Courses et charges communes', options: ['Chacun le sien', 'Caisse commune', 'À définir ensemble'] },
+      { cle: 'cuisine', options: ['separee', 'parfois', 'ensemble'] },
+      { cle: 'charges', options: ['chacun', 'commune', 'a-definir'] },
     ],
   },
   {
-    titre: 'Sociabilité et langue du foyer',
-    intro: 'Dernière étape avant votre profil de compatibilité.',
+    id: 'sociabilite',
     questions: [
-      { cle: 'social', label: 'Vous cherchez plutôt des colocataires', options: ['Amis proches', 'Bon voisinage', 'Peu importe'] },
-      { cle: 'langue', label: 'Langue de communication au foyer', options: ['Darija', 'Français', 'Indifférent'] },
+      { cle: 'social', options: ['amis', 'voisinage', 'peu-importe'] },
+      { cle: 'langue', options: ['darija', 'francais', 'indifferent'] },
     ],
   },
 ]

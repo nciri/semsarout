@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, Card, Avatar, Icon } from '../../ds/index.js'
 import { stayContext, reviewCriteria, receivedReviews, pendingReviewsCount, pendingReviewsDelayDays } from '../../data/reviews.js'
 
 function StarPicker({ value, onChange }) {
+  const { t } = useTranslation(['web', 'common'])
   return (
     <div style={{ display: 'flex', gap: 6 }}>
       {[1, 2, 3, 4, 5].map((n) => (
@@ -10,7 +12,7 @@ function StarPicker({ value, onChange }) {
           key={n}
           type="button"
           onClick={() => onChange(n)}
-          aria-label={`${n} étoile${n > 1 ? 's' : ''}`}
+          aria-label={t('web:reviews.starAriaLabel', { count: n })}
           style={{
             width: 34, height: 34, border: 0, background: 'transparent',
             fontSize: 22, cursor: 'pointer', padding: 0, lineHeight: 1,
@@ -25,6 +27,7 @@ function StarPicker({ value, onChange }) {
 }
 
 export default function Avis() {
+  const { t } = useTranslation(['web', 'common'])
   const [scores, setScores] = useState(() =>
     Object.fromEntries(reviewCriteria.map((c) => [c.key, c.initial])),
   )
@@ -39,10 +42,10 @@ export default function Avis() {
     <div style={{ maxWidth: 760, margin: '0 auto', padding: '34px 24px 64px', display: 'flex', flexDirection: 'column', gap: 26 }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <h1 style={{ margin: 0, font: 'var(--fw-bold) 26px/1.2 var(--font-display)', letterSpacing: '-0.02em', color: 'var(--text-heading)' }}>
-          Évaluer votre séjour
+          {t('web:reviews.title')}
         </h1>
         <p style={{ margin: 0, font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-body)' }}>
-          Avec {stayContext.partnerName} — {stayContext.listingTitle} · terminé le {stayContext.endedDate}
+          {t('web:reviews.subtitle', { partner: stayContext.partnerName, listing: stayContext.listingTitle, date: stayContext.endedDate })}
         </p>
       </div>
 
@@ -53,15 +56,14 @@ export default function Avis() {
       }}>
         <Icon name="info" size={16} color="var(--navy-600)" style={{ marginTop: 2, flex: 'none' }} />
         <span>
-          Votre évaluation ne sera publiée que lorsque les deux parties auront évalué — ou automatiquement 14 jours
-          après la fin du séjour.
+          {t('web:reviews.publishNotice')}
         </span>
       </div>
 
       <Card padding={22} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         {reviewCriteria.map((c) => (
           <div key={c.key} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ font: 'var(--fw-bold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>{c.label}</div>
+            <div style={{ font: 'var(--fw-bold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>{t(`web:reviews.criteria.${c.key}`)}</div>
             <StarPicker
               value={scores[c.key]}
               onChange={(n) => setScores((s) => ({ ...s, [c.key]: n }))}
@@ -71,13 +73,13 @@ export default function Avis() {
 
         <label style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
           <span style={{ font: 'var(--fw-bold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>
-            Commentaire (visible après publication)
+            {t('web:reviews.commentLabel')}
           </span>
           <textarea
             rows={4}
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Décrivez votre expérience de cohabitation…"
+            placeholder={t('web:reviews.commentPlaceholder')}
             style={{
               padding: '12px 14px', border: '1px solid var(--border-subtle)', borderRadius: 8,
               font: 'var(--fw-regular) var(--fs-body) var(--font-body)', outline: 'none', resize: 'vertical',
@@ -86,13 +88,13 @@ export default function Avis() {
         </label>
 
         <Button variant="accent" onClick={submit} style={{ alignSelf: 'flex-start' }}>
-          {submitted ? 'Évaluation envoyée' : 'Publier mon évaluation'}
+          {submitted ? t('web:reviews.submittedCta') : t('web:reviews.submitCta')}
         </Button>
       </Card>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ font: 'var(--fw-bold) var(--fs-body-lg) var(--font-display)', color: 'var(--text-heading)' }}>
-          Vos évaluations reçues
+          {t('web:reviews.receivedTitle')}
         </div>
 
         {receivedReviews.map((r) => (
@@ -118,8 +120,7 @@ export default function Avis() {
             font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-muted)',
           }}>
             <Icon name="clock" size={16} style={{ flex: 'none' }} />
-            {pendingReviewsCount} évaluation{pendingReviewsCount > 1 ? 's' : ''} en attente de publication — visible
-            {pendingReviewsCount > 1 ? 's' : ''} dans {pendingReviewsDelayDays} jours ou dès que l&apos;autre partie aura évalué.
+            {t('web:reviews.pendingNotice', { count: pendingReviewsCount, days: pendingReviewsDelayDays })}
           </div>
         )}
       </div>

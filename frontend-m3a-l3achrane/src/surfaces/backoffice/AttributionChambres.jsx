@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Avatar, Badge, Button, Chip, Icon, MatchScore, SidebarNav } from '../../ds/index.js'
 import { BACKOFFICE_NAV_ITEMS, PROPERTIES } from '../../data/roomAssignmentBoard.js'
 
@@ -6,11 +7,7 @@ const SORT_COMPATIBILITY = 'compatibility'
 const SORT_PROXIMITY = 'proximity'
 const SORT_NAME = 'name'
 
-const SORTS = [
-  { value: SORT_COMPATIBILITY, label: 'Compatibilité' },
-  { value: SORT_PROXIMITY, label: 'Proximité' },
-  { value: SORT_NAME, label: 'Nom' },
-]
+const SORT_VALUES = [SORT_COMPATIBILITY, SORT_PROXIMITY, SORT_NAME]
 
 const ROOM_STATUS_TAKEN = 'taken'
 const ROOM_STATUS_OPEN_WITH_PICK = 'open-with-pick'
@@ -25,10 +22,10 @@ function averageScore(candidate, rooms) {
   return Math.round(total / rooms.length)
 }
 
-function compatibilityReason(score, candidate) {
-  if (score >= 88) return `Mode de vie et budget alignés, trajet court vers ${candidate.anchor}.`
-  if (score >= 75) return 'Bon accord général ; écart léger sur le budget ou les horaires.'
-  return 'Compatibilité faible : rythme de vie ou trajet peu adaptés.'
+function compatibilityReason(t, score, candidate) {
+  if (score >= 88) return t('backoffice:roomAssignment.room.reasonHigh', { anchor: candidate.anchor })
+  if (score >= 75) return t('backoffice:roomAssignment.room.reasonMid')
+  return t('backoffice:roomAssignment.room.reasonLow')
 }
 
 /**
@@ -37,6 +34,7 @@ function compatibilityReason(score, candidate) {
  * (compatible glisser-déposer visuel simplifié en "sélectionner puis placer").
  */
 export default function AttributionChambres() {
+  const { t } = useTranslation(['backoffice'])
   const [propertyIndex, setPropertyIndex] = useState(0)
   const [selectedCandidateId, setSelectedCandidateId] = useState(null)
   const [sort, setSort] = useState(SORT_COMPATIBILITY)
@@ -48,6 +46,19 @@ export default function AttributionChambres() {
     () => new Map(property.candidates.map((c) => [c.id, c])),
     [property]
   )
+
+  const navItems = useMemo(
+    () => BACKOFFICE_NAV_ITEMS.map((item) => ({
+      ...item,
+      label: t(`backoffice:roomAssignment.sidebarNav.${item.value}`, { defaultValue: item.label }),
+    })),
+    [t]
+  )
+
+  const sorts = SORT_VALUES.map((value) => ({
+    value,
+    label: t(`backoffice:roomAssignment.sorts.${value}`),
+  }))
 
   function selectProperty(index) {
     setPropertyIndex(index)
@@ -136,7 +147,7 @@ export default function AttributionChambres() {
         room,
         candidate: selectedCandidate,
         score: selectedCandidate.scores[room.id],
-        reason: compatibilityReason(selectedCandidate.scores[room.id], selectedCandidate),
+        reason: compatibilityReason(t, selectedCandidate.scores[room.id], selectedCandidate),
         isBest: bestRoomId === room.id,
       }
     }
@@ -174,15 +185,31 @@ export default function AttributionChambres() {
   const meanCompatibility = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0
 
   const kpis = [
-    { label: 'Occupation', value: `${filled}/${property.rooms.length}`, note: `${property.rooms.length - filled} chambre(s) libre(s)` },
-    { label: 'Compatibilité moyenne', value: meanCompatibility ? `${meanCompatibility}%` : '—', note: 'sur les places attribuées' },
-    { label: 'Trajet moyen', value: '16 min', note: 'vers école, campus ou entreprise' },
-    { label: 'Candidats en attente', value: String(property.candidates.length - filled), note: 'dossiers vérifiés' },
+    {
+      label: t('backoffice:roomAssignment.kpis.occupation'),
+      value: `${filled}/${property.rooms.length}`,
+      note: t('backoffice:roomAssignment.kpis.occupationNote', { count: property.rooms.length - filled }),
+    },
+    {
+      label: t('backoffice:roomAssignment.kpis.avgCompatibility'),
+      value: meanCompatibility ? `${meanCompatibility}%` : '—',
+      note: t('backoffice:roomAssignment.kpis.avgCompatibilityNote'),
+    },
+    {
+      label: t('backoffice:roomAssignment.kpis.avgCommute'),
+      value: t('backoffice:roomAssignment.kpis.avgCommuteValue'),
+      note: t('backoffice:roomAssignment.kpis.avgCommuteNote'),
+    },
+    {
+      label: t('backoffice:roomAssignment.kpis.waitingCandidates'),
+      value: String(property.candidates.length - filled),
+      note: t('backoffice:roomAssignment.kpis.waitingCandidatesNote'),
+    },
   ]
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: 'var(--bg-page)' }}>
-      <SidebarNav items={BACKOFFICE_NAV_ITEMS} active="assignments" />
+      <SidebarNav items={navItems} active="assignments" />
 
       <main style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
         <header
@@ -200,15 +227,15 @@ export default function AttributionChambres() {
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0 }}>
             <div style={{ font: 'var(--fw-bold) 12.5px var(--font-body)', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-              Gestion locative
+              {t('backoffice:roomAssignment.kicker')}
             </div>
             <h1 style={{ margin: 0, font: 'var(--fw-extrabold) 23px var(--font-display)', letterSpacing: '-0.02em', color: 'var(--text-heading)' }}>
-              Attribution des chambres
+              {t('backoffice:roomAssignment.title')}
             </h1>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flex: 'none' }}>
-            <Button variant="secondary" size="md">Exporter le plan</Button>
-            <Button variant="primary" size="md" onClick={autoFill}>Affectation automatique</Button>
+            <Button variant="secondary" size="md">{t('backoffice:roomAssignment.export')}</Button>
+            <Button variant="primary" size="md" onClick={autoFill}>{t('backoffice:roomAssignment.autoFill')}</Button>
           </div>
         </header>
 
@@ -238,7 +265,9 @@ export default function AttributionChambres() {
                   <span style={{ font: 'var(--fw-extrabold) 14.5px var(--font-display)', color: 'var(--text-heading)' }}>{p.name}</span>
                   <span style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>{p.place}</span>
                   <span style={{ display: 'flex', gap: 8, alignItems: 'center', marginBlockStart: 2 }}>
-                    <Badge tone={on ? 'solidNavy' : 'neutral'} size="sm">{occupied}/{p.rooms.length} occupées</Badge>
+                    <Badge tone={on ? 'solidNavy' : 'neutral'} size="sm">
+                      {t('backoffice:roomAssignment.occupied', { count: occupied, total: p.rooms.length })}
+                    </Badge>
                     <span style={{ font: 'var(--fw-regular) 12px var(--font-body)', color: 'var(--text-muted)' }}>{p.anchorLabel}</span>
                   </span>
                 </button>
@@ -286,11 +315,13 @@ export default function AttributionChambres() {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-                  <div style={{ font: 'var(--fw-extrabold) 15px var(--font-display)', color: 'var(--text-heading)' }}>Plan du bien</div>
+                  <div style={{ font: 'var(--fw-extrabold) 15px var(--font-display)', color: 'var(--text-heading)' }}>
+                    {t('backoffice:roomAssignment.planTitle')}
+                  </div>
                   <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
                     {selectedCandidate
-                      ? `${selectedCandidate.name} sélectionné(e) — chaque chambre affiche son score`
-                      : 'Sélectionnez un candidat pour voir les scores par chambre'}
+                      ? t('backoffice:roomAssignment.planHintSelected', { name: selectedCandidate.name })
+                      : t('backoffice:roomAssignment.planHintEmpty')}
                   </div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(232px,1fr))', gap: 14 }}>
@@ -316,13 +347,15 @@ export default function AttributionChambres() {
               }}
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <div style={{ font: 'var(--fw-extrabold) 15px var(--font-display)', color: 'var(--text-heading)' }}>Candidats recommandés</div>
+                <div style={{ font: 'var(--fw-extrabold) 15px var(--font-display)', color: 'var(--text-heading)' }}>
+                  {t('backoffice:roomAssignment.candidatesTitle')}
+                </div>
                 <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                  Classés par compatibilité moyenne avec ce bien et proximité du {property.anchorWord}.
+                  {t('backoffice:roomAssignment.candidatesHint', { anchor: property.anchorWord })}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
-                {SORTS.map((s) => (
+                {sorts.map((s) => (
                   <Chip key={s.value} selected={sort === s.value} onClick={() => setSort(s.value)}>
                     {s.label}
                   </Chip>
@@ -342,12 +375,13 @@ export default function AttributionChambres() {
 }
 
 function RoomTile({ entry, onPlace, onClear }) {
+  const { t } = useTranslation(['backoffice'])
   const { status, room } = entry
   return (
     <div style={{ border: '1px solid var(--border-subtle)', borderRadius: 14, overflow: 'hidden', background: 'var(--white)', display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '11px 14px', background: 'var(--gray-100)', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={{ font: 'var(--fw-extrabold) 14px var(--font-display)', color: 'var(--text-heading)', flex: 1 }}>{room.name}</div>
-        <div style={{ font: 'var(--fw-bold) 12px var(--font-body)', color: 'var(--text-muted)' }}>{room.price} / mois</div>
+        <div style={{ font: 'var(--fw-bold) 12px var(--font-body)', color: 'var(--text-muted)' }}>{room.price} {t('backoffice:roomAssignment.room.perMonth')}</div>
       </div>
       <div style={{ padding: '8px 14px 0', font: 'var(--fw-regular) 12px var(--font-body)', color: 'var(--text-muted)' }}>{room.meta}</div>
 
@@ -365,12 +399,12 @@ function RoomTile({ entry, onPlace, onClear }) {
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5, padding: '9px 11px', borderRadius: 10, background: 'var(--green-50)' }}>
-            <Badge tone="verified" size="sm">{entry.score}% de compatibilité</Badge>
+            <Badge tone="verified" size="sm">{t('backoffice:roomAssignment.room.compatibilityBadge', { score: entry.score })}</Badge>
             <div style={{ font: 'var(--fw-regular) 12px var(--font-body)', color: 'var(--text-body)', lineHeight: 1.45 }}>
               {entry.tenant.anchor} — {entry.tenant.distance} · {entry.tenant.commute}
             </div>
           </div>
-          <Button variant="secondary" size="sm" onClick={() => onClear(room.id)}>Libérer la chambre</Button>
+          <Button variant="secondary" size="sm" onClick={() => onClear(room.id)}>{t('backoffice:roomAssignment.room.releaseRoom')}</Button>
         </div>
       )}
 
@@ -379,15 +413,17 @@ function RoomTile({ entry, onPlace, onClear }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5, padding: '9px 11px', borderRadius: 10, background: 'var(--navy-50)', border: '1px dashed var(--navy-300)' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
               <span style={{ font: 'var(--fw-extrabold) 17px var(--font-display)', color: 'var(--navy-700)', letterSpacing: '-0.01em' }}>{entry.score}%</span>
-              <span style={{ font: 'var(--fw-bold) 12px var(--font-body)', color: 'var(--text-muted)' }}>avec {entry.candidate.name.split(' ')[0]}</span>
+              <span style={{ font: 'var(--fw-bold) 12px var(--font-body)', color: 'var(--text-muted)' }}>
+                {t('backoffice:roomAssignment.room.withCandidate', { name: entry.candidate.name.split(' ')[0] })}
+              </span>
             </div>
             <div style={{ font: 'var(--fw-regular) 12px var(--font-body)', color: 'var(--text-body)', lineHeight: 1.45 }}>
               {entry.candidate.anchor} — {entry.candidate.distance} · {entry.candidate.commute}
             </div>
             <div style={{ font: 'var(--fw-regular) 12px var(--font-body)', color: 'var(--text-muted)', lineHeight: 1.45 }}>{entry.reason}</div>
           </div>
-          {entry.isBest && <Badge tone="gold" size="sm" style={{ alignSelf: 'flex-start' }}>Meilleure suggestion</Badge>}
-          <Button variant="primary" size="sm" onClick={() => onPlace(room.id)}>Placer ici</Button>
+          {entry.isBest && <Badge tone="gold" size="sm" style={{ alignSelf: 'flex-start' }}>{t('backoffice:roomAssignment.room.bestSuggestion')}</Badge>}
+          <Button variant="primary" size="sm" onClick={() => onPlace(room.id)}>{t('backoffice:roomAssignment.room.placeHere')}</Button>
         </div>
       )}
 
@@ -409,14 +445,14 @@ function RoomTile({ entry, onPlace, onClear }) {
               lineHeight: 1.45,
             }}
           >
-            Chambre libre
+            {t('backoffice:roomAssignment.room.freeRoomLine1')}
             <br />
-            Sélectionnez un candidat à droite
+            {t('backoffice:roomAssignment.room.freeRoomLine2')}
           </div>
           <div style={{ font: 'var(--fw-regular) 12px var(--font-body)', color: 'var(--text-muted)' }}>
             {entry.topCandidate
-              ? `Meilleur candidat : ${entry.topCandidate.name} (${entry.topCandidate.scores[room.id]}%)`
-              : 'Aucun candidat disponible'}
+              ? t('backoffice:roomAssignment.room.bestCandidate', { name: entry.topCandidate.name, score: entry.topCandidate.scores[room.id] })
+              : t('backoffice:roomAssignment.room.noCandidateAvailable')}
           </div>
         </div>
       )}
@@ -425,6 +461,7 @@ function RoomTile({ entry, onPlace, onClear }) {
 }
 
 function CandidateCard({ entry, onSelect }) {
+  const { t } = useTranslation(['backoffice'])
   const { candidate, avg, placed, placedInRoomName, selected } = entry
 
   if (placed) {
@@ -434,7 +471,9 @@ function CandidateCard({ entry, onSelect }) {
         <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3, flex: 1 }}>
           <div style={{ font: 'var(--fw-extrabold) 13.5px var(--font-display)', color: 'var(--text-heading)' }}>{candidate.name}</div>
           <div style={{ font: 'var(--fw-regular) 12px var(--font-body)', color: 'var(--text-muted)' }}>{candidate.profile}</div>
-          <div style={{ font: 'var(--fw-bold) 12px var(--font-body)', color: 'var(--green-700)' }}>Placé · {placedInRoomName}</div>
+          <div style={{ font: 'var(--fw-bold) 12px var(--font-body)', color: 'var(--green-700)' }}>
+            {t('backoffice:roomAssignment.candidateCard.placed', { room: placedInRoomName })}
+          </div>
         </div>
       </div>
     )
@@ -472,7 +511,7 @@ function CandidateCard({ entry, onSelect }) {
         </span>
         <span style={{ font: 'var(--fw-regular) 12px var(--font-body)', color: 'var(--text-muted)', lineHeight: 1.45, display: 'flex', alignItems: 'center', gap: 5 }}>
           <Icon name="move-right" size={13} color="var(--text-muted)" />
-          {candidate.commute} · Budget {candidate.budget}
+          {t('backoffice:roomAssignment.candidateCard.commuteBudget', { commute: candidate.commute, budget: candidate.budget })}
         </span>
       </span>
       {selected && (
@@ -488,7 +527,9 @@ function CandidateCard({ entry, onSelect }) {
         </span>
       )}
       {selected && (
-        <span style={{ font: 'var(--fw-extrabold) 12px var(--font-display)', color: 'var(--navy-700)' }}>Choisissez une chambre sur le plan →</span>
+        <span style={{ font: 'var(--fw-extrabold) 12px var(--font-display)', color: 'var(--navy-700)' }}>
+          {t('backoffice:roomAssignment.candidateCard.chooseRoom')}
+        </span>
       )}
     </button>
   )

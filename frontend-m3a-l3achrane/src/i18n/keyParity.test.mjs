@@ -5,16 +5,19 @@ import commonFr from '../locales/fr/common.json' with { type: 'json' }
 import webFr from '../locales/fr/web.json' with { type: 'json' }
 import appFr from '../locales/fr/app.json' with { type: 'json' }
 import partnerFr from '../locales/fr/partner.json' with { type: 'json' }
+import backofficeFr from '../locales/fr/backoffice.json' with { type: 'json' }
 import commonAr from '../locales/ar/common.json' with { type: 'json' }
 import webAr from '../locales/ar/web.json' with { type: 'json' }
 import appAr from '../locales/ar/app.json' with { type: 'json' }
 import partnerAr from '../locales/ar/partner.json' with { type: 'json' }
+import backofficeAr from '../locales/ar/backoffice.json' with { type: 'json' }
 
 const NAMESPACES = {
   common: [commonFr, commonAr],
   web: [webFr, webAr],
   app: [appFr, appAr],
   partner: [partnerFr, partnerAr],
+  backoffice: [backofficeFr, backofficeAr],
 }
 
 // Deep key paths ("notFound.title") so nesting mismatches are caught too, not just top level.

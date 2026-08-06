@@ -290,5 +290,81 @@
     "termsLink": "شروط الاستخدام",
     "termsAnd": "و",
     "privacyLink": "سياسة الخصوصية"
+  },
+  "registration": {
+    "title": "أنشئ ملفك الشخصي",
+    "subtitle": "ثلاث خطوات قصيرة. تبقى معلوماتك خاصة إلى أن تتواصل مع سكن جماعي.",
+    "steps": {
+      "profile": "الملف الشخصي",
+      "verification": "التحقق",
+      "lifestyle": "نمط الحياة"
+    },
+    "iAmLabel": "أنا",
+    "roles": {
+      "student": {
+        "title": "طالب/ة",
+        "desc": "مسجّل في مؤسسة تعليمية"
+      },
+      "worker": {
+        "title": "شاب/ة عامل/ة",
+        "desc": "يعمل أو يقوم بتدريب"
+      },
+      "host": {
+        "title": "أعرض سكنًا",
+        "desc": "مالك أو شريك سكن"
+      }
+    },
+    "cityOptions": [
+      "الدار البيضاء",
+      "الرباط",
+      "مراكش",
+      "طنجة",
+      "فاس"
+    ],
+    "form": {
+      "firstNameLabel": "الاسم الشخصي",
+      "firstNamePlaceholder": "ياسين",
+      "lastNameLabel": "الاسم العائلي",
+      "lastNamePlaceholder": "بنعلي",
+      "emailLabel": "البريد الإلكتروني",
+      "emailPlaceholder": "prenom.nom@exemple.ma",
+      "phoneLabel": "الهاتف",
+      "phonePlaceholder": "+212 6 12 34 56 78",
+      "cityLabel": "المدينة",
+      "orgLabel": "المؤسسة التعليمية أو صاحب العمل",
+      "orgPlaceholder": "جامعة الحسن الثاني",
+      "passwordLabel": "كلمة المرور",
+      "passwordPlaceholder": "8 أحرف على الأقل",
+      "passwordHint": "8 أحرف على الأقل، تتضمن رقمًا واحدًا على الأقل."
+    },
+    "nextStepTitle": "الخطوة التالية: التحقق",
+    "nextStepDesc": "ستقوم برفع بطاقتك الوطنية وإثبات وضعيتك. لا شيء مرئي للأعضاء الآخرين — تظهر فقط شارة «موثّق» في ملفك الشخصي.",
+    "agreementPrefix": "أوافق على",
+    "agreementTermsLink": "شروط الاستخدام",
+    "agreementMiddle": "ومعالجة بياناتي وفقًا لـ",
+    "agreementPrivacyLink": "سياسة الخصوصية",
+    "agreementSuffix": "(CNDP).",
+    "saveLaterCta": "احفظ واستأنف لاحقًا",
+    "continueCta": "متابعة"
+  },
+  "reviews": {
+    "title": "قيّم إقامتك",
+    "subtitle": "مع {{partner}} — {{listing}} · انتهت في {{date}}",
+    "publishNotice": "لن يُنشر تقييمك إلا بعد أن يقيّم الطرفان — أو تلقائيًا بعد 14 يومًا من انتهاء الإقامة.",
+    "criteria": {
+      "respect": "احترام المواعيد والقواعد",
+      "proprete": "نظافة المساحات المشتركة",
+      "communication": "التواصل",
+      "conformite": "المطابقة مع الإعلان"
+    },
+    "commentLabel": "تعليق (يظهر بعد النشر)",
+    "commentPlaceholder": "صف تجربتك في السكن المشترك…",
+    "submitCta": "نشر تقييمي",
+    "submittedCta": "تم إرسال التقييم",
+    "receivedTitle": "التقييمات التي تلقّيتها",
+    "starAriaLabel_one": "{{count}} نجمة",
+    "starAriaLabel_other": "{{count}} نجوم",
+    "pendingNotice_one": "{{count}} تقييم في انتظار النشر — يظهر خلال {{days}} أيام أو حالما يقيّم الطرف الآخر.",
+    "pendingNotice_other": "{{count}} تقييمات في انتظار النشر — تظهر خلال {{days}} أيام أو حالما يقيّم الطرف الآخر."
   }
 }

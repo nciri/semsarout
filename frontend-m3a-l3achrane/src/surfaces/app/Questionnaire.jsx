@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, Card, Chip } from '../../ds/index.js'
 import { IMPORTANCE_LEVELS, lifestyleQuestionnaireSteps } from '../../data/lifestyleQuestionnaireSteps.js'
 
@@ -52,15 +53,17 @@ function ImportanceChip({ label, selected, onClick }) {
   )
 }
 
-function QuestionCard({ question, answer, importance, onPick, onPickImportance }) {
+function QuestionCard({ stepId, question, answer, importance, onPick, onPickImportance }) {
+  const { t } = useTranslation(['app', 'common'])
+  const base = `app:questionnaire.steps.${stepId}.questions.${question.cle}`
   return (
     <Card padding={0} style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div style={{ font: 'var(--fw-bold) 15px var(--font-body)', color: 'var(--text-heading)' }}>{question.label}</div>
+      <div style={{ font: 'var(--fw-bold) 15px var(--font-body)', color: 'var(--text-heading)' }}>{t(`${base}.label`)}</div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {question.options.map((option) => (
           <OptionChip
             key={option}
-            label={option}
+            label={t(`${base}.options.${option}`)}
             selected={answer === option}
             onClick={() => onPick(question.cle, option)}
           />
@@ -68,12 +71,14 @@ function QuestionCard({ question, answer, importance, onPick, onPickImportance }
       </div>
       <div style={{ height: 1, background: 'var(--border-subtle)' }} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-        <span style={{ font: 'var(--fw-bold) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>Importance</span>
+        <span style={{ font: 'var(--fw-bold) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+          {t('app:questionnaire.importanceLabel')}
+        </span>
         {IMPORTANCE_LEVELS.map((level) => (
           <ImportanceChip
             key={level}
-            label={level}
-            selected={(importance || 'Préférence') === level}
+            label={t(`app:questionnaire.importance.${level}`)}
+            selected={(importance || 'preference') === level}
             onClick={() => onPickImportance(question.cle, level)}
           />
         ))}
@@ -83,6 +88,7 @@ function QuestionCard({ question, answer, importance, onPick, onPickImportance }
 }
 
 export default function Questionnaire() {
+  const { t } = useTranslation(['app', 'common'])
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState({})
   const [importance, setImportance] = useState({})
@@ -108,24 +114,24 @@ export default function Questionnaire() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
             <div style={{ font: 'var(--fw-bold) 13px var(--font-body)', color: 'var(--text-muted)' }}>
-              Étape {step + 1} / {total}
+              {t('app:questionnaire.stepIndicator', { step: step + 1, total })}
             </div>
             {!mandatory && (
               <a href="#" style={{ font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)' }}>
-                Passer pour l&apos;instant →
+                {t('app:questionnaire.skipForNow')}
               </a>
             )}
             {mandatory && (
               <div style={{ font: 'var(--fw-bold) 13px var(--font-body)', color: 'var(--gold-700)', letterSpacing: '.04em', textTransform: 'uppercase' }}>
-                Requis avant de postuler
+                {t('app:questionnaire.requiredNotice')}
               </div>
             )}
           </div>
           <h1 style={{ margin: 0, font: 'var(--fw-extrabold) 26px var(--font-display)', color: 'var(--text-heading)', letterSpacing: '-0.02em' }}>
-            {current.titre}
+            {t(`app:questionnaire.steps.${current.id}.title`)}
           </h1>
           <p style={{ margin: 0, font: 'var(--fw-regular) 14.5px/1.55 var(--font-body)', color: 'var(--text-body)' }}>
-            {current.intro}
+            {t(`app:questionnaire.steps.${current.id}.intro`)}
           </p>
           <ProgressDots total={total} current={step} />
         </div>
@@ -134,6 +140,7 @@ export default function Questionnaire() {
           {current.questions.map((question) => (
             <QuestionCard
               key={question.cle}
+              stepId={current.id}
               question={question}
               answer={answers[question.cle]}
               importance={importance[question.cle]}
@@ -145,19 +152,19 @@ export default function Questionnaire() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           {canBack ? (
-            <Button variant="secondary" onClick={goBack}>Précédent</Button>
+            <Button variant="secondary" onClick={goBack}>{t('app:questionnaire.back')}</Button>
           ) : (
             <div style={{ width: 112 }} />
           )}
           <div style={{ font: 'var(--fw-regular) 13px var(--font-body)', color: 'var(--text-muted)' }}>
-            {answeredCount}/{current.questions.length} répondues sur cette page
+            {t('app:questionnaire.answeredCount', { answered: answeredCount, total: current.questions.length })}
           </div>
           {isLast ? (
             <Button variant="accent" onClick={finish}>
-              {mandatory ? 'Continuer ma candidature' : 'Terminer et voir mes recommandations'}
+              {mandatory ? t('app:questionnaire.continueApplication') : t('app:questionnaire.finishAndSeeRecommendations')}
             </Button>
           ) : (
-            <Button variant="primary" onClick={goNext}>Suivant</Button>
+            <Button variant="primary" onClick={goNext}>{t('app:questionnaire.next')}</Button>
           )}
         </div>
       </div>

@@ -290,5 +290,81 @@
     "termsLink": "conditions d'utilisation",
     "termsAnd": "et notre",
     "privacyLink": "politique de confidentialité"
+  },
+  "registration": {
+    "title": "Créez votre profil",
+    "subtitle": "Trois étapes courtes. Vos informations restent privées jusqu'à ce que vous contactiez une colocation.",
+    "steps": {
+      "profile": "Profil",
+      "verification": "Vérification",
+      "lifestyle": "Mode de vie"
+    },
+    "iAmLabel": "Je suis",
+    "roles": {
+      "student": {
+        "title": "Étudiant·e",
+        "desc": "Inscrit dans un établissement"
+      },
+      "worker": {
+        "title": "Jeune actif",
+        "desc": "En poste ou en stage"
+      },
+      "host": {
+        "title": "Je propose un logement",
+        "desc": "Propriétaire ou colocataire"
+      }
+    },
+    "cityOptions": [
+      "Casablanca",
+      "Rabat",
+      "Marrakech",
+      "Tanger",
+      "Fès"
+    ],
+    "form": {
+      "firstNameLabel": "Prénom",
+      "firstNamePlaceholder": "Yassine",
+      "lastNameLabel": "Nom",
+      "lastNamePlaceholder": "Benali",
+      "emailLabel": "Adresse e-mail",
+      "emailPlaceholder": "prenom.nom@exemple.ma",
+      "phoneLabel": "Téléphone",
+      "phonePlaceholder": "+212 6 12 34 56 78",
+      "cityLabel": "Ville",
+      "orgLabel": "Établissement ou employeur",
+      "orgPlaceholder": "Université Hassan II",
+      "passwordLabel": "Mot de passe",
+      "passwordPlaceholder": "8 caractères minimum",
+      "passwordHint": "Au moins 8 caractères, dont un chiffre."
+    },
+    "nextStepTitle": "Prochaine étape : la vérification",
+    "nextStepDesc": "Vous téléverserez votre CIN et votre justificatif de statut. Rien n'est visible par les autres membres — seul le badge « Vérifié » apparaît sur votre profil.",
+    "agreementPrefix": "J'accepte les",
+    "agreementTermsLink": "conditions d'utilisation",
+    "agreementMiddle": "et le traitement de mes données conformément à la",
+    "agreementPrivacyLink": "politique de confidentialité",
+    "agreementSuffix": "(CNDP).",
+    "saveLaterCta": "Enregistrer et reprendre plus tard",
+    "continueCta": "Continuer"
+  },
+  "reviews": {
+    "title": "Évaluer votre séjour",
+    "subtitle": "Avec {{partner}} — {{listing}} · terminé le {{date}}",
+    "publishNotice": "Votre évaluation ne sera publiée que lorsque les deux parties auront évalué — ou automatiquement 14 jours après la fin du séjour.",
+    "criteria": {
+      "respect": "Respect des horaires et des règles",
+      "proprete": "Propreté des parties communes",
+      "communication": "Communication",
+      "conformite": "Conformité avec l'annonce"
+    },
+    "commentLabel": "Commentaire (visible après publication)",
+    "commentPlaceholder": "Décrivez votre expérience de cohabitation…",
+    "submitCta": "Publier mon évaluation",
+    "submittedCta": "Évaluation envoyée",
+    "receivedTitle": "Vos évaluations reçues",
+    "starAriaLabel_one": "{{count}} étoile",
+    "starAriaLabel_other": "{{count}} étoiles",
+    "pendingNotice_one": "{{count}} évaluation en attente de publication — visible dans {{days}} jours ou dès que l'autre partie aura évalué.",
+    "pendingNotice_other": "{{count}} évaluations en attente de publication — visibles dans {{days}} jours ou dès que l'autre partie aura évalué."
   }
 }
