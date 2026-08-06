@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { fr, ar } from 'date-fns/locale'
 import { useTranslation } from 'react-i18next'
 import { FiMail, FiMessageSquare } from 'react-icons/fi'
 import { agencyMessageService } from '../../services/agencyMessageService'
@@ -15,7 +15,8 @@ const STATUS_TONE = {
 }
 
 function AgencyMessages() {
-  const { t } = useTranslation(['dashboard', 'common'])
+  const { t, i18n } = useTranslation(['dashboard', 'common'])
+  const dateFnsLocale = i18n.language === 'ar' ? ar : fr
   const [selectedId, setSelectedId] = useState(null)
   const queryClient = useQueryClient()
 
@@ -73,7 +74,7 @@ function AgencyMessages() {
                 </div>
                 <p className="text-sm text-gray-500 truncate">{m.message}</p>
                 <p className="text-xs text-gray-400 mt-1">
-                  {format(new Date(m.created_at), 'dd MMM yyyy', { locale: fr })}
+                  {format(new Date(m.created_at), 'dd MMM yyyy', { locale: dateFnsLocale })}
                 </p>
               </button>
             ))}

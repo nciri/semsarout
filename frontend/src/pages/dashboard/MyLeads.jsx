@@ -4,7 +4,7 @@ import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { FiMail, FiPhone, FiMessageSquare, FiChevronDown } from 'react-icons/fi'
 import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { fr, ar } from 'date-fns/locale'
 import api from '../../services/api'
 
 const STATUS_TONE = {
@@ -17,7 +17,8 @@ const STATUS_TONE = {
 const STATUS_VALUES = ['new', 'contacted', 'qualified', 'converted', 'lost']
 
 function MyLeads() {
-  const { t } = useTranslation(['dashboard', 'common'])
+  const { t, i18n } = useTranslation(['dashboard', 'common'])
+  const dateFnsLocale = i18n.language === 'ar' ? ar : fr
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
 
@@ -150,7 +151,7 @@ function MyLeads() {
 
                 <div className="text-sm text-gray-500 md:text-end shrink-0">
                   <p>
-                    {format(new Date(lead.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
+                    {format(new Date(lead.created_at), 'dd MMM yyyy à HH:mm', { locale: dateFnsLocale })}
                   </p>
                   {lead.property_id && (
                     <Link
