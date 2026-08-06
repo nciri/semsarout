@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { listPartners } from '../../services/index.js'
-import { Badge, Button, Icon } from '../../ds/index.js'
+import { Badge, Button, Icon, Input, VerifiedBadge } from '../../ds/index.js'
 
 const SEGMENT_COUNT = 10
 
@@ -31,8 +31,6 @@ function Kpi({ label, value, sub }) {
   )
 }
 
-// VerifiedBadge's `level` (full | partial | none) must reflect the real verifies/quota
-// ratio, not the component's "full" default — a quota of 0 shown "full" would fabricate trust.
 function fillRatio(partner) {
   return partner.quota > 0 ? partner.verifies / partner.quota : 0
 }
@@ -42,6 +40,15 @@ function quotaStatus(partner) {
   if (ratio >= 1) return { label: 'Quota atteint', tone: 'verified' }
   if (ratio >= 0.7) return { label: 'En bonne voie', tone: 'info' }
   return { label: 'Sous quota', tone: 'warning' }
+}
+
+// VerifiedBadge's `level` (full | partial | none) must reflect the real verifies/quota
+// ratio, not the component's "full" default — a quota of 0 shown "full" would fabricate trust.
+function verifiedLevel(partner) {
+  const ratio = fillRatio(partner)
+  if (ratio >= 1) return 'full'
+  if (ratio > 0) return 'partial'
+  return 'none'
 }
 
 function groupByType(partners) {
@@ -57,6 +64,7 @@ function groupByType(partners) {
 
 export default function PartnerPortal() {
   const [partners, setPartners] = useState(null)
+  const [query, setQuery] = useState('')
 
   useEffect(() => {
     listPartners().then(setPartners)
@@ -73,6 +81,9 @@ export default function PartnerPortal() {
   const fillRate = totalQuota > 0 ? Math.round((totalVerifies / totalQuota) * 100) : 0
   const typeBreakdown = groupByType(partners)
   const attention = [...partners].sort((a, b) => fillRatio(a) - fillRatio(b)).slice(0, 3)
+  const filtered = query
+    ? partners.filter((p) => p.nom.toLowerCase().includes(query.toLowerCase()))
+    : partners
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)' }}>
@@ -216,6 +227,108 @@ export default function PartnerPortal() {
               </div>
             </div>
           </div>
+        </div>
+
+        <div
+          style={{
+            background: 'var(--surface-card)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: 'var(--shadow-sm)',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '16px 20px',
+              borderBottom: '1px solid var(--border-subtle)',
+            }}
+          >
+            <h3 style={{ font: 'var(--fw-bold) var(--fs-h3) var(--font-display)', color: 'var(--text-heading)', margin: 0 }}>
+              Tous les partenaires
+            </h3>
+            <div style={{ width: 240 }}>
+              <Input
+                icon="search"
+                placeholder="Rechercher un partenaire"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: 'var(--gray-50)' }}>
+                {['Partenaire', 'Type', 'Vérifiés', 'Quota', 'Statut'].map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      textAlign: 'start',
+                      padding: '11px 20px',
+                      font: 'var(--fw-semibold) var(--fs-xs) var(--font-body)',
+                      color: 'var(--text-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '.04em',
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={{ padding: '24px 20px', textAlign: 'center', font: 'var(--fw-medium) var(--fs-sm) var(--font-body)', color: 'var(--text-muted)' }}>
+                    Aucun partenaire ne correspond à cette recherche.
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((p) => {
+                  const status = quotaStatus(p)
+                  return (
+                    <tr key={p.id} style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                      <td style={{ padding: '13px 20px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span
+                            style={{
+                              width: 30,
+                              height: 30,
+                              borderRadius: 'var(--radius-sm)',
+                              overflow: 'hidden',
+                              background: 'var(--navy-100)',
+                              display: 'inline-block',
+                              flex: 'none',
+                            }}
+                          >
+                            <img src={p.logo} alt={p.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </span>
+                          <span style={{ font: 'var(--fw-semibold) var(--fs-sm) var(--font-display)', color: 'var(--text-heading)' }}>
+                            {p.nom}
+                          </span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '13px 20px' }}>
+                        <Badge tone="navy">{p.type}</Badge>
+                      </td>
+                      <td style={{ padding: '13px 20px' }}>
+                        <VerifiedBadge label={`${p.verifies} vérifiés`} level={verifiedLevel(p)} size="sm" />
+                      </td>
+                      <td style={{ padding: '13px 20px', font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-body)' }}>
+                        {p.quota}
+                      </td>
+                      <td style={{ padding: '13px 20px' }}>
+                        <Badge tone={status.tone}>{status.label}</Badge>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
