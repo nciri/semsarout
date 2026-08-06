@@ -13,11 +13,13 @@ import {
   FiChevronDown
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
+import { useFormat } from '../../../utils/format'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
 
 export default function StayManagerProperties() {
   const { token } = useAuthStore()
+  const { fmtDate } = useFormat()
   const [loading, setLoading] = useState(true)
   const [propertyLinks, setPropertyLinks] = useState([])
   const [availableProperties, setAvailableProperties] = useState([])
@@ -379,7 +381,7 @@ export default function StayManagerProperties() {
                     <p className="text-xs text-gray-500 mb-1">Derniere sync</p>
                     <p className="font-semibold text-gray-900 text-sm">
                       {link.last_reservation_sync
-                        ? new Date(link.last_reservation_sync).toLocaleDateString('fr-FR')
+                        ? fmtDate(link.last_reservation_sync)
                         : 'Jamais'}
                     </p>
                   </div>

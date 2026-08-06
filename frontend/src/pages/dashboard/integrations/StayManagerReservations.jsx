@@ -16,6 +16,7 @@ import {
   FiPhone
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
+import { useFormat } from '../../../utils/format'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
 
@@ -35,6 +36,7 @@ const PLATFORM_LABELS = {
 
 export default function StayManagerReservations() {
   const { token } = useAuthStore()
+  const { fmtDate, fmtDateTime, fmtNumber } = useFormat()
   const [searchParams, setSearchParams] = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [reservations, setReservations] = useState([])
@@ -97,7 +99,7 @@ export default function StayManagerReservations() {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '-'
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
+    return fmtDate(dateStr, {
       weekday: 'short',
       day: 'numeric',
       month: 'short',
@@ -107,7 +109,7 @@ export default function StayManagerReservations() {
 
   const formatDateShort = (dateStr) => {
     if (!dateStr) return '-'
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
+    return fmtDate(dateStr, {
       day: 'numeric',
       month: 'short'
     })
@@ -260,7 +262,7 @@ export default function StayManagerReservations() {
                     <div className="text-right">
                       {reservation.total_price && (
                         <p className="font-semibold text-gray-900">
-                          {parseFloat(reservation.total_price).toLocaleString('fr-FR')} {reservation.currency || 'Đh'}
+                          {fmtNumber(parseFloat(reservation.total_price))} {reservation.currency || 'Đh'}
                         </p>
                       )}
                       {reservation.guest?.count && (
@@ -376,7 +378,7 @@ export default function StayManagerReservations() {
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-3">Prix total</h4>
                   <p className="text-2xl font-bold text-gray-900">
-                    {parseFloat(selectedReservation.total_price).toLocaleString('fr-FR')} {selectedReservation.currency || 'Đh'}
+                    {fmtNumber(parseFloat(selectedReservation.total_price))} {selectedReservation.currency || 'Đh'}
                   </p>
                 </div>
               )}
@@ -429,7 +431,7 @@ export default function StayManagerReservations() {
                   {selectedReservation.external_id && ` | Externe: ${selectedReservation.external_id}`}
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
-                  Derniere sync: {selectedReservation.synced_at ? new Date(selectedReservation.synced_at).toLocaleString('fr-FR') : 'Inconnue'}
+                  Derniere sync: {selectedReservation.synced_at ? fmtDateTime(selectedReservation.synced_at) : 'Inconnue'}
                 </p>
               </div>
             </div>

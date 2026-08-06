@@ -17,6 +17,7 @@ import {
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
 import StayManagerWordmark from '../../../components/common/StayManagerWordmark'
+import { useFormat } from '../../../utils/format'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
 
@@ -32,6 +33,7 @@ const SM_COLORS = {
 
 export default function StayManager() {
   const { token } = useAuthStore()
+  const { fmtDateTime } = useFormat()
   const [loading, setLoading] = useState(true)
   const [connecting, setConnecting] = useState(false)
   const [syncing, setSyncing] = useState(false)
@@ -331,7 +333,7 @@ export default function StayManager() {
                 <p className="text-sm text-gray-500 mb-1">Derniere sync</p>
                 <p className="font-medium text-gray-900">
                   {integration.last_sync_at
-                    ? new Date(integration.last_sync_at).toLocaleString('fr-FR')
+                    ? fmtDateTime(integration.last_sync_at)
                     : 'Jamais'}
                 </p>
               </div>
