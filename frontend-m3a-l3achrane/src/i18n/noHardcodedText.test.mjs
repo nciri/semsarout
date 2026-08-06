@@ -14,6 +14,7 @@ export const MIGRATED_FILES = [
   'src/surfaces/web/WebLayout.jsx',
   'src/surfaces/web/Landing.jsx',
   'src/surfaces/web/SearchResults.jsx',
+  'src/surfaces/web/ListingDetail.jsx',
 ]
 
 const FRENCH_ACCENTS = /[àâäéèêëîïôöùûüçœÀÂÄÉÈÊËÎÏÔÖÙÛÜÇŒ]/
