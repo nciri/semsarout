@@ -51,9 +51,9 @@
       "agency": "وكالة"
     },
     "status": {
-      "active": "active",
-      "suspended": "suspended",
-      "deleted": "deleted"
+      "active": "نشط",
+      "suspended": "موقوف",
+      "deleted": "محذوف"
     }
   },
   "accountDetail": {
@@ -96,12 +96,12 @@
       "error": "خطأ"
     },
     "status": {
-      "pending": "pending",
-      "paid": "paid",
-      "preparing": "preparing",
-      "shipped": "shipped",
-      "delivered": "delivered",
-      "cancelled": "cancelled"
+      "pending": "قيد الانتظار",
+      "paid": "مدفوعة",
+      "preparing": "قيد التحضير",
+      "shipped": "تم الشحن",
+      "delivered": "تم التسليم",
+      "cancelled": "ملغاة"
     }
   },
   "products": {

@@ -51,9 +51,9 @@
       "agency": "Agence"
     },
     "status": {
-      "active": "active",
-      "suspended": "suspended",
-      "deleted": "deleted"
+      "active": "Actif",
+      "suspended": "Suspendu",
+      "deleted": "Supprimé"
     }
   },
   "accountDetail": {
@@ -96,12 +96,12 @@
       "error": "Erreur"
     },
     "status": {
-      "pending": "pending",
-      "paid": "paid",
-      "preparing": "preparing",
-      "shipped": "shipped",
-      "delivered": "delivered",
-      "cancelled": "cancelled"
+      "pending": "En attente",
+      "paid": "Payée",
+      "preparing": "En préparation",
+      "shipped": "Expédiée",
+      "delivered": "Livrée",
+      "cancelled": "Annulée"
     }
   },
   "products": {
