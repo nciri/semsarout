@@ -20,6 +20,10 @@ export const MIGRATED_FILES = [
   'src/ds/nav/SidebarNav.jsx',
   'src/surfaces/app/AppLayout.jsx',
   'src/surfaces/partner/PartnerLayout.jsx',
+  'src/ds/trust/VerifiedBadge.jsx',
+  'src/ds/trust/CompatibilityRing.jsx',
+  'src/ds/listing/PriceTag.jsx',
+  'src/ds/listing/ListingCard.jsx',
 ]
 
 const FRENCH_ACCENTS = /[àâäéèêëîïôöùûüçœÀÂÄÉÈÊËÎÏÔÖÙÛÜÇŒ]/

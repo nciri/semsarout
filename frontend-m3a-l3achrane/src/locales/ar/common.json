@@ -36,5 +36,19 @@
     "billing": "الفوترة",
     "apiWebhooks": "واجهة برمجية و webhooks",
     "help": "بحاجة إلى مساعدة؟"
+  },
+  "trust": {
+    "verified": "موثّقة",
+    "compatibility": "توافق ممتاز"
+  },
+  "listingCard": {
+    "defaultTitle": "غرفة في شقة من 4 غرف",
+    "defaultCity": "المعاريف، الدار البيضاء",
+    "amenityRoommates": "3 من السكان",
+    "amenityQuiet": "هادئ",
+    "amenityNoSmoking": "غير مدخن"
+  },
+  "priceTag": {
+    "perMonth": "شهر"
   }
 }

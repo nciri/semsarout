@@ -1,7 +1,10 @@
+import { useTranslation } from "react-i18next";
 import { Icon } from "../core/Icon.jsx";
 
 /** VerifiedBadge — trust token showing identity/status verification. */
-export function VerifiedBadge({ label = "Vérifiée", level = "full", size = "md", style }) {
+export function VerifiedBadge({ label, level = "full", size = "md", style }) {
+  const { t } = useTranslation();
+  const badgeLabel = label ?? t("trust.verified");
   const on = { full: "var(--green-500)", partial: "var(--gold-600)", none: "var(--gray-400)" }[level];
   const bg = { full: "var(--green-100)", partial: "var(--gold-100)", none: "var(--gray-100)" }[level];
   const fs = size === "sm" ? "var(--fs-xs)" : "var(--fs-sm)";
@@ -13,7 +16,7 @@ export function VerifiedBadge({ label = "Vérifiée", level = "full", size = "md
       font: `var(--fw-semibold) ${fs}/1 var(--font-body)`, ...style,
     }}>
       <Icon name="shield-check" size={ic} strokeWidth={2.4} />
-      {label}
+      {badgeLabel}
     </span>
   );
 }
