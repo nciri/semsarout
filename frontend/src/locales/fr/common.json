@@ -1,6 +1,12 @@
 {
-  "language": { "fr": "Français", "ar": "العربية" },
-  "actions": { "search": "Rechercher...", "logout": "Déconnexion" },
+  "language": {
+    "fr": "Français",
+    "ar": "العربية"
+  },
+  "actions": {
+    "search": "Rechercher...",
+    "logout": "Déconnexion"
+  },
   "footer": {
     "tagline": "L'immobilier sans les intermédiaires douteux. Vendez, louez et gérez votre bien à tarif fixe, sans commission, avec un accompagnement professionnel.",
     "comingSoon": "Bientôt disponible",
@@ -291,5 +297,39 @@
     "avis_impot": "Avis d'imposition",
     "garant": "Pièce du garant",
     "autre": "Autre"
+  },
+  "messaging": {
+    "replyPlaceholder": "Écrire une réponse..."
+  },
+  "address": {
+    "label": "Adresse complète",
+    "placeholder": "Adresse du projet"
+  },
+  "map": {
+    "agency": {
+      "empty": "Aucune agence avec coordonnées géographiques",
+      "verified": "Vérifié",
+      "viewAgency": "Voir l'agence",
+      "count_one": "{{count}} agence sur la carte",
+      "count_other": "{{count}} agences sur la carte",
+      "activeListings_one": "{{count}} annonce active",
+      "activeListings_other": "{{count}} annonces actives"
+    },
+    "property": {
+      "empty": "Aucune annonce avec coordonnées géographiques",
+      "sale": "Vente",
+      "rent": "Location",
+      "perMonth": "/mois",
+      "count_one": "{{count}} bien sur la carte",
+      "count_other": "{{count}} biens sur la carte",
+      "bedroomsAbbr": "ch."
+    }
+  },
+  "compareBar": {
+    "selectedCount_one": "{{count}} bien sélectionné",
+    "selectedCount_other": "{{count}} biens sélectionnés",
+    "max": " (max {{count}})",
+    "clear": "Effacer",
+    "compare": "Comparer"
   }
 }

@@ -1,6 +1,12 @@
 {
-  "language": { "fr": "الفرنسية", "ar": "العربية" },
-  "actions": { "search": "بحث...", "logout": "تسجيل الخروج" },
+  "language": {
+    "fr": "الفرنسية",
+    "ar": "العربية"
+  },
+  "actions": {
+    "search": "بحث...",
+    "logout": "تسجيل الخروج"
+  },
   "footer": {
     "tagline": "العقارات دون وسطاء مشبوهين. بيعوا واستأجروا وأدروا عقاركم بسعر ثابت، دون عمولة، بمرافقة احترافية.",
     "comingSoon": "قريباً",
@@ -291,5 +297,39 @@
     "avis_impot": "الإشعار الضريبي",
     "garant": "وثيقة الضامن",
     "autre": "أخرى"
+  },
+  "messaging": {
+    "replyPlaceholder": "اكتب ردًا..."
+  },
+  "address": {
+    "label": "العنوان الكامل",
+    "placeholder": "عنوان المشروع"
+  },
+  "map": {
+    "agency": {
+      "empty": "لا توجد وكالة تتوفر على إحداثيات جغرافية",
+      "verified": "موثّقة",
+      "viewAgency": "عرض الوكالة",
+      "count_one": "{{count}} وكالة على الخريطة",
+      "count_other": "{{count}} وكالات على الخريطة",
+      "activeListings_one": "{{count}} إعلان نشط",
+      "activeListings_other": "{{count}} إعلانات نشطة"
+    },
+    "property": {
+      "empty": "لا يوجد أي إعلان يتوفر على إحداثيات جغرافية",
+      "sale": "بيع",
+      "rent": "كراء",
+      "perMonth": "/شهر",
+      "count_one": "{{count}} عقار على الخريطة",
+      "count_other": "{{count}} عقارات على الخريطة",
+      "bedroomsAbbr": "غرف"
+    }
+  },
+  "compareBar": {
+    "selectedCount_one": "{{count}} عقار محدد",
+    "selectedCount_other": "{{count}} عقارات محددة",
+    "max": " (بحد أقصى {{count}})",
+    "clear": "مسح",
+    "compare": "مقارنة"
   }
 }

@@ -9,7 +9,7 @@ import { FiSend } from 'react-icons/fi'
  * `viewerRole` is 'buyer' or 'agent' — determines which side messages appear on.
  */
 function MessageThread({ message, viewerRole, onReply, isReplying }) {
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation(['common'])
   const dateFnsLocale = i18n.language === 'ar' ? ar : fr
   const [body, setBody] = useState('')
 
@@ -58,7 +58,7 @@ function MessageThread({ message, viewerRole, onReply, isReplying }) {
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          placeholder="Écrire une réponse..."
+          placeholder={t('common:messaging.replyPlaceholder')}
           rows={2}
           className="input flex-1 resize-none"
         />
