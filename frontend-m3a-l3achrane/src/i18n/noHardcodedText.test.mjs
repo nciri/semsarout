@@ -11,6 +11,7 @@ const REPO_ROOT = path.resolve(__dirname, '../..')
 // Heuristic below only runs against this list; everything else is still FR by design.
 export const MIGRATED_FILES = [
   'src/surfaces/NotFound.jsx',
+  'src/surfaces/web/WebLayout.jsx',
 ]
 
 const FRENCH_ACCENTS = /[àâäéèêëîïôöùûüçœÀÂÄÉÈÊËÎÏÔÖÙÛÜÇŒ]/

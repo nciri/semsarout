@@ -1,5 +1,121 @@
 {
   "meta": {
     "title": "M3a-L3chrane"
+  },
+  "layout": {
+    "footer": {
+      "tagline": "M3a-L3chrane — Colocation vérifiée au Maroc",
+      "search": "Rechercher",
+      "mySpace": "Mon espace",
+      "partners": "Partenaires"
+    }
+  },
+  "landing": {
+    "searchBox": {
+      "tabColoc": "Colocations",
+      "tabRes": "Résidences",
+      "cityLabel": "Ville ou quartier",
+      "budgetLabel": "Budget max",
+      "cta": "Rechercher",
+      "cities": ["Casablanca", "Rabat", "Marrakech", "Fès", "Tanger", "Agadir"],
+      "budgets": ["1 500 MAD", "2 500 MAD", "4 000 MAD"]
+    },
+    "hero": {
+      "titlePrefix": "Trouvez votre colocation idéale en toute",
+      "titleHighlight": "confiance",
+      "subtitle": "La plateforme de colocation vérifiée pour étudiants et jeunes actifs au Maroc.",
+      "roleStudent": "Je suis étudiant",
+      "roleEmployee": "Je suis salarié",
+      "trust1Title": "Profils vérifiés",
+      "trust1Sub": "CIN, statut étudiant ou employeur",
+      "trust2Title": "Compatibilité intelligente",
+      "trust2Sub": "Plus qu'un prix, un mode de vie",
+      "trust3Title": "Paiement sécurisé",
+      "trust3Sub": "Caution et premier loyer sous séquestre",
+      "photoAlt": "Photo — ville marocaine",
+      "avatarName": "Salma, 19 ans",
+      "avatarSub": "Colocataire · Rabat",
+      "listingTitle": "F4 · Agdal",
+      "listingSub": "85% compatible"
+    },
+    "trustBand": {
+      "title": "La confiance, au cœur de M3a-L3chrane",
+      "items": [
+        { "title": "Identité vérifiée", "sub": "CIN vérifiée" },
+        { "title": "Statut vérifié", "sub": "Étudiant ou employé" },
+        { "title": "Annonces modérées", "sub": "Contrôle qualité" },
+        { "title": "Paiement sécurisé", "sub": "Séquestre jusqu'à l'état des lieux" }
+      ]
+    },
+    "howItWorks": {
+      "eyebrow": "Comment ça marche",
+      "title": "Cinq étapes, en toute sérénité",
+      "steps": [
+        { "title": "Créez votre profil", "sub": "Vérification d'identité et de statut" },
+        { "title": "Recherchez & filtrez", "sub": "Trouvez les colocations compatibles" },
+        { "title": "Échangez", "sub": "Discutez en toute sécurité" },
+        { "title": "Visitez & choisissez", "sub": "Rencontrez vos futurs colocataires" },
+        { "title": "Signez & emménagez", "sub": "Contrat en ligne, paiement sécurisé" }
+      ]
+    },
+    "partnersBand": {
+      "title": "Ils nous font confiance",
+      "names": ["UM6P", "Univ. Mohammed V", "INPT", "OFPPT", "Maroc Telecom", "Société Générale"]
+    },
+    "partnerCta": {
+      "eyebrow": "Partenaires institutions",
+      "title": "Des portails dédiés et des intégrations API",
+      "body": "Pour accompagner vos étudiants et vos collaborateurs, avec un reporting anonymisé et un référentiel vérifié.",
+      "universitiesTitle": "Portail Universités",
+      "universitiesSub": "Gérez le logement de vos étudiants",
+      "companiesTitle": "Portail Entreprises",
+      "companiesSub": "Relocation de vos nouveaux talents",
+      "dashboardAlt": "Tableau de bord partenaire"
+    }
+  },
+  "search": {
+    "cityLabel": "Ville ou quartier",
+    "budgetLabel": "Budget max",
+    "typeLabel": "Type",
+    "typeOptions": ["Tout", "Chambre", "Studio"],
+    "genderLabel": "Genre",
+    "genderOptions": ["Tout", "Féminin", "Masculin"],
+    "budgetOptions": ["2 500 MAD", "4 000 MAD"],
+    "cta": "Rechercher",
+    "title": "Colocations disponibles",
+    "resultCount_one": "{{count}} annonce",
+    "resultCount_other": "{{count}} annonces",
+    "sortBy": "Trier par",
+    "sortOptions": ["Pertinence", "Prix croissant", "Date", "Distance"],
+    "filterChips": ["Non-fumeur", "Meublé", "Wifi", "Féminin", "Proche fac", "Court séjour"],
+    "empty": "Aucune annonce ne correspond à votre recherche."
+  },
+  "listing": {
+    "notFoundTitle": "Annonce introuvable",
+    "backToSearch": "Retour à la recherche",
+    "breadcrumbSearch": "Rechercher",
+    "photosCta": "Voir les {{count}} photos",
+    "verifiedLabel": "Vérifiée",
+    "aboutTitle": "À propos du logement",
+    "flatmatesTitle": "Colocataires actuels",
+    "contactTitle": "Contacter",
+    "sendMessage": "Envoyer un message",
+    "addFavorite": "Ajouter aux favoris",
+    "securePaymentTitle": "Paiement sécurisé",
+    "securePaymentBody": "Caution et premier loyer sous séquestre jusqu'à l'état des lieux d'entrée. Un cadre clair pour tous.",
+    "learnMore": "En savoir plus"
+  },
+  "auth": {
+    "loginTitle": "Connexion",
+    "registerTitle": "Créer un compte",
+    "firstNameLabel": "Prénom",
+    "lastNameLabel": "Nom",
+    "emailLabel": "Email",
+    "passwordLabel": "Mot de passe",
+    "loginCta": "Se connecter",
+    "registerCta": "S'inscrire",
+    "switchToRegister": "Pas encore de compte ? Créer un compte",
+    "switchToLogin": "Déjà un compte ? Se connecter",
+    "genericError": "Connexion impossible — réessayez."
   }
 }
