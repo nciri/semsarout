@@ -6,8 +6,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Police arabe en RTL — déclaration directe (robuste en dev ET build, sans
+   dépendre de la génération de l'utilitaire Tailwind `font-arabic`). */
 html[lang='ar'] {
-  @apply font-arabic;
+  font-family: 'Noto Sans Arabic', sans-serif;
 }
 
 @layer base {
