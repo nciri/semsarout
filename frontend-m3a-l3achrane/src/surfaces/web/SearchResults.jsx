@@ -25,9 +25,9 @@ export default function SearchResults() {
 
   const activeFilters = useMemo(() => {
     const filters = []
-    if (activeType) filters.push(activeType)
-    if (verifiedOnly) filters.push(verifiedFilterChip)
-    filters.push(...lifestyle)
+    if (activeType) filters.push({ kind: 'type', label: activeType })
+    if (verifiedOnly) filters.push({ kind: 'verified', label: verifiedFilterChip })
+    lifestyle.forEach((label) => filters.push({ kind: 'lifestyle', label }))
     return filters
   }, [activeType, lifestyle, verifiedOnly, verifiedFilterChip])
 
@@ -38,6 +38,12 @@ export default function SearchResults() {
       else next.add(label)
       return next
     })
+  }
+
+  const removeFilter = (filter) => {
+    if (filter.kind === 'type') setActiveType(null)
+    else if (filter.kind === 'verified') setVerifiedOnly(false)
+    else if (filter.kind === 'lifestyle') toggleLifestyle(filter.label)
   }
 
   const visibleItems = useMemo(() => {
@@ -56,7 +62,7 @@ export default function SearchResults() {
   return (
     <div style={{ background: 'var(--bg-page)', minHeight: '100%' }}>
       <div style={{ background: '#fff', borderBottom: '1px solid var(--border-subtle)', padding: '18px 40px' }}>
-        <div style={{ maxWidth: 'var(--container-max)', margin: '0 auto', display: 'flex', gap: 12, alignItems: 'end', flexWrap: 'wrap' }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', gap: 12, alignItems: 'end', flexWrap: 'wrap' }}>
           <div style={{ width: 220 }}><Input label={t('web:search.cityLabel')} icon="map-pin" defaultValue={t('web:search.locationDefault')} /></div>
           <div style={{ width: 160 }}><Select label={t('web:search.budgetLabel')} options={t('web:search.budgetOptions', { returnObjects: true })} /></div>
           <div style={{ width: 150 }}><Select label={t('web:search.typeLabel')} options={t('web:search.typeOptions', { returnObjects: true })} /></div>
@@ -67,7 +73,7 @@ export default function SearchResults() {
 
       <div
         style={{
-          maxWidth: 'var(--container-max)',
+          maxWidth: 1400,
           margin: '0 auto',
           padding: '24px 40px 56px',
           display: 'grid',
@@ -195,17 +201,24 @@ export default function SearchResults() {
           {activeFilters.length > 0 && (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               <span style={{ font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-muted)' }}>{t('web:search.activeFiltersLabel')}</span>
-              {activeFilters.map((label) => (
+              {activeFilters.map((filter) => (
                 <span
-                  key={label}
+                  key={`${filter.kind}-${filter.label}`}
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 10px 6px 12px',
                     borderRadius: 'var(--radius-pill)', background: 'var(--navy-50)', border: '1px solid var(--navy-100)',
                     color: 'var(--text-heading)', font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)',
                   }}
                 >
-                  {label}
-                  <span style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>×</span>
+                  {filter.label}
+                  <button
+                    type="button"
+                    onClick={() => removeFilter(filter)}
+                    aria-label={t('web:search.removeFilterLabel', { label: filter.label })}
+                    style={{ display: 'inline-flex', color: 'var(--text-muted)', cursor: 'pointer', background: 'none', border: 0, padding: 0, font: 'inherit', lineHeight: 1 }}
+                  >
+                    ×
+                  </button>
                 </span>
               ))}
             </div>
@@ -228,7 +241,7 @@ export default function SearchResults() {
             </div>
           ) : (
             <>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(288px, 1fr))', gap: 20 }}>
+              <div className="m3a-search-grid" style={{ display: 'grid', gap: 20 }}>
                 {visibleItems.map((it) => (
                   <ListingCard
                     key={it.id}

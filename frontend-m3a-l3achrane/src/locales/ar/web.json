@@ -205,6 +205,7 @@
     "viewListLabel": "قائمة",
     "viewMapLabel": "خريطة",
     "activeFiltersLabel": "عوامل التصفية النشطة:",
+    "removeFilterLabel": "إزالة عامل التصفية {{label}}",
     "verifiedFilterChip": "الملفات الموثقة",
     "mapComingSoon": "عرض الخريطة قريبًا",
     "loadMore": "عرض المزيد من السكنات",

@@ -205,6 +205,7 @@
     "viewListLabel": "Liste",
     "viewMapLabel": "Carte",
     "activeFiltersLabel": "Filtres actifs :",
+    "removeFilterLabel": "Retirer le filtre {{label}}",
     "verifiedFilterChip": "Profils vérifiés",
     "mapComingSoon": "Vue carte à venir",
     "loadMore": "Afficher plus de logements",
