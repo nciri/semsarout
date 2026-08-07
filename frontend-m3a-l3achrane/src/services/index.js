@@ -198,3 +198,15 @@ export async function getBackofficeContracts() {
   if (isMocked('backoffice')) return delay({ items: [], available: false })
   return { items: [], available: false }
 }
+
+// Signalements (super-admin) : `trust-safety` (services/trust-safety/app/models.py) ne porte
+// que la modération de comptes (`ModerationStatus` : suspend/delete par user/agency) et son
+// journal d'audit (`AdminAction`) — aucun modèle de signalement/litige communautaire (pas de
+// `Report`, pas de motif, pas de statut traité/classé). Le "signalement" côté app m3a
+// (`src/data/securityCenter.js`) n'est lui-même qu'un écran de libellés, sans soumission réelle
+// vers un backend. Aucun endpoint à réutiliser, aucun risque de collision avec le monolithe
+// legacy (`frontend/`) : état vide honnête plutôt que d'inventer une file de signalements.
+export async function getBackofficeReports() {
+  if (isMocked('backoffice')) return delay({ items: [], available: false })
+  return { items: [], available: false }
+}

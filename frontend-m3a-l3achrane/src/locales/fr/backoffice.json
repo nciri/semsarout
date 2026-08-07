@@ -3,13 +3,41 @@
     "brand": "M3a-L3chrane",
     "brandTag": "Back-office",
     "nav": {
-      "overview": { "label": "Vue d'ensemble", "title": "Vue d'ensemble", "subtitle": "Activité de la plateforme — 30 derniers jours" },
-      "verif": { "label": "Vérifications", "title": "Vérifications d’identité", "subtitle": "File KYC — CIN, statut étudiant, attestation employeur" },
-      "listings": { "label": "Annonces", "title": "Modération des annonces", "subtitle": "Contrôle qualité et conformité des logements publiés" },
-      "users": { "label": "Utilisateurs", "title": "Utilisateurs", "subtitle": "Chercheurs, hôtes et partenaires institutionnels" },
-      "contracts": { "label": "Contrats & paiements", "title": "Contrats & paiements", "subtitle": "Contrats de colocation et paiements associés" },
-      "reports": { "label": "Signalements", "title": "Signalements", "subtitle": "Litiges et contenus signalés par la communauté" },
-      "settings": { "label": "Paramètres", "title": "Paramètres", "subtitle": "Règles de matching, équipe et permissions" }
+      "overview": {
+        "label": "Vue d'ensemble",
+        "title": "Vue d'ensemble",
+        "subtitle": "Activité de la plateforme — 30 derniers jours"
+      },
+      "verif": {
+        "label": "Vérifications",
+        "title": "Vérifications d’identité",
+        "subtitle": "File KYC — CIN, statut étudiant, attestation employeur"
+      },
+      "listings": {
+        "label": "Annonces",
+        "title": "Modération des annonces",
+        "subtitle": "Contrôle qualité et conformité des logements publiés"
+      },
+      "users": {
+        "label": "Utilisateurs",
+        "title": "Utilisateurs",
+        "subtitle": "Chercheurs, hôtes et partenaires institutionnels"
+      },
+      "contracts": {
+        "label": "Contrats & paiements",
+        "title": "Contrats & paiements",
+        "subtitle": "Contrats de colocation et paiements associés"
+      },
+      "reports": {
+        "label": "Signalements",
+        "title": "Signalements",
+        "subtitle": "Litiges et contenus signalés par la communauté"
+      },
+      "settings": {
+        "label": "Paramètres",
+        "title": "Paramètres",
+        "subtitle": "Règles de matching, équipe et permissions"
+      }
     },
     "queueNote": {
       "title": "File de vérification",
@@ -149,23 +177,32 @@
     "unavailable": "Aucun contrat ni paiement de colocation à afficher : ce domaine n’est pas encore relié au back-office m3a-l3achrane."
   },
   "reports": {
-    "reportedBy": "Signalé par {{name}}",
-    "dismiss": "Classer",
-    "process": "Traiter",
-    "priority": {
-      "urgent": "Prioritaire",
-      "normal": "Standard"
-    }
+    "loading": "Chargement des signalements…",
+    "loadError": "Les signalements sont momentanément indisponibles.",
+    "unavailableTitle": "Domaine pas encore disponible",
+    "unavailable": "Aucun signalement à afficher : le service trust-safety ne porte aujourd’hui que la modération de comptes (suspension), pas de file de signalements communautaires."
   },
   "settings": {
     "matchingRulesTitle": "Règles de mise en relation",
     "teamTitle": "Équipe & rôles",
     "inviteMember": "Inviter un membre",
     "rules": {
-      "rule-min-score": { "label": "Score de compatibilité minimum", "desc": "Masquer les annonces sous 55 % de compatibilité dans les résultats du chercheur." },
-      "rule-verif-required": { "label": "Vérification obligatoire avant contact", "desc": "Le chercheur doit avoir une CIN validée pour ouvrir une conversation." },
-      "rule-auto-publish": { "label": "Publication automatique des annonces", "desc": "Publier sans revue humaine si l’hôte a déjà 3 baux clôturés sans litige." },
-      "rule-escrow": { "label": "Séquestre du dépôt de garantie", "desc": "Bloquer le dépôt jusqu’à confirmation de l’état des lieux par les deux parties." }
+      "rule-min-score": {
+        "label": "Score de compatibilité minimum",
+        "desc": "Masquer les annonces sous 55 % de compatibilité dans les résultats du chercheur."
+      },
+      "rule-verif-required": {
+        "label": "Vérification obligatoire avant contact",
+        "desc": "Le chercheur doit avoir une CIN validée pour ouvrir une conversation."
+      },
+      "rule-auto-publish": {
+        "label": "Publication automatique des annonces",
+        "desc": "Publier sans revue humaine si l’hôte a déjà 3 baux clôturés sans litige."
+      },
+      "rule-escrow": {
+        "label": "Séquestre du dépôt de garantie",
+        "desc": "Bloquer le dépôt jusqu’à confirmation de l’état des lieux par les deux parties."
+      }
     }
   },
   "roomAssignment": {

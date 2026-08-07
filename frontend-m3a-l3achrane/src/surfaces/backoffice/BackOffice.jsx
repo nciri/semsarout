@@ -6,6 +6,7 @@ import {
   getBackofficeContracts,
   getBackofficeListings,
   getBackofficeOverview,
+  getBackofficeReports,
   getBackofficeUsers,
   getBackofficeVerifications,
   reactivateBackofficeUser,
@@ -20,7 +21,6 @@ import {
   BACKOFFICE_NAV,
   MATCHES_CHART,
   MATCHING_RULES,
-  REPORTS,
   TEAM,
   TODAY_TODO,
   VERIFICATION_QUEUE_NOTE,
@@ -48,7 +48,6 @@ const ACTIVITY_TONE = { validated: 'verified', rejected: 'danger', in_progress: 
 // Statuts réels de la machine à états coloc-listing (cf. state_machine.py) — seuls
 // EN_MODERATION/PUBLIEE/REJETEE sont attendus dans la file de modération.
 const LISTING_TONE = { EN_MODERATION: 'warning', PUBLIEE: 'verified', REJETEE: 'danger' }
-const REPORT_TONE = { urgent: 'danger', normal: 'warning' }
 
 function sectionTitle(children) {
   return <h2 style={{ margin: 0, font: 'var(--fw-extrabold) 15.5px var(--font-display)', color: 'var(--text-heading)' }}>{children}</h2>
@@ -823,37 +822,45 @@ function ContractsView() {
 
 function ReportsView() {
   const { t } = useTranslation(['backoffice'])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setLoadError(false)
+    getBackofficeReports()
+      .catch(() => { if (!cancelled) setLoadError(true) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16, alignItems: 'start' }}>
-      {REPORTS.map((r) => {
-        const tone = REPORT_TONE[r.priority]
-        const label = t(`backoffice:reports.priority.${r.priority}`, { defaultValue: r.priority })
-        return (
-          <Card key={r.id} padding={20} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Badge tone={tone}>{label}</Badge>
-              <span style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>{r.id} · {r.age}</span>
+    <Card padding={24}>
+      {loading && (
+        <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+          {t('backoffice:reports.loading')}
+        </div>
+      )}
+      {!loading && loadError && (
+        <div style={{ font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+          {t('backoffice:reports.loadError')}
+        </div>
+      )}
+      {!loading && !loadError && (
+        <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+          <Icon name="flag" size={20} strokeWidth={2} style={{ color: 'var(--text-muted)', flex: 'none', marginTop: 2 }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ font: 'var(--fw-bold) 13.5px var(--font-body)', color: 'var(--text-heading)' }}>
+              {t('backoffice:reports.unavailableTitle')}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <h3 style={{ margin: 0, font: 'var(--fw-extrabold) 15.5px var(--font-display)', color: 'var(--text-heading)' }}>{r.title}</h3>
-              <p style={{ margin: 0, font: 'var(--fw-regular) 13.5px/1.6 var(--font-body)', color: 'var(--text-body)' }}>{r.body}</p>
+            <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)', maxWidth: 560 }}>
+              {t('backoffice:reports.unavailable')}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBlockStart: 4, borderBlockStart: '1px solid var(--border-subtle)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 9, paddingBlockStart: 10 }}>
-                <Avatar name={r.by} size={28} />
-                <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
-                  {t('backoffice:reports.reportedBy', { name: r.by })}
-                </div>
-              </div>
-              <div style={{ marginInlineStart: 'auto', display: 'flex', gap: 8, paddingBlockStart: 10 }}>
-                <Button variant="secondary" size="sm" iconLeft="archive">{t('backoffice:reports.dismiss')}</Button>
-                <Button variant="primary" size="sm" iconLeft="gavel">{t('backoffice:reports.process')}</Button>
-              </div>
-            </div>
-          </Card>
-        )
-      })}
-    </div>
+          </div>
+        </div>
+      )}
+    </Card>
   )
 }
 

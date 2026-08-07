@@ -8,7 +8,7 @@ export const BACKOFFICE_NAV = [
   { id: 'listings', icon: 'building-2', label: 'Annonces', count: 8, title: 'Modération des annonces', subtitle: 'Contrôle qualité et conformité des logements publiés' },
   { id: 'users', icon: 'users', label: 'Utilisateurs', title: 'Utilisateurs', subtitle: 'Chercheurs, hôtes et partenaires institutionnels' },
   { id: 'contracts', icon: 'file-signature', label: 'Contrats & paiements', title: 'Contrats & paiements', subtitle: 'Contrats de colocation et paiements associés' },
-  { id: 'reports', icon: 'flag', label: 'Signalements', count: 5, title: 'Signalements', subtitle: 'Litiges et contenus signalés par la communauté' },
+  { id: 'reports', icon: 'flag', label: 'Signalements', title: 'Signalements', subtitle: 'Litiges et contenus signalés par la communauté' },
   { id: 'settings', icon: 'settings', label: 'Paramètres', title: 'Paramètres', subtitle: 'Règles de matching, équipe et permissions' },
 ]
 
@@ -51,29 +51,6 @@ export const VERIF_TABS = [
   { id: 'relaunched', label: 'Relancés', icon: 'rotate-cw' },
   { id: 'rejected', label: 'Refusés', icon: 'x-circle' },
   { id: 'validated', label: 'Validés', icon: 'check-circle' },
-]
-
-export const REPORTS = [
-  {
-    id: 'SIG-0442', age: 'il y a 3 h', priority: 'urgent', initials: 'IM', by: 'Imane Mrabet',
-    title: 'Comportement inapproprié en messagerie',
-    body: 'L’hôte insiste pour un paiement hors plateforme et refuse la signature du bail en ligne. Trois relances documentées dans la conversation.',
-  },
-  {
-    id: 'SIG-0441', age: 'il y a 9 h', priority: 'normal', initials: 'OT', by: 'Omar Tazi',
-    title: 'Annonce non conforme aux photos',
-    body: 'La chambre visitée ne correspond pas aux visuels publiés : surface et exposition différentes. Demande de retrait de l’annonce ANN-4471.',
-  },
-  {
-    id: 'SIG-0439', age: 'il y a 1 j', priority: 'urgent', initials: 'MR', by: 'Mehdi Raji',
-    title: 'État des lieux contesté — retenue sur dépôt',
-    body: 'Retenue de 2 000 MAD sur le dépôt sans justificatif photographique. Le locataire fournit un état des lieux d’entrée signé.',
-  },
-  {
-    id: 'SIG-0436', age: 'il y a 2 j', priority: 'normal', initials: 'SL', by: 'Salma Lahlou',
-    title: 'Profil dupliqué',
-    body: 'Deux comptes hôtes utilisent les mêmes photos et le même numéro de téléphone pour des annonces distinctes à Marrakech.',
-  },
 ]
 
 export const MATCHING_RULES = [
