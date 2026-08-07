@@ -21,7 +21,7 @@ from . import events
 from .db import get_db, init_db
 from .models import ColocProperty, CurrentRoommates, HouseRule, Listing, ListingMedia, _now
 from .schemas import HouseRulesIn, ListingCreateIn, ListingUpdateIn, MediaIn, RoommatesIn
-from .state_machine import EDITABLE_STATUSES, TransitionError, assert_transition
+from .state_machine import EDITABLE_STATUSES, STATUSES, TransitionError, assert_transition
 
 settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
@@ -90,6 +90,34 @@ def internal_stats(tenant: str | None = None, x_internal_token: str = Header(def
         "in_moderation_listings": db.query(Listing).filter(Listing.status == "EN_MODERATION").count(),
         "new_listings_30d": db.query(Listing).filter(Listing.created_at >= since).count(),
     }
+
+
+@app.get("/internal/listings/queue", include_in_schema=False)
+def internal_listings_queue(status: str | None = None, tenant: str | None = None,
+                            x_internal_token: str = Header(default=""),
+                            db: Session = Depends(get_db)) -> dict:
+    """File des annonces pour modération back-office (super-admin, via BFF) — statut
+    `EN_MODERATION` par défaut ; `status` permet de filtrer sur un autre statut connu
+    (historique : PUBLIEE, REJETEE, ...). Mono-tenant m3a-l3achrane (pas de colonne
+    tenant sur Listing) : `tenant` n'est accepté que pour uniformité de contrat avec les
+    autres `/internal/*` et ignoré s'il diffère de m3a-l3achrane (liste vide plutôt qu'un
+    mélange trompeur)."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    if tenant and tenant != TENANT:
+        return {"items": []}
+    query = db.query(Listing)
+    if status:
+        if status not in STATUSES:
+            return _err("Statut inconnu", 400)
+        query = query.filter(Listing.status == status)
+    else:
+        query = query.filter(Listing.status == "EN_MODERATION")
+    rows = query.order_by(Listing.created_at.asc()).all()
+    return {"items": [
+        {**listing.to_dict(), "owner_id": listing.owner_id, "created_at": listing.created_at.isoformat()}
+        for listing in rows
+    ]}
 
 
 router = APIRouter(dependencies=[Depends(_require_tenant)])
