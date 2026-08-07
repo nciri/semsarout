@@ -1008,6 +1008,7 @@ export default function Subscription() {
                       )}
                       <button
                         onClick={() => handleDeletePayment(pm.id)}
+                        // impeccable-disable-next-line gray-on-color -- icône grise sur fond blanc ; le rouge n'est qu'un état :hover
                         className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       >
                         <FiTrash2 className="w-4 h-4" />

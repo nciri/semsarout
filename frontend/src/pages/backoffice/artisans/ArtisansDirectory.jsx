@@ -64,6 +64,7 @@ function ArtisansDirectory() {
     { header: t('backoffice:artisans.directory.columns.name'), className: 'font-medium text-gray-900', cell: (a) => (
       <div className="flex items-center gap-2">
         <span>{a.name}</span>
+        {/* impeccable-disable-next-line gray-on-color -- branches de ternaire : le gris est sur bg-gray-100 (neutre), pas sur le bleu */}
         <StatusBadge label={a.is_shared ? t('backoffice:artisans.directory.badge.shared') : t('backoffice:artisans.directory.badge.private')} className={a.is_shared ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-600'} />
       </div>
     ) },
@@ -81,6 +82,7 @@ function ArtisansDirectory() {
           <button onClick={() => openEdit(a)} className="p-1.5 text-gray-400 hover:text-primary-600 rounded-lg hover:bg-primary-50 transition-colors" title={t('backoffice:artisans.directory.actions.edit')}>
             <FiEdit2 className="w-4 h-4" />
           </button>
+          {/* impeccable-disable-next-line gray-on-color -- icône grise sur fond blanc ; le rouge n'est qu'un état :hover */}
           <button onClick={() => del.mutate(a.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors" title={t('backoffice:artisans.directory.actions.delete')}>
             <FiTrash2 className="w-4 h-4" />
           </button>
