@@ -104,9 +104,9 @@ export default function SearchResults() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ font: 'var(--fw-extrabold) 12.5px var(--font-body)', letterSpacing: '.02em', color: 'var(--text-heading)' }}>{t('web:search.monthlyBudgetLabel')}</div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <Input defaultValue="1 500" containerStyle={{ flex: 1 }} />
-                <Input defaultValue="3 000" containerStyle={{ flex: 1 }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <Input defaultValue="1 500" containerStyle={{ width: '100%' }} />
+                <Input defaultValue="3 000" containerStyle={{ width: '100%' }} />
               </div>
               <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>{t('web:search.budgetUnitNote')}</div>
             </div>
