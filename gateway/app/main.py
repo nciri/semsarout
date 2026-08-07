@@ -464,6 +464,9 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         path == "/api/v1/listings"
         or path.startswith("/api/v1/listings/")
         or path == "/api/v1/me/listings"
+        or path == "/api/v1/me/lease"
+        or path == "/api/v1/leases"
+        or path.startswith("/api/v1/leases/")
     ):
         return app.state.coloc_listing, path.replace("/api/v1", "", 1)
     if settings.coloc_profile_url and (
@@ -736,6 +739,28 @@ async def backoffice_listings(request: Request) -> Response:
         params["status"] = status
     try:
         r = await client.request("GET", "/internal/listings/queue", params=params, headers=headers)
+    except Exception:  # noqa: BLE001 — dégradation propre si coloc-listing est indisponible
+        return JSONResponse({"tenant": tenant, "items": []})
+    if r.status_code != 200:
+        return JSONResponse({"tenant": tenant, "items": []})
+    return JSONResponse({"tenant": tenant, **r.json()})
+
+
+@app.get("/api/v1/backoffice/leases", include_in_schema=False)
+async def backoffice_leases(request: Request) -> Response:
+    """Baux + paiements du tenant m3a (super-admin uniquement) : proxy vers coloc-listing
+    `/internal/leases` — alimente la vue « Contrats & paiements ». Cadrage : ÉTATS de
+    séquestre modélisés (pending/escrowed/released/refunded), aucun PSP réel intégré."""
+    denied, tenant, _ident = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.coloc_listing
+    if client is None:
+        return JSONResponse({"tenant": tenant, "items": []})
+    headers = {"x-internal-token": settings.internal_token}
+    try:
+        r = await client.request("GET", "/internal/leases", params={"tenant": tenant}, headers=headers)
     except Exception:  # noqa: BLE001 — dégradation propre si coloc-listing est indisponible
         return JSONResponse({"tenant": tenant, "items": []})
     if r.status_code != 200:
