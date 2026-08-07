@@ -494,7 +494,9 @@ def _payment_transition(db: Session, lease_id: str, payment_id: str, principal: 
         lease.status = "active"
     enqueue(db, "coloc_listing", payment.id, events.PAYMENT_STATUS_CHANGED,
             {"lease_id": lease.id, "payment_id": payment.id, "previous_status": previous,
-             "new_status": target})
+             "new_status": target, "owner_id": lease.owner_id,
+             "tenant_user_id": lease.tenant_user_id, "payment_type": payment.type,
+             "amount": float(payment.amount)})
     return lease, None
 
 
