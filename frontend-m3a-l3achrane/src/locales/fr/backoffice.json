@@ -7,7 +7,7 @@
       "verif": { "label": "Vérifications", "title": "Vérifications d’identité", "subtitle": "File KYC — CIN, statut étudiant, attestation employeur" },
       "listings": { "label": "Annonces", "title": "Modération des annonces", "subtitle": "Contrôle qualité et conformité des logements publiés" },
       "users": { "label": "Utilisateurs", "title": "Utilisateurs", "subtitle": "Chercheurs, hôtes et partenaires institutionnels" },
-      "contracts": { "label": "Contrats & paiements", "title": "Contrats & paiements", "subtitle": "Baux signés en ligne et dépôts de garantie séquestrés" },
+      "contracts": { "label": "Contrats & paiements", "title": "Contrats & paiements", "subtitle": "Contrats de colocation et paiements associés" },
       "reports": { "label": "Signalements", "title": "Signalements", "subtitle": "Litiges et contenus signalés par la communauté" },
       "settings": { "label": "Paramètres", "title": "Paramètres", "subtitle": "Règles de matching, équipe et permissions" }
     },
@@ -143,26 +143,10 @@
     "actionError": "Action impossible pour le moment — réessayez."
   },
   "contracts": {
-    "money": {
-      "escrow": "Dépôts sous séquestre",
-      "commissions": "Commissions du mois",
-      "disputes": "Litiges ouverts"
-    },
-    "columns": {
-      "contract": "Contrat",
-      "parties": "Parties",
-      "period": "Période",
-      "deposit": "Dépôt",
-      "status": "Statut",
-      "action": "Action"
-    },
-    "detail": "Détail",
-    "status": {
-      "active": "Actif",
-      "signature": "Signature",
-      "litigation": "Litige",
-      "closed": "Clôturé"
-    }
+    "loading": "Chargement des contrats et paiements…",
+    "loadError": "Les contrats et paiements sont momentanément indisponibles.",
+    "unavailableTitle": "Domaine pas encore disponible",
+    "unavailable": "Aucun contrat ni paiement de colocation à afficher : ce domaine n’est pas encore relié au back-office m3a-l3achrane."
   },
   "reports": {
     "reportedBy": "Signalé par {{name}}",

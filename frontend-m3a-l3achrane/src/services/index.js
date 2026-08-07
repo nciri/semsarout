@@ -186,3 +186,15 @@ export async function reactivateBackofficeUser(userId) {
   const { data } = await api.post(`/backoffice/users/${userId}/unsuspend`)
   return data
 }
+
+// Contrats & paiements (super-admin) : domaine non disponible pour la colocation m3a à ce
+// jour. Les services `contract`/`payment` du monorepo sont cloisonnés par agence immobilière
+// (agency_id, transactions de vente/location classique — cf. services/contract/app/models.py,
+// services/payment/app/models.py) et n'ont aucune notion de tenant colocation ni de bail m3a ;
+// `/api/v1/backoffice/contracts` est déjà pris par le back-office agence legacy (frontend/),
+// donc pas de réutilisation possible sans collision. Retourne un état vide honnête plutôt que
+// d'inventer des données — la vue affiche un message clair (voir ContractsView).
+export async function getBackofficeContracts() {
+  if (isMocked('backoffice')) return delay({ items: [], available: false })
+  return { items: [], available: false }
+}

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Avatar, Badge, Button, Card, Icon, Input, Tabs, VerifiedBadge } from '../../ds/index.js'
 import {
   approveBackofficeListing,
+  getBackofficeContracts,
   getBackofficeListings,
   getBackofficeOverview,
   getBackofficeUsers,
@@ -17,8 +18,6 @@ import {
   ACTIVITY_LOG,
   ADMIN_PROFILE,
   BACKOFFICE_NAV,
-  CONTRACTS,
-  CONTRACTS_MONEY,
   MATCHES_CHART,
   MATCHING_RULES,
   REPORTS,
@@ -49,7 +48,6 @@ const ACTIVITY_TONE = { validated: 'verified', rejected: 'danger', in_progress: 
 // Statuts réels de la machine à états coloc-listing (cf. state_machine.py) — seuls
 // EN_MODERATION/PUBLIEE/REJETEE sont attendus dans la file de modération.
 const LISTING_TONE = { EN_MODERATION: 'warning', PUBLIEE: 'verified', REJETEE: 'danger' }
-const CONTRACT_TONE = { active: 'verified', signature: 'warning', litigation: 'danger', closed: 'verified' }
 const REPORT_TONE = { urgent: 'danger', normal: 'warning' }
 
 function sectionTitle(children) {
@@ -776,58 +774,50 @@ function UsersView() {
   )
 }
 
+// Vue « Contrats & paiements » : aucun domaine colocation ne backe encore ce concept (les
+// services contract/payment du monorepo sont cloisonnés par agence immobilière, cf.
+// `getBackofficeContracts`) — état vide honnête plutôt que des données inventées.
 function ContractsView() {
   const { t } = useTranslation(['backoffice'])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setLoadError(false)
+    getBackofficeContracts()
+      .catch(() => { if (!cancelled) setLoadError(true) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
   return (
-    <>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
-        {CONTRACTS_MONEY.map((m) => (
-          <Card key={m.id} padding={18} style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-            <div style={{ font: 'var(--fw-bold) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
-              {t(`backoffice:contracts.money.${m.id}`, { defaultValue: m.label })}
-            </div>
-            <div style={{ font: 'var(--fw-extrabold) 28px var(--font-display)', color: 'var(--text-heading)', letterSpacing: '-0.02em', lineHeight: 1 }}>{m.value}</div>
-            <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>{m.note}</div>
-          </Card>
-        ))}
-      </div>
-      <Card padding={0} style={{ overflow: 'hidden' }}>
-        <div
-          style={{
-            display: 'grid', gridTemplateColumns: '130px minmax(0, 1fr) 150px 120px 130px 96px', gap: 16,
-            padding: '13px 20px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--surface-sunken)',
-            font: 'var(--fw-extrabold) 12px var(--font-body)', color: 'var(--text-muted)', letterSpacing: '.05em', textTransform: 'uppercase',
-          }}
-        >
-          <div>{t('backoffice:contracts.columns.contract')}</div>
-          <div>{t('backoffice:contracts.columns.parties')}</div>
-          <div>{t('backoffice:contracts.columns.period')}</div>
-          <div>{t('backoffice:contracts.columns.deposit')}</div>
-          <div>{t('backoffice:contracts.columns.status')}</div>
-          <div style={{ justifySelf: 'end' }}>{t('backoffice:contracts.columns.action')}</div>
+    <Card padding={24}>
+      {loading && (
+        <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+          {t('backoffice:contracts.loading')}
         </div>
-        {CONTRACTS.map((c) => {
-          const tone = CONTRACT_TONE[c.status]
-          const label = t(`backoffice:contracts.status.${c.status}`, { defaultValue: c.status })
-          return (
-            <div
-              key={c.id}
-              style={{
-                display: 'grid', gridTemplateColumns: '130px minmax(0, 1fr) 150px 120px 130px 96px', gap: 16, alignItems: 'center',
-                padding: '14px 20px', borderBottom: '1px solid var(--border-subtle)', fontSize: 13.5,
-              }}
-            >
-              <div style={{ fontWeight: 800, color: 'var(--text-heading)', fontVariantNumeric: 'tabular-nums' }}>{c.id}</div>
-              <div style={{ color: 'var(--text-body)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.parties}</div>
-              <div style={{ color: 'var(--text-muted)' }}>{c.period}</div>
-              <div style={{ color: 'var(--text-heading)', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{c.deposit}</div>
-              <div><Badge tone={tone}>{label}</Badge></div>
-              <Button variant="secondary" size="sm" iconLeft="file-text" style={{ justifySelf: 'end' }}>{t('backoffice:contracts.detail')}</Button>
+      )}
+      {!loading && loadError && (
+        <div style={{ font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+          {t('backoffice:contracts.loadError')}
+        </div>
+      )}
+      {!loading && !loadError && (
+        <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+          <Icon name="file-signature" size={20} strokeWidth={2} style={{ color: 'var(--text-muted)', flex: 'none', marginTop: 2 }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ font: 'var(--fw-bold) 13.5px var(--font-body)', color: 'var(--text-heading)' }}>
+              {t('backoffice:contracts.unavailableTitle')}
             </div>
-          )
-        })}
-      </Card>
-    </>
+            <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)', maxWidth: 560 }}>
+              {t('backoffice:contracts.unavailable')}
+            </div>
+          </div>
+        </div>
+      )}
+    </Card>
   )
 }
 

@@ -7,7 +7,7 @@ export const BACKOFFICE_NAV = [
   { id: 'verif', icon: 'shield-check', label: 'Vérifications', count: 23, title: 'Vérifications d’identité', subtitle: 'File KYC — CIN, statut étudiant, attestation employeur' },
   { id: 'listings', icon: 'building-2', label: 'Annonces', count: 8, title: 'Modération des annonces', subtitle: 'Contrôle qualité et conformité des logements publiés' },
   { id: 'users', icon: 'users', label: 'Utilisateurs', title: 'Utilisateurs', subtitle: 'Chercheurs, hôtes et partenaires institutionnels' },
-  { id: 'contracts', icon: 'file-signature', label: 'Contrats & paiements', title: 'Contrats & paiements', subtitle: 'Baux signés en ligne et dépôts de garantie séquestrés' },
+  { id: 'contracts', icon: 'file-signature', label: 'Contrats & paiements', title: 'Contrats & paiements', subtitle: 'Contrats de colocation et paiements associés' },
   { id: 'reports', icon: 'flag', label: 'Signalements', count: 5, title: 'Signalements', subtitle: 'Litiges et contenus signalés par la communauté' },
   { id: 'settings', icon: 'settings', label: 'Paramètres', title: 'Paramètres', subtitle: 'Règles de matching, équipe et permissions' },
 ]
@@ -51,21 +51,6 @@ export const VERIF_TABS = [
   { id: 'relaunched', label: 'Relancés', icon: 'rotate-cw' },
   { id: 'rejected', label: 'Refusés', icon: 'x-circle' },
   { id: 'validated', label: 'Validés', icon: 'check-circle' },
-]
-
-export const CONTRACTS_MONEY = [
-  { id: 'escrow', label: 'Dépôts sous séquestre', value: '2,84 M MAD', note: '1 106 contrats en cours' },
-  { id: 'commissions', label: 'Commissions du mois', value: '318 400 MAD', note: 'Taux moyen 4,2 %' },
-  { id: 'disputes', label: 'Litiges ouverts', value: '7', note: '2 en arbitrage externe' },
-]
-
-export const CONTRACTS = [
-  { id: 'CTR-1204', parties: 'K. Amrani ↔ A. El Khattabi', period: 'Sept. 26 – Juin 27', deposit: '4 800 MAD', status: 'active' },
-  { id: 'CTR-1201', parties: 'O. Tazi ↔ Résidence Al Manar', period: 'Sept. 26 – Juil. 27', deposit: '3 000 MAD', status: 'signature' },
-  { id: 'CTR-1198', parties: 'I. Mrabet ↔ N. Cherkaoui', period: 'Août 26 – Août 27', deposit: '3 800 MAD', status: 'active' },
-  { id: 'CTR-1191', parties: 'M. Raji ↔ Y. Sqalli', period: 'Juil. 26 – Juin 27', deposit: '5 300 MAD', status: 'litigation' },
-  { id: 'CTR-1187', parties: 'S. Lahlou ↔ K. Benjelloun', period: 'Juin 26 – Mai 27', deposit: '6 400 MAD', status: 'active' },
-  { id: 'CTR-1180', parties: 'H. Alaoui ↔ L. Berrada', period: 'Sept. 25 – Juin 26', deposit: '4 200 MAD', status: 'closed' },
 ]
 
 export const REPORTS = [
