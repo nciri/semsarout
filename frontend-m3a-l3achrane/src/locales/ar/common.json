@@ -41,7 +41,9 @@
     "reporting": "التقارير",
     "billing": "الفوترة",
     "apiWebhooks": "واجهة برمجية و webhooks",
-    "help": "بحاجة إلى مساعدة؟"
+    "help": "بحاجة إلى مساعدة؟",
+    "logout": "تسجيل الخروج",
+    "myAccount": "حسابي"
   },
   "trust": {
     "verified": "موثّقة",

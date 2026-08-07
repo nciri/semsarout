@@ -41,7 +41,9 @@
     "reporting": "Reporting",
     "billing": "Facturation",
     "apiWebhooks": "API & webhooks",
-    "help": "Besoin d'aide ?"
+    "help": "Besoin d'aide ?",
+    "logout": "Déconnexion",
+    "myAccount": "Mon compte"
   },
   "trust": {
     "verified": "Vérifiée",

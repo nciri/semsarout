@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { SidebarNav } from '../../ds/index.js'
+import { getCurrentProfile } from '../../services/index.js'
 
 const ROUTES = {
   home: '/',
@@ -19,6 +20,7 @@ export default function AppLayout() {
   const { t } = useTranslation('common')
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  const [userName, setUserName] = useState(null)
   // Route active = plus long préfixe correspondant (candidatures avant candidature avant espace).
   const active = Object.entries(ROUTES)
     .sort((a, b) => b[1].length - a[1].length)
@@ -44,9 +46,26 @@ export default function AppLayout() {
     if (!token) navigate('/connexion', { replace: true })
   }, [navigate])
 
+  useEffect(() => {
+    getCurrentProfile()
+      .then((profile) => setUserName(profile.prenom || null))
+      .catch(() => {})
+  }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth-storage')
+    navigate('/connexion')
+  }
+
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-      <SidebarNav items={items} active={active} onSelect={(value) => navigate(ROUTES[value])} />
+      <SidebarNav
+        items={items}
+        active={active}
+        onSelect={(value) => navigate(ROUTES[value])}
+        userName={userName || t('nav.myAccount')}
+        onLogout={handleLogout}
+      />
       <Outlet />
     </div>
   )
