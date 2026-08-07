@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Avatar, Badge, Button, Card, Icon, Input, Tabs, VerifiedBadge } from '../../ds/index.js'
 import {
   approveBackofficeListing,
-  getBackofficeContracts,
+  getBackofficeLeases,
   getBackofficeLifestyleReferential,
   getBackofficeListings,
   getBackofficeMatchingWeights,
@@ -777,11 +777,23 @@ function UsersView() {
   )
 }
 
-// Vue « Contrats & paiements » : aucun domaine colocation ne backe encore ce concept (les
-// services contract/payment du monorepo sont cloisonnés par agence immobilière, cf.
-// `getBackofficeContracts`) — état vide honnête plutôt que des données inventées.
+const LEASE_STATUS_TONE = { pending: 'warning', active: 'verified', ended: 'neutral', cancelled: 'danger' }
+const PAYMENT_STATUS_ICON = { pending: 'clock', escrowed: 'lock', released: 'check-circle', refunded: 'rotate-ccw' }
+const PAYMENT_STATUS_TONE = { pending: 'neutral', escrowed: 'warning', released: 'verified', refunded: 'danger' }
+
+function fmtLeaseDate(iso, lang) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString(lang === 'ar' ? 'ar-MA' : 'fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+// Vue « Contrats & paiements » : baux + paiements du domaine colocation m3a
+// (services/coloc-listing, ColocLease/ColocPayment), fan-out BFF `/api/v1/backoffice/leases`.
+// CADRAGE honnête : les statuts (pending/escrowed/released/refunded) modélisent des ÉTATS
+// de séquestre — aucun prestataire de paiement (PSP) n'est intégré, aucun mouvement d'argent
+// réel n'a lieu sur cette plateforme (voir bandeau ci-dessous).
 function ContractsView() {
-  const { t } = useTranslation(['backoffice'])
+  const { t, i18n } = useTranslation(['backoffice'])
+  const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
 
@@ -789,38 +801,104 @@ function ContractsView() {
     let cancelled = false
     setLoading(true)
     setLoadError(false)
-    getBackofficeContracts()
+    getBackofficeLeases()
+      .then((data) => { if (!cancelled) setItems(data?.items ?? []) })
       .catch(() => { if (!cancelled) setLoadError(true) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [])
 
   return (
-    <Card padding={24}>
-      {loading && (
-        <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
-          {t('backoffice:contracts.loading')}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div
+        style={{
+          display: 'flex', gap: 10, alignItems: 'flex-start', padding: '12px 16px',
+          background: 'var(--navy-50)', border: '1px solid var(--navy-100)', borderRadius: 10,
+        }}
+      >
+        <Icon name="info" size={16} strokeWidth={2.4} style={{ color: 'var(--navy-700)', flex: 'none', marginTop: 1 }} />
+        <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-body)', lineHeight: 1.5 }}>
+          {t('backoffice:contracts.escrowNote')}
         </div>
-      )}
-      {!loading && loadError && (
-        <div style={{ font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
-          {t('backoffice:contracts.loadError')}
+      </div>
+
+      <Card padding={0} style={{ overflow: 'hidden' }}>
+        <div
+          style={{
+            display: 'grid', gridTemplateColumns: 'minmax(0, 1.3fr) 110px 110px 110px 1fr', gap: 16,
+            padding: '13px 20px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--surface-sunken)',
+            font: 'var(--fw-extrabold) 12px var(--font-body)', color: 'var(--text-muted)', letterSpacing: '.05em', textTransform: 'uppercase',
+          }}
+        >
+          <div>{t('backoffice:contracts.columns.lease')}</div>
+          <div>{t('backoffice:contracts.columns.rent')}</div>
+          <div>{t('backoffice:contracts.columns.deposit')}</div>
+          <div>{t('backoffice:contracts.columns.status')}</div>
+          <div>{t('backoffice:contracts.columns.payments')}</div>
         </div>
-      )}
-      {!loading && !loadError && (
-        <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-          <Icon name="file-signature" size={20} strokeWidth={2} style={{ color: 'var(--text-muted)', flex: 'none', marginTop: 2 }} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div style={{ font: 'var(--fw-bold) 13.5px var(--font-body)', color: 'var(--text-heading)' }}>
-              {t('backoffice:contracts.unavailableTitle')}
-            </div>
-            <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)', maxWidth: 560 }}>
-              {t('backoffice:contracts.unavailable')}
-            </div>
+        {loading && (
+          <div style={{ padding: '18px 20px', font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+            {t('backoffice:contracts.loading')}
           </div>
-        </div>
-      )}
-    </Card>
+        )}
+        {!loading && loadError && (
+          <div style={{ padding: '18px 20px', font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+            {t('backoffice:contracts.loadError')}
+          </div>
+        )}
+        {!loading && !loadError && items.length === 0 && (
+          <div style={{ padding: '18px 20px', font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+            {t('backoffice:contracts.empty')}
+          </div>
+        )}
+        {!loading && !loadError && items.map((lease) => {
+          const statusLabel = t(`backoffice:contracts.status.${lease.status}`, { defaultValue: lease.status })
+          return (
+            <div
+              key={lease.id}
+              style={{
+                display: 'grid', gridTemplateColumns: 'minmax(0, 1.3fr) 110px 110px 110px 1fr', gap: 16, alignItems: 'center',
+                padding: '13px 20px', borderBottom: '1px solid var(--border-subtle)', fontSize: 13.5,
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, color: 'var(--text-heading)' }}>
+                  {t('backoffice:contracts.listingLabel', { id: lease.listing_id })}
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                  {t('backoffice:contracts.parties', { tenant: lease.tenant_user_id, owner: lease.owner_id })}
+                </div>
+                <div style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+                  {fmtLeaseDate(lease.start_date, i18n.language)}
+                </div>
+              </div>
+              <div style={{ color: 'var(--text-body)', fontVariantNumeric: 'tabular-nums' }}>
+                {Math.round(lease.rent_amount)} MAD
+              </div>
+              <div style={{ color: 'var(--text-body)', fontVariantNumeric: 'tabular-nums' }}>
+                {Math.round(lease.deposit_amount)} MAD
+              </div>
+              <div><Badge tone={LEASE_STATUS_TONE[lease.status] ?? 'neutral'}>{statusLabel}</Badge></div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {(lease.payments ?? []).map((p) => (
+                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Icon name={PAYMENT_STATUS_ICON[p.status] ?? 'circle'} size={13} strokeWidth={2.4}
+                          style={{ color: 'var(--text-muted)', flex: 'none' }} />
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 'none' }}>
+                      {t(`backoffice:contracts.paymentType.${p.type}`)}
+                      {p.period ? ` (${p.period})` : ''}
+                    </span>
+                    <Badge tone={PAYMENT_STATUS_TONE[p.status] ?? 'neutral'}>
+                      {t(`backoffice:contracts.paymentStatus.${p.status}`, { defaultValue: p.status })}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </Card>
+    </div>
   )
 }
 

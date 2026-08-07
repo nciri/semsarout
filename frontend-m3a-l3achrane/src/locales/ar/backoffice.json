@@ -173,8 +173,33 @@
   "contracts": {
     "loading": "جارٍ تحميل العقود والمدفوعات…",
     "loadError": "العقود والمدفوعات غير متاحة مؤقتًا.",
-    "unavailableTitle": "قسم غير متوفر بعد",
-    "unavailable": "لا يوجد عقد أو دفع خاص بالسكن المشترك لعرضه: هذا القسم غير مرتبط بعد بلوحة تحكم m3a-l3achrane."
+    "empty": "لا يوجد أي عقد إيجار لعرضه.",
+    "escrowNote": "حالات الضمان (séquestre) هنا نموذج توضيحي فقط: هذه المنصة لا تعالج أي دفعة حقيقية (لا يوجد مزوّد دفع مدمج).",
+    "listingLabel": "الإعلان {{id}}",
+    "parties": "المستأجر رقم {{tenant}} · المالك رقم {{owner}}",
+    "columns": {
+      "lease": "عقد الإيجار",
+      "rent": "الإيجار",
+      "deposit": "التأمين",
+      "status": "الحالة",
+      "payments": "المدفوعات"
+    },
+    "status": {
+      "pending": "قيد الانتظار",
+      "active": "نشط",
+      "ended": "منتهٍ",
+      "cancelled": "ملغى"
+    },
+    "paymentType": {
+      "deposit": "التأمين",
+      "rent": "الإيجار"
+    },
+    "paymentStatus": {
+      "pending": "قيد الانتظار",
+      "escrowed": "تحت الضمان",
+      "released": "تم التحرير",
+      "refunded": "تم الاسترجاع"
+    }
   },
   "reports": {
     "columns": {

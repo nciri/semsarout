@@ -1,7 +1,44 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Badge, Button, Card, Icon, Input, PriceTag } from '../../ds/index.js'
 import { paiementSequestre } from '../../data/paiementSequestre.js'
+import { getListing, getMyLease } from '../../services/index.js'
+
+// Dérive les 4 étapes du design (fonds déposés / contrat / état des lieux / fonds libérés)
+// depuis l'état réel du bail. Le domaine bail/paiement ne modélise que la caution/le loyer
+// (statuts pending→escrowed→released|refunded) : « contrat signé » est déduit du statut du
+// bail (`active`), « état des lieux » n'a pas de backing data et sert de palier intermédiaire
+// entre caution déposée et fonds libérés.
+function deriveEtapes(lease) {
+  const depositStatus = lease.payments?.find((p) => p.type === 'deposit')?.status ?? 'pending'
+  const depotFait = ['escrowed', 'released', 'refunded'].includes(depositStatus)
+  const liberationFait = depositStatus === 'released'
+  const contratFait = depotFait && lease.status === 'active'
+  let currentIndex = 0
+  if (liberationFait) currentIndex = 4
+  else if (contratFait) currentIndex = 2
+  else if (depotFait) currentIndex = 1
+  return ['depot', 'contrat', 'etat_lieux', 'liberation'].map((id, i) => ({
+    id,
+    statut: i < currentIndex ? 'fait' : i === currentIndex ? 'en_cours' : 'attente',
+    mark: i < currentIndex ? '✓' : String(i + 1),
+  }))
+}
+
+function buildLignes(lease) {
+  return [
+    { id: 'loyer', montant: Math.round(lease.rent_amount) },
+    { id: 'charges', montant: 0 },
+    { id: 'caution', montant: Math.round(lease.deposit_amount) },
+  ]
+}
+
+function fmtEntree(iso, lang) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString(lang === 'ar' ? 'ar-MA' : 'fr-FR', {
+    day: 'numeric', month: 'long', year: 'numeric',
+  })
+}
 
 const STATUT_STYLE = {
   fait: { background: 'var(--green-500)', color: '#fff' },
@@ -47,10 +84,58 @@ function EtapeSequestre({ etape, isLast }) {
 }
 
 export default function Paiement() {
-  const { t } = useTranslation(['app', 'common'])
-  const { annonce, etapes, lignes, total } = paiementSequestre
+  const { t, i18n } = useTranslation(['app', 'common'])
+  const [lease, setLease] = useState(null)
+  const [listingTitre, setListingTitre] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [mode, setMode] = useState('carte')
   const [confirmeEspeces, setConfirmeEspeces] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setLoadError(false)
+    getMyLease()
+      .then(async (data) => {
+        if (cancelled) return
+        setLease(data)
+        if (data?.listing_id) {
+          try {
+            const listing = await getListing(data.listing_id)
+            if (!cancelled) setListingTitre(listing?.titre ?? '')
+          } catch {
+            // titre optionnel : le bail reste affichable sans lui
+          }
+        }
+      })
+      .catch(() => { if (!cancelled) setLoadError(true) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  if (loading) {
+    return (
+      <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)', padding: '34px 24px' }}>
+        <div style={{ maxWidth: 920, margin: '0 auto', font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-muted)' }}>
+          {t('app:paiement.loading')}
+        </div>
+      </div>
+    )
+  }
+
+  // Pas de bail réel (utilisateur de démo sans bail, ou service indisponible) : repli mock
+  // pour garder l'écran illustratif plutôt que vide.
+  const usingMock = loadError || !lease
+  const { annonce, etapes, lignes, total } = usingMock
+    ? paiementSequestre
+    : {
+        annonce: { titre: listingTitre || t('app:paiement.leaseFallbackTitle', { id: lease.listing_id }),
+                  entree: fmtEntree(lease.start_date, i18n.language) },
+        etapes: deriveEtapes(lease),
+        lignes: buildLignes(lease),
+        total: Math.round(lease.rent_amount) + Math.round(lease.deposit_amount),
+      }
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)' }}>
@@ -62,6 +147,18 @@ export default function Paiement() {
           <p style={{ margin: 0, font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-body)' }}>
             {t('app:paiement.subtitle', { titre: annonce.titre, entree: annonce.entree })}
           </p>
+        </div>
+
+        <div
+          style={{
+            display: 'flex', gap: 10, alignItems: 'flex-start', padding: '12px 16px',
+            background: 'var(--navy-50)', border: '1px solid var(--navy-100)', borderRadius: 10,
+          }}
+        >
+          <Icon name="info" size={16} strokeWidth={2.4} style={{ color: 'var(--navy-700)', flex: 'none', marginTop: 1 }} />
+          <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-body)', lineHeight: 1.5 }}>
+            {t('app:paiement.demoBanner')}
+          </div>
         </div>
 
         <Card style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>

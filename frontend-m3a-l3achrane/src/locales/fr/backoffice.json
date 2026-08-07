@@ -173,8 +173,33 @@
   "contracts": {
     "loading": "Chargement des contrats et paiements…",
     "loadError": "Les contrats et paiements sont momentanément indisponibles.",
-    "unavailableTitle": "Domaine pas encore disponible",
-    "unavailable": "Aucun contrat ni paiement de colocation à afficher : ce domaine n’est pas encore relié au back-office m3a-l3achrane."
+    "empty": "Aucun bail à afficher.",
+    "escrowNote": "États de séquestre modélisés à des fins de démonstration : cette plateforme ne traite aucun paiement réel (aucun prestataire de paiement intégré).",
+    "listingLabel": "Annonce {{id}}",
+    "parties": "Locataire #{{tenant}} · Bailleur #{{owner}}",
+    "columns": {
+      "lease": "Bail",
+      "rent": "Loyer",
+      "deposit": "Caution",
+      "status": "Statut",
+      "payments": "Paiements"
+    },
+    "status": {
+      "pending": "En attente",
+      "active": "Actif",
+      "ended": "Terminé",
+      "cancelled": "Annulé"
+    },
+    "paymentType": {
+      "deposit": "Caution",
+      "rent": "Loyer"
+    },
+    "paymentStatus": {
+      "pending": "En attente",
+      "escrowed": "Sous séquestre",
+      "released": "Libéré",
+      "refunded": "Remboursé"
+    }
   },
   "reports": {
     "columns": {

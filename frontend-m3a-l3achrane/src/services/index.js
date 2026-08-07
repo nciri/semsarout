@@ -187,16 +187,73 @@ export async function reactivateBackofficeUser(userId) {
   return data
 }
 
-// Contrats & paiements (super-admin) : domaine non disponible pour la colocation m3a à ce
-// jour. Les services `contract`/`payment` du monorepo sont cloisonnés par agence immobilière
-// (agency_id, transactions de vente/location classique — cf. services/contract/app/models.py,
-// services/payment/app/models.py) et n'ont aucune notion de tenant colocation ni de bail m3a ;
-// `/api/v1/backoffice/contracts` est déjà pris par le back-office agence legacy (frontend/),
-// donc pas de réutilisation possible sans collision. Retourne un état vide honnête plutôt que
-// d'inventer des données — la vue affiche un message clair (voir ContractsView).
-export async function getBackofficeContracts() {
-  if (isMocked('backoffice')) return delay({ items: [], available: false })
-  return { items: [], available: false }
+// Baux & paiements (super-admin) : domaine colocation m3a propre (services/coloc-listing,
+// modèles ColocLease/ColocPayment), distinct du back-office agence legacy (contract/payment,
+// cloisonnés agency_id) — d'où la route dédiée `/api/v1/backoffice/leases` plutôt que
+// `/api/v1/backoffice/contracts` (déjà prise par le legacy). CADRAGE : les statuts de
+// paiement (pending/escrowed/released/refunded) modélisent des ÉTATS de séquestre —
+// aucun prestataire de paiement (PSP) n'est intégré, aucun mouvement d'argent réel.
+export async function getBackofficeLeases() {
+  if (isMocked('backoffice')) {
+    return delay({
+      items: [
+        { id: 'lease-1', listing_id: 'l-4482', tenant_user_id: 42, owner_id: 3021,
+          rent_amount: 2400, deposit_amount: 2400, status: 'active',
+          start_date: '2026-07-25', end_date: null, created_at: '2026-07-25T09:00:00+00:00',
+          payments: [
+            { id: 'pay-1', type: 'deposit', amount: 2400, period: null, status: 'escrowed' },
+            { id: 'pay-2', type: 'rent', amount: 2400, period: '2026-08', status: 'escrowed' },
+          ] },
+        { id: 'lease-2', listing_id: 'l-4479', tenant_user_id: 58, owner_id: 3087,
+          rent_amount: 1900, deposit_amount: 1900, status: 'pending',
+          start_date: '2026-08-10', end_date: null, created_at: '2026-08-05T11:30:00+00:00',
+          payments: [
+            { id: 'pay-3', type: 'deposit', amount: 1900, period: null, status: 'pending' },
+            { id: 'pay-4', type: 'rent', amount: 1900, period: '2026-08', status: 'pending' },
+          ] },
+      ],
+    })
+  }
+  const { data } = await api.get('/backoffice/leases')
+  return data
+}
+
+// Bail du locataire courant (+ ses paiements) — écran Paiement/séquestre (utilisateur
+// authentifié). `null` si l'utilisateur n'a aucun bail.
+export async function getMyLease() {
+  if (isMocked('backoffice')) {
+    return delay({
+      id: 'lease-mock', listing_id: 'l-mock', tenant_user_id: 1, owner_id: 2,
+      rent_amount: 2400, deposit_amount: 2400, status: 'active',
+      start_date: '2026-08-01', end_date: null, created_at: '2026-07-20T09:00:00+00:00',
+      payments: [
+        { id: 'pay-mock-1', type: 'deposit', amount: 2400, period: null, status: 'escrowed' },
+        { id: 'pay-mock-2', type: 'rent', amount: 2400, period: '2026-08', status: 'pending' },
+      ],
+    })
+  }
+  const { data } = await api.get('/me/lease')
+  return data
+}
+
+// Actions de séquestre (owner/admin, gardées côté service coloc-listing) — état only,
+// aucun traitement de paiement réel.
+export async function escrowLeasePayment(leaseId, paymentId) {
+  if (isMocked('backoffice')) return delay({ id: leaseId })
+  const { data } = await api.post(`/leases/${leaseId}/payments/${paymentId}/escrow`)
+  return data
+}
+
+export async function releaseLeasePayment(leaseId, paymentId) {
+  if (isMocked('backoffice')) return delay({ id: leaseId })
+  const { data } = await api.post(`/leases/${leaseId}/payments/${paymentId}/release`)
+  return data
+}
+
+export async function refundLeasePayment(leaseId, paymentId) {
+  if (isMocked('backoffice')) return delay({ id: leaseId })
+  const { data } = await api.post(`/leases/${leaseId}/payments/${paymentId}/refund`)
+  return data
 }
 
 // Signalements (super-admin) : domaine `trust-safety` (services/trust-safety/app/models.py,

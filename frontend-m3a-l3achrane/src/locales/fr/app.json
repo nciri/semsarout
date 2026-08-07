@@ -193,6 +193,9 @@
   "paiement": {
     "title": "Sécuriser votre place",
     "subtitle": "{{titre}} · Entrée le {{entree}}",
+    "loading": "Chargement de votre bail…",
+    "demoBanner": "Les étapes ci-dessous reflètent l’état réel de votre bail (caution/loyer). Aucun paiement n’est traité par cette plateforme : cadre de séquestre présenté à titre de démonstration, sans prestataire de paiement intégré.",
+    "leaseFallbackTitle": "Bail #{{id}}",
     "escrowStatusTitle": "Statut du séquestre",
     "steps": {
       "depot": "Fonds déposés",
