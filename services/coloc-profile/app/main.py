@@ -8,7 +8,7 @@ l'original n'émettait rien. PII jamais dans les événements.
 """
 from contextlib import asynccontextmanager
 
-from fastapi import APIRouter, Depends, FastAPI, Request, Response
+from fastapi import APIRouter, Depends, FastAPI, Header, Request, Response
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import Session
@@ -68,6 +68,42 @@ async def _tenant_handler(request: Request, exc: _TenantForbidden) -> JSONRespon
 @app.get("/health", include_in_schema=False)
 async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
+
+
+@app.get("/internal/stats", include_in_schema=False)
+def internal_stats(tenant: str | None = None, x_internal_token: str = Header(default=""),
+                   db: Session = Depends(get_db)) -> dict:
+    """Compteurs profils (super-admin overview m3a) — agrégés par le BFF. coloc-profile
+    n'a PAS de colonne tenant (service mono-tenant m3a-l3achrane) : `tenant` n'est accepté
+    que pour uniformité de contrat avec identity et est ignoré s'il diffère de m3a-l3achrane
+    (dans ce cas, compteurs à zéro plutôt qu'un mélange trompeur)."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    if tenant and tenant != TENANT:
+        return {"total_profiles": 0, "verified_profiles": 0, "profiles_with_lifestyle": 0}
+    with_lifestyle = (
+        db.query(Profile.id).join(LifestyleAnswer, LifestyleAnswer.profile_id == Profile.id)
+        .distinct().count()
+    )
+    return {
+        "total_profiles": db.query(Profile).count(),
+        "verified_profiles": db.query(Profile).filter(Profile.is_verified.is_(True)).count(),
+        "profiles_with_lifestyle": with_lifestyle,
+    }
+
+
+@app.get("/internal/lifestyle-referential", include_in_schema=False)
+def internal_lifestyle_referential(x_internal_token: str = Header(default="")) -> dict:
+    """Référentiel lifestyle m3a (back-office super-admin, lecture seule) : source unique
+    du vocabulaire partagé (`semsar_common.coloc_referential`), déjà utilisé pour valider
+    les réponses au questionnaire (`put_lifestyle` ci-dessous). Module Python statique, pas
+    une table versionnée : pas d'endpoint d'édition (hors périmètre sans migration au préalable)."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    return {
+        "questions": LIFESTYLE_QUESTIONS,
+        "importance_levels": sorted(IMPORTANCE_LEVELS),
+    }
 
 
 router = APIRouter(dependencies=[Depends(_require_tenant)])

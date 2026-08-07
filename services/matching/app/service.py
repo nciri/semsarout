@@ -5,6 +5,7 @@ calcule depuis les projections et persiste (generate-once / render-many). Un
 hard-fail est aussi mis en cache (hard_pass=False) et rendu comme None. Sans
 profil scorable (gender/budget_max/city manquants) : tout None, aucun calcul.
 """
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -20,6 +21,18 @@ def active_weights(db: Session) -> Weights:
         return Weights(version="default-v1")
     return Weights(version=row.version, budget=float(row.weights["budget"]),
                    lifestyle=float(row.weights["lifestyle"]))
+
+
+def set_active_weights(db: Session, budget: float, lifestyle: float) -> Weights:
+    """Crée une nouvelle version de pondération et la rend active (désactive l'ancienne) —
+    back-office super-admin uniquement (`PUT /internal/weights`). Jamais d'UPDATE en place :
+    chaque édition est une version horodatée nouvelle, traçable (spec §matching)."""
+    db.query(MatchingWeights).filter(MatchingWeights.active.is_(True)).update({"active": False})
+    version = f"admin-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')}"
+    db.add(MatchingWeights(version=version, weights={"budget": budget, "lifestyle": lifestyle},
+                           active=True))
+    db.commit()
+    return Weights(version=version, budget=budget, lifestyle=lifestyle)
 
 
 def _seeker_criteria(p: CompatibilityProfile) -> SeekerCriteria:

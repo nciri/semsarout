@@ -210,6 +210,15 @@
     "mapComingSoon": "عرض الخريطة قريبًا",
     "loadMore": "عرض المزيد من السكنات",
     "locationDefault": "الدار البيضاء، المعاريف",
+    "institutionLabel": "المدرسة / الشركة",
+    "institutionDefault": "المدرسة الوطنية للتجارة والتسيير بالدار البيضاء",
+    "proximityLabel": "القرب",
+    "proximityRadiusOptions": [
+      "< 1 كم",
+      "< 2 كم",
+      "< 5 كم",
+      "غير محدد"
+    ],
     "lifestyleProfileBanner": {
       "withProfile": "توصيات بناءً على ملف التوافق الخاص بك",
       "withoutProfile": "أجب عن الاستبيان للحصول على توصيات مخصصة ←",
@@ -251,7 +260,20 @@
       "cleaning": "تناوب على تنظيف الأجزاء المشتركة",
       "smoking": "التدخين داخل السكن",
       "pets": "الحيوانات الأليفة مسموحة"
-    }
+    },
+    "reportCta": "الإبلاغ عن هذا الإعلان",
+    "reportReasonLabel": "سبب الإبلاغ",
+    "reportSubmitCta": "إرسال البلاغ",
+    "reportCancelCta": "إلغاء",
+    "reportReason": {
+      "spam": "رسائل مزعجة",
+      "inappropriate": "محتوى غير لائق",
+      "fraud": "احتيال",
+      "harassment": "تحرّش",
+      "other": "أخرى"
+    },
+    "reportSuccess": "تم إرسال البلاغ — شكرًا لك، سيراجعه فريقنا.",
+    "reportError": "تعذّر إرسال البلاغ حاليًا — يُرجى إعادة المحاولة."
   },
   "auth": {
     "loginTitle": "تسجيل الدخول",

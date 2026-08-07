@@ -23,6 +23,7 @@
     "messages": "Messages",
     "messaging": "Messagerie",
     "inbox": "Candidatures reçues",
+    "roommateValidation": "Colocataires à valider",
     "apply": "Candidater",
     "quiz": "Questionnaire",
     "security": "Sécurité",
@@ -40,7 +41,9 @@
     "reporting": "Reporting",
     "billing": "Facturation",
     "apiWebhooks": "API & webhooks",
-    "help": "Besoin d'aide ?"
+    "help": "Besoin d'aide ?",
+    "logout": "Déconnexion",
+    "myAccount": "Mon compte"
   },
   "trust": {
     "verified": "Vérifiée",
@@ -52,7 +55,8 @@
     "amenityRoommates": "3 colocs",
     "amenityQuiet": "Calme",
     "amenityNoSmoking": "Non-fumeur",
-    "applyCta": "Candidater"
+    "applyCta": "Candidater",
+    "proximityTo": "à {{distance}} de {{label}}"
   },
   "priceTag": {
     "perMonth": "mois"

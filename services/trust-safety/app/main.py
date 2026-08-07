@@ -12,9 +12,10 @@ et renvoie la réponse legacy (`user`/`agency` `to_dict`), relayée telle quelle
 """
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime
 
 import httpx
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import Session
@@ -25,7 +26,10 @@ from semsar_events import enqueue
 
 from . import events
 from .db import get_db, init_db
-from .models import AdminAction, ModerationStatus
+from .models import REPORT_STATUSES, AdminAction, ModerationStatus, Report
+from .schemas import ReportCreateIn
+
+DEFAULT_TENANT = "m3a-l3achrane"
 
 settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
@@ -205,3 +209,84 @@ def internal_moderation_hidden(request: Request, db: Session = Depends(get_db)):
     if request.headers.get("x-internal-token") != settings.internal_token:
         return _err("Forbidden", 403)
     return _hidden(db)
+
+
+# ---- Signalements (reports) : file de modération m3a-l3achrane ----
+def _tenant(request: Request) -> str:
+    return request.headers.get("x-semsar-tenant") or DEFAULT_TENANT
+
+
+@app.post("/reports", status_code=201)
+def create_report(body: ReportCreateIn, request: Request,
+                  principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    """Créer un signalement (tout utilisateur authentifié) — `reporter_id` + `tenant` injectés
+    depuis l'identité BFF, jamais fournis par le client."""
+    if not principal.sub or not principal.sub.isdigit():
+        return _err("Authentification requise", 401)
+    report = Report(
+        tenant=_tenant(request), reporter_id=int(principal.sub),
+        target_type=body.target_type, target_id=body.target_id,
+        reason=body.reason, description=body.description,
+    )
+    db.add(report)
+    db.flush()
+    enqueue(db, "report", report.id, events.REPORT_CREATED, report.to_dict())
+    db.commit()
+    db.refresh(report)
+    return report.to_dict()
+
+
+@app.get("/internal/reports", include_in_schema=False)
+def internal_reports(tenant: str | None = None, status: str | None = None,
+                     x_internal_token: str = Header(default=""), db: Session = Depends(get_db)):
+    """Liste des signalements pour la file back-office (super-admin, via BFF) — parité
+    `/internal/listings/queue`, `/internal/kyc/queue`."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    query = db.query(Report)
+    if tenant:
+        query = query.filter(Report.tenant == tenant)
+    if status:
+        if status not in REPORT_STATUSES:
+            return _err("Statut inconnu", 400)
+        query = query.filter(Report.status == status)
+    rows = query.order_by(Report.created_at.desc()).all()
+    return {"items": [r.to_dict() for r in rows]}
+
+
+def _close_report(db: Session, report_id: int, principal: Principal, status: str):
+    if not principal.is_superadmin:
+        return None, _err("Super-admin access required", 403)
+    report = db.get(Report, report_id)
+    if report is None:
+        return None, _err("Signalement introuvable", 404)
+    if report.status != "open":
+        return None, _err("Signalement déjà traité", 409)
+    report.status = status
+    report.resolved_at = datetime.utcnow()
+    report.resolver_id = int(principal.sub) if principal.sub and principal.sub.isdigit() else None
+    return report, None
+
+
+@app.post("/admin/reports/{report_id}/resolve")
+def resolve_report(report_id: int, principal: Principal = Depends(get_principal),
+                   db: Session = Depends(get_db)):
+    report, err = _close_report(db, report_id, principal, "resolved")
+    if err is not None:
+        return err
+    enqueue(db, "report", report.id, events.REPORT_RESOLVED, report.to_dict())
+    db.commit()
+    db.refresh(report)
+    return report.to_dict()
+
+
+@app.post("/admin/reports/{report_id}/dismiss")
+def dismiss_report(report_id: int, principal: Principal = Depends(get_principal),
+                   db: Session = Depends(get_db)):
+    report, err = _close_report(db, report_id, principal, "dismissed")
+    if err is not None:
+        return err
+    enqueue(db, "report", report.id, events.REPORT_DISMISSED, report.to_dict())
+    db.commit()
+    db.refresh(report)
+    return report.to_dict()

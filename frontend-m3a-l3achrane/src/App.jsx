@@ -14,6 +14,7 @@ const Dashboard = lazy(() => import('./surfaces/app/Dashboard.jsx'))
 const Messaging = lazy(() => import('./surfaces/app/Messaging.jsx'))
 const Candidature = lazy(() => import('./surfaces/app/Candidature.jsx'))
 const Candidatures = lazy(() => import('./surfaces/app/Candidatures.jsx'))
+const ValidationColocataire = lazy(() => import('./surfaces/app/ValidationColocataire.jsx'))
 const Questionnaire = lazy(() => import('./surfaces/app/Questionnaire.jsx'))
 const Paiement = lazy(() => import('./surfaces/app/Paiement.jsx'))
 const Securite = lazy(() => import('./surfaces/app/Securite.jsx'))
@@ -40,6 +41,7 @@ export default function App() {
             <Route index element={<Dashboard />} />
             <Route path="messages" element={<Messaging />} />
             <Route path="candidatures" element={<Candidatures />} />
+            <Route path="validation" element={<ValidationColocataire />} />
             <Route path="candidature" element={<Candidature />} />
             <Route path="questionnaire" element={<Questionnaire />} />
             <Route path="paiement" element={<Paiement />} />

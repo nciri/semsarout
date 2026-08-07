@@ -210,6 +210,15 @@
     "mapComingSoon": "Vue carte à venir",
     "loadMore": "Afficher plus de logements",
     "locationDefault": "Casablanca, Maârif",
+    "institutionLabel": "École / entreprise",
+    "institutionDefault": "ENCG Casablanca",
+    "proximityLabel": "Proximité",
+    "proximityRadiusOptions": [
+      "< 1 km",
+      "< 2 km",
+      "< 5 km",
+      "Indifférent"
+    ],
     "lifestyleProfileBanner": {
       "withProfile": "Recommandations basées sur votre profil de compatibilité",
       "withoutProfile": "Répondez au questionnaire pour des recommandations personnalisées →",
@@ -251,7 +260,20 @@
       "cleaning": "Ménage des parties communes tournant",
       "smoking": "Tabac à l’intérieur",
       "pets": "Animaux acceptés"
-    }
+    },
+    "reportCta": "Signaler cette annonce",
+    "reportReasonLabel": "Motif du signalement",
+    "reportSubmitCta": "Envoyer le signalement",
+    "reportCancelCta": "Annuler",
+    "reportReason": {
+      "spam": "Spam",
+      "inappropriate": "Contenu inapproprié",
+      "fraud": "Fraude",
+      "harassment": "Harcèlement",
+      "other": "Autre"
+    },
+    "reportSuccess": "Signalement envoyé — merci, notre équipe va l’examiner.",
+    "reportError": "Signalement impossible pour le moment — réessayez."
   },
   "auth": {
     "loginTitle": "Connexion",

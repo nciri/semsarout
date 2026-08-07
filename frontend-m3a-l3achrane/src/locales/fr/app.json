@@ -193,6 +193,9 @@
   "paiement": {
     "title": "Sécuriser votre place",
     "subtitle": "{{titre}} · Entrée le {{entree}}",
+    "loading": "Chargement de votre bail…",
+    "demoBanner": "Les étapes ci-dessous reflètent l’état réel de votre bail (caution/loyer). Aucun paiement n’est traité par cette plateforme : cadre de séquestre présenté à titre de démonstration, sans prestataire de paiement intégré.",
+    "leaseFallbackTitle": "Bail #{{id}}",
     "escrowStatusTitle": "Statut du séquestre",
     "steps": {
       "depot": "Fonds déposés",
@@ -259,5 +262,24 @@
     "helpTitle": "Besoin d’aide immédiate ?",
     "helpText": "Notre équipe support répond sous 24h ouvrées.",
     "contactSupport": "Contacter le support →"
+  },
+  "roommateValidation": {
+    "title": "Des candidats pour votre colocation",
+    "subtitle": "{{titre}} — {{quartier}}, {{ville}}",
+    "roomsLabel": "Chambre(s) concernée(s)",
+    "explanation": "Le propriétaire a présélectionné ces profils ; votre avis compte pour la vie en commun.",
+    "compatibilityLabel": "Compatibilité avec vous",
+    "ageProfil": "{{age}} ans · {{profil}}",
+    "ownerNoteLabel": "Présélectionné·e par le propriétaire",
+    "actions": {
+      "validate": "Valider",
+      "refuse": "Refuser",
+      "viewProfile": "Voir le profil"
+    },
+    "statusBadge": {
+      "validated": "Validé par vous",
+      "rejected": "Écarté"
+    },
+    "empty": "Aucun candidat à valider pour le moment."
   }
 }

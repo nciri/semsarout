@@ -94,6 +94,15 @@ class RoommatesIn(BaseModel):
     statuses: dict[str, Any] = Field(default_factory=dict)
 
 
+class LeaseCreateIn(BaseModel):
+    listing_id: str = Field(min_length=1, max_length=32)
+    tenant_user_id: int = Field(gt=0)
+    rent_amount: Decimal = Field(gt=0)
+    deposit_amount: Decimal = Field(ge=0)
+    start_date: date
+    end_date: date | None = None
+
+
 class MediaIn(BaseModel):
     url: str = Field(max_length=500)
     position: int = Field(default=0, ge=0)

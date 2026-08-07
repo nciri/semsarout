@@ -23,6 +23,7 @@
     "messages": "الرسائل",
     "messaging": "المراسلة",
     "inbox": "الطلبات الواردة",
+    "roommateValidation": "زملاء للموافقة عليهم",
     "apply": "التقديم",
     "quiz": "الاستبيان",
     "security": "الأمان",
@@ -40,7 +41,9 @@
     "reporting": "التقارير",
     "billing": "الفوترة",
     "apiWebhooks": "واجهة برمجية و webhooks",
-    "help": "بحاجة إلى مساعدة؟"
+    "help": "بحاجة إلى مساعدة؟",
+    "logout": "تسجيل الخروج",
+    "myAccount": "حسابي"
   },
   "trust": {
     "verified": "موثّقة",
@@ -52,7 +55,8 @@
     "amenityRoommates": "3 من السكان",
     "amenityQuiet": "هادئ",
     "amenityNoSmoking": "غير مدخن",
-    "applyCta": "التقديم"
+    "applyCta": "التقديم",
+    "proximityTo": "على بعد {{distance}} من {{label}}"
   },
   "priceTag": {
     "perMonth": "شهر"

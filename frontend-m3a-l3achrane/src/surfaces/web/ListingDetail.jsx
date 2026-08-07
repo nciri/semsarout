@@ -1,8 +1,72 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { AmenityChip, Avatar, Badge, Button, Card, Icon, PriceTag, VerifiedBadge } from '../../ds/index.js'
-import { getListing } from '../../services/index.js'
+import { AmenityChip, Avatar, Badge, Button, Card, Icon, Select, VerifiedBadge, PriceTag } from '../../ds/index.js'
+import { createReport, getListing } from '../../services/index.js'
+
+const REPORT_REASONS = ['spam', 'inappropriate', 'fraud', 'harassment', 'other']
+
+function ReportListingAction({ listingId }) {
+  const { t } = useTranslation(['web'])
+  const [open, setOpen] = useState(false)
+  const [reason, setReason] = useState(REPORT_REASONS[0])
+  const [submitting, setSubmitting] = useState(false)
+  const [result, setResult] = useState(null) // 'success' | 'error' | null
+
+  const submit = () => {
+    setSubmitting(true)
+    setResult(null)
+    createReport({ target_type: 'listing', target_id: String(listingId), reason })
+      .then(() => { setResult('success'); setOpen(false) })
+      .catch(() => setResult('error'))
+      .finally(() => setSubmitting(false))
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <button
+        type="button"
+        onClick={() => { setOpen((v) => !v); setResult(null) }}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
+          border: 0, background: 'transparent', padding: 0, cursor: 'pointer',
+          font: 'var(--fw-medium) 12.5px var(--font-body)', color: 'var(--text-muted)',
+        }}
+      >
+        <Icon name="flag" size={14} strokeWidth={2} />
+        {t('web:listing.reportCta')}
+      </button>
+      {open && (
+        <Card padding={14} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <Select
+            label={t('web:listing.reportReasonLabel')}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            options={REPORT_REASONS.map((r) => ({ value: r, label: t(`web:listing.reportReason.${r}`) }))}
+          />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button variant="accent" onClick={submit} disabled={submitting}>
+              {t('web:listing.reportSubmitCta')}
+            </Button>
+            <Button variant="secondary" onClick={() => setOpen(false)} disabled={submitting}>
+              {t('web:listing.reportCancelCta')}
+            </Button>
+          </div>
+        </Card>
+      )}
+      {result === 'success' && (
+        <div style={{ font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--green-700)' }}>
+          {t('web:listing.reportSuccess')}
+        </div>
+      )}
+      {result === 'error' && (
+        <div style={{ font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+          {t('web:listing.reportError')}
+        </div>
+      )}
+    </div>
+  )
+}
 
 const DEFAULT_REGLEMENT = [
   { key: 'guests', ok: true },
@@ -203,6 +267,7 @@ export default function ListingDetail() {
                 </div>
               </div>
             </Card>
+            <ReportListingAction listingId={id} />
           </aside>
         </div>
       </div>

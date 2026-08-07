@@ -1,3 +1,5 @@
 """Routing keys des événements coloc-listing (exchange semsar.events)."""
 LISTING_PUBLISHED = "coloc.listing_published"
 LISTING_STATUS_CHANGED = "coloc.listing_status_changed"
+LEASE_CREATED = "coloc.lease_created"
+PAYMENT_STATUS_CHANGED = "coloc.payment_status_changed"
