@@ -108,25 +108,39 @@
   },
   "users": {
     "stats": {
-      "active-accounts": "الحسابات النشطة",
-      "seekers": "الباحثون",
-      "hosts": "المضيفون",
-      "partners": "الشركاء"
+      "total": "الحسابات",
+      "active": "الحسابات النشطة",
+      "suspended": "الحسابات الموقوفة",
+      "verified": "الحسابات الموثّقة"
     },
     "columns": {
       "user": "المستخدم",
       "role": "الصفة",
       "joined": "تاريخ التسجيل",
       "verification": "التحقّق",
-      "flags": "البلاغات",
+      "status": "الحالة",
       "action": "إجراء"
     },
-    "openProfile": "الملف",
+    "role": {
+      "seeker": "باحث",
+      "host": "مضيف / شريك",
+      "admin": "مسؤول"
+    },
     "verification": {
       "verified": "موثّق",
-      "pending": "قيد الانتظار",
-      "suspended": "موقوف"
-    }
+      "pending": "قيد الانتظار"
+    },
+    "status": {
+      "active": "نشط",
+      "suspended": "موقوف",
+      "deleted": "محذوف"
+    },
+    "suspendRowLabel": "إيقاف الحساب",
+    "reactivateRowLabel": "إعادة تفعيل الحساب",
+    "loading": "جارٍ تحميل المستخدمين…",
+    "loadError": "قائمة المستخدمين غير متاحة حاليًا.",
+    "empty": "لا يوجد مستخدمون حاليًا.",
+    "actionError": "تعذّر تنفيذ الإجراء حاليًا — يُرجى إعادة المحاولة."
   },
   "contracts": {
     "money": {

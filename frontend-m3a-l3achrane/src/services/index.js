@@ -147,3 +147,42 @@ export async function rejectBackofficeListing(listingId) {
   const { data } = await api.post(`/listings/${listingId}/reject`)
   return data
 }
+
+// Comptes utilisateurs du tenant m3a (super-admin), réutilise l'endpoint composite existant
+// `GET /api/v1/admin/accounts` (analytics, filtré `type=user`) avec le paramètre `tenant`
+// (opt-in, n'affecte pas la console super-admin semsarout qui l'omet).
+export async function getBackofficeUsers() {
+  if (isMocked('backoffice')) {
+    return delay({
+      items: [
+        { id: 101, name: 'Sara Candidat', email: 'candidat@m3a.ma', status: 'active',
+          account_role: 'buyer', user_type: 'particular', is_verified: true,
+          created_at: '2026-07-12T09:00:00+00:00', last_login: '2026-08-05T14:22:00+00:00' },
+        { id: 102, name: 'Karim Bailleur', email: 'bailleur@m3a.ma', status: 'active',
+          account_role: 'agent', user_type: 'professional', is_verified: true,
+          created_at: '2026-06-04T09:00:00+00:00', last_login: '2026-08-06T08:10:00+00:00' },
+        { id: 103, name: 'Imane Mrabet', email: 'i.mrabet@ocpgroup.ma', status: 'active',
+          account_role: 'buyer', user_type: 'particular', is_verified: false,
+          created_at: '2026-07-28T09:00:00+00:00', last_login: null },
+        { id: 104, name: 'Sofia Fassi', email: 'sofia.fassi@outlook.com', status: 'suspended',
+          account_role: 'agent', user_type: 'professional', is_verified: true,
+          created_at: '2026-03-19T09:00:00+00:00', last_login: '2026-07-02T11:05:00+00:00' },
+      ],
+      total: 4,
+    })
+  }
+  const { data } = await api.get('/admin/accounts', { params: { type: 'user', tenant: 'm3a-l3achrane' } })
+  return data
+}
+
+export async function suspendBackofficeUser(userId) {
+  if (isMocked('backoffice')) return delay({ user: { id: userId, is_suspended: true } })
+  const { data } = await api.post(`/backoffice/users/${userId}/suspend`)
+  return data
+}
+
+export async function reactivateBackofficeUser(userId) {
+  if (isMocked('backoffice')) return delay({ user: { id: userId, is_suspended: false } })
+  const { data } = await api.post(`/backoffice/users/${userId}/unsuspend`)
+  return data
+}

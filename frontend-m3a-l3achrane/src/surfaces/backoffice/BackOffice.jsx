@@ -5,9 +5,12 @@ import {
   approveBackofficeListing,
   getBackofficeListings,
   getBackofficeOverview,
+  getBackofficeUsers,
   getBackofficeVerifications,
+  reactivateBackofficeUser,
   rejectBackofficeListing,
   rejectBackofficeVerification,
+  suspendBackofficeUser,
   verifyBackofficeVerification,
 } from '../../services/index.js'
 import {
@@ -21,8 +24,6 @@ import {
   REPORTS,
   TEAM,
   TODAY_TODO,
-  USERS,
-  USER_STATS,
   VERIFICATION_QUEUE_NOTE,
   VERIF_TABS,
 } from '../../data/backofficeAdmin.js'
@@ -48,7 +49,6 @@ const ACTIVITY_TONE = { validated: 'verified', rejected: 'danger', in_progress: 
 // Statuts réels de la machine à états coloc-listing (cf. state_machine.py) — seuls
 // EN_MODERATION/PUBLIEE/REJETEE sont attendus dans la file de modération.
 const LISTING_TONE = { EN_MODERATION: 'warning', PUBLIEE: 'verified', REJETEE: 'danger' }
-const USER_VERIFICATION_LEVEL = { verified: 'full', pending: 'partial', suspended: 'none' }
 const CONTRACT_TONE = { active: 'verified', signature: 'warning', litigation: 'danger', closed: 'verified' }
 const REPORT_TONE = { urgent: 'danger', normal: 'warning' }
 
@@ -619,17 +619,74 @@ function ListingsView() {
   )
 }
 
+// Statut réel du compte (identity `_mod_state`) → tone du badge.
+const USER_STATUS_TONE = { active: 'verified', suspended: 'danger', deleted: 'none' }
+// account_role identity (buyer/agent/admin) → clé i18n du rôle affiché (parité seed m3a-demo).
+const USER_ROLE_KEY = { buyer: 'seeker', agent: 'host', admin: 'admin' }
+
+function fmtJoined(iso, lang) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString(lang === 'ar' ? 'ar-MA' : 'fr-FR', {
+    day: '2-digit', month: 'short', year: 'numeric',
+  })
+}
+
+function buildUserStats(items) {
+  const total = items.length
+  const active = items.filter((u) => u.status === 'active').length
+  const suspended = items.filter((u) => u.status === 'suspended').length
+  const verified = items.filter((u) => u.is_verified).length
+  return [
+    { id: 'total', value: total },
+    { id: 'active', value: active },
+    { id: 'suspended', value: suspended },
+    { id: 'verified', value: verified },
+  ]
+}
+
 function UsersView() {
-  const { t } = useTranslation(['backoffice'])
+  const { t, i18n } = useTranslation(['backoffice'])
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [actionError, setActionError] = useState(false)
+  const [pendingAction, setPendingAction] = useState(null) // id en cours de traitement
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setLoadError(false)
+    getBackofficeUsers()
+      .then((data) => { if (!cancelled) setItems(data?.items ?? []) })
+      .catch(() => { if (!cancelled) setLoadError(true) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  const runAction = (userId, action) => {
+    setPendingAction(userId)
+    setActionError(false)
+    const call = action === 'suspend' ? suspendBackofficeUser : reactivateBackofficeUser
+    const nextStatus = action === 'suspend' ? 'suspended' : 'active'
+    call(userId)
+      .then(() => setItems((prev) => prev.map((u) => (u.id === userId ? { ...u, status: nextStatus } : u))))
+      .catch(() => setActionError(true))
+      .finally(() => setPendingAction(null))
+  }
+
+  const stats = buildUserStats(items)
+
   return (
     <>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 16 }}>
-        {USER_STATS.map((u) => (
-          <Card key={u.id} padding={18} style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+        {stats.map((s) => (
+          <Card key={s.id} padding={18} style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
             <div style={{ font: 'var(--fw-bold) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
-              {t(`backoffice:users.stats.${u.id}`, { defaultValue: u.label })}
+              {t(`backoffice:users.stats.${s.id}`)}
             </div>
-            <div style={{ font: 'var(--fw-extrabold) 26px var(--font-display)', color: 'var(--text-heading)', letterSpacing: '-0.02em', lineHeight: 1 }}>{u.value}</div>
+            <div style={{ font: 'var(--fw-extrabold) 26px var(--font-display)', color: 'var(--text-heading)', letterSpacing: '-0.02em', lineHeight: 1 }}>
+              {fmtCount(s.value)}
+            </div>
           </Card>
         ))}
       </div>
@@ -645,12 +702,36 @@ function UsersView() {
           <div>{t('backoffice:users.columns.role')}</div>
           <div>{t('backoffice:users.columns.joined')}</div>
           <div>{t('backoffice:users.columns.verification')}</div>
-          <div>{t('backoffice:users.columns.flags')}</div>
+          <div>{t('backoffice:users.columns.status')}</div>
           <div style={{ justifySelf: 'end' }}>{t('backoffice:users.columns.action')}</div>
         </div>
-        {USERS.map((u) => {
-          const level = USER_VERIFICATION_LEVEL[u.verification]
-          const verificationLabel = t(`backoffice:users.verification.${u.verification}`, { defaultValue: u.verification })
+        {loading && (
+          <div style={{ padding: '18px 20px', font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+            {t('backoffice:users.loading')}
+          </div>
+        )}
+        {!loading && loadError && (
+          <div style={{ padding: '18px 20px', font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+            {t('backoffice:users.loadError')}
+          </div>
+        )}
+        {!loading && !loadError && actionError && (
+          <div style={{ padding: '10px 20px', font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+            {t('backoffice:users.actionError')}
+          </div>
+        )}
+        {!loading && !loadError && items.length === 0 && (
+          <div style={{ padding: '18px 20px', font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+            {t('backoffice:users.empty')}
+          </div>
+        )}
+        {!loading && !loadError && items.map((u) => {
+          const roleKey = USER_ROLE_KEY[u.account_role]
+          const roleLabel = roleKey ? t(`backoffice:users.role.${roleKey}`) : (u.account_role ?? '—')
+          const verificationLabel = t(`backoffice:users.verification.${u.is_verified ? 'verified' : 'pending'}`)
+          const statusLabel = t(`backoffice:users.status.${u.status}`, { defaultValue: u.status })
+          const busy = pendingAction === u.id
+          const isSuspended = u.status === 'suspended'
           return (
             <div
               key={u.id}
@@ -666,11 +747,27 @@ function UsersView() {
                   <div style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.email}</div>
                 </div>
               </div>
-              <div style={{ color: 'var(--text-body)' }}>{u.role}</div>
-              <div style={{ color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>{u.joined}</div>
-              <div><VerifiedBadge label={verificationLabel} level={level} size="sm" /></div>
-              <div style={{ color: 'var(--text-body)', fontVariantNumeric: 'tabular-nums' }}>{u.flags}</div>
-              <Button variant="secondary" size="sm" iconLeft="user" style={{ justifySelf: 'end' }}>{t('backoffice:users.openProfile')}</Button>
+              <div style={{ color: 'var(--text-body)' }}>{roleLabel}</div>
+              <div style={{ color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>{fmtJoined(u.created_at, i18n.language)}</div>
+              <div><VerifiedBadge label={verificationLabel} level={u.is_verified ? 'full' : 'none'} size="sm" /></div>
+              <div><Badge tone={USER_STATUS_TONE[u.status] ?? 'none'}>{statusLabel}</Badge></div>
+              <div style={{ display: 'flex', justifySelf: 'end' }}>
+                <button
+                  type="button"
+                  title={t(isSuspended ? 'backoffice:users.reactivateRowLabel' : 'backoffice:users.suspendRowLabel')}
+                  aria-label={t(isSuspended ? 'backoffice:users.reactivateRowLabel' : 'backoffice:users.suspendRowLabel')}
+                  disabled={busy}
+                  onClick={() => runAction(u.id, isSuspended ? 'reactivate' : 'suspend')}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px',
+                    border: 0, borderRadius: 7, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
+                    background: isSuspended ? 'var(--green-100)' : 'var(--red-100)',
+                    color: isSuspended ? 'var(--green-700)' : 'var(--red-600)',
+                  }}
+                >
+                  <Icon name={isSuspended ? 'rotate-ccw' : 'ban'} size={16} strokeWidth={2.6} />
+                </button>
+              </div>
             </div>
           )
         })}

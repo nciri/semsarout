@@ -53,23 +53,6 @@ export const VERIF_TABS = [
   { id: 'validated', label: 'Validés', icon: 'check-circle' },
 ]
 
-export const USER_STATS = [
-  { id: 'active-accounts', label: 'Comptes actifs', value: '11 903' },
-  { id: 'seekers', label: 'Chercheurs', value: '9 470' },
-  { id: 'hosts', label: 'Hôtes', value: '2 218' },
-  { id: 'partners', label: 'Partenaires', value: '215' },
-]
-
-export const USERS = [
-  { id: 'u-1', initials: 'KA', name: 'Kenza Amrani', email: 'kenza.amrani@um6p.ma', role: 'Chercheuse', joined: '12 juil. 2026', verification: 'verified', flags: 0 },
-  { id: 'u-2', initials: 'AK', name: 'Anas El Khattabi', email: 'a.khattabi@gmail.com', role: 'Hôte', joined: '04 juin 2026', verification: 'verified', flags: 1 },
-  { id: 'u-3', initials: 'IM', name: 'Imane Mrabet', email: 'i.mrabet@ocpgroup.ma', role: 'Chercheuse', joined: '28 juil. 2026', verification: 'pending', flags: 0 },
-  { id: 'u-4', initials: 'SF', name: 'Sofia Fassi', email: 'sofia.fassi@outlook.com', role: 'Hôte', joined: '19 mars 2026', verification: 'suspended', flags: 4 },
-  { id: 'u-5', initials: 'RM', name: 'Résidence Al Manar', email: 'contact@almanar.ma', role: 'Partenaire', joined: '02 févr. 2026', verification: 'verified', flags: 0 },
-  { id: 'u-6', initials: 'OT', name: 'Omar Tazi', email: 'omar.tazi@emi.ac.ma', role: 'Chercheur', joined: '30 juil. 2026', verification: 'pending', flags: 0 },
-  { id: 'u-7', initials: 'LB', name: 'Leila Berrada', email: 'l.berrada@gmail.com', role: 'Hôte', joined: '11 janv. 2026', verification: 'verified', flags: 2 },
-]
-
 export const CONTRACTS_MONEY = [
   { id: 'escrow', label: 'Dépôts sous séquestre', value: '2,84 M MAD', note: '1 106 contrats en cours' },
   { id: 'commissions', label: 'Commissions du mois', value: '318 400 MAD', note: 'Taux moyen 4,2 %' },

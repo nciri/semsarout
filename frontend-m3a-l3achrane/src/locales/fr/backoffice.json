@@ -108,25 +108,39 @@
   },
   "users": {
     "stats": {
-      "active-accounts": "Comptes actifs",
-      "seekers": "Chercheurs",
-      "hosts": "Hôtes",
-      "partners": "Partenaires"
+      "total": "Comptes",
+      "active": "Comptes actifs",
+      "suspended": "Comptes suspendus",
+      "verified": "Comptes vérifiés"
     },
     "columns": {
       "user": "Utilisateur",
       "role": "Rôle",
       "joined": "Inscription",
       "verification": "Vérification",
-      "flags": "Signalements",
+      "status": "Statut",
       "action": "Action"
     },
-    "openProfile": "Fiche",
+    "role": {
+      "seeker": "Chercheur",
+      "host": "Hôte / Partenaire",
+      "admin": "Administrateur"
+    },
     "verification": {
       "verified": "Vérifié",
-      "pending": "En attente",
-      "suspended": "Suspendu"
-    }
+      "pending": "En attente"
+    },
+    "status": {
+      "active": "Actif",
+      "suspended": "Suspendu",
+      "deleted": "Supprimé"
+    },
+    "suspendRowLabel": "Suspendre le compte",
+    "reactivateRowLabel": "Réactiver le compte",
+    "loading": "Chargement des utilisateurs…",
+    "loadError": "La liste des utilisateurs est momentanément indisponible.",
+    "empty": "Aucun utilisateur pour le moment.",
+    "actionError": "Action impossible pour le moment — réessayez."
   },
   "contracts": {
     "money": {
