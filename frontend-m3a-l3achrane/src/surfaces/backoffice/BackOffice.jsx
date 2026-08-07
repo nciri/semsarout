@@ -1278,7 +1278,7 @@ function LifestyleReferentialPanel() {
 function RoleForm({ initial, onCancel, onSubmit, t }) {
   const [name, setName] = useState(initial?.name ?? '')
   const [description, setDescription] = useState(initial?.description ?? '')
-  const [color, setColor] = useState(initial?.color ?? 'gray')
+  const [color] = useState(initial?.color ?? 'gray')
   const [level, setLevel] = useState(initial?.level ?? 100)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(false)
