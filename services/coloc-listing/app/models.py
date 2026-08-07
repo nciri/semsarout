@@ -23,6 +23,10 @@ HOUSING_GENDERS = {"FEMININ", "MASCULIN", "MIXTE_FAMILIAL"}
 MEDIA_TYPES = {"CHAMBRE", "PARTIES_COMMUNES", "AUTRE"}
 
 LEASE_STATUSES = {"pending", "active", "ended", "cancelled"}
+CANDIDATURE_STATUSES = {"received", "shortlisted", "pending_roommate", "accepted", "rejected"}
+# Une candidature "active" bloque une nouvelle candidature du même candidat sur la même
+# annonce (dédupe) ; seule `rejected` libère la voie (nouvelle tentative possible).
+CANDIDATURE_ACTIVE_STATUSES = {"received", "shortlisted", "pending_roommate", "accepted"}
 PAYMENT_TYPES = {"deposit", "rent"}
 PAYMENT_STATUSES = {"pending", "escrowed", "released", "refunded"}
 INTENT_STATUSES = {"processing", "succeeded", "failed"}
@@ -150,6 +154,49 @@ class CurrentRoommates(Base):
     women = Column(Integer, default=0, nullable=False)
     men = Column(Integer, default=0, nullable=False)
     statuses = Column(JSON, default=dict, nullable=False)
+
+
+class Candidature(Base):
+    """Candidature d'un candidat à une annonce de colocation. Domaine réel remplaçant le
+    mock front `applicationsInbox.js` — la génération de bail et les notifs candidature
+    reposent désormais sur cet objet. Statuts : received → shortlisted → (pending_roommate
+    si la chambre a déjà des colocataires en place, sinon direct) → accepted ; rejected
+    possible depuis n'importe quel statut non terminal."""
+
+    __tablename__ = "candidatures"
+
+    id = Column(String(32), primary_key=True, default=_uuid)
+    tenant = Column(String(40), default=TENANT_M3A, nullable=False, index=True)
+    listing_id = Column(String(32), ForeignKey("listings.id"), nullable=False, index=True)
+    candidate_user_id = Column(BigInteger, nullable=False, index=True)
+    owner_id = Column(BigInteger, nullable=False, index=True)
+    status = Column(String(20), default="received", nullable=False, index=True)
+    message = Column(Text)
+    created_at = Column(DateTime(timezone=True), default=_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_now, onupdate=_now, nullable=False)
+
+    listing = relationship("Listing", lazy="joined")
+
+    def to_dict(self) -> dict:
+        listing = self.listing
+        p = listing.property if listing else None
+        listing_summary = None
+        if listing is not None:
+            roommates = listing.roommates
+            listing_summary = {
+                "id": listing.id, "title": listing.title,
+                "city": p.city if p else None, "neighborhood": p.neighborhood if p else None,
+                "rent": float(listing.rent), "deposit": float(listing.deposit) if listing.deposit is not None else None,
+                "room_already_occupied": bool(roommates and roommates.total > 0),
+                "roommates": ({"total": roommates.total, "women": roommates.women,
+                              "men": roommates.men} if roommates else None),
+            }
+        return {
+            "id": self.id, "listing_id": self.listing_id, "candidate_user_id": self.candidate_user_id,
+            "owner_id": self.owner_id, "status": self.status, "message": self.message,
+            "created_at": self.created_at.isoformat(), "updated_at": self.updated_at.isoformat(),
+            "listing": listing_summary,
+        }
 
 
 class ColocLease(Base):

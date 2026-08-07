@@ -21,14 +21,14 @@ from . import events
 from .config import get_coloc_settings
 from .db import get_db, init_db
 from .models import (
-    ColocLease, ColocPayment, ColocProperty, CurrentRoommates, EtatDesLieux, HouseRule,
-    Listing, ListingMedia, _now,
+    Candidature, CANDIDATURE_ACTIVE_STATUSES, ColocLease, ColocPayment, ColocProperty,
+    CurrentRoommates, EtatDesLieux, HouseRule, Listing, ListingMedia, _now,
 )
 from .payment_provider import get_payment_provider, verify_webhook_signature
 from .payment_state_machine import PaymentTransitionError, assert_payment_transition
 from .schemas import (
-    EtatDesLieuxCreateIn, EtatDesLieuxUpdateIn, HouseRulesIn, LeaseCreateIn, ListingCreateIn,
-    ListingUpdateIn, MediaIn, RoommatesIn, WebhookIn,
+    CandidatureCreateIn, EtatDesLieuxCreateIn, EtatDesLieuxUpdateIn, HouseRulesIn, LeaseCreateIn,
+    ListingCreateIn, ListingUpdateIn, MediaIn, RoommateDecisionIn, RoommatesIn, WebhookIn,
 )
 from .state_machine import EDITABLE_STATUSES, STATUSES, TransitionError, assert_transition
 
@@ -375,6 +375,183 @@ def archive(listing_id: str, principal: Principal = Depends(get_principal),
     db.commit()
     db.refresh(listing)
     return listing.to_dict()
+
+
+def _is_current_roommate(db: Session, listing_id: str, uid: int) -> bool:
+    """« Colocataire en place » = titulaire d'un bail (pending ou active) sur cette annonce.
+    `CurrentRoommates` est un agrégat NON NOMINATIF (total/women/men, aucune identité) —
+    la seule source de vérité nominative pour « qui habite déjà ici » est `ColocLease`."""
+    return db.query(ColocLease).filter(
+        ColocLease.listing_id == listing_id, ColocLease.tenant_user_id == uid,
+        ColocLease.status.in_(("pending", "active")),
+    ).first() is not None
+
+
+@router.post("/candidatures", status_code=201)
+def apply_to_listing(body: CandidatureCreateIn, principal: Principal = Depends(get_principal),
+                     db: Session = Depends(get_db)):
+    """Le candidat postule à une annonce publiée. Dédupe : une seule candidature ACTIVE
+    (non rejetée) par (candidat, annonce)."""
+    uid = _uid(principal)
+    if uid is None:
+        return _err("Authentification requise", 401)
+    listing = _get(db, body.listing_id)
+    if listing is None or listing.status != "PUBLIEE":
+        return _err("Annonce introuvable", 404)
+    existing = db.query(Candidature).filter(
+        Candidature.listing_id == listing.id, Candidature.candidate_user_id == uid,
+        Candidature.status.in_(CANDIDATURE_ACTIVE_STATUSES),
+    ).first()
+    if existing is not None:
+        return _err("Vous avez déjà une candidature active pour cette annonce", 409)
+    candidature = Candidature(listing_id=listing.id, candidate_user_id=uid,
+                              owner_id=listing.owner_id, message=body.message)
+    db.add(candidature)
+    db.flush()
+    enqueue(db, "coloc_listing", candidature.id, events.CANDIDATURE_RECEIVED,
+            {"candidature_id": candidature.id, "listing_id": listing.id,
+             "owner_id": listing.owner_id, "candidate_user_id": uid,
+             "listing_title": listing.title})
+    db.commit()
+    db.refresh(candidature)
+    return candidature.to_dict()
+
+
+@router.get("/candidatures/mine")
+def my_candidatures(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    uid = _uid(principal)
+    if uid is None:
+        return _err("Authentification requise", 401)
+    rows = db.query(Candidature).filter(Candidature.candidate_user_id == uid) \
+        .order_by(Candidature.created_at.desc()).all()
+    return [c.to_dict() for c in rows]
+
+
+@router.get("/candidatures/received")
+def received_candidatures(listing_id: str | None = None,
+                          principal: Principal = Depends(get_principal),
+                          db: Session = Depends(get_db)):
+    """Candidatures reçues par le propriétaire appelant, toutes annonces confondues ou
+    filtrées sur une annonce (`listing_id`)."""
+    uid = _uid(principal)
+    if uid is None:
+        return _err("Authentification requise", 401)
+    query = db.query(Candidature).filter(Candidature.owner_id == uid)
+    if listing_id:
+        query = query.filter(Candidature.listing_id == listing_id)
+    rows = query.order_by(Candidature.created_at.desc()).all()
+    return [c.to_dict() for c in rows]
+
+
+@router.get("/candidatures/roommate-pending")
+def roommate_pending_candidatures(principal: Principal = Depends(get_principal),
+                                  db: Session = Depends(get_db)):
+    """Candidatures `pending_roommate` en attente de la décision de l'appelant — restreint
+    aux annonces où il est colocataire en place (titulaire d'un bail pending/active)."""
+    uid = _uid(principal)
+    if uid is None:
+        return _err("Authentification requise", 401)
+    listing_ids = [row[0] for row in db.query(ColocLease.listing_id).filter(
+        ColocLease.tenant_user_id == uid, ColocLease.status.in_(("pending", "active")),
+    ).distinct().all()]
+    if not listing_ids:
+        return []
+    rows = db.query(Candidature).filter(
+        Candidature.listing_id.in_(listing_ids), Candidature.status == "pending_roommate",
+    ).order_by(Candidature.created_at.desc()).all()
+    return [c.to_dict() for c in rows]
+
+
+def _owned_candidature(db: Session, candidature_id: str, principal: Principal):
+    uid = _uid(principal)
+    if uid is None:
+        return None, _err("Authentification requise", 401)
+    candidature = db.get(Candidature, candidature_id)
+    if candidature is None:
+        return None, _err("Candidature introuvable", 404)
+    if candidature.owner_id != uid and not principal.is_superadmin:
+        return None, _err("Réservé au propriétaire de l'annonce ou à l'admin", 403)
+    return candidature, None
+
+
+@router.post("/candidatures/{candidature_id}/shortlist")
+def shortlist_candidature(candidature_id: str, principal: Principal = Depends(get_principal),
+                          db: Session = Depends(get_db)):
+    candidature, err = _owned_candidature(db, candidature_id, principal)
+    if err is not None:
+        return err
+    if candidature.status != "received":
+        return _err(f"Transition interdite : {candidature.status} → shortlisted", 409)
+    candidature.status = "shortlisted"
+    db.commit()
+    db.refresh(candidature)
+    return candidature.to_dict()
+
+
+@router.post("/candidatures/{candidature_id}/accept")
+def accept_candidature(candidature_id: str, principal: Principal = Depends(get_principal),
+                       db: Session = Depends(get_db)):
+    """Accepte une candidature présélectionnée : si la chambre a déjà des colocataires en
+    place, passe en `pending_roommate` (validation à partager) ; sinon accepte directement."""
+    candidature, err = _owned_candidature(db, candidature_id, principal)
+    if err is not None:
+        return err
+    if candidature.status != "shortlisted":
+        return _err(f"Transition interdite : {candidature.status} → accepted", 409)
+    listing = candidature.listing
+    room_occupied = bool(listing and listing.roommates and listing.roommates.total > 0)
+    if room_occupied:
+        candidature.status = "pending_roommate"
+    else:
+        candidature.status = "accepted"
+        enqueue(db, "coloc_listing", candidature.id, events.CANDIDATURE_ACCEPTED,
+                {"candidature_id": candidature.id, "listing_id": candidature.listing_id,
+                 "owner_id": candidature.owner_id, "candidate_user_id": candidature.candidate_user_id})
+    db.commit()
+    db.refresh(candidature)
+    return candidature.to_dict()
+
+
+@router.post("/candidatures/{candidature_id}/reject")
+def reject_candidature(candidature_id: str, principal: Principal = Depends(get_principal),
+                       db: Session = Depends(get_db)):
+    candidature, err = _owned_candidature(db, candidature_id, principal)
+    if err is not None:
+        return err
+    if candidature.status in ("accepted", "rejected"):
+        return _err(f"Transition interdite : {candidature.status} → rejected", 409)
+    candidature.status = "rejected"
+    db.commit()
+    db.refresh(candidature)
+    return candidature.to_dict()
+
+
+@router.post("/candidatures/{candidature_id}/roommate-decision")
+def roommate_decision(candidature_id: str, body: RoommateDecisionIn,
+                      principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    """Le·s colocataire·s en place valident ou refusent une candidature `pending_roommate`.
+    Garde : l'appelant doit être colocataire en place (titulaire d'un bail actif/pending)
+    de l'annonce concernée."""
+    uid = _uid(principal)
+    if uid is None:
+        return _err("Authentification requise", 401)
+    candidature = db.get(Candidature, candidature_id)
+    if candidature is None:
+        return _err("Candidature introuvable", 404)
+    if candidature.status != "pending_roommate":
+        return _err("Cette candidature n'attend pas de validation colocataire", 409)
+    if not _is_current_roommate(db, candidature.listing_id, uid):
+        return _err("Réservé aux colocataires en place de cette annonce", 403)
+    if body.decision == "validated":
+        candidature.status = "accepted"
+        enqueue(db, "coloc_listing", candidature.id, events.CANDIDATURE_ACCEPTED,
+                {"candidature_id": candidature.id, "listing_id": candidature.listing_id,
+                 "owner_id": candidature.owner_id, "candidate_user_id": candidature.candidate_user_id})
+    else:
+        candidature.status = "rejected"
+    db.commit()
+    db.refresh(candidature)
+    return candidature.to_dict()
 
 
 def _lease_authorized_read(lease: ColocLease, principal: Principal) -> bool:

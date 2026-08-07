@@ -123,6 +123,20 @@ class EtatDesLieuxUpdateIn(BaseModel):
     items: list[EtatDesLieuxItemIn]
 
 
+class CandidatureCreateIn(BaseModel):
+    listing_id: str = Field(min_length=1, max_length=32)
+    message: str | None = Field(default=None, max_length=2000)
+
+
+class RoommateDecisionIn(BaseModel):
+    decision: str  # 'validated' | 'rejected'
+
+    @field_validator("decision")
+    @classmethod
+    def _d(cls, v: str) -> str:
+        return _validate(v, {"validated", "rejected"}, "decision")
+
+
 class WebhookIn(BaseModel):
     intent_id: str = Field(min_length=1, max_length=64)
     event: str  # 'succeeded' | 'failed'
