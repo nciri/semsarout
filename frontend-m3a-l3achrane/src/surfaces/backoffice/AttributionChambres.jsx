@@ -234,8 +234,8 @@ export default function AttributionChambres() {
             </h1>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flex: 'none' }}>
-            <Button variant="secondary" size="md">{t('backoffice:roomAssignment.export')}</Button>
-            <Button variant="primary" size="md" onClick={autoFill}>{t('backoffice:roomAssignment.autoFill')}</Button>
+            <Button variant="secondary" size="md" iconLeft="download">{t('backoffice:roomAssignment.export')}</Button>
+            <Button variant="primary" size="md" iconLeft="wand-2" onClick={autoFill}>{t('backoffice:roomAssignment.autoFill')}</Button>
           </div>
         </header>
 
@@ -404,7 +404,7 @@ function RoomTile({ entry, onPlace, onClear }) {
               {entry.tenant.anchor} — {entry.tenant.distance} · {entry.tenant.commute}
             </div>
           </div>
-          <Button variant="secondary" size="sm" onClick={() => onClear(room.id)}>{t('backoffice:roomAssignment.room.releaseRoom')}</Button>
+          <Button variant="secondary" size="sm" iconLeft="user-minus" onClick={() => onClear(room.id)}>{t('backoffice:roomAssignment.room.releaseRoom')}</Button>
         </div>
       )}
 
@@ -423,7 +423,7 @@ function RoomTile({ entry, onPlace, onClear }) {
             <div style={{ font: 'var(--fw-regular) 12px var(--font-body)', color: 'var(--text-muted)', lineHeight: 1.45 }}>{entry.reason}</div>
           </div>
           {entry.isBest && <Badge tone="gold" size="sm" style={{ alignSelf: 'flex-start' }}>{t('backoffice:roomAssignment.room.bestSuggestion')}</Badge>}
-          <Button variant="primary" size="sm" onClick={() => onPlace(room.id)}>{t('backoffice:roomAssignment.room.placeHere')}</Button>
+          <Button variant="primary" size="sm" iconLeft="user-plus" onClick={() => onPlace(room.id)}>{t('backoffice:roomAssignment.room.placeHere')}</Button>
         </div>
       )}
 

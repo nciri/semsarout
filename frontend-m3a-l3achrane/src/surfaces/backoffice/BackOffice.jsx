@@ -141,8 +141,8 @@ function TopHeader({ title, subtitle }) {
             style={{ font: 'var(--fw-regular) 13.5px var(--font-body)' }}
           />
         </div>
-        <Button variant="secondary" size="sm">{t('backoffice:header.export')}</Button>
-        <Button variant="primary" size="sm">{t('backoffice:header.newAction')}</Button>
+        <Button variant="secondary" size="sm" iconLeft="download">{t('backoffice:header.export')}</Button>
+        <Button variant="primary" size="sm" iconLeft="plus">{t('backoffice:header.newAction')}</Button>
       </div>
     </header>
   )
@@ -207,7 +207,7 @@ function OverviewView() {
                 <div style={{ font: 'var(--fw-bold) 13.5px var(--font-display)', color: 'var(--text-heading)' }}>{td.title}</div>
                 <div style={{ font: 'var(--fw-regular) 12.5px/1.5 var(--font-body)', color: 'var(--text-muted)' }}>{td.meta}</div>
               </div>
-              <Button variant="secondary" size="sm" style={{ marginInlineStart: 'auto', flex: 'none' }}>{t('backoffice:overview.todoCard.open')}</Button>
+              <Button variant="secondary" size="sm" iconLeft="arrow-right" style={{ marginInlineStart: 'auto', flex: 'none' }}>{t('backoffice:overview.todoCard.open')}</Button>
             </div>
           ))}
         </Card>
@@ -249,7 +249,7 @@ function VerifView() {
   const [selectedId, setSelectedId] = useState(VERIFICATIONS[0].id)
   const [note, setNote] = useState('')
   const selected = VERIFICATIONS.find((v) => v.id === selectedId) || VERIFICATIONS[0]
-  const tabs = VERIF_TABS.map((tb) => ({ value: tb.id, label: t(`backoffice:verif.tabs.${tb.id}`, { defaultValue: tb.label }) }))
+  const tabs = VERIF_TABS.map((tb) => ({ value: tb.id, label: t(`backoffice:verif.tabs.${tb.id}`, { defaultValue: tb.label }), icon: tb.icon }))
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 372px', gap: 16, alignItems: 'start' }}>
@@ -278,8 +278,20 @@ function VerifView() {
             <div style={{ font: 'var(--fw-regular) 13px var(--font-body)', color: 'var(--text-body)' }}>{v.doc}</div>
             <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>{v.age}</div>
             <div style={{ display: 'flex', gap: 6, justifySelf: 'end' }}>
-              <button style={{ padding: '6px 10px', border: 0, borderRadius: 7, background: 'var(--green-100)', color: 'var(--green-700)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}>✓</button>
-              <button style={{ padding: '6px 10px', border: 0, borderRadius: 7, background: 'var(--red-100)', color: 'var(--red-600)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' }}>✕</button>
+              <button
+                title={t('backoffice:verif.approveRowLabel')}
+                aria-label={t('backoffice:verif.approveRowLabel')}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', border: 0, borderRadius: 7, background: 'var(--green-100)', color: 'var(--green-700)', cursor: 'pointer' }}
+              >
+                <Icon name="check" size={16} strokeWidth={2.6} />
+              </button>
+              <button
+                title={t('backoffice:verif.rejectRowLabel')}
+                aria-label={t('backoffice:verif.rejectRowLabel')}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', border: 0, borderRadius: 7, background: 'var(--red-100)', color: 'var(--red-600)', cursor: 'pointer' }}
+              >
+                <Icon name="x" size={16} strokeWidth={2.6} />
+              </button>
             </div>
           </div>
         ))}
@@ -324,8 +336,8 @@ function VerifView() {
           }}
         />
         <div style={{ display: 'flex', gap: 10 }}>
-          <Button variant="primary" fullWidth style={{ background: 'var(--green-600)', border: '1px solid var(--green-600)' }}>{t('backoffice:verif.validate')}</Button>
-          <Button variant="danger" fullWidth style={{ background: 'var(--white)', color: 'var(--red-600)', border: '1px solid var(--red-500)' }}>{t('backoffice:verif.reject')}</Button>
+          <Button variant="primary" fullWidth iconLeft="check" style={{ background: 'var(--green-600)', border: '1px solid var(--green-600)' }}>{t('backoffice:verif.validate')}</Button>
+          <Button variant="danger" fullWidth iconLeft="x" style={{ background: 'var(--white)', color: 'var(--red-600)', border: '1px solid var(--red-500)' }}>{t('backoffice:verif.reject')}</Button>
         </div>
       </Card>
     </div>
@@ -372,15 +384,15 @@ function ListingsView() {
             <div style={{ color: 'var(--text-heading)', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{l.rent}</div>
             <div style={{ color: 'var(--text-body)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.host}</div>
             <div><Badge tone={tone}>{label}</Badge></div>
-            <Button variant="secondary" size="sm" style={{ justifySelf: 'end' }}>{t('backoffice:listings.review')}</Button>
+            <Button variant="secondary" size="sm" iconLeft="eye" style={{ justifySelf: 'end' }}>{t('backoffice:listings.review')}</Button>
           </div>
         )
       })}
       <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 12, fontSize: 13, color: 'var(--text-muted)' }}>
         {t('backoffice:listings.pagination', { shown: LISTINGS.length, total: LISTINGS_TOTAL.toLocaleString('fr-FR') })}
         <div style={{ marginInlineStart: 'auto', display: 'flex', gap: 8 }}>
-          <Button variant="secondary" size="sm">{t('backoffice:listings.prev')}</Button>
-          <Button variant="secondary" size="sm">{t('backoffice:listings.next')}</Button>
+          <Button variant="secondary" size="sm" iconLeft="chevron-left">{t('backoffice:listings.prev')}</Button>
+          <Button variant="secondary" size="sm" iconRight="chevron-right">{t('backoffice:listings.next')}</Button>
         </div>
       </div>
     </Card>
@@ -438,7 +450,7 @@ function UsersView() {
               <div style={{ color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>{u.joined}</div>
               <div><VerifiedBadge label={verificationLabel} level={level} size="sm" /></div>
               <div style={{ color: 'var(--text-body)', fontVariantNumeric: 'tabular-nums' }}>{u.flags}</div>
-              <Button variant="secondary" size="sm" style={{ justifySelf: 'end' }}>{t('backoffice:users.openProfile')}</Button>
+              <Button variant="secondary" size="sm" iconLeft="user" style={{ justifySelf: 'end' }}>{t('backoffice:users.openProfile')}</Button>
             </div>
           )
         })}
@@ -493,7 +505,7 @@ function ContractsView() {
               <div style={{ color: 'var(--text-muted)' }}>{c.period}</div>
               <div style={{ color: 'var(--text-heading)', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{c.deposit}</div>
               <div><Badge tone={tone}>{label}</Badge></div>
-              <Button variant="secondary" size="sm" style={{ justifySelf: 'end' }}>{t('backoffice:contracts.detail')}</Button>
+              <Button variant="secondary" size="sm" iconLeft="file-text" style={{ justifySelf: 'end' }}>{t('backoffice:contracts.detail')}</Button>
             </div>
           )
         })}
@@ -527,8 +539,8 @@ function ReportsView() {
                 </div>
               </div>
               <div style={{ marginInlineStart: 'auto', display: 'flex', gap: 8, paddingBlockStart: 10 }}>
-                <Button variant="secondary" size="sm">{t('backoffice:reports.dismiss')}</Button>
-                <Button variant="primary" size="sm">{t('backoffice:reports.process')}</Button>
+                <Button variant="secondary" size="sm" iconLeft="archive">{t('backoffice:reports.dismiss')}</Button>
+                <Button variant="primary" size="sm" iconLeft="gavel">{t('backoffice:reports.process')}</Button>
               </div>
             </div>
           </Card>

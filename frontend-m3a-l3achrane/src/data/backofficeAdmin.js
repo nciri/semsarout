@@ -54,10 +54,10 @@ export const ACTIVITY_LOG = [
 ]
 
 export const VERIF_TABS = [
-  { id: 'pending', label: 'En attente' },
-  { id: 'relaunched', label: 'Relancés' },
-  { id: 'rejected', label: 'Refusés' },
-  { id: 'validated', label: 'Validés' },
+  { id: 'pending', label: 'En attente', icon: 'clock' },
+  { id: 'relaunched', label: 'Relancés', icon: 'rotate-cw' },
+  { id: 'rejected', label: 'Refusés', icon: 'x-circle' },
+  { id: 'validated', label: 'Validés', icon: 'check-circle' },
 ]
 
 export const VERIFICATIONS = [

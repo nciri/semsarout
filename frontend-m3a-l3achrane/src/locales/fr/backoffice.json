@@ -63,6 +63,8 @@
     "notePlaceholder": "Note interne (visible par l'équipe conformité uniquement)",
     "validate": "Valider le profil",
     "reject": "Refuser",
+    "approveRowLabel": "Valider le dossier",
+    "rejectRowLabel": "Refuser le dossier",
     "checks": {
       "c1": "Lisibilité du document",
       "c2": "Concordance nom / prénom",
