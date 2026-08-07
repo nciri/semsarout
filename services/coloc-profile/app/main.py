@@ -92,6 +92,20 @@ def internal_stats(tenant: str | None = None, x_internal_token: str = Header(def
     }
 
 
+@app.get("/internal/lifestyle-referential", include_in_schema=False)
+def internal_lifestyle_referential(x_internal_token: str = Header(default="")) -> dict:
+    """Référentiel lifestyle m3a (back-office super-admin, lecture seule) : source unique
+    du vocabulaire partagé (`semsar_common.coloc_referential`), déjà utilisé pour valider
+    les réponses au questionnaire (`put_lifestyle` ci-dessous). Module Python statique, pas
+    une table versionnée : pas d'endpoint d'édition (hors périmètre sans migration au préalable)."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    return {
+        "questions": LIFESTYLE_QUESTIONS,
+        "importance_levels": sorted(IMPORTANCE_LEVELS),
+    }
+
+
 router = APIRouter(dependencies=[Depends(_require_tenant)])
 
 
