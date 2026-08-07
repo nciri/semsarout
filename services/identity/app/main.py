@@ -128,14 +128,24 @@ def _mod_state(u) -> str:
 
 
 @app.get("/internal/users", include_in_schema=False)
-def internal_users(x_internal_token: str = Header(default=""), db: Session = Depends(get_db)) -> dict:
-    """Dump léger de tous les comptes users (super-admin `/admin/accounts`) — agrégé par analytics."""
+def internal_users(tenant: str | None = None, x_internal_token: str = Header(default=""),
+                   db: Session = Depends(get_db)) -> dict:
+    """Dump léger des comptes users (super-admin `/admin/accounts`) — agrégé par analytics.
+
+    `tenant` optionnel : filtre `UserRO.tenant` (parité `/internal/users/stats`). Absent →
+    comportement historique (tous tenants), pour ne pas casser les appelants existants."""
     if x_internal_token != settings.internal_token:
         raise forbidden("Forbidden")
     from .models import UserRO
-    rows = db.query(UserRO).all()
+    q = db.query(UserRO)
+    if tenant:
+        q = q.filter(UserRO.tenant == tenant)
+    rows = q.all()
     return {"users": [{"id": u.id, "name": u.full_name, "email": u.email,
-                       "status": _mod_state(u),
+                       "tenant": u.tenant, "status": _mod_state(u),
+                       "account_role": u.account_role, "user_type": u.user_type,
+                       "is_verified": bool(u.is_verified),
+                       "created_at": u.created_at.isoformat() if u.created_at else None,
                        "last_login": u.last_login.isoformat() if u.last_login else None}
                       for u in rows]}
 

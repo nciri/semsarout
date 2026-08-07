@@ -48,16 +48,20 @@ def _emit(db: Session, user: UserRO) -> None:
     enqueue(db, "user", user.id, "user.updated", _user_event_doc(user))
 
 
-def _resolve(db: Session, user_id: int, x_internal_token: str) -> UserRO | None:
+def _resolve(db: Session, user_id: int, x_internal_token: str, tenant: str | None = None) -> UserRO | None:
     if x_internal_token != settings.internal_token:
         raise forbidden("Forbidden")
-    return db.get(UserRO, user_id)
+    u = db.get(UserRO, user_id)
+    if u is not None and tenant and u.tenant != tenant:
+        return None
+    return u
 
 
 @router.post("/internal/accounts/users/{user_id}/suspend", include_in_schema=False)
 def suspend_user(user_id: int, actor_id: int | None = None, reason: str | None = None,
+                 tenant: str | None = None,
                  x_internal_token: str = Header(default=""), db: Session = Depends(get_db)):
-    u = _resolve(db, user_id, x_internal_token)
+    u = _resolve(db, user_id, x_internal_token, tenant)
     if u is None:
         return _err("User not found", 404)
     if u.id == actor_id:
@@ -76,8 +80,9 @@ def suspend_user(user_id: int, actor_id: int | None = None, reason: str | None =
 
 @router.post("/internal/accounts/users/{user_id}/unsuspend", include_in_schema=False)
 def unsuspend_user(user_id: int, actor_id: int | None = None, reason: str | None = None,
+                   tenant: str | None = None,
                    x_internal_token: str = Header(default=""), db: Session = Depends(get_db)):
-    u = _resolve(db, user_id, x_internal_token)
+    u = _resolve(db, user_id, x_internal_token, tenant)
     if u is None:
         return _err("User not found", 404)
     u.is_suspended = False
