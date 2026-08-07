@@ -27,10 +27,12 @@
   "overview": {
     "kpis": {
       "verified-profiles": "Profils vérifiés",
-      "active-listings": "Annonces actives",
-      "matches": "Mises en relation",
-      "verif-delay": "Délai de vérification"
+      "active-listings": "Annonces publiées",
+      "total-users": "Utilisateurs",
+      "in-moderation-listings": "Annonces en modération"
     },
+    "loading": "Chargement des indicateurs…",
+    "loadError": "Certains indicateurs sont momentanément indisponibles.",
     "matchesCard": {
       "title": "Mises en relation confirmées",
       "period": "12 dernières semaines"

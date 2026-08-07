@@ -27,10 +27,12 @@
   "overview": {
     "kpis": {
       "verified-profiles": "الملفات الموثّقة",
-      "active-listings": "الإعلانات النشطة",
-      "matches": "المطابقات",
-      "verif-delay": "مدة التحقّق"
+      "active-listings": "الإعلانات المنشورة",
+      "total-users": "المستخدمون",
+      "in-moderation-listings": "إعلانات قيد المراجعة"
     },
+    "loading": "جارٍ تحميل المؤشرات…",
+    "loadError": "بعض المؤشرات غير متوفرة مؤقتًا.",
     "matchesCard": {
       "title": "المطابقات المؤكَّدة",
       "period": "آخر 12 أسبوعًا"

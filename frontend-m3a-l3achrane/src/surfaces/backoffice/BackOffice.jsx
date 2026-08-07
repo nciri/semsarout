@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Avatar, Badge, Button, Card, Icon, Input, Tabs, VerifiedBadge } from '../../ds/index.js'
+import { getBackofficeOverview } from '../../services/index.js'
 import {
   ACTIVITY_LOG,
   ADMIN_PROFILE,
@@ -11,7 +12,6 @@ import {
   LISTINGS_TOTAL,
   MATCHES_CHART,
   MATCHING_RULES,
-  OVERVIEW_KPIS,
   REPORTS,
   TEAM,
   TODAY_TODO,
@@ -21,6 +21,23 @@ import {
   VERIFICATION_QUEUE_NOTE,
   VERIF_TABS,
 } from '../../data/backofficeAdmin.js'
+
+// Nombre → chaîne localisée FR ("1 284") ; `—` si absent (dégradation d'un sous-service).
+const fmtCount = (n) => (typeof n === 'number' ? n.toLocaleString('fr-FR') : '—')
+
+// KPIs réels de la vue d'ensemble à partir de l'agrégat BFF `/api/v1/backoffice/overview`.
+// `data` peut avoir des sous-clés `null` (service en panne) → chaque KPI se dégrade en isolation.
+function buildOverviewKpis(data) {
+  const users = data?.users ?? null
+  const listings = data?.listings ?? null
+  const profiles = data?.profiles ?? null
+  return [
+    { id: 'total-users', value: fmtCount(users?.total_users) },
+    { id: 'active-listings', value: fmtCount(listings?.published_listings) },
+    { id: 'verified-profiles', value: fmtCount(profiles?.verified_profiles) },
+    { id: 'in-moderation-listings', value: fmtCount(listings?.in_moderation_listings) },
+  ]
+}
 
 const ACTIVITY_TONE = { validated: 'verified', rejected: 'danger', in_progress: 'warning' }
 const LISTING_TONE = { published: 'verified', review: 'warning', unpublished: 'danger' }
@@ -156,21 +173,51 @@ function KpiCard({ label, value, delta, trend }) {
     <Card padding={18} style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
       <div style={{ font: 'var(--fw-bold) 12.5px var(--font-body)', color: 'var(--text-muted)', letterSpacing: '.01em' }}>{label}</div>
       <div style={{ font: 'var(--fw-extrabold) 30px var(--font-display)', color: 'var(--text-heading)', letterSpacing: '-0.03em', lineHeight: 1 }}>{value}</div>
-      <div style={{ font: 'var(--fw-bold) 12.5px var(--font-body)', color: trendColor }}>
-        {arrow} {delta} <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{t('backoffice:kpi.vsPeriod')}</span>
-      </div>
+      {/* Deltas/tendances non disponibles côté API réelle (compteurs live, pas de série historique) */}
+      {delta != null && (
+        <div style={{ font: 'var(--fw-bold) 12.5px var(--font-body)', color: trendColor }}>
+          {arrow} {delta} <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{t('backoffice:kpi.vsPeriod')}</span>
+        </div>
+      )}
     </Card>
   )
 }
 
 function OverviewView() {
   const { t } = useTranslation(['backoffice'])
+  const [overview, setOverview] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const maxValue = Math.max(...MATCHES_CHART.map((b) => b.value))
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setLoadError(false)
+    getBackofficeOverview()
+      .then((data) => { if (!cancelled) setOverview(data) })
+      .catch(() => { if (!cancelled) setLoadError(true) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  const kpis = buildOverviewKpis(overview)
+
   return (
     <>
+      {loading && (
+        <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+          {t('backoffice:overview.loading')}
+        </div>
+      )}
+      {!loading && loadError && (
+        <div style={{ font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+          {t('backoffice:overview.loadError')}
+        </div>
+      )}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 16 }}>
-        {OVERVIEW_KPIS.map((k) => (
-          <KpiCard key={k.id} {...k} label={t(`backoffice:overview.kpis.${k.id}`, { defaultValue: k.label })} />
+        {kpis.map((k) => (
+          <KpiCard key={k.id} value={k.value} label={t(`backoffice:overview.kpis.${k.id}`)} />
         ))}
       </div>
 

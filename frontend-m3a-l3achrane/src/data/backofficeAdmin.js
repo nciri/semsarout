@@ -23,13 +23,6 @@ export const VERIFICATION_QUEUE_NOTE = {
   body: 'Délai moyen de traitement : 4 h 12. Objectif interne < 6 h.',
 }
 
-export const OVERVIEW_KPIS = [
-  { id: 'verified-profiles', label: 'Profils vérifiés', value: '8 412', delta: '6,2 %', trend: 'up' },
-  { id: 'active-listings', label: 'Annonces actives', value: '1 284', delta: '3,1 %', trend: 'up' },
-  { id: 'matches', label: 'Mises en relation', value: '396', delta: '18,4 %', trend: 'up' },
-  { id: 'verif-delay', label: 'Délai de vérification', value: '4 h 12', delta: '11 %', trend: 'down' },
-]
-
 export const MATCHES_CHART = [
   { label: 'S1', value: 34 }, { label: 'S2', value: 41 }, { label: 'S3', value: 38 },
   { label: 'S4', value: 52 }, { label: 'S5', value: 47 }, { label: 'S6', value: 61 },

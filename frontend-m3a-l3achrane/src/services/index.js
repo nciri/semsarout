@@ -67,3 +67,18 @@ export async function listThreads() {
   const { data } = await api.get('/messages/threads')
   return data
 }
+
+// Vue d'ensemble back-office (super-admin) : KPIs consolidés (users/listings/profiles), fan-out
+// BFF `/api/v1/backoffice/overview`. Chaque sous-clé peut être `null` si le service source est
+// indisponible (dégradation propre côté gateway) — le front affiche alors « — » pour ce KPI.
+export async function getBackofficeOverview() {
+  if (isMocked('backoffice')) {
+    return delay({
+      users: { total_users: 8412, signups_last_30d: 210, suspended_users: 12, deleted_pending_users: 3 },
+      listings: { total_listings: 1284, published_listings: 1108, in_moderation_listings: 41, new_listings_30d: 96 },
+      profiles: { total_profiles: 9021, verified_profiles: 8412, profiles_with_lifestyle: 7340 },
+    })
+  }
+  const { data } = await api.get('/backoffice/overview')
+  return data
+}
