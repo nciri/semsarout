@@ -210,3 +210,71 @@ export async function getBackofficeReports() {
   if (isMocked('backoffice')) return delay({ items: [], available: false })
   return { items: [], available: false }
 }
+
+// Pondération active du scoring matching (super-admin, lecture + édition), fan-out BFF
+// `GET/PUT /api/v1/backoffice/matching-weights` → service matching `/internal/weights`
+// (table `matching_weights`, versionnée — cf. services/matching/app/models.py).
+export async function getBackofficeMatchingWeights() {
+  if (isMocked('backoffice')) return delay({ version: 'default-v1', budget: 0.4, lifestyle: 0.6 })
+  const { data } = await api.get('/backoffice/matching-weights')
+  return data
+}
+
+export async function updateBackofficeMatchingWeights(budget, lifestyle) {
+  if (isMocked('backoffice')) {
+    return delay({ version: `mock-${Date.now()}`, budget, lifestyle })
+  }
+  const { data } = await api.put('/backoffice/matching-weights', { budget, lifestyle })
+  return data
+}
+
+// Référentiel lifestyle m3a (super-admin, LECTURE SEULE) : fan-out BFF
+// `GET /api/v1/backoffice/lifestyle-referential` → coloc-profile `/internal/lifestyle-referential`
+// (module Python statique `semsar_common.coloc_referential`, pas une table — pas d'édition
+// possible tant qu'il n'est pas migré en base).
+export async function getBackofficeLifestyleReferential() {
+  if (isMocked('backoffice')) {
+    return delay({
+      questions: {
+        coucher: ['avant22', '22h-minuit', 'apres-minuit'],
+        travail: ['jour', 'decale', 'teletravail'],
+        weekend: ['maison', 'sorti', 'ca-depend'],
+        menage: ['quotidien', '2-3-semaine', 'hebdomadaire'],
+        vaisselle: ['immediat', 'jour-meme', 'beaucoup'],
+        tabac: ['non-fumeur', 'balcon', 'interieur'],
+        alcool: ['jamais', 'occasionnel', 'regulier'],
+        invites: ['rarement', 'mensuel', 'souvent'],
+        bruit: ['casque', 'modere', 'sans-contrainte'],
+        cuisine: ['separee', 'parfois', 'ensemble'],
+        charges: ['chacun', 'commune', 'a-definir'],
+        social: ['amis', 'voisinage', 'peu-importe'],
+        langue: ['darija', 'francais', 'indifferent'],
+      },
+      importance_levels: ['DECISIF', 'INDIFFERENT', 'PREFERENCE'],
+    })
+  }
+  const { data } = await api.get('/backoffice/lifestyle-referential')
+  return data
+}
+
+// Rôles & permissions (super-admin, LECTURE SEULE ici) : réutilise le proxy générique
+// existant `GET /api/v1/backoffice/roles` (identity, `services/identity/app/rbac.py`) —
+// déjà servi au back-office legacy (`frontend/`). L'écriture (création/édition de rôle)
+// existe côté identity (`POST/PUT /backoffice/roles`) mais n'est pas câblée ici : hors
+// périmètre de la vue Paramètres m3a pour cette phase (pas d'UI de gestion des rôles).
+export async function getBackofficeRoles() {
+  if (isMocked('backoffice')) {
+    return delay({
+      roles: [
+        { id: 1, name: 'Super-admin', description: 'Accès complet à la plateforme', level: 0,
+          users_count: 2, permissions: [{ id: 1 }, { id: 2 }, { id: 3 }] },
+        { id: 2, name: 'Modération', description: 'Vérifications, annonces, comptes', level: 1,
+          users_count: 3, permissions: [{ id: 1 }, { id: 2 }] },
+        { id: 3, name: 'Support', description: 'Lecture seule, assistance utilisateurs', level: 2,
+          users_count: 4, permissions: [{ id: 1 }] },
+      ],
+    })
+  }
+  const { data } = await api.get('/backoffice/roles')
+  return data
+}

@@ -4,15 +4,19 @@ import { Avatar, Badge, Button, Card, Icon, Input, Tabs, VerifiedBadge } from '.
 import {
   approveBackofficeListing,
   getBackofficeContracts,
+  getBackofficeLifestyleReferential,
   getBackofficeListings,
+  getBackofficeMatchingWeights,
   getBackofficeOverview,
   getBackofficeReports,
+  getBackofficeRoles,
   getBackofficeUsers,
   getBackofficeVerifications,
   reactivateBackofficeUser,
   rejectBackofficeListing,
   rejectBackofficeVerification,
   suspendBackofficeUser,
+  updateBackofficeMatchingWeights,
   verifyBackofficeVerification,
 } from '../../services/index.js'
 import {
@@ -20,8 +24,6 @@ import {
   ADMIN_PROFILE,
   BACKOFFICE_NAV,
   MATCHES_CHART,
-  MATCHING_RULES,
-  TEAM,
   TODAY_TODO,
   VERIFICATION_QUEUE_NOTE,
   VERIF_TABS,
@@ -864,58 +866,222 @@ function ReportsView() {
   )
 }
 
-function SettingsView() {
+// Pondération matching (budget/lifestyle, doit sommer à 1) — édition super-admin réelle
+// via PUT /api/v1/backoffice/matching-weights (service matching, `matching_weights`).
+function MatchingWeightsPanel() {
   const { t } = useTranslation(['backoffice'])
-  const [rules, setRules] = useState(MATCHING_RULES)
-  const toggleRule = (id) => setRules((prev) => prev.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)))
+  const [weights, setWeights] = useState(null)
+  const [budgetPct, setBudgetPct] = useState(40)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setLoadError(false)
+    getBackofficeMatchingWeights()
+      .then((data) => {
+        if (cancelled) return
+        setWeights(data)
+        setBudgetPct(Math.round((data?.budget ?? 0.4) * 100))
+      })
+      .catch(() => { if (!cancelled) setLoadError(true) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  const lifestylePct = 100 - budgetPct
+  const dirty = weights != null && budgetPct !== Math.round((weights.budget ?? 0.4) * 100)
+
+  const handleSave = () => {
+    setSaving(true)
+    setSaveError(false)
+    setSaved(false)
+    updateBackofficeMatchingWeights(budgetPct / 100, lifestylePct / 100)
+      .then((data) => { setWeights(data); setSaved(true) })
+      .catch(() => setSaveError(true))
+      .finally(() => setSaving(false))
+  }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 16, alignItems: 'start' }}>
-      <Card padding={22} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-        {sectionTitle(t('backoffice:settings.matchingRulesTitle'))}
-        {rules.map((r) => {
-          const label = t(`backoffice:settings.rules.${r.id}.label`, { defaultValue: r.label })
-          const desc = t(`backoffice:settings.rules.${r.id}.desc`, { defaultValue: r.desc })
-          return (
-            <div key={r.id} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', paddingBlockEnd: 16, borderBlockEnd: '1px solid var(--border-subtle)' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-                <div style={{ font: 'var(--fw-bold) 13.5px var(--font-display)', color: 'var(--text-heading)' }}>{label}</div>
-                <div style={{ font: 'var(--fw-regular) 12.5px/1.5 var(--font-body)', color: 'var(--text-muted)' }}>{desc}</div>
-              </div>
-              <button
-                onClick={() => toggleRule(r.id)}
-                aria-pressed={r.enabled}
-                aria-label={label}
-                style={{
-                  marginInlineStart: 'auto', flex: 'none', width: 44, height: 25, borderRadius: 999, border: 0,
-                  background: r.enabled ? 'var(--green-500)' : 'var(--gray-300)', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: r.enabled ? 'flex-end' : 'flex-start',
-                  padding: 3, boxSizing: 'border-box',
-                }}
-              >
-                <span style={{ width: 19, height: 19, borderRadius: '50%', background: '#fff', display: 'block' }} />
-              </button>
+    <Card padding={22} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {sectionTitle(t('backoffice:settings.matchingWeightsTitle'))}
+      <div style={{ font: 'var(--fw-regular) 12.5px/1.5 var(--font-body)', color: 'var(--text-muted)' }}>
+        {t('backoffice:settings.matchingWeightsDesc')}
+      </div>
+      {loading && (
+        <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+          {t('backoffice:settings.loading')}
+        </div>
+      )}
+      {!loading && loadError && (
+        <div style={{ font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+          {t('backoffice:settings.loadError')}
+        </div>
+      )}
+      {!loading && !loadError && (
+        <>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', font: 'var(--fw-bold) 13px var(--font-body)', color: 'var(--text-heading)' }}>
+              <span>{t('backoffice:settings.weightBudget')}</span>
+              <span>{budgetPct}%</span>
             </div>
-          )
-        })}
-      </Card>
-
-      <Card padding={22} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {sectionTitle(t('backoffice:settings.teamTitle'))}
-        {TEAM.map((tm) => (
-          <div key={tm.id} style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBlockEnd: 12, borderBlockEnd: '1px solid var(--border-subtle)' }}>
-            <Avatar name={tm.name} size={36} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <div style={{ font: 'var(--fw-bold) 13.5px var(--font-display)', color: 'var(--text-heading)' }}>{tm.name}</div>
-              <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>{tm.email}</div>
+            <input
+              type="range" min={0} max={100} step={5} value={budgetPct}
+              onChange={(e) => setBudgetPct(Number(e.target.value))}
+              aria-label={t('backoffice:settings.weightBudget')}
+              style={{ width: '100%' }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', font: 'var(--fw-bold) 13px var(--font-body)', color: 'var(--text-heading)' }}>
+              <span>{t('backoffice:settings.weightLifestyle')}</span>
+              <span>{lifestylePct}%</span>
             </div>
-            <span style={{ marginInlineStart: 'auto' }}><Badge tone="navy">{tm.role}</Badge></span>
           </div>
-        ))}
-        <Button variant="secondary" size="sm" iconLeft="plus" style={{ alignSelf: 'flex-start', border: '1px dashed var(--border-default)' }}>
-          {t('backoffice:settings.inviteMember')}
-        </Button>
-      </Card>
+          <div style={{ font: 'var(--fw-regular) 11.5px var(--font-body)', color: 'var(--text-muted)' }}>
+            {t('backoffice:settings.activeVersion', { version: weights?.version ?? '—' })}
+          </div>
+          {saveError && (
+            <div style={{ font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+              {t('backoffice:settings.saveError')}
+            </div>
+          )}
+          {saved && !dirty && (
+            <div style={{ font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--green-700)' }}>
+              {t('backoffice:settings.saveSuccess')}
+            </div>
+          )}
+          <Button
+            variant="primary" size="sm" disabled={saving || !dirty}
+            onClick={handleSave}
+            style={{ alignSelf: 'flex-start' }}
+          >
+            {saving ? t('backoffice:settings.saving') : t('backoffice:settings.save')}
+          </Button>
+        </>
+      )}
+    </Card>
+  )
+}
+
+// Référentiel lifestyle (13 questions m3a) — LECTURE SEULE : module Python statique côté
+// coloc-profile (`semsar_common.coloc_referential`), pas de table versionnée à éditer.
+function LifestyleReferentialPanel() {
+  const { t } = useTranslation(['backoffice'])
+  const [referential, setReferential] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setLoadError(false)
+    getBackofficeLifestyleReferential()
+      .then((data) => { if (!cancelled) setReferential(data) })
+      .catch(() => { if (!cancelled) setLoadError(true) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  const questions = Object.entries(referential?.questions ?? {})
+
+  return (
+    <Card padding={22} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {sectionTitle(t('backoffice:settings.lifestyleReferentialTitle'))}
+        <Badge tone="neutral">{t('backoffice:settings.readOnly')}</Badge>
+      </div>
+      {loading && (
+        <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+          {t('backoffice:settings.loading')}
+        </div>
+      )}
+      {!loading && loadError && (
+        <div style={{ font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+          {t('backoffice:settings.loadError')}
+        </div>
+      )}
+      {!loading && !loadError && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 260, overflowY: 'auto' }}>
+          {questions.map(([code, values]) => (
+            <div key={code} style={{ display: 'flex', gap: 10, alignItems: 'baseline', paddingBlockEnd: 8, borderBlockEnd: '1px solid var(--border-subtle)' }}>
+              <div style={{ font: 'var(--fw-bold) 12.5px var(--font-body)', color: 'var(--text-heading)', minWidth: 90 }}>{code}</div>
+              <div style={{ font: 'var(--fw-regular) 12px var(--font-body)', color: 'var(--text-muted)' }}>{values.join(' · ')}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+// Rôles & permissions — LECTURE SEULE dans cette vue : réutilise l'endpoint identity RBAC
+// existant (`GET /api/v1/backoffice/roles`) ; l'édition (création/modification de rôle,
+// endpoints déjà présents côté identity) n'a pas d'UI dédiée dans cette phase.
+function RolesPanel() {
+  const { t } = useTranslation(['backoffice'])
+  const [roles, setRoles] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setLoadError(false)
+    getBackofficeRoles()
+      .then((data) => { if (!cancelled) setRoles(data?.roles ?? []) })
+      .catch(() => { if (!cancelled) setLoadError(true) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  return (
+    <Card padding={22} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {sectionTitle(t('backoffice:settings.rolesTitle'))}
+        <Badge tone="neutral">{t('backoffice:settings.readOnly')}</Badge>
+      </div>
+      {loading && (
+        <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+          {t('backoffice:settings.loading')}
+        </div>
+      )}
+      {!loading && loadError && (
+        <div style={{ font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+          {t('backoffice:settings.loadError')}
+        </div>
+      )}
+      {!loading && !loadError && roles.length === 0 && (
+        <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+          {t('backoffice:settings.rolesEmpty')}
+        </div>
+      )}
+      {!loading && !loadError && roles.map((r) => (
+        <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBlockEnd: 12, borderBlockEnd: '1px solid var(--border-subtle)' }}>
+          <Avatar name={r.name} size={36} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+            <div style={{ font: 'var(--fw-bold) 13.5px var(--font-display)', color: 'var(--text-heading)' }}>{r.name}</div>
+            <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>{r.description}</div>
+          </div>
+          <span style={{ marginInlineStart: 'auto' }}>
+            <Badge tone="navy">{t('backoffice:settings.rolesUsersCount', { count: r.users_count ?? 0 })}</Badge>
+          </span>
+        </div>
+      ))}
+    </Card>
+  )
+}
+
+function SettingsView() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 16, alignItems: 'start' }}>
+        <MatchingWeightsPanel />
+        <LifestyleReferentialPanel />
+      </div>
+      <RolesPanel />
     </div>
   )
 }

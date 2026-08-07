@@ -183,27 +183,23 @@
     "unavailable": "Aucun signalement à afficher : le service trust-safety ne porte aujourd’hui que la modération de comptes (suspension), pas de file de signalements communautaires."
   },
   "settings": {
-    "matchingRulesTitle": "Règles de mise en relation",
-    "teamTitle": "Équipe & rôles",
-    "inviteMember": "Inviter un membre",
-    "rules": {
-      "rule-min-score": {
-        "label": "Score de compatibilité minimum",
-        "desc": "Masquer les annonces sous 55 % de compatibilité dans les résultats du chercheur."
-      },
-      "rule-verif-required": {
-        "label": "Vérification obligatoire avant contact",
-        "desc": "Le chercheur doit avoir une CIN validée pour ouvrir une conversation."
-      },
-      "rule-auto-publish": {
-        "label": "Publication automatique des annonces",
-        "desc": "Publier sans revue humaine si l’hôte a déjà 3 baux clôturés sans litige."
-      },
-      "rule-escrow": {
-        "label": "Séquestre du dépôt de garantie",
-        "desc": "Bloquer le dépôt jusqu’à confirmation de l’état des lieux par les deux parties."
-      }
-    }
+    "loading": "Chargement…",
+    "loadError": "Ces paramètres sont momentanément indisponibles.",
+    "readOnly": "Lecture seule",
+    "matchingWeightsTitle": "Pondération de mise en relation",
+    "matchingWeightsDesc": "Répartition budget / mode de vie utilisée par le calcul de compatibilité (service matching). Doit toujours sommer à 100 %.",
+    "weightBudget": "Budget",
+    "weightLifestyle": "Mode de vie",
+    "activeVersion": "Version active : {{version}}",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "saveSuccess": "Pondération enregistrée et activée.",
+    "saveError": "L’enregistrement a échoué. Réessayez.",
+    "lifestyleReferentialTitle": "Référentiel mode de vie",
+    "rolesTitle": "Rôles & permissions",
+    "rolesEmpty": "Aucun rôle à afficher.",
+    "rolesUsersCount": "{{count}} membre",
+    "rolesUsersCount_other": "{{count}} membres"
   },
   "roomAssignment": {
     "kicker": "Gestion locative",

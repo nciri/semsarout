@@ -53,16 +53,3 @@ export const VERIF_TABS = [
   { id: 'validated', label: 'Validés', icon: 'check-circle' },
 ]
 
-export const MATCHING_RULES = [
-  { id: 'rule-min-score', label: 'Score de compatibilité minimum', desc: 'Masquer les annonces sous 55 % de compatibilité dans les résultats du chercheur.', enabled: true },
-  { id: 'rule-verif-required', label: 'Vérification obligatoire avant contact', desc: 'Le chercheur doit avoir une CIN validée pour ouvrir une conversation.', enabled: true },
-  { id: 'rule-auto-publish', label: 'Publication automatique des annonces', desc: 'Publier sans revue humaine si l’hôte a déjà 3 baux clôturés sans litige.', enabled: false },
-  { id: 'rule-escrow', label: 'Séquestre du dépôt de garantie', desc: 'Bloquer le dépôt jusqu’à confirmation de l’état des lieux par les deux parties.', enabled: true },
-]
-
-export const TEAM = [
-  { id: 't-1', initials: 'SA', name: 'Salma Aït Bella', email: 's.aitbella@m3a-l3chrane.ma', role: 'Admin' },
-  { id: 't-2', initials: 'RB', name: 'Rachid Bouzid', email: 'r.bouzid@m3a-l3chrane.ma', role: 'Modération' },
-  { id: 't-3', initials: 'HL', name: 'Hind Lamrani', email: 'h.lamrani@m3a-l3chrane.ma', role: 'Conformité' },
-  { id: 't-4', initials: 'ZT', name: 'Zakaria Tahiri', email: 'z.tahiri@m3a-l3chrane.ma', role: 'Support' },
-]
