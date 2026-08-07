@@ -634,6 +634,78 @@ async def backoffice_overview(request: Request) -> Response:
     })
 
 
+def _forbidden_json(message: str = "Forbidden") -> Response:
+    return Response(content=('{"error":"%s"}' % message).encode(), status_code=403,
+                    media_type="application/json")
+
+
+async def _require_backoffice_superadmin(request: Request):
+    """Garde commune aux routes back-office composites (parité `backoffice_overview`) : jeton
+    valide + super-admin + tenant du jeton == tenant de la requête. Retourne `None` (autorisé)
+    ou une `Response` 403 prête à renvoyer telle quelle."""
+    app_ = request.app
+    tenant = _resolve_tenant(request.headers, request.headers.get("host", ""))
+    ident = await _resolve_identity(
+        app_, request.headers.get("authorization"),
+        request.cookies.get(settings.cookie_access_name),
+    )
+    if ident is None or not ident.get("is_superadmin"):
+        return _forbidden_json(), tenant
+    if ident.get("tenant", "semsar") != tenant:
+        return _forbidden_json("Tenant mismatch"), tenant
+    return None, tenant
+
+
+@app.get("/api/v1/backoffice/verifications", include_in_schema=False)
+async def backoffice_verifications(request: Request) -> Response:
+    """File de vérification KYC en attente du tenant m3a (super-admin uniquement) : proxy
+    vers identity `/internal/kyc/queue` (source réelle des candidatures CIN/étudiant/employeur)."""
+    denied, tenant = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.identity
+    if client is None:
+        return JSONResponse({"tenant": tenant, "items": []})
+    headers = {"x-internal-token": settings.internal_token}
+    try:
+        r = await client.request("GET", "/internal/kyc/queue", params={"tenant": tenant}, headers=headers)
+    except Exception:  # noqa: BLE001 — dégradation propre si identity est indisponible
+        return JSONResponse({"tenant": tenant, "items": []})
+    if r.status_code != 200:
+        return JSONResponse({"tenant": tenant, "items": []})
+    return JSONResponse({"tenant": tenant, **r.json()})
+
+
+async def _backoffice_kyc_action(request: Request, kyc_id: int, action: str) -> Response:
+    denied, _tenant = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.identity
+    if client is None:
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    headers = {"x-internal-token": settings.internal_token}
+    try:
+        r = await client.request("POST", f"/internal/kyc/{kyc_id}/{action}", headers=headers)
+    except Exception:  # noqa: BLE001
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    return Response(content=r.content, status_code=r.status_code,
+                    media_type=r.headers.get("content-type"))
+
+
+@app.post("/api/v1/backoffice/verifications/{kyc_id}/verify", include_in_schema=False)
+async def backoffice_verifications_verify(kyc_id: int, request: Request) -> Response:
+    return await _backoffice_kyc_action(request, kyc_id, "verify")
+
+
+@app.post("/api/v1/backoffice/verifications/{kyc_id}/reject", include_in_schema=False)
+async def backoffice_verifications_reject(kyc_id: int, request: Request) -> Response:
+    return await _backoffice_kyc_action(request, kyc_id, "reject")
+
+
 @app.post("/api/v1/auth/logout", include_in_schema=False)
 async def logout(request: Request) -> Response:
     """Révoque la session côté BFF (efface les cookies). Servi par le BFF lui-même, pas
