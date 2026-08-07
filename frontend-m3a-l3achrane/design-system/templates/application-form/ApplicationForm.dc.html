@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Candidature" description="Le SEEKER postule sur une annonce — récapitulatif de compatibilité, message, créneaux de visite proposés, puis confirmation" -->
+<helmet><script src="./ds-base.js"></script><style>html,body{margin:0}body{font-family:var(--font-body);background:var(--bg-page)}a{color:var(--link);text-decoration:none}</style></helmet>
+<div style="min-height:100vh;background:var(--bg-page)">
+<header style="background:var(--surface-navy);color:var(--text-on-navy);padding:14px 32px;display:flex;align-items:center;gap:24px">
+<div style="font-size:18px;font-weight:800;letter-spacing:-0.02em">M3a-L3chrane</div>
+<a href="../listing-detail/ListingDetail.dc.html" style="color:var(--text-on-navy-muted);font-size:14px">← Retour à l'annonce</a>
+</header>
+<main style="max-width:760px;margin:0 auto;padding:34px 24px 64px">
+<sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:22px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<h1 style="margin:0;font-size:26px;font-weight:800;color:var(--text-heading);letter-spacing:-0.02em">Postuler pour cette chambre</h1>
+<p style="margin:0;font-size:14.5px;color:var(--text-body)">Chambre privée — Maârif, Casablanca · 2 400 MAD/mois</p>
+</div>
+<div style="background:var(--green-50);border:1px solid var(--green-100);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:6px">
+<div style="font-size:15px;font-weight:800;color:var(--green-700)">91% de compatibilité avec ce logement</div>
+<div style="font-size:13.5px;color:var(--text-body);line-height:1.55">Même rythme de sommeil · non-fumeuse · à 11 min à pied de l'ENCG Casablanca · budget aligné</div>
+</div>
+<div style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:22px;display:flex;flex-direction:column;gap:16px">
+<label style="display:flex;flex-direction:column;gap:7px"><span style="font-size:14px;font-weight:700;color:var(--text-heading)">Message au·à la colocataire</span><textarea rows="5" placeholder="Présentez-vous en quelques lignes : votre situation, vos disponibilités, pourquoi ce logement vous intéresse…" style="padding:12px 14px;border:1px solid var(--border-subtle);border-radius:8px;font-size:14px;font-family:inherit;color:var(--text-heading);outline:none;resize:vertical" style-focus="border-color:var(--border-focus)"></textarea></label>
+<div style="display:flex;flex-direction:column;gap:9px">
+<span style="font-size:14px;font-weight:700;color:var(--text-heading)">Créneaux de visite qui vous conviennent</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{ slots }}" as="s" hint-placeholder-count="4">
+<sc-if value="{{ s.on }}"><button onClick="{{ s.toggle }}" style="padding:9px 14px;border-radius:9px;border:1.5px solid var(--navy-700);background:var(--navy-700);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer">{{ s.label }}</button></sc-if>
+<sc-if value="{{ s.off }}" hint-placeholder-val="{{ true }}"><button onClick="{{ s.toggle }}" style="padding:9px 14px;border-radius:9px;border:1.5px solid var(--border-subtle);background:var(--white);color:var(--text-body);font-size:13.5px;font-weight:600;cursor:pointer">{{ s.label }}</button></sc-if>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:10px;background:var(--navy-50)">
+<div style="width:28px;height:28px;border-radius:50%;background:var(--verified-bg);color:var(--verified);display:flex;align-items:center;justify-content:center;font-weight:800;flex:none;font-size:13px">✓</div>
+<div style="font-size:13px;color:var(--text-body);line-height:1.55">Votre profil est vérifié et votre questionnaire de mode de vie est complet — le·la propriétaire verra votre score de compatibilité dès réception.</div>
+</div>
+<button onClick="{{ submit }}" style="align-self:flex-end;padding:13px 26px;border:0;border-radius:8px;background:var(--brand-accent);color:var(--text-on-accent);font-size:15px;font-weight:800;cursor:pointer" style-hover="background:var(--brand-accent-hover)">Envoyer ma candidature</button>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ sent }}">
+<div style="display:flex;flex-direction:column;align-items:center;gap:18px;padding:60px 20px;text-align:center">
+<div style="width:64px;height:64px;border-radius:50%;background:var(--green-100);color:var(--green-700);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800">✓</div>
+<h1 style="margin:0;font-size:24px;font-weight:800;color:var(--text-heading);letter-spacing:-0.02em">Candidature envoyée</h1>
+<p style="margin:0;max-width:440px;font-size:14.5px;color:var(--text-body);line-height:1.6">Hajar B. a été notifiée. Vous recevrez une réponse sous 48h — suivez son statut dans vos candidatures ou continuez la conversation.</p>
+<div style="display:flex;gap:12px">
+<a href="../messaging/Messaging.dc.html" style="padding:12px 22px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--white);color:var(--text-heading);font-size:14.5px;font-weight:700">Voir la conversation</a>
+<a href="../search-results/SearchResults.dc.html" style="padding:12px 22px;border:0;border-radius:8px;background:var(--navy-700);color:#fff;font-size:14.5px;font-weight:800">Continuer la recherche</a>
+</div>
+</div>
+</sc-if>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { sent: false, picked: { 0: true, 2: true } };
+  toggle(i) { this.setState(s => ({ picked: { ...s.picked, [i]: !s.picked[i] } })); }
+  renderVals() {
+    const labels = ['Sam. 9 août, matin', 'Sam. 9 août, après-midi', 'Dim. 10 août, matin', 'En visio'];
+    return {
+      sent: this.state.sent, notSent: !this.state.sent,
+      slots: labels.map((label, i) => ({ label, on: !!this.state.picked[i], off: !this.state.picked[i], toggle: () => this.toggle(i) })),
+      submit: () => this.setState({ sent: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,398 @@
+{
+  "meta": {
+    "title": "مع العشران"
+  },
+  "layout": {
+    "footer": {
+      "tagline": "مع العشران — سكن جماعي موثّق في المغرب",
+      "search": "بحث",
+      "mySpace": "مساحتي",
+      "partners": "الشركاء"
+    }
+  },
+  "landing": {
+    "searchBox": {
+      "tabColoc": "سكن جماعي",
+      "tabRes": "إقامات",
+      "cityLabel": "المدينة أو الحي",
+      "budgetLabel": "الميزانية القصوى",
+      "cta": "بحث",
+      "cities": [
+        "الدار البيضاء",
+        "الرباط",
+        "مراكش",
+        "فاس",
+        "طنجة",
+        "أكادير"
+      ],
+      "budgets": [
+        "1500 درهم",
+        "2500 درهم",
+        "4000 درهم"
+      ]
+    },
+    "hero": {
+      "titlePrefix": "اعثر على سكنك الجماعي المثالي بكل",
+      "titleHighlight": "ثقة",
+      "subtitle": "منصة السكن الجماعي الموثّقة للطلبة والشباب العاملين في المغرب.",
+      "roleStudent": "أنا طالب",
+      "roleEmployee": "أنا موظف",
+      "trust1Title": "ملفات موثّقة",
+      "trust1Sub": "البطاقة الوطنية، الوضعية الطلابية أو المهنية",
+      "trust2Title": "توافق ذكي",
+      "trust2Sub": "أكثر من مجرد سعر، أسلوب حياة",
+      "trust3Title": "دفع آمن",
+      "trust3Sub": "الوديعة وأول إيجار تحت الضمان",
+      "photoAlt": "صورة — مدينة مغربية",
+      "avatarName": "سلمى، 19 سنة",
+      "avatarSub": "سكن جماعي · الرباط",
+      "listingTitle": "شقة F4 · أكدال",
+      "listingSub": "توافق 85%"
+    },
+    "trustBand": {
+      "title": "الثقة في صميم مع العشران",
+      "items": [
+        {
+          "title": "هوية موثّقة",
+          "sub": "بطاقة وطنية موثّقة"
+        },
+        {
+          "title": "وضعية موثّقة",
+          "sub": "طالب أو موظف"
+        },
+        {
+          "title": "إعلانات مُراقبة",
+          "sub": "مراقبة الجودة"
+        },
+        {
+          "title": "دفع آمن",
+          "sub": "ضمان إلى حين معاينة السكن"
+        }
+      ]
+    },
+    "howItWorks": {
+      "eyebrow": "كيف يعمل الموقع",
+      "title": "خمس خطوات، بكل طمأنينة",
+      "steps": [
+        {
+          "title": "أنشئ ملفك الشخصي",
+          "sub": "التحقق من الهوية والوضعية"
+        },
+        {
+          "title": "ابحث وصفِّ النتائج",
+          "sub": "اعثر على السكن الجماعي المتوافق"
+        },
+        {
+          "title": "تواصل",
+          "sub": "تحدّث بكل أمان"
+        },
+        {
+          "title": "قم بالزيارة واختر",
+          "sub": "التقِ بشركائك المستقبليين في السكن"
+        },
+        {
+          "title": "وقّع وانتقل للسكن",
+          "sub": "عقد عبر الإنترنت، دفع آمن"
+        }
+      ]
+    },
+    "partnersBand": {
+      "title": "يثقون بنا",
+      "names": [
+        "UM6P",
+        "جامعة محمد الخامس",
+        "INPT",
+        "OFPPT",
+        "اتصالات المغرب",
+        "Société Générale"
+      ]
+    },
+    "partnerCta": {
+      "eyebrow": "شركاء من المؤسسات",
+      "title": "بوابات مخصّصة وتكاملات عبر واجهات برمجية",
+      "body": "لمرافقة طلبتكم ومتعاونيكم، مع تقارير مجهولة المصدر ومرجعية موثّقة.",
+      "universitiesTitle": "بوابة الجامعات",
+      "universitiesSub": "سيّروا سكن طلبتكم",
+      "companiesTitle": "بوابة الشركات",
+      "companiesSub": "انتقال الكفاءات الجديدة",
+      "dashboardAlt": "لوحة تحكم الشريك"
+    }
+  },
+  "search": {
+    "cityLabel": "المدينة أو الحي",
+    "budgetLabel": "الميزانية القصوى",
+    "typeLabel": "النوع",
+    "typeOptions": [
+      "الكل",
+      "غرفة",
+      "استوديو"
+    ],
+    "genderLabel": "الجنس",
+    "genderOptions": [
+      "الكل",
+      "إناث",
+      "ذكور"
+    ],
+    "budgetOptions": [
+      "2500 درهم",
+      "4000 درهم"
+    ],
+    "cta": "بحث",
+    "title": "سكن جماعي متاح",
+    "resultCount_one": "إعلان واحد",
+    "resultCount_other": "{{count}} إعلان",
+    "sortBy": "الترتيب حسب",
+    "sortOptions": [
+      "الأنسب",
+      "السعر تصاعديًا",
+      "التاريخ",
+      "المسافة"
+    ],
+    "filterChips": [
+      "غير مدخّن",
+      "مفروش",
+      "واي فاي",
+      "إناث",
+      "قرب الجامعة",
+      "إقامة قصيرة"
+    ],
+    "empty": "لا يوجد إعلان يطابق بحثك.",
+    "filtersTitle": "عوامل التصفية",
+    "resetFilters": "إعادة الضبط",
+    "monthlyBudgetLabel": "الميزانية الشهرية",
+    "budgetUnitNote": "درهم / شهريًا، شاملة التكاليف",
+    "housingTypeLabel": "نوع السكن",
+    "typeFilters": [
+      {
+        "label": "غرفة في سكن جماعي",
+        "count": 31
+      },
+      {
+        "label": "شقة كاملة",
+        "count": 9
+      },
+      {
+        "label": "استوديو مشترك",
+        "count": 6
+      },
+      {
+        "label": "إقامة شريكة",
+        "count": 2
+      }
+    ],
+    "lifestyleLabel": "نمط الحياة",
+    "lifestyleChips": [
+      "غير مدخّن",
+      "هادئ",
+      "الضيوف مسموحون",
+      "الحيوانات الأليفة مسموحة",
+      "سكن نسائي",
+      "سكن رجالي"
+    ],
+    "trustLabel": "الثقة",
+    "verifiedOnlyLabel": "الملفات الموثقة فقط",
+    "institutionalPartnerLabel": "شريك مؤسساتي",
+    "onlineContractLabel": "عقد إلكتروني متاح",
+    "resultsTitle": "سكن جماعي في الدار البيضاء، المعاريف",
+    "resultsSubtitle_one": "سكن واحد — مرتب حسب التوافق مع ملفك الشخصي",
+    "resultsSubtitle_other": "{{count}} سكن — مرتبة حسب التوافق مع ملفك الشخصي",
+    "sortOptionsDetailed": [
+      "التوافق",
+      "السعر تصاعديًا",
+      "السعر تنازليًا",
+      "الأحدث"
+    ],
+    "viewListLabel": "قائمة",
+    "viewMapLabel": "خريطة",
+    "activeFiltersLabel": "عوامل التصفية النشطة:",
+    "removeFilterLabel": "إزالة عامل التصفية {{label}}",
+    "verifiedFilterChip": "الملفات الموثقة",
+    "mapComingSoon": "عرض الخريطة قريبًا",
+    "loadMore": "عرض المزيد من السكنات",
+    "locationDefault": "الدار البيضاء، المعاريف",
+    "institutionLabel": "المدرسة / الشركة",
+    "institutionDefault": "المدرسة الوطنية للتجارة والتسيير بالدار البيضاء",
+    "proximityLabel": "القرب",
+    "proximityRadiusOptions": [
+      "< 1 كم",
+      "< 2 كم",
+      "< 5 كم",
+      "غير محدد"
+    ],
+    "lifestyleProfileBanner": {
+      "withProfile": "توصيات بناءً على ملف التوافق الخاص بك",
+      "withoutProfile": "أجب عن الاستبيان للحصول على توصيات مخصصة ←",
+      "editLink": "تعديل"
+    }
+  },
+  "listing": {
+    "notFoundTitle": "الإعلان غير موجود",
+    "backToSearch": "العودة إلى البحث",
+    "breadcrumbSearch": "بحث",
+    "photosCta": "عرض {{count}} صور",
+    "verifiedLabel": "موثّقة",
+    "aboutTitle": "حول السكن",
+    "flatmatesTitle": "السكان الحاليون",
+    "contactTitle": "تواصل",
+    "sendMessage": "إرسال رسالة",
+    "addFavorite": "إضافة إلى المفضلة",
+    "securePaymentTitle": "دفع آمن",
+    "securePaymentBody": "الوديعة وأول إيجار تحت الضمان إلى حين معاينة السكن عند الدخول. إطار واضح للجميع.",
+    "learnMore": "معرفة المزيد",
+    "amenitiesTitle": "المرافق",
+    "houseRulesTitle": "قواعد السكن",
+    "sinceLabel": "منذ",
+    "proximityTitle": "الأماكن القريبة",
+    "proximityConnector": " · على بعد {{distance}} من {{label}}",
+    "locationTitle": "الموقع",
+    "locationApproxNote": "الموقع تقريبي (نطاق 300 م) — يُكشف العنوان الدقيق بعد قبول ترشحك.",
+    "priceUnitPeriod": "شهريًا، شاملة التكاليف",
+    "matchPercentLabel": "{{pct}}٪ توافق مع ملفك الشخصي",
+    "matchDetailsBase": "نفس إيقاع النوم · غير مدخّن",
+    "applyCta": "التقديم على هذه الغرفة",
+    "contactRoommateCta": "التواصل مع الشريك في السكن",
+    "applicationRequirementNote": "يتطلب الترشح إتمام استبيان أسلوب الحياة الخاص بك.",
+    "ownerRoleLabel": "المالك",
+    "ownerTrustNote": "هوية موثقة · يجيب خلال أقل من ساعتين",
+    "morePhotosOverlay": "+{{count}} صور",
+    "houseRules": {
+      "guests": "استقبال ضيوف عرضيين مسموح",
+      "cleaning": "تناوب على تنظيف الأجزاء المشتركة",
+      "smoking": "التدخين داخل السكن",
+      "pets": "الحيوانات الأليفة مسموحة"
+    },
+    "reportCta": "الإبلاغ عن هذا الإعلان",
+    "reportReasonLabel": "سبب الإبلاغ",
+    "reportSubmitCta": "إرسال البلاغ",
+    "reportCancelCta": "إلغاء",
+    "reportReason": {
+      "spam": "رسائل مزعجة",
+      "inappropriate": "محتوى غير لائق",
+      "fraud": "احتيال",
+      "harassment": "تحرّش",
+      "other": "أخرى"
+    },
+    "reportSuccess": "تم إرسال البلاغ — شكرًا لك، سيراجعه فريقنا.",
+    "reportError": "تعذّر إرسال البلاغ حاليًا — يُرجى إعادة المحاولة."
+  },
+  "auth": {
+    "loginTitle": "تسجيل الدخول",
+    "registerTitle": "إنشاء حساب",
+    "firstNameLabel": "الاسم الشخصي",
+    "lastNameLabel": "الاسم العائلي",
+    "emailLabel": "البريد الإلكتروني",
+    "passwordLabel": "كلمة المرور",
+    "loginCta": "تسجيل الدخول",
+    "registerCta": "إنشاء حساب",
+    "switchToRegister": "ليس لديك حساب؟ أنشئ حسابًا",
+    "switchToLogin": "لديك حساب بالفعل؟ سجّل الدخول",
+    "genericError": "تعذّر تسجيل الدخول — يُرجى إعادة المحاولة.",
+    "taglinePrefix": "ابحث عن سكنك الجماعي،",
+    "taglineHighlight": "بكل ثقة.",
+    "trustFeatures": [
+      {
+        "title": "ملفات موثّقة",
+        "desc": "البطاقة الوطنية، الوضعية الطلابية أو المهنية"
+      },
+      {
+        "title": "توافق مقاس بدقة",
+        "desc": "درجة نمط حياة، وليس محض صدفة"
+      },
+      {
+        "title": "إطار واضح للجميع",
+        "desc": "عقد موقّع إلكترونيًا، وديعة آمنة"
+      }
+    ],
+    "dataResidencyNotice": "البيانات مستضافة في المغرب — متوافقة مع معايير CNDP",
+    "emailTab": "البريد الإلكتروني",
+    "phoneTab": "الهاتف",
+    "phonePlaceholder": "تسجيل الدخول عبر الهاتف متاح قريبًا.",
+    "noAccountPrompt": "ليس لديك حساب؟ ",
+    "hasAccountPrompt": "لديك حساب بالفعل؟ ",
+    "rememberMe": "البقاء متصلاً على هذا الجهاز",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "orDivider": "أو",
+    "continueWithGoogle": "المتابعة باستخدام Google",
+    "continueWithInstitution": "المتابعة عبر مؤسستي",
+    "termsPrefix": "بمتابعتك، فإنك توافق على",
+    "termsLink": "شروط الاستخدام",
+    "termsAnd": "و",
+    "privacyLink": "سياسة الخصوصية"
+  },
+  "registration": {
+    "title": "أنشئ ملفك الشخصي",
+    "subtitle": "ثلاث خطوات قصيرة. تبقى معلوماتك خاصة إلى أن تتواصل مع سكن جماعي.",
+    "steps": {
+      "profile": "الملف الشخصي",
+      "verification": "التحقق",
+      "lifestyle": "نمط الحياة"
+    },
+    "iAmLabel": "أنا",
+    "roles": {
+      "student": {
+        "title": "طالب/ة",
+        "desc": "مسجّل في مؤسسة تعليمية"
+      },
+      "worker": {
+        "title": "شاب/ة عامل/ة",
+        "desc": "يعمل أو يقوم بتدريب"
+      },
+      "host": {
+        "title": "أعرض سكنًا",
+        "desc": "مالك أو شريك سكن"
+      }
+    },
+    "cityOptions": [
+      "الدار البيضاء",
+      "الرباط",
+      "مراكش",
+      "طنجة",
+      "فاس"
+    ],
+    "form": {
+      "firstNameLabel": "الاسم الشخصي",
+      "firstNamePlaceholder": "ياسين",
+      "lastNameLabel": "الاسم العائلي",
+      "lastNamePlaceholder": "بنعلي",
+      "emailLabel": "البريد الإلكتروني",
+      "emailPlaceholder": "prenom.nom@exemple.ma",
+      "phoneLabel": "الهاتف",
+      "phonePlaceholder": "+212 6 12 34 56 78",
+      "cityLabel": "المدينة",
+      "orgLabel": "المؤسسة التعليمية أو صاحب العمل",
+      "orgPlaceholder": "جامعة الحسن الثاني",
+      "passwordLabel": "كلمة المرور",
+      "passwordPlaceholder": "8 أحرف على الأقل",
+      "passwordHint": "8 أحرف على الأقل، تتضمن رقمًا واحدًا على الأقل."
+    },
+    "nextStepTitle": "الخطوة التالية: التحقق",
+    "nextStepDesc": "ستقوم برفع بطاقتك الوطنية وإثبات وضعيتك. لا شيء مرئي للأعضاء الآخرين — تظهر فقط شارة «موثّق» في ملفك الشخصي.",
+    "agreementPrefix": "أوافق على",
+    "agreementTermsLink": "شروط الاستخدام",
+    "agreementMiddle": "ومعالجة بياناتي وفقًا لـ",
+    "agreementPrivacyLink": "سياسة الخصوصية",
+    "agreementSuffix": "(CNDP).",
+    "saveLaterCta": "احفظ واستأنف لاحقًا",
+    "continueCta": "متابعة"
+  },
+  "reviews": {
+    "title": "قيّم إقامتك",
+    "subtitle": "مع {{partner}} — {{listing}} · انتهت في {{date}}",
+    "publishNotice": "لن يُنشر تقييمك إلا بعد أن يقيّم الطرفان — أو تلقائيًا بعد 14 يومًا من انتهاء الإقامة.",
+    "criteria": {
+      "respect": "احترام المواعيد والقواعد",
+      "proprete": "نظافة المساحات المشتركة",
+      "communication": "التواصل",
+      "conformite": "المطابقة مع الإعلان"
+    },
+    "commentLabel": "تعليق (يظهر بعد النشر)",
+    "commentPlaceholder": "صف تجربتك في السكن المشترك…",
+    "submitCta": "نشر تقييمي",
+    "submittedCta": "تم إرسال التقييم",
+    "receivedTitle": "التقييمات التي تلقّيتها",
+    "starAriaLabel_one": "{{count}} نجمة",
+    "starAriaLabel_other": "{{count}} نجوم",
+    "pendingNotice_one": "{{count}} تقييم في انتظار النشر — يظهر خلال {{days}} أيام أو حالما يقيّم الطرف الآخر.",
+    "pendingNotice_other": "{{count}} تقييمات في انتظار النشر — تظهر خلال {{days}} أيام أو حالما يقيّم الطرف الآخر."
+  }
+}

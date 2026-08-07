@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Questionnaire de mode de vie" description="Parcours en 6 étapes réutilisé après inscription (optionnel) et avant candidature (obligatoire) — réponse + niveau d'importance par question" -->
+<helmet><script src="./ds-base.js"></script><style>html,body{margin:0}body{font-family:var(--font-body);background:var(--bg-page)}a{color:var(--link);text-decoration:none}a:hover{color:var(--link-hover)}</style></helmet>
+<div style="min-height:100vh;background:var(--bg-page);display:flex;flex-direction:column">
+<header style="background:var(--surface-navy);color:var(--text-on-navy);padding:16px 40px;display:flex;align-items:center;justify-content:space-between">
+<div style="font-size:18px;font-weight:800;letter-spacing:-0.02em">M3a-L3chrane</div>
+<sc-if value="{{ skippable }}" hint-placeholder-val="{{ true }}"><a href="../search-results/SearchResults.dc.html" style="color:var(--text-on-navy-muted);font-size:14px;font-weight:600">Passer pour l'instant →</a></sc-if>
+<sc-if value="{{ mandatory }}"><div style="font-size:13px;font-weight:700;color:var(--gold-400);letter-spacing:.04em;text-transform:uppercase">Requis avant de postuler</div></sc-if>
+</header>
+<main style="flex:1;display:flex;justify-content:center;padding:44px 24px 64px">
+<div style="width:100%;max-width:680px;display:flex;flex-direction:column;gap:26px">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font-size:13px;font-weight:700;color:var(--text-muted)">Étape {{ stepNum }} / {{ stepTotal }}</div>
+<h1 style="margin:0;font-size:26px;font-weight:800;color:var(--text-heading);letter-spacing:-0.02em">{{ stepTitle }}</h1>
+<p style="margin:0;font-size:14.5px;color:var(--text-body);line-height:1.55">{{ stepIntro }}</p>
+<div style="display:flex;gap:5px">
+<sc-for list="{{ dots }}" as="d" hint-placeholder-count="6">
+<sc-if value="{{ d.done }}"><div style="height:5px;border-radius:3px;flex:1;background:var(--navy-700)"></div></sc-if>
+<sc-if value="{{ d.todo }}" hint-placeholder-val="{{ true }}"><div style="height:5px;border-radius:3px;flex:1;background:var(--gray-200)"></div></sc-if>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<sc-for list="{{ questions }}" as="q" hint-placeholder-count="3">
+<div style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:14px;box-shadow:var(--shadow-sm);padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+<div style="font-size:15px;font-weight:700;color:var(--text-heading)">{{ q.label }}</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{ q.opts }}" as="o" hint-placeholder-count="3">
+<sc-if value="{{ o.on }}"><button onClick="{{ o.pick }}" style="padding:8px 14px;border-radius:9px;border:1.5px solid var(--navy-700);background:var(--navy-700);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer">{{ o.label }}</button></sc-if>
+<sc-if value="{{ o.off }}" hint-placeholder-val="{{ true }}"><button onClick="{{ o.pick }}" style="padding:8px 14px;border-radius:9px;border:1.5px solid var(--border-subtle);background:var(--white);color:var(--text-body);font-size:13.5px;font-weight:600;cursor:pointer" style-hover="border-color:var(--navy-300)">{{ o.label }}</button></sc-if>
+</sc-for>
+</div>
+<div style="height:1px;background:var(--border-subtle)"></div>
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<span style="font-size:12.5px;font-weight:700;color:var(--text-muted)">Importance</span>
+<sc-for list="{{ q.imp }}" as="i" hint-placeholder-count="3">
+<sc-if value="{{ i.on }}"><button onClick="{{ i.pick }}" style="padding:5px 11px;border-radius:999px;border:1px solid var(--gold-500);background:var(--gold-100);color:var(--gold-700);font-size:12.5px;font-weight:700;cursor:pointer">{{ i.label }}</button></sc-if>
+<sc-if value="{{ i.off }}" hint-placeholder-val="{{ true }}"><button onClick="{{ i.pick }}" style="padding:5px 11px;border-radius:999px;border:1px solid var(--border-subtle);background:var(--white);color:var(--text-muted);font-size:12.5px;font-weight:600;cursor:pointer" style-hover="border-color:var(--border-default)">{{ i.label }}</button></sc-if>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+<sc-if value="{{ canBack }}"><button onClick="{{ back }}" style="padding:12px 20px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--white);color:var(--text-heading);font-size:14.5px;font-weight:600;cursor:pointer">Précédent</button></sc-if>
+<sc-if value="{{ canBack }}" hint-placeholder-val="{{ false }}"><div style="width:112px"></div></sc-if>
+<div style="font-size:13px;color:var(--text-muted)">{{ answeredHint }}</div>
+<sc-if value="{{ isLast }}" hint-placeholder-val="{{ true }}"><button onClick="{{ finish }}" style="padding:12px 26px;border:0;border-radius:8px;background:var(--brand-accent);color:var(--text-on-accent);font-size:15px;font-weight:800;cursor:pointer" style-hover="background:var(--brand-accent-hover)">{{ finishLabel }}</button></sc-if>
+<sc-if value="{{ isLast }}" hint-placeholder-val="{{ false }}"><button onClick="{{ next }}" style="padding:12px 26px;border:0;border-radius:8px;background:var(--navy-700);color:#fff;font-size:15px;font-weight:800;cursor:pointer" style-hover="background:var(--navy-600)">Suivant</button></sc-if>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;optional&quot;,&quot;options&quot;:[&quot;optional&quot;,&quot;mandatory&quot;],&quot;tsType&quot;:&quot;'optional'|'mandatory'&quot;}}">
+const STEPS = [
+  { title: 'Votre rythme de vie', intro: 'Ça aide à trouver des colocataires sur le même tempo.', qs: [
+    { k: 'coucher', label: 'Vous vous couchez plutôt…', opts: ['Avant 22h', '22h–minuit', 'Après minuit'] },
+    { k: 'travail', label: 'Votre semaine type', opts: ['Cours/travail le jour', 'Horaires décalés', 'Télétravail fréquent'] },
+    { k: 'weekend', label: 'Le week-end, vous êtes plutôt', opts: ['À la maison', 'Souvent sorti', 'Ça dépend'] }
+  ]},
+  { title: 'Propreté et organisation', intro: 'La première source de friction en colocation.', qs: [
+    { k: 'menage', label: 'Fréquence de ménage des parties communes', opts: ['Quotidien', '2–3×/semaine', 'Hebdomadaire'] },
+    { k: 'vaisselle', label: 'La vaisselle, vous la faites', opts: ['Immédiatement', 'Le jour même', 'Quand il y en a beaucoup'] }
+  ]},
+  { title: 'Tabac et alcool', intro: 'Des critères souvent décisifs, à préciser clairement.', qs: [
+    { k: 'tabac', label: 'Tabac', opts: ['Non-fumeur', 'Fume au balcon', 'Fume à l’intérieur'] },
+    { k: 'alcool', label: 'Alcool dans le logement', opts: ['Jamais', 'Occasionnellement', 'Régulièrement'] }
+  ]},
+  { title: 'Invités et bruit', intro: 'Pour anticiper les attentes sur les parties communes.', qs: [
+    { k: 'invites', label: 'Invités à la maison', opts: ['Rarement', 'Quelques fois/mois', 'Souvent'] },
+    { k: 'bruit', label: 'Musique / appels dans le logement', opts: ['Casque uniquement', 'Volume modéré', 'Pas de contrainte'] }
+  ]},
+  { title: 'Cuisine et partage', intro: 'Séparé ou en commun — puis comment les charges se répartissent.', qs: [
+    { k: 'cuisine', label: 'Cuisine', opts: ['Séparée', 'Partagée parfois', 'On cuisine ensemble'] },
+    { k: 'charges', label: 'Courses et charges communes', opts: ['Chacun le sien', 'Caisse commune', 'À définir ensemble'] }
+  ]},
+  { title: 'Sociabilité et langue du foyer', intro: 'Dernière étape avant votre profil de compatibilité.', qs: [
+    { k: 'social', label: 'Vous cherchez plutôt des colocataires', opts: ['Amis proches', 'Bon voisinage', 'Peu importe'] },
+    { k: 'langue', label: 'Langue de communication au foyer', opts: ['Darija', 'Français', 'Indifférent'] }
+  ]}
+];
+const IMP = ['Indifférent', 'Préférence', 'Décisif'];
+
+class Component extends DCLogic {
+  state = { step: 0, answers: {}, importance: {} };
+  pick(k, v) { this.setState(s => ({ answers: { ...s.answers, [k]: v } })); }
+  pickImp(k, v) { this.setState(s => ({ importance: { ...s.importance, [k]: v } })); }
+
+  renderVals() {
+    const mandatory = this.props.mode === 'mandatory';
+    const { step, answers, importance } = this.state;
+    const s = STEPS[step];
+    const total = STEPS.length;
+    const questions = s.qs.map(q => ({
+      label: q.label,
+      opts: q.opts.map(o => ({ label: o, on: answers[q.k] === o, off: answers[q.k] !== o, pick: () => this.pick(q.k, o) })),
+      imp: IMP.map(i => ({ label: i, on: (importance[q.k] || 'Préférence') === i, off: (importance[q.k] || 'Préférence') !== i, pick: () => this.pickImp(q.k, i) }))
+    }));
+    const answeredCount = s.qs.filter(q => answers[q.k]).length;
+    return {
+      skippable: !mandatory, mandatory,
+      stepNum: step + 1, stepTotal: total, stepTitle: s.title, stepIntro: s.intro,
+      dots: STEPS.map((_, i) => ({ done: i <= step, todo: i > step })),
+      questions,
+      back: () => this.setState(st => ({ step: Math.max(0, st.step - 1) })),
+      next: () => this.setState(st => ({ step: Math.min(total - 1, st.step + 1) })),
+      canBack: step > 0,
+      isLast: step === total - 1,
+      finishLabel: mandatory ? 'Continuer ma candidature' : 'Terminer et voir mes recommandations',
+      finish: () => { window.location.href = mandatory ? '../application-form/ApplicationForm.dc.html' : '../search-results/SearchResults.dc.html'; },
+      answeredHint: answeredCount + '/' + s.qs.length + ' répondues sur cette page'
+    };
+  }
+}
+</script>
+</body>
+</html>

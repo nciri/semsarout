@@ -3,20 +3,15 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useMutation, useQuery } from 'react-query'
 import { toast } from 'react-toastify'
-import { FiSave, FiEye } from 'react-icons/fi'
+import { useTranslation } from 'react-i18next'
+import { FiSave } from 'react-icons/fi'
 import { propertyService } from '../../services/propertyService'
 import { DIRHAM_SYMBOL } from '../../utils/currency'
 import { getAmenityIcon } from '../../utils/amenityIcons'
 
-const PROPERTY_TYPES = [
-  { value: 'apartment', label: 'Appartement' },
-  { value: 'house', label: 'Maison' },
-  { value: 'villa', label: 'Villa' },
-  { value: 'land', label: 'Terrain' },
-  { value: 'commercial', label: 'Local commercial' },
-  { value: 'office', label: 'Bureau' }
-]
+const PROPERTY_TYPE_VALUES = ['apartment', 'house', 'villa', 'land', 'commercial', 'office']
 
+// Valeurs envoyées telles quelles à l'API (données FR, non traduites).
 const FEATURES = [
   'Parking', 'Garage', 'Balcon', 'Terrasse', 'Jardin',
   'Piscine', 'Ascenseur', 'Climatisation', 'Chauffage central',
@@ -24,6 +19,7 @@ const FEATURES = [
 ]
 
 function CreateProperty() {
+  const { t } = useTranslation(['dashboard', 'common'])
   const navigate = useNavigate()
   const { id } = useParams()
   const isEditMode = Boolean(id)
@@ -69,11 +65,11 @@ function CreateProperty() {
     (data) => propertyService.createProperty(data),
     {
       onSuccess: () => {
-        toast.success('Annonce créée avec succès')
+        toast.success(t('dashboard:createProperty.toasts.created'))
         navigate('/dashboard/annonces')
       },
       onError: (error) => {
-        toast.error(error.response?.data?.error || 'Erreur lors de la création')
+        toast.error(error.response?.data?.error || t('dashboard:createProperty.toasts.createError'))
       }
     }
   )
@@ -82,11 +78,11 @@ function CreateProperty() {
     (data) => propertyService.updateProperty(id, data),
     {
       onSuccess: () => {
-        toast.success('Annonce mise à jour avec succès')
+        toast.success(t('dashboard:createProperty.toasts.updated'))
         navigate('/dashboard/annonces')
       },
       onError: (error) => {
-        toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour')
+        toast.error(error.response?.data?.error || t('dashboard:createProperty.toasts.updateError'))
       }
     }
   )
@@ -134,10 +130,10 @@ function CreateProperty() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="font-display text-2xl font-bold text-gray-900">
-          {isEditMode ? "Modifier l'annonce" : 'Créer une annonce'}
+          {isEditMode ? t('dashboard:createProperty.titleEdit') : t('dashboard:createProperty.titleCreate')}
         </h1>
         <p className="text-gray-600">
-          Remplissez les informations de votre bien immobilier
+          {t('dashboard:createProperty.subtitle')}
         </p>
       </div>
 
@@ -145,7 +141,7 @@ function CreateProperty() {
         <div className="space-y-8">
           {/* Transaction Type */}
           <div className="card p-6">
-            <h2 className="font-semibold mb-4">Type de transaction</h2>
+            <h2 className="font-semibold mb-4">{t('dashboard:createProperty.sections.transactionType')}</h2>
             <div className="flex gap-4">
               <label className={`flex-1 flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer ${
                 transactionType === 'sale' ? 'border-primary-600 bg-primary-50' : 'border-gray-200'
@@ -157,7 +153,7 @@ function CreateProperty() {
                   className="sr-only"
                 />
                 <span className={transactionType === 'sale' ? 'text-primary-600 font-medium' : 'text-gray-600'}>
-                  Vente
+                  {t('dashboard:createProperty.transactionType.sale')}
                 </span>
               </label>
               <label className={`flex-1 flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer ${
@@ -170,7 +166,7 @@ function CreateProperty() {
                   className="sr-only"
                 />
                 <span className={transactionType === 'rent' ? 'text-primary-600 font-medium' : 'text-gray-600'}>
-                  Location
+                  {t('dashboard:createProperty.transactionType.rent')}
                 </span>
               </label>
             </div>
@@ -178,34 +174,34 @@ function CreateProperty() {
 
           {/* Basic Info */}
           <div className="card p-6">
-            <h2 className="font-semibold mb-4">Informations générales</h2>
+            <h2 className="font-semibold mb-4">{t('dashboard:createProperty.sections.generalInfo')}</h2>
             <div className="space-y-4">
               <div>
-                <label className="label">Titre de l'annonce *</label>
+                <label className="label">{t('dashboard:createProperty.fields.listingTitle')}</label>
                 <input
-                  {...register('title', { required: 'Titre requis' })}
+                  {...register('title', { required: t('dashboard:createProperty.validation.titleRequired') })}
                   className="input"
-                  placeholder="Ex: Appartement 3 pièces avec vue mer"
+                  placeholder={t('dashboard:createProperty.fields.listingTitlePlaceholder')}
                 />
                 {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
               </div>
 
               <div>
-                <label className="label">Type de bien *</label>
+                <label className="label">{t('dashboard:createProperty.fields.propertyType')}</label>
                 <select {...register('property_type')} className="input">
-                  {PROPERTY_TYPES.map(type => (
-                    <option key={type.value} value={type.value}>{type.label}</option>
+                  {PROPERTY_TYPE_VALUES.map(value => (
+                    <option key={value} value={value}>{t(`dashboard:shared.propertyTypes.${value}`)}</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="label">Description</label>
+                <label className="label">{t('dashboard:createProperty.fields.description')}</label>
                 <textarea
                   {...register('description')}
                   className="input"
                   rows="5"
-                  placeholder="Décrivez votre bien en détail..."
+                  placeholder={t('dashboard:createProperty.fields.descriptionPlaceholder')}
                 />
               </div>
             </div>
@@ -213,23 +209,23 @@ function CreateProperty() {
 
           {/* Price & Surface */}
           <div className="card p-6">
-            <h2 className="font-semibold mb-4">Prix et surface</h2>
+            <h2 className="font-semibold mb-4">{t('dashboard:createProperty.sections.priceAndSurface')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="label">
-                  Prix ({DIRHAM_SYMBOL}) * {transactionType === 'rent' && <span className="text-gray-400">/ mois</span>}
+                  {t('dashboard:createProperty.fields.price', { currency: DIRHAM_SYMBOL })} {transactionType === 'rent' && <span className="text-gray-400">{t('dashboard:createProperty.fields.perMonth')}</span>}
                 </label>
                 <input
                   type="number"
-                  {...register('price', { required: 'Prix requis', min: 0 })}
+                  {...register('price', { required: t('dashboard:createProperty.validation.priceRequired'), min: 0 })}
                   className="input"
-                  placeholder="Ex: 1500000"
+                  placeholder={t('dashboard:createProperty.fields.pricePlaceholder')}
                 />
                 {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price.message}</p>}
               </div>
 
               <div>
-                <label className="label">Surface (m²)</label>
+                <label className="label">{t('dashboard:createProperty.fields.surface')}</label>
                 <input
                   type="number"
                   {...register('surface')}
@@ -242,10 +238,10 @@ function CreateProperty() {
 
           {/* Characteristics */}
           <div className="card p-6">
-            <h2 className="font-semibold mb-4">Caractéristiques</h2>
+            <h2 className="font-semibold mb-4">{t('dashboard:createProperty.sections.characteristics')}</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <label className="label">Pièces</label>
+                <label className="label">{t('dashboard:createProperty.fields.rooms')}</label>
                 <input
                   type="number"
                   {...register('rooms')}
@@ -254,7 +250,7 @@ function CreateProperty() {
                 />
               </div>
               <div>
-                <label className="label">Chambres</label>
+                <label className="label">{t('dashboard:createProperty.fields.bedrooms')}</label>
                 <input
                   type="number"
                   {...register('bedrooms')}
@@ -263,7 +259,7 @@ function CreateProperty() {
                 />
               </div>
               <div>
-                <label className="label">Salles de bain</label>
+                <label className="label">{t('dashboard:createProperty.fields.bathrooms')}</label>
                 <input
                   type="number"
                   {...register('bathrooms')}
@@ -272,7 +268,7 @@ function CreateProperty() {
                 />
               </div>
               <div>
-                <label className="label">Étage</label>
+                <label className="label">{t('dashboard:createProperty.fields.floor')}</label>
                 <input
                   type="number"
                   {...register('floor')}
@@ -283,7 +279,7 @@ function CreateProperty() {
             </div>
 
             <div className="mt-6">
-              <label className="label">Équipements</label>
+              <label className="label">{t('dashboard:createProperty.fields.features')}</label>
               <div className="flex flex-wrap gap-2">
                 {FEATURES.map(feature => {
                   const Icon = getAmenityIcon(feature)
@@ -309,19 +305,19 @@ function CreateProperty() {
 
           {/* Location */}
           <div className="card p-6">
-            <h2 className="font-semibold mb-4">Localisation</h2>
+            <h2 className="font-semibold mb-4">{t('dashboard:createProperty.sections.location')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="label">Ville *</label>
+                <label className="label">{t('dashboard:createProperty.fields.city')}</label>
                 <input
-                  {...register('city', { required: 'Ville requise' })}
+                  {...register('city', { required: t('dashboard:createProperty.validation.cityRequired') })}
                   className="input"
                   placeholder="Ex: Casablanca"
                 />
                 {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>}
               </div>
               <div>
-                <label className="label">Quartier</label>
+                <label className="label">{t('dashboard:createProperty.fields.neighborhood')}</label>
                 <input
                   {...register('neighborhood')}
                   className="input"
@@ -329,7 +325,7 @@ function CreateProperty() {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="label">Adresse</label>
+                <label className="label">{t('dashboard:createProperty.fields.address')}</label>
                 <input
                   {...register('address')}
                   className="input"
@@ -346,15 +342,15 @@ function CreateProperty() {
               onClick={() => navigate('/dashboard/annonces')}
               className="btn-secondary"
             >
-              Annuler
+              {t('dashboard:shared.actions.cancel')}
             </button>
             <button
               type="submit"
               disabled={isSaving}
               className="btn-primary"
             >
-              <FiSave className="w-4 h-4 mr-2" />
-              {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+              <FiSave className="w-4 h-4 me-2" />
+              {isSaving ? t('dashboard:shared.actions.saving') : t('dashboard:shared.actions.save')}
             </button>
           </div>
         </div>

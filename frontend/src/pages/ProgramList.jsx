@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fi'
 import { DIRHAM_SYMBOL, formatPrice } from '../utils/currency'
 import DirIcon from '../components/common/DirIcon'
+import { useFormat } from '../utils/format'
 
 const programsService = {
   getPrograms: async (params) => {
@@ -34,7 +35,7 @@ const MOROCCAN_CITIES = [
   'Kenitra', 'Tétouan', 'El Jadida', 'Mohammedia', 'Salé', 'Meknès'
 ]
 
-function ProgramCard({ program, t, dateLocale }) {
+function ProgramCard({ program, t, fmtDate }) {
   const constructionStatus = CONSTRUCTION_STATUS[program.construction_status] || CONSTRUCTION_STATUS.planning
   const ConstructionIcon = constructionStatus.icon
   const statusKey = program.construction_status && CONSTRUCTION_STATUS[program.construction_status]
@@ -68,7 +69,7 @@ function ProgramCard({ program, t, dateLocale }) {
           <div className="absolute bottom-3 start-3 bg-black/60 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
             <FiCalendar className="w-3 h-3" />
             {t('public:programList.deliveryDate', {
-              date: new Date(program.delivery_date).toLocaleDateString(dateLocale, { month: 'long', year: 'numeric' })
+              date: fmtDate(program.delivery_date, { month: 'long', year: 'numeric' })
             })}
           </div>
         )}
@@ -118,8 +119,8 @@ function ProgramCard({ program, t, dateLocale }) {
 }
 
 export default function ProgramList() {
-  const { t, i18n } = useTranslation(['public', 'common'])
-  const dateLocale = i18n.language === 'ar' ? 'ar' : 'fr-FR'
+  const { t } = useTranslation(['public', 'common'])
+  const { fmtDate } = useFormat()
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState({
     city: '',
@@ -316,7 +317,7 @@ export default function ProgramList() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {data.programs.map(program => (
-                <ProgramCard key={program.id} program={program} t={t} dateLocale={dateLocale} />
+                <ProgramCard key={program.id} program={program} t={t} fmtDate={fmtDate} />
               ))}
             </div>
 

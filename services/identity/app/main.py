@@ -128,14 +128,24 @@ def _mod_state(u) -> str:
 
 
 @app.get("/internal/users", include_in_schema=False)
-def internal_users(x_internal_token: str = Header(default=""), db: Session = Depends(get_db)) -> dict:
-    """Dump léger de tous les comptes users (super-admin `/admin/accounts`) — agrégé par analytics."""
+def internal_users(tenant: str | None = None, x_internal_token: str = Header(default=""),
+                   db: Session = Depends(get_db)) -> dict:
+    """Dump léger des comptes users (super-admin `/admin/accounts`) — agrégé par analytics.
+
+    `tenant` optionnel : filtre `UserRO.tenant` (parité `/internal/users/stats`). Absent →
+    comportement historique (tous tenants), pour ne pas casser les appelants existants."""
     if x_internal_token != settings.internal_token:
         raise forbidden("Forbidden")
     from .models import UserRO
-    rows = db.query(UserRO).all()
+    q = db.query(UserRO)
+    if tenant:
+        q = q.filter(UserRO.tenant == tenant)
+    rows = q.all()
     return {"users": [{"id": u.id, "name": u.full_name, "email": u.email,
-                       "status": _mod_state(u),
+                       "tenant": u.tenant, "status": _mod_state(u),
+                       "account_role": u.account_role, "user_type": u.user_type,
+                       "is_verified": bool(u.is_verified),
+                       "created_at": u.created_at.isoformat() if u.created_at else None,
                        "last_login": u.last_login.isoformat() if u.last_login else None}
                       for u in rows]}
 
@@ -154,20 +164,28 @@ def internal_user_detail(user_id: int, x_internal_token: str = Header(default=""
 
 
 @app.get("/internal/users/stats", include_in_schema=False)
-def internal_users_stats(x_internal_token: str = Header(default=""), db: Session = Depends(get_db)) -> dict:
+def internal_users_stats(tenant: str | None = None, x_internal_token: str = Header(default=""),
+                         db: Session = Depends(get_db)) -> dict:
     """Compteurs users plateforme (super-admin overview) — agrégés par analytics. identity possède
-    les comptes (parité des sous-comptes de `admin/overview.py`)."""
+    les comptes (parité des sous-comptes de `admin/overview.py`).
+
+    `tenant` optionnel : filtre `UserRO.tenant` (m3a-l3achrane vs semsar). Absent → comportement
+    historique (tous tenants confondus), pour ne pas casser les appelants existants."""
     if x_internal_token != settings.internal_token:
         raise forbidden("Forbidden")
     from datetime import datetime, timedelta
 
     from .models import UserRO
     since = datetime.utcnow() - timedelta(days=30)
+
+    def _scoped(q):
+        return q.filter(UserRO.tenant == tenant) if tenant else q
+
     return {
-        "total_users": db.query(UserRO).filter(UserRO.deleted_at.is_(None)).count(),
-        "signups_last_30d": db.query(UserRO).filter(UserRO.created_at >= since).count(),
-        "suspended_users": db.query(UserRO).filter(UserRO.is_suspended.is_(True)).count(),
-        "deleted_pending_users": db.query(UserRO).filter(
+        "total_users": _scoped(db.query(UserRO)).filter(UserRO.deleted_at.is_(None)).count(),
+        "signups_last_30d": _scoped(db.query(UserRO)).filter(UserRO.created_at >= since).count(),
+        "suspended_users": _scoped(db.query(UserRO)).filter(UserRO.is_suspended.is_(True)).count(),
+        "deleted_pending_users": _scoped(db.query(UserRO)).filter(
             UserRO.deleted_at.isnot(None), UserRO.anonymized_at.is_(None)).count(),
     }
 
@@ -224,3 +242,74 @@ def get_kyc(
     if record.user_id != _user_id(principal) and not is_reviewer:
         raise forbidden("Accès non autorisé à cette vérification.")
     return {"id": record.id, "user_id": record.user_id, "status": record.status}
+
+
+def _kyc_to_dict(record: KycVerification, user) -> dict:
+    return {
+        "id": record.id, "user_id": record.user_id, "status": record.status,
+        "cin_last4": record.cin[-4:] if record.cin else None,
+        "created_at": record.created_at.isoformat() if record.created_at else None,
+        "full_name": user.full_name if user is not None else None,
+        "email": user.email if user is not None else None,
+    }
+
+
+@app.get("/internal/kyc/queue", include_in_schema=False)
+def internal_kyc_queue(tenant: str | None = None, x_internal_token: str = Header(default=""),
+                       db: Session = Depends(get_db)) -> dict:
+    """File de vérification KYC en attente (statut `pending`), cloisonnée tenant via jointure
+    `UserRO.tenant` — alimente la vue back-office Vérifications (fan-out BFF super-admin)."""
+    if x_internal_token != settings.internal_token:
+        raise forbidden("Forbidden")
+    from .models import UserRO
+    q = (
+        db.query(KycVerification, UserRO)
+        .join(UserRO, UserRO.id == KycVerification.user_id)
+        .filter(KycVerification.status == "pending")
+    )
+    if tenant:
+        q = q.filter(UserRO.tenant == tenant)
+    rows = q.order_by(KycVerification.created_at.asc()).all()
+    return {"items": [_kyc_to_dict(record, user) for record, user in rows]}
+
+
+def _resolve_kyc(db: Session, kyc_id: int, x_internal_token: str) -> KycVerification | None:
+    if x_internal_token != settings.internal_token:
+        raise forbidden("Forbidden")
+    return db.get(KycVerification, kyc_id)
+
+
+@app.post("/internal/kyc/{kyc_id}/verify", include_in_schema=False)
+def internal_kyc_verify(kyc_id: int, x_internal_token: str = Header(default=""),
+                        db: Session = Depends(get_db)) -> dict:
+    """Valide une vérification KYC : passe la file en `verified` + marque le compte vérifié
+    (`UserRO.is_verified`). Jeton interne (le BFF a déjà vérifié superadmin/kyc_reviewer)."""
+    record = _resolve_kyc(db, kyc_id, x_internal_token)
+    if record is None:
+        raise not_found("Vérification introuvable.")
+    from .models import UserRO
+    record.status = "verified"
+    user = db.get(UserRO, record.user_id)
+    if user is not None:
+        user.is_verified = True
+    enqueue(
+        db, aggregate_type="kyc_verification", aggregate_id=record.id,
+        event_type=events.KYC_VERIFIED, payload={"user_id": record.user_id},
+    )
+    db.commit()
+    return _kyc_to_dict(record, user)
+
+
+@app.post("/internal/kyc/{kyc_id}/reject", include_in_schema=False)
+def internal_kyc_reject(kyc_id: int, x_internal_token: str = Header(default=""),
+                        db: Session = Depends(get_db)) -> dict:
+    """Refuse une vérification KYC : passe la file en `rejected` (ne touche pas
+    `UserRO.is_verified` — un refus n'annule pas une vérification déjà acquise ailleurs)."""
+    record = _resolve_kyc(db, kyc_id, x_internal_token)
+    if record is None:
+        raise not_found("Vérification introuvable.")
+    from .models import UserRO
+    record.status = "rejected"
+    user = db.get(UserRO, record.user_id)
+    db.commit()
+    return _kyc_to_dict(record, user)

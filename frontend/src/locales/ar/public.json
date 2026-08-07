@@ -32,6 +32,50 @@
     "ctaSubtitle": "سواء أردتم البيع أو الكراء أو تسيير عقاركم أو الانضمام إلى شبكة وكالاتنا الشريكة، فريقنا يواكبكم.",
     "ctaButton": "اتصلوا بنا"
   },
+  "checkout": {
+    "backLink": "رجوع",
+    "title": "إتمام طلبكم",
+    "stepInfoLabel": "المعلومات",
+    "stepPaymentLabel": "الدفع",
+    "step1Title": "معلوماتكم",
+    "nameLabel": "الاسم الكامل *",
+    "namePlaceholder": "اسمكم",
+    "emailLabel": "البريد الإلكتروني *",
+    "emailPlaceholder": "بريدكم@الإلكتروني.com",
+    "phoneLabel": "الهاتف *",
+    "phoneRequired": "رقم الهاتف مطلوب",
+    "phonePlaceholder": "+212 6XX XXX XXX",
+    "addressLabel": "العنوان",
+    "addressPlaceholder": "العنوان",
+    "cityLabel": "المدينة",
+    "cityPlaceholder": "المدينة",
+    "continueButton": "المتابعة نحو الدفع",
+    "editInfoButton": "تعديل معلوماتي",
+    "paymentMethodTitle": "طريقة الدفع",
+    "cardMethodLabel": "بطاقة بنكية",
+    "cardMethodNote": "Visa، Mastercard، CMI",
+    "transferMethodShort": "تحويل",
+    "transferMethodLabel": "تحويل بنكي",
+    "transferMethodNote": "التفعيل بعد الاستلام",
+    "cardRedirectNote": "سيتم توجيهكم إلى شريكنا الآمن للدفع لإتمام معاملتكم.",
+    "transferInstructionsTitle": "تعليمات التحويل البنكي",
+    "transferInstructionsText": "بعد التأكيد، ستتوصلون بالإحداثيات البنكية عبر البريد الإلكتروني. سيتم تفعيل خدمتكم فور استلام التحويل.",
+    "termsPrefix": "أوافق على",
+    "termsLink": "الشروط العامة للبيع",
+    "termsAnd": "و",
+    "privacyLink": "سياسة الخصوصية",
+    "processing": "جارٍ المعالجة...",
+    "payButton": "الدفع {{price}}",
+    "summaryTitle": "ملخص الطلب",
+    "billingYearly": "فوترة سنوية",
+    "billingMonthly": "فوترة شهرية",
+    "subtotalLabel": "المجموع الفرعي",
+    "vatLabel": "ضريبة القيمة المضافة (20%)",
+    "vatIncluded": "مشمولة",
+    "totalLabel": "المجموع الإجمالي",
+    "securePaymentNote": "دفع آمن 100%",
+    "genericError": "حدث خطأ ما. يرجى إعادة المحاولة."
+  },
   "checkoutConfirmation": {
     "successTitle": "تم تأكيد الدفع",
     "successMessage": "شكرًا لك! تم تسجيل دفعتك بنجاح (المرجع {{paymentId}}).",
@@ -277,6 +321,701 @@
       "residential": "سكني",
       "commercial": "تجاري",
       "mixed": "مختلط"
+    }
+  },
+  "programDetail": {
+    "breadcrumbHome": "الرئيسية",
+    "breadcrumbPrograms": "المشاريع",
+    "notFoundTitle": "المشروع غير موجود",
+    "notFoundText": "هذا المشروع غير موجود أو لم يعد متاحا.",
+    "backToList": "العودة إلى المشاريع",
+    "status": {
+      "planning": "قيد الدراسة",
+      "under_construction": "قيد الإنجاز",
+      "delivered": "مُسلَّم"
+    },
+    "deliveryDate": "التسليم {{date}}",
+    "priceFrom": "السعر ابتداء من",
+    "descriptionTitle": "الوصف",
+    "unitsTitle": "أنواع الوحدات المتاحة",
+    "unitTypes": {
+      "studio": "استوديو",
+      "apartment": "شقة",
+      "duplex": "دوبلكس",
+      "villa": "فيلا",
+      "penthouse": "بنتهاوس",
+      "commercial": "محل تجاري"
+    },
+    "surfaceLabel": "المساحة",
+    "roomsLabel": "الغرف",
+    "bedroomsLabel": "غرف النوم",
+    "bathroomsLabel": "الحمامات",
+    "priceLabel": "السعر",
+    "availableCount": "{{n}} متاحة",
+    "amenitiesTitle": "التجهيزات والخدمات",
+    "amenities": {
+      "pool": "مسبح",
+      "gym": "قاعة رياضية",
+      "security": "حراسة على مدار الساعة",
+      "parking": "موقف سيارات",
+      "garden": "حديقة",
+      "playground": "ساحة ألعاب",
+      "concierge": "خدمة الاستقبال",
+      "elevator": "مصعد",
+      "terrace": "شرفة",
+      "spa": "سبا"
+    },
+    "documentsTitle": "الوثائق",
+    "downloadBrochure": "تحميل الكتيب",
+    "watchVideo": "مشاهدة الفيديو",
+    "contactCardTitle": "طلب المزيد من المعلومات",
+    "call": "الاتصال",
+    "share": "مشاركة",
+    "shareText": "اكتشفوا المشروع العقاري \"{{name}}\" على SemsarOut",
+    "summaryTitle": "ملخص",
+    "totalUnitsLabel": "العدد الإجمالي للوحدات",
+    "availableUnitsLabel": "الوحدات المتاحة",
+    "referenceLabel": "المرجع",
+    "namePlaceholder": "اسمكم *",
+    "phonePlaceholder": "الهاتف *",
+    "emailPlaceholder": "البريد الإلكتروني",
+    "messagePlaceholder": "رسالتكم",
+    "messageDefault": "أنا مهتم(ة) بالمشروع \"{{name}}\".",
+    "sending": "جارٍ الإرسال...",
+    "sendButton": "إرسال طلبي",
+    "sendError": "حدث خطأ أثناء الإرسال",
+    "submittedTitle": "تم إرسال الرسالة!",
+    "submittedText": "ستتواصل معكم الوكالة في أقرب وقت ممكن."
+  },
+  "agencyPricing": {
+    "title": "أسعار الوكالات الشريكة",
+    "subtitle": "طوّروا نشاطكم مع سمسارأوت. أدوات فعّالة لتسيير إعلاناتكم وتوليد المزيد من العملاء المحتملين المؤهلين.",
+    "billing": {
+      "monthly": "شهري",
+      "yearly": "سنوي",
+      "yearlyDiscount": "-17%"
+    },
+    "popularBadge": "الأكثر رواجًا",
+    "perMonthSuffix": "/شهر",
+    "billedYearly": "يُفوتَر ~{{price}}/سنة",
+    "savings": "(توفرون {{amount}})",
+    "ctaButton": "ابدأوا الآن",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "description": "مثالية للانطلاق"
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "للوكالات في طور النمو"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "description": "حل شامل"
+      }
+    },
+    "features": {
+      "listingsUnlimited": "إعلانات غير محدودة",
+      "listingsCount": "{{n}} إعلانات نشطة",
+      "featuredCount": "{{n}} إعلانات مميزة/شهريًا",
+      "urgentCount": "{{n}} شارات \"عاجل\"/شهريًا",
+      "leadContact": "الوصول إلى جهات الاتصال",
+      "apiAccess": "الوصول إلى واجهة برمجة REST",
+      "csvImport": "استيراد CSV",
+      "analytics": "لوحة تحليلات",
+      "staymanagerSync": "مزامنة StayManager",
+      "prioritySupport": "دعم ذو أولوية",
+      "dedicatedManager": "مسؤول حساب مخصص"
+    },
+    "comparison": {
+      "title": "مقارنة تفصيلية",
+      "feature": "الميزة",
+      "activeListings": "إعلانات نشطة",
+      "photosPerListing": "صور لكل إعلان",
+      "featuredPerMonth": "إعلانات مميزة/شهريًا",
+      "csvImport": "استيراد CSV",
+      "apiRest": "واجهة برمجة REST",
+      "advancedAnalytics": "تحليلات متقدمة",
+      "staymanagerSync": "مزامنة StayManager",
+      "prioritySupport": "دعم ذو أولوية",
+      "dedicatedManager": "مسؤول حساب مخصص",
+      "unlimited": "غير محدود"
+    },
+    "faq": {
+      "title": "الأسئلة الشائعة",
+      "q1Question": "هل يمكنني تغيير خطتي في أي وقت؟",
+      "q1Answer": "نعم، يمكنكم ترقية خطتكم في أي وقت. يصبح التغيير ساري المفعول فورًا وتدفعون فقط الفرق بالتناسب. أما في حالة التخفيض، فسيصبح التغيير ساري المفعول في نهاية فترة الفوترة الجارية.",
+      "q2Question": "كيف تعمل الفوترة؟",
+      "q2Answer": "تتم الفوترة في بداية كل فترة (شهرية أو سنوية). تتلقون فاتورة عبر البريد الإلكتروني ويمكنكم تحميلها من لوحة التحكم الخاصة بكم.",
+      "q3Question": "هل هناك التزام أدنى؟",
+      "q3Answer": "لا، لا يوجد أي التزام أدنى. يمكنكم إلغاء اشتراككم في أي وقت. بالنسبة للاشتراكات السنوية، تستفيدون من ضمان استرجاع الأموال خلال 30 يومًا.",
+      "q4Question": "كيف تعمل واجهة برمجة التطبيقات؟",
+      "q4Answer": "تتيح لكم واجهة برمجة REST الخاصة بنا مزامنة إعلاناتكم تلقائيًا مع برنامجكم المهني. تتلقون مفتاح API فريدًا في لوحة التحكم الخاصة بكم، مرفقًا بوثائق كاملة."
+    },
+    "cta": {
+      "title": "بحاجة إلى عرض مخصص؟",
+      "text": "نقترح حلولًا مخصصة لشبكات الوكالات والمروجين والحسابات الكبرى. تواصلوا معنا لمناقشة احتياجاتكم.",
+      "contactButton": "اتصلوا بنا"
+    }
+  },
+  "propertyList": {
+    "searchToggle": "البحث والتصفية",
+    "mobileSearchModalTitle": "بحث متقدم",
+    "loading": "جارٍ التحميل...",
+    "resultsCount": "{{n}} إعلان تم العثور عليه",
+    "titleRent": "إيجارات",
+    "titleSale": "مبيعات",
+    "titleDefault": "إعلانات",
+    "titleSuffix": "عقارية",
+    "titleCity": "في {{city}}",
+    "clearFilters": "مسح ({{n}})",
+    "saveSearch": "حفظ + تنبيهات",
+    "saveSearchLoginPrompt": "سجّلوا الدخول لحفظ هذا البحث",
+    "saveSearchNamePrompt": "اسم هذا البحث (مثال: \"شقة الدار البيضاء -2 مليون\")",
+    "saveSearchSuccess": "تم حفظ البحث! سوف تتلقون بريدًا إلكترونيًا عن كل عقار جديد مطابق.",
+    "saveSearchError": "خطأ أثناء الحفظ",
+    "sortNewest": "الأحدث",
+    "sortOldest": "الأقدم",
+    "sortPriceAsc": "السعر تصاعديًا",
+    "sortPriceDesc": "السعر تنازليًا",
+    "sortSurfaceDesc": "المساحة تنازليًا",
+    "sortRoomsDesc": "عدد الغرف الأكثر",
+    "viewGrid": "عرض شبكي",
+    "viewList": "عرض قائمة",
+    "viewMap": "عرض الخريطة",
+    "viewSplit": "عرض مزدوج",
+    "errorLoading": "حدث خطأ أثناء تحميل الإعلانات.",
+    "emptyTitle": "لم يتم العثور على أي إعلان",
+    "emptyText": "حاولوا تعديل معايير البحث أو توسيع منطقتكم الجغرافية.",
+    "resetFilters": "إعادة ضبط المرشحات",
+    "previous": "السابق",
+    "next": "التالي",
+    "resultsInfo": "عرض {{from}} - {{to}} من أصل {{total}} نتيجة"
+  },
+  "services": {
+    "title": "خدماتنا",
+    "subtitle": "وكالة عقارية إلكترونية شاملة: بيع، كراء طويل الأمد وتدبير كرائي. أسعار شفافة وخدمة ذات جودة احترافية.",
+    "badges": {
+      "transparentPricing": "أسعار شفافة",
+      "noSurprise": "بدون مفاجآت",
+      "response24h": "الرد خلال 24 ساعة"
+    },
+    "includedTitle": "ما يشمله العرض",
+    "notIncludedTitle": "غير مشمول",
+    "optionsDefaultTitle": "الخيارات المتاحة",
+    "photoServiceBadge": "خدمة مشمولة",
+    "photoServiceOptionsLabel": "خيارات إضافية:",
+    "partnershipPrefix": "بشراكة مع",
+    "learnMore": "معرفة المزيد",
+    "orCallUs": "أو اتصلوا بنا",
+    "requestEstimateLabel": "طلب تقييم",
+    "requestQuoteLabel": "طلب عرض سعر",
+    "createStayManagerAccount": "إنشاء حسابك في StayManager",
+    "trust": {
+      "title": "يثقون بنا",
+      "propertiesManaged": "عقار مُدبَّر",
+      "satisfied": "راضون",
+      "responsiveness": "سرعة الاستجابة"
+    },
+    "howItWorks": {
+      "title": "كيف يعمل الأمر؟",
+      "step1Title": "تواصلوا معنا",
+      "step1Text": "املأوا الاستمارة أو اتصلوا بنا لمناقشة مشروعكم.",
+      "step2Title": "الزيارة والتقييم",
+      "step2Text": "يتنقل خبير لتقييم عقاركم واحتياجاتكم.",
+      "step3Title": "التنفيذ",
+      "step3Text": "نضع الخدمة المختارة موضع التنفيذ بكل شفافية.",
+      "step4Title": "متابعة شخصية",
+      "step4Text": "تبقون على اطلاع في كل مرحلة عبر فضائكم الخاص."
+    },
+    "aToZTitle": "مرافقتنا من الألف إلى الياء",
+    "overviewTitle": "جميع خدماتنا في لمحة واحدة",
+    "faqTitle": "الأسئلة المتكررة",
+    "faq": {
+      "q1Question": "كيف يعمل التدبير الكرائي؟",
+      "q1Answer": "نتكفل بتدبير عقاركم بشكل كامل: البحث عن المكترين، التحقق من الملفات، تحرير عقد الكراء، محاضر المعاينة، تحصيل الكراء، تدبير الأشغال والنزاعات، إلى غاية خروج المكتري. تتوصلون بتقرير شهري مفصل.",
+      "q2Question": "ما هي الشراكة مع StayManager؟",
+      "q2Answer": "StayManager.ma هي المنصة المغربية لتدبير وتأمين الكراء قصير المدى. بفضل شراكتنا، تديرون عقاراتكم بكل أمان: التحقق من هوية المسافرين، أقفال متصلة، مزامنة التقاويم (Airbnb، Booking)، رسائل آلية، عقود رقمية وتدبير الفريق.",
+      "q3Question": "ما هي رسوم التدبير الكرائي؟",
+      "q3Answer": "تبلغ رسوم التدبير الكرائي 5% من الكراء الشهري (شاملة التكاليف). بالنسبة للكراء وحده (بدون تدبير)، نحتسب ما يعادل شهرا واحدا من الكراء. أما بالنسبة للكراء قصير المدى، فتقترح منصة StayManager.ma صيغا بدءا من 179 {{symbol}} لكل عقار شهريا، مع فترة تجريبية مجانية مدتها 14 يوما.",
+      "q4Question": "كيف يتم اختيار المكترين؟",
+      "q4Answer": "نطبق انتقاء صارما: التحقق من الدخل (بحد أدنى 3 أضعاف الكراء)، مراقبة الوثائق الثبوتية، تحليل الوضعية المهنية، التحقق من الضامنين عند الاقتضاء، والتواصل مع الملاك السابقين إن أمكن."
+    },
+    "ctaTitle": "بحاجة إلى استشارة شخصية؟",
+    "ctaSubtitle": "خبراؤنا رهن إشارتكم لمرافقتكم في مشروعكم العقاري، سواء للبيع أو الكراء أو التدبير.",
+    "ctaContact": "تواصلوا معنا",
+    "vente": {
+      "title": "باقة البيع",
+      "subtitle": "خدمة وكالة عبر الإنترنت",
+      "priceNote": "شامل الضريبة - سعر ثابت",
+      "description": "مرافقة شاملة لبيع عقاركم بأفضل سعر، دون العمولات الباهظة للوكالات التقليدية.",
+      "features": [
+        "تقييم مجاني لعقاركم من طرف خبير",
+        "تحرير إعلان محسّن",
+        "نشر مميز على SemsarOut",
+        "تدبير طلبات التواصل",
+        "تنظيم الزيارات",
+        "مرافقة إلى غاية التوقيع",
+        "استشارات قانونية أساسية"
+      ],
+      "photoService": {
+        "title": "صور احترافية مشمولة",
+        "features": [
+          "مصور محترف في عين المكان",
+          "15-20 صورة عالية الجودة معدّلة",
+          "إبراز أمثل للفضاءات",
+          "التسليم خلال 48 ساعة"
+        ],
+        "options": {
+          "virtualTour360": "جولة افتراضية 360°",
+          "drone": "تصوير بطائرة مسيّرة",
+          "video": "فيديو تعريفي"
+        }
+      },
+      "notIncluded": [
+        "مصاريف التوثيق (على عاتق المشتري)",
+        "التشخيصات العقارية الإلزامية"
+      ],
+      "ctaLabel": "ابدأوا بيعكم عبر الإنترنت"
+    },
+    "gestion-locative": {
+      "title": "تدبير كرائي شامل",
+      "subtitle": "كراء طويل الأمد - راحة بال تامة",
+      "pricePrefix": "بدءا من",
+      "priceNote": "من الكراء الشهري (الحد الأدنى 500 درهم/شهر)",
+      "description": "فوّضوا تدبير عقاركم الكرائي بالكامل. من البحث عن المكتري المناسب إلى غاية مغادرته، نتكفل بكل شيء نيابة عنكم. عدة صيغ تناسب احتياجاتكم.",
+      "features": [
+        "بحث واختيار صارم للمكترين",
+        "تحقق معمق من الملفات (الدخل، الضامنون)",
+        "تحرير عقد كراء مطابق للتشريع",
+        "محضر معاينة الدخول مفصل مع صور",
+        "تحصيل ومتابعة الكراء",
+        "تدبير التكاليف والتسويات",
+        "واجهة للمالك مع تقرير شهري",
+        "تدبير الحوادث والتأمينات",
+        "تنسيق الأشغال والإصلاحات",
+        "الوساطة وتدبير النزاعات",
+        "محضر معاينة الخروج",
+        "استرجاع وديعة الضمان"
+      ],
+      "optionsTitle": "صيغ التدبير الكرائي لدينا",
+      "options": [
+        {
+          "name": "التدبير الأساسي",
+          "price": "3% من الكراء / بحد أدنى 300 درهم"
+        },
+        {
+          "name": "التدبير الشامل",
+          "price": "5% من الكراء / بحد أدنى 500 درهم"
+        },
+        {
+          "name": "التدبير المميز",
+          "price": "7% من الكراء / بحد أدنى 700 درهم"
+        }
+      ],
+      "phases": [
+        {
+          "title": "طرح العقار للكراء",
+          "items": [
+            "تقييم الكراء",
+            "صور احترافية",
+            "نشر متعدد القنوات",
+            "زيارات مؤهلة"
+          ]
+        },
+        {
+          "title": "دخول المكتري",
+          "items": [
+            "اختيار الملف",
+            "تحرير عقد الكراء",
+            "محضر المعاينة",
+            "تسليم المفاتيح"
+          ]
+        },
+        {
+          "title": "خلال مدة العقد",
+          "items": [
+            "تحصيل الكراء",
+            "الإيصالات",
+            "الأشغال",
+            "الوساطة"
+          ]
+        },
+        {
+          "title": "خروج المكتري",
+          "items": [
+            "الإشعار المسبق",
+            "محضر معاينة الخروج",
+            "وديعة الضمان",
+            "إعادة الكراء"
+          ]
+        }
+      ]
+    },
+    "mise-en-location": {
+      "title": "طرح للكراء",
+      "subtitle": "اعثروا على المكتري المثالي",
+      "priceLabel": "شهر واحد",
+      "priceNote": "من الكراء (مرة واحدة)",
+      "description": "نجد لكم المكتري المثالي لعقاركم: اختيار صارم، تحقق من الملفات، ومرافقة إلى غاية توقيع عقد الكراء.",
+      "features": [
+        "تقييم الكراء الأمثل",
+        "إعلان مميز على SemsarOut وشركائنا",
+        "استقبال وفرز الترشيحات",
+        "تحقق معمق من الملفات",
+        "تنظيم الزيارات",
+        "اختيار أفضل ملف",
+        "تحرير عقد الكراء",
+        "محضر معاينة الدخول",
+        "تسليم المفاتيح"
+      ],
+      "photoService": {
+        "title": "صور احترافية مشمولة",
+        "features": [
+          "مصور محترف في عين المكان",
+          "10-15 صورة عالية الجودة معدّلة",
+          "إبراز أمثل للفضاءات",
+          "التسليم خلال 48 ساعة"
+        ],
+        "options": {
+          "virtualTour360": "جولة افتراضية 360°",
+          "video": "فيديو تعريفي"
+        }
+      },
+      "notIncluded": [
+        "التدبير الكرائي الجاري (اختياري)",
+        "ضمان عدم أداء الكراء (اختياري)"
+      ]
+    },
+    "courte-duree": {
+      "title": "كراء قصير المدى",
+      "subtitle": "بشراكة مع StayManager.ma",
+      "pricePrefix": "بدءا من",
+      "priceNote": "لكل عقار شهريا - تجربة مجانية لمدة 14 يوما",
+      "description": "أمّنوا وأتمتوا كراءكم الموسمي عبر منصة StayManager.ma: التحقق من هوية المسافرين، أقفال متصلة، حجوزات ومراسلة آلية. كل سير عملكم كمضيفين في أداة واحدة.",
+      "features": [
+        "تحقق آلي من هوية المسافرين",
+        "قراءة ضوئية لوثائق الهوية",
+        "أقفال متصلة: ولوج تلقائي للمسافرين المُتحقق منهم",
+        "مزامنة التقاويم (iCal) مع Airbnb وBooking وغيرها",
+        "تدبير مركزي للحجوزات",
+        "أتمتة الرسائل الموجهة للمسافرين",
+        "عقود الكراء والتوقيع الرقمي",
+        "تدبير الفريق: التنظيف، الصيانة، المضيفون المشاركون",
+        "إشعارات فورية: الوصول، التحققات، الولوج",
+        "الامتثال التنظيمي (التعريف بالمسافرين)"
+      ],
+      "optionsTitle": "صيغ StayManager.ma",
+      "optionPrice": "{{amount}} {{currency}}/عقار/شهر",
+      "options": {
+        "manage": "Manage",
+        "automate": "Automate",
+        "optimize": "Optimize"
+      },
+      "partnership": {
+        "description": "منصة تدبير وتأمين الكراء قصير المدى بالمغرب"
+      }
+    },
+    "estimation": {
+      "title": "تقييم مجاني",
+      "subtitle": "تعرفوا على قيمة عقاركم",
+      "priceLabel": "مجاني",
+      "priceNote": "بدون التزام",
+      "description": "احصلوا على تقييم دقيق لعقاركم استنادا إلى معطيات السوق وخبرة وكلائنا.",
+      "features": [
+        "تحليل مقارن للسوق المحلي",
+        "مراعاة خصائص العقار",
+        "تقرير تقييم مفصل",
+        "نصائح لتحسين القيمة",
+        "بدون التزام بالبيع"
+      ]
+    }
+  },
+  "propertyDetail": {
+    "notFound": "الإعلان غير موجود",
+    "urgentBadge": "عاجل",
+    "breadcrumbListing": "الإعلانات",
+    "noImage": "لا توجد صورة",
+    "zoomTitle": "عرض بحجم أكبر",
+    "favoriteAriaLabel": "مفضلة",
+    "removeFromFavoritesTitle": "إزالة من المفضلة",
+    "viewsCount": "{{n}} مشاهدة",
+    "perMonth": "/شهريًا",
+    "expiresIn": "تنتهي خلال: {{time}}",
+    "timeUnits": {
+      "daysHours": "{{d}}ي {{h}}س",
+      "hoursMinutes": "{{h}}س {{m}}د",
+      "minutes": "{{m}}د"
+    },
+    "simulateCredit": "محاكاة قرض لهذا العقار",
+    "surfaceLabel": "المساحة",
+    "roomsLabel": "الغرف",
+    "bedroomsLabel": "غرف النوم",
+    "bathroomsLabel": "الحمامات",
+    "descriptionTitle": "الوصف",
+    "noDescription": "لم يتم تقديم أي وصف.",
+    "featuresTitle": "الخصائص",
+    "detailsTitle": "التفاصيل",
+    "typeLabel": "النوع",
+    "transactionLabel": "المعاملة",
+    "transactionTypes": {
+      "sale": "بيع",
+      "rent": "كراء"
+    },
+    "floorLabel": "الطابق",
+    "floorGround": "أرضي",
+    "constructionYearLabel": "سنة البناء",
+    "referenceLabel": "المرجع",
+    "types": {
+      "apartment": "شقة",
+      "house": "منزل",
+      "villa": "فيلا",
+      "land": "أرض",
+      "commercial": "محل تجاري",
+      "office": "مكتب"
+    },
+    "interestedContactsTitle": "جهات الاتصال المهتمة",
+    "loadingEllipsis": "جارٍ التحميل…",
+    "noInterestedContacts": "لا توجد جهات اتصال مهتمة حاليًا.",
+    "manageInBackoffice": "← الإدارة من لوحة التحكم",
+    "leadStatus": {
+      "new": "جديد",
+      "contacted": "تم الاتصال",
+      "qualified": "مؤهل",
+      "converted": "محوَّل",
+      "lost": "ضائع"
+    },
+    "contactCardTitle": "اتصل بنا",
+    "nameLabel": "الاسم *",
+    "namePlaceholder": "اسمك",
+    "nameRequired": "الاسم مطلوب",
+    "emailLabel": "البريد الإلكتروني *",
+    "emailPlaceholder": "بريدك@الإلكتروني.com",
+    "emailRequired": "البريد الإلكتروني مطلوب",
+    "phoneLabel": "الهاتف",
+    "phonePlaceholder": "+212 6XX XXX XXX",
+    "messageLabel": "الرسالة",
+    "messagePlaceholder": "رسالتك...",
+    "sendingEllipsis": "جارٍ الإرسال...",
+    "sendButton": "إرسال",
+    "sendMessageButton": "إرسال رسالة",
+    "callUsButton": "اتصل بنا",
+    "revealingPhoneLabel": "جارٍ التحميل...",
+    "openApplyModalButton": "تقديم ملف الترشح",
+    "inFavoritesLabel": "في المفضلة",
+    "addToFavoritesButton": "إضافة إلى المفضلة",
+    "shareButton": "مشاركة",
+    "monthlyIncomeLabel": "الدخل الشهري (درهم)",
+    "guarantorNameLabel": "اسم الضامن",
+    "guarantorNamePlaceholder": "اسم الضامن (اختياري)",
+    "guarantorIncomeLabel": "دخل الضامن (درهم)",
+    "optionalPlaceholder": "اختياري",
+    "attachmentsLabel": "المرفقات",
+    "addFileButton": "إضافة ملف",
+    "removeFileAriaLabel": "إزالة هذا الملف",
+    "cancelButton": "إلغاء",
+    "submitApplicationButton": "إرسال ترشحي",
+    "uploadingDocsLabel": "جارٍ إرسال الملفات...",
+    "contactDefaultMessage": "مرحبًا، أنا مهتم(ة) بعقاركم \"{{title}}\". هل يمكنكم الاتصال بي؟",
+    "shareText": "اكتشف هذا العقار على SemsarOut: {{title}}",
+    "toast": {
+      "removedFavorite": "تمت الإزالة من المفضلة",
+      "addedFavorite": "تمت الإضافة إلى المفضلة",
+      "linkCopied": "تم نسخ الرابط",
+      "phoneUnavailable": "الرقم غير متوفر لهذا العقار",
+      "messageSent": "تم إرسال رسالتك بنجاح!",
+      "messageSendError": "خطأ أثناء إرسال الرسالة",
+      "docUploadError": "فشل إرسال «{{name}}»",
+      "applicationSent": "تم إرسال الترشح مع الملفات.",
+      "fileTooLarge": "الملف كبير جدًا (10 ميغا كحد أقصى)"
+    }
+  },
+  "sellProperty": {
+    "title": "بيع عقارك عبر الإنترنت",
+    "subtitle": "صف عقارك، احصل على تقدير، أعد ملفك: إعلانك جاهز للنشر. باقة ثابتة {{price}}، تُدفع بعد التحقق.",
+    "steps": {
+      "bien": "عقارك",
+      "prix": "التقدير والسعر",
+      "photos": "الصور",
+      "documents": "المستندات",
+      "recap": "الملخص"
+    },
+    "errors": {
+      "chooseType": "اختر نوع العقار",
+      "cityRequired": "حدد المدينة",
+      "surfaceRequired": "حدد المساحة السكنية",
+      "priceRequired": "حدد سعر البيع الخاص بك",
+      "accountRequiredPhotos": "أنشئ حسابك لإضافة صورك",
+      "photosRequired": "أضف صورة واحدة على الأقل، أو اختر التصوير الاحترافي",
+      "consentRequired": "يرجى قبول الشروط لإرسال ملفك",
+      "uploadPhotoFailed": "فشل إرسال إحدى الصور",
+      "uploadDocumentFailed": "فشل إرسال المستند",
+      "submitFailed": "حدث خطأ، يرجى إعادة المحاولة"
+    },
+    "step1": {
+      "propertyTypeLabel": "نوع العقار",
+      "cityLabel": "المدينة",
+      "cityPlaceholder": "مثال: الدار البيضاء",
+      "neighborhoodLabel": "الحي",
+      "neighborhoodPlaceholder": "مثال: المعاريف",
+      "addressLabel": "العنوان",
+      "addressPlaceholder": "لن يُنشر في الإعلان",
+      "surfaceLabel": "المساحة (م²)",
+      "surfacePlaceholder": "85",
+      "roomsLabel": "الغرف",
+      "roomsPlaceholder": "3",
+      "bedroomsLabel": "غرف النوم",
+      "bedroomsPlaceholder": "2",
+      "bathroomsLabel": "الحمامات",
+      "bathroomsPlaceholder": "1",
+      "floorLabel": "الطابق",
+      "floorPlaceholder": "2",
+      "totalFloorsLabel": "عدد طوابق المبنى",
+      "totalFloorsPlaceholder": "5",
+      "constructionYearLabel": "سنة البناء",
+      "constructionYearPlaceholder": "2010",
+      "featuresLabel": "المزايا",
+      "descriptionLabel": "وصف حر",
+      "descriptionPlaceholder": "نقاط القوة، الأشغال الحديثة، المحيط... سيقوم خبراؤنا بصقل نص الإعلان."
+    },
+    "propertyTypes": {
+      "apartment": "شقة",
+      "house": "منزل",
+      "villa": "فيلا",
+      "riad": "رياض",
+      "land": "أرض",
+      "commercial": "محل تجاري",
+      "office": "مكتب",
+      "garage": "مرآب/موقف سيارات"
+    },
+    "features": {
+      "parking": "موقف سيارات",
+      "garage": "مرآب",
+      "jardin": "حديقة",
+      "terrasse": "شرفة",
+      "balcon": "بلكونة",
+      "piscine": "مسبح",
+      "ascenseur": "مصعد",
+      "gardien": "حارس",
+      "climatisation": "تكييف",
+      "chauffage": "تدفئة",
+      "meuble": "مفروش",
+      "cuisineEquipee": "مطبخ مجهز",
+      "cave": "قبو",
+      "vueMer": "إطلالة على البحر",
+      "vueMontagne": "إطلالة على الجبل",
+      "duplex": "دوبلكس"
+    },
+    "step2": {
+      "estimationTitle": "تقدير قيمة عقارك",
+      "estimationLoading": "جارٍ تحليل العقارات المماثلة...",
+      "rangeLow": "الحد الأدنى",
+      "recommendedPrice": "السعر الموصى به",
+      "rangeHigh": "الحد الأعلى",
+      "comparablesBasisCityAndType": "استنادًا إلى {{count}} عقار(ات) مماثل(ة) ({{type}} في {{city}}) — أي حوالي {{price}}/م². سيقوم خبير بتدقيق هذا التقدير عند التحقق من ملفك.",
+      "comparablesBasisCity": "استنادًا إلى {{count}} عقار(ات) مماثل(ة) في {{city}} — أي حوالي {{price}}/م². سيقوم خبير بتدقيق هذا التقدير عند التحقق من ملفك.",
+      "comparablesBasisType": "استنادًا إلى {{count}} عقار(ات) مماثل(ة) من نفس النوع — أي حوالي {{price}}/م². سيقوم خبير بتدقيق هذا التقدير عند التحقق من ملفك.",
+      "noEstimation": "لا توجد عقارات مماثلة كافية لتقدير تلقائي — سيقوم خبير بتقدير عقارك مجانًا عند التحقق من الملف.",
+      "priceTitle": "سعر البيع الخاص بك",
+      "priceLabel": "السعر المطلوب ({{currency}})",
+      "pricePlaceholder": "1 400 000",
+      "priceAboveRangeWarning": "السعر أعلى من الحد الأعلى: قد يستغرق البيع وقتًا أطول.",
+      "priceIndicative": "يبقى هذا السعر إرشاديًا: ستؤكده مع خبيرك قبل النشر."
+    },
+    "step3": {
+      "accountRequiredTitle": "أنشئ حسابك للمتابعة",
+      "accountRequiredText": "سيتم ربط صورك ومستنداتك بحسابك. بياناتك محفوظة: ستتابع تمامًا من هنا.",
+      "createAccountButton": "أنشئ حسابي مجانًا",
+      "haveAccountButton": "لدي حساب بالفعل",
+      "photosTitle": "صور عقارك",
+      "photosHelp": "الصيغ المقبولة JPG وPNG وWebP — 10 ميغا كحد أقصى لكل صورة. الإعلانات المرفقة بصور تحصل على 5 أضعاف عدد التواصلات.",
+      "uploading": "جارٍ الإرسال...",
+      "clickToAdd": "انقر لإضافة صورك",
+      "dragDrop": "أو اسحب وأفلت عدة ملفات",
+      "mainPhotoBadge": "رئيسية",
+      "removePhotoAriaLabel": "حذف الصورة",
+      "proPhotosLabel": "أرغب في جلسة تصوير احترافية",
+      "proPhotosIncluded": "مشمولة في باقة البيع",
+      "proPhotosHelp": "15 إلى 20 صورة عالية الدقة معدّلة بواسطة مصور في منزلك، تُسلّم خلال 48 ساعة. يمكنك رغم ذلك إضافة صورك في انتظار ذلك."
+    },
+    "step4": {
+      "title": "مستندات العقار",
+      "help": "جميعها اختيارية في هذه المرحلة، لكن الملف الكامل يسرّع التحقق ويطمئن المشترين. الصيغ المقبولة PDF أو صورة، 10 ميغا كحد أقصى.",
+      "added": "تمت إضافة المستند",
+      "removeDocumentAriaLabel": "حذف المستند",
+      "addButton": "إضافة"
+    },
+    "docTypes": {
+      "titre_foncier": {
+        "label": "سند الملكية / الرسم العقاري",
+        "description": "ضروري لإتمام البيع لدى الموثق"
+      },
+      "cin": {
+        "label": "بطاقة الهوية (CIN)",
+        "description": "للتحقق من هويتك كمالك"
+      },
+      "plan": {
+        "label": "مخطط العقار",
+        "description": "يساعد المشترين على تصور المكان"
+      },
+      "reglement_copropriete": {
+        "label": "نظام الملكية المشتركة",
+        "description": "للشقق في إطار الملكية المشتركة"
+      },
+      "diagnostic": {
+        "label": "التشخيصات / الشهادات",
+        "description": "الكهرباء، المطابقة... إن وُجدت"
+      },
+      "autre": {
+        "label": "مستند آخر",
+        "description": "أي مستند مفيد للبيع"
+      }
+    },
+    "step5": {
+      "propertyTitle": "عقارك",
+      "editButton": "تعديل",
+      "typeLabel": "النوع",
+      "cityLabel": "المدينة",
+      "surfaceLabel": "المساحة",
+      "roomsLabel": "الغرف",
+      "bedroomsLabel": "غرف النوم",
+      "bathroomsLabel": "الحمامات",
+      "constructionLabel": "البناء",
+      "priceTitle": "السعر",
+      "estimationRange": "التقدير: {{low}} — {{high}}",
+      "photosTitle": "الصور",
+      "photosCount": "{{count}} صورة (صور) مضافة",
+      "proPhotosRequested": "+ تم طلب التصوير الاحترافي",
+      "documentsTitle": "المستندات",
+      "noDocuments": "لا يوجد مستند — سيطلبها منك خبيرك لاحقًا.",
+      "consentText": "أشهد أنني مالك هذا العقار (أو مفوَّض لبيعه) وأوافق على <link>شروط باقة البيع</link>. لا تُفوتر باقة {{price}} إلا بعد التحقق من الملف مع خبيرك."
+    },
+    "successScreen": {
+      "title": "تم إرسال ملف البيع!",
+      "referenceLabel": "مرجع ملفك:",
+      "pendingValidation": "إعلانك في انتظار التحقق من قِبل خبرائنا.",
+      "nextStepsTitle": "الخطوات التالية",
+      "step1Title": "التحقق خلال 24 ساعة عمل",
+      "step1Text": "يتحقق خبير من ملفك وسعرك ومستنداتك، ثم يتواصل معك.",
+      "step2TitlePro": "جلسة تصوير احترافية",
+      "step2TitleOptim": "تحسين إعلانك",
+      "step2TextPro": "سيتواصل معك مصورنا لتحديد موعد الجلسة (مشمولة في باقة البيع).",
+      "step2TextOptim": "تحرير محسّن وإبراز لعقارك.",
+      "step3Title": "النشر والزيارات",
+      "step3Text": "يُنشر إعلانك، ونتولى التواصل وتنظيم الزيارات معك.",
+      "trackButton": "تتبع ملفي",
+      "backHome": "العودة إلى الرئيسية"
+    },
+    "navigation": {
+      "previous": "السابق",
+      "continue": "متابعة",
+      "submitting": "جارٍ إرسال الملف...",
+      "submit": "إرسال ملف البيع"
+    },
+    "reassurance": {
+      "time": "10 دقائق تكفي",
+      "validation": "تحقق من قِبل خبير خلال 24 ساعة",
+      "free": "لا شيء للدفع قبل التحقق"
     }
   }
 }

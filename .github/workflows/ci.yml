@@ -1,6 +1,16 @@
 # CI SemsarOut / M3a-L3achrane — tests exigés sur les PR vers develop et main,
 # et revalidation à chaque push sur develop. La CD (déploiement production) est
 # dans deploy.yml et se déclenche au merge develop → main.
+#
+# Filtrage par chemin : un job `changes` détecte ce qui a changé et ne lance que
+# les jobs pertinents (une PR frontend ne lance aucun test backend, etc.).
+# Règle de sûreté : si une lib partagée (libs/**) ou ce workflow change, TOUTE la
+# matrice backend est relancée (couplage par dépendances partagées).
+#
+# ⚠️ Protection de branche : à cause du filtrage, les jobs non pertinents sont
+# "skipped". Un check requis skippé bloque la PR. Le check requis à configurer
+# dans les règles de protection de develop/main est UNIQUEMENT le job final
+# « CI passed » (il agrège les résultats et réussit si rien n'a échoué).
 name: CI
 
 on:
@@ -10,34 +20,79 @@ on:
     branches: [develop]
 
 jobs:
+  changes:
+    name: Détection des changements
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.detect.outputs.matrix }}
+      backend_any: ${{ steps.detect.outputs.backend_any }}
+      frontend: ${{ steps.detect.outputs.frontend }}
+      m3a: ${{ steps.detect.outputs.m3a }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: detect
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          # Liste faisant autorité des dirs backend (garder synchronisée avec la matrice).
+          ALL="gateway services/analytics services/billing services/catalog \
+          services/coloc-listing services/coloc-profile services/commission \
+          services/contract services/crm services/directory services/identity \
+          services/legal services/listing services/marketplace services/matching \
+          services/messaging services/notification services/payment services/rental \
+          services/search services/selling services/translation"
+
+          if [ "$EVENT" = "pull_request" ]; then
+            git fetch --no-tags --prune --depth=200 origin "$BASE_REF"
+            base="$(git merge-base "origin/$BASE_REF" HEAD)"
+            changed="$(git diff --name-only "$base" HEAD)"
+          else
+            # push : diff depuis l'état précédent (fallback HEAD~1 si before absent/nul).
+            if [ -n "${BEFORE:-}" ] && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+              changed="$(git diff --name-only "$BEFORE" "$GITHUB_SHA")"
+            else
+              changed="$(git diff --name-only HEAD~1 HEAD || true)"
+            fi
+          fi
+          echo "Fichiers changés :"; echo "$changed"
+
+          # Règle couplage : lib partagée ou workflow CI → toute la matrice.
+          if echo "$changed" | grep -qE '^(libs/|\.github/workflows/ci\.yml)'; then
+            sel="$ALL"
+          else
+            sel=""
+            for d in $ALL; do
+              if echo "$changed" | grep -qE "^${d}/"; then sel="$sel $d"; fi
+            done
+          fi
+
+          if [ -n "$(echo "$sel" | tr -d ' ')" ]; then
+            matrix="$(printf '%s\n' $sel | jq -R . | jq -cs '{dir: .}')"
+            echo "backend_any=true" >> "$GITHUB_OUTPUT"
+          else
+            matrix='{"dir":[]}'
+            echo "backend_any=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "Matrice backend : $matrix"
+
+          # Frontends (^frontend/ ne matche pas frontend-m3a-l3achrane/ grâce au slash).
+          if echo "$changed" | grep -qE '^frontend/'; then echo "frontend=true" >> "$GITHUB_OUTPUT"; else echo "frontend=false" >> "$GITHUB_OUTPUT"; fi
+          if echo "$changed" | grep -qE '^frontend-m3a-l3achrane/'; then echo "m3a=true" >> "$GITHUB_OUTPUT"; else echo "m3a=false" >> "$GITHUB_OUTPUT"; fi
+
   backend:
     name: pytest ${{ matrix.dir }}
+    needs: changes
+    if: needs.changes.outputs.backend_any == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        dir:
-          - gateway
-          - services/analytics
-          - services/billing
-          - services/catalog
-          - services/coloc-listing
-          - services/coloc-profile
-          - services/commission
-          - services/contract
-          - services/crm
-          - services/directory
-          - services/identity
-          - services/legal
-          - services/listing
-          - services/marketplace
-          - services/matching
-          - services/messaging
-          - services/notification
-          - services/payment
-          - services/rental
-          - services/search
-          - services/selling
+      matrix: ${{ fromJson(needs.changes.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -59,6 +114,8 @@ jobs:
 
   frontend-m3a-l3achrane:
     name: front m3a-l3achrane (lint + test + build)
+    needs: changes
+    if: needs.changes.outputs.m3a == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -77,6 +134,8 @@ jobs:
 
   frontend-semsarout:
     name: front semsarout (build)
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -90,3 +149,25 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run build
+
+  # Porte unique à exiger dans la protection de branche : réussit si aucun job
+  # requis n'a échoué/annulé. Les jobs "skipped" (non pertinents) sont OK.
+  ci-ok:
+    name: CI passed
+    if: always()
+    needs: [changes, backend, frontend-m3a-l3achrane, frontend-semsarout]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vérifier les résultats
+        run: |
+          echo "changes=${{ needs.changes.result }}"
+          echo "backend=${{ needs.backend.result }}"
+          echo "frontend-m3a=${{ needs.frontend-m3a-l3achrane.result }}"
+          echo "frontend-semsarout=${{ needs.frontend-semsarout.result }}"
+          for r in "${{ needs.changes.result }}" "${{ needs.backend.result }}" \
+                   "${{ needs.frontend-m3a-l3achrane.result }}" "${{ needs.frontend-semsarout.result }}"; do
+            if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then
+              echo "::error::Un job requis a échoué ($r)"; exit 1
+            fi
+          done
+          echo "Tous les jobs pertinents sont passés."

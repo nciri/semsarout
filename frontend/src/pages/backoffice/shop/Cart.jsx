@@ -2,13 +2,16 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useNavigate, Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import { useTranslation } from 'react-i18next'
 import { FiTrash2, FiArrowLeft, FiShoppingCart } from 'react-icons/fi'
 import { shopService } from '../../../services/shopService'
 import SearchableSelect from '../../../components/common/SearchableSelect'
 import api from '../../../services/api'
 import { PageHeader, EmptyState } from '../../../components/backoffice/ui'
+import DirIcon from '../../../components/common/DirIcon'
 
 function Cart() {
+  const { t } = useTranslation(['backoffice', 'common'])
   const qc = useQueryClient()
   const navigate = useNavigate()
   const { data, isLoading } = useQuery('shop-cart', () => shopService.getCart())
@@ -17,11 +20,11 @@ function Cart() {
   const [address, setAddress] = useState('')
 
   const refresh = () => qc.invalidateQueries('shop-cart')
-  const onErr = (e) => toast.error(e.response?.data?.error || 'Erreur')
+  const onErr = (e) => toast.error(e.response?.data?.error || t('common:errors.short'))
   const upd = useMutation(({ id, quantity }) => shopService.updateCartItem(id, quantity), { onSuccess: refresh, onError: onErr })
   const rm = useMutation((id) => shopService.removeCartItem(id), { onSuccess: refresh, onError: onErr })
   const order = useMutation(() => shopService.checkout({ property_id: propertyId ? Number(propertyId) : undefined, delivery_address: address || undefined }), {
-    onSuccess: (res) => { toast.success('Commande créée'); qc.invalidateQueries('shop-cart'); navigate(`/backoffice/mes-commandes/${res.order.id}`) },
+    onSuccess: (res) => { toast.success(t('backoffice:shop.cart.toasts.orderCreated')); qc.invalidateQueries('shop-cart'); navigate(`/backoffice/mes-commandes/${res.order.id}`) },
     onError: onErr,
   })
 
@@ -32,9 +35,9 @@ function Cart() {
     <div className="space-y-6 max-w-3xl">
       <div>
         <Link to="/backoffice/boutique" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-2">
-          <FiArrowLeft className="w-4 h-4" /> Continuer mes achats
+          <DirIcon icon={FiArrowLeft} className="w-4 h-4" /> {t('backoffice:shop.cart.backToShop')}
         </Link>
-        <PageHeader title="Mon panier" />
+        <PageHeader title={t('backoffice:shop.cart.pageTitle')} />
       </div>
 
       {isLoading ? (
@@ -45,9 +48,9 @@ function Cart() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <EmptyState
             icon={FiShoppingCart}
-            title="Votre panier est vide"
-            description="Parcourez la boutique pour ajouter du mobilier et de l'électroménager."
-            action={<Link to="/backoffice/boutique" className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">Aller à la boutique</Link>}
+            title={t('backoffice:shop.cart.empty.title')}
+            description={t('backoffice:shop.cart.empty.description')}
+            action={<Link to="/backoffice/boutique" className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">{t('backoffice:shop.cart.empty.action')}</Link>}
           />
         </div>
       ) : (
@@ -71,7 +74,7 @@ function Cart() {
                   className="w-16 px-2 py-1.5 border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
                 <div className="w-24 text-right font-medium text-gray-900">{it.line_total} Đh</div>
-                <button onClick={() => rm.mutate(it.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors" title="Retirer">
+                <button onClick={() => rm.mutate(it.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors" title={t('backoffice:shop.cart.removeTitle')}>
                   <FiTrash2 className="w-4 h-4" />
                 </button>
               </div>
@@ -80,26 +83,26 @@ function Cart() {
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
             <div className="flex justify-between items-center font-bold text-lg text-gray-900">
-              <span>Total</span><span>{cart.total} Đh</span>
+              <span>{t('backoffice:shop.cart.total')}</span><span>{cart.total} Đh</span>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Livrer vers un bien (optionnel)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:shop.cart.deliverToProperty')}</label>
               <SearchableSelect
                 value={propertyId}
                 onChange={setPropertyId}
                 options={properties.map((p) => ({ value: p.id, label: p.title || p.reference, description: p.city }))}
-                placeholder="— Adresse libre —"
-                searchPlaceholder="Rechercher un bien…"
+                placeholder={t('backoffice:shop.cart.freeAddressPlaceholder')}
+                searchPlaceholder={t('backoffice:shop.cart.propertySearchPlaceholder')}
                 clearable
               />
             </div>
             {!propertyId && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Adresse de livraison</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:shop.cart.deliveryAddress')}</label>
                 <input
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Adresse de livraison"
+                  placeholder={t('backoffice:shop.cart.deliveryAddress')}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
@@ -109,7 +112,7 @@ function Cart() {
               disabled={order.isLoading}
               className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
             >
-              Commander
+              {t('backoffice:shop.cart.orderButton')}
             </button>
           </div>
         </>

@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   FiPlus, FiSearch, FiFilter, FiMoreVertical, FiEdit2, FiTrash2,
   FiEye, FiGrid, FiList, FiMapPin, FiCalendar, FiHome, FiLock,
   FiArrowRight, FiCheckCircle, FiClock, FiAlertCircle
 } from 'react-icons/fi'
-import useAuthStore from '../../store/authStore'
+import DirIcon from '../../components/common/DirIcon'
 import { formatPrice } from '../../utils/currency'
+import { useFormat } from '../../utils/format'
 import MesBiensTabs from '../../components/dashboard/MesBiensTabs'
 import api from '../../services/api'
 
@@ -38,28 +40,25 @@ const STATUS_COLORS = {
   archived: 'bg-red-100 text-red-700'
 }
 
-const STATUS_LABELS = {
-  active: 'En ligne',
-  draft: 'Brouillon',
-  completed: 'Livré',
-  archived: 'Archivé'
-}
+const STATUS_KEYS = ['active', 'draft', 'completed', 'archived']
 
-const CONSTRUCTION_STATUS = {
-  planning: { label: 'En projet', icon: FiClock, color: 'text-gray-500' },
-  under_construction: { label: 'En construction', icon: FiAlertCircle, color: 'text-orange-500' },
-  delivered: { label: 'Livré', icon: FiCheckCircle, color: 'text-green-500' }
-}
-
-const PROGRAM_TYPES = {
-  residential: 'Résidentiel',
-  commercial: 'Commercial',
-  mixed: 'Mixte'
+const CONSTRUCTION_STATUS_META = {
+  planning: { icon: FiClock, color: 'text-gray-500' },
+  under_construction: { icon: FiAlertCircle, color: 'text-orange-500' },
+  delivered: { icon: FiCheckCircle, color: 'text-green-500' }
 }
 
 function ProgramCard({ program, onDelete, onPublish, onUnpublish, viewMode }) {
+  const { t } = useTranslation(['dashboard', 'common'])
+  const { fmtDate } = useFormat()
   const [menuOpen, setMenuOpen] = useState(false)
-  const constructionStatus = CONSTRUCTION_STATUS[program.construction_status] || CONSTRUCTION_STATUS.planning
+  const constructionStatusMeta = CONSTRUCTION_STATUS_META[program.construction_status] || CONSTRUCTION_STATUS_META.planning
+  const constructionStatus = {
+    ...constructionStatusMeta,
+    label: t(`dashboard:programs.constructionStatus.${program.construction_status}`, {
+      defaultValue: t('dashboard:programs.constructionStatus.planning')
+    })
+  }
   const ConstructionIcon = constructionStatus.icon
 
   if (viewMode === 'list') {
@@ -94,22 +93,22 @@ function ProgramCard({ program, onDelete, onPublish, onUnpublish, viewMode }) {
             </div>
             <div className="flex items-center gap-2">
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[program.status]}`}>
-                {STATUS_LABELS[program.status]}
+                {t(`dashboard:programs.status.${program.status}`, { defaultValue: program.status })}
               </span>
             </div>
           </div>
           <div className="flex items-center gap-4 mt-2 text-sm">
-            <span className="text-gray-600">{PROGRAM_TYPES[program.program_type] || 'Résidentiel'}</span>
+            <span className="text-gray-600">{t(`dashboard:programs.type.${program.program_type}`, { defaultValue: t('dashboard:programs.type.residential') })}</span>
             {program.min_price && (
               <span className="font-semibold text-gray-900">
-                À partir de {formatPrice(program.min_price)}
+                {t('dashboard:programs.startingFrom', { price: formatPrice(program.min_price) })}
               </span>
             )}
             <span className="flex items-center gap-1 text-gray-500">
               <ConstructionIcon className={`w-4 h-4 ${constructionStatus.color}`} />
               {constructionStatus.label}
             </span>
-            <span className="text-gray-400">{program.views_count || 0} vues</span>
+            <span className="text-gray-400">{t('dashboard:programs.viewsCount', { count: program.views_count || 0 })}</span>
           </div>
         </div>
         <div className="relative">
@@ -122,21 +121,21 @@ function ProgramCard({ program, onDelete, onPublish, onUnpublish, viewMode }) {
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-              <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20">
+              <div className="absolute end-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20">
                 {program.status === 'active' && (
                   <Link
                     to={`/programmes/${program.slug}`}
                     target="_blank"
                     className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
-                    <FiEye className="w-4 h-4" /> Voir en ligne
+                    <FiEye className="w-4 h-4" /> {t('dashboard:programs.menu.viewOnline')}
                   </Link>
                 )}
                 <Link
                   to={`/dashboard/programmes/${program.id}`}
                   className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
-                  <FiEdit2 className="w-4 h-4" /> Modifier
+                  <FiEdit2 className="w-4 h-4" /> {t('dashboard:programs.menu.edit')}
                 </Link>
                 {program.status === 'draft' && (
                   <button
@@ -146,7 +145,7 @@ function ProgramCard({ program, onDelete, onPublish, onUnpublish, viewMode }) {
                     }}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-green-50 w-full"
                   >
-                    <FiCheckCircle className="w-4 h-4" /> Publier
+                    <FiCheckCircle className="w-4 h-4" /> {t('dashboard:programs.menu.publish')}
                   </button>
                 )}
                 {program.status === 'active' && (
@@ -157,7 +156,7 @@ function ProgramCard({ program, onDelete, onPublish, onUnpublish, viewMode }) {
                     }}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 w-full"
                   >
-                    <FiClock className="w-4 h-4" /> Mettre en brouillon
+                    <FiClock className="w-4 h-4" /> {t('dashboard:programs.menu.unpublish')}
                   </button>
                 )}
                 <button
@@ -167,7 +166,7 @@ function ProgramCard({ program, onDelete, onPublish, onUnpublish, viewMode }) {
                   }}
                   className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full"
                 >
-                  <FiTrash2 className="w-4 h-4" /> Archiver
+                  <FiTrash2 className="w-4 h-4" /> {t('dashboard:programs.menu.archive')}
                 </button>
               </div>
             </>
@@ -191,10 +190,10 @@ function ProgramCard({ program, onDelete, onPublish, onUnpublish, viewMode }) {
             <FiHome className="w-12 h-12 text-gray-400" />
           </div>
         )}
-        <span className={`absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[program.status]}`}>
-          {STATUS_LABELS[program.status]}
+        <span className={`absolute top-2 start-2 px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[program.status]}`}>
+          {t(`dashboard:programs.status.${program.status}`, { defaultValue: program.status })}
         </span>
-        <div className="absolute top-2 right-2">
+        <div className="absolute top-2 end-2">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="p-2 bg-white/90 text-gray-600 hover:bg-white rounded-lg shadow"
@@ -204,21 +203,21 @@ function ProgramCard({ program, onDelete, onPublish, onUnpublish, viewMode }) {
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-              <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20">
+              <div className="absolute end-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20">
                 {program.status === 'active' && (
                   <Link
                     to={`/programmes/${program.slug}`}
                     target="_blank"
                     className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
-                    <FiEye className="w-4 h-4" /> Voir en ligne
+                    <FiEye className="w-4 h-4" /> {t('dashboard:programs.menu.viewOnline')}
                   </Link>
                 )}
                 <Link
                   to={`/dashboard/programmes/${program.id}`}
                   className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
-                  <FiEdit2 className="w-4 h-4" /> Modifier
+                  <FiEdit2 className="w-4 h-4" /> {t('dashboard:programs.menu.edit')}
                 </Link>
                 {program.status === 'draft' && (
                   <button
@@ -228,7 +227,7 @@ function ProgramCard({ program, onDelete, onPublish, onUnpublish, viewMode }) {
                     }}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-green-50 w-full"
                   >
-                    <FiCheckCircle className="w-4 h-4" /> Publier
+                    <FiCheckCircle className="w-4 h-4" /> {t('dashboard:programs.menu.publish')}
                   </button>
                 )}
                 {program.status === 'active' && (
@@ -239,7 +238,7 @@ function ProgramCard({ program, onDelete, onPublish, onUnpublish, viewMode }) {
                     }}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 w-full"
                   >
-                    <FiClock className="w-4 h-4" /> Mettre en brouillon
+                    <FiClock className="w-4 h-4" /> {t('dashboard:programs.menu.unpublish')}
                   </button>
                 )}
                 <button
@@ -249,7 +248,7 @@ function ProgramCard({ program, onDelete, onPublish, onUnpublish, viewMode }) {
                   }}
                   className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full"
                 >
-                  <FiTrash2 className="w-4 h-4" /> Archiver
+                  <FiTrash2 className="w-4 h-4" /> {t('dashboard:programs.menu.archive')}
                 </button>
               </div>
             </>
@@ -275,19 +274,19 @@ function ProgramCard({ program, onDelete, onPublish, onUnpublish, viewMode }) {
           {program.delivery_date && (
             <span className="flex items-center gap-1 text-xs text-gray-500">
               <FiCalendar className="w-3 h-3" />
-              {new Date(program.delivery_date).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+              {fmtDate(program.delivery_date, { month: 'long', year: 'numeric' })}
             </span>
           )}
         </div>
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
           {program.min_price ? (
             <span className="text-lg font-bold text-gray-900">
-              À partir de {formatPrice(program.min_price)}
+              {t('dashboard:programs.startingFrom', { price: formatPrice(program.min_price) })}
             </span>
           ) : (
-            <span className="text-sm text-gray-400">Prix non défini</span>
+            <span className="text-sm text-gray-400">{t('dashboard:programs.priceUndefined')}</span>
           )}
-          <span className="text-sm text-gray-500">{program.views_count || 0} vues</span>
+          <span className="text-sm text-gray-500">{t('dashboard:programs.viewsCount', { count: program.views_count || 0 })}</span>
         </div>
       </div>
     </div>
@@ -295,32 +294,32 @@ function ProgramCard({ program, onDelete, onPublish, onUnpublish, viewMode }) {
 }
 
 function UpgradePrompt() {
+  const { t } = useTranslation(['dashboard', 'common'])
   return (
     <div className="bg-gradient-to-br from-primary-50 to-blue-50 rounded-2xl p-8 text-center">
       <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
         <FiLock className="w-8 h-8 text-primary-600" />
       </div>
       <h2 className="text-2xl font-bold text-gray-900 mb-2">
-        Programmes immobiliers
+        {t('dashboard:programs.upgrade.title')}
       </h2>
       <p className="text-gray-600 mb-6 max-w-md mx-auto">
-        Publiez vos projets immobiliers neufs avec plusieurs types de biens (appartements, villas, etc.).
-        Cette fonctionnalité est disponible à partir du plan Pro.
+        {t('dashboard:programs.upgrade.description')}
       </p>
       <Link
         to="/dashboard/abonnement"
         className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
       >
-        Passer au plan Pro
-        <FiArrowRight className="w-5 h-5" />
+        {t('dashboard:programs.upgrade.cta')}
+        <DirIcon icon={FiArrowRight} className="w-5 h-5" />
       </Link>
     </div>
   )
 }
 
 export default function DashboardPrograms() {
+  const { t } = useTranslation(['dashboard', 'common'])
   const queryClient = useQueryClient()
-  const { user } = useAuthStore()
   const [search, setSearch] = useState('')
   const [viewMode, setViewMode] = useState('grid')
   const [filters, setFilters] = useState({
@@ -354,7 +353,7 @@ export default function DashboardPrograms() {
   })
 
   const handleDelete = (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir archiver ce programme ?')) {
+    if (window.confirm(t('dashboard:programs.archiveConfirm'))) {
       deleteMutation.mutate(id)
     }
   }
@@ -385,11 +384,11 @@ export default function DashboardPrograms() {
       {/* En-tête unifié avec « Mes annonces » : ici on affiche le nombre de programmes gérés */}
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold text-gray-900">Mes annonces</h1>
+          <h1 className="font-display text-2xl font-bold text-gray-900">{t('dashboard:programs.title')}</h1>
           <p className="text-gray-600">
-            {data?.total || 0} programme{(data?.total || 0) > 1 ? 's' : ''} géré{(data?.total || 0) > 1 ? 's' : ''}
+            {t('dashboard:programs.managedCount', { count: data?.total || 0 })}
             {programsLimit && (
-              <span className="ml-1 text-sm text-gray-400">sur {programsLimit}</span>
+              <span className="ms-1 text-sm text-gray-400">{t('dashboard:programs.outOf', { limit: programsLimit })}</span>
             )}
           </p>
         </div>
@@ -398,7 +397,7 @@ export default function DashboardPrograms() {
           className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
         >
           <FiPlus className="w-5 h-5" />
-          Nouveau programme
+          {t('dashboard:programs.newProgram')}
         </Link>
       </div>
       <MesBiensTabs />
@@ -408,13 +407,13 @@ export default function DashboardPrograms() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <FiSearch className="absolute start-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Rechercher par nom, ville..."
+              placeholder={t('dashboard:programs.searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full ps-10 pe-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -443,7 +442,7 @@ export default function DashboardPrograms() {
               }`}
             >
               <FiFilter className="w-5 h-5" />
-              Filtres
+              {t('dashboard:programs.filters')}
             </button>
           </div>
         </div>
@@ -451,15 +450,15 @@ export default function DashboardPrograms() {
         {showFilters && (
           <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('dashboard:programs.status.label')}</label>
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <option value="">Tous les statuts</option>
-                {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
+                <option value="">{t('dashboard:programs.status.all')}</option>
+                {STATUS_KEYS.map((key) => (
+                  <option key={key} value={key}>{t(`dashboard:programs.status.${key}`)}</option>
                 ))}
               </select>
             </div>
@@ -468,7 +467,7 @@ export default function DashboardPrograms() {
                 onClick={() => setFilters({ status: '', page: 1 })}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
               >
-                Réinitialiser
+                {t('dashboard:programs.reset')}
               </button>
             </div>
           </div>
@@ -524,17 +523,17 @@ export default function DashboardPrograms() {
                 disabled={filters.page === 1}
                 className="px-4 py-2 border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
-                Précédent
+                {t('dashboard:programs.pagination.previous')}
               </button>
               <span className="text-gray-600">
-                Page {filters.page} sur {data.pages}
+                {t('dashboard:programs.pagination.pageOf', { page: filters.page, total: data.pages })}
               </span>
               <button
                 onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
                 disabled={filters.page === data.pages}
                 className="px-4 py-2 border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
-                Suivant
+                {t('dashboard:programs.pagination.next')}
               </button>
             </div>
           )}
@@ -542,18 +541,18 @@ export default function DashboardPrograms() {
       ) : (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
           <FiHome className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun programme trouvé</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">{t('dashboard:programs.empty.title')}</h3>
           <p className="text-gray-500 mb-4">
             {search || filters.status
-              ? 'Aucun programme ne correspond à vos critères.'
-              : 'Commencez par créer votre premier programme immobilier.'}
+              ? t('dashboard:programs.empty.noMatch')
+              : t('dashboard:programs.empty.getStarted')}
           </p>
           <Link
             to="/dashboard/programmes/nouveau"
             className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
           >
             <FiPlus className="w-5 h-5" />
-            Créer un programme
+            {t('dashboard:programs.empty.createButton')}
           </Link>
         </div>
       )}

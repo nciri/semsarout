@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FiChevronDown, FiSearch, FiCheck, FiX } from 'react-icons/fi'
 
 // Dropdown enrichi : affiche la valeur sélectionnée, ouvre un panneau avec un
@@ -8,13 +9,17 @@ export default function SearchableSelect({
   value,
   onChange,
   options,
-  placeholder = 'Sélectionner…',
-  searchPlaceholder = 'Rechercher…',
+  placeholder,
+  searchPlaceholder,
   disabled = false,
   clearable = false,
-  emptyLabel = 'Aucun résultat',
+  emptyLabel,
   className = '',
 }) {
+  const { t } = useTranslation(['common'])
+  const resolvedPlaceholder = placeholder ?? t('common:search.select')
+  const resolvedSearchPlaceholder = searchPlaceholder ?? t('common:search.searchPlaceholder')
+  const resolvedEmptyLabel = emptyLabel ?? t('common:search.noResults')
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [highlight, setHighlight] = useState(0)
@@ -84,7 +89,7 @@ export default function SearchableSelect({
         className={`${triggerCls} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         <span className={`truncate ${selected ? 'text-gray-900' : 'text-gray-400'}`}>
-          {selected ? selected.label : placeholder}
+          {selected ? selected.label : resolvedPlaceholder}
         </span>
         <span className="flex items-center gap-1 flex-shrink-0">
           {clearable && selected && !disabled && (
@@ -107,14 +112,14 @@ export default function SearchableSelect({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={onKeyDown}
-                placeholder={searchPlaceholder}
+                placeholder={resolvedSearchPlaceholder}
                 className="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
           </div>
           <ul className="max-h-60 overflow-y-auto py-1">
             {filtered.length === 0 ? (
-              <li className="px-3 py-2 text-sm text-gray-400">{emptyLabel}</li>
+              <li className="px-3 py-2 text-sm text-gray-400">{resolvedEmptyLabel}</li>
             ) : (
               filtered.map((opt, i) => {
                 const isSel = String(opt.value) === String(value)

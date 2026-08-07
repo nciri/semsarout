@@ -5,7 +5,9 @@ Phase 0 : proxy transparent de `/api/*` vers le monolithe Flask, en préservant
 strangler, `proxy()` sera remplacé route par route par des appels aux nouveaux
 services et par de l'agrégation (BFF).
 """
+import asyncio
 import re
+import secrets
 import time
 from contextlib import asynccontextmanager
 
@@ -68,10 +70,16 @@ def _identity_from_claims(payload: dict) -> dict:
     }
 
 
-async def _resolve_identity(app: FastAPI, authorization: str | None) -> dict | None:
+async def _resolve_identity(
+    app: FastAPI, authorization: str | None, cookie_access: str | None = None
+) -> dict | None:
     """Valide le jeton et renvoie le contexte d'auth (user_id, agency_id, is_superadmin,
     role, features). **Priorité : validation LOCALE du JWT** (signature + claims embarqués),
-    sans appeler le monolithe. Repli /auth/me uniquement pour les anciens jetons sans claims."""
+    sans appeler le monolithe. Repli /auth/me uniquement pour les anciens jetons sans claims.
+
+    Source du jeton : en-tête `Authorization` en priorité (rétro-compat clients existants /
+    monolithe séparé) ; à défaut, cookie httpOnly `m3a_access` (durcissement m3a-l3achrane)."""
+    authorization = authorization or (f"Bearer {cookie_access}" if cookie_access else None)
     if not authorization:
         return None
     now = time.monotonic()
@@ -96,6 +104,77 @@ async def _resolve_identity(app: FastAPI, authorization: str | None) -> dict | N
     # identity ne devienne l'émetteur) est rejeté → l'utilisateur se reconnecte (nouveau jeton
     # enrichi). Les claims (dont `features`) sont désormais toujours forgés par identity.
     return None
+
+
+def _is_https(request: Request) -> bool:
+    """Secure=true si la requête (ou le proxy en amont) est en HTTPS — jamais en dev http,
+    sinon le navigateur rejette silencieusement le cookie. Hors dev (`environment != "dev"`),
+    Secure est FORCÉ même si le reverse-proxy prod omet `X-Forwarded-Proto` : on ne veut
+    jamais de cookie de session sans Secure en environnement non-dev."""
+    if settings.environment != "dev":
+        return True
+    if request.url.scheme == "https":
+        return True
+    return request.headers.get("x-forwarded-proto", "").lower() == "https"
+
+
+# Réponses d'auth susceptibles de porter des jetons à convertir en cookies httpOnly.
+_AUTH_COOKIE_PATHS = {"/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/register"}
+# Endpoints d'auth exemptés du contrôle CSRF (émission/révocation de session, pas de mutation
+# métier authentifiée par cookie).
+_CSRF_EXEMPT_PATHS = {
+    "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/register", "/api/v1/auth/logout",
+}
+_MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+
+
+def _set_auth_cookies(response: Response, body: dict, secure: bool) -> None:
+    """Pose les cookies de session à partir du corps JSON d'une réponse login/refresh/register.
+    Le corps JSON renvoyé au client reste inchangé (rétro-compat)."""
+    access = body.get("access_token") if isinstance(body, dict) else None
+    if not access:
+        return
+    response.set_cookie(
+        settings.cookie_access_name, access, max_age=settings.cookie_access_ttl_seconds,
+        path="/api", httponly=True, samesite="lax", secure=secure,
+    )
+    response.set_cookie(
+        settings.cookie_authed_name, "1", max_age=settings.cookie_access_ttl_seconds,
+        path="/", httponly=False, samesite="lax", secure=secure,
+    )
+    response.set_cookie(
+        settings.cookie_csrf_name, secrets.token_urlsafe(32),
+        max_age=settings.cookie_access_ttl_seconds,
+        path="/", httponly=False, samesite="lax", secure=secure,
+    )
+    refresh = body.get("refresh_token")
+    if refresh:
+        response.set_cookie(
+            settings.cookie_refresh_name, refresh, max_age=settings.cookie_refresh_ttl_seconds,
+            path="/api/v1/auth/refresh", httponly=True, samesite="lax", secure=secure,
+        )
+
+
+def _clear_auth_cookies(response: Response, secure: bool) -> None:
+    response.delete_cookie(settings.cookie_access_name, path="/api", samesite="lax", secure=secure)
+    response.delete_cookie(
+        settings.cookie_refresh_name, path="/api/v1/auth/refresh", samesite="lax", secure=secure
+    )
+    response.delete_cookie(settings.cookie_csrf_name, path="/", samesite="lax", secure=secure)
+    response.delete_cookie(settings.cookie_authed_name, path="/", samesite="lax", secure=secure)
+
+
+def _csrf_required(request: Request) -> bool:
+    """CSRF exigé seulement pour les mutations authentifiées PAR COOKIE (pas d'en-tête
+    Authorization) : double-submit m3a_csrf. Les clients Bearer (rétro-compat) sont exemptés —
+    ils ne portent pas le cookie de session, donc pas de CSRF cross-site possible via cookie."""
+    if request.method not in _MUTATING_METHODS:
+        return False
+    if request.url.path in _CSRF_EXEMPT_PATHS:
+        return False
+    if request.headers.get("authorization"):
+        return False
+    return bool(request.cookies.get(settings.cookie_access_name))
 
 
 def _inject_identity(headers: dict, ident: dict) -> None:
@@ -125,6 +204,8 @@ _CRM_LEADS_PUBLIC = re.compile(r"^/api/v1/leads/\d+(/status)?$")
 # Lecture détail d'un compte (super-admin) : GET → analytics (agrégat). Les ÉCRITURES de
 # modération (même préfixe) restent à trust-safety.
 _ADMIN_ACCOUNT_DETAIL = re.compile(r"^/api/v1/admin/accounts/(users|agencies)/\d+$")
+# Actions de traitement d'un signalement (super-admin) → trust-safety.
+_REPORT_ACTION = re.compile(r"^/api/v1/admin/reports/\d+/(resolve|dismiss)$")
 
 
 def _listing_match(path: str, method: str) -> bool:
@@ -284,6 +365,9 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         return app.state.payment, path.replace("/api/v1/payment", "/payment", 1)
     if settings.billing_url and path.startswith("/api/v1/billing"):
         return app.state.billing, path.replace("/api/v1/billing", "/billing", 1)
+    # translation : cache Postgres devant Azure Translator, endpoint unique /v1/translate.
+    if settings.translation_url and path == "/api/v1/translate":
+        return app.state.translation, path.replace("/api/v1", "", 1)
     # Extraction du domaine boutique : routes EXISTANTES reroutées (préfixe /api/v1 retiré).
     if settings.catalog_url and (
         path.startswith("/api/v1/backoffice/shop/products")
@@ -306,6 +390,17 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         return app.state.directory, path.replace("/api/v1", "", 1)
     if settings.messaging_url and path.startswith("/api/v1/messaging"):
         return app.state.messaging, path.replace("/api/v1", "", 1)
+    # Messagerie m3a-l3achrane (conversations candidat/bailleur) : composite REST propre côté
+    # front, réécrit vers les routes `/messaging/conversations*` du service.
+    if settings.messaging_url and (
+        path == "/api/v1/conversations" or path.startswith("/api/v1/conversations/")
+    ):
+        return app.state.messaging, path.replace("/api/v1/conversations", "/messaging/conversations", 1)
+    # Notifications in-app m3a-l3achrane (même service messaging, domaine dédié).
+    if settings.messaging_url and (
+        path == "/api/v1/notifications" or path.startswith("/api/v1/notifications/")
+    ):
+        return app.state.messaging, path.replace("/api/v1/notifications", "/messaging/notifications", 1)
     if settings.buyer_url and (
         path.startswith("/api/v1/buyer/saved-searches")
         or path.startswith("/api/v1/buyer/favorites")
@@ -320,6 +415,13 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         path.startswith("/api/v1/admin/accounts/users/")
         or path.startswith("/api/v1/admin/accounts/agencies/")
     ):
+        return app.state.trust_safety, path.replace("/api/v1", "", 1)
+    # Signalements (reports) : création authentifiée + actions de traitement super-admin.
+    # La liste back-office (GET /backoffice/reports) reste un endpoint composite dédié
+    # (parité backoffice_listings/backoffice_verifications, cf. plus bas).
+    if settings.trust_safety_url and method == "POST" and path == "/api/v1/reports":
+        return app.state.trust_safety, "/reports"
+    if settings.trust_safety_url and method == "POST" and _REPORT_ACTION.match(path):
         return app.state.trust_safety, path.replace("/api/v1", "", 1)
     if settings.crm_url and (
         path.startswith("/api/v1/backoffice/leads")
@@ -373,6 +475,12 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         path == "/api/v1/listings"
         or path.startswith("/api/v1/listings/")
         or path == "/api/v1/me/listings"
+        or path == "/api/v1/me/lease"
+        or path == "/api/v1/me/leases"
+        or path == "/api/v1/leases"
+        or path.startswith("/api/v1/leases/")
+        or path == "/api/v1/candidatures"
+        or path.startswith("/api/v1/candidatures/")
     ):
         return app.state.coloc_listing, path.replace("/api/v1", "", 1)
     if settings.coloc_profile_url and (
@@ -420,6 +528,7 @@ async def lifespan(app: FastAPI):
     app.state.coloc_listing = _client_or_none(settings.coloc_listing_url)
     app.state.coloc_profile = _client_or_none(settings.coloc_profile_url)
     app.state.matching = _client_or_none(settings.matching_url)
+    app.state.translation = _client_or_none(settings.translation_url)
     yield
     for client in (
         app.state.monolith, app.state.identity, app.state.search,
@@ -430,7 +539,7 @@ async def lifespan(app: FastAPI):
         app.state.buyer, app.state.programs, app.state.staymanager, app.state.geo,
         app.state.messaging, app.state.trust_safety, app.state.agency, app.state.audit,
         app.state.commission, app.state.selling, app.state.coloc_listing,
-        app.state.coloc_profile, app.state.matching,
+        app.state.coloc_profile, app.state.matching, app.state.translation,
     ):
         if client is not None:
             await client.aclose()
@@ -474,7 +583,10 @@ async def coloc_listings_composite(request: Request) -> Response:
         return Response(content=b'{"error":"Not found"}', status_code=404,
                         media_type="application/json")
     tenant = _resolve_tenant(request.headers, request.headers.get("host", ""))
-    ident = await _resolve_identity(app_, request.headers.get("authorization"))
+    ident = await _resolve_identity(
+        app_, request.headers.get("authorization"),
+        request.cookies.get(settings.cookie_access_name),
+    )
     if ident and ident.get("tenant", "semsar") != tenant:
         return Response(content=b'{"error":"Tenant mismatch"}', status_code=403,
                         media_type="application/json")
@@ -501,6 +613,518 @@ async def coloc_listings_composite(request: Request) -> Response:
     return JSONResponse(data)
 
 
+def _forward_headers(request: Request, ident: dict | None, tenant: str) -> dict:
+    """En-têtes vers un service interne, mêmes règles que `proxy()` : on jette les hop-by-hop
+    et tout X-Semsar-* entrant (anti-usurpation), puis on ré-injecte l'identité + le tenant."""
+    headers = {
+        k: v for k, v in request.headers.items()
+        if k.lower() not in _HOP_BY_HOP
+        and not k.lower().startswith("x-semsar-")
+        and k.lower() != "x-tenant"
+    }
+    if ident:
+        _inject_identity(headers, ident)
+    headers["x-semsar-tenant"] = tenant
+    return headers
+
+
+async def _resolve_candidate_names(app_: FastAPI, ids: set) -> dict:
+    """id candidat → nom humain (identity `/internal/user/{id}`). identity absent/en panne ou
+    user introuvable → id omis du dict : le front retombe sur « Candidat #id »."""
+    client = app_.state.identity
+    ids = {i for i in ids if i is not None}
+    if client is None or not ids:
+        return {}
+    headers = {"x-internal-token": settings.internal_token}
+
+    async def _one(uid):
+        try:
+            r = await client.request("GET", f"/internal/user/{uid}", headers=headers)
+        except Exception:  # noqa: BLE001 — dégradation nom par nom
+            return uid, None
+        if r.status_code != 200:
+            return uid, None
+        user = (r.json() or {}).get("user") or {}
+        return uid, (user.get("full_name") or "").strip() or None
+
+    pairs = await asyncio.gather(*(_one(uid) for uid in ids))
+    return {uid: name for uid, name in pairs if name}
+
+
+async def _resolve_candidate_scores(app_: FastAPI, candidatures: list) -> dict:
+    """id candidature → match_pct : compatibilité (candidat = seeker) ↔ (annonce), via matching
+    `/internal/scores` (un appel par candidat distinct). matching absent/en panne ou profil/
+    critères manquants → clé omise, le front masque le score (parité `coloc_listings_composite`)."""
+    client = app_.state.matching
+    if client is None:
+        return {}
+    by_candidate: dict = {}
+    for c in candidatures:
+        cu, li = c.get("candidate_user_id"), c.get("listing_id")
+        if cu and li:
+            by_candidate.setdefault(cu, set()).add(li)
+    if not by_candidate:
+        return {}
+    headers = {"x-internal-token": settings.internal_token}
+
+    async def _one(cu, listing_ids):
+        try:
+            r = await client.request(
+                "POST", "/internal/scores",
+                json={"user_id": cu, "listing_ids": list(listing_ids)}, headers=headers)
+            if r.status_code == 200:
+                return cu, r.json().get("scores", {})
+        except Exception:  # noqa: BLE001 — dégradation sans score
+            return cu, {}
+        return cu, {}
+
+    results = dict(await asyncio.gather(
+        *(_one(cu, lids) for cu, lids in by_candidate.items())))
+    out: dict = {}
+    for c in candidatures:
+        pct = results.get(c.get("candidate_user_id"), {}).get(c.get("listing_id"))
+        if pct is not None:
+            out[c["id"]] = pct
+    return out
+
+
+async def _candidatures_composite(request: Request, upstream_path: str) -> Response:
+    """Proxifie une liste de candidatures (coloc-listing) puis l'enrichit au BFF : nom humain
+    du candidat + score de compatibilité candidat↔annonce. L'enrichissement ne fait jamais
+    échouer la liste (dégradation par clé absente)."""
+    app_ = request.app
+    if app_.state.coloc_listing is None:
+        return Response(content=b'{"error":"Not found"}', status_code=404,
+                        media_type="application/json")
+    tenant = _resolve_tenant(request.headers, request.headers.get("host", ""))
+    ident = await _resolve_identity(
+        app_, request.headers.get("authorization"),
+        request.cookies.get(settings.cookie_access_name),
+    )
+    if ident and ident.get("tenant", "semsar") != tenant:
+        return Response(content=b'{"error":"Tenant mismatch"}', status_code=403,
+                        media_type="application/json")
+    url = upstream_path + (f"?{request.url.query}" if request.url.query else "")
+    upstream = await app_.state.coloc_listing.request(
+        "GET", url, headers=_forward_headers(request, ident, tenant))
+    if upstream.status_code != 200:
+        return Response(content=upstream.content, status_code=upstream.status_code,
+                        media_type=upstream.headers.get("content-type", "application/json"))
+    try:
+        rows = upstream.json()
+    except ValueError:
+        return Response(content=upstream.content, status_code=upstream.status_code,
+                        media_type=upstream.headers.get("content-type", "application/json"))
+    if isinstance(rows, list) and rows:
+        names, scores = await asyncio.gather(
+            _resolve_candidate_names(
+                app_, {r.get("candidate_user_id") for r in rows}),
+            _resolve_candidate_scores(app_, rows),
+        )
+        for r in rows:
+            name = names.get(r.get("candidate_user_id"))
+            if name:
+                r["candidate_name"] = name
+            pct = scores.get(r.get("id"))
+            if pct is not None:
+                r["match_pct"] = pct
+    return JSONResponse(rows)
+
+
+@app.get("/api/v1/candidatures/received", include_in_schema=False)
+async def candidatures_received_composite(request: Request) -> Response:
+    """Candidatures reçues (propriétaire), enrichies au BFF du nom humain du candidat (identity)
+    et d'un score de compatibilité candidat↔annonce (matching). Dégradation propre : nom/score
+    absent → clé omise, la liste ne tombe jamais à cause de l'enrichissement."""
+    return await _candidatures_composite(request, "/candidatures/received")
+
+
+@app.get("/api/v1/candidatures/roommate-pending", include_in_schema=False)
+async def candidatures_roommate_pending_composite(request: Request) -> Response:
+    """Candidatures en attente de la décision du colocataire en place, mêmes enrichissements
+    (nom + score) que `/candidatures/received`."""
+    return await _candidatures_composite(request, "/candidatures/roommate-pending")
+
+
+async def _fetch_internal_stats(
+    client: httpx.AsyncClient | None, path: str, tenant: str, headers: dict
+) -> dict | None:
+    """Un sous-compteur de l'overview back-office : `None` si le service est absent, en panne,
+    ou répond en erreur — jamais d'exception qui ferait échouer l'agrégat complet."""
+    if client is None:
+        return None
+    try:
+        r = await client.request("GET", path, params={"tenant": tenant}, headers=headers)
+    except Exception:  # noqa: BLE001 — dégradation service par service
+        return None
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+
+@app.get("/api/v1/backoffice/overview", include_in_schema=False)
+async def backoffice_overview(request: Request) -> Response:
+    """KPIs consolidés de la vue d'ensemble back-office m3a (super-admin uniquement) : fan-out
+    vers identity(tenant)+coloc-listing+coloc-profile `/internal/stats`. Dégradation propre par
+    service (sous-clé `null`) si un service échoue — jamais d'échec global de la vue (spec §8)."""
+    app_ = request.app
+    tenant = _resolve_tenant(request.headers, request.headers.get("host", ""))
+    ident = await _resolve_identity(
+        app_, request.headers.get("authorization"),
+        request.cookies.get(settings.cookie_access_name),
+    )
+    if ident is None or not ident.get("is_superadmin"):
+        return Response(content=b'{"error":"Forbidden"}', status_code=403,
+                        media_type="application/json")
+    if ident.get("tenant", "semsar") != tenant:
+        return Response(content=b'{"error":"Tenant mismatch"}', status_code=403,
+                        media_type="application/json")
+    headers = {"x-internal-token": settings.internal_token}
+    users_stats, listings_stats, profiles_stats = await asyncio.gather(
+        _fetch_internal_stats(app_.state.identity, "/internal/users/stats", tenant, headers),
+        _fetch_internal_stats(app_.state.coloc_listing, "/internal/stats", tenant, headers),
+        _fetch_internal_stats(app_.state.coloc_profile, "/internal/stats", tenant, headers),
+    )
+    return JSONResponse({
+        "tenant": tenant,
+        "users": users_stats,
+        "listings": listings_stats,
+        "profiles": profiles_stats,
+    })
+
+
+def _forbidden_json(message: str = "Forbidden") -> Response:
+    return Response(content=('{"error":"%s"}' % message).encode(), status_code=403,
+                    media_type="application/json")
+
+
+async def _require_backoffice_superadmin(request: Request):
+    """Garde commune aux routes back-office composites (parité `backoffice_overview`) : jeton
+    valide + super-admin + tenant du jeton == tenant de la requête. Retourne `(None, tenant,
+    ident)` (autorisé) ou `(Response 403, tenant, None)` prêt à renvoyer tel quel."""
+    app_ = request.app
+    tenant = _resolve_tenant(request.headers, request.headers.get("host", ""))
+    ident = await _resolve_identity(
+        app_, request.headers.get("authorization"),
+        request.cookies.get(settings.cookie_access_name),
+    )
+    if ident is None or not ident.get("is_superadmin"):
+        return _forbidden_json(), tenant, None
+    if ident.get("tenant", "semsar") != tenant:
+        return _forbidden_json("Tenant mismatch"), tenant, None
+    return None, tenant, ident
+
+
+@app.get("/api/v1/backoffice/verifications", include_in_schema=False)
+async def backoffice_verifications(request: Request) -> Response:
+    """File de vérification KYC en attente du tenant m3a (super-admin uniquement) : proxy
+    vers identity `/internal/kyc/queue` (source réelle des candidatures CIN/étudiant/employeur)."""
+    denied, tenant, _ident = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.identity
+    if client is None:
+        return JSONResponse({"tenant": tenant, "items": []})
+    headers = {"x-internal-token": settings.internal_token}
+    try:
+        r = await client.request("GET", "/internal/kyc/queue", params={"tenant": tenant}, headers=headers)
+    except Exception:  # noqa: BLE001 — dégradation propre si identity est indisponible
+        return JSONResponse({"tenant": tenant, "items": []})
+    if r.status_code != 200:
+        return JSONResponse({"tenant": tenant, "items": []})
+    return JSONResponse({"tenant": tenant, **r.json()})
+
+
+async def _backoffice_kyc_action(request: Request, kyc_id: int, action: str) -> Response:
+    denied, _tenant, _ident = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.identity
+    if client is None:
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    headers = {"x-internal-token": settings.internal_token}
+    try:
+        r = await client.request("POST", f"/internal/kyc/{kyc_id}/{action}", headers=headers)
+    except Exception:  # noqa: BLE001
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    return Response(content=r.content, status_code=r.status_code,
+                    media_type=r.headers.get("content-type"))
+
+
+@app.post("/api/v1/backoffice/verifications/{kyc_id}/verify", include_in_schema=False)
+async def backoffice_verifications_verify(kyc_id: int, request: Request) -> Response:
+    return await _backoffice_kyc_action(request, kyc_id, "verify")
+
+
+@app.post("/api/v1/backoffice/verifications/{kyc_id}/reject", include_in_schema=False)
+async def backoffice_verifications_reject(kyc_id: int, request: Request) -> Response:
+    return await _backoffice_kyc_action(request, kyc_id, "reject")
+
+
+@app.get("/api/v1/backoffice/listings", include_in_schema=False)
+async def backoffice_listings(request: Request) -> Response:
+    """File des annonces à modérer du tenant m3a (super-admin uniquement) : proxy vers
+    coloc-listing `/internal/listings/queue` (statut EN_MODERATION par défaut, filtrable
+    via `?status=`). Les actions (approuver/rejeter) restent servies par les routes
+    existantes `POST /api/v1/listings/{id}/(approve|reject)` (proxy générique, garde
+    superadmin déjà en place côté service)."""
+    denied, tenant, _ident = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.coloc_listing
+    if client is None:
+        return JSONResponse({"tenant": tenant, "items": []})
+    headers = {"x-internal-token": settings.internal_token}
+    params = {"tenant": tenant}
+    status = request.query_params.get("status")
+    if status:
+        params["status"] = status
+    try:
+        r = await client.request("GET", "/internal/listings/queue", params=params, headers=headers)
+    except Exception:  # noqa: BLE001 — dégradation propre si coloc-listing est indisponible
+        return JSONResponse({"tenant": tenant, "items": []})
+    if r.status_code != 200:
+        return JSONResponse({"tenant": tenant, "items": []})
+    return JSONResponse({"tenant": tenant, **r.json()})
+
+
+@app.get("/api/v1/backoffice/leases", include_in_schema=False)
+async def backoffice_leases(request: Request) -> Response:
+    """Baux + paiements du tenant m3a (super-admin uniquement) : proxy vers coloc-listing
+    `/internal/leases` — alimente la vue « Contrats & paiements ». Cadrage : ÉTATS de
+    séquestre modélisés (pending/escrowed/released/refunded), aucun PSP réel intégré."""
+    denied, tenant, _ident = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.coloc_listing
+    if client is None:
+        return JSONResponse({"tenant": tenant, "items": []})
+    headers = {"x-internal-token": settings.internal_token}
+    try:
+        r = await client.request("GET", "/internal/leases", params={"tenant": tenant}, headers=headers)
+    except Exception:  # noqa: BLE001 — dégradation propre si coloc-listing est indisponible
+        return JSONResponse({"tenant": tenant, "items": []})
+    if r.status_code != 200:
+        return JSONResponse({"tenant": tenant, "items": []})
+    return JSONResponse({"tenant": tenant, **r.json()})
+
+
+@app.post("/api/v1/payments/webhook", include_in_schema=False)
+async def payments_webhook_relay(request: Request) -> Response:
+    """Relais du webhook (simulé) du provider de paiement vers coloc-listing
+    `/internal/payments/webhook`. Pas d'auth utilisateur ici : un vrai PSP appelle cette
+    URL publique sans jeton applicatif — c'est la signature `x-webhook-signature` (HMAC,
+    vérifiée côté coloc-listing avec le secret partagé) qui fait foi, comme chez la
+    plupart des prestataires réels. Le BFF se contente de relayer body + signature vers
+    le service interne (non exposé publiquement) ; `x-internal-token` est ajouté en plus
+    pour rester cohérent avec les autres appels inter-services du mesh."""
+    app_ = request.app
+    client = app_.state.coloc_listing
+    if client is None:
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    body = await request.body()
+    headers = {
+        "x-internal-token": settings.internal_token,
+        "x-webhook-signature": request.headers.get("x-webhook-signature", ""),
+        "content-type": "application/json",
+    }
+    try:
+        r = await client.request("POST", "/internal/payments/webhook", content=body, headers=headers)
+    except Exception:  # noqa: BLE001 — dégradation propre si coloc-listing est indisponible
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    return Response(content=r.content, status_code=r.status_code,
+                    media_type=r.headers.get("content-type"))
+
+
+@app.get("/api/v1/backoffice/reports", include_in_schema=False)
+async def backoffice_reports(request: Request) -> Response:
+    """File des signalements du tenant m3a (super-admin uniquement) : proxy vers trust-safety
+    `/internal/reports` (statut `open` par défaut côté service, filtrable via `?status=`).
+    Les actions (traiter/rejeter) restent servies par `POST /api/v1/admin/reports/{id}/
+    (resolve|dismiss)` (proxy générique, garde superadmin déjà en place côté service)."""
+    denied, tenant, _ident = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.trust_safety
+    if client is None:
+        return JSONResponse({"tenant": tenant, "items": []})
+    headers = {"x-internal-token": settings.internal_token}
+    params = {"tenant": tenant}
+    status = request.query_params.get("status")
+    if status:
+        params["status"] = status
+    try:
+        r = await client.request("GET", "/internal/reports", params=params, headers=headers)
+    except Exception:  # noqa: BLE001 — dégradation propre si trust-safety est indisponible
+        return JSONResponse({"tenant": tenant, "items": []})
+    if r.status_code != 200:
+        return JSONResponse({"tenant": tenant, "items": []})
+    return JSONResponse({"tenant": tenant, **r.json()})
+
+
+async def _backoffice_user_action(request: Request, user_id: int, action: str) -> Response:
+    """Suspend/réactive un compte du tenant courant (super-admin uniquement) : proxy vers
+    identity `/internal/accounts/users/{id}/{action}` (modération de compte, déjà implémentée
+    côté identity — `services/identity/app/accounts.py`). `tenant` + `actor_id` (garde
+    auto-action) transmis pour cloisonnement, comme `_backoffice_kyc_action`."""
+    denied, tenant, ident = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.identity
+    if client is None:
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    headers = {"x-internal-token": settings.internal_token}
+    params = {"tenant": tenant}
+    actor_id = ident.get("user_id") if ident else None
+    if actor_id is not None:
+        params["actor_id"] = actor_id
+    try:
+        r = await client.request("POST", f"/internal/accounts/users/{user_id}/{action}",
+                                 params=params, headers=headers)
+    except Exception:  # noqa: BLE001
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    return Response(content=r.content, status_code=r.status_code,
+                    media_type=r.headers.get("content-type"))
+
+
+@app.post("/api/v1/backoffice/users/{user_id}/suspend", include_in_schema=False)
+async def backoffice_users_suspend(user_id: int, request: Request) -> Response:
+    return await _backoffice_user_action(request, user_id, "suspend")
+
+
+@app.post("/api/v1/backoffice/users/{user_id}/unsuspend", include_in_schema=False)
+async def backoffice_users_unsuspend(user_id: int, request: Request) -> Response:
+    return await _backoffice_user_action(request, user_id, "unsuspend")
+
+
+@app.get("/api/v1/backoffice/matching-weights", include_in_schema=False)
+async def backoffice_matching_weights_get(request: Request) -> Response:
+    """Pondération active du scoring matching (super-admin, lecture) : proxy vers
+    matching `/internal/weights`. Nom de route distinct de `/api/v1/backoffice/settings`
+    (déjà pris par le service `agency`, config commission du back-office legacy) pour
+    éviter toute collision de proxy générique (cf. `_resolve_upstream` ligne ~274)."""
+    denied, _tenant, _ident = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.matching
+    if client is None:
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    headers = {"x-internal-token": settings.internal_token}
+    try:
+        r = await client.request("GET", "/internal/weights", headers=headers)
+    except Exception:  # noqa: BLE001 — dégradation propre si matching est indisponible
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    return Response(content=r.content, status_code=r.status_code,
+                    media_type=r.headers.get("content-type"))
+
+
+@app.put("/api/v1/backoffice/matching-weights", include_in_schema=False)
+async def backoffice_matching_weights_put(request: Request) -> Response:
+    """Édite la pondération active du scoring matching (super-admin) : proxy vers
+    matching `PUT /internal/weights` (crée une nouvelle version horodatée et l'active)."""
+    denied, _tenant, _ident = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.matching
+    if client is None:
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    body = await request.body()
+    headers = {"x-internal-token": settings.internal_token, "content-type": "application/json"}
+    try:
+        r = await client.request("PUT", "/internal/weights", content=body, headers=headers)
+    except Exception:  # noqa: BLE001
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    return Response(content=r.content, status_code=r.status_code,
+                    media_type=r.headers.get("content-type"))
+
+
+@app.get("/api/v1/backoffice/lifestyle-referential", include_in_schema=False)
+async def backoffice_lifestyle_referential(request: Request) -> Response:
+    """Référentiel lifestyle m3a (super-admin, lecture seule) : proxy vers coloc-profile
+    `/internal/lifestyle-referential`. Module Python statique côté service (pas de table
+    versionnée) : pas de route d'édition tant que le référentiel n'est pas migré en base."""
+    denied, _tenant, _ident = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.coloc_profile
+    if client is None:
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    headers = {"x-internal-token": settings.internal_token}
+    try:
+        r = await client.request("GET", "/internal/lifestyle-referential", headers=headers)
+    except Exception:  # noqa: BLE001
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    return Response(content=r.content, status_code=r.status_code,
+                    media_type=r.headers.get("content-type"))
+
+
+@app.get("/api/v1/backoffice/accounts", include_in_schema=False)
+async def backoffice_accounts(request: Request) -> Response:
+    """Comptes utilisateurs du tenant m3a (super-admin) — LOT B : garde tenant STRICTE côté
+    serveur. `GET /api/v1/admin/accounts` (proxy générique → analytics) accepte un `tenant` en
+    query string entièrement piloté par le client : le front m3a l'envoyait de bonne foi
+    (`tenant=m3a-l3achrane`), mais rien n'empêchait un appel direct à l'API de l'omettre (→ tous
+    tenants) ou de le falsifier. Ici le tenant vient exclusivement de `_resolve_tenant` (Host /
+    en-tête `x-tenant` dev-only) + du jeton vérifié (`ident['tenant']`, comparaison faite par
+    `_require_backoffice_superadmin`) — jamais du paramètre client, qui est ignoré s'il est
+    fourni. `type=user` forcé par défaut (vue Utilisateurs), reste des filtres (q/status/page)
+    relayés tels quels."""
+    denied, tenant, _ident = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.analytics
+    if client is None:
+        return JSONResponse({"items": [], "total": 0})
+    ident = await _resolve_identity(
+        app_, request.headers.get("authorization"),
+        request.cookies.get(settings.cookie_access_name),
+    )
+    headers: dict = {}
+    _inject_identity(headers, ident or {})
+    # Tenant FORCÉ serveur : tout `tenant` fourni par le client dans la query string est ignoré.
+    params = {k: v for k, v in request.query_params.items() if k != "tenant"}
+    params.setdefault("type", "user")
+    params["tenant"] = tenant
+    try:
+        r = await client.request("GET", "/admin/accounts", params=params, headers=headers)
+    except Exception:  # noqa: BLE001 — dégradation propre si analytics est indisponible
+        return JSONResponse({"items": [], "total": 0})
+    if r.status_code != 200:
+        return JSONResponse({"items": [], "total": 0})
+    return JSONResponse(r.json())
+
+
+@app.post("/api/v1/auth/logout", include_in_schema=False)
+async def logout(request: Request) -> Response:
+    """Révoque la session côté BFF (efface les cookies). Servi par le BFF lui-même, pas
+    relayé à identity : la déconnexion n'a pas besoin de round-trip upstream."""
+    response = Response(status_code=204)
+    _clear_auth_cookies(response, _is_https(request))
+    return response
+
+
 @app.api_route(
     "/api/{path:path}",
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
@@ -508,6 +1132,12 @@ async def coloc_listings_composite(request: Request) -> Response:
 )
 async def proxy(path: str, request: Request) -> Response:
     app = request.app
+    if _csrf_required(request):
+        csrf_cookie = request.cookies.get(settings.cookie_csrf_name)
+        csrf_header = request.headers.get("x-csrf-token")
+        if not csrf_cookie or not csrf_header or not secrets.compare_digest(csrf_header, csrf_cookie):
+            return Response(content=b'{"error":"CSRF token invalid"}', status_code=403,
+                            media_type="application/json")
     client, upstream_path = _resolve_upstream(app, request.url.path, request.method)
     if client is None:  # route non servie par v2 (monolithe décommissionné)
         return Response(content=b'{"error":"Not found"}', status_code=404, media_type="application/json")
@@ -523,8 +1153,17 @@ async def proxy(path: str, request: Request) -> Response:
         and not k.lower().startswith("x-semsar-")
         and k.lower() != "x-tenant"
     }
+    # /auth/refresh : pas d'en-tête Authorization → repli sur le refresh token du cookie
+    # httpOnly (rétro-compat : l'en-tête reste prioritaire s'il est fourni).
+    if request.url.path == "/api/v1/auth/refresh" and not request.headers.get("authorization"):
+        refresh_cookie = request.cookies.get(settings.cookie_refresh_name)
+        if refresh_cookie:
+            headers["Authorization"] = f"Bearer {refresh_cookie}"
     # Frontière d'auth : tous les upstreams sont des services internes → injecter l'identité.
-    ident = await _resolve_identity(app, request.headers.get("authorization"))
+    ident = await _resolve_identity(
+        app, request.headers.get("authorization"),
+        request.cookies.get(settings.cookie_access_name),
+    )
     if ident:
         if ident.get("tenant", "semsar") != tenant:
             # Jeton d'un produit utilisé sur l'autre (semsar ⇄ m3a-l3achrane) → rejet.
@@ -538,12 +1177,19 @@ async def proxy(path: str, request: Request) -> Response:
     resp_headers = {
         k: v for k, v in upstream.headers.items() if k.lower() not in _HOP_BY_HOP
     }
-    return Response(
+    response = Response(
         content=upstream.content,
         status_code=upstream.status_code,
         headers=resp_headers,
         media_type=upstream.headers.get("content-type"),
     )
+    if request.url.path in _AUTH_COOKIE_PATHS and 200 <= upstream.status_code < 300:
+        try:
+            body = upstream.json()
+        except ValueError:
+            body = {}
+        _set_auth_cookies(response, body, _is_https(request))
+    return response
 
 
 @app.api_route("/uploads/{path:path}", methods=["GET", "HEAD"], include_in_schema=False)

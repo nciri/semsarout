@@ -24,6 +24,22 @@ def generate_api_key():
     return f"sk_{secrets.token_urlsafe(32)}"
 
 
+def is_agency_admin(user, agency):
+    """Le membre peut-il gérer l'agence (voir/régénérer la clé API, éditer) ?
+
+    Réservé au propriétaire de l'agence (`owner_id`) ou à un admin plateforme.
+    Fallback non-régressif : les agences historiques sans `owner_id` restent
+    gérables par leurs membres (owner_id est désormais renseigné à la création).
+    """
+    if user is None or agency is None:
+        return False
+    if user.account_role == 'admin':
+        return True
+    if agency.owner_id is not None:
+        return agency.owner_id == user.id
+    return user.agency_id == agency.id
+
+
 @api_v1_bp.route('/agencies', methods=['GET'])
 def list_agencies():
     """List all verified agencies."""
@@ -125,7 +141,8 @@ def create_agency():
         license_number=data.get('license_number'),
         rc_number=data.get('rc_number'),
         ice_number=data.get('ice_number'),
-        api_key=generate_api_key()
+        api_key=generate_api_key(),
+        owner_id=user.id,
     )
 
     db.session.add(agency)
@@ -152,8 +169,8 @@ def update_agency(slug):
 
     agency = Agency.query.filter_by(slug=slug).first_or_404()
 
-    # Check if user belongs to this agency
-    if user.agency_id != agency.id:
+    # Réservé au propriétaire / admin de l'agence.
+    if not is_agency_admin(user, agency):
         return jsonify({'error': 'Unauthorized'}), 403
 
     data = request.get_json()
@@ -190,7 +207,8 @@ def regenerate_api_key(slug):
 
     agency = Agency.query.filter_by(slug=slug).first_or_404()
 
-    if user.agency_id != agency.id:
+    # Réservé au propriétaire / admin de l'agence.
+    if not is_agency_admin(user, agency):
         return jsonify({'error': 'Unauthorized'}), 403
 
     agency.api_key = generate_api_key()
@@ -213,4 +231,7 @@ def my_agency():
         return jsonify({'error': 'You do not belong to an agency'}), 404
 
     agency = Agency.query.get(user.agency_id)
-    return jsonify({'agency': agency.to_dict(include_members=True)})
+    can_manage = is_agency_admin(user, agency)
+    data = agency.to_dict(include_members=True, include_api_key=can_manage)
+    data['can_manage'] = can_manage  # pilote l'affichage de la section Accès API côté front
+    return jsonify({'agency': data})

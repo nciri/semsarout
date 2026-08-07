@@ -2,17 +2,16 @@ import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import { useTranslation } from 'react-i18next'
 import { FiLock, FiTrash2, FiBriefcase, FiPlus, FiEdit2, FiFilePlus } from 'react-icons/fi'
 import { legalService } from '../../../services/legalService'
 import { DataTable, EmptyState, Field, Modal, GatedNotice, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
 
 const EMPTY = { name: '', office: '', city: '', phone: '', email: '', license_number: '' }
-const FIELDS = [
-  ['name', 'Nom *'], ['office', 'Étude'], ['city', 'Ville'],
-  ['phone', 'Téléphone'], ['email', 'Email'], ['license_number', 'N° agrément'],
-]
+const FIELD_KEYS = ['name', 'office', 'city', 'phone', 'email', 'license_number']
 
 function NotariesDirectory() {
+  const { t } = useTranslation(['backoffice', 'common'])
   const qc = useQueryClient()
   const navigate = useNavigate()
   const { data, isLoading, error } = useQuery('notaries', () => legalService.listNotaries())
@@ -21,25 +20,26 @@ function NotariesDirectory() {
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState(EMPTY)
 
-  const onErr = (e) => toast.error(e.response?.data?.error || 'Erreur')
+  const onErr = (e) => toast.error(e.response?.data?.error || t('common:errors.short'))
   const closeModal = () => { setModalOpen(false); setEditingId(null); setForm(EMPTY) }
 
   const save = useMutation(
     () => (editingId ? legalService.updateNotary(editingId, form) : legalService.createNotary(form)),
     {
-      onSuccess: () => { toast.success(editingId ? 'Notaire modifié' : 'Notaire ajouté'); qc.invalidateQueries('notaries'); closeModal() },
+      onSuccess: () => { toast.success(editingId ? t('backoffice:legal.notaries.toasts.updated') : t('backoffice:legal.notaries.toasts.created')); qc.invalidateQueries('notaries'); closeModal() },
       onError: onErr,
     },
   )
   const del = useMutation((id) => legalService.deleteNotary(id), {
-    onSuccess: () => { toast.success('Notaire supprimé'); qc.invalidateQueries('notaries') },
+    onSuccess: () => { toast.success(t('backoffice:legal.notaries.toasts.deleted')); qc.invalidateQueries('notaries') },
     onError: onErr,
   })
   const createCase = useMutation((notaryId) => legalService.createCase({ case_type: 'sale', notary_id: notaryId }), {
-    onSuccess: (res) => { toast.success('Dossier créé'); qc.invalidateQueries('legal-cases'); navigate(`/backoffice/notaires/dossiers/${res.case.id}`) },
+    onSuccess: (res) => { toast.success(t('backoffice:legal.shared.caseCreatedToast')); qc.invalidateQueries('legal-cases'); navigate(`/backoffice/notaires/dossiers/${res.case.id}`) },
     onError: onErr,
   })
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const notaries = data?.notaries || []
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase()
@@ -48,7 +48,7 @@ function NotariesDirectory() {
   }, [notaries, q])
 
   if (error?.response?.status === 403) {
-    return <GatedNotice icon={FiLock} title="Notaires" message="L'annuaire des notaires est réservé aux plans Pro et Entreprise." />
+    return <GatedNotice icon={FiLock} title={t('backoffice:legal.notaries.gated.title')} message={t('backoffice:legal.notaries.gated.message')} />
   }
 
   const openCreate = () => { setEditingId(null); setForm(EMPTY); setModalOpen(true) }
@@ -59,10 +59,10 @@ function NotariesDirectory() {
   }
 
   const columns = [
-    { header: 'Nom', className: 'font-medium text-gray-900', cell: (n) => n.name },
-    { header: 'Étude', cell: (n) => <span className="text-gray-600">{n.office || '—'}</span> },
-    { header: 'Ville', cell: (n) => <span className="text-gray-600">{n.city || '—'}</span> },
-    { header: 'Contact', cell: (n) => (
+    { header: t('backoffice:legal.notaries.columns.name'), className: 'font-medium text-gray-900', cell: (n) => n.name },
+    { header: t('backoffice:legal.notaries.columns.office'), cell: (n) => <span className="text-gray-600">{n.office || '—'}</span> },
+    { header: t('backoffice:legal.notaries.columns.city'), cell: (n) => <span className="text-gray-600">{n.city || '—'}</span> },
+    { header: t('backoffice:legal.notaries.columns.contact'), cell: (n) => (
       <div>
         <div className="text-gray-700">{n.phone || '—'}</div>
         {n.email && <div className="text-xs text-gray-400">{n.email}</div>}
@@ -70,13 +70,14 @@ function NotariesDirectory() {
     ) },
     { header: '', align: 'right', cell: (n) => (
       <div className="flex items-center justify-end gap-1">
-        <button onClick={() => createCase.mutate(n.id)} className="p-1.5 text-gray-400 hover:text-primary-600 rounded-lg hover:bg-primary-50 transition-colors" title="Créer un dossier avec ce notaire">
+        <button onClick={() => createCase.mutate(n.id)} className="p-1.5 text-gray-400 hover:text-primary-600 rounded-lg hover:bg-primary-50 transition-colors" title={t('backoffice:legal.notaries.actions.createCase')}>
           <FiFilePlus className="w-4 h-4" />
         </button>
-        <button onClick={() => openEdit(n)} className="p-1.5 text-gray-400 hover:text-primary-600 rounded-lg hover:bg-primary-50 transition-colors" title="Modifier">
+        <button onClick={() => openEdit(n)} className="p-1.5 text-gray-400 hover:text-primary-600 rounded-lg hover:bg-primary-50 transition-colors" title={t('backoffice:legal.notaries.actions.edit')}>
           <FiEdit2 className="w-4 h-4" />
         </button>
-        <button onClick={() => del.mutate(n.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors" title="Supprimer">
+        {/* impeccable-disable-next-line gray-on-color -- icône grise sur fond blanc ; le rouge n'est qu'un état :hover */}
+        <button onClick={() => del.mutate(n.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors" title={t('backoffice:legal.notaries.actions.delete')}>
           <FiTrash2 className="w-4 h-4" />
         </button>
       </div>
@@ -89,11 +90,11 @@ function NotariesDirectory() {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Rechercher un notaire, une étude, une ville…"
+          placeholder={t('backoffice:legal.notaries.searchPlaceholder')}
           className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
         <button onClick={openCreate} className={PRIMARY_BTN}>
-          <FiPlus className="w-5 h-5" /> Ajouter un notaire
+          <FiPlus className="w-5 h-5" /> {t('backoffice:legal.notaries.addButton')}
         </button>
       </div>
 
@@ -104,9 +105,9 @@ function NotariesDirectory() {
         empty={(
           <EmptyState
             icon={FiBriefcase}
-            title="Aucun notaire"
-            description="Ajoutez votre premier notaire partenaire pour le mobiliser sur vos dossiers."
-            action={<button onClick={openCreate} className={PRIMARY_BTN}><FiPlus className="w-5 h-5" /> Ajouter un notaire</button>}
+            title={t('backoffice:legal.notaries.empty.title')}
+            description={t('backoffice:legal.notaries.empty.description')}
+            action={<button onClick={openCreate} className={PRIMARY_BTN}><FiPlus className="w-5 h-5" /> {t('backoffice:legal.notaries.empty.addButton')}</button>}
           />
         )}
       />
@@ -114,18 +115,18 @@ function NotariesDirectory() {
       <Modal
         open={modalOpen}
         onClose={closeModal}
-        title={editingId ? 'Modifier le notaire' : 'Ajouter un notaire'}
+        title={editingId ? t('backoffice:legal.notaries.modal.editTitle') : t('backoffice:legal.notaries.modal.createTitle')}
         footer={(
           <>
-            <button onClick={closeModal} className={SECONDARY_BTN}>Annuler</button>
+            <button onClick={closeModal} className={SECONDARY_BTN}>{t('backoffice:legal.notaries.modal.cancel')}</button>
             <button disabled={!form.name || save.isLoading} onClick={() => save.mutate()} className={PRIMARY_BTN}>
-              {editingId ? 'Enregistrer' : 'Ajouter'}
+              {editingId ? t('backoffice:legal.notaries.modal.save') : t('backoffice:legal.notaries.modal.create')}
             </button>
           </>
         )}
       >
-        {FIELDS.map(([f, ph]) => (
-          <Field key={f} value={form[f]} onChange={(e) => setForm({ ...form, [f]: e.target.value })} placeholder={ph} />
+        {FIELD_KEYS.map((f) => (
+          <Field key={f} value={form[f]} onChange={(e) => setForm({ ...form, [f]: e.target.value })} placeholder={t(`backoffice:legal.notaries.fields.${f}`)} />
         ))}
       </Modal>
     </div>

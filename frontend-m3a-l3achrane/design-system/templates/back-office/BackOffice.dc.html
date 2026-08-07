@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Back-office" description="Administration M3a-L3chrane — pilotage, vérifications KYC, modération des annonces, utilisateurs, contrats et signalements" -->
+<helmet><script src="./ds-base.js"></script><style>html,body{margin:0}body{font-family:var(--font-body);background:var(--bg-page)}a{color:var(--link);text-decoration:none}a:hover{color:var(--link-hover)}input,select{font:inherit}::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:8px;border:3px solid transparent;background-clip:content-box}</style></helmet>
+<div style="min-height:100vh;display:grid;grid-template-columns:248px minmax(0,1fr);background:var(--bg-page)">
+<aside style="background:var(--surface-navy-deep);color:var(--text-on-navy);display:flex;flex-direction:column;gap:26px;padding:22px 16px;position:sticky;top:0;height:100vh;box-sizing:border-box">
+<div style="display:flex;flex-direction:column;gap:2px;padding:0 8px">
+<div style="font-size:17px;font-weight:800;letter-spacing:-0.02em">M3a-L3chrane</div>
+<div style="font-size:11.5px;font-weight:700;letter-spacing:.14em;color:var(--gold-500);text-transform:uppercase">Back-office</div>
+</div>
+<nav style="display:flex;flex-direction:column;gap:3px">
+<sc-for list="{{ nav }}" as="item" hint-placeholder-count="6">
+<sc-if value="{{ item.active }}">
+<button onClick="{{ item.go }}" style="display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:10px 12px;border:0;border-radius:9px;background:var(--navy-600);color:#fff;font-size:14px;font-weight:700;cursor:pointer">
+<span style="width:18px;text-align:center;font-size:13px;opacity:.95">{{ item.glyph }}</span>{{ item.label }}
+<sc-if value="{{ item.count }}"><span style="margin-left:auto;padding:2px 8px;border-radius:999px;background:var(--gold-500);color:var(--navy-900);font-size:11.5px;font-weight:800">{{ item.count }}</span></sc-if>
+</button>
+</sc-if>
+<sc-if value="{{ item.inactive }}" hint-placeholder-val="{{ true }}">
+<button onClick="{{ item.go }}" style="display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:10px 12px;border:0;border-radius:9px;background:transparent;color:var(--text-on-navy-muted);font-size:14px;font-weight:600;cursor:pointer" style-hover="background:rgba(255,255,255,.07);color:#fff">
+<span style="width:18px;text-align:center;font-size:13px;opacity:.8">{{ item.glyph }}</span>{{ item.label }}
+<sc-if value="{{ item.count }}"><span style="margin-left:auto;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.13);color:#fff;font-size:11.5px;font-weight:800">{{ item.count }}</span></sc-if>
+</button>
+</sc-if>
+</sc-for>
+</nav>
+<div style="margin-top:auto;display:flex;flex-direction:column;gap:12px">
+<div style="padding:14px;border-radius:12px;background:rgba(255,255,255,.06);display:flex;flex-direction:column;gap:6px">
+<div style="font-size:12.5px;font-weight:800;color:var(--gold-400)">File de vérification</div>
+<div style="font-size:12.5px;line-height:1.5;color:var(--text-on-navy-muted)">Délai moyen de traitement : 4 h 12. Objectif interne &lt; 6 h.</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px">
+<div style="width:32px;height:32px;border-radius:50%;background:var(--navy-500);display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;flex:none">SA</div>
+<div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+<div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Salma Aït Bella</div>
+<div style="font-size:11.5px;color:var(--text-on-navy-muted)">Admin — Conformité</div>
+</div>
+</div>
+</div>
+</aside>
+<main style="min-width:0;display:flex;flex-direction:column">
+<header style="background:var(--surface-card);border-bottom:1px solid var(--border-subtle);padding:16px 28px;display:flex;align-items:center;gap:20px;position:sticky;top:0;z-index:4">
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+<h1 style="margin:0;font-size:20px;font-weight:800;color:var(--text-heading);letter-spacing:-0.02em">{{ title }}</h1>
+<div style="font-size:13px;color:var(--text-muted)">{{ subtitle }}</div>
+</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+<input placeholder="Rechercher un profil, une annonce, un contrat…" style="width:320px;padding:9px 13px;border:1px solid var(--border-subtle);border-radius:9px;background:var(--surface-sunken);font-size:13.5px;color:var(--text-heading);outline:none" style-focus="border-color:var(--border-focus);background:var(--white);box-shadow:0 0 0 3px var(--navy-100)">
+<button style="padding:9px 14px;border:1px solid var(--border-subtle);border-radius:9px;background:var(--white);color:var(--text-heading);font-size:13.5px;font-weight:700;cursor:pointer" style-hover="border-color:var(--border-default)">Exporter</button>
+<button style="padding:9px 14px;border:0;border-radius:9px;background:var(--brand-primary);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer" style-hover="background:var(--brand-primary-hover)">Nouvelle action</button>
+</div>
+</header>
+<div style="padding:24px 28px 56px;display:flex;flex-direction:column;gap:22px">
+
+<sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px">
+<sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+<div style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:14px;box-shadow:var(--shadow-sm);padding:18px 18px 16px;display:flex;flex-direction:column;gap:9px">
+<div style="font-size:12.5px;font-weight:700;color:var(--text-muted);letter-spacing:.01em">{{ k.label }}</div>
+<div style="font-size:30px;font-weight:800;color:var(--text-heading);letter-spacing:-0.03em;line-height:1">{{ k.value }}</div>
+<sc-if value="{{ k.up }}"><div style="font-size:12.5px;font-weight:700;color:var(--green-600)">▲ {{ k.delta }} <span style="color:var(--text-muted);font-weight:600">vs. 30 j</span></div></sc-if>
+<sc-if value="{{ k.down }}"><div style="font-size:12.5px;font-weight:700;color:var(--red-600)">▼ {{ k.delta }} <span style="color:var(--text-muted);font-weight:600">vs. 30 j</span></div></sc-if>
+</div>
+</sc-for>
+</div>
+<div style="display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:16px;align-items:start">
+<section style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:20px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;align-items:baseline;gap:12px">
+<h2 style="margin:0;font-size:15.5px;font-weight:800;color:var(--text-heading)">Mises en relation confirmées</h2>
+<span style="font-size:12.5px;color:var(--text-muted)">12 dernières semaines</span>
+<span style="margin-left:auto;font-size:12.5px;font-weight:700;color:var(--green-600)">+18,4 %</span>
+</div>
+<div style="display:flex;align-items:flex-end;gap:10px;height:190px">{{ chart }}</div>
+</section>
+<section style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:20px;display:flex;flex-direction:column;gap:14px">
+<h2 style="margin:0;font-size:15.5px;font-weight:800;color:var(--text-heading)">À traiter aujourd'hui</h2>
+<sc-for list="{{ todo }}" as="t" hint-placeholder-count="4">
+<div style="display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:11px;background:var(--surface-sunken)">
+<div style="width:8px;height:8px;border-radius:50%;background:var(--gold-500);margin-top:6px;flex:none"></div>
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+<div style="font-size:13.5px;font-weight:700;color:var(--text-heading)">{{ t.title }}</div>
+<div style="font-size:12.5px;color:var(--text-muted);line-height:1.5">{{ t.meta }}</div>
+</div>
+<button style="margin-left:auto;flex:none;padding:6px 11px;border:1px solid var(--border-default);border-radius:8px;background:var(--white);font-size:12.5px;font-weight:700;color:var(--text-heading);cursor:pointer" style-hover="border-color:var(--navy-500);color:var(--navy-700)">Ouvrir</button>
+</div>
+</sc-for>
+</section>
+</div>
+<section style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="padding:18px 20px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:12px">
+<h2 style="margin:0;font-size:15.5px;font-weight:800;color:var(--text-heading)">Journal d'activité</h2>
+<span style="margin-left:auto;font-size:12.5px;color:var(--text-muted)">Horodatage UTC+1 — Casablanca</span>
+</div>
+<sc-for list="{{ activity }}" as="a" hint-placeholder-count="6">
+<div style="display:grid;grid-template-columns:96px minmax(0,1fr) 180px 130px;gap:16px;align-items:center;padding:13px 20px;border-bottom:1px solid var(--border-subtle);font-size:13.5px">
+<div style="color:var(--text-muted);font-variant-numeric:tabular-nums">{{ a.time }}</div>
+<div style="color:var(--text-body)">{{ a.text }}</div>
+<div style="color:var(--text-muted)">{{ a.actor }}</div>
+<div style="justify-self:start">
+<sc-if value="{{ a.ok }}"><span style="padding:4px 10px;border-radius:999px;background:var(--green-100);color:var(--green-700);font-size:12px;font-weight:800">{{ a.status }}</span></sc-if>
+<sc-if value="{{ a.warn }}"><span style="padding:4px 10px;border-radius:999px;background:var(--amber-100);color:var(--gold-700);font-size:12px;font-weight:800">{{ a.status }}</span></sc-if>
+<sc-if value="{{ a.bad }}"><span style="padding:4px 10px;border-radius:999px;background:var(--red-100);color:var(--red-600);font-size:12px;font-weight:800">{{ a.status }}</span></sc-if>
+</div>
+</div>
+</sc-for>
+</section>
+</sc-if>
+
+<sc-if value="{{ isVerif }}">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:16px;align-items:start">
+<section style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="padding:14px 18px;border-bottom:1px solid var(--border-subtle);display:flex;gap:8px;align-items:center">
+<sc-for list="{{ verifTabs }}" as="tb" hint-placeholder-count="4">
+<sc-if value="{{ tb.active }}"><button onClick="{{ tb.go }}" style="padding:7px 13px;border:0;border-radius:999px;background:var(--navy-700);color:#fff;font-size:13px;font-weight:700;cursor:pointer">{{ tb.label }}</button></sc-if>
+<sc-if value="{{ tb.inactive }}" hint-placeholder-val="{{ true }}"><button onClick="{{ tb.go }}" style="padding:7px 13px;border:1px solid var(--border-subtle);border-radius:999px;background:var(--white);color:var(--text-body);font-size:13px;font-weight:600;cursor:pointer" style-hover="border-color:var(--border-default);color:var(--text-heading)">{{ tb.label }}</button></sc-if>
+</sc-for>
+<span style="margin-left:auto;font-size:12.5px;color:var(--text-muted)">{{ verifCount }} dossiers en attente</span>
+</div>
+<sc-for list="{{ verifs }}" as="v" hint-placeholder-count="6">
+<div onClick="{{ v.select }}" style="display:grid;grid-template-columns:40px minmax(0,1fr) 150px 120px 96px;gap:14px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border-subtle);cursor:pointer" style-hover="background:var(--gray-50)">
+<div style="width:40px;height:40px;border-radius:50%;background:var(--navy-100);color:var(--navy-700);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800">{{ v.initials }}</div>
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+<div style="font-size:14px;font-weight:700;color:var(--text-heading)">{{ v.name }}</div>
+<div style="font-size:12.5px;color:var(--text-muted)">{{ v.meta }}</div>
+</div>
+<div style="font-size:13px;color:var(--text-body)">{{ v.doc }}</div>
+<div style="font-size:12.5px;color:var(--text-muted);font-variant-numeric:tabular-nums">{{ v.age }}</div>
+<div style="display:flex;gap:6px;justify-self:end">
+<button style="padding:6px 10px;border:0;border-radius:7px;background:var(--green-100);color:var(--green-700);font-size:12.5px;font-weight:800;cursor:pointer" style-hover="background:var(--green-500);color:#fff">✓</button>
+<button style="padding:6px 10px;border:0;border-radius:7px;background:var(--red-100);color:var(--red-600);font-size:12.5px;font-weight:800;cursor:pointer" style-hover="background:var(--red-500);color:#fff">✕</button>
+</div>
+</div>
+</sc-for>
+</section>
+<aside style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:20px;display:flex;flex-direction:column;gap:18px;position:sticky;top:96px">
+<div style="display:flex;gap:13px;align-items:center">
+<div style="width:52px;height:52px;border-radius:50%;background:var(--navy-100);color:var(--navy-700);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800">{{ sel.initials }}</div>
+<div style="display:flex;flex-direction:column;gap:3px">
+<div style="font-size:16px;font-weight:800;color:var(--text-heading)">{{ sel.name }}</div>
+<div style="font-size:12.5px;color:var(--text-muted)">{{ sel.meta }}</div>
+</div>
+</div>
+<div style="height:186px;border-radius:12px;background:var(--gray-150);border:1px dashed var(--border-default);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:12.5px;text-align:center;padding:16px;box-sizing:border-box">Aperçu du document — {{ sel.doc }}<br>(pièce chiffrée, visible 15 min)</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{ sel.checks }}" as="c" hint-placeholder-count="4">
+<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding-bottom:9px;border-bottom:1px solid var(--border-subtle)">
+<span style="color:var(--text-body)">{{ c.label }}</span>
+<sc-if value="{{ c.ok }}"><span style="font-weight:800;color:var(--green-600)">Conforme</span></sc-if>
+<sc-if value="{{ c.warn }}"><span style="font-weight:800;color:var(--gold-700)">À vérifier</span></sc-if>
+</div>
+</sc-for>
+</div>
+<textarea placeholder="Note interne (visible par l'équipe conformité uniquement)" style="min-height:78px;padding:11px;border:1px solid var(--border-subtle);border-radius:10px;font-family:inherit;font-size:13px;color:var(--text-heading);resize:vertical;outline:none" style-focus="border-color:var(--border-focus);box-shadow:0 0 0 3px var(--navy-100)"></textarea>
+<div style="display:flex;gap:10px">
+<button style="flex:1;padding:11px;border:0;border-radius:9px;background:var(--green-600);color:#fff;font-size:13.5px;font-weight:800;cursor:pointer" style-hover="background:var(--green-700)">Valider le profil</button>
+<button style="flex:1;padding:11px;border:1px solid var(--red-500);border-radius:9px;background:var(--white);color:var(--red-600);font-size:13.5px;font-weight:800;cursor:pointer" style-hover="background:var(--red-100)">Refuser</button>
+</div>
+</aside>
+</div>
+</sc-if>
+
+<sc-if value="{{ isListings }}">
+<section style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 130px 120px 140px 120px 92px;gap:16px;padding:13px 20px;border-bottom:1px solid var(--border-subtle);background:var(--surface-sunken);font-size:12px;font-weight:800;color:var(--text-muted);letter-spacing:.05em;text-transform:uppercase">
+<div>Annonce</div><div>Ville</div><div>Loyer</div><div>Hôte</div><div>Statut</div><div style="justify-self:end">Action</div>
+</div>
+<sc-for list="{{ listings }}" as="l" hint-placeholder-count="7">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 130px 120px 140px 120px 92px;gap:16px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--border-subtle);font-size:13.5px" style-hover="background:var(--gray-50)">
+<div style="display:flex;gap:12px;align-items:center;min-width:0">
+<div style="width:46px;height:38px;border-radius:8px;background:var(--gray-150);flex:none"></div>
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+<div style="font-weight:700;color:var(--text-heading);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ l.title }}</div>
+<div style="font-size:12px;color:var(--text-muted)">{{ l.ref }}</div>
+</div>
+</div>
+<div style="color:var(--text-body)">{{ l.city }}</div>
+<div style="color:var(--text-heading);font-weight:700;font-variant-numeric:tabular-nums">{{ l.rent }}</div>
+<div style="color:var(--text-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ l.host }}</div>
+<div>
+<sc-if value="{{ l.ok }}"><span style="padding:4px 10px;border-radius:999px;background:var(--green-100);color:var(--green-700);font-size:12px;font-weight:800">{{ l.status }}</span></sc-if>
+<sc-if value="{{ l.warn }}"><span style="padding:4px 10px;border-radius:999px;background:var(--amber-100);color:var(--gold-700);font-size:12px;font-weight:800">{{ l.status }}</span></sc-if>
+<sc-if value="{{ l.bad }}"><span style="padding:4px 10px;border-radius:999px;background:var(--red-100);color:var(--red-600);font-size:12px;font-weight:800">{{ l.status }}</span></sc-if>
+</div>
+<button style="justify-self:end;padding:6px 11px;border:1px solid var(--border-default);border-radius:8px;background:var(--white);font-size:12.5px;font-weight:700;color:var(--text-heading);cursor:pointer" style-hover="border-color:var(--navy-500);color:var(--navy-700)">Examiner</button>
+</div>
+</sc-for>
+<div style="padding:14px 20px;display:flex;align-items:center;gap:12px;font-size:13px;color:var(--text-muted)">1 – 7 sur 1 284 annonces<div style="margin-left:auto;display:flex;gap:8px"><button style="padding:7px 12px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--white);font-size:13px;font-weight:600;color:var(--text-body);cursor:pointer">Précédent</button><button style="padding:7px 12px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--white);font-size:13px;font-weight:600;color:var(--text-heading);cursor:pointer" style-hover="border-color:var(--border-default)">Suivant</button></div></div>
+</section>
+</sc-if>
+
+<sc-if value="{{ isUsers }}">
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px">
+<sc-for list="{{ userStats }}" as="u" hint-placeholder-count="4">
+<div style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:14px;box-shadow:var(--shadow-sm);padding:18px;display:flex;flex-direction:column;gap:7px">
+<div style="font-size:12.5px;font-weight:700;color:var(--text-muted)">{{ u.label }}</div>
+<div style="font-size:26px;font-weight:800;color:var(--text-heading);letter-spacing:-0.02em;line-height:1">{{ u.value }}</div>
+</div>
+</sc-for>
+</div>
+<section style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 120px 130px 120px 110px 92px;gap:16px;padding:13px 20px;border-bottom:1px solid var(--border-subtle);background:var(--surface-sunken);font-size:12px;font-weight:800;color:var(--text-muted);letter-spacing:.05em;text-transform:uppercase">
+<div>Utilisateur</div><div>Rôle</div><div>Inscription</div><div>Vérification</div><div>Signalements</div><div style="justify-self:end">Action</div>
+</div>
+<sc-for list="{{ users }}" as="u" hint-placeholder-count="7">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 120px 130px 120px 110px 92px;gap:16px;align-items:center;padding:13px 20px;border-bottom:1px solid var(--border-subtle);font-size:13.5px" style-hover="background:var(--gray-50)">
+<div style="display:flex;gap:11px;align-items:center;min-width:0">
+<div style="width:34px;height:34px;border-radius:50%;background:var(--navy-100);color:var(--navy-700);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:none">{{ u.initials }}</div>
+<div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+<div style="font-weight:700;color:var(--text-heading)">{{ u.name }}</div>
+<div style="font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.email }}</div>
+</div>
+</div>
+<div style="color:var(--text-body)">{{ u.role }}</div>
+<div style="color:var(--text-muted);font-variant-numeric:tabular-nums">{{ u.joined }}</div>
+<div>
+<sc-if value="{{ u.ok }}"><span style="padding:4px 10px;border-radius:999px;background:var(--green-100);color:var(--green-700);font-size:12px;font-weight:800">Vérifié</span></sc-if>
+<sc-if value="{{ u.warn }}"><span style="padding:4px 10px;border-radius:999px;background:var(--amber-100);color:var(--gold-700);font-size:12px;font-weight:800">En attente</span></sc-if>
+<sc-if value="{{ u.bad }}"><span style="padding:4px 10px;border-radius:999px;background:var(--gray-150);color:var(--gray-600);font-size:12px;font-weight:800">Suspendu</span></sc-if>
+</div>
+<div style="color:var(--text-body);font-variant-numeric:tabular-nums">{{ u.flags }}</div>
+<button style="justify-self:end;padding:6px 11px;border:1px solid var(--border-default);border-radius:8px;background:var(--white);font-size:12.5px;font-weight:700;color:var(--text-heading);cursor:pointer" style-hover="border-color:var(--navy-500);color:var(--navy-700)">Fiche</button>
+</div>
+</sc-for>
+</section>
+</sc-if>
+
+<sc-if value="{{ isContracts }}">
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
+<sc-for list="{{ money }}" as="m" hint-placeholder-count="3">
+<div style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:14px;box-shadow:var(--shadow-sm);padding:18px;display:flex;flex-direction:column;gap:7px">
+<div style="font-size:12.5px;font-weight:700;color:var(--text-muted)">{{ m.label }}</div>
+<div style="font-size:28px;font-weight:800;color:var(--text-heading);letter-spacing:-0.02em;line-height:1">{{ m.value }}</div>
+<div style="font-size:12.5px;color:var(--text-muted)">{{ m.note }}</div>
+</div>
+</sc-for>
+</div>
+<section style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);overflow:hidden">
+<div style="display:grid;grid-template-columns:130px minmax(0,1fr) 150px 120px 130px 96px;gap:16px;padding:13px 20px;border-bottom:1px solid var(--border-subtle);background:var(--surface-sunken);font-size:12px;font-weight:800;color:var(--text-muted);letter-spacing:.05em;text-transform:uppercase">
+<div>Contrat</div><div>Parties</div><div>Période</div><div>Dépôt</div><div>Statut</div><div style="justify-self:end">Action</div>
+</div>
+<sc-for list="{{ contracts }}" as="c" hint-placeholder-count="6">
+<div style="display:grid;grid-template-columns:130px minmax(0,1fr) 150px 120px 130px 96px;gap:16px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--border-subtle);font-size:13.5px" style-hover="background:var(--gray-50)">
+<div style="font-weight:800;color:var(--text-heading);font-variant-numeric:tabular-nums">{{ c.ref }}</div>
+<div style="color:var(--text-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.parties }}</div>
+<div style="color:var(--text-muted)">{{ c.period }}</div>
+<div style="color:var(--text-heading);font-weight:700;font-variant-numeric:tabular-nums">{{ c.deposit }}</div>
+<div>
+<sc-if value="{{ c.ok }}"><span style="padding:4px 10px;border-radius:999px;background:var(--green-100);color:var(--green-700);font-size:12px;font-weight:800">{{ c.status }}</span></sc-if>
+<sc-if value="{{ c.warn }}"><span style="padding:4px 10px;border-radius:999px;background:var(--amber-100);color:var(--gold-700);font-size:12px;font-weight:800">{{ c.status }}</span></sc-if>
+<sc-if value="{{ c.bad }}"><span style="padding:4px 10px;border-radius:999px;background:var(--red-100);color:var(--red-600);font-size:12px;font-weight:800">{{ c.status }}</span></sc-if>
+</div>
+<button style="justify-self:end;padding:6px 11px;border:1px solid var(--border-default);border-radius:8px;background:var(--white);font-size:12.5px;font-weight:700;color:var(--text-heading);cursor:pointer" style-hover="border-color:var(--navy-500);color:var(--navy-700)">Détail</button>
+</div>
+</sc-for>
+</section>
+</sc-if>
+
+<sc-if value="{{ isReports }}">
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start">
+<sc-for list="{{ reports }}" as="r" hint-placeholder-count="4">
+<article style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px">
+<sc-if value="{{ r.urgent }}"><span style="padding:4px 10px;border-radius:999px;background:var(--red-100);color:var(--red-600);font-size:12px;font-weight:800">Prioritaire</span></sc-if>
+<sc-if value="{{ r.normal }}"><span style="padding:4px 10px;border-radius:999px;background:var(--amber-100);color:var(--gold-700);font-size:12px;font-weight:800">Standard</span></sc-if>
+<span style="font-size:12.5px;color:var(--text-muted);font-variant-numeric:tabular-nums">{{ r.ref }} · {{ r.age }}</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<h3 style="margin:0;font-size:15.5px;font-weight:800;color:var(--text-heading)">{{ r.title }}</h3>
+<p style="margin:0;font-size:13.5px;line-height:1.6;color:var(--text-body)">{{ r.body }}</p>
+</div>
+<div style="display:flex;align-items:center;gap:10px;padding-top:4px;border-top:1px solid var(--border-subtle)">
+<div style="display:flex;align-items:center;gap:9px;padding-top:10px">
+<div style="width:28px;height:28px;border-radius:50%;background:var(--navy-100);color:var(--navy-700);display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800">{{ r.initials }}</div>
+<div style="font-size:12.5px;color:var(--text-muted)">Signalé par {{ r.by }}</div>
+</div>
+<div style="margin-left:auto;display:flex;gap:8px;padding-top:10px">
+<button style="padding:7px 12px;border:1px solid var(--border-default);border-radius:8px;background:var(--white);font-size:12.5px;font-weight:700;color:var(--text-heading);cursor:pointer" style-hover="border-color:var(--navy-500)">Classer</button>
+<button style="padding:7px 12px;border:0;border-radius:8px;background:var(--brand-primary);color:#fff;font-size:12.5px;font-weight:700;cursor:pointer" style-hover="background:var(--brand-primary-hover)">Traiter</button>
+</div>
+</div>
+</article>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSettings }}">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start">
+<section style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:22px;display:flex;flex-direction:column;gap:18px">
+<h2 style="margin:0;font-size:15.5px;font-weight:800;color:var(--text-heading)">Règles de mise en relation</h2>
+<sc-for list="{{ rules }}" as="s" hint-placeholder-count="4">
+<div style="display:flex;gap:14px;align-items:flex-start;padding-bottom:16px;border-bottom:1px solid var(--border-subtle)">
+<div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+<div style="font-size:13.5px;font-weight:700;color:var(--text-heading)">{{ s.label }}</div>
+<div style="font-size:12.5px;color:var(--text-muted);line-height:1.5">{{ s.desc }}</div>
+</div>
+<div style="margin-left:auto;flex:none">
+<sc-if value="{{ s.on }}"><button onClick="{{ s.toggle }}" style="width:44px;height:25px;border-radius:999px;border:0;background:var(--green-500);cursor:pointer;display:flex;align-items:center;justify-content:flex-end;padding:3px;box-sizing:border-box"><span style="width:19px;height:19px;border-radius:50%;background:#fff;display:block"></span></button></sc-if>
+<sc-if value="{{ s.off }}"><button onClick="{{ s.toggle }}" style="width:44px;height:25px;border-radius:999px;border:0;background:var(--gray-300);cursor:pointer;display:flex;align-items:center;justify-content:flex-start;padding:3px;box-sizing:border-box"><span style="width:19px;height:19px;border-radius:50%;background:#fff;display:block"></span></button></sc-if>
+</div>
+</div>
+</sc-for>
+</section>
+<section style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:22px;display:flex;flex-direction:column;gap:16px">
+<h2 style="margin:0;font-size:15.5px;font-weight:800;color:var(--text-heading)">Équipe & rôles</h2>
+<sc-for list="{{ team }}" as="t" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--border-subtle)">
+<div style="width:36px;height:36px;border-radius:50%;background:var(--navy-100);color:var(--navy-700);display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:800">{{ t.initials }}</div>
+<div style="display:flex;flex-direction:column;gap:1px"><div style="font-size:13.5px;font-weight:700;color:var(--text-heading)">{{ t.name }}</div><div style="font-size:12.5px;color:var(--text-muted)">{{ t.email }}</div></div>
+<span style="margin-left:auto;padding:4px 10px;border-radius:999px;background:var(--navy-50);color:var(--navy-600);font-size:12px;font-weight:800">{{ t.role }}</span>
+</div>
+</sc-for>
+<button style="align-self:flex-start;padding:9px 14px;border:1px dashed var(--border-default);border-radius:9px;background:var(--white);color:var(--text-heading);font-size:13px;font-weight:700;cursor:pointer" style-hover="border-color:var(--navy-500);color:var(--navy-700)">+ Inviter un membre</button>
+</section>
+</div>
+</sc-if>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:960}}">
+const VIEWS = [
+  { id: 'overview', label: "Vue d'ensemble", glyph: '◧', title: "Vue d'ensemble", subtitle: 'Activité de la plateforme — 30 derniers jours' },
+  { id: 'verif', label: 'Vérifications', glyph: '✓', count: '23', title: 'Vérifications d’identité', subtitle: 'File KYC — CIN, statut étudiant, attestation employeur' },
+  { id: 'listings', label: 'Annonces', glyph: '▤', count: '8', title: 'Modération des annonces', subtitle: 'Contrôle qualité et conformité des logements publiés' },
+  { id: 'users', label: 'Utilisateurs', glyph: '☰', title: 'Utilisateurs', subtitle: 'Chercheurs, hôtes et partenaires institutionnels' },
+  { id: 'contracts', label: 'Contrats & paiements', glyph: '₪', title: 'Contrats & paiements', subtitle: 'Baux signés en ligne et dépôts de garantie séquestrés' },
+  { id: 'reports', label: 'Signalements', glyph: '⚑', count: '5', title: 'Signalements', subtitle: 'Litiges et contenus signalés par la communauté' },
+  { id: 'settings', label: 'Paramètres', glyph: '⚙', title: 'Paramètres', subtitle: 'Règles de matching, équipe et permissions' }
+];
+
+const BARS = [
+  ['S1', 34], ['S2', 41], ['S3', 38], ['S4', 52], ['S5', 47], ['S6', 61],
+  ['S7', 58], ['S8', 72], ['S9', 66], ['S10', 81], ['S11', 88], ['S12', 96]
+];
+
+const VERIFS = [
+  { initials: 'YB', name: 'Youssef Benali', meta: 'Étudiant — ENCG Casablanca', doc: 'CIN + carte étudiant', age: 'il y a 42 min' },
+  { initials: 'IM', name: 'Imane Mrabet', meta: 'Salariée — OCP Group', doc: 'CIN + attestation', age: 'il y a 1 h 10' },
+  { initials: 'AK', name: 'Anas El Khattabi', meta: 'Hôte — 3 annonces', doc: 'Titre de propriété', age: 'il y a 2 h 05' },
+  { initials: 'SL', name: 'Salma Lahlou', meta: 'Étudiante — UM6P Benguerir', doc: 'CIN + carte étudiant', age: 'il y a 3 h 30' },
+  { initials: 'MR', name: 'Mehdi Raji', meta: 'Salarié — Attijariwafa', doc: 'CIN + bulletin de paie', age: 'il y a 4 h 48' },
+  { initials: 'NC', name: 'Nada Cherkaoui', meta: 'Hôte — 1 annonce', doc: 'Bail + CIN', age: 'il y a 6 h 12' },
+  { initials: 'OT', name: 'Omar Tazi', meta: 'Étudiant — EMI Rabat', doc: 'CIN + carte étudiant', age: 'il y a 8 h 03' }
+];
+
+class Component extends DCLogic {
+  state = { view: 'overview', verifTab: 'attente', selected: 0, rules: [true, true, false, true] };
+
+  go(id) { return () => this.setState({ view: id }); }
+
+  renderVals() {
+    const v = this.state.view;
+    const meta = VIEWS.find(x => x.id === v) || VIEWS[0];
+    const sel = VERIFS[this.state.selected] || VERIFS[0];
+    const tabs = [['attente', 'En attente'], ['relance', 'Relancés'], ['refus', 'Refusés'], ['valides', 'Validés']];
+
+    return {
+      title: meta.title,
+      subtitle: meta.subtitle,
+      isOverview: v === 'overview', isVerif: v === 'verif', isListings: v === 'listings',
+      isUsers: v === 'users', isContracts: v === 'contracts', isReports: v === 'reports',
+      isSettings: v === 'settings',
+
+      nav: VIEWS.map(x => ({ ...x, active: x.id === v, inactive: x.id !== v, go: this.go(x.id) })),
+
+      kpis: [
+        { label: 'Profils vérifiés', value: '8 412', delta: '6,2 %', up: true },
+        { label: 'Annonces actives', value: '1 284', delta: '3,1 %', up: true },
+        { label: 'Mises en relation', value: '396', delta: '18,4 %', up: true },
+        { label: 'Délai de vérification', value: '4 h 12', delta: '11 %', down: true }
+      ],
+
+      chart: BARS.map(([label, h]) => React.createElement('div', {
+        key: label,
+        style: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, justifyContent: 'flex-end', height: '100%' }
+      }, [
+        React.createElement('div', { key: 'b', style: { width: '100%', height: h + '%', borderRadius: '6px 6px 0 0', background: h > 85 ? 'var(--navy-700)' : 'var(--navy-500)' } }),
+        React.createElement('div', { key: 'l', style: { fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 } }, label)
+      ])),
+
+      todo: [
+        { title: '23 dossiers KYC en attente', meta: '6 dépassent la cible de 6 h' },
+        { title: '8 annonces à modérer', meta: '2 signalées pour photos non conformes' },
+        { title: '3 dépôts de garantie à libérer', meta: 'Fin de bail confirmée par les deux parties' },
+        { title: '1 litige à arbitrer', meta: 'Dossier LIT-2291 — état des lieux contesté' }
+      ],
+
+      activity: [
+        { time: '14:38', text: 'Profil vérifié — Kenza Amrani (CIN + carte étudiant)', actor: 'S. Aït Bella', status: 'Validé', ok: true },
+        { time: '14:11', text: 'Annonce ANN-4471 dépubliée — photos trompeuses', actor: 'R. Bouzid', status: 'Refusé', bad: true },
+        { time: '13:52', text: 'Dépôt de garantie libéré — contrat CTR-1180', actor: 'Automatique', status: 'Validé', ok: true },
+        { time: '13:20', text: 'Signalement SIG-0442 ouvert — comportement inapproprié', actor: 'Communauté', status: 'En cours', warn: true },
+        { time: '12:47', text: 'Partenaire ajouté — Résidence Al Manar (Rabat)', actor: 'S. Aït Bella', status: 'Validé', ok: true },
+        { time: '11:59', text: 'Compte suspendu 30 j — annonces dupliquées', actor: 'R. Bouzid', status: 'Refusé', bad: true }
+      ],
+
+      verifCount: '23',
+      verifTabs: tabs.map(([id, label]) => ({
+        label, active: this.state.verifTab === id, inactive: this.state.verifTab !== id,
+        go: () => this.setState({ verifTab: id })
+      })),
+      verifs: VERIFS.map((x, i) => ({ ...x, select: () => this.setState({ selected: i }) })),
+      sel: {
+        ...sel,
+        checks: [
+          { label: 'Lisibilité du document', ok: true },
+          { label: 'Concordance nom / prénom', ok: true },
+          { label: 'Validité (date d’expiration)', ok: true },
+          { label: 'Selfie de correspondance', warn: true }
+        ]
+      },
+
+      listings: [
+        { title: 'Chambre lumineuse — Maârif, proche BD Zerktouni', ref: 'ANN-4482', city: 'Casablanca', rent: '2 400 MAD', host: 'A. El Khattabi', status: 'Publiée', ok: true },
+        { title: 'Colocation 3 chambres — Agdal', ref: 'ANN-4479', city: 'Rabat', rent: '1 900 MAD', host: 'N. Cherkaoui', status: 'En revue', warn: true },
+        { title: 'Studio meublé — Hivernage', ref: 'ANN-4476', city: 'Marrakech', rent: '3 200 MAD', host: 'K. Benjelloun', status: 'Publiée', ok: true },
+        { title: 'Chambre en résidence étudiante — Benguerir', ref: 'ANN-4470', city: 'Benguerir', rent: '1 500 MAD', host: 'Résidence UM6P', status: 'Publiée', ok: true },
+        { title: 'Appartement partagé — Gueliz, 2e étage', ref: 'ANN-4471', city: 'Marrakech', rent: '2 800 MAD', host: 'S. Fassi', status: 'Dépubliée', bad: true },
+        { title: 'Chambre chez l’habitant — Souissi', ref: 'ANN-4468', city: 'Rabat', rent: '2 100 MAD', host: 'L. Berrada', status: 'En revue', warn: true },
+        { title: 'Duplex 4 places — Californie', ref: 'ANN-4465', city: 'Casablanca', rent: '2 650 MAD', host: 'Y. Sqalli', status: 'Publiée', ok: true }
+      ],
+
+      userStats: [
+        { label: 'Comptes actifs', value: '11 903' },
+        { label: 'Chercheurs', value: '9 470' },
+        { label: 'Hôtes', value: '2 218' },
+        { label: 'Partenaires', value: '215' }
+      ],
+      users: [
+        { initials: 'KA', name: 'Kenza Amrani', email: 'kenza.amrani@um6p.ma', role: 'Chercheuse', joined: '12 juil. 2026', ok: true, flags: '0' },
+        { initials: 'AK', name: 'Anas El Khattabi', email: 'a.khattabi@gmail.com', role: 'Hôte', joined: '04 juin 2026', ok: true, flags: '1' },
+        { initials: 'IM', name: 'Imane Mrabet', email: 'i.mrabet@ocpgroup.ma', role: 'Chercheuse', joined: '28 juil. 2026', warn: true, flags: '0' },
+        { initials: 'SF', name: 'Sofia Fassi', email: 'sofia.fassi@outlook.com', role: 'Hôte', joined: '19 mars 2026', bad: true, flags: '4' },
+        { initials: 'RM', name: 'Résidence Al Manar', email: 'contact@almanar.ma', role: 'Partenaire', joined: '02 févr. 2026', ok: true, flags: '0' },
+        { initials: 'OT', name: 'Omar Tazi', email: 'omar.tazi@emi.ac.ma', role: 'Chercheur', joined: '30 juil. 2026', warn: true, flags: '0' },
+        { initials: 'LB', name: 'Leila Berrada', email: 'l.berrada@gmail.com', role: 'Hôte', joined: '11 janv. 2026', ok: true, flags: '2' }
+      ],
+
+      money: [
+        { label: 'Dépôts sous séquestre', value: '2,84 M MAD', note: '1 106 contrats en cours' },
+        { label: 'Commissions du mois', value: '318 400 MAD', note: 'Taux moyen 4,2 %' },
+        { label: 'Litiges ouverts', value: '7', note: '2 en arbitrage externe' }
+      ],
+      contracts: [
+        { ref: 'CTR-1204', parties: 'K. Amrani ↔ A. El Khattabi', period: 'Sept. 26 – Juin 27', deposit: '4 800 MAD', status: 'Actif', ok: true },
+        { ref: 'CTR-1201', parties: 'O. Tazi ↔ Résidence Al Manar', period: 'Sept. 26 – Juil. 27', deposit: '3 000 MAD', status: 'Signature', warn: true },
+        { ref: 'CTR-1198', parties: 'I. Mrabet ↔ N. Cherkaoui', period: 'Août 26 – Août 27', deposit: '3 800 MAD', status: 'Actif', ok: true },
+        { ref: 'CTR-1191', parties: 'M. Raji ↔ Y. Sqalli', period: 'Juil. 26 – Juin 27', deposit: '5 300 MAD', status: 'Litige', bad: true },
+        { ref: 'CTR-1187', parties: 'S. Lahlou ↔ K. Benjelloun', period: 'Juin 26 – Mai 27', deposit: '6 400 MAD', status: 'Actif', ok: true },
+        { ref: 'CTR-1180', parties: 'H. Alaoui ↔ L. Berrada', period: 'Sept. 25 – Juin 26', deposit: '4 200 MAD', status: 'Clôturé', ok: true }
+      ],
+
+      reports: [
+        { ref: 'SIG-0442', age: 'il y a 3 h', urgent: true, initials: 'IM', by: 'Imane Mrabet', title: 'Comportement inapproprié en messagerie', body: 'L’hôte insiste pour un paiement hors plateforme et refuse la signature du bail en ligne. Trois relances documentées dans la conversation.' },
+        { ref: 'SIG-0441', age: 'il y a 9 h', normal: true, initials: 'OT', by: 'Omar Tazi', title: 'Annonce non conforme aux photos', body: 'La chambre visitée ne correspond pas aux visuels publiés : surface et exposition différentes. Demande de retrait de l’annonce ANN-4471.' },
+        { ref: 'SIG-0439', age: 'il y a 1 j', urgent: true, initials: 'MR', by: 'Mehdi Raji', title: 'État des lieux contesté — retenue sur dépôt', body: 'Retenue de 2 000 MAD sur le dépôt sans justificatif photographique. Le locataire fournit un état des lieux d’entrée signé.' },
+        { ref: 'SIG-0436', age: 'il y a 2 j', normal: true, initials: 'SL', by: 'Salma Lahlou', title: 'Profil dupliqué', body: 'Deux comptes hôtes utilisent les mêmes photos et le même numéro de téléphone pour des annonces distinctes à Marrakech.' }
+      ],
+
+      rules: [
+        { label: 'Score de compatibilité minimum', desc: 'Masquer les annonces sous 55 % de compatibilité dans les résultats du chercheur.', on: this.state.rules[0], off: !this.state.rules[0], toggle: () => this.toggleRule(0) },
+        { label: 'Vérification obligatoire avant contact', desc: 'Le chercheur doit avoir une CIN validée pour ouvrir une conversation.', on: this.state.rules[1], off: !this.state.rules[1], toggle: () => this.toggleRule(1) },
+        { label: 'Publication automatique des annonces', desc: 'Publier sans revue humaine si l’hôte a déjà 3 baux clôturés sans litige.', on: this.state.rules[2], off: !this.state.rules[2], toggle: () => this.toggleRule(2) },
+        { label: 'Séquestre du dépôt de garantie', desc: 'Bloquer le dépôt jusqu’à confirmation de l’état des lieux par les deux parties.', on: this.state.rules[3], off: !this.state.rules[3], toggle: () => this.toggleRule(3) }
+      ],
+      team: [
+        { initials: 'SA', name: 'Salma Aït Bella', email: 's.aitbella@m3a-l3chrane.ma', role: 'Admin' },
+        { initials: 'RB', name: 'Rachid Bouzid', email: 'r.bouzid@m3a-l3chrane.ma', role: 'Modération' },
+        { initials: 'HL', name: 'Hind Lamrani', email: 'h.lamrani@m3a-l3chrane.ma', role: 'Conformité' },
+        { initials: 'ZT', name: 'Zakaria Tahiri', email: 'z.tahiri@m3a-l3chrane.ma', role: 'Support' }
+      ]
+    };
+  }
+
+  toggleRule(i) {
+    this.setState(s => { const r = s.rules.slice(); r[i] = !r[i]; return { rules: r }; });
+  }
+}
+</script>
+</body>
+</html>

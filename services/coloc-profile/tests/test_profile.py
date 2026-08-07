@@ -38,16 +38,16 @@ def test_put_profile_validates_and_emits(client, db_session):
 
 def test_put_lifestyle_replaces_and_validates(client, db_session):
     ok = {"answers": [
-        {"question_code": "tabac", "value": "non_fumeur", "importance": "DECISIF"},
-        {"question_code": "coucher", "value": "tot", "importance": "PREFERENCE"},
+        {"question_code": "tabac", "value": "non-fumeur", "importance": "DECISIF"},
+        {"question_code": "coucher", "value": "avant22", "importance": "PREFERENCE"},
     ]}
     resp = client.put("/me/lifestyle", json=ok, headers=headers())
     assert resp.status_code == 200 and len(resp.json()) == 2
     # remplacement complet
     resp = client.put("/me/lifestyle", headers=headers(),
-                      json={"answers": [{"question_code": "tabac", "value": "fumeur",
+                      json={"answers": [{"question_code": "tabac", "value": "interieur",
                                          "importance": "PREFERENCE"}]})
-    assert [a["value"] for a in resp.json()] == ["fumeur"]
+    assert [a["value"] for a in resp.json()] == ["interieur"]
     # hors référentiel → 400
     assert client.put("/me/lifestyle", headers=headers(),
                       json={"answers": [{"question_code": "regime", "value": "x",

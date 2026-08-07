@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from 'react-query'
 import { toast } from 'react-toastify'
+import { useTranslation } from 'react-i18next'
 import {
   FiFilter, FiGrid, FiList, FiChevronLeft, FiChevronRight,
   FiMap, FiSliders, FiX, FiBell
@@ -11,17 +12,18 @@ import PropertyCard from '../components/common/PropertyCard'
 import AdvancedSearch from '../components/search/AdvancedSearch'
 import PropertyMap from '../components/map/PropertyMap'
 import CompareBar from '../components/common/CompareBar'
+import DirIcon from '../components/common/DirIcon'
 import { propertyService } from '../services/propertyService'
 import { buyerService } from '../services/buyerService'
 import useAuthStore from '../store/authStore'
 
 const SORT_OPTIONS = [
-  { value: 'newest', label: 'Plus récentes' },
-  { value: 'oldest', label: 'Plus anciennes' },
-  { value: 'price_asc', label: 'Prix croissant' },
-  { value: 'price_desc', label: 'Prix décroissant' },
-  { value: 'surface_desc', label: 'Surface décroissante' },
-  { value: 'rooms_desc', label: 'Plus de pièces' }
+  { value: 'newest', labelKey: 'sortNewest' },
+  { value: 'oldest', labelKey: 'sortOldest' },
+  { value: 'price_asc', labelKey: 'sortPriceAsc' },
+  { value: 'price_desc', labelKey: 'sortPriceDesc' },
+  { value: 'surface_desc', labelKey: 'sortSurfaceDesc' },
+  { value: 'rooms_desc', labelKey: 'sortRoomsDesc' }
 ]
 
 const VIEW_MODES = {
@@ -32,6 +34,7 @@ const VIEW_MODES = {
 }
 
 function PropertyList() {
+  const { t } = useTranslation(['public'])
   const [searchParams, setSearchParams] = useSearchParams()
   const [viewMode, setViewMode] = useState(VIEW_MODES.GRID)
   const [showMobileSearch, setShowMobileSearch] = useState(false)
@@ -95,10 +98,10 @@ function PropertyList() {
 
   const handleSaveSearch = async () => {
     if (!isAuthenticated) {
-      toast.info('Connectez-vous pour sauvegarder cette recherche')
+      toast.info(t('public:propertyList.saveSearchLoginPrompt'))
       return
     }
-    const name = window.prompt('Nom de cette recherche (ex: "Appart Casablanca -2M")', getTitle())
+    const name = window.prompt(t('public:propertyList.saveSearchNamePrompt'), getTitle())
     if (!name) return
 
     setSavingSearch(true)
@@ -109,9 +112,9 @@ function PropertyList() {
         )
       )
       await buyerService.createSavedSearch({ name, criteria, notify_new_matches: true })
-      toast.success('Recherche sauvegardée ! Vous recevrez un email pour chaque nouveau bien correspondant.')
+      toast.success(t('public:propertyList.saveSearchSuccess'))
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde')
+      toast.error(error.response?.data?.error || t('public:propertyList.saveSearchError'))
     } finally {
       setSavingSearch(false)
     }
@@ -127,15 +130,15 @@ function PropertyList() {
   const getTitle = () => {
     const parts = []
     if (filters.transaction_type === 'rent') {
-      parts.push('Locations')
+      parts.push(t('public:propertyList.titleRent'))
     } else if (filters.transaction_type === 'sale') {
-      parts.push('Ventes')
+      parts.push(t('public:propertyList.titleSale'))
     } else {
-      parts.push('Annonces')
+      parts.push(t('public:propertyList.titleDefault'))
     }
-    parts.push('immobilières')
+    parts.push(t('public:propertyList.titleSuffix'))
     if (filters.city) {
-      parts.push(`à ${filters.city}`)
+      parts.push(t('public:propertyList.titleCity', { city: filters.city }))
     }
     return parts.join(' ')
   }
@@ -161,7 +164,7 @@ function PropertyList() {
         >
           <span className="flex items-center gap-2">
             <FiFilter />
-            <span>Rechercher et filtrer</span>
+            <span>{t('public:propertyList.searchToggle')}</span>
             {activeFiltersCount > 0 && (
               <span className="bg-primary-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                 {activeFiltersCount}
@@ -178,7 +181,7 @@ function PropertyList() {
           <div className="absolute inset-0 bg-black/50" onClick={() => setShowMobileSearch(false)} />
           <div className="absolute inset-x-0 top-0 max-h-[90vh] overflow-auto bg-white rounded-b-2xl">
             <div className="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
-              <h2 className="font-semibold text-lg">Recherche avancée</h2>
+              <h2 className="font-semibold text-lg">{t('public:propertyList.mobileSearchModalTitle')}</h2>
               <button
                 onClick={() => setShowMobileSearch(false)}
                 className="p-2 hover:bg-gray-100 rounded-full"
@@ -205,11 +208,9 @@ function PropertyList() {
             </h1>
             <p className="text-gray-600 mt-1">
               {isLoading ? (
-                <span className="animate-pulse">Chargement...</span>
+                <span className="animate-pulse">{t('public:propertyList.loading')}</span>
               ) : (
-                <>
-                  <span className="font-semibold text-primary-600">{data?.total || 0}</span> annonces trouvées
-                </>
+                <span>{t('public:propertyList.resultsCount', { n: data?.total || 0 })}</span>
               )}
             </p>
           </div>
@@ -219,7 +220,7 @@ function PropertyList() {
             {filters.ai_query && (
               <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-sm">
                 <HiSparkles className="w-4 h-4" />
-                <span className="max-w-[200px] truncate">"{filters.ai_query}"</span>
+                <span className="max-w-[200px] truncate">&quot;{filters.ai_query}&quot;</span>
                 <button
                   onClick={() => {
                     const newParams = new URLSearchParams(searchParams)
@@ -241,7 +242,7 @@ function PropertyList() {
                   className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm"
                 >
                   <FiX className="w-4 h-4" />
-                  Effacer ({activeFiltersCount})
+                  {t('public:propertyList.clearFilters', { n: activeFiltersCount })}
                 </button>
                 <button
                   onClick={handleSaveSearch}
@@ -249,7 +250,7 @@ function PropertyList() {
                   className="flex items-center gap-2 px-3 py-1.5 border border-primary-200 text-primary-700 hover:bg-primary-50 rounded-lg text-sm font-medium disabled:opacity-50"
                 >
                   <FiBell className="w-4 h-4" />
-                  Sauvegarder + alertes
+                  {t('public:propertyList.saveSearch')}
                 </button>
               </>
             )}
@@ -261,7 +262,7 @@ function PropertyList() {
               className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               {SORT_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <option key={opt.value} value={opt.value}>{t(`public:propertyList.${opt.labelKey}`)}</option>
               ))}
             </select>
 
@@ -274,7 +275,7 @@ function PropertyList() {
                     ? 'bg-white text-primary-600 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
-                title="Vue grille"
+                title={t('public:propertyList.viewGrid')}
               >
                 <FiGrid className="w-4 h-4" />
               </button>
@@ -285,7 +286,7 @@ function PropertyList() {
                     ? 'bg-white text-primary-600 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
-                title="Vue liste"
+                title={t('public:propertyList.viewList')}
               >
                 <FiList className="w-4 h-4" />
               </button>
@@ -296,7 +297,7 @@ function PropertyList() {
                     ? 'bg-white text-primary-600 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
-                title="Vue carte"
+                title={t('public:propertyList.viewMap')}
               >
                 <FiMap className="w-4 h-4" />
               </button>
@@ -307,7 +308,7 @@ function PropertyList() {
                     ? 'bg-white text-primary-600 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
-                title="Vue mixte"
+                title={t('public:propertyList.viewSplit')}
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="3" width="8" height="18" rx="1" />
@@ -321,7 +322,7 @@ function PropertyList() {
         {/* Error State */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <p className="text-red-700">Une erreur est survenue lors du chargement des annonces.</p>
+            <p className="text-red-700">{t('public:propertyList.errorLoading')}</p>
           </div>
         )}
 
@@ -355,7 +356,7 @@ function PropertyList() {
             {viewMode === VIEW_MODES.SPLIT && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* List side */}
-                <div className="space-y-4 max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
+                <div className="space-y-4 max-h-[calc(100vh-280px)] overflow-y-auto pe-2">
                   {data?.properties?.map(property => (
                     <div
                       key={property.id}
@@ -371,7 +372,7 @@ function PropertyList() {
                   ))}
                   {(!data?.properties || data.properties.length === 0) && (
                     <div className="text-center py-8 text-gray-500">
-                      Aucune annonce trouvée
+                      {t('public:propertyList.emptyTitle')}
                     </div>
                   )}
                 </div>
@@ -414,8 +415,8 @@ function PropertyList() {
                           disabled={page === 1}
                           className="flex items-center gap-1 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
-                          <FiChevronLeft className="w-4 h-4" />
-                          <span className="hidden sm:inline">Précédent</span>
+                          <DirIcon icon={FiChevronLeft} className="w-4 h-4" />
+                          <span className="hidden sm:inline">{t('public:propertyList.previous')}</span>
                         </button>
 
                         {/* Page numbers */}
@@ -453,15 +454,19 @@ function PropertyList() {
                           disabled={page === data.pages}
                           className="flex items-center gap-1 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
-                          <span className="hidden sm:inline">Suivant</span>
-                          <FiChevronRight className="w-4 h-4" />
+                          <span className="hidden sm:inline">{t('public:propertyList.next')}</span>
+                          <DirIcon icon={FiChevronRight} className="w-4 h-4" />
                         </button>
                       </div>
                     )}
 
                     {/* Results info */}
                     <p className="text-center text-sm text-gray-500 mt-4">
-                      Affichage {((page - 1) * 12) + 1} - {Math.min(page * 12, data.total)} sur {data.total} résultats
+                      {t('public:propertyList.resultsInfo', {
+                        from: ((page - 1) * 12) + 1,
+                        to: Math.min(page * 12, data.total),
+                        total: data.total
+                      })}
                     </p>
                   </>
                 ) : (
@@ -471,16 +476,16 @@ function PropertyList() {
                       <FiFilter className="w-10 h-10 text-gray-400" />
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      Aucune annonce trouvée
+                      {t('public:propertyList.emptyTitle')}
                     </h3>
                     <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                      Essayez de modifier vos critères de recherche ou d'élargir votre zone géographique.
+                      {t('public:propertyList.emptyText')}
                     </p>
                     <button
                       onClick={clearAllFilters}
                       className="btn-primary"
                     >
-                      Réinitialiser les filtres
+                      {t('public:propertyList.resetFilters')}
                     </button>
                   </div>
                 )}

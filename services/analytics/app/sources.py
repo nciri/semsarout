@@ -75,8 +75,9 @@ def subscriptions_stats() -> dict:
 
 
 # --- Comptes admin (super-admin) : `/admin/accounts` (liste + détail) ---
-def users_list() -> list[dict]:
-    return _get(f"{IDENTITY_URL}/internal/users", {}).get("users", [])
+def users_list(tenant: str | None = None) -> list[dict]:
+    params = {"tenant": tenant} if tenant else {}
+    return _get(f"{IDENTITY_URL}/internal/users", params).get("users", [])
 
 
 def user_detail(user_id: int) -> dict:

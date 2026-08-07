@@ -12,7 +12,7 @@ def _listing(db):
                       description="Belle chambre.", bed_type="CHAMBRE_INDIVIDUELLE",
                       rent=Decimal("2200.00"), housing_gender="FEMININ", furnished=True, capacity=3)
     db.add(listing); db.flush()
-    db.add(HouseRule(listing_id=listing.id, code="fumeur", value="Non-fumeur"))
+    db.add(HouseRule(listing_id=listing.id, code="tabac", value="non-fumeur"))
     db.add(ListingMedia(listing_id=listing.id, url="/uploads/photos/demo1.jpg",
                         position=0, media_type="CHAMBRE"))
     db.add(CurrentRoommates(listing_id=listing.id, total=2, women=2, men=0))
@@ -29,7 +29,7 @@ def test_defaults_and_to_dict(db_session):
     assert d["city"] == "Casablanca"
     assert d["rent"] == 2200.0
     assert d["media"] == [{"url": "/uploads/photos/demo1.jpg", "position": 0, "media_type": "CHAMBRE"}]
-    assert d["house_rules"] == [{"code": "fumeur", "value": "Non-fumeur"}]
+    assert d["house_rules"] == [{"code": "tabac", "value": "non-fumeur"}]
     assert d["roommates"] == {"total": 2, "women": 2, "men": 0}
     # Confidentialité : jamais d'adresse ni de coordonnées dans les sorties.
     assert "address" not in d and "latitude" not in d and "longitude" not in d

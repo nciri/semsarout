@@ -1,10 +1,20 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { FiFacebook, FiInstagram, FiLinkedin, FiTwitter, FiYoutube } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
 import StayManagerWordmark from '../common/StayManagerWordmark'
 import Wordmark from '../common/Wordmark'
 
+const SOCIAL_NETWORKS = [
+  { icon: FiFacebook, name: 'Facebook' },
+  { icon: FiInstagram, name: 'Instagram' },
+  { icon: FiLinkedin, name: 'LinkedIn' },
+  { icon: FiTwitter, name: 'Twitter' },
+  { icon: FiYoutube, name: 'YouTube' }
+]
+
 function Footer() {
+  const { t } = useTranslation(['common'])
   return (
     <footer className="bg-midnight text-ivory/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -15,69 +25,63 @@ function Footer() {
               <Wordmark dark />
             </Link>
             <p className="text-sm mb-4 max-w-xs">
-              L'immobilier sans les intermédiaires douteux. Vendez, louez et gérez votre bien
-              à tarif fixe, sans commission, avec un accompagnement professionnel.
+              {t('common:footer.tagline')}
             </p>
-            <div className="flex space-x-4">
-              <span className="text-ivory/30 cursor-not-allowed" aria-label="Facebook (bientôt disponible)" title="Bientôt disponible">
-                <FiFacebook className="w-5 h-5" />
-              </span>
-              <span className="text-ivory/30 cursor-not-allowed" aria-label="Instagram (bientôt disponible)" title="Bientôt disponible">
-                <FiInstagram className="w-5 h-5" />
-              </span>
-              <span className="text-ivory/30 cursor-not-allowed" aria-label="LinkedIn (bientôt disponible)" title="Bientôt disponible">
-                <FiLinkedin className="w-5 h-5" />
-              </span>
-              <span className="text-ivory/30 cursor-not-allowed" aria-label="Twitter (bientôt disponible)" title="Bientôt disponible">
-                <FiTwitter className="w-5 h-5" />
-              </span>
-              <span className="text-ivory/30 cursor-not-allowed" aria-label="YouTube (bientôt disponible)" title="Bientôt disponible">
-                <FiYoutube className="w-5 h-5" />
-              </span>
+            <div className="flex gap-4">
+              {SOCIAL_NETWORKS.map(({ icon: Icon, name }) => (
+                <span
+                  key={name}
+                  className="text-ivory/30 cursor-not-allowed"
+                  aria-label={t('common:footer.socialAria', { network: name })}
+                  title={t('common:footer.comingSoon')}
+                >
+                  <Icon className="w-5 h-5" />
+                </span>
+              ))}
             </div>
           </div>
 
           {/* Vente */}
           <div>
-            <h4 className="font-semibold text-white mb-4">Vente</h4>
+            <h4 className="font-semibold text-white mb-4">{t('common:footer.saleTitle')}</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/nos-services" className="hover:text-white transition-colors">Forfait Vente ({formatPrice(4900)})</Link></li>
-              <li><Link to="/nos-services" className="hover:text-white transition-colors">Photos Professionnelles</Link></li>
-              <li><Link to="/nos-services" className="hover:text-white transition-colors">Estimation Gratuite</Link></li>
-              <li><Link to="/annonces?transaction_type=sale" className="hover:text-white transition-colors">Acheter un bien</Link></li>
-              <li><Link to="/simulateur-credit" className="hover:text-white transition-colors">Simulateur de crédit</Link></li>
+              <li><Link to="/nos-services" className="hover:text-white transition-colors">{t('common:footer.salePackage', { price: formatPrice(4900) })}</Link></li>
+              <li><Link to="/nos-services" className="hover:text-white transition-colors">{t('common:footer.professionalPhotos')}</Link></li>
+              <li><Link to="/nos-services" className="hover:text-white transition-colors">{t('common:footer.freeEstimate')}</Link></li>
+              <li><Link to="/annonces?transaction_type=sale" className="hover:text-white transition-colors">{t('common:footer.buyProperty')}</Link></li>
+              <li><Link to="/simulateur-credit" className="hover:text-white transition-colors">{t('common:footer.mortgageSimulator')}</Link></li>
             </ul>
           </div>
 
           {/* Location */}
           <div>
-            <h4 className="font-semibold text-white mb-4">Location</h4>
+            <h4 className="font-semibold text-white mb-4">{t('common:footer.rentTitle')}</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/nos-services" className="hover:text-white transition-colors">Mise en Location</Link></li>
-              <li><Link to="/nos-services" className="hover:text-white transition-colors">Gestion Locative Complète</Link></li>
+              <li><Link to="/nos-services" className="hover:text-white transition-colors">{t('common:footer.listForRent')}</Link></li>
+              <li><Link to="/nos-services" className="hover:text-white transition-colors">{t('common:footer.fullPropertyManagement')}</Link></li>
               <li>
                 <Link to="/nos-services" className="hover:text-white transition-colors">
-                  Location Courte Durée
-                  <span className="ml-1 text-xs text-[#AFCFBC]">StayManager</span>
+                  {t('common:footer.shortTermRental')}
+                  <span className="ms-1 text-xs text-[#AFCFBC]">StayManager</span>
                 </Link>
               </li>
-              <li><Link to="/annonces?transaction_type=rent" className="hover:text-white transition-colors">Louer un bien</Link></li>
+              <li><Link to="/annonces?transaction_type=rent" className="hover:text-white transition-colors">{t('common:footer.rentProperty')}</Link></li>
             </ul>
           </div>
 
           {/* Professionnels & À propos */}
           <div>
-            <h4 className="font-semibold text-white mb-4">Professionnels</h4>
+            <h4 className="font-semibold text-white mb-4">{t('common:footer.professionalsTitle')}</h4>
             <ul className="space-y-2 text-sm mb-6">
-              <li><Link to="/agences" className="hover:text-white transition-colors">Agences partenaires</Link></li>
-              <li><Link to="/dashboard/agence" className="hover:text-white transition-colors">Devenir partenaire</Link></li>
-              <li><Link to="/agences/tarifs" className="hover:text-white transition-colors">Tarifs agences</Link></li>
+              <li><Link to="/agences" className="hover:text-white transition-colors">{t('common:footer.partnerAgencies')}</Link></li>
+              <li><Link to="/dashboard/agence" className="hover:text-white transition-colors">{t('common:footer.becomePartner')}</Link></li>
+              <li><Link to="/agences/tarifs" className="hover:text-white transition-colors">{t('common:footer.agencyPricing')}</Link></li>
             </ul>
 
-            <h4 className="font-semibold text-white mb-4">À propos</h4>
+            <h4 className="font-semibold text-white mb-4">{t('common:footer.aboutTitle')}</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/a-propos" className="hover:text-white transition-colors">Qui sommes-nous</Link></li>
-              <li><Link to="/contact" className="hover:text-white transition-colors">Nous contacter</Link></li>
+              <li><Link to="/a-propos" className="hover:text-white transition-colors">{t('common:footer.whoWeAre')}</Link></li>
+              <li><Link to="/contact" className="hover:text-white transition-colors">{t('common:footer.contactUs')}</Link></li>
               <li>
                 <a
                   href="https://www.staymanager.ma"
@@ -86,7 +90,7 @@ function Footer() {
                   className="hover:text-white transition-colors"
                 >
                   <StayManagerWordmark light className="text-sm" />
-                  <span className="ml-1 text-xs">↗</span>
+                  <span className="ms-1 text-xs">↗</span>
                 </a>
               </li>
             </ul>
@@ -97,13 +101,13 @@ function Footer() {
         <div className="border-t border-gray-800 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm">
-              © {new Date().getFullYear()} SemsarOut. Tous droits réservés.
+              {t('common:footer.copyright', { year: new Date().getFullYear() })}
             </p>
             <div className="flex flex-wrap justify-center gap-4 text-sm">
-              <Link to="/mentions-legales" className="hover:text-white transition-colors">Mentions légales</Link>
-              <Link to="/cgu" className="hover:text-white transition-colors">CGU</Link>
-              <Link to="/politique-de-confidentialite" className="hover:text-white transition-colors">Politique de confidentialité</Link>
-              <Link to="/cookies" className="hover:text-white transition-colors">Cookies</Link>
+              <Link to="/mentions-legales" className="hover:text-white transition-colors">{t('common:footer.legalNotice')}</Link>
+              <Link to="/cgu" className="hover:text-white transition-colors">{t('common:footer.termsOfUse')}</Link>
+              <Link to="/politique-de-confidentialite" className="hover:text-white transition-colors">{t('common:footer.privacyPolicy')}</Link>
+              <Link to="/cookies" className="hover:text-white transition-colors">{t('common:footer.cookies')}</Link>
             </div>
           </div>
         </div>

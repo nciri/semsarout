@@ -1,6 +1,11 @@
 {
   "nav": {
-    "sections": { "main": "الرئيسية", "crm": "إدارة العملاء", "finance": "المالية", "admin": "الإدارة" },
+    "sections": {
+      "main": "الرئيسية",
+      "crm": "إدارة العملاء",
+      "finance": "المالية",
+      "admin": "الإدارة"
+    },
     "dashboard": "لوحة التحكم",
     "properties": "العقارات",
     "pipeline": "مسار الصفقات",
@@ -15,7 +20,11 @@
     "shop": "المتجر",
     "team": "الفريق",
     "analytics": "التحليلات",
-    "settings": "الإعدادات"
+    "settings": "الإعدادات",
+    "userMenu": {
+      "agencySettings": "إعدادات الوكالة",
+      "backToSite": "العودة إلى الموقع"
+    }
   },
   "dashboard": {
     "title": "لوحة التحكم",
@@ -40,6 +49,1824 @@
     "newClient": "عميل جديد",
     "planVisit": "برمجة زيارة",
     "viewPipeline": "عرض مسار الصفقات",
-    "viewAll": "عرض الكل"
+    "viewAll": "عرض الكل",
+    "vsLastMonth": "{{value}}% مقارنة بالشهر الماضي",
+    "visitFallback": "زيارة",
+    "period": {
+      "last7": "آخر 7 أيام",
+      "last30": "آخر 30 يومًا",
+      "last90": "آخر 3 أشهر"
+    }
+  },
+  "signature": {
+    "title": "التوقيع الإلكتروني",
+    "status": {
+      "pending": "قيد الانتظار",
+      "sent": "أُرسل للتوقيع",
+      "in_progress": "التوقيع جارٍ",
+      "completed": "تم التوقيع",
+      "declined": "مرفوض",
+      "voided": "ملغى",
+      "expired": "منتهي الصلاحية"
+    },
+    "pdfUnavailable": "ملف PDF غير متوفر",
+    "notSent": "لم يُرسل هذا المستند للتوقيع بعد.",
+    "sendButton": "إرسال للتوقيع",
+    "downloadSignedPdf": "تحميل PDF الموقَّع",
+    "signedByAll": "تم التوقيع من قبل جميع الأطراف."
+  },
+  "rental": {
+    "shared": {
+      "pageTitle": "التسيير الكرائي",
+      "loading": "جارٍ التحميل…",
+      "back": "رجوع",
+      "notFound": "العنصر غير موجود.",
+      "loadError": "حدث خطأ أثناء التحميل. حاول مرة أخرى لاحقًا."
+    },
+    "layout": {
+      "subtitle": "عقود التسيير، عقود الكراء والمخالصات، طلبات الكراء",
+      "tabs": {
+        "mandates": "عقود التسيير",
+        "leases": "عقود الكراء",
+        "applications": "الطلبات"
+      }
+    },
+    "mandate": {
+      "gated": {
+        "message": "التسيير الكرائي مخصص لباقتي Pro والمؤسسات."
+      },
+      "backToList": "الرجوع إلى عقود التسيير",
+      "status": {
+        "draft": "مسودة",
+        "active": "نشط",
+        "expired": "منتهي الصلاحية",
+        "terminated": "مفسوخ"
+      },
+      "type": {
+        "gestion": "تسيير",
+        "location": "كراء"
+      },
+      "stats": {
+        "total": "إجمالي العقود",
+        "active": "نشطة",
+        "draft": "مسودات"
+      },
+      "newButton": "عقد تسيير جديد",
+      "empty": {
+        "title": "لا يوجد عقد تسيير",
+        "description": "أنشئ عقد تسيير لمالك وعقار."
+      },
+      "columns": {
+        "reference": "المرجع",
+        "type": "النوع",
+        "fees": "الأتعاب",
+        "status": "الحالة"
+      },
+      "modal": {
+        "title": "عقد تسيير جديد",
+        "propertyLabel": "العقار",
+        "propertyPlaceholder": "اختر عقارًا…",
+        "propertySearchPlaceholder": "البحث عن عقار…",
+        "landlordLabel": "العميل المالك",
+        "landlordPlaceholder": "اختر عميلاً…",
+        "landlordSearchPlaceholder": "البحث عن عميل…",
+        "typeLabel": "النوع",
+        "feesLabel": "الأتعاب (%)",
+        "feesPlaceholder": "مثال: 8",
+        "cancel": "إلغاء",
+        "create": "إنشاء"
+      },
+      "toasts": {
+        "created": "تم إنشاء العقد"
+      },
+      "detail": {
+        "title": "عقد التسيير {{reference}}",
+        "pdfButton": "PDF",
+        "signButton": "توقيع",
+        "signedToast": "تم توقيع العقد",
+        "fields": {
+          "status": "الحالة",
+          "type": "النوع",
+          "fees": "الأتعاب",
+          "propertyId": "العقار (المعرف)",
+          "landlordId": "المالك (العميل)"
+        }
+      },
+      "crg": {
+        "panelTitle": "التقارير الدورية للتسيير (CRG)",
+        "period": "الفترة",
+        "collected": "المحصّل",
+        "net": "الصافي المحوّل",
+        "pdf": "PDF",
+        "empty": {
+          "title": "لا يوجد تقرير",
+          "description": "تظهر التقارير الشهرية هنا بعد تحصيل الإيجارات."
+        }
+      }
+    },
+    "lease": {
+      "gated": {
+        "message": "التسيير الكرائي مخصص لباقتي Pro والمؤسسات."
+      },
+      "status": {
+        "draft": "مسودة",
+        "active": "نشط",
+        "ended": "منتهٍ",
+        "terminated": "مفسوخ"
+      },
+      "stats": {
+        "total": "إجمالي عقود الكراء",
+        "active": "نشطة"
+      },
+      "newButton": "عقد كراء جديد",
+      "empty": {
+        "title": "لا يوجد عقد كراء",
+        "description": "أنشئ عقد كراء مرتبطًا بعقد تسيير."
+      },
+      "columns": {
+        "reference": "المرجع",
+        "rent": "الإيجار",
+        "charges": "التكاليف",
+        "status": "الحالة"
+      },
+      "modal": {
+        "title": "عقد كراء جديد",
+        "mandateLabel": "عقد التسيير",
+        "mandatePlaceholder": "اختر عقد تسيير…",
+        "mandateSearchPlaceholder": "البحث عن عقد تسيير…",
+        "tenantLabel": "العميل المستأجر",
+        "tenantPlaceholder": "اختر عميلاً…",
+        "tenantSearchPlaceholder": "البحث عن عميل…",
+        "rentLabel": "الإيجار (Đh)",
+        "chargesLabel": "التكاليف (Đh)",
+        "depositLabel": "وديعة الضمان (Đh)",
+        "paymentDayLabel": "يوم الاستحقاق (1-28)",
+        "cancel": "إلغاء",
+        "create": "إنشاء"
+      },
+      "toasts": {
+        "created": "تم إنشاء عقد الكراء",
+        "signed": "تم توقيع عقد الكراء",
+        "revised": "تمت مراجعة الإيجار",
+        "depositReturned": "تم استرجاع الوديعة",
+        "paymentRecorded": "تم تسجيل الدفعة",
+        "inventoryCreated": "تم إنشاء محضر الحالة"
+      },
+      "backToList": "الرجوع إلى عقود الكراء",
+      "detail": {
+        "title": "عقد الكراء {{reference}}",
+        "pdfButton": "PDF",
+        "signButton": "توقيع",
+        "reviseButton": "مراجعة الإيجار",
+        "returnDepositButton": "استرجاع الوديعة",
+        "fields": {
+          "status": "الحالة",
+          "rent": "الإيجار",
+          "charges": "التكاليف",
+          "deposit": "الوديعة"
+        }
+      },
+      "rentPeriods": {
+        "panelTitle": "المخالصات",
+        "columns": {
+          "period": "الفترة",
+          "due": "المستحق",
+          "status": "الحالة"
+        },
+        "status": {
+          "pending": "قيد التسديد",
+          "late": "متأخر",
+          "partial": "جزئي",
+          "paid": "مدفوع"
+        },
+        "receiptButton": "المخالصة",
+        "recordPaymentButton": "تسجيل دفعة",
+        "empty": {
+          "title": "لا توجد مستحقات",
+          "description": "تُولَّد مستحقات الإيجار شهريًا آليًا."
+        }
+      },
+      "inventories": {
+        "panelTitle": "محاضر الحالة",
+        "outStatementLink": "كشف حساب الخروج",
+        "entryLabel": "محضر حالة الدخول",
+        "exitLabel": "محضر حالة الخروج",
+        "openButton": "فتح",
+        "createEntryButton": "إنشاء محضر الدخول",
+        "createExitButton": "إنشاء محضر الخروج"
+      },
+      "payModal": {
+        "title": "تسجيل دفعة — {{period}}",
+        "amountLabel": "المبلغ (Đh)",
+        "methodLabel": "طريقة الدفع",
+        "methods": {
+          "virement": "تحويل بنكي",
+          "cheque": "شيك",
+          "especes": "نقدًا",
+          "carte": "بطاقة"
+        },
+        "cancel": "إلغاء",
+        "submit": "تسجيل"
+      },
+      "reviseModal": {
+        "title": "مراجعة الإيجار",
+        "newRentLabel": "الإيجار الجديد (Đh)",
+        "cancel": "إلغاء",
+        "apply": "تطبيق"
+      }
+    },
+    "application": {
+      "gated": {
+        "message": "التسيير الكرائي مخصص لباقتي Pro والمؤسسات."
+      },
+      "pageTitle": "الطلبات",
+      "status": {
+        "received": "مستلَم",
+        "reviewing": "قيد الدراسة",
+        "shortlist": "في القائمة المختصرة",
+        "accepted": "مقبول",
+        "rejected": "مرفوض",
+        "withdrawn": "مسحوب"
+      },
+      "stats": {
+        "total": "الإجمالي",
+        "new": "جديدة",
+        "accepted": "مقبولة"
+      },
+      "newButton": "إيداع ملف لعميل",
+      "badges": {
+        "submittedByAgency": "أودعته الوكالة"
+      },
+      "filters": {
+        "searchPlaceholder": "البحث عن مترشح (الاسم، البريد الإلكتروني)…",
+        "allStatuses": "كل الحالات",
+        "allProperties": "كل العقارات",
+        "propertySearchPlaceholder": "البحث عن عقار…"
+      },
+      "columns": {
+        "candidate": "المترشح",
+        "submittedAt": "تاريخ الإيداع",
+        "monthlyIncome": "الدخل الشهري",
+        "status": "الحالة"
+      },
+      "actions": {
+        "shortlist": "إدراج في القائمة المختصرة"
+      },
+      "propertyFallback": "عقار #{{id}}",
+      "groupCount_one": "· {{count}} طلب",
+      "groupCount_other": "· {{count}} طلبات",
+      "empty": {
+        "noApplications": {
+          "title": "لا يوجد طلب",
+          "description": "تظهر هنا الملفات التي يودعها المترشحون على عقاراتكم، مجمّعة حسب العقار."
+        },
+        "noResults": {
+          "title": "لا توجد نتيجة",
+          "description": "لا يوجد طلب يطابق عوامل التصفية الخاصة بكم."
+        }
+      },
+      "modal": {
+        "title": "إيداع ملف لعميل",
+        "propertyIdLabel": "معرّف العقار",
+        "clientIdLabel": "معرّف العميل",
+        "monthlyIncomeLabel": "الدخل الشهري (Đh)",
+        "guarantorNameLabel": "اسم الضامن",
+        "guarantorIncomeLabel": "دخل الضامن (Đh)",
+        "docsLabel": "الوثائق المثبتة",
+        "docType": {
+          "cin": "بطاقة التعريف الوطنية (CIN)",
+          "bulletin_salaire": "كشف الراتب",
+          "contrat_travail": "عقد العمل",
+          "avis_impot": "الإشعار الضريبي",
+          "garant": "وثيقة الضامن",
+          "autre": "أخرى"
+        },
+        "addButton": "إضافة",
+        "cancel": "إلغاء",
+        "submit": "إيداع الملف"
+      },
+      "toasts": {
+        "created": "تم إيداع الملف",
+        "shortlisted": "تمت إضافة الطلب إلى القائمة المختصرة",
+        "fileTooLarge": "الملف كبير جدًا (الحد الأقصى 10 ميغابايت)",
+        "uploadFailed": "فشل إرسال « {{filename}} »"
+      },
+      "detail": {
+        "backToList": "الرجوع إلى الطلبات",
+        "title": "طلب {{name}}",
+        "actions": {
+          "shortlist": "إدراج في القائمة المختصرة",
+          "accept": "قبول",
+          "reject": "رفض"
+        },
+        "fields": {
+          "status": "الحالة",
+          "email": "البريد الإلكتروني",
+          "phone": "الهاتف",
+          "monthlyIncome": "الدخل الشهري",
+          "guarantor": "الضامن",
+          "property": "العقار"
+        },
+        "docs": {
+          "panelTitle": "الوثائق المثبتة",
+          "status": {
+            "received": "مستلَمة",
+            "validated": "مصادَق عليها",
+            "rejected": "مرفوضة"
+          },
+          "columns": {
+            "type": "النوع",
+            "file": "الملف",
+            "status": "الحالة"
+          },
+          "validateButton": "مصادقة",
+          "rejectButton": "رفض",
+          "empty": {
+            "title": "لا توجد وثيقة",
+            "description": "لم يودع المترشح أي وثيقة بعد."
+          },
+          "toast": "تم تحديث الوثيقة"
+        },
+        "rejectModal": {
+          "title": "رفض الطلب",
+          "reasonLabel": "السبب (اختياري، يُبلَّغ به المترشح)",
+          "reasonPlaceholder": "مثال: ملف غير مكتمل",
+          "cancel": "إلغاء",
+          "submit": "تأكيد الرفض"
+        },
+        "toasts": {
+          "decided": "تم تسجيل القرار"
+        }
+      }
+    },
+    "inventory": {
+      "gated": {
+        "message": "التسيير الكرائي مخصص لباقتي Pro والمؤسسات."
+      },
+      "pageTitle": "محضر الحالة",
+      "backToLease": "الرجوع إلى العقد",
+      "panelTitle": {
+        "entry": "محضر الحالة عند الدخول",
+        "exit": "محضر الحالة عند الخروج"
+      },
+      "status": {
+        "draft": "مسودة",
+        "finalized": "مُنجَز",
+        "signed": "مُوقَّع"
+      },
+      "condition": {
+        "bon": "جيد",
+        "moyen": "متوسط",
+        "mauvais": "سيئ"
+      },
+      "pdfButton": "PDF",
+      "finalizeButton": "إنهاء",
+      "lockNotice": "محضر الحالة هذا منتهٍ ومقفل (للقراءة فقط).",
+      "commentPlaceholder": "تعليق",
+      "newRoomPlaceholder": "غرفة جديدة",
+      "addRoomButton": "إضافة غرفة",
+      "addItemPlaceholder": "إضافة عنصر",
+      "addItemButton": "عنصر",
+      "toasts": {
+        "roomAdded": "تمت إضافة الغرفة",
+        "itemAdded": "تمت إضافة العنصر",
+        "photoAdded": "تمت إضافة الصورة",
+        "finalized": "تم إنهاء محضر الحالة"
+      }
+    },
+    "settlement": {
+      "pageTitle": "تصفية الضمان",
+      "comparisonTitle": "مقارنة الدخول ↔ الخروج",
+      "degradedLabel": "متضرر",
+      "noExit": {
+        "title": "لا يوجد محضر حالة عند الخروج",
+        "description": "أنجزوا محضر الحالة عند الخروج للمقارنة وتبرير الاقتطاعات."
+      },
+      "empty": {
+        "title": "لا توجد تصفية",
+        "description": "أنشئوا تصفية الضمان لتسجيل الاقتطاعات."
+      },
+      "createButton": "إنشاء تصفية الضمان",
+      "noLines": "لا توجد اقتطاعات.",
+      "form": {
+        "labelLabel": "بيان الاقتطاع",
+        "labelPlaceholder": "مثال: طاولة عمل محروقة",
+        "amountLabel": "المبلغ (Đh)",
+        "itemPlaceholder": "عنصر (اختياري)",
+        "addButton": "إضافة"
+      },
+      "totals": {
+        "deposit": "الضمان",
+        "totalDeductions": "مجموع الاقتطاعات",
+        "refunded": "الضمان المسترجع",
+        "balanceDue": "الرصيد المستحق"
+      },
+      "balanceWarning": "تتجاوز الأضرار مبلغ الضمان: يبقى رصيد على عاتق المستأجر (يُعالج التحصيل خارج المنصة).",
+      "toasts": {
+        "created": "تم إنشاء التصفية",
+        "lineAdded": "تمت إضافة الاقتطاع",
+        "finalized": "تم إنهاء التصفية — تم إرسال بريد إلكتروني إلى المستأجر"
+      }
+    }
+  },
+  "shop": {
+    "shared": {
+      "pageTitle": "المتجر",
+      "loading": "جارٍ التحميل…",
+      "back": "رجوع",
+      "notFound": "العنصر غير موجود.",
+      "loadError": "حدث خطأ أثناء التحميل. حاول مرة أخرى لاحقًا."
+    },
+    "catalog": {
+      "subtitle": "أثاث وأجهزة كهرومنزلية لتجهيز عقاراتك الكرائية",
+      "myOrders": "طلباتي",
+      "cart": "السلة",
+      "filters": {
+        "allGroups": "كل الفئات",
+        "group": {
+          "furniture": "أثاث",
+          "appliance": "أجهزة كهرومنزلية"
+        },
+        "allCategories": "كل الأصناف"
+      },
+      "searchPlaceholder": "ابحث عن منتج…",
+      "empty": {
+        "title": "لا يوجد منتج",
+        "description": "لا يوجد عنصر مطابق لعوامل التصفية حاليًا."
+      },
+      "outOfStock": "غير متوفر",
+      "addButton": "إضافة",
+      "toasts": {
+        "added": "تمت الإضافة إلى السلة"
+      }
+    },
+    "product": {
+      "notFound": "المنتج غير موجود.",
+      "notFoundBack": "العودة إلى المتجر",
+      "outOfStock": "غير متوفر في المخزون",
+      "inStock": "{{n}} متوفر في المخزون",
+      "addButton": "إضافة إلى السلة"
+    },
+    "cart": {
+      "backToShop": "متابعة التسوق",
+      "pageTitle": "سلتي",
+      "empty": {
+        "title": "سلتك فارغة",
+        "description": "تصفح المتجر لإضافة الأثاث والأجهزة الكهرومنزلية.",
+        "action": "الانتقال إلى المتجر"
+      },
+      "removeTitle": "إزالة",
+      "total": "المجموع",
+      "deliverToProperty": "التوصيل إلى عقار (اختياري)",
+      "freeAddressPlaceholder": "— عنوان حر —",
+      "propertySearchPlaceholder": "ابحث عن عقار…",
+      "deliveryAddress": "عنوان التوصيل",
+      "orderButton": "إتمام الطلب",
+      "toasts": {
+        "orderCreated": "تم إنشاء الطلب"
+      }
+    },
+    "order": {
+      "pageTitle": "طلباتي",
+      "subtitle": "تتبع طلباتك من الأثاث والأجهزة الكهرومنزلية",
+      "shopButton": "المتجر",
+      "stats": {
+        "total": "المجموع",
+        "pending": "قيد الانتظار",
+        "inProgress": "قيد التنفيذ",
+        "delivered": "تم التسليم"
+      },
+      "columns": {
+        "reference": "المرجع",
+        "items": "العناصر",
+        "total": "المجموع",
+        "status": "الحالة",
+        "date": "التاريخ"
+      },
+      "status": {
+        "pending": "قيد الانتظار",
+        "paid": "مدفوعة",
+        "preparing": "قيد التحضير",
+        "shipped": "تم الشحن",
+        "delivered": "تم التسليم",
+        "cancelled": "ملغاة"
+      },
+      "empty": {
+        "title": "لا توجد طلبات",
+        "description": "ستظهر هنا طلباتك المنجزة من المتجر.",
+        "action": "الانتقال إلى المتجر"
+      },
+      "backToList": "طلباتي",
+      "notFound": "الطلب غير موجود.",
+      "payButton": "الدفع الآن",
+      "paymentReference": "مرجع الدفع: {{reference}}",
+      "toasts": {
+        "paymentSuccess": "تم الدفع بنجاح",
+        "paymentError": "خطأ"
+      }
+    }
+  },
+  "ui": {
+    "viewOffers": "عرض عروض Pro والمؤسسات"
+  },
+  "artisans": {
+    "shared": {
+      "pageTitle": "الحرفيون",
+      "loading": "جارٍ التحميل…",
+      "back": "رجوع",
+      "notFound": "العنصر غير موجود.",
+      "loadError": "حدث خطأ أثناء التحميل. حاول مرة أخرى لاحقًا."
+    },
+    "layout": {
+      "subtitle": "سجلّ الحرفيين الخاص بكم ومتابعة التدخلات على عقاراتكم",
+      "tabs": {
+        "directory": "الدليل",
+        "interventions": "التدخلات"
+      }
+    },
+    "directory": {
+      "stats": {
+        "total": "الحرفيون",
+        "shared": "مشتركون",
+        "private": "وكالتي"
+      },
+      "filters": {
+        "allTrades": "جميع المهن",
+        "cityPlaceholder": "المدينة"
+      },
+      "searchPlaceholder": "البحث عن حرفي…",
+      "addButton": "إضافة",
+      "gated": {
+        "message": "دليل الحرفيين مخصص لخطتي Pro وEntreprise."
+      },
+      "columns": {
+        "name": "الاسم",
+        "trade": "المهنة",
+        "city": "المدينة",
+        "contact": "التواصل"
+      },
+      "badge": {
+        "shared": "مشترك",
+        "private": "وكالتي",
+        "readOnly": "للقراءة فقط"
+      },
+      "actions": {
+        "edit": "تعديل",
+        "delete": "حذف"
+      },
+      "empty": {
+        "title": "لا يوجد حرفيون",
+        "description": "عدّلوا عوامل التصفية أو أضيفوا أول حرفي خاص بكم.",
+        "addButton": "إضافة حرفي"
+      },
+      "modal": {
+        "editTitle": "تعديل الحرفي",
+        "createTitle": "إضافة حرفي",
+        "tradeLabel": "المهنة",
+        "fields": {
+          "name": "الاسم *",
+          "company": "الشركة",
+          "city": "المدينة",
+          "phone": "الهاتف",
+          "email": "البريد الإلكتروني"
+        },
+        "cancel": "إلغاء",
+        "save": "حفظ",
+        "create": "إضافة"
+      },
+      "toasts": {
+        "updated": "تم تعديل الحرفي",
+        "created": "تمت إضافة الحرفي",
+        "deleted": "تم حذف الحرفي"
+      }
+    },
+    "workOrder": {
+      "gated": {
+        "title": "أوامر العمل",
+        "message": "متابعة التدخلات مخصصة لخطتي Pro وEntreprise."
+      },
+      "stats": {
+        "total": "المجموع",
+        "scheduled": "مبرمجة",
+        "inProgress": "قيد التنفيذ",
+        "done": "منتهية"
+      },
+      "form": {
+        "titlePlaceholder": "عنوان التدخل",
+        "newButton": "جديد"
+      },
+      "columns": {
+        "title": "العنوان",
+        "trade": "المهنة",
+        "artisan": "الحرفي",
+        "costFinal": "التكلفة النهائية",
+        "status": "الحالة"
+      },
+      "status": {
+        "requested": "مطلوب",
+        "scheduled": "مبرمج",
+        "in_progress": "قيد التنفيذ",
+        "done": "منتهي",
+        "cancelled": "ملغى"
+      },
+      "empty": {
+        "title": "لا يوجد أمر عمل",
+        "description": "أنشئوا تدخلاً أعلاه، ثم عيّنوا له حرفياً وعقاراً."
+      },
+      "toasts": {
+        "created": "تم إنشاء أمر العمل",
+        "saved": "تم الحفظ"
+      },
+      "backToList": "التدخلات",
+      "notFound": "أمر العمل غير موجود.",
+      "fields": {
+        "status": "الحالة",
+        "artisan": "الحرفي",
+        "noneOption": "بدون",
+        "sharedSuffix": " (مشترك)",
+        "costEstimate": "التكلفة التقديرية (Đh)",
+        "costFinal": "التكلفة النهائية (Đh)",
+        "notes": "ملاحظات"
+      },
+      "autoSaveNote": "يتم حفظ التعديلات تلقائياً."
+    }
+  },
+  "contracts": {
+    "shared": {
+      "backToList": "العقود"
+    },
+    "status": {
+      "draft": "مسودة",
+      "finalized": "نهائي",
+      "signed": "موقّع"
+    },
+    "docType": {
+      "mandate_sale": "وكالة بيع",
+      "mandate_rental": "وكالة كراء/تدبير",
+      "compromise": "وعد بالبيع",
+      "lease": "عقد كراء",
+      "other": "أخرى"
+    },
+    "list": {
+      "pageTitle": "العقود",
+      "subtitle": "حرّر وأدِر عقود معاملاتك",
+      "templatesButton": "النماذج",
+      "newButton": "عقد جديد",
+      "gated": {
+        "title": "العقود",
+        "message": "تحرير العقود متاح لباقتَي Pro وEntreprise فقط."
+      },
+      "stats": {
+        "total": "الإجمالي",
+        "draft": "مسودات",
+        "finalized": "نهائية",
+        "signed": "موقّعة"
+      },
+      "columns": {
+        "title": "العنوان",
+        "type": "النوع",
+        "status": "الحالة",
+        "createdAt": "أُنشئ في"
+      },
+      "empty": {
+        "title": "لا يوجد أي عقد",
+        "description": "أنشئ عقدك الأول انطلاقًا من نموذج أو صفحة فارغة."
+      }
+    },
+    "editor": {
+      "save": "حفظ",
+      "finalize": "إنهاء",
+      "downloadPdf": "تحميل PDF",
+      "markSigned": "تعليم كموقّع",
+      "locked": "عقد {{status}} — التحرير مقفل.",
+      "toasts": {
+        "saved": "تم الحفظ",
+        "finalized": "تم إنهاء العقد",
+        "signed": "تم التعليم كموقّع"
+      }
+    },
+    "create": {
+      "pageTitle": "عقد جديد",
+      "submit": "إنشاء العقد",
+      "submitting": "جارٍ الإنشاء…",
+      "hint": "يُنقّح المحتوى المفصّل لاحقًا في محرّر العقد.",
+      "sections": {
+        "template": "النموذج",
+        "attach": "الربط",
+        "details": "تفاصيل العقد"
+      },
+      "fields": {
+        "template": "النموذج",
+        "templatePlaceholder": "اختر نموذجًا…",
+        "customSuffix": " (مخصّص)",
+        "title": "عنوان العقد",
+        "titlePlaceholder": "مثال: وكالة بيع — فيلا أنفا",
+        "property": "العقار",
+        "client": "العميل",
+        "transaction": "المعاملة المرتبطة",
+        "seller": "البائع / الموكِّل",
+        "sellerPlaceholder": "اسم البائع",
+        "buyer": "المشتري / المكتري",
+        "buyerPlaceholder": "اسم المشتري",
+        "amount": "المبلغ (Đh)",
+        "amountPlaceholder": "مثال: 1500000",
+        "signDate": "تاريخ التوقيع",
+        "effectDate": "تاريخ السريان",
+        "notes": "ملاحظات / بنود خاصة",
+        "notesPlaceholder": "شروط واقفة، بنود خاصة…"
+      },
+      "search": {
+        "property": "ابحث عن عقار…",
+        "client": "ابحث عن عميل…",
+        "transaction": "ابحث عن معاملة…"
+      },
+      "select": {
+        "none": "—",
+        "noneTransaction": "— لا شيء"
+      },
+      "fallback": {
+        "property": "عقار"
+      },
+      "preview": {
+        "title": "معاينة النموذج",
+        "empty": "اختر نموذجًا لعرض معاينته.",
+        "noContent": "لا يحتوي هذا النموذج على محتوى للمعاينة."
+      }
+    },
+    "templates": {
+      "pageTitle": "نماذج العقود",
+      "subtitle": "أنشئ قوالبك القابلة لإعادة الاستعمال لتوليد العقود",
+      "gated": {
+        "title": "النماذج المخصّصة",
+        "message": "النماذج المخصّصة متاحة لباقة Entreprise فقط.",
+        "cta": "عرض الباقات"
+      },
+      "myTemplates": "نماذجي المخصّصة",
+      "empty": {
+        "title": "لا يوجد أي نموذج مخصّص",
+        "description": "أنشئ نموذجك الأول من الاستمارة المجاورة."
+      },
+      "newTemplate": "نموذج جديد",
+      "fields": {
+        "name": "اسم النموذج",
+        "namePlaceholder": "مثال: وكالة بيع نموذجية",
+        "type": "نوع الوثيقة"
+      },
+      "mergeFields": "حقول الدمج:",
+      "submit": "إنشاء النموذج",
+      "delete": "حذف",
+      "toasts": {
+        "created": "تم إنشاء النموذج",
+        "deleted": "تم حذف النموذج"
+      }
+    }
+  },
+  "legal": {
+    "shared": {
+      "caseType": {
+        "sale": "بيع",
+        "rental": "كراء"
+      },
+      "status": {
+        "open": "مفتوح",
+        "in_progress": "قيد الإنجاز",
+        "closed": "مُغلق"
+      },
+      "caseCreatedToast": "تم إنشاء الملف"
+    },
+    "layout": {
+      "title": "الموثّقون والشؤون القانونية",
+      "subtitle": "موثّقوك الشركاء ومتابعة ملفاتك القانونية",
+      "tabs": {
+        "notaries": "الموثّقون",
+        "cases": "الملفات"
+      }
+    },
+    "notaries": {
+      "gated": {
+        "title": "الموثّقون",
+        "message": "دليل الموثّقين متاح لباقتَي Pro وEntreprise فقط."
+      },
+      "searchPlaceholder": "ابحث عن موثّق أو مكتب أو مدينة…",
+      "addButton": "إضافة موثّق",
+      "columns": {
+        "name": "الاسم",
+        "office": "المكتب",
+        "city": "المدينة",
+        "contact": "التواصل"
+      },
+      "actions": {
+        "createCase": "إنشاء ملف مع هذا الموثّق",
+        "edit": "تعديل",
+        "delete": "حذف"
+      },
+      "empty": {
+        "title": "لا يوجد أي موثّق",
+        "description": "أضف موثّقك الشريك الأول لإشراكه في ملفاتك.",
+        "addButton": "إضافة موثّق"
+      },
+      "modal": {
+        "editTitle": "تعديل الموثّق",
+        "createTitle": "إضافة موثّق",
+        "cancel": "إلغاء",
+        "save": "حفظ",
+        "create": "إضافة"
+      },
+      "fields": {
+        "name": "الاسم *",
+        "office": "المكتب",
+        "city": "المدينة",
+        "phone": "الهاتف",
+        "email": "البريد الإلكتروني",
+        "license_number": "رقم الاعتماد"
+      },
+      "toasts": {
+        "updated": "تم تعديل الموثّق",
+        "created": "تمت إضافة الموثّق",
+        "deleted": "تم حذف الموثّق"
+      }
+    },
+    "cases": {
+      "stats": {
+        "total": "الإجمالي",
+        "open": "مفتوحة",
+        "in_progress": "قيد الإنجاز",
+        "closed": "مُغلقة"
+      },
+      "gated": {
+        "title": "الملفات القانونية",
+        "message": "المتابعة القانونية متاحة لباقتَي Pro وEntreprise فقط."
+      },
+      "noNotary": "لم يتم إعداد أي موثّق. أضف موثّقًا من تبويب <notariesLink>الموثّقون</notariesLink> لتتمكّن من إنشاء ملف.",
+      "columns": {
+        "title": "العنوان",
+        "type": "النوع",
+        "notary": "الموثّق",
+        "progress": "التقدّم",
+        "status": "الحالة"
+      },
+      "toolbar": {
+        "titlePlaceholder": "عنوان الملف (اختياري)",
+        "newButton": "ملف جديد",
+        "noNotaryTooltip": "أعدّ موثّقًا أولًا (تبويب الموثّقون)"
+      },
+      "empty": {
+        "title": "لا يوجد أي ملف",
+        "description": "أنشئ ملفًا أعلاه لتوليد قائمة مراحله القانونية تلقائيًا."
+      }
+    },
+    "caseDetail": {
+      "notFound": {
+        "text": "الملف غير موجود.",
+        "link": "العودة إلى الملفات"
+      },
+      "back": "الملفات القانونية",
+      "closeCase": "إغلاق الملف",
+      "closeCaseTooltip": "إغلاق هذا الملف (لم تُعالَج أي مرحلة)",
+      "statusLabel": "الحالة",
+      "notaryLabel": "الموثّق",
+      "notaryNone": "لا شيء",
+      "progress": "التقدّم",
+      "tasksTitle": "مراحل الملف",
+      "taskToggleTooltip": "تغيير الحالة",
+      "taskDeleteTooltip": "حذف",
+      "tasksEmpty": "لا توجد أي مرحلة حاليًا.",
+      "addTaskPlaceholder": "إضافة مرحلة…",
+      "addButton": "إضافة"
+    }
+  },
+  "analytics": {
+    "shared": {
+      "loading": "جارٍ التحميل…",
+      "noData": "لا تتوفّر أي بيانات تحليلية.",
+      "noDataShort": "لا توجد بيانات",
+      "propertyCount_one": "{{count}} عقار",
+      "propertyCount_other": "{{count}} عقارات",
+      "transactionCount_one": "{{count}} معاملة",
+      "transactionCount_other": "{{count}} معاملات"
+    },
+    "layout": {
+      "title": "التحليلات",
+      "cityNote": "تنطبق المدينة على تبويب السوق فقط (العقارات).",
+      "ranges": {
+        "30d": "30 ي",
+        "90d": "90 ي",
+        "12m": "12 شهرًا",
+        "ytd": "السنة"
+      },
+      "txTypes": {
+        "all": "كل الأنواع",
+        "sale": "بيع",
+        "rent": "كراء"
+      },
+      "tabs": {
+        "overview": "نظرة عامة",
+        "finance": "المالية",
+        "market": "السوق",
+        "pipeline": "المسار",
+        "team": "الفريق"
+      },
+      "agentAll": "كل الوكلاء",
+      "agentSearch": "ابحث عن وكيل…",
+      "cityAll": "كل المدن",
+      "citySearch": "ابحث عن مدينة…"
+    },
+    "overview": {
+      "subtitle": "نظرة عامة على أداء الوكالة",
+      "exportButton": "تصدير (العقارات)",
+      "stats": {
+        "revenue": "الإيرادات",
+        "dealsWon": "الصفقات المُنجَزة",
+        "newClients": "عملاء جدد",
+        "visits": "الزيارات المُنجَزة"
+      },
+      "changeVsPrev": "{{pct}}% مقارنةً بالفترة السابقة",
+      "charts": {
+        "revenueByMonth": "الإيرادات حسب الشهر",
+        "commissionByTxType": "العمولة حسب نوع المعاملة"
+      },
+      "topAgents": "أفضل الوكلاء",
+      "commissionLabel": "عمولة",
+      "propertiesByCity": "العقارات حسب المدينة",
+      "funnel": {
+        "title": "قمع التحويل",
+        "leads": "عملاء محتملون",
+        "qualified": "مؤهَّلون",
+        "visits": "زيارات",
+        "offers": "عروض",
+        "closed": "مُغلقة"
+      },
+      "kpis": {
+        "title": "المؤشرات الرئيسية",
+        "conversionRate": "معدّل التحويل",
+        "avgCloseDays": "متوسّط أيام الإغلاق",
+        "avgDealValue": "متوسّط قيمة الصفقة",
+        "weightedPipeline": "المسار المُرجَّح"
+      },
+      "txTypeLabels": {
+        "sale": "بيع",
+        "rent": "كراء",
+        "autre": "أخرى"
+      }
+    },
+    "financial": {
+      "kpis": {
+        "revenueRealized": "الإيرادات المُحقّقة",
+        "weightedPipeline": "المسار المُرجَّح",
+        "dealsWon": "الصفقات الرابحة",
+        "avgCycle": "متوسّط الدورة (ي)"
+      },
+      "charts": {
+        "revenueTrend": "اتجاه الإيرادات المُحقّقة",
+        "commissionByAgent": "العمولة حسب الوكيل"
+      },
+      "series": {
+        "realized": "الإيرادات المُحقّقة",
+        "commission": "العمولة"
+      }
+    },
+    "pipeline": {
+      "kpis": {
+        "globalConversion": "التحويل الإجمالي",
+        "openPipeline": "المسار المفتوح",
+        "closings30d": "إغلاقات 30 ي",
+        "closed": "مُغلقة"
+      },
+      "charts": {
+        "funnel": "القمع",
+        "velocityByStage": "السرعة حسب المرحلة (ي)"
+      },
+      "series": {
+        "days": "أيام"
+      }
+    },
+    "market": {
+      "kpis": {
+        "portfolioPriceSqm": "السعر/م² للمحفظة",
+        "marketPriceSqm": "السعر/م² للسوق",
+        "gapVsMarket": "الفارق مقابل السوق",
+        "daysOnMarket": "أيام في السوق"
+      },
+      "charts": {
+        "priceSqmByNeighborhood": "السعر/م² حسب الحي (المحفظة مقابل السوق)",
+        "daysOnMarket": "أيام في السوق",
+        "valuationByCity": "التقييم حسب المدينة"
+      },
+      "series": {
+        "portfolio": "المحفظة",
+        "market": "السوق",
+        "listings": "الإعلانات"
+      }
+    },
+    "team": {
+      "kpis": {
+        "costPerLead": "التكلفة لكل عميل محتمل",
+        "bestSource": "أفضل مصدر",
+        "agents": "الوكلاء",
+        "sources": "المصادر"
+      },
+      "charts": {
+        "commissionByAgent": "العمولة حسب الوكيل",
+        "conversionBySource": "التحويل حسب المصدر",
+        "roiBySource": "العائد حسب المصدر"
+      },
+      "series": {
+        "commission": "العمولة",
+        "conversionPct": "نسبة التحويل"
+      },
+      "table": {
+        "source": "المصدر",
+        "leads": "عملاء محتملون",
+        "converted": "مُحوَّلون",
+        "cost": "التكلفة",
+        "conversion": "التحويل"
+      }
+    }
+  },
+  "crm": {
+    "shared": {
+      "loading": "جارٍ التحميل…",
+      "back": "رجوع",
+      "notFound": "العنصر غير موجود.",
+      "loadError": "حدث خطأ أثناء التحميل. حاول مرة أخرى لاحقًا.",
+      "status": {
+        "active": "نشط",
+        "prospect": "عميل محتمل",
+        "inactive": "غير نشط"
+      },
+      "clientTypes": {
+        "buyer": "مشتري",
+        "seller": "بائع",
+        "landlord": "مالك",
+        "tenant": "مستأجر",
+        "investor": "مستثمر"
+      },
+      "propertyTypes": {
+        "apartment": "شقة",
+        "house": "منزل",
+        "villa": "فيلا",
+        "land": "أرض",
+        "commercial": "محل تجاري",
+        "office": "مكتب"
+      },
+      "listingTypes": {
+        "sale": "بيع",
+        "rent": "كراء"
+      }
+    },
+    "clients": {
+      "list": {
+        "pageTitle": "العملاء",
+        "subtitle": "أدر قاعدة عملائك والعملاء المحتملين",
+        "newButton": "عميل جديد",
+        "addFirstButton": "إضافة عميل",
+        "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني أو الهاتف...",
+        "filtersButton": "عوامل التصفية",
+        "filterTypeLabel": "نوع العميل",
+        "filterTypeAll": "جميع الأنواع",
+        "filterStatusLabel": "الحالة",
+        "filterStatusAll": "جميع الحالات",
+        "resetFilters": "إعادة التعيين",
+        "types": {
+          "buyer": {
+            "label": "المشترون",
+            "description": "عملاء يبحثون عن عقار للشراء"
+          },
+          "seller": {
+            "label": "البائعون",
+            "description": "مالكون يرغبون في بيع عقارهم"
+          },
+          "landlord": {
+            "label": "الملاك",
+            "description": "ملاك يعرضون عقارهم للكراء"
+          },
+          "tenant": {
+            "label": "المستأجرون",
+            "description": "عملاء يبحثون عن كراء"
+          },
+          "investor": {
+            "label": "المستثمرون",
+            "description": "مستثمرون عقاريون"
+          }
+        },
+        "emptyCategory": "لا يوجد عميل في هذه الفئة",
+        "newTransaction": "معاملة جديدة",
+        "budget": "الميزانية: {{min}} - {{max}}",
+        "confirmDelete": "هل أنت متأكد من رغبتك في حذف هذا العميل؟",
+        "empty": {
+          "title": "لم يتم العثور على أي عميل",
+          "filtered": "لا يوجد عميل يطابق معايير بحثك.",
+          "default": "ابدأ بإضافة أول عميل لك."
+        }
+      },
+      "form": {
+        "titleNew": "عميل جديد",
+        "titleEdit": "تعديل العميل",
+        "subtitleNew": "أضف عميلاً جديداً إلى قاعدتك",
+        "subtitleEdit": "حدّث معلومات العميل",
+        "sections": {
+          "personalInfo": "المعلومات الشخصية",
+          "address": "العنوان",
+          "searchCriteria": "معايير البحث",
+          "tags": "الوسوم",
+          "notes": "الملاحظات والإسناد"
+        },
+        "fields": {
+          "firstName": "الاسم الشخصي",
+          "lastName": "الاسم العائلي",
+          "email": "البريد الإلكتروني",
+          "phonePrimary": "الهاتف الرئيسي",
+          "phoneSecondary": "الهاتف الثانوي",
+          "clientType": "نوع العميل",
+          "status": "الحالة",
+          "source": "المصدر",
+          "address": "العنوان",
+          "city": "المدينة",
+          "selectCity": "اختر مدينة",
+          "budgetMin": "الميزانية الدنيا ({{currency}})",
+          "budgetMax": "الميزانية القصوى ({{currency}})",
+          "propertyTypesWanted": "أنواع العقارات المطلوبة",
+          "preferredCities": "المدن المفضلة",
+          "agentAssigned": "الوكيل المسند",
+          "agentPlaceholder": "غير مسند",
+          "agentSearchPlaceholder": "البحث عن وكيل…",
+          "notes": "ملاحظات",
+          "notesPlaceholder": "ملاحظات داخلية حول العميل...",
+          "gdprConsent": "منح العميل موافقته على معالجة بياناته (RGPD)"
+        },
+        "sourceOptions": {
+          "direct": "مباشر",
+          "website": "الموقع الإلكتروني",
+          "referral": "توصية",
+          "social": "الشبكات الاجتماعية",
+          "advertising": "إعلان",
+          "partner": "شريك"
+        },
+        "tagsPlaceholder": "إضافة وسم...",
+        "validation": {
+          "contactRequired": "البريد الإلكتروني أو الهاتف مطلوب"
+        },
+        "cancelButton": "إلغاء",
+        "createButton": "إنشاء العميل",
+        "updateButton": "تحديث"
+      },
+      "detail": {
+        "editButton": "تعديل",
+        "sections": {
+          "contact": "معلومات الاتصال",
+          "searchCriteria": "معايير البحث"
+        },
+        "fields": {
+          "email": "البريد الإلكتروني",
+          "phonePrimary": "الهاتف الرئيسي",
+          "phoneSecondary": "الهاتف الثانوي",
+          "city": "المدينة",
+          "address": "العنوان",
+          "agentAssigned": "الوكيل المسند",
+          "tags": "الوسوم",
+          "notes": "ملاحظات"
+        },
+        "budget": "الميزانية: {{min}} — {{max}}",
+        "propertyTypesWanted": "أنواع العقارات المطلوبة",
+        "preferredCities": "المدن المفضلة",
+        "createTransaction": "إنشاء معاملة ({{type}})",
+        "transactionType": {
+          "rent": "كراء",
+          "sale": "بيع"
+        }
+      }
+    },
+    "pipeline": {
+      "leads": {
+        "list": {
+          "pageTitle": "العملاء المحتملون",
+          "subtitle": "أدر عملاءك المحتملين وحوّلهم إلى عملاء",
+          "stats": {
+            "total": "إجمالي العملاء المحتملين",
+            "new": "جديد",
+            "qualified": "مؤهّل",
+            "converted": "محوّل"
+          },
+          "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني...",
+          "filtersButton": "التصفية",
+          "filterStatusLabel": "الحالة",
+          "filterStatusAll": "جميع الحالات",
+          "filterSourceLabel": "المصدر",
+          "filterSourceAll": "جميع المصادر",
+          "resetFilters": "إعادة تعيين",
+          "columns": {
+            "contact": "جهة الاتصال",
+            "contactInfo": "بيانات التواصل",
+            "source": "المصدر",
+            "status": "الحالة",
+            "property": "العقار المرتبط",
+            "date": "التاريخ",
+            "actions": "الإجراءات"
+          },
+          "viewDetails": "عرض التفاصيل",
+          "markLost": "تحديد كمفقود",
+          "paginationInfo": "عرض {{from}} إلى {{to}} من أصل {{total}} عميل محتمل",
+          "prev": "السابق",
+          "next": "التالي",
+          "empty": {
+            "title": "لم يتم العثور على أي عميل محتمل",
+            "filtered": "لا يوجد عميل محتمل يطابق معايير البحث.",
+            "default": "ستظهر العملاء المحتملون هنا عندما يتواصل معك المهتمون."
+          }
+        },
+        "detail": {
+          "title": "تفاصيل العميل المحتمل",
+          "contactInfo": "بيانات التواصل",
+          "message": "الرسالة",
+          "internalNotes": "ملاحظات داخلية",
+          "source": "المصدر",
+          "createdAt": "تاريخ الإنشاء",
+          "property": "العقار المرتبط",
+          "assignedTo": "مسند إلى"
+        },
+        "status": {
+          "new": "جديد",
+          "contacted": "تم التواصل",
+          "qualified": "مؤهّل",
+          "converted": "محوّل",
+          "lost": "مفقود"
+        },
+        "source": {
+          "contact_form": "نموذج التواصل",
+          "phone_reveal": "الهاتف",
+          "callback_request": "طلب اتصال",
+          "website": "الموقع الإلكتروني",
+          "manual": "يدوي",
+          "other": "أخرى"
+        },
+        "nextAction": {
+          "new": "وضع علامة \"تم التواصل\"",
+          "contacted": "وضع علامة \"مؤهّل\"",
+          "qualified": "تحويل إلى عميل"
+        },
+        "confirm": {
+          "convert": "هل تريد تحويل \"{{name}}\" إلى عميل؟",
+          "markStatus": "هل تريد تحديد حالة \"{{name}}\" كـ{{status}}؟",
+          "lost": "هل تريد تحديد \"{{name}}\" كمفقود؟"
+        }
+      },
+      "pipeline": {
+        "list": {
+          "pageTitle": "مسار الصفقات",
+          "subtitle": "أدر معاملاتك الجارية",
+          "listViewLink": "عرض القائمة",
+          "newButton": "معاملة جديدة",
+          "typeSale": "البيع",
+          "typeRent": "الكراء",
+          "agentPlaceholder": "جميع الوكلاء",
+          "agentSearchPlaceholder": "البحث عن وكيل…",
+          "totalTransactions": "إجمالي المعاملات:",
+          "totalValue": "القيمة الإجمالية:",
+          "priorityLegend": "دليل الأولويات"
+        },
+        "card": {
+          "openDetail": "فتح التفاصيل في تبويب جديد",
+          "edit": "تعديل",
+          "archive": "أرشفة",
+          "noPropertyTitle": "عقار بدون عنوان",
+          "noClient": "عميل غير محدد",
+          "agent": "الوكيل: {{name}}"
+        },
+        "column": {
+          "empty": "لا توجد معاملات"
+        },
+        "priority": {
+          "low": "منخفضة",
+          "medium": "متوسطة",
+          "high": "عالية",
+          "urgent": "عاجلة"
+        }
+      },
+      "visits": {
+        "list": {
+          "pageTitle": "الزيارات والمواعيد",
+          "subtitle": "أدر زياراتك ومواعيدك",
+          "newButton": "جدولة زيارة",
+          "viewToggleCalendar": "التقويم",
+          "viewToggleList": "قائمة",
+          "today": "اليوم",
+          "filterStatusAll": "جميع الحالات",
+          "daysHeader": {
+            "mon": "إثنين",
+            "tue": "ثلاثاء",
+            "wed": "أربعاء",
+            "thu": "خميس",
+            "fri": "جمعة",
+            "sat": "سبت",
+            "sun": "أحد"
+          },
+          "moreCount": "+{{count}} أخرى",
+          "empty": {
+            "title": "لا توجد زيارات",
+            "description": "خطط لزيارتك الأولى."
+          },
+          "legend": "دليل الحالات"
+        },
+        "status": {
+          "scheduled": "مجدولة",
+          "confirmed": "مؤكدة",
+          "completed": "منجزة",
+          "cancelled": "ملغاة",
+          "no_show": "عدم حضور"
+        },
+        "modal": {
+          "title": "تفاصيل الزيارة",
+          "noProperty": "عقار غير محدد",
+          "duration": "- {{minutes}} د",
+          "noVisitor": "زائر غير محدد",
+          "reportLabel": "تقرير الزيارة",
+          "reportPlaceholder": "ملاحظات حول الزيارة...",
+          "feedbackLabel": "ملاحظات العميل",
+          "feedbackOptions": {
+            "select": "اختر...",
+            "very_interested": "مهتم جدًا",
+            "interested": "مهتم",
+            "neutral": "محايد",
+            "not_interested": "غير مهتم"
+          },
+          "confirmButton": "تأكيد",
+          "cancelButton": "إلغاء",
+          "submitReportButton": "تأكيد التقرير",
+          "markCompletedButton": "التعليم كمنجزة",
+          "closeButton": "إغلاق"
+        },
+        "newModal": {
+          "title": "جدولة زيارة",
+          "visitorNameLabel": "اسم الزائر *",
+          "emailLabel": "البريد الإلكتروني",
+          "phoneLabel": "الهاتف",
+          "dateTimeLabel": "التاريخ والوقت *",
+          "durationLabel": "المدة (دقائق)",
+          "duration15": "15 د",
+          "duration30": "30 د",
+          "duration45": "45 د",
+          "duration60": "ساعة واحدة",
+          "duration90": "ساعة و30 د",
+          "notesLabel": "ملاحظات",
+          "notesPlaceholder": "معلومات إضافية...",
+          "cancelButton": "إلغاء",
+          "submitButton": "جدولة"
+        }
+      }
+    },
+    "transactions": {
+      "status": {
+        "active": "قيد التنفيذ",
+        "won": "فائزة",
+        "lost": "خاسرة",
+        "on_hold": "معلّقة"
+      },
+      "stage": {
+        "contact": "الاتصال الأولي",
+        "visit": "زيارة",
+        "offer": "عرض",
+        "negotiation": "تفاوض",
+        "compromise": "اتفاق مبدئي",
+        "final_act": "العقد النهائي",
+        "application": "طلب الترشح",
+        "verification": "تحقق",
+        "lease": "عقد الكراء",
+        "move_in": "الدخول"
+      },
+      "type": {
+        "sale": "بيع",
+        "rent": "كراء"
+      },
+      "offerStatus": {
+        "pending": "قيد الانتظار",
+        "accepted": "مقبولة",
+        "rejected": "مرفوضة",
+        "countered": "عرض مضاد",
+        "expired": "منتهية الصلاحية"
+      },
+      "offerParty": {
+        "buyer": "مشتري",
+        "seller": "بائع"
+      },
+      "list": {
+        "pageTitle": "المعاملات",
+        "subtitle": "عرض قائمة بكل المعاملات",
+        "pipelineViewLink": "عرض المسار",
+        "newButton": "معاملة جديدة",
+        "searchPlaceholder": "البحث بالمرجع...",
+        "filtersButton": "التصفية",
+        "filterTypeLabel": "النوع",
+        "filterTypeAll": "كل الأنواع",
+        "filterStatusLabel": "الحالة",
+        "filterStatusAll": "كل الحالات",
+        "filterStageLabel": "المرحلة",
+        "filterStageAll": "كل المراحل",
+        "resetFilters": "إعادة التعيين",
+        "columns": {
+          "reference": "المرجع",
+          "property": "العقار",
+          "client": "العميل",
+          "type": "النوع",
+          "stage": "المرحلة",
+          "price": "السعر",
+          "status": "الحالة",
+          "agent": "الوكيل"
+        },
+        "viewDetails": "عرض",
+        "empty": {
+          "title": "لا توجد معاملات",
+          "filtered": "لا توجد معاملة مطابقة لمعاييرك.",
+          "default": "أنشئ أول معاملة.",
+          "pipelineLink": "عرض المسار"
+        },
+        "prev": "السابق",
+        "next": "التالي",
+        "pageInfo": "الصفحة {{page}} من {{total}}"
+      },
+      "create": {
+        "backLink": "المعاملات",
+        "pageTitle": "معاملة جديدة",
+        "subtitle": "اربط عقارًا موجودًا بعميل. لإنشاء عقار جديد، استخدم صفحة العقارات.",
+        "sectionPropertyClient": "العقار والعميل",
+        "propertyLabel": "العقار",
+        "propertyPlaceholder": "اختر عقارًا…",
+        "propertySearchPlaceholder": "البحث عن عقار…",
+        "clientLabel": "العميل",
+        "clientPlaceholder": "اختر عميلًا…",
+        "clientSearchPlaceholder": "البحث عن عميل…",
+        "sectionDetails": "التفاصيل",
+        "typeLabel": "النوع",
+        "priceLabel": "السعر المطلوب (Đh)",
+        "pricePlaceholder": "مثال: 1500000",
+        "closingDateLabel": "تاريخ الإغلاق المتوقع",
+        "priorityLabel": "الأولوية",
+        "notesLabel": "ملاحظات",
+        "notesPlaceholder": "السياق، الشروط الخاصة…",
+        "agentNote": "ستكون أنت الوكيل المكلَّف. تبدأ المعاملة من مرحلة «الاتصال».",
+        "submitButton": "إنشاء المعاملة",
+        "submitting": "جارٍ الإنشاء…",
+        "toastSuccess": "تم إنشاء المعاملة",
+        "toastError": "خطأ"
+      },
+      "detail": {
+        "notFound": "المعاملة غير موجودة.",
+        "backToList": "الرجوع إلى القائمة",
+        "pipelineLink": "عرض المسار",
+        "propertyPartiesTitle": "العقار والأطراف",
+        "propertyLabel": "العقار",
+        "clientLabel": "العميل",
+        "sellerLabel": "البائع / الموكِّل",
+        "agentLabel": "الوكيل",
+        "trackingTitle": "المتابعة التجارية",
+        "stageLabel": "المرحلة",
+        "priorityLabel": "الأولوية",
+        "probabilityLabel": "الاحتمالية",
+        "firstContactLabel": "أول اتصال",
+        "expectedClosingLabel": "تاريخ الإغلاق المتوقع",
+        "actualClosingLabel": "تاريخ الإغلاق الفعلي",
+        "lostReason": "سبب الخسارة: {{reason}}",
+        "financialTitle": "الجانب المالي",
+        "askingPriceLabel": "السعر المطلوب",
+        "offerPriceLabel": "سعر العرض",
+        "finalPriceLabel": "السعر النهائي",
+        "commissionRateLabel": "نسبة العمولة",
+        "commissionAmountLabel": "مبلغ العمولة",
+        "offersTitle": "العروض ({{count}})",
+        "offersEmpty": "لا توجد عروض مسجلة.",
+        "offerCreatedBy": " · {{name}}",
+        "notesTitle": "ملاحظات"
+      }
+    },
+    "properties": {
+      "list": {
+        "pageTitle": "العقارات",
+        "subtitle": "أدر محفظة عقاراتك",
+        "newButton": "إضافة عقار",
+        "addFirstButton": "إضافة عقار",
+        "searchPlaceholder": "ابحث بالعنوان، المدينة...",
+        "filtersButton": "الفلاتر",
+        "filterStatusLabel": "الحالة",
+        "filterStatusAll": "جميع الحالات",
+        "filterTypeLabel": "نوع العقار",
+        "filterTypeAll": "جميع الأنواع",
+        "resetFilters": "إعادة التصفير",
+        "confirmDelete": "هل أنت متأكد من حذف هذا العقار؟",
+        "viewOnline": "عرض على الموقع",
+        "edit": "تعديل",
+        "newTransaction": "معاملة جديدة",
+        "delete": "حذف",
+        "viewsCount_one": "{{count}} مشاهدة",
+        "viewsCount_other": "{{count}} مشاهدة",
+        "previous": "السابق",
+        "next": "التالي",
+        "pageOf": "صفحة {{page}} من {{pages}}",
+        "empty": {
+          "title": "لا يوجد أي عقار",
+          "filtered": "لا يوجد عقار يطابق معايير البحث.",
+          "default": "ابدأ بإضافة عقارك الأول."
+        }
+      },
+      "status": {
+        "active": "منشور",
+        "pending": "قيد الانتظار",
+        "sold": "مُباع",
+        "rented": "مُكترى",
+        "draft": "مسودة"
+      },
+      "form": {
+        "titleNew": "عقار جديد",
+        "titleEdit": "تعديل العقار",
+        "subtitleNew": "أضف عقارًا جديدًا إلى محفظتك",
+        "subtitleEdit": "حدّث معلومات العقار",
+        "sections": {
+          "generalInfo": "معلومات عامة",
+          "priceSurface": "السعر والمساحة",
+          "features": "الخصائص",
+          "location": "الموقع",
+          "photos": "الصور"
+        },
+        "fields": {
+          "title": "عنوان الإعلان",
+          "titlePlaceholder": "مثال: شقة من 3 غرف بإطلالة على البحر",
+          "featured": "وضعه في الواجهة",
+          "featuredTooltip": "تُعرض العقارات المميزة في الصفحة الرئيسية وفي مقدمة نتائج البحث.",
+          "description": "الوصف",
+          "descriptionPlaceholder": "صف العقار بالتفصيل...",
+          "propertyType": "نوع العقار",
+          "listingType": "نوع الإعلان",
+          "status": "الحالة",
+          "price": "السعر ({{currency}})",
+          "surface": "المساحة (م²)",
+          "rooms": "الغرف",
+          "bedrooms": "غرف النوم",
+          "bathrooms": "الحمامات",
+          "yearBuilt": "سنة البناء",
+          "floor": "الطابق",
+          "totalFloors": "عدد الطوابق",
+          "featuresLabel": "التجهيزات",
+          "address": "العنوان",
+          "city": "المدينة",
+          "selectCity": "اختر مدينة",
+          "neighborhood": "الحي",
+          "latitude": "خط العرض",
+          "longitude": "خط الطول",
+          "latitudePlaceholder": "مثال: 33.5731",
+          "longitudePlaceholder": "مثال: -7.5898",
+          "photosHint": "صورة واحدة على الأقل مطلوبة، مهما كان نوع الإعلان.",
+          "dragImages": "اسحب صورك هنا أو",
+          "browse": "تصفح",
+          "uploadHint": "PNG أو JPG بحد أقصى 10 ميغابايت"
+        },
+        "statusOptions": {
+          "draft": "مسودة",
+          "active": "منشور",
+          "pending": "قيد الانتظار"
+        },
+        "validation": {
+          "titleRequired": "العنوان مطلوب",
+          "priceRequired": "السعر مطلوب",
+          "cityRequired": "المدينة مطلوبة",
+          "surfaceRequired": "المساحة مطلوبة",
+          "imagesRequired": "أضف صورة واحدة على الأقل"
+        },
+        "toastImagesRequired": "أضف صورة واحدة على الأقل.",
+        "cancelButton": "إلغاء",
+        "createButton": "إنشاء العقار",
+        "updateButton": "تحديث"
+      }
+    }
+  },
+  "settings": {
+    "team": {
+      "pageTitle": "الفريق",
+      "subtitle": "إدارة الأعضاء والدعوات والفرق.",
+      "seatGauge": {
+        "label": "المقاعد",
+        "unlimited": "{{count}} عضو · غير محدود",
+        "limited": "{{used}} / {{limit}} مقعدًا"
+      },
+      "invite": {
+        "title": "دعوة عضو",
+        "emailPlaceholder": "email@exemple.com",
+        "noTeam": "بدون فريق",
+        "button": "دعوة"
+      },
+      "pendingInvitations": {
+        "title": "دعوات قيد الانتظار",
+        "resend": "إعادة الإرسال",
+        "revoke": "إلغاء"
+      },
+      "teams": {
+        "title": "الفرق",
+        "newPlaceholder": "فريق جديد",
+        "create": "إنشاء",
+        "limitReached": "تم بلوغ الحد الأقصى للفرق — قم بالترقية إلى خطة أعلى.",
+        "empty": "لا يوجد أي فريق."
+      },
+      "members": {
+        "title": "الأعضاء",
+        "columns": {
+          "name": "الاسم",
+          "email": "البريد الإلكتروني",
+          "team": "الفريق"
+        },
+        "owner": "(المالك)",
+        "noTeam": "—",
+        "remove": "إزالة"
+      },
+      "toast": {
+        "linkCopied": "تم نسخ رابط الدعوة",
+        "inviteCreated": "تم إنشاء الدعوة",
+        "inviteResent": "تمت إعادة إرسال الدعوة",
+        "inviteRevoked": "تم إلغاء الدعوة",
+        "teamCreated": "تم إنشاء الفريق",
+        "teamDeleted": "تم حذف الفريق",
+        "memberRemoved": "تمت إزالة العضو"
+      }
+    },
+    "general": {
+      "pageTitle": "الإعدادات",
+      "subtitle": "قم بتكوين إعدادات وكالتك",
+      "savedNotice": "تم حفظ الإعدادات بنجاح",
+      "tabs": {
+        "general": "عام",
+        "notifications": "الإشعارات",
+        "stripe": "Stripe",
+        "integrations": "التكاملات",
+        "security": "الأمان"
+      },
+      "fields": {
+        "agencyName": "اسم الوكالة",
+        "website": "الموقع الإلكتروني",
+        "email": "البريد الإلكتروني",
+        "phone": "الهاتف",
+        "address": "العنوان",
+        "city": "المدينة",
+        "timezone": "المنطقة الزمنية",
+        "description": "وصف الوكالة",
+        "descriptionPlaceholder": "صف وكالتك..."
+      },
+      "timezoneOptions": {
+        "casablanca": "أفريقيا/الدار البيضاء (GMT+1)",
+        "paris": "أوروبا/باريس (GMT+1)"
+      },
+      "notifications": {
+        "email": {
+          "title": "إشعارات البريد الإلكتروني",
+          "description": "تلقي الإشعارات عبر البريد الإلكتروني"
+        },
+        "sms": {
+          "title": "إشعارات الرسائل القصيرة",
+          "description": "تلقي الإشعارات عبر الرسائل القصيرة"
+        },
+        "leadAutoAssign": {
+          "title": "الإسناد التلقائي للعملاء المحتملين",
+          "description": "إسناد العملاء المحتملين الجدد تلقائيًا إلى الوكلاء"
+        },
+        "visitReminder": {
+          "label": "تذكير الزيارة (عدد الساعات قبل)",
+          "hours_one": "ساعة واحدة",
+          "hours_other": "{{count}} ساعات"
+        }
+      },
+      "integrations": {
+        "smtp": {
+          "title": "إعداد SMTP",
+          "description": "قم بتكوين خادم SMTP الخاص بك لإرسال البريد الإلكتروني",
+          "host": "خادم SMTP",
+          "hostPlaceholder": "smtp.exemple.com",
+          "port": "المنفذ",
+          "portPlaceholder": "587",
+          "user": "المستخدم",
+          "password": "كلمة المرور"
+        },
+        "api": {
+          "title": "واجهة برمجة التطبيقات والـ Webhooks",
+          "description": "مفاتيح API وwebhooks للتكاملات الخارجية",
+          "keyLabel": "مفتاح API",
+          "regenerate": "إعادة التوليد"
+        },
+        "erp": {
+          "title": "تكاملات ERP",
+          "description": "اربط نظام إدارة المؤسسة الخاص بك",
+          "odoo": {
+            "name": "Odoo",
+            "description": "مزامنة جهات الاتصال والفواتير"
+          },
+          "sap": {
+            "name": "SAP Business One",
+            "description": "تكامل المحاسبة والإدارة"
+          }
+        },
+        "crm": {
+          "title": "تكاملات CRM",
+          "description": "اربط نظام CRM الخارجي الخاص بك لمزامنة البيانات",
+          "salesforce": {
+            "name": "Salesforce",
+            "description": "مزامنة ثنائية الاتجاه للعملاء المحتملين وجهات الاتصال"
+          },
+          "hubspot": {
+            "name": "HubSpot",
+            "description": "إدارة جهات الاتصال وأتمتة التسويق"
+          },
+          "zoho": {
+            "name": "Zoho CRM",
+            "description": "استيراد وتصدير بيانات العملاء"
+          }
+        },
+        "status": {
+          "notConnected": "غير متصل"
+        },
+        "actions": {
+          "configure": "تكوين",
+          "connect": "ربط"
+        }
+      },
+      "security": {
+        "twoFactor": {
+          "title": "المصادقة الثنائية",
+          "description": "أضف طبقة أمان إضافية إلى حسابك",
+          "button": "تفعيل المصادقة الثنائية"
+        },
+        "sessions": {
+          "title": "الجلسات النشطة",
+          "description": "إدارة الأجهزة المتصلة بحسابك",
+          "chromeMacos": "Chrome على MacOS",
+          "currentSession": "الجلسة الحالية",
+          "active": "نشط"
+        },
+        "dangerZone": {
+          "title": "منطقة الخطر",
+          "description": "هذه الإجراءات لا رجعة فيها",
+          "deleteAccount": "حذف الحساب"
+        }
+      },
+      "save": {
+        "saving": "جارٍ الحفظ...",
+        "button": "حفظ"
+      }
+    },
+    "hub": {
+      "tabs": {
+        "agency": "الوكالة",
+        "account": "حسابي"
+      }
+    },
+    "shared": {
+      "adminOnly": "للمشرفين فقط"
+    },
+    "stripe": {
+      "subtitle": "قم بتكوين إعدادات الدفع Stripe لمنصتك",
+      "dashboardLink": "لوحة تحكم Stripe",
+      "statusBanner": {
+        "mode": {
+          "production": "وضع الإنتاج",
+          "test": "وضع الاختبار"
+        },
+        "description": {
+          "production": "المدفوعات الحقيقية مفعّلة. سيتم إصدار فواتير للعملاء.",
+          "test": "المدفوعات محاكاة. استخدم بطاقات اختبار Stripe."
+        },
+        "switchToTest": "التبديل إلى وضع الاختبار",
+        "switchToProduction": "التبديل إلى وضع الإنتاج"
+      },
+      "apiKeys": {
+        "title": "مفاتيح API",
+        "subtitle": "مفاتيح الوصول إلى واجهة برمجة تطبيقات Stripe",
+        "publishableKey": "المفتاح العام (Publishable Key)",
+        "secretKey": "المفتاح السري (Secret Key)",
+        "secretKeyWarning": "لا تشارك هذا المفتاح أبدًا",
+        "webhookSecret": "سر Webhook",
+        "testConnection": "اختبار الاتصال",
+        "testingConnection": "جارٍ الاختبار...",
+        "connectionSuccess": "تم الاتصال بنجاح"
+      },
+      "paymentSettings": {
+        "title": "إعدادات الدفع",
+        "subtitle": "قم بتكوين خيارات الفوترة",
+        "currency": "العملة",
+        "currencyOptions": {
+          "mad": "درهم مغربي (Đh)",
+          "eur": "يورو (EUR)",
+          "usd": "دولار أمريكي (USD)"
+        },
+        "commissionRate": "عمولة المنصة (%)",
+        "autoCapture": {
+          "title": "التحصيل التلقائي",
+          "description": "تحصيل المدفوعات تلقائيًا عند الفوترة"
+        }
+      },
+      "paypal": {
+        "title": "PayPal",
+        "subtitle": "قبول الدفع عبر PayPal",
+        "clientId": "معرّف العميل (Client ID)",
+        "clientSecret": "سر العميل (Client Secret)"
+      },
+      "save": {
+        "saving": "جارٍ الحفظ...",
+        "button": "حفظ إعدادات Stripe",
+        "successAlert": "تم حفظ إعدادات Stripe بنجاح!"
+      }
+    }
   }
 }

@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from 'react-query'
+import { useTranslation } from 'react-i18next'
 import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiLink, FiTrendingUp, FiInbox, FiShield, FiBriefcase, FiClipboard, FiSearch, FiMail, FiCalendar } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
 import { leadService } from '../../services/leadService'
 import Wordmark from '../common/Wordmark'
 
 function Header() {
+  const { t } = useTranslation(['common'])
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const { isAuthenticated, user, logout } = useAuthStore()
@@ -36,20 +38,20 @@ function Header() {
   // Groupes métier du menu compte (voir proposition de réorganisation)
   const menuSections = [
     {
-      title: 'Activité',
+      title: t('common:nav.sections.activity'),
       items: [
-        { to: '/dashboard', label: user?.agency_id ? 'Tour de contrôle' : 'Mon espace', icon: FiGrid },
-        { to: '/dashboard/annonces', label: 'Mes annonces', icon: FiFileText },
-        { to: '/dashboard/candidatures', label: 'Mes candidatures', icon: FiClipboard },
-        { to: '/dashboard/leads', label: 'Demandes / Leads', icon: FiInbox }
+        { to: '/dashboard', label: user?.agency_id ? t('common:nav.controlTower') : t('common:nav.mySpace'), icon: FiGrid },
+        { to: '/dashboard/annonces', label: t('common:nav.myListings'), icon: FiFileText },
+        { to: '/dashboard/candidatures', label: t('common:nav.myApplications'), icon: FiClipboard },
+        { to: '/dashboard/leads', label: t('common:nav.leads'), icon: FiInbox }
       ]
     },
     ...(!user?.agency_id
       ? [{
-          title: 'Recherche',
+          title: t('common:nav.sections.search'),
           items: [
-            { to: '/dashboard/mes-recherches', label: 'Mes recherches', icon: FiSearch },
-            { to: '/dashboard/mes-messages', label: 'Mes messages', icon: FiMail }
+            { to: '/dashboard/mes-recherches', label: t('common:nav.mySearches'), icon: FiSearch },
+            { to: '/dashboard/mes-messages', label: t('common:nav.myMessages'), icon: FiMail }
           ]
         }]
       : []),
@@ -57,35 +59,35 @@ function Header() {
       ? [{
           title: null,
           items: [
-            { to: '/backoffice', label: "Gestion de l'agence", icon: FiBriefcase }
+            { to: '/backoffice', label: t('common:nav.agencyManagement'), icon: FiBriefcase }
           ]
         }, {
-          title: 'Relation client',
+          title: t('common:nav.sections.clientRelations'),
           items: [
-            { to: '/dashboard/messages', label: 'Messagerie', icon: FiMail },
-            { to: '/dashboard/disponibilites', label: 'Disponibilités', icon: FiCalendar }
+            { to: '/dashboard/messages', label: t('common:nav.messaging'), icon: FiMail },
+            { to: '/dashboard/disponibilites', label: t('common:nav.availability'), icon: FiCalendar }
           ]
         }]
       : []),
     {
-      title: 'Location courte durée',
+      title: t('common:nav.sections.shortTermRental'),
       items: [
         { to: '/dashboard/staymanager', label: 'StayManager', icon: FiLink }
       ]
     },
     ...(isAdmin
       ? [{
-          title: 'Administration',
+          title: t('common:nav.sections.administration'),
           items: [
-            { to: '/dashboard/prix-marche', label: 'Prix de référence', icon: FiTrendingUp }
+            { to: '/dashboard/prix-marche', label: t('common:nav.referencePrices'), icon: FiTrendingUp }
           ]
         }]
       : []),
     ...(user?.is_superadmin
       ? [{
-          title: 'Super-admin',
+          title: t('common:nav.sections.superAdmin'),
           items: [
-            { to: '/admin', label: 'Plateforme', icon: FiShield }
+            { to: '/admin', label: t('common:nav.platform'), icon: FiShield }
           ]
         }]
       : []),
@@ -93,7 +95,7 @@ function Header() {
       // Les 3 pages (agence / abonnement / paramètres) sont des onglets d'une même page
       title: null,
       items: [
-        { to: '/dashboard/compte', label: 'Mon compte', icon: FiUser }
+        { to: '/dashboard/compte', label: t('common:nav.myAccount'), icon: FiUser }
       ]
     }
   ]
@@ -121,18 +123,18 @@ function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center">
             {/* Primary nav - Acheter/Louer */}
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center gap-6">
               <Link
                 to="/annonces?transaction_type=sale"
                 className="text-slate-700 hover:text-midnight font-semibold text-[15px] transition-colors"
               >
-                Acheter
+                {t('common:nav.buy')}
               </Link>
               <Link
                 to="/annonces?transaction_type=rent"
                 className="text-slate-700 hover:text-midnight font-semibold text-[15px] transition-colors"
               >
-                Louer
+                {t('common:nav.rent')}
               </Link>
             </div>
 
@@ -144,38 +146,38 @@ function Header() {
               to="/programmes"
               className="px-4 py-1.5 bg-midnight text-ivory font-semibold rounded-full hover:bg-slate-800 transition-all shadow-ds-sm hover:shadow-ds-md"
             >
-              Programmes neufs
+              {t('common:nav.newPrograms')}
             </Link>
 
             {/* Separator */}
             <div className="mx-10 h-6 w-px bg-gray-200"></div>
 
             {/* Secondary nav - Agences & Services */}
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center gap-6">
               <Link
                 to="/agences"
                 className="text-emerald-500 hover:text-emerald-600 font-semibold text-[15px] transition-colors"
               >
-                Agences
+                {t('common:nav.agencies')}
               </Link>
               <Link
                 to="/nos-services"
                 className="text-emerald-500 hover:text-emerald-600 font-semibold text-[15px] transition-colors"
               >
-                Nos Services
+                {t('common:nav.ourServices')}
               </Link>
             </div>
           </nav>
 
           {/* Desktop Actions */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center gap-4">
             {isAuthenticated && (
               <Link
                 to="/dashboard/annonces/nouvelle"
                 className="btn-primary"
               >
-                <FiPlus className="w-4 h-4 mr-2" />
-                Déposer une annonce
+                <FiPlus className="w-4 h-4 me-2" />
+                {t('common:nav.postListing')}
               </Link>
             )}
 
@@ -184,7 +186,7 @@ function Header() {
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
-                aria-label="Menu utilisateur"
+                aria-label={t('common:nav.userMenuAria')}
               >
                 {isAuthenticated && user ? (
                   <span className="text-primary-600 font-semibold">
@@ -195,7 +197,7 @@ function Header() {
                 )}
                 {/* Pastille : demandes non lues, visible menu fermé */}
                 {isAuthenticated && unreadLeads > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-red-600 text-white text-[10px] font-bold ring-2 ring-white">
+                  <span className="absolute -top-0.5 -end-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-red-600 text-white text-[10px] font-bold ring-2 ring-white">
                     {unreadLeads > 9 ? '9+' : unreadLeads}
                   </span>
                 )}
@@ -203,7 +205,7 @@ function Header() {
 
               {/* Dropdown Menu */}
               {isUserMenuOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                <div className="absolute end-0 mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
                   {isAuthenticated ? (
                     <>
                       {/* User info */}
@@ -230,10 +232,10 @@ function Header() {
                                 onClick={() => setIsUserMenuOpen(false)}
                                 className={`flex items-center px-4 py-2 ${active ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
                               >
-                                <Icon className={`w-4 h-4 mr-3 ${active ? 'text-primary-600' : 'text-gray-400'}`} />
+                                <Icon className={`w-4 h-4 me-3 ${active ? 'text-primary-600' : 'text-gray-400'}`} />
                                 <span className="flex-1">{label}</span>
                                 {to === '/dashboard/leads' && unreadLeads > 0 && (
-                                  <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-600 text-white text-xs font-semibold">
+                                  <span className="ms-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-600 text-white text-xs font-semibold">
                                     {unreadLeads > 99 ? '99+' : unreadLeads}
                                   </span>
                                 )}
@@ -250,8 +252,8 @@ function Header() {
                           onClick={handleLogout}
                           className="flex items-center w-full px-4 py-2 text-red-600 hover:bg-red-50"
                         >
-                          <FiLogOut className="w-4 h-4 mr-3" />
-                          Déconnexion
+                          <FiLogOut className="w-4 h-4 me-3" />
+                          {t('common:actions.logout')}
                         </button>
                       </div>
                     </>
@@ -259,7 +261,7 @@ function Header() {
                     <>
                       {/* Login Form Preview */}
                       <div className="p-4">
-                        <h3 className="font-semibold text-gray-900 mb-4">Connexion</h3>
+                        <h3 className="font-semibold text-gray-900 mb-4">{t('common:nav.login')}</h3>
 
                         {/* Email Login Link */}
                         <Link
@@ -267,18 +269,18 @@ function Header() {
                           onClick={() => setIsUserMenuOpen(false)}
                           className="block w-full text-center px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
                         >
-                          Se connecter avec email
+                          {t('common:nav.loginWithEmail')}
                         </Link>
 
                         {/* Register Link */}
                         <p className="text-center text-sm text-gray-600 mt-4">
-                          Pas encore de compte ?{' '}
+                          {t('common:nav.noAccountYet')}{' '}
                           <Link
                             to="/inscription"
                             onClick={() => setIsUserMenuOpen(false)}
                             className="text-primary-600 hover:text-primary-700 font-medium"
                           >
-                            Créer un compte
+                            {t('common:nav.createAccount')}
                           </Link>
                         </p>
                       </div>
@@ -307,14 +309,14 @@ function Header() {
                 className="py-2 text-gray-700 font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Acheter
+                {t('common:nav.buy')}
               </Link>
               <Link
                 to="/annonces?transaction_type=rent"
                 className="py-2 text-gray-700 font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Louer
+                {t('common:nav.rent')}
               </Link>
               <div className="h-px bg-gray-200 my-2"></div>
               <Link
@@ -322,7 +324,7 @@ function Header() {
                 className="inline-block my-2 px-4 py-2 bg-gradient-to-r from-terracotta-500 to-terracotta-600 text-white font-semibold rounded-full"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Programmes neufs
+                {t('common:nav.newPrograms')}
               </Link>
               <div className="h-px bg-gray-200 my-2"></div>
               <Link
@@ -330,14 +332,14 @@ function Header() {
                 className="py-2 text-gray-600 font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Agences
+                {t('common:nav.agencies')}
               </Link>
               <Link
                 to="/nos-services"
                 className="py-2 text-gray-600 font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Nos Services
+                {t('common:nav.ourServices')}
               </Link>
               <div className="h-px bg-gray-200 my-2"></div>
               {isAuthenticated ? (
@@ -375,9 +377,9 @@ function Header() {
                       handleLogout()
                       setIsMenuOpen(false)
                     }}
-                    className="py-2 mt-2 text-left text-red-600 border-t border-gray-200"
+                    className="py-2 mt-2 text-start text-red-600 border-t border-gray-200"
                   >
-                    Déconnexion
+                    {t('common:actions.logout')}
                   </button>
                 </>
               ) : (
@@ -387,14 +389,14 @@ function Header() {
                     className="py-2 text-gray-600"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Connexion
+                    {t('common:nav.login')}
                   </Link>
                   <Link
                     to="/inscription"
                     className="py-2 text-primary-600 font-medium"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Créer un compte
+                    {t('common:nav.createAccount')}
                   </Link>
                 </>
               )}

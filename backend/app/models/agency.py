@@ -59,8 +59,12 @@ class Agency(db.Model):
     subscription = db.relationship('Subscription', back_populates='agency', uselist=False)
     leads = db.relationship('Lead', back_populates='agency', lazy='dynamic')
 
-    def to_dict(self, include_members=False):
-        """Serialize agency to dictionary."""
+    def to_dict(self, include_members=False, include_api_key=False):
+        """Serialize agency to dictionary.
+
+        api_key est SENSIBLE : ne l'inclure que pour le propriétaire de l'agence
+        (endpoint /my-agency), jamais dans les listes/fiches publiques.
+        """
         data = {
             'id': self.id,
             'name': self.name,
@@ -82,6 +86,8 @@ class Agency(db.Model):
             'deleted_at': self.deleted_at.isoformat() if self.deleted_at else None,
             'anonymized_at': self.anonymized_at.isoformat() if self.anonymized_at else None,
         }
+        if include_api_key:
+            data['api_key'] = self.api_key
         if include_members:
             data['members'] = [m.to_dict() for m in self.members]
         return data

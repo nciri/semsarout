@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Marker, Popup } from 'react-leaflet'
-import { FiMapPin, FiPhone, FiMail, FiHome, FiX } from 'react-icons/fi'
+import { useTranslation } from 'react-i18next'
+import { FiMapPin, FiPhone, FiHome, FiX } from 'react-icons/fi'
 import MapContainer, { createAgencyMarker, FitBounds, MOROCCO_CENTER } from './MapContainer'
 
 function AgencyPopup({ agency }) {
+  const { t } = useTranslation(['common'])
   return (
     <div className="w-64">
       {/* Logo */}
@@ -27,7 +29,7 @@ function AgencyPopup({ agency }) {
               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              Vérifié
+              {t('common:map.agency.verified')}
             </span>
           )}
         </div>
@@ -35,21 +37,21 @@ function AgencyPopup({ agency }) {
 
       {/* Address */}
       <div className="flex items-start text-sm text-gray-600 mb-2">
-        <FiMapPin className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
+        <FiMapPin className="w-4 h-4 me-2 mt-0.5 flex-shrink-0" />
         <span>{agency.address}, {agency.city}</span>
       </div>
 
       {/* Contact */}
       {agency.phone && (
         <div className="flex items-center text-sm text-gray-600 mb-2">
-          <FiPhone className="w-4 h-4 mr-2" />
+          <FiPhone className="w-4 h-4 me-2" />
           <span>{agency.phone}</span>
         </div>
       )}
 
       {/* Properties count */}
       <div className="text-sm text-gray-500 mb-3">
-        {agency.properties_count || 0} annonce{(agency.properties_count || 0) > 1 ? 's' : ''} active{(agency.properties_count || 0) > 1 ? 's' : ''}
+        {t('common:map.agency.activeListings', { count: agency.properties_count || 0 })}
       </div>
 
       {/* Link */}
@@ -57,7 +59,7 @@ function AgencyPopup({ agency }) {
         to={`/agences/${agency.slug}`}
         className="block w-full text-center py-2 bg-terracotta-600 text-white rounded-lg text-sm font-medium hover:bg-terracotta-700 transition-colors"
       >
-        Voir l'agence
+        {t('common:map.agency.viewAgency')}
       </Link>
     </div>
   )
@@ -70,6 +72,7 @@ export default function AgencyMap({
   className = '',
   onClose = null
 }) {
+  const { t } = useTranslation(['common'])
   const [hoveredId, setHoveredId] = useState(null)
 
   // Filter agencies with valid coordinates
@@ -87,7 +90,7 @@ export default function AgencyMap({
       <div className={`bg-gray-100 rounded-xl flex items-center justify-center ${className}`} style={{ minHeight: '400px' }}>
         <div className="text-center text-gray-500">
           <FiMapPin className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p>Aucune agence avec coordonnées géographiques</p>
+          <p>{t('common:map.agency.empty')}</p>
         </div>
       </div>
     )
@@ -99,7 +102,7 @@ export default function AgencyMap({
       {onClose && (
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-[1000] bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition-colors"
+          className="absolute top-4 end-4 z-[1000] bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition-colors"
         >
           <FiX className="w-5 h-5" />
         </button>
@@ -127,9 +130,9 @@ export default function AgencyMap({
       </MapContainer>
 
       {/* Agency count badge */}
-      <div className="absolute bottom-4 left-4 z-[1000] bg-white rounded-lg px-3 py-2 shadow-lg">
+      <div className="absolute bottom-4 start-4 z-[1000] bg-white rounded-lg px-3 py-2 shadow-lg">
         <span className="text-sm font-medium text-gray-700">
-          {mappableAgencies.length} agence{mappableAgencies.length > 1 ? 's' : ''} sur la carte
+          {t('common:map.agency.count', { count: mappableAgencies.length })}
         </span>
       </div>
     </div>

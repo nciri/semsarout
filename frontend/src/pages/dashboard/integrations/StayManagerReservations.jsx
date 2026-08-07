@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   FiArrowLeft,
   FiCalendar,
   FiUser,
-  FiCheck,
   FiX,
   FiAlertCircle,
   FiFilter,
@@ -16,26 +16,30 @@ import {
   FiPhone
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
+import DirIcon from '../../../components/common/DirIcon'
+import { useFormat } from '../../../utils/format'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
 
-const STATUS_LABELS = {
-  confirmed: { label: 'Confirmee', color: 'bg-green-100 text-green-700' },
-  cancelled: { label: 'Annulee', color: 'bg-red-100 text-red-700' },
-  blocked: { label: 'Bloquee', color: 'bg-gray-100 text-gray-700' },
-  pending: { label: 'En attente', color: 'bg-yellow-100 text-yellow-700' }
+const STATUS_TONE = {
+  confirmed: 'bg-green-100 text-green-700',
+  cancelled: 'bg-red-100 text-red-700',
+  blocked: 'bg-gray-100 text-gray-700',
+  pending: 'bg-yellow-100 text-yellow-700'
 }
 
-const PLATFORM_LABELS = {
-  airbnb: { label: 'Airbnb', color: 'bg-pink-100 text-pink-700' },
-  booking: { label: 'Booking.com', color: 'bg-blue-100 text-blue-700' },
-  vrbo: { label: 'VRBO', color: 'bg-indigo-100 text-indigo-700' },
-  direct: { label: 'Direct', color: 'bg-purple-100 text-purple-700' }
+const PLATFORM_TONE = {
+  airbnb: 'bg-pink-100 text-pink-700',
+  booking: 'bg-blue-100 text-blue-700',
+  vrbo: 'bg-indigo-100 text-indigo-700',
+  direct: 'bg-purple-100 text-purple-700'
 }
 
 export default function StayManagerReservations() {
-  const { token } = useAuthStore()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { t } = useTranslation(['dashboard', 'common'])
+  const { accessToken: token } = useAuthStore()
+  const { fmtDate, fmtDateTime, fmtNumber } = useFormat()
+  const [searchParams] = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [reservations, setReservations] = useState([])
   const [propertyLinks, setPropertyLinks] = useState([])
@@ -51,10 +55,12 @@ export default function StayManagerReservations() {
 
   useEffect(() => {
     fetchPropertyLinks()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     fetchReservations()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propertyFilter, statusFilter, upcomingOnly])
 
   const fetchPropertyLinks = async () => {
@@ -89,7 +95,7 @@ export default function StayManagerReservations() {
       const data = await response.json()
       setReservations(data.reservations || [])
     } catch (err) {
-      setError('Erreur lors du chargement des reservations')
+      setError(t('dashboard:stayManager.reservations.errors.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -97,7 +103,7 @@ export default function StayManagerReservations() {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '-'
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
+    return fmtDate(dateStr, {
       weekday: 'short',
       day: 'numeric',
       month: 'short',
@@ -107,7 +113,7 @@ export default function StayManagerReservations() {
 
   const formatDateShort = (dateStr) => {
     if (!dateStr) return '-'
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
+    return fmtDate(dateStr, {
       day: 'numeric',
       month: 'short'
     })
@@ -121,20 +127,20 @@ export default function StayManagerReservations() {
           to="/dashboard/staymanager"
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
         >
-          <FiArrowLeft className="w-4 h-4" />
-          Retour aux parametres
+          <DirIcon icon={FiArrowLeft} className="w-4 h-4" />
+          {t('dashboard:stayManager.reservations.back')}
         </Link>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Reservations StayManager</h1>
-            <p className="text-gray-600 mt-1">Toutes les reservations synchronisees depuis StayManager</p>
+            <h1 className="text-2xl font-bold text-gray-900">{t('dashboard:stayManager.reservations.title')}</h1>
+            <p className="text-gray-600 mt-1">{t('dashboard:stayManager.reservations.subtitle')}</p>
           </div>
           <button
             onClick={fetchReservations}
             className="flex items-center gap-2 px-4 py-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
           >
             <FiRefreshCw className="w-4 h-4" />
-            Actualiser
+            {t('dashboard:stayManager.reservations.refresh')}
           </button>
         </div>
       </div>
@@ -144,7 +150,7 @@ export default function StayManagerReservations() {
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <FiFilter className="w-4 h-4 text-gray-400" />
-            <span className="text-sm font-medium text-gray-700">Filtres:</span>
+            <span className="text-sm font-medium text-gray-700">{t('dashboard:stayManager.reservations.filters.label')}</span>
           </div>
 
           <select
@@ -152,10 +158,10 @@ export default function StayManagerReservations() {
             onChange={e => setPropertyFilter(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
-            <option value="">Tous les biens</option>
+            <option value="">{t('dashboard:stayManager.reservations.filters.allProperties')}</option>
             {propertyLinks.map(link => (
               <option key={link.property_id} value={link.property_id}>
-                {link.property?.title || `Bien #${link.property_id}`}
+                {link.property?.title || t('dashboard:stayManager.properties.fallbackTitle', { id: link.property_id })}
               </option>
             ))}
           </select>
@@ -165,11 +171,11 @@ export default function StayManagerReservations() {
             onChange={e => setStatusFilter(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
-            <option value="">Tous les statuts</option>
-            <option value="confirmed">Confirmees</option>
-            <option value="cancelled">Annulees</option>
-            <option value="blocked">Bloquees</option>
-            <option value="pending">En attente</option>
+            <option value="">{t('dashboard:stayManager.reservations.filters.allStatuses')}</option>
+            <option value="confirmed">{t('dashboard:stayManager.reservations.filters.status.confirmed')}</option>
+            <option value="cancelled">{t('dashboard:stayManager.reservations.filters.status.cancelled')}</option>
+            <option value="blocked">{t('dashboard:stayManager.reservations.filters.status.blocked')}</option>
+            <option value="pending">{t('dashboard:stayManager.reservations.filters.status.pending')}</option>
           </select>
 
           <label className="flex items-center gap-2 cursor-pointer">
@@ -179,7 +185,7 @@ export default function StayManagerReservations() {
               onChange={e => setUpcomingOnly(e.target.checked)}
               className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
             />
-            <span className="text-sm text-gray-700">A venir uniquement</span>
+            <span className="text-sm text-gray-700">{t('dashboard:stayManager.reservations.filters.upcomingOnly')}</span>
           </label>
         </div>
       </div>
@@ -201,19 +207,22 @@ export default function StayManagerReservations() {
         ) : reservations.length === 0 ? (
           <div className="text-center py-12">
             <FiCalendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune reservation</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('dashboard:stayManager.reservations.empty.title')}</h3>
             <p className="text-gray-600">
               {upcomingOnly
-                ? 'Aucune reservation a venir.'
-                : 'Aucune reservation trouvee avec ces filtres.'}
+                ? t('dashboard:stayManager.reservations.empty.upcoming')
+                : t('dashboard:stayManager.reservations.empty.filtered')}
             </p>
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
             {reservations.map(reservation => {
-              const status = STATUS_LABELS[reservation.status] || STATUS_LABELS.pending
-              const platform = PLATFORM_LABELS[reservation.platform] || { label: reservation.platform || 'Direct', color: 'bg-gray-100 text-gray-700' }
-
+              const statusTone = STATUS_TONE[reservation.status] || STATUS_TONE.pending
+              const statusLabel = t(`dashboard:stayManager.reservations.status.${STATUS_TONE[reservation.status] ? reservation.status : 'pending'}`)
+              const platformTone = PLATFORM_TONE[reservation.platform] || 'bg-gray-100 text-gray-700'
+              const platformLabel = PLATFORM_TONE[reservation.platform]
+                ? t(`dashboard:stayManager.reservations.platform.${reservation.platform}`)
+                : (reservation.platform || t('dashboard:stayManager.reservations.platform.direct'))
               return (
                 <div
                   key={reservation.id}
@@ -228,44 +237,44 @@ export default function StayManagerReservations() {
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold text-gray-900">
-                            {reservation.guest?.name || 'Client'}
+                            {reservation.guest?.name || t('dashboard:stayManager.reservations.card.guestFallback')}
                           </h3>
                           {reservation.guest?.verified && (
                             <span className="flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
                               <FiShield className="w-3 h-3" />
-                              Verifie
+                              {t('dashboard:stayManager.reservations.card.verified')}
                             </span>
                           )}
                         </div>
                         <p className="text-sm text-gray-600">
                           {formatDateShort(reservation.check_in)} - {formatDateShort(reservation.check_out)}
-                          {reservation.nights && ` (${reservation.nights} nuits)`}
+                          {reservation.nights && ` ${t('dashboard:stayManager.reservations.card.nights', { count: reservation.nights })}`}
                         </p>
                         <div className="flex items-center gap-2 mt-2">
-                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${status.color}`}>
-                            {status.label}
+                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${statusTone}`}>
+                            {statusLabel}
                           </span>
-                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${platform.color}`}>
-                            {platform.label}
+                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${platformTone}`}>
+                            {platformLabel}
                           </span>
                           {reservation.has_access_code && (
                             <span className="flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full">
                               <FiKey className="w-3 h-3" />
-                              Code
+                              {t('dashboard:stayManager.reservations.card.accessCode')}
                             </span>
                           )}
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-end">
                       {reservation.total_price && (
                         <p className="font-semibold text-gray-900">
-                          {parseFloat(reservation.total_price).toLocaleString('fr-FR')} {reservation.currency || 'Đh'}
+                          {fmtNumber(parseFloat(reservation.total_price))} {reservation.currency || 'Đh'}
                         </p>
                       )}
                       {reservation.guest?.count && (
                         <p className="text-sm text-gray-500">
-                          {reservation.guest.count} voyageur{reservation.guest.count > 1 ? 's' : ''}
+                          {t('dashboard:stayManager.reservations.card.guestCount', { count: reservation.guest.count })}
                         </p>
                       )}
                     </div>
@@ -283,7 +292,7 @@ export default function StayManagerReservations() {
           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Details de la reservation</h3>
+                <h3 className="text-lg font-semibold text-gray-900">{t('dashboard:stayManager.reservations.detail.title')}</h3>
                 <button
                   onClick={() => setSelectedReservation(null)}
                   className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -296,25 +305,25 @@ export default function StayManagerReservations() {
             <div className="p-6 space-y-6">
               {/* Guest Info */}
               <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-3">Client</h4>
+                <h4 className="text-sm font-medium text-gray-500 mb-3">{t('dashboard:stayManager.reservations.detail.guest')}</h4>
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
                     <FiUser className="w-6 h-6 text-gray-400" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">
-                      {selectedReservation.guest?.name || 'Client'}
+                      {selectedReservation.guest?.name || t('dashboard:stayManager.reservations.card.guestFallback')}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       {selectedReservation.guest?.verified ? (
                         <span className="flex items-center gap-1 text-xs text-green-600">
                           <FiShield className="w-3 h-3" />
-                          Verifie
+                          {t('dashboard:stayManager.reservations.detail.verified')}
                         </span>
                       ) : (
                         <span className="flex items-center gap-1 text-xs text-yellow-600">
                           <FiAlertCircle className="w-3 h-3" />
-                          Non verifie
+                          {t('dashboard:stayManager.reservations.detail.notVerified')}
                         </span>
                       )}
                     </div>
@@ -340,33 +349,37 @@ export default function StayManagerReservations() {
 
               {/* Dates */}
               <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-3">Dates</h4>
+                <h4 className="text-sm font-medium text-gray-500 mb-3">{t('dashboard:stayManager.reservations.detail.dates')}</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="text-xs text-gray-500 mb-1">Arrivee</p>
+                    <p className="text-xs text-gray-500 mb-1">{t('dashboard:stayManager.reservations.detail.checkin')}</p>
                     <p className="font-medium text-gray-900">{formatDate(selectedReservation.check_in)}</p>
                   </div>
                   <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="text-xs text-gray-500 mb-1">Depart</p>
+                    <p className="text-xs text-gray-500 mb-1">{t('dashboard:stayManager.reservations.detail.checkout')}</p>
                     <p className="font-medium text-gray-900">{formatDate(selectedReservation.check_out)}</p>
                   </div>
                 </div>
                 {selectedReservation.nights && (
                   <p className="text-sm text-gray-500 mt-2 text-center">
-                    {selectedReservation.nights} nuit{selectedReservation.nights > 1 ? 's' : ''}
+                    {t('dashboard:stayManager.reservations.detail.nights', { count: selectedReservation.nights })}
                   </p>
                 )}
               </div>
 
               {/* Status */}
               <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-3">Statut</h4>
+                <h4 className="text-sm font-medium text-gray-500 mb-3">{t('dashboard:stayManager.reservations.detail.status')}</h4>
                 <div className="flex items-center gap-3">
-                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${STATUS_LABELS[selectedReservation.status]?.color || 'bg-gray-100 text-gray-700'}`}>
-                    {STATUS_LABELS[selectedReservation.status]?.label || selectedReservation.status}
+                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${STATUS_TONE[selectedReservation.status] || 'bg-gray-100 text-gray-700'}`}>
+                    {STATUS_TONE[selectedReservation.status]
+                      ? t(`dashboard:stayManager.reservations.status.${selectedReservation.status}`)
+                      : selectedReservation.status}
                   </span>
-                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${PLATFORM_LABELS[selectedReservation.platform]?.color || 'bg-gray-100 text-gray-700'}`}>
-                    {PLATFORM_LABELS[selectedReservation.platform]?.label || selectedReservation.platform || 'Direct'}
+                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${PLATFORM_TONE[selectedReservation.platform] || 'bg-gray-100 text-gray-700'}`}>
+                    {PLATFORM_TONE[selectedReservation.platform]
+                      ? t(`dashboard:stayManager.reservations.platform.${selectedReservation.platform}`)
+                      : (selectedReservation.platform || t('dashboard:stayManager.reservations.platform.direct'))}
                   </span>
                 </div>
               </div>
@@ -374,9 +387,9 @@ export default function StayManagerReservations() {
               {/* Price */}
               {selectedReservation.total_price && (
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-3">Prix total</h4>
+                  <h4 className="text-sm font-medium text-gray-500 mb-3">{t('dashboard:stayManager.reservations.detail.price')}</h4>
                   <p className="text-2xl font-bold text-gray-900">
-                    {parseFloat(selectedReservation.total_price).toLocaleString('fr-FR')} {selectedReservation.currency || 'Đh'}
+                    {fmtNumber(parseFloat(selectedReservation.total_price))} {selectedReservation.currency || 'Đh'}
                   </p>
                 </div>
               )}
@@ -387,10 +400,12 @@ export default function StayManagerReservations() {
                   <div className="p-4 bg-purple-50 rounded-lg">
                     <div className="flex items-center gap-2 text-purple-700">
                       <FiKey className="w-4 h-4" />
-                      <span className="text-sm font-medium">Code d'acces</span>
+                      <span className="text-sm font-medium">{t('dashboard:stayManager.reservations.detail.accessCode')}</span>
                     </div>
                     <p className="text-sm text-purple-600 mt-1">
-                      {selectedReservation.access_code_masked ? `****${selectedReservation.access_code_masked}` : 'Genere'}
+                      {selectedReservation.access_code_masked
+                        ? `****${selectedReservation.access_code_masked}`
+                        : t('dashboard:stayManager.reservations.detail.accessCodeGenerated')}
                     </p>
                   </div>
                 )}
@@ -398,12 +413,14 @@ export default function StayManagerReservations() {
                   <div className="p-4 bg-blue-50 rounded-lg">
                     <div className="flex items-center gap-2 text-blue-700">
                       <FiFileText className="w-4 h-4" />
-                      <span className="text-sm font-medium">Contrat</span>
+                      <span className="text-sm font-medium">{t('dashboard:stayManager.reservations.detail.contract')}</span>
                     </div>
                     <p className="text-sm text-blue-600 mt-1">
-                      {selectedReservation.contract_status === 'signed' ? 'Signe' :
-                       selectedReservation.contract_status === 'sent' ? 'Envoye' :
-                       selectedReservation.contract_status === 'generated' ? 'Genere' : 'Non genere'}
+                      {t(`dashboard:stayManager.reservations.detail.contractStatus.${
+                        ['signed', 'sent', 'generated'].includes(selectedReservation.contract_status)
+                          ? selectedReservation.contract_status
+                          : 'none'
+                      }`)}
                     </p>
                   </div>
                 )}
@@ -412,7 +429,7 @@ export default function StayManagerReservations() {
               {/* Notes */}
               {(selectedReservation.guest_notes || selectedReservation.special_requests) && (
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-3">Notes</h4>
+                  <h4 className="text-sm font-medium text-gray-500 mb-3">{t('dashboard:stayManager.reservations.detail.notes')}</h4>
                   {selectedReservation.guest_notes && (
                     <p className="text-sm text-gray-600 mb-2">{selectedReservation.guest_notes}</p>
                   )}
@@ -425,11 +442,15 @@ export default function StayManagerReservations() {
               {/* Sync Info */}
               <div className="pt-4 border-t border-gray-200">
                 <p className="text-xs text-gray-400">
-                  ID: {selectedReservation.staymanager_reservation_id}
-                  {selectedReservation.external_id && ` | Externe: ${selectedReservation.external_id}`}
+                  {t('dashboard:stayManager.reservations.detail.idLabel', { id: selectedReservation.staymanager_reservation_id })}
+                  {selectedReservation.external_id && t('dashboard:stayManager.reservations.detail.externalIdLabel', { id: selectedReservation.external_id })}
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
-                  Derniere sync: {selectedReservation.synced_at ? new Date(selectedReservation.synced_at).toLocaleString('fr-FR') : 'Inconnue'}
+                  {t('dashboard:stayManager.reservations.detail.lastSync', {
+                    date: selectedReservation.synced_at
+                      ? fmtDateTime(selectedReservation.synced_at, { second: '2-digit' })
+                      : t('dashboard:stayManager.reservations.detail.unknown')
+                  })}
                 </p>
               </div>
             </div>

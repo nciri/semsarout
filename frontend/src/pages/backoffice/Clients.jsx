@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   FiPlus, FiSearch, FiFilter, FiPhone, FiMail,
   FiEdit2, FiTrash2, FiEye, FiUser, FiUsers, FiHome, FiDollarSign,
-  FiCalendar, FiChevronDown, FiChevronRight
+  FiChevronDown, FiChevronRight
 } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
 import { transactionTypeForClient } from '../../utils/clients'
@@ -22,51 +23,43 @@ const backofficeService = {
   }
 }
 
+// Icônes/couleurs par type de client (STATUS_TONE-like) ; libellés via
+// t('backoffice:crm.clients.list.types.<type>.*') keyés sur l'enum API.
 const CLIENT_TYPE_CONFIG = {
   buyer: {
-    label: 'Acheteurs',
     icon: FiUser,
     color: 'bg-blue-500',
     lightColor: 'bg-blue-50',
     textColor: 'text-blue-700',
     borderColor: 'border-blue-200',
-    description: 'Clients à la recherche d\'un bien à acheter'
   },
   seller: {
-    label: 'Vendeurs',
     icon: FiHome,
     color: 'bg-green-500',
     lightColor: 'bg-green-50',
     textColor: 'text-green-700',
     borderColor: 'border-green-200',
-    description: 'Propriétaires souhaitant vendre leur bien'
   },
   landlord: {
-    label: 'Propriétaires',
     icon: FiHome,
     color: 'bg-purple-500',
     lightColor: 'bg-purple-50',
     textColor: 'text-purple-700',
     borderColor: 'border-purple-200',
-    description: 'Propriétaires mettant en location'
   },
   tenant: {
-    label: 'Locataires',
     icon: FiUsers,
     color: 'bg-yellow-500',
     lightColor: 'bg-yellow-50',
     textColor: 'text-yellow-700',
     borderColor: 'border-yellow-200',
-    description: 'Clients cherchant une location'
   },
   investor: {
-    label: 'Investisseurs',
     icon: FiDollarSign,
     color: 'bg-pink-500',
     lightColor: 'bg-pink-50',
     textColor: 'text-pink-700',
     borderColor: 'border-pink-200',
-    description: 'Investisseurs immobiliers'
   }
 }
 
@@ -76,7 +69,7 @@ const STATUS_BADGE = {
   inactive: 'bg-gray-100 text-gray-700'
 }
 
-function ClientCard({ client, onDelete }) {
+function ClientCard({ client, onDelete, t }) {
   return (
     <div className="bg-white rounded-lg border border-gray-100 p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between">
@@ -93,8 +86,8 @@ function ClientCard({ client, onDelete }) {
             >
               {client.first_name} {client.last_name}
             </Link>
-            <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[client.status] || STATUS_BADGE.active}`}>
-              {client.status === 'active' ? 'Actif' : client.status === 'prospect' ? 'Prospect' : 'Inactif'}
+            <span className={`ms-2 px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[client.status] || STATUS_BADGE.active}`}>
+              {t(`backoffice:crm.shared.status.${client.status}`, { defaultValue: t('backoffice:crm.shared.status.active') })}
             </span>
           </div>
         </div>
@@ -138,7 +131,7 @@ function ClientCard({ client, onDelete }) {
       {(client.budget_min || client.budget_max) && (
         <div className="mt-3 pt-3 border-t border-gray-100">
           <p className="text-xs text-gray-500">
-            Budget: {formatPrice(client.budget_min || 0)} - {formatPrice(client.budget_max || 0)}
+            {t('backoffice:crm.clients.list.budget', { min: formatPrice(client.budget_min || 0), max: formatPrice(client.budget_max || 0) })}
           </p>
         </div>
       )}
@@ -149,14 +142,14 @@ function ClientCard({ client, onDelete }) {
           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
         >
           <FiPlus className="w-3.5 h-3.5" />
-          Nouvelle transaction
+          {t('backoffice:crm.clients.list.newTransaction')}
         </Link>
       </div>
     </div>
   )
 }
 
-function ClientTypeSection({ type, clients, onDelete, defaultExpanded = true }) {
+function ClientTypeSection({ type, clients, onDelete, defaultExpanded = true, t }) {
   const [expanded, setExpanded] = useState(defaultExpanded)
   const config = CLIENT_TYPE_CONFIG[type]
   const Icon = config?.icon || FiUser
@@ -174,14 +167,14 @@ function ClientTypeSection({ type, clients, onDelete, defaultExpanded = true }) 
           <div className={`w-10 h-10 rounded-lg ${config.color} flex items-center justify-center`}>
             <Icon className="w-5 h-5 text-white" />
           </div>
-          <div className="text-left">
+          <div className="text-start">
             <h3 className={`font-semibold ${config.textColor}`}>
-              {config.label}
-              <span className="ml-2 px-2 py-0.5 bg-white/50 rounded-full text-sm">
+              {t(`backoffice:crm.clients.list.types.${type}.label`)}
+              <span className="ms-2 px-2 py-0.5 bg-white/50 rounded-full text-sm">
                 {clients.length}
               </span>
             </h3>
-            <p className="text-sm text-gray-500">{config.description}</p>
+            <p className="text-sm text-gray-500">{t(`backoffice:crm.clients.list.types.${type}.description`)}</p>
           </div>
         </div>
         {expanded ? (
@@ -197,13 +190,13 @@ function ClientTypeSection({ type, clients, onDelete, defaultExpanded = true }) 
           {clients.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {clients.map(client => (
-                <ClientCard key={client.id} client={client} onDelete={onDelete} />
+                <ClientCard key={client.id} client={client} onDelete={onDelete} t={t} />
               ))}
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500">
               <Icon className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-              <p>Aucun client dans cette catégorie</p>
+              <p>{t('backoffice:crm.clients.list.emptyCategory')}</p>
             </div>
           )}
         </div>
@@ -213,6 +206,7 @@ function ClientTypeSection({ type, clients, onDelete, defaultExpanded = true }) 
 }
 
 export default function BackofficeClients() {
+  const { t } = useTranslation(['backoffice', 'common'])
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState({
@@ -235,7 +229,7 @@ export default function BackofficeClients() {
   })
 
   const handleDelete = (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce client ?')) {
+    if (window.confirm(t('backoffice:crm.clients.list.confirmDelete'))) {
       deleteMutation.mutate(id)
     }
   }
@@ -273,15 +267,15 @@ export default function BackofficeClients() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Clients</h1>
-          <p className="text-gray-500">Gérez votre base de clients et prospects</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('backoffice:crm.clients.list.pageTitle')}</h1>
+          <p className="text-gray-500">{t('backoffice:crm.clients.list.subtitle')}</p>
         </div>
         <Link
           to="/backoffice/clients/nouveau"
           className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
         >
           <FiPlus className="w-5 h-5" />
-          Nouveau client
+          {t('backoffice:crm.clients.list.newButton')}
         </Link>
       </div>
 
@@ -301,7 +295,7 @@ export default function BackofficeClients() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-900">{count}</p>
-                  <p className={`text-sm ${config.textColor}`}>{config.label}</p>
+                  <p className={`text-sm ${config.textColor}`}>{t(`backoffice:crm.clients.list.types.${type}.label`)}</p>
                 </div>
               </div>
             </div>
@@ -313,13 +307,13 @@ export default function BackofficeClients() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <FiSearch className="absolute start-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Rechercher par nom, email, téléphone..."
+              placeholder={t('backoffice:crm.clients.list.searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full ps-10 pe-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
           <button
@@ -329,7 +323,7 @@ export default function BackofficeClients() {
             }`}
           >
             <FiFilter className="w-5 h-5" />
-            Filtres
+            {t('backoffice:crm.clients.list.filtersButton')}
             {(filters.client_type || filters.status) && (
               <span className="px-1.5 py-0.5 bg-primary-100 text-primary-700 text-xs rounded-full">
                 {[filters.client_type, filters.status].filter(Boolean).length}
@@ -341,29 +335,29 @@ export default function BackofficeClients() {
         {showFilters && (
           <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Type de client</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.clients.list.filterTypeLabel')}</label>
               <select
                 value={filters.client_type}
                 onChange={(e) => setFilters({ ...filters, client_type: e.target.value, page: 1 })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <option value="">Tous les types</option>
-                {Object.entries(CLIENT_TYPE_CONFIG).map(([key, config]) => (
-                  <option key={key} value={key}>{config.label}</option>
+                <option value="">{t('backoffice:crm.clients.list.filterTypeAll')}</option>
+                {Object.keys(CLIENT_TYPE_CONFIG).map((key) => (
+                  <option key={key} value={key}>{t(`backoffice:crm.clients.list.types.${key}.label`)}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.clients.list.filterStatusLabel')}</label>
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <option value="">Tous les statuts</option>
-                <option value="active">Actif</option>
-                <option value="prospect">Prospect</option>
-                <option value="inactive">Inactif</option>
+                <option value="">{t('backoffice:crm.clients.list.filterStatusAll')}</option>
+                <option value="active">{t('backoffice:crm.shared.status.active')}</option>
+                <option value="prospect">{t('backoffice:crm.shared.status.prospect')}</option>
+                <option value="inactive">{t('backoffice:crm.shared.status.inactive')}</option>
               </select>
             </div>
             <div className="flex items-end">
@@ -371,7 +365,7 @@ export default function BackofficeClients() {
                 onClick={() => setFilters({ client_type: '', status: '', page: 1 })}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
               >
-                Réinitialiser
+                {t('backoffice:crm.clients.list.resetFilters')}
               </button>
             </div>
           </div>
@@ -404,24 +398,25 @@ export default function BackofficeClients() {
               clients={clientsByType[type] || []}
               onDelete={handleDelete}
               defaultExpanded={!filters.client_type || filters.client_type === type}
+              t={t}
             />
           ))}
         </div>
       ) : (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
           <FiUsers className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun client trouvé</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">{t('backoffice:crm.clients.list.empty.title')}</h3>
           <p className="text-gray-500 mb-4">
             {search || filters.client_type || filters.status
-              ? 'Aucun client ne correspond à vos critères de recherche.'
-              : 'Commencez par ajouter votre premier client.'}
+              ? t('backoffice:crm.clients.list.empty.filtered')
+              : t('backoffice:crm.clients.list.empty.default')}
           </p>
           <Link
             to="/backoffice/clients/nouveau"
             className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
           >
             <FiPlus className="w-5 h-5" />
-            Ajouter un client
+            {t('backoffice:crm.clients.list.addFirstButton')}
           </Link>
         </div>
       )}

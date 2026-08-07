@@ -1,21 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import { useTranslation } from 'react-i18next'
 import {
   FiArrowLeft, FiPlus, FiTrash2, FiSave, FiX, FiImage,
   FiEdit3, FiMousePointer, FiCheck, FiRotateCcw, FiZoomIn, FiZoomOut, FiCopy
 } from 'react-icons/fi'
+import DirIcon from '../../components/common/DirIcon'
 import { lotPlanService, LOT_STATUS } from '../../services/lotPlanService'
 
-const LOT_TYPES = [
-  { value: 'apartment', label: 'Appartement' },
-  { value: 'villa', label: 'Villa' },
-  { value: 'duplex', label: 'Duplex' },
-  { value: 'studio', label: 'Studio' },
-  { value: 'terrain', label: 'Terrain' },
-  { value: 'commercial', label: 'Local commercial' },
-  { value: 'office', label: 'Bureau' }
-]
+const LOT_TYPE_VALUES = ['apartment', 'villa', 'duplex', 'studio', 'terrain', 'commercial', 'office']
+const LOT_STATUS_KEYS = Object.keys(LOT_STATUS)
 
 const EMPTY_FORM = {
   reference: '', title: '', lot_type: 'apartment', surface: '', rooms: '',
@@ -33,8 +28,11 @@ const cloneZone = (zone) => (zone || []).map(p => ({ x: p.x, y: p.y }))
 // Duplication d'un lot : référence suffixée, zone légèrement décalée (à repositionner),
 // statut remis à "available" (un nouveau lot physique est disponible).
 const DUP_OFFSET = 0.03
+// eslint-disable-next-line react-refresh/only-export-components
 export const nextReference = (ref) => `${ref || 'LOT'}-copie`
+// eslint-disable-next-line react-refresh/only-export-components
 export const offsetZone = (zone) => (zone || []).map(p => ({ x: clamp01(p.x + DUP_OFFSET), y: clamp01(p.y + DUP_OFFSET) }))
+// eslint-disable-next-line react-refresh/only-export-components
 export const duplicateLotPayload = (lot) => ({
   reference: nextReference(lot.reference), title: lot.title || '', lot_type: lot.lot_type || 'apartment',
   surface: lot.surface ?? null, rooms: lot.rooms ?? null, bedrooms: lot.bedrooms ?? null,
@@ -51,6 +49,7 @@ function eventToNorm(e, el) {
 }
 
 export default function ProgramPlanEditor() {
+  const { t } = useTranslation(['dashboard', 'common'])
   const { id: programId } = useParams()
   const [plans, setPlans] = useState([])
   const [activePlanId, setActivePlanId] = useState(null)
@@ -88,7 +87,7 @@ export default function ProgramPlanEditor() {
       setPlans(data)
       setActivePlanId(prev => prev || (data[0]?.id ?? null))
     } catch {
-      toast.error('Erreur lors du chargement des plans')
+      toast.error(t('dashboard:programPlanEditor.toasts.loadError'))
     } finally {
       setLoading(false)
     }
@@ -102,11 +101,11 @@ export default function ProgramPlanEditor() {
       const last = h[h.length - 1]
       setUndoing(true)
       Promise.resolve(last())
-        .catch(() => toast.error("Impossible d'annuler cette action"))
+        .catch(() => toast.error(t('dashboard:programPlanEditor.toasts.undoError')))
         .finally(() => setUndoing(false))
       return h.slice(0, -1)
     })
-  }, [])
+  }, [t])
 
   useEffect(() => {
     const onKey = (e) => {
@@ -147,7 +146,7 @@ export default function ProgramPlanEditor() {
         await lotPlanService.deletePlan(programId, plan.id)
         setPlans(ps => { const rest = ps.filter(p => p.id !== plan.id); setActivePlanId(rest[0]?.id ?? null); return rest })
       })
-    } catch (err) { toast.error(err.response?.data?.error || 'Erreur') }
+    } catch (err) { toast.error(err.response?.data?.error || t('common:errors.short')) }
   }
 
   const handleUploadImage = async (e) => {
@@ -159,18 +158,18 @@ export default function ProgramPlanEditor() {
       await lotPlanService.updatePlan(programId, activePlan.id, { image_url: url })
       setPlans(ps => ps.map(p => p.id === activePlan.id ? { ...p, image_url: url } : p))
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Erreur lors du téléchargement')
+      toast.error(err.response?.data?.error || t('dashboard:programPlanEditor.toasts.uploadError'))
     } finally { setUploading(false); e.target.value = '' }
   }
 
   const handleDeletePlan = async () => {
     if (!activePlan) return
-    if (!window.confirm(`Supprimer le plan « ${activePlan.name} » et ses lots ?`)) return
+    if (!window.confirm(t('dashboard:programPlanEditor.confirms.deletePlan', { name: activePlan.name }))) return
     try {
       await lotPlanService.deletePlan(programId, activePlan.id)
       const rest = plans.filter(p => p.id !== activePlan.id)
       setPlans(rest); setActivePlanId(rest[0]?.id ?? null); resetSelection()
-    } catch (err) { toast.error(err.response?.data?.error || 'Erreur') }
+    } catch (err) { toast.error(err.response?.data?.error || t('common:errors.short')) }
   }
 
   // ---- Canvas: draw ----
@@ -179,7 +178,7 @@ export default function ProgramPlanEditor() {
     setDraft(d => [...d, eventToNorm(e, canvasRef.current)])
   }
   const finishDraft = () => {
-    if (draft.length < 3) { toast.info('Placez au moins 3 points pour dessiner un lot'); return }
+    if (draft.length < 3) { toast.info(t('dashboard:programPlanEditor.toasts.needThreePoints')); return }
     setCreating(true); setSelectedLotId(null); setForm(EMPTY_FORM); setMode('select')
   }
 
@@ -228,7 +227,7 @@ export default function ProgramPlanEditor() {
           await lotPlanService.updateLot(programId, d.lotId, { zone: d.origZone })
           setLotZoneLocal(activePlanId, d.lotId, d.origZone)
         })
-      } catch { toast.error('Erreur lors du déplacement') }
+      } catch { toast.error(t('dashboard:programPlanEditor.toasts.moveError')) }
     }
   }
 
@@ -261,7 +260,7 @@ export default function ProgramPlanEditor() {
         await lotPlanService.updateLot(programId, lot.id, { zone: d.origZone })
         setLotZoneLocal(activePlanId, lot.id, d.origZone)
       })
-    } catch { toast.error('Erreur lors du déplacement') }
+    } catch { toast.error(t('dashboard:programPlanEditor.toasts.moveError')) }
   }
 
   // ---- Save / delete lot ----
@@ -282,7 +281,7 @@ export default function ProgramPlanEditor() {
           await lotPlanService.deleteLot(programId, lot.id)
           removeLotLocal(activePlan.id, lot.id); recomputeCounts(activePlan.id); resetSelection()
         })
-        toast.success('Lot ajouté')
+        toast.success(t('dashboard:programPlanEditor.toasts.lotAdded'))
       } else if (selectedLot) {
         const before = { ...selectedLot }
         const lot = await lotPlanService.updateLot(programId, selectedLot.id, payload)
@@ -296,16 +295,16 @@ export default function ProgramPlanEditor() {
           })
           upsertLotLocal(activePlan.id, restored); recomputeCounts(activePlan.id)
         })
-        toast.success('Lot mis à jour')
+        toast.success(t('dashboard:programPlanEditor.toasts.lotUpdated'))
       }
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Erreur')
+      toast.error(err.response?.data?.error || t('common:errors.short'))
     } finally { setSaving(false) }
   }
 
   const handleDeleteLot = async (lot) => {
     if (!lot) return
-    if (!window.confirm('Supprimer ce lot ?')) return
+    if (!window.confirm(t('dashboard:programPlanEditor.confirms.deleteLot'))) return
     const before = { ...lot, zone: cloneZone(lot.zone) }
     try {
       await lotPlanService.deleteLot(programId, lot.id)
@@ -321,7 +320,7 @@ export default function ProgramPlanEditor() {
         upsertLotLocal(activePlan.id, re); recomputeCounts(activePlan.id)
       })
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Erreur lors de la suppression')
+      toast.error(err.response?.data?.error || t('dashboard:programPlanEditor.toasts.deleteError'))
     }
   }
 
@@ -335,9 +334,9 @@ export default function ProgramPlanEditor() {
         await lotPlanService.deleteLot(programId, created.id)
         removeLotLocal(activePlan.id, created.id); recomputeCounts(activePlan.id)
       })
-      toast.success('Lot dupliqué')
+      toast.success(t('dashboard:programPlanEditor.toasts.lotDuplicated'))
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Erreur lors de la duplication')
+      toast.error(err.response?.data?.error || t('dashboard:programPlanEditor.toasts.duplicateError'))
     }
   }
 
@@ -352,11 +351,11 @@ export default function ProgramPlanEditor() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center gap-4 mb-6">
         <Link to={`/dashboard/programmes/${programId}`} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg">
-          <FiArrowLeft className="w-5 h-5" />
+          <DirIcon icon={FiArrowLeft} className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Plan interactif des lots</h1>
-          <p className="text-gray-500">Placez et gérez vos lots directement sur le plan.</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('dashboard:programPlanEditor.title')}</h1>
+          <p className="text-gray-500">{t('dashboard:programPlanEditor.subtitle')}</p>
         </div>
       </div>
 
@@ -370,61 +369,61 @@ export default function ProgramPlanEditor() {
         ))}
         <button onClick={() => setShowAddPlan(true)}
           className="px-3 py-2 rounded-lg text-sm font-medium text-primary-600 hover:bg-primary-50 inline-flex items-center gap-1">
-          <FiPlus className="w-4 h-4" /> Ajouter un plan
+          <FiPlus className="w-4 h-4" /> {t('dashboard:programPlanEditor.addPlan')}
         </button>
       </div>
 
       {!activePlan ? (
         <div className="card p-12 text-center text-gray-500">
           <FiImage className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          Créez un premier plan pour commencer à placer vos lots.
+          {t('dashboard:programPlanEditor.noPlanYet')}
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-3">
             {/* Icon toolbar */}
             <div className="flex items-center gap-2 flex-wrap">
-              <button title="Sélectionner / déplacer" onClick={() => { setMode('select'); setDraft([]); setCreating(false) }} className={iconBtn(mode === 'select')}>
+              <button title={t('dashboard:programPlanEditor.toolbar.select')} onClick={() => { setMode('select'); setDraft([]); setCreating(false) }} className={iconBtn(mode === 'select')}>
                 <FiMousePointer className="w-4 h-4" />
               </button>
-              <button title="Dessiner un lot" onClick={() => { setMode('draw'); resetSelection() }} disabled={!activePlan.image_url}
+              <button title={t('dashboard:programPlanEditor.toolbar.draw')} onClick={() => { setMode('draw'); resetSelection() }} disabled={!activePlan.image_url}
                 className={`${iconBtn(mode === 'draw')} disabled:opacity-40`}>
                 <FiEdit3 className="w-4 h-4" />
               </button>
               {mode === 'draw' && (
-                <button title={`Terminer le tracé (${draft.length} points)`} onClick={finishDraft} className="p-2 rounded-lg bg-green-600 text-white">
+                <button title={t('dashboard:programPlanEditor.toolbar.finishDraft', { count: draft.length })} onClick={finishDraft} className="p-2 rounded-lg bg-green-600 text-white">
                   <FiCheck className="w-4 h-4" />
                 </button>
               )}
-              <button title="Annuler la dernière action (Ctrl+Z)" onClick={undo} disabled={!history.length || undoing}
+              <button title={t('dashboard:programPlanEditor.toolbar.undo')} onClick={undo} disabled={!history.length || undoing}
                 className="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40">
                 <FiRotateCcw className="w-4 h-4" />
               </button>
 
-              <div className="flex items-center gap-1 ml-2">
-                <button title="Dézoomer" onClick={() => setZoom(z => Math.max(MIN_ZOOM, +(z - ZOOM_STEP).toFixed(2)))} disabled={zoom <= MIN_ZOOM}
+              <div className="flex items-center gap-1 ms-2">
+                <button title={t('dashboard:programPlanEditor.toolbar.zoomOut')} onClick={() => setZoom(z => Math.max(MIN_ZOOM, +(z - ZOOM_STEP).toFixed(2)))} disabled={zoom <= MIN_ZOOM}
                   className="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40">
                   <FiZoomOut className="w-4 h-4" />
                 </button>
                 <span className="text-xs text-gray-500 w-10 text-center">{Math.round(zoom * 100)}%</span>
-                <button title="Zoomer" onClick={() => setZoom(z => Math.min(MAX_ZOOM, +(z + ZOOM_STEP).toFixed(2)))} disabled={zoom >= MAX_ZOOM}
+                <button title={t('dashboard:programPlanEditor.toolbar.zoomIn')} onClick={() => setZoom(z => Math.min(MAX_ZOOM, +(z + ZOOM_STEP).toFixed(2)))} disabled={zoom >= MAX_ZOOM}
                   className="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40">
                   <FiZoomIn className="w-4 h-4" />
                 </button>
               </div>
 
-              <label title={activePlan.image_url ? "Changer l'image du plan" : 'Charger une image de plan'}
-                className="p-2 rounded-lg bg-gray-100 text-gray-700 cursor-pointer hover:bg-gray-200 ml-auto">
+              <label title={activePlan.image_url ? t('dashboard:programPlanEditor.toolbar.changeImage') : t('dashboard:programPlanEditor.toolbar.uploadImage')}
+                className="p-2 rounded-lg bg-gray-100 text-gray-700 cursor-pointer hover:bg-gray-200 ms-auto">
                 <FiImage className="w-4 h-4" />
                 <input type="file" accept="image/*" className="hidden" onChange={handleUploadImage} disabled={uploading} />
               </label>
-              <button title="Supprimer le plan" onClick={handleDeletePlan} className="p-2 text-gray-400 hover:text-red-600">
+              <button title={t('dashboard:programPlanEditor.toolbar.deletePlan')} onClick={handleDeletePlan} className="p-2 text-gray-400 hover:text-red-600">
                 <FiTrash2 className="w-4 h-4" />
               </button>
             </div>
 
             {mode === 'draw' && (
-              <p className="text-xs text-gray-500">Cliquez sur le plan pour poser les sommets du lot, puis validez avec ✓.</p>
+              <p className="text-xs text-gray-500">{t('dashboard:programPlanEditor.drawHint')}</p>
             )}
 
             {/* Zoomable canvas */}
@@ -439,7 +438,7 @@ export default function ProgramPlanEditor() {
                   <img src={activePlan.image_url} alt={activePlan.name} className="w-full block pointer-events-none" draggable={false} />
                 ) : (
                   <div className="aspect-video flex items-center justify-center text-gray-400">
-                    Chargez une image de plan pour commencer
+                    {t('dashboard:programPlanEditor.uploadHint')}
                   </div>
                 )}
 
@@ -493,10 +492,10 @@ export default function ProgramPlanEditor() {
 
             {/* Legend */}
             <div className="flex items-center gap-4 text-sm">
-              {Object.entries(LOT_STATUS).map(([k, v]) => (
+              {LOT_STATUS_KEYS.map((k) => (
                 <span key={k} className="inline-flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded" style={{ backgroundColor: v.color }} />
-                  {v.label} ({activePlan.status_counts?.[k] ?? 0})
+                  <span className="w-3 h-3 rounded" style={{ backgroundColor: LOT_STATUS[k].color }} />
+                  {t(`common:lotPlan.status.${k}`)} ({activePlan.status_counts?.[k] ?? 0})
                 </span>
               ))}
             </div>
@@ -507,40 +506,40 @@ export default function ProgramPlanEditor() {
             {(creating || selectedLot) ? (
               <div className="card p-5 space-y-3 sticky top-24">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-gray-900">{creating ? 'Nouveau lot' : `Lot ${form.reference || ''}`}</h3>
+                  <h3 className="font-semibold text-gray-900">{creating ? t('dashboard:programPlanEditor.newLot') : t('dashboard:programPlanEditor.lotWithReference', { reference: form.reference || '' })}</h3>
                   <button onClick={resetSelection} className="p-1 text-gray-400 hover:text-gray-600"><FiX className="w-4 h-4" /></button>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <input className="input" placeholder="Référence" value={form.reference} onChange={e => setForm({ ...form, reference: e.target.value })} />
+                  <input className="input" placeholder={t('dashboard:programPlanEditor.form.reference')} value={form.reference} onChange={e => setForm({ ...form, reference: e.target.value })} />
                   <select className="input" value={form.lot_type} onChange={e => setForm({ ...form, lot_type: e.target.value })}>
-                    {LOT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                    {LOT_TYPE_VALUES.map(value => <option key={value} value={value}>{t(`dashboard:programPlanEditor.lotTypes.${value}`)}</option>)}
                   </select>
                 </div>
-                <input className="input" placeholder="Titre (optionnel)" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
+                <input className="input" placeholder={t('dashboard:programPlanEditor.form.titleOptional')} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
                 <div className="grid grid-cols-2 gap-2">
-                  <input className="input" type="number" placeholder="Surface m²" value={form.surface} onChange={e => setForm({ ...form, surface: e.target.value })} />
-                  <input className="input" type="number" placeholder="Prix (Dh)" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
-                  <input className="input" type="number" placeholder="Pièces" value={form.rooms} onChange={e => setForm({ ...form, rooms: e.target.value })} />
-                  <input className="input" type="number" placeholder="Chambres" value={form.bedrooms} onChange={e => setForm({ ...form, bedrooms: e.target.value })} />
-                  <input className="input" type="number" placeholder="SDB" value={form.bathrooms} onChange={e => setForm({ ...form, bathrooms: e.target.value })} />
-                  <input className="input" type="number" placeholder="Étage" value={form.floor} onChange={e => setForm({ ...form, floor: e.target.value })} />
+                  <input className="input" type="number" placeholder={t('dashboard:programPlanEditor.form.surface')} value={form.surface} onChange={e => setForm({ ...form, surface: e.target.value })} />
+                  <input className="input" type="number" placeholder={t('dashboard:programPlanEditor.form.price')} value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
+                  <input className="input" type="number" placeholder={t('dashboard:programPlanEditor.form.rooms')} value={form.rooms} onChange={e => setForm({ ...form, rooms: e.target.value })} />
+                  <input className="input" type="number" placeholder={t('dashboard:programPlanEditor.form.bedrooms')} value={form.bedrooms} onChange={e => setForm({ ...form, bedrooms: e.target.value })} />
+                  <input className="input" type="number" placeholder={t('dashboard:programPlanEditor.form.bathrooms')} value={form.bathrooms} onChange={e => setForm({ ...form, bathrooms: e.target.value })} />
+                  <input className="input" type="number" placeholder={t('dashboard:programPlanEditor.form.floor')} value={form.floor} onChange={e => setForm({ ...form, floor: e.target.value })} />
                 </div>
                 <div>
-                  <label className="text-sm text-gray-600 mb-1 block">Statut</label>
+                  <label className="text-sm text-gray-600 mb-1 block">{t('dashboard:programPlanEditor.form.status')}</label>
                   <div className="grid grid-cols-3 gap-2">
-                    {Object.entries(LOT_STATUS).map(([k, v]) => (
+                    {LOT_STATUS_KEYS.map((k) => (
                       <button key={k} type="button" onClick={() => setForm({ ...form, status: k })}
                         className={`px-2 py-1.5 rounded-lg text-xs font-medium border-2 ${form.status === k ? 'text-white' : 'text-gray-600 bg-white'}`}
-                        style={form.status === k ? { backgroundColor: v.color, borderColor: v.color } : { borderColor: '#e5e7eb' }}>
-                        {v.label}
+                        style={form.status === k ? { backgroundColor: LOT_STATUS[k].color, borderColor: LOT_STATUS[k].color } : { borderColor: '#e5e7eb' }}>
+                        {t(`common:lotPlan.status.${k}`)}
                       </button>
                     ))}
                   </div>
                 </div>
-                <textarea className="input" rows={2} placeholder="Description (optionnel)" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+                <textarea className="input" rows={2} placeholder={t('dashboard:programPlanEditor.form.descriptionOptional')} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
                 <div className="flex gap-2 pt-1">
                   <button onClick={handleSaveLot} disabled={saving} className="btn-primary flex-1 justify-center">
-                    <FiSave className="w-4 h-4 mr-2" /> {saving ? '...' : 'Enregistrer'}
+                    <FiSave className="w-4 h-4 me-2" /> {saving ? '...' : t('dashboard:shared.actions.save')}
                   </button>
                   {selectedLot && (
                     <button onClick={() => handleDeleteLot(selectedLot)} className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg"><FiTrash2 className="w-4 h-4" /></button>
@@ -549,13 +548,13 @@ export default function ProgramPlanEditor() {
               </div>
             ) : (
               <div className="card p-5 text-sm text-gray-500 sticky top-24">
-                <p className="font-medium text-gray-700 mb-2">Comment faire ?</p>
+                <p className="font-medium text-gray-700 mb-2">{t('dashboard:programPlanEditor.howTo.title')}</p>
                 <ol className="list-decimal list-inside space-y-1">
-                  <li>Chargez l'image du plan (icône image).</li>
-                  <li>Outil crayon, cliquez les sommets, validez avec ✓.</li>
-                  <li>Remplissez les infos et choisissez le statut.</li>
-                  <li>Outil flèche : cliquez un lot pour l'éditer, glissez-le pour le déplacer, ou glissez ses points.</li>
-                  <li>Zoom +/− pour affiner, flèche retour ↺ pour annuler.</li>
+                  <li>{t('dashboard:programPlanEditor.howTo.step1')}</li>
+                  <li>{t('dashboard:programPlanEditor.howTo.step2')}</li>
+                  <li>{t('dashboard:programPlanEditor.howTo.step3')}</li>
+                  <li>{t('dashboard:programPlanEditor.howTo.step4')}</li>
+                  <li>{t('dashboard:programPlanEditor.howTo.step5')}</li>
                 </ol>
               </div>
             )}
@@ -563,11 +562,11 @@ export default function ProgramPlanEditor() {
             {/* Liste des lots du plan actif */}
             {lots.length > 0 && (
               <div className="bg-white rounded-xl border border-gray-200 p-4 mt-4">
-                <h3 className="font-semibold text-gray-900 mb-3">Lots ({lots.length})</h3>
+                <h3 className="font-semibold text-gray-900 mb-3">{t('dashboard:programPlanEditor.lotsCount', { count: lots.length })}</h3>
                 <div className="space-y-2 max-h-72 overflow-y-auto">
                   {lots.map(lot => {
                     const st = LOT_STATUS[lot.status] || LOT_STATUS.available
-                    const typeLabel = LOT_TYPES.find(t => t.value === lot.lot_type)?.label || lot.lot_type
+                    const typeLabel = LOT_TYPE_VALUES.includes(lot.lot_type) ? t(`dashboard:programPlanEditor.lotTypes.${lot.lot_type}`) : lot.lot_type
                     return (
                       <div
                         key={lot.id}
@@ -582,16 +581,16 @@ export default function ProgramPlanEditor() {
                           </p>
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${st.bg} ${st.text}`}>{st.label}</span>
-                          <button title="Modifier" onClick={() => selectLot(lot)}
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${st.bg} ${st.text}`}>{t(`common:lotPlan.status.${lot.status}`)}</span>
+                          <button title={t('dashboard:programPlanEditor.actions.edit')} onClick={() => selectLot(lot)}
                             className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-gray-200 rounded-lg">
                             <FiEdit3 className="w-4 h-4" />
                           </button>
-                          <button title="Dupliquer" onClick={() => handleDuplicateLot(lot)}
+                          <button title={t('dashboard:programPlanEditor.actions.duplicate')} onClick={() => handleDuplicateLot(lot)}
                             className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-gray-200 rounded-lg">
                             <FiCopy className="w-4 h-4" />
                           </button>
-                          <button title="Supprimer" onClick={() => handleDeleteLot(lot)}
+                          <button title={t('dashboard:shared.actions.delete')} onClick={() => handleDeleteLot(lot)}
                             className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-100 rounded-lg">
                             <FiTrash2 className="w-4 h-4" />
                           </button>
@@ -609,12 +608,12 @@ export default function ProgramPlanEditor() {
       {showAddPlan && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <form onSubmit={handleAddPlan} className="bg-white rounded-xl p-6 max-w-sm w-full">
-            <h3 className="font-semibold text-lg mb-4">Nouveau plan</h3>
-            <input autoFocus className="input mb-4" placeholder="Nom (ex: Plan de masse, Étage 3)"
+            <h3 className="font-semibold text-lg mb-4">{t('dashboard:programPlanEditor.newPlan')}</h3>
+            <input autoFocus className="input mb-4" placeholder={t('dashboard:programPlanEditor.form.planNamePlaceholder')}
               value={newPlanName} onChange={e => setNewPlanName(e.target.value)} />
             <div className="flex gap-2 justify-end">
-              <button type="button" onClick={() => setShowAddPlan(false)} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Annuler</button>
-              <button type="submit" className="btn-primary">Créer</button>
+              <button type="button" onClick={() => setShowAddPlan(false)} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">{t('dashboard:shared.actions.cancel')}</button>
+              <button type="submit" className="btn-primary">{t('dashboard:programPlanEditor.create')}</button>
             </div>
           </form>
         </div>

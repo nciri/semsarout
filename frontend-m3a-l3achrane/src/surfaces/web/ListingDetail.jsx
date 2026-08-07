@@ -1,12 +1,91 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { AmenityChip, Avatar, Button, Card, Icon, PriceTag, VerifiedBadge } from '../../ds/index.js'
-import { getListing } from '../../services/index.js'
+import { useTranslation } from 'react-i18next'
+import { AmenityChip, Avatar, Badge, Button, Card, Icon, Select, VerifiedBadge, PriceTag } from '../../ds/index.js'
+import { createReport, getListing } from '../../services/index.js'
+
+const REPORT_REASONS = ['spam', 'inappropriate', 'fraud', 'harassment', 'other']
+
+function ReportListingAction({ listingId }) {
+  const { t } = useTranslation(['web'])
+  const [open, setOpen] = useState(false)
+  const [reason, setReason] = useState(REPORT_REASONS[0])
+  const [submitting, setSubmitting] = useState(false)
+  const [result, setResult] = useState(null) // 'success' | 'error' | null
+
+  const submit = () => {
+    setSubmitting(true)
+    setResult(null)
+    createReport({ target_type: 'listing', target_id: String(listingId), reason })
+      .then(() => { setResult('success'); setOpen(false) })
+      .catch(() => setResult('error'))
+      .finally(() => setSubmitting(false))
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <button
+        type="button"
+        onClick={() => { setOpen((v) => !v); setResult(null) }}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
+          border: 0, background: 'transparent', padding: 0, cursor: 'pointer',
+          font: 'var(--fw-medium) 12.5px var(--font-body)', color: 'var(--text-muted)',
+        }}
+      >
+        <Icon name="flag" size={14} strokeWidth={2} />
+        {t('web:listing.reportCta')}
+      </button>
+      {open && (
+        <Card padding={14} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <Select
+            label={t('web:listing.reportReasonLabel')}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            options={REPORT_REASONS.map((r) => ({ value: r, label: t(`web:listing.reportReason.${r}`) }))}
+          />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button variant="accent" onClick={submit} disabled={submitting}>
+              {t('web:listing.reportSubmitCta')}
+            </Button>
+            <Button variant="secondary" onClick={() => setOpen(false)} disabled={submitting}>
+              {t('web:listing.reportCancelCta')}
+            </Button>
+          </div>
+        </Card>
+      )}
+      {result === 'success' && (
+        <div style={{ font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--green-700)' }}>
+          {t('web:listing.reportSuccess')}
+        </div>
+      )}
+      {result === 'error' && (
+        <div style={{ font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+          {t('web:listing.reportError')}
+        </div>
+      )}
+    </div>
+  )
+}
+
+const DEFAULT_REGLEMENT = [
+  { key: 'guests', ok: true },
+  { key: 'cleaning', ok: true },
+  { key: 'smoking', ok: false },
+  { key: 'pets', ok: false },
+]
+
+const DEFAULT_PROXIMITE = [{ label: 'Centre-ville', distance: '1 km' }]
+
+const GALLERY_BG = ['var(--gray-200)', 'var(--gray-150)', 'var(--gray-200)', 'var(--gray-150)', 'var(--gray-200)']
 
 export default function ListingDetail() {
+  const { t, i18n } = useTranslation(['web', 'common'])
   const { id } = useParams()
   const navigate = useNavigate()
   const [listing, setListing] = useState(undefined)
+  const isRtl = i18n.dir() === 'rtl'
+  const breadcrumbChevronStyle = isRtl ? { transform: 'scaleX(-1)' } : undefined
 
   useEffect(() => {
     setListing(undefined)
@@ -16,7 +95,7 @@ export default function ListingDetail() {
   if (listing === undefined) {
     return (
       <div style={{ padding: 48, maxWidth: 'var(--container-max)', margin: '0 auto', font: 'var(--fw-medium) var(--fs-body) var(--font-body)', color: 'var(--text-muted)' }}>
-        Chargement…
+        {t('common:loading')}
       </div>
     )
   }
@@ -24,77 +103,172 @@ export default function ListingDetail() {
   if (listing === null) {
     return (
       <div style={{ padding: 48, maxWidth: 'var(--container-max)', margin: '0 auto', textAlign: 'center' }}>
-        <h1 style={{ font: 'var(--fw-bold) 24px var(--font-display)', color: 'var(--navy-700)', margin: '0 0 12px' }}>Annonce introuvable</h1>
-        <Link to="/recherche" style={{ font: 'var(--fw-semibold) var(--fs-body) var(--font-body)', color: 'var(--navy-700)' }}>Retour à la recherche</Link>
+        <h1 style={{ font: 'var(--fw-bold) 24px var(--font-display)', color: 'var(--navy-700)', margin: '0 0 12px' }}>{t('web:listing.notFoundTitle')}</h1>
+        <Link to="/recherche" style={{ font: 'var(--fw-semibold) var(--fs-body) var(--font-body)', color: 'var(--navy-700)' }}>{t('web:listing.backToSearch')}</Link>
       </div>
     )
   }
 
+  const reglement = listing.reglement?.length ? listing.reglement : DEFAULT_REGLEMENT
+  const proximite = listing.proximite?.length ? listing.proximite : DEFAULT_PROXIMITE
+  const extraPhotos = Math.max(0, (listing.photos?.length ?? 0) - 5)
+  const proximityConnector = proximite[0] ? t('web:listing.proximityConnector', { distance: proximite[0].distance, label: proximite[0].label }) : ''
+
   return (
     <div style={{ background: 'var(--bg-page)', minHeight: '100%' }}>
-      <div style={{ maxWidth: 'var(--container-max)', margin: '0 auto', padding: '20px 40px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, font: 'var(--fw-medium) var(--fs-sm) var(--font-body)', color: 'var(--text-muted)', marginBottom: 16 }}>
-          <a href="#" onClick={(e) => { e.preventDefault(); navigate('/recherche') }}>Rechercher</a>
-          <Icon name="chevron-right" size={14} />
+      <div style={{ maxWidth: 'var(--container-max)', margin: '0 auto', padding: '20px 40px 64px', display: 'flex', flexDirection: 'column', gap: 22 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, font: 'var(--fw-medium) var(--fs-sm) var(--font-body)', color: 'var(--text-muted)' }}>
+          <a href="#" onClick={(e) => { e.preventDefault(); navigate('/recherche') }}>{t('web:listing.breadcrumbSearch')}</a>
+          <Icon name="chevron-right" size={14} style={breadcrumbChevronStyle} />
           {listing.ville}
-          <Icon name="chevron-right" size={14} />
+          <Icon name="chevron-right" size={14} style={breadcrumbChevronStyle} />
           <span style={{ color: 'var(--text-strong)' }}>{listing.quartier}</span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.7fr 1fr', gap: 28 }}>
-          <div>
-            <div style={{ height: 320, borderRadius: 'var(--radius-lg)', background: 'linear-gradient(150deg,var(--navy-200),var(--navy-400))', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,.55)' }}>
-              <Icon name="image" size={40} />
-              <div style={{ position: 'absolute', right: 14, bottom: 14 }}><Button variant="secondary" size="sm" iconLeft="images">Voir les {listing.photos.length} photos</Button></div>
-            </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-              {listing.photos.map((photo, i) => <div key={`${i}-${photo}`} style={{ flex: 1, height: 56, borderRadius: 'var(--radius-sm)', background: 'var(--navy-100)' }} />)}
-            </div>
 
-            <div style={{ marginTop: 26, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
-              <div>
-                <h1 style={{ font: 'var(--fw-bold) 26px var(--font-display)', color: 'var(--navy-700)', margin: '0 0 8px' }}>{listing.titre} — {listing.quartier}</h1>
-                <PriceTag amount={listing.prixMad} size="lg" />
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 8, height: 360, borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+          {GALLERY_BG.map((bg, i) => {
+            const photo = listing.photos?.[i]
+            const isLast = i === GALLERY_BG.length - 1
+            return (
+              <div
+                key={`${i}-${photo ?? 'placeholder'}`}
+                style={{
+                  position: 'relative',
+                  background: photo ? `var(--navy-100) url(${photo}) center/cover no-repeat` : bg,
+                }}
+              >
+                {isLast && extraPhotos > 0 && (
+                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(15,26,56,.55)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', font: 'var(--fw-bold) var(--fs-sm) var(--font-body)' }}>
+                    {t('web:listing.morePhotosOverlay', { count: extraPhotos })}
+                  </div>
+                )}
               </div>
-              {listing.verifiee && <VerifiedBadge label="Vérifiée" />}
+            )
+          })}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 360px', gap: 28, alignItems: 'start' }}>
+          <section style={{ display: 'flex', flexDirection: 'column', gap: 22, minWidth: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                {listing.verifiee && <VerifiedBadge label={t('web:listing.verifiedLabel')} />}
+                {listing.logementGenre && <Badge tone="navy">{listing.logementGenre}</Badge>}
+              </div>
+              <h1 style={{ margin: 0, font: 'var(--fw-bold) 27px var(--font-display)', color: 'var(--text-heading)', letterSpacing: '-0.02em' }}>
+                {listing.titre} — {listing.quartier}
+              </h1>
+              <div style={{ font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-muted)' }}>
+                {listing.ville}, {listing.quartier}
+                {proximityConnector}
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: 18, margin: '16px 0', flexWrap: 'wrap', font: 'var(--fw-medium) var(--fs-sm) var(--font-body)', color: 'var(--text-body)' }}>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, padding: 18, background: 'var(--surface-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)' }}>
               {listing.facts.map((fact) => (
-                <span key={fact.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <Icon name="check" size={16} color="var(--gray-500)" />
-                  {fact.label} : {fact.value}
-                </span>
+                <div key={fact.label} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <div style={{ font: 'var(--fw-bold) 11.5px var(--font-body)', textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text-muted)' }}>{fact.label}</div>
+                  <div style={{ font: 'var(--fw-bold) var(--fs-body) var(--font-body)', color: 'var(--text-strong)' }}>{fact.value}</div>
+                </div>
               ))}
             </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
-              {listing.equipements.map((eq) => <AmenityChip key={eq}>{eq}</AmenityChip>)}
-            </div>
-            <h3 style={{ font: 'var(--fw-bold) var(--fs-h3) var(--font-display)', color: 'var(--navy-700)', margin: '0 0 8px' }}>À propos du logement</h3>
-            <p style={{ font: 'var(--fw-regular) var(--fs-body)/1.6 var(--font-body)', color: 'var(--text-body)', margin: '0 0 8px' }}>{listing.description}</p>
 
-            <h3 style={{ font: 'var(--fw-bold) var(--fs-h3) var(--font-display)', color: 'var(--navy-700)', margin: '26px 0 12px' }}>Colocataires actuels</h3>
-            <div style={{ display: 'flex', gap: 24 }}>
-              {listing.colocataires.map((coloc) => (
-                <Avatar key={coloc.nom} name={coloc.nom} src={coloc.avatar} showLabel />
-              ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ font: 'var(--fw-bold) var(--fs-h3) var(--font-display)', color: 'var(--text-strong)' }}>{t('web:listing.aboutTitle')}</div>
+              <p style={{ margin: 0, font: 'var(--fw-regular) var(--fs-body)/1.7 var(--font-body)', color: 'var(--text-body)' }}>{listing.description}</p>
             </div>
-          </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <Card style={{ position: 'sticky', top: 20 }}>
-              <div style={{ font: 'var(--fw-bold) var(--fs-h3) var(--font-display)', color: 'var(--navy-700)', marginBottom: 14 }}>Contacter</div>
-              <Button variant="primary" fullWidth iconLeft="send" style={{ marginBottom: 10 }}>Envoyer un message</Button>
-              <Button variant="secondary" fullWidth iconLeft="heart">Ajouter aux favoris</Button>
-              <div style={{ height: 1, background: 'var(--border-subtle)', margin: '18px 0' }} />
-              <div style={{ display: 'flex', gap: 10 }}>
-                <Icon name="lock" size={20} color="var(--green-600)" />
-                <div>
-                  <div style={{ font: 'var(--fw-semibold) var(--fs-sm) var(--font-display)', color: 'var(--text-strong)' }}>Paiement sécurisé</div>
-                  <div style={{ font: 'var(--fw-regular) var(--fs-xs)/1.45 var(--font-body)', color: 'var(--text-muted)', marginTop: 2 }}>Caution et premier loyer sous séquestre jusqu&apos;à l&apos;état des lieux d&apos;entrée. Un cadre clair pour tous.</div>
-                  <a href="#" style={{ font: 'var(--fw-semibold) var(--fs-xs) var(--font-body)', display: 'inline-block', marginTop: 6 }}>En savoir plus</a>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ font: 'var(--fw-bold) var(--fs-h3) var(--font-display)', color: 'var(--text-strong)' }}>{t('web:listing.amenitiesTitle')}</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {listing.equipements.map((eq) => <AmenityChip key={eq}>{eq}</AmenityChip>)}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ font: 'var(--fw-bold) var(--fs-h3) var(--font-display)', color: 'var(--text-strong)' }}>{t('web:listing.houseRulesTitle')}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                {reglement.map((r) => {
+                  const label = r.key ? t(`web:listing.houseRules.${r.key}`) : r.label
+                  return (
+                  <div key={label} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-body)' }}>
+                    <Icon name={r.ok ? 'check' : 'x'} size={16} strokeWidth={2.6} color={r.ok ? 'var(--green-600)' : 'var(--red-600)'} />
+                    {label}
+                  </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ font: 'var(--fw-bold) var(--fs-h3) var(--font-display)', color: 'var(--text-strong)' }}>{t('web:listing.flatmatesTitle')}</div>
+              <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+                {listing.colocataires.map((coloc) => (
+                  <div key={coloc.nom} style={{ display: 'flex', gap: 11, alignItems: 'center', padding: '12px 16px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', background: 'var(--surface-card)' }}>
+                    <Avatar name={coloc.nom} src={coloc.avatar} size={38} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <div style={{ font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)', color: 'var(--text-strong)' }}>{coloc.nom}</div>
+                      {coloc.depuis && <div style={{ font: 'var(--fw-regular) var(--fs-xs) var(--font-body)', color: 'var(--text-muted)' }}>{t('web:listing.sinceLabel')} {coloc.depuis}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ font: 'var(--fw-bold) var(--fs-h3) var(--font-display)', color: 'var(--text-strong)' }}>{t('web:listing.proximityTitle')}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {proximite.map((p) => (
+                  <div key={p.label} style={{ display: 'flex', alignItems: 'center', gap: 8, font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-body)' }}>
+                    <Icon name="map-pin" size={15} color="var(--gray-500)" />
+                    {p.label}
+                    <span style={{ marginLeft: 'auto', color: 'var(--text-muted)' }}>{p.distance}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ font: 'var(--fw-bold) var(--fs-h3) var(--font-display)', color: 'var(--text-strong)' }}>{t('web:listing.locationTitle')}</div>
+              <div style={{ height: 220, borderRadius: 'var(--radius-md)', background: 'var(--gray-150)', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: '50%', left: '50%', width: 130, height: 130, transform: 'translate(-50%,-50%)', borderRadius: '50%', background: 'rgba(27,42,82,.14)', border: '1px dashed var(--navy-300)' }} />
+                <div style={{ position: 'absolute', top: '50%', left: '50%', width: 14, height: 14, transform: 'translate(-50%,-50%)', borderRadius: '50%', background: 'var(--navy-700)', border: '3px solid #fff', boxShadow: 'var(--shadow-sm)' }} />
+              </div>
+              <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+                {t('web:listing.locationApproxNote')}
+              </div>
+            </div>
+          </section>
+
+          <aside style={{ display: 'flex', flexDirection: 'column', gap: 14, position: 'sticky', top: 20 }}>
+            <Card>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <PriceTag amount={listing.prixMad} period={t('web:listing.priceUnitPeriod')} size="lg" />
+                {listing.matchPct != null && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '12px 14px', borderRadius: 'var(--radius-md)', background: 'var(--green-50)' }}>
+                    <div style={{ font: 'var(--fw-bold) var(--fs-body) var(--font-body)', color: 'var(--green-700)' }}>{t('web:listing.matchPercentLabel', { pct: listing.matchPct })}</div>
+                    <div style={{ font: 'var(--fw-regular) var(--fs-xs)/1.5 var(--font-body)', color: 'var(--text-body)' }}>
+                      {t('web:listing.matchDetailsBase')}{proximityConnector}
+                    </div>
+                  </div>
+                )}
+                <Button variant="accent" fullWidth onClick={() => navigate(`/espace/candidature?listingId=${id}`)}>{t('web:listing.applyCta')}</Button>
+                <Button variant="secondary" fullWidth>{t('web:listing.contactRoommateCta')}</Button>
+                <div style={{ font: 'var(--fw-regular) var(--fs-xs)/1.55 var(--font-body)', color: 'var(--text-muted)' }}>
+                  {t('web:listing.applicationRequirementNote')}
                 </div>
               </div>
             </Card>
-          </div>
+            <Card>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                <Avatar name="Hajar B." size={40} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <div style={{ font: 'var(--fw-bold) var(--fs-body) var(--font-body)', color: 'var(--text-strong)' }}>Hajar B. — {t('web:listing.ownerRoleLabel')}</div>
+                  <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>{t('web:listing.ownerTrustNote')}</div>
+                </div>
+              </div>
+            </Card>
+            <ReportListingAction listingId={id} />
+          </aside>
         </div>
       </div>
     </div>

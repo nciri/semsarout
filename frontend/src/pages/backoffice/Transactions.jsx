@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useQuery } from 'react-query'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
-  FiPlus, FiSearch, FiFilter, FiGrid, FiList, FiDollarSign,
-  FiCalendar, FiUser, FiHome, FiMoreVertical, FiEye
+  FiPlus, FiSearch, FiFilter, FiGrid, FiDollarSign,
+  FiUser, FiHome, FiEye
 } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
 import api from '../../services/api'
@@ -23,32 +24,15 @@ const STATUS_COLORS = {
   on_hold: 'bg-yellow-100 text-yellow-700'
 }
 
-const STATUS_LABELS = {
-  active: 'En cours',
-  won: 'Gagnée',
-  lost: 'Perdue',
-  on_hold: 'En pause'
-}
+const STAGE_KEYS = [
+  'contact', 'visit', 'offer', 'negotiation', 'compromise',
+  'final_act', 'application', 'verification', 'lease', 'move_in',
+]
 
-const STAGE_LABELS = {
-  contact: 'Contact initial',
-  visit: 'Visite',
-  offer: 'Offre',
-  negotiation: 'Négociation',
-  compromise: 'Compromis',
-  final_act: 'Acte final',
-  application: 'Candidature',
-  verification: 'Vérification',
-  lease: 'Bail',
-  move_in: 'Entrée'
-}
-
-const TYPE_LABELS = {
-  sale: 'Vente',
-  rent: 'Location'
-}
+const TYPE_KEYS = ['sale', 'rent']
 
 export default function BackofficeTransactions() {
+  const { t } = useTranslation(['backoffice', 'common'])
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState({
     type: '',
@@ -69,8 +53,8 @@ export default function BackofficeTransactions() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Transactions</h1>
-          <p className="text-gray-500">Vue liste de toutes les transactions</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('backoffice:crm.transactions.list.pageTitle')}</h1>
+          <p className="text-gray-500">{t('backoffice:crm.transactions.list.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <Link
@@ -78,14 +62,14 @@ export default function BackofficeTransactions() {
             className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
           >
             <FiGrid className="w-5 h-5" />
-            Vue Pipeline
+            {t('backoffice:crm.transactions.list.pipelineViewLink')}
           </Link>
           <Link
             to="/backoffice/transactions/nouveau"
             className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
           >
             <FiPlus className="w-5 h-5" />
-            Nouvelle transaction
+            {t('backoffice:crm.transactions.list.newButton')}
           </Link>
         </div>
       </div>
@@ -94,13 +78,13 @@ export default function BackofficeTransactions() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <FiSearch className="absolute start-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Rechercher par référence..."
+              placeholder={t('backoffice:crm.transactions.list.searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full ps-10 pe-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
           <button
@@ -110,48 +94,48 @@ export default function BackofficeTransactions() {
             }`}
           >
             <FiFilter className="w-5 h-5" />
-            Filtres
+            {t('backoffice:crm.transactions.list.filtersButton')}
           </button>
         </div>
 
         {showFilters && (
           <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.transactions.list.filterTypeLabel')}</label>
               <select
                 value={filters.type}
                 onChange={(e) => setFilters({ ...filters, type: e.target.value, page: 1 })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <option value="">Tous les types</option>
-                {Object.entries(TYPE_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
+                <option value="">{t('backoffice:crm.transactions.list.filterTypeAll')}</option>
+                {TYPE_KEYS.map((key) => (
+                  <option key={key} value={key}>{t(`backoffice:crm.transactions.type.${key}`)}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.transactions.list.filterStatusLabel')}</label>
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <option value="">Tous les statuts</option>
-                {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
+                <option value="">{t('backoffice:crm.transactions.list.filterStatusAll')}</option>
+                {Object.keys(STATUS_COLORS).map((key) => (
+                  <option key={key} value={key}>{t(`backoffice:crm.transactions.status.${key}`)}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Étape</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.transactions.list.filterStageLabel')}</label>
               <select
                 value={filters.stage}
                 onChange={(e) => setFilters({ ...filters, stage: e.target.value, page: 1 })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <option value="">Toutes les étapes</option>
-                {Object.entries(STAGE_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
+                <option value="">{t('backoffice:crm.transactions.list.filterStageAll')}</option>
+                {STAGE_KEYS.map((key) => (
+                  <option key={key} value={key}>{t(`backoffice:crm.transactions.stage.${key}`)}</option>
                 ))}
               </select>
             </div>
@@ -160,7 +144,7 @@ export default function BackofficeTransactions() {
                 onClick={() => setFilters({ type: '', status: '', stage: '', page: 1 })}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
               >
-                Réinitialiser
+                {t('backoffice:crm.transactions.list.resetFilters')}
               </button>
             </div>
           </div>
@@ -178,15 +162,15 @@ export default function BackofficeTransactions() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Référence</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bien</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Étape</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prix</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Agent</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"></th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase">{t('backoffice:crm.transactions.list.columns.reference')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase">{t('backoffice:crm.transactions.list.columns.property')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase">{t('backoffice:crm.transactions.list.columns.client')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase">{t('backoffice:crm.transactions.list.columns.type')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase">{t('backoffice:crm.transactions.list.columns.stage')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase">{t('backoffice:crm.transactions.list.columns.price')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase">{t('backoffice:crm.transactions.list.columns.status')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase">{t('backoffice:crm.transactions.list.columns.agent')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -211,17 +195,17 @@ export default function BackofficeTransactions() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm text-gray-600">{TYPE_LABELS[tx.transaction_type]}</span>
+                      <span className="text-sm text-gray-600">{t(`backoffice:crm.transactions.type.${tx.transaction_type}`, { defaultValue: tx.transaction_type })}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm text-gray-600">{STAGE_LABELS[tx.stage] || tx.stage}</span>
+                      <span className="text-sm text-gray-600">{t(`backoffice:crm.transactions.stage.${tx.stage}`, { defaultValue: tx.stage })}</span>
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-sm font-medium text-gray-900">{formatPrice(tx.asking_price || 0)}</span>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[tx.status]}`}>
-                        {STATUS_LABELS[tx.status]}
+                        {t(`backoffice:crm.transactions.status.${tx.status}`, { defaultValue: tx.status })}
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -231,7 +215,7 @@ export default function BackofficeTransactions() {
                       <Link
                         to={`/backoffice/transactions/${tx.id}`}
                         className="inline-flex p-1.5 text-gray-400 hover:text-primary-600 rounded-lg hover:bg-primary-50"
-                        title="Voir"
+                        title={t('backoffice:crm.transactions.list.viewDetails')}
                       >
                         <FiEye className="w-4 h-4" />
                       </Link>
@@ -244,18 +228,18 @@ export default function BackofficeTransactions() {
         ) : (
           <div className="p-12 text-center">
             <FiDollarSign className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune transaction</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('backoffice:crm.transactions.list.empty.title')}</h3>
             <p className="text-gray-500 mb-4">
               {search || filters.type || filters.status || filters.stage
-                ? 'Aucune transaction ne correspond à vos critères.'
-                : 'Créez votre première transaction.'}
+                ? t('backoffice:crm.transactions.list.empty.filtered')
+                : t('backoffice:crm.transactions.list.empty.default')}
             </p>
             <Link
               to="/backoffice/pipeline"
               className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
             >
               <FiGrid className="w-5 h-5" />
-              Voir le pipeline
+              {t('backoffice:crm.transactions.list.empty.pipelineLink')}
             </Link>
           </div>
         )}
@@ -269,17 +253,17 @@ export default function BackofficeTransactions() {
             disabled={filters.page === 1}
             className="px-4 py-2 border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
           >
-            Précédent
+            {t('backoffice:crm.transactions.list.prev')}
           </button>
           <span className="text-gray-600">
-            Page {filters.page} sur {data.pages}
+            {t('backoffice:crm.transactions.list.pageInfo', { page: filters.page, total: data.pages })}
           </span>
           <button
             onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
             disabled={filters.page === data.pages}
             className="px-4 py-2 border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
           >
-            Suivant
+            {t('backoffice:crm.transactions.list.next')}
           </button>
         </div>
       )}

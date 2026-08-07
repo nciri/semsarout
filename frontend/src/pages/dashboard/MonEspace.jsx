@@ -1,29 +1,32 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { FiSearch, FiClipboard, FiFileText, FiInbox, FiUser, FiArrowRight } from 'react-icons/fi'
+import DirIcon from '../../components/common/DirIcon'
 
 const SHELL = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'
 
 const CARDS = [
-  { to: '/annonces', icon: FiSearch, title: 'Rechercher un bien', desc: 'Parcourez les annonces à louer ou à acheter.' },
-  { to: '/dashboard/candidatures', icon: FiClipboard, title: 'Mes candidatures', desc: 'Déposez vos dossiers et suivez leur avancement.' },
-  { to: '/dashboard/annonces', icon: FiFileText, title: 'Mes annonces', desc: 'Publiez et gérez les biens que vous proposez.' },
-  { to: '/dashboard/leads', icon: FiInbox, title: 'Demandes reçues', desc: 'Retrouvez les contacts intéressés par vos biens.' },
-  { to: '/dashboard/compte', icon: FiUser, title: 'Mon compte', desc: 'Coordonnées, sécurité et préférences.' },
+  { to: '/annonces', icon: FiSearch, key: 'search' },
+  { to: '/dashboard/candidatures', icon: FiClipboard, key: 'applications' },
+  { to: '/dashboard/annonces', icon: FiFileText, key: 'myListings' },
+  { to: '/dashboard/leads', icon: FiInbox, key: 'leads' },
+  { to: '/dashboard/compte', icon: FiUser, key: 'account' },
 ]
 
 function MonEspace({ user }) {
+  const { t } = useTranslation(['dashboard', 'common'])
   const firstName = user?.first_name || user?.full_name || ''
   return (
     <div className={SHELL}>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
-          Bonjour{firstName ? ` ${firstName}` : ''} 👋
+          {firstName ? t('dashboard:monEspace.greetingWithName', { name: firstName }) : t('dashboard:monEspace.greeting')}
         </h1>
-        <p className="text-gray-600 mt-1">Bienvenue dans votre espace SemsarOut.</p>
+        <p className="text-gray-600 mt-1">{t('dashboard:monEspace.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {CARDS.map(({ to, icon: Icon, title, desc }) => (
+        {CARDS.map(({ to, icon: Icon, key }) => (
           <Link
             key={to}
             to={to}
@@ -33,10 +36,10 @@ function MonEspace({ user }) {
               <Icon className="w-5 h-5" />
             </div>
             <h2 className="font-semibold text-gray-900 flex items-center gap-1">
-              {title}
-              <FiArrowRight className="w-4 h-4 text-gray-300 group-hover:text-primary-600 group-hover:translate-x-0.5 transition-all" />
+              {t(`dashboard:monEspace.cards.${key}.title`)}
+              <DirIcon icon={FiArrowRight} className="w-4 h-4 text-gray-300 group-hover:text-primary-600 group-hover:translate-x-0.5 transition-all" />
             </h2>
-            <p className="text-sm text-gray-500 mt-1">{desc}</p>
+            <p className="text-sm text-gray-500 mt-1">{t(`dashboard:monEspace.cards.${key}.desc`)}</p>
           </Link>
         ))}
       </div>

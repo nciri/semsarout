@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Paiement et séquestre" description="Paiement du dépôt et du premier loyer — séquestre CMI ou déclaration d'encaissement en espèces, avec suivi de libération" -->
+<helmet><script src="./ds-base.js"></script><style>html,body{margin:0}body{font-family:var(--font-body);background:var(--bg-page)}a{color:var(--link);text-decoration:none}</style></helmet>
+<div style="min-height:100vh;background:var(--bg-page)">
+<header style="background:var(--surface-navy);color:var(--text-on-navy);padding:14px 32px;display:flex;align-items:center;gap:24px">
+<div style="font-size:18px;font-weight:800;letter-spacing:-0.02em">M3a-L3chrane</div>
+<a href="../messaging/Messaging.dc.html" style="color:var(--text-on-navy-muted);font-size:14px">← Retour à la conversation</a>
+</header>
+<main style="max-width:920px;margin:0 auto;padding:34px 24px 64px;display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<h1 style="margin:0;font-size:26px;font-weight:800;color:var(--text-heading);letter-spacing:-0.02em">Sécuriser votre place</h1>
+<p style="margin:0;font-size:14.5px;color:var(--text-body)">Chambre privée — Maârif, Casablanca · Entrée le 1er septembre 2026</p>
+</div>
+<div style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:22px;display:flex;flex-direction:column;gap:18px">
+<div style="font-size:15px;font-weight:800;color:var(--text-heading)">Statut du séquestre</div>
+<div style="display:flex;align-items:center;gap:0">
+<sc-for list="{{ stages }}" as="s" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;flex:1;last-child:none">
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:none">
+<sc-if value="{{ s.done }}"><div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;background:var(--green-500);color:#fff">{{ s.mark }}</div></sc-if>
+<sc-if value="{{ s.current }}"><div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;background:var(--navy-700);color:#fff">{{ s.mark }}</div></sc-if>
+<sc-if value="{{ s.pending }}" hint-placeholder-val="{{ true }}"><div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;background:var(--gray-150);color:var(--text-muted)">{{ s.mark }}</div></sc-if>
+<div style="font-size:11.5px;font-weight:700;color:var(--text-heading);text-align:center;max-width:90px">{{ s.label }}</div>
+</div>
+<sc-if value="{{ s.barDone }}"><div style="flex:1;height:2px;background:var(--green-500);margin:0 6px 22px"></div></sc-if>
+<sc-if value="{{ s.barPending }}" hint-placeholder-val="{{ true }}"><div style="flex:1;height:2px;background:var(--gray-200);margin:0 6px 22px"></div></sc-if>
+</div>
+</sc-for>
+</div>
+<div style="background:var(--navy-50);border:1px solid var(--navy-100);border-radius:10px;padding:14px 16px;font-size:13.5px;color:var(--text-body);line-height:1.55">Les fonds sont conservés sous séquestre et libérés au propriétaire uniquement après confirmation de l'état des lieux d'entrée, ou à l'expiration du délai de rétractation.</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+<div style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:22px;display:flex;flex-direction:column;gap:14px">
+<div style="font-size:15px;font-weight:800;color:var(--text-heading)">Détail du montant</div>
+<sc-for list="{{ lines }}" as="l" hint-placeholder-count="4">
+<div style="display:flex;justify-content:space-between;font-size:14px;color:var(--text-body)"><span>{{ l.label }}</span><span style="font-weight:700;color:var(--text-heading)">{{ l.value }}</span></div>
+</sc-for>
+<div style="height:1px;background:var(--border-subtle)"></div>
+<div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800;color:var(--text-heading)"><span>Total à sécuriser</span><span>6 700 MAD</span></div>
+</div>
+<div style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:22px;display:flex;flex-direction:column;gap:14px">
+<div style="font-size:15px;font-weight:800;color:var(--text-heading)">Mode de paiement</div>
+<div style="display:flex;background:var(--surface-sunken);border-radius:9px;padding:4px;gap:4px">
+<sc-if value="{{ modeCard }}" hint-placeholder-val="{{ true }}"><button onClick="{{ setCard }}" style="flex:1;padding:9px;border:0;border-radius:6px;background:var(--white);color:var(--text-heading);font-size:13.5px;font-weight:700;box-shadow:var(--shadow-sm);cursor:pointer">Carte (CMI)</button></sc-if>
+<sc-if value="{{ modeCard }}" hint-placeholder-val="{{ false }}"><button onClick="{{ setCard }}" style="flex:1;padding:9px;border:0;border-radius:6px;background:transparent;color:var(--text-muted);font-size:13.5px;font-weight:600;cursor:pointer">Carte (CMI)</button></sc-if>
+<sc-if value="{{ modeCash }}" hint-placeholder-val="{{ false }}"><button onClick="{{ setCash }}" style="flex:1;padding:9px;border:0;border-radius:6px;background:var(--white);color:var(--text-heading);font-size:13.5px;font-weight:700;box-shadow:var(--shadow-sm);cursor:pointer">Espèces</button></sc-if>
+<sc-if value="{{ modeCash }}" hint-placeholder-val="{{ true }}"><button onClick="{{ setCash }}" style="flex:1;padding:9px;border:0;border-radius:6px;background:transparent;color:var(--text-muted);font-size:13.5px;font-weight:600;cursor:pointer">Espèces</button></sc-if>
+</div>
+<sc-if value="{{ modeCard }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:10px">
+<input placeholder="Numéro de carte" style="padding:11px 13px;border:1px solid var(--border-subtle);border-radius:8px;font-size:14px;outline:none">
+<div style="display:flex;gap:10px"><input placeholder="MM/AA" style="flex:1;padding:11px 13px;border:1px solid var(--border-subtle);border-radius:8px;font-size:14px;outline:none"><input placeholder="CVC" style="flex:1;padding:11px 13px;border:1px solid var(--border-subtle);border-radius:8px;font-size:14px;outline:none"></div>
+<button style="padding:13px;border:0;border-radius:8px;background:var(--brand-accent);color:var(--text-on-accent);font-size:15px;font-weight:800;cursor:pointer">Payer 6 700 MAD</button>
+</div>
+</sc-if>
+<sc-if value="{{ modeCash }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:10px">
+<p style="margin:0;font-size:13.5px;color:var(--text-body);line-height:1.55">Le propriétaire déclare l'encaissement en espèces ; vous confirmez ensuite pour recevoir une quittance numérique. Aucun montant ne transite par la plateforme.</p>
+<button style="padding:13px;border:1px solid var(--navy-700);border-radius:8px;background:var(--navy-50);color:var(--navy-700);font-size:14.5px;font-weight:800;cursor:pointer">Confirmer la réception de l'encaissement</button>
+</div>
+</sc-if>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { mode: 'card' };
+  renderVals() {
+    const cash = this.state.mode === 'cash';
+    return {
+      stages: [
+        { mark: '✓', label: 'Fonds déposés', done: true, barDone: true },
+        { mark: '2', label: 'Contrat signé', current: true, barPending: true },
+        { mark: '3', label: 'État des lieux', pending: true, barPending: true },
+        { mark: '4', label: 'Fonds libérés', pending: true }
+      ],
+      lines: [
+        { label: 'Premier loyer', value: '2 400 MAD' },
+        { label: 'Charges incluses', value: '0 MAD' },
+        { label: 'Caution (1 mois)', value: '2 400 MAD' },
+        { label: 'Frais de service (1,5%)', value: '1 900 MAD' }
+      ],
+      modeCard: !cash, modeCash: cash,
+      setCard: () => this.setState({ mode: 'card' }), setCash: () => this.setState({ mode: 'cash' })
+    };
+  }
+}
+</script>
+</body>
+</html>

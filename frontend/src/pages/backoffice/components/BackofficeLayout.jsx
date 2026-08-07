@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { Link, useLocation, Outlet, Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  FiHome, FiUsers, FiFileText, FiCalendar, FiDollarSign,
+  FiHome, FiUsers, FiFileText, FiCalendar,
   FiSettings, FiMenu, FiX, FiBriefcase,
   FiUserCheck, FiGrid, FiMail, FiLogOut, FiBell, FiSearch,
-  FiChevronDown, FiExternalLink, FiTrendingUp, FiShield, FiTool, FiClipboard, FiShoppingBag, FiPackage, FiKey
+  FiChevronDown, FiTrendingUp, FiTool, FiShoppingBag, FiKey
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
 import Wordmark from '../../../components/common/Wordmark'
@@ -273,7 +273,7 @@ export default function BackofficeLayout() {
                         className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                       >
                         <FiSettings className="w-4 h-4 text-gray-400" />
-                        Paramètres agence
+                        {t('nav.userMenu.agencySettings')}
                       </Link>
                       <Link
                         to="/"
@@ -281,7 +281,7 @@ export default function BackofficeLayout() {
                         className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                       >
                         <FiHome className="w-4 h-4 text-gray-400" />
-                        Retour au site
+                        {t('nav.userMenu.backToSite')}
                       </Link>
                     </div>
                     <div className="border-t border-gray-100 pt-2">

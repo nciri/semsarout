@@ -63,10 +63,21 @@ class GatewaySettings(BaseSettings):
     coloc_listing_url: str | None = None
     coloc_profile_url: str | None = None
     matching_url: str | None = None
+    translation_url: str | None = None
     # Jeton interne partagé (appels BFF → APIs internes des services, ex. matching).
     internal_token: str = ""
 
     otlp_endpoint: str = "http://localhost:4318"
+
+    # Auth par cookies httpOnly (m3a-l3achrane) : le BFF pose les jetons en cookies au lieu
+    # de les renvoyer au frontend pour un stockage localStorage. Rétro-compat : l'en-tête
+    # Authorization reste honoré en priorité (autres clients / monolithe séparé).
+    cookie_access_name: str = "m3a_access"
+    cookie_refresh_name: str = "m3a_refresh"
+    cookie_csrf_name: str = "m3a_csrf"
+    cookie_authed_name: str = "m3a_authed"
+    cookie_access_ttl_seconds: int = 3600        # 1 h (aligné sur JWT_ACCESS_TTL d'identity)
+    cookie_refresh_ttl_seconds: int = 2592000    # 30 j (aligné sur JWT_REFRESH_TTL d'identity)
 
 
 @lru_cache

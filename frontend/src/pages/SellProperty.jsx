@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import { Trans, useTranslation } from 'react-i18next'
 import {
   FiCheck, FiCheckCircle, FiArrowRight, FiArrowLeft, FiHome, FiCamera,
   FiFileText, FiDollarSign, FiClipboard, FiUpload, FiTrash2, FiUser,
@@ -7,18 +8,41 @@ import {
 } from 'react-icons/fi'
 import useAuthStore from '../store/authStore'
 import api from '../services/api'
+import DirIcon from '../components/common/DirIcon'
 import { formatPrice, DIRHAM_SYMBOL } from '../utils/currency'
 import { PROPERTY_TYPES, FEATURES, MOROCCAN_CITIES, DOC_TYPES } from '../constants/property'
 
 const STORAGE_KEY = 'sell-wizard-v1'
 
 const STEPS = [
-  { key: 'bien', label: 'Votre bien', icon: FiHome },
-  { key: 'prix', label: 'Estimation & prix', icon: FiDollarSign },
-  { key: 'photos', label: 'Photos', icon: FiCamera },
-  { key: 'documents', label: 'Documents', icon: FiFileText },
-  { key: 'recap', label: 'Récapitulatif', icon: FiClipboard }
+  { key: 'bien', icon: FiHome },
+  { key: 'prix', icon: FiDollarSign },
+  { key: 'photos', icon: FiCamera },
+  { key: 'documents', icon: FiFileText },
+  { key: 'recap', icon: FiClipboard }
 ]
+
+// Clés FR utilisées uniquement pour retrouver la clé de traduction du libellé
+// (public:sellProperty.features.<key>) — la valeur elle-même reste celle
+// envoyée à l'API et ne change pas.
+const FEATURE_LABEL_KEYS = {
+  parking: 'parking',
+  garage: 'garage',
+  jardin: 'jardin',
+  terrasse: 'terrasse',
+  balcon: 'balcon',
+  piscine: 'piscine',
+  ascenseur: 'ascenseur',
+  gardien: 'gardien',
+  climatisation: 'climatisation',
+  chauffage: 'chauffage',
+  'meublé': 'meuble',
+  'cuisine équipée': 'cuisineEquipee',
+  cave: 'cave',
+  'vue mer': 'vueMer',
+  'vue montagne': 'vueMontagne',
+  duplex: 'duplex'
+}
 
 const EMPTY_FORM = {
   property_type: '',
@@ -52,14 +76,15 @@ function loadSaved() {
 }
 
 function SellProperty() {
-  const navigate = useNavigate()
+  const { t } = useTranslation(['public', 'common'])
   const { isAuthenticated } = useAuthStore()
 
   const saved = loadSaved()
   const [step, setStep] = useState(saved?.__step ?? 0)
   const [form, setForm] = useState(() => {
     if (!saved) return EMPTY_FORM
-    const { __step, ...rest } = saved
+    const rest = { ...saved }
+    delete rest.__step
     return rest
   })
   const [stepError, setStepError] = useState('')
@@ -91,17 +116,17 @@ function SellProperty() {
   /* ---------- Validation par étape ---------- */
   const validateStep = (idx) => {
     if (idx === 0) {
-      if (!form.property_type) return 'Choisissez le type de bien'
-      if (!form.city) return 'Indiquez la ville'
-      if (!form.surface || Number(form.surface) <= 0) return 'Indiquez la surface habitable'
+      if (!form.property_type) return t('public:sellProperty.errors.chooseType')
+      if (!form.city) return t('public:sellProperty.errors.cityRequired')
+      if (!form.surface || Number(form.surface) <= 0) return t('public:sellProperty.errors.surfaceRequired')
     }
     if (idx === 1) {
-      if (!form.desired_price || Number(form.desired_price) <= 0) return 'Indiquez votre prix de vente'
+      if (!form.desired_price || Number(form.desired_price) <= 0) return t('public:sellProperty.errors.priceRequired')
     }
     if (idx === 2) {
-      if (!isAuthenticated) return 'Créez votre compte pour ajouter vos photos'
+      if (!isAuthenticated) return t('public:sellProperty.errors.accountRequiredPhotos')
       if (form.photos.length === 0 && !form.wants_pro_photos) {
-        return 'Ajoutez au moins une photo, ou choisissez le shooting professionnel'
+        return t('public:sellProperty.errors.photosRequired')
       }
     }
     return ''
@@ -175,7 +200,7 @@ function SellProperty() {
       }
       update({ photos: [...form.photos, ...uploaded] })
     } catch (err) {
-      setStepError(err.response?.data?.error || "Échec de l'envoi d'une photo")
+      setStepError(err.response?.data?.error || t('public:sellProperty.errors.uploadPhotoFailed'))
     } finally {
       setUploading(false)
       e.target.value = ''
@@ -196,7 +221,7 @@ function SellProperty() {
         }
       })
     } catch (err) {
-      setStepError(err.response?.data?.error || "Échec de l'envoi du document")
+      setStepError(err.response?.data?.error || t('public:sellProperty.errors.uploadDocumentFailed'))
     } finally {
       setUploading(false)
       e.target.value = ''
@@ -206,7 +231,7 @@ function SellProperty() {
   /* ---------- Soumission ---------- */
   const submit = async () => {
     if (!consent) {
-      setStepError("Veuillez accepter les conditions pour envoyer votre dossier")
+      setStepError(t('public:sellProperty.errors.consentRequired'))
       return
     }
     setIsSubmitting(true)
@@ -242,13 +267,13 @@ function SellProperty() {
       setResult(data)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (err) {
-      setStepError(err.response?.data?.error || 'Une erreur est survenue, veuillez réessayer')
+      setStepError(err.response?.data?.error || t('public:sellProperty.errors.submitFailed'))
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const typeLabel = PROPERTY_TYPES.find((t) => t.value === form.property_type)?.label
+  const typeLabel = form.property_type ? t(`public:sellProperty.propertyTypes.${form.property_type}`) : undefined
 
   /* ================= Écran de succès ================= */
   if (result) {
@@ -259,44 +284,46 @@ function SellProperty() {
             <FiCheckCircle className="w-8 h-8 text-green-600" />
           </div>
           <h1 className="font-display text-3xl font-bold text-gray-900 mb-3">
-            Dossier de vente envoyé !
+            {t('public:sellProperty.successScreen.title')}
           </h1>
           <p className="text-gray-600 mb-2">
-            Référence de votre dossier :{' '}
+            {t('public:sellProperty.successScreen.referenceLabel')}{' '}
             <span className="font-mono font-semibold text-gray-900">{result.reference}</span>
           </p>
           <p className="text-gray-600 mb-10">
-            Votre annonce est en attente de validation par nos experts.
+            {t('public:sellProperty.successScreen.pendingValidation')}
           </p>
 
-          <div className="card p-6 text-left mb-8">
-            <h2 className="font-semibold mb-5">Les prochaines étapes</h2>
+          <div className="card p-6 text-start mb-8">
+            <h2 className="font-semibold mb-5">{t('public:sellProperty.successScreen.nextStepsTitle')}</h2>
             <ol className="space-y-5">
               <li className="flex">
-                <div className="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-sm mr-4 flex-shrink-0">1</div>
+                <div className="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-sm me-4 flex-shrink-0">1</div>
                 <div>
-                  <div className="font-medium text-gray-900">Validation sous 24h ouvrées</div>
-                  <div className="text-sm text-gray-600">Un expert vérifie votre dossier, votre prix et vos documents, puis vous contacte.</div>
+                  <div className="font-medium text-gray-900">{t('public:sellProperty.successScreen.step1Title')}</div>
+                  <div className="text-sm text-gray-600">{t('public:sellProperty.successScreen.step1Text')}</div>
                 </div>
               </li>
               <li className="flex">
-                <div className="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-sm mr-4 flex-shrink-0">2</div>
+                <div className="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-sm me-4 flex-shrink-0">2</div>
                 <div>
                   <div className="font-medium text-gray-900">
-                    {form.wants_pro_photos ? 'Shooting photo professionnel' : 'Optimisation de votre annonce'}
+                    {form.wants_pro_photos
+                      ? t('public:sellProperty.successScreen.step2TitlePro')
+                      : t('public:sellProperty.successScreen.step2TitleOptim')}
                   </div>
                   <div className="text-sm text-gray-600">
                     {form.wants_pro_photos
-                      ? 'Notre photographe vous contacte pour planifier la séance (incluse dans le Forfait Vente).'
-                      : 'Rédaction optimisée et mise en valeur de votre bien.'}
+                      ? t('public:sellProperty.successScreen.step2TextPro')
+                      : t('public:sellProperty.successScreen.step2TextOptim')}
                   </div>
                 </div>
               </li>
               <li className="flex">
-                <div className="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-sm mr-4 flex-shrink-0">3</div>
+                <div className="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-sm me-4 flex-shrink-0">3</div>
                 <div>
-                  <div className="font-medium text-gray-900">Publication et visites</div>
-                  <div className="text-sm text-gray-600">Votre annonce est publiée, nous gérons les contacts et organisons les visites avec vous.</div>
+                  <div className="font-medium text-gray-900">{t('public:sellProperty.successScreen.step3Title')}</div>
+                  <div className="text-sm text-gray-600">{t('public:sellProperty.successScreen.step3Text')}</div>
                 </div>
               </li>
             </ol>
@@ -304,11 +331,11 @@ function SellProperty() {
 
           <div className="flex flex-wrap justify-center gap-3">
             <Link to="/dashboard/annonces" className="btn-primary">
-              Suivre mon dossier
-              <FiArrowRight className="w-4 h-4 ml-2" />
+              {t('public:sellProperty.successScreen.trackButton')}
+              <DirIcon icon={FiArrowRight} className="w-4 h-4 ms-2" />
             </Link>
             <Link to="/" className="btn border border-gray-200 text-gray-700 hover:bg-gray-50">
-              Retour à l'accueil
+              {t('public:sellProperty.successScreen.backHome')}
             </Link>
           </div>
         </div>
@@ -322,10 +349,9 @@ function SellProperty() {
       {/* Hero */}
       <section className="bg-gradient-to-br from-gray-900 to-gray-800 text-white py-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="font-display text-3xl font-bold mb-2">Vendez votre bien en ligne</h1>
+          <h1 className="font-display text-3xl font-bold mb-2">{t('public:sellProperty.title')}</h1>
           <p className="text-gray-300">
-            Décrivez votre bien, obtenez une estimation, constituez votre dossier :
-            votre annonce est prête à être publiée. Forfait fixe {formatPrice(4900)}, payable après validation.
+            {t('public:sellProperty.subtitle', { price: formatPrice(4900) })}
           </p>
         </div>
       </section>
@@ -352,13 +378,13 @@ function SellProperty() {
                   }`}>
                     {done ? <FiCheck className="w-4 h-4" /> : <SIcon className="w-4 h-4" />}
                   </div>
-                  <span className={`ml-2 mr-4 text-sm font-medium hidden md:inline ${
+                  <span className={`ms-2 me-4 text-sm font-medium hidden md:inline ${
                     current ? 'text-primary-700' : done ? 'text-gray-700' : 'text-gray-400'
                   }`}>
-                    {s.label}
+                    {t(`public:sellProperty.steps.${s.key}`)}
                   </span>
                   {idx < STEPS.length - 1 && (
-                    <div className={`w-6 lg:w-12 h-0.5 mr-4 hidden sm:block ${done ? 'bg-green-400' : 'bg-gray-200'}`} />
+                    <div className={`w-6 lg:w-12 h-0.5 me-4 hidden sm:block ${done ? 'bg-green-400' : 'bg-gray-200'}`} />
                   )}
                 </button>
               )
@@ -371,7 +397,7 @@ function SellProperty() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {stepError && (
             <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg text-sm flex items-center">
-              <FiAlertCircle className="w-4 h-4 mr-2 flex-shrink-0" />
+              <FiAlertCircle className="w-4 h-4 me-2 flex-shrink-0" />
               {stepError}
             </div>
           )}
@@ -380,20 +406,20 @@ function SellProperty() {
           {step === 0 && (
             <div className="card p-6 sm:p-8 space-y-6">
               <div>
-                <label className="label">Type de bien <span className="text-red-500">*</span></label>
+                <label className="label">{t('public:sellProperty.step1.propertyTypeLabel')} <span className="text-red-500">*</span></label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {PROPERTY_TYPES.map((t) => (
+                  {PROPERTY_TYPES.map((pt) => (
                     <button
-                      key={t.value}
+                      key={pt.value}
                       type="button"
-                      onClick={() => update({ property_type: t.value })}
+                      onClick={() => update({ property_type: pt.value })}
                       className={`p-3 rounded-lg border-2 text-sm font-medium transition-colors ${
-                        form.property_type === t.value
+                        form.property_type === pt.value
                           ? 'border-primary-600 bg-primary-50 text-primary-700'
                           : 'border-gray-200 text-gray-600 hover:border-gray-300'
                       }`}
                     >
-                      {t.label}
+                      {t(`public:sellProperty.propertyTypes.${pt.value}`)}
                     </button>
                   ))}
                 </div>
@@ -401,86 +427,86 @@ function SellProperty() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="label">Ville <span className="text-red-500">*</span></label>
+                  <label className="label">{t('public:sellProperty.step1.cityLabel')} <span className="text-red-500">*</span></label>
                   <input
                     list="cities"
                     value={form.city}
                     onChange={(e) => update({ city: e.target.value })}
                     className="input"
-                    placeholder="Ex: Casablanca"
+                    placeholder={t('public:sellProperty.step1.cityPlaceholder')}
                   />
                   <datalist id="cities">
                     {MOROCCAN_CITIES.map((c) => <option key={c} value={c} />)}
                   </datalist>
                 </div>
                 <div>
-                  <label className="label">Quartier</label>
+                  <label className="label">{t('public:sellProperty.step1.neighborhoodLabel')}</label>
                   <input
                     value={form.neighborhood}
                     onChange={(e) => update({ neighborhood: e.target.value })}
                     className="input"
-                    placeholder="Ex: Maârif"
+                    placeholder={t('public:sellProperty.step1.neighborhoodPlaceholder')}
                   />
                 </div>
                 <div>
-                  <label className="label">Adresse</label>
+                  <label className="label">{t('public:sellProperty.step1.addressLabel')}</label>
                   <input
                     value={form.address}
                     onChange={(e) => update({ address: e.target.value })}
                     className="input"
-                    placeholder="Non publiée sur l'annonce"
+                    placeholder={t('public:sellProperty.step1.addressPlaceholder')}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div>
-                  <label className="label">Surface (m²) <span className="text-red-500">*</span></label>
+                  <label className="label">{t('public:sellProperty.step1.surfaceLabel')} <span className="text-red-500">*</span></label>
                   <input
                     type="number" min="1"
                     value={form.surface}
                     onChange={(e) => { setEstimation(null); update({ surface: e.target.value }) }}
                     className="input"
-                    placeholder="85"
+                    placeholder={t('public:sellProperty.step1.surfacePlaceholder')}
                   />
                 </div>
                 <div>
-                  <label className="label">Pièces</label>
+                  <label className="label">{t('public:sellProperty.step1.roomsLabel')}</label>
                   <input type="number" min="0" value={form.rooms}
-                    onChange={(e) => update({ rooms: e.target.value })} className="input" placeholder="3" />
+                    onChange={(e) => update({ rooms: e.target.value })} className="input" placeholder={t('public:sellProperty.step1.roomsPlaceholder')} />
                 </div>
                 <div>
-                  <label className="label">Chambres</label>
+                  <label className="label">{t('public:sellProperty.step1.bedroomsLabel')}</label>
                   <input type="number" min="0" value={form.bedrooms}
-                    onChange={(e) => update({ bedrooms: e.target.value })} className="input" placeholder="2" />
+                    onChange={(e) => update({ bedrooms: e.target.value })} className="input" placeholder={t('public:sellProperty.step1.bedroomsPlaceholder')} />
                 </div>
                 <div>
-                  <label className="label">Salles de bain</label>
+                  <label className="label">{t('public:sellProperty.step1.bathroomsLabel')}</label>
                   <input type="number" min="0" value={form.bathrooms}
-                    onChange={(e) => update({ bathrooms: e.target.value })} className="input" placeholder="1" />
+                    onChange={(e) => update({ bathrooms: e.target.value })} className="input" placeholder={t('public:sellProperty.step1.bathroomsPlaceholder')} />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div>
-                  <label className="label">Étage</label>
+                  <label className="label">{t('public:sellProperty.step1.floorLabel')}</label>
                   <input type="number" value={form.floor}
-                    onChange={(e) => update({ floor: e.target.value })} className="input" placeholder="2" />
+                    onChange={(e) => update({ floor: e.target.value })} className="input" placeholder={t('public:sellProperty.step1.floorPlaceholder')} />
                 </div>
                 <div>
-                  <label className="label">Étages du bâtiment</label>
+                  <label className="label">{t('public:sellProperty.step1.totalFloorsLabel')}</label>
                   <input type="number" min="0" value={form.total_floors}
-                    onChange={(e) => update({ total_floors: e.target.value })} className="input" placeholder="5" />
+                    onChange={(e) => update({ total_floors: e.target.value })} className="input" placeholder={t('public:sellProperty.step1.totalFloorsPlaceholder')} />
                 </div>
                 <div className="col-span-2">
-                  <label className="label">Année de construction</label>
+                  <label className="label">{t('public:sellProperty.step1.constructionYearLabel')}</label>
                   <input type="number" min="1900" max="2030" value={form.construction_year}
-                    onChange={(e) => update({ construction_year: e.target.value })} className="input" placeholder="2010" />
+                    onChange={(e) => update({ construction_year: e.target.value })} className="input" placeholder={t('public:sellProperty.step1.constructionYearPlaceholder')} />
                 </div>
               </div>
 
               <div>
-                <label className="label">Caractéristiques</label>
+                <label className="label">{t('public:sellProperty.step1.featuresLabel')}</label>
                 <div className="flex flex-wrap gap-2">
                   {FEATURES.map((f) => (
                     <button
@@ -493,20 +519,20 @@ function SellProperty() {
                           : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
                       }`}
                     >
-                      {f.label}
+                      {t(`public:sellProperty.features.${FEATURE_LABEL_KEYS[f.value]}`)}
                     </button>
                   ))}
                 </div>
               </div>
 
               <div>
-                <label className="label">Description libre</label>
+                <label className="label">{t('public:sellProperty.step1.descriptionLabel')}</label>
                 <textarea
                   rows={4}
                   value={form.description}
                   onChange={(e) => update({ description: e.target.value })}
                   className="input resize-none"
-                  placeholder="Points forts, travaux récents, environnement... Nos experts peaufineront le texte de l'annonce."
+                  placeholder={t('public:sellProperty.step1.descriptionPlaceholder')}
                 />
               </div>
             </div>
@@ -517,64 +543,75 @@ function SellProperty() {
             <div className="space-y-6">
               <div className="card p-6 sm:p-8">
                 <div className="flex items-center mb-4">
-                  <FiTrendingUp className="w-5 h-5 text-primary-600 mr-2" />
-                  <h2 className="font-semibold text-lg">Estimation de votre bien</h2>
+                  <FiTrendingUp className="w-5 h-5 text-primary-600 me-2" />
+                  <h2 className="font-semibold text-lg">{t('public:sellProperty.step2.estimationTitle')}</h2>
                 </div>
 
                 {isEstimating ? (
-                  <p className="text-gray-500">Analyse des biens comparables en cours...</p>
+                  <p className="text-gray-500">{t('public:sellProperty.step2.estimationLoading')}</p>
                 ) : estimation?.available ? (
                   <div>
                     <div className="grid grid-cols-3 gap-4 text-center mb-4">
                       <div className="p-4 bg-gray-50 rounded-xl">
-                        <div className="text-sm text-gray-500 mb-1">Fourchette basse</div>
+                        <div className="text-sm text-gray-500 mb-1">{t('public:sellProperty.step2.rangeLow')}</div>
                         <div className="text-lg font-bold text-gray-700">{formatPrice(estimation.estimate_low)}</div>
                       </div>
                       <div className="p-4 bg-primary-50 border-2 border-primary-200 rounded-xl">
-                        <div className="text-sm text-primary-600 mb-1">Prix conseillé</div>
+                        <div className="text-sm text-primary-600 mb-1">{t('public:sellProperty.step2.recommendedPrice')}</div>
                         <div className="text-xl font-bold text-primary-700">{formatPrice(estimation.estimate)}</div>
                       </div>
                       <div className="p-4 bg-gray-50 rounded-xl">
-                        <div className="text-sm text-gray-500 mb-1">Fourchette haute</div>
+                        <div className="text-sm text-gray-500 mb-1">{t('public:sellProperty.step2.rangeHigh')}</div>
                         <div className="text-lg font-bold text-gray-700">{formatPrice(estimation.estimate_high)}</div>
                       </div>
                     </div>
                     <p className="text-sm text-gray-500">
-                      Basée sur {estimation.comparables_count} bien(s) comparable(s)
-                      {estimation.scope === 'city_and_type' ? ` (${typeLabel?.toLowerCase()}s à ${form.city})` :
-                       estimation.scope === 'city' ? ` à ${form.city}` : ' du même type'}
-                      {' '}— environ {formatPrice(estimation.price_per_sqm)}/m².
-                      Un expert affinera cette estimation lors de la validation de votre dossier.
+                      {estimation.scope === 'city_and_type'
+                        ? t('public:sellProperty.step2.comparablesBasisCityAndType', {
+                            count: estimation.comparables_count,
+                            type: typeLabel?.toLowerCase(),
+                            city: form.city,
+                            price: formatPrice(estimation.price_per_sqm)
+                          })
+                        : estimation.scope === 'city'
+                        ? t('public:sellProperty.step2.comparablesBasisCity', {
+                            count: estimation.comparables_count,
+                            city: form.city,
+                            price: formatPrice(estimation.price_per_sqm)
+                          })
+                        : t('public:sellProperty.step2.comparablesBasisType', {
+                            count: estimation.comparables_count,
+                            price: formatPrice(estimation.price_per_sqm)
+                          })}
                     </p>
                   </div>
                 ) : (
                   <p className="text-gray-600 text-sm">
-                    Pas assez de biens comparables pour une estimation automatique —
-                    un expert estimera votre bien gratuitement à la validation du dossier.
+                    {t('public:sellProperty.step2.noEstimation')}
                   </p>
                 )}
               </div>
 
               <div className="card p-6 sm:p-8">
-                <h2 className="font-semibold text-lg mb-4">Votre prix de vente</h2>
+                <h2 className="font-semibold text-lg mb-4">{t('public:sellProperty.step2.priceTitle')}</h2>
                 <div className="max-w-xs">
-                  <label className="label">Prix souhaité ({DIRHAM_SYMBOL}) <span className="text-red-500">*</span></label>
+                  <label className="label">{t('public:sellProperty.step2.priceLabel', { currency: DIRHAM_SYMBOL })} <span className="text-red-500">*</span></label>
                   <input
                     type="number" min="1"
                     value={form.desired_price}
                     onChange={(e) => update({ desired_price: e.target.value })}
                     className="input text-lg font-semibold"
-                    placeholder="1 400 000"
+                    placeholder={t('public:sellProperty.step2.pricePlaceholder')}
                   />
                 </div>
                 {estimation?.available && Number(form.desired_price) > estimation.estimate_high && (
                   <p className="text-sm text-amber-600 mt-2 flex items-center">
-                    <FiAlertCircle className="w-4 h-4 mr-1" />
-                    Prix au-dessus de la fourchette haute : la vente pourrait prendre plus de temps.
+                    <FiAlertCircle className="w-4 h-4 me-1" />
+                    {t('public:sellProperty.step2.priceAboveRangeWarning')}
                   </p>
                 )}
                 <p className="text-sm text-gray-500 mt-3">
-                  Ce prix reste indicatif : vous le validerez avec votre expert avant publication.
+                  {t('public:sellProperty.step2.priceIndicative')}
                 </p>
               </div>
             </div>
@@ -588,34 +625,32 @@ function SellProperty() {
                   <div className="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <FiUser className="w-7 h-7 text-primary-600" />
                   </div>
-                  <h2 className="font-semibold text-lg mb-2">Créez votre compte pour continuer</h2>
+                  <h2 className="font-semibold text-lg mb-2">{t('public:sellProperty.step3.accountRequiredTitle')}</h2>
                   <p className="text-gray-600 text-sm mb-6 max-w-md mx-auto">
-                    Vos photos et documents seront rattachés à votre compte.
-                    Votre saisie est conservée : vous reprendrez exactement ici.
+                    {t('public:sellProperty.step3.accountRequiredText')}
                   </p>
                   <div className="flex flex-wrap justify-center gap-3">
                     <Link
                       to={`/inscription?service=vente&redirect=${encodeURIComponent('/vendre')}`}
                       className="btn-primary"
                     >
-                      Créer mon compte gratuitement
-                      <FiArrowRight className="w-4 h-4 ml-2" />
+                      {t('public:sellProperty.step3.createAccountButton')}
+                      <DirIcon icon={FiArrowRight} className="w-4 h-4 ms-2" />
                     </Link>
                     <Link
                       to={`/connexion?redirect=${encodeURIComponent('/vendre')}`}
                       className="btn border border-gray-200 text-gray-700 hover:bg-gray-50"
                     >
-                      J'ai déjà un compte
+                      {t('public:sellProperty.step3.haveAccountButton')}
                     </Link>
                   </div>
                 </div>
               ) : (
                 <>
                   <div className="card p-6 sm:p-8">
-                    <h2 className="font-semibold text-lg mb-1">Photos de votre bien</h2>
+                    <h2 className="font-semibold text-lg mb-1">{t('public:sellProperty.step3.photosTitle')}</h2>
                     <p className="text-sm text-gray-500 mb-6">
-                      Formats JPG, PNG ou WebP — 10 Mo max par photo. Les annonces avec photos
-                      reçoivent 5x plus de contacts.
+                      {t('public:sellProperty.step3.photosHelp')}
                     </p>
 
                     <label className={`block border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
@@ -631,9 +666,9 @@ function SellProperty() {
                       />
                       <FiUpload className="w-8 h-8 text-primary-500 mx-auto mb-2" />
                       <div className="font-medium text-gray-700">
-                        {uploading ? 'Envoi en cours...' : 'Cliquez pour ajouter vos photos'}
+                        {uploading ? t('public:sellProperty.step3.uploading') : t('public:sellProperty.step3.clickToAdd')}
                       </div>
-                      <div className="text-sm text-gray-500 mt-1">ou glissez-déposez plusieurs fichiers</div>
+                      <div className="text-sm text-gray-500 mt-1">{t('public:sellProperty.step3.dragDrop')}</div>
                     </label>
 
                     {form.photos.length > 0 && (
@@ -646,15 +681,15 @@ function SellProperty() {
                               className="w-full h-28 object-cover rounded-lg border border-gray-200"
                             />
                             {idx === 0 && (
-                              <span className="absolute top-1.5 left-1.5 px-2 py-0.5 bg-primary-600 text-white text-xs rounded-full">
-                                Principale
+                              <span className="absolute top-1.5 start-1.5 px-2 py-0.5 bg-primary-600 text-white text-xs rounded-full">
+                                {t('public:sellProperty.step3.mainPhotoBadge')}
                               </span>
                             )}
                             <button
                               type="button"
                               onClick={() => update({ photos: form.photos.filter((p) => p.url !== photo.url) })}
-                              className="absolute top-1.5 right-1.5 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                              aria-label="Supprimer la photo"
+                              className="absolute top-1.5 end-1.5 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                              aria-label={t('public:sellProperty.step3.removePhotoAriaLabel')}
                             >
                               <FiTrash2 className="w-4 h-4" />
                             </button>
@@ -669,17 +704,16 @@ function SellProperty() {
                       type="checkbox"
                       checked={form.wants_pro_photos}
                       onChange={(e) => update({ wants_pro_photos: e.target.checked })}
-                      className="mt-1 rounded border-gray-300 text-terracotta-600 mr-3"
+                      className="mt-1 rounded border-gray-300 text-terracotta-600 me-3"
                     />
                     <span>
                       <span className="flex items-center font-medium text-gray-900">
-                        <FiCamera className="w-4 h-4 mr-2 text-terracotta-600" />
-                        Je souhaite le shooting photo professionnel
-                        <span className="ml-2 text-xs bg-terracotta-100 text-terracotta-700 px-2 py-0.5 rounded-full">Inclus dans le Forfait Vente</span>
+                        <FiCamera className="w-4 h-4 me-2 text-terracotta-600" />
+                        {t('public:sellProperty.step3.proPhotosLabel')}
+                        <span className="ms-2 text-xs bg-terracotta-100 text-terracotta-700 px-2 py-0.5 rounded-full">{t('public:sellProperty.step3.proPhotosIncluded')}</span>
                       </span>
                       <span className="block text-sm text-gray-500 mt-1">
-                        15-20 photos HD retouchées par un photographe à domicile, livrées sous 48h.
-                        Vous pouvez quand même ajouter vos photos en attendant.
+                        {t('public:sellProperty.step3.proPhotosHelp')}
                       </span>
                     </span>
                   </label>
@@ -691,10 +725,9 @@ function SellProperty() {
           {/* ---------- Étape 4 : Documents ---------- */}
           {step === 3 && (
             <div className="card p-6 sm:p-8">
-              <h2 className="font-semibold text-lg mb-1">Documents du bien</h2>
+              <h2 className="font-semibold text-lg mb-1">{t('public:sellProperty.step4.title')}</h2>
               <p className="text-sm text-gray-500 mb-6">
-                Tous facultatifs à ce stade, mais un dossier complet accélère la validation
-                et rassure les acheteurs. Formats PDF ou image, 10 Mo max.
+                {t('public:sellProperty.step4.help')}
               </p>
 
               <div className="divide-y">
@@ -703,23 +736,24 @@ function SellProperty() {
                   return (
                     <div key={doc.value} className="py-4 flex flex-col sm:flex-row sm:items-center gap-3">
                       <div className="flex-1">
-                        <div className="font-medium text-gray-900">{doc.label}</div>
-                        <div className="text-sm text-gray-500">{doc.description}</div>
+                        <div className="font-medium text-gray-900">{t(`public:sellProperty.docTypes.${doc.value}.label`)}</div>
+                        <div className="text-sm text-gray-500">{t(`public:sellProperty.docTypes.${doc.value}.description`)}</div>
                       </div>
                       {uploaded ? (
                         <div className="flex items-center gap-2">
                           <span className="flex items-center text-sm text-green-700 bg-green-50 px-3 py-1.5 rounded-full">
-                            <FiCheck className="w-4 h-4 mr-1.5" />
-                            {uploaded.original_name || 'Document ajouté'}
+                            <FiCheck className="w-4 h-4 me-1.5" />
+                            {uploaded.original_name || t('public:sellProperty.step4.added')}
                           </span>
                           <button
                             type="button"
                             onClick={() => {
-                              const { [doc.value]: _, ...rest } = form.documents
+                              const rest = { ...form.documents }
+                              delete rest[doc.value]
                               update({ documents: rest })
                             }}
                             className="text-gray-400 hover:text-red-500"
-                            aria-label="Supprimer le document"
+                            aria-label={t('public:sellProperty.step4.removeDocumentAriaLabel')}
                           >
                             <FiTrash2 className="w-4 h-4" />
                           </button>
@@ -733,8 +767,8 @@ function SellProperty() {
                             disabled={uploading || !isAuthenticated}
                             className="sr-only"
                           />
-                          <FiUpload className="w-4 h-4 mr-2" />
-                          Ajouter
+                          <FiUpload className="w-4 h-4 me-2" />
+                          {t('public:sellProperty.step4.addButton')}
                         </label>
                       )}
                     </div>
@@ -749,19 +783,19 @@ function SellProperty() {
             <div className="space-y-6">
               <div className="card p-6 sm:p-8">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-semibold text-lg">Votre bien</h2>
+                  <h2 className="font-semibold text-lg">{t('public:sellProperty.step5.propertyTitle')}</h2>
                   <button type="button" onClick={() => goTo(0)} className="text-sm text-primary-600 flex items-center">
-                    <FiEdit2 className="w-3.5 h-3.5 mr-1" /> Modifier
+                    <FiEdit2 className="w-3.5 h-3.5 me-1" /> {t('public:sellProperty.step5.editButton')}
                   </button>
                 </div>
                 <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3 text-sm">
-                  <div><dt className="text-gray-500">Type</dt><dd className="font-medium text-gray-900">{typeLabel || '-'}</dd></div>
-                  <div><dt className="text-gray-500">Ville</dt><dd className="font-medium text-gray-900">{form.city}{form.neighborhood ? ` (${form.neighborhood})` : ''}</dd></div>
-                  <div><dt className="text-gray-500">Surface</dt><dd className="font-medium text-gray-900">{form.surface} m²</dd></div>
-                  {form.rooms && <div><dt className="text-gray-500">Pièces</dt><dd className="font-medium text-gray-900">{form.rooms}</dd></div>}
-                  {form.bedrooms && <div><dt className="text-gray-500">Chambres</dt><dd className="font-medium text-gray-900">{form.bedrooms}</dd></div>}
-                  {form.bathrooms && <div><dt className="text-gray-500">Salles de bain</dt><dd className="font-medium text-gray-900">{form.bathrooms}</dd></div>}
-                  {form.construction_year && <div><dt className="text-gray-500">Construction</dt><dd className="font-medium text-gray-900">{form.construction_year}</dd></div>}
+                  <div><dt className="text-gray-500">{t('public:sellProperty.step5.typeLabel')}</dt><dd className="font-medium text-gray-900">{typeLabel || '-'}</dd></div>
+                  <div><dt className="text-gray-500">{t('public:sellProperty.step5.cityLabel')}</dt><dd className="font-medium text-gray-900">{form.city}{form.neighborhood ? ` (${form.neighborhood})` : ''}</dd></div>
+                  <div><dt className="text-gray-500">{t('public:sellProperty.step5.surfaceLabel')}</dt><dd className="font-medium text-gray-900">{form.surface} m²</dd></div>
+                  {form.rooms && <div><dt className="text-gray-500">{t('public:sellProperty.step5.roomsLabel')}</dt><dd className="font-medium text-gray-900">{form.rooms}</dd></div>}
+                  {form.bedrooms && <div><dt className="text-gray-500">{t('public:sellProperty.step5.bedroomsLabel')}</dt><dd className="font-medium text-gray-900">{form.bedrooms}</dd></div>}
+                  {form.bathrooms && <div><dt className="text-gray-500">{t('public:sellProperty.step5.bathroomsLabel')}</dt><dd className="font-medium text-gray-900">{form.bathrooms}</dd></div>}
+                  {form.construction_year && <div><dt className="text-gray-500">{t('public:sellProperty.step5.constructionLabel')}</dt><dd className="font-medium text-gray-900">{form.construction_year}</dd></div>}
                 </dl>
                 {form.features.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-4">
@@ -774,9 +808,9 @@ function SellProperty() {
 
               <div className="card p-6 sm:p-8">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-semibold text-lg">Prix</h2>
+                  <h2 className="font-semibold text-lg">{t('public:sellProperty.step5.priceTitle')}</h2>
                   <button type="button" onClick={() => goTo(1)} className="text-sm text-primary-600 flex items-center">
-                    <FiEdit2 className="w-3.5 h-3.5 mr-1" /> Modifier
+                    <FiEdit2 className="w-3.5 h-3.5 me-1" /> {t('public:sellProperty.step5.editButton')}
                   </button>
                 </div>
                 <div className="text-2xl font-bold text-primary-700">
@@ -784,7 +818,10 @@ function SellProperty() {
                 </div>
                 {estimation?.available && (
                   <p className="text-sm text-gray-500 mt-1">
-                    Estimation : {formatPrice(estimation.estimate_low)} — {formatPrice(estimation.estimate_high)}
+                    {t('public:sellProperty.step5.estimationRange', {
+                      low: formatPrice(estimation.estimate_low),
+                      high: formatPrice(estimation.estimate_high)
+                    })}
                   </p>
                 )}
               </div>
@@ -792,17 +829,17 @@ function SellProperty() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="card p-6">
                   <div className="flex items-center justify-between mb-3">
-                    <h2 className="font-semibold">Photos</h2>
+                    <h2 className="font-semibold">{t('public:sellProperty.step5.photosTitle')}</h2>
                     <button type="button" onClick={() => goTo(2)} className="text-sm text-primary-600 flex items-center">
-                      <FiEdit2 className="w-3.5 h-3.5 mr-1" /> Modifier
+                      <FiEdit2 className="w-3.5 h-3.5 me-1" /> {t('public:sellProperty.step5.editButton')}
                     </button>
                   </div>
                   <p className="text-sm text-gray-600">
-                    {form.photos.length} photo(s) ajoutée(s)
-                    {form.wants_pro_photos && <span className="block text-terracotta-600 mt-1">+ shooting professionnel demandé</span>}
+                    {t('public:sellProperty.step5.photosCount', { count: form.photos.length })}
+                    {form.wants_pro_photos && <span className="block text-terracotta-600 mt-1">{t('public:sellProperty.step5.proPhotosRequested')}</span>}
                   </p>
                   {form.photos.length > 0 && (
-                    <div className="flex -space-x-2 mt-3">
+                    <div className="flex -space-x-2 rtl:space-x-reverse mt-3">
                       {form.photos.slice(0, 5).map((p) => (
                         <img key={p.url} src={p.url} alt="" className="w-10 h-10 rounded-lg object-cover border-2 border-white" />
                       ))}
@@ -817,23 +854,23 @@ function SellProperty() {
 
                 <div className="card p-6">
                   <div className="flex items-center justify-between mb-3">
-                    <h2 className="font-semibold">Documents</h2>
+                    <h2 className="font-semibold">{t('public:sellProperty.step5.documentsTitle')}</h2>
                     <button type="button" onClick={() => goTo(3)} className="text-sm text-primary-600 flex items-center">
-                      <FiEdit2 className="w-3.5 h-3.5 mr-1" /> Modifier
+                      <FiEdit2 className="w-3.5 h-3.5 me-1" /> {t('public:sellProperty.step5.editButton')}
                     </button>
                   </div>
                   {Object.keys(form.documents).length > 0 ? (
                     <ul className="text-sm text-gray-600 space-y-1">
                       {Object.keys(form.documents).map((key) => (
                         <li key={key} className="flex items-center">
-                          <FiCheck className="w-3.5 h-3.5 text-green-500 mr-2" />
-                          {DOC_TYPES.find((d) => d.value === key)?.label || key}
+                          <FiCheck className="w-3.5 h-3.5 text-green-500 me-2" />
+                          {t(`public:sellProperty.docTypes.${key}.label`, { defaultValue: key })}
                         </li>
                       ))}
                     </ul>
                   ) : (
                     <p className="text-sm text-gray-500">
-                      Aucun document — votre expert vous les demandera plus tard.
+                      {t('public:sellProperty.step5.noDocuments')}
                     </p>
                   )}
                 </div>
@@ -845,12 +882,14 @@ function SellProperty() {
                     type="checkbox"
                     checked={consent}
                     onChange={(e) => { setConsent(e.target.checked); setStepError('') }}
-                    className="mt-1 rounded border-gray-300 text-primary-600 mr-3"
+                    className="mt-1 rounded border-gray-300 text-primary-600 me-3"
                   />
                   <span className="text-sm text-gray-600">
-                    Je certifie être propriétaire de ce bien (ou mandaté pour sa vente) et j'accepte
-                    les <Link to="/cgu" target="_blank" className="text-primary-600 underline">conditions du Forfait Vente</Link>.
-                    Le forfait de {formatPrice(4900)} n'est facturé qu'après validation du dossier avec votre expert.
+                    <Trans
+                      i18nKey="public:sellProperty.step5.consentText"
+                      values={{ price: formatPrice(4900) }}
+                      components={{ link: <Link to="/cgu" target="_blank" className="text-primary-600 underline" /> }}
+                    />
                   </span>
                 </label>
               </div>
@@ -861,8 +900,8 @@ function SellProperty() {
           <div className="flex items-center justify-between mt-8">
             {step > 0 ? (
               <button type="button" onClick={prev} className="btn border border-gray-200 text-gray-700 hover:bg-gray-50">
-                <FiArrowLeft className="w-4 h-4 mr-2" />
-                Précédent
+                <DirIcon icon={FiArrowLeft} className="w-4 h-4 me-2" />
+                {t('public:sellProperty.navigation.previous')}
               </button>
             ) : <span />}
 
@@ -876,8 +915,8 @@ function SellProperty() {
                 }}
                 className="btn-primary"
               >
-                Continuer
-                <FiArrowRight className="w-4 h-4 ml-2" />
+                {t('public:sellProperty.navigation.continue')}
+                <DirIcon icon={FiArrowRight} className="w-4 h-4 ms-2" />
               </button>
             ) : (
               <button
@@ -886,17 +925,17 @@ function SellProperty() {
                 disabled={isSubmitting}
                 className="btn-primary"
               >
-                {isSubmitting ? 'Envoi du dossier...' : 'Envoyer mon dossier de vente'}
-                {!isSubmitting && <FiCheckCircle className="w-4 h-4 ml-2" />}
+                {isSubmitting ? t('public:sellProperty.navigation.submitting') : t('public:sellProperty.navigation.submit')}
+                {!isSubmitting && <FiCheckCircle className="w-4 h-4 ms-2" />}
               </button>
             )}
           </div>
 
           {/* Réassurance */}
           <div className="flex flex-wrap justify-center gap-6 mt-10 text-sm text-gray-500">
-            <span className="flex items-center"><FiClock className="w-4 h-4 mr-1.5" /> 10 minutes suffisent</span>
-            <span className="flex items-center"><FiEye className="w-4 h-4 mr-1.5" /> Validation par un expert sous 24h</span>
-            <span className="flex items-center"><FiCheck className="w-4 h-4 mr-1.5" /> Rien à payer avant validation</span>
+            <span className="flex items-center"><FiClock className="w-4 h-4 me-1.5" /> {t('public:sellProperty.reassurance.time')}</span>
+            <span className="flex items-center"><FiEye className="w-4 h-4 me-1.5" /> {t('public:sellProperty.reassurance.validation')}</span>
+            <span className="flex items-center"><FiCheck className="w-4 h-4 me-1.5" /> {t('public:sellProperty.reassurance.free')}</span>
           </div>
         </div>
       </section>

@@ -23,8 +23,8 @@ def test_hard_constraints():
     assert evaluate(_seeker(), _listing(housing_gender="MASCULIN"), W).hard_failures == ["genre-logement"]
     assert evaluate(_seeker(), _listing(rent=Decimal("2600")), W).hard_failures == ["budget"]
     assert evaluate(_seeker(), _listing(city_id="Rabat"), W).hard_failures == ["ville"]
-    r = evaluate(_seeker(lifestyle={"tabac": "non_fumeur"}, importance={"tabac": "DECISIF"}),
-                 _listing(house_rules={"tabac": "fumeur"}), W)
+    r = evaluate(_seeker(lifestyle={"tabac": "non-fumeur"}, importance={"tabac": "DECISIF"}),
+                 _listing(house_rules={"tabac": "interieur"}), W)
     assert r.hard_failures == ["decisif:tabac"] and r.score == 0
 
 
@@ -34,15 +34,15 @@ def test_score_and_weights():
     # loyer au budget_max → budget_fit 0.5 → 0.4*0.5 + 0.6*1.0 = 0.8
     assert evaluate(_seeker(), _listing(rent=Decimal("2500")), W).score == 80
     # préférence en conflit → lifestyle_fit 0 → 0.4*1.0 = 0.4
-    r = evaluate(_seeker(lifestyle={"coucher": "tot"}, importance={"coucher": "PREFERENCE"}),
-                 _listing(rent=Decimal("1000"), house_rules={"coucher": "tard"}), W)
+    r = evaluate(_seeker(lifestyle={"coucher": "avant22"}, importance={"coucher": "PREFERENCE"}),
+                 _listing(rent=Decimal("1000"), house_rules={"coucher": "apres-minuit"}), W)
     assert r.score == 40
 
 
 def test_explanations_max_four_and_content():
-    r = evaluate(_seeker(lifestyle={"coucher": "tot", "tabac": "non_fumeur"},
+    r = evaluate(_seeker(lifestyle={"coucher": "avant22", "tabac": "non-fumeur"},
                          importance={"coucher": "PREFERENCE", "tabac": "PREFERENCE"}),
-                 _listing(house_rules={"coucher": "tot", "tabac": "fumeur"}), W)
+                 _listing(house_rules={"coucher": "avant22", "tabac": "interieur"}), W)
     assert r.hard_pass and len(r.explanations) <= 4
     assert any("Budget compatible" in e for e in r.explanations)
     assert any("coucher" in e for e in r.explanations)      # atout

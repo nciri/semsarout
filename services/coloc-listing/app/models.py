@@ -22,6 +22,18 @@ BED_TYPES = {"CHAMBRE_INDIVIDUELLE", "CHAMBRE_PARTAGEE", "LIT_DORTOIR", "STUDIO_
 HOUSING_GENDERS = {"FEMININ", "MASCULIN", "MIXTE_FAMILIAL"}
 MEDIA_TYPES = {"CHAMBRE", "PARTIES_COMMUNES", "AUTRE"}
 
+LEASE_STATUSES = {"pending", "active", "ended", "cancelled"}
+CANDIDATURE_STATUSES = {"received", "shortlisted", "pending_roommate", "accepted", "rejected"}
+# Une candidature "active" bloque une nouvelle candidature du même candidat sur la même
+# annonce (dédupe) ; seule `rejected` libère la voie (nouvelle tentative possible).
+CANDIDATURE_ACTIVE_STATUSES = {"received", "shortlisted", "pending_roommate", "accepted"}
+PAYMENT_TYPES = {"deposit", "rent"}
+PAYMENT_STATUSES = {"pending", "escrowed", "released", "refunded"}
+INTENT_STATUSES = {"processing", "succeeded", "failed"}
+EDL_TYPES = {"entree", "sortie"}
+EDL_STATUSES = {"draft", "signed"}
+TENANT_M3A = "m3a-l3achrane"
+
 
 def _uuid() -> str:
     return uuid.uuid4().hex
@@ -142,3 +154,144 @@ class CurrentRoommates(Base):
     women = Column(Integer, default=0, nullable=False)
     men = Column(Integer, default=0, nullable=False)
     statuses = Column(JSON, default=dict, nullable=False)
+
+
+class Candidature(Base):
+    """Candidature d'un candidat à une annonce de colocation. Domaine réel remplaçant le
+    mock front `applicationsInbox.js` — la génération de bail et les notifs candidature
+    reposent désormais sur cet objet. Statuts : received → shortlisted → (pending_roommate
+    si la chambre a déjà des colocataires en place, sinon direct) → accepted ; rejected
+    possible depuis n'importe quel statut non terminal."""
+
+    __tablename__ = "candidatures"
+
+    id = Column(String(32), primary_key=True, default=_uuid)
+    tenant = Column(String(40), default=TENANT_M3A, nullable=False, index=True)
+    listing_id = Column(String(32), ForeignKey("listings.id"), nullable=False, index=True)
+    candidate_user_id = Column(BigInteger, nullable=False, index=True)
+    owner_id = Column(BigInteger, nullable=False, index=True)
+    status = Column(String(20), default="received", nullable=False, index=True)
+    message = Column(Text)
+    created_at = Column(DateTime(timezone=True), default=_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_now, onupdate=_now, nullable=False)
+
+    listing = relationship("Listing", lazy="joined")
+
+    def to_dict(self) -> dict:
+        listing = self.listing
+        p = listing.property if listing else None
+        listing_summary = None
+        if listing is not None:
+            roommates = listing.roommates
+            listing_summary = {
+                "id": listing.id, "title": listing.title,
+                "city": p.city if p else None, "neighborhood": p.neighborhood if p else None,
+                "rent": float(listing.rent), "deposit": float(listing.deposit) if listing.deposit is not None else None,
+                "room_already_occupied": bool(roommates and roommates.total > 0),
+                "roommates": ({"total": roommates.total, "women": roommates.women,
+                              "men": roommates.men} if roommates else None),
+            }
+        return {
+            "id": self.id, "listing_id": self.listing_id, "candidate_user_id": self.candidate_user_id,
+            "owner_id": self.owner_id, "status": self.status, "message": self.message,
+            "created_at": self.created_at.isoformat(), "updated_at": self.updated_at.isoformat(),
+            "listing": listing_summary,
+        }
+
+
+class ColocLease(Base):
+    """Bail de colocation (domaine m3a-l3achrane). PAS d'intégration PSP réelle : ce
+    modèle et les statuts `ColocPayment` ci-dessous représentent les ÉTATS d'un séquestre
+    (dépôt/loyer bloqué puis libéré/remboursé), sans aucun mouvement d'argent effectif —
+    voir README du service pour le cadrage complet."""
+
+    __tablename__ = "leases"
+
+    id = Column(String(32), primary_key=True, default=_uuid)
+    tenant = Column(String(40), default=TENANT_M3A, nullable=False, index=True)
+    listing_id = Column(String(32), ForeignKey("listings.id"), nullable=False, index=True)
+    tenant_user_id = Column(BigInteger, nullable=False, index=True)  # locataire
+    owner_id = Column(BigInteger, nullable=False, index=True)  # bailleur (propriétaire de l'annonce)
+    rent_amount = Column(Numeric(12, 2), nullable=False)
+    deposit_amount = Column(Numeric(12, 2), nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date)
+    status = Column(String(20), default="pending", nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), default=_now, nullable=False)
+
+    payments = relationship("ColocPayment", cascade="all, delete-orphan",
+                            order_by="ColocPayment.created_at", lazy="selectin")
+    etats_des_lieux = relationship("EtatDesLieux", cascade="all, delete-orphan",
+                                   order_by="EtatDesLieux.created_at", lazy="selectin")
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id, "tenant": self.tenant, "listing_id": self.listing_id,
+            "tenant_user_id": self.tenant_user_id, "owner_id": self.owner_id,
+            "rent_amount": float(self.rent_amount), "deposit_amount": float(self.deposit_amount),
+            "start_date": self.start_date.isoformat() if self.start_date else None,
+            "end_date": self.end_date.isoformat() if self.end_date else None,
+            "status": self.status, "created_at": self.created_at.isoformat(),
+            "payments": [p.to_dict() for p in self.payments],
+            "etats_des_lieux": [e.to_dict() for e in self.etats_des_lieux],
+        }
+
+
+class ColocPayment(Base):
+    """Paiement (caution ou loyer) rattaché à un bail. Machine à états séquestre :
+    pending → escrowed → released|refunded. Modélise le CADRE, pas un traitement réel
+    d'argent (pas de PSP intégré)."""
+
+    __tablename__ = "lease_payments"
+
+    id = Column(String(32), primary_key=True, default=_uuid)
+    lease_id = Column(String(32), ForeignKey("leases.id"), nullable=False, index=True)
+    type = Column(String(10), nullable=False)  # 'deposit' | 'rent'
+    amount = Column(Numeric(12, 2), nullable=False)
+    period = Column(String(7))  # 'YYYY-MM' pour un loyer ; null pour une caution
+    status = Column(String(20), default="pending", nullable=False, index=True)
+    # Couture PSP (simulé par défaut, voir app/payment_provider.py) : référence de
+    # l'intent créé côté "provider" et son propre statut (processing/succeeded/failed),
+    # distinct du statut séquestre ci-dessus qui reste la source de vérité métier.
+    provider = Column(String(20))
+    intent_id = Column(String(64), index=True)
+    intent_status = Column(String(20))
+    created_at = Column(DateTime(timezone=True), default=_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_now, onupdate=_now, nullable=False)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id, "lease_id": self.lease_id, "type": self.type,
+            "amount": float(self.amount), "period": self.period, "status": self.status,
+            "provider": self.provider, "intent_id": self.intent_id,
+            "intent_status": self.intent_status,
+            "created_at": self.created_at.isoformat(), "updated_at": self.updated_at.isoformat(),
+        }
+
+
+class EtatDesLieux(Base):
+    """État des lieux (entrée/sortie) rattaché à un bail. Sous-domaine autonome —
+    remplace la déduction par position (front) d'une étape « état des lieux » par une
+    vraie donnée : pièces/items, statut brouillon/signé, signatures des deux parties."""
+
+    __tablename__ = "etats_des_lieux"
+    __table_args__ = (UniqueConstraint("lease_id", "type", name="uq_edl_lease_type"),)
+
+    id = Column(String(32), primary_key=True, default=_uuid)
+    lease_id = Column(String(32), ForeignKey("leases.id"), nullable=False, index=True)
+    type = Column(String(10), nullable=False)  # 'entree' | 'sortie'
+    status = Column(String(10), default="draft", nullable=False, index=True)
+    items = Column(JSON, default=list, nullable=False)  # [{piece, etat, commentaire}, ...]
+    owner_signed_at = Column(DateTime(timezone=True))
+    tenant_signed_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), default=_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_now, onupdate=_now, nullable=False)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id, "lease_id": self.lease_id, "type": self.type,
+            "status": self.status, "items": self.items or [],
+            "owner_signed_at": self.owner_signed_at.isoformat() if self.owner_signed_at else None,
+            "tenant_signed_at": self.tenant_signed_at.isoformat() if self.tenant_signed_at else None,
+            "created_at": self.created_at.isoformat(), "updated_at": self.updated_at.isoformat(),
+        }

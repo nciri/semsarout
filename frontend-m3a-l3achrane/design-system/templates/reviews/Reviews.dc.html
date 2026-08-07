@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Évaluations mutuelles" description="Notation à double sens après un séjour — publication différée jusqu'à ce que les deux parties aient évalué, ou après 14 jours" -->
+<helmet><script src="./ds-base.js"></script><style>html,body{margin:0}body{font-family:var(--font-body);background:var(--bg-page)}a{color:var(--link);text-decoration:none}</style></helmet>
+<div style="min-height:100vh;background:var(--bg-page)">
+<header style="background:var(--surface-navy);color:var(--text-on-navy);padding:14px 32px;display:flex;align-items:center;gap:24px">
+<div style="font-size:18px;font-weight:800;letter-spacing:-0.02em">M3a-L3chrane</div>
+<a href="../messaging/Messaging.dc.html" style="color:var(--text-on-navy-muted);font-size:14px">← Messages</a>
+</header>
+<main style="max-width:760px;margin:0 auto;padding:34px 24px 64px;display:flex;flex-direction:column;gap:26px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<h1 style="margin:0;font-size:26px;font-weight:800;color:var(--text-heading);letter-spacing:-0.02em">Évaluer votre séjour</h1>
+<p style="margin:0;font-size:14.5px;color:var(--text-body)">Avec Salma Ouazzani — Chambre, ISCAE Casablanca · terminé le 28 juin 2026</p>
+</div>
+<div style="background:var(--navy-50);border:1px solid var(--navy-100);border-radius:12px;padding:14px 16px;font-size:13.5px;color:var(--text-body);line-height:1.55">Votre évaluation ne sera publiée que lorsque les deux parties auront évalué — ou automatiquement 14 jours après la fin du séjour.</div>
+<div style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:22px;display:flex;flex-direction:column;gap:18px">
+<sc-for list="{{ criteria }}" as="c" hint-placeholder-count="4">
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-size:14.5px;font-weight:700;color:var(--text-heading)">{{ c.label }}</div>
+<div style="display:flex;gap:6px">
+<sc-for list="{{ c.stars }}" as="s" hint-placeholder-count="5">
+<sc-if value="{{ s.filled }}"><button onClick="{{ s.pick }}" style="width:34px;height:34px;border:0;background:transparent;font-size:22px;cursor:pointer;color:var(--gold-500)">★</button></sc-if>
+<sc-if value="{{ s.filled }}" hint-placeholder-val="{{ false }}"><button onClick="{{ s.pick }}" style="width:34px;height:34px;border:0;background:transparent;font-size:22px;cursor:pointer;color:var(--gray-200)">★</button></sc-if>
+</sc-for>
+</div>
+</div>
+</sc-for>
+<label style="display:flex;flex-direction:column;gap:7px"><span style="font-size:14px;font-weight:700;color:var(--text-heading)">Commentaire (visible après publication)</span><textarea rows="4" placeholder="Décrivez votre expérience de cohabitation…" style="padding:12px 14px;border:1px solid var(--border-subtle);border-radius:8px;font-size:14px;font-family:inherit;outline:none;resize:vertical"></textarea></label>
+<button style="align-self:flex-start;padding:12px 24px;border:0;border-radius:8px;background:var(--brand-accent);color:var(--text-on-accent);font-size:15px;font-weight:800;cursor:pointer">Publier mon évaluation</button>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="font-size:16px;font-weight:800;color:var(--text-heading)">Vos évaluations reçues</div>
+<sc-for list="{{ received }}" as="r" hint-placeholder-count="2">
+<div style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:14px;padding:16px 18px;display:flex;gap:14px">
+<div style="width:38px;height:38px;border-radius:50%;background:var(--navy-500);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex:none">{{ r.initials }}</div>
+<div style="display:flex;flex-direction:column;gap:5px;flex:1">
+<div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:14px;font-weight:800;color:var(--text-heading)">{{ r.name }}</span><span style="color:var(--gold-500);font-size:13px;font-weight:700">{{ r.stars }}</span></div>
+<div style="font-size:13.5px;color:var(--text-body);line-height:1.55">{{ r.text }}</div>
+<div style="font-size:12px;color:var(--text-muted)">{{ r.date }}</div>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{ hasPending }}"><div style="display:flex;gap:12px;align-items:center;padding:14px 16px;border:1px dashed var(--border-default);border-radius:12px;font-size:13.5px;color:var(--text-muted)">1 évaluation en attente de publication — visible dans 9 jours ou dès que l'autre partie aura évalué.</div></sc-if>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { scores: { respect: 5, proprete: 4, communication: 5, conformite: 4 } };
+  set(k, v) { this.setState(s => ({ scores: { ...s.scores, [k]: v } })); }
+  renderVals() {
+    const mk = (k, label) => ({
+      label, stars: [1, 2, 3, 4, 5].map(n => ({ filled: n <= this.state.scores[k], pick: () => this.set(k, n) }))
+    });
+    return {
+      criteria: [mk('respect', 'Respect des horaires et des règles'), mk('proprete', 'Propreté des parties communes'), mk('communication', 'Communication'), mk('conformite', 'Conformité avec l’annonce')],
+      received: [{ initials: 'YB', name: 'Yasmine Berrada', stars: '★★★★★', text: 'Colocataire très respectueuse, ponctuelle sur le loyer, je recommande.', date: 'Publié le 12 juin 2026' }],
+      hasPending: true
+    };
+  }
+}
+</script>
+</body>
+</html>

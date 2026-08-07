@@ -1,0 +1,340 @@
+{
+  "sidebar": {
+    "brand": "M3a-L3chrane",
+    "brandTag": "Back-office",
+    "nav": {
+      "overview": {
+        "label": "Vue d'ensemble",
+        "title": "Vue d'ensemble",
+        "subtitle": "Activité de la plateforme — 30 derniers jours"
+      },
+      "verif": {
+        "label": "Vérifications",
+        "title": "Vérifications d’identité",
+        "subtitle": "File KYC — CIN, statut étudiant, attestation employeur"
+      },
+      "listings": {
+        "label": "Annonces",
+        "title": "Modération des annonces",
+        "subtitle": "Contrôle qualité et conformité des logements publiés"
+      },
+      "users": {
+        "label": "Utilisateurs",
+        "title": "Utilisateurs",
+        "subtitle": "Chercheurs, hôtes et partenaires institutionnels"
+      },
+      "contracts": {
+        "label": "Contrats & paiements",
+        "title": "Contrats & paiements",
+        "subtitle": "Contrats de colocation et paiements associés"
+      },
+      "reports": {
+        "label": "Signalements",
+        "title": "Signalements",
+        "subtitle": "Litiges et contenus signalés par la communauté"
+      },
+      "settings": {
+        "label": "Paramètres",
+        "title": "Paramètres",
+        "subtitle": "Règles de matching, équipe et permissions"
+      }
+    },
+    "queueNote": {
+      "title": "File de vérification",
+      "body": "Délai moyen de traitement : 4 h 12. Objectif interne < 6 h."
+    }
+  },
+  "header": {
+    "searchPlaceholder": "Rechercher un profil, une annonce, un contrat…",
+    "export": "Exporter",
+    "newAction": "Nouvelle action"
+  },
+  "kpi": {
+    "vsPeriod": "vs. 30 j"
+  },
+  "overview": {
+    "kpis": {
+      "verified-profiles": "Profils vérifiés",
+      "active-listings": "Annonces publiées",
+      "total-users": "Utilisateurs",
+      "in-moderation-listings": "Annonces en modération"
+    },
+    "loading": "Chargement des indicateurs…",
+    "loadError": "Certains indicateurs sont momentanément indisponibles.",
+    "matchesCard": {
+      "title": "Mises en relation confirmées",
+      "period": "12 dernières semaines"
+    },
+    "todoCard": {
+      "title": "À traiter aujourd’hui",
+      "open": "Ouvrir"
+    },
+    "activityLog": {
+      "title": "Journal d’activité",
+      "timezoneNote": "Horodatage UTC+1 — Casablanca"
+    },
+    "status": {
+      "validated": "Validé",
+      "rejected": "Refusé",
+      "in_progress": "En cours"
+    }
+  },
+  "verif": {
+    "tabs": {
+      "pending": "En attente",
+      "relaunched": "Relancés",
+      "rejected": "Refusés",
+      "validated": "Validés"
+    },
+    "pendingCount_one": "{{count}} dossier en attente",
+    "pendingCount_other": "{{count}} dossiers en attente",
+    "documentPreview": "Aperçu du document — {{doc}}",
+    "documentPreviewNote": "(pièce chiffrée, visible 15 min)",
+    "notePlaceholder": "Note interne (visible par l'équipe conformité uniquement)",
+    "validate": "Valider le profil",
+    "reject": "Refuser",
+    "approveRowLabel": "Valider le dossier",
+    "rejectRowLabel": "Refuser le dossier",
+    "cinDoc": "CIN ····{{last4}}",
+    "loading": "Chargement de la file de vérification…",
+    "loadError": "La file de vérification est momentanément indisponible.",
+    "empty": "Aucun dossier en attente.",
+    "noSelection": "Sélectionnez un dossier pour voir le détail.",
+    "actionError": "Action impossible pour le moment — réessayez.",
+    "age": {
+      "minutes_one": "il y a {{count}} min",
+      "minutes_other": "il y a {{count}} min",
+      "hours_one": "il y a {{count}} h",
+      "hours_other": "il y a {{count}} h",
+      "days_one": "il y a {{count}} j",
+      "days_other": "il y a {{count}} j"
+    }
+  },
+  "listings": {
+    "columns": {
+      "listing": "Annonce",
+      "city": "Ville",
+      "rent": "Loyer",
+      "host": "Hôte",
+      "status": "Statut",
+      "action": "Action"
+    },
+    "hostId": "Hôte #{{id}}",
+    "approveRowLabel": "Approuver l'annonce",
+    "rejectRowLabel": "Rejeter l'annonce",
+    "loading": "Chargement de la file de modération…",
+    "loadError": "La file de modération est momentanément indisponible.",
+    "empty": "Aucune annonce en attente de modération.",
+    "actionError": "Action impossible pour le moment — réessayez.",
+    "count_one": "{{count}} annonce en attente de modération",
+    "count_other": "{{count}} annonces en attente de modération",
+    "status": {
+      "EN_MODERATION": "En modération",
+      "PUBLIEE": "Publiée",
+      "REJETEE": "Rejetée"
+    }
+  },
+  "users": {
+    "stats": {
+      "total": "Comptes",
+      "active": "Comptes actifs",
+      "suspended": "Comptes suspendus",
+      "verified": "Comptes vérifiés"
+    },
+    "columns": {
+      "user": "Utilisateur",
+      "role": "Rôle",
+      "joined": "Inscription",
+      "verification": "Vérification",
+      "status": "Statut",
+      "action": "Action"
+    },
+    "role": {
+      "seeker": "Chercheur",
+      "host": "Hôte / Partenaire",
+      "admin": "Administrateur"
+    },
+    "verification": {
+      "verified": "Vérifié",
+      "pending": "En attente"
+    },
+    "status": {
+      "active": "Actif",
+      "suspended": "Suspendu",
+      "deleted": "Supprimé"
+    },
+    "suspendRowLabel": "Suspendre le compte",
+    "reactivateRowLabel": "Réactiver le compte",
+    "loading": "Chargement des utilisateurs…",
+    "loadError": "La liste des utilisateurs est momentanément indisponible.",
+    "empty": "Aucun utilisateur pour le moment.",
+    "actionError": "Action impossible pour le moment — réessayez."
+  },
+  "contracts": {
+    "loading": "Chargement des contrats et paiements…",
+    "loadError": "Les contrats et paiements sont momentanément indisponibles.",
+    "empty": "Aucun bail à afficher.",
+    "escrowNote": "États de séquestre modélisés à des fins de démonstration : cette plateforme ne traite aucun paiement réel (aucun prestataire de paiement intégré).",
+    "listingLabel": "Annonce {{id}}",
+    "parties": "Locataire #{{tenant}} · Bailleur #{{owner}}",
+    "columns": {
+      "lease": "Bail",
+      "rent": "Loyer",
+      "deposit": "Caution",
+      "status": "Statut",
+      "payments": "Paiements"
+    },
+    "status": {
+      "pending": "En attente",
+      "active": "Actif",
+      "ended": "Terminé",
+      "cancelled": "Annulé"
+    },
+    "paymentType": {
+      "deposit": "Caution",
+      "rent": "Loyer"
+    },
+    "paymentStatus": {
+      "pending": "En attente",
+      "escrowed": "Sous séquestre",
+      "released": "Libéré",
+      "refunded": "Remboursé"
+    },
+    "releaseButton": "Libérer",
+    "refundButton": "Rembourser",
+    "actionError": "Action impossible pour le moment — réessayez.",
+    "edl": {
+      "title": "État des lieux",
+      "entree": "Entrée",
+      "sortie": "Sortie",
+      "createEntree": "Créer l'état des lieux d'entrée",
+      "createSortie": "Créer l'état des lieux de sortie",
+      "statusDraft": "Brouillon",
+      "statusSigned": "Signé (2/2)",
+      "awaitingSignatures": "En attente de signature"
+    }
+  },
+  "reports": {
+    "columns": {
+      "target": "Signalé",
+      "reason": "Motif",
+      "reporter": "Signalé par",
+      "reportedAt": "Signalé le",
+      "action": "Action"
+    },
+    "reporterId": "Utilisateur #{{id}}",
+    "resolveRowLabel": "Traiter le signalement",
+    "dismissRowLabel": "Rejeter le signalement",
+    "loading": "Chargement des signalements…",
+    "loadError": "Les signalements sont momentanément indisponibles.",
+    "empty": "Aucun signalement en attente de traitement.",
+    "actionError": "Action impossible pour le moment — réessayez.",
+    "count_one": "{{count}} signalement en attente de traitement",
+    "count_other": "{{count}} signalements en attente de traitement",
+    "targetType": {
+      "listing": "Annonce",
+      "profile": "Profil",
+      "message": "Message"
+    },
+    "reason": {
+      "spam": "Spam",
+      "inappropriate": "Contenu inapproprié",
+      "fraud": "Fraude",
+      "harassment": "Harcèlement",
+      "other": "Autre"
+    }
+  },
+  "settings": {
+    "loading": "Chargement…",
+    "loadError": "Ces paramètres sont momentanément indisponibles.",
+    "readOnly": "Lecture seule",
+    "matchingWeightsTitle": "Pondération de mise en relation",
+    "matchingWeightsDesc": "Répartition budget / mode de vie utilisée par le calcul de compatibilité (service matching). Doit toujours sommer à 100 %.",
+    "weightBudget": "Budget",
+    "weightLifestyle": "Mode de vie",
+    "activeVersion": "Version active : {{version}}",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "saveSuccess": "Pondération enregistrée et activée.",
+    "saveError": "L’enregistrement a échoué. Réessayez.",
+    "lifestyleReferentialTitle": "Référentiel mode de vie",
+    "rolesTitle": "Rôles & permissions",
+    "rolesEmpty": "Aucun rôle à afficher.",
+    "rolesUsersCount": "{{count}} membre",
+    "rolesUsersCount_other": "{{count}} membres",
+    "rolesAdd": "Ajouter un rôle",
+    "roleFormNameLabel": "Nom",
+    "roleFormDescriptionLabel": "Description",
+    "roleFormLevelLabel": "Niveau",
+    "roleFormCreate": "Créer",
+    "roleFormSave": "Enregistrer",
+    "roleFormCancel": "Annuler",
+    "roleFormSaving": "Enregistrement…",
+    "roleFormError": "Une erreur est survenue. Réessayez.",
+    "roleSystemBadge": "Rôle système",
+    "roleEditAria": "Modifier le rôle {{name}}",
+    "roleDeleteAria": "Supprimer le rôle {{name}}",
+    "roleDeleteConfirm": "Supprimer le rôle « {{name}} » ?",
+    "roleDeleteConfirmBtn": "Supprimer",
+    "roleDeleteCancelBtn": "Annuler",
+    "roleDeleteError": "Suppression impossible (rôle système ou membres encore assignés)."
+  },
+  "roomAssignment": {
+    "kicker": "Gestion locative",
+    "title": "Attribution des chambres",
+    "export": "Exporter le plan",
+    "autoFill": "Affectation automatique",
+    "occupied": "{{count}}/{{total}} occupées",
+    "kpis": {
+      "occupation": "Occupation",
+      "occupationNote_one": "{{count}} chambre libre",
+      "occupationNote_other": "{{count}} chambres libres",
+      "avgCompatibility": "Compatibilité moyenne",
+      "avgCompatibilityNote": "sur les places attribuées",
+      "avgCommute": "Trajet moyen",
+      "avgCommuteValue": "16 min",
+      "avgCommuteNote": "vers école, campus ou entreprise",
+      "waitingCandidates": "Candidats en attente",
+      "waitingCandidatesNote": "dossiers vérifiés"
+    },
+    "planTitle": "Plan du bien",
+    "planHintSelected": "{{name}} sélectionné(e) — chaque chambre affiche son score",
+    "planHintEmpty": "Sélectionnez un candidat pour voir les scores par chambre",
+    "candidatesTitle": "Candidats recommandés",
+    "candidatesHint": "Classés par compatibilité moyenne avec ce bien et proximité du {{anchor}}.",
+    "sorts": {
+      "compatibility": "Compatibilité",
+      "proximity": "Proximité",
+      "name": "Nom"
+    },
+    "room": {
+      "perMonth": "/ mois",
+      "freeRoomLine1": "Chambre libre",
+      "freeRoomLine2": "Sélectionnez un candidat à droite",
+      "bestCandidate": "Meilleur candidat : {{name}} ({{score}}%)",
+      "noCandidateAvailable": "Aucun candidat disponible",
+      "compatibilityBadge": "{{score}}% de compatibilité",
+      "releaseRoom": "Libérer la chambre",
+      "bestSuggestion": "Meilleure suggestion",
+      "placeHere": "Placer ici",
+      "withCandidate": "avec {{name}}",
+      "reasonHigh": "Mode de vie et budget alignés, trajet court vers {{anchor}}.",
+      "reasonMid": "Bon accord général ; écart léger sur le budget ou les horaires.",
+      "reasonLow": "Compatibilité faible : rythme de vie ou trajet peu adaptés."
+    },
+    "candidateCard": {
+      "placed": "Placé · {{room}}",
+      "commuteBudget": "{{commute}} · Budget {{budget}}",
+      "chooseRoom": "Choisissez une chambre sur le plan →"
+    },
+    "sidebarNav": {
+      "dashboard": "Tableau de bord",
+      "verifications": "Vérifications",
+      "listings": "Annonces",
+      "assignments": "Affectations",
+      "users": "Utilisateurs",
+      "contracts": "Contrats",
+      "reports": "Signalements"
+    }
+  }
+}

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Résultats de recherche" description="Recherche publique — filtres, tri, grille d'annonces avec score de compatibilité" -->
+<helmet><script src="./ds-base.js"></script><style>html,body{margin:0}body{font-family:var(--font-body);background:var(--bg-page)}a{color:var(--link);text-decoration:none}a:hover{color:var(--link-hover)}input,select{font:inherit}</style></helmet>
+<div style="min-height:100vh;background:var(--bg-page)">
+<header style="background:var(--surface-navy);color:var(--text-on-navy);padding:14px 32px;display:flex;align-items:center;gap:24px;position:sticky;top:0;z-index:5;box-shadow:var(--shadow-nav,0 2px 12px rgba(15,26,56,.24))">
+<div style="font-size:18px;font-weight:800;letter-spacing:-0.02em;flex:none">M3a-L3chrane</div>
+<div style="flex:1;display:flex;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:6px 8px;max-width:620px">
+<input value="Casablanca, Maârif" style="flex:1;background:transparent;border:0;color:#fff;font-size:14.5px;outline:none;padding:6px 8px">
+<div style="width:1px;background:rgba(255,255,255,.18)"></div>
+<input value="Sept. 2026" style="width:120px;background:transparent;border:0;color:#fff;font-size:14.5px;outline:none;padding:6px 8px">
+<button style="padding:8px 18px;border:0;border-radius:7px;background:var(--brand-accent);color:var(--text-on-accent);font-size:14px;font-weight:800;cursor:pointer">Rechercher</button>
+</div>
+<nav style="display:flex;gap:22px;align-items:center;font-size:14px;flex:none">
+<a href="#" style="color:var(--text-on-navy-muted)">Messages</a>
+<a href="#" style="color:var(--text-on-navy-muted)">Favoris</a>
+<div style="width:32px;height:32px;border-radius:50%;background:var(--navy-500);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">YB</div>
+</nav>
+</header>
+<div style="display:grid;grid-template-columns:276px minmax(0,1fr);gap:28px;padding:28px 32px 56px;max-width:1360px;margin:0 auto;align-items:start">
+<aside style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:20px;display:flex;flex-direction:column;gap:22px;position:sticky;top:96px">
+<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:15px;font-weight:800;color:var(--text-heading)">Filtres</div><button style="border:0;background:transparent;color:var(--link);font-size:13px;font-weight:600;cursor:pointer;padding:0">Réinitialiser</button></div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font-size:12.5px;font-weight:800;color:var(--text-heading);letter-spacing:.02em">Budget mensuel</div>
+<div style="display:flex;gap:8px"><input value="1 500" style="width:100%;padding:9px 10px;border:1px solid var(--border-subtle);border-radius:8px;font-size:14px;color:var(--text-heading);outline:none"><input value="3 000" style="width:100%;padding:9px 10px;border:1px solid var(--border-subtle);border-radius:8px;font-size:14px;color:var(--text-heading);outline:none"></div>
+<div style="font-size:12.5px;color:var(--text-muted)">MAD / mois, charges comprises</div>
+</div>
+<div style="height:1px;background:var(--border-subtle)"></div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font-size:12.5px;font-weight:800;color:var(--text-heading)">Type de logement</div>
+<sc-for list="{{ typeFilters }}" as="f" hint-placeholder-count="4">
+<label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--text-body);cursor:pointer"><input type="checkbox" checked="{{ f.on }}" style="width:15px;height:15px;accent-color:var(--navy-700)">{{ f.label }}<span style="margin-left:auto;font-size:12.5px;color:var(--text-muted)">{{ f.count }}</span></label>
+</sc-for>
+</div>
+<div style="height:1px;background:var(--border-subtle)"></div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font-size:12.5px;font-weight:800;color:var(--text-heading)">Mode de vie</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{ lifestyle }}" as="chip" hint-placeholder-count="6">
+<sc-if value="{{ chip.on }}"><button onClick="{{ chip.toggle }}" style="padding:7px 12px;border-radius:999px;border:1px solid var(--navy-700);background:var(--navy-700);color:#fff;font-size:13px;font-weight:600;cursor:pointer">{{ chip.label }}</button></sc-if>
+<sc-if value="{{ chip.off }}" hint-placeholder-val="{{ true }}"><button onClick="{{ chip.toggle }}" style="padding:7px 12px;border-radius:999px;border:1px solid var(--border-subtle);background:var(--white);color:var(--text-body);font-size:13px;font-weight:600;cursor:pointer" style-hover="border-color:var(--border-default)">{{ chip.label }}</button></sc-if>
+</sc-for>
+</div>
+</div>
+<div style="height:1px;background:var(--border-subtle)"></div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font-size:12.5px;font-weight:800;color:var(--text-heading)">Confiance</div>
+<label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--text-body);cursor:pointer"><input type="checkbox" checked style="width:15px;height:15px;accent-color:var(--navy-700)">Profils vérifiés uniquement</label>
+<label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--text-body);cursor:pointer"><input type="checkbox" style="width:15px;height:15px;accent-color:var(--navy-700)">Partenaire institutionnel</label>
+<label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--text-body);cursor:pointer"><input type="checkbox" style="width:15px;height:15px;accent-color:var(--navy-700)">Contrat en ligne disponible</label>
+</div>
+</aside>
+<section style="display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:5px">
+<h1 style="margin:0;font-size:24px;font-weight:800;color:var(--text-heading);letter-spacing:-0.02em">Colocations à Casablanca, Maârif</h1>
+<div style="font-size:14px;color:var(--text-body)">{{ count }} logements — triés par compatibilité avec votre profil</div>
+</div>
+<div style="display:flex;gap:10px;align-items:center">
+<select style="padding:9px 12px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--white);font-size:14px;color:var(--text-heading);outline:none"><option>Compatibilité</option><option>Prix croissant</option><option>Prix décroissant</option><option>Plus récentes</option></select>
+<div style="display:flex;background:var(--surface-sunken);border-radius:8px;padding:3px;gap:3px">
+<button style="padding:7px 14px;border:0;border-radius:6px;background:var(--white);color:var(--text-heading);font-size:13.5px;font-weight:700;box-shadow:var(--shadow-sm);cursor:pointer">Liste</button>
+<button style="padding:7px 14px;border:0;border-radius:6px;background:transparent;color:var(--text-muted);font-size:13.5px;font-weight:600;cursor:pointer">Carte</button>
+</div>
+</div>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+<span style="font-size:13px;color:var(--text-muted)">Filtres actifs :</span>
+<sc-for list="{{ activeFilters }}" as="a" hint-placeholder-count="3">
+<span style="display:inline-flex;align-items:center;gap:7px;padding:6px 10px 6px 12px;border-radius:999px;background:var(--navy-50);border:1px solid var(--navy-100);color:var(--text-heading);font-size:13px;font-weight:600">{{ a }}<span style="color:var(--text-muted);cursor:pointer">×</span></span>
+</sc-for>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(288px,1fr));gap:20px">
+<sc-for list="{{ listings }}" as="l" hint-placeholder-count="6">
+<a href="../listing-detail/ListingDetail.dc.html" style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:box-shadow 180ms ease,transform 180ms ease;color:inherit" style-hover="box-shadow:var(--shadow-md);transform:translateY(-2px)">
+<div style="position:relative;height:172px;background:var(--gray-150)">
+<sc-if value="{{ l.high }}"><div style="position:absolute;top:12px;right:12px;padding:6px 10px;border-radius:999px;background:var(--green-100);color:var(--green-700);font-size:13px;font-weight:800;box-shadow:var(--shadow-sm)">{{ l.score }}</div></sc-if>
+<sc-if value="{{ l.mid }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;top:12px;right:12px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.94);color:var(--text-heading);font-size:13px;font-weight:800;box-shadow:var(--shadow-sm)">{{ l.score }}</div></sc-if>
+<div style="position:absolute;top:12px;left:12px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.94);color:var(--verified);font-size:12px;font-weight:800;display:flex;align-items:center;gap:5px">✓ Vérifiée</div>
+</div>
+<div style="padding:16px;display:flex;flex-direction:column;gap:10px;flex:1">
+<div style="display:flex;flex-direction:column;gap:3px">
+<div style="font-size:16px;font-weight:800;color:var(--text-heading);letter-spacing:-0.01em">{{ l.title }}</div>
+<div style="font-size:13.5px;color:var(--text-muted)">{{ l.place }}</div>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px">
+<sc-for list="{{ l.chips }}" as="c" hint-placeholder-count="3">
+<span style="padding:5px 10px;border-radius:999px;background:var(--surface-sunken);color:var(--text-body);font-size:12.5px;font-weight:600">{{ c }}</span>
+</sc-for>
+</div>
+<div style="margin-top:auto;padding-top:12px;border-top:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:baseline">
+<div style="font-size:18px;font-weight:800;color:var(--text-heading)">{{ l.price }}<span style="font-size:13px;font-weight:600;color:var(--text-muted)"> /mois</span></div>
+<span style="font-size:13.5px;font-weight:700;color:var(--link)">Voir le détail</span>
+</div>
+</div>
+</a>
+</sc-for>
+</div>
+<div style="display:flex;justify-content:center;padding-top:8px"><button style="padding:12px 26px;border:1px solid var(--border-default);border-radius:8px;background:var(--white);color:var(--text-heading);font-size:14.5px;font-weight:700;cursor:pointer" style-hover="border-color:var(--navy-300)">Afficher plus de logements</button></div>
+</section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { chips: { 'Non-fumeur': true, 'Calme': true } };
+  renderVals() {
+    const data = [
+      { title: 'Chambre lumineuse, Maârif', place: 'Casablanca · 12 min à pied UH2', price: '2 300 MAD', score: 92, chips: ['Meublé', 'Wi-Fi', '2 colocataires'] },
+      { title: 'Colocation étudiante, Gauthier', place: 'Casablanca · Tram L1', price: '1 950 MAD', score: 87, chips: ['Non-fumeur', 'Calme', '3 colocataires'] },
+      { title: 'Appartement partagé, Bourgogne', place: 'Casablanca · 8 min bus', price: '2 700 MAD', score: 81, chips: ['Balcon', 'Meublé', 'Invités OK'] },
+      { title: 'Chambre privée, Racine', place: 'Casablanca · Quartier calme', price: '3 100 MAD', score: 76, chips: ['Salle de bain privée', 'Wi-Fi'] },
+      { title: 'Studio partagé, Oasis', place: 'Casablanca · Proche ISCAE', price: '1 800 MAD', score: 71, chips: ['Meublé', '1 colocataire'] },
+      { title: 'Colocation jeunes actifs, CFC', place: 'Casablanca · Casa Finance City', price: '3 400 MAD', score: 68, chips: ['Neuf', 'Parking', 'Wi-Fi'] }
+    ];
+    const listings = data.map(l => ({
+      ...l, score: l.score + '%',
+      high: l.score >= 80, mid: l.score < 80
+    }));
+    const lifestyle = ['Non-fumeur', 'Calme', 'Invités OK', 'Animaux OK', 'Colocation féminine', 'Colocation masculine'].map(label => {
+      const on = !!this.state.chips[label];
+      return { label, on, off: !on,
+        toggle: () => this.setState(s => ({ chips: { ...s.chips, [label]: !s.chips[label] } })) };
+    });
+    return {
+      listings, lifestyle, count: 48,
+      typeFilters: [
+        { label: 'Chambre en colocation', count: 31, on: true },
+        { label: 'Appartement entier', count: 9, on: false },
+        { label: 'Studio partagé', count: 6, on: false },
+        { label: 'Résidence partenaire', count: 2, on: false }
+      ],
+      activeFilters: ['1 500 – 3 000 MAD', 'Profils vérifiés', 'Non-fumeur', 'Calme']
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -13,3 +13,28 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
+
+/* RTL (arabe) — bascule de police et de sens portée par [dir] sur <html>,
+   posé par src/i18n/index.js au changement de langue. */
+[dir="rtl"] body {
+  font-family: var(--font-arabic);
+}
+[dir="rtl"] {
+  --font-display: var(--font-arabic);
+  --font-body: var(--font-arabic);
+}
+
+/* Recherche — grille de résultats : 3 colonnes, dégrade sur petits écrans. */
+.m3a-search-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 1100px) {
+  .m3a-search-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 680px) {
+  .m3a-search-grid {
+    grid-template-columns: 1fr;
+  }
+}

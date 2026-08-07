@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useQuery, useMutation } from 'react-query'
 import { Link, Navigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import { useTranslation } from 'react-i18next'
 import { analyticsService } from '../../services/analyticsService'
 import { WIDGETS, Widget } from '../../components/dashboard/widgets'
 import useAuthStore from '../../store/authStore'
@@ -11,6 +12,7 @@ const DEFAULT = Object.keys(WIDGETS).map((id, i) => ({ id, order: i, hidden: fal
 const SHELL = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'
 
 function Dashboard() {
+  const { t } = useTranslation(['dashboard', 'common'])
   const user = useAuthStore((s) => s.user)
   // La « Tour de contrôle » est le tableau de bord AGENCE (overview back-office → 400 sans agence).
   // On ne l'appelle donc que pour un agent d'agence. Superadmin → /admin ; particulier → « Mon espace ».
@@ -27,8 +29,8 @@ function Dashboard() {
   }, [overview])
 
   const save = useMutation(() => analyticsService.saveConfig(widgets.map((w, i) => ({ ...w, order: i }))), {
-    onSuccess: () => { toast.success('Tableau de bord enregistré'); setEditing(false) },
-    onError: () => toast.error('Erreur'),
+    onSuccess: () => { toast.success(t('dashboard:home.toasts.saved')); setEditing(false) },
+    onError: () => toast.error(t('common:errors.short')),
   })
 
   const onDrop = (targetId) => {
@@ -45,17 +47,17 @@ function Dashboard() {
 
   if (isSuperadmin) return <Navigate to="/admin" replace />
   if (!hasAgency) return <MonEspace user={user} />
-  if (isLoading) return <div className={SHELL}>Chargement…</div>
+  if (isLoading) return <div className={SHELL}>{t('dashboard:shared.loading')}</div>
   if (isError || !overview) {
     return (
       <div className={SHELL}>
-        <h1 className="text-2xl font-bold text-gray-900 mb-5">Tour de contrôle</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-5">{t('dashboard:home.title')}</h1>
         <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
-          <p className="text-gray-600 mb-1">Impossible de charger le tableau de bord.</p>
-          <p className="text-sm text-gray-400 mb-5">Votre session a peut-être expiré.</p>
+          <p className="text-gray-600 mb-1">{t('dashboard:home.error.title')}</p>
+          <p className="text-sm text-gray-400 mb-5">{t('dashboard:home.error.subtitle')}</p>
           <div className="flex items-center justify-center gap-3">
-            <button onClick={() => refetch()} className="btn-secondary text-sm">Réessayer</button>
-            <Link to="/connexion" className="btn-primary text-sm">Se reconnecter</Link>
+            <button onClick={() => refetch()} className="btn-secondary text-sm">{t('dashboard:shared.actions.retry')}</button>
+            <Link to="/connexion" className="btn-primary text-sm">{t('dashboard:shared.actions.reconnect')}</Link>
           </div>
         </div>
       </div>
@@ -66,13 +68,13 @@ function Dashboard() {
   return (
     <div className={SHELL}>
       <div className="flex items-center justify-between mb-5">
-        <h1 className="text-2xl font-bold text-gray-900">Tour de contrôle</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('dashboard:home.title')}</h1>
         {editing
           ? <div className="flex gap-2">
-              <button onClick={() => save.mutate()} className="btn-primary text-sm">Enregistrer</button>
-              <button onClick={() => setEditing(false)} className="btn-secondary text-sm">Annuler</button>
+              <button onClick={() => save.mutate()} className="btn-primary text-sm">{t('dashboard:shared.actions.save')}</button>
+              <button onClick={() => setEditing(false)} className="btn-secondary text-sm">{t('dashboard:shared.actions.cancel')}</button>
             </div>
-          : <button onClick={() => setEditing(true)} className="btn-secondary text-sm">Personnaliser</button>}
+          : <button onClick={() => setEditing(true)} className="btn-secondary text-sm">{t('dashboard:home.customize')}</button>}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {visible.map((w) => {
@@ -88,11 +90,11 @@ function Dashboard() {
               {editing && (
                 <div className="flex justify-end mb-1">
                   <button onClick={() => toggleHide(w.id)} className="text-xs text-gray-500">
-                    {w.hidden ? 'Afficher' : 'Masquer'}
+                    {w.hidden ? t('dashboard:home.show') : t('dashboard:home.hide')}
                   </button>
                 </div>
               )}
-              <Widget title={def.title} to={editing ? null : def.to}>{def.render(overview)}</Widget>
+              <Widget titleKey={w.id} to={editing ? null : def.to}>{def.render(overview)}</Widget>
             </div>
           )
         })}

@@ -1,0 +1,340 @@
+{
+  "sidebar": {
+    "brand": "معا لعشران",
+    "brandTag": "الإدارة الخلفية",
+    "nav": {
+      "overview": {
+        "label": "نظرة عامة",
+        "title": "نظرة عامة",
+        "subtitle": "نشاط المنصة — آخر 30 يومًا"
+      },
+      "verif": {
+        "label": "التحقّقات",
+        "title": "التحقّق من الهوية",
+        "subtitle": "قائمة التحقّق — بطاقة التعريف، الصفة الطلابية، شهادة العمل"
+      },
+      "listings": {
+        "label": "الإعلانات",
+        "title": "مراقبة الإعلانات",
+        "subtitle": "مراقبة الجودة ومطابقة السكنات المنشورة"
+      },
+      "users": {
+        "label": "المستخدمون",
+        "title": "المستخدمون",
+        "subtitle": "الباحثون والمضيفون والشركاء المؤسسيون"
+      },
+      "contracts": {
+        "label": "العقود والمدفوعات",
+        "title": "العقود والمدفوعات",
+        "subtitle": "عقود السكن المشترك والمدفوعات المرتبطة بها"
+      },
+      "reports": {
+        "label": "البلاغات",
+        "title": "البلاغات",
+        "subtitle": "النزاعات والمحتوى المُبلّغ عنه من المجتمع"
+      },
+      "settings": {
+        "label": "الإعدادات",
+        "title": "الإعدادات",
+        "subtitle": "قواعد المطابقة، الفريق والصلاحيات"
+      }
+    },
+    "queueNote": {
+      "title": "قائمة التحقّق",
+      "body": "متوسط مدة المعالجة: 4 س 12 د. الهدف الداخلي أقل من 6 س."
+    }
+  },
+  "header": {
+    "searchPlaceholder": "ابحث عن ملف شخصي أو إعلان أو عقد…",
+    "export": "تصدير",
+    "newAction": "إجراء جديد"
+  },
+  "kpi": {
+    "vsPeriod": "مقارنة بـ 30 يومًا"
+  },
+  "overview": {
+    "kpis": {
+      "verified-profiles": "الملفات الموثّقة",
+      "active-listings": "الإعلانات المنشورة",
+      "total-users": "المستخدمون",
+      "in-moderation-listings": "إعلانات قيد المراجعة"
+    },
+    "loading": "جارٍ تحميل المؤشرات…",
+    "loadError": "بعض المؤشرات غير متوفرة مؤقتًا.",
+    "matchesCard": {
+      "title": "المطابقات المؤكَّدة",
+      "period": "آخر 12 أسبوعًا"
+    },
+    "todoCard": {
+      "title": "للمعالجة اليوم",
+      "open": "فتح"
+    },
+    "activityLog": {
+      "title": "سجلّ النشاط",
+      "timezoneNote": "التوقيت UTC+1 — الدار البيضاء"
+    },
+    "status": {
+      "validated": "مصادَق عليه",
+      "rejected": "مرفوض",
+      "in_progress": "قيد المعالجة"
+    }
+  },
+  "verif": {
+    "tabs": {
+      "pending": "قيد الانتظار",
+      "relaunched": "معاد إرسالها",
+      "rejected": "مرفوضة",
+      "validated": "مصادَق عليها"
+    },
+    "pendingCount_one": "ملف واحد قيد الانتظار",
+    "pendingCount_other": "{{count}} ملفات قيد الانتظار",
+    "documentPreview": "معاينة الوثيقة — {{doc}}",
+    "documentPreviewNote": "(وثيقة مشفَّرة، تظهر لمدة 15 دقيقة)",
+    "notePlaceholder": "ملاحظة داخلية (مرئية لفريق المطابقة فقط)",
+    "validate": "تصديق الملف الشخصي",
+    "reject": "رفض",
+    "approveRowLabel": "المصادقة على الملف",
+    "rejectRowLabel": "رفض الملف",
+    "cinDoc": "بطاقة التعريف ····{{last4}}",
+    "loading": "جارٍ تحميل قائمة التحقق…",
+    "loadError": "قائمة التحقق غير متوفرة مؤقتًا.",
+    "empty": "لا يوجد ملف قيد الانتظار.",
+    "noSelection": "اختر ملفًا لعرض التفاصيل.",
+    "actionError": "تعذّر تنفيذ الإجراء حاليًا — أعد المحاولة.",
+    "age": {
+      "minutes_one": "منذ {{count}} دقيقة",
+      "minutes_other": "منذ {{count}} دقيقة",
+      "hours_one": "منذ {{count}} ساعة",
+      "hours_other": "منذ {{count}} ساعة",
+      "days_one": "منذ {{count}} يوم",
+      "days_other": "منذ {{count}} يوم"
+    }
+  },
+  "listings": {
+    "columns": {
+      "listing": "الإعلان",
+      "city": "المدينة",
+      "rent": "الإيجار",
+      "host": "المضيف",
+      "status": "الحالة",
+      "action": "إجراء"
+    },
+    "hostId": "المضيف #{{id}}",
+    "approveRowLabel": "الموافقة على الإعلان",
+    "rejectRowLabel": "رفض الإعلان",
+    "loading": "جارٍ تحميل قائمة المراجعة…",
+    "loadError": "قائمة المراجعة غير متاحة مؤقتًا.",
+    "empty": "لا توجد إعلانات بانتظار المراجعة.",
+    "actionError": "تعذّر تنفيذ الإجراء حاليًا — يُرجى إعادة المحاولة.",
+    "count_one": "إعلان واحد بانتظار المراجعة",
+    "count_other": "{{count}} إعلانات بانتظار المراجعة",
+    "status": {
+      "EN_MODERATION": "قيد المراجعة",
+      "PUBLIEE": "منشورة",
+      "REJETEE": "مرفوضة"
+    }
+  },
+  "users": {
+    "stats": {
+      "total": "الحسابات",
+      "active": "الحسابات النشطة",
+      "suspended": "الحسابات الموقوفة",
+      "verified": "الحسابات الموثّقة"
+    },
+    "columns": {
+      "user": "المستخدم",
+      "role": "الصفة",
+      "joined": "تاريخ التسجيل",
+      "verification": "التحقّق",
+      "status": "الحالة",
+      "action": "إجراء"
+    },
+    "role": {
+      "seeker": "باحث",
+      "host": "مضيف / شريك",
+      "admin": "مسؤول"
+    },
+    "verification": {
+      "verified": "موثّق",
+      "pending": "قيد الانتظار"
+    },
+    "status": {
+      "active": "نشط",
+      "suspended": "موقوف",
+      "deleted": "محذوف"
+    },
+    "suspendRowLabel": "إيقاف الحساب",
+    "reactivateRowLabel": "إعادة تفعيل الحساب",
+    "loading": "جارٍ تحميل المستخدمين…",
+    "loadError": "قائمة المستخدمين غير متاحة حاليًا.",
+    "empty": "لا يوجد مستخدمون حاليًا.",
+    "actionError": "تعذّر تنفيذ الإجراء حاليًا — يُرجى إعادة المحاولة."
+  },
+  "contracts": {
+    "loading": "جارٍ تحميل العقود والمدفوعات…",
+    "loadError": "العقود والمدفوعات غير متاحة مؤقتًا.",
+    "empty": "لا يوجد أي عقد إيجار لعرضه.",
+    "escrowNote": "حالات الضمان (séquestre) هنا نموذج توضيحي فقط: هذه المنصة لا تعالج أي دفعة حقيقية (لا يوجد مزوّد دفع مدمج).",
+    "listingLabel": "الإعلان {{id}}",
+    "parties": "المستأجر رقم {{tenant}} · المالك رقم {{owner}}",
+    "columns": {
+      "lease": "عقد الإيجار",
+      "rent": "الإيجار",
+      "deposit": "التأمين",
+      "status": "الحالة",
+      "payments": "المدفوعات"
+    },
+    "status": {
+      "pending": "قيد الانتظار",
+      "active": "نشط",
+      "ended": "منتهٍ",
+      "cancelled": "ملغى"
+    },
+    "paymentType": {
+      "deposit": "التأمين",
+      "rent": "الإيجار"
+    },
+    "paymentStatus": {
+      "pending": "قيد الانتظار",
+      "escrowed": "تحت الضمان",
+      "released": "تم التحرير",
+      "refunded": "تم الاسترجاع"
+    },
+    "releaseButton": "تحرير",
+    "refundButton": "استرجاع",
+    "actionError": "تعذّر تنفيذ الإجراء حاليًا — يُرجى إعادة المحاولة.",
+    "edl": {
+      "title": "معاينة حالة السكن",
+      "entree": "الدخول",
+      "sortie": "الخروج",
+      "createEntree": "إنشاء معاينة حالة الدخول",
+      "createSortie": "إنشاء معاينة حالة الخروج",
+      "statusDraft": "مسودة",
+      "statusSigned": "موقّع (2/2)",
+      "awaitingSignatures": "بانتظار التوقيع"
+    }
+  },
+  "reports": {
+    "columns": {
+      "target": "المُبلَّغ عنه",
+      "reason": "السبب",
+      "reporter": "أبلغ عنه",
+      "reportedAt": "تاريخ البلاغ",
+      "action": "إجراء"
+    },
+    "reporterId": "المستخدم #{{id}}",
+    "resolveRowLabel": "معالجة البلاغ",
+    "dismissRowLabel": "رفض البلاغ",
+    "loading": "جارٍ تحميل البلاغات…",
+    "loadError": "البلاغات غير متاحة مؤقتًا.",
+    "empty": "لا توجد بلاغات بانتظار المعالجة.",
+    "actionError": "تعذّر تنفيذ الإجراء حاليًا — يُرجى إعادة المحاولة.",
+    "count_one": "بلاغ واحد بانتظار المعالجة",
+    "count_other": "{{count}} بلاغات بانتظار المعالجة",
+    "targetType": {
+      "listing": "إعلان",
+      "profile": "ملف شخصي",
+      "message": "رسالة"
+    },
+    "reason": {
+      "spam": "رسائل مزعجة",
+      "inappropriate": "محتوى غير لائق",
+      "fraud": "احتيال",
+      "harassment": "تحرّش",
+      "other": "أخرى"
+    }
+  },
+  "settings": {
+    "loading": "جارٍ التحميل…",
+    "loadError": "هذه الإعدادات غير متاحة مؤقتًا.",
+    "readOnly": "للقراءة فقط",
+    "matchingWeightsTitle": "ترجيح المطابقة",
+    "matchingWeightsDesc": "توزيع الميزانية / نمط الحياة المستخدم في حساب التوافق (خدمة matching). يجب أن يبلغ المجموع دائمًا 100%.",
+    "weightBudget": "الميزانية",
+    "weightLifestyle": "نمط الحياة",
+    "activeVersion": "النسخة النشطة: {{version}}",
+    "save": "حفظ",
+    "saving": "جارٍ الحفظ…",
+    "saveSuccess": "تم حفظ الترجيح وتفعيله.",
+    "saveError": "فشل الحفظ. يُرجى إعادة المحاولة.",
+    "lifestyleReferentialTitle": "مرجعية نمط الحياة",
+    "rolesTitle": "الأدوار والصلاحيات",
+    "rolesEmpty": "لا يوجد أي دور لعرضه.",
+    "rolesUsersCount": "{{count}} عضو",
+    "rolesUsersCount_other": "{{count}} أعضاء",
+    "rolesAdd": "إضافة دور",
+    "roleFormNameLabel": "الاسم",
+    "roleFormDescriptionLabel": "الوصف",
+    "roleFormLevelLabel": "المستوى",
+    "roleFormCreate": "إنشاء",
+    "roleFormSave": "حفظ",
+    "roleFormCancel": "إلغاء",
+    "roleFormSaving": "جارٍ الحفظ…",
+    "roleFormError": "حدث خطأ. يُرجى إعادة المحاولة.",
+    "roleSystemBadge": "دور نظامي",
+    "roleEditAria": "تعديل دور {{name}}",
+    "roleDeleteAria": "حذف دور {{name}}",
+    "roleDeleteConfirm": "حذف الدور « {{name}} »؟",
+    "roleDeleteConfirmBtn": "حذف",
+    "roleDeleteCancelBtn": "إلغاء",
+    "roleDeleteError": "تعذّر الحذف (دور نظامي أو ما زال مرتبطًا بأعضاء)."
+  },
+  "roomAssignment": {
+    "kicker": "التسيير الإيجاري",
+    "title": "توزيع الغرف",
+    "export": "تصدير المخطط",
+    "autoFill": "توزيع تلقائي",
+    "occupied": "{{count}}/{{total}} مشغولة",
+    "kpis": {
+      "occupation": "الإشغال",
+      "occupationNote_one": "غرفة واحدة شاغرة",
+      "occupationNote_other": "{{count}} غرف شاغرة",
+      "avgCompatibility": "متوسط التوافق",
+      "avgCompatibilityNote": "على الأماكن الموزَّعة",
+      "avgCommute": "متوسط مدة التنقّل",
+      "avgCommuteValue": "16 د",
+      "avgCommuteNote": "نحو المدرسة أو الجامعة أو الشركة",
+      "waitingCandidates": "المترشّحون في الانتظار",
+      "waitingCandidatesNote": "ملفات موثّقة"
+    },
+    "planTitle": "مخطط العقار",
+    "planHintSelected": "تم اختيار {{name}} — كل غرفة تعرض درجة توافقها",
+    "planHintEmpty": "اختر مترشّحًا لعرض درجات التوافق حسب الغرفة",
+    "candidatesTitle": "المترشّحون المقترَحون",
+    "candidatesHint": "مرتّبون حسب متوسط التوافق مع هذا العقار والقرب من {{anchor}}.",
+    "sorts": {
+      "compatibility": "التوافق",
+      "proximity": "القرب",
+      "name": "الاسم"
+    },
+    "room": {
+      "perMonth": "/ شهريًا",
+      "freeRoomLine1": "غرفة شاغرة",
+      "freeRoomLine2": "اختر مترشّحًا على اليمين",
+      "bestCandidate": "أفضل مترشّح: {{name}} ({{score}}%)",
+      "noCandidateAvailable": "لا يوجد مترشّح متاح",
+      "compatibilityBadge": "توافق بنسبة {{score}}%",
+      "releaseRoom": "تحرير الغرفة",
+      "bestSuggestion": "أفضل اقتراح",
+      "placeHere": "التنصيب هنا",
+      "withCandidate": "مع {{name}}",
+      "reasonHigh": "نمط حياة وميزانية متوافقان، ومسافة قصيرة نحو {{anchor}}.",
+      "reasonMid": "توافق عام جيد؛ فارق طفيف في الميزانية أو التوقيت.",
+      "reasonLow": "توافق ضعيف: نمط الحياة أو مدة التنقّل غير مناسبين."
+    },
+    "candidateCard": {
+      "placed": "تم التنصيب · {{room}}",
+      "commuteBudget": "{{commute}} · الميزانية {{budget}}",
+      "chooseRoom": "اختر غرفة من المخطط ←"
+    },
+    "sidebarNav": {
+      "dashboard": "لوحة التحكّم",
+      "verifications": "التحقّقات",
+      "listings": "الإعلانات",
+      "assignments": "التوزيعات",
+      "users": "المستخدمون",
+      "contracts": "العقود",
+      "reports": "البلاغات"
+    }
+  }
+}

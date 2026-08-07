@@ -1,0 +1,65 @@
+{
+  "loading": "Chargement…",
+  "notFound": {
+    "title": "Page introuvable",
+    "body": "La page que vous cherchez n’existe pas.",
+    "backHome": "Retour à l’accueil"
+  },
+  "languageSwitcher": {
+    "label": "Changer de langue",
+    "fr": "FR",
+    "ar": "AR"
+  },
+  "topbar": {
+    "howItWorks": "Comment ça marche",
+    "discover": "Découvrir",
+    "about": "À propos",
+    "signIn": "Se connecter",
+    "signUp": "S'inscrire"
+  },
+  "nav": {
+    "home": "Accueil",
+    "dashboard": "Tableau de bord",
+    "messages": "Messages",
+    "messaging": "Messagerie",
+    "inbox": "Candidatures reçues",
+    "roommateValidation": "Colocataires à valider",
+    "apply": "Candidater",
+    "quiz": "Questionnaire",
+    "security": "Sécurité",
+    "search": "Rechercher",
+    "favorites": "Mes favoris",
+    "applications": "Mes candidatures",
+    "contracts": "Mes contrats",
+    "payments": "Paiements",
+    "profile": "Profil",
+    "settings": "Paramètres",
+    "affiliates": "Affiliés",
+    "verifications": "Vérifications",
+    "reservedOffers": "Offres réservées",
+    "grants": "Subventions",
+    "reporting": "Reporting",
+    "billing": "Facturation",
+    "apiWebhooks": "API & webhooks",
+    "help": "Besoin d'aide ?",
+    "logout": "Déconnexion",
+    "myAccount": "Mon compte",
+    "notifications": "Notifications"
+  },
+  "trust": {
+    "verified": "Vérifiée",
+    "compatibility": "Excellente compatibilité"
+  },
+  "listingCard": {
+    "defaultTitle": "Chambre dans un F4",
+    "defaultCity": "Maârif, Casablanca",
+    "amenityRoommates": "3 colocs",
+    "amenityQuiet": "Calme",
+    "amenityNoSmoking": "Non-fumeur",
+    "applyCta": "Candidater",
+    "proximityTo": "à {{distance}} de {{label}}"
+  },
+  "priceTag": {
+    "perMonth": "mois"
+  }
+}

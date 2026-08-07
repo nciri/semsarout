@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
+import { useTranslation } from 'react-i18next'
 import {
   FiArrowLeft, FiSave, FiUpload, FiX, FiHome, FiMapPin,
   FiDollarSign, FiGrid, FiImage, FiInfo
 } from 'react-icons/fi'
 import { DIRHAM_SYMBOL } from '../../utils/currency'
+import DirIcon from '../../components/common/DirIcon'
 import api from '../../services/api'
 
 const backofficeService = {
@@ -24,26 +26,32 @@ const backofficeService = {
   }
 }
 
-const PROPERTY_TYPES = [
-  { value: 'apartment', label: 'Appartement' },
-  { value: 'house', label: 'Maison' },
-  { value: 'villa', label: 'Villa' },
-  { value: 'land', label: 'Terrain' },
-  { value: 'commercial', label: 'Commercial' },
-  { value: 'office', label: 'Bureau' }
-]
+// Libellés via t('backoffice:crm.shared.propertyTypes'), keyés sur l'enum API.
+const PROPERTY_TYPES = ['apartment', 'house', 'villa', 'land', 'commercial', 'office']
 
-const LISTING_TYPES = [
-  { value: 'sale', label: 'Vente' },
-  { value: 'rent', label: 'Location' }
-]
+// Libellés via t('backoffice:crm.shared.listingTypes'), keyés sur l'enum API.
+const LISTING_TYPES = ['sale', 'rent']
 
+// Statut du formulaire (sous-ensemble de crm.properties.status, libellés propres au
+// contexte de saisie) : libellés via t('backoffice:crm.properties.form.statusOptions').
+const STATUS_OPTIONS = ['draft', 'active', 'pending']
+
+// Noms de villes : données de référence, non traduites (cohérent avec ClientForm.jsx).
 const CITIES = [
   'Casablanca', 'Rabat', 'Marrakech', 'Tanger', 'Fès', 'Agadir',
   'Meknès', 'Oujda', 'Kénitra', 'Tétouan', 'Salé', 'Mohammedia'
 ]
 
+// Équipements : valeurs = libellés stockés tels quels côté API, non traduits
+// (cohérent avec le traitement des CITIES ci-dessus).
+const FEATURES = [
+  'Parking', 'Garage', 'Ascenseur', 'Piscine', 'Jardin', 'Terrasse',
+  'Balcon', 'Cave', 'Climatisation', 'Chauffage central', 'Sécurité 24/7',
+  'Concierge', 'Interphone', 'Digicode', 'Meublé', 'Cuisine équipée'
+]
+
 export default function BackofficePropertyForm() {
+  const { t } = useTranslation(['backoffice', 'common'])
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -130,11 +138,11 @@ export default function BackofficePropertyForm() {
 
   const validate = () => {
     const newErrors = {}
-    if (!formData.title) newErrors.title = 'Le titre est requis'
-    if (!formData.price) newErrors.price = 'Le prix est requis'
-    if (!formData.city) newErrors.city = 'La ville est requise'
-    if (!formData.surface) newErrors.surface = 'La surface est requise'
-    if (images.length === 0) newErrors.images = 'Ajoutez au moins une photo'
+    if (!formData.title) newErrors.title = t('backoffice:crm.properties.form.validation.titleRequired')
+    if (!formData.price) newErrors.price = t('backoffice:crm.properties.form.validation.priceRequired')
+    if (!formData.city) newErrors.city = t('backoffice:crm.properties.form.validation.cityRequired')
+    if (!formData.surface) newErrors.surface = t('backoffice:crm.properties.form.validation.surfaceRequired')
+    if (images.length === 0) newErrors.images = t('backoffice:crm.properties.form.validation.imagesRequired')
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -143,7 +151,7 @@ export default function BackofficePropertyForm() {
     e.preventDefault()
     if (!validate()) {
       if (images.length === 0) {
-        toast.error('Ajoutez au moins une photo.')
+        toast.error(t('backoffice:crm.properties.form.toastImagesRequired'))
       }
       return
     }
@@ -169,12 +177,6 @@ export default function BackofficePropertyForm() {
     }
   }
 
-  const FEATURES = [
-    'Parking', 'Garage', 'Ascenseur', 'Piscine', 'Jardin', 'Terrasse',
-    'Balcon', 'Cave', 'Climatisation', 'Chauffage central', 'Sécurité 24/7',
-    'Concierge', 'Interphone', 'Digicode', 'Meublé', 'Cuisine équipée'
-  ]
-
   const toggleFeature = (feature) => {
     const features = formData.features.includes(feature)
       ? formData.features.filter(f => f !== feature)
@@ -198,14 +200,14 @@ export default function BackofficePropertyForm() {
           onClick={() => navigate('/backoffice/biens')}
           className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
         >
-          <FiArrowLeft className="w-5 h-5" />
+          <DirIcon icon={FiArrowLeft} className="w-5 h-5" />
         </button>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {isEditing ? 'Modifier le bien' : 'Nouveau bien'}
+            {isEditing ? t('backoffice:crm.properties.form.titleEdit') : t('backoffice:crm.properties.form.titleNew')}
           </h1>
           <p className="text-gray-500">
-            {isEditing ? 'Mettez à jour les informations du bien' : 'Ajoutez un nouveau bien à votre portefeuille'}
+            {isEditing ? t('backoffice:crm.properties.form.subtitleEdit') : t('backoffice:crm.properties.form.subtitleNew')}
           </p>
         </div>
       </div>
@@ -215,14 +217,14 @@ export default function BackofficePropertyForm() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <FiHome className="w-5 h-5 text-gray-400" />
-            Informations générales
+            {t('backoffice:crm.properties.form.sections.generalInfo')}
           </h2>
 
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Titre de l'annonce <span className="text-red-500">*</span>
+                  {t('backoffice:crm.properties.form.fields.title')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -231,7 +233,7 @@ export default function BackofficePropertyForm() {
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
                     errors.title ? 'border-red-500' : 'border-gray-200'
                   }`}
-                  placeholder="Ex: Appartement 3 pièces avec vue mer"
+                  placeholder={t('backoffice:crm.properties.form.fields.titlePlaceholder')}
                 />
                 {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
               </div>
@@ -252,17 +254,17 @@ export default function BackofficePropertyForm() {
                     }`}
                   />
                 </button>
-                <span className="text-sm font-medium text-gray-700">Mettre à la une</span>
+                <span className="text-sm font-medium text-gray-700">{t('backoffice:crm.properties.form.fields.featured')}</span>
                 <span
                   className="relative group inline-flex items-center text-gray-400 hover:text-gray-600 cursor-help"
                   tabIndex={0}
                 >
                   <FiInfo
                     className="w-4 h-4"
-                    title="Les biens à la une sont mis en avant sur la page d'accueil et en tête des résultats de recherche."
+                    title={t('backoffice:crm.properties.form.fields.featuredTooltip')}
                   />
-                  <span className="pointer-events-none absolute right-0 bottom-full mb-2 hidden w-56 rounded-lg bg-gray-900 px-3 py-2 text-xs text-white shadow-lg group-hover:block group-focus:block z-10">
-                    Les biens à la une sont mis en avant sur la page d'accueil et en tête des résultats de recherche.
+                  <span className="pointer-events-none absolute end-0 bottom-full mb-2 hidden w-56 rounded-lg bg-gray-900 px-3 py-2 text-xs text-white shadow-lg group-hover:block group-focus:block z-10">
+                    {t('backoffice:crm.properties.form.fields.featuredTooltip')}
                   </span>
                 </span>
               </div>
@@ -270,21 +272,21 @@ export default function BackofficePropertyForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
+                {t('backoffice:crm.properties.form.fields.description')}
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={4}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="Décrivez le bien en détail..."
+                placeholder={t('backoffice:crm.properties.form.fields.descriptionPlaceholder')}
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Type de bien
+                  {t('backoffice:crm.properties.form.fields.propertyType')}
                 </label>
                 <select
                   value={formData.property_type}
@@ -292,14 +294,14 @@ export default function BackofficePropertyForm() {
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   {PROPERTY_TYPES.map(type => (
-                    <option key={type.value} value={type.value}>{type.label}</option>
+                    <option key={type} value={type}>{t(`backoffice:crm.shared.propertyTypes.${type}`)}</option>
                   ))}
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Type d'annonce
+                  {t('backoffice:crm.properties.form.fields.listingType')}
                 </label>
                 <select
                   value={formData.listing_type}
@@ -307,23 +309,23 @@ export default function BackofficePropertyForm() {
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   {LISTING_TYPES.map(type => (
-                    <option key={type.value} value={type.value}>{type.label}</option>
+                    <option key={type} value={type}>{t(`backoffice:crm.shared.listingTypes.${type}`)}</option>
                   ))}
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Statut
+                  {t('backoffice:crm.properties.form.fields.status')}
                 </label>
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
-                  <option value="draft">Brouillon</option>
-                  <option value="active">Publié</option>
-                  <option value="pending">En attente</option>
+                  {STATUS_OPTIONS.map(status => (
+                    <option key={status} value={status}>{t(`backoffice:crm.properties.form.statusOptions.${status}`)}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -334,13 +336,13 @@ export default function BackofficePropertyForm() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <FiDollarSign className="w-5 h-5 text-gray-400" />
-            Prix et surface
+            {t('backoffice:crm.properties.form.sections.priceSurface')}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Prix ({DIRHAM_SYMBOL}) <span className="text-red-500">*</span>
+                {t('backoffice:crm.properties.form.fields.price', { currency: DIRHAM_SYMBOL })} <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -355,7 +357,7 @@ export default function BackofficePropertyForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Surface (m²) <span className="text-red-500">*</span>
+                {t('backoffice:crm.properties.form.fields.surface')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -374,12 +376,12 @@ export default function BackofficePropertyForm() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <FiGrid className="w-5 h-5 text-gray-400" />
-            Caractéristiques
+            {t('backoffice:crm.properties.form.sections.features')}
           </h2>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Pièces</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.properties.form.fields.rooms')}</label>
               <input
                 type="number"
                 value={formData.rooms}
@@ -388,7 +390,7 @@ export default function BackofficePropertyForm() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Chambres</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.properties.form.fields.bedrooms')}</label>
               <input
                 type="number"
                 value={formData.bedrooms}
@@ -397,7 +399,7 @@ export default function BackofficePropertyForm() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Salles de bain</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.properties.form.fields.bathrooms')}</label>
               <input
                 type="number"
                 value={formData.bathrooms}
@@ -406,7 +408,7 @@ export default function BackofficePropertyForm() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Année de construction</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.properties.form.fields.yearBuilt')}</label>
               <input
                 type="number"
                 value={formData.year_built}
@@ -415,7 +417,7 @@ export default function BackofficePropertyForm() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Étage</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.properties.form.fields.floor')}</label>
               <input
                 type="number"
                 value={formData.floor}
@@ -424,7 +426,7 @@ export default function BackofficePropertyForm() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre d'étages</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.properties.form.fields.totalFloors')}</label>
               <input
                 type="number"
                 value={formData.total_floors}
@@ -435,7 +437,7 @@ export default function BackofficePropertyForm() {
           </div>
 
           <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Équipements</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('backoffice:crm.properties.form.fields.featuresLabel')}</label>
             <div className="flex flex-wrap gap-2">
               {FEATURES.map(feature => (
                 <button
@@ -459,12 +461,12 @@ export default function BackofficePropertyForm() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <FiMapPin className="w-5 h-5 text-gray-400" />
-            Localisation
+            {t('backoffice:crm.properties.form.sections.location')}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.properties.form.fields.address')}</label>
               <input
                 type="text"
                 value={formData.address}
@@ -474,7 +476,7 @@ export default function BackofficePropertyForm() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ville <span className="text-red-500">*</span>
+                {t('backoffice:crm.properties.form.fields.city')} <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.city}
@@ -483,7 +485,7 @@ export default function BackofficePropertyForm() {
                   errors.city ? 'border-red-500' : 'border-gray-200'
                 }`}
               >
-                <option value="">Sélectionner une ville</option>
+                <option value="">{t('backoffice:crm.properties.form.fields.selectCity')}</option>
                 {CITIES.map(city => (
                   <option key={city} value={city}>{city}</option>
                 ))}
@@ -491,7 +493,7 @@ export default function BackofficePropertyForm() {
               {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Quartier</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.properties.form.fields.neighborhood')}</label>
               <input
                 type="text"
                 value={formData.neighborhood}
@@ -500,23 +502,23 @@ export default function BackofficePropertyForm() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.properties.form.fields.latitude')}</label>
               <input
                 type="text"
                 value={formData.latitude}
                 onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="Ex: 33.5731"
+                placeholder={t('backoffice:crm.properties.form.fields.latitudePlaceholder')}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.properties.form.fields.longitude')}</label>
               <input
                 type="text"
                 value={formData.longitude}
                 onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="Ex: -7.5898"
+                placeholder={t('backoffice:crm.properties.form.fields.longitudePlaceholder')}
               />
             </div>
           </div>
@@ -526,9 +528,9 @@ export default function BackofficePropertyForm() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
             <FiImage className="w-5 h-5 text-gray-400" />
-            Photos <span className="text-red-500">*</span>
+            {t('backoffice:crm.properties.form.sections.photos')} <span className="text-red-500">*</span>
           </h2>
-          <p className="text-xs text-gray-400 mb-4">Au moins une photo est requise, quel que soit le type d'annonce.</p>
+          <p className="text-xs text-gray-400 mb-4">{t('backoffice:crm.properties.form.fields.photosHint')}</p>
           {errors.images && <p className="text-red-500 text-xs mb-4">{errors.images}</p>}
 
           {images.length > 0 && (
@@ -539,7 +541,7 @@ export default function BackofficePropertyForm() {
                   <button
                     type="button"
                     onClick={() => setImages(images.filter((_, idx) => idx !== i))}
-                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                    className="absolute top-2 end-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
                   >
                     <FiX className="w-4 h-4" />
                   </button>
@@ -550,13 +552,13 @@ export default function BackofficePropertyForm() {
 
           <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center">
             <FiUpload className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 mb-2">Glissez vos images ici ou</p>
+            <p className="text-gray-500 mb-2">{t('backoffice:crm.properties.form.fields.dragImages')}</p>
             <label className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 cursor-pointer transition-colors">
               <FiUpload className="w-5 h-5" />
-              Parcourir
+              {t('backoffice:crm.properties.form.fields.browse')}
               <input type="file" multiple accept="image/*" className="hidden" />
             </label>
-            <p className="text-xs text-gray-400 mt-2">PNG, JPG jusqu'à 10MB</p>
+            <p className="text-xs text-gray-400 mt-2">{t('backoffice:crm.properties.form.fields.uploadHint')}</p>
           </div>
         </div>
 
@@ -567,7 +569,7 @@ export default function BackofficePropertyForm() {
             onClick={() => navigate('/backoffice/biens')}
             className="px-6 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            Annuler
+            {t('backoffice:crm.properties.form.cancelButton')}
           </button>
           <button
             type="submit"
@@ -575,7 +577,7 @@ export default function BackofficePropertyForm() {
             className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             <FiSave className="w-5 h-5" />
-            {isEditing ? 'Mettre à jour' : 'Créer le bien'}
+            {isEditing ? t('backoffice:crm.properties.form.updateButton') : t('backoffice:crm.properties.form.createButton')}
           </button>
         </div>
       </form>

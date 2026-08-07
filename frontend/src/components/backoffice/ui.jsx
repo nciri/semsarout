@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FiSearch, FiX } from 'react-icons/fi'
 
 // Primitives de présentation du back-office, calquées sur le langage visuel des
@@ -49,7 +50,8 @@ export function Toolbar({ children }) {
   )
 }
 
-export function SearchInput({ value, onChange, placeholder = 'Rechercher…' }) {
+export function SearchInput({ value, onChange, placeholder }) {
+  const { t } = useTranslation(['backoffice', 'common'])
   return (
     <div className="flex-1 relative min-w-[180px]">
       <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -57,7 +59,7 @@ export function SearchInput({ value, onChange, placeholder = 'Rechercher…' }) 
         type="text"
         value={value}
         onChange={onChange}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t('common:search.searchPlaceholder')}
         className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
       />
     </div>
@@ -204,6 +206,7 @@ export const PRIMARY_BTN = 'inline-flex items-center justify-center gap-2 px-4 p
 export const SECONDARY_BTN = 'inline-flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors'
 
 export function GatedNotice({ icon: Icon, title, message }) {
+  const { t } = useTranslation(['backoffice', 'common'])
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center max-w-lg mx-auto">
       {Icon && <Icon className="w-12 h-12 text-gray-300 mx-auto mb-4" />}
@@ -213,7 +216,7 @@ export function GatedNotice({ icon: Icon, title, message }) {
         href="/dashboard/compte/abonnement"
         className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
       >
-        Voir les offres Pro & Entreprise
+        {t('backoffice:ui.viewOffers')}
       </a>
     </div>
   )

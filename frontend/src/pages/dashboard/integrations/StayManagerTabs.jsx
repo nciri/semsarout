@@ -1,11 +1,13 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useQuery } from 'react-query'
+import { useTranslation } from 'react-i18next'
 import { FiLink, FiHome, FiCalendar, FiLock } from 'react-icons/fi'
 import api from '../../../services/api'
 
 // Regroupe les 3 pages StayManager (connexion / biens / réservations) en onglets.
 // Les onglets Biens/Réservations restent grisés tant que le compte n'est pas connecté.
 export default function StayManagerTabs() {
+  const { t } = useTranslation(['dashboard'])
   const { data: status } = useQuery(
     'staymanager-status',
     async () => {
@@ -25,8 +27,8 @@ export default function StayManagerTabs() {
     }`
 
   const lockedTabs = [
-    { to: 'biens', label: 'Biens synchronisés', icon: FiHome },
-    { to: 'reservations', label: 'Réservations', icon: FiCalendar }
+    { to: 'biens', label: t('dashboard:stayManager.tabs.properties'), icon: FiHome },
+    { to: 'reservations', label: t('dashboard:stayManager.tabs.reservations'), icon: FiCalendar }
   ]
 
   return (
@@ -36,7 +38,7 @@ export default function StayManagerTabs() {
           <nav className="flex gap-1 -mb-px overflow-x-auto">
             <NavLink to="." end className={linkClass}>
               <FiLink className="w-4 h-4" />
-              Connexion
+              {t('dashboard:stayManager.tabs.connection')}
             </NavLink>
 
             {lockedTabs.map(({ to, label, icon: Icon }) =>
@@ -48,7 +50,7 @@ export default function StayManagerTabs() {
               ) : (
                 <span
                   key={to}
-                  title="Connectez votre compte StayManager pour accéder à cet onglet"
+                  title={t('dashboard:stayManager.tabs.lockedHint')}
                   className={`${baseTab} border-transparent text-gray-300 cursor-not-allowed`}
                 >
                   <FiLock className="w-4 h-4" />

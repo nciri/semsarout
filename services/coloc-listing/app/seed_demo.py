@@ -10,34 +10,69 @@ from semsar_events import enqueue
 
 from . import events
 from .db import SessionLocal, init_db
-from .models import ColocProperty, CurrentRoommates, HouseRule, Listing, ListingMedia, _now
+from .models import (
+    ColocLease, ColocPayment, ColocProperty, CurrentRoommates, HouseRule, Listing,
+    ListingMedia, _now,
+)
 
 DEMO = [
     ("Chambre lumineuse à Gauthier", "Casablanca", "Gauthier", "APPARTEMENT",
-     "CHAMBRE_INDIVIDUELLE", "FEMININ", Decimal("2200.00"), True, 3, [("tabac", "non_fumeur"), ("menage", "frequent")]),
+     "CHAMBRE_INDIVIDUELLE", "FEMININ", Decimal("2200.00"), True, 3, [("tabac", "non-fumeur"), ("menage", "quotidien")]),
     ("Chambre dans villa avec jardin", "Casablanca", "Californie", "VILLA",
-     "CHAMBRE_INDIVIDUELLE", "MIXTE_FAMILIAL", Decimal("2800.00"), True, 4, [("animaux", "acceptes")]),
+     "CHAMBRE_INDIVIDUELLE", "MIXTE_FAMILIAL", Decimal("2800.00"), True, 4, [("cuisine", "ensemble")]),
     ("Studio meublé proche fac", "Rabat", "Agdal", "STUDIO",
-     "STUDIO_ENTIER", "FEMININ", Decimal("3200.00"), True, 1, [("tabac", "non_fumeur")]),
+     "STUDIO_ENTIER", "FEMININ", Decimal("3200.00"), True, 1, [("tabac", "non-fumeur")]),
     ("Chambre étudiante à Agdal", "Rabat", "Agdal", "APPARTEMENT",
      "CHAMBRE_INDIVIDUELLE", "MASCULIN", Decimal("1800.00"), False, 3, [("invites", "rarement")]),
     ("Colocation moderne à Hay Riad", "Rabat", "Hay Riad", "APPARTEMENT",
-     "CHAMBRE_INDIVIDUELLE", "FEMININ", Decimal("2500.00"), True, 2, [("tabac", "non_fumeur"), ("coucher", "tot")]),
+     "CHAMBRE_INDIVIDUELLE", "FEMININ", Decimal("2500.00"), True, 2, [("tabac", "non-fumeur"), ("coucher", "avant22")]),
     ("Chambre en résidence étudiante", "Marrakech", "Guéliz", "RESIDENCE_ETUDIANTE",
-     "CHAMBRE_INDIVIDUELLE", "FEMININ", Decimal("1500.00"), True, 6, [("invites", "rarement"), ("menage", "frequent")]),
+     "CHAMBRE_INDIVIDUELLE", "FEMININ", Decimal("1500.00"), True, 6, [("invites", "rarement"), ("menage", "quotidien")]),
     ("Chambre partagée centre-ville", "Marrakech", "Médina", "MAISON",
      "CHAMBRE_PARTAGEE", "MASCULIN", Decimal("950.00"), False, 4, [("invites", "souvent")]),
     ("Grande chambre à Maârif", "Casablanca", "Maârif", "APPARTEMENT",
-     "CHAMBRE_INDIVIDUELLE", "MASCULIN", Decimal("2400.00"), True, 3, [("tabac", "non_fumeur")]),
+     "CHAMBRE_INDIVIDUELLE", "MASCULIN", Decimal("2400.00"), True, 3, [("tabac", "non-fumeur")]),
 ]
 
 _OWNER_ID = 1  # compte de démo
+_TENANT_USER_ID = 2  # locataire de démo (Contrats & paiements / écran Paiement)
 
 
 def _search_doc(listing: Listing) -> dict:
     from .main import _search_doc as doc  # même document que l'API
 
     return doc(listing)
+
+
+def _seed_leases(db, seeded_listings: list[Listing]) -> None:
+    """Baux de démo plausibles — cadre séquestre (états), aucun mouvement d'argent réel.
+    Bail 0 : actif, caution en séquestre, loyer du mois courant en séquestre (pour
+    l'écran Paiement/séquestre du locataire de démo). Bail 1 : encore pending (avant
+    tout séquestre) — illustre les deux statuts dans la vue back-office."""
+    if not seeded_listings:
+        return
+    today = date.today()
+    scenarios = [
+        (seeded_listings[0], "active", "escrowed", "escrowed"),
+        (seeded_listings[1] if len(seeded_listings) > 1 else seeded_listings[0],
+         "pending", "pending", "pending"),
+    ]
+    for listing, lease_status, deposit_status, rent_status in scenarios:
+        lease = ColocLease(
+            listing_id=listing.id, tenant_user_id=_TENANT_USER_ID, owner_id=listing.owner_id,
+            rent_amount=listing.rent, deposit_amount=listing.deposit or listing.rent,
+            start_date=today - timedelta(days=10), status=lease_status,
+        )
+        db.add(lease); db.flush()
+        deposit = ColocPayment(lease_id=lease.id, type="deposit",
+                               amount=listing.deposit or listing.rent, status=deposit_status)
+        rent = ColocPayment(lease_id=lease.id, type="rent", amount=listing.rent,
+                            period=today.strftime("%Y-%m"), status=rent_status)
+        db.add(deposit); db.add(rent)
+        db.flush()
+        enqueue(db, "coloc_listing", lease.id, events.LEASE_CREATED,
+                {"lease_id": lease.id, "listing_id": listing.id, "owner_id": listing.owner_id,
+                 "tenant_user_id": _TENANT_USER_ID})
 
 
 def seed() -> int:
@@ -48,6 +83,7 @@ def seed() -> int:
             print("Seed ignoré : des annonces existent déjà.")
             return 0
         now = _now()
+        seeded_listings = []
         for i, (title, city, hood, ptype, bed, gender, rent, furnished, cap, rules) in enumerate(DEMO):
             # Non-mixité par défaut (contrainte dure du domaine) : le seed la respecte
             # aussi — tout MIXTE_FAMILIAL résiduel des données de démo devient FEMININ.
@@ -76,6 +112,10 @@ def seed() -> int:
             db.refresh(listing)
             enqueue(db, "coloc_listing", listing.id, events.LISTING_PUBLISHED,
                     _search_doc(listing))
+            seeded_listings.append(listing)
+
+        _seed_leases(db, seeded_listings)
+
         db.commit()
         print(f"Seed : {len(DEMO)} annonces publiées (outbox alimentée).")
         return len(DEMO)

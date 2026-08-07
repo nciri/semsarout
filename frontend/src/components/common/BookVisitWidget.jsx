@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useQuery, useMutation } from 'react-query'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'react-toastify'
 import { FiCalendar, FiCheckCircle, FiClock } from 'react-icons/fi'
 import { availabilityService } from '../../services/availabilityService'
 import useAuthStore from '../../store/authStore'
+import { useFormat } from '../../utils/format'
 
 function nextDays(count) {
   const days = []
@@ -18,6 +20,8 @@ function nextDays(count) {
 }
 
 function BookVisitWidget({ propertyId }) {
+  const { t } = useTranslation(['common'])
+  const { fmtDate } = useFormat()
   const navigate = useNavigate()
   const { isAuthenticated } = useAuthStore()
   const days = nextDays(14)
@@ -36,9 +40,9 @@ function BookVisitWidget({ propertyId }) {
     {
       onSuccess: () => {
         setBooked(true)
-        toast.success('Visite réservée !')
+        toast.success(t('common:visit.toastBooked'))
       },
-      onError: (error) => toast.error(error.response?.data?.error || 'Erreur lors de la réservation')
+      onError: (error) => toast.error(error.response?.data?.error || t('common:visit.toastError'))
     }
   )
 
@@ -57,9 +61,12 @@ function BookVisitWidget({ propertyId }) {
     return (
       <div className="card p-6 text-center">
         <FiCheckCircle className="w-10 h-10 text-green-500 mx-auto mb-3" />
-        <p className="font-semibold text-gray-900">Visite confirmée</p>
+        <p className="font-semibold text-gray-900">{t('common:visit.confirmedTitle')}</p>
         <p className="text-sm text-gray-600">
-          Le {new Date(selectedDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} à {selectedTime}
+          {t('common:visit.confirmedDateTime', {
+            date: fmtDate(selectedDate, { weekday: 'long', day: 'numeric', month: 'long' }),
+            time: selectedTime
+          })}
         </p>
       </div>
     )
@@ -69,7 +76,7 @@ function BookVisitWidget({ propertyId }) {
     <div className="card p-6">
       <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
         <FiCalendar className="w-5 h-5 text-primary-600" />
-        Réserver une visite
+        {t('common:visit.heading')}
       </h3>
 
       <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
@@ -84,7 +91,7 @@ function BookVisitWidget({ propertyId }) {
                 isSelected ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              <div className="text-xs opacity-80">{d.toLocaleDateString('fr-FR', { weekday: 'short' })}</div>
+              <div className="text-xs opacity-80">{fmtDate(d, { weekday: 'short' })}</div>
               <div className="font-semibold">{d.getDate()}</div>
             </button>
           )
@@ -92,11 +99,11 @@ function BookVisitWidget({ propertyId }) {
       </div>
 
       {isLoading ? (
-        <div className="text-sm text-gray-400">Chargement des créneaux...</div>
+        <div className="text-sm text-gray-400">{t('common:visit.loadingSlots')}</div>
       ) : slots.length === 0 ? (
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <FiClock className="w-4 h-4" />
-          Aucun créneau disponible ce jour-là
+          {t('common:visit.noSlotsAvailable')}
         </div>
       ) : (
         <div className="flex flex-wrap gap-2 mb-4">
@@ -122,7 +129,11 @@ function BookVisitWidget({ propertyId }) {
           disabled={!selectedTime || bookMutation.isLoading}
           className="btn-primary w-full justify-center disabled:opacity-50"
         >
-          {bookMutation.isLoading ? 'Réservation...' : isAuthenticated ? 'Confirmer la visite' : 'Se connecter pour réserver'}
+          {bookMutation.isLoading
+            ? t('common:visit.bookButtonLoading')
+            : isAuthenticated
+              ? t('common:visit.bookButtonConfirm')
+              : t('common:visit.bookButtonLogin')}
         </button>
       )}
     </div>
