@@ -1,83 +1,88 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Avatar, Badge, Button, Card, Chip, CompatibilityRing } from '../../ds/index.js'
-import { roommateValidation } from '../../data/roommateValidation.js'
+import { Avatar, Badge, Button, Card } from '../../ds/index.js'
+import { getPendingRoommateCandidatures, roommateDecision } from '../../services/index.js'
 
-function LifestyleChips({ lifestyle }) {
-  const { t } = useTranslation('app')
-  return (
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-      {lifestyle.map((point) => (
-        <Chip key={`${point.step}-${point.question}`}>
-          {t(`questionnaire.steps.${point.step}.questions.${point.question}.options.${point.option}`)}
-        </Chip>
-      ))}
-    </div>
-  )
-}
-
-function CandidateActions({ statut, onValidate, onReject }) {
+function CandidateActions({ status, busy, onValidate, onReject }) {
   const { t } = useTranslation('app')
 
-  if (statut === 'to_validate') {
+  if (status === 'pending_roommate') {
     return (
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        <Button size="sm" onClick={onValidate}>{t('roommateValidation.actions.validate')}</Button>
-        <Button size="sm" variant="ghost" onClick={onReject}>{t('roommateValidation.actions.refuse')}</Button>
-        <Button size="sm" variant="ghost">{t('roommateValidation.actions.viewProfile')}</Button>
+        <Button size="sm" onClick={onValidate} disabled={busy}>{t('roommateValidation.actions.validate')}</Button>
+        <Button size="sm" variant="ghost" onClick={onReject} disabled={busy}>{t('roommateValidation.actions.refuse')}</Button>
       </div>
     )
   }
 
-  if (statut === 'validated') {
+  if (status === 'accepted') {
     return <Badge tone="verified">{t('roommateValidation.statusBadge.validated')}</Badge>
   }
 
-  if (statut === 'rejected') {
+  if (status === 'rejected') {
     return <Badge tone="neutral">{t('roommateValidation.statusBadge.rejected')}</Badge>
   }
 
   return null
 }
 
-function CandidateCard({ candidat, onSetStatus }) {
+function CandidateCard({ candidature, onDecide }) {
   const { t } = useTranslation('app')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(false)
+  const listing = candidature.listing
+
+  const decide = async (decision) => {
+    setBusy(true)
+    setError(false)
+    try {
+      const updated = await roommateDecision(candidature.id, decision)
+      onDecide(candidature.id, updated.status)
+    } catch {
+      setError(true)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <Card>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-          <Avatar name={candidat.nom} size={42} />
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
-            <span style={{ font: 'var(--fw-bold) var(--fs-body) var(--font-display)', color: 'var(--text-strong)' }}>
-              {candidat.nom}
+        {listing && (
+          <div style={{ font: 'var(--fw-semibold) var(--fs-xs) var(--font-body)', color: 'var(--text-muted)' }}>
+            {listing.title} — {listing.neighborhood}, {listing.city}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+          <Avatar name="" size={42} />
+          <span style={{ font: 'var(--fw-bold) var(--fs-body) var(--font-display)', color: 'var(--text-strong)' }}>
+            {t('candidatures.candidateLabel', { id: candidature.candidate_user_id })}
+          </span>
+        </div>
+
+        {candidature.message && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '12px 14px', borderRadius: 'var(--radius-md)', background: 'var(--surface-sunken)' }}>
+            <span style={{ font: 'var(--fw-semibold) var(--fs-xs) var(--font-body)', color: 'var(--text-muted)' }}>
+              {t('roommateValidation.ownerNoteLabel')}
             </span>
-            <span style={{ font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-muted)' }}>
-              {t('roommateValidation.ageProfil', { age: candidat.age, profil: candidat.profil })}
+            <span style={{ font: 'var(--fw-regular) var(--fs-sm)/1.55 var(--font-body)', color: 'var(--text-body)' }}>
+              {candidature.message}
             </span>
           </div>
-          <CompatibilityRing
-            value={candidat.compatibilite}
-            size={76}
-            stroke={7}
-            label={t('roommateValidation.compatibilityLabel')}
-          />
-        </div>
+        )}
 
-        <LifestyleChips lifestyle={candidat.lifestyle} />
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '12px 14px', borderRadius: 'var(--radius-md)', background: 'var(--surface-sunken)' }}>
-          <span style={{ font: 'var(--fw-semibold) var(--fs-xs) var(--font-body)', color: 'var(--text-muted)' }}>
-            {t('roommateValidation.ownerNoteLabel')}
-          </span>
-          <span style={{ font: 'var(--fw-regular) var(--fs-sm)/1.55 var(--font-body)', color: 'var(--text-body)' }}>
-            {candidat.noteProprietaire}
-          </span>
-        </div>
+        {error && (
+          <div style={{ font: 'var(--fw-semibold) var(--fs-xs) var(--font-body)', color: 'var(--red-600)' }}>
+            {t('candidatures.actionError')}
+          </div>
+        )}
 
         <CandidateActions
-          statut={candidat.statut}
-          onValidate={() => onSetStatus(candidat.id, 'validated')}
-          onReject={() => onSetStatus(candidat.id, 'rejected')}
+          status={candidature.status}
+          busy={busy}
+          onValidate={() => decide('validated')}
+          onReject={() => decide('rejected')}
         />
       </div>
     </Card>
@@ -86,11 +91,29 @@ function CandidateCard({ candidat, onSetStatus }) {
 
 export default function ValidationColocataire() {
   const { t } = useTranslation('app')
-  const [candidats, setCandidats] = useState(roommateValidation.candidats)
-  const { logement } = roommateValidation
+  const [candidatures, setCandidatures] = useState(undefined) // undefined = loading
+  const [loadError, setLoadError] = useState(false)
 
-  const setStatus = (id, statut) => {
-    setCandidats((prev) => prev.map((c) => (c.id === id ? { ...c, statut } : c)))
+  useEffect(() => {
+    let cancelled = false
+    getPendingRoommateCandidatures()
+      .then((rows) => { if (!cancelled) setCandidatures(rows) })
+      .catch(() => { if (!cancelled) { setCandidatures([]); setLoadError(true) } })
+    return () => { cancelled = true }
+  }, [])
+
+  const setStatus = (id, status) => {
+    setCandidatures((prev) => prev.map((c) => (c.id === id ? { ...c, status } : c)))
+  }
+
+  if (candidatures === undefined) {
+    return (
+      <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)' }}>
+        <div style={{ maxWidth: 1080, margin: '0 auto', padding: 48, font: 'var(--fw-medium) var(--fs-body) var(--font-body)', color: 'var(--text-muted)' }}>
+          {t('common:loading')}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -100,30 +123,25 @@ export default function ValidationColocataire() {
           <h1 style={{ margin: 0, font: 'var(--fw-extrabold) var(--fs-h1) var(--font-display)', color: 'var(--text-strong)' }}>
             {t('roommateValidation.title')}
           </h1>
-          <p style={{ margin: 0, font: 'var(--fw-medium) var(--fs-sm) var(--font-body)', color: 'var(--text-muted)' }}>
-            {t('roommateValidation.subtitle', { titre: logement.titre, quartier: logement.quartier, ville: logement.ville })}
-          </p>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ font: 'var(--fw-semibold) var(--fs-xs) var(--font-body)', color: 'var(--text-muted)' }}>
-              {t('roommateValidation.roomsLabel')} :
-            </span>
-            {logement.chambres.map((chambre) => (
-              <Chip key={chambre}>{chambre}</Chip>
-            ))}
-          </div>
           <p style={{ margin: 0, font: 'var(--fw-regular) var(--fs-sm)/1.55 var(--font-body)', color: 'var(--text-body)' }}>
             {t('roommateValidation.explanation')}
           </p>
         </div>
 
+        {loadError && (
+          <div style={{ font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)', color: 'var(--red-600)' }}>
+            {t('candidatures.loadError')}
+          </div>
+        )}
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {candidats.length === 0 && (
+          {candidatures.length === 0 && (
             <div style={{ padding: 32, textAlign: 'center', font: 'var(--fw-medium) var(--fs-body) var(--font-body)', color: 'var(--text-muted)' }}>
               {t('roommateValidation.empty')}
             </div>
           )}
-          {candidats.map((candidat) => (
-            <CandidateCard key={candidat.id} candidat={candidat} onSetStatus={setStatus} />
+          {candidatures.map((candidature) => (
+            <CandidateCard key={candidature.id} candidature={candidature} onDecide={setStatus} />
           ))}
         </div>
       </div>

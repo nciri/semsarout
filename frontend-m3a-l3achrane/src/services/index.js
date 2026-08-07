@@ -340,6 +340,97 @@ export async function refundLeasePayment(leaseId, paymentId) {
   return data
 }
 
+// ---------------------------------------------------------------------------------------
+// Candidatures (domaine réel, service coloc-listing) — remplace le mock
+// `data/applicationsInbox.js`. Statuts serveur : received → shortlisted →
+// (pending_roommate si chambre déjà occupée, sinon direct) → accepted ; rejected possible
+// tant que non accepted. Tenant + rôle imposés côté serveur (candidat/owner/colocataire
+// en place). Domaine réel par défaut (absent de MOCK_DOMAINS), bascule dev via
+// VITE_MOCK_DOMAINS=candidatures.
+// ---------------------------------------------------------------------------------------
+
+function _mockCandidature(overrides = {}) {
+  const now = new Date().toISOString()
+  return {
+    id: `cand-${Date.now()}`, listing_id: 'l-mock', candidate_user_id: 1, owner_id: 2,
+    status: 'received', message: null, created_at: now, updated_at: now,
+    listing: { id: 'l-mock', title: 'Chambre privée', city: 'Casablanca', neighborhood: 'Maârif',
+              rent: 2200, deposit: 2200, room_already_occupied: false, roommates: null },
+    ...overrides,
+  }
+}
+
+// Le candidat postule à une annonce publiée (dédupe serveur : une seule candidature
+// active par candidat/annonce, 409 sinon).
+export async function applyToListing({ listingId, message }) {
+  if (isMocked('candidatures')) return delay(_mockCandidature({ listing_id: listingId, message: message ?? null }))
+  const { data } = await api.post('/candidatures', { listing_id: listingId, message: message ?? null })
+  return data
+}
+
+// Mes candidatures (candidat).
+export async function getMyCandidatures() {
+  if (isMocked('candidatures')) return delay([_mockCandidature()])
+  const { data } = await api.get('/candidatures/mine')
+  return data
+}
+
+// Candidatures reçues (propriétaire) — toutes annonces, ou filtrées sur `listingId`.
+export async function getReceivedCandidatures(listingId) {
+  if (isMocked('candidatures')) {
+    return delay([
+      _mockCandidature({ id: 'cand-1', candidate_user_id: 51, status: 'received',
+        message: "Bonjour, je suis très intéressée par la chambre.",
+        listing: { id: 'l-1', title: 'Chambre privée', city: 'Casablanca', neighborhood: 'Maârif',
+                  rent: 2200, deposit: 2200, room_already_occupied: true,
+                  roommates: { total: 2, women: 1, men: 1 } } }),
+      _mockCandidature({ id: 'cand-2', candidate_user_id: 58, status: 'accepted',
+        listing: { id: 'l-2', title: 'Appartement entier T2', city: 'Casablanca', neighborhood: 'Gauthier',
+                  rent: 1900, deposit: 1900, room_already_occupied: false, roommates: null } }),
+    ])
+  }
+  const { data } = await api.get('/candidatures/received', { params: listingId ? { listing_id: listingId } : {} })
+  return data
+}
+
+// Candidatures `pending_roommate` en attente de MA décision de colocataire en place
+// (garde serveur : restreint aux annonces où je suis titulaire d'un bail pending/active).
+export async function getPendingRoommateCandidatures() {
+  if (isMocked('candidatures')) return delay([])
+  const { data } = await api.get('/candidatures/roommate-pending')
+  return data
+}
+
+export async function shortlistCandidature(id) {
+  if (isMocked('candidatures')) return delay(_mockCandidature({ id, status: 'shortlisted' }))
+  const { data } = await api.post(`/candidatures/${id}/shortlist`)
+  return data
+}
+
+// Accepte une candidature présélectionnée — le serveur décide seul entre `accepted`
+// (direct) et `pending_roommate` (chambre déjà occupée) selon l'état réel de l'annonce.
+export async function acceptCandidature(id) {
+  if (isMocked('candidatures')) return delay(_mockCandidature({ id, status: 'accepted' }))
+  const { data } = await api.post(`/candidatures/${id}/accept`)
+  return data
+}
+
+export async function rejectCandidature(id) {
+  if (isMocked('candidatures')) return delay(_mockCandidature({ id, status: 'rejected' }))
+  const { data } = await api.post(`/candidatures/${id}/reject`)
+  return data
+}
+
+// Décision du·des colocataire·s en place sur une candidature `pending_roommate`.
+// `decision` : 'validated' | 'rejected'.
+export async function roommateDecision(id, decision) {
+  if (isMocked('candidatures')) {
+    return delay(_mockCandidature({ id, status: decision === 'validated' ? 'accepted' : 'rejected' }))
+  }
+  const { data } = await api.post(`/candidatures/${id}/roommate-decision`, { decision })
+  return data
+}
+
 // Signalements (super-admin) : domaine `trust-safety` (services/trust-safety/app/models.py,
 // modèle `Report`), fan-out BFF `GET /api/v1/backoffice/reports` → trust-safety
 // `/internal/reports` (statut `open` par défaut, filtrable via `?status=`).

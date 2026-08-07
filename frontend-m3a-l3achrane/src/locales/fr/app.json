@@ -68,17 +68,17 @@
   },
   "candidature": {
     "sentTitle": "Candidature envoyée",
-    "sentMessage": "{{host}} a été notifiée. Vous recevrez une réponse sous 48h — suivez son statut dans vos candidatures ou continuez la conversation.",
+    "sentMessage": "Le·la propriétaire a été notifié·e. Vous recevrez une réponse sous 48h — suivez son statut dans vos candidatures ou continuez la conversation.",
     "viewConversation": "Voir la conversation",
     "continueSearch": "Continuer la recherche",
     "title": "Postuler pour cette chambre",
     "listingSubtitle": "{{titre}} — {{quartier}}, {{ville}} · {{prix}} MAD/mois",
-    "matchTitle": "{{pct}}% de compatibilité avec ce logement",
     "messageLabel": "Message au·à la colocataire",
     "messagePlaceholder": "Présentez-vous en quelques lignes : votre situation, vos disponibilités, pourquoi ce logement vous intéresse…",
-    "slotsLabel": "Créneaux de visite qui vous conviennent",
     "verifiedNotice": "Votre profil est vérifié et votre questionnaire de mode de vie est complet — le·la propriétaire verra votre score de compatibilité dès réception.",
-    "submit": "Envoyer ma candidature"
+    "submit": "Envoyer ma candidature",
+    "submitting": "Envoi…",
+    "submitError": "Envoi impossible — réessayez."
   },
   "candidatures": {
     "title": "Candidatures reçues",
@@ -95,16 +95,14 @@
       "shortlist": "Présélectionner",
       "share": "Partager avec le colocataire",
       "validate": "Valider",
-      "refuse": "Refuser",
-      "markRoommateValidated": "Marquer comme validé par le colocataire"
+      "refuse": "Refuser"
     },
     "statusBadge": {
       "pendingRoommate": "En attente de validation du colocataire",
       "accepted": "Validée",
       "refused": "Refusée — le candidat a été notifié"
     },
-    "roommatesInPlace": "Colocataires en place",
-    "acceptedPickSlot": "Candidature acceptée — proposez un créneau de visite",
+    "roommatesInPlace": "{{count}} colocataire(s) en place",
     "empty": "Aucune candidature dans cette catégorie.",
     "generateLeaseButton": "Générer le bail",
     "generateLeaseFormTitle": "Générer le bail",
@@ -114,7 +112,10 @@
     "generateLeaseSubmit": "Créer le bail",
     "generateLeaseSubmitting": "Création…",
     "generateLeaseError": "Création du bail impossible — réessayez.",
-    "leaseGenerated": "Bail généré (#{{id}})"
+    "leaseGenerated": "Bail généré (#{{id}})",
+    "candidateLabel": "Candidat #{{id}}",
+    "loadError": "Impossible de charger les candidatures — réessayez.",
+    "actionError": "Action impossible — réessayez."
   },
   "questionnaire": {
     "stepIndicator": "Étape {{step}} / {{total}}",
@@ -139,15 +140,27 @@
         "questions": {
           "coucher": {
             "label": "Vous vous couchez plutôt…",
-            "options": { "avant22": "Avant 22h", "22h-minuit": "22h–minuit", "apres-minuit": "Après minuit" }
+            "options": {
+              "avant22": "Avant 22h",
+              "22h-minuit": "22h–minuit",
+              "apres-minuit": "Après minuit"
+            }
           },
           "travail": {
             "label": "Votre semaine type",
-            "options": { "jour": "Cours/travail le jour", "decale": "Horaires décalés", "teletravail": "Télétravail fréquent" }
+            "options": {
+              "jour": "Cours/travail le jour",
+              "decale": "Horaires décalés",
+              "teletravail": "Télétravail fréquent"
+            }
           },
           "weekend": {
             "label": "Le week-end, vous êtes plutôt",
-            "options": { "maison": "À la maison", "sorti": "Souvent sorti", "ca-depend": "Ça dépend" }
+            "options": {
+              "maison": "À la maison",
+              "sorti": "Souvent sorti",
+              "ca-depend": "Ça dépend"
+            }
           }
         }
       },
@@ -157,11 +170,19 @@
         "questions": {
           "menage": {
             "label": "Fréquence de ménage des parties communes",
-            "options": { "quotidien": "Quotidien", "2-3-semaine": "2–3×/semaine", "hebdomadaire": "Hebdomadaire" }
+            "options": {
+              "quotidien": "Quotidien",
+              "2-3-semaine": "2–3×/semaine",
+              "hebdomadaire": "Hebdomadaire"
+            }
           },
           "vaisselle": {
             "label": "La vaisselle, vous la faites",
-            "options": { "immediat": "Immédiatement", "jour-meme": "Le jour même", "beaucoup": "Quand il y en a beaucoup" }
+            "options": {
+              "immediat": "Immédiatement",
+              "jour-meme": "Le jour même",
+              "beaucoup": "Quand il y en a beaucoup"
+            }
           }
         }
       },
@@ -171,11 +192,19 @@
         "questions": {
           "tabac": {
             "label": "Tabac",
-            "options": { "non-fumeur": "Non-fumeur", "balcon": "Fume au balcon", "interieur": "Fume à l’intérieur" }
+            "options": {
+              "non-fumeur": "Non-fumeur",
+              "balcon": "Fume au balcon",
+              "interieur": "Fume à l’intérieur"
+            }
           },
           "alcool": {
             "label": "Alcool dans le logement",
-            "options": { "jamais": "Jamais", "occasionnel": "Occasionnellement", "regulier": "Régulièrement" }
+            "options": {
+              "jamais": "Jamais",
+              "occasionnel": "Occasionnellement",
+              "regulier": "Régulièrement"
+            }
           }
         }
       },
@@ -185,11 +214,19 @@
         "questions": {
           "invites": {
             "label": "Invités à la maison",
-            "options": { "rarement": "Rarement", "mensuel": "Quelques fois/mois", "souvent": "Souvent" }
+            "options": {
+              "rarement": "Rarement",
+              "mensuel": "Quelques fois/mois",
+              "souvent": "Souvent"
+            }
           },
           "bruit": {
             "label": "Musique / appels dans le logement",
-            "options": { "casque": "Casque uniquement", "modere": "Volume modéré", "sans-contrainte": "Pas de contrainte" }
+            "options": {
+              "casque": "Casque uniquement",
+              "modere": "Volume modéré",
+              "sans-contrainte": "Pas de contrainte"
+            }
           }
         }
       },
@@ -199,11 +236,19 @@
         "questions": {
           "cuisine": {
             "label": "Cuisine",
-            "options": { "separee": "Séparée", "parfois": "Partagée parfois", "ensemble": "On cuisine ensemble" }
+            "options": {
+              "separee": "Séparée",
+              "parfois": "Partagée parfois",
+              "ensemble": "On cuisine ensemble"
+            }
           },
           "charges": {
             "label": "Courses et charges communes",
-            "options": { "chacun": "Chacun le sien", "commune": "Caisse commune", "a-definir": "À définir ensemble" }
+            "options": {
+              "chacun": "Chacun le sien",
+              "commune": "Caisse commune",
+              "a-definir": "À définir ensemble"
+            }
           }
         }
       },
@@ -213,11 +258,19 @@
         "questions": {
           "social": {
             "label": "Vous cherchez plutôt des colocataires",
-            "options": { "amis": "Amis proches", "voisinage": "Bon voisinage", "peu-importe": "Peu importe" }
+            "options": {
+              "amis": "Amis proches",
+              "voisinage": "Bon voisinage",
+              "peu-importe": "Peu importe"
+            }
           },
           "langue": {
             "label": "Langue de communication au foyer",
-            "options": { "darija": "Darija", "francais": "Français", "indifferent": "Indifférent" }
+            "options": {
+              "darija": "Darija",
+              "francais": "Français",
+              "indifferent": "Indifférent"
+            }
           }
         }
       }
@@ -317,16 +370,11 @@
   },
   "roommateValidation": {
     "title": "Des candidats pour votre colocation",
-    "subtitle": "{{titre}} — {{quartier}}, {{ville}}",
-    "roomsLabel": "Chambre(s) concernée(s)",
     "explanation": "Le propriétaire a présélectionné ces profils ; votre avis compte pour la vie en commun.",
-    "compatibilityLabel": "Compatibilité avec vous",
-    "ageProfil": "{{age}} ans · {{profil}}",
     "ownerNoteLabel": "Présélectionné·e par le propriétaire",
     "actions": {
       "validate": "Valider",
-      "refuse": "Refuser",
-      "viewProfile": "Voir le profil"
+      "refuse": "Refuser"
     },
     "statusBadge": {
       "validated": "Validé par vous",

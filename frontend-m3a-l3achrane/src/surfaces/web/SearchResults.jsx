@@ -329,7 +329,7 @@ export default function SearchResults() {
                     amenities={it.chips?.map((label) => ({ icon: 'check', label }))}
                     proximity={it.proximite?.[0]}
                     onClick={() => navigate(`/annonce/${it.id}`)}
-                    onApply={() => navigate('/espace/candidature')}
+                    onApply={() => navigate(`/espace/candidature?listingId=${it.id}`)}
                   />
                 ))}
               </div>

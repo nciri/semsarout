@@ -251,7 +251,7 @@ export default function ListingDetail() {
                     </div>
                   </div>
                 )}
-                <Button variant="accent" fullWidth onClick={() => navigate('/espace/candidature')}>{t('web:listing.applyCta')}</Button>
+                <Button variant="accent" fullWidth onClick={() => navigate(`/espace/candidature?listingId=${id}`)}>{t('web:listing.applyCta')}</Button>
                 <Button variant="secondary" fullWidth>{t('web:listing.contactRoommateCta')}</Button>
                 <div style={{ font: 'var(--fw-regular) var(--fs-xs)/1.55 var(--font-body)', color: 'var(--text-muted)' }}>
                   {t('web:listing.applicationRequirementNote')}
