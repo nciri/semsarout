@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -274,7 +274,7 @@ export default function DashboardProgramForm() {
   const [programId, setProgramId] = useState(id ? parseInt(id) : null)
 
   // Fetch program if editing
-  const { data: program, isLoading } = useQuery(
+  const { isLoading } = useQuery(
     ['program', id],
     () => programsService.getProgram(id),
     {

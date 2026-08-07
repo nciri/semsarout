@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  FiCreditCard, FiKey, FiCheck, FiAlertCircle, FiEye, FiEyeOff,
+  FiKey, FiCheck, FiAlertCircle, FiEye, FiEyeOff,
   FiRefreshCw, FiExternalLink, FiSettings, FiDollarSign, FiPercent,
   FiToggleLeft, FiToggleRight, FiSave, FiShield
 } from 'react-icons/fi'
@@ -60,11 +60,6 @@ export default function StripeConfig() {
     setTestingConnection(false)
     setConnectionStatus('success')
     setTimeout(() => setConnectionStatus(null), 5000)
-  }
-
-  const maskKey = (key) => {
-    if (!key || key.length < 12) return key
-    return key.substring(0, 8) + '...' + key.substring(key.length - 4)
   }
 
   return (

@@ -199,6 +199,19 @@
       "escrowed": "تحت الضمان",
       "released": "تم التحرير",
       "refunded": "تم الاسترجاع"
+    },
+    "releaseButton": "تحرير",
+    "refundButton": "استرجاع",
+    "actionError": "تعذّر تنفيذ الإجراء حاليًا — يُرجى إعادة المحاولة.",
+    "edl": {
+      "title": "معاينة حالة السكن",
+      "entree": "الدخول",
+      "sortie": "الخروج",
+      "createEntree": "إنشاء معاينة حالة الدخول",
+      "createSortie": "إنشاء معاينة حالة الخروج",
+      "statusDraft": "مسودة",
+      "statusSigned": "موقّع (2/2)",
+      "awaitingSignatures": "بانتظار التوقيع"
     }
   },
   "reports": {

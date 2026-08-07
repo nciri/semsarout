@@ -11,7 +11,6 @@ import {
   FiHome,
   FiCalendar,
   FiUsers,
-  FiClock,
   FiKey,
   FiChevronRight,
   FiZap
@@ -35,7 +34,7 @@ const SM_COLORS = {
 
 export default function StayManager() {
   const { t } = useTranslation(['dashboard', 'common'])
-  const { token } = useAuthStore()
+  const { accessToken: token } = useAuthStore()
   const { fmtDateTime } = useFormat()
   const [loading, setLoading] = useState(true)
   const [connecting, setConnecting] = useState(false)
@@ -56,6 +55,7 @@ export default function StayManager() {
 
   useEffect(() => {
     fetchStatus()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const fetchStatus = async () => {

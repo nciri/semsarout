@@ -199,6 +199,19 @@
       "escrowed": "Sous séquestre",
       "released": "Libéré",
       "refunded": "Remboursé"
+    },
+    "releaseButton": "Libérer",
+    "refundButton": "Rembourser",
+    "actionError": "Action impossible pour le moment — réessayez.",
+    "edl": {
+      "title": "État des lieux",
+      "entree": "Entrée",
+      "sortie": "Sortie",
+      "createEntree": "Créer l'état des lieux d'entrée",
+      "createSortie": "Créer l'état des lieux de sortie",
+      "statusDraft": "Brouillon",
+      "statusSigned": "Signé (2/2)",
+      "awaitingSignatures": "En attente de signature"
     }
   },
   "reports": {

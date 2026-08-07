@@ -390,6 +390,17 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         return app.state.directory, path.replace("/api/v1", "", 1)
     if settings.messaging_url and path.startswith("/api/v1/messaging"):
         return app.state.messaging, path.replace("/api/v1", "", 1)
+    # Messagerie m3a-l3achrane (conversations candidat/bailleur) : composite REST propre côté
+    # front, réécrit vers les routes `/messaging/conversations*` du service.
+    if settings.messaging_url and (
+        path == "/api/v1/conversations" or path.startswith("/api/v1/conversations/")
+    ):
+        return app.state.messaging, path.replace("/api/v1/conversations", "/messaging/conversations", 1)
+    # Notifications in-app m3a-l3achrane (même service messaging, domaine dédié).
+    if settings.messaging_url and (
+        path == "/api/v1/notifications" or path.startswith("/api/v1/notifications/")
+    ):
+        return app.state.messaging, path.replace("/api/v1/notifications", "/messaging/notifications", 1)
     if settings.buyer_url and (
         path.startswith("/api/v1/buyer/saved-searches")
         or path.startswith("/api/v1/buyer/favorites")
@@ -465,8 +476,11 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path.startswith("/api/v1/listings/")
         or path == "/api/v1/me/listings"
         or path == "/api/v1/me/lease"
+        or path == "/api/v1/me/leases"
         or path == "/api/v1/leases"
         or path.startswith("/api/v1/leases/")
+        or path == "/api/v1/candidatures"
+        or path.startswith("/api/v1/candidatures/")
     ):
         return app.state.coloc_listing, path.replace("/api/v1", "", 1)
     if settings.coloc_profile_url and (
@@ -597,6 +611,139 @@ async def coloc_listings_composite(request: Request) -> Response:
             scores = {}
     _merge_match_scores(data.get("items", []), scores)
     return JSONResponse(data)
+
+
+def _forward_headers(request: Request, ident: dict | None, tenant: str) -> dict:
+    """En-têtes vers un service interne, mêmes règles que `proxy()` : on jette les hop-by-hop
+    et tout X-Semsar-* entrant (anti-usurpation), puis on ré-injecte l'identité + le tenant."""
+    headers = {
+        k: v for k, v in request.headers.items()
+        if k.lower() not in _HOP_BY_HOP
+        and not k.lower().startswith("x-semsar-")
+        and k.lower() != "x-tenant"
+    }
+    if ident:
+        _inject_identity(headers, ident)
+    headers["x-semsar-tenant"] = tenant
+    return headers
+
+
+async def _resolve_candidate_names(app_: FastAPI, ids: set) -> dict:
+    """id candidat → nom humain (identity `/internal/user/{id}`). identity absent/en panne ou
+    user introuvable → id omis du dict : le front retombe sur « Candidat #id »."""
+    client = app_.state.identity
+    ids = {i for i in ids if i is not None}
+    if client is None or not ids:
+        return {}
+    headers = {"x-internal-token": settings.internal_token}
+
+    async def _one(uid):
+        try:
+            r = await client.request("GET", f"/internal/user/{uid}", headers=headers)
+        except Exception:  # noqa: BLE001 — dégradation nom par nom
+            return uid, None
+        if r.status_code != 200:
+            return uid, None
+        user = (r.json() or {}).get("user") or {}
+        return uid, (user.get("full_name") or "").strip() or None
+
+    pairs = await asyncio.gather(*(_one(uid) for uid in ids))
+    return {uid: name for uid, name in pairs if name}
+
+
+async def _resolve_candidate_scores(app_: FastAPI, candidatures: list) -> dict:
+    """id candidature → match_pct : compatibilité (candidat = seeker) ↔ (annonce), via matching
+    `/internal/scores` (un appel par candidat distinct). matching absent/en panne ou profil/
+    critères manquants → clé omise, le front masque le score (parité `coloc_listings_composite`)."""
+    client = app_.state.matching
+    if client is None:
+        return {}
+    by_candidate: dict = {}
+    for c in candidatures:
+        cu, li = c.get("candidate_user_id"), c.get("listing_id")
+        if cu and li:
+            by_candidate.setdefault(cu, set()).add(li)
+    if not by_candidate:
+        return {}
+    headers = {"x-internal-token": settings.internal_token}
+
+    async def _one(cu, listing_ids):
+        try:
+            r = await client.request(
+                "POST", "/internal/scores",
+                json={"user_id": cu, "listing_ids": list(listing_ids)}, headers=headers)
+            if r.status_code == 200:
+                return cu, r.json().get("scores", {})
+        except Exception:  # noqa: BLE001 — dégradation sans score
+            return cu, {}
+        return cu, {}
+
+    results = dict(await asyncio.gather(
+        *(_one(cu, lids) for cu, lids in by_candidate.items())))
+    out: dict = {}
+    for c in candidatures:
+        pct = results.get(c.get("candidate_user_id"), {}).get(c.get("listing_id"))
+        if pct is not None:
+            out[c["id"]] = pct
+    return out
+
+
+async def _candidatures_composite(request: Request, upstream_path: str) -> Response:
+    """Proxifie une liste de candidatures (coloc-listing) puis l'enrichit au BFF : nom humain
+    du candidat + score de compatibilité candidat↔annonce. L'enrichissement ne fait jamais
+    échouer la liste (dégradation par clé absente)."""
+    app_ = request.app
+    if app_.state.coloc_listing is None:
+        return Response(content=b'{"error":"Not found"}', status_code=404,
+                        media_type="application/json")
+    tenant = _resolve_tenant(request.headers, request.headers.get("host", ""))
+    ident = await _resolve_identity(
+        app_, request.headers.get("authorization"),
+        request.cookies.get(settings.cookie_access_name),
+    )
+    if ident and ident.get("tenant", "semsar") != tenant:
+        return Response(content=b'{"error":"Tenant mismatch"}', status_code=403,
+                        media_type="application/json")
+    url = upstream_path + (f"?{request.url.query}" if request.url.query else "")
+    upstream = await app_.state.coloc_listing.request(
+        "GET", url, headers=_forward_headers(request, ident, tenant))
+    if upstream.status_code != 200:
+        return Response(content=upstream.content, status_code=upstream.status_code,
+                        media_type=upstream.headers.get("content-type", "application/json"))
+    try:
+        rows = upstream.json()
+    except ValueError:
+        return Response(content=upstream.content, status_code=upstream.status_code,
+                        media_type=upstream.headers.get("content-type", "application/json"))
+    if isinstance(rows, list) and rows:
+        names, scores = await asyncio.gather(
+            _resolve_candidate_names(
+                app_, {r.get("candidate_user_id") for r in rows}),
+            _resolve_candidate_scores(app_, rows),
+        )
+        for r in rows:
+            name = names.get(r.get("candidate_user_id"))
+            if name:
+                r["candidate_name"] = name
+            pct = scores.get(r.get("id"))
+            if pct is not None:
+                r["match_pct"] = pct
+    return JSONResponse(rows)
+
+
+@app.get("/api/v1/candidatures/received", include_in_schema=False)
+async def candidatures_received_composite(request: Request) -> Response:
+    """Candidatures reçues (propriétaire), enrichies au BFF du nom humain du candidat (identity)
+    et d'un score de compatibilité candidat↔annonce (matching). Dégradation propre : nom/score
+    absent → clé omise, la liste ne tombe jamais à cause de l'enrichissement."""
+    return await _candidatures_composite(request, "/candidatures/received")
+
+
+@app.get("/api/v1/candidatures/roommate-pending", include_in_schema=False)
+async def candidatures_roommate_pending_composite(request: Request) -> Response:
+    """Candidatures en attente de la décision du colocataire en place, mêmes enrichissements
+    (nom + score) que `/candidatures/received`."""
+    return await _candidatures_composite(request, "/candidatures/roommate-pending")
 
 
 async def _fetch_internal_stats(
@@ -766,6 +913,35 @@ async def backoffice_leases(request: Request) -> Response:
     if r.status_code != 200:
         return JSONResponse({"tenant": tenant, "items": []})
     return JSONResponse({"tenant": tenant, **r.json()})
+
+
+@app.post("/api/v1/payments/webhook", include_in_schema=False)
+async def payments_webhook_relay(request: Request) -> Response:
+    """Relais du webhook (simulé) du provider de paiement vers coloc-listing
+    `/internal/payments/webhook`. Pas d'auth utilisateur ici : un vrai PSP appelle cette
+    URL publique sans jeton applicatif — c'est la signature `x-webhook-signature` (HMAC,
+    vérifiée côté coloc-listing avec le secret partagé) qui fait foi, comme chez la
+    plupart des prestataires réels. Le BFF se contente de relayer body + signature vers
+    le service interne (non exposé publiquement) ; `x-internal-token` est ajouté en plus
+    pour rester cohérent avec les autres appels inter-services du mesh."""
+    app_ = request.app
+    client = app_.state.coloc_listing
+    if client is None:
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    body = await request.body()
+    headers = {
+        "x-internal-token": settings.internal_token,
+        "x-webhook-signature": request.headers.get("x-webhook-signature", ""),
+        "content-type": "application/json",
+    }
+    try:
+        r = await client.request("POST", "/internal/payments/webhook", content=body, headers=headers)
+    except Exception:  # noqa: BLE001 — dégradation propre si coloc-listing est indisponible
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    return Response(content=r.content, status_code=r.status_code,
+                    media_type=r.headers.get("content-type"))
 
 
 @app.get("/api/v1/backoffice/reports", include_in_schema=False)

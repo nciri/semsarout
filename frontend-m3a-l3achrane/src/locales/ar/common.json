@@ -43,7 +43,8 @@
     "apiWebhooks": "واجهة برمجية و webhooks",
     "help": "بحاجة إلى مساعدة؟",
     "logout": "تسجيل الخروج",
-    "myAccount": "حسابي"
+    "myAccount": "حسابي",
+    "notifications": "الإشعارات"
   },
   "trust": {
     "verified": "موثّقة",

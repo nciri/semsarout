@@ -82,6 +82,7 @@ function ApplicationsList() {
   }
   const removeDoc = (i) => setDocs((d) => d.filter((_, idx) => idx !== i))
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const apps = data?.applications || []
   const stats = useMemo(() => ({ total: apps.length, received: apps.filter((a) => a.status === 'received').length, accepted: apps.filter((a) => a.status === 'accepted').length }), [apps])
 

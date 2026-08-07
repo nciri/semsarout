@@ -1,25 +1,40 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Button, Card, Chip, Icon } from '../../ds/index.js'
-import { applicationHost, applicationListing, applicationMatch, applicationSlots } from '../../data/applicationForm.js'
+import { Button, Card, Icon } from '../../ds/index.js'
+import { applyToListing, getListing } from '../../services/index.js'
 
 // Règle canonique des formulaires : champ requis ⇒ étoile rouge après le label.
 const requiredStar = <span style={{ color: 'var(--red-500)' }} aria-hidden> *</span>
 
 export default function Candidature() {
-  const { t } = useTranslation(['app', 'common'])
-  const [sent, setSent] = useState(false)
+  const { t } = useTranslation(['app', 'common', 'web'])
+  const [searchParams] = useSearchParams()
+  const listingId = searchParams.get('listingId')
+  const [listing, setListing] = useState(undefined) // undefined = loading, null = introuvable
   const [message, setMessage] = useState('')
-  const [slots, setSlots] = useState(applicationSlots)
+  const [sent, setSent] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(false)
 
-  const toggleSlot = (id) => {
-    setSlots((list) => list.map((s) => (s.id === id ? { ...s, selected: !s.selected } : s)))
-  }
+  useEffect(() => {
+    if (!listingId) { setListing(null); return }
+    setListing(undefined)
+    getListing(listingId).then(setListing)
+  }, [listingId])
 
-  const submit = () => {
-    if (!message.trim()) return
-    setSent(true)
+  const submit = async () => {
+    if (!message.trim() || !listingId) return
+    setSubmitting(true)
+    setError(false)
+    try {
+      await applyToListing({ listingId, message: message.trim() })
+      setSent(true)
+    } catch {
+      setError(true)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (sent) {
@@ -37,7 +52,7 @@ export default function Candidature() {
               {t('app:candidature.sentTitle')}
             </h1>
             <p style={{ margin: 0, maxWidth: 440, fontSize: 14.5, color: 'var(--text-body)', lineHeight: 1.6 }}>
-              {t('app:candidature.sentMessage', { host: applicationHost.nom })}
+              {t('app:candidature.sentMessage')}
             </p>
             <div style={{ display: 'flex', gap: 12 }}>
               <Link to="/espace/messages">
@@ -53,6 +68,31 @@ export default function Candidature() {
     )
   }
 
+  if (listing === undefined) {
+    return (
+      <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)' }}>
+        <div style={{ maxWidth: 760, margin: '0 auto', padding: 48, fontSize: 14.5, color: 'var(--text-muted)' }}>
+          {t('common:loading')}
+        </div>
+      </div>
+    )
+  }
+
+  if (listing === null) {
+    return (
+      <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)' }}>
+        <div style={{ maxWidth: 760, margin: '0 auto', padding: 48, textAlign: 'center' }}>
+          <h1 style={{ margin: '0 0 12px', fontSize: 22, fontWeight: 800, color: 'var(--text-heading)' }}>
+            {t('web:listing.notFoundTitle')}
+          </h1>
+          <Link to="/recherche" style={{ font: 'var(--fw-semibold) var(--fs-body) var(--font-body)', color: 'var(--navy-700)' }}>
+            {t('web:listing.backToSearch')}
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)' }}>
       <div style={{ maxWidth: 760, margin: '0 auto', padding: '34px 24px 64px' }}>
@@ -63,24 +103,12 @@ export default function Candidature() {
             </h1>
             <p style={{ margin: 0, fontSize: 14.5, color: 'var(--text-body)' }}>
               {t('app:candidature.listingSubtitle', {
-                titre: applicationListing.titre,
-                quartier: applicationListing.quartier,
-                ville: applicationListing.ville,
-                prix: applicationListing.prixMad.toLocaleString('fr-FR'),
+                titre: listing.titre,
+                quartier: listing.quartier,
+                ville: listing.ville,
+                prix: listing.prixMad.toLocaleString('fr-FR'),
               })}
             </p>
-          </div>
-
-          <div style={{
-            background: 'var(--green-50)', border: '1px solid var(--green-100)', borderRadius: 14,
-            padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 6,
-          }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--green-700)' }}>
-              {t('app:candidature.matchTitle', { pct: applicationMatch.pct })}
-            </div>
-            <div style={{ fontSize: 13.5, color: 'var(--text-body)', lineHeight: 1.55 }}>
-              {applicationMatch.raisons.join(' · ')}
-            </div>
           </div>
 
           <Card padding={22} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -101,19 +129,6 @@ export default function Candidature() {
               />
             </label>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-heading)' }}>
-                {t('app:candidature.slotsLabel')}
-              </span>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {slots.map((s) => (
-                  <Chip key={s.id} selected={s.selected} onClick={() => toggleSlot(s.id)}>
-                    {s.label}
-                  </Chip>
-                ))}
-              </div>
-            </div>
-
             <div style={{
               display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 16px',
               borderRadius: 10, background: 'var(--navy-50)',
@@ -130,9 +145,15 @@ export default function Candidature() {
               </div>
             </div>
 
+            {error && (
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--red-600)' }}>
+                {t('app:candidature.submitError')}
+              </div>
+            )}
+
             <div style={{ alignSelf: 'flex-end' }}>
-              <Button variant="accent" size="lg" onClick={submit} disabled={!message.trim()}>
-                {t('app:candidature.submit')}
+              <Button variant="accent" size="lg" onClick={submit} disabled={!message.trim() || submitting}>
+                {submitting ? t('app:candidature.submitting') : t('app:candidature.submit')}
               </Button>
             </div>
           </Card>

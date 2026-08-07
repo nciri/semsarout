@@ -8,7 +8,6 @@ import {
   FiArrowRight, FiCheckCircle, FiClock, FiAlertCircle
 } from 'react-icons/fi'
 import DirIcon from '../../components/common/DirIcon'
-import useAuthStore from '../../store/authStore'
 import { formatPrice } from '../../utils/currency'
 import { useFormat } from '../../utils/format'
 import MesBiensTabs from '../../components/dashboard/MesBiensTabs'
@@ -321,7 +320,6 @@ function UpgradePrompt() {
 export default function DashboardPrograms() {
   const { t } = useTranslation(['dashboard', 'common'])
   const queryClient = useQueryClient()
-  const { user } = useAuthStore()
   const [search, setSearch] = useState('')
   const [viewMode, setViewMode] = useState('grid')
   const [filters, setFilters] = useState({

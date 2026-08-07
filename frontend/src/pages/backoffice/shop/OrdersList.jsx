@@ -22,6 +22,7 @@ function OrdersList() {
   const { t } = useTranslation(['backoffice', 'common'])
   const { fmtDate } = useFormat()
   const { data, isLoading } = useQuery('shop-orders', () => shopService.listOrders())
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const orders = data?.orders || []
   const stats = useMemo(() => ({
     total: orders.length,

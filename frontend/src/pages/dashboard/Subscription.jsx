@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { Link } from 'react-router-dom'
 import {
   FiCheck, FiX, FiCreditCard, FiDownload, FiCheckCircle, FiClock,
-  FiAlertCircle, FiCalendar, FiArrowRight, FiStar, FiZap, FiAward,
-  FiPlus, FiTrash2, FiEdit2, FiRefreshCw
+  FiAlertCircle, FiCalendar, FiStar, FiZap, FiAward,
+  FiPlus, FiTrash2, FiRefreshCw
 } from 'react-icons/fi'
 import { jsPDF } from 'jspdf'
 import { toast } from 'react-toastify'
@@ -13,7 +12,6 @@ import useAuthStore from '../../store/authStore'
 import { formatPrice } from '../../utils/currency'
 import api from '../../services/api'
 import { CONTACT } from '../../constants/contact'
-import DirIcon from '../../components/common/DirIcon'
 import { useFormat } from '../../utils/format'
 
 // Generate invoice PDF (t: fonction de traduction i18n, injectée par l'appelant)
@@ -554,7 +552,7 @@ export default function Subscription() {
   )
 
   // Fetch payment methods from backend
-  const { data: paymentMethodsData, isLoading: loadingPaymentMethods, refetch: refetchPaymentMethods } = useQuery(
+  const { data: paymentMethodsData, isLoading: loadingPaymentMethods } = useQuery(
     'paymentMethods',
     async () => {
       const { data } = await api.get('/payment-methods')
@@ -564,7 +562,7 @@ export default function Subscription() {
   )
 
   // Fetch invoices from backend
-  const { data: invoicesData, isLoading: loadingInvoices, refetch: refetchInvoices } = useQuery(
+  const { data: invoicesData, isLoading: loadingInvoices } = useQuery(
     'invoices',
     async () => {
       const { data } = await api.get('/invoices')
@@ -1010,6 +1008,7 @@ export default function Subscription() {
                       )}
                       <button
                         onClick={() => handleDeletePayment(pm.id)}
+                        // impeccable-disable-next-line gray-on-color -- icône grise sur fond blanc ; le rouge n'est qu'un état :hover
                         className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       >
                         <FiTrash2 className="w-4 h-4" />

@@ -37,6 +37,7 @@ function MandatesList() {
     onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
   })
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const mandates = data?.mandates || []
   const stats = useMemo(() => ({
     total: mandates.length,

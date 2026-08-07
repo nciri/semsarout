@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   FiSearch, FiSliders, FiX, FiChevronDown, FiChevronUp,
   FiMapPin, FiHome, FiDollarSign, FiMaximize, FiLayers,
-  FiDroplet, FiSun, FiStar, FiZap
+  FiDroplet, FiSun, FiStar
 } from 'react-icons/fi'
 import { HiSparkles } from 'react-icons/hi2'
 import { DIRHAM_SYMBOL } from '../../utils/currency'
@@ -42,25 +42,6 @@ const MOROCCAN_CITIES = [
   'Agadir', 'Meknès', 'Oujda', 'Kenitra', 'Tétouan',
   'El Jadida', 'Mohammedia', 'Beni Mellal', 'Nador', 'Safi'
 ]
-
-const ENERGY_CLASSES = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
-
-const PRICE_RANGES = {
-  sale: [
-    { min: 0, max: 500000, label: `< 500 000 ${DIRHAM_SYMBOL}` },
-    { min: 500000, max: 1000000, label: `500 000 - 1 000 000 ${DIRHAM_SYMBOL}` },
-    { min: 1000000, max: 2000000, label: `1 000 000 - 2 000 000 ${DIRHAM_SYMBOL}` },
-    { min: 2000000, max: 5000000, label: `2 000 000 - 5 000 000 ${DIRHAM_SYMBOL}` },
-    { min: 5000000, max: null, label: `> 5 000 000 ${DIRHAM_SYMBOL}` }
-  ],
-  rent: [
-    { min: 0, max: 3000, label: `< 3 000 ${DIRHAM_SYMBOL}/mois` },
-    { min: 3000, max: 5000, label: `3 000 - 5 000 ${DIRHAM_SYMBOL}/mois` },
-    { min: 5000, max: 10000, label: `5 000 - 10 000 ${DIRHAM_SYMBOL}/mois` },
-    { min: 10000, max: 20000, label: `10 000 - 20 000 ${DIRHAM_SYMBOL}/mois` },
-    { min: 20000, max: null, label: `> 20 000 ${DIRHAM_SYMBOL}/mois` }
-  ]
-}
 
 export default function AdvancedSearch({ onSearch, initialFilters = {}, variant = 'full' }) {
   const { t } = useTranslation(['common'])
@@ -124,15 +105,6 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
       features: prev.features.includes(feature)
         ? prev.features.filter(f => f !== feature)
         : [...prev.features, feature]
-    }))
-  }
-
-  const handleEnergyToggle = (energyClass) => {
-    setFilters(prev => ({
-      ...prev,
-      energy_class: prev.energy_class.includes(energyClass)
-        ? prev.energy_class.filter(e => e !== energyClass)
-        : [...prev.energy_class, energyClass]
     }))
   }
 

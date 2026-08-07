@@ -13,7 +13,7 @@ const centroid = (zone) => {
   return { x: s.x / zone.length, y: s.y / zone.length }
 }
 
-export default function LotPlanViewer({ programId, programName }) {
+export default function LotPlanViewer({ programId }) {
   const { t } = useTranslation(['common'])
   const { user, isAuthenticated } = useAuthStore()
   const [plans, setPlans] = useState([])

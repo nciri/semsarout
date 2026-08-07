@@ -2,8 +2,8 @@ import { useQuery } from 'react-query'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  FiArrowRight, FiCheck, FiCamera, FiDollarSign,
-  FiShield, FiTrendingUp, FiUsers, FiZap, FiX, FiKey
+  FiArrowRight, FiCheck, FiDollarSign,
+  FiShield, FiTrendingUp, FiUsers, FiZap, FiX
 } from 'react-icons/fi'
 import AdvancedSearch from '../components/search/AdvancedSearch'
 import PropertyCard from '../components/common/PropertyCard'

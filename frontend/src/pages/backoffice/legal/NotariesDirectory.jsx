@@ -39,6 +39,7 @@ function NotariesDirectory() {
     onError: onErr,
   })
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const notaries = data?.notaries || []
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase()
@@ -75,6 +76,7 @@ function NotariesDirectory() {
         <button onClick={() => openEdit(n)} className="p-1.5 text-gray-400 hover:text-primary-600 rounded-lg hover:bg-primary-50 transition-colors" title={t('backoffice:legal.notaries.actions.edit')}>
           <FiEdit2 className="w-4 h-4" />
         </button>
+        {/* impeccable-disable-next-line gray-on-color -- icône grise sur fond blanc ; le rouge n'est qu'un état :hover */}
         <button onClick={() => del.mutate(n.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors" title={t('backoffice:legal.notaries.actions.delete')}>
           <FiTrash2 className="w-4 h-4" />
         </button>

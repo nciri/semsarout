@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import {
   FiPlus, FiSearch, FiFilter, FiPhone, FiMail,
   FiEdit2, FiTrash2, FiEye, FiUser, FiUsers, FiHome, FiDollarSign,
-  FiCalendar, FiChevronDown, FiChevronRight
+  FiChevronDown, FiChevronRight
 } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
 import { transactionTypeForClient } from '../../utils/clients'

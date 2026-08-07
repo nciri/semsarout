@@ -19,6 +19,7 @@ function ContractsList() {
   const { t } = useTranslation(['backoffice', 'common'])
   const { fmtDate } = useFormat()
   const { data, isLoading, error } = useQuery('contracts', () => contractService.list())
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const rows = data?.contracts || []
   const stats = useMemo(() => ({
     total: rows.length,

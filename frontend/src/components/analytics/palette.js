@@ -15,25 +15,10 @@ const PALETTE = {
   },
 }
 
-// No manual theme toggle in the app today (Tailwind's default 'media'
-// strategy) — detect via an explicit data-theme override if one is ever
-// added, else fall back to the OS/browser preference.
-function isDarkMode() {
-  if (typeof document !== 'undefined') {
-    const attr = document.documentElement.getAttribute('data-theme')
-    if (attr === 'dark') return true
-    if (attr === 'light') return false
-  }
-  if (typeof window !== 'undefined' && window.matchMedia) {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-  }
-  return false
-}
-
 // Le backoffice est en thème clair uniquement (aucun bascule sombre ailleurs) :
 // les blocs d'analyse restent clairs, donc les graphiques utilisent toujours la
 // palette claire — sinon la grille claire deviendrait invisible sur fond clair
-// quand l'OS est en mode sombre. `isDarkMode` est conservé pour un futur toggle.
+// quand l'OS est en mode sombre.
 export function useChartTheme() {
   return PALETTE.light
 }

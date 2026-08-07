@@ -5,7 +5,6 @@ import {
   FiArrowLeft,
   FiCalendar,
   FiUser,
-  FiCheck,
   FiX,
   FiAlertCircle,
   FiFilter,
@@ -38,9 +37,9 @@ const PLATFORM_TONE = {
 
 export default function StayManagerReservations() {
   const { t } = useTranslation(['dashboard', 'common'])
-  const { token } = useAuthStore()
+  const { accessToken: token } = useAuthStore()
   const { fmtDate, fmtDateTime, fmtNumber } = useFormat()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [reservations, setReservations] = useState([])
   const [propertyLinks, setPropertyLinks] = useState([])
@@ -56,10 +55,12 @@ export default function StayManagerReservations() {
 
   useEffect(() => {
     fetchPropertyLinks()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     fetchReservations()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propertyFilter, statusFilter, upcomingOnly])
 
   const fetchPropertyLinks = async () => {

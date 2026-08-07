@@ -28,8 +28,11 @@ const cloneZone = (zone) => (zone || []).map(p => ({ x: p.x, y: p.y }))
 // Duplication d'un lot : référence suffixée, zone légèrement décalée (à repositionner),
 // statut remis à "available" (un nouveau lot physique est disponible).
 const DUP_OFFSET = 0.03
+// eslint-disable-next-line react-refresh/only-export-components
 export const nextReference = (ref) => `${ref || 'LOT'}-copie`
+// eslint-disable-next-line react-refresh/only-export-components
 export const offsetZone = (zone) => (zone || []).map(p => ({ x: clamp01(p.x + DUP_OFFSET), y: clamp01(p.y + DUP_OFFSET) }))
+// eslint-disable-next-line react-refresh/only-export-components
 export const duplicateLotPayload = (lot) => ({
   reference: nextReference(lot.reference), title: lot.title || '', lot_type: lot.lot_type || 'apartment',
   surface: lot.surface ?? null, rooms: lot.rooms ?? null, bedrooms: lot.bedrooms ?? null,

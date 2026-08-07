@@ -12,6 +12,7 @@ const Avis = lazy(() => import('./surfaces/web/Avis.jsx'))
 const AppLayout = lazy(() => import('./surfaces/app/AppLayout.jsx'))
 const Dashboard = lazy(() => import('./surfaces/app/Dashboard.jsx'))
 const Messaging = lazy(() => import('./surfaces/app/Messaging.jsx'))
+const Notifications = lazy(() => import('./surfaces/app/Notifications.jsx'))
 const Candidature = lazy(() => import('./surfaces/app/Candidature.jsx'))
 const Candidatures = lazy(() => import('./surfaces/app/Candidatures.jsx'))
 const ValidationColocataire = lazy(() => import('./surfaces/app/ValidationColocataire.jsx'))
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/espace" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="messages" element={<Messaging />} />
+            <Route path="notifications" element={<Notifications />} />
             <Route path="candidatures" element={<Candidatures />} />
             <Route path="validation" element={<ValidationColocataire />} />
             <Route path="candidature" element={<Candidature />} />

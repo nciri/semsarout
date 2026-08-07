@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   FiPlus, FiSearch, FiFilter, FiMoreVertical, FiEdit2, FiTrash2,
-  FiEye, FiHome, FiMapPin, FiDollarSign, FiGrid, FiList
+  FiEye, FiHome, FiMapPin, FiGrid, FiList
 } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
 import api from '../../services/api'

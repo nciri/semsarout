@@ -3,8 +3,8 @@ import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  FiPlus, FiFilter, FiMoreVertical, FiUser, FiHome, FiDollarSign,
-  FiCalendar, FiPhone, FiMail, FiEdit2, FiTrash2, FiChevronDown
+  FiPlus, FiMoreVertical, FiUser, FiHome, FiDollarSign,
+  FiCalendar, FiEdit2, FiTrash2
 } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
 import SearchableSelect from '../../components/common/SearchableSelect'
@@ -196,7 +196,6 @@ export default function BackofficePipeline() {
     type: 'sale',
     agent_id: ''
   })
-  const [showFilters, setShowFilters] = useState(false)
 
   const { data, isLoading } = useQuery(
     ['backoffice-pipeline', filters],
@@ -215,10 +214,6 @@ export default function BackofficePipeline() {
   const handleDragOver = (e) => {
     e.preventDefault()
     e.currentTarget.classList.add('bg-primary-50')
-  }
-
-  const handleDragLeave = (e) => {
-    e.currentTarget.classList.remove('bg-primary-50')
   }
 
   const handleDrop = (e, stageId) => {

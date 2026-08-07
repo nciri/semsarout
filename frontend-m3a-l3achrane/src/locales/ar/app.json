@@ -40,21 +40,45 @@
     "now": "الآن",
     "viewListing": "عرض الإعلان",
     "privacyBanner": "تبقى أرقام هاتفك وعناوين بريدك الإلكتروني مخفية إلى أن يتم قبول التواصل.",
-    "phoneDetectedWarning": "تم اكتشاف رقم هاتف وإخفاؤه — يُرجى البقاء ضمن المراسلة الداخلية إلى حين التحقق."
+    "phoneDetectedWarning": "تم اكتشاف رقم هاتف وإخفاؤه — يُرجى البقاء ضمن المراسلة الداخلية إلى حين التحقق.",
+    "empty": "ليس لديك أي محادثة بعد.",
+    "emptyThread": "لا توجد رسائل بعد — اكتب·ي أول رسالة!",
+    "loadError": "تعذّر تحميل المراسلة حاليًا.",
+    "contact": "تواصل·ي",
+    "contactSuccess": "تم فتح المحادثة — ستجدها في مراسلتك.",
+    "contactError": "تعذّر فتح المحادثة حاليًا.",
+    "role": {
+      "owner": "المالك·ة #{{id}}",
+      "candidate": "المترشح·ة #{{id}}"
+    }
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "empty": "لا توجد إشعارات بعد.",
+    "loadError": "تعذّر تحميل الإشعارات حاليًا.",
+    "markAllRead": "وضع علامة مقروء على الكل",
+    "unreadCount_one": "{{count}} غير مقروء",
+    "unreadCount_other": "{{count}} غير مقروءة",
+    "types": {
+      "message.new": "رسالة جديدة",
+      "lease.to_sign": "عقد للاطلاع·التوقيع",
+      "payment.due": "دفعة مستحقة",
+      "payment.received": "تحديث في الدفع"
+    }
   },
   "candidature": {
     "sentTitle": "تم إرسال الطلب",
-    "sentMessage": "تم إشعار {{host}}. ستتلقى ردًا خلال 48 ساعة — تابع·ي حالته في طلباتك أو واصل·ي المحادثة.",
+    "sentMessage": "تم إشعار المالك·ة. ستتوصّل·ين بردّ خلال 48 ساعة — تابع·ي حالة طلبك أو واصل·ي المحادثة.",
     "viewConversation": "عرض المحادثة",
     "continueSearch": "متابعة البحث",
     "title": "التقدم بطلب لهذه الغرفة",
     "listingSubtitle": "{{titre}} — {{quartier}}، {{ville}} · {{prix}} درهم/شهريًا",
-    "matchTitle": "{{pct}}٪ نسبة توافق مع هذا السكن",
     "messageLabel": "رسالة إلى الزميل·ة في السكن",
     "messagePlaceholder": "قدّم·ي نفسك في بضعة أسطر: وضعيتك، أوقات تفرغك، ولماذا يهمك هذا السكن…",
-    "slotsLabel": "المواعيد التي تناسبك للزيارة",
     "verifiedNotice": "ملفك الشخصي موثّق واستبيان نمط حياتك مكتمل — سيرى·ترى المالك·ة نسبة التوافق فور الاستلام.",
-    "submit": "إرسال طلبي"
+    "submit": "إرسال طلبي",
+    "submitting": "جارٍ الإرسال…",
+    "submitError": "تعذّر الإرسال — يُرجى إعادة المحاولة."
   },
   "candidatures": {
     "title": "الطلبات المستلمة",
@@ -71,17 +95,27 @@
       "shortlist": "ترشيح",
       "share": "المشاركة مع الزميل·ة",
       "validate": "الموافقة",
-      "refuse": "رفض",
-      "markRoommateValidated": "تحديد كموافَق عليها من طرف الزميل·ة"
+      "refuse": "رفض"
     },
     "statusBadge": {
       "pendingRoommate": "بانتظار موافقة الزميل·ة",
       "accepted": "مقبولة",
       "refused": "مرفوضة — تم إشعار المترشح·ة"
     },
-    "roommatesInPlace": "الزملاء الحاليون في السكن",
-    "acceptedPickSlot": "تم قبول الطلب — اقترح·ي موعد زيارة",
-    "empty": "لا توجد طلبات في هذه الفئة."
+    "roommatesInPlace": "{{count}} من الزملاء الحاليين في السكن",
+    "empty": "لا توجد طلبات في هذه الفئة.",
+    "generateLeaseButton": "إنشاء عقد الإيجار",
+    "generateLeaseFormTitle": "إنشاء عقد الإيجار",
+    "rentLabel": "الإيجار (درهم)",
+    "depositLabel": "التأمين (درهم)",
+    "startDateLabel": "تاريخ الدخول",
+    "generateLeaseSubmit": "إنشاء العقد",
+    "generateLeaseSubmitting": "جارٍ الإنشاء…",
+    "generateLeaseError": "تعذّر إنشاء العقد — يُرجى إعادة المحاولة.",
+    "leaseGenerated": "تم إنشاء العقد (#{{id}})",
+    "candidateLabel": "المترشح·ة رقم #{{id}}",
+    "loadError": "تعذّر تحميل الطلبات — يُرجى إعادة المحاولة.",
+    "actionError": "تعذّر تنفيذ العملية — يُرجى إعادة المحاولة."
   },
   "questionnaire": {
     "stepIndicator": "الخطوة {{step}} / {{total}}",
@@ -106,15 +140,27 @@
         "questions": {
           "coucher": {
             "label": "غالبًا ما تخلد إلى النوم…",
-            "options": { "avant22": "قبل 22:00", "22h-minuit": "22:00–منتصف الليل", "apres-minuit": "بعد منتصف الليل" }
+            "options": {
+              "avant22": "قبل 22:00",
+              "22h-minuit": "22:00–منتصف الليل",
+              "apres-minuit": "بعد منتصف الليل"
+            }
           },
           "travail": {
             "label": "أسبوعك المعتاد",
-            "options": { "jour": "دراسة/عمل نهارًا", "decale": "أوقات عمل متغيّرة", "teletravail": "عمل عن بُعد متكرر" }
+            "options": {
+              "jour": "دراسة/عمل نهارًا",
+              "decale": "أوقات عمل متغيّرة",
+              "teletravail": "عمل عن بُعد متكرر"
+            }
           },
           "weekend": {
             "label": "في عطلة نهاية الأسبوع، غالبًا ما تكون",
-            "options": { "maison": "في المنزل", "sorti": "خارج المنزل غالبًا", "ca-depend": "الأمر يختلف" }
+            "options": {
+              "maison": "في المنزل",
+              "sorti": "خارج المنزل غالبًا",
+              "ca-depend": "الأمر يختلف"
+            }
           }
         }
       },
@@ -124,11 +170,19 @@
         "questions": {
           "menage": {
             "label": "وتيرة تنظيف الأماكن المشتركة",
-            "options": { "quotidien": "يوميًا", "2-3-semaine": "2–3 مرات/أسبوع", "hebdomadaire": "أسبوعيًا" }
+            "options": {
+              "quotidien": "يوميًا",
+              "2-3-semaine": "2–3 مرات/أسبوع",
+              "hebdomadaire": "أسبوعيًا"
+            }
           },
           "vaisselle": {
             "label": "تقوم·ين بغسل الأواني",
-            "options": { "immediat": "فورًا", "jour-meme": "في نفس اليوم", "beaucoup": "عندما تتراكم كثيرًا" }
+            "options": {
+              "immediat": "فورًا",
+              "jour-meme": "في نفس اليوم",
+              "beaucoup": "عندما تتراكم كثيرًا"
+            }
           }
         }
       },
@@ -138,11 +192,19 @@
         "questions": {
           "tabac": {
             "label": "التدخين",
-            "options": { "non-fumeur": "غير مدخّن·ة", "balcon": "يدخّن·تدخّن في الشرفة", "interieur": "يدخّن·تدخّن داخل المنزل" }
+            "options": {
+              "non-fumeur": "غير مدخّن·ة",
+              "balcon": "يدخّن·تدخّن في الشرفة",
+              "interieur": "يدخّن·تدخّن داخل المنزل"
+            }
           },
           "alcool": {
             "label": "الكحول داخل السكن",
-            "options": { "jamais": "أبدًا", "occasionnel": "أحيانًا", "regulier": "بانتظام" }
+            "options": {
+              "jamais": "أبدًا",
+              "occasionnel": "أحيانًا",
+              "regulier": "بانتظام"
+            }
           }
         }
       },
@@ -152,11 +214,19 @@
         "questions": {
           "invites": {
             "label": "استقبال الضيوف في المنزل",
-            "options": { "rarement": "نادرًا", "mensuel": "بضع مرات في الشهر", "souvent": "غالبًا" }
+            "options": {
+              "rarement": "نادرًا",
+              "mensuel": "بضع مرات في الشهر",
+              "souvent": "غالبًا"
+            }
           },
           "bruit": {
             "label": "الموسيقى / المكالمات داخل السكن",
-            "options": { "casque": "سماعات فقط", "modere": "صوت معتدل", "sans-contrainte": "بدون قيود" }
+            "options": {
+              "casque": "سماعات فقط",
+              "modere": "صوت معتدل",
+              "sans-contrainte": "بدون قيود"
+            }
           }
         }
       },
@@ -166,11 +236,19 @@
         "questions": {
           "cuisine": {
             "label": "المطبخ",
-            "options": { "separee": "منفصل", "parfois": "مشترك أحيانًا", "ensemble": "نطبخ معًا" }
+            "options": {
+              "separee": "منفصل",
+              "parfois": "مشترك أحيانًا",
+              "ensemble": "نطبخ معًا"
+            }
           },
           "charges": {
             "label": "التسوق والمصاريف المشتركة",
-            "options": { "chacun": "كل واحد·ة على حدة", "commune": "صندوق مشترك", "a-definir": "يُحدَّد معًا" }
+            "options": {
+              "chacun": "كل واحد·ة على حدة",
+              "commune": "صندوق مشترك",
+              "a-definir": "يُحدَّد معًا"
+            }
           }
         }
       },
@@ -180,11 +258,19 @@
         "questions": {
           "social": {
             "label": "تبحث·ين عن زملاء سكن من نوع",
-            "options": { "amis": "أصدقاء مقرّبون", "voisinage": "جوار طيب", "peu-importe": "لا يهم" }
+            "options": {
+              "amis": "أصدقاء مقرّبون",
+              "voisinage": "جوار طيب",
+              "peu-importe": "لا يهم"
+            }
           },
           "langue": {
             "label": "لغة التواصل داخل المنزل",
-            "options": { "darija": "الدارجة", "francais": "الفرنسية", "indifferent": "غير مهم" }
+            "options": {
+              "darija": "الدارجة",
+              "francais": "الفرنسية",
+              "indifferent": "غير مهم"
+            }
           }
         }
       }
@@ -194,8 +280,15 @@
     "title": "تأمين مكانك",
     "subtitle": "{{titre}} · الدخول في {{entree}}",
     "loading": "جارٍ تحميل عقد إيجارك…",
-    "demoBanner": "الخطوات أدناه تعكس الحالة الفعلية لعقدك (التأمين/الإيجار). هذه المنصة لا تعالج أي دفعة حقيقية: إطار الضمان معروض هنا لأغراض توضيحية فقط، دون مزوّد دفع مدمج.",
+    "demoBanner": "دفع تجريبي (نموذج توضيحي): الخطوات أدناه تعكس الحالة الفعلية لعقدك (التأمين/الإيجار)، لكن لا يتم أي تحويل مالي حقيقي على هذه المنصة (دون مزوّد دفع مدمج).",
     "leaseFallbackTitle": "عقد إيجار #{{id}}",
+    "leaseSelectorLabel": "عقد الإيجار المعني",
+    "leaseStatus": {
+      "pending": "قيد الانتظار",
+      "active": "نشط",
+      "ended": "منتهٍ",
+      "cancelled": "ملغى"
+    },
     "escrowStatusTitle": "حالة الضمان",
     "steps": {
       "depot": "تم إيداع الأموال",
@@ -220,10 +313,22 @@
     "cvcPlaceholder": "CVC",
     "securePaymentNotice": "دفع آمن عبر CMI — لا يتم تخزين أي بيانات للبطاقة على المنصة.",
     "payButton": "دفع {{amount}} درهم",
+    "payProcessing": "جارٍ المعالجة (تجريبي)…",
+    "paySucceeded": "تم تأكيد الدفع التجريبي — تحت الضمان",
+    "payError": "فشل الدفع التجريبي — يُرجى إعادة المحاولة",
     "cashNotice": "يصرّح المالك·ة باستلام المبلغ نقدًا؛ ثم تؤكد·ين ذلك لاستلام إيصال رقمي. لا يمر أي مبلغ عبر المنصة.",
     "cashConfirmedBadge": "تم تأكيد الاستلام — تم إرسال الإيصال",
     "confirmCashReceipt": "تأكيد استلام المبلغ",
-    "cashReceiptConfirmed": "تم تأكيد الاستلام"
+    "cashReceiptConfirmed": "تم تأكيد الاستلام",
+    "edl": {
+      "title": "معاينة حالة السكن عند الدخول",
+      "statusDraft": "مسودة",
+      "statusSigned": "موقّع من الطرفين",
+      "awaitingTenant": "بانتظار توقيعك.",
+      "awaitingOwner": "تم التوقيع من جانبك — بانتظار المالك·ة.",
+      "signButton": "توقيع معاينة الحالة",
+      "signing": "جارٍ التوقيع…"
+    }
   },
   "securite": {
     "title": "مركز الأمان",
@@ -265,16 +370,11 @@
   },
   "roommateValidation": {
     "title": "مترشّحون لسكنك المشترك",
-    "subtitle": "{{titre}} — {{quartier}}, {{ville}}",
-    "roomsLabel": "الغرفة (الغرف) المعنية",
     "explanation": "قام المالك·ة بترشيح هذه الملفات مسبقًا؛ رأيك مهم من أجل الحياة المشتركة.",
-    "compatibilityLabel": "التوافق معك",
-    "ageProfil": "{{age}} سنة · {{profil}}",
     "ownerNoteLabel": "مرشَّح·ة من طرف المالك·ة",
     "actions": {
       "validate": "الموافقة",
-      "refuse": "رفض",
-      "viewProfile": "عرض الملف الشخصي"
+      "refuse": "رفض"
     },
     "statusBadge": {
       "validated": "تمت موافقتك",

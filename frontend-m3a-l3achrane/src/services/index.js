@@ -9,7 +9,7 @@ const IMPORTANCE_TO_BACKEND = { neutral: 'INDIFFERENT', preference: 'PREFERENCE'
 // sinon, seuls les domaines encore sans backend restent mockés (retirés au fil des plans C/D).
 const ALL_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 const MOCK_DOMAINS = new Set(
-  (import.meta.env.VITE_MOCK_DOMAINS ?? 'partners,messages').split(','),
+  (import.meta.env.VITE_MOCK_DOMAINS ?? 'partners').split(','),
 )
 const isMocked = (domain) => ALL_MOCK || MOCK_DOMAINS.has(domain)
 const delay = (v) => new Promise((r) => setTimeout(() => r(v), 120)) // mimic async
@@ -59,12 +59,6 @@ export async function saveLifestyle(answers, importance) {
 export async function listPartners() {
   if (isMocked('partners')) return delay(partners)
   const { data } = await api.get('/partners')
-  return data
-}
-
-export async function listThreads() {
-  if (isMocked('messages')) return delay(threads)
-  const { data } = await api.get('/messages/threads')
   return data
 }
 
@@ -239,6 +233,93 @@ export async function getMyLease() {
   return data
 }
 
+// Baux du LOCATAIRE courant (liste complète — multi-bail). Complète `getMyLease` (bail
+// « le plus pertinent ») pour l'écran Paiement quand l'utilisateur a plusieurs baux.
+export async function getMyLeases() {
+  if (isMocked('backoffice')) {
+    const single = await getMyLease()
+    return delay(single ? [single] : [])
+  }
+  const { data } = await api.get('/me/leases')
+  return data
+}
+
+// Création d'un bail (propriétaire/admin) à partir d'une candidature acceptée — génère
+// aussi les paiements initiaux (caution + 1er loyer, statut pending) côté service.
+export async function createLease({ listingId, tenantUserId, rentAmount, depositAmount,
+  startDate, endDate }) {
+  if (isMocked('backoffice')) {
+    return delay({
+      id: `lease-${Date.now()}`, listing_id: listingId, tenant_user_id: tenantUserId,
+      owner_id: 1, rent_amount: rentAmount, deposit_amount: depositAmount, status: 'pending',
+      start_date: startDate, end_date: endDate || null, created_at: new Date().toISOString(),
+      payments: [
+        { id: `pay-${Date.now()}-d`, type: 'deposit', amount: depositAmount, period: null, status: 'pending' },
+        { id: `pay-${Date.now()}-r`, type: 'rent', amount: rentAmount, period: startDate?.slice(0, 7), status: 'pending' },
+      ],
+      etats_des_lieux: [],
+    })
+  }
+  const { data } = await api.post('/leases', {
+    listing_id: listingId, tenant_user_id: tenantUserId, rent_amount: rentAmount,
+    deposit_amount: depositAmount, start_date: startDate, end_date: endDate || null,
+  })
+  return data
+}
+
+// État des lieux (sous-domaine dédié — remplace la déduction par position dans Paiement.jsx).
+export async function listEtatDesLieux(leaseId) {
+  if (isMocked('backoffice')) return delay([])
+  const { data } = await api.get(`/leases/${leaseId}/etat-des-lieux`)
+  return data
+}
+
+export async function createEtatDesLieux(leaseId, type, items = []) {
+  if (isMocked('backoffice')) {
+    return delay({ id: `edl-${Date.now()}`, lease_id: leaseId, type, status: 'draft', items,
+      owner_signed_at: null, tenant_signed_at: null })
+  }
+  const { data } = await api.post(`/leases/${leaseId}/etat-des-lieux`, { type, items })
+  return data
+}
+
+export async function updateEtatDesLieux(leaseId, edlId, items) {
+  if (isMocked('backoffice')) return delay({ id: edlId, lease_id: leaseId, items })
+  const { data } = await api.patch(`/leases/${leaseId}/etat-des-lieux/${edlId}`, { items })
+  return data
+}
+
+export async function signEtatDesLieux(leaseId, edlId) {
+  if (isMocked('backoffice')) {
+    return delay({ id: edlId, lease_id: leaseId, status: 'signed' })
+  }
+  const { data } = await api.post(`/leases/${leaseId}/etat-des-lieux/${edlId}/sign`)
+  return data
+}
+
+// Paiement séquestre — flux intent (locataire) puis webhook (simulé, cf. bandeau
+// "paiement simulé" du front). AUCUN mouvement d'argent réel, AUCUN appel réseau externe.
+export async function createPaymentIntent(leaseId, paymentId) {
+  if (isMocked('backoffice')) {
+    return delay({ id: paymentId, lease_id: leaseId, provider: 'simulated',
+      intent_id: `sim_${Date.now()}`, intent_status: 'processing', status: 'pending' })
+  }
+  const { data } = await api.post(`/leases/${leaseId}/payments/${paymentId}/intent`)
+  return data
+}
+
+// DÉMO UNIQUEMENT : confirme l'intent créé ci-dessus comme le ferait le webhook du PSP
+// (cf. app/main.py:confirm_payment_intent_demo — réservé au provider simulé, ne remplace
+// jamais le vrai webhook signé). Permet à cet écran de dérouler intent → confirmation sans
+// exposer le secret webhook au client.
+export async function confirmPaymentIntentDemo(leaseId, paymentId) {
+  if (isMocked('backoffice')) {
+    return delay({ id: paymentId, lease_id: leaseId, status: 'escrowed', intent_status: 'succeeded' })
+  }
+  const { data } = await api.post(`/leases/${leaseId}/payments/${paymentId}/intent/confirm`)
+  return data
+}
+
 // Actions de séquestre (owner/admin, gardées côté service coloc-listing) — état only,
 // aucun traitement de paiement réel.
 export async function escrowLeasePayment(leaseId, paymentId) {
@@ -256,6 +337,99 @@ export async function releaseLeasePayment(leaseId, paymentId) {
 export async function refundLeasePayment(leaseId, paymentId) {
   if (isMocked('backoffice')) return delay({ id: leaseId })
   const { data } = await api.post(`/leases/${leaseId}/payments/${paymentId}/refund`)
+  return data
+}
+
+// ---------------------------------------------------------------------------------------
+// Candidatures (domaine réel, service coloc-listing) — remplace le mock
+// `data/applicationsInbox.js`. Statuts serveur : received → shortlisted →
+// (pending_roommate si chambre déjà occupée, sinon direct) → accepted ; rejected possible
+// tant que non accepted. Tenant + rôle imposés côté serveur (candidat/owner/colocataire
+// en place). Domaine réel par défaut (absent de MOCK_DOMAINS), bascule dev via
+// VITE_MOCK_DOMAINS=candidatures.
+// ---------------------------------------------------------------------------------------
+
+function _mockCandidature(overrides = {}) {
+  const now = new Date().toISOString()
+  return {
+    id: `cand-${Date.now()}`, listing_id: 'l-mock', candidate_user_id: 1, owner_id: 2,
+    status: 'received', message: null, created_at: now, updated_at: now,
+    listing: { id: 'l-mock', title: 'Chambre privée', city: 'Casablanca', neighborhood: 'Maârif',
+              rent: 2200, deposit: 2200, room_already_occupied: false, roommates: null },
+    ...overrides,
+  }
+}
+
+// Le candidat postule à une annonce publiée (dédupe serveur : une seule candidature
+// active par candidat/annonce, 409 sinon).
+export async function applyToListing({ listingId, message }) {
+  if (isMocked('candidatures')) return delay(_mockCandidature({ listing_id: listingId, message: message ?? null }))
+  const { data } = await api.post('/candidatures', { listing_id: listingId, message: message ?? null })
+  return data
+}
+
+// Mes candidatures (candidat).
+export async function getMyCandidatures() {
+  if (isMocked('candidatures')) return delay([_mockCandidature()])
+  const { data } = await api.get('/candidatures/mine')
+  return data
+}
+
+// Candidatures reçues (propriétaire) — toutes annonces, ou filtrées sur `listingId`.
+export async function getReceivedCandidatures(listingId) {
+  if (isMocked('candidatures')) {
+    return delay([
+      _mockCandidature({ id: 'cand-1', candidate_user_id: 51, candidate_name: 'Salma Bennani',
+        match_pct: 88, status: 'received',
+        message: "Bonjour, je suis très intéressée par la chambre.",
+        listing: { id: 'l-1', title: 'Chambre privée', city: 'Casablanca', neighborhood: 'Maârif',
+                  rent: 2200, deposit: 2200, room_already_occupied: true,
+                  roommates: { total: 2, women: 1, men: 1 } } }),
+      _mockCandidature({ id: 'cand-2', candidate_user_id: 58, candidate_name: 'Youssef El Amrani',
+        match_pct: 64, status: 'accepted',
+        listing: { id: 'l-2', title: 'Appartement entier T2', city: 'Casablanca', neighborhood: 'Gauthier',
+                  rent: 1900, deposit: 1900, room_already_occupied: false, roommates: null } }),
+    ])
+  }
+  const { data } = await api.get('/candidatures/received', { params: listingId ? { listing_id: listingId } : {} })
+  return data
+}
+
+// Candidatures `pending_roommate` en attente de MA décision de colocataire en place
+// (garde serveur : restreint aux annonces où je suis titulaire d'un bail pending/active).
+export async function getPendingRoommateCandidatures() {
+  if (isMocked('candidatures')) return delay([])
+  const { data } = await api.get('/candidatures/roommate-pending')
+  return data
+}
+
+export async function shortlistCandidature(id) {
+  if (isMocked('candidatures')) return delay(_mockCandidature({ id, status: 'shortlisted' }))
+  const { data } = await api.post(`/candidatures/${id}/shortlist`)
+  return data
+}
+
+// Accepte une candidature présélectionnée — le serveur décide seul entre `accepted`
+// (direct) et `pending_roommate` (chambre déjà occupée) selon l'état réel de l'annonce.
+export async function acceptCandidature(id) {
+  if (isMocked('candidatures')) return delay(_mockCandidature({ id, status: 'accepted' }))
+  const { data } = await api.post(`/candidatures/${id}/accept`)
+  return data
+}
+
+export async function rejectCandidature(id) {
+  if (isMocked('candidatures')) return delay(_mockCandidature({ id, status: 'rejected' }))
+  const { data } = await api.post(`/candidatures/${id}/reject`)
+  return data
+}
+
+// Décision du·des colocataire·s en place sur une candidature `pending_roommate`.
+// `decision` : 'validated' | 'rejected'.
+export async function roommateDecision(id, decision) {
+  if (isMocked('candidatures')) {
+    return delay(_mockCandidature({ id, status: decision === 'validated' ? 'accepted' : 'rejected' }))
+  }
+  const { data } = await api.post(`/candidatures/${id}/roommate-decision`, { decision })
   return data
 }
 
@@ -397,5 +571,126 @@ export async function deleteRole(roleId) {
     return delay({ message: 'Role deleted' })
   }
   const { data } = await api.delete(`/backoffice/roles/${roleId}`)
+  return data
+}
+
+// ---------------------------------------------------------------------------------------
+// Messagerie (conversations candidat ↔ bailleur) + notifications in-app — BFF composite
+// `/api/v1/conversations*` et `/api/v1/notifications*` (service messaging, tenant forcé
+// serveur). Mock fallback dédié (domaines 'conversations'/'notifications', absents de
+// MOCK_DOMAINS par défaut : réel par défaut, bascule explicite pour dev hors-ligne).
+// ---------------------------------------------------------------------------------------
+
+function _shortTime(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const now = new Date()
+  const sameDay = d.toDateString() === now.toDateString()
+  return sameDay
+    ? d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    : d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
+}
+
+function _mapConversation(c) {
+  return {
+    id: c.id,
+    otherUserId: c.other_user_id ?? null,
+    isRequester: Boolean(c.is_requester),
+    listingId: c.property_id,
+    contextType: c.context_type,
+    updatedAt: c.updated_at,
+    updatedAtLabel: _shortTime(c.updated_at),
+  }
+}
+
+function _mapMessage(m) {
+  return { id: m.id, mine: Boolean(m.mine), texte: m.body, heure: _shortTime(m.created_at), createdAt: m.created_at }
+}
+
+function _mockConversations() {
+  return threads.map((th) => ({
+    id: th.id, otherUserId: null, isRequester: true, listingId: null, contextType: 'listing',
+    updatedAt: null, updatedAtLabel: th.heure, _mockNom: th.nom, _mockAvatar: th.avatar,
+    _mockDernier: th.dernier,
+  }))
+}
+
+// Liste de mes conversations (non archivées d'abord — tri par activité récente côté service).
+export async function getConversations() {
+  if (isMocked('conversations')) return delay(_mockConversations())
+  const { data } = await api.get('/conversations')
+  return (data.conversations ?? []).map(_mapConversation)
+}
+
+// Ouvre (ou crée, avec dédupe serveur) une conversation avec `otherUserId` sur un contexte
+// (annonce/candidature/bail) — point d'entrée du bouton « Contacter ».
+export async function createOrOpenConversation({ otherUserId, contextType = 'listing', listingId, contextRefId }) {
+  if (isMocked('conversations')) {
+    const existing = _mockConversations()[0]
+    return delay({ id: existing.id, created: false })
+  }
+  const { data } = await api.post('/conversations', {
+    other_user_id: otherUserId, context_type: contextType,
+    listing_id: listingId, context_ref_id: contextRefId ?? listingId,
+  })
+  return { id: data.conversation.id, created: data.created }
+}
+
+// Fil complet (conversation + messages) — marque aussi les messages reçus comme lus
+// (comportement service, idempotent).
+export async function getConversationThread(conversationId) {
+  if (isMocked('conversations')) {
+    const th = threads.find((t) => t.id === conversationId) ?? threads[0]
+    return { conversation: _mockConversations().find((c) => c.id === th.id),
+             messages: th.messages.map((m, i) => ({ id: i, mine: m.mine, texte: m.texte, heure: m.heure })) }
+  }
+  const { data } = await api.get(`/conversations/${conversationId}`)
+  return { conversation: _mapConversation(data.conversation), messages: (data.messages ?? []).map(_mapMessage) }
+}
+
+export async function sendConversationMessage(conversationId, body) {
+  if (isMocked('conversations')) {
+    return delay({ id: Date.now(), mine: true, texte: body, heure: '' })
+  }
+  const { data } = await api.post(`/conversations/${conversationId}/messages`, { body })
+  return _mapMessage(data.message)
+}
+
+export async function markConversationRead(conversationId) {
+  if (isMocked('conversations')) return delay({ marked: 0 })
+  const { data } = await api.post(`/conversations/${conversationId}/read`)
+  return data
+}
+
+// Notifications in-app (nouveau message, bail à signer, paiement reçu). Non lues d'abord.
+export async function getNotifications() {
+  if (isMocked('notifications')) {
+    return delay([
+      { id: 1, type: 'message.new', payload: { conversation_id: 1 }, link: '/espace/messages',
+        read_at: null, created_at: new Date().toISOString() },
+      { id: 2, type: 'lease.to_sign', payload: {}, link: '/espace/paiement',
+        read_at: new Date().toISOString(), created_at: new Date(Date.now() - 86400000).toISOString() },
+    ])
+  }
+  const { data } = await api.get('/notifications')
+  return data.notifications ?? []
+}
+
+export async function getUnreadNotificationsCount() {
+  if (isMocked('notifications')) return delay(1)
+  const { data } = await api.get('/notifications/unread-count')
+  return data.unread_count ?? 0
+}
+
+export async function markNotificationRead(notificationId) {
+  if (isMocked('notifications')) return delay({ id: notificationId, read_at: new Date().toISOString() })
+  const { data } = await api.post(`/notifications/${notificationId}/read`)
+  return data
+}
+
+export async function markAllNotificationsRead() {
+  if (isMocked('notifications')) return delay({ marked: 0 })
+  const { data } = await api.post('/notifications/read-all')
   return data
 }

@@ -9,9 +9,7 @@ import {
   FiX,
   FiAlertCircle,
   FiHome,
-  FiCalendar,
-  FiSearch,
-  FiChevronDown
+  FiCalendar
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
 import DirIcon from '../../../components/common/DirIcon'
@@ -21,7 +19,7 @@ const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
 
 export default function StayManagerProperties() {
   const { t } = useTranslation(['dashboard', 'common'])
-  const { token } = useAuthStore()
+  const { accessToken: token } = useAuthStore()
   const { fmtDate } = useFormat()
   const [loading, setLoading] = useState(true)
   const [propertyLinks, setPropertyLinks] = useState([])
@@ -39,6 +37,7 @@ export default function StayManagerProperties() {
 
   useEffect(() => {
     fetchData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const fetchData = async () => {

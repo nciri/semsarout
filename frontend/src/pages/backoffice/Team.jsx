@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'react-toastify'
-import { FiUserPlus, FiCopy, FiTrash2, FiRefreshCw } from 'react-icons/fi'
+import { FiUserPlus, FiTrash2, FiRefreshCw } from 'react-icons/fi'
 import { teamService } from '../../services/teamService'
 
 function SeatGauge({ used, limit }) {
@@ -30,7 +30,7 @@ function Team() {
   const qc = useQueryClient()
   const { data, isLoading } = useQuery('team', teamService.getTeam)
   const [email, setEmail] = useState('')
-  const [roleId, setRoleId] = useState('')
+  const [roleId] = useState('')
   const [teamId, setTeamId] = useState('')
   const [newTeam, setNewTeam] = useState('')
 
