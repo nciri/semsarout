@@ -232,3 +232,74 @@ def get_kyc(
     if record.user_id != _user_id(principal) and not is_reviewer:
         raise forbidden("Accès non autorisé à cette vérification.")
     return {"id": record.id, "user_id": record.user_id, "status": record.status}
+
+
+def _kyc_to_dict(record: KycVerification, user) -> dict:
+    return {
+        "id": record.id, "user_id": record.user_id, "status": record.status,
+        "cin_last4": record.cin[-4:] if record.cin else None,
+        "created_at": record.created_at.isoformat() if record.created_at else None,
+        "full_name": user.full_name if user is not None else None,
+        "email": user.email if user is not None else None,
+    }
+
+
+@app.get("/internal/kyc/queue", include_in_schema=False)
+def internal_kyc_queue(tenant: str | None = None, x_internal_token: str = Header(default=""),
+                       db: Session = Depends(get_db)) -> dict:
+    """File de vérification KYC en attente (statut `pending`), cloisonnée tenant via jointure
+    `UserRO.tenant` — alimente la vue back-office Vérifications (fan-out BFF super-admin)."""
+    if x_internal_token != settings.internal_token:
+        raise forbidden("Forbidden")
+    from .models import UserRO
+    q = (
+        db.query(KycVerification, UserRO)
+        .join(UserRO, UserRO.id == KycVerification.user_id)
+        .filter(KycVerification.status == "pending")
+    )
+    if tenant:
+        q = q.filter(UserRO.tenant == tenant)
+    rows = q.order_by(KycVerification.created_at.asc()).all()
+    return {"items": [_kyc_to_dict(record, user) for record, user in rows]}
+
+
+def _resolve_kyc(db: Session, kyc_id: int, x_internal_token: str) -> KycVerification | None:
+    if x_internal_token != settings.internal_token:
+        raise forbidden("Forbidden")
+    return db.get(KycVerification, kyc_id)
+
+
+@app.post("/internal/kyc/{kyc_id}/verify", include_in_schema=False)
+def internal_kyc_verify(kyc_id: int, x_internal_token: str = Header(default=""),
+                        db: Session = Depends(get_db)) -> dict:
+    """Valide une vérification KYC : passe la file en `verified` + marque le compte vérifié
+    (`UserRO.is_verified`). Jeton interne (le BFF a déjà vérifié superadmin/kyc_reviewer)."""
+    record = _resolve_kyc(db, kyc_id, x_internal_token)
+    if record is None:
+        raise not_found("Vérification introuvable.")
+    from .models import UserRO
+    record.status = "verified"
+    user = db.get(UserRO, record.user_id)
+    if user is not None:
+        user.is_verified = True
+    enqueue(
+        db, aggregate_type="kyc_verification", aggregate_id=record.id,
+        event_type=events.KYC_VERIFIED, payload={"user_id": record.user_id},
+    )
+    db.commit()
+    return _kyc_to_dict(record, user)
+
+
+@app.post("/internal/kyc/{kyc_id}/reject", include_in_schema=False)
+def internal_kyc_reject(kyc_id: int, x_internal_token: str = Header(default=""),
+                        db: Session = Depends(get_db)) -> dict:
+    """Refuse une vérification KYC : passe la file en `rejected` (ne touche pas
+    `UserRO.is_verified` — un refus n'annule pas une vérification déjà acquise ailleurs)."""
+    record = _resolve_kyc(db, kyc_id, x_internal_token)
+    if record is None:
+        raise not_found("Vérification introuvable.")
+    from .models import UserRO
+    record.status = "rejected"
+    user = db.get(UserRO, record.user_id)
+    db.commit()
+    return _kyc_to_dict(record, user)
