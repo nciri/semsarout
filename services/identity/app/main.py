@@ -154,20 +154,28 @@ def internal_user_detail(user_id: int, x_internal_token: str = Header(default=""
 
 
 @app.get("/internal/users/stats", include_in_schema=False)
-def internal_users_stats(x_internal_token: str = Header(default=""), db: Session = Depends(get_db)) -> dict:
+def internal_users_stats(tenant: str | None = None, x_internal_token: str = Header(default=""),
+                         db: Session = Depends(get_db)) -> dict:
     """Compteurs users plateforme (super-admin overview) — agrégés par analytics. identity possède
-    les comptes (parité des sous-comptes de `admin/overview.py`)."""
+    les comptes (parité des sous-comptes de `admin/overview.py`).
+
+    `tenant` optionnel : filtre `UserRO.tenant` (m3a-l3achrane vs semsar). Absent → comportement
+    historique (tous tenants confondus), pour ne pas casser les appelants existants."""
     if x_internal_token != settings.internal_token:
         raise forbidden("Forbidden")
     from datetime import datetime, timedelta
 
     from .models import UserRO
     since = datetime.utcnow() - timedelta(days=30)
+
+    def _scoped(q):
+        return q.filter(UserRO.tenant == tenant) if tenant else q
+
     return {
-        "total_users": db.query(UserRO).filter(UserRO.deleted_at.is_(None)).count(),
-        "signups_last_30d": db.query(UserRO).filter(UserRO.created_at >= since).count(),
-        "suspended_users": db.query(UserRO).filter(UserRO.is_suspended.is_(True)).count(),
-        "deleted_pending_users": db.query(UserRO).filter(
+        "total_users": _scoped(db.query(UserRO)).filter(UserRO.deleted_at.is_(None)).count(),
+        "signups_last_30d": _scoped(db.query(UserRO)).filter(UserRO.created_at >= since).count(),
+        "suspended_users": _scoped(db.query(UserRO)).filter(UserRO.is_suspended.is_(True)).count(),
+        "deleted_pending_users": _scoped(db.query(UserRO)).filter(
             UserRO.deleted_at.isnot(None), UserRO.anonymized_at.is_(None)).count(),
     }
 
