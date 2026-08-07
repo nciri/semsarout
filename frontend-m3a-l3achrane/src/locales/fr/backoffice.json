@@ -177,10 +177,34 @@
     "unavailable": "Aucun contrat ni paiement de colocation à afficher : ce domaine n’est pas encore relié au back-office m3a-l3achrane."
   },
   "reports": {
+    "columns": {
+      "target": "Signalé",
+      "reason": "Motif",
+      "reporter": "Signalé par",
+      "reportedAt": "Signalé le",
+      "action": "Action"
+    },
+    "reporterId": "Utilisateur #{{id}}",
+    "resolveRowLabel": "Traiter le signalement",
+    "dismissRowLabel": "Rejeter le signalement",
     "loading": "Chargement des signalements…",
     "loadError": "Les signalements sont momentanément indisponibles.",
-    "unavailableTitle": "Domaine pas encore disponible",
-    "unavailable": "Aucun signalement à afficher : le service trust-safety ne porte aujourd’hui que la modération de comptes (suspension), pas de file de signalements communautaires."
+    "empty": "Aucun signalement en attente de traitement.",
+    "actionError": "Action impossible pour le moment — réessayez.",
+    "count_one": "{{count}} signalement en attente de traitement",
+    "count_other": "{{count}} signalements en attente de traitement",
+    "targetType": {
+      "listing": "Annonce",
+      "profile": "Profil",
+      "message": "Message"
+    },
+    "reason": {
+      "spam": "Spam",
+      "inappropriate": "Contenu inapproprié",
+      "fraud": "Fraude",
+      "harassment": "Harcèlement",
+      "other": "Autre"
+    }
   },
   "settings": {
     "loading": "Chargement…",

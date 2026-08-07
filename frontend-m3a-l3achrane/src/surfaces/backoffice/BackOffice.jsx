@@ -8,6 +8,7 @@ import {
   getBackofficeListings,
   getBackofficeMatchingWeights,
   getBackofficeOverview,
+  dismissReport,
   getBackofficeReports,
   getBackofficeRoles,
   getBackofficeUsers,
@@ -15,6 +16,7 @@ import {
   reactivateBackofficeUser,
   rejectBackofficeListing,
   rejectBackofficeVerification,
+  resolveReport,
   suspendBackofficeUser,
   updateBackofficeMatchingWeights,
   verifyBackofficeVerification,
@@ -822,44 +824,132 @@ function ContractsView() {
   )
 }
 
+const REPORT_TARGET_ICON = { listing: 'home', profile: 'user', message: 'message-circle' }
+
+function fmtReportDate(iso, lang) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleString(lang === 'ar' ? 'ar-MA' : 'fr-FR', {
+    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+  })
+}
+
 function ReportsView() {
-  const { t } = useTranslation(['backoffice'])
+  const { t, i18n } = useTranslation(['backoffice'])
+  const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
+  const [actionError, setActionError] = useState(false)
+  const [pendingAction, setPendingAction] = useState(null) // id en cours de traitement
 
   useEffect(() => {
     let cancelled = false
     setLoading(true)
     setLoadError(false)
     getBackofficeReports()
+      .then((data) => { if (!cancelled) setItems(data?.items ?? []) })
       .catch(() => { if (!cancelled) setLoadError(true) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [])
 
+  const runAction = (reportId, action) => {
+    setPendingAction(reportId)
+    setActionError(false)
+    const call = action === 'resolve' ? resolveReport : dismissReport
+    call(reportId)
+      .then(() => setItems((prev) => prev.filter((r) => r.id !== reportId)))
+      .catch(() => setActionError(true))
+      .finally(() => setPendingAction(null))
+  }
+
   return (
-    <Card padding={24}>
+    <Card padding={0} style={{ overflow: 'hidden' }}>
+      <div
+        style={{
+          display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 130px 150px 150px 92px', gap: 16,
+          padding: '13px 20px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--surface-sunken)',
+          font: 'var(--fw-extrabold) 12px var(--font-body)', color: 'var(--text-muted)', letterSpacing: '.05em', textTransform: 'uppercase',
+        }}
+      >
+        <div>{t('backoffice:reports.columns.target')}</div>
+        <div>{t('backoffice:reports.columns.reason')}</div>
+        <div>{t('backoffice:reports.columns.reporter')}</div>
+        <div>{t('backoffice:reports.columns.reportedAt')}</div>
+        <div style={{ justifySelf: 'end' }}>{t('backoffice:reports.columns.action')}</div>
+      </div>
       {loading && (
-        <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+        <div style={{ padding: '18px 20px', font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
           {t('backoffice:reports.loading')}
         </div>
       )}
       {!loading && loadError && (
-        <div style={{ font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+        <div style={{ padding: '18px 20px', font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
           {t('backoffice:reports.loadError')}
         </div>
       )}
-      {!loading && !loadError && (
-        <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-          <Icon name="flag" size={20} strokeWidth={2} style={{ color: 'var(--text-muted)', flex: 'none', marginTop: 2 }} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div style={{ font: 'var(--fw-bold) 13.5px var(--font-body)', color: 'var(--text-heading)' }}>
-              {t('backoffice:reports.unavailableTitle')}
+      {!loading && !loadError && actionError && (
+        <div style={{ padding: '10px 20px', font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+          {t('backoffice:reports.actionError')}
+        </div>
+      )}
+      {!loading && !loadError && items.length === 0 && (
+        <div style={{ padding: '18px 20px', font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+          {t('backoffice:reports.empty')}
+        </div>
+      )}
+      {!loading && !loadError && items.map((r) => {
+        const reasonLabel = t(`backoffice:reports.reason.${r.reason}`, { defaultValue: r.reason })
+        const busy = pendingAction === r.id
+        return (
+          <div
+            key={r.id}
+            style={{
+              display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 130px 150px 150px 92px', gap: 16, alignItems: 'center',
+              padding: '14px 20px', borderBottom: '1px solid var(--border-subtle)', fontSize: 13.5,
+            }}
+          >
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', minWidth: 0 }}>
+              <Icon name={REPORT_TARGET_ICON[r.target_type] ?? 'flag'} size={18} strokeWidth={2} style={{ color: 'var(--text-muted)', flex: 'none' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, color: 'var(--text-heading)' }}>
+                  {t(`backoffice:reports.targetType.${r.target_type}`, { defaultValue: r.target_type })}
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {r.target_id}{r.description ? ` — ${r.description}` : ''}
+                </div>
+              </div>
             </div>
-            <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)', maxWidth: 560 }}>
-              {t('backoffice:reports.unavailable')}
+            <div><Badge tone="danger">{reasonLabel}</Badge></div>
+            <div style={{ color: 'var(--text-body)' }}>{t('backoffice:reports.reporterId', { id: r.reporter_id })}</div>
+            <div style={{ color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>{fmtReportDate(r.created_at, i18n.language)}</div>
+            <div style={{ display: 'flex', gap: 6, justifySelf: 'end' }}>
+              <button
+                type="button"
+                title={t('backoffice:reports.resolveRowLabel')}
+                aria-label={t('backoffice:reports.resolveRowLabel')}
+                disabled={busy}
+                onClick={() => runAction(r.id, 'resolve')}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', border: 0, borderRadius: 7, background: 'var(--green-100)', color: 'var(--green-700)', cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1 }}
+              >
+                <Icon name="check" size={16} strokeWidth={2.6} />
+              </button>
+              <button
+                type="button"
+                title={t('backoffice:reports.dismissRowLabel')}
+                aria-label={t('backoffice:reports.dismissRowLabel')}
+                disabled={busy}
+                onClick={() => runAction(r.id, 'dismiss')}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', border: 0, borderRadius: 7, background: 'var(--red-100)', color: 'var(--red-600)', cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1 }}
+              >
+                <Icon name="x" size={16} strokeWidth={2.6} />
+              </button>
             </div>
           </div>
+        )
+      })}
+      {!loading && !loadError && items.length > 0 && (
+        <div style={{ padding: '14px 20px', font: 'var(--fw-regular) 13px var(--font-body)', color: 'var(--text-muted)' }}>
+          {t('backoffice:reports.count', { count: items.length })}
         </div>
       )}
     </Card>

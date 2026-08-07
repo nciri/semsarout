@@ -199,16 +199,49 @@ export async function getBackofficeContracts() {
   return { items: [], available: false }
 }
 
-// Signalements (super-admin) : `trust-safety` (services/trust-safety/app/models.py) ne porte
-// que la modération de comptes (`ModerationStatus` : suspend/delete par user/agency) et son
-// journal d'audit (`AdminAction`) — aucun modèle de signalement/litige communautaire (pas de
-// `Report`, pas de motif, pas de statut traité/classé). Le "signalement" côté app m3a
-// (`src/data/securityCenter.js`) n'est lui-même qu'un écran de libellés, sans soumission réelle
-// vers un backend. Aucun endpoint à réutiliser, aucun risque de collision avec le monolithe
-// legacy (`frontend/`) : état vide honnête plutôt que d'inventer une file de signalements.
+// Signalements (super-admin) : domaine `trust-safety` (services/trust-safety/app/models.py,
+// modèle `Report`), fan-out BFF `GET /api/v1/backoffice/reports` → trust-safety
+// `/internal/reports` (statut `open` par défaut, filtrable via `?status=`).
 export async function getBackofficeReports() {
-  if (isMocked('backoffice')) return delay({ items: [], available: false })
-  return { items: [], available: false }
+  if (isMocked('backoffice')) {
+    return delay({
+      items: [
+        { id: 1, tenant: 'm3a-l3achrane', reporter_id: 3021, target_type: 'listing',
+          target_id: 'l-4482', reason: 'spam', description: 'Annonce publiée en double.',
+          status: 'open', created_at: '2026-08-06T09:18:00+00:00', resolved_at: null,
+          resolver_id: null },
+        { id: 2, tenant: 'm3a-l3achrane', reporter_id: 3087, target_type: 'profile',
+          target_id: '102', reason: 'harassment', description: null, status: 'open',
+          created_at: '2026-08-06T08:10:00+00:00', resolved_at: null, resolver_id: null },
+      ],
+    })
+  }
+  const { data } = await api.get('/backoffice/reports')
+  return data
+}
+
+// Actions de traitement d'un signalement — proxy générique du service trust-safety (garde
+// superadmin déjà appliquée côté service, cf. POST /admin/reports/{id}/(resolve|dismiss)).
+export async function resolveReport(reportId) {
+  if (isMocked('backoffice')) return delay({ id: reportId, status: 'resolved' })
+  const { data } = await api.post(`/admin/reports/${reportId}/resolve`)
+  return data
+}
+
+export async function dismissReport(reportId) {
+  if (isMocked('backoffice')) return delay({ id: reportId, status: 'dismissed' })
+  const { data } = await api.post(`/admin/reports/${reportId}/dismiss`)
+  return data
+}
+
+// Création d'un signalement (utilisateur authentifié) — `POST /api/v1/reports` → trust-safety
+// `POST /reports` (reporter_id + tenant injectés depuis l'identité par le BFF).
+export async function createReport({ target_type, target_id, reason, description }) {
+  if (isMocked('backoffice')) {
+    return delay({ id: Date.now(), target_type, target_id, reason, description, status: 'open' })
+  }
+  const { data } = await api.post('/reports', { target_type, target_id, reason, description })
+  return data
 }
 
 // Pondération active du scoring matching (super-admin, lecture + édition), fan-out BFF
