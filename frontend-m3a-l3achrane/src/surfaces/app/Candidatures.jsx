@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Avatar, Badge, Button, Card, Chip, Input, MatchScore } from '../../ds/index.js'
 import { applicationsInbox } from '../../data/applicationsInbox.js'
-import { createLease } from '../../services/index.js'
+import { createLease, createOrOpenConversation } from '../../services/index.js'
 
 const todayIso = () => new Date().toISOString().slice(0, 10)
 
@@ -151,8 +152,27 @@ function ApplicationActions({ app, onShortlist, onShare, onValidate, onRefuse, o
 
 function ApplicationCard({ app, slots, onSetStatus, onPickSlot, onLeaseCreated }) {
   const { t } = useTranslation(['app', 'common'])
+  const navigate = useNavigate()
   const [showLeaseForm, setShowLeaseForm] = useState(false)
+  const [contacting, setContacting] = useState(false)
+  const [contactError, setContactError] = useState(false)
   const { annonce } = app
+
+  const contact = async () => {
+    setContacting(true)
+    setContactError(false)
+    try {
+      const { id } = await createOrOpenConversation({
+        otherUserId: app.tenantUserId, contextType: 'listing', listingId: app.listingId,
+      })
+      navigate(`/espace/messages?conversation=${id}`)
+    } catch {
+      setContactError(true)
+    } finally {
+      setContacting(false)
+    }
+  }
+
   return (
     <Card>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -172,7 +192,17 @@ function ApplicationCard({ app, slots, onSetStatus, onPickSlot, onLeaseCreated }
             </div>
             <div style={{ font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-muted)' }}>{app.profil}</div>
           </div>
-          <MatchScore value={app.score} />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+            <MatchScore value={app.score} />
+            <Button size="sm" variant="ghost" onClick={contact} disabled={contacting}>
+              {t('app:messaging.contact')}
+            </Button>
+            {contactError && (
+              <span style={{ font: 'var(--fw-medium) var(--fs-xs) var(--font-body)', color: 'var(--red-600)' }}>
+                {t('app:messaging.contactError')}
+              </span>
+            )}
+          </div>
         </div>
 
         <div style={{ font: 'var(--fw-regular) var(--fs-sm)/1.55 var(--font-body)', color: 'var(--text-body)', padding: '12px 14px', borderRadius: 'var(--radius-md)', background: 'var(--surface-sunken)' }}>

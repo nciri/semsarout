@@ -3,7 +3,10 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { SidebarNav } from '../../ds/index.js'
 import api from '../../services/api.js'
-import { getCurrentProfile } from '../../services/index.js'
+import { getCurrentProfile, getUnreadNotificationsCount } from '../../services/index.js'
+
+// Polling léger (pas de websocket) — assez réactif pour un badge, sans coût serveur notable.
+const UNREAD_POLL_MS = 30000
 
 // Garde d'auth : présence du drapeau lisible `m3a_authed` (posé par le BFF, JAMAIS un
 // jeton) — le jeton d'accès réel reste en cookie httpOnly, invisible ici.
@@ -21,6 +24,7 @@ const ROUTES = {
   quiz: '/espace/questionnaire',
   pay: '/espace/paiement',
   security: '/espace/securite',
+  notifications: '/espace/notifications',
 }
 
 export default function AppLayout() {
@@ -28,6 +32,7 @@ export default function AppLayout() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const [userName, setUserName] = useState(null)
+  const [unreadCount, setUnreadCount] = useState(0)
   // Route active = plus long préfixe correspondant (candidatures avant candidature avant espace).
   const active = Object.entries(ROUTES)
     .sort((a, b) => b[1].length - a[1].length)
@@ -43,6 +48,8 @@ export default function AppLayout() {
     { icon: 'list-checks', label: t('nav.quiz'), value: 'quiz' },
     { icon: 'credit-card', label: t('nav.payments'), value: 'pay' },
     { icon: 'shield', label: t('nav.security'), value: 'security' },
+    { icon: 'bell', label: t('nav.notifications'), value: 'notifications',
+      badge: unreadCount > 0 ? unreadCount : undefined },
   ]
 
   useEffect(() => {
@@ -53,6 +60,14 @@ export default function AppLayout() {
     getCurrentProfile()
       .then((profile) => setUserName(profile.prenom || null))
       .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    const poll = () => getUnreadNotificationsCount().then((n) => !cancelled && setUnreadCount(n)).catch(() => {})
+    poll()
+    const id = setInterval(poll, UNREAD_POLL_MS)
+    return () => { cancelled = true; clearInterval(id) }
   }, [])
 
   const handleLogout = () => {

@@ -9,7 +9,7 @@ const IMPORTANCE_TO_BACKEND = { neutral: 'INDIFFERENT', preference: 'PREFERENCE'
 // sinon, seuls les domaines encore sans backend restent mockés (retirés au fil des plans C/D).
 const ALL_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 const MOCK_DOMAINS = new Set(
-  (import.meta.env.VITE_MOCK_DOMAINS ?? 'partners,messages').split(','),
+  (import.meta.env.VITE_MOCK_DOMAINS ?? 'partners').split(','),
 )
 const isMocked = (domain) => ALL_MOCK || MOCK_DOMAINS.has(domain)
 const delay = (v) => new Promise((r) => setTimeout(() => r(v), 120)) // mimic async
@@ -59,12 +59,6 @@ export async function saveLifestyle(answers, importance) {
 export async function listPartners() {
   if (isMocked('partners')) return delay(partners)
   const { data } = await api.get('/partners')
-  return data
-}
-
-export async function listThreads() {
-  if (isMocked('messages')) return delay(threads)
-  const { data } = await api.get('/messages/threads')
   return data
 }
 
@@ -484,5 +478,126 @@ export async function deleteRole(roleId) {
     return delay({ message: 'Role deleted' })
   }
   const { data } = await api.delete(`/backoffice/roles/${roleId}`)
+  return data
+}
+
+// ---------------------------------------------------------------------------------------
+// Messagerie (conversations candidat ↔ bailleur) + notifications in-app — BFF composite
+// `/api/v1/conversations*` et `/api/v1/notifications*` (service messaging, tenant forcé
+// serveur). Mock fallback dédié (domaines 'conversations'/'notifications', absents de
+// MOCK_DOMAINS par défaut : réel par défaut, bascule explicite pour dev hors-ligne).
+// ---------------------------------------------------------------------------------------
+
+function _shortTime(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const now = new Date()
+  const sameDay = d.toDateString() === now.toDateString()
+  return sameDay
+    ? d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    : d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
+}
+
+function _mapConversation(c) {
+  return {
+    id: c.id,
+    otherUserId: c.other_user_id ?? null,
+    isRequester: Boolean(c.is_requester),
+    listingId: c.property_id,
+    contextType: c.context_type,
+    updatedAt: c.updated_at,
+    updatedAtLabel: _shortTime(c.updated_at),
+  }
+}
+
+function _mapMessage(m) {
+  return { id: m.id, mine: Boolean(m.mine), texte: m.body, heure: _shortTime(m.created_at), createdAt: m.created_at }
+}
+
+function _mockConversations() {
+  return threads.map((th) => ({
+    id: th.id, otherUserId: null, isRequester: true, listingId: null, contextType: 'listing',
+    updatedAt: null, updatedAtLabel: th.heure, _mockNom: th.nom, _mockAvatar: th.avatar,
+    _mockDernier: th.dernier,
+  }))
+}
+
+// Liste de mes conversations (non archivées d'abord — tri par activité récente côté service).
+export async function getConversations() {
+  if (isMocked('conversations')) return delay(_mockConversations())
+  const { data } = await api.get('/conversations')
+  return (data.conversations ?? []).map(_mapConversation)
+}
+
+// Ouvre (ou crée, avec dédupe serveur) une conversation avec `otherUserId` sur un contexte
+// (annonce/candidature/bail) — point d'entrée du bouton « Contacter ».
+export async function createOrOpenConversation({ otherUserId, contextType = 'listing', listingId, contextRefId }) {
+  if (isMocked('conversations')) {
+    const existing = _mockConversations()[0]
+    return delay({ id: existing.id, created: false })
+  }
+  const { data } = await api.post('/conversations', {
+    other_user_id: otherUserId, context_type: contextType,
+    listing_id: listingId, context_ref_id: contextRefId ?? listingId,
+  })
+  return { id: data.conversation.id, created: data.created }
+}
+
+// Fil complet (conversation + messages) — marque aussi les messages reçus comme lus
+// (comportement service, idempotent).
+export async function getConversationThread(conversationId) {
+  if (isMocked('conversations')) {
+    const th = threads.find((t) => t.id === conversationId) ?? threads[0]
+    return { conversation: _mockConversations().find((c) => c.id === th.id),
+             messages: th.messages.map((m, i) => ({ id: i, mine: m.mine, texte: m.texte, heure: m.heure })) }
+  }
+  const { data } = await api.get(`/conversations/${conversationId}`)
+  return { conversation: _mapConversation(data.conversation), messages: (data.messages ?? []).map(_mapMessage) }
+}
+
+export async function sendConversationMessage(conversationId, body) {
+  if (isMocked('conversations')) {
+    return delay({ id: Date.now(), mine: true, texte: body, heure: '' })
+  }
+  const { data } = await api.post(`/conversations/${conversationId}/messages`, { body })
+  return _mapMessage(data.message)
+}
+
+export async function markConversationRead(conversationId) {
+  if (isMocked('conversations')) return delay({ marked: 0 })
+  const { data } = await api.post(`/conversations/${conversationId}/read`)
+  return data
+}
+
+// Notifications in-app (nouveau message, bail à signer, paiement reçu). Non lues d'abord.
+export async function getNotifications() {
+  if (isMocked('notifications')) {
+    return delay([
+      { id: 1, type: 'message.new', payload: { conversation_id: 1 }, link: '/espace/messages',
+        read_at: null, created_at: new Date().toISOString() },
+      { id: 2, type: 'lease.to_sign', payload: {}, link: '/espace/paiement',
+        read_at: new Date().toISOString(), created_at: new Date(Date.now() - 86400000).toISOString() },
+    ])
+  }
+  const { data } = await api.get('/notifications')
+  return data.notifications ?? []
+}
+
+export async function getUnreadNotificationsCount() {
+  if (isMocked('notifications')) return delay(1)
+  const { data } = await api.get('/notifications/unread-count')
+  return data.unread_count ?? 0
+}
+
+export async function markNotificationRead(notificationId) {
+  if (isMocked('notifications')) return delay({ id: notificationId, read_at: new Date().toISOString() })
+  const { data } = await api.post(`/notifications/${notificationId}/read`)
+  return data
+}
+
+export async function markAllNotificationsRead() {
+  if (isMocked('notifications')) return delay({ marked: 0 })
+  const { data } = await api.post('/notifications/read-all')
   return data
 }

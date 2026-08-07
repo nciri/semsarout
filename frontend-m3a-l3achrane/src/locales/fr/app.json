@@ -40,7 +40,31 @@
     "now": "maintenant",
     "viewListing": "Voir l’annonce",
     "privacyBanner": "Vos numéros et e-mails restent masqués tant que la mise en relation n’est pas acceptée.",
-    "phoneDetectedWarning": "Numéro de téléphone détecté et masqué — restez sur la messagerie interne jusqu’à la vérification."
+    "phoneDetectedWarning": "Numéro de téléphone détecté et masqué — restez sur la messagerie interne jusqu’à la vérification.",
+    "empty": "Vous n’avez pas encore de conversation.",
+    "emptyThread": "Aucun message pour l’instant — écrivez le premier !",
+    "loadError": "Impossible de charger la messagerie pour le moment.",
+    "contact": "Contacter",
+    "contactSuccess": "Conversation ouverte — retrouvez-la dans votre messagerie.",
+    "contactError": "Impossible d’ouvrir la conversation pour le moment.",
+    "role": {
+      "owner": "Bailleur #{{id}}",
+      "candidate": "Candidat·e #{{id}}"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "Aucune notification pour l’instant.",
+    "loadError": "Impossible de charger les notifications pour le moment.",
+    "markAllRead": "Tout marquer comme lu",
+    "unreadCount_one": "{{count}} non lue",
+    "unreadCount_other": "{{count}} non lues",
+    "types": {
+      "message.new": "Nouveau message",
+      "lease.to_sign": "Bail à consulter/signer",
+      "payment.due": "Paiement à effectuer",
+      "payment.received": "Mise à jour de paiement"
+    }
   },
   "candidature": {
     "sentTitle": "Candidature envoyée",

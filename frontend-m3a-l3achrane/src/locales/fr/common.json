@@ -43,7 +43,8 @@
     "apiWebhooks": "API & webhooks",
     "help": "Besoin d'aide ?",
     "logout": "Déconnexion",
-    "myAccount": "Mon compte"
+    "myAccount": "Mon compte",
+    "notifications": "Notifications"
   },
   "trust": {
     "verified": "Vérifiée",
