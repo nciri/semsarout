@@ -1,32 +1,40 @@
 import axios from 'axios'
 
+// Durcissement JWT : les jetons vivent en cookies httpOnly posés par le BFF (jamais en
+// localStorage/JS). `withCredentials` fait porter ces cookies sur chaque requête ; le
+// serveur les valide (Authorization en repli côté BFF pour les autres clients).
 const api = axios.create({
   baseURL: '/api/v1',
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
 })
 
 const AUTH_PATHS = ['/auth/login', '/auth/register', '/auth/refresh']
 const isAuthPath = (url = '') => AUTH_PATHS.some((p) => url.includes(p))
 
-const readAuthState = () => {
-  try {
-    const raw = localStorage.getItem('auth-storage')
-    if (!raw) return null
-    return JSON.parse(raw)?.state ?? null
-  } catch {
-    return null
-  }
+const MUTATING_METHODS = new Set(['post', 'put', 'patch', 'delete'])
+
+// Double-submit CSRF : le cookie m3a_csrf est lisible en JS par construction (sinon le
+// front ne pourrait jamais prouver qu'il l'a vu) ; seuls les jetons d'accès/refresh sont
+// httpOnly.
+function readCsrfCookie() {
+  const match = document.cookie.match(/(?:^|;\s*)m3a_csrf=([^;]+)/)
+  return match ? decodeURIComponent(match[1]) : null
 }
 
 api.interceptors.request.use((config) => {
   if (isAuthPath(config.url)) return config
-  const state = readAuthState()
-  if (state?.accessToken) config.headers.Authorization = `Bearer ${state.accessToken}`
+  const method = (config.method || 'get').toLowerCase()
+  if (MUTATING_METHODS.has(method)) {
+    const csrf = readCsrfCookie()
+    if (csrf) config.headers['X-CSRF-Token'] = csrf
+  }
   return config
 })
 
 // Miroir du refresh du client semsar (cf. frontend/src/services/api.js) :
-// un 401 hors routes d'auth déclenche un unique essai de refresh avant de retenter la requête.
+// un 401 hors routes d'auth déclenche un unique essai de refresh (via cookie) avant de
+// retenter la requête d'origine.
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -35,22 +43,11 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthPath(originalRequest.url)) {
       originalRequest._retry = true
 
-      const state = readAuthState()
-      if (state?.refreshToken) {
-        try {
-          const response = await axios.post('/api/v1/auth/refresh', null, {
-            headers: { Authorization: `Bearer ${state.refreshToken}` },
-          })
-
-          const newState = { ...state, accessToken: response.data.access_token }
-          localStorage.setItem('auth-storage', JSON.stringify({ state: newState }))
-
-          originalRequest.headers.Authorization = `Bearer ${response.data.access_token}`
-          return api(originalRequest)
-        } catch (refreshError) {
-          localStorage.removeItem('auth-storage')
-          return Promise.reject(refreshError)
-        }
+      try {
+        await axios.post('/api/v1/auth/refresh', null, { withCredentials: true })
+        return api(originalRequest)
+      } catch (refreshError) {
+        return Promise.reject(refreshError)
       }
     }
 

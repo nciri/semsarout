@@ -2,7 +2,14 @@ import { useEffect, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { SidebarNav } from '../../ds/index.js'
+import api from '../../services/api.js'
 import { getCurrentProfile } from '../../services/index.js'
+
+// Garde d'auth : présence du drapeau lisible `m3a_authed` (posé par le BFF, JAMAIS un
+// jeton) — le jeton d'accès réel reste en cookie httpOnly, invisible ici.
+function hasAuthedCookie() {
+  return /(?:^|;\s*)m3a_authed=1(?:;|$)/.test(document.cookie)
+}
 
 const ROUTES = {
   home: '/',
@@ -39,11 +46,7 @@ export default function AppLayout() {
   ]
 
   useEffect(() => {
-    let token = null
-    try {
-      token = JSON.parse(localStorage.getItem('auth-storage'))?.state?.accessToken ?? null
-    } catch { /* stockage corrompu = non connecté */ }
-    if (!token) navigate('/connexion', { replace: true })
+    if (!hasAuthedCookie()) navigate('/connexion', { replace: true })
   }, [navigate])
 
   useEffect(() => {
@@ -53,8 +56,7 @@ export default function AppLayout() {
   }, [])
 
   const handleLogout = () => {
-    localStorage.removeItem('auth-storage')
-    navigate('/connexion')
+    api.post('/auth/logout').finally(() => navigate('/connexion'))
   }
 
   return (

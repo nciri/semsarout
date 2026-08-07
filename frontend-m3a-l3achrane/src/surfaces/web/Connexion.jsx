@@ -15,12 +15,6 @@ const TRUST_FEATURE_STYLES = [
   { bg: 'rgba(255,255,255,.12)', color: '#fff' },
 ]
 
-function persistSession(data) {
-  localStorage.setItem('auth-storage', JSON.stringify({
-    state: { accessToken: data.access_token, refreshToken: data.refresh_token },
-  }))
-}
-
 export default function Connexion() {
   const { t } = useTranslation(['web', 'common'])
   const navigate = useNavigate()
@@ -42,8 +36,8 @@ export default function Connexion() {
       const payload = mode === 'login'
         ? { email: form.email, password: form.password }
         : form
-      const { data } = await api.post(path, payload)
-      persistSession(data)
+      // Le BFF pose les cookies httpOnly de session ; rien à persister côté front.
+      await api.post(path, payload)
       navigate('/espace')
     } catch (err) {
       setError(err.response?.data?.error ?? t('web:auth.genericError'))
