@@ -903,6 +903,43 @@ async def backoffice_lifestyle_referential(request: Request) -> Response:
                     media_type=r.headers.get("content-type"))
 
 
+@app.get("/api/v1/backoffice/accounts", include_in_schema=False)
+async def backoffice_accounts(request: Request) -> Response:
+    """Comptes utilisateurs du tenant m3a (super-admin) — LOT B : garde tenant STRICTE côté
+    serveur. `GET /api/v1/admin/accounts` (proxy générique → analytics) accepte un `tenant` en
+    query string entièrement piloté par le client : le front m3a l'envoyait de bonne foi
+    (`tenant=m3a-l3achrane`), mais rien n'empêchait un appel direct à l'API de l'omettre (→ tous
+    tenants) ou de le falsifier. Ici le tenant vient exclusivement de `_resolve_tenant` (Host /
+    en-tête `x-tenant` dev-only) + du jeton vérifié (`ident['tenant']`, comparaison faite par
+    `_require_backoffice_superadmin`) — jamais du paramètre client, qui est ignoré s'il est
+    fourni. `type=user` forcé par défaut (vue Utilisateurs), reste des filtres (q/status/page)
+    relayés tels quels."""
+    denied, tenant, _ident = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.analytics
+    if client is None:
+        return JSONResponse({"items": [], "total": 0})
+    ident = await _resolve_identity(
+        app_, request.headers.get("authorization"),
+        request.cookies.get(settings.cookie_access_name),
+    )
+    headers: dict = {}
+    _inject_identity(headers, ident or {})
+    # Tenant FORCÉ serveur : tout `tenant` fourni par le client dans la query string est ignoré.
+    params = {k: v for k, v in request.query_params.items() if k != "tenant"}
+    params.setdefault("type", "user")
+    params["tenant"] = tenant
+    try:
+        r = await client.request("GET", "/admin/accounts", params=params, headers=headers)
+    except Exception:  # noqa: BLE001 — dégradation propre si analytics est indisponible
+        return JSONResponse({"items": [], "total": 0})
+    if r.status_code != 200:
+        return JSONResponse({"items": [], "total": 0})
+    return JSONResponse(r.json())
+
+
 @app.post("/api/v1/auth/logout", include_in_schema=False)
 async def logout(request: Request) -> Response:
     """Révoque la session côté BFF (efface les cookies). Servi par le BFF lui-même, pas

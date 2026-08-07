@@ -148,9 +148,12 @@ export async function rejectBackofficeListing(listingId) {
   return data
 }
 
-// Comptes utilisateurs du tenant m3a (super-admin), réutilise l'endpoint composite existant
-// `GET /api/v1/admin/accounts` (analytics, filtré `type=user`) avec le paramètre `tenant`
-// (opt-in, n'affecte pas la console super-admin semsarout qui l'omet).
+// Comptes utilisateurs du tenant m3a (super-admin) : route composite BFF dédiée
+// `GET /api/v1/backoffice/accounts` (LOT B — durcissement). Le cloisonnement tenant est
+// désormais imposé CÔTÉ SERVEUR par le BFF (`gateway/app/main.py:backoffice_accounts`,
+// tenant résolu depuis Host/jeton, jamais depuis un paramètre client) — remplace l'ancien
+// appel direct à `GET /api/v1/admin/accounts?tenant=...` où `tenant` était un simple
+// paramètre de requête que le client pouvait omettre ou falsifier.
 export async function getBackofficeUsers() {
   if (isMocked('backoffice')) {
     return delay({
@@ -171,7 +174,7 @@ export async function getBackofficeUsers() {
       total: 4,
     })
   }
-  const { data } = await api.get('/admin/accounts', { params: { type: 'user', tenant: 'm3a-l3achrane' } })
+  const { data } = await api.get('/backoffice/accounts')
   return data
 }
 
