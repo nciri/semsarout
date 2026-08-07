@@ -5,7 +5,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
-from .models import BED_TYPES, HOUSING_GENDERS, MEDIA_TYPES, PROPERTY_TYPES
+from .models import BED_TYPES, EDL_TYPES, HOUSING_GENDERS, MEDIA_TYPES, PROPERTY_TYPES
 
 
 def _validate(value: str, allowed: set[str], label: str) -> str:
@@ -101,6 +101,31 @@ class LeaseCreateIn(BaseModel):
     deposit_amount: Decimal = Field(ge=0)
     start_date: date
     end_date: date | None = None
+
+
+class EtatDesLieuxItemIn(BaseModel):
+    piece: str = Field(min_length=1, max_length=80)
+    etat: str = Field(min_length=1, max_length=40)
+    commentaire: str = Field(default="", max_length=500)
+
+
+class EtatDesLieuxCreateIn(BaseModel):
+    type: str
+    items: list[EtatDesLieuxItemIn] = Field(default_factory=list)
+
+    @field_validator("type")
+    @classmethod
+    def _t(cls, v: str) -> str:
+        return _validate(v, EDL_TYPES, "type")
+
+
+class EtatDesLieuxUpdateIn(BaseModel):
+    items: list[EtatDesLieuxItemIn]
+
+
+class WebhookIn(BaseModel):
+    intent_id: str = Field(min_length=1, max_length=64)
+    event: str  # 'succeeded' | 'failed'
 
 
 class MediaIn(BaseModel):

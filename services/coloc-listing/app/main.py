@@ -18,18 +18,22 @@ from semsar_common import get_settings, install_legacy_error_handlers, setup_log
 from semsar_events import enqueue
 
 from . import events
+from .config import get_coloc_settings
 from .db import get_db, init_db
 from .models import (
-    ColocLease, ColocPayment, ColocProperty, CurrentRoommates, HouseRule, Listing,
-    ListingMedia, _now,
+    ColocLease, ColocPayment, ColocProperty, CurrentRoommates, EtatDesLieux, HouseRule,
+    Listing, ListingMedia, _now,
 )
+from .payment_provider import get_payment_provider, verify_webhook_signature
 from .payment_state_machine import PaymentTransitionError, assert_payment_transition
 from .schemas import (
-    HouseRulesIn, LeaseCreateIn, ListingCreateIn, ListingUpdateIn, MediaIn, RoommatesIn,
+    EtatDesLieuxCreateIn, EtatDesLieuxUpdateIn, HouseRulesIn, LeaseCreateIn, ListingCreateIn,
+    ListingUpdateIn, MediaIn, RoommatesIn, WebhookIn,
 )
 from .state_machine import EDITABLE_STATUSES, STATUSES, TransitionError, assert_transition
 
 settings = get_settings()
+coloc_settings = get_coloc_settings()
 setup_logging(settings.service_name, settings.log_level)
 
 TENANT = "m3a-l3achrane"
@@ -430,10 +434,23 @@ def my_leases(principal: Principal = Depends(get_principal), db: Session = Depen
     return [lease.to_dict() for lease in rows]
 
 
+@router.get("/me/leases")
+def my_leases_tenant(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    """Tous les baux du LOCATAIRE courant (le plus récent en premier) — support multi-bail
+    pour l'écran Paiement (sélecteur si plusieurs baux)."""
+    uid = _uid(principal)
+    if uid is None:
+        return _err("Authentification requise", 401)
+    rows = db.query(ColocLease).filter(ColocLease.tenant_user_id == uid) \
+        .order_by(ColocLease.created_at.desc()).all()
+    return [lease.to_dict() for lease in rows]
+
+
 @router.get("/me/lease")
 def my_lease(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
     """Bail le plus pertinent du LOCATAIRE courant (actif en priorité, sinon le plus
-    récent) — alimente l'écran Paiement/séquestre. `null` si l'utilisateur n'a aucun bail."""
+    récent) — alimente l'écran Paiement/séquestre. `null` si l'utilisateur n'a aucun bail.
+    Conservée pour compat ; préférer `/me/leases` (liste complète) côté nouveaux clients."""
     uid = _uid(principal)
     if uid is None:
         return _err("Authentification requise", 401)
@@ -516,6 +533,233 @@ def refund_payment(lease_id: str, payment_id: str, principal: Principal = Depend
     db.commit()
     db.refresh(lease)
     return lease.to_dict()
+
+
+# --- Paiement : intent (port PaymentProvider) + webhook simulé ------------------------
+
+def _lease_authorized_intent(lease: ColocLease, principal: Principal) -> bool:
+    """Créer un intent de paiement : réservé au LOCATAIRE du bail (c'est lui qui paie)."""
+    uid = _uid(principal)
+    return uid is not None and uid == lease.tenant_user_id
+
+
+@router.post("/leases/{lease_id}/payments/{payment_id}/intent", status_code=201)
+def create_payment_intent(lease_id: str, payment_id: str,
+                          principal: Principal = Depends(get_principal),
+                          db: Session = Depends(get_db)):
+    """Crée un intent de paiement via le port `PaymentProvider` (simulé par défaut,
+    aucun mouvement d'argent réel). Le paiement reste `pending` tant que le webhook
+    simulé n'a pas confirmé l'intent (flux asynchrone réaliste, cf. payment_provider.py)."""
+    lease = db.get(ColocLease, lease_id)
+    if lease is None:
+        return _err("Bail introuvable", 404)
+    if not _lease_authorized_intent(lease, principal):
+        return _err("Seul le locataire du bail peut initier ce paiement", 403)
+    payment = next((p for p in lease.payments if p.id == payment_id), None)
+    if payment is None:
+        return _err("Paiement introuvable", 404)
+    if payment.status != "pending":
+        return _err(f"Paiement non initiable dans le statut {payment.status}", 409)
+    provider = get_payment_provider()
+    intent = provider.create_intent(payment_id=payment.id, amount=float(payment.amount))
+    payment.provider = provider.name
+    payment.intent_id = intent["intent_id"]
+    payment.intent_status = intent["status"]
+    enqueue(db, "coloc_listing", payment.id, events.PAYMENT_INTENT_CREATED,
+            {"lease_id": lease.id, "payment_id": payment.id, "intent_id": intent["intent_id"],
+             "provider": provider.name})
+    db.commit()
+    db.refresh(payment)
+    return payment.to_dict()
+
+
+def _apply_intent_event(db: Session, payment: ColocPayment, event: str) -> JSONResponse | None:
+    """Applique l'issue d'un intent (succeeded/failed) à un `ColocPayment` — logique
+    partagée par le webhook (signé, source de vérité) et l'endpoint de confirmation démo
+    (cf. `confirm_payment_intent`, réservé au provider simulé). Retourne une erreur ou None."""
+    payment.intent_status = event
+    enqueue(db, "coloc_listing", payment.id, events.PAYMENT_WEBHOOK_RECEIVED,
+            {"payment_id": payment.id, "intent_id": payment.intent_id, "event": event})
+    if event == "succeeded":
+        lease = db.get(ColocLease, payment.lease_id)
+        try:
+            assert_payment_transition(payment.status, "escrowed")
+        except PaymentTransitionError:
+            return _err(f"Transition interdite : {payment.status} → escrowed", 409)
+        previous = payment.status
+        payment.status = "escrowed"
+        if lease is not None and lease.status == "pending":
+            lease.status = "active"
+        enqueue(db, "coloc_listing", payment.id, events.PAYMENT_STATUS_CHANGED,
+                {"lease_id": payment.lease_id, "payment_id": payment.id,
+                 "previous_status": previous, "new_status": "escrowed"})
+    return None
+
+
+@app.post("/internal/payments/webhook", include_in_schema=False)
+async def payments_webhook(request: Request, db: Session = Depends(get_db)):
+    """Webhook (simulé) du provider de paiement : fait avancer `ColocPayment` selon
+    l'issue de l'intent. Signature HMAC (`x-webhook-signature`) plutôt que le jeton
+    interne inter-services classique : c'est la couture destinée à recevoir un vrai
+    callback PSP demain (schéma générique, à adapter au prestataire réel — voir
+    payment_provider.py)."""
+    raw_body = await request.body()
+    signature = request.headers.get("x-webhook-signature", "")
+    if not verify_webhook_signature(raw_body, signature):
+        return _err("Signature invalide", 403)
+    try:
+        body = WebhookIn.model_validate_json(raw_body)
+    except Exception:  # noqa: BLE001
+        return _err("Payload invalide", 400)
+    if body.event not in ("succeeded", "failed"):
+        return _err("Événement inconnu", 400)
+    payment = db.query(ColocPayment).filter(ColocPayment.intent_id == body.intent_id).first()
+    if payment is None:
+        return _err("Intent introuvable", 404)
+    err = _apply_intent_event(db, payment, body.event)
+    if err is not None:
+        return err
+    db.commit()
+    db.refresh(payment)
+    return payment.to_dict()
+
+
+@router.post("/leases/{lease_id}/payments/{payment_id}/intent/confirm")
+def confirm_payment_intent_demo(lease_id: str, payment_id: str,
+                                principal: Principal = Depends(get_principal),
+                                db: Session = Depends(get_db)):
+    """DÉMO UNIQUEMENT (provider simulé) : déclenche côté locataire la confirmation de son
+    propre intent, comme le ferait le webhook du PSP une fois le paiement réellement
+    traité. N'existe QUE pour `PAYMENT_PROVIDER=simulated` — un vrai provider ne serait
+    JAMAIS confirmé ainsi (uniquement par son webhook signé, cf. `payments_webhook`).
+    Permet à Paiement.jsx de dérouler intent → confirmation sans exposer le secret
+    webhook au client."""
+    if coloc_settings.payment_provider != "simulated":
+        return _err("Confirmation démo indisponible (provider réel configuré)", 403)
+    lease = db.get(ColocLease, lease_id)
+    if lease is None:
+        return _err("Bail introuvable", 404)
+    if not _lease_authorized_intent(lease, principal):
+        return _err("Seul le locataire du bail peut confirmer ce paiement", 403)
+    payment = next((p for p in lease.payments if p.id == payment_id), None)
+    if payment is None:
+        return _err("Paiement introuvable", 404)
+    if not payment.intent_id:
+        return _err("Aucun intent à confirmer pour ce paiement", 409)
+    provider = get_payment_provider()
+    outcome = provider.confirm(payment.intent_id)
+    err = _apply_intent_event(db, payment, outcome["status"])
+    if err is not None:
+        return err
+    db.commit()
+    db.refresh(payment)
+    return payment.to_dict()
+
+
+# --- État des lieux ---------------------------------------------------------------------
+
+def _edl_authorized_read(lease: ColocLease, principal: Principal) -> bool:
+    return _lease_authorized_read(lease, principal)
+
+
+@router.post("/leases/{lease_id}/etat-des-lieux", status_code=201)
+def create_etat_des_lieux(lease_id: str, body: EtatDesLieuxCreateIn,
+                          principal: Principal = Depends(get_principal),
+                          db: Session = Depends(get_db)):
+    """Crée l'état des lieux (entrée ou sortie) d'un bail — réservé au bailleur/admin.
+    Au plus un par (bail, type) : voir contrainte d'unicité du modèle."""
+    lease = db.get(ColocLease, lease_id)
+    if lease is None:
+        return _err("Bail introuvable", 404)
+    if not _lease_authorized_write(lease, principal):
+        return _err("Réservé au bailleur ou à l'admin", 403)
+    existing = next((e for e in lease.etats_des_lieux if e.type == body.type), None)
+    if existing is not None:
+        return _err(f"État des lieux « {body.type} » déjà créé pour ce bail", 409)
+    edl = EtatDesLieux(lease_id=lease.id, type=body.type,
+                       items=[item.model_dump() for item in body.items])
+    db.add(edl)
+    db.flush()
+    enqueue(db, "coloc_listing", edl.id, events.ETAT_DES_LIEUX_CREATED,
+            {"lease_id": lease.id, "etat_des_lieux_id": edl.id, "type": edl.type})
+    db.commit()
+    db.refresh(edl)
+    return edl.to_dict()
+
+
+@router.get("/leases/{lease_id}/etat-des-lieux")
+def list_etat_des_lieux(lease_id: str, principal: Principal = Depends(get_principal),
+                        db: Session = Depends(get_db)):
+    """Liste les états des lieux (entrée/sortie) d'un bail — bailleur, locataire ou admin."""
+    lease = db.get(ColocLease, lease_id)
+    if lease is None:
+        return _err("Bail introuvable", 404)
+    if not _edl_authorized_read(lease, principal):
+        return _err("Accès refusé", 403)
+    return [e.to_dict() for e in lease.etats_des_lieux]
+
+
+def _get_edl(db: Session, lease_id: str, edl_id: str) -> EtatDesLieux | None:
+    edl = db.get(EtatDesLieux, edl_id)
+    if edl is None or edl.lease_id != lease_id:
+        return None
+    return edl
+
+
+@router.patch("/leases/{lease_id}/etat-des-lieux/{edl_id}")
+def update_etat_des_lieux(lease_id: str, edl_id: str, body: EtatDesLieuxUpdateIn,
+                          principal: Principal = Depends(get_principal),
+                          db: Session = Depends(get_db)):
+    """Met à jour les items (pièces) d'un état des lieux — bailleur/admin, tant qu'il est
+    en brouillon (verrouillé une fois signé par les deux parties)."""
+    lease = db.get(ColocLease, lease_id)
+    if lease is None:
+        return _err("Bail introuvable", 404)
+    if not _lease_authorized_write(lease, principal):
+        return _err("Réservé au bailleur ou à l'admin", 403)
+    edl = _get_edl(db, lease_id, edl_id)
+    if edl is None:
+        return _err("État des lieux introuvable", 404)
+    if edl.status != "draft":
+        return _err("État des lieux déjà signé, non modifiable", 409)
+    edl.items = [item.model_dump() for item in body.items]
+    db.commit()
+    db.refresh(edl)
+    return edl.to_dict()
+
+
+@router.post("/leases/{lease_id}/etat-des-lieux/{edl_id}/sign")
+def sign_etat_des_lieux(lease_id: str, edl_id: str, principal: Principal = Depends(get_principal),
+                        db: Session = Depends(get_db)):
+    """Signature d'une partie (bailleur ou locataire). Passe en `signed` quand les deux
+    parties ont signé."""
+    lease = db.get(ColocLease, lease_id)
+    if lease is None:
+        return _err("Bail introuvable", 404)
+    uid = _uid(principal)
+    if uid is None:
+        return _err("Authentification requise", 401)
+    is_tenant = uid == lease.tenant_user_id
+    is_owner = uid == lease.owner_id or (principal.is_superadmin and not is_tenant)
+    if not (is_owner or is_tenant):
+        return _err("Accès refusé", 403)
+    edl = _get_edl(db, lease_id, edl_id)
+    if edl is None:
+        return _err("État des lieux introuvable", 404)
+    if edl.status == "signed":
+        return _err("Déjà signé par les deux parties", 409)
+    now = _now()
+    if is_owner and edl.owner_signed_at is None:
+        edl.owner_signed_at = now
+    if is_tenant and edl.tenant_signed_at is None:
+        edl.tenant_signed_at = now
+    if edl.owner_signed_at is not None and edl.tenant_signed_at is not None:
+        edl.status = "signed"
+        enqueue(db, "coloc_listing", edl.id, events.ETAT_DES_LIEUX_SIGNED,
+                {"lease_id": lease_id, "etat_des_lieux_id": edl.id})
+    db.commit()
+    db.refresh(edl)
+    return edl.to_dict()
 
 
 app.include_router(router)
