@@ -19,8 +19,14 @@ from semsar_events import enqueue
 
 from . import events
 from .db import get_db, init_db
-from .models import ColocProperty, CurrentRoommates, HouseRule, Listing, ListingMedia, _now
-from .schemas import HouseRulesIn, ListingCreateIn, ListingUpdateIn, MediaIn, RoommatesIn
+from .models import (
+    ColocLease, ColocPayment, ColocProperty, CurrentRoommates, HouseRule, Listing,
+    ListingMedia, _now,
+)
+from .payment_state_machine import PaymentTransitionError, assert_payment_transition
+from .schemas import (
+    HouseRulesIn, LeaseCreateIn, ListingCreateIn, ListingUpdateIn, MediaIn, RoommatesIn,
+)
 from .state_machine import EDITABLE_STATUSES, STATUSES, TransitionError, assert_transition
 
 settings = get_settings()
@@ -118,6 +124,19 @@ def internal_listings_queue(status: str | None = None, tenant: str | None = None
         {**listing.to_dict(), "owner_id": listing.owner_id, "created_at": listing.created_at.isoformat()}
         for listing in rows
     ]}
+
+
+@app.get("/internal/leases", include_in_schema=False)
+def internal_leases(tenant: str | None = None, x_internal_token: str = Header(default=""),
+                    db: Session = Depends(get_db)) -> dict:
+    """Baux + paiements pour la vue back-office « Contrats & paiements » (super-admin,
+    via BFF). Cadrage : ÉTATS de séquestre modélisés, aucun PSP réel intégré — voir README."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    if tenant and tenant != TENANT:
+        return {"items": []}
+    rows = db.query(ColocLease).order_by(ColocLease.created_at.desc()).all()
+    return {"items": [lease.to_dict() for lease in rows]}
 
 
 router = APIRouter(dependencies=[Depends(_require_tenant)])
@@ -352,6 +371,151 @@ def archive(listing_id: str, principal: Principal = Depends(get_principal),
     db.commit()
     db.refresh(listing)
     return listing.to_dict()
+
+
+def _lease_authorized_read(lease: ColocLease, principal: Principal) -> bool:
+    uid = _uid(principal)
+    return principal.is_superadmin or (
+        uid is not None and uid in (lease.owner_id, lease.tenant_user_id)
+    )
+
+
+def _lease_authorized_write(lease: ColocLease, principal: Principal) -> bool:
+    """Actions de séquestre : réservées au propriétaire (bailleur) ou à l'admin."""
+    uid = _uid(principal)
+    return principal.is_superadmin or (uid is not None and uid == lease.owner_id)
+
+
+@router.post("/leases", status_code=201)
+def create_lease(body: LeaseCreateIn, principal: Principal = Depends(get_principal),
+                 db: Session = Depends(get_db)):
+    """Crée un bail pour une annonce détenue par l'appelant (ou par un admin) : initialise
+    aussi les paiements caution + 1er loyer en statut `pending` (cadre séquestre, pas de
+    mouvement d'argent réel)."""
+    uid = _uid(principal)
+    if uid is None:
+        return _err("Authentification requise", 401)
+    listing = _get(db, body.listing_id)
+    if listing is None:
+        return _err("Annonce introuvable", 404)
+    if listing.owner_id != uid and not principal.is_superadmin:
+        return _err("Vous n'êtes pas propriétaire de cette annonce", 403)
+    lease = ColocLease(listing_id=listing.id, tenant_user_id=body.tenant_user_id,
+                       owner_id=listing.owner_id, rent_amount=body.rent_amount,
+                       deposit_amount=body.deposit_amount, start_date=body.start_date,
+                       end_date=body.end_date)
+    db.add(lease)
+    db.flush()
+    db.add(ColocPayment(lease_id=lease.id, type="deposit", amount=body.deposit_amount))
+    db.add(ColocPayment(lease_id=lease.id, type="rent", amount=body.rent_amount,
+                        period=body.start_date.strftime("%Y-%m")))
+    db.flush()
+    enqueue(db, "coloc_listing", lease.id, events.LEASE_CREATED,
+            {"lease_id": lease.id, "listing_id": listing.id, "owner_id": listing.owner_id,
+             "tenant_user_id": body.tenant_user_id})
+    db.commit()
+    db.refresh(lease)
+    return lease.to_dict()
+
+
+@router.get("/leases/mine")
+def my_leases(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    """Baux où l'appelant est bailleur OU locataire."""
+    uid = _uid(principal)
+    if uid is None:
+        return _err("Authentification requise", 401)
+    rows = db.query(ColocLease).filter(
+        (ColocLease.tenant_user_id == uid) | (ColocLease.owner_id == uid)
+    ).order_by(ColocLease.created_at.desc()).all()
+    return [lease.to_dict() for lease in rows]
+
+
+@router.get("/me/lease")
+def my_lease(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    """Bail le plus pertinent du LOCATAIRE courant (actif en priorité, sinon le plus
+    récent) — alimente l'écran Paiement/séquestre. `null` si l'utilisateur n'a aucun bail."""
+    uid = _uid(principal)
+    if uid is None:
+        return _err("Authentification requise", 401)
+    rows = db.query(ColocLease).filter(ColocLease.tenant_user_id == uid).all()
+    if not rows:
+        return None
+    active = [lease for lease in rows if lease.status == "active"]
+    pool = active or rows
+    chosen = max(pool, key=lambda lease: lease.created_at)
+    return chosen.to_dict()
+
+
+@router.get("/leases/{lease_id}")
+def lease_detail(lease_id: str, principal: Principal = Depends(get_principal),
+                 db: Session = Depends(get_db)):
+    lease = db.get(ColocLease, lease_id)
+    if lease is None:
+        return _err("Bail introuvable", 404)
+    if not _lease_authorized_read(lease, principal):
+        return _err("Accès refusé", 403)
+    return lease.to_dict()
+
+
+def _payment_transition(db: Session, lease_id: str, payment_id: str, principal: Principal,
+                        target: str):
+    lease = db.get(ColocLease, lease_id)
+    if lease is None:
+        return None, _err("Bail introuvable", 404)
+    if not _lease_authorized_write(lease, principal):
+        return None, _err("Action séquestre réservée au bailleur ou à l'admin", 403)
+    payment = next((p for p in lease.payments if p.id == payment_id), None)
+    if payment is None:
+        return None, _err("Paiement introuvable", 404)
+    try:
+        assert_payment_transition(payment.status, target)
+    except PaymentTransitionError:
+        return None, _err(f"Transition interdite : {payment.status} → {target}", 409)
+    previous = payment.status
+    payment.status = target
+    if target == "escrowed" and lease.status == "pending":
+        lease.status = "active"
+    enqueue(db, "coloc_listing", payment.id, events.PAYMENT_STATUS_CHANGED,
+            {"lease_id": lease.id, "payment_id": payment.id, "previous_status": previous,
+             "new_status": target})
+    return lease, None
+
+
+@router.post("/leases/{lease_id}/payments/{payment_id}/escrow")
+def escrow_payment(lease_id: str, payment_id: str, principal: Principal = Depends(get_principal),
+                   db: Session = Depends(get_db)):
+    """Place le paiement en séquestre (`pending` → `escrowed`). Modélise l'état ; aucun
+    mouvement d'argent réel (pas de PSP intégré)."""
+    lease, err = _payment_transition(db, lease_id, payment_id, principal, "escrowed")
+    if err is not None:
+        return err
+    db.commit()
+    db.refresh(lease)
+    return lease.to_dict()
+
+
+@router.post("/leases/{lease_id}/payments/{payment_id}/release")
+def release_payment(lease_id: str, payment_id: str, principal: Principal = Depends(get_principal),
+                    db: Session = Depends(get_db)):
+    """Libère le séquestre (`escrowed` → `released`) : modélise le paiement final au bailleur."""
+    lease, err = _payment_transition(db, lease_id, payment_id, principal, "released")
+    if err is not None:
+        return err
+    db.commit()
+    db.refresh(lease)
+    return lease.to_dict()
+
+
+@router.post("/leases/{lease_id}/payments/{payment_id}/refund")
+def refund_payment(lease_id: str, payment_id: str, principal: Principal = Depends(get_principal),
+                   db: Session = Depends(get_db)):
+    """Rembourse le séquestre (`escrowed` → `refunded`) : modélise le retour au locataire."""
+    lease, err = _payment_transition(db, lease_id, payment_id, principal, "refunded")
+    if err is not None:
+        return err
+    db.commit()
+    db.refresh(lease)
+    return lease.to_dict()
 
 
 app.include_router(router)

@@ -22,6 +22,11 @@ BED_TYPES = {"CHAMBRE_INDIVIDUELLE", "CHAMBRE_PARTAGEE", "LIT_DORTOIR", "STUDIO_
 HOUSING_GENDERS = {"FEMININ", "MASCULIN", "MIXTE_FAMILIAL"}
 MEDIA_TYPES = {"CHAMBRE", "PARTIES_COMMUNES", "AUTRE"}
 
+LEASE_STATUSES = {"pending", "active", "ended", "cancelled"}
+PAYMENT_TYPES = {"deposit", "rent"}
+PAYMENT_STATUSES = {"pending", "escrowed", "released", "refunded"}
+TENANT_M3A = "m3a-l3achrane"
+
 
 def _uuid() -> str:
     return uuid.uuid4().hex
@@ -142,3 +147,62 @@ class CurrentRoommates(Base):
     women = Column(Integer, default=0, nullable=False)
     men = Column(Integer, default=0, nullable=False)
     statuses = Column(JSON, default=dict, nullable=False)
+
+
+class ColocLease(Base):
+    """Bail de colocation (domaine m3a-l3achrane). PAS d'intégration PSP réelle : ce
+    modèle et les statuts `ColocPayment` ci-dessous représentent les ÉTATS d'un séquestre
+    (dépôt/loyer bloqué puis libéré/remboursé), sans aucun mouvement d'argent effectif —
+    voir README du service pour le cadrage complet."""
+
+    __tablename__ = "leases"
+
+    id = Column(String(32), primary_key=True, default=_uuid)
+    tenant = Column(String(40), default=TENANT_M3A, nullable=False, index=True)
+    listing_id = Column(String(32), ForeignKey("listings.id"), nullable=False, index=True)
+    tenant_user_id = Column(BigInteger, nullable=False, index=True)  # locataire
+    owner_id = Column(BigInteger, nullable=False, index=True)  # bailleur (propriétaire de l'annonce)
+    rent_amount = Column(Numeric(12, 2), nullable=False)
+    deposit_amount = Column(Numeric(12, 2), nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date)
+    status = Column(String(20), default="pending", nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), default=_now, nullable=False)
+
+    payments = relationship("ColocPayment", cascade="all, delete-orphan",
+                            order_by="ColocPayment.created_at", lazy="selectin")
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id, "tenant": self.tenant, "listing_id": self.listing_id,
+            "tenant_user_id": self.tenant_user_id, "owner_id": self.owner_id,
+            "rent_amount": float(self.rent_amount), "deposit_amount": float(self.deposit_amount),
+            "start_date": self.start_date.isoformat() if self.start_date else None,
+            "end_date": self.end_date.isoformat() if self.end_date else None,
+            "status": self.status, "created_at": self.created_at.isoformat(),
+            "payments": [p.to_dict() for p in self.payments],
+        }
+
+
+class ColocPayment(Base):
+    """Paiement (caution ou loyer) rattaché à un bail. Machine à états séquestre :
+    pending → escrowed → released|refunded. Modélise le CADRE, pas un traitement réel
+    d'argent (pas de PSP intégré)."""
+
+    __tablename__ = "lease_payments"
+
+    id = Column(String(32), primary_key=True, default=_uuid)
+    lease_id = Column(String(32), ForeignKey("leases.id"), nullable=False, index=True)
+    type = Column(String(10), nullable=False)  # 'deposit' | 'rent'
+    amount = Column(Numeric(12, 2), nullable=False)
+    period = Column(String(7))  # 'YYYY-MM' pour un loyer ; null pour une caution
+    status = Column(String(20), default="pending", nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), default=_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_now, onupdate=_now, nullable=False)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id, "lease_id": self.lease_id, "type": self.type,
+            "amount": float(self.amount), "period": self.period, "status": self.status,
+            "created_at": self.created_at.isoformat(), "updated_at": self.updated_at.isoformat(),
+        }
