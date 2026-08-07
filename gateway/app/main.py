@@ -479,6 +479,8 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path == "/api/v1/me/leases"
         or path == "/api/v1/leases"
         or path.startswith("/api/v1/leases/")
+        or path == "/api/v1/candidatures"
+        or path.startswith("/api/v1/candidatures/")
     ):
         return app.state.coloc_listing, path.replace("/api/v1", "", 1)
     if settings.coloc_profile_url and (

@@ -53,6 +53,27 @@ def test_lease_routes_to_coloc_listing(monkeypatch):
     ) == ("COLOC", "/leases/abc123/etat-des-lieux/e1/sign")
 
 
+def test_candidature_routes_to_coloc_listing(monkeypatch):
+    monkeypatch.setattr(m.settings, "coloc_listing_url", "http://c")
+    fake = _app(coloc_listing="COLOC")
+    assert _resolve_upstream(fake, "/api/v1/candidatures", "POST") == ("COLOC", "/candidatures")
+    assert _resolve_upstream(fake, "/api/v1/candidatures/mine", "GET") == ("COLOC", "/candidatures/mine")
+    assert _resolve_upstream(fake, "/api/v1/candidatures/received", "GET") == (
+        "COLOC", "/candidatures/received")
+    assert _resolve_upstream(
+        fake, "/api/v1/candidatures/abc123/shortlist", "POST"
+    ) == ("COLOC", "/candidatures/abc123/shortlist")
+    assert _resolve_upstream(
+        fake, "/api/v1/candidatures/abc123/accept", "POST"
+    ) == ("COLOC", "/candidatures/abc123/accept")
+    assert _resolve_upstream(
+        fake, "/api/v1/candidatures/abc123/reject", "POST"
+    ) == ("COLOC", "/candidatures/abc123/reject")
+    assert _resolve_upstream(
+        fake, "/api/v1/candidatures/abc123/roommate-decision", "POST"
+    ) == ("COLOC", "/candidatures/abc123/roommate-decision")
+
+
 def test_unmapped_when_disabled(monkeypatch):
     monkeypatch.setattr(m.settings, "coloc_listing_url", None)
     monkeypatch.setattr(m.settings, "search_url", None)
