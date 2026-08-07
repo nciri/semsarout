@@ -259,5 +259,24 @@
     "helpTitle": "بحاجة إلى مساعدة فورية؟",
     "helpText": "يرد فريق الدعم لدينا خلال 24 ساعة عمل.",
     "contactSupport": "التواصل مع الدعم ←"
+  },
+  "roommateValidation": {
+    "title": "مترشّحون لسكنك المشترك",
+    "subtitle": "{{titre}} — {{quartier}}, {{ville}}",
+    "roomsLabel": "الغرفة (الغرف) المعنية",
+    "explanation": "قام المالك·ة بترشيح هذه الملفات مسبقًا؛ رأيك مهم من أجل الحياة المشتركة.",
+    "compatibilityLabel": "التوافق معك",
+    "ageProfil": "{{age}} سنة · {{profil}}",
+    "ownerNoteLabel": "مرشَّح·ة من طرف المالك·ة",
+    "actions": {
+      "validate": "الموافقة",
+      "refuse": "رفض",
+      "viewProfile": "عرض الملف الشخصي"
+    },
+    "statusBadge": {
+      "validated": "تمت موافقتك",
+      "rejected": "مستبعَد·ة"
+    },
+    "empty": "لا يوجد مترشّحون للموافقة عليهم حاليًا."
   }
 }
