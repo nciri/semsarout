@@ -641,8 +641,8 @@ def _forbidden_json(message: str = "Forbidden") -> Response:
 
 async def _require_backoffice_superadmin(request: Request):
     """Garde commune aux routes back-office composites (parité `backoffice_overview`) : jeton
-    valide + super-admin + tenant du jeton == tenant de la requête. Retourne `None` (autorisé)
-    ou une `Response` 403 prête à renvoyer telle quelle."""
+    valide + super-admin + tenant du jeton == tenant de la requête. Retourne `(None, tenant,
+    ident)` (autorisé) ou `(Response 403, tenant, None)` prêt à renvoyer tel quel."""
     app_ = request.app
     tenant = _resolve_tenant(request.headers, request.headers.get("host", ""))
     ident = await _resolve_identity(
@@ -650,17 +650,17 @@ async def _require_backoffice_superadmin(request: Request):
         request.cookies.get(settings.cookie_access_name),
     )
     if ident is None or not ident.get("is_superadmin"):
-        return _forbidden_json(), tenant
+        return _forbidden_json(), tenant, None
     if ident.get("tenant", "semsar") != tenant:
-        return _forbidden_json("Tenant mismatch"), tenant
-    return None, tenant
+        return _forbidden_json("Tenant mismatch"), tenant, None
+    return None, tenant, ident
 
 
 @app.get("/api/v1/backoffice/verifications", include_in_schema=False)
 async def backoffice_verifications(request: Request) -> Response:
     """File de vérification KYC en attente du tenant m3a (super-admin uniquement) : proxy
     vers identity `/internal/kyc/queue` (source réelle des candidatures CIN/étudiant/employeur)."""
-    denied, tenant = await _require_backoffice_superadmin(request)
+    denied, tenant, _ident = await _require_backoffice_superadmin(request)
     if denied is not None:
         return denied
     app_ = request.app
@@ -678,7 +678,7 @@ async def backoffice_verifications(request: Request) -> Response:
 
 
 async def _backoffice_kyc_action(request: Request, kyc_id: int, action: str) -> Response:
-    denied, _tenant = await _require_backoffice_superadmin(request)
+    denied, _tenant, _ident = await _require_backoffice_superadmin(request)
     if denied is not None:
         return denied
     app_ = request.app
@@ -713,7 +713,7 @@ async def backoffice_listings(request: Request) -> Response:
     via `?status=`). Les actions (approuver/rejeter) restent servies par les routes
     existantes `POST /api/v1/listings/{id}/(approve|reject)` (proxy générique, garde
     superadmin déjà en place côté service)."""
-    denied, tenant = await _require_backoffice_superadmin(request)
+    denied, tenant, _ident = await _require_backoffice_superadmin(request)
     if denied is not None:
         return denied
     app_ = request.app
@@ -732,6 +732,44 @@ async def backoffice_listings(request: Request) -> Response:
     if r.status_code != 200:
         return JSONResponse({"tenant": tenant, "items": []})
     return JSONResponse({"tenant": tenant, **r.json()})
+
+
+async def _backoffice_user_action(request: Request, user_id: int, action: str) -> Response:
+    """Suspend/réactive un compte du tenant courant (super-admin uniquement) : proxy vers
+    identity `/internal/accounts/users/{id}/{action}` (modération de compte, déjà implémentée
+    côté identity — `services/identity/app/accounts.py`). `tenant` + `actor_id` (garde
+    auto-action) transmis pour cloisonnement, comme `_backoffice_kyc_action`."""
+    denied, tenant, ident = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.identity
+    if client is None:
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    headers = {"x-internal-token": settings.internal_token}
+    params = {"tenant": tenant}
+    actor_id = ident.get("user_id") if ident else None
+    if actor_id is not None:
+        params["actor_id"] = actor_id
+    try:
+        r = await client.request("POST", f"/internal/accounts/users/{user_id}/{action}",
+                                 params=params, headers=headers)
+    except Exception:  # noqa: BLE001
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    return Response(content=r.content, status_code=r.status_code,
+                    media_type=r.headers.get("content-type"))
+
+
+@app.post("/api/v1/backoffice/users/{user_id}/suspend", include_in_schema=False)
+async def backoffice_users_suspend(user_id: int, request: Request) -> Response:
+    return await _backoffice_user_action(request, user_id, "suspend")
+
+
+@app.post("/api/v1/backoffice/users/{user_id}/unsuspend", include_in_schema=False)
+async def backoffice_users_unsuspend(user_id: int, request: Request) -> Response:
+    return await _backoffice_user_action(request, user_id, "unsuspend")
 
 
 @app.post("/api/v1/auth/logout", include_in_schema=False)
