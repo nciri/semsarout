@@ -69,3 +69,40 @@ def test_lease_notification_idempotent(db_session, monkeypatch):
     _handle("coloc.lease_created", p, "cl:1")
     _handle("coloc.lease_created", p, "cl:1")
     assert db_session.query(models.Notification).filter_by(user_id=10).count() == 1
+
+
+def test_candidature_received_notifies_owner(db_session, monkeypatch):
+    import app.worker as w
+    monkeypatch.setattr(w, "SessionLocal", lambda: db_session)
+    _handle("coloc.candidature_received",
+           {"candidature_id": "c1", "listing_id": "prop1", "owner_id": 5,
+            "candidate_user_id": 10, "listing_title": "Chambre à Maârif"}, "cc:1")
+    notif = db_session.query(models.Notification).filter_by(user_id=5).first()
+    assert notif is not None
+    assert notif.type == "candidature.received"
+    assert notif.link == "/espace/candidatures"
+    assert notif.payload["candidature_id"] == "c1"
+    # Candidate does not get a "received" notification (only the owner does).
+    assert db_session.query(models.Notification).filter_by(user_id=10).count() == 0
+
+
+def test_candidature_accepted_notifies_candidate(db_session, monkeypatch):
+    import app.worker as w
+    monkeypatch.setattr(w, "SessionLocal", lambda: db_session)
+    _handle("coloc.candidature_accepted",
+           {"candidature_id": "c1", "listing_id": "prop1", "owner_id": 5,
+            "candidate_user_id": 10}, "cc:2")
+    notif = db_session.query(models.Notification).filter_by(user_id=10).first()
+    assert notif is not None
+    assert notif.type == "candidature.accepted"
+    assert notif.link == "/espace/candidature"
+    assert db_session.query(models.Notification).filter_by(user_id=5).count() == 0
+
+
+def test_candidature_notifications_idempotent(db_session, monkeypatch):
+    import app.worker as w
+    monkeypatch.setattr(w, "SessionLocal", lambda: db_session)
+    p = {"candidature_id": "c1", "listing_id": "prop1", "owner_id": 5, "candidate_user_id": 10}
+    _handle("coloc.candidature_received", p, "cc:1")
+    _handle("coloc.candidature_received", p, "cc:1")
+    assert db_session.query(models.Notification).filter_by(user_id=5).count() == 1

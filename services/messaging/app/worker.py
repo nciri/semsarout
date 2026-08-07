@@ -59,6 +59,33 @@ def _notify_payment_status_changed(db, payload: dict) -> None:
                             payload=base_payload, link=link))
 
 
+def _notify_candidature_received(db, payload: dict) -> None:
+    """`coloc.candidature_received` : le bailleur a une nouvelle candidature à traiter."""
+    owner_id = payload.get("owner_id")
+    candidature_id = payload.get("candidature_id")
+    if not isinstance(owner_id, int) or candidature_id is None:
+        return
+    db.add(Notification(
+        tenant=DEFAULT_TENANT, user_id=owner_id, type="candidature.received",
+        payload={"candidature_id": candidature_id, "listing_id": payload.get("listing_id"),
+                 "listing_title": payload.get("listing_title")},
+        link="/espace/candidatures",
+    ))
+
+
+def _notify_candidature_accepted(db, payload: dict) -> None:
+    """`coloc.candidature_accepted` : le candidat est accepté, bail à signer bientôt."""
+    candidate_user_id = payload.get("candidate_user_id")
+    candidature_id = payload.get("candidature_id")
+    if not isinstance(candidate_user_id, int) or candidature_id is None:
+        return
+    db.add(Notification(
+        tenant=DEFAULT_TENANT, user_id=candidate_user_id, type="candidature.accepted",
+        payload={"candidature_id": candidature_id, "listing_id": payload.get("listing_id")},
+        link="/espace/candidature",
+    ))
+
+
 def _handle(routing_key: str, payload: dict, message_id: str) -> None:
     db = SessionLocal()
     try:
@@ -81,6 +108,10 @@ def _handle(routing_key: str, payload: dict, message_id: str) -> None:
             _notify_lease_created(db, payload)
         elif routing_key == "coloc.payment_status_changed":
             _notify_payment_status_changed(db, payload)
+        elif routing_key == "coloc.candidature_received":
+            _notify_candidature_received(db, payload)
+        elif routing_key == "coloc.candidature_accepted":
+            _notify_candidature_accepted(db, payload)
         if message_id:
             db.add(ProcessedMessage(message_id=message_id))
         db.commit()
@@ -99,7 +130,8 @@ def main() -> None:
     consumer = EventConsumer(
         settings.rabbitmq_url, service_name=settings.service_name,
         bindings=["listing.#", "rental.application.received", "sale.inquiry.created",
-                  "coloc.lease_created", "coloc.payment_status_changed"],
+                  "coloc.lease_created", "coloc.payment_status_changed",
+                  "coloc.candidature_received", "coloc.candidature_accepted"],
         exchange=settings.events_exchange)
     consumer.run(handler=_handle)
 

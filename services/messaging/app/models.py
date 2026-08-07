@@ -110,6 +110,7 @@ class Message(Base):
 
 NOTIFICATION_TYPES = {
     "message.new", "lease.to_sign", "payment.due", "payment.received",
+    "candidature.received", "candidature.accepted",
 }
 
 
