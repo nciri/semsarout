@@ -41,7 +41,7 @@ def test_composite_anonymous_no_scores(composite_env):
 
 
 def test_composite_authenticated_enriches(composite_env, monkeypatch):
-    async def fake_ident(app_, auth):
+    async def fake_ident(app_, auth, cookie=None):
         return {"user_id": 7, "tenant": "m3a-l3achrane"} if auth else None
 
     monkeypatch.setattr(m, "_resolve_identity", fake_ident)
@@ -51,7 +51,7 @@ def test_composite_authenticated_enriches(composite_env, monkeypatch):
 
 
 def test_composite_degrades_when_matching_down(composite_env, monkeypatch):
-    async def fake_ident(app_, auth):
+    async def fake_ident(app_, auth, cookie=None):
         return {"user_id": 7, "tenant": "m3a-l3achrane"}
 
     def broken(request):

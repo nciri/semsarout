@@ -6,6 +6,7 @@ strangler, `proxy()` sera remplacé route par route par des appels aux nouveaux
 services et par de l'agrégation (BFF).
 """
 import re
+import secrets
 import time
 from contextlib import asynccontextmanager
 
@@ -68,10 +69,16 @@ def _identity_from_claims(payload: dict) -> dict:
     }
 
 
-async def _resolve_identity(app: FastAPI, authorization: str | None) -> dict | None:
+async def _resolve_identity(
+    app: FastAPI, authorization: str | None, cookie_access: str | None = None
+) -> dict | None:
     """Valide le jeton et renvoie le contexte d'auth (user_id, agency_id, is_superadmin,
     role, features). **Priorité : validation LOCALE du JWT** (signature + claims embarqués),
-    sans appeler le monolithe. Repli /auth/me uniquement pour les anciens jetons sans claims."""
+    sans appeler le monolithe. Repli /auth/me uniquement pour les anciens jetons sans claims.
+
+    Source du jeton : en-tête `Authorization` en priorité (rétro-compat clients existants /
+    monolithe séparé) ; à défaut, cookie httpOnly `m3a_access` (durcissement m3a-l3achrane)."""
+    authorization = authorization or (f"Bearer {cookie_access}" if cookie_access else None)
     if not authorization:
         return None
     now = time.monotonic()
@@ -96,6 +103,73 @@ async def _resolve_identity(app: FastAPI, authorization: str | None) -> dict | N
     # identity ne devienne l'émetteur) est rejeté → l'utilisateur se reconnecte (nouveau jeton
     # enrichi). Les claims (dont `features`) sont désormais toujours forgés par identity.
     return None
+
+
+def _is_https(request: Request) -> bool:
+    """Secure=true seulement si la requête (ou le proxy en amont) est en HTTPS — jamais en
+    dev http, sinon le navigateur rejette silencieusement le cookie."""
+    if request.url.scheme == "https":
+        return True
+    return request.headers.get("x-forwarded-proto", "").lower() == "https"
+
+
+# Réponses d'auth susceptibles de porter des jetons à convertir en cookies httpOnly.
+_AUTH_COOKIE_PATHS = {"/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/register"}
+# Endpoints d'auth exemptés du contrôle CSRF (émission/révocation de session, pas de mutation
+# métier authentifiée par cookie).
+_CSRF_EXEMPT_PATHS = {
+    "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/register", "/api/v1/auth/logout",
+}
+_MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+
+
+def _set_auth_cookies(response: Response, body: dict, secure: bool) -> None:
+    """Pose les cookies de session à partir du corps JSON d'une réponse login/refresh/register.
+    Le corps JSON renvoyé au client reste inchangé (rétro-compat)."""
+    access = body.get("access_token") if isinstance(body, dict) else None
+    if not access:
+        return
+    response.set_cookie(
+        settings.cookie_access_name, access, max_age=settings.cookie_access_ttl_seconds,
+        path="/api", httponly=True, samesite="lax", secure=secure,
+    )
+    response.set_cookie(
+        settings.cookie_authed_name, "1", max_age=settings.cookie_access_ttl_seconds,
+        path="/", httponly=False, samesite="lax", secure=secure,
+    )
+    response.set_cookie(
+        settings.cookie_csrf_name, secrets.token_urlsafe(32),
+        max_age=settings.cookie_access_ttl_seconds,
+        path="/", httponly=False, samesite="lax", secure=secure,
+    )
+    refresh = body.get("refresh_token")
+    if refresh:
+        response.set_cookie(
+            settings.cookie_refresh_name, refresh, max_age=settings.cookie_refresh_ttl_seconds,
+            path="/api/v1/auth/refresh", httponly=True, samesite="lax", secure=secure,
+        )
+
+
+def _clear_auth_cookies(response: Response, secure: bool) -> None:
+    response.delete_cookie(settings.cookie_access_name, path="/api", samesite="lax", secure=secure)
+    response.delete_cookie(
+        settings.cookie_refresh_name, path="/api/v1/auth/refresh", samesite="lax", secure=secure
+    )
+    response.delete_cookie(settings.cookie_csrf_name, path="/", samesite="lax", secure=secure)
+    response.delete_cookie(settings.cookie_authed_name, path="/", samesite="lax", secure=secure)
+
+
+def _csrf_required(request: Request) -> bool:
+    """CSRF exigé seulement pour les mutations authentifiées PAR COOKIE (pas d'en-tête
+    Authorization) : double-submit m3a_csrf. Les clients Bearer (rétro-compat) sont exemptés —
+    ils ne portent pas le cookie de session, donc pas de CSRF cross-site possible via cookie."""
+    if request.method not in _MUTATING_METHODS:
+        return False
+    if request.url.path in _CSRF_EXEMPT_PATHS:
+        return False
+    if request.headers.get("authorization"):
+        return False
+    return bool(request.cookies.get(settings.cookie_access_name))
 
 
 def _inject_identity(headers: dict, ident: dict) -> None:
@@ -478,7 +552,10 @@ async def coloc_listings_composite(request: Request) -> Response:
         return Response(content=b'{"error":"Not found"}', status_code=404,
                         media_type="application/json")
     tenant = _resolve_tenant(request.headers, request.headers.get("host", ""))
-    ident = await _resolve_identity(app_, request.headers.get("authorization"))
+    ident = await _resolve_identity(
+        app_, request.headers.get("authorization"),
+        request.cookies.get(settings.cookie_access_name),
+    )
     if ident and ident.get("tenant", "semsar") != tenant:
         return Response(content=b'{"error":"Tenant mismatch"}', status_code=403,
                         media_type="application/json")
@@ -505,6 +582,15 @@ async def coloc_listings_composite(request: Request) -> Response:
     return JSONResponse(data)
 
 
+@app.post("/api/v1/auth/logout", include_in_schema=False)
+async def logout(request: Request) -> Response:
+    """Révoque la session côté BFF (efface les cookies). Servi par le BFF lui-même, pas
+    relayé à identity : la déconnexion n'a pas besoin de round-trip upstream."""
+    response = Response(status_code=204)
+    _clear_auth_cookies(response, _is_https(request))
+    return response
+
+
 @app.api_route(
     "/api/{path:path}",
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
@@ -512,6 +598,12 @@ async def coloc_listings_composite(request: Request) -> Response:
 )
 async def proxy(path: str, request: Request) -> Response:
     app = request.app
+    if _csrf_required(request):
+        csrf_cookie = request.cookies.get(settings.cookie_csrf_name)
+        csrf_header = request.headers.get("x-csrf-token")
+        if not csrf_cookie or not csrf_header or csrf_header != csrf_cookie:
+            return Response(content=b'{"error":"CSRF token invalid"}', status_code=403,
+                            media_type="application/json")
     client, upstream_path = _resolve_upstream(app, request.url.path, request.method)
     if client is None:  # route non servie par v2 (monolithe décommissionné)
         return Response(content=b'{"error":"Not found"}', status_code=404, media_type="application/json")
@@ -527,8 +619,17 @@ async def proxy(path: str, request: Request) -> Response:
         and not k.lower().startswith("x-semsar-")
         and k.lower() != "x-tenant"
     }
+    # /auth/refresh : pas d'en-tête Authorization → repli sur le refresh token du cookie
+    # httpOnly (rétro-compat : l'en-tête reste prioritaire s'il est fourni).
+    if request.url.path == "/api/v1/auth/refresh" and not request.headers.get("authorization"):
+        refresh_cookie = request.cookies.get(settings.cookie_refresh_name)
+        if refresh_cookie:
+            headers["Authorization"] = f"Bearer {refresh_cookie}"
     # Frontière d'auth : tous les upstreams sont des services internes → injecter l'identité.
-    ident = await _resolve_identity(app, request.headers.get("authorization"))
+    ident = await _resolve_identity(
+        app, request.headers.get("authorization"),
+        request.cookies.get(settings.cookie_access_name),
+    )
     if ident:
         if ident.get("tenant", "semsar") != tenant:
             # Jeton d'un produit utilisé sur l'autre (semsar ⇄ m3a-l3achrane) → rejet.
@@ -542,12 +643,19 @@ async def proxy(path: str, request: Request) -> Response:
     resp_headers = {
         k: v for k, v in upstream.headers.items() if k.lower() not in _HOP_BY_HOP
     }
-    return Response(
+    response = Response(
         content=upstream.content,
         status_code=upstream.status_code,
         headers=resp_headers,
         media_type=upstream.headers.get("content-type"),
     )
+    if request.url.path in _AUTH_COOKIE_PATHS and 200 <= upstream.status_code < 300:
+        try:
+            body = upstream.json()
+        except ValueError:
+            body = {}
+        _set_auth_cookies(response, body, _is_https(request))
+    return response
 
 
 @app.api_route("/uploads/{path:path}", methods=["GET", "HEAD"], include_in_schema=False)
