@@ -111,3 +111,39 @@ export async function rejectBackofficeVerification(kycId) {
   const { data } = await api.post(`/backoffice/verifications/${kycId}/reject`)
   return data
 }
+
+// File des annonces à modérer (super-admin), fan-out BFF `/api/v1/backoffice/listings` →
+// coloc-listing `/internal/listings/queue` (statut EN_MODERATION par défaut).
+export async function getBackofficeListings() {
+  if (isMocked('backoffice')) {
+    return delay({
+      items: [
+        { id: 'l-4482', title: 'Chambre lumineuse — Maârif, proche BD Zerktouni', city: 'Casablanca',
+          rent: 2400, currency: 'MAD', owner_id: 3021, status: 'EN_MODERATION',
+          created_at: '2026-08-06T09:18:00+00:00' },
+        { id: 'l-4479', title: 'Colocation 3 chambres — Agdal', city: 'Rabat', rent: 1900,
+          currency: 'MAD', owner_id: 3087, status: 'EN_MODERATION',
+          created_at: '2026-08-06T08:10:00+00:00' },
+        { id: 'l-4471', title: 'Appartement partagé — Gueliz, 2e étage', city: 'Marrakech',
+          rent: 2800, currency: 'MAD', owner_id: 3114, status: 'EN_MODERATION',
+          created_at: '2026-08-05T17:42:00+00:00' },
+      ],
+    })
+  }
+  const { data } = await api.get('/backoffice/listings')
+  return data
+}
+
+// Actions de modération — routes du proxy générique du service coloc-listing (garde
+// superadmin déjà appliquée côté service, cf. POST /listings/{id}/(approve|reject)).
+export async function approveBackofficeListing(listingId) {
+  if (isMocked('backoffice')) return delay({ id: listingId, status: 'PUBLIEE' })
+  const { data } = await api.post(`/listings/${listingId}/approve`)
+  return data
+}
+
+export async function rejectBackofficeListing(listingId) {
+  if (isMocked('backoffice')) return delay({ id: listingId, status: 'REJETEE' })
+  const { data } = await api.post(`/listings/${listingId}/reject`)
+  return data
+}

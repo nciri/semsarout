@@ -91,14 +91,19 @@
       "status": "Statut",
       "action": "Action"
     },
-    "review": "Examiner",
-    "pagination": "1 – {{shown}} sur {{total}} annonces",
-    "prev": "Précédent",
-    "next": "Suivant",
+    "hostId": "Hôte #{{id}}",
+    "approveRowLabel": "Approuver l'annonce",
+    "rejectRowLabel": "Rejeter l'annonce",
+    "loading": "Chargement de la file de modération…",
+    "loadError": "La file de modération est momentanément indisponible.",
+    "empty": "Aucune annonce en attente de modération.",
+    "actionError": "Action impossible pour le moment — réessayez.",
+    "count_one": "{{count}} annonce en attente de modération",
+    "count_other": "{{count}} annonces en attente de modération",
     "status": {
-      "published": "Publiée",
-      "review": "En revue",
-      "unpublished": "Dépubliée"
+      "EN_MODERATION": "En modération",
+      "PUBLIEE": "Publiée",
+      "REJETEE": "Rejetée"
     }
   },
   "users": {

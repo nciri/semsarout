@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Avatar, Badge, Button, Card, Icon, Input, Tabs, VerifiedBadge } from '../../ds/index.js'
 import {
+  approveBackofficeListing,
+  getBackofficeListings,
   getBackofficeOverview,
   getBackofficeVerifications,
+  rejectBackofficeListing,
   rejectBackofficeVerification,
   verifyBackofficeVerification,
 } from '../../services/index.js'
@@ -13,8 +16,6 @@ import {
   BACKOFFICE_NAV,
   CONTRACTS,
   CONTRACTS_MONEY,
-  LISTINGS,
-  LISTINGS_TOTAL,
   MATCHES_CHART,
   MATCHING_RULES,
   REPORTS,
@@ -44,7 +45,9 @@ function buildOverviewKpis(data) {
 }
 
 const ACTIVITY_TONE = { validated: 'verified', rejected: 'danger', in_progress: 'warning' }
-const LISTING_TONE = { published: 'verified', review: 'warning', unpublished: 'danger' }
+// Statuts réels de la machine à états coloc-listing (cf. state_machine.py) — seuls
+// EN_MODERATION/PUBLIEE/REJETEE sont attendus dans la file de modération.
+const LISTING_TONE = { EN_MODERATION: 'warning', PUBLIEE: 'verified', REJETEE: 'danger' }
 const USER_VERIFICATION_LEVEL = { verified: 'full', pending: 'partial', suspended: 'none' }
 const CONTRACT_TONE = { active: 'verified', signature: 'warning', litigation: 'danger', closed: 'verified' }
 const REPORT_TONE = { urgent: 'danger', normal: 'warning' }
@@ -490,8 +493,39 @@ function VerifView() {
   )
 }
 
+// Loyer réel (rent + currency backend) → chaîne localisée FR ("2 400 MAD").
+const fmtRent = (rent, currency) =>
+  typeof rent === 'number' ? `${rent.toLocaleString('fr-FR')} ${currency || ''}`.trim() : '—'
+
 function ListingsView() {
   const { t } = useTranslation(['backoffice'])
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [actionError, setActionError] = useState(false)
+  const [pendingAction, setPendingAction] = useState(null) // id en cours de traitement
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setLoadError(false)
+    getBackofficeListings()
+      .then((data) => { if (!cancelled) setItems(data?.items ?? []) })
+      .catch(() => { if (!cancelled) setLoadError(true) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  const runAction = (listingId, action) => {
+    setPendingAction(listingId)
+    setActionError(false)
+    const call = action === 'approve' ? approveBackofficeListing : rejectBackofficeListing
+    call(listingId)
+      .then(() => setItems((prev) => prev.filter((l) => l.id !== listingId)))
+      .catch(() => setActionError(true))
+      .finally(() => setPendingAction(null))
+  }
+
   return (
     <Card padding={0} style={{ overflow: 'hidden' }}>
       <div
@@ -508,9 +542,30 @@ function ListingsView() {
         <div>{t('backoffice:listings.columns.status')}</div>
         <div style={{ justifySelf: 'end' }}>{t('backoffice:listings.columns.action')}</div>
       </div>
-      {LISTINGS.map((l) => {
+      {loading && (
+        <div style={{ padding: '18px 20px', font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+          {t('backoffice:listings.loading')}
+        </div>
+      )}
+      {!loading && loadError && (
+        <div style={{ padding: '18px 20px', font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+          {t('backoffice:listings.loadError')}
+        </div>
+      )}
+      {!loading && !loadError && actionError && (
+        <div style={{ padding: '10px 20px', font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+          {t('backoffice:listings.actionError')}
+        </div>
+      )}
+      {!loading && !loadError && items.length === 0 && (
+        <div style={{ padding: '18px 20px', font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+          {t('backoffice:listings.empty')}
+        </div>
+      )}
+      {!loading && !loadError && items.map((l) => {
         const tone = LISTING_TONE[l.status]
         const label = t(`backoffice:listings.status.${l.status}`, { defaultValue: l.status })
+        const busy = pendingAction === l.id
         return (
           <div
             key={l.id}
@@ -527,20 +582,39 @@ function ListingsView() {
               </div>
             </div>
             <div style={{ color: 'var(--text-body)' }}>{l.city}</div>
-            <div style={{ color: 'var(--text-heading)', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{l.rent}</div>
-            <div style={{ color: 'var(--text-body)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.host}</div>
+            <div style={{ color: 'var(--text-heading)', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{fmtRent(l.rent, l.currency)}</div>
+            <div style={{ color: 'var(--text-body)' }}>{t('backoffice:listings.hostId', { id: l.owner_id ?? '—' })}</div>
             <div><Badge tone={tone}>{label}</Badge></div>
-            <Button variant="secondary" size="sm" iconLeft="eye" style={{ justifySelf: 'end' }}>{t('backoffice:listings.review')}</Button>
+            <div style={{ display: 'flex', gap: 6, justifySelf: 'end' }}>
+              <button
+                type="button"
+                title={t('backoffice:listings.approveRowLabel')}
+                aria-label={t('backoffice:listings.approveRowLabel')}
+                disabled={busy}
+                onClick={() => runAction(l.id, 'approve')}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', border: 0, borderRadius: 7, background: 'var(--green-100)', color: 'var(--green-700)', cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1 }}
+              >
+                <Icon name="check" size={16} strokeWidth={2.6} />
+              </button>
+              <button
+                type="button"
+                title={t('backoffice:listings.rejectRowLabel')}
+                aria-label={t('backoffice:listings.rejectRowLabel')}
+                disabled={busy}
+                onClick={() => runAction(l.id, 'reject')}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', border: 0, borderRadius: 7, background: 'var(--red-100)', color: 'var(--red-600)', cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1 }}
+              >
+                <Icon name="x" size={16} strokeWidth={2.6} />
+              </button>
+            </div>
           </div>
         )
       })}
-      <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 12, fontSize: 13, color: 'var(--text-muted)' }}>
-        {t('backoffice:listings.pagination', { shown: LISTINGS.length, total: LISTINGS_TOTAL.toLocaleString('fr-FR') })}
-        <div style={{ marginInlineStart: 'auto', display: 'flex', gap: 8 }}>
-          <Button variant="secondary" size="sm" iconLeft="chevron-left">{t('backoffice:listings.prev')}</Button>
-          <Button variant="secondary" size="sm" iconRight="chevron-right">{t('backoffice:listings.next')}</Button>
+      {!loading && !loadError && items.length > 0 && (
+        <div style={{ padding: '14px 20px', font: 'var(--fw-regular) 13px var(--font-body)', color: 'var(--text-muted)' }}>
+          {t('backoffice:listings.count', { count: items.length })}
         </div>
-      </div>
+      )}
     </Card>
   )
 }

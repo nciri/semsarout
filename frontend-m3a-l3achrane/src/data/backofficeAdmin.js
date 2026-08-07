@@ -53,17 +53,6 @@ export const VERIF_TABS = [
   { id: 'validated', label: 'Validés', icon: 'check-circle' },
 ]
 
-export const LISTINGS = [
-  { id: 'ANN-4482', title: 'Chambre lumineuse — Maârif, proche BD Zerktouni', city: 'Casablanca', rent: '2 400 MAD', host: 'A. El Khattabi', status: 'published' },
-  { id: 'ANN-4479', title: 'Colocation 3 chambres — Agdal', city: 'Rabat', rent: '1 900 MAD', host: 'N. Cherkaoui', status: 'review' },
-  { id: 'ANN-4476', title: 'Studio meublé — Hivernage', city: 'Marrakech', rent: '3 200 MAD', host: 'K. Benjelloun', status: 'published' },
-  { id: 'ANN-4470', title: 'Chambre en résidence étudiante — Benguerir', city: 'Benguerir', rent: '1 500 MAD', host: 'Résidence UM6P', status: 'published' },
-  { id: 'ANN-4471', title: 'Appartement partagé — Gueliz, 2e étage', city: 'Marrakech', rent: '2 800 MAD', host: 'S. Fassi', status: 'unpublished' },
-  { id: 'ANN-4468', title: 'Chambre chez l’habitant — Souissi', city: 'Rabat', rent: '2 100 MAD', host: 'L. Berrada', status: 'review' },
-  { id: 'ANN-4465', title: 'Duplex 4 places — Californie', city: 'Casablanca', rent: '2 650 MAD', host: 'Y. Sqalli', status: 'published' },
-]
-export const LISTINGS_TOTAL = 1284
-
 export const USER_STATS = [
   { id: 'active-accounts', label: 'Comptes actifs', value: '11 903' },
   { id: 'seekers', label: 'Chercheurs', value: '9 470' },
