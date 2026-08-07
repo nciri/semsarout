@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Avatar, Badge, Button, Card, Icon, Input, Tabs, VerifiedBadge } from '../../ds/index.js'
+import { Avatar, Badge, Button, Card, Icon, IconButton, Input, Tabs, VerifiedBadge } from '../../ds/index.js'
 import {
   approveBackofficeListing,
+  createRole,
+  deleteRole,
   getBackofficeLeases,
   getBackofficeLifestyleReferential,
   getBackofficeListings,
@@ -19,6 +21,7 @@ import {
   resolveReport,
   suspendBackofficeUser,
   updateBackofficeMatchingWeights,
+  updateRole,
   verifyBackofficeVerification,
 } from '../../services/index.js'
 import {
@@ -1185,32 +1188,121 @@ function LifestyleReferentialPanel() {
   )
 }
 
-// Rôles & permissions — LECTURE SEULE dans cette vue : réutilise l'endpoint identity RBAC
-// existant (`GET /api/v1/backoffice/roles`) ; l'édition (création/modification de rôle,
-// endpoints déjà présents côté identity) n'a pas d'UI dédiée dans cette phase.
+// Formulaire création/édition d'un rôle — partagé entre la ligne "+ rôle" (create) et
+// l'édition inline d'une ligne existante (edit, `initial` renseigné). Seul `name` est requis
+// côté identity (`RoleRO.name`) ; description/couleur/niveau restent optionnels.
+function RoleForm({ initial, onCancel, onSubmit, t }) {
+  const [name, setName] = useState(initial?.name ?? '')
+  const [description, setDescription] = useState(initial?.description ?? '')
+  const [color, setColor] = useState(initial?.color ?? 'gray')
+  const [level, setLevel] = useState(initial?.level ?? 100)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(false)
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!name.trim()) return
+    setSaving(true)
+    setError(false)
+    onSubmit({ name: name.trim(), description: description.trim() || null, color, level: Number(level) || 100 })
+      .catch(() => { setSaving(false); setError(true) })
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, borderRadius: 'var(--radius-sm)', background: 'var(--surface-sunken)' }}
+    >
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 3fr) minmax(0, 1fr)', gap: 12 }}>
+        <Input
+          label={<>{t('backoffice:settings.roleFormNameLabel')} <span style={{ color: 'var(--red-500)', marginInlineStart: 2 }}>*</span></>}
+          value={name} onChange={(e) => setName(e.target.value)} required
+          autoFocus disabled={saving}
+        />
+        <Input
+          label={t('backoffice:settings.roleFormDescriptionLabel')}
+          value={description} onChange={(e) => setDescription(e.target.value)} disabled={saving}
+        />
+        <Input
+          label={t('backoffice:settings.roleFormLevelLabel')} type="number" min={0} max={999}
+          value={level} onChange={(e) => setLevel(e.target.value)} disabled={saving}
+        />
+      </div>
+      {error && (
+        <div style={{ font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+          {t('backoffice:settings.roleFormError')}
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+        <Button type="button" variant="ghost" size="sm" onClick={onCancel} disabled={saving}>
+          {t('backoffice:settings.roleFormCancel')}
+        </Button>
+        <Button type="submit" variant="primary" size="sm" disabled={saving || !name.trim()}>
+          {saving
+            ? t('backoffice:settings.roleFormSaving')
+            : t(initial ? 'backoffice:settings.roleFormSave' : 'backoffice:settings.roleFormCreate')}
+        </Button>
+      </div>
+    </form>
+  )
+}
+
+// Rôles & permissions — CRUD complet (création / édition inline / suppression) via le proxy
+// BFF `/api/v1/backoffice/roles*` (identity source de vérité). Les rôles système
+// (`is_system`) ne peuvent être ni édités ni supprimés (identity renvoie 403 ; l'UI les
+// désactive en amont pour éviter l'aller-retour).
 function RolesPanel() {
   const { t } = useTranslation(['backoffice'])
   const [roles, setRoles] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
+  const [actionError, setActionError] = useState(null) // id du rôle en erreur (delete) ou null
+  const [editingId, setEditingId] = useState(null) // id en édition, ou 'new' pour la création
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
 
-  useEffect(() => {
-    let cancelled = false
+  const load = (cancelledRef) => {
     setLoading(true)
     setLoadError(false)
-    getBackofficeRoles()
-      .then((data) => { if (!cancelled) setRoles(data?.roles ?? []) })
-      .catch(() => { if (!cancelled) setLoadError(true) })
-      .finally(() => { if (!cancelled) setLoading(false) })
-    return () => { cancelled = true }
+    return getBackofficeRoles()
+      .then((data) => { if (!cancelledRef?.current) setRoles(data?.roles ?? []) })
+      .catch(() => { if (!cancelledRef?.current) setLoadError(true) })
+      .finally(() => { if (!cancelledRef?.current) setLoading(false) })
+  }
+
+  useEffect(() => {
+    const cancelledRef = { current: false }
+    load(cancelledRef)
+    return () => { cancelledRef.current = true }
   }, [])
+
+  const handleCreate = (payload) => createRole(payload).then(() => { setEditingId(null); return load() })
+  const handleUpdate = (roleId, payload) => updateRole(roleId, payload).then(() => { setEditingId(null); return load() })
+
+  const handleDelete = (roleId) => {
+    setDeletingId(roleId)
+    setActionError(null)
+    deleteRole(roleId)
+      .then(() => { setConfirmDeleteId(null); return load() })
+      .catch(() => setActionError(roleId))
+      .finally(() => setDeletingId(null))
+  }
 
   return (
     <Card padding={22} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         {sectionTitle(t('backoffice:settings.rolesTitle'))}
-        <Badge tone="neutral">{t('backoffice:settings.readOnly')}</Badge>
+        <span style={{ marginInlineStart: 'auto' }}>
+          {editingId !== 'new' && (
+            <Button variant="secondary" size="sm" iconLeft="plus" onClick={() => setEditingId('new')}>
+              {t('backoffice:settings.rolesAdd')}
+            </Button>
+          )}
+        </span>
       </div>
+      {editingId === 'new' && (
+        <RoleForm t={t} onCancel={() => setEditingId(null)} onSubmit={handleCreate} />
+      )}
       {loading && (
         <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
           {t('backoffice:settings.loading')}
@@ -1221,21 +1313,67 @@ function RolesPanel() {
           {t('backoffice:settings.loadError')}
         </div>
       )}
-      {!loading && !loadError && roles.length === 0 && (
+      {!loading && !loadError && roles.length === 0 && editingId !== 'new' && (
         <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
           {t('backoffice:settings.rolesEmpty')}
         </div>
       )}
       {!loading && !loadError && roles.map((r) => (
-        <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBlockEnd: 12, borderBlockEnd: '1px solid var(--border-subtle)' }}>
-          <Avatar name={r.name} size={36} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
-            <div style={{ font: 'var(--fw-bold) 13.5px var(--font-display)', color: 'var(--text-heading)' }}>{r.name}</div>
-            <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>{r.description}</div>
-          </div>
-          <span style={{ marginInlineStart: 'auto' }}>
-            <Badge tone="navy">{t('backoffice:settings.rolesUsersCount', { count: r.users_count ?? 0 })}</Badge>
-          </span>
+        <div key={r.id} style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBlockEnd: 12, borderBlockEnd: '1px solid var(--border-subtle)' }}>
+          {editingId === r.id ? (
+            <RoleForm
+              t={t} initial={r} onCancel={() => setEditingId(null)}
+              onSubmit={(payload) => handleUpdate(r.id, payload)}
+            />
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Avatar name={r.name} size={36} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ font: 'var(--fw-bold) 13.5px var(--font-display)', color: 'var(--text-heading)' }}>{r.name}</span>
+                  {r.is_system && <Badge tone="neutral">{t('backoffice:settings.roleSystemBadge')}</Badge>}
+                </div>
+                <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>{r.description}</div>
+              </div>
+              <span style={{ marginInlineStart: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Badge tone="navy">{t('backoffice:settings.rolesUsersCount', { count: r.users_count ?? 0 })}</Badge>
+                {!r.is_system && (
+                  <>
+                    <IconButton
+                      icon="pencil" size="sm" variant="ghost"
+                      label={t('backoffice:settings.roleEditAria', { name: r.name })}
+                      onClick={() => setEditingId(r.id)}
+                    />
+                    <IconButton
+                      icon="trash-2" size="sm" variant="ghost"
+                      label={t('backoffice:settings.roleDeleteAria', { name: r.name })}
+                      onClick={() => { setConfirmDeleteId(r.id); setActionError(null) }}
+                    />
+                  </>
+                )}
+              </span>
+            </div>
+          )}
+          {confirmDeleteId === r.id && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 12, borderRadius: 'var(--radius-sm)', background: 'var(--red-50, #fef2f2)' }}>
+              <span style={{ font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-700, var(--red-600))' }}>
+                {t('backoffice:settings.roleDeleteConfirm', { name: r.name })}
+              </span>
+              <span style={{ marginInlineStart: 'auto', display: 'flex', gap: 8 }}>
+                <Button variant="ghost" size="sm" onClick={() => setConfirmDeleteId(null)} disabled={deletingId === r.id}>
+                  {t('backoffice:settings.roleDeleteCancelBtn')}
+                </Button>
+                <Button variant="danger" size="sm" onClick={() => handleDelete(r.id)} disabled={deletingId === r.id}>
+                  {deletingId === r.id ? t('backoffice:settings.roleFormSaving') : t('backoffice:settings.roleDeleteConfirmBtn')}
+                </Button>
+              </span>
+            </div>
+          )}
+          {actionError === r.id && (
+            <div style={{ font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+              {t('backoffice:settings.roleDeleteError')}
+            </div>
+          )}
         </div>
       ))}
     </Card>

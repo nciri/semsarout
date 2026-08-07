@@ -347,24 +347,52 @@ export async function getBackofficeLifestyleReferential() {
   return data
 }
 
-// Rôles & permissions (super-admin, LECTURE SEULE ici) : réutilise le proxy générique
-// existant `GET /api/v1/backoffice/roles` (identity, `services/identity/app/rbac.py`) —
-// déjà servi au back-office legacy (`frontend/`). L'écriture (création/édition de rôle)
-// existe côté identity (`POST/PUT /backoffice/roles`) mais n'est pas câblée ici : hors
-// périmètre de la vue Paramètres m3a pour cette phase (pas d'UI de gestion des rôles).
+// Rôles & permissions (super-admin) : CRUD complet — réutilise le proxy générique existant
+// `/api/v1/backoffice/roles*` (routé vers identity, `services/identity/app/rbac.py`, déjà
+// servi au back-office legacy `frontend/`). Le BFF (`gateway/app/main.py`) relaie ces routes
+// telles quelles ; la garde (superadmin / droit de gérer les rôles, rôles système protégés,
+// anti-escalation des permissions) vit côté identity.
+let _mockRoles = [
+  { id: 1, name: 'Super-admin', description: 'Accès complet à la plateforme', level: 0,
+    is_system: true, users_count: 2, permissions: [{ id: 1 }, { id: 2 }, { id: 3 }] },
+  { id: 2, name: 'Modération', description: 'Vérifications, annonces, comptes', level: 1,
+    is_system: false, users_count: 3, permissions: [{ id: 1 }, { id: 2 }] },
+  { id: 3, name: 'Support', description: 'Lecture seule, assistance utilisateurs', level: 2,
+    is_system: false, users_count: 4, permissions: [{ id: 1 }] },
+]
+
 export async function getBackofficeRoles() {
-  if (isMocked('backoffice')) {
-    return delay({
-      roles: [
-        { id: 1, name: 'Super-admin', description: 'Accès complet à la plateforme', level: 0,
-          users_count: 2, permissions: [{ id: 1 }, { id: 2 }, { id: 3 }] },
-        { id: 2, name: 'Modération', description: 'Vérifications, annonces, comptes', level: 1,
-          users_count: 3, permissions: [{ id: 1 }, { id: 2 }] },
-        { id: 3, name: 'Support', description: 'Lecture seule, assistance utilisateurs', level: 2,
-          users_count: 4, permissions: [{ id: 1 }] },
-      ],
-    })
-  }
+  if (isMocked('backoffice')) return delay({ roles: _mockRoles })
   const { data } = await api.get('/backoffice/roles')
+  return data
+}
+
+export async function createRole({ name, description, color, level }) {
+  if (isMocked('backoffice')) {
+    const role = { id: Math.max(0, ..._mockRoles.map((r) => r.id)) + 1, name, description,
+      color, level: level ?? 100, is_system: false, users_count: 0, permissions: [] }
+    _mockRoles = [..._mockRoles, role]
+    return delay(role)
+  }
+  const { data } = await api.post('/backoffice/roles', { name, description, color, level })
+  return data
+}
+
+export async function updateRole(roleId, { name, description, color, level }) {
+  if (isMocked('backoffice')) {
+    const patch = { name, description, color, level }
+    _mockRoles = _mockRoles.map((r) => (r.id === roleId ? { ...r, ...patch } : r))
+    return delay(_mockRoles.find((r) => r.id === roleId))
+  }
+  const { data } = await api.put(`/backoffice/roles/${roleId}`, { name, description, color, level })
+  return data
+}
+
+export async function deleteRole(roleId) {
+  if (isMocked('backoffice')) {
+    _mockRoles = _mockRoles.filter((r) => r.id !== roleId)
+    return delay({ message: 'Role deleted' })
+  }
+  const { data } = await api.delete(`/backoffice/roles/${roleId}`)
   return data
 }
