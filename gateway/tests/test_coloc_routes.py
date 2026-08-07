@@ -35,12 +35,22 @@ def test_lease_routes_to_coloc_listing(monkeypatch):
     monkeypatch.setattr(m.settings, "coloc_listing_url", "http://c")
     fake = _app(coloc_listing="COLOC")
     assert _resolve_upstream(fake, "/api/v1/me/lease", "GET") == ("COLOC", "/me/lease")
+    assert _resolve_upstream(fake, "/api/v1/me/leases", "GET") == ("COLOC", "/me/leases")
     assert _resolve_upstream(fake, "/api/v1/leases", "POST") == ("COLOC", "/leases")
     assert _resolve_upstream(fake, "/api/v1/leases/mine", "GET") == ("COLOC", "/leases/mine")
     assert _resolve_upstream(fake, "/api/v1/leases/abc123", "GET") == ("COLOC", "/leases/abc123")
     assert _resolve_upstream(
         fake, "/api/v1/leases/abc123/payments/p1/escrow", "POST"
     ) == ("COLOC", "/leases/abc123/payments/p1/escrow")
+    assert _resolve_upstream(
+        fake, "/api/v1/leases/abc123/payments/p1/intent", "POST"
+    ) == ("COLOC", "/leases/abc123/payments/p1/intent")
+    assert _resolve_upstream(
+        fake, "/api/v1/leases/abc123/etat-des-lieux", "POST"
+    ) == ("COLOC", "/leases/abc123/etat-des-lieux")
+    assert _resolve_upstream(
+        fake, "/api/v1/leases/abc123/etat-des-lieux/e1/sign", "POST"
+    ) == ("COLOC", "/leases/abc123/etat-des-lieux/e1/sign")
 
 
 def test_unmapped_when_disabled(monkeypatch):

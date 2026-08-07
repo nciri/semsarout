@@ -465,6 +465,7 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path.startswith("/api/v1/listings/")
         or path == "/api/v1/me/listings"
         or path == "/api/v1/me/lease"
+        or path == "/api/v1/me/leases"
         or path == "/api/v1/leases"
         or path.startswith("/api/v1/leases/")
     ):
@@ -766,6 +767,35 @@ async def backoffice_leases(request: Request) -> Response:
     if r.status_code != 200:
         return JSONResponse({"tenant": tenant, "items": []})
     return JSONResponse({"tenant": tenant, **r.json()})
+
+
+@app.post("/api/v1/payments/webhook", include_in_schema=False)
+async def payments_webhook_relay(request: Request) -> Response:
+    """Relais du webhook (simulé) du provider de paiement vers coloc-listing
+    `/internal/payments/webhook`. Pas d'auth utilisateur ici : un vrai PSP appelle cette
+    URL publique sans jeton applicatif — c'est la signature `x-webhook-signature` (HMAC,
+    vérifiée côté coloc-listing avec le secret partagé) qui fait foi, comme chez la
+    plupart des prestataires réels. Le BFF se contente de relayer body + signature vers
+    le service interne (non exposé publiquement) ; `x-internal-token` est ajouté en plus
+    pour rester cohérent avec les autres appels inter-services du mesh."""
+    app_ = request.app
+    client = app_.state.coloc_listing
+    if client is None:
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    body = await request.body()
+    headers = {
+        "x-internal-token": settings.internal_token,
+        "x-webhook-signature": request.headers.get("x-webhook-signature", ""),
+        "content-type": "application/json",
+    }
+    try:
+        r = await client.request("POST", "/internal/payments/webhook", content=body, headers=headers)
+    except Exception:  # noqa: BLE001 — dégradation propre si coloc-listing est indisponible
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    return Response(content=r.content, status_code=r.status_code,
+                    media_type=r.headers.get("content-type"))
 
 
 @app.get("/api/v1/backoffice/reports", include_in_schema=False)
