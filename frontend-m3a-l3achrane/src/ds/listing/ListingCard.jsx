@@ -35,7 +35,7 @@ export function ListingCard({
         {match != null && <div style={{ position: "absolute", top: 10, insetInlineStart: 10 }}><MatchScore value={match} size="sm" /></div>}
         {verified && <div style={{ position: "absolute", top: 10, insetInlineEnd: 10 }}><VerifiedBadge label={t("trust.verified")} size="sm" /></div>}
       </div>
-      <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 5, color: "var(--text-muted)", font: "var(--fw-medium) var(--fs-xs) var(--font-body)" }}>
           <Icon name="map-pin" size={13} strokeWidth={2} /> {displayCity}
         </div>
@@ -55,7 +55,7 @@ export function ListingCard({
             type="button"
             onClick={(e) => { e.stopPropagation(); onApply(e); }}
             style={{
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 7, marginTop: 4,
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 7, marginBlockStart: "auto",
               padding: "9px 14px", borderRadius: "var(--radius-sm)", border: "1px solid var(--navy-700)",
               background: "var(--navy-700)", color: "#fff", cursor: "pointer",
               font: "var(--fw-semibold) var(--fs-sm) var(--font-body)",
