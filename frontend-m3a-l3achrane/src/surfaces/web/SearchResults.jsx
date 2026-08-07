@@ -112,7 +112,10 @@ export default function SearchResults() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ font: 'var(--fw-extrabold) 12.5px var(--font-body)', letterSpacing: '.02em', color: 'var(--text-heading)' }}>{t('web:search.monthlyBudgetLabel')}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, font: 'var(--fw-extrabold) 12.5px var(--font-body)', letterSpacing: '.02em', color: 'var(--text-heading)' }}>
+                <Icon name="wallet" size={15} strokeWidth={2} />
+                {t('web:search.monthlyBudgetLabel')}
+              </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <Input defaultValue="1 500" containerStyle={{ width: '100%' }} />
                 <Input defaultValue="3 000" containerStyle={{ width: '100%' }} />
@@ -123,7 +126,10 @@ export default function SearchResults() {
             <div style={{ height: 1, background: 'var(--border-subtle)' }} />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ font: 'var(--fw-extrabold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>{t('web:search.housingTypeLabel')}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, font: 'var(--fw-extrabold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>
+                <Icon name="home" size={15} strokeWidth={2} />
+                {t('web:search.housingTypeLabel')}
+              </div>
               {typeFilters.map((f) => (
                 <label key={f.label} style={{ display: 'flex', gap: 10, alignItems: 'center', font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-body)', cursor: 'pointer' }}>
                   <input
@@ -141,7 +147,10 @@ export default function SearchResults() {
             <div style={{ height: 1, background: 'var(--border-subtle)' }} />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ font: 'var(--fw-extrabold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>{t('web:search.lifestyleLabel')}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, font: 'var(--fw-extrabold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>
+                <Icon name="sparkles" size={15} strokeWidth={2} />
+                {t('web:search.lifestyleLabel')}
+              </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {lifestyleChips.map((label) => (
                   <Chip key={label} selected={lifestyle.has(label)} onClick={() => toggleLifestyle(label)}>
@@ -154,7 +163,10 @@ export default function SearchResults() {
             <div style={{ height: 1, background: 'var(--border-subtle)' }} />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ font: 'var(--fw-extrabold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>{t('web:search.proximityLabel')}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, font: 'var(--fw-extrabold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>
+                <Icon name="navigation" size={15} strokeWidth={2} />
+                {t('web:search.proximityLabel')}
+              </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {proximityRadiusOptions.map((label) => (
                   <Chip key={label} selected={proximityRadius === label} onClick={() => setProximityRadius(label)}>
@@ -167,7 +179,10 @@ export default function SearchResults() {
             <div style={{ height: 1, background: 'var(--border-subtle)' }} />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ font: 'var(--fw-extrabold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>{t('web:search.trustLabel')}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, font: 'var(--fw-extrabold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>
+                <Icon name="shield-check" size={15} strokeWidth={2} />
+                {t('web:search.trustLabel')}
+              </div>
               <label style={{ display: 'flex', gap: 10, alignItems: 'center', font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-body)', cursor: 'pointer' }}>
                 <input type="checkbox" checked={verifiedOnly} onChange={(e) => setVerifiedOnly(e.target.checked)} style={{ width: 15, height: 15, accentColor: 'var(--navy-700)' }} />
                 {t('web:search.verifiedOnlyLabel')}
@@ -188,16 +203,18 @@ export default function SearchResults() {
           <div
             style={{
               display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
-              borderRadius: 'var(--radius-md, 10px)', background: 'var(--navy-50)', border: '1px solid var(--navy-100)',
+              borderRadius: 'var(--radius-md, 10px)',
+              background: hasLifestyleProfile ? 'var(--navy-50)' : 'var(--gold-100)',
+              border: `1px solid ${hasLifestyleProfile ? 'var(--navy-100)' : 'var(--gold-500)'}`,
             }}
           >
-            <Icon name={hasLifestyleProfile ? 'user-check' : 'sliders'} size={16} color="var(--navy-700)" />
+            <Icon name={hasLifestyleProfile ? 'user-check' : 'sparkles'} size={16} color={hasLifestyleProfile ? 'var(--navy-700)' : 'var(--gold-700)'} />
             <a
               href="/espace/questionnaire"
               onClick={(e) => { e.preventDefault(); navigate('/espace/questionnaire') }}
               style={{
                 font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)',
-                color: hasLifestyleProfile ? 'var(--text-heading)' : 'var(--link)',
+                color: hasLifestyleProfile ? 'var(--text-heading)' : 'var(--gold-700)',
                 flex: 1, textDecoration: 'none',
               }}
             >
