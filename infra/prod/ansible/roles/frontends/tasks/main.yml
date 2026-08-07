@@ -4,20 +4,20 @@
     name: [ca-certificates, curl, gnupg]
     state: present
 
-- name: Vérifier si Node 20 est déjà installé
+- name: Vérifier si Node 24 est déjà installé
   ansible.builtin.command: node --version
   register: semsar_node_version
   changed_when: false
   failed_when: false
 
-- name: Installer Node.js 20 (NodeSource)
+- name: Installer Node.js 24 (NodeSource)
   ansible.builtin.shell: |
     set -euo pipefail
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+    curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
     apt-get install -y nodejs
   args:
     executable: /bin/bash
-  when: semsar_node_version.rc != 0 or not semsar_node_version.stdout is match('^v20\\.')
+  when: semsar_node_version.rc != 0 or not semsar_node_version.stdout is match('^v24\\.')
 
 - name: Builder + déployer chaque frontend
   vars:
