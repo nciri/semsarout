@@ -8,7 +8,7 @@ le BFF route déjà par host/tenant).
 from contextlib import asynccontextmanager
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, FastAPI, Request
+from fastapi import APIRouter, Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import Session
@@ -69,6 +69,27 @@ async def _tenant_handler(request: Request, exc: _TenantForbidden) -> JSONRespon
 @app.get("/health", include_in_schema=False)
 async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
+
+
+@app.get("/internal/stats", include_in_schema=False)
+def internal_stats(tenant: str | None = None, x_internal_token: str = Header(default=""),
+                   db: Session = Depends(get_db)) -> dict:
+    """Compteurs annonces (super-admin overview m3a) — agrégés par le BFF. coloc-listing
+    n'a PAS de colonne tenant (service mono-tenant m3a-l3achrane) : `tenant` n'est accepté
+    que pour uniformité de contrat avec identity et est ignoré s'il diffère de m3a-l3achrane
+    (dans ce cas, compteurs à zéro plutôt qu'un mélange trompeur)."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    if tenant and tenant != TENANT:
+        return {"total_listings": 0, "published_listings": 0, "in_moderation_listings": 0,
+                "new_listings_30d": 0}
+    since = _now() - timedelta(days=30)
+    return {
+        "total_listings": db.query(Listing).count(),
+        "published_listings": db.query(Listing).filter(Listing.status == "PUBLIEE").count(),
+        "in_moderation_listings": db.query(Listing).filter(Listing.status == "EN_MODERATION").count(),
+        "new_listings_30d": db.query(Listing).filter(Listing.created_at >= since).count(),
+    }
 
 
 router = APIRouter(dependencies=[Depends(_require_tenant)])
