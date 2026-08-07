@@ -115,21 +115,29 @@ def admin_overview(principal: Principal = Depends(get_principal)):
 @app.get("/admin/accounts")
 def admin_accounts(request: Request, principal: Principal = Depends(get_principal)):
     """Liste unifiée users+agences (super-admin, parité `admin/accounts.py:list_accounts`).
-    Agrège identity (users) + agency (agences) + billing (plan) + listing (nb biens)."""
+    Agrège identity (users) + agency (agences) + billing (plan) + listing (nb biens).
+
+    `tenant` optionnel (ex. `m3a-l3achrane`) : filtre les users côté identity — utilisé par le
+    back-office m3a (vue Utilisateurs, cloisonnée tenant). Absent → comportement historique
+    (tous tenants), pour ne pas casser la console super-admin semsarout existante."""
     if not principal.is_superadmin:
         return err("Super-admin access required", 403)
     qp = request.query_params
     kind = qp.get("type"); status = qp.get("status"); q = (qp.get("q") or "").strip().lower()
+    tenant = qp.get("tenant")
     page = int(qp.get("page") or 1); per_page = int(qp.get("per_page") or 20)
     counts = sources.property_counts()
     by_owner = counts.get("by_owner", {}); by_agency = counts.get("by_agency", {})
     rows = []
     if kind in (None, "user"):
-        for u in sources.users_list():
+        for u in sources.users_list(tenant):
             if q and q not in (u["name"] or "").lower() and q not in (u["email"] or "").lower():
                 continue
             rows.append({"kind": "user", "id": u["id"], "name": u["name"], "email": u["email"],
                          "status": u["status"], "plan": None, "last_login": u["last_login"],
+                         "tenant": u.get("tenant"), "account_role": u.get("account_role"),
+                         "user_type": u.get("user_type"), "is_verified": u.get("is_verified"),
+                         "created_at": u.get("created_at"),
                          "listings_count": by_owner.get(str(u["id"]), 0)})
     if kind in (None, "agency"):
         subs = sources.subscriptions_map()
