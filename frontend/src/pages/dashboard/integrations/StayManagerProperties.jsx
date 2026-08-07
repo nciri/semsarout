@@ -21,7 +21,7 @@ const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
 
 export default function StayManagerProperties() {
   const { t } = useTranslation(['dashboard', 'common'])
-  const { token } = useAuthStore()
+  const { accessToken: token } = useAuthStore()
   const { fmtDate } = useFormat()
   const [loading, setLoading] = useState(true)
   const [propertyLinks, setPropertyLinks] = useState([])

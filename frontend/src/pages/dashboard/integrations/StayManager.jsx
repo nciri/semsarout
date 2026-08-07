@@ -35,7 +35,7 @@ const SM_COLORS = {
 
 export default function StayManager() {
   const { t } = useTranslation(['dashboard', 'common'])
-  const { token } = useAuthStore()
+  const { accessToken: token } = useAuthStore()
   const { fmtDateTime } = useFormat()
   const [loading, setLoading] = useState(true)
   const [connecting, setConnecting] = useState(false)

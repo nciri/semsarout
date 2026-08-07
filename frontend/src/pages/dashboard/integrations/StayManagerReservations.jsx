@@ -38,7 +38,7 @@ const PLATFORM_TONE = {
 
 export default function StayManagerReservations() {
   const { t } = useTranslation(['dashboard', 'common'])
-  const { token } = useAuthStore()
+  const { accessToken: token } = useAuthStore()
   const { fmtDate, fmtDateTime, fmtNumber } = useFormat()
   const [searchParams, setSearchParams] = useSearchParams()
   const [loading, setLoading] = useState(true)
