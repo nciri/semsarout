@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { Link } from 'react-router-dom'
 import {
   FiCheck, FiX, FiCreditCard, FiDownload, FiCheckCircle, FiClock,
-  FiAlertCircle, FiCalendar, FiArrowRight, FiStar, FiZap, FiAward,
-  FiPlus, FiTrash2, FiEdit2, FiRefreshCw
+  FiAlertCircle, FiCalendar, FiStar, FiZap, FiAward,
+  FiPlus, FiTrash2, FiRefreshCw
 } from 'react-icons/fi'
 import { jsPDF } from 'jspdf'
 import { toast } from 'react-toastify'
@@ -13,7 +12,6 @@ import useAuthStore from '../../store/authStore'
 import { formatPrice } from '../../utils/currency'
 import api from '../../services/api'
 import { CONTACT } from '../../constants/contact'
-import DirIcon from '../../components/common/DirIcon'
 import { useFormat } from '../../utils/format'
 
 // Generate invoice PDF (t: fonction de traduction i18n, injectée par l'appelant)

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Marker, Popup } from 'react-leaflet'
 import { useTranslation } from 'react-i18next'
-import { FiMapPin, FiPhone, FiMail, FiHome, FiX } from 'react-icons/fi'
+import { FiMapPin, FiPhone, FiHome, FiX } from 'react-icons/fi'
 import MapContainer, { createAgencyMarker, FitBounds, MOROCCO_CENTER } from './MapContainer'
 
 function AgencyPopup({ agency }) {

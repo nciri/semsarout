@@ -5,7 +5,6 @@ import {
   FiArrowLeft,
   FiCalendar,
   FiUser,
-  FiCheck,
   FiX,
   FiAlertCircle,
   FiFilter,

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { FiArrowRight } from 'react-icons/fi'
-import { fmtMAD, fmtNum, fmtPct } from '../../analytics/palette'
+import { fmtMAD, fmtNum } from '../../analytics/palette'
 import DirIcon from '../../common/DirIcon'
 import i18n from '../../../i18n'
 

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { FiX, FiBarChart2 } from 'react-icons/fi'
+import { FiBarChart2 } from 'react-icons/fi'
 import useCompareStore, { MAX_COMPARE_PROPERTIES } from '../../store/compareStore'
 
 function CompareBar() {

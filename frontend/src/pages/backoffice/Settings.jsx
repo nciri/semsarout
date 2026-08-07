@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useTranslation } from 'react-i18next'
 import {
-  FiSave, FiUpload, FiGlobe, FiMail, FiPhone, FiMapPin,
-  FiDollarSign, FiBell, FiShield, FiDatabase, FiKey, FiCreditCard
+  FiSave, FiGlobe, FiMail, FiPhone, FiMapPin,
+  FiBell, FiShield, FiDatabase, FiKey, FiCreditCard
 } from 'react-icons/fi'
 import api from '../../services/api'
 import useAuthStore from '../../store/authStore'

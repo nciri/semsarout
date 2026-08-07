@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   FiSearch, FiSliders, FiX, FiChevronDown, FiChevronUp,
   FiMapPin, FiHome, FiDollarSign, FiMaximize, FiLayers,
-  FiDroplet, FiSun, FiStar, FiZap
+  FiDroplet, FiSun, FiStar
 } from 'react-icons/fi'
 import { HiSparkles } from 'react-icons/hi2'
 import { DIRHAM_SYMBOL } from '../../utils/currency'

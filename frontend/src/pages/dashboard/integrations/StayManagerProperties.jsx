@@ -9,9 +9,7 @@ import {
   FiX,
   FiAlertCircle,
   FiHome,
-  FiCalendar,
-  FiSearch,
-  FiChevronDown
+  FiCalendar
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
 import DirIcon from '../../../components/common/DirIcon'

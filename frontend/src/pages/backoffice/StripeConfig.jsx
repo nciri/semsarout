@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  FiCreditCard, FiKey, FiCheck, FiAlertCircle, FiEye, FiEyeOff,
+  FiKey, FiCheck, FiAlertCircle, FiEye, FiEyeOff,
   FiRefreshCw, FiExternalLink, FiSettings, FiDollarSign, FiPercent,
   FiToggleLeft, FiToggleRight, FiSave, FiShield
 } from 'react-icons/fi'

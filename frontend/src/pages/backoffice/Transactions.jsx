@@ -3,8 +3,8 @@ import { useQuery } from 'react-query'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  FiPlus, FiSearch, FiFilter, FiGrid, FiList, FiDollarSign,
-  FiCalendar, FiUser, FiHome, FiMoreVertical, FiEye
+  FiPlus, FiSearch, FiFilter, FiGrid, FiDollarSign,
+  FiUser, FiHome, FiEye
 } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
 import api from '../../services/api'

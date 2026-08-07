@@ -3,7 +3,7 @@ import { useQuery } from 'react-query'
 import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  FiMapPin, FiCalendar, FiHome, FiPhone, FiMail, FiShare2,
+  FiMapPin, FiCalendar, FiHome, FiPhone, FiShare2,
   FiCheckCircle, FiClock, FiAlertCircle, FiChevronLeft, FiChevronRight,
   FiDownload, FiPlay, FiX, FiMaximize2
 } from 'react-icons/fi'

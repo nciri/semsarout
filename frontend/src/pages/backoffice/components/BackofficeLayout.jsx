@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { Link, useLocation, Outlet, Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  FiHome, FiUsers, FiFileText, FiCalendar, FiDollarSign,
+  FiHome, FiUsers, FiFileText, FiCalendar,
   FiSettings, FiMenu, FiX, FiBriefcase,
   FiUserCheck, FiGrid, FiMail, FiLogOut, FiBell, FiSearch,
-  FiChevronDown, FiExternalLink, FiTrendingUp, FiShield, FiTool, FiClipboard, FiShoppingBag, FiPackage, FiKey
+  FiChevronDown, FiTrendingUp, FiTool, FiShoppingBag, FiKey
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
 import Wordmark from '../../../components/common/Wordmark'

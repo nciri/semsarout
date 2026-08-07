@@ -6,7 +6,7 @@ import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import {
   FiMapPin, FiMaximize, FiPhone, FiMail, FiHeart,
-  FiShare2, FiChevronLeft, FiChevronRight, FiCheck, FiZoomIn, FiEye, FiFileText,
+  FiShare2, FiChevronLeft, FiChevronRight, FiZoomIn, FiEye, FiFileText,
   FiUploadCloud, FiTrash2
 } from 'react-icons/fi'
 import { IoBedOutline, IoWaterOutline } from 'react-icons/io5'

@@ -3,8 +3,8 @@ import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useTranslation } from 'react-i18next'
 import {
   FiPlus, FiCalendar, FiClock, FiUser, FiHome, FiPhone, FiMail,
-  FiCheck, FiX, FiMoreVertical, FiChevronLeft, FiChevronRight,
-  FiFilter, FiList, FiGrid
+  FiX, FiChevronLeft, FiChevronRight,
+  FiList, FiGrid
 } from 'react-icons/fi'
 import DirIcon from '../../components/common/DirIcon'
 import api from '../../services/api'

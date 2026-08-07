@@ -1,7 +1,7 @@
 import { useQuery } from 'react-query'
 import {
   FiHome, FiUsers, FiMail, FiCalendar, FiTrendingUp,
-  FiTrendingDown, FiDollarSign, FiEye, FiArrowRight, FiClock
+  FiTrendingDown, FiDollarSign, FiEye, FiArrowRight
 } from 'react-icons/fi'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'

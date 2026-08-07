@@ -11,7 +11,6 @@ import {
   FiHome,
   FiCalendar,
   FiUsers,
-  FiClock,
   FiKey,
   FiChevronRight,
   FiZap
