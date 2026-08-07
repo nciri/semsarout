@@ -613,6 +613,139 @@ async def coloc_listings_composite(request: Request) -> Response:
     return JSONResponse(data)
 
 
+def _forward_headers(request: Request, ident: dict | None, tenant: str) -> dict:
+    """En-têtes vers un service interne, mêmes règles que `proxy()` : on jette les hop-by-hop
+    et tout X-Semsar-* entrant (anti-usurpation), puis on ré-injecte l'identité + le tenant."""
+    headers = {
+        k: v for k, v in request.headers.items()
+        if k.lower() not in _HOP_BY_HOP
+        and not k.lower().startswith("x-semsar-")
+        and k.lower() != "x-tenant"
+    }
+    if ident:
+        _inject_identity(headers, ident)
+    headers["x-semsar-tenant"] = tenant
+    return headers
+
+
+async def _resolve_candidate_names(app_: FastAPI, ids: set) -> dict:
+    """id candidat → nom humain (identity `/internal/user/{id}`). identity absent/en panne ou
+    user introuvable → id omis du dict : le front retombe sur « Candidat #id »."""
+    client = app_.state.identity
+    ids = {i for i in ids if i is not None}
+    if client is None or not ids:
+        return {}
+    headers = {"x-internal-token": settings.internal_token}
+
+    async def _one(uid):
+        try:
+            r = await client.request("GET", f"/internal/user/{uid}", headers=headers)
+        except Exception:  # noqa: BLE001 — dégradation nom par nom
+            return uid, None
+        if r.status_code != 200:
+            return uid, None
+        user = (r.json() or {}).get("user") or {}
+        return uid, (user.get("full_name") or "").strip() or None
+
+    pairs = await asyncio.gather(*(_one(uid) for uid in ids))
+    return {uid: name for uid, name in pairs if name}
+
+
+async def _resolve_candidate_scores(app_: FastAPI, candidatures: list) -> dict:
+    """id candidature → match_pct : compatibilité (candidat = seeker) ↔ (annonce), via matching
+    `/internal/scores` (un appel par candidat distinct). matching absent/en panne ou profil/
+    critères manquants → clé omise, le front masque le score (parité `coloc_listings_composite`)."""
+    client = app_.state.matching
+    if client is None:
+        return {}
+    by_candidate: dict = {}
+    for c in candidatures:
+        cu, li = c.get("candidate_user_id"), c.get("listing_id")
+        if cu and li:
+            by_candidate.setdefault(cu, set()).add(li)
+    if not by_candidate:
+        return {}
+    headers = {"x-internal-token": settings.internal_token}
+
+    async def _one(cu, listing_ids):
+        try:
+            r = await client.request(
+                "POST", "/internal/scores",
+                json={"user_id": cu, "listing_ids": list(listing_ids)}, headers=headers)
+            if r.status_code == 200:
+                return cu, r.json().get("scores", {})
+        except Exception:  # noqa: BLE001 — dégradation sans score
+            return cu, {}
+        return cu, {}
+
+    results = dict(await asyncio.gather(
+        *(_one(cu, lids) for cu, lids in by_candidate.items())))
+    out: dict = {}
+    for c in candidatures:
+        pct = results.get(c.get("candidate_user_id"), {}).get(c.get("listing_id"))
+        if pct is not None:
+            out[c["id"]] = pct
+    return out
+
+
+async def _candidatures_composite(request: Request, upstream_path: str) -> Response:
+    """Proxifie une liste de candidatures (coloc-listing) puis l'enrichit au BFF : nom humain
+    du candidat + score de compatibilité candidat↔annonce. L'enrichissement ne fait jamais
+    échouer la liste (dégradation par clé absente)."""
+    app_ = request.app
+    if app_.state.coloc_listing is None:
+        return Response(content=b'{"error":"Not found"}', status_code=404,
+                        media_type="application/json")
+    tenant = _resolve_tenant(request.headers, request.headers.get("host", ""))
+    ident = await _resolve_identity(
+        app_, request.headers.get("authorization"),
+        request.cookies.get(settings.cookie_access_name),
+    )
+    if ident and ident.get("tenant", "semsar") != tenant:
+        return Response(content=b'{"error":"Tenant mismatch"}', status_code=403,
+                        media_type="application/json")
+    url = upstream_path + (f"?{request.url.query}" if request.url.query else "")
+    upstream = await app_.state.coloc_listing.request(
+        "GET", url, headers=_forward_headers(request, ident, tenant))
+    if upstream.status_code != 200:
+        return Response(content=upstream.content, status_code=upstream.status_code,
+                        media_type=upstream.headers.get("content-type", "application/json"))
+    try:
+        rows = upstream.json()
+    except ValueError:
+        return Response(content=upstream.content, status_code=upstream.status_code,
+                        media_type=upstream.headers.get("content-type", "application/json"))
+    if isinstance(rows, list) and rows:
+        names, scores = await asyncio.gather(
+            _resolve_candidate_names(
+                app_, {r.get("candidate_user_id") for r in rows}),
+            _resolve_candidate_scores(app_, rows),
+        )
+        for r in rows:
+            name = names.get(r.get("candidate_user_id"))
+            if name:
+                r["candidate_name"] = name
+            pct = scores.get(r.get("id"))
+            if pct is not None:
+                r["match_pct"] = pct
+    return JSONResponse(rows)
+
+
+@app.get("/api/v1/candidatures/received", include_in_schema=False)
+async def candidatures_received_composite(request: Request) -> Response:
+    """Candidatures reçues (propriétaire), enrichies au BFF du nom humain du candidat (identity)
+    et d'un score de compatibilité candidat↔annonce (matching). Dégradation propre : nom/score
+    absent → clé omise, la liste ne tombe jamais à cause de l'enrichissement."""
+    return await _candidatures_composite(request, "/candidatures/received")
+
+
+@app.get("/api/v1/candidatures/roommate-pending", include_in_schema=False)
+async def candidatures_roommate_pending_composite(request: Request) -> Response:
+    """Candidatures en attente de la décision du colocataire en place, mêmes enrichissements
+    (nom + score) que `/candidatures/received`."""
+    return await _candidatures_composite(request, "/candidatures/roommate-pending")
+
+
 async def _fetch_internal_stats(
     client: httpx.AsyncClient | None, path: str, tenant: str, headers: dict
 ) -> dict | None:

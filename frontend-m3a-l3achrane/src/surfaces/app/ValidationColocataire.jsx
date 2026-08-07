@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Avatar, Badge, Button, Card } from '../../ds/index.js'
+import { Avatar, Badge, Button, Card, CompatibilityRing } from '../../ds/index.js'
 import { getPendingRoommateCandidatures, roommateDecision } from '../../services/index.js'
 
 function CandidateActions({ status, busy, onValidate, onReject }) {
@@ -55,10 +55,13 @@ function CandidateCard({ candidature, onDecide }) {
         )}
 
         <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-          <Avatar name="" size={42} />
-          <span style={{ font: 'var(--fw-bold) var(--fs-body) var(--font-display)', color: 'var(--text-strong)' }}>
-            {t('candidatures.candidateLabel', { id: candidature.candidate_user_id })}
+          <Avatar name={candidature.candidate_name || ''} size={42} />
+          <span style={{ flex: 1, font: 'var(--fw-bold) var(--fs-body) var(--font-display)', color: 'var(--text-strong)' }}>
+            {candidature.candidate_name || t('candidatures.candidateLabel', { id: candidature.candidate_user_id })}
           </span>
+          {typeof candidature.match_pct === 'number' && (
+            <CompatibilityRing value={candidature.match_pct} size={52} stroke={6} label="" />
+          )}
         </div>
 
         {candidature.message && (

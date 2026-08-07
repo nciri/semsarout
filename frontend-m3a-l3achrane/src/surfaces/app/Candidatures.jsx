@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Avatar, Badge, Button, Card, Chip, Input } from '../../ds/index.js'
+import { Avatar, Badge, Button, Card, Chip, CompatibilityRing, Input } from '../../ds/index.js'
 import {
   acceptCandidature, createLease, createOrOpenConversation, getReceivedCandidatures,
   rejectCandidature, shortlistCandidature,
@@ -200,17 +200,20 @@ function ApplicationCard({ app, onSetStatus, onLeaseCreated, leaseId }) {
         )}
 
         <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-          <Avatar name="" size={42} />
+          <Avatar name={app.candidate_name || ''} size={42} />
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
             <div style={{ display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap' }}>
               <span style={{ font: 'var(--fw-bold) var(--fs-body) var(--font-display)', color: 'var(--text-strong)' }}>
-                {t('app:candidatures.candidateLabel', { id: app.candidate_user_id })}
+                {app.candidate_name || t('app:candidatures.candidateLabel', { id: app.candidate_user_id })}
               </span>
               <span style={{ font: 'var(--fw-regular) var(--fs-xs) var(--font-body)', color: 'var(--text-muted)' }}>
                 {new Date(app.created_at).toLocaleDateString()}
               </span>
             </div>
           </div>
+          {typeof app.match_pct === 'number' && (
+            <CompatibilityRing value={app.match_pct} size={52} stroke={6} label="" />
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
             <Button size="sm" variant="ghost" onClick={contact} disabled={contacting}>
               {t('app:messaging.contact')}

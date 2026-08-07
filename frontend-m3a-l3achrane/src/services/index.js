@@ -379,12 +379,14 @@ export async function getMyCandidatures() {
 export async function getReceivedCandidatures(listingId) {
   if (isMocked('candidatures')) {
     return delay([
-      _mockCandidature({ id: 'cand-1', candidate_user_id: 51, status: 'received',
+      _mockCandidature({ id: 'cand-1', candidate_user_id: 51, candidate_name: 'Salma Bennani',
+        match_pct: 88, status: 'received',
         message: "Bonjour, je suis très intéressée par la chambre.",
         listing: { id: 'l-1', title: 'Chambre privée', city: 'Casablanca', neighborhood: 'Maârif',
                   rent: 2200, deposit: 2200, room_already_occupied: true,
                   roommates: { total: 2, women: 1, men: 1 } } }),
-      _mockCandidature({ id: 'cand-2', candidate_user_id: 58, status: 'accepted',
+      _mockCandidature({ id: 'cand-2', candidate_user_id: 58, candidate_name: 'Youssef El Amrani',
+        match_pct: 64, status: 'accepted',
         listing: { id: 'l-2', title: 'Appartement entier T2', city: 'Casablanca', neighborhood: 'Gauthier',
                   rent: 1900, deposit: 1900, room_already_occupied: false, roommates: null } }),
     ])
