@@ -23,8 +23,12 @@ export default function SearchResults() {
   const sortOptionsDetailed = t('web:search.sortOptionsDetailed', { returnObjects: true })
   const verifiedFilterChip = t('web:search.verifiedFilterChip')
 
+  const proximityRadiusOptions = t('web:search.proximityRadiusOptions', { returnObjects: true })
+  const indifferentRadius = proximityRadiusOptions[proximityRadiusOptions.length - 1]
+
   const [activeType, setActiveType] = useState(typeFilters[0].label)
   const [lifestyle, setLifestyle] = useState(() => new Set([lifestyleChips[0], lifestyleChips[1]]))
+  const [proximityRadius, setProximityRadius] = useState(indifferentRadius)
 
   useEffect(() => {
     listListings().then(setItems)
@@ -35,8 +39,9 @@ export default function SearchResults() {
     if (activeType) filters.push({ kind: 'type', label: activeType })
     if (verifiedOnly) filters.push({ kind: 'verified', label: verifiedFilterChip })
     lifestyle.forEach((label) => filters.push({ kind: 'lifestyle', label }))
+    if (proximityRadius && proximityRadius !== indifferentRadius) filters.push({ kind: 'proximity', label: proximityRadius })
     return filters
-  }, [activeType, lifestyle, verifiedOnly, verifiedFilterChip])
+  }, [activeType, lifestyle, verifiedOnly, verifiedFilterChip, proximityRadius, indifferentRadius])
 
   const toggleLifestyle = (label) => {
     setLifestyle((prev) => {
@@ -51,6 +56,7 @@ export default function SearchResults() {
     if (filter.kind === 'type') setActiveType(null)
     else if (filter.kind === 'verified') setVerifiedOnly(false)
     else if (filter.kind === 'lifestyle') toggleLifestyle(filter.label)
+    else if (filter.kind === 'proximity') setProximityRadius(indifferentRadius)
   }
 
   const visibleItems = useMemo(() => {
@@ -70,6 +76,9 @@ export default function SearchResults() {
     <div style={{ background: 'var(--bg-page)', minHeight: '100%' }}>
       <div style={{ background: '#fff', borderBottom: '1px solid var(--border-subtle)', padding: '18px 40px' }}>
         <div style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', gap: 12, alignItems: 'end', flexWrap: 'wrap' }}>
+          <div style={{ width: 260 }}>
+            <Input label={t('web:search.institutionLabel')} icon="graduation-cap" defaultValue={t('web:search.institutionDefault')} />
+          </div>
           <div style={{ width: 220 }}><Input label={t('web:search.cityLabel')} icon="map-pin" defaultValue={t('web:search.locationDefault')} /></div>
           <div style={{ width: 160 }}><Select label={t('web:search.budgetLabel')} options={t('web:search.budgetOptions', { returnObjects: true })} /></div>
           <div style={{ width: 150 }}><Select label={t('web:search.typeLabel')} options={t('web:search.typeOptions', { returnObjects: true })} /></div>
@@ -95,7 +104,7 @@ export default function SearchResults() {
               <span style={{ font: 'var(--fw-extrabold) var(--fs-body) var(--font-body)', color: 'var(--text-heading)' }}>{t('web:search.filtersTitle')}</span>
               <button
                 type="button"
-                onClick={() => { setActiveType(typeFilters[0].label); setLifestyle(new Set()); setVerifiedOnly(false) }}
+                onClick={() => { setActiveType(typeFilters[0].label); setLifestyle(new Set()); setVerifiedOnly(false); setProximityRadius(indifferentRadius) }}
                 style={{ border: 0, background: 'transparent', color: 'var(--link)', font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)', cursor: 'pointer', padding: 0 }}
               >
                 {t('web:search.resetFilters')}
@@ -136,6 +145,19 @@ export default function SearchResults() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {lifestyleChips.map((label) => (
                   <Chip key={label} selected={lifestyle.has(label)} onClick={() => toggleLifestyle(label)}>
+                    {label}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ height: 1, background: 'var(--border-subtle)' }} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ font: 'var(--fw-extrabold) var(--fs-sm) var(--font-body)', color: 'var(--text-heading)' }}>{t('web:search.proximityLabel')}</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {proximityRadiusOptions.map((label) => (
+                  <Chip key={label} selected={proximityRadius === label} onClick={() => setProximityRadius(label)}>
                     {label}
                   </Chip>
                 ))}
@@ -288,6 +310,7 @@ export default function SearchResults() {
                     city={`${it.quartier}, ${it.ville}`}
                     price={it.prixMad}
                     amenities={it.chips?.map((label) => ({ icon: 'check', label }))}
+                    proximity={it.proximite?.[0]}
                     onClick={() => navigate(`/annonce/${it.id}`)}
                     onApply={() => navigate('/espace/candidature')}
                   />

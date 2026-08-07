@@ -53,7 +53,8 @@
     "amenityRoommates": "3 من السكان",
     "amenityQuiet": "هادئ",
     "amenityNoSmoking": "غير مدخن",
-    "applyCta": "التقديم"
+    "applyCta": "التقديم",
+    "proximityTo": "على بعد {{distance}} من {{label}}"
   },
   "priceTag": {
     "perMonth": "شهر"

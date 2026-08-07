@@ -210,6 +210,15 @@
     "mapComingSoon": "عرض الخريطة قريبًا",
     "loadMore": "عرض المزيد من السكنات",
     "locationDefault": "الدار البيضاء، المعاريف",
+    "institutionLabel": "المدرسة / الشركة",
+    "institutionDefault": "المدرسة الوطنية للتجارة والتسيير بالدار البيضاء",
+    "proximityLabel": "القرب",
+    "proximityRadiusOptions": [
+      "< 1 كم",
+      "< 2 كم",
+      "< 5 كم",
+      "غير محدد"
+    ],
     "lifestyleProfileBanner": {
       "withProfile": "توصيات بناءً على ملف التوافق الخاص بك",
       "withoutProfile": "أجب عن الاستبيان للحصول على توصيات مخصصة ←",

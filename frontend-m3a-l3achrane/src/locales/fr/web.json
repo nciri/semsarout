@@ -210,6 +210,15 @@
     "mapComingSoon": "Vue carte à venir",
     "loadMore": "Afficher plus de logements",
     "locationDefault": "Casablanca, Maârif",
+    "institutionLabel": "École / entreprise",
+    "institutionDefault": "ENCG Casablanca",
+    "proximityLabel": "Proximité",
+    "proximityRadiusOptions": [
+      "< 1 km",
+      "< 2 km",
+      "< 5 km",
+      "Indifférent"
+    ],
     "lifestyleProfileBanner": {
       "withProfile": "Recommandations basées sur votre profil de compatibilité",
       "withoutProfile": "Répondez au questionnaire pour des recommandations personnalisées →",

@@ -53,7 +53,8 @@
     "amenityRoommates": "3 colocs",
     "amenityQuiet": "Calme",
     "amenityNoSmoking": "Non-fumeur",
-    "applyCta": "Candidater"
+    "applyCta": "Candidater",
+    "proximityTo": "à {{distance}} de {{label}}"
   },
   "priceTag": {
     "perMonth": "mois"

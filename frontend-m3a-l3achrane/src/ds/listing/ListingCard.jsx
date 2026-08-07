@@ -9,7 +9,7 @@ import { AmenityChip } from "./AmenityChip.jsx";
 /** ListingCard — the core marketplace card: photo + match score, title, location, price, amenities. */
 export function ListingCard({
   image, imageTone = "var(--navy-100)", match, verified = true, title,
-  city, price = 2300, amenities,
+  city, price = 2300, amenities, proximity,
   onClick, onApply, style,
 }) {
   const { t } = useTranslation();
@@ -40,6 +40,12 @@ export function ListingCard({
           <Icon name="map-pin" size={13} strokeWidth={2} /> {displayCity}
         </div>
         <div style={{ font: "var(--fw-semibold) var(--fs-h3) var(--font-display)", color: "var(--text-strong)" }}>{displayTitle}</div>
+        {proximity && (
+          <div style={{ display: "flex", alignItems: "center", gap: 5, color: "var(--navy-700)", font: "var(--fw-semibold) var(--fs-xs) var(--font-body)" }}>
+            <Icon name="graduation-cap" size={13} strokeWidth={2} />
+            {t("listingCard.proximityTo", { distance: proximity.distance, label: proximity.label })}
+          </div>
+        )}
         <PriceTag amount={price} size="md" />
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 2 }}>
           {displayAmenities.map((a, i) => <AmenityChip key={i} icon={a.icon}>{a.label}</AmenityChip>)}
