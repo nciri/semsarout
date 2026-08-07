@@ -196,7 +196,6 @@ export default function BackofficePipeline() {
     type: 'sale',
     agent_id: ''
   })
-  const [showFilters, setShowFilters] = useState(false)
 
   const { data, isLoading } = useQuery(
     ['backoffice-pipeline', filters],
@@ -215,10 +214,6 @@ export default function BackofficePipeline() {
   const handleDragOver = (e) => {
     e.preventDefault()
     e.currentTarget.classList.add('bg-primary-50')
-  }
-
-  const handleDragLeave = (e) => {
-    e.currentTarget.classList.remove('bg-primary-50')
   }
 
   const handleDrop = (e, stageId) => {

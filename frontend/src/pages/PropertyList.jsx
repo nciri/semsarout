@@ -220,7 +220,7 @@ function PropertyList() {
             {filters.ai_query && (
               <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-sm">
                 <HiSparkles className="w-4 h-4" />
-                <span className="max-w-[200px] truncate">"{filters.ai_query}"</span>
+                <span className="max-w-[200px] truncate">&quot;{filters.ai_query}&quot;</span>
                 <button
                   onClick={() => {
                     const newParams = new URLSearchParams(searchParams)

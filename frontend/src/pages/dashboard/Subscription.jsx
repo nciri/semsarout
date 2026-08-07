@@ -552,7 +552,7 @@ export default function Subscription() {
   )
 
   // Fetch payment methods from backend
-  const { data: paymentMethodsData, isLoading: loadingPaymentMethods, refetch: refetchPaymentMethods } = useQuery(
+  const { data: paymentMethodsData, isLoading: loadingPaymentMethods } = useQuery(
     'paymentMethods',
     async () => {
       const { data } = await api.get('/payment-methods')
@@ -562,7 +562,7 @@ export default function Subscription() {
   )
 
   // Fetch invoices from backend
-  const { data: invoicesData, isLoading: loadingInvoices, refetch: refetchInvoices } = useQuery(
+  const { data: invoicesData, isLoading: loadingInvoices } = useQuery(
     'invoices',
     async () => {
       const { data } = await api.get('/invoices')

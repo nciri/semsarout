@@ -23,6 +23,7 @@ function ContractCreate() {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
   const setVal = (k) => (v) => setForm((f) => ({ ...f, [k]: v }))
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const templates = tplData?.templates || []
   const properties = propsData?.properties || []
   const clients = clientsData?.clients || []

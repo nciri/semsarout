@@ -30,7 +30,7 @@ function Team() {
   const qc = useQueryClient()
   const { data, isLoading } = useQuery('team', teamService.getTeam)
   const [email, setEmail] = useState('')
-  const [roleId, setRoleId] = useState('')
+  const [roleId] = useState('')
   const [teamId, setTeamId] = useState('')
   const [newTeam, setNewTeam] = useState('')
 

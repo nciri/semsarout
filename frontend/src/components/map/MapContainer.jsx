@@ -120,8 +120,11 @@ const MOROCCO_BOUNDS = [
 ]
 
 export {
+  // eslint-disable-next-line react-refresh/only-export-components
   createCustomIcon,
+  // eslint-disable-next-line react-refresh/only-export-components
   createPriceMarker,
+  // eslint-disable-next-line react-refresh/only-export-components
   createAgencyMarker,
   FitBounds,
   MOROCCO_CENTER,
@@ -155,4 +158,5 @@ export default function MapContainer({
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export { Marker, Popup, useMap }

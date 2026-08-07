@@ -19,7 +19,7 @@ function MyAgency() {
     { enabled: !!user?.agency_id }
   )
 
-  const { register, handleSubmit, reset, formState: { errors, isDirty } } = useForm()
+  const { register, handleSubmit, formState: { errors } } = useForm()
 
   const createMutation = useMutation(
     (data) => agencyService.createAgency(data),

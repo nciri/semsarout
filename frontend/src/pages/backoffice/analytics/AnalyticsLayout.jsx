@@ -81,7 +81,9 @@ function AnalyticsLayout() {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useFilters = () => useOutletContext().filters
 // Rétro-compat : les pages n'utilisant que la période.
+// eslint-disable-next-line react-refresh/only-export-components
 export const useRange = () => useOutletContext().filters.range
 export default AnalyticsLayout

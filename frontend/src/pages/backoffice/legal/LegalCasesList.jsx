@@ -28,6 +28,7 @@ function LegalCasesList() {
     onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
   })
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const cases = data?.cases || []
   const notaries = notariesData?.notaries || []
   const noNotary = notaries.length === 0

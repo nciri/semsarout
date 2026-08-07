@@ -5,7 +5,7 @@ import useCompareStore, { MAX_COMPARE_PROPERTIES } from '../../store/compareStor
 
 function CompareBar() {
   const { t } = useTranslation(['common'])
-  const { propertyIds, remove, clear } = useCompareStore()
+  const { propertyIds, clear } = useCompareStore()
 
   if (propertyIds.length === 0) return null
 

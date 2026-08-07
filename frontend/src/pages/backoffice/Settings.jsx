@@ -20,20 +20,6 @@ const backofficeService = {
   }
 }
 
-function SettingsSection({ title, icon: Icon, children }) {
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="flex items-center gap-3 p-4 border-b border-gray-100 bg-gray-50">
-        <Icon className="w-5 h-5 text-gray-400" />
-        <h2 className="font-semibold text-gray-900">{title}</h2>
-      </div>
-      <div className="p-6">
-        {children}
-      </div>
-    </div>
-  )
-}
-
 export default function BackofficeSettings() {
   const { t } = useTranslation(['backoffice'])
   const queryClient = useQueryClient()
@@ -61,7 +47,7 @@ export default function BackofficeSettings() {
   })
   const [saved, setSaved] = useState(false)
 
-  const { data, isLoading } = useQuery('backoffice-settings', backofficeService.getSettings, {
+  const { isLoading } = useQuery('backoffice-settings', backofficeService.getSettings, {
     onSuccess: (data) => {
       if (data) {
         setFormData(prev => ({ ...prev, ...data }))

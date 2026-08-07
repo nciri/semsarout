@@ -274,7 +274,7 @@ export default function DashboardProgramForm() {
   const [programId, setProgramId] = useState(id ? parseInt(id) : null)
 
   // Fetch program if editing
-  const { data: program, isLoading } = useQuery(
+  const { isLoading } = useQuery(
     ['program', id],
     () => programsService.getProgram(id),
     {

@@ -62,11 +62,6 @@ export default function StripeConfig() {
     setTimeout(() => setConnectionStatus(null), 5000)
   }
 
-  const maskKey = (key) => {
-    if (!key || key.length < 12) return key
-    return key.substring(0, 8) + '...' + key.substring(key.length - 4)
-  }
-
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}

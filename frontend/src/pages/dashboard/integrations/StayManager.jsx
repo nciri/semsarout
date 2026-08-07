@@ -55,6 +55,7 @@ export default function StayManager() {
 
   useEffect(() => {
     fetchStatus()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const fetchStatus = async () => {

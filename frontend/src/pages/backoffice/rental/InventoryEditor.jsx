@@ -29,6 +29,7 @@ function InventoryEditor() {
     catch { toast.error(t('backoffice:signature.pdfUnavailable')) }
   }
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const mut = (fn, ok) => useMutation(fn, { onSuccess: () => { if (ok) toast.success(ok); refresh() }, onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')) })
   const addRoom = mut(() => rentalService.addRoom(invId, newRoom), t('backoffice:rental.inventory.toasts.roomAdded'))
   const delRoom = mut((rid) => rentalService.deleteRoom(rid))

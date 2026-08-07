@@ -70,7 +70,6 @@ export default function PropertyMap({
   selectedId = null,
   onMarkerClick = () => {},
   className = '',
-  showList = false,
   onClose = () => {}
 }) {
   const { t } = useTranslation(['common'])

@@ -41,6 +41,7 @@ function ArtisansDirectory() {
     onError: onErr,
   })
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const artisans = data?.artisans || []
   const stats = useMemo(() => ({
     total: artisans.length,

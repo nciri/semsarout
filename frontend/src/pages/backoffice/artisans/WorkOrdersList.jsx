@@ -32,6 +32,7 @@ function WorkOrdersList() {
     onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
   })
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const orders = data?.work_orders || []
   const stats = useMemo(() => ({
     total: orders.length,

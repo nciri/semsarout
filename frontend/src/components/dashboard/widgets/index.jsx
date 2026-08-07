@@ -28,6 +28,7 @@ function WidgetBody({ children }) {
 }
 
 // registry: id -> { to, render(overview) } — title is resolved from common:widgets.titles.<id> by Widget.
+// eslint-disable-next-line react-refresh/only-export-components
 export const WIDGETS = {
   financial: { to: '/backoffice/analyses', render: (o) => (
     <div><div className="text-2xl font-bold text-gray-900">{fmtMAD(o.financial?.revenue_realized)}</div>

@@ -39,6 +39,7 @@ function NotariesDirectory() {
     onError: onErr,
   })
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const notaries = data?.notaries || []
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase()

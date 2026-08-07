@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Trans, useTranslation } from 'react-i18next'
 import {
   FiCheck, FiCheckCircle, FiArrowRight, FiArrowLeft, FiHome, FiCamera,
@@ -77,14 +77,14 @@ function loadSaved() {
 
 function SellProperty() {
   const { t } = useTranslation(['public', 'common'])
-  const navigate = useNavigate()
   const { isAuthenticated } = useAuthStore()
 
   const saved = loadSaved()
   const [step, setStep] = useState(saved?.__step ?? 0)
   const [form, setForm] = useState(() => {
     if (!saved) return EMPTY_FORM
-    const { __step, ...rest } = saved
+    const rest = { ...saved }
+    delete rest.__step
     return rest
   })
   const [stepError, setStepError] = useState('')
@@ -748,7 +748,8 @@ function SellProperty() {
                           <button
                             type="button"
                             onClick={() => {
-                              const { [doc.value]: _, ...rest } = form.documents
+                              const rest = { ...form.documents }
+                              delete rest[doc.value]
                               update({ documents: rest })
                             }}
                             className="text-gray-400 hover:text-red-500"

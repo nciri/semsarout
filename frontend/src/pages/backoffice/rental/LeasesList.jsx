@@ -38,6 +38,7 @@ function LeasesList() {
     onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
   })
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const leases = data?.leases || []
   const stats = useMemo(() => ({ total: leases.length, active: leases.filter((l) => l.status === 'active').length }), [leases])
   if (error?.response?.status === 403) return <GatedNotice icon={FiLock} title={t('backoffice:rental.shared.pageTitle')} message={t('backoffice:rental.lease.gated.message')} />
