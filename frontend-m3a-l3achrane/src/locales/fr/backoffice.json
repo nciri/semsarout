@@ -67,15 +67,19 @@
     "reject": "Refuser",
     "approveRowLabel": "Valider le dossier",
     "rejectRowLabel": "Refuser le dossier",
-    "checks": {
-      "c1": "Lisibilité du document",
-      "c2": "Concordance nom / prénom",
-      "c3": "Validité (date d’expiration)",
-      "c4": "Selfie de correspondance"
-    },
-    "checkStatus": {
-      "ok": "Conforme",
-      "warn": "À vérifier"
+    "cinDoc": "CIN ····{{last4}}",
+    "loading": "Chargement de la file de vérification…",
+    "loadError": "La file de vérification est momentanément indisponible.",
+    "empty": "Aucun dossier en attente.",
+    "noSelection": "Sélectionnez un dossier pour voir le détail.",
+    "actionError": "Action impossible pour le moment — réessayez.",
+    "age": {
+      "minutes_one": "il y a {{count}} min",
+      "minutes_other": "il y a {{count}} min",
+      "hours_one": "il y a {{count}} h",
+      "hours_other": "il y a {{count}} h",
+      "days_one": "il y a {{count}} j",
+      "days_other": "il y a {{count}} j"
     }
   },
   "listings": {

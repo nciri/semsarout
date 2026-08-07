@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Avatar, Badge, Button, Card, Icon, Input, Tabs, VerifiedBadge } from '../../ds/index.js'
-import { getBackofficeOverview } from '../../services/index.js'
+import {
+  getBackofficeOverview,
+  getBackofficeVerifications,
+  rejectBackofficeVerification,
+  verifyBackofficeVerification,
+} from '../../services/index.js'
 import {
   ACTIVITY_LOG,
   ADMIN_PROFILE,
@@ -17,7 +22,6 @@ import {
   TODAY_TODO,
   USERS,
   USER_STATS,
-  VERIFICATIONS,
   VERIFICATION_QUEUE_NOTE,
   VERIF_TABS,
 } from '../../data/backofficeAdmin.js'
@@ -44,7 +48,6 @@ const LISTING_TONE = { published: 'verified', review: 'warning', unpublished: 'd
 const USER_VERIFICATION_LEVEL = { verified: 'full', pending: 'partial', suspended: 'none' }
 const CONTRACT_TONE = { active: 'verified', signature: 'warning', litigation: 'danger', closed: 'verified' }
 const REPORT_TONE = { urgent: 'danger', normal: 'warning' }
-const CHECK_COLOR = { ok: 'var(--green-600)', warn: 'var(--gold-700)' }
 
 function sectionTitle(children) {
   return <h2 style={{ margin: 0, font: 'var(--fw-extrabold) 15.5px var(--font-display)', color: 'var(--text-heading)' }}>{children}</h2>
@@ -290,13 +293,65 @@ function OverviewView() {
   )
 }
 
+// Âge d'une candidature KYC (`created_at` ISO) → { unit, count } pour i18n pluriel
+// (`backoffice:verif.age.<unit>`). `null` si la date est absente (dégradation propre).
+function verifAge(iso) {
+  if (!iso) return null
+  const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000))
+  if (minutes < 60) return { unit: 'minutes', count: minutes }
+  const hours = Math.round(minutes / 60)
+  if (hours < 24) return { unit: 'hours', count: hours }
+  return { unit: 'days', count: Math.round(hours / 24) }
+}
+
 function VerifView() {
   const { t } = useTranslation(['backoffice'])
   const [tab, setTab] = useState(VERIF_TABS[0].id)
-  const [selectedId, setSelectedId] = useState(VERIFICATIONS[0].id)
+  const [items, setItems] = useState([])
+  const [selectedId, setSelectedId] = useState(null)
   const [note, setNote] = useState('')
-  const selected = VERIFICATIONS.find((v) => v.id === selectedId) || VERIFICATIONS[0]
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [actionError, setActionError] = useState(false)
+  const [pendingAction, setPendingAction] = useState(null) // id en cours de traitement
   const tabs = VERIF_TABS.map((tb) => ({ value: tb.id, label: t(`backoffice:verif.tabs.${tb.id}`, { defaultValue: tb.label }), icon: tb.icon }))
+
+  const load = () => {
+    let cancelled = false
+    setLoading(true)
+    setLoadError(false)
+    getBackofficeVerifications()
+      .then((data) => {
+        if (cancelled) return
+        const rows = data?.items ?? []
+        setItems(rows)
+        setSelectedId((current) => (rows.some((r) => r.id === current) ? current : rows[0]?.id ?? null))
+      })
+      .catch(() => { if (!cancelled) setLoadError(true) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }
+
+  useEffect(load, [])
+
+  // La file backend ne couvre que les candidatures `pending` (v1) — les autres onglets
+  // n'ont pas encore de source de données réelle, on affiche l'état vide plutôt qu'un mock.
+  const rows = tab === 'pending' ? items : []
+  const selected = rows.find((v) => v.id === selectedId) || null
+
+  const runAction = (kycId, action) => {
+    setPendingAction(kycId)
+    setActionError(false)
+    const call = action === 'verify' ? verifyBackofficeVerification : rejectBackofficeVerification
+    call(kycId)
+      .then(() => {
+        setItems((prev) => prev.filter((v) => v.id !== kycId))
+        setSelectedId((current) => (current === kycId ? null : current))
+        setNote('')
+      })
+      .catch(() => setActionError(true))
+      .finally(() => setPendingAction(null))
+  }
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 372px', gap: 16, alignItems: 'start' }}>
@@ -304,88 +359,132 @@ function VerifView() {
         <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', gap: 8, alignItems: 'center' }}>
           <Tabs tabs={tabs} value={tab} onChange={setTab} style={{ borderBottom: 'none' }} />
           <span style={{ marginInlineStart: 'auto', font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
-            {t('backoffice:verif.pendingCount', { count: VERIFICATIONS.length })}
+            {t('backoffice:verif.pendingCount', { count: rows.length })}
           </span>
         </div>
-        {VERIFICATIONS.map((v) => (
-          <div
-            key={v.id}
-            onClick={() => setSelectedId(v.id)}
-            style={{
-              display: 'grid', gridTemplateColumns: '40px minmax(0, 1fr) 150px 120px 96px', gap: 14, alignItems: 'center',
-              padding: '14px 18px', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer',
-              background: v.id === selectedId ? 'var(--gray-50)' : 'transparent',
-            }}
-          >
-            <Avatar name={v.name} size={40} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-              <div style={{ font: 'var(--fw-bold) 14px var(--font-display)', color: 'var(--text-heading)' }}>{v.name}</div>
-              <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>{v.meta}</div>
-            </div>
-            <div style={{ font: 'var(--fw-regular) 13px var(--font-body)', color: 'var(--text-body)' }}>{v.doc}</div>
-            <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>{v.age}</div>
-            <div style={{ display: 'flex', gap: 6, justifySelf: 'end' }}>
-              <button
-                title={t('backoffice:verif.approveRowLabel')}
-                aria-label={t('backoffice:verif.approveRowLabel')}
-                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', border: 0, borderRadius: 7, background: 'var(--green-100)', color: 'var(--green-700)', cursor: 'pointer' }}
-              >
-                <Icon name="check" size={16} strokeWidth={2.6} />
-              </button>
-              <button
-                title={t('backoffice:verif.rejectRowLabel')}
-                aria-label={t('backoffice:verif.rejectRowLabel')}
-                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', border: 0, borderRadius: 7, background: 'var(--red-100)', color: 'var(--red-600)', cursor: 'pointer' }}
-              >
-                <Icon name="x" size={16} strokeWidth={2.6} />
-              </button>
-            </div>
+        {loading && (
+          <div style={{ padding: '18px', font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+            {t('backoffice:verif.loading')}
           </div>
-        ))}
+        )}
+        {!loading && loadError && (
+          <div style={{ padding: '18px', font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+            {t('backoffice:verif.loadError')}
+          </div>
+        )}
+        {!loading && !loadError && rows.length === 0 && (
+          <div style={{ padding: '18px', font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+            {t('backoffice:verif.empty')}
+          </div>
+        )}
+        {!loading && !loadError && rows.map((v) => {
+          const age = verifAge(v.created_at)
+          const busy = pendingAction === v.id
+          return (
+            <div
+              key={v.id}
+              onClick={() => setSelectedId(v.id)}
+              style={{
+                display: 'grid', gridTemplateColumns: '40px minmax(0, 1fr) 150px 120px 96px', gap: 14, alignItems: 'center',
+                padding: '14px 18px', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer',
+                background: v.id === selectedId ? 'var(--gray-50)' : 'transparent',
+              }}
+            >
+              <Avatar name={v.full_name || v.email} size={40} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                <div style={{ font: 'var(--fw-bold) 14px var(--font-display)', color: 'var(--text-heading)' }}>{v.full_name || v.email}</div>
+                <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>{v.email}</div>
+              </div>
+              <div style={{ font: 'var(--fw-regular) 13px var(--font-body)', color: 'var(--text-body)' }}>
+                {t('backoffice:verif.cinDoc', { last4: v.cin_last4 || '····' })}
+              </div>
+              <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
+                {age ? t(`backoffice:verif.age.${age.unit}`, { count: age.count }) : '—'}
+              </div>
+              <div style={{ display: 'flex', gap: 6, justifySelf: 'end' }}>
+                <button
+                  type="button"
+                  title={t('backoffice:verif.approveRowLabel')}
+                  aria-label={t('backoffice:verif.approveRowLabel')}
+                  disabled={busy}
+                  onClick={(e) => { e.stopPropagation(); runAction(v.id, 'verify') }}
+                  style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', border: 0, borderRadius: 7, background: 'var(--green-100)', color: 'var(--green-700)', cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1 }}
+                >
+                  <Icon name="check" size={16} strokeWidth={2.6} />
+                </button>
+                <button
+                  type="button"
+                  title={t('backoffice:verif.rejectRowLabel')}
+                  aria-label={t('backoffice:verif.rejectRowLabel')}
+                  disabled={busy}
+                  onClick={(e) => { e.stopPropagation(); runAction(v.id, 'reject') }}
+                  style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', border: 0, borderRadius: 7, background: 'var(--red-100)', color: 'var(--red-600)', cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1 }}
+                >
+                  <Icon name="x" size={16} strokeWidth={2.6} />
+                </button>
+              </div>
+            </div>
+          )
+        })}
       </Card>
 
       <Card padding={20} style={{ display: 'flex', flexDirection: 'column', gap: 18, position: 'sticky', insetBlockStart: 96 }}>
-        <div style={{ display: 'flex', gap: 13, alignItems: 'center' }}>
-          <Avatar name={selected.name} size={52} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <div style={{ font: 'var(--fw-extrabold) 16px var(--font-display)', color: 'var(--text-heading)' }}>{selected.name}</div>
-            <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>{selected.meta}</div>
+        {!selected && (
+          <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+            {t('backoffice:verif.noSelection')}
           </div>
-        </div>
-        <div
-          style={{
-            height: 186, borderRadius: 12, background: 'var(--gray-150)', border: '1px dashed var(--border-default)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)',
-            fontSize: 12.5, textAlign: 'center', padding: 16, boxSizing: 'border-box',
-          }}
-        >
-          {t('backoffice:verif.documentPreview', { doc: selected.doc })}<br />{t('backoffice:verif.documentPreviewNote')}
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {selected.checks.map((c) => {
-            const label = t(`backoffice:verif.checks.${c.id}`, { defaultValue: c.label })
-            const statusLabel = t(`backoffice:verif.checkStatus.${c.status}`, { defaultValue: c.status })
-            return (
-              <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, paddingBottom: 9, borderBottom: '1px solid var(--border-subtle)' }}>
-                <span style={{ color: 'var(--text-body)' }}>{label}</span>
-                <span style={{ fontWeight: 800, color: CHECK_COLOR[c.status] }}>{statusLabel}</span>
+        )}
+        {selected && (
+          <>
+            <div style={{ display: 'flex', gap: 13, alignItems: 'center' }}>
+              <Avatar name={selected.full_name || selected.email} size={52} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <div style={{ font: 'var(--fw-extrabold) 16px var(--font-display)', color: 'var(--text-heading)' }}>{selected.full_name || selected.email}</div>
+                <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>{selected.email}</div>
               </div>
-            )
-          })}
-        </div>
-        <textarea
-          placeholder={t('backoffice:verif.notePlaceholder')}
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          style={{
-            minHeight: 78, padding: 11, border: '1px solid var(--border-subtle)', borderRadius: 10,
-            font: '13px/1.5 var(--font-body)', color: 'var(--text-heading)', resize: 'vertical', outline: 'none',
-          }}
-        />
-        <div style={{ display: 'flex', gap: 10 }}>
-          <Button variant="primary" fullWidth iconLeft="check" style={{ background: 'var(--green-600)', border: '1px solid var(--green-600)' }}>{t('backoffice:verif.validate')}</Button>
-          <Button variant="danger" fullWidth iconLeft="x" style={{ background: 'var(--white)', color: 'var(--red-600)', border: '1px solid var(--red-500)' }}>{t('backoffice:verif.reject')}</Button>
-        </div>
+            </div>
+            <div
+              style={{
+                height: 186, borderRadius: 12, background: 'var(--gray-150)', border: '1px dashed var(--border-default)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)',
+                fontSize: 12.5, textAlign: 'center', padding: 16, boxSizing: 'border-box',
+              }}
+            >
+              {t('backoffice:verif.documentPreview', { doc: t('backoffice:verif.cinDoc', { last4: selected.cin_last4 || '····' }) })}
+              <br />{t('backoffice:verif.documentPreviewNote')}
+            </div>
+            {actionError && (
+              <div style={{ font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+                {t('backoffice:verif.actionError')}
+              </div>
+            )}
+            <textarea
+              placeholder={t('backoffice:verif.notePlaceholder')}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              style={{
+                minHeight: 78, padding: 11, border: '1px solid var(--border-subtle)', borderRadius: 10,
+                font: '13px/1.5 var(--font-body)', color: 'var(--text-heading)', resize: 'vertical', outline: 'none',
+              }}
+            />
+            <div style={{ display: 'flex', gap: 10 }}>
+              <Button
+                variant="primary" fullWidth iconLeft="check" disabled={pendingAction === selected.id}
+                onClick={() => runAction(selected.id, 'verify')}
+                style={{ background: 'var(--green-600)', border: '1px solid var(--green-600)' }}
+              >
+                {t('backoffice:verif.validate')}
+              </Button>
+              <Button
+                variant="danger" fullWidth iconLeft="x" disabled={pendingAction === selected.id}
+                onClick={() => runAction(selected.id, 'reject')}
+                style={{ background: 'var(--white)', color: 'var(--red-600)', border: '1px solid var(--red-500)' }}
+              >
+                {t('backoffice:verif.reject')}
+              </Button>
+            </div>
+          </>
+        )}
       </Card>
     </div>
   )

@@ -82,3 +82,32 @@ export async function getBackofficeOverview() {
   const { data } = await api.get('/backoffice/overview')
   return data
 }
+
+// File de vérification KYC (super-admin) : candidatures en attente (CIN/étudiant/employeur),
+// fan-out BFF `/api/v1/backoffice/verifications` → identity `/internal/kyc/queue`.
+export async function getBackofficeVerifications() {
+  if (isMocked('backoffice')) {
+    return delay({
+      items: [
+        { id: 1, user_id: 101, status: 'pending', cin_last4: '4821', full_name: 'Youssef Benali',
+          email: 'youssef.benali@example.ma', created_at: '2026-08-06T09:18:00+00:00' },
+        { id: 2, user_id: 102, status: 'pending', cin_last4: '9207', full_name: 'Imane Mrabet',
+          email: 'imane.mrabet@example.ma', created_at: '2026-08-06T08:10:00+00:00' },
+      ],
+    })
+  }
+  const { data } = await api.get('/backoffice/verifications')
+  return data
+}
+
+export async function verifyBackofficeVerification(kycId) {
+  if (isMocked('backoffice')) return delay({ id: kycId, status: 'verified' })
+  const { data } = await api.post(`/backoffice/verifications/${kycId}/verify`)
+  return data
+}
+
+export async function rejectBackofficeVerification(kycId) {
+  if (isMocked('backoffice')) return delay({ id: kycId, status: 'rejected' })
+  const { data } = await api.post(`/backoffice/verifications/${kycId}/reject`)
+  return data
+}
