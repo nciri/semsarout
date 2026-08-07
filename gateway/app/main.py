@@ -5,6 +5,7 @@ Phase 0 : proxy transparent de `/api/*` vers le monolithe Flask, en préservant
 strangler, `proxy()` sera remplacé route par route par des appels aux nouveaux
 services et par de l'agrégation (BFF).
 """
+import asyncio
 import re
 import secrets
 import time
@@ -584,6 +585,53 @@ async def coloc_listings_composite(request: Request) -> Response:
             scores = {}
     _merge_match_scores(data.get("items", []), scores)
     return JSONResponse(data)
+
+
+async def _fetch_internal_stats(
+    client: httpx.AsyncClient | None, path: str, tenant: str, headers: dict
+) -> dict | None:
+    """Un sous-compteur de l'overview back-office : `None` si le service est absent, en panne,
+    ou répond en erreur — jamais d'exception qui ferait échouer l'agrégat complet."""
+    if client is None:
+        return None
+    try:
+        r = await client.request("GET", path, params={"tenant": tenant}, headers=headers)
+    except Exception:  # noqa: BLE001 — dégradation service par service
+        return None
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+
+@app.get("/api/v1/backoffice/overview", include_in_schema=False)
+async def backoffice_overview(request: Request) -> Response:
+    """KPIs consolidés de la vue d'ensemble back-office m3a (super-admin uniquement) : fan-out
+    vers identity(tenant)+coloc-listing+coloc-profile `/internal/stats`. Dégradation propre par
+    service (sous-clé `null`) si un service échoue — jamais d'échec global de la vue (spec §8)."""
+    app_ = request.app
+    tenant = _resolve_tenant(request.headers, request.headers.get("host", ""))
+    ident = await _resolve_identity(
+        app_, request.headers.get("authorization"),
+        request.cookies.get(settings.cookie_access_name),
+    )
+    if ident is None or not ident.get("is_superadmin"):
+        return Response(content=b'{"error":"Forbidden"}', status_code=403,
+                        media_type="application/json")
+    if ident.get("tenant", "semsar") != tenant:
+        return Response(content=b'{"error":"Tenant mismatch"}', status_code=403,
+                        media_type="application/json")
+    headers = {"x-internal-token": settings.internal_token}
+    users_stats, listings_stats, profiles_stats = await asyncio.gather(
+        _fetch_internal_stats(app_.state.identity, "/internal/users/stats", tenant, headers),
+        _fetch_internal_stats(app_.state.coloc_listing, "/internal/stats", tenant, headers),
+        _fetch_internal_stats(app_.state.coloc_profile, "/internal/stats", tenant, headers),
+    )
+    return JSONResponse({
+        "tenant": tenant,
+        "users": users_stats,
+        "listings": listings_stats,
+        "profiles": profiles_stats,
+    })
 
 
 @app.post("/api/v1/auth/logout", include_in_schema=False)
