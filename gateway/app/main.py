@@ -772,6 +772,76 @@ async def backoffice_users_unsuspend(user_id: int, request: Request) -> Response
     return await _backoffice_user_action(request, user_id, "unsuspend")
 
 
+@app.get("/api/v1/backoffice/matching-weights", include_in_schema=False)
+async def backoffice_matching_weights_get(request: Request) -> Response:
+    """Pondération active du scoring matching (super-admin, lecture) : proxy vers
+    matching `/internal/weights`. Nom de route distinct de `/api/v1/backoffice/settings`
+    (déjà pris par le service `agency`, config commission du back-office legacy) pour
+    éviter toute collision de proxy générique (cf. `_resolve_upstream` ligne ~274)."""
+    denied, _tenant, _ident = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.matching
+    if client is None:
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    headers = {"x-internal-token": settings.internal_token}
+    try:
+        r = await client.request("GET", "/internal/weights", headers=headers)
+    except Exception:  # noqa: BLE001 — dégradation propre si matching est indisponible
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    return Response(content=r.content, status_code=r.status_code,
+                    media_type=r.headers.get("content-type"))
+
+
+@app.put("/api/v1/backoffice/matching-weights", include_in_schema=False)
+async def backoffice_matching_weights_put(request: Request) -> Response:
+    """Édite la pondération active du scoring matching (super-admin) : proxy vers
+    matching `PUT /internal/weights` (crée une nouvelle version horodatée et l'active)."""
+    denied, _tenant, _ident = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.matching
+    if client is None:
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    body = await request.body()
+    headers = {"x-internal-token": settings.internal_token, "content-type": "application/json"}
+    try:
+        r = await client.request("PUT", "/internal/weights", content=body, headers=headers)
+    except Exception:  # noqa: BLE001
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    return Response(content=r.content, status_code=r.status_code,
+                    media_type=r.headers.get("content-type"))
+
+
+@app.get("/api/v1/backoffice/lifestyle-referential", include_in_schema=False)
+async def backoffice_lifestyle_referential(request: Request) -> Response:
+    """Référentiel lifestyle m3a (super-admin, lecture seule) : proxy vers coloc-profile
+    `/internal/lifestyle-referential`. Module Python statique côté service (pas de table
+    versionnée) : pas de route d'édition tant que le référentiel n'est pas migré en base."""
+    denied, _tenant, _ident = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.coloc_profile
+    if client is None:
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    headers = {"x-internal-token": settings.internal_token}
+    try:
+        r = await client.request("GET", "/internal/lifestyle-referential", headers=headers)
+    except Exception:  # noqa: BLE001
+        return Response(content=b'{"error":"Service indisponible"}', status_code=502,
+                        media_type="application/json")
+    return Response(content=r.content, status_code=r.status_code,
+                    media_type=r.headers.get("content-type"))
+
+
 @app.post("/api/v1/auth/logout", include_in_schema=False)
 async def logout(request: Request) -> Response:
     """Révoque la session côté BFF (efface les cookies). Servi par le BFF lui-même, pas
