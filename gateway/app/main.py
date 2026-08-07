@@ -204,6 +204,8 @@ _CRM_LEADS_PUBLIC = re.compile(r"^/api/v1/leads/\d+(/status)?$")
 # Lecture détail d'un compte (super-admin) : GET → analytics (agrégat). Les ÉCRITURES de
 # modération (même préfixe) restent à trust-safety.
 _ADMIN_ACCOUNT_DETAIL = re.compile(r"^/api/v1/admin/accounts/(users|agencies)/\d+$")
+# Actions de traitement d'un signalement (super-admin) → trust-safety.
+_REPORT_ACTION = re.compile(r"^/api/v1/admin/reports/\d+/(resolve|dismiss)$")
 
 
 def _listing_match(path: str, method: str) -> bool:
@@ -402,6 +404,13 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         path.startswith("/api/v1/admin/accounts/users/")
         or path.startswith("/api/v1/admin/accounts/agencies/")
     ):
+        return app.state.trust_safety, path.replace("/api/v1", "", 1)
+    # Signalements (reports) : création authentifiée + actions de traitement super-admin.
+    # La liste back-office (GET /backoffice/reports) reste un endpoint composite dédié
+    # (parité backoffice_listings/backoffice_verifications, cf. plus bas).
+    if settings.trust_safety_url and method == "POST" and path == "/api/v1/reports":
+        return app.state.trust_safety, "/reports"
+    if settings.trust_safety_url and method == "POST" and _REPORT_ACTION.match(path):
         return app.state.trust_safety, path.replace("/api/v1", "", 1)
     if settings.crm_url and (
         path.startswith("/api/v1/backoffice/leads")
@@ -728,6 +737,33 @@ async def backoffice_listings(request: Request) -> Response:
     try:
         r = await client.request("GET", "/internal/listings/queue", params=params, headers=headers)
     except Exception:  # noqa: BLE001 — dégradation propre si coloc-listing est indisponible
+        return JSONResponse({"tenant": tenant, "items": []})
+    if r.status_code != 200:
+        return JSONResponse({"tenant": tenant, "items": []})
+    return JSONResponse({"tenant": tenant, **r.json()})
+
+
+@app.get("/api/v1/backoffice/reports", include_in_schema=False)
+async def backoffice_reports(request: Request) -> Response:
+    """File des signalements du tenant m3a (super-admin uniquement) : proxy vers trust-safety
+    `/internal/reports` (statut `open` par défaut côté service, filtrable via `?status=`).
+    Les actions (traiter/rejeter) restent servies par `POST /api/v1/admin/reports/{id}/
+    (resolve|dismiss)` (proxy générique, garde superadmin déjà en place côté service)."""
+    denied, tenant, _ident = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.trust_safety
+    if client is None:
+        return JSONResponse({"tenant": tenant, "items": []})
+    headers = {"x-internal-token": settings.internal_token}
+    params = {"tenant": tenant}
+    status = request.query_params.get("status")
+    if status:
+        params["status"] = status
+    try:
+        r = await client.request("GET", "/internal/reports", params=params, headers=headers)
+    except Exception:  # noqa: BLE001 — dégradation propre si trust-safety est indisponible
         return JSONResponse({"tenant": tenant, "items": []})
     if r.status_code != 200:
         return JSONResponse({"tenant": tenant, "items": []})
