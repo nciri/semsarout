@@ -88,6 +88,39 @@ def test_login_secure_cookie_when_https(identity_env):
     assert "Secure" in access_line
 
 
+def test_login_secure_cookie_forced_outside_dev_without_forwarded_proto(identity_env, monkeypatch):
+    """Hors dev, Secure est forcé même si le reverse-proxy n'envoie pas X-Forwarded-Proto
+    (défense en profondeur : jamais de cookie de session sans Secure en prod/staging)."""
+    monkeypatch.setattr(m.settings, "environment", "production")
+
+    def handler(request):
+        return httpx.Response(200, json={"access_token": "acc-tok", "refresh_token": "ref-tok"})
+
+    _set_identity_handler(handler)
+    resp = identity_env.post("/api/v1/auth/login", json={"email": "a@a.com", "password": "x"})
+    raw = "\n".join(resp.headers.get_list("set-cookie"))
+    access_line = next(l for l in raw.splitlines() if l.startswith(m.settings.cookie_access_name))
+    assert "Secure" in access_line
+
+
+def test_csrf_constant_time_rejects_mismatch(identity_env, monkeypatch):
+    """Un jeton CSRF de longueur/valeur différente est rejeté (comparaison temps constant,
+    pas de court-circuit sur mismatch)."""
+    def handler(request):
+        return httpx.Response(200, json={"user": {"id": 7}})
+
+    _set_identity_handler(handler)
+    resp = identity_env.put(
+        "/api/v1/auth/me", json={"first_name": "x"},
+        cookies={
+            m.settings.cookie_access_name: "whatever",
+            m.settings.cookie_csrf_name: "csrf-abc",
+        },
+        headers={"X-CSRF-Token": "csrf-xyz-different-length"},
+    )
+    assert resp.status_code == 403
+
+
 def test_identity_resolved_from_access_cookie(identity_env, monkeypatch):
     secret = "test-secret"
     monkeypatch.setattr(m.settings, "jwt_secret_key", secret)

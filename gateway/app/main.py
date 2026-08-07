@@ -106,8 +106,12 @@ async def _resolve_identity(
 
 
 def _is_https(request: Request) -> bool:
-    """Secure=true seulement si la requête (ou le proxy en amont) est en HTTPS — jamais en
-    dev http, sinon le navigateur rejette silencieusement le cookie."""
+    """Secure=true si la requête (ou le proxy en amont) est en HTTPS — jamais en dev http,
+    sinon le navigateur rejette silencieusement le cookie. Hors dev (`environment != "dev"`),
+    Secure est FORCÉ même si le reverse-proxy prod omet `X-Forwarded-Proto` : on ne veut
+    jamais de cookie de session sans Secure en environnement non-dev."""
+    if settings.environment != "dev":
+        return True
     if request.url.scheme == "https":
         return True
     return request.headers.get("x-forwarded-proto", "").lower() == "https"
@@ -601,7 +605,7 @@ async def proxy(path: str, request: Request) -> Response:
     if _csrf_required(request):
         csrf_cookie = request.cookies.get(settings.cookie_csrf_name)
         csrf_header = request.headers.get("x-csrf-token")
-        if not csrf_cookie or not csrf_header or csrf_header != csrf_cookie:
+        if not csrf_cookie or not csrf_header or not secrets.compare_digest(csrf_header, csrf_cookie):
             return Response(content=b'{"error":"CSRF token invalid"}', status_code=403,
                             media_type="application/json")
     client, upstream_path = _resolve_upstream(app, request.url.path, request.method)
