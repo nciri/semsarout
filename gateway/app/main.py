@@ -706,6 +706,34 @@ async def backoffice_verifications_reject(kyc_id: int, request: Request) -> Resp
     return await _backoffice_kyc_action(request, kyc_id, "reject")
 
 
+@app.get("/api/v1/backoffice/listings", include_in_schema=False)
+async def backoffice_listings(request: Request) -> Response:
+    """File des annonces à modérer du tenant m3a (super-admin uniquement) : proxy vers
+    coloc-listing `/internal/listings/queue` (statut EN_MODERATION par défaut, filtrable
+    via `?status=`). Les actions (approuver/rejeter) restent servies par les routes
+    existantes `POST /api/v1/listings/{id}/(approve|reject)` (proxy générique, garde
+    superadmin déjà en place côté service)."""
+    denied, tenant = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.coloc_listing
+    if client is None:
+        return JSONResponse({"tenant": tenant, "items": []})
+    headers = {"x-internal-token": settings.internal_token}
+    params = {"tenant": tenant}
+    status = request.query_params.get("status")
+    if status:
+        params["status"] = status
+    try:
+        r = await client.request("GET", "/internal/listings/queue", params=params, headers=headers)
+    except Exception:  # noqa: BLE001 — dégradation propre si coloc-listing est indisponible
+        return JSONResponse({"tenant": tenant, "items": []})
+    if r.status_code != 200:
+        return JSONResponse({"tenant": tenant, "items": []})
+    return JSONResponse({"tenant": tenant, **r.json()})
+
+
 @app.post("/api/v1/auth/logout", include_in_schema=False)
 async def logout(request: Request) -> Response:
     """Révoque la session côté BFF (efface les cookies). Servi par le BFF lui-même, pas
