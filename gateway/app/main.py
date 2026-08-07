@@ -390,6 +390,17 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         return app.state.directory, path.replace("/api/v1", "", 1)
     if settings.messaging_url and path.startswith("/api/v1/messaging"):
         return app.state.messaging, path.replace("/api/v1", "", 1)
+    # Messagerie m3a-l3achrane (conversations candidat/bailleur) : composite REST propre côté
+    # front, réécrit vers les routes `/messaging/conversations*` du service.
+    if settings.messaging_url and (
+        path == "/api/v1/conversations" or path.startswith("/api/v1/conversations/")
+    ):
+        return app.state.messaging, path.replace("/api/v1/conversations", "/messaging/conversations", 1)
+    # Notifications in-app m3a-l3achrane (même service messaging, domaine dédié).
+    if settings.messaging_url and (
+        path == "/api/v1/notifications" or path.startswith("/api/v1/notifications/")
+    ):
+        return app.state.messaging, path.replace("/api/v1/notifications", "/messaging/notifications", 1)
     if settings.buyer_url and (
         path.startswith("/api/v1/buyer/saved-searches")
         or path.startswith("/api/v1/buyer/favorites")
