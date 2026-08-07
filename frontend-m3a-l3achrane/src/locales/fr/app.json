@@ -81,7 +81,16 @@
     },
     "roommatesInPlace": "Colocataires en place",
     "acceptedPickSlot": "Candidature acceptée — proposez un créneau de visite",
-    "empty": "Aucune candidature dans cette catégorie."
+    "empty": "Aucune candidature dans cette catégorie.",
+    "generateLeaseButton": "Générer le bail",
+    "generateLeaseFormTitle": "Générer le bail",
+    "rentLabel": "Loyer (MAD)",
+    "depositLabel": "Caution (MAD)",
+    "startDateLabel": "Date d'entrée",
+    "generateLeaseSubmit": "Créer le bail",
+    "generateLeaseSubmitting": "Création…",
+    "generateLeaseError": "Création du bail impossible — réessayez.",
+    "leaseGenerated": "Bail généré (#{{id}})"
   },
   "questionnaire": {
     "stepIndicator": "Étape {{step}} / {{total}}",
@@ -194,8 +203,15 @@
     "title": "Sécuriser votre place",
     "subtitle": "{{titre}} · Entrée le {{entree}}",
     "loading": "Chargement de votre bail…",
-    "demoBanner": "Les étapes ci-dessous reflètent l’état réel de votre bail (caution/loyer). Aucun paiement n’est traité par cette plateforme : cadre de séquestre présenté à titre de démonstration, sans prestataire de paiement intégré.",
+    "demoBanner": "Paiement simulé (démo) : les étapes ci-dessous reflètent l’état réel de votre bail (caution/loyer), mais aucun mouvement d’argent réel n’a lieu sur cette plateforme (aucun prestataire de paiement intégré).",
     "leaseFallbackTitle": "Bail #{{id}}",
+    "leaseSelectorLabel": "Bail concerné",
+    "leaseStatus": {
+      "pending": "En attente",
+      "active": "Actif",
+      "ended": "Terminé",
+      "cancelled": "Annulé"
+    },
     "escrowStatusTitle": "Statut du séquestre",
     "steps": {
       "depot": "Fonds déposés",
@@ -220,10 +236,22 @@
     "cvcPlaceholder": "CVC",
     "securePaymentNotice": "Paiement sécurisé par CMI — aucune donnée de carte n’est stockée sur la plateforme.",
     "payButton": "Payer {{amount}} MAD",
+    "payProcessing": "Traitement en cours (simulé)…",
+    "paySucceeded": "Paiement simulé confirmé — placé sous séquestre",
+    "payError": "Échec du paiement simulé — réessayez",
     "cashNotice": "Le propriétaire déclare l’encaissement en espèces ; vous confirmez ensuite pour recevoir une quittance numérique. Aucun montant ne transite par la plateforme.",
     "cashConfirmedBadge": "Réception confirmée — quittance envoyée",
     "confirmCashReceipt": "Confirmer la réception de l’encaissement",
-    "cashReceiptConfirmed": "Réception confirmée"
+    "cashReceiptConfirmed": "Réception confirmée",
+    "edl": {
+      "title": "État des lieux d'entrée",
+      "statusDraft": "Brouillon",
+      "statusSigned": "Signé par les deux parties",
+      "awaitingTenant": "En attente de votre signature.",
+      "awaitingOwner": "Signé de votre côté — en attente du bailleur.",
+      "signButton": "Signer l'état des lieux",
+      "signing": "Signature…"
+    }
   },
   "securite": {
     "title": "Centre de sécurité",

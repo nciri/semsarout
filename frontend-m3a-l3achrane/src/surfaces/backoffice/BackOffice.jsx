@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Avatar, Badge, Button, Card, Icon, IconButton, Input, Tabs, VerifiedBadge } from '../../ds/index.js'
 import {
   approveBackofficeListing,
+  createEtatDesLieux,
   createRole,
   deleteRole,
   getBackofficeLeases,
@@ -16,8 +17,10 @@ import {
   getBackofficeUsers,
   getBackofficeVerifications,
   reactivateBackofficeUser,
+  refundLeasePayment,
   rejectBackofficeListing,
   rejectBackofficeVerification,
+  releaseLeasePayment,
   resolveReport,
   suspendBackofficeUser,
   updateBackofficeMatchingWeights,
@@ -799,6 +802,17 @@ function ContractsView() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
+  const [actionError, setActionError] = useState(false)
+  const [busyKey, setBusyKey] = useState(null)
+
+  const reload = () => {
+    setLoading(true)
+    setLoadError(false)
+    return getBackofficeLeases()
+      .then((data) => setItems(data?.items ?? []))
+      .catch(() => setLoadError(true))
+      .finally(() => setLoading(false))
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -810,6 +824,19 @@ function ContractsView() {
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [])
+
+  const runAction = async (key, action) => {
+    setActionError(false)
+    setBusyKey(key)
+    try {
+      await action()
+      await reload()
+    } catch {
+      setActionError(true)
+    } finally {
+      setBusyKey(null)
+    }
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -824,6 +851,12 @@ function ContractsView() {
           {t('backoffice:contracts.escrowNote')}
         </div>
       </div>
+
+      {actionError && (
+        <div style={{ padding: '10px 16px', background: 'var(--red-50, #fdecec)', border: '1px solid var(--red-200, #f4b8b8)', borderRadius: 10, font: 'var(--fw-semibold) 12.5px var(--font-body)', color: 'var(--red-600)' }}>
+          {t('backoffice:contracts.actionError')}
+        </div>
+      )}
 
       <Card padding={0} style={{ overflow: 'hidden' }}>
         <div
@@ -882,9 +915,9 @@ function ContractsView() {
                 {Math.round(lease.deposit_amount)} MAD
               </div>
               <div><Badge tone={LEASE_STATUS_TONE[lease.status] ?? 'neutral'}>{statusLabel}</Badge></div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {(lease.payments ?? []).map((p) => (
-                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                     <Icon name={PAYMENT_STATUS_ICON[p.status] ?? 'circle'} size={13} strokeWidth={2.4}
                           style={{ color: 'var(--text-muted)', flex: 'none' }} />
                     <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 'none' }}>
@@ -894,8 +927,59 @@ function ContractsView() {
                     <Badge tone={PAYMENT_STATUS_TONE[p.status] ?? 'neutral'}>
                       {t(`backoffice:contracts.paymentStatus.${p.status}`, { defaultValue: p.status })}
                     </Badge>
+                    {p.status === 'escrowed' && (
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <Button
+                          size="sm" variant="secondary"
+                          disabled={busyKey === `release-${p.id}`}
+                          onClick={() => runAction(`release-${p.id}`, () => releaseLeasePayment(lease.id, p.id))}
+                          style={{ padding: '4px 8px', font: 'var(--fw-semibold) 11px var(--font-body)' }}
+                        >
+                          {t('backoffice:contracts.releaseButton')}
+                        </Button>
+                        <Button
+                          size="sm" variant="secondary"
+                          disabled={busyKey === `refund-${p.id}`}
+                          onClick={() => runAction(`refund-${p.id}`, () => refundLeasePayment(lease.id, p.id))}
+                          style={{ padding: '4px 8px', font: 'var(--fw-semibold) 11px var(--font-body)' }}
+                        >
+                          {t('backoffice:contracts.refundButton')}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ))}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4, paddingTop: 6, borderTop: '1px dashed var(--border-subtle)' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.04em' }}>
+                    {t('backoffice:contracts.edl.title')}
+                  </span>
+                  {['entree', 'sortie'].map((type) => {
+                    const edl = (lease.etats_des_lieux ?? []).find((e) => e.type === type)
+                    if (!edl) {
+                      return (
+                        <Button
+                          key={type} size="sm" variant="ghost"
+                          disabled={busyKey === `edl-${type}-${lease.id}`}
+                          onClick={() => runAction(`edl-${type}-${lease.id}`,
+                            () => createEtatDesLieux(lease.id, type, []))}
+                          style={{ padding: '4px 8px', font: 'var(--fw-semibold) 11px var(--font-body)', justifyContent: 'flex-start' }}
+                        >
+                          {t(`backoffice:contracts.edl.create${type === 'entree' ? 'Entree' : 'Sortie'}`)}
+                        </Button>
+                      )
+                    }
+                    return (
+                      <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+                        <span style={{ color: 'var(--text-muted)' }}>{t(`backoffice:contracts.edl.${type}`)}</span>
+                        <Badge tone={edl.status === 'signed' ? 'verified' : 'neutral'}>
+                          {edl.status === 'signed'
+                            ? t('backoffice:contracts.edl.statusSigned')
+                            : t('backoffice:contracts.edl.statusDraft')}
+                        </Badge>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           )

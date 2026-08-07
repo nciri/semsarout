@@ -1,7 +1,66 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Avatar, Badge, Button, Card, Chip, MatchScore } from '../../ds/index.js'
+import { Avatar, Badge, Button, Card, Chip, Input, MatchScore } from '../../ds/index.js'
 import { applicationsInbox } from '../../data/applicationsInbox.js'
+import { createLease } from '../../services/index.js'
+
+const todayIso = () => new Date().toISOString().slice(0, 10)
+
+// Formulaire de génération de bail — pré-rempli (loyer/caution/date) depuis la candidature,
+// éditable avant création. N'appelle `createLease` (POST /leases) que sur soumission.
+function GenerateLeaseForm({ app, onCreated }) {
+  const { t } = useTranslation(['app', 'common'])
+  const [rentAmount, setRentAmount] = useState(String(app.rent ?? ''))
+  const [depositAmount, setDepositAmount] = useState(String(app.deposit ?? ''))
+  const [startDate, setStartDate] = useState(todayIso())
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(false)
+
+  const submit = async () => {
+    setSubmitting(true)
+    setError(false)
+    try {
+      const lease = await createLease({
+        listingId: app.listingId,
+        tenantUserId: app.tenantUserId,
+        rentAmount: Number(rentAmount),
+        depositAmount: Number(depositAmount),
+        startDate,
+      })
+      onCreated(lease.id)
+    } catch {
+      setError(true)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '14px 16px', borderRadius: 'var(--radius-md)', background: 'var(--navy-50)', border: '1px solid var(--navy-100)' }}>
+      <div style={{ font: 'var(--fw-bold) var(--fs-sm) var(--font-display)', color: 'var(--navy-700)' }}>
+        {t('app:candidatures.generateLeaseFormTitle')}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+        <Input label={t('app:candidatures.rentLabel')} type="number" value={rentAmount}
+               onChange={(e) => setRentAmount(e.target.value)} />
+        <Input label={t('app:candidatures.depositLabel')} type="number" value={depositAmount}
+               onChange={(e) => setDepositAmount(e.target.value)} />
+        <Input label={t('app:candidatures.startDateLabel')} type="date" value={startDate}
+               onChange={(e) => setStartDate(e.target.value)} />
+      </div>
+      {error && (
+        <div style={{ font: 'var(--fw-semibold) var(--fs-xs) var(--font-body)', color: 'var(--red-600)' }}>
+          {t('app:candidatures.generateLeaseError')}
+        </div>
+      )}
+      <div>
+        <Button size="sm" onClick={submit} disabled={submitting || !rentAmount || !depositAmount || !startDate}>
+          {submitting ? t('app:candidatures.generateLeaseSubmitting') : t('app:candidatures.generateLeaseSubmit')}
+        </Button>
+      </div>
+    </div>
+  )
+}
 
 function buildFilters(t) {
   return [
@@ -90,8 +149,9 @@ function ApplicationActions({ app, onShortlist, onShare, onValidate, onRefuse, o
   return null
 }
 
-function ApplicationCard({ app, slots, onSetStatus, onPickSlot }) {
+function ApplicationCard({ app, slots, onSetStatus, onPickSlot, onLeaseCreated }) {
   const { t } = useTranslation(['app', 'common'])
+  const [showLeaseForm, setShowLeaseForm] = useState(false)
   const { annonce } = app
   return (
     <Card>
@@ -134,6 +194,22 @@ function ApplicationCard({ app, slots, onSetStatus, onPickSlot }) {
           </div>
         )}
 
+        {app.statut === 'accepted' && (
+          app.leaseId ? (
+            <Badge tone="verified" icon="check">
+              {t('app:candidatures.leaseGenerated', { id: app.leaseId })}
+            </Badge>
+          ) : showLeaseForm ? (
+            <GenerateLeaseForm app={app} onCreated={(leaseId) => { onLeaseCreated(app.id, leaseId); setShowLeaseForm(false) }} />
+          ) : (
+            <div>
+              <Button size="sm" variant="secondary" onClick={() => setShowLeaseForm(true)}>
+                {t('app:candidatures.generateLeaseButton')}
+              </Button>
+            </div>
+          )
+        )}
+
         <ApplicationActions
           app={app}
           onShortlist={() => onSetStatus(app.id, 'shortlisted')}
@@ -159,6 +235,9 @@ export default function Candidatures() {
   }
   const pickSlot = (id, slotId) => {
     setApplications((prev) => prev.map((a) => (a.id === id ? { ...a, slotId } : a)))
+  }
+  const markLeaseCreated = (id, leaseId) => {
+    setApplications((prev) => prev.map((a) => (a.id === id ? { ...a, leaseId } : a)))
   }
 
   const counts = applications.reduce(
@@ -194,7 +273,8 @@ export default function Candidatures() {
             </div>
           )}
           {visible.map((app) => (
-            <ApplicationCard key={app.id} app={app} slots={slots} onSetStatus={setStatus} onPickSlot={pickSlot} />
+            <ApplicationCard key={app.id} app={app} slots={slots} onSetStatus={setStatus}
+                             onPickSlot={pickSlot} onLeaseCreated={markLeaseCreated} />
           ))}
         </div>
       </div>

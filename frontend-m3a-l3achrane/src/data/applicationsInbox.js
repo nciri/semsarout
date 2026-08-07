@@ -25,6 +25,7 @@ export const applicationsInbox = {
         "Bonjour, je suis très intéressée par la chambre, disponible dès le 1er septembre. Je peux passer samedi si besoin.",
       statut: 'received',
       slotId: null,
+      listingId: 'l-listing-1', tenantUserId: 51, rent: 2200, deposit: 2200, leaseId: null,
       annonce: {
         titre: 'Chambre privée',
         quartier: 'Maârif',
@@ -46,6 +47,9 @@ export const applicationsInbox = {
         "Bonjour ! Le logement m'intéresse beaucoup, je cherche un cadre calme pour étudier. Dispo ce week-end.",
       statut: 'accepted',
       slotId: 'sam-17h',
+      // Champs nécessaires à la génération du bail (POST /leases) : listingId doit être
+      // l'annonce réelle de ce propriétaire ; tenantUserId le compte du candidat accepté.
+      listingId: 'l-listing-2', tenantUserId: 58, rent: 1900, deposit: 1900, leaseId: null,
       annonce: {
         titre: 'Appartement entier T2',
         quartier: 'Gauthier',
@@ -63,6 +67,7 @@ export const applicationsInbox = {
       message: 'Bonjour, première recherche de coloc pour moi, je suis flexible sur les visites.',
       statut: 'pending_roommate',
       slotId: null,
+      listingId: 'l-listing-1', tenantUserId: 63, rent: 2200, deposit: 2200, leaseId: null,
       annonce: {
         titre: 'Chambre privée',
         quartier: 'Maârif',
@@ -83,6 +88,7 @@ export const applicationsInbox = {
       message: 'Bonsoir, je recherche un logement calme pour la durée de ma thèse, budget aligné.',
       statut: 'refused',
       slotId: null,
+      listingId: 'l-listing-3', tenantUserId: 70, rent: 2100, deposit: 2100, leaseId: null,
       annonce: {
         titre: 'Chambre avec balcon',
         quartier: "Racine",
@@ -100,6 +106,7 @@ export const applicationsInbox = {
       message: 'Bonjour, je suis sérieux et non-fumeur, dispo pour visite quand vous voulez.',
       statut: 'shortlisted',
       slotId: null,
+      listingId: 'l-listing-3', tenantUserId: 74, rent: 2100, deposit: 2100, leaseId: null,
       annonce: {
         titre: 'Chambre avec balcon',
         quartier: 'Racine',
@@ -117,6 +124,7 @@ export const applicationsInbox = {
       message: 'Bonjour, le studio correspond parfaitement à mon budget et à mes horaires de cours.',
       statut: 'shortlisted',
       slotId: null,
+      listingId: 'l-listing-4', tenantUserId: 82, rent: 1700, deposit: 1700, leaseId: null,
       annonce: {
         titre: 'Studio meublé',
         quartier: 'Bourgogne',

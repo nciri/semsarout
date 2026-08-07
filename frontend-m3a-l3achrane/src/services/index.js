@@ -239,6 +239,93 @@ export async function getMyLease() {
   return data
 }
 
+// Baux du LOCATAIRE courant (liste complète — multi-bail). Complète `getMyLease` (bail
+// « le plus pertinent ») pour l'écran Paiement quand l'utilisateur a plusieurs baux.
+export async function getMyLeases() {
+  if (isMocked('backoffice')) {
+    const single = await getMyLease()
+    return delay(single ? [single] : [])
+  }
+  const { data } = await api.get('/me/leases')
+  return data
+}
+
+// Création d'un bail (propriétaire/admin) à partir d'une candidature acceptée — génère
+// aussi les paiements initiaux (caution + 1er loyer, statut pending) côté service.
+export async function createLease({ listingId, tenantUserId, rentAmount, depositAmount,
+  startDate, endDate }) {
+  if (isMocked('backoffice')) {
+    return delay({
+      id: `lease-${Date.now()}`, listing_id: listingId, tenant_user_id: tenantUserId,
+      owner_id: 1, rent_amount: rentAmount, deposit_amount: depositAmount, status: 'pending',
+      start_date: startDate, end_date: endDate || null, created_at: new Date().toISOString(),
+      payments: [
+        { id: `pay-${Date.now()}-d`, type: 'deposit', amount: depositAmount, period: null, status: 'pending' },
+        { id: `pay-${Date.now()}-r`, type: 'rent', amount: rentAmount, period: startDate?.slice(0, 7), status: 'pending' },
+      ],
+      etats_des_lieux: [],
+    })
+  }
+  const { data } = await api.post('/leases', {
+    listing_id: listingId, tenant_user_id: tenantUserId, rent_amount: rentAmount,
+    deposit_amount: depositAmount, start_date: startDate, end_date: endDate || null,
+  })
+  return data
+}
+
+// État des lieux (sous-domaine dédié — remplace la déduction par position dans Paiement.jsx).
+export async function listEtatDesLieux(leaseId) {
+  if (isMocked('backoffice')) return delay([])
+  const { data } = await api.get(`/leases/${leaseId}/etat-des-lieux`)
+  return data
+}
+
+export async function createEtatDesLieux(leaseId, type, items = []) {
+  if (isMocked('backoffice')) {
+    return delay({ id: `edl-${Date.now()}`, lease_id: leaseId, type, status: 'draft', items,
+      owner_signed_at: null, tenant_signed_at: null })
+  }
+  const { data } = await api.post(`/leases/${leaseId}/etat-des-lieux`, { type, items })
+  return data
+}
+
+export async function updateEtatDesLieux(leaseId, edlId, items) {
+  if (isMocked('backoffice')) return delay({ id: edlId, lease_id: leaseId, items })
+  const { data } = await api.patch(`/leases/${leaseId}/etat-des-lieux/${edlId}`, { items })
+  return data
+}
+
+export async function signEtatDesLieux(leaseId, edlId) {
+  if (isMocked('backoffice')) {
+    return delay({ id: edlId, lease_id: leaseId, status: 'signed' })
+  }
+  const { data } = await api.post(`/leases/${leaseId}/etat-des-lieux/${edlId}/sign`)
+  return data
+}
+
+// Paiement séquestre — flux intent (locataire) puis webhook (simulé, cf. bandeau
+// "paiement simulé" du front). AUCUN mouvement d'argent réel, AUCUN appel réseau externe.
+export async function createPaymentIntent(leaseId, paymentId) {
+  if (isMocked('backoffice')) {
+    return delay({ id: paymentId, lease_id: leaseId, provider: 'simulated',
+      intent_id: `sim_${Date.now()}`, intent_status: 'processing', status: 'pending' })
+  }
+  const { data } = await api.post(`/leases/${leaseId}/payments/${paymentId}/intent`)
+  return data
+}
+
+// DÉMO UNIQUEMENT : confirme l'intent créé ci-dessus comme le ferait le webhook du PSP
+// (cf. app/main.py:confirm_payment_intent_demo — réservé au provider simulé, ne remplace
+// jamais le vrai webhook signé). Permet à cet écran de dérouler intent → confirmation sans
+// exposer le secret webhook au client.
+export async function confirmPaymentIntentDemo(leaseId, paymentId) {
+  if (isMocked('backoffice')) {
+    return delay({ id: paymentId, lease_id: leaseId, status: 'escrowed', intent_status: 'succeeded' })
+  }
+  const { data } = await api.post(`/leases/${leaseId}/payments/${paymentId}/intent/confirm`)
+  return data
+}
+
 // Actions de séquestre (owner/admin, gardées côté service coloc-listing) — état only,
 // aucun traitement de paiement réel.
 export async function escrowLeasePayment(leaseId, paymentId) {

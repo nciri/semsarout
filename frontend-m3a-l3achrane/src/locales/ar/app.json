@@ -81,7 +81,16 @@
     },
     "roommatesInPlace": "الزملاء الحاليون في السكن",
     "acceptedPickSlot": "تم قبول الطلب — اقترح·ي موعد زيارة",
-    "empty": "لا توجد طلبات في هذه الفئة."
+    "empty": "لا توجد طلبات في هذه الفئة.",
+    "generateLeaseButton": "إنشاء عقد الإيجار",
+    "generateLeaseFormTitle": "إنشاء عقد الإيجار",
+    "rentLabel": "الإيجار (درهم)",
+    "depositLabel": "التأمين (درهم)",
+    "startDateLabel": "تاريخ الدخول",
+    "generateLeaseSubmit": "إنشاء العقد",
+    "generateLeaseSubmitting": "جارٍ الإنشاء…",
+    "generateLeaseError": "تعذّر إنشاء العقد — يُرجى إعادة المحاولة.",
+    "leaseGenerated": "تم إنشاء العقد (#{{id}})"
   },
   "questionnaire": {
     "stepIndicator": "الخطوة {{step}} / {{total}}",
@@ -194,8 +203,15 @@
     "title": "تأمين مكانك",
     "subtitle": "{{titre}} · الدخول في {{entree}}",
     "loading": "جارٍ تحميل عقد إيجارك…",
-    "demoBanner": "الخطوات أدناه تعكس الحالة الفعلية لعقدك (التأمين/الإيجار). هذه المنصة لا تعالج أي دفعة حقيقية: إطار الضمان معروض هنا لأغراض توضيحية فقط، دون مزوّد دفع مدمج.",
+    "demoBanner": "دفع تجريبي (نموذج توضيحي): الخطوات أدناه تعكس الحالة الفعلية لعقدك (التأمين/الإيجار)، لكن لا يتم أي تحويل مالي حقيقي على هذه المنصة (دون مزوّد دفع مدمج).",
     "leaseFallbackTitle": "عقد إيجار #{{id}}",
+    "leaseSelectorLabel": "عقد الإيجار المعني",
+    "leaseStatus": {
+      "pending": "قيد الانتظار",
+      "active": "نشط",
+      "ended": "منتهٍ",
+      "cancelled": "ملغى"
+    },
     "escrowStatusTitle": "حالة الضمان",
     "steps": {
       "depot": "تم إيداع الأموال",
@@ -220,10 +236,22 @@
     "cvcPlaceholder": "CVC",
     "securePaymentNotice": "دفع آمن عبر CMI — لا يتم تخزين أي بيانات للبطاقة على المنصة.",
     "payButton": "دفع {{amount}} درهم",
+    "payProcessing": "جارٍ المعالجة (تجريبي)…",
+    "paySucceeded": "تم تأكيد الدفع التجريبي — تحت الضمان",
+    "payError": "فشل الدفع التجريبي — يُرجى إعادة المحاولة",
     "cashNotice": "يصرّح المالك·ة باستلام المبلغ نقدًا؛ ثم تؤكد·ين ذلك لاستلام إيصال رقمي. لا يمر أي مبلغ عبر المنصة.",
     "cashConfirmedBadge": "تم تأكيد الاستلام — تم إرسال الإيصال",
     "confirmCashReceipt": "تأكيد استلام المبلغ",
-    "cashReceiptConfirmed": "تم تأكيد الاستلام"
+    "cashReceiptConfirmed": "تم تأكيد الاستلام",
+    "edl": {
+      "title": "معاينة حالة السكن عند الدخول",
+      "statusDraft": "مسودة",
+      "statusSigned": "موقّع من الطرفين",
+      "awaitingTenant": "بانتظار توقيعك.",
+      "awaitingOwner": "تم التوقيع من جانبك — بانتظار المالك·ة.",
+      "signButton": "توقيع معاينة الحالة",
+      "signing": "جارٍ التوقيع…"
+    }
   },
   "securite": {
     "title": "مركز الأمان",
