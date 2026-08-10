@@ -11,6 +11,24 @@ test('buildCreatePayload structure property + listing', () => {
   assert.equal(p.condo_fees, 800)
 })
 
+test('buildCreatePayload convertit les défauts chaîne vide en null pour les champs numériques', () => {
+  const p = buildCreatePayload({
+    city: 'Casa', property_type: 'APPARTEMENT', title: 'T', bed_type: 'CHAMBRE_INDIVIDUELLE',
+    housing_gender: 'FEMININ', rent: 2500, capacity: '',
+    floor: '', area_m2: '', charges_amount: '', deposit: '', condo_fees: '',
+    duration_min_months: '', duration_max_months: '', is_condo: true, photos: [],
+  })
+  assert.equal(p.property.floor, null)
+  assert.equal(p.property.area_m2, null)
+  assert.equal(p.condo_fees, null)
+  assert.equal(p.deposit, null)
+  assert.equal(p.charges_amount, null)
+  assert.equal(p.duration_min_months, null)
+  assert.equal(p.duration_max_months, null)
+  assert.equal(typeof p.rent, 'number')
+  assert.equal(p.rent, 2500)
+})
+
 test('publish enchaîne create → media → submit', async () => {
   const calls = []
   const services = {
