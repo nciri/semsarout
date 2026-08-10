@@ -51,7 +51,12 @@ def partner_ctx(request: Request, db: Session = Depends(get_db)) -> PartnerCtx:
     uid = _uid(principal)
     if uid is None:
         raise PartnerForbidden()
-    member = db.query(PartnerMember).filter(PartnerMember.user_id == uid).first()
+    member = (
+        db.query(PartnerMember)
+        .filter(PartnerMember.user_id == uid)
+        .order_by(PartnerMember.created_at)
+        .first()
+    )
     if member is None:
         raise PartnerForbidden()
     return PartnerCtx(partner_id=member.partner_id, mode="session")

@@ -110,6 +110,8 @@ router = APIRouter(dependencies=[Depends(_require_tenant)])
 @router.get("/partner/me")
 async def get_partner_me(ctx: PartnerCtx = Depends(partner_ctx), db=Depends(get_db)) -> dict:
     partner = db.query(Partner).filter(Partner.id == ctx.partner_id).first()
+    if partner is None:
+        return _err("Partner introuvable", 404)
     return partner.to_dict()
 
 
@@ -267,8 +269,7 @@ def _decide_verification(verification: Verification, status: str, request: Reque
     verification.status = status
     verification.decided_at = _now()
     verification.decided_by = _uid(principal)
-    db.commit()
-    db.refresh(verification)
+    db.flush()
     return verification
 
 
@@ -283,6 +284,7 @@ async def approve_verification(verification_id: str, request: Request,
             {"verification_id": verification.id, "partner_id": ctx.partner_id,
              "status": verification.status})
     db.commit()
+    db.refresh(verification)
     return verification.to_dict()
 
 
@@ -297,6 +299,7 @@ async def reject_verification(verification_id: str, request: Request,
             {"verification_id": verification.id, "partner_id": ctx.partner_id,
              "status": verification.status})
     db.commit()
+    db.refresh(verification)
     return verification.to_dict()
 
 
