@@ -404,7 +404,9 @@
     "agreementPrivacyLink": "سياسة الخصوصية",
     "agreementSuffix": "(CNDP).",
     "saveLaterCta": "احفظ واستأنف لاحقًا",
-    "continueCta": "متابعة"
+    "continueCta": "متابعة",
+    "continueCtaBusy": "جارٍ الإنشاء…",
+    "genericError": "حدث خطأ — يُرجى إعادة المحاولة."
   },
   "reviews": {
     "title": "قيّم إقامتك",

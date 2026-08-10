@@ -404,7 +404,9 @@
     "agreementPrivacyLink": "politique de confidentialité",
     "agreementSuffix": "(CNDP).",
     "saveLaterCta": "Enregistrer et reprendre plus tard",
-    "continueCta": "Continuer"
+    "continueCta": "Continuer",
+    "continueCtaBusy": "Création…",
+    "genericError": "Une erreur est survenue — réessayez."
   },
   "reviews": {
     "title": "Évaluer votre séjour",
