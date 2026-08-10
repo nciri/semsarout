@@ -500,7 +500,7 @@ function VerifView() {
   )
 }
 
-// Loyer réel (rent + currency backend) → chaîne localisée FR ("2 400 MAD").
+// Loyer réel (rent + currency backend) → chaîne localisée FR ("2 400 Đh").
 const fmtRent = (rent, currency) =>
   typeof rent === 'number' ? `${rent.toLocaleString('fr-FR')} ${currency || ''}`.trim() : '—'
 
@@ -909,10 +909,10 @@ function ContractsView() {
                 </div>
               </div>
               <div style={{ color: 'var(--text-body)', fontVariantNumeric: 'tabular-nums' }}>
-                {Math.round(lease.rent_amount)} MAD
+                {Math.round(lease.rent_amount)} Đh
               </div>
               <div style={{ color: 'var(--text-body)', fontVariantNumeric: 'tabular-nums' }}>
-                {Math.round(lease.deposit_amount)} MAD
+                {Math.round(lease.deposit_amount)} Đh
               </div>
               <div><Badge tone={LEASE_STATUS_TONE[lease.status] ?? 'neutral'}>{statusLabel}</Badge></div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
