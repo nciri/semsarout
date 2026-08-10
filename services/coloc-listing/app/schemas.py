@@ -37,6 +37,8 @@ class ListingCreateIn(BaseModel):
     rent: Decimal = Field(gt=0)
     charges_included: bool = False
     charges_amount: Decimal | None = None
+    is_condo: bool = True
+    condo_fees: Decimal | None = None
     deposit: Decimal | None = None
     currency: str = Field(default="MAD", min_length=3, max_length=3)
     furnished: bool = False
@@ -64,6 +66,8 @@ class ListingUpdateIn(BaseModel):
     rent: Decimal | None = Field(default=None, gt=0)
     charges_included: bool | None = None
     charges_amount: Decimal | None = None
+    is_condo: bool | None = None
+    condo_fees: Decimal | None = None
     deposit: Decimal | None = None
     furnished: bool | None = None
     capacity: int | None = Field(default=None, ge=1, le=8)

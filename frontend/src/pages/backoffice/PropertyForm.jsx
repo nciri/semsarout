@@ -10,6 +10,7 @@ import {
 import { DIRHAM_SYMBOL } from '../../utils/currency'
 import DirIcon from '../../components/common/DirIcon'
 import api from '../../services/api'
+import { CondoFeesField } from '../../components/property/CondoFeesField'
 
 const backofficeService = {
   getProperty: async (id) => {
@@ -78,7 +79,9 @@ export default function BackofficePropertyForm() {
     longitude: '',
     features: [],
     status: 'draft',
-    is_featured: false
+    is_featured: false,
+    is_condo: true,
+    condo_fees: null
   })
 
   const [images, setImages] = useState([])
@@ -113,7 +116,9 @@ export default function BackofficePropertyForm() {
         longitude: propertyData.longitude || '',
         features: propertyData.features || [],
         status: propertyData.status || 'draft',
-        is_featured: propertyData.is_featured || false
+        is_featured: propertyData.is_featured || false,
+        is_condo: propertyData.is_condo ?? true,
+        condo_fees: propertyData.condo_fees ?? null
       })
       if (propertyData.images) {
         setImages(propertyData.images)
@@ -167,7 +172,9 @@ export default function BackofficePropertyForm() {
       total_floors: formData.total_floors ? parseInt(formData.total_floors) : null,
       year_built: formData.year_built ? parseInt(formData.year_built) : null,
       latitude: formData.latitude ? parseFloat(formData.latitude) : null,
-      longitude: formData.longitude ? parseFloat(formData.longitude) : null
+      longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+      is_condo: formData.is_condo,
+      condo_fees: formData.is_condo && formData.condo_fees ? parseFloat(formData.condo_fees) : null
     }
 
     if (isEditing) {
@@ -369,6 +376,16 @@ export default function BackofficePropertyForm() {
               />
               {errors.surface && <p className="text-red-500 text-xs mt-1">{errors.surface}</p>}
             </div>
+          </div>
+
+          <div className="mt-4">
+            <CondoFeesField
+              propertyType={formData.property_type}
+              isCondo={formData.is_condo}
+              condoFees={formData.condo_fees}
+              onToggle={(v) => setFormData({ ...formData, is_condo: v })}
+              onAmount={(v) => setFormData({ ...formData, condo_fees: v })}
+            />
           </div>
         </div>
 

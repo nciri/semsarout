@@ -485,6 +485,8 @@ def create_property():
         price=data['price'],
         price_per_sqm=data.get('price_per_sqm'),
         charges=data.get('charges'),
+        is_condo=(data.get('is_condo', True) and data.get('property_type') != 'land'),
+        condo_fees=(None if data.get('property_type') == 'land' else data.get('condo_fees')),
         surface=data.get('surface'),
         land_surface=data.get('land_surface'),
         rooms=data.get('rooms'),
@@ -532,7 +534,8 @@ def update_property(property_id):
     # Update fields
     updatable_fields = [
         'title', 'description', 'property_type', 'transaction_type',
-        'price', 'price_per_sqm', 'charges', 'surface', 'land_surface',
+        'price', 'price_per_sqm', 'charges', 'is_condo', 'condo_fees',
+        'surface', 'land_surface',
         'rooms', 'bedrooms', 'bathrooms', 'floor', 'total_floors',
         'construction_year', 'features', 'energy_class', 'ges_class',
         'address', 'city', 'neighborhood', 'postal_code',
@@ -542,6 +545,10 @@ def update_property(property_id):
     for field in updatable_fields:
         if field in data:
             setattr(property, field, data[field])
+
+    if property.property_type == 'land':
+        property.is_condo = False
+        property.condo_fees = None
 
     db.session.commit()
 

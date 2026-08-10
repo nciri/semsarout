@@ -44,7 +44,8 @@
     "help": "بحاجة إلى مساعدة؟",
     "logout": "تسجيل الخروج",
     "myAccount": "حسابي",
-    "notifications": "الإشعارات"
+    "notifications": "الإشعارات",
+    "publish": "نشر إعلان"
   },
   "trust": {
     "verified": "موثّقة",

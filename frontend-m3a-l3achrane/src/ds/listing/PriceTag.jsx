@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 
-/** PriceTag — rent amount with MAD suffix and period. */
-export function PriceTag({ amount = 2300, currency = "MAD", period, size = "md", style }) {
+/** PriceTag — rent amount with Đh suffix and period. */
+export function PriceTag({ amount = 2300, currency = "Đh", period, size = "md", style }) {
   const { t } = useTranslation();
   const displayPeriod = period ?? t("priceTag.perMonth");
   const fs = { sm: "var(--fs-body)", md: "var(--fs-h3)", lg: "var(--fs-h1)" }[size];

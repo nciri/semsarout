@@ -247,6 +247,8 @@
     "locationTitle": "الموقع",
     "locationApproxNote": "الموقع تقريبي (نطاق 300 م) — يُكشف العنوان الدقيق بعد قبول ترشحك.",
     "priceUnitPeriod": "شهريًا، شاملة التكاليف",
+    "condoFeesLabel": "مصاريف الملكية المشتركة",
+    "chargesComprisesShort": "+cc",
     "matchPercentLabel": "{{pct}}٪ توافق مع ملفك الشخصي",
     "matchDetailsBase": "نفس إيقاع النوم · غير مدخّن",
     "applyCta": "التقديم على هذه الغرفة",

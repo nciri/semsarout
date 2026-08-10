@@ -25,6 +25,7 @@ const ROUTES = {
   pay: '/espace/paiement',
   security: '/espace/securite',
   notifications: '/espace/notifications',
+  publish: '/espace/publier',
 }
 
 export default function AppLayout() {
@@ -48,6 +49,7 @@ export default function AppLayout() {
     { icon: 'list-checks', label: t('nav.quiz'), value: 'quiz' },
     { icon: 'credit-card', label: t('nav.payments'), value: 'pay' },
     { icon: 'shield', label: t('nav.security'), value: 'security' },
+    { icon: 'plus-circle', label: t('nav.publish'), value: 'publish' },
     { icon: 'bell', label: t('nav.notifications'), value: 'notifications',
       badge: unreadCount > 0 ? unreadCount : undefined },
   ]

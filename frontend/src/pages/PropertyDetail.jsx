@@ -558,6 +558,12 @@ function PropertyDetail() {
                 <span className="text-gray-500">{t('public:propertyDetail.referenceLabel')}</span>
                 <span className="font-medium">{property.reference}</span>
               </div>
+              {property.is_condo && (
+                <div className="flex justify-between py-2 border-b">
+                  <span className="text-gray-500">{t('common:condoFees.label')}</span>
+                  <span className="font-medium">{property.condo_fees ? `${formatPrice(property.condo_fees)}/mois` : '—'}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

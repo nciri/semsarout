@@ -171,6 +171,8 @@ def _search_doc(listing: Listing) -> dict:
         "house_rules": {r.code: r.value for r in listing.house_rules},
         "amenities": [k for k, v in (p.amenities or {}).items() if v],
         "status": listing.status,
+        "is_condo": bool(listing.is_condo),
+        "condo_fees": float(listing.condo_fees) if listing.condo_fees is not None else None,
     }
 
 
@@ -207,6 +209,7 @@ def create_listing(body: ListingCreateIn, principal: Principal = Depends(get_pri
     listing = Listing(property_id=prop.id, owner_id=uid, title=body.title,
                       description=body.description, bed_type=body.bed_type, rent=body.rent,
                       charges_included=body.charges_included, charges_amount=body.charges_amount,
+                      is_condo=body.is_condo, condo_fees=body.condo_fees,
                       deposit=body.deposit, currency=body.currency, furnished=body.furnished,
                       housing_gender=body.housing_gender, capacity=body.capacity,
                       available_from=body.available_from,

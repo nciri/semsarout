@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AmenityChip, Avatar, Badge, Button, Card, Icon, Select, VerifiedBadge, PriceTag } from '../../ds/index.js'
 import { createReport, getListing } from '../../services/index.js'
+import { formatMad } from '../../lib/format.js'
 
 const REPORT_REASONS = ['spam', 'inappropriate', 'fraud', 'harassment', 'other']
 
@@ -243,6 +244,11 @@ export default function ListingDetail() {
             <Card>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <PriceTag amount={listing.prixMad} period={t('web:listing.priceUnitPeriod')} size="lg" />
+                {listing.isCondo && (
+                  <div style={{ font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-muted)' }} className="condo-fees-line">
+                    {t('web:listing.condoFeesLabel')} : {formatMad(listing.condoFees ?? 0, { suffix: true })}
+                  </div>
+                )}
                 {listing.matchPct != null && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '12px 14px', borderRadius: 'var(--radius-md)', background: 'var(--green-50)' }}>
                     <div style={{ font: 'var(--fw-bold) var(--fs-body) var(--font-body)', color: 'var(--green-700)' }}>{t('web:listing.matchPercentLabel', { pct: listing.matchPct })}</div>
