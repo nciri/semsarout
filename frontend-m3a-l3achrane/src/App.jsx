@@ -25,6 +25,13 @@ const Aide = lazy(() => import('./surfaces/app/Aide.jsx'))
 const PublierAnnonce = lazy(() => import('./surfaces/app/PublierAnnonce.jsx'))
 const PartnerLayout = lazy(() => import('./surfaces/partner/PartnerLayout.jsx'))
 const PartnerPortal = lazy(() => import('./surfaces/partner/PartnerPortal.jsx'))
+const Affiliates = lazy(() => import('./surfaces/partner/Affiliates.jsx'))
+const Verifications = lazy(() => import('./surfaces/partner/Verifications.jsx'))
+const ReservedOffers = lazy(() => import('./surfaces/partner/ReservedOffers.jsx'))
+const Grants = lazy(() => import('./surfaces/partner/Grants.jsx'))
+const Reporting = lazy(() => import('./surfaces/partner/Reporting.jsx'))
+const Billing = lazy(() => import('./surfaces/partner/Billing.jsx'))
+const ApiWebhooks = lazy(() => import('./surfaces/partner/ApiWebhooks.jsx'))
 const BackOffice = lazy(() => import('./surfaces/backoffice/BackOffice.jsx'))
 const AttributionChambres = lazy(() => import('./surfaces/backoffice/AttributionChambres.jsx'))
 const NotFound = lazy(() => import('./surfaces/NotFound.jsx'))
@@ -59,6 +66,13 @@ export default function App() {
           </Route>
           <Route path="/partenaire" element={<PartnerLayout />}>
             <Route index element={<PartnerPortal />} />
+            <Route path="affilies" element={<Affiliates />} />
+            <Route path="verifications" element={<Verifications />} />
+            <Route path="offres" element={<ReservedOffers />} />
+            <Route path="subventions" element={<Grants />} />
+            <Route path="reporting" element={<Reporting />} />
+            <Route path="facturation" element={<Billing />} />
+            <Route path="api" element={<ApiWebhooks />} />
           </Route>
           <Route path="/back-office" element={<BackOffice />} />
           <Route path="/back-office/attribution" element={<AttributionChambres />} />
