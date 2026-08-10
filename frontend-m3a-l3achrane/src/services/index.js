@@ -694,3 +694,43 @@ export async function markAllNotificationsRead() {
   const { data } = await api.post('/notifications/read-all')
   return data
 }
+
+// ---------------------------------------------------------------------------------------
+// Création d'annonce (domaine locatif m3a) — uploads/media/submit
+// ---------------------------------------------------------------------------------------
+
+export async function createListing(payload) {
+  if (isMocked('listings')) {
+    return delay({
+      id: `l-${Date.now()}`, ...payload, status: 'draft',
+      created_at: new Date().toISOString(),
+    })
+  }
+  const { data } = await api.post('/listings', payload)
+  return data
+}
+
+export async function uploadPhoto(file) {
+  if (isMocked('listings')) {
+    return delay(`/uploads/photos/mock-${Date.now()}.jpg`)
+  }
+  const form = new FormData()
+  form.append('file', file)
+  const { data } = await api.post('/uploads', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data.url
+}
+
+export async function addListingMedia(id, media) {
+  if (isMocked('listings')) return delay({ id, media })
+  await api.post(`/listings/${id}/media`, media)
+}
+
+export async function submitListing(id) {
+  if (isMocked('listings')) {
+    return delay({ id, status: 'submitted', submitted_at: new Date().toISOString() })
+  }
+  const { data } = await api.post(`/listings/${id}/submit`)
+  return data
+}
