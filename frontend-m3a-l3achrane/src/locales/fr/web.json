@@ -7,7 +7,8 @@
       "tagline": "M3a-L3chrane — Colocation vérifiée au Maroc",
       "search": "Rechercher",
       "mySpace": "Mon espace",
-      "partners": "Partenaires"
+      "partners": "Partenaires",
+      "reviews": "Avis"
     }
   },
   "landing": {
@@ -115,7 +116,8 @@
       "universitiesSub": "Gérez le logement de vos étudiants",
       "companiesTitle": "Portail Entreprises",
       "companiesSub": "Relocation de vos nouveaux talents",
-      "dashboardAlt": "Tableau de bord partenaire"
+      "dashboardAlt": "Tableau de bord partenaire",
+      "cta": "Découvrir l'espace partenaire"
     }
   },
   "search": {

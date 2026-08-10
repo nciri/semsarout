@@ -258,7 +258,10 @@ export default function ListingDetail() {
                   </div>
                 )}
                 <Button variant="accent" fullWidth onClick={() => navigate(`/espace/candidature?listingId=${id}`)}>{t('web:listing.applyCta')}</Button>
-                <Button variant="secondary" fullWidth>{t('web:listing.contactRoommateCta')}</Button>
+                {/* L'endpoint public GET /listings/:id (Listing.to_dict) n'expose pas owner_id :
+                    impossible d'ouvrir une conversation ciblée sans deviner l'id propriétaire.
+                    En attendant cette exposition backend, on route vers la messagerie. */}
+                <Button variant="secondary" fullWidth onClick={() => navigate('/espace/messages')}>{t('web:listing.contactRoommateCta')}</Button>
                 <div style={{ font: 'var(--fw-regular) var(--fs-xs)/1.55 var(--font-body)', color: 'var(--text-muted)' }}>
                   {t('web:listing.applicationRequirementNote')}
                 </div>

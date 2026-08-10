@@ -7,7 +7,8 @@
       "tagline": "مع العشران — سكن جماعي موثّق في المغرب",
       "search": "بحث",
       "mySpace": "مساحتي",
-      "partners": "الشركاء"
+      "partners": "الشركاء",
+      "reviews": "التقييمات"
     }
   },
   "landing": {
@@ -115,7 +116,8 @@
       "universitiesSub": "سيّروا سكن طلبتكم",
       "companiesTitle": "بوابة الشركات",
       "companiesSub": "انتقال الكفاءات الجديدة",
-      "dashboardAlt": "لوحة تحكم الشريك"
+      "dashboardAlt": "لوحة تحكم الشريك",
+      "cta": "اكتشف فضاء الشركاء"
     }
   },
   "search": {
