@@ -2,7 +2,7 @@ import { Outlet, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { SidebarNav } from '../../ds/index.js'
 
-const ROUTES = { dash: '/partenaire' }
+const ROUTES = { dash: '/partenaire', help: '/espace/aide' }
 
 export default function PartnerLayout() {
   const { t } = useTranslation('common')

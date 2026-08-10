@@ -26,6 +26,7 @@ const ROUTES = {
   security: '/espace/securite',
   notifications: '/espace/notifications',
   publish: '/espace/publier',
+  help: '/espace/aide',
 }
 
 export default function AppLayout() {

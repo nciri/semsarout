@@ -21,6 +21,7 @@ const ValidationColocataire = lazy(() => import('./surfaces/app/ValidationColoca
 const Questionnaire = lazy(() => import('./surfaces/app/Questionnaire.jsx'))
 const Paiement = lazy(() => import('./surfaces/app/Paiement.jsx'))
 const Securite = lazy(() => import('./surfaces/app/Securite.jsx'))
+const Aide = lazy(() => import('./surfaces/app/Aide.jsx'))
 const PublierAnnonce = lazy(() => import('./surfaces/app/PublierAnnonce.jsx'))
 const PartnerLayout = lazy(() => import('./surfaces/partner/PartnerLayout.jsx'))
 const PartnerPortal = lazy(() => import('./surfaces/partner/PartnerPortal.jsx'))
@@ -53,6 +54,7 @@ export default function App() {
             <Route path="questionnaire" element={<Questionnaire />} />
             <Route path="paiement" element={<Paiement />} />
             <Route path="securite" element={<Securite />} />
+            <Route path="aide" element={<Aide />} />
             <Route path="publier" element={<PublierAnnonce />} />
           </Route>
           <Route path="/partenaire" element={<PartnerLayout />}>

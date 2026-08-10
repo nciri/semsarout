@@ -58,7 +58,11 @@ export function SidebarNav({
         })}
       </div>
       <LanguageSwitcher style={{ marginTop: 12, justifyContent: "center" }} />
-      <button style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", marginTop: 8, background: "none", border: "none", color: "var(--text-on-navy-muted)", cursor: "pointer", font: "var(--fw-medium) var(--fs-body) var(--font-display)" }}>
+      <button
+        type="button"
+        onClick={() => onSelect && onSelect("help")}
+        style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", marginTop: 8, background: "none", border: "none", color: "var(--text-on-navy-muted)", cursor: "pointer", font: "var(--fw-medium) var(--fs-body) var(--font-display)" }}
+      >
         <Icon name="life-buoy" size={19} strokeWidth={2} /> {t("nav.help")}
       </button>
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 8px 4px", marginTop: 8, borderTop: "1px solid rgba(255,255,255,0.1)" }}>

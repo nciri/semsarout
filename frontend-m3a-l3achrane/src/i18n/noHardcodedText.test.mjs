@@ -37,6 +37,7 @@ export const MIGRATED_FILES = [
   'src/surfaces/app/Questionnaire.jsx',
   'src/surfaces/app/Paiement.jsx',
   'src/surfaces/app/Securite.jsx',
+  'src/surfaces/app/Aide.jsx',
   'src/surfaces/backoffice/BackOffice.jsx',
   'src/surfaces/backoffice/AttributionChambres.jsx',
   'src/surfaces/app/PublierAnnonce.jsx',
