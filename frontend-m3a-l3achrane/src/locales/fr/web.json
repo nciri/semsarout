@@ -136,6 +136,10 @@
       "Masculin"
     ],
     "budgetOptions": [
+      {
+        "value": "",
+        "label": "Tous les budgets"
+      },
       "2 500 Đh",
       "4 000 Đh"
     ],

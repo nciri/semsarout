@@ -108,6 +108,10 @@ export default function SearchResults() {
     let result = verifiedOnly ? items.filter((it) => it.verifiee) : items
 
     if (appliedSearch) {
+      // `appliedSearch.gender` est capturé au clic « Rechercher » mais volontairement
+      // ignoré ici : comme pour les cases partenaire/contrat, `mapListingHit` n'expose
+      // aucun champ genre — filtrer dessus donnerait des résultats trompeurs tant que
+      // le backend ne l'expose pas.
       const { city, budget, type } = appliedSearch
       if (city) {
         const needle = city.toLowerCase()
@@ -170,7 +174,7 @@ export default function SearchResults() {
           <div style={{ width: 160 }}>
             <Select
               label={t('web:search.budgetLabel')} options={budgetOptions}
-              value={budgetQuery || budgetOptions[0]} onChange={(e) => setBudgetQuery(e.target.value)}
+              value={budgetQuery} onChange={(e) => setBudgetQuery(e.target.value)}
             />
           </div>
           <div style={{ width: 150 }}>
