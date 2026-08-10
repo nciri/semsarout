@@ -8,8 +8,9 @@ import secrets
 from contextlib import asynccontextmanager
 
 import httpx
-from fastapi import APIRouter, Depends, FastAPI, Request
+from fastapi import APIRouter, Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
+from sqlalchemy import func
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from semsar_auth import get_principal
@@ -110,6 +111,77 @@ router = APIRouter(dependencies=[Depends(_require_tenant)])
 async def get_partner_me(ctx: PartnerCtx = Depends(partner_ctx), db=Depends(get_db)) -> dict:
     partner = db.query(Partner).filter(Partner.id == ctx.partner_id).first()
     return partner.to_dict()
+
+
+def _counts_by_status(db, model, partner_id: str) -> dict:
+    rows = (
+        db.query(model.status, func.count(model.id))
+        .filter(model.partner_id == partner_id)
+        .group_by(model.status)
+        .all()
+    )
+    return {status: count for status, count in rows}
+
+
+@router.get("/partner/reporting")
+async def get_partner_reporting(ctx: PartnerCtx = Depends(partner_ctx), db=Depends(get_db)) -> dict:
+    """Agrégats du partenaire du contexte — TOUJOURS filtrés `partner_id == ctx.partner_id`,
+    jamais d'agrégat cross-partenaire ici (contrairement à `/internal/stats`)."""
+    affilies_by_status = _counts_by_status(db, Affilie, ctx.partner_id)
+    affilies_total = sum(affilies_by_status.values())
+
+    verifications_by_status = _counts_by_status(db, Verification, ctx.partner_id)
+    v_pending = verifications_by_status.get("PENDING", 0)
+    v_approved = verifications_by_status.get("APPROVED", 0)
+    v_rejected = verifications_by_status.get("REJECTED", 0)
+    v_decided = v_approved + v_rejected
+    approval_rate = (v_approved / v_decided) if v_decided else None
+
+    reservations_by_status = _counts_by_status(db, Reservation, ctx.partner_id)
+    reservations_active = reservations_by_status.get("RESERVED", 0)
+    reservations_released = reservations_by_status.get("RELEASED", 0)
+
+    grants_by_status = _counts_by_status(db, Grant, ctx.partner_id)
+    grants_total_amount = (
+        db.query(func.coalesce(func.sum(Grant.amount), 0))
+        .filter(Grant.partner_id == ctx.partner_id)
+        .scalar()
+    )
+
+    invoices_by_status = _counts_by_status(db, Invoice, ctx.partner_id)
+    invoices_outstanding = (
+        db.query(func.coalesce(func.sum(Invoice.amount), 0))
+        .filter(Invoice.partner_id == ctx.partner_id, Invoice.status.in_(["DRAFT", "SENT", "OVERDUE"]))
+        .scalar()
+    )
+    invoices_paid = (
+        db.query(func.coalesce(func.sum(Invoice.amount), 0))
+        .filter(Invoice.partner_id == ctx.partner_id, Invoice.status == "PAID")
+        .scalar()
+    )
+
+    return {
+        "affilies": {"total": affilies_total, "by_status": affilies_by_status},
+        "verifications": {
+            "pending": v_pending,
+            "approved": v_approved,
+            "rejected": v_rejected,
+            "approval_rate": approval_rate,
+        },
+        "reservations": {
+            "active": reservations_active,
+            "released": reservations_released,
+        },
+        "grants": {
+            "total_amount": float(grants_total_amount or 0),
+            "by_status": grants_by_status,
+        },
+        "invoices": {
+            "outstanding_amount": float(invoices_outstanding or 0),
+            "paid_amount": float(invoices_paid or 0),
+            "by_status": invoices_by_status,
+        },
+    }
 
 
 def _scoped(db, model, obj_id, ctx: PartnerCtx):
@@ -465,6 +537,27 @@ async def test_webhook(webhook_id: str, ctx: PartnerCtx = Depends(partner_ctx), 
     db.commit()
     db.refresh(delivery)
     return delivery.to_dict()
+
+
+@app.get("/internal/stats", include_in_schema=False)
+def internal_stats(tenant: str | None = None, x_internal_token: str = Header(default=""),
+                    db=Depends(get_db)) -> dict:
+    """Compteurs globaux (tous partenaires) — back-office overview (super-admin, via BFF).
+    Patron `coloc-listing/internal_stats` : `tenant` n'est accepté que pour uniformité de
+    contrat et ignoré s'il diffère de m3a-l3achrane (compteurs à zéro plutôt qu'un mélange
+    trompeur — le service est mono-tenant m3a-l3achrane)."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    if tenant and tenant != TENANT:
+        return {"total_partners": 0, "total_affilies": 0, "total_verifications": 0,
+                "total_grants": 0, "total_invoices": 0}
+    return {
+        "total_partners": db.query(Partner).count(),
+        "total_affilies": db.query(Affilie).count(),
+        "total_verifications": db.query(Verification).count(),
+        "total_grants": db.query(Grant).count(),
+        "total_invoices": db.query(Invoice).count(),
+    }
 
 
 app.include_router(router)
