@@ -849,7 +849,7 @@ export async function listReservations() {
 
 export async function createReservation(payload) {
   if (isMocked('partners')) {
-    const item = { id: _newMockId(), statut: 'active', ...payload }
+    const item = { id: _newMockId(), status: 'RESERVED', ...payload }
     _mockReservations = [..._mockReservations, item]
     return delay(item)
   }
@@ -859,7 +859,7 @@ export async function createReservation(payload) {
 
 export async function releaseReservation(id) {
   if (isMocked('partners')) {
-    _mockReservations = _mockReservations.map((r) => (r.id === id ? { ...r, statut: 'liberee' } : r))
+    _mockReservations = _mockReservations.map((r) => (r.id === id ? { ...r, status: 'RELEASED' } : r))
     return delay(_mockReservations.find((r) => r.id === id))
   }
   const { data } = await api.post(`/partner/reservations/${id}/release`)
@@ -876,7 +876,7 @@ export async function listGrants() {
 
 export async function createGrant(payload) {
   if (isMocked('partners')) {
-    const item = { id: _newMockId(), statut: 'enAttente', ...payload }
+    const item = { id: _newMockId(), status: 'PLANNED', ...payload }
     _mockGrants = [..._mockGrants, item]
     return delay(item)
   }
@@ -903,10 +903,7 @@ export async function listInvoices() {
 
 export async function createInvoice(payload) {
   if (isMocked('partners')) {
-    const item = {
-      id: _newMockId(), statut: 'emise', devise: 'Đh',
-      dateEmission: new Date().toISOString().slice(0, 10), ...payload,
-    }
+    const item = { id: _newMockId(), status: 'DRAFT', currency: 'MAD', ...payload }
     _mockInvoices = [..._mockInvoices, item]
     return delay(item)
   }

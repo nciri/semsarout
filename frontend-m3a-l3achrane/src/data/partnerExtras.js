@@ -18,18 +18,21 @@ export const verificationRequests = [
   { id: 5, etudiant: 'Salma Ouazzani', document: 'CIN', statut: 'validee', date: '2026-08-01' },
 ]
 
+// Champs et valeurs de statut alignés sur services/partner/app/schemas.py (RESERVATION_STATUSES)
+// pour que le mode mock reflète fidèlement le contrat de l'API réelle.
 export const reservedOffers = [
-  { id: 1, annonce: 'Studio meublé — Agdal', reserveePour: 'Université Mohammed V', periode: 'Sept. 2026 — Juin 2027', statut: 'active' },
-  { id: 2, annonce: 'Colocation 3 chambres — Maarif', reserveePour: 'ENSA Casablanca', periode: 'Sept. 2026 — Juin 2027', statut: 'active' },
-  { id: 3, annonce: 'Chambre chez l’habitant — Hay Riad', reserveePour: 'OCP Group', periode: 'Oct. 2026 — Mars 2027', statut: 'expiree' },
-  { id: 4, annonce: 'Appartement 2 pièces — Bourgogne', reserveePour: 'Université Hassan II', periode: 'Sept. 2026 — Juin 2027', statut: 'enAttente' },
+  { id: 1, listing_id: 'LST-1042', affilie_id: 1, label: 'Studio meublé — Agdal', start_date: '2026-09-01', end_date: '2027-06-30', status: 'RESERVED' },
+  { id: 2, listing_id: 'LST-2087', affilie_id: 2, label: 'Colocation 3 chambres — Maarif', start_date: '2026-09-01', end_date: '2027-06-30', status: 'RESERVED' },
+  { id: 3, listing_id: 'LST-3310', affilie_id: 3, label: 'Chambre chez l’habitant — Hay Riad', start_date: '2026-10-01', end_date: '2027-03-31', status: 'CONVERTED' },
+  { id: 4, listing_id: 'LST-4118', affilie_id: 4, label: 'Appartement 2 pièces — Bourgogne', start_date: '2026-09-01', end_date: '2027-06-30', status: 'RELEASED' },
 ]
 
+// Champs et valeurs de statut alignés sur GRANT_STATUSES (services/partner/app/schemas.py).
 export const grants = [
-  { id: 1, programme: 'Bourse logement — Rectorat Rabat', beneficiaire: 'Youssef Benali', montant: 1500, statut: 'versee' },
-  { id: 2, programme: 'Aide sociale ENSA', beneficiaire: 'Imane Mrabet', montant: 900, statut: 'enCours' },
-  { id: 3, programme: 'Fonds solidarité OCP', beneficiaire: 'Karim Idrissi', montant: 2000, statut: 'enAttente' },
-  { id: 4, programme: 'Bourse logement — Rectorat Rabat', beneficiaire: 'Nadia Chraibi', montant: 1500, statut: 'versee' },
+  { id: 1, program: 'Bourse logement — Rectorat Rabat', affilie_id: 1, amount: 1500, status: 'PAID' },
+  { id: 2, program: 'Aide sociale ENSA', affilie_id: 2, amount: 900, status: 'PLANNED' },
+  { id: 3, program: 'Fonds solidarité OCP', affilie_id: 3, amount: 2000, status: 'CANCELLED' },
+  { id: 4, program: 'Bourse logement — Rectorat Rabat', affilie_id: 1, amount: 1500, status: 'PAID' },
 ]
 
 export const reportingRows = [

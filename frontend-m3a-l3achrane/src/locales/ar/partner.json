@@ -116,18 +116,40 @@
   "reservedOffers": {
     "kicker": "سكن محجوز",
     "heading": "العروض المحجوزة",
+    "intro": "احجزوا سكنات لمنتسبيكم قبل أن يترشحوا لها.",
     "table": {
       "listing": "الإعلان",
+      "listingId": "مرجع الإعلان",
       "reservedFor": "محجوزة لصالح",
       "period": "الفترة",
-      "status": "الحالة"
+      "status": "الحالة",
+      "actions": "الإجراءات"
     },
     "status": {
-      "active": "نشطة",
-      "expiree": "منتهية",
-      "enAttente": "قيد الانتظار"
+      "RESERVED": "محجوزة",
+      "RELEASED": "محرّرة",
+      "CONVERTED": "محوّلة"
     },
-    "noResults": "لا توجد عروض محجوزة حاليًا."
+    "noResults": "لا توجد عروض محجوزة حاليًا.",
+    "loadError": "تعذّر تحميل العروض المحجوزة.",
+    "addForm": {
+      "title": "حجز سكن",
+      "listingLabel": "مرجع الإعلان",
+      "listingPlaceholder": "معرّف الإعلان",
+      "affiliateLabel": "المنتسب",
+      "affiliateNone": "بدون",
+      "labelLabel": "التسمية",
+      "labelPlaceholder": "مثال: استوديو مفروش — أكدال",
+      "startDateLabel": "تاريخ البداية",
+      "endDateLabel": "تاريخ النهاية",
+      "submit": "حجز",
+      "submitting": "جارٍ الحجز…",
+      "error": "خطأ أثناء حجز السكن."
+    },
+    "actions": {
+      "release": "تحرير",
+      "actionError": "خطأ أثناء تحديث الحالة."
+    }
   },
   "grants": {
     "kicker": "دعم السكن",
@@ -136,14 +158,34 @@
       "program": "البرنامج",
       "beneficiary": "المستفيد",
       "amount": "المبلغ",
-      "status": "الحالة"
+      "status": "الحالة",
+      "actions": "الإجراءات"
     },
     "status": {
-      "versee": "مصروفة",
-      "enCours": "قيد المعالجة",
-      "enAttente": "قيد الانتظار"
+      "PLANNED": "مخطّطة",
+      "PAID": "مصروفة",
+      "CANCELLED": "ملغاة"
     },
-    "noResults": "لا توجد إعانة مسجّلة."
+    "noResults": "لا توجد إعانة مسجّلة.",
+    "loadError": "تعذّر تحميل الإعانات.",
+    "addForm": {
+      "title": "إضافة إعانة",
+      "programLabel": "البرنامج",
+      "programPlaceholder": "مثال: منحة سكن — أكاديمية الرباط",
+      "affiliateLabel": "المنتسب",
+      "affiliateNone": "بدون",
+      "amountLabel": "المبلغ (درهم)",
+      "amountPlaceholder": "0",
+      "statusLabel": "الحالة",
+      "submit": "إضافة",
+      "submitting": "جارٍ الإضافة…",
+      "error": "خطأ أثناء إضافة الإعانة."
+    },
+    "actions": {
+      "markPaid": "تعليم كمصروفة",
+      "cancel": "إلغاء",
+      "actionError": "خطأ أثناء تحديث الحالة."
+    }
   },
   "reporting": {
     "kicker": "المتابعة",
@@ -170,15 +212,37 @@
       "number": "رقم الفاتورة",
       "period": "الفترة",
       "amount": "المبلغ",
-      "status": "الحالة"
+      "status": "الحالة",
+      "actions": "الإجراءات"
     },
     "status": {
-      "payee": "مدفوعة",
-      "enAttente": "قيد الانتظار"
+      "DRAFT": "مسودة",
+      "SENT": "مُرسلة",
+      "PAID": "مدفوعة",
+      "OVERDUE": "متأخرة"
     },
     "empty": {
       "title": "لا توجد فاتورة حاليًا",
       "hint": "ستظهر الفواتير هنا بمجرد إصدار أول فترة فوترة."
+    },
+    "loadError": "تعذّر تحميل الفواتير.",
+    "addForm": {
+      "title": "إضافة فاتورة",
+      "numberLabel": "رقم الفاتورة",
+      "numberPlaceholder": "مثال: FAC-2026-014",
+      "periodLabel": "الفترة (سنة-شهر)",
+      "periodPlaceholder": "2026-09",
+      "amountLabel": "المبلغ (درهم)",
+      "amountPlaceholder": "0",
+      "statusLabel": "الحالة",
+      "submit": "إضافة",
+      "submitting": "جارٍ الإضافة…",
+      "error": "خطأ أثناء إضافة الفاتورة."
+    },
+    "actions": {
+      "send": "إرسال",
+      "markPaid": "تعليم كمدفوعة",
+      "actionError": "خطأ أثناء تحديث الحالة."
     }
   },
   "apiWebhooks": {

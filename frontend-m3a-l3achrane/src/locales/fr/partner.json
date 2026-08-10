@@ -116,18 +116,40 @@
   "reservedOffers": {
     "kicker": "Logement réservé",
     "heading": "Offres réservées",
+    "intro": "Bloquez des logements pour vos affiliés avant qu'ils postulent.",
     "table": {
       "listing": "Annonce",
+      "listingId": "Référence annonce",
       "reservedFor": "Réservée pour",
       "period": "Période",
-      "status": "Statut"
+      "status": "Statut",
+      "actions": "Actions"
     },
     "status": {
-      "active": "Active",
-      "expiree": "Expirée",
-      "enAttente": "En attente"
+      "RESERVED": "Réservée",
+      "RELEASED": "Libérée",
+      "CONVERTED": "Convertie"
     },
-    "noResults": "Aucune offre réservée pour l'instant."
+    "noResults": "Aucune offre réservée pour l'instant.",
+    "loadError": "Impossible de charger les offres réservées.",
+    "addForm": {
+      "title": "Réserver un logement",
+      "listingLabel": "Référence annonce",
+      "listingPlaceholder": "Identifiant de l'annonce",
+      "affiliateLabel": "Affilié",
+      "affiliateNone": "Aucun",
+      "labelLabel": "Libellé",
+      "labelPlaceholder": "Ex. Studio meublé — Agdal",
+      "startDateLabel": "Début",
+      "endDateLabel": "Fin",
+      "submit": "Réserver",
+      "submitting": "Réservation…",
+      "error": "Erreur lors de la réservation du logement."
+    },
+    "actions": {
+      "release": "Libérer",
+      "actionError": "Erreur lors de la mise à jour du statut."
+    }
   },
   "grants": {
     "kicker": "Aide au logement",
@@ -136,14 +158,34 @@
       "program": "Programme",
       "beneficiary": "Bénéficiaire",
       "amount": "Montant",
-      "status": "Statut"
+      "status": "Statut",
+      "actions": "Actions"
     },
     "status": {
-      "versee": "Versée",
-      "enCours": "En cours",
-      "enAttente": "En attente"
+      "PLANNED": "Planifiée",
+      "PAID": "Versée",
+      "CANCELLED": "Annulée"
     },
-    "noResults": "Aucune subvention enregistrée."
+    "noResults": "Aucune subvention enregistrée.",
+    "loadError": "Impossible de charger les subventions.",
+    "addForm": {
+      "title": "Ajouter une subvention",
+      "programLabel": "Programme",
+      "programPlaceholder": "Ex. Bourse logement — Rectorat Rabat",
+      "affiliateLabel": "Affilié",
+      "affiliateNone": "Aucun",
+      "amountLabel": "Montant (Đh)",
+      "amountPlaceholder": "0",
+      "statusLabel": "Statut",
+      "submit": "Ajouter",
+      "submitting": "Ajout…",
+      "error": "Erreur lors de l'ajout de la subvention."
+    },
+    "actions": {
+      "markPaid": "Marquer versée",
+      "cancel": "Annuler",
+      "actionError": "Erreur lors de la mise à jour du statut."
+    }
   },
   "reporting": {
     "kicker": "Pilotage",
@@ -170,15 +212,37 @@
       "number": "N° facture",
       "period": "Période",
       "amount": "Montant",
-      "status": "Statut"
+      "status": "Statut",
+      "actions": "Actions"
     },
     "status": {
-      "payee": "Payée",
-      "enAttente": "En attente"
+      "DRAFT": "Brouillon",
+      "SENT": "Envoyée",
+      "PAID": "Payée",
+      "OVERDUE": "En retard"
     },
     "empty": {
       "title": "Aucune facture pour l'instant",
       "hint": "Les factures apparaîtront ici dès la première période facturée."
+    },
+    "loadError": "Impossible de charger les factures.",
+    "addForm": {
+      "title": "Ajouter une facture",
+      "numberLabel": "N° facture",
+      "numberPlaceholder": "Ex. FAC-2026-014",
+      "periodLabel": "Période (AAAA-MM)",
+      "periodPlaceholder": "2026-09",
+      "amountLabel": "Montant (Đh)",
+      "amountPlaceholder": "0",
+      "statusLabel": "Statut",
+      "submit": "Ajouter",
+      "submitting": "Ajout…",
+      "error": "Erreur lors de l'ajout de la facture."
+    },
+    "actions": {
+      "send": "Envoyer",
+      "markPaid": "Marquer payée",
+      "actionError": "Erreur lors de la mise à jour du statut."
     }
   },
   "apiWebhooks": {
