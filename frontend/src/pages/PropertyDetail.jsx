@@ -560,7 +560,7 @@ function PropertyDetail() {
               </div>
               {property.is_condo && (
                 <div className="flex justify-between py-2 border-b">
-                  <span className="text-gray-500">Charges de copropriété</span>
+                  <span className="text-gray-500">{t('common:condoFees.label')}</span>
                   <span className="font-medium">{property.condo_fees ? `${formatPrice(property.condo_fees)}/mois` : '—'}</span>
                 </div>
               )}
