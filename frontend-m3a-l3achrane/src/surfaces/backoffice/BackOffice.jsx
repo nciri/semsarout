@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Avatar, Badge, Button, Card, Icon, IconButton, Input, Tabs, VerifiedBadge } from '../../ds/index.js'
 import {
@@ -90,21 +91,21 @@ function Sidebar({ active, onSelect }) {
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         {BACKOFFICE_NAV.map((item) => {
           const on = item.id === active
-          return (
-            <button
-              key={item.id}
-              onClick={() => onSelect(item.id)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 11, width: '100%', textAlign: 'start',
-                padding: '10px 12px', border: 0, borderRadius: 9, cursor: 'pointer',
-                background: on ? 'var(--navy-600)' : 'transparent',
-                color: on ? '#fff' : 'var(--text-on-navy-muted)',
-                font: `var(--fw-${on ? 'bold' : 'semibold'}) var(--fs-sm) var(--font-display)`,
-                transition: 'background var(--dur-fast) var(--ease-standard)',
-              }}
-              onMouseEnter={(e) => { if (!on) e.currentTarget.style.background = 'rgba(255,255,255,.07)' }}
-              onMouseLeave={(e) => { if (!on) e.currentTarget.style.background = 'transparent' }}
-            >
+          const itemStyle = {
+            display: 'flex', alignItems: 'center', gap: 11, width: '100%', textAlign: 'start',
+            padding: '10px 12px', border: 0, borderRadius: 9, cursor: 'pointer',
+            background: on ? 'var(--navy-600)' : 'transparent',
+            color: on ? '#fff' : 'var(--text-on-navy-muted)',
+            font: `var(--fw-${on ? 'bold' : 'semibold'}) var(--fs-sm) var(--font-display)`,
+            transition: 'background var(--dur-fast) var(--ease-standard)',
+            textDecoration: 'none', boxSizing: 'border-box',
+          }
+          const hoverHandlers = {
+            onMouseEnter: (e) => { if (!on) e.currentTarget.style.background = 'rgba(255,255,255,.07)' },
+            onMouseLeave: (e) => { if (!on) e.currentTarget.style.background = 'transparent' },
+          }
+          const content = (
+            <>
               <Icon name={item.icon} size={16} strokeWidth={2.2} />
               <span style={{ flex: 1 }}>{t(`backoffice:sidebar.nav.${item.id}.label`, { defaultValue: item.label })}</span>
               {item.count != null && (
@@ -118,6 +119,19 @@ function Sidebar({ active, onSelect }) {
                   {item.count}
                 </span>
               )}
+            </>
+          )
+          // Écrans routés séparément (hors bascule interne `view`) : lien react-router.
+          if (item.route) {
+            return (
+              <Link key={item.id} to={item.route} style={itemStyle} {...hoverHandlers}>
+                {content}
+              </Link>
+            )
+          }
+          return (
+            <button key={item.id} onClick={() => onSelect(item.id)} style={itemStyle} {...hoverHandlers}>
+              {content}
             </button>
           )
         })}

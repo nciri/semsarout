@@ -37,6 +37,9 @@
         "label": "Paramètres",
         "title": "Paramètres",
         "subtitle": "Règles de matching, équipe et permissions"
+      },
+      "attribution": {
+        "label": "Attribution des chambres"
       }
     },
     "queueNote": {
