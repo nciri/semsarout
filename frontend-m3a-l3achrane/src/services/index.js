@@ -783,7 +783,7 @@ let _mockAffiliates = [...affiliates]
 
 export async function listAffilies() {
   if (isMocked('partners')) return delay(_mockAffiliates)
-  const { data } = await api.get('/partner/affiliates')
+  const { data } = await api.get('/partner/affilies')
   return data
 }
 
@@ -793,7 +793,7 @@ export async function createAffilie(payload) {
     _mockAffiliates = [..._mockAffiliates, item]
     return delay(item)
   }
-  const { data } = await api.post('/partner/affiliates', payload)
+  const { data } = await api.post('/partner/affilies', payload)
   return data
 }
 
@@ -802,7 +802,7 @@ export async function updateAffilie(id, payload) {
     _mockAffiliates = _mockAffiliates.map((a) => (a.id === id ? { ...a, ...payload } : a))
     return delay(_mockAffiliates.find((a) => a.id === id))
   }
-  const { data } = await api.patch(`/partner/affiliates/${id}`, payload)
+  const { data } = await api.patch(`/partner/affilies/${id}`, payload)
   return data
 }
 
@@ -816,7 +816,7 @@ export async function listVerifications() {
 
 export async function createVerification(payload) {
   if (isMocked('partners')) {
-    const item = { id: _newMockId(), statut: 'enAttente', date: new Date().toISOString().slice(0, 10), ...payload }
+    const item = { id: _newMockId(), status: 'PENDING', submitted_at: new Date().toISOString(), ...payload }
     _mockVerifications = [..._mockVerifications, item]
     return delay(item)
   }
@@ -826,7 +826,9 @@ export async function createVerification(payload) {
 
 export async function approveVerification(id) {
   if (isMocked('partners')) {
-    _mockVerifications = _mockVerifications.map((v) => (v.id === id ? { ...v, statut: 'validee' } : v))
+    _mockVerifications = _mockVerifications.map((v) => (
+      v.id === id ? { ...v, status: 'APPROVED', decided_at: new Date().toISOString() } : v
+    ))
     return delay(_mockVerifications.find((v) => v.id === id))
   }
   const { data } = await api.post(`/partner/verifications/${id}/approve`)
@@ -835,7 +837,9 @@ export async function approveVerification(id) {
 
 export async function rejectVerification(id) {
   if (isMocked('partners')) {
-    _mockVerifications = _mockVerifications.map((v) => (v.id === id ? { ...v, statut: 'rejetee' } : v))
+    _mockVerifications = _mockVerifications.map((v) => (
+      v.id === id ? { ...v, status: 'REJECTED', decided_at: new Date().toISOString() } : v
+    ))
     return delay(_mockVerifications.find((v) => v.id === id))
   }
   const { data } = await api.post(`/partner/verifications/${id}/reject`)
@@ -932,13 +936,14 @@ export async function listApiKeys() {
 }
 
 // Mock renvoie aussi la clé brute (`key`) pour permettre à l'UI de dérouler le flux
-// « affichée une seule fois » — jamais renvoyée par `listApiKeys` ensuite (seul `masked` l'est).
+// « affichée une seule fois » — jamais renvoyée par `listApiKeys` ensuite (seul `prefix` l'est,
+// cf. ApiKey.to_dict côté backend qui n'expose jamais key_hash).
 export async function createApiKey(payload) {
   if (isMocked('partners')) {
     const rawKey = `pk_demo_${Math.random().toString(36).slice(2, 10)}`
     const item = {
-      id: _newMockId(), masked: `${rawKey.slice(0, 8)}••••••••${rawKey.slice(-4)}`,
-      creee: new Date().toISOString().slice(0, 10), statut: 'active', ...payload,
+      id: _newMockId(), prefix: rawKey.slice(0, 8), last_used_at: null,
+      created_at: new Date().toISOString(), revoked_at: null, ...payload,
     }
     _mockApiKeys = [..._mockApiKeys, item]
     return delay({ ...item, key: rawKey })
@@ -949,7 +954,7 @@ export async function createApiKey(payload) {
 
 export async function revokeApiKey(id) {
   if (isMocked('partners')) {
-    _mockApiKeys = _mockApiKeys.map((k) => (k.id === id ? { ...k, statut: 'revoquee' } : k))
+    _mockApiKeys = _mockApiKeys.map((k) => (k.id === id ? { ...k, revoked_at: new Date().toISOString() } : k))
     return delay(_mockApiKeys.find((k) => k.id === id))
   }
   const { data } = await api.delete(`/partner/api-keys/${id}`)
@@ -964,11 +969,15 @@ export async function listWebhooks() {
   return data
 }
 
+// Mock renvoie aussi le secret brut (`secret`) pour permettre à l'UI de dérouler le flux
+// « affiché une seule fois », à l'image du backend (cf. POST /partner/webhooks).
 export async function createWebhook(payload) {
   if (isMocked('partners')) {
-    const item = { id: _newMockId(), statut: 'actif', evenements: [], ...payload }
+    const item = {
+      id: _newMockId(), active: true, events: [], created_at: new Date().toISOString(), ...payload,
+    }
     _mockWebhooks = [..._mockWebhooks, item]
-    return delay(item)
+    return delay({ ...item, secret: `whsec_demo_${Math.random().toString(36).slice(2, 10)}` })
   }
   const { data } = await api.post('/partner/webhooks', payload)
   return data
@@ -993,16 +1002,10 @@ export async function deleteWebhook(id) {
 }
 
 export async function testWebhook(id) {
-  if (isMocked('partners')) return delay({ id, statut: 'teste', dernierTest: new Date().toISOString() })
+  if (isMocked('partners')) return delay({ id, status: 'DELIVERED', last_attempt_at: new Date().toISOString() })
   const { data } = await api.post(`/partner/webhooks/${id}/test`)
   return data
 }
-
-// Statuts du jeu de données mock verificationRequests (français, hérité des maquettes Lot E)
-// -> vocabulaire backend (cf. services/partner/app/models.py) pour que la forme du mock
-// colle au contrat `/partner/reporting`, pas seulement ses valeurs. `affiliates` stocke déjà
-// les valeurs backend (status: ACTIVE/PENDING/INACTIVE), aucune traduction requise.
-const VERIFICATION_STATUS_MAP = { enAttente: 'PENDING', validee: 'APPROVED', rejetee: 'REJECTED' }
 
 function _mockCountsByStatus(rows, statusField, statusMap) {
   const out = {}
@@ -1016,7 +1019,7 @@ function _mockCountsByStatus(rows, statusField, statusMap) {
 export async function getPartnerReporting() {
   if (isMocked('partners')) {
     const affiliesByStatus = _mockCountsByStatus(affiliates, 'status', {})
-    const verificationsByStatus = _mockCountsByStatus(verificationRequests, 'statut', VERIFICATION_STATUS_MAP)
+    const verificationsByStatus = _mockCountsByStatus(verificationRequests, 'status', {})
     const vApproved = verificationsByStatus.APPROVED ?? 0
     const vRejected = verificationsByStatus.REJECTED ?? 0
     const vDecided = vApproved + vRejected

@@ -4,7 +4,11 @@ import { Badge, Button, Select } from '../../ds/index.js'
 import { approveVerification, createVerification, listAffilies, listVerifications, rejectVerification } from '../../services/index.js'
 import { PartnerCard, PartnerScreen, PartnerTable } from './PartnerSection.jsx'
 
-const STATUS_TONE = { enAttente: 'warning', validee: 'verified', rejetee: 'danger' }
+const STATUS_TONE = { PENDING: 'warning', APPROVED: 'verified', REJECTED: 'danger' }
+
+// Statut backend prioritaire (Verification.to_dict), fallback vers l'ancien champ mock
+// français — pour ne pas casser un jeu de données mock non encore migré.
+const rowStatus = (row) => row.status ?? row.statut
 
 // Valeurs techniques envoyées à l'API — ne JAMAIS traduire, seul le libellé affiché l'est.
 const DOC_TYPES = ['CIN', 'CARTE_ETUDIANT', 'ATTESTATION_EMPLOYEUR', 'AUTRE']
@@ -107,8 +111,8 @@ export default function Verifications() {
 
   const handleCreated = (created) => setVerifications((prev) => [...(prev ?? []), created])
 
-  const setRowStatus = (id, statut) => {
-    setVerifications((prev) => prev.map((v) => (v.id === id ? { ...v, statut } : v)))
+  const setRowStatus = (id, status) => {
+    setVerifications((prev) => prev.map((v) => (v.id === id ? { ...v, status } : v)))
   }
 
   const runAction = async (id, action) => {
@@ -116,7 +120,7 @@ export default function Verifications() {
     setActionError(false)
     try {
       const updated = await action(id)
-      setRowStatus(id, updated.statut)
+      setRowStatus(id, rowStatus(updated))
     } catch {
       setActionError(true)
     } finally {
@@ -135,20 +139,25 @@ export default function Verifications() {
     return row.doc_type ? t(`partner:verifications.docTypes.${row.doc_type}`) : '—'
   }
 
+  const dateLabel = (row) => {
+    const iso = row.submitted_at ?? row.created_at
+    return iso ? iso.slice(0, 10) : (row.date ?? '—')
+  }
+
   const columns = [
     { key: 'affiliate', label: t('partner:verifications.table.affiliate'), render: affiliateName },
     { key: 'document', label: t('partner:verifications.table.document'), render: documentLabel },
     {
       key: 'status',
       label: t('partner:verifications.table.status'),
-      render: (row) => <Badge tone={STATUS_TONE[row.statut]}>{t(`partner:verifications.status.${row.statut}`)}</Badge>,
+      render: (row) => <Badge tone={STATUS_TONE[rowStatus(row)]}>{t(`partner:verifications.status.${rowStatus(row)}`)}</Badge>,
     },
-    { key: 'date', label: t('partner:verifications.table.date'), render: (row) => row.date },
+    { key: 'date', label: t('partner:verifications.table.date'), render: dateLabel },
     {
       key: 'actions',
       label: t('partner:verifications.table.actions'),
       render: (row) => (
-        row.statut === 'enAttente' ? (
+        rowStatus(row) === 'PENDING' ? (
           <div style={{ display: 'flex', gap: 8 }}>
             <Button size="sm" onClick={() => runAction(row.id, approveVerification)} disabled={actingId === row.id}>
               {t('partner:verifications.actions.approve')}

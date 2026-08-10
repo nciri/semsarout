@@ -75,9 +75,9 @@
       "actions": "Actions"
     },
     "status": {
-      "enAttente": "En attente",
-      "validee": "Validée",
-      "rejetee": "Rejetée"
+      "PENDING": "En attente",
+      "APPROVED": "Validée",
+      "REJECTED": "Rejetée"
     },
     "noResults": "Aucune demande de vérification en cours.",
     "loadError": "Impossible de charger les vérifications.",

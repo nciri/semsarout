@@ -75,9 +75,9 @@
       "actions": "الإجراءات"
     },
     "status": {
-      "enAttente": "قيد الانتظار",
-      "validee": "مقبولة",
-      "rejetee": "مرفوضة"
+      "PENDING": "قيد الانتظار",
+      "APPROVED": "مقبولة",
+      "REJECTED": "مرفوضة"
     },
     "noResults": "لا توجد طلبات تحقق حاليًا.",
     "loadError": "تعذّر تحميل طلبات التحقق.",

@@ -13,12 +13,15 @@ export const affiliates = [
   { id: 5, full_name: 'École Centrale Casablanca', email: 'contact@centrale-casablanca.ma', external_ref: 'ECC-CASA', status: 'PENDING' },
 ]
 
+// Champs et valeurs alignés sur services/partner/app/models.py (Verification.to_dict) :
+// affilie_id référence `affiliates` ci-dessus, doc_type ∈ DOC_TYPES (Verifications.jsx),
+// status ∈ PENDING/APPROVED/REJECTED.
 export const verificationRequests = [
-  { id: 1, etudiant: 'Youssef Benali', document: "Carte d'étudiant", statut: 'enAttente', date: '2026-08-05' },
-  { id: 2, etudiant: 'Imane Mrabet', document: 'CIN', statut: 'enAttente', date: '2026-08-05' },
-  { id: 3, etudiant: 'Nadia Chraibi', document: "Attestation d'inscription", statut: 'validee', date: '2026-08-03' },
-  { id: 4, etudiant: 'Karim Idrissi', document: "Carte d'étudiant", statut: 'rejetee', date: '2026-08-02' },
-  { id: 5, etudiant: 'Salma Ouazzani', document: 'CIN', statut: 'validee', date: '2026-08-01' },
+  { id: 1, affilie_id: 1, doc_type: 'CARTE_ETUDIANT', status: 'PENDING', submitted_at: '2026-08-05T09:00:00+00:00' },
+  { id: 2, affilie_id: 2, doc_type: 'CIN', status: 'PENDING', submitted_at: '2026-08-05T10:30:00+00:00' },
+  { id: 3, affilie_id: 3, doc_type: 'ATTESTATION_EMPLOYEUR', status: 'APPROVED', submitted_at: '2026-08-03T08:15:00+00:00' },
+  { id: 4, affilie_id: 4, doc_type: 'CARTE_ETUDIANT', status: 'REJECTED', submitted_at: '2026-08-02T14:00:00+00:00' },
+  { id: 5, affilie_id: 5, doc_type: 'CIN', status: 'APPROVED', submitted_at: '2026-08-01T11:45:00+00:00' },
 ]
 
 // Champs et valeurs de statut alignés sur services/partner/app/schemas.py (RESERVATION_STATUSES)
@@ -41,13 +44,17 @@ export const grants = [
 // No demo invoices — this shows the empty state rather than fabricating billing history.
 export const invoices = []
 
+// Champs alignés sur services/partner/app/models.py (ApiKey.to_dict) — `prefix` seul est
+// exposé après création (jamais key_hash), `revoked_at` porte l'état actif/révoquée.
 export const apiKeys = [
-  { id: 1, label: 'Clé de production', masked: 'sk_live_••••••••4f2a', creee: '2026-03-12', statut: 'active' },
-  { id: 2, label: 'Clé de test', masked: 'sk_test_••••••••91c7', creee: '2026-01-20', statut: 'active' },
+  { id: 1, label: 'Clé de production', prefix: 'sk_live_a1b2', last_used_at: '2026-08-04T09:00:00+00:00', created_at: '2026-03-12T00:00:00+00:00', revoked_at: null },
+  { id: 2, label: 'Clé de test', prefix: 'sk_test_c3d4', last_used_at: null, created_at: '2026-01-20T00:00:00+00:00', revoked_at: null },
 ]
 
+// Champs alignés sur services/partner/app/models.py (Webhook.to_dict) — `events` utilise les
+// valeurs techniques WEBHOOK_EVENT_TYPES (ApiWebhooks.jsx), jamais traduites.
 export const webhooks = [
-  { id: 1, url: 'https://partenaire-univ.example.ma/hooks/verifications', evenements: ['verification.validee', 'verification.rejetee'], statut: 'actif' },
-  { id: 2, url: 'https://ocp-rh.example.ma/hooks/subventions', evenements: ['subvention.versee'], statut: 'actif' },
-  { id: 3, url: 'https://ensa-scolarite.example.ma/hooks/offres', evenements: ['offre.reservee', 'offre.expiree'], statut: 'inactif' },
+  { id: 1, url: 'https://partenaire-univ.example.ma/hooks/verifications', events: ['partner.verification_decided'], active: true, created_at: '2026-08-01T09:00:00+00:00' },
+  { id: 2, url: 'https://ocp-rh.example.ma/hooks/subventions', events: ['partner.grant_paid'], active: true, created_at: '2026-07-15T09:00:00+00:00' },
+  { id: 3, url: 'https://ensa-scolarite.example.ma/hooks/offres', events: ['partner.reservation_created', 'partner.reservation_released'], active: false, created_at: '2026-06-20T09:00:00+00:00' },
 ]

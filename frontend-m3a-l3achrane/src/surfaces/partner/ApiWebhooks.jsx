@@ -67,8 +67,8 @@ function SecretReveal({ title, warning, value, onDismiss }) {
 }
 
 const isKeyRevoked = (row) => Boolean(row.revoked_at) || row.statut === 'revoquee'
-const keyDisplay = (row) => row.masked ?? `${row.prefix}••••`
-const keyCreatedDisplay = (row) => row.creee ?? (row.created_at ? row.created_at.slice(0, 10) : '—')
+const keyDisplay = (row) => (row.prefix ? `${row.prefix}••••` : row.masked ?? '—')
+const keyCreatedDisplay = (row) => (row.created_at ? row.created_at.slice(0, 10) : (row.creee ?? '—'))
 
 function ApiKeysSection({ apiKeys, loadError, onCreated, onRevoked }) {
   const { t } = useTranslation(['partner', 'common'])
