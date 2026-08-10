@@ -326,6 +326,8 @@ export default function SearchResults() {
                     title={it.titre}
                     city={`${it.quartier}, ${it.ville}`}
                     price={it.prixMad}
+                    isCondo={it.isCondo}
+                    condoFees={it.condoFees}
                     amenities={it.chips?.map((label) => ({ icon: 'check', label }))}
                     proximity={it.proximite?.[0]}
                     onClick={() => navigate(`/annonce/${it.id}`)}

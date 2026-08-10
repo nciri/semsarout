@@ -106,6 +106,8 @@ export default function Dashboard() {
               title={it.titre}
               city={`${it.quartier}, ${it.ville}`}
               price={it.prixMad}
+              isCondo={it.isCondo}
+              condoFees={it.condoFees}
               amenities={it.chips?.map((label) => ({ icon: 'check', label }))}
               onClick={() => navigate(`/annonce/${it.id}`)}
             />
