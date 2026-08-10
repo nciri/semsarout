@@ -26,9 +26,9 @@
         "Agadir"
       ],
       "budgets": [
-        "1 500 MAD",
-        "2 500 MAD",
-        "4 000 MAD"
+        "1 500 Đh",
+        "2 500 Đh",
+        "4 000 Đh"
       ]
     },
     "hero": {
@@ -134,8 +134,8 @@
       "Masculin"
     ],
     "budgetOptions": [
-      "2 500 MAD",
-      "4 000 MAD"
+      "2 500 Đh",
+      "4 000 Đh"
     ],
     "cta": "Rechercher",
     "title": "Colocations disponibles",
@@ -160,7 +160,7 @@
     "filtersTitle": "Filtres",
     "resetFilters": "Réinitialiser",
     "monthlyBudgetLabel": "Budget mensuel",
-    "budgetUnitNote": "MAD / mois, charges comprises",
+    "budgetUnitNote": "Đh / mois, charges comprises",
     "housingTypeLabel": "Type de logement",
     "typeFilters": [
       {
