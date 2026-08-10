@@ -16,6 +16,8 @@ export const MIGRATED_FILES = [
   'src/surfaces/web/SearchResults.jsx',
   'src/surfaces/web/ListingDetail.jsx',
   'src/surfaces/web/Connexion.jsx',
+  'src/surfaces/web/MotDePasseOublie.jsx',
+  'src/surfaces/web/ReinitialiserMotDePasse.jsx',
   'src/ds/nav/TopBar.jsx',
   'src/ds/nav/SidebarNav.jsx',
   'src/surfaces/app/AppLayout.jsx',

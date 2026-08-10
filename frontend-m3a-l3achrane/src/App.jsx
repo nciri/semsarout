@@ -7,6 +7,8 @@ const Landing = lazy(() => import('./surfaces/web/Landing.jsx'))
 const SearchResults = lazy(() => import('./surfaces/web/SearchResults.jsx'))
 const ListingDetail = lazy(() => import('./surfaces/web/ListingDetail.jsx'))
 const Connexion = lazy(() => import('./surfaces/web/Connexion.jsx'))
+const MotDePasseOublie = lazy(() => import('./surfaces/web/MotDePasseOublie.jsx'))
+const ReinitialiserMotDePasse = lazy(() => import('./surfaces/web/ReinitialiserMotDePasse.jsx'))
 const Inscription = lazy(() => import('./surfaces/web/Inscription.jsx'))
 const Avis = lazy(() => import('./surfaces/web/Avis.jsx'))
 const AppLayout = lazy(() => import('./surfaces/app/AppLayout.jsx'))
@@ -36,6 +38,8 @@ export default function App() {
             <Route path="/recherche" element={<SearchResults />} />
             <Route path="/annonce/:id" element={<ListingDetail />} />
             <Route path="/connexion" element={<Connexion />} />
+            <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
+            <Route path="/reinitialiser-mot-de-passe" element={<ReinitialiserMotDePasse />} />
             <Route path="/inscription" element={<Inscription />} />
             <Route path="/avis" element={<Avis />} />
           </Route>
