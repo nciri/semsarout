@@ -4,6 +4,8 @@ import StepBien from './publier/StepBien.jsx'
 import StepLogement from './publier/StepLogement.jsx'
 import StepPrix from './publier/StepPrix.jsx'
 import StepDispoPhotos from './publier/StepDispoPhotos.jsx'
+import { publish } from './publier/orchestrate.mjs'
+import { createListing, uploadPhoto, addListingMedia, submitListing } from '../../services/index.js'
 
 // Validation bloquante par étape — utilisée par le wizard avant d'autoriser « Suivant ».
 // eslint-disable-next-line react-refresh/only-export-components
@@ -37,8 +39,24 @@ export default function PublierAnnonce() {
   const [step, setStep] = useState(0)
   const [form, setForm] = useState(initialForm)
   const [errors, setErrors] = useState({})
+  const [publishing, setPublishing] = useState(false)
+  const [publishError, setPublishError] = useState('')
+  const [published, setPublished] = useState(false)
 
   const update = (patch) => setForm((f) => ({ ...f, ...patch }))
+
+  const handlePublish = async () => {
+    setPublishing(true)
+    setPublishError('')
+    try {
+      await publish(form, { createListing, uploadPhoto, addListingMedia, submitListing })
+      setPublished(true)
+    } catch {
+      setPublishError("La publication a échoué. L'annonce reste en brouillon, veuillez réessayer.")
+    } finally {
+      setPublishing(false)
+    }
+  }
 
   const goNext = () => {
     const errs = validateStep(step, form)
@@ -55,6 +73,21 @@ export default function PublierAnnonce() {
 
   const StepComponent = STEP_COMPONENTS[step]
   const isLast = step === STEP_COMPONENTS.length - 1
+
+  if (published) {
+    return (
+      <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)' }}>
+        <div style={{ maxWidth: 720, margin: '0 auto', padding: '64px 28px', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center', textAlign: 'center' }}>
+          <h1 style={{ margin: 0, font: 'var(--fw-extrabold) var(--fs-h1) var(--font-display)', color: 'var(--text-strong)' }}>
+            Annonce envoyée en modération
+          </h1>
+          <p style={{ margin: 0, font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-body)' }}>
+            Votre annonce a bien été transmise et sera publiée après vérification par notre équipe.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)' }}>
@@ -84,11 +117,18 @@ export default function PublierAnnonce() {
 
         <StepComponent form={form} errors={errors} update={update} />
 
+        {isLast && publishError && (
+          <p style={{ margin: 0, font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)', color: 'var(--red-600)' }}>
+            {publishError}
+          </p>
+        )}
+
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-          <Button variant="secondary" onClick={goBack} disabled={step === 0}>Retour</Button>
+          <Button variant="secondary" onClick={goBack} disabled={step === 0 || publishing}>Retour</Button>
           {isLast ? (
-            // Orchestration réelle (create → upload → media → submit) branchée en tâche 3.4.
-            <Button disabled title="Publication disponible prochainement">Publier</Button>
+            <Button onClick={handlePublish} disabled={publishing}>
+              {publishing ? 'Publication…' : 'Publier'}
+            </Button>
           ) : (
             <Button onClick={goNext}>Suivant</Button>
           )}
