@@ -8,7 +8,18 @@ en clair, jamais sérialisée).
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import BigInteger, Column, Date, DateTime, ForeignKey, Numeric, String
+from sqlalchemy import (
+    JSON,
+    BigInteger,
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+)
 
 from .db import Base
 
@@ -204,4 +215,54 @@ class ApiKey(Base):
             "last_used_at": self.last_used_at.isoformat() if self.last_used_at else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "revoked_at": self.revoked_at.isoformat() if self.revoked_at else None,
+        }
+
+
+class Webhook(Base):
+    __tablename__ = "webhooks"
+
+    id = Column(String(32), primary_key=True, default=_uuid)
+    partner_id = Column(String(32), ForeignKey("partners.id"), nullable=False, index=True)
+    url = Column(String(500), nullable=False)
+    events = Column(JSON, default=list, nullable=False)
+    secret = Column(String(64), nullable=False)
+    active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), default=_now, nullable=False)
+
+    def to_dict(self) -> dict:
+        # secret n'est JAMAIS re-sérialisé après la création.
+        return {
+            "id": self.id,
+            "partner_id": self.partner_id,
+            "url": self.url,
+            "events": self.events,
+            "active": self.active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class WebhookDelivery(Base):
+    __tablename__ = "webhook_deliveries"
+
+    id = Column(String(32), primary_key=True, default=_uuid)
+    webhook_id = Column(String(32), ForeignKey("webhooks.id"), nullable=False, index=True)
+    event_type = Column(String(80), nullable=False)
+    payload = Column(JSON, default=dict, nullable=False)
+    status = Column(String(20), nullable=False, default="PENDING")
+    attempts = Column(Integer, nullable=False, default=0)
+    last_attempt_at = Column(DateTime(timezone=True))
+    response_code = Column(Integer)
+    created_at = Column(DateTime(timezone=True), default=_now, nullable=False)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "webhook_id": self.webhook_id,
+            "event_type": self.event_type,
+            "payload": self.payload,
+            "status": self.status,
+            "attempts": self.attempts,
+            "last_attempt_at": self.last_attempt_at.isoformat() if self.last_attempt_at else None,
+            "response_code": self.response_code,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }

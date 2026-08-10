@@ -59,3 +59,25 @@ class InvoiceUpdateIn(BaseModel):
 
 class ApiKeyCreateIn(BaseModel):
     label: str = Field(min_length=1, max_length=120)
+
+
+WEBHOOK_EVENTS = {
+    "partner.affilie_created",
+    "partner.verification_decided",
+    "partner.reservation_created",
+    "partner.reservation_released",
+    "partner.grant_paid",
+    "partner.invoice_sent",
+    "partner.test",
+}
+
+
+class WebhookCreateIn(BaseModel):
+    url: str = Field(min_length=1, max_length=500)
+    events: list[str] = Field(min_length=1)
+
+
+class WebhookUpdateIn(BaseModel):
+    url: str | None = Field(default=None, min_length=1, max_length=500)
+    events: list[str] | None = None
+    active: bool | None = None

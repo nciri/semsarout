@@ -7,6 +7,7 @@ m3a-l3achrane (défense en profondeur — le BFF route déjà par host/tenant).
 import secrets
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -18,12 +19,25 @@ from semsar_events import enqueue
 from . import events
 from .auth import PartnerCtx, PartnerForbidden, _uid, hash_key, partner_ctx
 from .db import get_db, init_db
-from .models import Affilie, ApiKey, Grant, Invoice, Partner, Reservation, Verification, _now
+from .delivery import deliver
+from .models import (
+    Affilie,
+    ApiKey,
+    Grant,
+    Invoice,
+    Partner,
+    Reservation,
+    Verification,
+    Webhook,
+    WebhookDelivery,
+    _now,
+)
 from .schemas import (
     AFFILIE_STATUSES,
     GRANT_STATUSES,
     INVOICE_STATUSES,
     VERIFICATION_DOC_TYPES,
+    WEBHOOK_EVENTS,
     AffilieCreateIn,
     AffilieUpdateIn,
     ApiKeyCreateIn,
@@ -33,6 +47,8 @@ from .schemas import (
     InvoiceUpdateIn,
     ReservationCreateIn,
     VerificationCreateIn,
+    WebhookCreateIn,
+    WebhookUpdateIn,
 )
 
 settings = get_settings()
@@ -369,6 +385,86 @@ async def revoke_api_key(key_id: str, ctx: PartnerCtx = Depends(partner_ctx), db
     db.commit()
     db.refresh(key)
     return key.to_dict()
+
+
+def _http_post(url: str, data: bytes, headers: dict) -> int:
+    """`post` injectable de `deliver` en prod — remplacé en test."""
+    try:
+        resp = httpx.post(url, content=data, headers=headers, timeout=5.0)
+        return resp.status_code
+    except httpx.HTTPError:
+        return 599  # échec réseau (pas de réponse du destinataire)
+
+
+@router.get("/partner/webhooks")
+async def list_webhooks(ctx: PartnerCtx = Depends(partner_ctx), db=Depends(get_db)) -> list:
+    webhooks = (
+        db.query(Webhook)
+        .filter(Webhook.partner_id == ctx.partner_id)
+        .order_by(Webhook.created_at.desc())
+        .all()
+    )
+    return [w.to_dict() for w in webhooks]
+
+
+@router.post("/partner/webhooks", status_code=201)
+async def create_webhook(body: WebhookCreateIn, ctx: PartnerCtx = Depends(partner_ctx),
+                          db=Depends(get_db)) -> dict:
+    if not set(body.events) <= WEBHOOK_EVENTS:
+        return _err("Événement(s) invalide(s)", 422)
+    secret = secrets.token_urlsafe(32)
+    webhook = Webhook(partner_id=ctx.partner_id, url=body.url, events=body.events, secret=secret)
+    db.add(webhook)
+    db.commit()
+    db.refresh(webhook)
+    # Le secret n'est renvoyé QUE dans cette réponse de création — jamais rejoué ni relogué.
+    return {**webhook.to_dict(), "secret": secret}
+
+
+@router.patch("/partner/webhooks/{webhook_id}")
+async def update_webhook(webhook_id: str, body: WebhookUpdateIn,
+                          ctx: PartnerCtx = Depends(partner_ctx), db=Depends(get_db)):
+    webhook = _scoped(db, Webhook, webhook_id, ctx)
+    if webhook is None:
+        return _err("Webhook introuvable", 404)
+    if body.events is not None:
+        if not set(body.events) <= WEBHOOK_EVENTS:
+            return _err("Événement(s) invalide(s)", 422)
+        webhook.events = body.events
+    if body.url is not None:
+        webhook.url = body.url
+    if body.active is not None:
+        webhook.active = body.active
+    db.commit()
+    db.refresh(webhook)
+    return webhook.to_dict()
+
+
+@router.delete("/partner/webhooks/{webhook_id}")
+async def delete_webhook(webhook_id: str, ctx: PartnerCtx = Depends(partner_ctx), db=Depends(get_db)):
+    webhook = _scoped(db, Webhook, webhook_id, ctx)
+    if webhook is None:
+        return _err("Webhook introuvable", 404)
+    db.delete(webhook)
+    db.commit()
+    return {"ok": True}
+
+
+@router.post("/partner/webhooks/{webhook_id}/test")
+async def test_webhook(webhook_id: str, ctx: PartnerCtx = Depends(partner_ctx), db=Depends(get_db)):
+    webhook = _scoped(db, Webhook, webhook_id, ctx)
+    if webhook is None:
+        return _err("Webhook introuvable", 404)
+    payload = {"webhook_id": webhook.id, "partner_id": ctx.partner_id}
+    result = deliver({"url": webhook.url, "secret": webhook.secret}, events.WEBHOOK_TEST, payload,
+                      post=_http_post, max_attempts=3)
+    delivery = WebhookDelivery(webhook_id=webhook.id, event_type=events.WEBHOOK_TEST, payload=payload,
+                                status=result.status, attempts=result.attempts,
+                                last_attempt_at=_now(), response_code=result.response_code)
+    db.add(delivery)
+    db.commit()
+    db.refresh(delivery)
+    return delivery.to_dict()
 
 
 app.include_router(router)
