@@ -35,12 +35,6 @@ export const grants = [
   { id: 4, program: 'Bourse logement — Rectorat Rabat', affilie_id: 1, amount: 1500, status: 'PAID' },
 ]
 
-export const reportingRows = [
-  { periode: 'Mai 2026', verifications: 84, subventionsVersees: 12, montantTotal: 18500 },
-  { periode: 'Juin 2026', verifications: 112, subventionsVersees: 18, montantTotal: 27200 },
-  { periode: 'Juillet 2026', verifications: 96, subventionsVersees: 15, montantTotal: 22600 },
-]
-
 // No demo invoices — this shows the empty state rather than fabricating billing history.
 export const invoices = []
 

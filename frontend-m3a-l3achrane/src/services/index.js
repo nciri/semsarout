@@ -1,7 +1,7 @@
 import api from './api.js'
 import { listings, currentProfile, partners, threads } from '../data/index.js'
 import {
-  affiliates, verificationRequests, reservedOffers, grants, reportingRows, invoices, apiKeys, webhooks,
+  affiliates, verificationRequests, reservedOffers, grants, invoices, apiKeys, webhooks,
 } from '../data/partnerExtras.js'
 import { lifestyleLabel, mapListingDetail, mapListingHit, mapProfile, mapSearchFilters } from './mappers.js'
 
@@ -995,8 +995,61 @@ export async function testWebhook(id) {
   return data
 }
 
+// Statuts des jeux de données mock (français, hérités des maquettes Lot E) -> vocabulaire
+// backend (AFFILIE_STATUSES / VERIFICATION statuses réels, cf. services/partner/app/models.py)
+// pour que la forme du mock colle au contrat `/partner/reporting`, pas seulement ses valeurs.
+const AFFILIE_STATUS_MAP = { actif: 'ACTIVE', suspendu: 'INACTIVE', enAttente: 'PENDING' }
+const VERIFICATION_STATUS_MAP = { enAttente: 'PENDING', validee: 'APPROVED', rejetee: 'REJECTED' }
+
+function _mockCountsByStatus(rows, statusField, statusMap) {
+  const out = {}
+  for (const row of rows) {
+    const status = statusMap[row[statusField]] ?? row[statusField]
+    out[status] = (out[status] ?? 0) + 1
+  }
+  return out
+}
+
 export async function getPartnerReporting() {
-  if (isMocked('partners')) return delay(reportingRows)
+  if (isMocked('partners')) {
+    const affiliesByStatus = _mockCountsByStatus(affiliates, 'statut', AFFILIE_STATUS_MAP)
+    const verificationsByStatus = _mockCountsByStatus(verificationRequests, 'statut', VERIFICATION_STATUS_MAP)
+    const vApproved = verificationsByStatus.APPROVED ?? 0
+    const vRejected = verificationsByStatus.REJECTED ?? 0
+    const vDecided = vApproved + vRejected
+
+    const reservationsByStatus = _mockCountsByStatus(reservedOffers, 'status', {})
+    const grantsByStatus = _mockCountsByStatus(grants, 'status', {})
+    const grantsTotalAmount = grants.reduce((sum, g) => sum + g.amount, 0)
+
+    const invoicesByStatus = _mockCountsByStatus(invoices, 'status', {})
+    const invoicesOutstanding = invoices
+      .filter((i) => ['DRAFT', 'SENT', 'OVERDUE'].includes(i.status))
+      .reduce((sum, i) => sum + i.amount, 0)
+    const invoicesPaid = invoices
+      .filter((i) => i.status === 'PAID')
+      .reduce((sum, i) => sum + i.amount, 0)
+
+    return delay({
+      affilies: { total: affiliates.length, by_status: affiliesByStatus },
+      verifications: {
+        pending: verificationsByStatus.PENDING ?? 0,
+        approved: vApproved,
+        rejected: vRejected,
+        approval_rate: vDecided ? vApproved / vDecided : null,
+      },
+      reservations: {
+        active: reservationsByStatus.RESERVED ?? 0,
+        released: reservationsByStatus.RELEASED ?? 0,
+      },
+      grants: { total_amount: grantsTotalAmount, by_status: grantsByStatus },
+      invoices: {
+        outstanding_amount: invoicesOutstanding,
+        paid_amount: invoicesPaid,
+        by_status: invoicesByStatus,
+      },
+    })
+  }
   const { data } = await api.get('/partner/reporting')
   return data
 }

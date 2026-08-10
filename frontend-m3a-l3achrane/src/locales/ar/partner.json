@@ -2,47 +2,37 @@
   "meta": {
     "title": "بوابة الشركاء"
   },
+  "accessRequired": {
+    "title": "الوصول كشريك مطلوب",
+    "description": "حسابك غير مرتبط بأي شريك. تواصل مع مؤسستك أو فريق SemsarOut للحصول على صلاحية الوصول."
+  },
   "portal": {
     "title": "لوحة التحكم",
     "subtitle": "التحققات وحصص شركائكم",
     "kicker": "الحياة الطلابية",
     "heading": "لوحة تحكم السكن",
+    "headingWithName": "لوحة التحكم — {{name}}",
     "export": "تصدير",
     "import": "استيراد سجل",
-    "metrics": {
-      "partners": "الشركاء",
-      "verified": "المنتسبون الموثّقون",
-      "totalQuota": "إجمالي الحصة",
-      "fillRate": "معدل الإشغال",
-      "fillRateSub": "موثّقون / الحصة"
-    },
-    "quotaStatus": {
-      "reached": "الحصة مستوفاة",
-      "onTrack": "في مسار جيد",
-      "underQuota": "دون الحصة"
-    },
+    "loadError": "تعذّر تحميل لوحة التحكم.",
     "privacyBanner": "تقارير مجهولة الهوية · التجميعات مخفية تحت عتبة إخفاء الهوية الجماعي (k ≥ 5). لا يتم الكشف عن أي عنوان أو هوية لأحد السكان.",
     "breakdown": {
-      "title": "التوزيع حسب نوع الشريك"
+      "title": "توزيع المنتسبين حسب الحالة"
     },
-    "attention": {
-      "title": "شركاء يستحقون المتابعة"
+    "billingSummary": {
+      "title": "الفوترة",
+      "outstanding": "فواتير قيد الأداء",
+      "paid": "فواتير مدفوعة"
     },
     "lastImport": {
       "title": "آخر استيراد",
       "empty": "لم يتم استيراد أي سجل حتى الآن",
       "hint": "استوردوا ملف CSV للمنتسبين لبدء عمليات التحقق."
     },
-    "tableTitle": "جميع الشركاء",
-    "searchPlaceholder": "البحث عن شريك",
+    "tableTitle": "منتسبوكم",
+    "searchPlaceholder": "البحث عن منتسب",
     "table": {
-      "partner": "الشريك",
-      "type": "النوع",
-      "verified": "موثّقون",
-      "quota": "الحصة",
-      "status": "الحالة",
-      "verifiedCount": "{{count}} موثّق",
-      "noResults": "لا يوجد شريك مطابق لهذا البحث."
+      "noResults": "لا يوجد منتسب مطابق لهذا البحث."
     }
   },
   "affiliates": {
@@ -190,19 +180,32 @@
   "reporting": {
     "kicker": "المتابعة",
     "heading": "التقارير",
+    "loadError": "تعذّر تحميل التقارير.",
     "kpis": {
-      "totalVerifications": "التحققات (آخر 3 أشهر)",
-      "totalGrantsPaid": "الإعانات المصروفة",
-      "totalAmount": "إجمالي المبلغ المصروف"
+      "totalAffilies": "المنتسبون",
+      "activeAffilies": "المنتسبون النشطون",
+      "grantsTotalAmount": "الإعانات المصروفة (الإجمالي)",
+      "invoicesOutstanding": "فواتير قيد الأداء"
     },
-    "tableTitle": "ملخص شهري",
-    "table": {
-      "period": "الفترة",
-      "verifications": "التحققات",
-      "grantsPaid": "الإعانات المصروفة",
-      "totalAmount": "إجمالي المبلغ"
+    "affilieStatus": {
+      "ACTIVE": "نشطون",
+      "PENDING": "قيد الانتظار",
+      "INACTIVE": "غير نشطين"
     },
-    "noResults": "لا توجد بيانات تقارير متاحة."
+    "funnel": {
+      "title": "قمع التحقق",
+      "pending": "قيد الانتظار",
+      "approved": "موافق عليها",
+      "rejected": "مرفوضة",
+      "approvalRate": "معدل الموافقة",
+      "noDecisions": "لا يوجد قرار حتى الآن"
+    },
+    "chart": {
+      "title": "الحجوزات النشطة مقابل المحرّرة",
+      "ariaLabel": "رسم بياني بالأعمدة يقارن عدد الحجوزات النشطة بعدد الحجوزات المحرّرة",
+      "active": "نشطة",
+      "released": "محرّرة"
+    }
   },
   "billing": {
     "kicker": "الفوترة",
