@@ -2,7 +2,7 @@ const NB = '\xa0'
 
 export function formatMad(amount, { suffix = true } = {}) {
   const grouped = String(Math.round(amount)).replace(/\B(?=(\d{3})+(?!\d))/g, NB)
-  const base = `${grouped}${NB}MAD`
+  const base = `${grouped}${NB}Đh`
   return suffix ? `${base}${NB}/mois` : base
 }
 

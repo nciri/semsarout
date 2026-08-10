@@ -5,13 +5,13 @@ import { formatMad, frenchPunct, matchTone } from './format.js'
 const NB = '\xa0'
 
 test('formatMad spaces thousands and appends /mois with nbsp', () => {
-  assert.equal(formatMad(2300), `2${NB}300${NB}MAD${NB}/mois`)
-  assert.equal(formatMad(950), `950${NB}MAD${NB}/mois`)
-  assert.equal(formatMad(12000), `12${NB}000${NB}MAD${NB}/mois`)
+  assert.equal(formatMad(2300), `2${NB}300${NB}Đh${NB}/mois`)
+  assert.equal(formatMad(950), `950${NB}Đh${NB}/mois`)
+  assert.equal(formatMad(12000), `12${NB}000${NB}Đh${NB}/mois`)
 })
 
 test('formatMad without suffix drops /mois', () => {
-  assert.equal(formatMad(2300, { suffix: false }), `2${NB}300${NB}MAD`)
+  assert.equal(formatMad(2300, { suffix: false }), `2${NB}300${NB}Đh`)
 })
 
 test('frenchPunct inserts nbsp before : ; ! ?', () => {
