@@ -4,6 +4,9 @@ import { Badge, Button, Card, Icon, Input } from '../../ds/index.js'
 
 const FAQ_IDS = ['publierAnnonce', 'preselection', 'paiementCaution', 'securiteSignalement']
 
+// Règle canonique des formulaires : champ requis ⇒ étoile rouge après le label.
+const requiredStar = <span style={{ color: 'var(--red-500)' }} aria-hidden> *</span>
+
 export default function Aide() {
   const { t } = useTranslation(['app', 'common'])
   const [openFaq, setOpenFaq] = useState(FAQ_IDS[0])
@@ -81,7 +84,7 @@ export default function Aide() {
               ) : (
                 <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <Input
-                    label={t('app:aide.subjectLabel')}
+                    label={<>{t('app:aide.subjectLabel')}{requiredStar}</>}
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                     placeholder={t('app:aide.subjectPlaceholder')}
@@ -96,7 +99,7 @@ export default function Aide() {
                   />
                   <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <span style={{ font: 'var(--fw-semibold) 13px var(--font-body)', color: 'var(--text-strong)' }}>
-                      {t('app:aide.messageLabel')}
+                      {t('app:aide.messageLabel')}{requiredStar}
                     </span>
                     <textarea
                       rows={4}
