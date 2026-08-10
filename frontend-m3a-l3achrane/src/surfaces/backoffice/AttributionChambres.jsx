@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Avatar, Badge, Button, Chip, Icon, MatchScore, SidebarNav } from '../../ds/index.js'
-import { BACKOFFICE_NAV_ITEMS, PROPERTIES } from '../../data/roomAssignmentBoard.js'
+import { Avatar, Badge, Button, Chip, Icon, MatchScore } from '../../ds/index.js'
+import { PROPERTIES } from '../../data/roomAssignmentBoard.js'
+import { BackofficeSidebar } from './BackofficeSidebar.jsx'
 
 const SORT_COMPATIBILITY = 'compatibility'
 const SORT_PROXIMITY = 'proximity'
@@ -35,6 +37,7 @@ function compatibilityReason(t, score, candidate) {
  */
 export default function AttributionChambres() {
   const { t } = useTranslation(['backoffice'])
+  const navigate = useNavigate()
   const [propertyIndex, setPropertyIndex] = useState(0)
   const [selectedCandidateId, setSelectedCandidateId] = useState(null)
   const [sort, setSort] = useState(SORT_COMPATIBILITY)
@@ -45,14 +48,6 @@ export default function AttributionChambres() {
   const candidateById = useMemo(
     () => new Map(property.candidates.map((c) => [c.id, c])),
     [property]
-  )
-
-  const navItems = useMemo(
-    () => BACKOFFICE_NAV_ITEMS.map((item) => ({
-      ...item,
-      label: t(`backoffice:roomAssignment.sidebarNav.${item.value}`, { defaultValue: item.label }),
-    })),
-    [t]
   )
 
   const sorts = SORT_VALUES.map((value) => ({
@@ -208,10 +203,10 @@ export default function AttributionChambres() {
   ]
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', background: 'var(--bg-page)' }}>
-      <SidebarNav items={navItems} active="assignments" />
+    <div style={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: '248px minmax(0, 1fr)', background: 'var(--bg-page)' }}>
+      <BackofficeSidebar active="attribution" onSelect={(id) => navigate('/back-office', { state: { view: id } })} />
 
-      <main style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <main style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         <header
           style={{
             background: 'var(--surface-card)',

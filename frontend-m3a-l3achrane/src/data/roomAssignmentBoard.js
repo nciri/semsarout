@@ -62,13 +62,3 @@ export const PROPERTIES = [
     initialAssignment: {},
   },
 ]
-
-export const BACKOFFICE_NAV_ITEMS = [
-  { icon: 'layout-dashboard', label: 'Tableau de bord', value: 'dashboard' },
-  { icon: 'badge-check', label: 'Vérifications', value: 'verifications' },
-  { icon: 'layout-grid', label: 'Annonces', value: 'listings' },
-  { icon: 'grip', label: 'Affectations', value: 'assignments' },
-  { icon: 'circle-user-round', label: 'Utilisateurs', value: 'users' },
-  { icon: 'file-signature', label: 'Contrats', value: 'contracts' },
-  { icon: 'flag', label: 'Signalements', value: 'reports' },
-]
