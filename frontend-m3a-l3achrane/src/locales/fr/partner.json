@@ -44,5 +44,131 @@
       "verifiedCount": "{{count}} vérifiés",
       "noResults": "Aucun partenaire ne correspond à cette recherche."
     }
+  },
+  "affiliates": {
+    "kicker": "Réseau partenaire",
+    "heading": "Établissements affiliés",
+    "table": {
+      "name": "Établissement",
+      "city": "Ville",
+      "students": "Étudiants logés",
+      "status": "Statut"
+    },
+    "status": {
+      "actif": "Actif",
+      "suspendu": "Suspendu",
+      "enAttente": "En attente"
+    },
+    "noResults": "Aucun établissement affilié pour l'instant."
+  },
+  "verifications": {
+    "kicker": "Contrôle d'identité",
+    "heading": "File de vérifications",
+    "table": {
+      "student": "Étudiant",
+      "document": "Type de document",
+      "status": "Statut",
+      "date": "Date"
+    },
+    "status": {
+      "enAttente": "En attente",
+      "validee": "Validée",
+      "rejetee": "Rejetée"
+    },
+    "noResults": "Aucune demande de vérification en cours."
+  },
+  "reservedOffers": {
+    "kicker": "Logement réservé",
+    "heading": "Offres réservées",
+    "table": {
+      "listing": "Annonce",
+      "reservedFor": "Réservée pour",
+      "period": "Période",
+      "status": "Statut"
+    },
+    "status": {
+      "active": "Active",
+      "expiree": "Expirée",
+      "enAttente": "En attente"
+    },
+    "noResults": "Aucune offre réservée pour l'instant."
+  },
+  "grants": {
+    "kicker": "Aide au logement",
+    "heading": "Subventions",
+    "table": {
+      "program": "Programme",
+      "beneficiary": "Bénéficiaire",
+      "amount": "Montant",
+      "status": "Statut"
+    },
+    "status": {
+      "versee": "Versée",
+      "enCours": "En cours",
+      "enAttente": "En attente"
+    },
+    "noResults": "Aucune subvention enregistrée."
+  },
+  "reporting": {
+    "kicker": "Pilotage",
+    "heading": "Reporting",
+    "kpis": {
+      "totalVerifications": "Vérifications (3 derniers mois)",
+      "totalGrantsPaid": "Subventions versées",
+      "totalAmount": "Montant total versé"
+    },
+    "tableTitle": "Récapitulatif mensuel",
+    "table": {
+      "period": "Période",
+      "verifications": "Vérifications",
+      "grantsPaid": "Subventions versées",
+      "totalAmount": "Montant total"
+    },
+    "noResults": "Aucune donnée de reporting disponible."
+  },
+  "billing": {
+    "kicker": "Facturation",
+    "heading": "Factures",
+    "download": "Télécharger",
+    "table": {
+      "number": "N° facture",
+      "period": "Période",
+      "amount": "Montant",
+      "status": "Statut"
+    },
+    "status": {
+      "payee": "Payée",
+      "enAttente": "En attente"
+    },
+    "empty": {
+      "title": "Aucune facture pour l'instant",
+      "hint": "Les factures apparaîtront ici dès la première période facturée."
+    }
+  },
+  "apiWebhooks": {
+    "kicker": "Intégration",
+    "heading": "API & webhooks",
+    "apiKeys": {
+      "title": "Clés API",
+      "table": {
+        "label": "Nom",
+        "key": "Clé",
+        "created": "Créée le",
+        "status": "Statut"
+      }
+    },
+    "webhooks": {
+      "title": "Webhooks configurés",
+      "table": {
+        "url": "URL",
+        "events": "Événements",
+        "status": "Statut"
+      }
+    },
+    "status": {
+      "active": "Active",
+      "actif": "Actif",
+      "inactif": "Inactif"
+    }
   }
 }

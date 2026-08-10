@@ -45,6 +45,14 @@ export const MIGRATED_FILES = [
   'src/surfaces/app/publier/StepLogement.jsx',
   'src/surfaces/app/publier/StepPrix.jsx',
   'src/surfaces/app/publier/StepDispoPhotos.jsx',
+  'src/surfaces/partner/PartnerSection.jsx',
+  'src/surfaces/partner/Affiliates.jsx',
+  'src/surfaces/partner/Verifications.jsx',
+  'src/surfaces/partner/ReservedOffers.jsx',
+  'src/surfaces/partner/Grants.jsx',
+  'src/surfaces/partner/Reporting.jsx',
+  'src/surfaces/partner/Billing.jsx',
+  'src/surfaces/partner/ApiWebhooks.jsx',
 ]
 
 const FRENCH_ACCENTS = /[àâäéèêëîïôöùûüçœÀÂÄÉÈÊËÎÏÔÖÙÛÜÇŒ]/
