@@ -381,5 +381,96 @@
       "rejected": "مستبعَد·ة"
     },
     "empty": "لا يوجد مترشّحون للموافقة عليهم حاليًا."
+  },
+  "publier": {
+    "pageTitle": "نشر إعلان",
+    "stepIndicator": "الخطوة {{current}}/{{total}}",
+    "steps": {
+      "bien": "العقار",
+      "logement": "السكن",
+      "prix": "السعر والتكاليف",
+      "dispoPhotos": "التوفر والصور"
+    },
+    "actions": {
+      "back": "رجوع",
+      "next": "التالي",
+      "publish": "نشر",
+      "publishing": "جارٍ النشر…"
+    },
+    "errors": {
+      "required": "حقل إلزامي",
+      "rentPositive": "يجب أن يكون الإيجار أكبر من 0",
+      "publishFailed": "فشل النشر. يبقى الإعلان كمسودة، يرجى إعادة المحاولة."
+    },
+    "success": {
+      "title": "تم إرسال الإعلان للمراجعة",
+      "text": "تم إرسال إعلانك بنجاح وسيُنشر بعد التحقق من طرف فريقنا."
+    },
+    "selectPlaceholder": "اختر…",
+    "propertyTypes": {
+      "APPARTEMENT": "شقة",
+      "MAISON": "منزل",
+      "VILLA": "فيلا",
+      "STUDIO": "استوديو",
+      "RESIDENCE_ETUDIANTE": "إقامة طلابية",
+      "CHEZ_HABITANT": "لدى صاحب السكن"
+    },
+    "amenities": {
+      "wifi": "واي فاي",
+      "parking": "موقف سيارات",
+      "ascenseur": "مصعد",
+      "chauffage": "تدفئة",
+      "climatisation": "تكييف",
+      "lave_linge": "غسالة ملابس"
+    },
+    "bedTypes": {
+      "CHAMBRE_INDIVIDUELLE": "غرفة فردية",
+      "CHAMBRE_PARTAGEE": "غرفة مشتركة",
+      "LIT_DORTOIR": "سرير في مهجع",
+      "STUDIO_ENTIER": "استوديو كامل",
+      "APPARTEMENT_ENTIER": "شقة كاملة"
+    },
+    "housingGenders": {
+      "FEMININ": "نساء فقط",
+      "MASCULIN": "رجال فقط"
+    },
+    "mediaTypes": {
+      "CHAMBRE": "غرفة",
+      "PARTIES_COMMUNES": "أجزاء مشتركة",
+      "AUTRE": "أخرى"
+    },
+    "stepBien": {
+      "cityLabel": "المدينة",
+      "neighborhoodLabel": "الحي",
+      "addressLabel": "العنوان",
+      "propertyTypeLabel": "نوع العقار",
+      "floorLabel": "الطابق",
+      "areaLabel": "المساحة (م²)",
+      "amenitiesLabel": "التجهيزات"
+    },
+    "stepLogement": {
+      "titleLabel": "عنوان الإعلان",
+      "descriptionLabel": "الوصف",
+      "bedTypeLabel": "نوع الغرفة",
+      "housingGenderLabel": "الفئة المستقبَلة",
+      "furnishedLabel": "مفروش",
+      "capacityLabel": "السعة (عدد المتشاركين في السكن)"
+    },
+    "stepPrix": {
+      "rentLabel": "الإيجار الشهري (درهم)",
+      "chargesIncludedLabel": "التكاليف مشمولة",
+      "chargesAmountLabel": "مبلغ التكاليف (درهم/شهر)",
+      "depositLabel": "الضمان (درهم)",
+      "isCondoLabel": "عمارة في ملكية مشتركة",
+      "condoFeesLabel": "تكاليف الملكية المشتركة (درهم/شهر)"
+    },
+    "stepDispoPhotos": {
+      "availableFromLabel": "متوفر ابتداءً من",
+      "durationMinLabel": "المدة الدنيا (أشهر)",
+      "durationMaxLabel": "المدة القصوى (أشهر)",
+      "photosLabel": "الصور",
+      "addPhotos": "إضافة صور",
+      "removePhoto": "إزالة"
+    }
   }
 }

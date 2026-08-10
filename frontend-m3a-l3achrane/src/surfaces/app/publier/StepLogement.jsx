@@ -1,18 +1,10 @@
+import { useTranslation } from 'react-i18next'
 import { Input, Select, Textarea, Checkbox } from '../../../ds/index.js'
 
-const BED_TYPES = [
-  { value: 'CHAMBRE_INDIVIDUELLE', label: 'Chambre individuelle' },
-  { value: 'CHAMBRE_PARTAGEE', label: 'Chambre partagée' },
-  { value: 'LIT_DORTOIR', label: 'Lit en dortoir' },
-  { value: 'STUDIO_ENTIER', label: 'Studio entier' },
-  { value: 'APPARTEMENT_ENTIER', label: 'Appartement entier' },
-]
+const BED_TYPE_VALUES = ['CHAMBRE_INDIVIDUELLE', 'CHAMBRE_PARTAGEE', 'LIT_DORTOIR', 'STUDIO_ENTIER', 'APPARTEMENT_ENTIER']
 
 // Restreint à FEMININ/MASCULIN pour cette annonce (pas de MIXTE_FAMILIAL).
-const HOUSING_GENDERS = [
-  { value: 'FEMININ', label: 'Femmes uniquement' },
-  { value: 'MASCULIN', label: 'Hommes uniquement' },
-]
+const HOUSING_GENDER_VALUES = ['FEMININ', 'MASCULIN']
 
 function Req() {
   return <span style={{ color: 'var(--red-600)' }}> *</span>
@@ -27,45 +19,50 @@ function ErrorText({ children }) {
 }
 
 export default function StepLogement({ form, errors, update }) {
+  const { t } = useTranslation(['app'])
+
+  const bedTypes = BED_TYPE_VALUES.map((value) => ({ value, label: t(`app:publier.bedTypes.${value}`) }))
+  const housingGenders = HOUSING_GENDER_VALUES.map((value) => ({ value, label: t(`app:publier.housingGenders.${value}`) }))
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <Input
-        label={<>{"Titre de l'annonce"}<Req /></>}
+        label={<>{t('app:publier.stepLogement.titleLabel')}<Req /></>}
         value={form.title}
         onChange={(e) => update({ title: e.target.value })}
-        error={errors.title ? 'Champ requis' : undefined}
+        error={errors.title ? t('app:publier.errors.required') : undefined}
       />
       <Textarea
-        label="Description"
+        label={t('app:publier.stepLogement.descriptionLabel')}
         rows={5}
         value={form.description}
         onChange={(e) => update({ description: e.target.value })}
       />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <Select
-          label={<>Type de chambre<Req /></>}
+          label={<>{t('app:publier.stepLogement.bedTypeLabel')}<Req /></>}
           value={form.bed_type}
           onChange={(e) => update({ bed_type: e.target.value })}
-          options={[{ value: '', label: 'Sélectionner…' }, ...BED_TYPES]}
+          options={[{ value: '', label: t('app:publier.selectPlaceholder') }, ...bedTypes]}
         />
-        {errors.bed_type && <ErrorText>Champ requis</ErrorText>}
+        {errors.bed_type && <ErrorText>{t('app:publier.errors.required')}</ErrorText>}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <Select
-          label={<>Public accueilli<Req /></>}
+          label={<>{t('app:publier.stepLogement.housingGenderLabel')}<Req /></>}
           value={form.housing_gender}
           onChange={(e) => update({ housing_gender: e.target.value })}
-          options={HOUSING_GENDERS}
+          options={housingGenders}
         />
-        {errors.housing_gender && <ErrorText>Champ requis</ErrorText>}
+        {errors.housing_gender && <ErrorText>{t('app:publier.errors.required')}</ErrorText>}
       </div>
       <Checkbox
-        label="Meublé"
+        label={t('app:publier.stepLogement.furnishedLabel')}
         checked={!!form.furnished}
         onChange={(e) => update({ furnished: e.target.checked })}
       />
       <Input
-        label="Capacité (nombre de colocataires)"
+        label={t('app:publier.stepLogement.capacityLabel')}
         type="number"
         min={1}
         max={8}

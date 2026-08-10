@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '../../ds/index.js'
 import StepBien from './publier/StepBien.jsx'
 import StepLogement from './publier/StepLogement.jsx'
@@ -17,7 +18,7 @@ export function validateStep(step, f) {
   return errs
 }
 
-const STEP_TITLES = ['Le bien', 'Le logement', 'Prix & charges', 'Disponibilité & photos']
+const STEP_TITLE_KEYS = ['bien', 'logement', 'prix', 'dispoPhotos']
 const STEP_COMPONENTS = [StepBien, StepLogement, StepPrix, StepDispoPhotos]
 
 function initialForm() {
@@ -36,6 +37,7 @@ function initialForm() {
 }
 
 export default function PublierAnnonce() {
+  const { t } = useTranslation(['app'])
   const [step, setStep] = useState(0)
   const [form, setForm] = useState(initialForm)
   const [errors, setErrors] = useState({})
@@ -52,7 +54,7 @@ export default function PublierAnnonce() {
       await publish(form, { createListing, uploadPhoto, addListingMedia, submitListing })
       setPublished(true)
     } catch {
-      setPublishError("La publication a échoué. L'annonce reste en brouillon, veuillez réessayer.")
+      setPublishError(t('app:publier.errors.publishFailed'))
     } finally {
       setPublishing(false)
     }
@@ -79,10 +81,10 @@ export default function PublierAnnonce() {
       <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)' }}>
         <div style={{ maxWidth: 720, margin: '0 auto', padding: '64px 28px', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center', textAlign: 'center' }}>
           <h1 style={{ margin: 0, font: 'var(--fw-extrabold) var(--fs-h1) var(--font-display)', color: 'var(--text-strong)' }}>
-            Annonce envoyée en modération
+            {t('app:publier.success.title')}
           </h1>
           <p style={{ margin: 0, font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-body)' }}>
-            Votre annonce a bien été transmise et sera publiée après vérification par notre équipe.
+            {t('app:publier.success.text')}
           </p>
         </div>
       </div>
@@ -94,16 +96,16 @@ export default function PublierAnnonce() {
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '28px 28px 64px', display: 'flex', flexDirection: 'column', gap: 24 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <h1 style={{ margin: 0, font: 'var(--fw-extrabold) var(--fs-h1) var(--font-display)', color: 'var(--text-strong)' }}>
-            Déposer une annonce
+            {t('app:publier.pageTitle')}
           </h1>
           <p style={{ margin: 0, font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-body)' }}>
-            {STEP_TITLES[step]}
+            {t(`app:publier.steps.${STEP_TITLE_KEYS[step]}`)}
           </p>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', font: 'var(--fw-semibold) var(--fs-xs) var(--font-body)', color: 'var(--text-muted)' }}>
-            <span>Étape {step + 1}/{STEP_COMPONENTS.length}</span>
+            <span>{t('app:publier.stepIndicator', { current: step + 1, total: STEP_COMPONENTS.length })}</span>
           </div>
           <div style={{ height: 6, borderRadius: 'var(--radius-pill)', background: 'var(--gray-100)', overflow: 'hidden' }}>
             <div
@@ -124,13 +126,13 @@ export default function PublierAnnonce() {
         )}
 
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-          <Button variant="secondary" onClick={goBack} disabled={step === 0 || publishing}>Retour</Button>
+          <Button variant="secondary" onClick={goBack} disabled={step === 0 || publishing}>{t('app:publier.actions.back')}</Button>
           {isLast ? (
             <Button onClick={handlePublish} disabled={publishing}>
-              {publishing ? 'Publication…' : 'Publier'}
+              {publishing ? t('app:publier.actions.publishing') : t('app:publier.actions.publish')}
             </Button>
           ) : (
-            <Button onClick={goNext}>Suivant</Button>
+            <Button onClick={goNext}>{t('app:publier.actions.next')}</Button>
           )}
         </div>
       </div>

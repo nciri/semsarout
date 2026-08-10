@@ -1,12 +1,13 @@
+import { useTranslation } from 'react-i18next'
 import { Input, Select, Button } from '../../../ds/index.js'
 
-const MEDIA_TYPES = [
-  { value: 'CHAMBRE', label: 'Chambre' },
-  { value: 'PARTIES_COMMUNES', label: 'Parties communes' },
-  { value: 'AUTRE', label: 'Autre' },
-]
+const MEDIA_TYPE_VALUES = ['CHAMBRE', 'PARTIES_COMMUNES', 'AUTRE']
 
 export default function StepDispoPhotos({ form, update }) {
+  const { t } = useTranslation(['app'])
+
+  const mediaTypes = MEDIA_TYPE_VALUES.map((value) => ({ value, label: t(`app:publier.mediaTypes.${value}`) }))
+
   const onFilesSelected = (e) => {
     const files = Array.from(e.target.files || [])
     const newPhotos = files.map((file, i) => ({
@@ -32,20 +33,20 @@ export default function StepDispoPhotos({ form, update }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <Input
-        label="Disponible à partir du"
+        label={t('app:publier.stepDispoPhotos.availableFromLabel')}
         type="date"
         value={form.available_from}
         onChange={(e) => update({ available_from: e.target.value })}
       />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <Input
-          label="Durée minimale (mois)"
+          label={t('app:publier.stepDispoPhotos.durationMinLabel')}
           type="number"
           value={form.duration_min_months}
           onChange={(e) => update({ duration_min_months: e.target.value })}
         />
         <Input
-          label="Durée maximale (mois)"
+          label={t('app:publier.stepDispoPhotos.durationMaxLabel')}
           type="number"
           value={form.duration_max_months}
           onChange={(e) => update({ duration_max_months: e.target.value })}
@@ -54,7 +55,7 @@ export default function StepDispoPhotos({ form, update }) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <span style={{ font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)', color: 'var(--text-strong)' }}>
-          Photos
+          {t('app:publier.stepDispoPhotos.photosLabel')}
         </span>
         <label style={{ display: 'inline-block', width: 'fit-content' }}>
           <input type="file" accept="image/*" multiple onChange={onFilesSelected} style={{ display: 'none' }} />
@@ -65,7 +66,7 @@ export default function StepDispoPhotos({ form, update }) {
               font: 'var(--fw-semibold) var(--fs-body)/1 var(--font-display)', color: 'var(--text-strong)',
             }}
           >
-            Ajouter des photos
+            {t('app:publier.stepDispoPhotos.addPhotos')}
           </span>
         </label>
 
@@ -78,8 +79,8 @@ export default function StepDispoPhotos({ form, update }) {
                   alt=""
                   style={{ width: '100%', height: 100, objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-default)' }}
                 />
-                <Select value={p.media_type} onChange={(e) => setMediaType(i, e.target.value)} options={MEDIA_TYPES} />
-                <Button size="sm" variant="ghost" onClick={() => removePhoto(i)}>Retirer</Button>
+                <Select value={p.media_type} onChange={(e) => setMediaType(i, e.target.value)} options={mediaTypes} />
+                <Button size="sm" variant="ghost" onClick={() => removePhoto(i)}>{t('app:publier.stepDispoPhotos.removePhoto')}</Button>
               </div>
             ))}
           </div>

@@ -37,6 +37,11 @@ export const MIGRATED_FILES = [
   'src/surfaces/app/Securite.jsx',
   'src/surfaces/backoffice/BackOffice.jsx',
   'src/surfaces/backoffice/AttributionChambres.jsx',
+  'src/surfaces/app/PublierAnnonce.jsx',
+  'src/surfaces/app/publier/StepBien.jsx',
+  'src/surfaces/app/publier/StepLogement.jsx',
+  'src/surfaces/app/publier/StepPrix.jsx',
+  'src/surfaces/app/publier/StepDispoPhotos.jsx',
 ]
 
 const FRENCH_ACCENTS = /[àâäéèêëîïôöùûüçœÀÂÄÉÈÊËÎÏÔÖÙÛÜÇŒ]/
