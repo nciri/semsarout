@@ -45,9 +45,9 @@
       "status": "Statut"
     },
     "status": {
-      "actif": "Actif",
-      "suspendu": "Suspendu",
-      "enAttente": "En attente"
+      "ACTIVE": "Actif",
+      "INACTIVE": "Suspendu",
+      "PENDING": "En attente"
     },
     "noResults": "Aucun établissement affilié pour l'instant.",
     "loadError": "Impossible de charger les affiliés.",

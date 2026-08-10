@@ -2,12 +2,15 @@
 // domains — everything here is static demo data, consumed directly by the surfaces/partner/*
 // screens without going through the services/api layer (no network call to fake).
 
+// Champs et valeurs de statut alignés sur services/partner/app/models.py (Affilie.to_dict)
+// et AFFILIE_STATUSES (services/partner/app/schemas.py) pour que le mode mock reflète
+// fidèlement le contrat de l'API réelle.
 export const affiliates = [
-  { id: 1, nom: 'Université Mohammed V', ville: 'Rabat', logementsEtudiants: 340, statut: 'actif' },
-  { id: 2, nom: 'ENSA Casablanca', ville: 'Casablanca', logementsEtudiants: 128, statut: 'actif' },
-  { id: 3, nom: 'OCP Group', ville: 'Khouribga', logementsEtudiants: 96, statut: 'actif' },
-  { id: 4, nom: 'Université Hassan II', ville: 'Casablanca', logementsEtudiants: 212, statut: 'suspendu' },
-  { id: 5, nom: 'École Centrale Casablanca', ville: 'Casablanca', logementsEtudiants: 54, statut: 'enAttente' },
+  { id: 1, full_name: 'Université Mohammed V', email: 'contact@um5.ac.ma', external_ref: 'UM5-RABAT', status: 'ACTIVE' },
+  { id: 2, full_name: 'ENSA Casablanca', email: 'contact@ensa-casa.ac.ma', external_ref: 'ENSA-CASA', status: 'ACTIVE' },
+  { id: 3, full_name: 'OCP Group', email: 'rh@ocpgroup.ma', external_ref: 'OCP-KHOURIBGA', status: 'ACTIVE' },
+  { id: 4, full_name: 'Université Hassan II', email: 'contact@uh2c.ac.ma', external_ref: 'UH2C-CASA', status: 'INACTIVE' },
+  { id: 5, full_name: 'École Centrale Casablanca', email: 'contact@centrale-casablanca.ma', external_ref: 'ECC-CASA', status: 'PENDING' },
 ]
 
 export const verificationRequests = [

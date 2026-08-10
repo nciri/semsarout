@@ -7,7 +7,7 @@ import { isForbiddenError } from './access.js'
 
 const SEGMENT_COUNT = 10
 const AFFILIE_STATUS_ORDER = ['ACTIVE', 'PENDING', 'INACTIVE']
-const AFFILIATE_STATUS_TONE = { actif: 'verified', suspendu: 'danger', enAttente: 'warning' }
+const AFFILIATE_STATUS_TONE = { ACTIVE: 'verified', INACTIVE: 'danger', PENDING: 'warning' }
 
 const money = (v) => `${Number(v ?? 0).toLocaleString('fr-MA')} Đh`
 
@@ -65,10 +65,10 @@ export default function PartnerPortal() {
     )
   }
 
-  const partnerName = me?.name ?? me?.nom
+  const partnerName = me?.name
   const affiliesByStatus = reporting.affilies.by_status
   const filtered = query
-    ? affiliates.filter((a) => (a.full_name ?? a.nom ?? '').toLowerCase().includes(query.toLowerCase()))
+    ? affiliates.filter((a) => (a.full_name ?? '').toLowerCase().includes(query.toLowerCase()))
     : affiliates
 
   return (
@@ -278,13 +278,13 @@ export default function PartnerPortal() {
                 filtered.map((a) => (
                   <tr key={a.id} style={{ borderTop: '1px solid var(--border-subtle)' }}>
                     <td style={{ padding: '13px 20px', font: 'var(--fw-semibold) var(--fs-sm) var(--font-display)', color: 'var(--text-heading)' }}>
-                      {a.full_name ?? a.nom}
+                      {a.full_name}
                     </td>
                     <td style={{ padding: '13px 20px', font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-body)' }}>
                       {a.email ?? '—'}
                     </td>
                     <td style={{ padding: '13px 20px' }}>
-                      <Badge tone={AFFILIATE_STATUS_TONE[a.statut]}>{t(`partner:affiliates.status.${a.statut}`)}</Badge>
+                      <Badge tone={AFFILIATE_STATUS_TONE[a.status]}>{t(`partner:affiliates.status.${a.status}`)}</Badge>
                     </td>
                   </tr>
                 ))

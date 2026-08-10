@@ -768,8 +768,11 @@ export async function getPartnerMe() {
   if (isMocked('partners')) {
     const self = partners[0]
     return delay({
-      id: self?.id ?? 1, nom: self?.nom ?? 'Partenaire Demo', type: self?.type ?? 'Université',
-      email: 'contact@partenaire-demo.ma', statut: 'actif', quota: self?.quota ?? 500, verifies: self?.verifies ?? 0,
+      id: self?.id ?? 1,
+      name: self?.nom ?? 'Partenaire Demo',
+      type: self?.type ?? 'Université',
+      tenant: 'm3a-l3achrane',
+      created_at: new Date().toISOString(),
     })
   }
   const { data } = await api.get('/partner/me')
@@ -786,7 +789,7 @@ export async function listAffilies() {
 
 export async function createAffilie(payload) {
   if (isMocked('partners')) {
-    const item = { id: _newMockId(), statut: 'enAttente', ...payload }
+    const item = { id: _newMockId(), status: 'PENDING', ...payload }
     _mockAffiliates = [..._mockAffiliates, item]
     return delay(item)
   }
@@ -995,10 +998,10 @@ export async function testWebhook(id) {
   return data
 }
 
-// Statuts des jeux de données mock (français, hérités des maquettes Lot E) -> vocabulaire
-// backend (AFFILIE_STATUSES / VERIFICATION statuses réels, cf. services/partner/app/models.py)
-// pour que la forme du mock colle au contrat `/partner/reporting`, pas seulement ses valeurs.
-const AFFILIE_STATUS_MAP = { actif: 'ACTIVE', suspendu: 'INACTIVE', enAttente: 'PENDING' }
+// Statuts du jeu de données mock verificationRequests (français, hérité des maquettes Lot E)
+// -> vocabulaire backend (cf. services/partner/app/models.py) pour que la forme du mock
+// colle au contrat `/partner/reporting`, pas seulement ses valeurs. `affiliates` stocke déjà
+// les valeurs backend (status: ACTIVE/PENDING/INACTIVE), aucune traduction requise.
 const VERIFICATION_STATUS_MAP = { enAttente: 'PENDING', validee: 'APPROVED', rejetee: 'REJECTED' }
 
 function _mockCountsByStatus(rows, statusField, statusMap) {
@@ -1012,7 +1015,7 @@ function _mockCountsByStatus(rows, statusField, statusMap) {
 
 export async function getPartnerReporting() {
   if (isMocked('partners')) {
-    const affiliesByStatus = _mockCountsByStatus(affiliates, 'statut', AFFILIE_STATUS_MAP)
+    const affiliesByStatus = _mockCountsByStatus(affiliates, 'status', {})
     const verificationsByStatus = _mockCountsByStatus(verificationRequests, 'statut', VERIFICATION_STATUS_MAP)
     const vApproved = verificationsByStatus.APPROVED ?? 0
     const vRejected = verificationsByStatus.REJECTED ?? 0

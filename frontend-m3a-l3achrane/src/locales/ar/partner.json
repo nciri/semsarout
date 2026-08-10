@@ -45,9 +45,9 @@
       "status": "الحالة"
     },
     "status": {
-      "actif": "نشط",
-      "suspendu": "معلّق",
-      "enAttente": "قيد الانتظار"
+      "ACTIVE": "نشط",
+      "INACTIVE": "معلّق",
+      "PENDING": "قيد الانتظار"
     },
     "noResults": "لا توجد مؤسسة منتسبة حاليًا.",
     "loadError": "تعذّر تحميل المنتسبين.",

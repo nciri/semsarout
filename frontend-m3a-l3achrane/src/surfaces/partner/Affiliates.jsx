@@ -4,7 +4,7 @@ import { Badge, Button, Input } from '../../ds/index.js'
 import { createAffilie, listAffilies } from '../../services/index.js'
 import { PartnerCard, PartnerScreen, PartnerTable } from './PartnerSection.jsx'
 
-const STATUS_TONE = { actif: 'verified', suspendu: 'danger', enAttente: 'warning' }
+const STATUS_TONE = { ACTIVE: 'verified', INACTIVE: 'danger', PENDING: 'warning' }
 
 // Étoile rouge sur les champs requis — patron canonique des formulaires (cf. Inscription.jsx).
 const requiredStar = <span style={{ color: 'var(--red-500)' }} aria-hidden> *</span>
@@ -98,13 +98,13 @@ export default function Affiliates() {
   const handleCreated = (created) => setAffiliates((prev) => [...(prev ?? []), created])
 
   const columns = [
-    { key: 'name', label: t('partner:affiliates.table.name'), render: (row) => row.full_name ?? row.nom },
+    { key: 'name', label: t('partner:affiliates.table.name'), render: (row) => row.full_name },
     { key: 'email', label: t('partner:affiliates.table.email'), render: (row) => row.email ?? '—' },
     { key: 'externalRef', label: t('partner:affiliates.table.externalRef'), render: (row) => row.external_ref ?? '—' },
     {
       key: 'status',
       label: t('partner:affiliates.table.status'),
-      render: (row) => <Badge tone={STATUS_TONE[row.statut]}>{t(`partner:affiliates.status.${row.statut}`)}</Badge>,
+      render: (row) => <Badge tone={STATUS_TONE[row.status]}>{t(`partner:affiliates.status.${row.status}`)}</Badge>,
     },
   ]
 
