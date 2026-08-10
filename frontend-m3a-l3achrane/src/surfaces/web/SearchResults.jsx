@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button, Card, Chip, Icon, Input, ListingCard, Select } from '../../ds/index.js'
 import { getCurrentProfile, listListings } from '../../services/index.js'
+import SearchResultsMap from './SearchResultsMap.jsx'
 
 export default function SearchResults() {
   const { t } = useTranslation(['web', 'common'])
@@ -413,16 +414,7 @@ export default function SearchResults() {
           )}
 
           {view === 'carte' ? (
-            <div
-              style={{
-                height: 420, borderRadius: 'var(--radius-lg)', background: 'var(--gray-150)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                font: 'var(--fw-medium) var(--fs-body) var(--font-body)', color: 'var(--text-muted)',
-              }}
-            >
-              <Icon name="map" size={20} />
-              {t('web:search.mapComingSoon')}
-            </div>
+            <SearchResultsMap items={visibleItems} cityFilter={appliedSearch?.city || null} />
           ) : visibleItems.length === 0 ? (
             <div style={{ padding: '64px 0', textAlign: 'center', font: 'var(--fw-medium) var(--fs-body) var(--font-body)', color: 'var(--text-muted)' }}>
               {t('web:search.empty')}
