@@ -329,15 +329,6 @@
       "placed": "Placé · {{room}}",
       "commuteBudget": "{{commute}} · Budget {{budget}}",
       "chooseRoom": "Choisissez une chambre sur le plan →"
-    },
-    "sidebarNav": {
-      "dashboard": "Tableau de bord",
-      "verifications": "Vérifications",
-      "listings": "Annonces",
-      "assignments": "Affectations",
-      "users": "Utilisateurs",
-      "contracts": "Contrats",
-      "reports": "Signalements"
     }
   }
 }
