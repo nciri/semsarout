@@ -368,6 +368,39 @@
     "helpText": "Notre équipe support répond sous 24h ouvrées.",
     "contactSupport": "Contacter le support →"
   },
+  "aide": {
+    "title": "Aide & support",
+    "subtitle": "Trouvez une réponse rapide ou écrivez directement à notre équipe.",
+    "faqTitle": "Questions fréquentes",
+    "faq": {
+      "publierAnnonce": {
+        "question": "Comment déposer une annonce ?",
+        "answer": "Depuis votre espace, cliquez sur « Publier » puis suivez les étapes : bien, logement, prix, disponibilité et photos. Votre annonce est ensuite soumise à vérification avant publication."
+      },
+      "preselection": {
+        "question": "Comment fonctionne la présélection ?",
+        "answer": "Le propriétaire présélectionne les candidatures qui l'intéressent. Les colocataires déjà en place valident ensuite ces profils avant que le dossier ne passe à l'étape suivante."
+      },
+      "paiementCaution": {
+        "question": "Paiement et caution, comment ça marche ?",
+        "answer": "Le loyer et la caution se règlent depuis l'espace « Paiement » de votre compte. Les fonds transitent par notre parcours sécurisé, jamais directement entre particuliers."
+      },
+      "securiteSignalement": {
+        "question": "Sécurité et signalement, que faire en cas de problème ?",
+        "answer": "Utilisez le Centre de sécurité pour signaler un profil, une annonce ou un message suspect, et pour bloquer un utilisateur. Notre équipe examine chaque signalement rapidement."
+      }
+    },
+    "contactTitle": "Contacter le support",
+    "contactText": "Une question qui n'est pas dans la FAQ ? Écrivez-nous, notre équipe vous répond sous 24h ouvrées.",
+    "subjectLabel": "Sujet",
+    "subjectPlaceholder": "Résumez votre demande en quelques mots",
+    "emailLabel": "Email",
+    "emailPlaceholder": "vous@exemple.com",
+    "messageLabel": "Message",
+    "messagePlaceholder": "Décrivez votre demande…",
+    "submitContact": "Envoyer le message",
+    "contactSent": "Votre message a bien été envoyé, notre équipe vous répondra sous 24h ouvrées."
+  },
   "roommateValidation": {
     "title": "Des candidats pour votre colocation",
     "explanation": "Le propriétaire a présélectionné ces profils ; votre avis compte pour la vie en commun.",

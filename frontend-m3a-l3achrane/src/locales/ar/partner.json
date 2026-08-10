@@ -44,5 +44,131 @@
       "verifiedCount": "{{count}} موثّق",
       "noResults": "لا يوجد شريك مطابق لهذا البحث."
     }
+  },
+  "affiliates": {
+    "kicker": "شبكة الشركاء",
+    "heading": "المؤسسات المنتسبة",
+    "table": {
+      "name": "المؤسسة",
+      "city": "المدينة",
+      "students": "الطلبة المسكّنون",
+      "status": "الحالة"
+    },
+    "status": {
+      "actif": "نشط",
+      "suspendu": "معلّق",
+      "enAttente": "قيد الانتظار"
+    },
+    "noResults": "لا توجد مؤسسة منتسبة حاليًا."
+  },
+  "verifications": {
+    "kicker": "التحقق من الهوية",
+    "heading": "قائمة التحققات",
+    "table": {
+      "student": "الطالب",
+      "document": "نوع الوثيقة",
+      "status": "الحالة",
+      "date": "التاريخ"
+    },
+    "status": {
+      "enAttente": "قيد الانتظار",
+      "validee": "مقبولة",
+      "rejetee": "مرفوضة"
+    },
+    "noResults": "لا توجد طلبات تحقق حاليًا."
+  },
+  "reservedOffers": {
+    "kicker": "سكن محجوز",
+    "heading": "العروض المحجوزة",
+    "table": {
+      "listing": "الإعلان",
+      "reservedFor": "محجوزة لصالح",
+      "period": "الفترة",
+      "status": "الحالة"
+    },
+    "status": {
+      "active": "نشطة",
+      "expiree": "منتهية",
+      "enAttente": "قيد الانتظار"
+    },
+    "noResults": "لا توجد عروض محجوزة حاليًا."
+  },
+  "grants": {
+    "kicker": "دعم السكن",
+    "heading": "الإعانات",
+    "table": {
+      "program": "البرنامج",
+      "beneficiary": "المستفيد",
+      "amount": "المبلغ",
+      "status": "الحالة"
+    },
+    "status": {
+      "versee": "مصروفة",
+      "enCours": "قيد المعالجة",
+      "enAttente": "قيد الانتظار"
+    },
+    "noResults": "لا توجد إعانة مسجّلة."
+  },
+  "reporting": {
+    "kicker": "المتابعة",
+    "heading": "التقارير",
+    "kpis": {
+      "totalVerifications": "التحققات (آخر 3 أشهر)",
+      "totalGrantsPaid": "الإعانات المصروفة",
+      "totalAmount": "إجمالي المبلغ المصروف"
+    },
+    "tableTitle": "ملخص شهري",
+    "table": {
+      "period": "الفترة",
+      "verifications": "التحققات",
+      "grantsPaid": "الإعانات المصروفة",
+      "totalAmount": "إجمالي المبلغ"
+    },
+    "noResults": "لا توجد بيانات تقارير متاحة."
+  },
+  "billing": {
+    "kicker": "الفوترة",
+    "heading": "الفواتير",
+    "download": "تحميل",
+    "table": {
+      "number": "رقم الفاتورة",
+      "period": "الفترة",
+      "amount": "المبلغ",
+      "status": "الحالة"
+    },
+    "status": {
+      "payee": "مدفوعة",
+      "enAttente": "قيد الانتظار"
+    },
+    "empty": {
+      "title": "لا توجد فاتورة حاليًا",
+      "hint": "ستظهر الفواتير هنا بمجرد إصدار أول فترة فوترة."
+    }
+  },
+  "apiWebhooks": {
+    "kicker": "التكامل",
+    "heading": "API و webhooks",
+    "apiKeys": {
+      "title": "مفاتيح API",
+      "table": {
+        "label": "الاسم",
+        "key": "المفتاح",
+        "created": "أُنشئ في",
+        "status": "الحالة"
+      }
+    },
+    "webhooks": {
+      "title": "webhooks المهيّأة",
+      "table": {
+        "url": "الرابط",
+        "events": "الأحداث",
+        "status": "الحالة"
+      }
+    },
+    "status": {
+      "active": "نشط",
+      "actif": "نشط",
+      "inactif": "غير نشط"
+    }
   }
 }

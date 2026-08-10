@@ -7,6 +7,8 @@ const Landing = lazy(() => import('./surfaces/web/Landing.jsx'))
 const SearchResults = lazy(() => import('./surfaces/web/SearchResults.jsx'))
 const ListingDetail = lazy(() => import('./surfaces/web/ListingDetail.jsx'))
 const Connexion = lazy(() => import('./surfaces/web/Connexion.jsx'))
+const MotDePasseOublie = lazy(() => import('./surfaces/web/MotDePasseOublie.jsx'))
+const ReinitialiserMotDePasse = lazy(() => import('./surfaces/web/ReinitialiserMotDePasse.jsx'))
 const Inscription = lazy(() => import('./surfaces/web/Inscription.jsx'))
 const Avis = lazy(() => import('./surfaces/web/Avis.jsx'))
 const AppLayout = lazy(() => import('./surfaces/app/AppLayout.jsx'))
@@ -19,9 +21,17 @@ const ValidationColocataire = lazy(() => import('./surfaces/app/ValidationColoca
 const Questionnaire = lazy(() => import('./surfaces/app/Questionnaire.jsx'))
 const Paiement = lazy(() => import('./surfaces/app/Paiement.jsx'))
 const Securite = lazy(() => import('./surfaces/app/Securite.jsx'))
+const Aide = lazy(() => import('./surfaces/app/Aide.jsx'))
 const PublierAnnonce = lazy(() => import('./surfaces/app/PublierAnnonce.jsx'))
 const PartnerLayout = lazy(() => import('./surfaces/partner/PartnerLayout.jsx'))
 const PartnerPortal = lazy(() => import('./surfaces/partner/PartnerPortal.jsx'))
+const Affiliates = lazy(() => import('./surfaces/partner/Affiliates.jsx'))
+const Verifications = lazy(() => import('./surfaces/partner/Verifications.jsx'))
+const ReservedOffers = lazy(() => import('./surfaces/partner/ReservedOffers.jsx'))
+const Grants = lazy(() => import('./surfaces/partner/Grants.jsx'))
+const Reporting = lazy(() => import('./surfaces/partner/Reporting.jsx'))
+const Billing = lazy(() => import('./surfaces/partner/Billing.jsx'))
+const ApiWebhooks = lazy(() => import('./surfaces/partner/ApiWebhooks.jsx'))
 const BackOffice = lazy(() => import('./surfaces/backoffice/BackOffice.jsx'))
 const AttributionChambres = lazy(() => import('./surfaces/backoffice/AttributionChambres.jsx'))
 const NotFound = lazy(() => import('./surfaces/NotFound.jsx'))
@@ -36,6 +46,8 @@ export default function App() {
             <Route path="/recherche" element={<SearchResults />} />
             <Route path="/annonce/:id" element={<ListingDetail />} />
             <Route path="/connexion" element={<Connexion />} />
+            <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
+            <Route path="/reinitialiser-mot-de-passe" element={<ReinitialiserMotDePasse />} />
             <Route path="/inscription" element={<Inscription />} />
             <Route path="/avis" element={<Avis />} />
           </Route>
@@ -49,10 +61,18 @@ export default function App() {
             <Route path="questionnaire" element={<Questionnaire />} />
             <Route path="paiement" element={<Paiement />} />
             <Route path="securite" element={<Securite />} />
+            <Route path="aide" element={<Aide />} />
             <Route path="publier" element={<PublierAnnonce />} />
           </Route>
           <Route path="/partenaire" element={<PartnerLayout />}>
             <Route index element={<PartnerPortal />} />
+            <Route path="affilies" element={<Affiliates />} />
+            <Route path="verifications" element={<Verifications />} />
+            <Route path="offres" element={<ReservedOffers />} />
+            <Route path="subventions" element={<Grants />} />
+            <Route path="reporting" element={<Reporting />} />
+            <Route path="facturation" element={<Billing />} />
+            <Route path="api" element={<ApiWebhooks />} />
           </Route>
           <Route path="/back-office" element={<BackOffice />} />
           <Route path="/back-office/attribution" element={<AttributionChambres />} />

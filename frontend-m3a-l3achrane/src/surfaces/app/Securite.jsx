@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { Avatar, Badge, Button, Card, Icon, Select, VerifiedBadge } from '../../ds/index.js'
 import { blockedUsers as initialBlockedUsers, reportReasons, reportTargets, safetyTips } from '../../data/securityCenter.js'
 
 export default function Securite() {
   const { t } = useTranslation(['app', 'common'])
+  const navigate = useNavigate()
   const [target, setTarget] = useState(reportTargets[0].value)
   const [reason, setReason] = useState(reportReasons[0].value)
   const [details, setDetails] = useState('')
@@ -148,9 +150,13 @@ export default function Securite() {
               <div style={{ font: 'var(--fw-regular) 13px/1.5 var(--font-body)', color: 'var(--text-body)' }}>
                 {t('app:securite.helpText')}
               </div>
-              <a href="#" style={{ font: 'var(--fw-bold) 13px var(--font-body)', color: 'var(--link)' }}>
+              <button
+                type="button"
+                onClick={() => navigate('/espace/aide#contact')}
+                style={{ padding: 0, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'start', font: 'var(--fw-bold) 13px var(--font-body)', color: 'var(--link)' }}
+              >
                 {t('app:securite.contactSupport')}
-              </a>
+              </button>
             </Card>
           </aside>
         </div>

@@ -1,14 +1,24 @@
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { SidebarNav } from '../../ds/index.js'
 
-const ROUTES = { dash: '/partenaire' }
+const ROUTES = {
+  dash: '/partenaire',
+  aff: '/partenaire/affilies',
+  ver: '/partenaire/verifications',
+  res: '/partenaire/offres',
+  sub: '/partenaire/subventions',
+  rep: '/partenaire/reporting',
+  bill: '/partenaire/facturation',
+  api: '/partenaire/api',
+  help: '/espace/aide',
+}
 
 export default function PartnerLayout() {
   const { t } = useTranslation('common')
   const navigate = useNavigate()
-  // Single built route so far — branch on pathname once more partner screens exist.
-  const active = 'dash'
+  const { pathname } = useLocation()
+  const active = Object.keys(ROUTES).find((key) => ROUTES[key] === pathname) ?? 'dash'
 
   const items = [
     { icon: 'layout-dashboard', label: t('nav.dashboard'), value: 'dash' },

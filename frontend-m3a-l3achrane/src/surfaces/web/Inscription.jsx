@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
+import api from '../../services/api.js'
 import { Button, Input, Select } from '../../ds/index.js'
 
 // Règle canonique des formulaires : champ requis ⇒ étoile rouge après le label.
@@ -11,6 +13,7 @@ const CURRENT_STEP = 1
 
 export default function Inscription() {
   const { t } = useTranslation(['web', 'common'])
+  const navigate = useNavigate()
   const CITY_OPTIONS = t('web:registration.cityOptions', { returnObjects: true })
   const STEPS = [
     { num: 1, label: t('web:registration.steps.profile') },
@@ -28,11 +31,22 @@ export default function Inscription() {
     first_name: '', last_name: '', email: '', phone: '', city: CITY_OPTIONS[0], org: '', password: '',
   })
   const [agree, setAgree] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault()
-    // Câblage API à faire lors de l'intégration (étape suivante : vérification).
+    setBusy(true); setError(null)
+    try {
+      // Le BFF pose les cookies httpOnly de session ; rien à persister côté front (register = connexion directe).
+      await api.post('/auth/register', form)
+      navigate('/espace/questionnaire')
+    } catch (err) {
+      setError(err.response?.data?.error ?? t('web:registration.genericError'))
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -199,9 +213,13 @@ export default function Inscription() {
               </span>
             </label>
 
+            {error && <p role="alert" style={{ margin: 0, color: 'var(--red-600)', font: 'var(--fw-medium) var(--fs-sm) var(--font-body)' }}>{error}</p>}
+
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', alignItems: 'center' }}>
-              <Button type="button" variant="secondary">{t('web:registration.saveLaterCta')}</Button>
-              <Button type="submit">{t('web:registration.continueCta')}</Button>
+              <Button type="button" variant="secondary" onClick={() => navigate('/')}>{t('web:registration.saveLaterCta')}</Button>
+              <Button type="submit" disabled={busy}>
+                {busy ? t('web:registration.continueCtaBusy') : t('web:registration.continueCta')}
+              </Button>
             </div>
           </form>
         </section>

@@ -734,3 +734,19 @@ export async function submitListing(id) {
   const { data } = await api.post(`/listings/${id}/submit`)
   return data
 }
+
+// ---------------------------------------------------------------------------------------
+// Réinitialisation de mot de passe (domaine identity) — anti-énumération : le backend
+// renvoie toujours le même message générique côté `forgot-password`, que le compte existe
+// ou non. Pas de mock dédié : le contrat est déjà anti-énumération côté serveur.
+// ---------------------------------------------------------------------------------------
+
+export async function requestPasswordReset(email) {
+  const { data } = await api.post('/auth/forgot-password', { email })
+  return data
+}
+
+export async function resetPassword(token, newPassword) {
+  const { data } = await api.post('/auth/reset-password', { token, new_password: newPassword })
+  return data
+}

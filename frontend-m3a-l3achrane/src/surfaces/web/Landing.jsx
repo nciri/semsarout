@@ -1,14 +1,14 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button, Icon, Select, Tabs } from '../../ds/index.js'
 
 const TRUST_BAND_ICONS = ['scan-face', 'badge-check', 'clipboard-check', 'lock']
 const HOW_IT_WORKS_ICONS = ['user-round', 'search', 'messages-square', 'calendar-check', 'file-signature']
 
-function Section({ children, bg, style }) {
+function Section({ children, bg, style, id }) {
   return (
-    <section style={{ padding: '72px 40px', background: bg || 'transparent', ...style }}>
+    <section id={id} style={{ padding: '72px 40px', background: bg || 'transparent', scrollMarginTop: 68, ...style }}>
       <div style={{ maxWidth: 'var(--container-max)', margin: '0 auto' }}>{children}</div>
     </section>
   )
@@ -68,10 +68,21 @@ function SearchBox() {
 
 export default function Landing() {
   const { t } = useTranslation('web')
+  const navigate = useNavigate()
+  const location = useLocation()
   const [role, setRole] = useState('etudiant')
   const partners = t('web:landing.partnersBand.names', { returnObjects: true })
   const trustItems = t('web:landing.trustBand.items', { returnObjects: true })
   const steps = t('web:landing.howItWorks.steps', { returnObjects: true })
+
+  // react-router (mode BrowserRouter classique) ne scroll pas automatiquement vers le
+  // fragment d'URL lors d'une navigation cliente : on le fait nous-mêmes (TopBar "Comment
+  // ça marche" / "À propos" pointent vers ces ancres depuis n'importe quelle page).
+  useEffect(() => {
+    if (!location.hash) return
+    const el = document.getElementById(location.hash.slice(1))
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [location.hash])
   return (
     <div style={{ background: 'var(--bg-page)' }}>
       {/* Hero */}
@@ -108,7 +119,7 @@ export default function Landing() {
       </div>
 
       {/* Trust band */}
-      <Section bg="#fff" style={{ padding: '56px 40px' }}>
+      <Section id="about" bg="#fff" style={{ padding: '56px 40px' }}>
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <h2 style={{ font: 'var(--fw-bold) 26px var(--font-display)', color: 'var(--navy-700)', margin: 0 }}>{t('web:landing.trustBand.title')}</h2>
         </div>
@@ -124,7 +135,7 @@ export default function Landing() {
       </Section>
 
       {/* How it works */}
-      <Section>
+      <Section id="how-it-works">
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <Eyebrow>{t('web:landing.howItWorks.eyebrow')}</Eyebrow>
           <h2 style={{ font: 'var(--fw-bold) 28px var(--font-display)', color: 'var(--navy-700)', margin: 0 }}>{t('web:landing.howItWorks.title')}</h2>
@@ -159,6 +170,9 @@ export default function Landing() {
             <p style={{ font: 'var(--fw-regular) var(--fs-body-lg)/1.5 var(--font-body)', color: 'var(--text-on-navy-muted)', margin: '0 0 24px' }}>
               {t('web:landing.partnerCta.body')}
             </p>
+            <Button variant="accent" size="md" iconLeft="arrow-right" onClick={() => navigate('/partenaire')} style={{ marginBottom: 20 }}>
+              {t('web:landing.partnerCta.cta')}
+            </Button>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,.08)', borderRadius: 'var(--radius-md)', padding: '12px 16px' }}>
                 <Icon name="graduation-cap" size={22} color="var(--gold-500)" />

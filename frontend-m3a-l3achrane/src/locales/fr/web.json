@@ -7,7 +7,8 @@
       "tagline": "M3a-L3chrane — Colocation vérifiée au Maroc",
       "search": "Rechercher",
       "mySpace": "Mon espace",
-      "partners": "Partenaires"
+      "partners": "Partenaires",
+      "reviews": "Avis"
     }
   },
   "landing": {
@@ -115,7 +116,8 @@
       "universitiesSub": "Gérez le logement de vos étudiants",
       "companiesTitle": "Portail Entreprises",
       "companiesSub": "Relocation de vos nouveaux talents",
-      "dashboardAlt": "Tableau de bord partenaire"
+      "dashboardAlt": "Tableau de bord partenaire",
+      "cta": "Découvrir l'espace partenaire"
     }
   },
   "search": {
@@ -134,6 +136,10 @@
       "Masculin"
     ],
     "budgetOptions": [
+      {
+        "value": "",
+        "label": "Tous les budgets"
+      },
       "2 500 Đh",
       "4 000 Đh"
     ],
@@ -207,7 +213,8 @@
     "activeFiltersLabel": "Filtres actifs :",
     "removeFilterLabel": "Retirer le filtre {{label}}",
     "verifiedFilterChip": "Profils vérifiés",
-    "mapComingSoon": "Vue carte à venir",
+    "mapPrivacyNotice": "Positions approximatives par ville — l'adresse exacte est communiquée après mise en relation.",
+    "mapPopupSeeListing": "Voir l'annonce",
     "loadMore": "Afficher plus de logements",
     "locationDefault": "Casablanca, Maârif",
     "institutionLabel": "École / entreprise",
@@ -319,7 +326,30 @@
     "termsPrefix": "En continuant, vous acceptez nos",
     "termsLink": "conditions d'utilisation",
     "termsAnd": "et notre",
-    "privacyLink": "politique de confidentialité"
+    "privacyLink": "politique de confidentialité",
+    "passwordReset": {
+      "forgot": {
+        "title": "Mot de passe oublié",
+        "subtitle": "Indiquez votre email, nous vous enverrons un lien de réinitialisation.",
+        "emailLabel": "Email",
+        "submitCta": "Envoyer le lien",
+        "genericSuccess": "Si un compte existe avec cet email, un lien de réinitialisation a été envoyé.",
+        "networkError": "Une erreur est survenue — réessayez plus tard.",
+        "backToLogin": "Retour à la connexion"
+      },
+      "reset": {
+        "title": "Réinitialiser le mot de passe",
+        "newPasswordLabel": "Nouveau mot de passe",
+        "confirmPasswordLabel": "Confirmer le mot de passe",
+        "submitCta": "Réinitialiser",
+        "tooShortError": "Le mot de passe doit contenir au moins 8 caractères.",
+        "mismatchError": "Les mots de passe ne correspondent pas.",
+        "genericError": "Une erreur est survenue — réessayez plus tard.",
+        "invalidLinkMessage": "Ce lien de réinitialisation est invalide.",
+        "successMessage": "Votre mot de passe a été réinitialisé avec succès.",
+        "backToLogin": "Retour à la connexion"
+      }
+    }
   },
   "registration": {
     "title": "Créez votre profil",
@@ -374,8 +404,10 @@
     "agreementMiddle": "et le traitement de mes données conformément à la",
     "agreementPrivacyLink": "politique de confidentialité",
     "agreementSuffix": "(CNDP).",
-    "saveLaterCta": "Enregistrer et reprendre plus tard",
-    "continueCta": "Continuer"
+    "saveLaterCta": "Plus tard",
+    "continueCta": "Continuer",
+    "continueCtaBusy": "Création…",
+    "genericError": "Une erreur est survenue — réessayez."
   },
   "reviews": {
     "title": "Évaluer votre séjour",
