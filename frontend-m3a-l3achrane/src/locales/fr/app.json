@@ -457,12 +457,12 @@
       "capacityLabel": "Capacité (nombre de colocataires)"
     },
     "stepPrix": {
-      "rentLabel": "Loyer mensuel (Dh)",
+      "rentLabel": "Loyer mensuel (Đh)",
       "chargesIncludedLabel": "Charges comprises",
-      "chargesAmountLabel": "Montant des charges (Dh/mois)",
-      "depositLabel": "Caution (Dh)",
+      "chargesAmountLabel": "Montant des charges (Đh/mois)",
+      "depositLabel": "Caution (Đh)",
       "isCondoLabel": "Immeuble en copropriété",
-      "condoFeesLabel": "Charges de copropriété (Dh/mois)"
+      "condoFeesLabel": "Charges de copropriété (Đh/mois)"
     },
     "stepDispoPhotos": {
       "availableFromLabel": "Disponible à partir du",
