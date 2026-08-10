@@ -59,6 +59,29 @@ class PartnerMember(Base):
         }
 
 
+class Affilie(Base):
+    __tablename__ = "affilies"
+
+    id = Column(String(32), primary_key=True, default=_uuid)
+    partner_id = Column(String(32), ForeignKey("partners.id"), nullable=False, index=True)
+    full_name = Column(String(160), nullable=False)
+    email = Column(String(255), nullable=False)
+    external_ref = Column(String(80))
+    status = Column(String(20), nullable=False, default="PENDING")
+    created_at = Column(DateTime(timezone=True), default=_now, nullable=False)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "partner_id": self.partner_id,
+            "full_name": self.full_name,
+            "email": self.email,
+            "external_ref": self.external_ref,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
 class ApiKey(Base):
     __tablename__ = "partner_api_keys"
 
