@@ -20,6 +20,9 @@ class Property(db.Model):
     price = db.Column(db.Numeric(12, 2), nullable=False)
     price_per_sqm = db.Column(db.Numeric(10, 2))
     charges = db.Column(db.Numeric(10, 2))  # Monthly charges for rent
+    # Copropriété : indicateur + charges mensuelles (vente ou location).
+    is_condo = db.Column(db.Boolean, default=False)
+    condo_fees = db.Column(db.Numeric(10, 2))  # charges de copropriété mensuelles
 
     # Characteristics
     surface = db.Column(db.Float)  # m2
@@ -93,6 +96,8 @@ class Property(db.Model):
             'price': float(self.price) if self.price else None,
             'price_per_sqm': float(self.price_per_sqm) if self.price_per_sqm else None,
             'charges': float(self.charges) if self.charges else None,
+            'is_condo': bool(self.is_condo),
+            'condo_fees': float(self.condo_fees) if self.condo_fees else None,
             'surface': self.surface,
             'land_surface': self.land_surface,
             'rooms': self.rooms,
