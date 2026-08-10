@@ -1,5 +1,8 @@
 import api from './api.js'
 import { listings, currentProfile, partners, threads } from '../data/index.js'
+import {
+  affiliates, verificationRequests, reservedOffers, grants, reportingRows, invoices, apiKeys, webhooks,
+} from '../data/partnerExtras.js'
 import { lifestyleLabel, mapListingDetail, mapListingHit, mapProfile, mapSearchFilters } from './mappers.js'
 
 // Mapping importance front (Questionnaire.jsx) <-> backend (coloc-profile référentiel).
@@ -748,5 +751,255 @@ export async function requestPasswordReset(email) {
 
 export async function resetPassword(token, newPassword) {
   const { data } = await api.post('/auth/reset-password', { token, new_password: newPassword })
+  return data
+}
+
+// ---------------------------------------------------------------------------------------
+// Portail partenaire (`/partner/*`, service coloc-listing) — affiliés, vérifications,
+// réservations, subventions, factures, clés API, webhooks, reporting. Mock fallback
+// (domaine 'partners', mocké par défaut en dev — cf. MOCK_DOMAINS) réutilise/complète
+// les jeux de données statiques `data/partnerExtras.js` en état mutable local, pour que
+// les create/update/actions se reflètent dans les list* suivants (session courante).
+// ---------------------------------------------------------------------------------------
+
+const _newMockId = () => (crypto.randomUUID?.() ?? String(Date.now()))
+
+export async function getPartnerMe() {
+  if (isMocked('partners')) {
+    const self = partners[0]
+    return delay({
+      id: self?.id ?? 1, nom: self?.nom ?? 'Partenaire Demo', type: self?.type ?? 'Université',
+      email: 'contact@partenaire-demo.ma', statut: 'actif', quota: self?.quota ?? 500, verifies: self?.verifies ?? 0,
+    })
+  }
+  const { data } = await api.get('/partner/me')
+  return data
+}
+
+let _mockAffiliates = [...affiliates]
+
+export async function listAffilies() {
+  if (isMocked('partners')) return delay(_mockAffiliates)
+  const { data } = await api.get('/partner/affiliates')
+  return data
+}
+
+export async function createAffilie(payload) {
+  if (isMocked('partners')) {
+    const item = { id: _newMockId(), statut: 'enAttente', ...payload }
+    _mockAffiliates = [..._mockAffiliates, item]
+    return delay(item)
+  }
+  const { data } = await api.post('/partner/affiliates', payload)
+  return data
+}
+
+export async function updateAffilie(id, payload) {
+  if (isMocked('partners')) {
+    _mockAffiliates = _mockAffiliates.map((a) => (a.id === id ? { ...a, ...payload } : a))
+    return delay(_mockAffiliates.find((a) => a.id === id))
+  }
+  const { data } = await api.patch(`/partner/affiliates/${id}`, payload)
+  return data
+}
+
+let _mockVerifications = [...verificationRequests]
+
+export async function listVerifications() {
+  if (isMocked('partners')) return delay(_mockVerifications)
+  const { data } = await api.get('/partner/verifications')
+  return data
+}
+
+export async function createVerification(payload) {
+  if (isMocked('partners')) {
+    const item = { id: _newMockId(), statut: 'enAttente', date: new Date().toISOString().slice(0, 10), ...payload }
+    _mockVerifications = [..._mockVerifications, item]
+    return delay(item)
+  }
+  const { data } = await api.post('/partner/verifications', payload)
+  return data
+}
+
+export async function approveVerification(id) {
+  if (isMocked('partners')) {
+    _mockVerifications = _mockVerifications.map((v) => (v.id === id ? { ...v, statut: 'validee' } : v))
+    return delay(_mockVerifications.find((v) => v.id === id))
+  }
+  const { data } = await api.post(`/partner/verifications/${id}/approve`)
+  return data
+}
+
+export async function rejectVerification(id) {
+  if (isMocked('partners')) {
+    _mockVerifications = _mockVerifications.map((v) => (v.id === id ? { ...v, statut: 'rejetee' } : v))
+    return delay(_mockVerifications.find((v) => v.id === id))
+  }
+  const { data } = await api.post(`/partner/verifications/${id}/reject`)
+  return data
+}
+
+let _mockReservations = [...reservedOffers]
+
+export async function listReservations() {
+  if (isMocked('partners')) return delay(_mockReservations)
+  const { data } = await api.get('/partner/reservations')
+  return data
+}
+
+export async function createReservation(payload) {
+  if (isMocked('partners')) {
+    const item = { id: _newMockId(), statut: 'active', ...payload }
+    _mockReservations = [..._mockReservations, item]
+    return delay(item)
+  }
+  const { data } = await api.post('/partner/reservations', payload)
+  return data
+}
+
+export async function releaseReservation(id) {
+  if (isMocked('partners')) {
+    _mockReservations = _mockReservations.map((r) => (r.id === id ? { ...r, statut: 'liberee' } : r))
+    return delay(_mockReservations.find((r) => r.id === id))
+  }
+  const { data } = await api.post(`/partner/reservations/${id}/release`)
+  return data
+}
+
+let _mockGrants = [...grants]
+
+export async function listGrants() {
+  if (isMocked('partners')) return delay(_mockGrants)
+  const { data } = await api.get('/partner/grants')
+  return data
+}
+
+export async function createGrant(payload) {
+  if (isMocked('partners')) {
+    const item = { id: _newMockId(), statut: 'enAttente', ...payload }
+    _mockGrants = [..._mockGrants, item]
+    return delay(item)
+  }
+  const { data } = await api.post('/partner/grants', payload)
+  return data
+}
+
+export async function updateGrant(id, payload) {
+  if (isMocked('partners')) {
+    _mockGrants = _mockGrants.map((g) => (g.id === id ? { ...g, ...payload } : g))
+    return delay(_mockGrants.find((g) => g.id === id))
+  }
+  const { data } = await api.patch(`/partner/grants/${id}`, payload)
+  return data
+}
+
+let _mockInvoices = [...invoices]
+
+export async function listInvoices() {
+  if (isMocked('partners')) return delay(_mockInvoices)
+  const { data } = await api.get('/partner/invoices')
+  return data
+}
+
+export async function createInvoice(payload) {
+  if (isMocked('partners')) {
+    const item = {
+      id: _newMockId(), statut: 'emise', devise: 'Đh',
+      dateEmission: new Date().toISOString().slice(0, 10), ...payload,
+    }
+    _mockInvoices = [..._mockInvoices, item]
+    return delay(item)
+  }
+  const { data } = await api.post('/partner/invoices', payload)
+  return data
+}
+
+export async function updateInvoice(id, payload) {
+  if (isMocked('partners')) {
+    _mockInvoices = _mockInvoices.map((i) => (i.id === id ? { ...i, ...payload } : i))
+    return delay(_mockInvoices.find((i) => i.id === id))
+  }
+  const { data } = await api.patch(`/partner/invoices/${id}`, payload)
+  return data
+}
+
+let _mockApiKeys = [...apiKeys]
+
+export async function listApiKeys() {
+  if (isMocked('partners')) return delay(_mockApiKeys)
+  const { data } = await api.get('/partner/api-keys')
+  return data
+}
+
+// Mock renvoie aussi la clé brute (`key`) pour permettre à l'UI de dérouler le flux
+// « affichée une seule fois » — jamais renvoyée par `listApiKeys` ensuite (seul `masked` l'est).
+export async function createApiKey(payload) {
+  if (isMocked('partners')) {
+    const rawKey = `pk_demo_${Math.random().toString(36).slice(2, 10)}`
+    const item = {
+      id: _newMockId(), masked: `${rawKey.slice(0, 8)}••••••••${rawKey.slice(-4)}`,
+      creee: new Date().toISOString().slice(0, 10), statut: 'active', ...payload,
+    }
+    _mockApiKeys = [..._mockApiKeys, item]
+    return delay({ ...item, key: rawKey })
+  }
+  const { data } = await api.post('/partner/api-keys', payload)
+  return data
+}
+
+export async function revokeApiKey(id) {
+  if (isMocked('partners')) {
+    _mockApiKeys = _mockApiKeys.map((k) => (k.id === id ? { ...k, statut: 'revoquee' } : k))
+    return delay(_mockApiKeys.find((k) => k.id === id))
+  }
+  const { data } = await api.delete(`/partner/api-keys/${id}`)
+  return data
+}
+
+let _mockWebhooks = [...webhooks]
+
+export async function listWebhooks() {
+  if (isMocked('partners')) return delay(_mockWebhooks)
+  const { data } = await api.get('/partner/webhooks')
+  return data
+}
+
+export async function createWebhook(payload) {
+  if (isMocked('partners')) {
+    const item = { id: _newMockId(), statut: 'actif', evenements: [], ...payload }
+    _mockWebhooks = [..._mockWebhooks, item]
+    return delay(item)
+  }
+  const { data } = await api.post('/partner/webhooks', payload)
+  return data
+}
+
+export async function updateWebhook(id, payload) {
+  if (isMocked('partners')) {
+    _mockWebhooks = _mockWebhooks.map((w) => (w.id === id ? { ...w, ...payload } : w))
+    return delay(_mockWebhooks.find((w) => w.id === id))
+  }
+  const { data } = await api.patch(`/partner/webhooks/${id}`, payload)
+  return data
+}
+
+export async function deleteWebhook(id) {
+  if (isMocked('partners')) {
+    _mockWebhooks = _mockWebhooks.filter((w) => w.id !== id)
+    return delay({ message: 'Webhook supprimé' })
+  }
+  const { data } = await api.delete(`/partner/webhooks/${id}`)
+  return data
+}
+
+export async function testWebhook(id) {
+  if (isMocked('partners')) return delay({ id, statut: 'teste', dernierTest: new Date().toISOString() })
+  const { data } = await api.post(`/partner/webhooks/${id}/test`)
+  return data
+}
+
+export async function getPartnerReporting() {
+  if (isMocked('partners')) return delay(reportingRows)
+  const { data } = await api.get('/partner/reporting')
   return data
 }
