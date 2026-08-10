@@ -55,3 +55,7 @@ class InvoiceCreateIn(BaseModel):
 
 class InvoiceUpdateIn(BaseModel):
     status: str  # validé contre INVOICE_STATUSES dans la route
+
+
+class ApiKeyCreateIn(BaseModel):
+    label: str = Field(min_length=1, max_length=120)

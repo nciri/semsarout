@@ -4,6 +4,7 @@ Conventions du mesh : erreurs legacy {'error': msg}, identité via x-semsar-*
 (BFF), outbox transactionnel. Toutes les routes métier exigent le tenant
 m3a-l3achrane (défense en profondeur — le BFF route déjà par host/tenant).
 """
+import secrets
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, FastAPI, Request
@@ -15,9 +16,9 @@ from semsar_common import get_settings, install_legacy_error_handlers, setup_log
 from semsar_events import enqueue
 
 from . import events
-from .auth import PartnerCtx, PartnerForbidden, _uid, partner_ctx
+from .auth import PartnerCtx, PartnerForbidden, _uid, hash_key, partner_ctx
 from .db import get_db, init_db
-from .models import Affilie, Grant, Invoice, Partner, Reservation, Verification, _now
+from .models import Affilie, ApiKey, Grant, Invoice, Partner, Reservation, Verification, _now
 from .schemas import (
     AFFILIE_STATUSES,
     GRANT_STATUSES,
@@ -25,6 +26,7 @@ from .schemas import (
     VERIFICATION_DOC_TYPES,
     AffilieCreateIn,
     AffilieUpdateIn,
+    ApiKeyCreateIn,
     GrantCreateIn,
     GrantUpdateIn,
     InvoiceCreateIn,
@@ -332,6 +334,41 @@ async def update_invoice(invoice_id: str, body: InvoiceUpdateIn, ctx: PartnerCtx
     db.commit()
     db.refresh(invoice)
     return invoice.to_dict()
+
+
+@router.get("/partner/api-keys")
+async def list_api_keys(ctx: PartnerCtx = Depends(partner_ctx), db=Depends(get_db)) -> list:
+    keys = (
+        db.query(ApiKey)
+        .filter(ApiKey.partner_id == ctx.partner_id)
+        .order_by(ApiKey.created_at.desc())
+        .all()
+    )
+    return [k.to_dict() for k in keys]
+
+
+@router.post("/partner/api-keys", status_code=201)
+async def create_api_key(body: ApiKeyCreateIn, ctx: PartnerCtx = Depends(partner_ctx),
+                          db=Depends(get_db)) -> dict:
+    raw = secrets.token_urlsafe(32)
+    key = ApiKey(partner_id=ctx.partner_id, label=body.label, prefix=raw[:8],
+                 key_hash=hash_key(raw))
+    db.add(key)
+    db.commit()
+    db.refresh(key)
+    # Le brut n'est renvoyé QUE dans cette réponse de création — jamais rejoué ni relogué.
+    return {**key.to_dict(), "key": raw}
+
+
+@router.delete("/partner/api-keys/{key_id}")
+async def revoke_api_key(key_id: str, ctx: PartnerCtx = Depends(partner_ctx), db=Depends(get_db)):
+    key = _scoped(db, ApiKey, key_id, ctx)
+    if key is None:
+        return _err("Clé API introuvable", 404)
+    key.revoked_at = _now()
+    db.commit()
+    db.refresh(key)
+    return key.to_dict()
 
 
 app.include_router(router)
