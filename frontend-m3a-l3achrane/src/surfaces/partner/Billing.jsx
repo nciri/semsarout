@@ -1,17 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Badge, Button, Icon, Input, Select } from '../../ds/index.js'
+import { Badge, Button, Icon, Input } from '../../ds/index.js'
 import { createInvoice, listInvoices, updateInvoice } from '../../services/index.js'
 import { PartnerCard, PartnerScreen, PartnerTable } from './PartnerSection.jsx'
 
 // Valeurs techniques envoyées à/reçues de l'API — ne JAMAIS traduire, seul le libellé affiché l'est.
-const INVOICE_STATUSES = ['DRAFT', 'SENT', 'PAID', 'OVERDUE']
 const STATUS_TONE = { DRAFT: 'neutral', SENT: 'info', PAID: 'verified', OVERDUE: 'danger' }
 
 // Étoile rouge sur les champs requis — patron canonique des formulaires (cf. Inscription.jsx).
 const requiredStar = <span style={{ color: 'var(--red-500)' }} aria-hidden> *</span>
 
-const EMPTY_FORM = { number: '', period: '', amount: '', status: INVOICE_STATUSES[0] }
+const EMPTY_FORM = { number: '', period: '', amount: '' }
 
 function AddInvoiceForm({ onCreated }) {
   const { t } = useTranslation(['partner', 'common'])
@@ -19,8 +18,6 @@ function AddInvoiceForm({ onCreated }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(false)
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
-
-  const statusOptions = INVOICE_STATUSES.map((key) => ({ value: key, label: t(`partner:billing.status.${key}`) }))
 
   const canSubmit = form.number.trim() && form.period.trim() && Number(form.amount) > 0
 
@@ -30,11 +27,12 @@ function AddInvoiceForm({ onCreated }) {
     setSubmitting(true)
     setError(false)
     try {
+      // Le backend force toujours DRAFT à la création (InvoiceCreateIn n'a pas de champ status) —
+      // pas de sélecteur de statut ici, le changement se fait via l'action updateInvoice.
       const payload = {
         number: form.number.trim(),
         period: form.period.trim(),
         amount: Number(form.amount),
-        status: form.status,
       }
       const created = await createInvoice(payload)
       onCreated(created)
@@ -49,7 +47,7 @@ function AddInvoiceForm({ onCreated }) {
   return (
     <PartnerCard title={t('partner:billing.addForm.title')}>
       <form onSubmit={submit} style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
           <Input
             id="invoice-number"
             label={<>{t('partner:billing.addForm.numberLabel')}{requiredStar}</>}
@@ -76,13 +74,6 @@ function AddInvoiceForm({ onCreated }) {
             value={form.amount}
             onChange={set('amount')}
             required
-          />
-          <Select
-            id="invoice-status"
-            label={t('partner:billing.addForm.statusLabel')}
-            options={statusOptions}
-            value={form.status}
-            onChange={set('status')}
           />
         </div>
         {error && (

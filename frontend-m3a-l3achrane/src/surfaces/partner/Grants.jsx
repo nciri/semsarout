@@ -5,13 +5,12 @@ import { createGrant, listAffilies, listGrants, updateGrant } from '../../servic
 import { PartnerCard, PartnerScreen, PartnerTable } from './PartnerSection.jsx'
 
 // Valeurs techniques envoyées à/reçues de l'API — ne JAMAIS traduire, seul le libellé affiché l'est.
-const GRANT_STATUSES = ['PLANNED', 'PAID', 'CANCELLED']
 const STATUS_TONE = { PLANNED: 'info', PAID: 'verified', CANCELLED: 'danger' }
 
 // Étoile rouge sur les champs requis — patron canonique des formulaires (cf. Inscription.jsx).
 const requiredStar = <span style={{ color: 'var(--red-500)' }} aria-hidden> *</span>
 
-const EMPTY_FORM = { program: '', affilie_id: '', amount: '', status: GRANT_STATUSES[0] }
+const EMPTY_FORM = { program: '', affilie_id: '', amount: '' }
 
 function AddGrantForm({ affiliates, onCreated }) {
   const { t } = useTranslation(['partner', 'common'])
@@ -24,7 +23,6 @@ function AddGrantForm({ affiliates, onCreated }) {
     { value: '', label: t('partner:grants.addForm.affiliateNone') },
     ...affiliates.map((a) => ({ value: String(a.id), label: a.full_name ?? a.nom })),
   ]
-  const statusOptions = GRANT_STATUSES.map((key) => ({ value: key, label: t(`partner:grants.status.${key}`) }))
 
   const canSubmit = form.program.trim() && Number(form.amount) > 0
 
@@ -34,7 +32,9 @@ function AddGrantForm({ affiliates, onCreated }) {
     setSubmitting(true)
     setError(false)
     try {
-      const payload = { program: form.program.trim(), amount: Number(form.amount), status: form.status }
+      // Le backend force toujours PLANNED à la création (GrantCreateIn n'a pas de champ status) —
+      // pas de sélecteur de statut ici, le changement se fait via l'action updateGrant.
+      const payload = { program: form.program.trim(), amount: Number(form.amount) }
       if (form.affilie_id) payload.affilie_id = form.affilie_id
       const created = await createGrant(payload)
       onCreated(created)
@@ -49,7 +49,7 @@ function AddGrantForm({ affiliates, onCreated }) {
   return (
     <PartnerCard title={t('partner:grants.addForm.title')}>
       <form onSubmit={submit} style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
           <Input
             id="grant-program"
             label={<>{t('partner:grants.addForm.programLabel')}{requiredStar}</>}
@@ -75,13 +75,6 @@ function AddGrantForm({ affiliates, onCreated }) {
             value={form.amount}
             onChange={set('amount')}
             required
-          />
-          <Select
-            id="grant-status"
-            label={t('partner:grants.addForm.statusLabel')}
-            options={statusOptions}
-            value={form.status}
-            onChange={set('status')}
           />
         </div>
         {error && (

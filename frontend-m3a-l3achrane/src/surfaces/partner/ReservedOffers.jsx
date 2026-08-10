@@ -24,7 +24,7 @@ function AddReservationForm({ affiliates, onCreated }) {
     ...affiliates.map((a) => ({ value: String(a.id), label: a.full_name ?? a.nom })),
   ]
 
-  const canSubmit = form.listing_id.trim() && form.label.trim()
+  const canSubmit = form.listing_id.trim() && form.label.trim() && form.start_date && form.end_date
 
   const submit = async (e) => {
     e.preventDefault()
@@ -32,10 +32,13 @@ function AddReservationForm({ affiliates, onCreated }) {
     setSubmitting(true)
     setError(false)
     try {
-      const payload = { listing_id: form.listing_id.trim(), label: form.label.trim() }
+      const payload = {
+        listing_id: form.listing_id.trim(),
+        label: form.label.trim(),
+        start_date: form.start_date,
+        end_date: form.end_date,
+      }
       if (form.affilie_id) payload.affilie_id = form.affilie_id
-      if (form.start_date) payload.start_date = form.start_date
-      if (form.end_date) payload.end_date = form.end_date
       const created = await createReservation(payload)
       onCreated(created)
       setForm(EMPTY_FORM)
@@ -78,16 +81,18 @@ function AddReservationForm({ affiliates, onCreated }) {
           <Input
             id="reservation-start-date"
             type="date"
-            label={t('partner:reservedOffers.addForm.startDateLabel')}
+            label={<>{t('partner:reservedOffers.addForm.startDateLabel')}{requiredStar}</>}
             value={form.start_date}
             onChange={set('start_date')}
+            required
           />
           <Input
             id="reservation-end-date"
             type="date"
-            label={t('partner:reservedOffers.addForm.endDateLabel')}
+            label={<>{t('partner:reservedOffers.addForm.endDateLabel')}{requiredStar}</>}
             value={form.end_date}
             onChange={set('end_date')}
+            required
           />
         </div>
         {error && (
