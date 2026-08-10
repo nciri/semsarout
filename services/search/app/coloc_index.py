@@ -28,6 +28,8 @@ COLOC_MAPPING: dict[str, Any] = {
             "rules": {"type": "keyword"},
             "amenities": {"type": "keyword"},
             "status": {"type": "keyword"},
+            "is_condo": {"type": "boolean"},
+            "condo_fees": {"type": "double"},
             "text": {"type": "text", "analyzer": "standard"},
         }
     }

@@ -171,6 +171,8 @@ def _search_doc(listing: Listing) -> dict:
         "house_rules": {r.code: r.value for r in listing.house_rules},
         "amenities": [k for k, v in (p.amenities or {}).items() if v],
         "status": listing.status,
+        "is_condo": bool(listing.is_condo),
+        "condo_fees": float(listing.condo_fees) if listing.condo_fees is not None else None,
     }
 
 
