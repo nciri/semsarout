@@ -49,9 +49,9 @@
     "kicker": "شبكة الشركاء",
     "heading": "المؤسسات المنتسبة",
     "table": {
-      "name": "المؤسسة",
-      "city": "المدينة",
-      "students": "الطلبة المسكّنون",
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "externalRef": "المرجع الخارجي",
       "status": "الحالة"
     },
     "status": {
@@ -59,23 +59,59 @@
       "suspendu": "معلّق",
       "enAttente": "قيد الانتظار"
     },
-    "noResults": "لا توجد مؤسسة منتسبة حاليًا."
+    "noResults": "لا توجد مؤسسة منتسبة حاليًا.",
+    "loadError": "تعذّر تحميل المنتسبين.",
+    "addForm": {
+      "title": "إضافة منتسب",
+      "fullNameLabel": "الاسم الكامل",
+      "fullNamePlaceholder": "اسم المؤسسة أو الشخص",
+      "emailLabel": "البريد الإلكتروني",
+      "emailPlaceholder": "contact@exemple.ma",
+      "externalRefLabel": "المرجع الخارجي",
+      "externalRefPlaceholder": "معرّف داخلي (اختياري)",
+      "submit": "إضافة",
+      "submitting": "جارٍ الإضافة…",
+      "error": "خطأ أثناء إضافة المنتسب."
+    }
   },
   "verifications": {
     "kicker": "التحقق من الهوية",
     "heading": "قائمة التحققات",
     "table": {
-      "student": "الطالب",
+      "affiliate": "المنتسب",
       "document": "نوع الوثيقة",
       "status": "الحالة",
-      "date": "التاريخ"
+      "date": "التاريخ",
+      "actions": "الإجراءات"
     },
     "status": {
       "enAttente": "قيد الانتظار",
       "validee": "مقبولة",
       "rejetee": "مرفوضة"
     },
-    "noResults": "لا توجد طلبات تحقق حاليًا."
+    "noResults": "لا توجد طلبات تحقق حاليًا.",
+    "loadError": "تعذّر تحميل طلبات التحقق.",
+    "docTypes": {
+      "CIN": "بطاقة التعريف الوطنية",
+      "CARTE_ETUDIANT": "بطاقة الطالب",
+      "ATTESTATION_EMPLOYEUR": "شهادة صاحب العمل",
+      "AUTRE": "أخرى"
+    },
+    "addForm": {
+      "title": "طلب تحقق جديد",
+      "affiliateLabel": "المنتسب",
+      "affiliatePlaceholder": "اختر منتسبًا",
+      "docTypeLabel": "نوع الوثيقة",
+      "submit": "إنشاء",
+      "submitting": "جارٍ الإنشاء…",
+      "error": "خطأ أثناء إنشاء طلب التحقق.",
+      "noAffiliates": "لا يوجد أي منتسب متاح. أضف منتسبًا أولاً."
+    },
+    "actions": {
+      "approve": "الموافقة",
+      "reject": "رفض",
+      "actionError": "خطأ أثناء تحديث الحالة."
+    }
   },
   "reservedOffers": {
     "kicker": "سكن محجوز",

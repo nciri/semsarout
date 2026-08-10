@@ -49,9 +49,9 @@
     "kicker": "Réseau partenaire",
     "heading": "Établissements affiliés",
     "table": {
-      "name": "Établissement",
-      "city": "Ville",
-      "students": "Étudiants logés",
+      "name": "Nom",
+      "email": "Email",
+      "externalRef": "Référence externe",
       "status": "Statut"
     },
     "status": {
@@ -59,23 +59,59 @@
       "suspendu": "Suspendu",
       "enAttente": "En attente"
     },
-    "noResults": "Aucun établissement affilié pour l'instant."
+    "noResults": "Aucun établissement affilié pour l'instant.",
+    "loadError": "Impossible de charger les affiliés.",
+    "addForm": {
+      "title": "Ajouter un affilié",
+      "fullNameLabel": "Nom complet",
+      "fullNamePlaceholder": "Nom de l'établissement ou de la personne",
+      "emailLabel": "Email",
+      "emailPlaceholder": "contact@exemple.ma",
+      "externalRefLabel": "Référence externe",
+      "externalRefPlaceholder": "Identifiant interne (optionnel)",
+      "submit": "Ajouter",
+      "submitting": "Ajout…",
+      "error": "Erreur lors de l'ajout de l'affilié."
+    }
   },
   "verifications": {
     "kicker": "Contrôle d'identité",
     "heading": "File de vérifications",
     "table": {
-      "student": "Étudiant",
+      "affiliate": "Affilié",
       "document": "Type de document",
       "status": "Statut",
-      "date": "Date"
+      "date": "Date",
+      "actions": "Actions"
     },
     "status": {
       "enAttente": "En attente",
       "validee": "Validée",
       "rejetee": "Rejetée"
     },
-    "noResults": "Aucune demande de vérification en cours."
+    "noResults": "Aucune demande de vérification en cours.",
+    "loadError": "Impossible de charger les vérifications.",
+    "docTypes": {
+      "CIN": "CIN",
+      "CARTE_ETUDIANT": "Carte d'étudiant",
+      "ATTESTATION_EMPLOYEUR": "Attestation employeur",
+      "AUTRE": "Autre"
+    },
+    "addForm": {
+      "title": "Nouvelle vérification",
+      "affiliateLabel": "Affilié",
+      "affiliatePlaceholder": "Sélectionner un affilié",
+      "docTypeLabel": "Type de document",
+      "submit": "Créer",
+      "submitting": "Création…",
+      "error": "Erreur lors de la création de la vérification.",
+      "noAffiliates": "Aucun affilié disponible. Ajoutez un affilié d'abord."
+    },
+    "actions": {
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "actionError": "Erreur lors de la mise à jour du statut."
+    }
   },
   "reservedOffers": {
     "kicker": "Logement réservé",
