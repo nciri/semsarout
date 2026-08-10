@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Input, Select, Button } from '../../../ds/index.js'
 
@@ -5,6 +6,14 @@ const MEDIA_TYPE_VALUES = ['CHAMBRE', 'PARTIES_COMMUNES', 'AUTRE']
 
 export default function StepDispoPhotos({ form, update }) {
   const { t } = useTranslation(['app'])
+  const photosRef = useRef(form.photos)
+  photosRef.current = form.photos
+
+  useEffect(() => () => {
+    for (const p of photosRef.current) {
+      if (p.previewUrl) URL.revokeObjectURL(p.previewUrl)
+    }
+  }, [])
 
   const mediaTypes = MEDIA_TYPE_VALUES.map((value) => ({ value, label: t(`app:publier.mediaTypes.${value}`) }))
 
@@ -26,6 +35,8 @@ export default function StepDispoPhotos({ form, update }) {
   }
 
   const removePhoto = (index) => {
+    const removed = form.photos[index]
+    if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl)
     const photos = form.photos.filter((_, i) => i !== index).map((p, i) => ({ ...p, position: i }))
     update({ photos })
   }
