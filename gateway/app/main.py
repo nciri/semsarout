@@ -770,8 +770,9 @@ async def _fetch_internal_stats(
 @app.get("/api/v1/backoffice/overview", include_in_schema=False)
 async def backoffice_overview(request: Request) -> Response:
     """KPIs consolidés de la vue d'ensemble back-office m3a (super-admin uniquement) : fan-out
-    vers identity(tenant)+coloc-listing+coloc-profile `/internal/stats`. Dégradation propre par
-    service (sous-clé `null`) si un service échoue — jamais d'échec global de la vue (spec §8)."""
+    vers identity(tenant)+coloc-listing+coloc-profile+partner `/internal/stats`. Dégradation
+    propre par service (sous-clé `null`) si un service échoue — jamais d'échec global de la vue
+    (spec §8)."""
     app_ = request.app
     tenant = _resolve_tenant(request.headers, request.headers.get("host", ""))
     ident = await _resolve_identity(
@@ -785,16 +786,18 @@ async def backoffice_overview(request: Request) -> Response:
         return Response(content=b'{"error":"Tenant mismatch"}', status_code=403,
                         media_type="application/json")
     headers = {"x-internal-token": settings.internal_token}
-    users_stats, listings_stats, profiles_stats = await asyncio.gather(
+    users_stats, listings_stats, profiles_stats, partners_stats = await asyncio.gather(
         _fetch_internal_stats(app_.state.identity, "/internal/users/stats", tenant, headers),
         _fetch_internal_stats(app_.state.coloc_listing, "/internal/stats", tenant, headers),
         _fetch_internal_stats(app_.state.coloc_profile, "/internal/stats", tenant, headers),
+        _fetch_internal_stats(app_.state.partner, "/internal/stats", tenant, headers),
     )
     return JSONResponse({
         "tenant": tenant,
         "users": users_stats,
         "listings": listings_stats,
         "profiles": profiles_stats,
+        "partners": partners_stats,
     })
 
 
