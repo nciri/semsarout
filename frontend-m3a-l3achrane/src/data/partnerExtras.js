@@ -2,52 +2,59 @@
 // domains — everything here is static demo data, consumed directly by the surfaces/partner/*
 // screens without going through the services/api layer (no network call to fake).
 
+// Champs et valeurs de statut alignés sur services/partner/app/models.py (Affilie.to_dict)
+// et AFFILIE_STATUSES (services/partner/app/schemas.py) pour que le mode mock reflète
+// fidèlement le contrat de l'API réelle.
 export const affiliates = [
-  { id: 1, nom: 'Université Mohammed V', ville: 'Rabat', logementsEtudiants: 340, statut: 'actif' },
-  { id: 2, nom: 'ENSA Casablanca', ville: 'Casablanca', logementsEtudiants: 128, statut: 'actif' },
-  { id: 3, nom: 'OCP Group', ville: 'Khouribga', logementsEtudiants: 96, statut: 'actif' },
-  { id: 4, nom: 'Université Hassan II', ville: 'Casablanca', logementsEtudiants: 212, statut: 'suspendu' },
-  { id: 5, nom: 'École Centrale Casablanca', ville: 'Casablanca', logementsEtudiants: 54, statut: 'enAttente' },
+  { id: 1, full_name: 'Université Mohammed V', email: 'contact@um5.ac.ma', external_ref: 'UM5-RABAT', status: 'ACTIVE' },
+  { id: 2, full_name: 'ENSA Casablanca', email: 'contact@ensa-casa.ac.ma', external_ref: 'ENSA-CASA', status: 'ACTIVE' },
+  { id: 3, full_name: 'OCP Group', email: 'rh@ocpgroup.ma', external_ref: 'OCP-KHOURIBGA', status: 'ACTIVE' },
+  { id: 4, full_name: 'Université Hassan II', email: 'contact@uh2c.ac.ma', external_ref: 'UH2C-CASA', status: 'INACTIVE' },
+  { id: 5, full_name: 'École Centrale Casablanca', email: 'contact@centrale-casablanca.ma', external_ref: 'ECC-CASA', status: 'PENDING' },
 ]
 
+// Champs et valeurs alignés sur services/partner/app/models.py (Verification.to_dict) :
+// affilie_id référence `affiliates` ci-dessus, doc_type ∈ DOC_TYPES (Verifications.jsx),
+// status ∈ PENDING/APPROVED/REJECTED.
 export const verificationRequests = [
-  { id: 1, etudiant: 'Youssef Benali', document: "Carte d'étudiant", statut: 'enAttente', date: '2026-08-05' },
-  { id: 2, etudiant: 'Imane Mrabet', document: 'CIN', statut: 'enAttente', date: '2026-08-05' },
-  { id: 3, etudiant: 'Nadia Chraibi', document: "Attestation d'inscription", statut: 'validee', date: '2026-08-03' },
-  { id: 4, etudiant: 'Karim Idrissi', document: "Carte d'étudiant", statut: 'rejetee', date: '2026-08-02' },
-  { id: 5, etudiant: 'Salma Ouazzani', document: 'CIN', statut: 'validee', date: '2026-08-01' },
+  { id: 1, affilie_id: 1, doc_type: 'CARTE_ETUDIANT', status: 'PENDING', submitted_at: '2026-08-05T09:00:00+00:00' },
+  { id: 2, affilie_id: 2, doc_type: 'CIN', status: 'PENDING', submitted_at: '2026-08-05T10:30:00+00:00' },
+  { id: 3, affilie_id: 3, doc_type: 'ATTESTATION_EMPLOYEUR', status: 'APPROVED', submitted_at: '2026-08-03T08:15:00+00:00' },
+  { id: 4, affilie_id: 4, doc_type: 'CARTE_ETUDIANT', status: 'REJECTED', submitted_at: '2026-08-02T14:00:00+00:00' },
+  { id: 5, affilie_id: 5, doc_type: 'CIN', status: 'APPROVED', submitted_at: '2026-08-01T11:45:00+00:00' },
 ]
 
+// Champs et valeurs de statut alignés sur services/partner/app/schemas.py (RESERVATION_STATUSES)
+// pour que le mode mock reflète fidèlement le contrat de l'API réelle.
 export const reservedOffers = [
-  { id: 1, annonce: 'Studio meublé — Agdal', reserveePour: 'Université Mohammed V', periode: 'Sept. 2026 — Juin 2027', statut: 'active' },
-  { id: 2, annonce: 'Colocation 3 chambres — Maarif', reserveePour: 'ENSA Casablanca', periode: 'Sept. 2026 — Juin 2027', statut: 'active' },
-  { id: 3, annonce: 'Chambre chez l’habitant — Hay Riad', reserveePour: 'OCP Group', periode: 'Oct. 2026 — Mars 2027', statut: 'expiree' },
-  { id: 4, annonce: 'Appartement 2 pièces — Bourgogne', reserveePour: 'Université Hassan II', periode: 'Sept. 2026 — Juin 2027', statut: 'enAttente' },
+  { id: 1, listing_id: 'LST-1042', affilie_id: 1, label: 'Studio meublé — Agdal', start_date: '2026-09-01', end_date: '2027-06-30', status: 'RESERVED' },
+  { id: 2, listing_id: 'LST-2087', affilie_id: 2, label: 'Colocation 3 chambres — Maarif', start_date: '2026-09-01', end_date: '2027-06-30', status: 'RESERVED' },
+  { id: 3, listing_id: 'LST-3310', affilie_id: 3, label: 'Chambre chez l’habitant — Hay Riad', start_date: '2026-10-01', end_date: '2027-03-31', status: 'CONVERTED' },
+  { id: 4, listing_id: 'LST-4118', affilie_id: 4, label: 'Appartement 2 pièces — Bourgogne', start_date: '2026-09-01', end_date: '2027-06-30', status: 'RELEASED' },
 ]
 
+// Champs et valeurs de statut alignés sur GRANT_STATUSES (services/partner/app/schemas.py).
 export const grants = [
-  { id: 1, programme: 'Bourse logement — Rectorat Rabat', beneficiaire: 'Youssef Benali', montant: 1500, statut: 'versee' },
-  { id: 2, programme: 'Aide sociale ENSA', beneficiaire: 'Imane Mrabet', montant: 900, statut: 'enCours' },
-  { id: 3, programme: 'Fonds solidarité OCP', beneficiaire: 'Karim Idrissi', montant: 2000, statut: 'enAttente' },
-  { id: 4, programme: 'Bourse logement — Rectorat Rabat', beneficiaire: 'Nadia Chraibi', montant: 1500, statut: 'versee' },
-]
-
-export const reportingRows = [
-  { periode: 'Mai 2026', verifications: 84, subventionsVersees: 12, montantTotal: 18500 },
-  { periode: 'Juin 2026', verifications: 112, subventionsVersees: 18, montantTotal: 27200 },
-  { periode: 'Juillet 2026', verifications: 96, subventionsVersees: 15, montantTotal: 22600 },
+  { id: 1, program: 'Bourse logement — Rectorat Rabat', affilie_id: 1, amount: 1500, status: 'PAID' },
+  { id: 2, program: 'Aide sociale ENSA', affilie_id: 2, amount: 900, status: 'PLANNED' },
+  { id: 3, program: 'Fonds solidarité OCP', affilie_id: 3, amount: 2000, status: 'CANCELLED' },
+  { id: 4, program: 'Bourse logement — Rectorat Rabat', affilie_id: 1, amount: 1500, status: 'PAID' },
 ]
 
 // No demo invoices — this shows the empty state rather than fabricating billing history.
 export const invoices = []
 
+// Champs alignés sur services/partner/app/models.py (ApiKey.to_dict) — `prefix` seul est
+// exposé après création (jamais key_hash), `revoked_at` porte l'état actif/révoquée.
 export const apiKeys = [
-  { id: 1, label: 'Clé de production', masked: 'sk_live_••••••••4f2a', creee: '2026-03-12', statut: 'active' },
-  { id: 2, label: 'Clé de test', masked: 'sk_test_••••••••91c7', creee: '2026-01-20', statut: 'active' },
+  { id: 1, label: 'Clé de production', prefix: 'sk_live_a1b2', last_used_at: '2026-08-04T09:00:00+00:00', created_at: '2026-03-12T00:00:00+00:00', revoked_at: null },
+  { id: 2, label: 'Clé de test', prefix: 'sk_test_c3d4', last_used_at: null, created_at: '2026-01-20T00:00:00+00:00', revoked_at: null },
 ]
 
+// Champs alignés sur services/partner/app/models.py (Webhook.to_dict) — `events` utilise les
+// valeurs techniques WEBHOOK_EVENT_TYPES (ApiWebhooks.jsx), jamais traduites.
 export const webhooks = [
-  { id: 1, url: 'https://partenaire-univ.example.ma/hooks/verifications', evenements: ['verification.validee', 'verification.rejetee'], statut: 'actif' },
-  { id: 2, url: 'https://ocp-rh.example.ma/hooks/subventions', evenements: ['subvention.versee'], statut: 'actif' },
-  { id: 3, url: 'https://ensa-scolarite.example.ma/hooks/offres', evenements: ['offre.reservee', 'offre.expiree'], statut: 'inactif' },
+  { id: 1, url: 'https://partenaire-univ.example.ma/hooks/verifications', events: ['partner.verification_decided'], active: true, created_at: '2026-08-01T09:00:00+00:00' },
+  { id: 2, url: 'https://ocp-rh.example.ma/hooks/subventions', events: ['partner.grant_paid'], active: true, created_at: '2026-07-15T09:00:00+00:00' },
+  { id: 3, url: 'https://ensa-scolarite.example.ma/hooks/offres', events: ['partner.reservation_created', 'partner.reservation_released'], active: false, created_at: '2026-06-20T09:00:00+00:00' },
 ]

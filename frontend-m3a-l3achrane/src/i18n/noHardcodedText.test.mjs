@@ -54,6 +54,7 @@ export const MIGRATED_FILES = [
   'src/surfaces/partner/Reporting.jsx',
   'src/surfaces/partner/Billing.jsx',
   'src/surfaces/partner/ApiWebhooks.jsx',
+  'src/surfaces/partner/charts.jsx',
 ]
 
 const FRENCH_ACCENTS = /[àâäéèêëîïôöùûüçœÀÂÄÉÈÊËÎÏÔÖÙÛÜÇŒ]/

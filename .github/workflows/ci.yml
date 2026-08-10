@@ -44,7 +44,7 @@ jobs:
           services/coloc-listing services/coloc-profile services/commission \
           services/contract services/crm services/directory services/identity \
           services/legal services/listing services/marketplace services/matching \
-          services/messaging services/notification services/payment services/rental \
+          services/messaging services/notification services/partner services/payment services/rental \
           services/search services/selling services/translation"
 
           if [ "$EVENT" = "pull_request" ]; then

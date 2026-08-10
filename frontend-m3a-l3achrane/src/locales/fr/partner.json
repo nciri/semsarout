@@ -2,96 +2,144 @@
   "meta": {
     "title": "Portail partenaire"
   },
+  "accessRequired": {
+    "title": "Accès partenaire requis",
+    "description": "Votre compte n'est rattaché à aucun partenaire. Contactez votre organisation ou l'équipe SemsarOut pour obtenir un accès."
+  },
   "portal": {
     "title": "Tableau de bord",
     "subtitle": "Vérifications et quotas de vos partenaires",
     "kicker": "Vie étudiante",
     "heading": "Tableau de bord logement",
+    "headingWithName": "Tableau de bord — {{name}}",
     "export": "Exporter",
     "import": "Importer un référentiel",
-    "metrics": {
-      "partners": "Partenaires",
-      "verified": "Affiliés vérifiés",
-      "totalQuota": "Quota total",
-      "fillRate": "Taux de remplissage",
-      "fillRateSub": "vérifiés / quota"
-    },
-    "quotaStatus": {
-      "reached": "Quota atteint",
-      "onTrack": "En bonne voie",
-      "underQuota": "Sous quota"
-    },
+    "loadError": "Impossible de charger le tableau de bord.",
     "privacyBanner": "Reporting anonymisé · agrégats masqués sous le seuil de k-anonymat (k ≥ 5). Aucune adresse ni identité de colocataire n'est exposée.",
     "breakdown": {
-      "title": "Répartition par type de partenaire"
+      "title": "Répartition des affiliés par statut"
     },
-    "attention": {
-      "title": "Partenaires à suivre"
+    "billingSummary": {
+      "title": "Facturation",
+      "outstanding": "Factures en cours",
+      "paid": "Factures payées"
     },
     "lastImport": {
       "title": "Dernier import",
       "empty": "Aucun référentiel importé pour l'instant",
       "hint": "Importez un fichier CSV d'affiliés pour lancer les vérifications."
     },
-    "tableTitle": "Tous les partenaires",
-    "searchPlaceholder": "Rechercher un partenaire",
+    "tableTitle": "Vos affiliés",
+    "searchPlaceholder": "Rechercher un affilié",
     "table": {
-      "partner": "Partenaire",
-      "type": "Type",
-      "verified": "Vérifiés",
-      "quota": "Quota",
-      "status": "Statut",
-      "verifiedCount": "{{count}} vérifiés",
-      "noResults": "Aucun partenaire ne correspond à cette recherche."
+      "noResults": "Aucun affilié ne correspond à cette recherche."
     }
   },
   "affiliates": {
     "kicker": "Réseau partenaire",
     "heading": "Établissements affiliés",
     "table": {
-      "name": "Établissement",
-      "city": "Ville",
-      "students": "Étudiants logés",
+      "name": "Nom",
+      "email": "Email",
+      "externalRef": "Référence externe",
       "status": "Statut"
     },
     "status": {
-      "actif": "Actif",
-      "suspendu": "Suspendu",
-      "enAttente": "En attente"
+      "ACTIVE": "Actif",
+      "INACTIVE": "Suspendu",
+      "PENDING": "En attente"
     },
-    "noResults": "Aucun établissement affilié pour l'instant."
+    "noResults": "Aucun établissement affilié pour l'instant.",
+    "loadError": "Impossible de charger les affiliés.",
+    "addForm": {
+      "title": "Ajouter un affilié",
+      "fullNameLabel": "Nom complet",
+      "fullNamePlaceholder": "Nom de l'établissement ou de la personne",
+      "emailLabel": "Email",
+      "emailPlaceholder": "contact@exemple.ma",
+      "externalRefLabel": "Référence externe",
+      "externalRefPlaceholder": "Identifiant interne (optionnel)",
+      "submit": "Ajouter",
+      "submitting": "Ajout…",
+      "error": "Erreur lors de l'ajout de l'affilié."
+    }
   },
   "verifications": {
     "kicker": "Contrôle d'identité",
     "heading": "File de vérifications",
     "table": {
-      "student": "Étudiant",
+      "affiliate": "Affilié",
       "document": "Type de document",
       "status": "Statut",
-      "date": "Date"
+      "date": "Date",
+      "actions": "Actions"
     },
     "status": {
-      "enAttente": "En attente",
-      "validee": "Validée",
-      "rejetee": "Rejetée"
+      "PENDING": "En attente",
+      "APPROVED": "Validée",
+      "REJECTED": "Rejetée"
     },
-    "noResults": "Aucune demande de vérification en cours."
+    "noResults": "Aucune demande de vérification en cours.",
+    "loadError": "Impossible de charger les vérifications.",
+    "docTypes": {
+      "CIN": "CIN",
+      "CARTE_ETUDIANT": "Carte d'étudiant",
+      "ATTESTATION_EMPLOYEUR": "Attestation employeur",
+      "AUTRE": "Autre"
+    },
+    "addForm": {
+      "title": "Nouvelle vérification",
+      "affiliateLabel": "Affilié",
+      "affiliatePlaceholder": "Sélectionner un affilié",
+      "docTypeLabel": "Type de document",
+      "submit": "Créer",
+      "submitting": "Création…",
+      "error": "Erreur lors de la création de la vérification.",
+      "noAffiliates": "Aucun affilié disponible. Ajoutez un affilié d'abord."
+    },
+    "actions": {
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "actionError": "Erreur lors de la mise à jour du statut."
+    }
   },
   "reservedOffers": {
     "kicker": "Logement réservé",
     "heading": "Offres réservées",
+    "intro": "Bloquez des logements pour vos affiliés avant qu'ils postulent.",
     "table": {
       "listing": "Annonce",
+      "listingId": "Référence annonce",
       "reservedFor": "Réservée pour",
       "period": "Période",
-      "status": "Statut"
+      "status": "Statut",
+      "actions": "Actions"
     },
     "status": {
-      "active": "Active",
-      "expiree": "Expirée",
-      "enAttente": "En attente"
+      "RESERVED": "Réservée",
+      "RELEASED": "Libérée",
+      "CONVERTED": "Convertie"
     },
-    "noResults": "Aucune offre réservée pour l'instant."
+    "noResults": "Aucune offre réservée pour l'instant.",
+    "loadError": "Impossible de charger les offres réservées.",
+    "addForm": {
+      "title": "Réserver un logement",
+      "listingLabel": "Référence annonce",
+      "listingPlaceholder": "Identifiant de l'annonce",
+      "affiliateLabel": "Affilié",
+      "affiliateNone": "Aucun",
+      "labelLabel": "Libellé",
+      "labelPlaceholder": "Ex. Studio meublé — Agdal",
+      "startDateLabel": "Début",
+      "endDateLabel": "Fin",
+      "submit": "Réserver",
+      "submitting": "Réservation…",
+      "error": "Erreur lors de la réservation du logement."
+    },
+    "actions": {
+      "release": "Libérer",
+      "actionError": "Erreur lors de la mise à jour du statut."
+    }
   },
   "grants": {
     "kicker": "Aide au logement",
@@ -100,31 +148,64 @@
       "program": "Programme",
       "beneficiary": "Bénéficiaire",
       "amount": "Montant",
-      "status": "Statut"
+      "status": "Statut",
+      "actions": "Actions"
     },
     "status": {
-      "versee": "Versée",
-      "enCours": "En cours",
-      "enAttente": "En attente"
+      "PLANNED": "Planifiée",
+      "PAID": "Versée",
+      "CANCELLED": "Annulée"
     },
-    "noResults": "Aucune subvention enregistrée."
+    "noResults": "Aucune subvention enregistrée.",
+    "loadError": "Impossible de charger les subventions.",
+    "addForm": {
+      "title": "Ajouter une subvention",
+      "programLabel": "Programme",
+      "programPlaceholder": "Ex. Bourse logement — Rectorat Rabat",
+      "affiliateLabel": "Affilié",
+      "affiliateNone": "Aucun",
+      "amountLabel": "Montant (Đh)",
+      "amountPlaceholder": "0",
+      "statusLabel": "Statut",
+      "submit": "Ajouter",
+      "submitting": "Ajout…",
+      "error": "Erreur lors de l'ajout de la subvention."
+    },
+    "actions": {
+      "markPaid": "Marquer versée",
+      "cancel": "Annuler",
+      "actionError": "Erreur lors de la mise à jour du statut."
+    }
   },
   "reporting": {
     "kicker": "Pilotage",
     "heading": "Reporting",
+    "loadError": "Impossible de charger le reporting.",
     "kpis": {
-      "totalVerifications": "Vérifications (3 derniers mois)",
-      "totalGrantsPaid": "Subventions versées",
-      "totalAmount": "Montant total versé"
+      "totalAffilies": "Affiliés",
+      "activeAffilies": "Affiliés actifs",
+      "grantsTotalAmount": "Subventions versées (total)",
+      "invoicesOutstanding": "Factures en cours"
     },
-    "tableTitle": "Récapitulatif mensuel",
-    "table": {
-      "period": "Période",
-      "verifications": "Vérifications",
-      "grantsPaid": "Subventions versées",
-      "totalAmount": "Montant total"
+    "affilieStatus": {
+      "ACTIVE": "Actifs",
+      "PENDING": "En attente",
+      "INACTIVE": "Inactifs"
     },
-    "noResults": "Aucune donnée de reporting disponible."
+    "funnel": {
+      "title": "Entonnoir de vérification",
+      "pending": "En attente",
+      "approved": "Approuvées",
+      "rejected": "Rejetées",
+      "approvalRate": "Taux d'approbation",
+      "noDecisions": "Aucune décision pour l'instant"
+    },
+    "chart": {
+      "title": "Réservations actives vs libérées",
+      "ariaLabel": "Graphique en barres comparant le nombre de réservations actives au nombre de réservations libérées",
+      "active": "Actives",
+      "released": "Libérées"
+    }
   },
   "billing": {
     "kicker": "Facturation",
@@ -134,39 +215,122 @@
       "number": "N° facture",
       "period": "Période",
       "amount": "Montant",
-      "status": "Statut"
+      "status": "Statut",
+      "actions": "Actions"
     },
     "status": {
-      "payee": "Payée",
-      "enAttente": "En attente"
+      "DRAFT": "Brouillon",
+      "SENT": "Envoyée",
+      "PAID": "Payée",
+      "OVERDUE": "En retard"
     },
     "empty": {
       "title": "Aucune facture pour l'instant",
       "hint": "Les factures apparaîtront ici dès la première période facturée."
+    },
+    "loadError": "Impossible de charger les factures.",
+    "addForm": {
+      "title": "Ajouter une facture",
+      "numberLabel": "N° facture",
+      "numberPlaceholder": "Ex. FAC-2026-014",
+      "periodLabel": "Période (AAAA-MM)",
+      "periodPlaceholder": "2026-09",
+      "amountLabel": "Montant (Đh)",
+      "amountPlaceholder": "0",
+      "statusLabel": "Statut",
+      "submit": "Ajouter",
+      "submitting": "Ajout…",
+      "error": "Erreur lors de l'ajout de la facture."
+    },
+    "actions": {
+      "send": "Envoyer",
+      "markPaid": "Marquer payée",
+      "actionError": "Erreur lors de la mise à jour du statut."
     }
   },
   "apiWebhooks": {
     "kicker": "Intégration",
     "heading": "API & webhooks",
+    "secretReveal": {
+      "copy": "Copier",
+      "copied": "Copié !",
+      "dismiss": "J'ai copié"
+    },
     "apiKeys": {
       "title": "Clés API",
       "table": {
         "label": "Nom",
         "key": "Clé",
         "created": "Créée le",
-        "status": "Statut"
-      }
+        "status": "Statut",
+        "actions": "Actions"
+      },
+      "actions": {
+        "revoke": "Révoquer",
+        "actionError": "Une erreur est survenue, réessayez."
+      },
+      "addForm": {
+        "labelLabel": "Nom de la clé",
+        "labelPlaceholder": "Ex. Clé de production",
+        "submit": "Générer une clé",
+        "submitting": "Génération…",
+        "error": "Impossible de générer la clé, réessayez."
+      },
+      "reveal": {
+        "title": "Nouvelle clé API",
+        "warning": "Copiez cette clé maintenant — elle ne sera plus jamais affichée."
+      },
+      "loadError": "Impossible de charger les clés API.",
+      "noResults": "Aucune clé API pour le moment."
     },
     "webhooks": {
       "title": "Webhooks configurés",
       "table": {
         "url": "URL",
         "events": "Événements",
-        "status": "Statut"
-      }
+        "status": "Statut",
+        "actions": "Actions"
+      },
+      "actions": {
+        "test": "Tester",
+        "activate": "Activer",
+        "deactivate": "Désactiver",
+        "delete": "Supprimer",
+        "actionError": "Une erreur est survenue, réessayez."
+      },
+      "addForm": {
+        "title": "Ajouter un webhook",
+        "urlLabel": "URL de destination",
+        "urlPlaceholder": "https://…",
+        "eventsLabel": "Événements",
+        "activeLabel": "Actif",
+        "submit": "Ajouter le webhook",
+        "submitting": "Ajout…",
+        "error": "Impossible d'ajouter le webhook, réessayez."
+      },
+      "reveal": {
+        "title": "Nouveau webhook",
+        "warning": "Copiez ce secret maintenant — il ne sera plus jamais affiché."
+      },
+      "eventTypes": {
+        "partner.affilie_created": "Affilié créé",
+        "partner.verification_decided": "Vérification décidée",
+        "partner.reservation_created": "Réservation créée",
+        "partner.reservation_released": "Réservation libérée",
+        "partner.grant_paid": "Subvention versée",
+        "partner.invoice_sent": "Facture envoyée"
+      },
+      "testResult": {
+        "DELIVERED": "Livré",
+        "FAILED": "Échec",
+        "tested": "Testé"
+      },
+      "loadError": "Impossible de charger les webhooks.",
+      "noResults": "Aucun webhook configuré pour le moment."
     },
     "status": {
       "active": "Active",
+      "revoked": "Révoquée",
       "actif": "Actif",
       "inactif": "Inactif"
     }

@@ -2,96 +2,144 @@
   "meta": {
     "title": "بوابة الشركاء"
   },
+  "accessRequired": {
+    "title": "الوصول كشريك مطلوب",
+    "description": "حسابك غير مرتبط بأي شريك. تواصل مع مؤسستك أو فريق SemsarOut للحصول على صلاحية الوصول."
+  },
   "portal": {
     "title": "لوحة التحكم",
     "subtitle": "التحققات وحصص شركائكم",
     "kicker": "الحياة الطلابية",
     "heading": "لوحة تحكم السكن",
+    "headingWithName": "لوحة التحكم — {{name}}",
     "export": "تصدير",
     "import": "استيراد سجل",
-    "metrics": {
-      "partners": "الشركاء",
-      "verified": "المنتسبون الموثّقون",
-      "totalQuota": "إجمالي الحصة",
-      "fillRate": "معدل الإشغال",
-      "fillRateSub": "موثّقون / الحصة"
-    },
-    "quotaStatus": {
-      "reached": "الحصة مستوفاة",
-      "onTrack": "في مسار جيد",
-      "underQuota": "دون الحصة"
-    },
+    "loadError": "تعذّر تحميل لوحة التحكم.",
     "privacyBanner": "تقارير مجهولة الهوية · التجميعات مخفية تحت عتبة إخفاء الهوية الجماعي (k ≥ 5). لا يتم الكشف عن أي عنوان أو هوية لأحد السكان.",
     "breakdown": {
-      "title": "التوزيع حسب نوع الشريك"
+      "title": "توزيع المنتسبين حسب الحالة"
     },
-    "attention": {
-      "title": "شركاء يستحقون المتابعة"
+    "billingSummary": {
+      "title": "الفوترة",
+      "outstanding": "فواتير قيد الأداء",
+      "paid": "فواتير مدفوعة"
     },
     "lastImport": {
       "title": "آخر استيراد",
       "empty": "لم يتم استيراد أي سجل حتى الآن",
       "hint": "استوردوا ملف CSV للمنتسبين لبدء عمليات التحقق."
     },
-    "tableTitle": "جميع الشركاء",
-    "searchPlaceholder": "البحث عن شريك",
+    "tableTitle": "منتسبوكم",
+    "searchPlaceholder": "البحث عن منتسب",
     "table": {
-      "partner": "الشريك",
-      "type": "النوع",
-      "verified": "موثّقون",
-      "quota": "الحصة",
-      "status": "الحالة",
-      "verifiedCount": "{{count}} موثّق",
-      "noResults": "لا يوجد شريك مطابق لهذا البحث."
+      "noResults": "لا يوجد منتسب مطابق لهذا البحث."
     }
   },
   "affiliates": {
     "kicker": "شبكة الشركاء",
     "heading": "المؤسسات المنتسبة",
     "table": {
-      "name": "المؤسسة",
-      "city": "المدينة",
-      "students": "الطلبة المسكّنون",
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "externalRef": "المرجع الخارجي",
       "status": "الحالة"
     },
     "status": {
-      "actif": "نشط",
-      "suspendu": "معلّق",
-      "enAttente": "قيد الانتظار"
+      "ACTIVE": "نشط",
+      "INACTIVE": "معلّق",
+      "PENDING": "قيد الانتظار"
     },
-    "noResults": "لا توجد مؤسسة منتسبة حاليًا."
+    "noResults": "لا توجد مؤسسة منتسبة حاليًا.",
+    "loadError": "تعذّر تحميل المنتسبين.",
+    "addForm": {
+      "title": "إضافة منتسب",
+      "fullNameLabel": "الاسم الكامل",
+      "fullNamePlaceholder": "اسم المؤسسة أو الشخص",
+      "emailLabel": "البريد الإلكتروني",
+      "emailPlaceholder": "contact@exemple.ma",
+      "externalRefLabel": "المرجع الخارجي",
+      "externalRefPlaceholder": "معرّف داخلي (اختياري)",
+      "submit": "إضافة",
+      "submitting": "جارٍ الإضافة…",
+      "error": "خطأ أثناء إضافة المنتسب."
+    }
   },
   "verifications": {
     "kicker": "التحقق من الهوية",
     "heading": "قائمة التحققات",
     "table": {
-      "student": "الطالب",
+      "affiliate": "المنتسب",
       "document": "نوع الوثيقة",
       "status": "الحالة",
-      "date": "التاريخ"
+      "date": "التاريخ",
+      "actions": "الإجراءات"
     },
     "status": {
-      "enAttente": "قيد الانتظار",
-      "validee": "مقبولة",
-      "rejetee": "مرفوضة"
+      "PENDING": "قيد الانتظار",
+      "APPROVED": "مقبولة",
+      "REJECTED": "مرفوضة"
     },
-    "noResults": "لا توجد طلبات تحقق حاليًا."
+    "noResults": "لا توجد طلبات تحقق حاليًا.",
+    "loadError": "تعذّر تحميل طلبات التحقق.",
+    "docTypes": {
+      "CIN": "بطاقة التعريف الوطنية",
+      "CARTE_ETUDIANT": "بطاقة الطالب",
+      "ATTESTATION_EMPLOYEUR": "شهادة صاحب العمل",
+      "AUTRE": "أخرى"
+    },
+    "addForm": {
+      "title": "طلب تحقق جديد",
+      "affiliateLabel": "المنتسب",
+      "affiliatePlaceholder": "اختر منتسبًا",
+      "docTypeLabel": "نوع الوثيقة",
+      "submit": "إنشاء",
+      "submitting": "جارٍ الإنشاء…",
+      "error": "خطأ أثناء إنشاء طلب التحقق.",
+      "noAffiliates": "لا يوجد أي منتسب متاح. أضف منتسبًا أولاً."
+    },
+    "actions": {
+      "approve": "الموافقة",
+      "reject": "رفض",
+      "actionError": "خطأ أثناء تحديث الحالة."
+    }
   },
   "reservedOffers": {
     "kicker": "سكن محجوز",
     "heading": "العروض المحجوزة",
+    "intro": "احجزوا سكنات لمنتسبيكم قبل أن يترشحوا لها.",
     "table": {
       "listing": "الإعلان",
+      "listingId": "مرجع الإعلان",
       "reservedFor": "محجوزة لصالح",
       "period": "الفترة",
-      "status": "الحالة"
+      "status": "الحالة",
+      "actions": "الإجراءات"
     },
     "status": {
-      "active": "نشطة",
-      "expiree": "منتهية",
-      "enAttente": "قيد الانتظار"
+      "RESERVED": "محجوزة",
+      "RELEASED": "محرّرة",
+      "CONVERTED": "محوّلة"
     },
-    "noResults": "لا توجد عروض محجوزة حاليًا."
+    "noResults": "لا توجد عروض محجوزة حاليًا.",
+    "loadError": "تعذّر تحميل العروض المحجوزة.",
+    "addForm": {
+      "title": "حجز سكن",
+      "listingLabel": "مرجع الإعلان",
+      "listingPlaceholder": "معرّف الإعلان",
+      "affiliateLabel": "المنتسب",
+      "affiliateNone": "بدون",
+      "labelLabel": "التسمية",
+      "labelPlaceholder": "مثال: استوديو مفروش — أكدال",
+      "startDateLabel": "تاريخ البداية",
+      "endDateLabel": "تاريخ النهاية",
+      "submit": "حجز",
+      "submitting": "جارٍ الحجز…",
+      "error": "خطأ أثناء حجز السكن."
+    },
+    "actions": {
+      "release": "تحرير",
+      "actionError": "خطأ أثناء تحديث الحالة."
+    }
   },
   "grants": {
     "kicker": "دعم السكن",
@@ -100,31 +148,64 @@
       "program": "البرنامج",
       "beneficiary": "المستفيد",
       "amount": "المبلغ",
-      "status": "الحالة"
+      "status": "الحالة",
+      "actions": "الإجراءات"
     },
     "status": {
-      "versee": "مصروفة",
-      "enCours": "قيد المعالجة",
-      "enAttente": "قيد الانتظار"
+      "PLANNED": "مخطّطة",
+      "PAID": "مصروفة",
+      "CANCELLED": "ملغاة"
     },
-    "noResults": "لا توجد إعانة مسجّلة."
+    "noResults": "لا توجد إعانة مسجّلة.",
+    "loadError": "تعذّر تحميل الإعانات.",
+    "addForm": {
+      "title": "إضافة إعانة",
+      "programLabel": "البرنامج",
+      "programPlaceholder": "مثال: منحة سكن — أكاديمية الرباط",
+      "affiliateLabel": "المنتسب",
+      "affiliateNone": "بدون",
+      "amountLabel": "المبلغ (درهم)",
+      "amountPlaceholder": "0",
+      "statusLabel": "الحالة",
+      "submit": "إضافة",
+      "submitting": "جارٍ الإضافة…",
+      "error": "خطأ أثناء إضافة الإعانة."
+    },
+    "actions": {
+      "markPaid": "تعليم كمصروفة",
+      "cancel": "إلغاء",
+      "actionError": "خطأ أثناء تحديث الحالة."
+    }
   },
   "reporting": {
     "kicker": "المتابعة",
     "heading": "التقارير",
+    "loadError": "تعذّر تحميل التقارير.",
     "kpis": {
-      "totalVerifications": "التحققات (آخر 3 أشهر)",
-      "totalGrantsPaid": "الإعانات المصروفة",
-      "totalAmount": "إجمالي المبلغ المصروف"
+      "totalAffilies": "المنتسبون",
+      "activeAffilies": "المنتسبون النشطون",
+      "grantsTotalAmount": "الإعانات المصروفة (الإجمالي)",
+      "invoicesOutstanding": "فواتير قيد الأداء"
     },
-    "tableTitle": "ملخص شهري",
-    "table": {
-      "period": "الفترة",
-      "verifications": "التحققات",
-      "grantsPaid": "الإعانات المصروفة",
-      "totalAmount": "إجمالي المبلغ"
+    "affilieStatus": {
+      "ACTIVE": "نشطون",
+      "PENDING": "قيد الانتظار",
+      "INACTIVE": "غير نشطين"
     },
-    "noResults": "لا توجد بيانات تقارير متاحة."
+    "funnel": {
+      "title": "قمع التحقق",
+      "pending": "قيد الانتظار",
+      "approved": "موافق عليها",
+      "rejected": "مرفوضة",
+      "approvalRate": "معدل الموافقة",
+      "noDecisions": "لا يوجد قرار حتى الآن"
+    },
+    "chart": {
+      "title": "الحجوزات النشطة مقابل المحرّرة",
+      "ariaLabel": "رسم بياني بالأعمدة يقارن عدد الحجوزات النشطة بعدد الحجوزات المحرّرة",
+      "active": "نشطة",
+      "released": "محرّرة"
+    }
   },
   "billing": {
     "kicker": "الفوترة",
@@ -134,39 +215,122 @@
       "number": "رقم الفاتورة",
       "period": "الفترة",
       "amount": "المبلغ",
-      "status": "الحالة"
+      "status": "الحالة",
+      "actions": "الإجراءات"
     },
     "status": {
-      "payee": "مدفوعة",
-      "enAttente": "قيد الانتظار"
+      "DRAFT": "مسودة",
+      "SENT": "مُرسلة",
+      "PAID": "مدفوعة",
+      "OVERDUE": "متأخرة"
     },
     "empty": {
       "title": "لا توجد فاتورة حاليًا",
       "hint": "ستظهر الفواتير هنا بمجرد إصدار أول فترة فوترة."
+    },
+    "loadError": "تعذّر تحميل الفواتير.",
+    "addForm": {
+      "title": "إضافة فاتورة",
+      "numberLabel": "رقم الفاتورة",
+      "numberPlaceholder": "مثال: FAC-2026-014",
+      "periodLabel": "الفترة (سنة-شهر)",
+      "periodPlaceholder": "2026-09",
+      "amountLabel": "المبلغ (درهم)",
+      "amountPlaceholder": "0",
+      "statusLabel": "الحالة",
+      "submit": "إضافة",
+      "submitting": "جارٍ الإضافة…",
+      "error": "خطأ أثناء إضافة الفاتورة."
+    },
+    "actions": {
+      "send": "إرسال",
+      "markPaid": "تعليم كمدفوعة",
+      "actionError": "خطأ أثناء تحديث الحالة."
     }
   },
   "apiWebhooks": {
     "kicker": "التكامل",
     "heading": "API و webhooks",
+    "secretReveal": {
+      "copy": "نسخ",
+      "copied": "تم النسخ!",
+      "dismiss": "لقد نسخت المفتاح"
+    },
     "apiKeys": {
       "title": "مفاتيح API",
       "table": {
         "label": "الاسم",
         "key": "المفتاح",
         "created": "أُنشئ في",
-        "status": "الحالة"
-      }
+        "status": "الحالة",
+        "actions": "الإجراءات"
+      },
+      "actions": {
+        "revoke": "إلغاء",
+        "actionError": "حدث خطأ، يرجى المحاولة مرة أخرى."
+      },
+      "addForm": {
+        "labelLabel": "اسم المفتاح",
+        "labelPlaceholder": "مثال: مفتاح الإنتاج",
+        "submit": "إنشاء مفتاح",
+        "submitting": "جارٍ الإنشاء…",
+        "error": "تعذر إنشاء المفتاح، يرجى المحاولة مرة أخرى."
+      },
+      "reveal": {
+        "title": "مفتاح API جديد",
+        "warning": "انسخ هذا المفتاح الآن — لن يُعرض مرة أخرى أبدًا."
+      },
+      "loadError": "تعذر تحميل مفاتيح API.",
+      "noResults": "لا توجد مفاتيح API حاليًا."
     },
     "webhooks": {
       "title": "webhooks المهيّأة",
       "table": {
         "url": "الرابط",
         "events": "الأحداث",
-        "status": "الحالة"
-      }
+        "status": "الحالة",
+        "actions": "الإجراءات"
+      },
+      "actions": {
+        "test": "اختبار",
+        "activate": "تفعيل",
+        "deactivate": "تعطيل",
+        "delete": "حذف",
+        "actionError": "حدث خطأ، يرجى المحاولة مرة أخرى."
+      },
+      "addForm": {
+        "title": "إضافة webhook",
+        "urlLabel": "رابط الوجهة",
+        "urlPlaceholder": "https://…",
+        "eventsLabel": "الأحداث",
+        "activeLabel": "نشط",
+        "submit": "إضافة webhook",
+        "submitting": "جارٍ الإضافة…",
+        "error": "تعذر إضافة webhook، يرجى المحاولة مرة أخرى."
+      },
+      "reveal": {
+        "title": "webhook جديد",
+        "warning": "انسخ هذا السر الآن — لن يُعرض مرة أخرى أبدًا."
+      },
+      "eventTypes": {
+        "partner.affilie_created": "تم إنشاء منتسب",
+        "partner.verification_decided": "تم البت في التحقق",
+        "partner.reservation_created": "تم إنشاء حجز",
+        "partner.reservation_released": "تم تحرير الحجز",
+        "partner.grant_paid": "تم صرف المنحة",
+        "partner.invoice_sent": "تم إرسال الفاتورة"
+      },
+      "testResult": {
+        "DELIVERED": "تم التسليم",
+        "FAILED": "فشل",
+        "tested": "تم الاختبار"
+      },
+      "loadError": "تعذر تحميل webhooks.",
+      "noResults": "لا توجد webhooks مهيأة حاليًا."
     },
     "status": {
-      "active": "نشط",
+      "active": "نشطة",
+      "revoked": "مُلغاة",
       "actif": "نشط",
       "inactif": "غير نشط"
     }

@@ -488,6 +488,10 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path.startswith("/api/v1/me/favorites/")
     ):
         return app.state.coloc_profile, path.replace("/api/v1", "", 1)
+    if settings.partner_url and (
+        path == "/api/v1/partner" or path.startswith("/api/v1/partner/")
+    ):
+        return app.state.partner, path.replace("/api/v1", "", 1)
     # Monolithe décommissionné : plus de repli. Toute route non mappée → 404 (client None).
     return None, path
 
@@ -527,6 +531,7 @@ async def lifespan(app: FastAPI):
     app.state.selling = _client_or_none(settings.selling_url)
     app.state.coloc_listing = _client_or_none(settings.coloc_listing_url)
     app.state.coloc_profile = _client_or_none(settings.coloc_profile_url)
+    app.state.partner = _client_or_none(settings.partner_url)
     app.state.matching = _client_or_none(settings.matching_url)
     app.state.translation = _client_or_none(settings.translation_url)
     yield
@@ -539,7 +544,7 @@ async def lifespan(app: FastAPI):
         app.state.buyer, app.state.programs, app.state.staymanager, app.state.geo,
         app.state.messaging, app.state.trust_safety, app.state.agency, app.state.audit,
         app.state.commission, app.state.selling, app.state.coloc_listing,
-        app.state.coloc_profile, app.state.matching, app.state.translation,
+        app.state.coloc_profile, app.state.partner, app.state.matching, app.state.translation,
     ):
         if client is not None:
             await client.aclose()
@@ -765,8 +770,9 @@ async def _fetch_internal_stats(
 @app.get("/api/v1/backoffice/overview", include_in_schema=False)
 async def backoffice_overview(request: Request) -> Response:
     """KPIs consolidés de la vue d'ensemble back-office m3a (super-admin uniquement) : fan-out
-    vers identity(tenant)+coloc-listing+coloc-profile `/internal/stats`. Dégradation propre par
-    service (sous-clé `null`) si un service échoue — jamais d'échec global de la vue (spec §8)."""
+    vers identity(tenant)+coloc-listing+coloc-profile+partner `/internal/stats`. Dégradation
+    propre par service (sous-clé `null`) si un service échoue — jamais d'échec global de la vue
+    (spec §8)."""
     app_ = request.app
     tenant = _resolve_tenant(request.headers, request.headers.get("host", ""))
     ident = await _resolve_identity(
@@ -780,16 +786,18 @@ async def backoffice_overview(request: Request) -> Response:
         return Response(content=b'{"error":"Tenant mismatch"}', status_code=403,
                         media_type="application/json")
     headers = {"x-internal-token": settings.internal_token}
-    users_stats, listings_stats, profiles_stats = await asyncio.gather(
+    users_stats, listings_stats, profiles_stats, partners_stats = await asyncio.gather(
         _fetch_internal_stats(app_.state.identity, "/internal/users/stats", tenant, headers),
         _fetch_internal_stats(app_.state.coloc_listing, "/internal/stats", tenant, headers),
         _fetch_internal_stats(app_.state.coloc_profile, "/internal/stats", tenant, headers),
+        _fetch_internal_stats(app_.state.partner, "/internal/stats", tenant, headers),
     )
     return JSONResponse({
         "tenant": tenant,
         "users": users_stats,
         "listings": listings_stats,
         "profiles": profiles_stats,
+        "partners": partners_stats,
     })
 
 

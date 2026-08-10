@@ -1,6 +1,51 @@
 // Shared layout pieces for the partner portal sub-screens (Lot E) — mirrors the header/card/table
 // look of PartnerPortal.jsx so the 7 new screens read as one surface rather than 7 one-offs.
 
+import { Icon } from '../../ds/index.js'
+
+export function PartnerAccessRequired({ title, description }) {
+  return (
+    <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)' }}>
+      <div
+        style={{
+          margin: '48px auto',
+          maxWidth: 460,
+          background: 'var(--surface-card)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-sm)',
+          padding: '32px 28px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 12,
+          textAlign: 'center',
+        }}
+      >
+        <div
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: '50%',
+            background: 'var(--amber-100)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Icon name="lock" size={22} color="var(--amber-500)" />
+        </div>
+        <h2 style={{ margin: 0, font: 'var(--fw-extrabold) 17px var(--font-display)', color: 'var(--text-heading)' }}>
+          {title}
+        </h2>
+        <p style={{ margin: 0, font: 'var(--fw-regular) 13.5px var(--font-body)', color: 'var(--text-muted)' }}>
+          {description}
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export function PartnerHeader({ kicker, heading, action }) {
   return (
     <div
