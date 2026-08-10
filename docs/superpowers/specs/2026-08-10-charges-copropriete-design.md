@@ -11,11 +11,15 @@ m3a-l3achrane), lorsque le bien est **en copropriété**. Le bloc de saisie est
 affiché par défaut, sauf pour un bien de type **terrain** (`land`, semsarout
 uniquement — le coloc n'a pas de terrain).
 
-Deux lots, livrables et commités séparément :
+Trois lots, livrables et commités séparément :
 
 - **Lot 1 — Cohérence devise m3a** : remplacer `MAD` par le symbole `Đh` (déjà
   utilisé partout dans semsarout) dans tout `frontend-m3a-l3achrane`.
-- **Lot 2 — Charges de copropriété** : la fonctionnalité elle-même.
+- **Lot 2 — Charges de copropriété** : la fonctionnalité elle-même (données,
+  backend, formulaires semsarout, affichage semsarout + m3a).
+- **Lot 3 — « Déposer une annonce » (m3a)** : écran de création d'annonce
+  (wizard 4 étapes + photos), aujourd'hui inexistant côté front m3a ; intègre les
+  charges de copropriété du Lot 2.
 
 ---
 
@@ -162,8 +166,97 @@ ligne « Charges de copropriété : `formatté` Đh/mois » si `property.is_cond
 5. `lint`, `test`, `build` verts (semsarout + m3a) ; pytest verts (monolithe +
    coloc-listing) ; parité i18n m3a.
 
+---
+
+## Lot 3 — « Déposer une annonce » (m3a)
+
+Aujourd'hui **aucun écran de création** d'annonce n'existe côté front m3a (les
+annonces viennent du seed / d'appels API directs). Le domaine backend gère
+pourtant tout le cycle : `POST /listings` (crée en `BROUILLON`) →
+`POST /listings/{id}/media` (enregistre une URL) → `POST /listings/{id}/submit`
+(`EN_MODERATION`) → approbation superadmin (`PUBLIEE`). On construit l'écran
+propriétaire qui orchestre ce cycle, charges de copropriété (Lot 2) incluses.
+
+### Route & accès
+- Nouvelle route `/espace/publier` sous `AppLayout` (espace authentifié), + une
+  entrée de navigation dans `AppLayout`. Gating d'auth cohérent avec les autres
+  écrans `/espace` (l'API renvoie 401 sinon).
+
+### Wizard — 4 étapes
+Contrat cible : `ListingCreateIn` (schemas coloc) + `is_condo`/`condo_fees`.
+Enums : `PROPERTY_TYPES` (APPARTEMENT, MAISON, VILLA, STUDIO,
+RESIDENCE_ETUDIANTE, CHEZ_HABITANT), `BED_TYPES` (CHAMBRE_INDIVIDUELLE,
+CHAMBRE_PARTAGEE, LIT_DORTOIR, STUDIO_ENTIER, APPARTEMENT_ENTIER),
+`HOUSING_GENDERS` (FEMININ, MASCULIN — **MIXTE_FAMILIAL exclu**, refusé côté
+serveur), `MEDIA_TYPES` (CHAMBRE, PARTIES_COMMUNES, AUTRE).
+
+1. **Le bien** : ville\*, quartier, adresse, `property_type`\* (Select), étage,
+   surface `area_m2`, équipements `amenities` (quelques toggles courants → dict).
+2. **Le logement** : titre\*, description (Textarea), `bed_type`\* (Select),
+   `housing_gender`\* (Select FEMININ/MASCULIN), meublé (Checkbox), capacité 1-8.
+3. **Prix & charges** : loyer\* (`rent`, Đh), charges locatives incluses
+   (`charges_included`) → montant (`charges_amount`), caution (`deposit`), **bloc
+   copropriété du Lot 2** : « Bien en copropriété » (`is_condo`, coché par défaut)
+   → « Charges de copropriété (Đh/mois) » (`condo_fees`).
+4. **Disponibilité & photos** : `available_from` (date), `duration_min_months`,
+   `duration_max_months`, **photos** : sélection de fichiers, `media_type` par
+   photo (CHAMBRE/PARTIES_COMMUNES/AUTRE) et ordre (`position`).
+
+Champs requis (astérisque rouge, skill `form-design`) : titre, ville,
+`property_type`, `bed_type`, `housing_gender`, loyer. Validation par étape avant
+« Suivant ». `currency` fixé à `MAD` en base (affiché `Đh`).
+
+### Action « Publier » (un geste)
+Séquence orchestrée par le front, l'annonce restant `BROUILLON` jusqu'au submit
+(le endpoint `/media` exige `editable_only`) :
+1. `POST /api/v1/listings` → crée en `BROUILLON`, renvoie l'`id`.
+2. Pour chaque photo : `POST /api/v1/uploads` (multipart, service `listing`
+   partagé → renvoie `/uploads/photos/xxx.jpg`) puis
+   `POST /api/v1/listings/{id}/media` (`{url, position, media_type}`).
+3. `POST /api/v1/listings/{id}/submit` → `EN_MODERATION`.
+4. Écran de succès « Annonce envoyée en modération ».
+En cas d'échec après création : l'annonce reste en brouillon (pas de rollback
+serveur) ; message d'erreur invitant à réessayer.
+
+### Ajouts DS (`src/ds/core/`)
+- `Textarea.jsx` (description) et `Checkbox.jsx` (booléens : charges incluses,
+  meublé, en copropriété), au style du DS existant. Exportés via `ds/core/index.js`.
+
+### Service (`src/services/index.js`)
+- `createListing(payload)` → `POST /listings`.
+- `uploadPhoto(file)` → `POST /uploads` (multipart), renvoie l'URL.
+- `addListingMedia(id, {url, position, media_type})` → `POST /listings/{id}/media`.
+- `submitListing(id)` → `POST /listings/{id}/submit`.
+
+### Routage gateway (vérifié, rien à changer)
+`POST /api/v1/listings`, `/listings/{id}/media`, `/listings/{id}/submit` sont
+proxifiés vers `coloc-listing` (seul `GET /api/v1/listings` est composite).
+`POST /api/v1/uploads` va au service `listing` (stockage objet partagé).
+
+### i18n
+FR + AR : libellés du wizard (étapes, champs, options d'enum, boutons), messages
+de validation, écran de succès. Parité obligatoire.
+
+### Tests
+- Validation par étape (champs requis bloquants).
+- Flux « Publier » : enchaînement create → upload×N → media×N → submit (API
+  mockée), gestion d'erreur.
+- Nouveaux composants DS (`Textarea`, `Checkbox`).
+- Parité i18n FR/AR.
+
+### Critères d'acceptation (Lot 3)
+1. Un propriétaire authentifié atteint `/espace/publier` et parcourt les 4 étapes.
+2. Les champs requis bloquent le passage à l'étape suivante.
+3. L'étape 3 propose le bloc copropriété (coché par défaut).
+4. « Publier » crée l'annonce, téléverse les photos, les rattache, puis soumet à
+   la modération ; l'annonce apparaît alors dans la file du back-office.
+5. `lint`, `test`, `build` m3a verts ; parité i18n.
+
 ## Hors périmètre
 
+- **Écran « Mes annonces »** (liste + gestion de statut, `GET /me/listings`) :
+  non inclus (le flux Lot 3 est create+submit en un geste, sans écran de gestion).
+- Édition/suppression d'une annonce existante depuis le front m3a.
 - Carte m3a « +cc » utilise `condo_fees` (copropriété), pas
   `charges_amount`/`charges_included` (charges locatives — concept distinct, non
   modifié).
