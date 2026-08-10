@@ -11,6 +11,7 @@ import api from '../services/api'
 import DirIcon from '../components/common/DirIcon'
 import { formatPrice, DIRHAM_SYMBOL } from '../utils/currency'
 import { PROPERTY_TYPES, FEATURES, MOROCCAN_CITIES, DOC_TYPES } from '../constants/property'
+import { CondoFeesField } from '../components/property/CondoFeesField'
 
 const STORAGE_KEY = 'sell-wizard-v1'
 
@@ -61,7 +62,9 @@ const EMPTY_FORM = {
   desired_price: '',
   photos: [],
   documents: {},
-  wants_pro_photos: false
+  wants_pro_photos: false,
+  is_condo: true,
+  condo_fees: null
 }
 
 function loadSaved() {
@@ -252,7 +255,9 @@ function SellProperty() {
           total_floors: toInt(form.total_floors),
           construction_year: toInt(form.construction_year),
           features: form.features,
-          description: form.description || undefined
+          description: form.description || undefined,
+          is_condo: form.is_condo,
+          condo_fees: form.is_condo && form.condo_fees ? Number(form.condo_fees) : null
         },
         desired_price: Number(form.desired_price),
         photos: form.photos.map((p) => p.url),
@@ -535,6 +540,14 @@ function SellProperty() {
                   placeholder={t('public:sellProperty.step1.descriptionPlaceholder')}
                 />
               </div>
+
+              <CondoFeesField
+                propertyType={form.property_type}
+                isCondo={form.is_condo}
+                condoFees={form.condo_fees}
+                onToggle={(v) => update({ is_condo: v })}
+                onAmount={(v) => update({ condo_fees: v })}
+              />
             </div>
           )}
 
