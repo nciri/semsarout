@@ -248,25 +248,86 @@
   "apiWebhooks": {
     "kicker": "التكامل",
     "heading": "API و webhooks",
+    "secretReveal": {
+      "copy": "نسخ",
+      "copied": "تم النسخ!",
+      "dismiss": "لقد نسخت المفتاح"
+    },
     "apiKeys": {
       "title": "مفاتيح API",
       "table": {
         "label": "الاسم",
         "key": "المفتاح",
         "created": "أُنشئ في",
-        "status": "الحالة"
-      }
+        "status": "الحالة",
+        "actions": "الإجراءات"
+      },
+      "actions": {
+        "revoke": "إلغاء",
+        "actionError": "حدث خطأ، يرجى المحاولة مرة أخرى."
+      },
+      "addForm": {
+        "labelLabel": "اسم المفتاح",
+        "labelPlaceholder": "مثال: مفتاح الإنتاج",
+        "submit": "إنشاء مفتاح",
+        "submitting": "جارٍ الإنشاء…",
+        "error": "تعذر إنشاء المفتاح، يرجى المحاولة مرة أخرى."
+      },
+      "reveal": {
+        "title": "مفتاح API جديد",
+        "warning": "انسخ هذا المفتاح الآن — لن يُعرض مرة أخرى أبدًا."
+      },
+      "loadError": "تعذر تحميل مفاتيح API.",
+      "noResults": "لا توجد مفاتيح API حاليًا."
     },
     "webhooks": {
       "title": "webhooks المهيّأة",
       "table": {
         "url": "الرابط",
         "events": "الأحداث",
-        "status": "الحالة"
-      }
+        "status": "الحالة",
+        "actions": "الإجراءات"
+      },
+      "actions": {
+        "test": "اختبار",
+        "activate": "تفعيل",
+        "deactivate": "تعطيل",
+        "delete": "حذف",
+        "actionError": "حدث خطأ، يرجى المحاولة مرة أخرى."
+      },
+      "addForm": {
+        "title": "إضافة webhook",
+        "urlLabel": "رابط الوجهة",
+        "urlPlaceholder": "https://…",
+        "eventsLabel": "الأحداث",
+        "activeLabel": "نشط",
+        "submit": "إضافة webhook",
+        "submitting": "جارٍ الإضافة…",
+        "error": "تعذر إضافة webhook، يرجى المحاولة مرة أخرى."
+      },
+      "reveal": {
+        "title": "webhook جديد",
+        "warning": "انسخ هذا السر الآن — لن يُعرض مرة أخرى أبدًا."
+      },
+      "eventTypes": {
+        "partner.affilie_created": "تم إنشاء منتسب",
+        "partner.verification_decided": "تم البت في التحقق",
+        "partner.reservation_created": "تم إنشاء حجز",
+        "partner.reservation_released": "تم تحرير الحجز",
+        "partner.grant_paid": "تم صرف المنحة",
+        "partner.invoice_sent": "تم إرسال الفاتورة"
+      },
+      "testResult": {
+        "DELIVERED": "تم التسليم",
+        "FAILED": "فشل",
+        "tested": "تم الاختبار"
+      },
+      "loadError": "تعذر تحميل webhooks.",
+      "noResults": "لا توجد webhooks مهيأة حاليًا."
     },
     "status": {
-      "active": "نشط",
+      "active": "نشطة",
+      "revoked": "مُلغاة",
       "actif": "نشط",
       "inactif": "غير نشط"
     }

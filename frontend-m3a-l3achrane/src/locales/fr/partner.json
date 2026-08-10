@@ -248,25 +248,86 @@
   "apiWebhooks": {
     "kicker": "Intégration",
     "heading": "API & webhooks",
+    "secretReveal": {
+      "copy": "Copier",
+      "copied": "Copié !",
+      "dismiss": "J'ai copié"
+    },
     "apiKeys": {
       "title": "Clés API",
       "table": {
         "label": "Nom",
         "key": "Clé",
         "created": "Créée le",
-        "status": "Statut"
-      }
+        "status": "Statut",
+        "actions": "Actions"
+      },
+      "actions": {
+        "revoke": "Révoquer",
+        "actionError": "Une erreur est survenue, réessayez."
+      },
+      "addForm": {
+        "labelLabel": "Nom de la clé",
+        "labelPlaceholder": "Ex. Clé de production",
+        "submit": "Générer une clé",
+        "submitting": "Génération…",
+        "error": "Impossible de générer la clé, réessayez."
+      },
+      "reveal": {
+        "title": "Nouvelle clé API",
+        "warning": "Copiez cette clé maintenant — elle ne sera plus jamais affichée."
+      },
+      "loadError": "Impossible de charger les clés API.",
+      "noResults": "Aucune clé API pour le moment."
     },
     "webhooks": {
       "title": "Webhooks configurés",
       "table": {
         "url": "URL",
         "events": "Événements",
-        "status": "Statut"
-      }
+        "status": "Statut",
+        "actions": "Actions"
+      },
+      "actions": {
+        "test": "Tester",
+        "activate": "Activer",
+        "deactivate": "Désactiver",
+        "delete": "Supprimer",
+        "actionError": "Une erreur est survenue, réessayez."
+      },
+      "addForm": {
+        "title": "Ajouter un webhook",
+        "urlLabel": "URL de destination",
+        "urlPlaceholder": "https://…",
+        "eventsLabel": "Événements",
+        "activeLabel": "Actif",
+        "submit": "Ajouter le webhook",
+        "submitting": "Ajout…",
+        "error": "Impossible d'ajouter le webhook, réessayez."
+      },
+      "reveal": {
+        "title": "Nouveau webhook",
+        "warning": "Copiez ce secret maintenant — il ne sera plus jamais affiché."
+      },
+      "eventTypes": {
+        "partner.affilie_created": "Affilié créé",
+        "partner.verification_decided": "Vérification décidée",
+        "partner.reservation_created": "Réservation créée",
+        "partner.reservation_released": "Réservation libérée",
+        "partner.grant_paid": "Subvention versée",
+        "partner.invoice_sent": "Facture envoyée"
+      },
+      "testResult": {
+        "DELIVERED": "Livré",
+        "FAILED": "Échec",
+        "tested": "Testé"
+      },
+      "loadError": "Impossible de charger les webhooks.",
+      "noResults": "Aucun webhook configuré pour le moment."
     },
     "status": {
       "active": "Active",
+      "revoked": "Révoquée",
       "actif": "Actif",
       "inactif": "Inactif"
     }
