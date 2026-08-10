@@ -80,3 +80,39 @@ def test_webhook_test_not_found_for_other_partner(client, db_session, headers):
                        json={"url": "https://example.org/hook", "events": ["partner.test"]}
                        ).json()["id"]
     assert client.post(f"/partner/webhooks/{wid}/test", headers=headers(8)).status_code == 404
+
+
+def test_webhook_create_rejects_ssrf_urls(client, db_session, headers):
+    _member(db_session, 7)
+    for bad_url in (
+        "http://example.org/hook",  # schéma non-https
+        "http://localhost/hook",
+        "https://localhost/hook",
+        "https://127.0.0.1/hook",
+        "https://169.254.169.254/latest/meta-data",  # métadonnées cloud
+        "https://10.0.0.5/hook",
+        "https://172.16.0.5/hook",
+        "https://192.168.1.5/hook",
+        "https://[::1]/hook",
+        "https://internal/hook",  # hôte sans point
+    ):
+        r = client.post("/partner/webhooks", headers=headers(7),
+                         json={"url": bad_url, "events": ["partner.grant_paid"]})
+        assert r.status_code == 422, f"{bad_url} devrait être refusé, reçu {r.status_code}"
+
+
+def test_webhook_create_accepts_valid_https_url(client, db_session, headers):
+    _member(db_session, 7)
+    r = client.post("/partner/webhooks", headers=headers(7),
+                     json={"url": "https://hooks.example.com/x", "events": ["partner.grant_paid"]})
+    assert r.status_code == 201, r.text
+
+
+def test_webhook_update_rejects_ssrf_url(client, db_session, headers):
+    _member(db_session, 7)
+    wid = client.post("/partner/webhooks", headers=headers(7),
+                       json={"url": "https://example.org/hook", "events": ["partner.grant_paid"]}
+                       ).json()["id"]
+    r = client.patch(f"/partner/webhooks/{wid}", headers=headers(7),
+                      json={"url": "http://169.254.169.254/latest/meta-data"})
+    assert r.status_code == 422

@@ -22,3 +22,10 @@ def test_affilie_isolated_between_partners(client, db_session, headers):
     assert all(a["id"] != aid for a in client.get("/partner/affilies", headers=headers(8)).json())
     assert client.patch(f"/partner/affilies/{aid}", headers=headers(8),
                         json={"status": "ACTIVE"}).status_code == 404
+
+def test_affilie_update_rejects_empty_full_name(client, db_session, headers):
+    _member(db_session, 7)
+    aid = client.post("/partner/affilies", headers=headers(7),
+                      json={"full_name": "A", "email": "a@x.ma"}).json()["id"]
+    r = client.patch(f"/partner/affilies/{aid}", headers=headers(7), json={"full_name": ""})
+    assert r.status_code == 422
