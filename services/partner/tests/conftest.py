@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker  # noqa: E402
 
 from semsar_events import OutboxBase  # noqa: E402
 
+from app import models  # noqa: E402,F401 — enregistre les tables
 from app.db import Base  # noqa: E402
 
 
@@ -41,10 +42,15 @@ def client(db_session):
     app.dependency_overrides.clear()
 
 
-def headers(user_id: int = 7, *, superadmin: bool = False,
-            tenant: str = "m3a-l3achrane") -> dict:
+def _headers(user_id: int = 7, *, superadmin: bool = False,
+             tenant: str = "m3a-l3achrane") -> dict:
     """En-têtes x-semsar-* comme injectés par le BFF (TRUST_GATEWAY_HEADERS)."""
     h = {"x-semsar-user-id": str(user_id), "x-semsar-tenant": tenant}
     if superadmin:
         h["x-semsar-superadmin"] = "1"
     return h
+
+
+@pytest.fixture
+def headers():
+    return _headers

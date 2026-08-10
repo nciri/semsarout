@@ -12,7 +12,9 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
-from .db import init_db
+from .auth import PartnerCtx, PartnerForbidden, partner_ctx
+from .db import get_db, init_db
+from .models import Partner
 
 settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
@@ -61,8 +63,18 @@ async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
 
 
+@app.exception_handler(PartnerForbidden)
+async def _partner_forbidden_handler(request: Request, exc: PartnerForbidden) -> JSONResponse:
+    return _err("Accès partenaire refusé", 403)
+
+
 router = APIRouter(dependencies=[Depends(_require_tenant)])
 
-# Les routes métier arrivent aux tâches suivantes.
+
+@router.get("/partner/me")
+async def get_partner_me(ctx: PartnerCtx = Depends(partner_ctx), db=Depends(get_db)) -> dict:
+    partner = db.query(Partner).filter(Partner.id == ctx.partner_id).first()
+    return partner.to_dict()
+
 
 app.include_router(router)
