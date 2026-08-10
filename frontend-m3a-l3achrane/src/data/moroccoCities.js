@@ -35,5 +35,10 @@ export const MOROCCO_DEFAULT_ZOOM = 6
 
 export function cityCentroid(cityName) {
   if (!cityName) return MOROCCO_CENTER
-  return MOROCCO_CITY_CENTROIDS[cityName.trim()] ?? MOROCCO_CENTER
+  const trimmed = cityName.trim()
+  if (MOROCCO_CITY_CENTROIDS[trimmed]) return MOROCCO_CITY_CENTROIDS[trimmed]
+  // Tolère les valeurs du type « Casablanca, Maârif » (ville + quartier) en ne
+  // retenant que la partie avant la virgule.
+  const cityOnly = trimmed.split(',')[0].trim()
+  return MOROCCO_CITY_CENTROIDS[cityOnly] ?? MOROCCO_CENTER
 }

@@ -1,4 +1,5 @@
-import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
+import { useEffect } from 'react'
+import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -30,12 +31,37 @@ function jitteredPosition([lat, lng], index) {
   return [lat + radius * Math.cos(angle), lng + radius * Math.sin(angle)]
 }
 
+// Cadre systématiquement la carte sur les positions réelles des marqueurs affichés,
+// plutôt que sur le centroïde de la ville filtrée : évite le décalage visuel quand
+// la ville a une forme non reconnue (ex. « Casablanca, Maârif ») ou quand les
+// annonces couvrent plusieurs villes.
+function FitBoundsToMarkers({ positions }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (positions.length === 0) {
+      map.setView(MOROCCO_CENTER, MOROCCO_DEFAULT_ZOOM)
+      return
+    }
+    if (positions.length === 1) {
+      map.setView(positions[0], 12)
+      return
+    }
+    const bounds = L.latLngBounds(positions)
+    map.fitBounds(bounds, { padding: [40, 40] })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, JSON.stringify(positions)])
+
+  return null
+}
+
 export default function SearchResultsMap({ items, cityFilter }) {
   const { t } = useTranslation(['web', 'common'])
   const navigate = useNavigate()
 
-  const center = cityFilter ? cityCentroid(cityFilter) : MOROCCO_CENTER
-  const zoom = cityFilter ? 12 : MOROCCO_DEFAULT_ZOOM
+  const markerPositions = items.map((it, index) => jitteredPosition(cityCentroid(it.ville), index))
+  const initialCenter = cityFilter ? cityCentroid(cityFilter) : MOROCCO_CENTER
+  const initialZoom = cityFilter ? 12 : MOROCCO_DEFAULT_ZOOM
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -52,13 +78,14 @@ export default function SearchResultsMap({ items, cityFilter }) {
       </div>
 
       <div style={{ height: 420, borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-        <MapContainer center={center} zoom={zoom} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false}>
+        <MapContainer center={initialCenter} zoom={initialZoom} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false}>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
+          <FitBoundsToMarkers positions={markerPositions} />
           {items.map((it, index) => (
-            <Marker key={it.id} position={jitteredPosition(cityCentroid(it.ville), index)} icon={markerIcon}>
+            <Marker key={it.id} position={markerPositions[index]} icon={markerIcon}>
               <Popup>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 160 }}>
                   <strong>{it.titre}</strong>
