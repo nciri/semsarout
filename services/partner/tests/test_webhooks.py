@@ -95,6 +95,10 @@ def test_webhook_create_rejects_ssrf_urls(client, db_session, headers):
         "https://192.168.1.5/hook",
         "https://[::1]/hook",
         "https://internal/hook",  # hôte sans point
+        "https://127.1/hook",  # IPv4 raccourci → 127.0.0.1
+        "https://0177.0.0.1/hook",  # IPv4 octal → 127.0.0.1
+        "https://0x7f.0.0.1/hook",  # IPv4 hex → 127.0.0.1
+        "https://169.254.169.254./latest/meta-data",  # FQDN à point final
     ):
         r = client.post("/partner/webhooks", headers=headers(7),
                          json={"url": bad_url, "events": ["partner.grant_paid"]})

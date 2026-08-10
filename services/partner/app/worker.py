@@ -8,12 +8,18 @@ import httpx
 from semsar_common import get_settings, setup_logging
 from semsar_events import EventConsumer
 
+from . import net_guard
 from .db import SessionLocal, init_db
 from .delivery import deliver
 from .models import Webhook, WebhookDelivery, _now
 
 
 def _http_post(url: str, data: bytes, headers: dict) -> int:
+    """Défense en profondeur contre le DNS-rebinding — voir
+    `app/main.py::_http_post` pour le détail (même garde-fou, dupliqué ici
+    car le worker poste indépendamment du process API)."""
+    if net_guard.is_blocked_url(url):
+        return 599  # hôte interne/privé — jamais posté
     try:
         resp = httpx.post(url, content=data, headers=headers, timeout=5.0)
         return resp.status_code

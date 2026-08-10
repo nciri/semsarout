@@ -17,7 +17,7 @@ from semsar_auth import get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 from semsar_events import enqueue
 
-from . import events
+from . import events, net_guard
 from .auth import PartnerCtx, PartnerForbidden, _uid, hash_key, partner_ctx
 from .db import get_db, init_db
 from .delivery import deliver
@@ -463,7 +463,14 @@ async def revoke_api_key(key_id: str, ctx: PartnerCtx = Depends(partner_ctx), db
 
 
 def _http_post(url: str, data: bytes, headers: dict) -> int:
-    """`post` injectable de `deliver` en prod — remplacé en test."""
+    """`post` injectable de `deliver` en prod — remplacé en test.
+
+    Défense en profondeur contre le DNS-rebinding : résout l'hôte et refuse
+    de poster si une IP résolue est interne, même si l'URL a passé la
+    validation à la création (un hôte public peut être re-pointé vers une
+    IP privée entre temps)."""
+    if net_guard.is_blocked_url(url):
+        return 599  # hôte interne/privé — jamais posté
     try:
         resp = httpx.post(url, content=data, headers=headers, timeout=5.0)
         return resp.status_code
