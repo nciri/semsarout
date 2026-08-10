@@ -30,6 +30,36 @@ export default function SearchResults() {
   const [lifestyle, setLifestyle] = useState(() => new Set([lifestyleChips[0], lifestyleChips[1]]))
   const [proximityRadius, setProximityRadius] = useState(indifferentRadius)
 
+  const typeOptions = t('web:search.typeOptions', { returnObjects: true })
+  const genderOptions = t('web:search.genderOptions', { returnObjects: true })
+  const budgetOptions = t('web:search.budgetOptions', { returnObjects: true })
+
+  // Barre de recherche (haut de page) : appliquée uniquement au clic sur « Rechercher »,
+  // sur les résultats déjà chargés côté client (pas de nouvel appel réseau).
+  const [cityQuery, setCityQuery] = useState(t('web:search.locationDefault'))
+  const [budgetQuery, setBudgetQuery] = useState('')
+  const [typeQuery, setTypeQuery] = useState(typeOptions[0])
+  const [genderQuery, setGenderQuery] = useState(genderOptions[0])
+  const [appliedSearch, setAppliedSearch] = useState(null)
+
+  const runSearch = () => {
+    setAppliedSearch({ city: cityQuery.trim(), budget: budgetQuery, type: typeQuery, gender: genderQuery })
+  }
+
+  // Tri (best-effort) : la « pertinence/compatibilité » et le prix existent réellement
+  // dans les données ; « Plus récentes » n'a pas de champ date sur ces items — on
+  // conserve alors l'ordre reçu plutôt que d'inventer une date.
+  const [sortValue, setSortValue] = useState(sortOptionsDetailed[0])
+
+  // Cases « Partenaire institutionnel » / « Contrat en ligne » : aucun champ correspondant
+  // n'existe encore sur les annonces (mapListingHit) — l'état est géré et visible (chip
+  // active retirable) mais ne filtre pas la liste tant que le backend ne l'expose pas.
+  const [institutionalPartnerOnly, setInstitutionalPartnerOnly] = useState(false)
+  const [onlineContractOnly, setOnlineContractOnly] = useState(false)
+
+  const PAGE_SIZE = 6
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+
   useEffect(() => {
     listListings().then(setItems)
   }, [])
@@ -40,8 +70,10 @@ export default function SearchResults() {
     if (verifiedOnly) filters.push({ kind: 'verified', label: verifiedFilterChip })
     lifestyle.forEach((label) => filters.push({ kind: 'lifestyle', label }))
     if (proximityRadius && proximityRadius !== indifferentRadius) filters.push({ kind: 'proximity', label: proximityRadius })
+    if (institutionalPartnerOnly) filters.push({ kind: 'institutionalPartner', label: t('web:search.institutionalPartnerLabel') })
+    if (onlineContractOnly) filters.push({ kind: 'onlineContract', label: t('web:search.onlineContractLabel') })
     return filters
-  }, [activeType, lifestyle, verifiedOnly, verifiedFilterChip, proximityRadius, indifferentRadius])
+  }, [activeType, lifestyle, verifiedOnly, verifiedFilterChip, proximityRadius, indifferentRadius, institutionalPartnerOnly, onlineContractOnly, t])
 
   const toggleLifestyle = (label) => {
     setLifestyle((prev) => {
@@ -57,12 +89,62 @@ export default function SearchResults() {
     else if (filter.kind === 'verified') setVerifiedOnly(false)
     else if (filter.kind === 'lifestyle') toggleLifestyle(filter.label)
     else if (filter.kind === 'proximity') setProximityRadius(indifferentRadius)
+    else if (filter.kind === 'institutionalPartner') setInstitutionalPartnerOnly(false)
+    else if (filter.kind === 'onlineContract') setOnlineContractOnly(false)
+  }
+
+  // Nombre extrait d'une option de budget localisée ("2 500 Đh" / "٢٬٥٠٠ درهم") : on ne
+  // garde que les chiffres, insensible à la langue/au séparateur de milliers.
+  const parseBudget = (label) => {
+    const digits = (label || '').replace(/[^\d٠-٩]/g, '')
+    if (!digits) return null
+    const normalized = digits.replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+    const n = Number(normalized)
+    return Number.isFinite(n) ? n : null
   }
 
   const visibleItems = useMemo(() => {
     if (!items) return items
-    return verifiedOnly ? items.filter((it) => it.verifiee) : items
-  }, [items, verifiedOnly])
+    let result = verifiedOnly ? items.filter((it) => it.verifiee) : items
+
+    if (appliedSearch) {
+      const { city, budget, type } = appliedSearch
+      if (city) {
+        const needle = city.toLowerCase()
+        result = result.filter((it) => `${it.ville} ${it.quartier}`.toLowerCase().includes(needle))
+      }
+      const budgetMax = budget ? parseBudget(budget) : null
+      if (budgetMax != null) {
+        result = result.filter((it) => it.prixMad <= budgetMax)
+      }
+      // "Tout" (première option) = pas de filtre ; sinon correspondance best-effort sur
+      // le titre/les chips, faute de champ "type" structuré sur mapListingHit.
+      if (type && type !== typeOptions[0]) {
+        const needle = type.toLowerCase()
+        result = result.filter((it) => it.titre?.toLowerCase().includes(needle) || it.chips?.some((c) => c.toLowerCase().includes(needle)))
+      }
+    }
+
+    const sortIndex = sortOptionsDetailed.indexOf(sortValue)
+    if (sortIndex === 1) {
+      result = [...result].sort((a, b) => a.prixMad - b.prixMad)
+    } else if (sortIndex === 2) {
+      result = [...result].sort((a, b) => b.prixMad - a.prixMad)
+    } else if (sortIndex === 0) {
+      result = [...result].sort((a, b) => (b.matchPct ?? -1) - (a.matchPct ?? -1))
+    }
+    // sortIndex === 3 ("Plus récentes") : aucun champ date sur ces items, on garde l'ordre reçu.
+
+    return result
+  }, [items, verifiedOnly, appliedSearch, sortValue, sortOptionsDetailed, typeOptions])
+
+  const pagedItems = visibleItems?.slice(0, visibleCount) ?? visibleItems
+  const hasMore = visibleItems ? visibleCount < visibleItems.length : false
+
+  // Un nouveau filtrage/tri repart de la première page.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE)
+  }, [verifiedOnly, appliedSearch, sortValue])
 
   if (items === null) {
     return (
@@ -79,11 +161,25 @@ export default function SearchResults() {
           <div style={{ width: 260 }}>
             <Input label={t('web:search.institutionLabel')} icon="graduation-cap" defaultValue={t('web:search.institutionDefault')} />
           </div>
-          <div style={{ width: 220 }}><Input label={t('web:search.cityLabel')} icon="map-pin" defaultValue={t('web:search.locationDefault')} /></div>
-          <div style={{ width: 160 }}><Select label={t('web:search.budgetLabel')} options={t('web:search.budgetOptions', { returnObjects: true })} /></div>
-          <div style={{ width: 150 }}><Select label={t('web:search.typeLabel')} options={t('web:search.typeOptions', { returnObjects: true })} /></div>
-          <div style={{ width: 150 }}><Select label={t('web:search.genderLabel')} options={t('web:search.genderOptions', { returnObjects: true })} /></div>
-          <Button variant="primary" style={{ height: 44 }}>{t('web:search.cta')}</Button>
+          <div style={{ width: 220 }}>
+            <Input
+              label={t('web:search.cityLabel')} icon="map-pin"
+              value={cityQuery} onChange={(e) => setCityQuery(e.target.value)}
+            />
+          </div>
+          <div style={{ width: 160 }}>
+            <Select
+              label={t('web:search.budgetLabel')} options={budgetOptions}
+              value={budgetQuery || budgetOptions[0]} onChange={(e) => setBudgetQuery(e.target.value)}
+            />
+          </div>
+          <div style={{ width: 150 }}>
+            <Select label={t('web:search.typeLabel')} options={typeOptions} value={typeQuery} onChange={(e) => setTypeQuery(e.target.value)} />
+          </div>
+          <div style={{ width: 150 }}>
+            <Select label={t('web:search.genderLabel')} options={genderOptions} value={genderQuery} onChange={(e) => setGenderQuery(e.target.value)} />
+          </div>
+          <Button variant="primary" style={{ height: 44 }} onClick={runSearch}>{t('web:search.cta')}</Button>
         </div>
       </div>
 
@@ -104,7 +200,10 @@ export default function SearchResults() {
               <span style={{ font: 'var(--fw-extrabold) var(--fs-body) var(--font-body)', color: 'var(--text-heading)' }}>{t('web:search.filtersTitle')}</span>
               <button
                 type="button"
-                onClick={() => { setActiveType(typeFilters[0].label); setLifestyle(new Set()); setVerifiedOnly(false); setProximityRadius(indifferentRadius) }}
+                onClick={() => {
+                  setActiveType(typeFilters[0].label); setLifestyle(new Set()); setVerifiedOnly(false)
+                  setProximityRadius(indifferentRadius); setInstitutionalPartnerOnly(false); setOnlineContractOnly(false)
+                }}
                 style={{ border: 0, background: 'transparent', color: 'var(--link)', font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)', cursor: 'pointer', padding: 0 }}
               >
                 {t('web:search.resetFilters')}
@@ -188,11 +287,19 @@ export default function SearchResults() {
                 {t('web:search.verifiedOnlyLabel')}
               </label>
               <label style={{ display: 'flex', gap: 10, alignItems: 'center', font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-body)', cursor: 'pointer' }}>
-                <input type="checkbox" style={{ width: 15, height: 15, accentColor: 'var(--navy-700)' }} />
+                <input
+                  type="checkbox" checked={institutionalPartnerOnly}
+                  onChange={(e) => setInstitutionalPartnerOnly(e.target.checked)}
+                  style={{ width: 15, height: 15, accentColor: 'var(--navy-700)' }}
+                />
                 {t('web:search.institutionalPartnerLabel')}
               </label>
               <label style={{ display: 'flex', gap: 10, alignItems: 'center', font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-body)', cursor: 'pointer' }}>
-                <input type="checkbox" style={{ width: 15, height: 15, accentColor: 'var(--navy-700)' }} />
+                <input
+                  type="checkbox" checked={onlineContractOnly}
+                  onChange={(e) => setOnlineContractOnly(e.target.checked)}
+                  style={{ width: 15, height: 15, accentColor: 'var(--navy-700)' }}
+                />
                 {t('web:search.onlineContractLabel')}
               </label>
             </div>
@@ -241,7 +348,9 @@ export default function SearchResults() {
               </span>
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              <div style={{ width: 180 }}><Select options={sortOptionsDetailed} /></div>
+              <div style={{ width: 180 }}>
+                <Select options={sortOptionsDetailed} value={sortValue} onChange={(e) => setSortValue(e.target.value)} />
+              </div>
               <div style={{ display: 'flex', background: 'var(--surface-sunken)', borderRadius: 8, padding: 3, gap: 3 }}>
                 <button
                   type="button"
@@ -317,7 +426,7 @@ export default function SearchResults() {
           ) : (
             <>
               <div className="m3a-search-grid" style={{ display: 'grid', gap: 20 }}>
-                {visibleItems.map((it) => (
+                {pagedItems.map((it) => (
                   <ListingCard
                     key={it.id}
                     image={it.photos?.[0]}
@@ -335,9 +444,13 @@ export default function SearchResults() {
                   />
                 ))}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 8 }}>
-                <Button variant="secondary">{t('web:search.loadMore')}</Button>
-              </div>
+              {hasMore && (
+                <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 8 }}>
+                  <Button variant="secondary" onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}>
+                    {t('web:search.loadMore')}
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </section>
