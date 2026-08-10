@@ -97,7 +97,7 @@ class Property(db.Model):
             'price_per_sqm': float(self.price_per_sqm) if self.price_per_sqm else None,
             'charges': float(self.charges) if self.charges else None,
             'is_condo': bool(self.is_condo),
-            'condo_fees': float(self.condo_fees) if self.condo_fees else None,
+            'condo_fees': float(self.condo_fees) if self.condo_fees is not None else None,
             'surface': self.surface,
             'land_surface': self.land_surface,
             'rooms': self.rooms,
