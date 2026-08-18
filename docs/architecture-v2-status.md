@@ -50,6 +50,18 @@ Dernière mise à jour de session : contrat **88/88 PASS**. #6 : **T1..T5 FAITS*
 > monolithe → 404, ne pas router). Détail complet en §8.3/§8.4. Décisions utilisateur : #3 = reproduire
 > les routes legacy ; #4 = tout extraire ; #6 = coupure auto autorisée si contrat vert.
 
+> **BRING-UP 2026-08-18 (contexte frais)** — Stack relancée via `scripts/dev-mesh-up.sh` :
+> **30/30 services + BFF sains (200)**, monolithe non démarré (décommissionné). Front SemsarOut
+> servi sur :5600 (login + parcours authentifié OK, données réelles via le BFF). **2 corrections
+> de migration** appliquées (les colonnes existaient dans les modèles mais aucune migration
+> incrémentale n'avait été écrite/appliquée pour la feature « charges de copropriété ») :
+> - `services/listing/db/migrate_condo.sql` **créé** (`listing.property` : `is_condo BOOLEAN`,
+>   `condo_fees NUMERIC(10,2)`) — sans lui `GET /backoffice/properties` renvoyait **500**.
+> - `services/coloc-listing/db/migrate_condo.sql` (déjà présent) **appliqué** localement.
+> - Rôles/schémas PG des 4 services récents (`commission`, `selling`, `translation`, `partner`)
+>   provisionnés (`db/schema.sql`) — ils ne l'étaient pas en local (auth PG échouait au démarrage).
+> Doc + diagramme (`architecture-v2.drawio`, ADR-0005, PLATFORM.md) mis à jour : **22 → 30 services**.
+
 ---
 
 ## 1. Vision cible (rappel)
@@ -86,6 +98,18 @@ reconstructibles). Validation JWT **locale** au BFF (frontière d'auth sévrée)
 | rental | 8518 | gestion locative — mandats/CRG, baux/quittancement, candidatures (backend **complet** ; **UI agence + UI candidat livrées**, voir §11) |
 | identity | 8501 | **auth complète** (voir §3) + RBAC + teams/invitations + `dashboard/config` + `internal/agency/{id}/seats|members|analytics-scope` |
 | analytics | 8504 | **tout dashboards/analytics/stats** query-time : `/analytics/*` (6) + `/stats/*` (6) + `/dashboard`+`/dashboard/charts/*`+`/dashboard/activity` — dumps internes transactions/crm/listing/geo/billing/audit + identity scope/seats |
+
+**Services ajoutés après la coupure (domaines neufs, hors périmètre de la cible v2 d'origine) :**
+| Service | Port | Domaine |
+|---|---|---|
+| rental | 8518 | gestion locative — mandats/CRG, baux/quittancement, candidatures, EDL, e-signature (voir §11) |
+| commission | 8519 | compteur d'affaires + gate de facturation (consomme `payment.*`) |
+| selling | 8520 | vente médiée : demande d'achat → offre → compromis e-signé (3a9dSign) → libère la commission |
+| coloc-listing | 8521 | **M3a-L3achrane** : annonces de colocation (`/listings*`, `/me/listings`) |
+| coloc-profile | 8522 | **M3a-L3achrane** : profils chercheurs (`/me/profile|lifestyle|favorites`) |
+| matching | 8523 | **M3a-L3achrane** : scores de compatibilité — API interne, composée par le BFF sur `GET /listings` |
+| translation | 8524 | traduction FR↔AR à la volée (Azure Translator + cache PostgreSQL) — support i18n |
+| partner | 8525 | **M3a-L3achrane** : portail partenaires/affiliés (`/partner/*` : clés API, webhooks, reporting) |
 
 **Services additifs (nouvelles surfaces, PAS consommées par le front — voir reste à faire) :**
 identity(KYC) · notification 8502
