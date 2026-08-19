@@ -5,7 +5,8 @@ import { useTranslation } from 'react-i18next'
 import {
   FiMapPin, FiCalendar, FiHome, FiPhone, FiShare2,
   FiCheckCircle, FiClock, FiAlertCircle, FiChevronLeft, FiChevronRight,
-  FiDownload, FiPlay, FiX, FiMaximize2
+  FiDownload, FiPlay, FiX, FiMaximize2,
+  FiGrid, FiList, FiLayers, FiSquare, FiStar, FiBriefcase
 } from 'react-icons/fi'
 import { formatPrice } from '../utils/currency'
 import { getAmenityIcon } from '../utils/amenityIcons'
@@ -27,6 +28,17 @@ const CONSTRUCTION_STATUS = {
   under_construction: { icon: FiAlertCircle, color: 'text-orange-600 bg-orange-100' },
   delivered: { icon: FiCheckCircle, color: 'text-green-600 bg-green-100' }
 }
+
+// Icône par type de bien (fallback FiHome pour les types inconnus)
+const UNIT_TYPE_ICON = {
+  studio: FiSquare,
+  apartment: FiGrid,
+  duplex: FiLayers,
+  villa: FiHome,
+  penthouse: FiStar,
+  commercial: FiBriefcase
+}
+const unitTypeIcon = (type) => UNIT_TYPE_ICON[type] || FiHome
 
 // Clés FR utilisées uniquement pour la résolution d'icône (getAmenityIcon reconnaît
 // des mots-clés FR/EN) — le libellé affiché, lui, passe par t().
@@ -229,6 +241,51 @@ function UnitCard({ unit, t }) {
   )
 }
 
+function UnitRow({ unit, t }) {
+  const TypeIcon = unitTypeIcon(unit.unit_type)
+  const surface = unit.surface_min === unit.surface_max || !unit.surface_max
+    ? (unit.surface_min > 0 ? `${unit.surface_min} m²` : null)
+    : `${unit.surface_min} - ${unit.surface_max} m²`
+  const price = unit.price_from === unit.price_to || !unit.price_to
+    ? (unit.price_from > 0 ? formatPrice(unit.price_from) : null)
+    : `${formatPrice(unit.price_from)} - ${formatPrice(unit.price_to)}`
+
+  return (
+    <div className="flex items-center gap-4 bg-gray-50 rounded-xl p-4">
+      <div className="flex-shrink-0 w-11 h-11 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
+        <TypeIcon className="w-5 h-5" />
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          <h4 className="font-semibold text-gray-900 truncate">{unit.name}</h4>
+          {unit.available_count > 0 && (
+            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+              {t('public:programDetail.availableCount', { n: unit.available_count })}
+            </span>
+          )}
+        </div>
+        <p className="text-sm text-gray-500">
+          {t(`public:programDetail.unitTypes.${unit.unit_type}`, { defaultValue: unit.unit_type })}
+        </p>
+        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-gray-600">
+          {surface && <span>{t('public:programDetail.surfaceLabel')} : {surface}</span>}
+          {unit.rooms > 0 && <span>{t('public:programDetail.roomsLabel')} : {unit.rooms}</span>}
+          {unit.bedrooms > 0 && <span>{t('public:programDetail.bedroomsLabel')} : {unit.bedrooms}</span>}
+          {unit.bathrooms > 0 && <span>{t('public:programDetail.bathroomsLabel')} : {unit.bathrooms}</span>}
+        </div>
+      </div>
+
+      {price && (
+        <div className="flex-shrink-0 text-end">
+          <span className="block text-xs text-gray-500">{t('public:programDetail.priceLabel')}</span>
+          <span className="text-base font-bold text-primary-600 whitespace-nowrap">{price}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ContactForm({ program }) {
   const { t } = useTranslation(['public'])
   const { user, isAuthenticated } = useAuthStore()
@@ -348,6 +405,7 @@ export default function ProgramDetail() {
   const { t } = useTranslation(['public'])
   const { fmtDate } = useFormat()
   const { slug } = useParams()
+  const [unitsView, setUnitsView] = useState('grid')
 
   const { data, isLoading, error } = useQuery(
     ['program', slug],
@@ -482,14 +540,54 @@ export default function ProgramDetail() {
             {/* Units */}
             {program.units && program.units.length > 0 && (
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  {t('public:programDetail.unitsTitle')}
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {program.units.map(unit => (
-                    <UnitCard key={unit.id} unit={unit} t={t} />
-                  ))}
+                <div className="flex items-center justify-between gap-4 mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    {t('public:programDetail.unitsTitle')}
+                  </h2>
+                  <div className="flex bg-gray-100 rounded-lg p-1">
+                    <button
+                      type="button"
+                      onClick={() => setUnitsView('grid')}
+                      className={`p-2 rounded transition-colors ${
+                        unitsView === 'grid'
+                          ? 'bg-white text-primary-600 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                      title={t('public:programDetail.viewGrid')}
+                      aria-label={t('public:programDetail.viewGrid')}
+                      aria-pressed={unitsView === 'grid'}
+                    >
+                      <FiGrid className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUnitsView('list')}
+                      className={`p-2 rounded transition-colors ${
+                        unitsView === 'list'
+                          ? 'bg-white text-primary-600 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                      title={t('public:programDetail.viewList')}
+                      aria-label={t('public:programDetail.viewList')}
+                      aria-pressed={unitsView === 'list'}
+                    >
+                      <FiList className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
+                {unitsView === 'grid' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {program.units.map(unit => (
+                      <UnitCard key={unit.id} unit={unit} t={t} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {program.units.map(unit => (
+                      <UnitRow key={unit.id} unit={unit} t={t} />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

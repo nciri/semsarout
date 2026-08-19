@@ -338,6 +338,8 @@
     "priceFrom": "Prix à partir de",
     "descriptionTitle": "Description",
     "unitsTitle": "Types de biens disponibles",
+    "viewGrid": "Vue grille",
+    "viewList": "Vue liste",
     "unitTypes": {
       "studio": "Studio",
       "apartment": "Appartement",
