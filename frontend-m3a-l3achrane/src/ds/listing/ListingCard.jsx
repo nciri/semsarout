@@ -9,10 +9,12 @@ import { AmenityChip } from "./AmenityChip.jsx";
 /** ListingCard — the core marketplace card: photo + match score, title, location, price, amenities. */
 export function ListingCard({
   image, imageTone = "var(--navy-100)", match, verified = true, title,
-  city, price = 2300, amenities, proximity,
+  city, price = 2300, isCondo = false, condoFees = null, amenities, proximity,
   onClick, onApply, style,
 }) {
   const { t } = useTranslation();
+  const hasCondoFees = isCondo && condoFees > 0;
+  const displayPrice = hasCondoFees ? price + condoFees : price;
   const displayTitle = title ?? t("listingCard.defaultTitle");
   const displayCity = city ?? t("listingCard.defaultCity");
   const displayAmenities = amenities ?? [
@@ -46,7 +48,18 @@ export function ListingCard({
             {t("listingCard.proximityTo", { distance: proximity.distance, label: proximity.label })}
           </div>
         )}
-        <PriceTag amount={price} size="md" />
+        <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+          <PriceTag amount={displayPrice} size="md" />
+          {hasCondoFees && (
+            <span
+              className="cc-badge"
+              title={t("web:listing.chargesComprisesShort")}
+              style={{ font: "var(--fw-semibold) var(--fs-xs) var(--font-body)", color: "var(--text-muted)" }}
+            >
+              {t("web:listing.chargesComprisesShort")}
+            </span>
+          )}
+        </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 2 }}>
           {displayAmenities.map((a, i) => <AmenityChip key={i} icon={a.icon}>{a.label}</AmenityChip>)}
         </div>

@@ -8,10 +8,12 @@
 > (`docs/m3a-architecture.drawio`). **Diagramme (as-built) :** `docs/architecture-v2.drawio`.
 >
 > ⚠️ **Écarts as-built vs cette cible : voir `docs/adr/ADR-0005-ecarts-as-built.md`.** En bref :
-> JWT **HS256** (secret partagé) au lieu de RS256 · **22 services** (transactions/programs/audit
-> détachés) au lieu de 19 · format d'erreur **legacy `{'error'}`** dominant (parité front) au lieu de
-> RFC 9457 · analytics = **agrégation query-time** au lieu de projection · **pas de Traefik** (le BFF
-> est l'entrée). Ce document décrit la **cible d'origine** ; l'ADR-0005 fait foi pour l'état réel.
+> JWT **HS256** (secret partagé) au lieu de RS256 · **30 services** (transactions/programs/audit
+> détachés, + `rental`, `commission`/`selling`, `translation`, et le vertical **M3a-L3achrane** :
+> `coloc-listing`/`coloc-profile`/`matching`/`partner`) au lieu de 19 · format d'erreur **legacy
+> `{'error'}`** dominant (parité front) au lieu de RFC 9457 · analytics = **agrégation query-time**
+> au lieu de projection · **pas de Traefik** (le BFF est l'entrée). Ce document décrit la **cible
+> d'origine** ; l'ADR-0005 fait foi pour l'état réel.
 
 ---
 

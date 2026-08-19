@@ -7,7 +7,8 @@
       "tagline": "مع العشران — سكن جماعي موثّق في المغرب",
       "search": "بحث",
       "mySpace": "مساحتي",
-      "partners": "الشركاء"
+      "partners": "الشركاء",
+      "reviews": "التقييمات"
     }
   },
   "landing": {
@@ -115,7 +116,8 @@
       "universitiesSub": "سيّروا سكن طلبتكم",
       "companiesTitle": "بوابة الشركات",
       "companiesSub": "انتقال الكفاءات الجديدة",
-      "dashboardAlt": "لوحة تحكم الشريك"
+      "dashboardAlt": "لوحة تحكم الشريك",
+      "cta": "اكتشف فضاء الشركاء"
     }
   },
   "search": {
@@ -134,6 +136,10 @@
       "ذكور"
     ],
     "budgetOptions": [
+      {
+        "value": "",
+        "label": "كل الميزانيات"
+      },
       "2500 درهم",
       "4000 درهم"
     ],
@@ -207,7 +213,8 @@
     "activeFiltersLabel": "عوامل التصفية النشطة:",
     "removeFilterLabel": "إزالة عامل التصفية {{label}}",
     "verifiedFilterChip": "الملفات الموثقة",
-    "mapComingSoon": "عرض الخريطة قريبًا",
+    "mapPrivacyNotice": "مواقع تقريبية حسب المدينة — يُكشف العنوان الدقيق بعد قبول التواصل.",
+    "mapPopupSeeListing": "عرض الإعلان",
     "loadMore": "عرض المزيد من السكنات",
     "locationDefault": "الدار البيضاء، المعاريف",
     "institutionLabel": "المدرسة / الشركة",
@@ -247,6 +254,8 @@
     "locationTitle": "الموقع",
     "locationApproxNote": "الموقع تقريبي (نطاق 300 م) — يُكشف العنوان الدقيق بعد قبول ترشحك.",
     "priceUnitPeriod": "شهريًا، شاملة التكاليف",
+    "condoFeesLabel": "مصاريف الملكية المشتركة",
+    "chargesComprisesShort": "+cc",
     "matchPercentLabel": "{{pct}}٪ توافق مع ملفك الشخصي",
     "matchDetailsBase": "نفس إيقاع النوم · غير مدخّن",
     "applyCta": "التقديم على هذه الغرفة",
@@ -317,7 +326,30 @@
     "termsPrefix": "بمتابعتك، فإنك توافق على",
     "termsLink": "شروط الاستخدام",
     "termsAnd": "و",
-    "privacyLink": "سياسة الخصوصية"
+    "privacyLink": "سياسة الخصوصية",
+    "passwordReset": {
+      "forgot": {
+        "title": "نسيت كلمة المرور",
+        "subtitle": "أدخل بريدك الإلكتروني، سنرسل لك رابط إعادة التعيين.",
+        "emailLabel": "البريد الإلكتروني",
+        "submitCta": "إرسال الرابط",
+        "genericSuccess": "إذا كان هناك حساب مرتبط بهذا البريد الإلكتروني، فقد تم إرسال رابط إعادة التعيين.",
+        "networkError": "حدث خطأ — يُرجى إعادة المحاولة لاحقًا.",
+        "backToLogin": "العودة إلى تسجيل الدخول"
+      },
+      "reset": {
+        "title": "إعادة تعيين كلمة المرور",
+        "newPasswordLabel": "كلمة المرور الجديدة",
+        "confirmPasswordLabel": "تأكيد كلمة المرور",
+        "submitCta": "إعادة التعيين",
+        "tooShortError": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.",
+        "mismatchError": "كلمتا المرور غير متطابقتين.",
+        "genericError": "حدث خطأ — يُرجى إعادة المحاولة لاحقًا.",
+        "invalidLinkMessage": "رابط إعادة التعيين هذا غير صالح.",
+        "successMessage": "تمت إعادة تعيين كلمة المرور بنجاح.",
+        "backToLogin": "العودة إلى تسجيل الدخول"
+      }
+    }
   },
   "registration": {
     "title": "أنشئ ملفك الشخصي",
@@ -372,8 +404,10 @@
     "agreementMiddle": "ومعالجة بياناتي وفقًا لـ",
     "agreementPrivacyLink": "سياسة الخصوصية",
     "agreementSuffix": "(CNDP).",
-    "saveLaterCta": "احفظ واستأنف لاحقًا",
-    "continueCta": "متابعة"
+    "saveLaterCta": "لاحقًا",
+    "continueCta": "متابعة",
+    "continueCtaBusy": "جارٍ الإنشاء…",
+    "genericError": "حدث خطأ — يُرجى إعادة المحاولة."
   },
   "reviews": {
     "title": "قيّم إقامتك",

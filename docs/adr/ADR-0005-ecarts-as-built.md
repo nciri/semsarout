@@ -26,14 +26,28 @@ justification et, le cas échéant, leur trajectoire de convergence.
   les services/BFF ne connaissent que la publique) une fois le monolithe hors du tableau — ce qui
   est désormais le cas. À planifier comme évolution isolée (rotation de clés + JWKS).
 
-### 2. **22 services** au lieu des **19** cibles (trois domaines détachés)
+### 2. **30 services** au lieu des **19** cibles (domaines détachés + surfaces ajoutées post-coupure)
 
 - **transactions** détaché de `crm` (pipeline ventes/locations + documents).
 - **programs** détaché de `listing` (programmes neufs : units/plans/lots).
 - **audit** détaché de `trust-safety` (journal d'activité, consomme `audit.logged`).
-- **Pourquoi :** frontières transactionnelles et de charge distinctes ; plus fidèle au principe
-  « un domaine = un service ». Écart **par excès de granularité**, pas de regroupement.
+- **Pourquoi (détachements) :** frontières transactionnelles et de charge distinctes ; plus fidèle
+  au principe « un domaine = un service ». Écart **par excès de granularité**, pas de regroupement.
 - **Nommage :** `integrations/ingestion` de la cible est réalisé sous le nom **staymanager**.
+- **Domaines ajoutés après la coupure** (hors périmètre de la cible v2 d'origine, développés depuis) :
+  - **rental** (:8518) — gestion locative : mandats/CRG, baux & quittancement, candidatures,
+    états des lieux (EDL), signature. Domaine neuf, pas de route legacy (hors `contract_test.py`).
+  - **commission** (:8519) — compteur d'affaires + gate de facturation ; **selling** (:8520) —
+    flux de vente médiée (demande d'achat → offre → compromis e-signé via 3a9dSign). `selling`
+    libère la commission associée à la complétion de la signature.
+  - **translation** (:8524) — traduction FR↔AR à la volée du contenu dynamique (Azure Translator,
+    cache PostgreSQL) — support du chantier i18n FR/arabe.
+  - **Vertical M3a-L3achrane** (colocation, second front) : **coloc-listing** (:8521) annonces,
+    **coloc-profile** (:8522) profils chercheurs, **matching** (:8523) scores de compatibilité
+    (API interne composée par le BFF), **partner** (:8525) portail partenaires/affiliés (clés API,
+    webhooks, reporting). Même mesh, même BFF, même infra que SemsarOut.
+- **Trajectoire :** ces services suivent les mêmes conventions (1 schéma + 1 rôle PG, outbox,
+  erreurs legacy pour parité) ; aucun ne dépend du monolithe (décommissionné).
 
 ### 3. Format d'erreur **legacy `{"error": msg}`** dominant, pas **RFC 9457** uniforme
 

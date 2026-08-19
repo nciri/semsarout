@@ -72,7 +72,7 @@
     "viewConversation": "Voir la conversation",
     "continueSearch": "Continuer la recherche",
     "title": "Postuler pour cette chambre",
-    "listingSubtitle": "{{titre}} — {{quartier}}, {{ville}} · {{prix}} MAD/mois",
+    "listingSubtitle": "{{titre}} — {{quartier}}, {{ville}} · {{prix}} Đh/mois",
     "messageLabel": "Message au·à la colocataire",
     "messagePlaceholder": "Présentez-vous en quelques lignes : votre situation, vos disponibilités, pourquoi ce logement vous intéresse…",
     "verifiedNotice": "Votre profil est vérifié et votre questionnaire de mode de vie est complet — le·la propriétaire verra votre score de compatibilité dès réception.",
@@ -106,8 +106,8 @@
     "empty": "Aucune candidature dans cette catégorie.",
     "generateLeaseButton": "Générer le bail",
     "generateLeaseFormTitle": "Générer le bail",
-    "rentLabel": "Loyer (MAD)",
-    "depositLabel": "Caution (MAD)",
+    "rentLabel": "Loyer (Đh)",
+    "depositLabel": "Caution (Đh)",
     "startDateLabel": "Date d'entrée",
     "generateLeaseSubmit": "Créer le bail",
     "generateLeaseSubmitting": "Création…",
@@ -312,7 +312,7 @@
     "expiryPlaceholder": "MM/AA",
     "cvcPlaceholder": "CVC",
     "securePaymentNotice": "Paiement sécurisé par CMI — aucune donnée de carte n’est stockée sur la plateforme.",
-    "payButton": "Payer {{amount}} MAD",
+    "payButton": "Payer {{amount}} Đh",
     "payProcessing": "Traitement en cours (simulé)…",
     "paySucceeded": "Paiement simulé confirmé — placé sous séquestre",
     "payError": "Échec du paiement simulé — réessayez",
@@ -368,6 +368,39 @@
     "helpText": "Notre équipe support répond sous 24h ouvrées.",
     "contactSupport": "Contacter le support →"
   },
+  "aide": {
+    "title": "Aide & support",
+    "subtitle": "Trouvez une réponse rapide ou écrivez directement à notre équipe.",
+    "faqTitle": "Questions fréquentes",
+    "faq": {
+      "publierAnnonce": {
+        "question": "Comment déposer une annonce ?",
+        "answer": "Depuis votre espace, cliquez sur « Publier » puis suivez les étapes : bien, logement, prix, disponibilité et photos. Votre annonce est ensuite soumise à vérification avant publication."
+      },
+      "preselection": {
+        "question": "Comment fonctionne la présélection ?",
+        "answer": "Le propriétaire présélectionne les candidatures qui l'intéressent. Les colocataires déjà en place valident ensuite ces profils avant que le dossier ne passe à l'étape suivante."
+      },
+      "paiementCaution": {
+        "question": "Paiement et caution, comment ça marche ?",
+        "answer": "Le loyer et la caution se règlent depuis l'espace « Paiement » de votre compte. Les fonds transitent par notre parcours sécurisé, jamais directement entre particuliers."
+      },
+      "securiteSignalement": {
+        "question": "Sécurité et signalement, que faire en cas de problème ?",
+        "answer": "Utilisez le Centre de sécurité pour signaler un profil, une annonce ou un message suspect, et pour bloquer un utilisateur. Notre équipe examine chaque signalement rapidement."
+      }
+    },
+    "contactTitle": "Contacter le support",
+    "contactText": "Une question qui n'est pas dans la FAQ ? Écrivez-nous, notre équipe vous répond sous 24h ouvrées.",
+    "subjectLabel": "Sujet",
+    "subjectPlaceholder": "Résumez votre demande en quelques mots",
+    "emailLabel": "Email",
+    "emailPlaceholder": "vous@exemple.com",
+    "messageLabel": "Message",
+    "messagePlaceholder": "Décrivez votre demande…",
+    "submitContact": "Envoyer le message",
+    "contactSent": "Votre message a bien été envoyé, notre équipe vous répondra sous 24h ouvrées."
+  },
   "roommateValidation": {
     "title": "Des candidats pour votre colocation",
     "explanation": "Le propriétaire a présélectionné ces profils ; votre avis compte pour la vie en commun.",
@@ -381,5 +414,96 @@
       "rejected": "Écarté"
     },
     "empty": "Aucun candidat à valider pour le moment."
+  },
+  "publier": {
+    "pageTitle": "Déposer une annonce",
+    "stepIndicator": "Étape {{current}}/{{total}}",
+    "steps": {
+      "bien": "Le bien",
+      "logement": "Le logement",
+      "prix": "Prix & charges",
+      "dispoPhotos": "Disponibilité & photos"
+    },
+    "actions": {
+      "back": "Retour",
+      "next": "Suivant",
+      "publish": "Publier",
+      "publishing": "Publication…"
+    },
+    "errors": {
+      "required": "Champ requis",
+      "rentPositive": "Le loyer doit être supérieur à 0",
+      "publishFailed": "La publication a échoué. L'annonce reste en brouillon, veuillez réessayer."
+    },
+    "success": {
+      "title": "Annonce envoyée en modération",
+      "text": "Votre annonce a bien été transmise et sera publiée après vérification par notre équipe."
+    },
+    "selectPlaceholder": "Sélectionner…",
+    "propertyTypes": {
+      "APPARTEMENT": "Appartement",
+      "MAISON": "Maison",
+      "VILLA": "Villa",
+      "STUDIO": "Studio",
+      "RESIDENCE_ETUDIANTE": "Résidence étudiante",
+      "CHEZ_HABITANT": "Chez l'habitant"
+    },
+    "amenities": {
+      "wifi": "Wifi",
+      "parking": "Parking",
+      "ascenseur": "Ascenseur",
+      "chauffage": "Chauffage",
+      "climatisation": "Climatisation",
+      "lave_linge": "Lave-linge"
+    },
+    "bedTypes": {
+      "CHAMBRE_INDIVIDUELLE": "Chambre individuelle",
+      "CHAMBRE_PARTAGEE": "Chambre partagée",
+      "LIT_DORTOIR": "Lit en dortoir",
+      "STUDIO_ENTIER": "Studio entier",
+      "APPARTEMENT_ENTIER": "Appartement entier"
+    },
+    "housingGenders": {
+      "FEMININ": "Femmes uniquement",
+      "MASCULIN": "Hommes uniquement"
+    },
+    "mediaTypes": {
+      "CHAMBRE": "Chambre",
+      "PARTIES_COMMUNES": "Parties communes",
+      "AUTRE": "Autre"
+    },
+    "stepBien": {
+      "cityLabel": "Ville",
+      "neighborhoodLabel": "Quartier",
+      "addressLabel": "Adresse",
+      "propertyTypeLabel": "Type de bien",
+      "floorLabel": "Étage",
+      "areaLabel": "Surface (m²)",
+      "amenitiesLabel": "Équipements"
+    },
+    "stepLogement": {
+      "titleLabel": "Titre de l'annonce",
+      "descriptionLabel": "Description",
+      "bedTypeLabel": "Type de chambre",
+      "housingGenderLabel": "Public accueilli",
+      "furnishedLabel": "Meublé",
+      "capacityLabel": "Capacité (nombre de colocataires)"
+    },
+    "stepPrix": {
+      "rentLabel": "Loyer mensuel (Đh)",
+      "chargesIncludedLabel": "Charges comprises",
+      "chargesAmountLabel": "Montant des charges (Đh/mois)",
+      "depositLabel": "Caution (Đh)",
+      "isCondoLabel": "Immeuble en copropriété",
+      "condoFeesLabel": "Charges de copropriété (Đh/mois)"
+    },
+    "stepDispoPhotos": {
+      "availableFromLabel": "Disponible à partir du",
+      "durationMinLabel": "Durée minimale (mois)",
+      "durationMaxLabel": "Durée maximale (mois)",
+      "photosLabel": "Photos",
+      "addPhotos": "Ajouter des photos",
+      "removePhoto": "Retirer"
+    }
   }
 }

@@ -65,6 +65,8 @@ export function mapListingHit(hit) {
     matchPct: hit.match_pct ?? null, // absent tant que le matching (plan C) n'est pas branché
     verifiee: hit.status === 'PUBLIEE', // publiée = passée en modération
     chips: buildChips(hit),
+    isCondo: hit.is_condo ?? false,
+    condoFees: hit.condo_fees ?? null,
   }
 }
 
@@ -96,6 +98,8 @@ export function mapListingDetail(d) {
     equipements: (d.amenities ?? []).map(amenityLabel),
     facts,
     colocataires,
+    isCondo: d.is_condo ?? false,
+    condoFees: d.condo_fees ?? null,
   }
 }
 

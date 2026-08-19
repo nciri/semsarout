@@ -62,6 +62,7 @@ class GatewaySettings(BaseSettings):
     selling_url: str | None = None
     coloc_listing_url: str | None = None
     coloc_profile_url: str | None = None
+    partner_url: str | None = None
     matching_url: str | None = None
     translation_url: str | None = None
     # Jeton interne partagé (appels BFF → APIs internes des services, ex. matching).

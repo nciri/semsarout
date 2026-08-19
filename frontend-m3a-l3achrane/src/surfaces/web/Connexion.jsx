@@ -165,9 +165,13 @@ export default function Connexion() {
                   <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span>{t('web:auth.passwordLabel')}{requiredStar}</span>
                     {mode === 'login' && (
-                      <a href="#" onClick={(e) => e.preventDefault()} style={{ fontWeight: 600, fontSize: 13 }}>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/mot-de-passe-oublie')}
+                        style={{ background: 'none', border: 0, padding: 0, font: 'inherit', fontWeight: 600, fontSize: 13, color: 'var(--link)', cursor: 'pointer' }}
+                      >
                         {t('web:auth.forgotPassword')}
-                      </a>
+                      </button>
                     )}
                   </span>
                 )}

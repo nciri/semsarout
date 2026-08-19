@@ -26,6 +26,24 @@ test('mapListingHit traduit le contrat backend vers les clés françaises', () =
   assert.ok(l.chips.includes('Non-fumeur') && l.chips.includes('Meublé') && l.chips.includes('Wifi'))
 })
 
+test('mapListingHit expose isCondo/condoFees', () => {
+  const l = mapListingHit({ ...HIT, is_condo: true, condo_fees: 300 })
+  assert.equal(l.isCondo, true)
+  assert.equal(l.condoFees, 300)
+})
+
+test('mapListingHit expose isCondo/condoFees par défaut à false/null', () => {
+  const l = mapListingHit(HIT)
+  assert.equal(l.isCondo, false)
+  assert.equal(l.condoFees, null)
+})
+
+test('mapListingDetail expose isCondo/condoFees', () => {
+  const l = mapListingDetail({ ...HIT, id: 'abc', is_condo: true, condo_fees: 800 })
+  assert.equal(l.isCondo, true)
+  assert.equal(l.condoFees, 800)
+})
+
 test('mapListingDetail produit equipements, facts et colocataires anonymes', () => {
   const d = mapListingDetail({
     ...HIT, id: 'abc', area_m2: 90, floor: 2,

@@ -8,6 +8,7 @@ import { FiSave } from 'react-icons/fi'
 import { propertyService } from '../../services/propertyService'
 import { DIRHAM_SYMBOL } from '../../utils/currency'
 import { getAmenityIcon } from '../../utils/amenityIcons'
+import { CondoFeesField } from '../../components/property/CondoFeesField'
 
 const PROPERTY_TYPE_VALUES = ['apartment', 'house', 'villa', 'land', 'commercial', 'office']
 
@@ -25,14 +26,19 @@ function CreateProperty() {
   const isEditMode = Boolean(id)
   const [selectedFeatures, setSelectedFeatures] = useState([])
 
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm({
     defaultValues: {
       transaction_type: 'sale',
-      property_type: 'apartment'
+      property_type: 'apartment',
+      is_condo: true,
+      condo_fees: null
     }
   })
 
   const transactionType = watch('transaction_type')
+  const propertyType = watch('property_type')
+  const isCondo = watch('is_condo')
+  const condoFees = watch('condo_fees')
 
   const { data: existingProperty, isLoading: isLoadingProperty } = useQuery(
     ['property', id],
@@ -55,7 +61,9 @@ function CreateProperty() {
         floor: existingProperty.floor,
         city: existingProperty.city,
         neighborhood: existingProperty.neighborhood,
-        address: existingProperty.address
+        address: existingProperty.address,
+        is_condo: existingProperty.is_condo ?? true,
+        condo_fees: existingProperty.condo_fees ?? null
       })
       setSelectedFeatures(existingProperty.features || [])
     }
@@ -103,7 +111,9 @@ function CreateProperty() {
       surface: data.surface ? parseFloat(data.surface) : null,
       rooms: data.rooms ? parseInt(data.rooms) : null,
       bedrooms: data.bedrooms ? parseInt(data.bedrooms) : null,
-      bathrooms: data.bathrooms ? parseInt(data.bathrooms) : null
+      bathrooms: data.bathrooms ? parseInt(data.bathrooms) : null,
+      is_condo: data.is_condo,
+      condo_fees: data.is_condo && data.condo_fees ? parseFloat(data.condo_fees) : null
     }
 
     if (isEditMode) {
@@ -233,6 +243,16 @@ function CreateProperty() {
                   placeholder="Ex: 85"
                 />
               </div>
+            </div>
+
+            <div className="mt-4">
+              <CondoFeesField
+                propertyType={propertyType}
+                isCondo={isCondo}
+                condoFees={condoFees}
+                onToggle={(v) => setValue('is_condo', v)}
+                onAmount={(v) => setValue('condo_fees', v)}
+              />
             </div>
           </div>
 

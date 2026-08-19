@@ -141,7 +141,11 @@ export default function Questionnaire() {
               {t('app:questionnaire.stepIndicator', { step: step + 1, total })}
             </div>
             {!mandatory && (
-              <a href="#" style={{ font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)' }}>
+              <a
+                href="/espace"
+                onClick={(e) => { e.preventDefault(); navigate('/espace') }}
+                style={{ font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)' }}
+              >
                 {t('app:questionnaire.skipForNow')}
               </a>
             )}

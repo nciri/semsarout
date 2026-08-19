@@ -75,6 +75,8 @@ class Listing(Base):
     rent = Column(Numeric(12, 2), nullable=False)
     charges_included = Column(Boolean, default=False, nullable=False)
     charges_amount = Column(Numeric(12, 2))
+    is_condo = Column(Boolean, default=True, nullable=False)
+    condo_fees = Column(Numeric(12, 2))
     deposit = Column(Numeric(12, 2))
     currency = Column(String(3), default="MAD", nullable=False)
     furnished = Column(Boolean, default=False, nullable=False)
@@ -106,6 +108,8 @@ class Listing(Base):
             "bed_type": self.bed_type, "rent": float(self.rent),
             "charges_included": self.charges_included,
             "charges_amount": float(self.charges_amount) if self.charges_amount is not None else None,
+            "is_condo": self.is_condo,
+            "condo_fees": float(self.condo_fees) if self.condo_fees is not None else None,
             "deposit": float(self.deposit) if self.deposit is not None else None,
             "currency": self.currency, "furnished": self.furnished,
             "housing_gender": self.housing_gender, "capacity": self.capacity,

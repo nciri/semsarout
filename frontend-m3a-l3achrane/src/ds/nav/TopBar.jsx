@@ -11,8 +11,8 @@ export function TopBar({
   const { t } = useTranslation();
   const navLinks = links ?? [
     { label: t("topbar.discover"), to: "/recherche", icon: "search" },
-    { label: t("topbar.howItWorks"), to: "/", icon: "info" },
-    { label: t("topbar.about"), to: "/", icon: "users" },
+    { label: t("topbar.howItWorks"), to: "/#how-it-works", icon: "info" },
+    { label: t("topbar.about"), to: "/#about", icon: "users" },
   ];
   return (
     <header style={{ display: "flex", alignItems: "center", gap: 28, padding: "0 40px", height: 68, background: "var(--surface-navy)", boxShadow: "var(--shadow-nav)", ...style }}>

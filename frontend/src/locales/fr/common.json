@@ -331,5 +331,9 @@
     "max": " (max {{count}})",
     "clear": "Effacer",
     "compare": "Comparer"
+  },
+  "condoFees": {
+    "toggle": "Bien en copropriété",
+    "label": "Charges de copropriété"
   }
 }

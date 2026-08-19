@@ -338,6 +338,8 @@
     "priceFrom": "السعر ابتداء من",
     "descriptionTitle": "الوصف",
     "unitsTitle": "أنواع الوحدات المتاحة",
+    "viewGrid": "عرض شبكي",
+    "viewList": "عرض قائمة",
     "unitTypes": {
       "studio": "استوديو",
       "apartment": "شقة",

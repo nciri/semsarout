@@ -36,6 +36,7 @@ mesh_apps:
   - { name: commission, port: 8519 }
   - { name: selling, port: 8520 }
   - { name: translation, port: 8524 }
+  - { name: partner, port: 8525 }
 
 mesh_relays:
   - listing
@@ -52,6 +53,7 @@ mesh_relays:
   - rental
   - commission
   - selling
+  - partner
 
 mesh_workers:
   - search
@@ -70,3 +72,4 @@ mesh_workers:
   - contract
   - rental
   - commission
+  - partner

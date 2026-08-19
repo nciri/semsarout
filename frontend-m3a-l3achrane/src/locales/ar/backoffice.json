@@ -37,6 +37,9 @@
         "label": "الإعدادات",
         "title": "الإعدادات",
         "subtitle": "قواعد المطابقة، الفريق والصلاحيات"
+      },
+      "attribution": {
+        "label": "توزيع الغرف"
       }
     },
     "queueNote": {
@@ -326,15 +329,6 @@
       "placed": "تم التنصيب · {{room}}",
       "commuteBudget": "{{commute}} · الميزانية {{budget}}",
       "chooseRoom": "اختر غرفة من المخطط ←"
-    },
-    "sidebarNav": {
-      "dashboard": "لوحة التحكّم",
-      "verifications": "التحقّقات",
-      "listings": "الإعلانات",
-      "assignments": "التوزيعات",
-      "users": "المستخدمون",
-      "contracts": "العقود",
-      "reports": "البلاغات"
     }
   }
 }

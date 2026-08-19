@@ -31,6 +31,8 @@ class Property(Base):
     price = Column(Numeric(12, 2), nullable=False)
     price_per_sqm = Column(Numeric(10, 2))
     charges = Column(Numeric(10, 2))
+    is_condo = Column(Boolean, default=False)
+    condo_fees = Column(Numeric(10, 2))
     surface = Column(Float)
     land_surface = Column(Float)
     rooms = Column(Integer)

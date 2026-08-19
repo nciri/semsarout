@@ -20,6 +20,7 @@ export default function WebLayout() {
           <nav style={{ display: 'flex', gap: 20 }}>
             <Link to="/recherche" style={{ color: 'inherit' }}>{t('web:layout.footer.search')}</Link>
             <Link to="/espace" style={{ color: 'inherit' }}>{t('web:layout.footer.mySpace')}</Link>
+            <Link to="/avis" style={{ color: 'inherit' }}>{t('web:layout.footer.reviews')}</Link>
             <Link to="/partenaire" style={{ color: 'inherit' }}>{t('web:layout.footer.partners')}</Link>
           </nav>
         </div>

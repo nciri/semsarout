@@ -6,7 +6,7 @@ import { getCurrentProfile, listListings } from '../../services/index.js'
 
 const TONES = ['var(--navy-100)', 'var(--gold-100)', 'var(--green-100)']
 
-function AppHeader({ prenom, verifiee, t }) {
+function AppHeader({ prenom, verifiee, t, navigate }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border-subtle)', background: '#fff' }}>
       <div>
@@ -18,7 +18,7 @@ function AppHeader({ prenom, verifiee, t }) {
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <IconButton icon="bell" label={t('app:dashboard.notifications')} variant="soft" round />
+        <IconButton icon="bell" label={t('app:dashboard.notifications')} variant="soft" round onClick={() => navigate('/espace/notifications')} />
         <Avatar name={prenom} showLabel subtitle={t('app:dashboard.studentSubtitle')} verified={verifiee} size={38} />
       </div>
     </div>
@@ -71,7 +71,7 @@ export default function Dashboard() {
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)' }}>
-      <AppHeader prenom={profile.prenom} verifiee={profile.verifiee} t={t} />
+      <AppHeader prenom={profile.prenom} verifiee={profile.verifiee} t={t} navigate={navigate} />
       <div style={{ padding: 32 }}>
         <div style={{ display: 'flex', gap: 16, marginBottom: 26 }}>
           <StatCard
@@ -93,7 +93,7 @@ export default function Dashboard() {
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <h2 style={{ font: 'var(--fw-bold) var(--fs-h2) var(--font-display)', color: 'var(--navy-700)', margin: 0 }}>{t('app:dashboard.recommendationsTitle')}</h2>
-          <a href="#" style={{ font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)' }}>{t('app:dashboard.seeAll')}</a>
+          <a href="/recherche" onClick={(e) => { e.preventDefault(); navigate('/recherche') }} style={{ font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)' }}>{t('app:dashboard.seeAll')}</a>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 18, marginBottom: 28 }}>
           {recs.map((it, i) => (
@@ -106,6 +106,8 @@ export default function Dashboard() {
               title={it.titre}
               city={`${it.quartier}, ${it.ville}`}
               price={it.prixMad}
+              isCondo={it.isCondo}
+              condoFees={it.condoFees}
               amenities={it.chips?.map((label) => ({ icon: 'check', label }))}
               onClick={() => navigate(`/annonce/${it.id}`)}
             />
@@ -133,7 +135,7 @@ export default function Dashboard() {
               <div>
                 <div style={{ font: 'var(--fw-semibold) var(--fs-body) var(--font-display)', color: 'var(--text-strong)' }}>{t('app:dashboard.nextStepVisitScheduled')}</div>
                 <div style={{ font: 'var(--fw-regular) var(--fs-sm) var(--font-body)', color: 'var(--text-muted)', margin: '2px 0' }}>{t('app:dashboard.nextStepVisitDetails')}</div>
-                <a href="#" style={{ font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)' }}>{t('app:dashboard.nextStepViewDetail')}</a>
+                <a href="/espace/candidatures" onClick={(e) => { e.preventDefault(); navigate('/espace/candidatures') }} style={{ font: 'var(--fw-semibold) var(--fs-sm) var(--font-body)' }}>{t('app:dashboard.nextStepViewDetail')}</a>
               </div>
             </div>
           </div>

@@ -10,6 +10,8 @@ export const BACKOFFICE_NAV = [
   { id: 'contracts', icon: 'file-signature', label: 'Contrats & paiements', title: 'Contrats & paiements', subtitle: 'Contrats de colocation et paiements associés' },
   { id: 'reports', icon: 'flag', label: 'Signalements', title: 'Signalements', subtitle: 'Litiges et contenus signalés par la communauté' },
   { id: 'settings', icon: 'settings', label: 'Paramètres', title: 'Paramètres', subtitle: 'Règles de matching, équipe et permissions' },
+  // Écran autonome (hors bascule interne `view`) : routée séparément via react-router.
+  { id: 'attribution', icon: 'door-open', label: 'Attribution des chambres', route: '/back-office/attribution' },
 ]
 
 export const ADMIN_PROFILE = {
