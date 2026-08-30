@@ -4,9 +4,12 @@ Démonstration : une mutation métier (demande de vérification CIN) écrit son
 événement dans l'**outbox** DANS LA MÊME TRANSACTION, puis un relais le publie sur
 RabbitMQ (`identity.kyc.requested`). Le BFF route `/api/v1/identity/*` vers ce service.
 """
+import json as _json
+import os
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, Header
+from fastapi import Depends, FastAPI, Header, Request
+from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -23,9 +26,13 @@ from semsar_common import (
 )
 from semsar_events import enqueue
 
-from . import accounts, auth, events, rbac, team
+from . import accounts, auth, didit_client, events, rbac, team
 from .db import get_db, init_db
 from .models import KycVerification
+
+_WEBHOOK_SECRET = os.environ.get("DIDIT_WEBHOOK_SECRET", "")
+_DECISION_MAP = {"Approved": "verified", "Declined": "rejected", "Abandoned": "rejected"}
+_TERMINAL_KYC = {"verified", "rejected"}
 
 # Rôles autorisés à consulter la KYC d'autrui (agents de conformité / admins).
 _KYC_REVIEWER_ROLES = {"admin", "kyc_reviewer"}
@@ -279,6 +286,20 @@ def _resolve_kyc(db: Session, kyc_id: int, x_internal_token: str) -> KycVerifica
     return db.get(KycVerification, kyc_id)
 
 
+def _apply_kyc_decision(db: Session, record: KycVerification, decision: str) -> None:
+    """decision ∈ 'verified'|'rejected'. Ne touche `UserRO.is_verified` que sur 'verified'
+    (un rejet n'annule pas une vérification déjà acquise ailleurs — parité comportement
+    historique). Réutilisée par le repli manuel admin ET le flux Didit (session/webhook/pull)."""
+    from .models import UserRO
+    record.status = decision
+    user = db.get(UserRO, record.user_id)
+    if decision == "verified" and user is not None:
+        user.is_verified = True
+    if decision == "verified":
+        enqueue(db, aggregate_type="kyc_verification", aggregate_id=record.id,
+               event_type=events.KYC_VERIFIED, payload={"user_id": record.user_id})
+
+
 @app.post("/internal/kyc/{kyc_id}/verify", include_in_schema=False)
 def internal_kyc_verify(kyc_id: int, x_internal_token: str = Header(default=""),
                         db: Session = Depends(get_db)) -> dict:
@@ -288,14 +309,8 @@ def internal_kyc_verify(kyc_id: int, x_internal_token: str = Header(default=""),
     if record is None:
         raise not_found("Vérification introuvable.")
     from .models import UserRO
-    record.status = "verified"
+    _apply_kyc_decision(db, record, "verified")
     user = db.get(UserRO, record.user_id)
-    if user is not None:
-        user.is_verified = True
-    enqueue(
-        db, aggregate_type="kyc_verification", aggregate_id=record.id,
-        event_type=events.KYC_VERIFIED, payload={"user_id": record.user_id},
-    )
     db.commit()
     return _kyc_to_dict(record, user)
 
@@ -309,7 +324,94 @@ def internal_kyc_reject(kyc_id: int, x_internal_token: str = Header(default=""),
     if record is None:
         raise not_found("Vérification introuvable.")
     from .models import UserRO
-    record.status = "rejected"
+    _apply_kyc_decision(db, record, "rejected")
     user = db.get(UserRO, record.user_id)
     db.commit()
     return _kyc_to_dict(record, user)
+
+
+@app.post("/identity/kyc/session", status_code=201)
+def create_kyc_session(principal: Principal = Depends(get_principal),
+                       db: Session = Depends(get_db)) -> dict:
+    """Crée une session Didit hébergée et renvoie l'URL de redirection. Remplace la saisie
+    manuelle du CIN (`POST /identity/kyc`) comme chemin principal — celui-ci reste en repli."""
+    user_id = _user_id(principal)
+    try:
+        session = didit_client.create_session(vendor_data=str(user_id))
+    except didit_client.DiditUnavailable:
+        return JSONResponse({"error": "Service de vérification indisponible."}, status_code=502)
+    record = KycVerification(user_id=user_id, cin=None, status="pending",
+                             didit_session_id=session["session_id"])
+    db.add(record)
+    db.commit()
+    return {"id": record.id, "status": record.status, "url": session["url"]}
+
+
+def _apply_didit_payload(db: Session, session_id: str, decision_payload: dict):
+    """Résout la session par `didit_session_id`, applique la décision si pas déjà terminale
+    (anti-rejeu). Renvoie `(record | None, applied: bool)`."""
+    record = db.query(KycVerification).filter(
+        KycVerification.didit_session_id == session_id).order_by(
+        KycVerification.id.desc()).first()
+    if record is None:
+        return None, False
+    if record.status in _TERMINAL_KYC:
+        return record, False
+    status = decision_payload.get("status")
+    decision = _DECISION_MAP.get(status)
+    record.decision = decision_payload
+    if decision is not None:
+        _apply_kyc_decision(db, record, decision)
+    return record, decision is not None
+
+
+@app.post("/identity/kyc/webhook", include_in_schema=False)
+async def kyc_webhook(request: Request, db: Session = Depends(get_db)) -> dict:
+    """Réception des événements Didit (`status.updated`). Public (pas de jeton utilisateur) :
+    la signature `X-Signature-V2` fait foi, comme le webhook paiement (`services/payment`)."""
+    raw = await request.body()
+    sig = request.headers.get("x-signature-v2", "")
+    if not didit_client.verify_signature(raw, sig, secret=_WEBHOOK_SECRET):
+        raise unauthorized("Signature invalide.")
+    payload = _json.loads(raw) if raw else {}
+    session_id = payload.get("session_id")
+    if not session_id:
+        return {"ok": True}
+    record, _applied = _apply_didit_payload(db, session_id, payload.get("decision") or {})
+    if record is None:
+        raise not_found("Session inconnue.")
+    db.commit()
+    return {"ok": True}
+
+
+@app.post("/identity/kyc/{kyc_id}/refresh")
+def refresh_kyc_session(kyc_id: int, principal: Principal = Depends(get_principal),
+                        db: Session = Depends(get_db)) -> dict:
+    """Filet de sécurité manuel : pull de la décision Didit si le webhook n'est jamais arrivé.
+    Déclenché par le front (bouton « Actualiser mon statut »), pas de tâche planifiée."""
+    record = db.get(KycVerification, kyc_id)
+    if record is None:
+        raise not_found("Vérification introuvable.")
+    if record.user_id != _user_id(principal):
+        raise forbidden("Accès non autorisé à cette vérification.")
+    if record.status in _TERMINAL_KYC or not record.didit_session_id:
+        return {"id": record.id, "status": record.status}
+    try:
+        decision_payload = didit_client.fetch_decision(record.didit_session_id)
+    except didit_client.DiditUnavailable:
+        return JSONResponse({"error": "Service de vérification indisponible."}, status_code=502)
+    _apply_didit_payload(db, record.didit_session_id, decision_payload)
+    db.commit()
+    return {"id": record.id, "status": record.status}
+
+
+@app.get("/internal/kyc/status/{user_id}", include_in_schema=False)
+def internal_kyc_status(user_id: int, x_internal_token: str = Header(default=""),
+                        db: Session = Depends(get_db)) -> dict:
+    """Statut KYC le plus récent d'un utilisateur — consommé par `rental`/`selling` comme
+    verrou avant signature électronique."""
+    if x_internal_token != settings.internal_token:
+        raise forbidden("Forbidden")
+    record = db.query(KycVerification).filter(
+        KycVerification.user_id == user_id).order_by(KycVerification.id.desc()).first()
+    return {"status": record.status if record is not None else "none"}
