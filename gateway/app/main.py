@@ -416,6 +416,9 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path.startswith("/api/v1/admin/accounts/agencies/")
     ):
         return app.state.trust_safety, path.replace("/api/v1", "", 1)
+    # Score de confiance (trust_level) : lecture publique, proxy direct vers trust-safety.
+    if settings.trust_safety_url and path.startswith("/api/v1/trust/"):
+        return app.state.trust_safety, path.replace("/api/v1", "", 1)
     # Signalements (reports) : création authentifiée + actions de traitement super-admin.
     # La liste back-office (GET /backoffice/reports) reste un endpoint composite dédié
     # (parité backoffice_listings/backoffice_verifications, cf. plus bas).

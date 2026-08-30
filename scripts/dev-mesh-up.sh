@@ -119,7 +119,7 @@ worker() { env SERVICE_NAME="$1" DATABASE_URL="$(dburl "$1")" RABBITMQ_URL="$RMQ
   OPENSEARCH_URL="$OS" MONOLITH_URL="$MONO" INTERNAL_TOKEN="$ITOK" \
   PYTHONPATH="services/$1" nohup python3 -m app.worker > "$LOG/$1-worker.log" 2>&1 & }
 for r in listing catalog identity contract payment billing transactions programs agency crm directory rental commission selling coloc-listing coloc-profile partner; do relay "$r"; done
-for w in search crm marketplace geo agency messaging analytics billing notification identity audit transactions legal contract rental commission coloc-profile matching partner; do worker "$w"; done
+for w in search crm marketplace geo agency messaging analytics billing notification identity audit transactions legal contract rental commission coloc-profile matching partner trust-safety; do worker "$w"; done
 # Ordonnanceur (Vague 2) : emails temporels (rappels de visite J-1, …).
 env SERVICE_NAME=notification DATABASE_URL="$(dburl notification)" RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" \
   OPENSEARCH_URL="$OS" INTERNAL_TOKEN="$ITOK" CRM_URL=http://localhost:8013 BILLING_URL=http://localhost:8508 \

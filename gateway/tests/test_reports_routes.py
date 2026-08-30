@@ -36,6 +36,19 @@ def test_report_dismiss_action_routes_to_trust_safety(monkeypatch):
         "TRUST_SAFETY", "/admin/reports/42/dismiss")
 
 
+def test_trust_read_routes_to_trust_safety(monkeypatch):
+    monkeypatch.setattr(m.settings, "trust_safety_url", "http://t")
+    fake = _app(trust_safety="TRUST_SAFETY")
+    assert _resolve_upstream(fake, "/api/v1/trust/agency/7", "GET") == ("TRUST_SAFETY", "/trust/agency/7")
+
+
+def test_trust_read_unmapped_when_disabled(monkeypatch):
+    monkeypatch.setattr(m.settings, "trust_safety_url", None)
+    fake = _app(trust_safety=None)
+    client, _ = _resolve_upstream(fake, "/api/v1/trust/agency/7", "GET")
+    assert client is None
+
+
 def test_reports_unmapped_when_disabled(monkeypatch):
     monkeypatch.setattr(m.settings, "trust_safety_url", None)
     fake = _app(trust_safety=None)
