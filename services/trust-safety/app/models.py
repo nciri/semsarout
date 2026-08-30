@@ -11,9 +11,10 @@ from sqlalchemy import JSON, BigInteger, Boolean, Column, DateTime, Integer, Str
 
 from .db import Base
 
-TARGET_TYPES = {"listing", "profile", "message"}
+TARGET_TYPES = {"listing", "profile", "message", "agency"}
 REPORT_REASONS = {"spam", "inappropriate", "fraud", "harassment", "other"}
 REPORT_STATUSES = {"open", "resolved", "dismissed"}
+LEVEL_ORDER = {"none": 0, "verified": 1, "verified_experience": 2}
 
 
 class ModerationStatus(Base):
@@ -25,6 +26,30 @@ class ModerationStatus(Base):
     is_deleted = Column(Boolean, default=False)
     reason = Column(Text)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class TrustLevel(Base):
+    """Score de confiance réel (remplace `is_verified` déclaratif) : `none` (pas de KYC),
+    `verified` (KYC vérifié), `verified_experience` (KYC + ≥1 transaction conclue).
+    Forcé à `none` immédiatement sur suspension ou signalement fraude confirmé — jamais lissé."""
+    __tablename__ = "trust_level"
+
+    entity_type = Column(String(10), primary_key=True)  # user | agency
+    entity_id = Column(BigInteger, primary_key=True)
+    level = Column(String(20), nullable=False, default="none", server_default="none")
+    deal_count = Column(Integer, nullable=False, default=0, server_default="0")
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self) -> dict:
+        return {"level": self.level, "deal_count": self.deal_count}
+
+
+class ProcessedMessage(Base):
+    """Idempotence du worker événementiel (KYC/deals) — dédup par `message_id`."""
+    __tablename__ = "processed_message"
+
+    message_id = Column(String(64), primary_key=True)
+    processed_at = Column(DateTime, default=datetime.utcnow)
 
 
 class AdminAction(Base):

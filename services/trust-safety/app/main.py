@@ -26,7 +26,7 @@ from semsar_events import enqueue
 
 from . import events
 from .db import get_db, init_db
-from .models import REPORT_STATUSES, AdminAction, ModerationStatus, Report
+from .models import LEVEL_ORDER, REPORT_STATUSES, AdminAction, ModerationStatus, Report, TrustLevel
 from .schemas import ReportCreateIn
 
 DEFAULT_TENANT = "m3a-l3achrane"
@@ -76,6 +76,28 @@ async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
 
 
+def upsert_trust_level(db: Session, entity_type: str, entity_id: int, *,
+                       min_level: str | None = None, force_level: str | None = None,
+                       increment_deals: bool = False) -> TrustLevel:
+    """Palier binaire par critère : `min_level` ne fait jamais redescendre, `force_level`
+    (suspension/fraude confirmée) est prioritaire et immédiat. `increment_deals` promeut
+    `verified` → `verified_experience` sans jamais faire monter un compte encore `none`."""
+    row = db.get(TrustLevel, {"entity_type": entity_type, "entity_id": entity_id})
+    if row is None:
+        row = TrustLevel(entity_type=entity_type, entity_id=entity_id, level="none", deal_count=0)
+        db.add(row)
+        db.flush()
+    if increment_deals:
+        row.deal_count += 1
+        if row.level == "verified":
+            row.level = "verified_experience"
+    if min_level is not None and LEVEL_ORDER[min_level] > LEVEL_ORDER[row.level]:
+        row.level = min_level
+    if force_level is not None:
+        row.level = force_level
+    return row
+
+
 def _apply_moderation(db: Session, entity_type: str, entity_id: int, mask: dict, reason=None) -> None:
     row = db.get(ModerationStatus, {"entity_type": entity_type, "entity_id": entity_id})
     if row is None:
@@ -118,6 +140,8 @@ async def _moderate(entity_type: str, entity_id: int, action: str, request: Requ
         evt = events.ACCOUNT_SUSPENDED if hidden else events.ACCOUNT_UNSUSPENDED
         enqueue(db, entity_type, entity_id, evt,
                 {"entity_type": entity_type, "entity_id": entity_id, "reason": reason})
+        if hidden:
+            upsert_trust_level(db, entity_type, entity_id, force_level="none")
         db.commit()
 
     return JSONResponse(_json_or_text(resp), status_code=resp.status_code)
@@ -275,6 +299,10 @@ def resolve_report(report_id: int, principal: Principal = Depends(get_principal)
     if err is not None:
         return err
     enqueue(db, "report", report.id, events.REPORT_RESOLVED, report.to_dict())
+    if report.reason == "fraud" and report.target_type in ("agency", "profile", "user") \
+            and report.target_id.isdigit():
+        entity_type = "agency" if report.target_type == "agency" else "user"
+        upsert_trust_level(db, entity_type, int(report.target_id), force_level="none")
     db.commit()
     db.refresh(report)
     return report.to_dict()
@@ -290,3 +318,23 @@ def dismiss_report(report_id: int, principal: Principal = Depends(get_principal)
     db.commit()
     db.refresh(report)
     return report.to_dict()
+
+
+# ---- Score de confiance (trust_level) : lecture publique + batch interne ----
+@app.get("/trust/{entity_type}/{entity_id}")
+def get_trust(entity_type: str, entity_id: int, db: Session = Depends(get_db)) -> dict:
+    row = db.get(TrustLevel, {"entity_type": entity_type, "entity_id": entity_id})
+    return row.to_dict() if row is not None else {"level": "none", "deal_count": 0}
+
+
+@app.get("/internal/trust/batch", include_in_schema=False)
+def internal_trust_batch(entity_type: str, ids: str, x_internal_token: str = Header(default=""),
+                         db: Session = Depends(get_db)) -> dict:
+    """Lecture batchée (évite le N+1) — consommée par `agency` pour enrichir ses listes."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    id_list = [int(i) for i in ids.split(",") if i.strip().isdigit()]
+    rows = db.query(TrustLevel).filter(
+        TrustLevel.entity_type == entity_type, TrustLevel.entity_id.in_(id_list)).all()
+    by_id = {r.entity_id: r.to_dict() for r in rows}
+    return {"items": {str(i): by_id.get(i, {"level": "none", "deal_count": 0}) for i in id_list}}
