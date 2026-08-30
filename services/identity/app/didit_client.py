@@ -40,8 +40,10 @@ def fetch_decision(session_id: str) -> dict:
 
 
 def verify_signature(raw_body: bytes, signature: str, secret: str | None = None) -> bool:
+    """Fail-closed : le webhook est public (aucun autre contrôle d'accès), donc l'absence de
+    secret configuré ou de signature fournie doit rejeter la requête, jamais l'accepter."""
     secret = os.environ.get("DIDIT_WEBHOOK_SECRET", "") if secret is None else secret
-    if not secret:
-        return True  # pas de secret configuré : no-op (parité payment webhook)
+    if not secret or not signature:
+        return False
     expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
     return hmac.compare_digest(signature, expected)

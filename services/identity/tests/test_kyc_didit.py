@@ -55,13 +55,31 @@ def test_webhook_rejects_bad_signature(client, monkeypatch):
     assert resp.status_code == 401
 
 
+def test_webhook_fails_closed_when_no_secret_configured(client, db_session, monkeypatch):
+    """Sécurité : ce webhook est public (aucune autre garde d'accès) — l'absence de secret
+    configuré doit rejeter, jamais accepter en silence."""
+    _user(db_session, 99)
+    k = KycVerification(user_id=99, cin=None, status="pending", didit_session_id="sess-99",
+                        created_at=datetime.now(timezone.utc))
+    db_session.add(k)
+    db_session.commit()
+    monkeypatch.setattr(m, "_WEBHOOK_SECRET", "")
+    resp = client.post("/identity/kyc/webhook", json={
+        "webhook_type": "status.updated", "session_id": "sess-99",
+        "decision": {"status": "Approved"},
+    })
+    assert resp.status_code == 401
+    db_session.refresh(k)
+    assert k.status == "pending"  # non appliqué
+
+
 def test_webhook_approved_marks_verified_and_emits_event(client, db_session, monkeypatch):
     u = _user(db_session, 2)
     k = KycVerification(user_id=2, cin=None, status="pending", didit_session_id="sess-2",
                         created_at=datetime.now(timezone.utc))
     db_session.add(k)
     db_session.commit()
-    monkeypatch.setattr(m, "_WEBHOOK_SECRET", "")
+    monkeypatch.setattr(m.didit_client, "verify_signature", lambda *a, **k: True)
     resp = client.post("/identity/kyc/webhook", json={
         "webhook_type": "status.updated", "session_id": "sess-2",
         "decision": {"status": "Approved"},
@@ -79,7 +97,7 @@ def test_webhook_declined_marks_rejected(client, db_session, monkeypatch):
                         created_at=datetime.now(timezone.utc))
     db_session.add(k)
     db_session.commit()
-    monkeypatch.setattr(m, "_WEBHOOK_SECRET", "")
+    monkeypatch.setattr(m.didit_client, "verify_signature", lambda *a, **k: True)
     resp = client.post("/identity/kyc/webhook", json={
         "webhook_type": "status.updated", "session_id": "sess-3",
         "decision": {"status": "Declined"},
@@ -95,7 +113,7 @@ def test_webhook_ignores_already_terminal_session(client, db_session, monkeypatc
                         created_at=datetime.now(timezone.utc))
     db_session.add(k)
     db_session.commit()
-    monkeypatch.setattr(m, "_WEBHOOK_SECRET", "")
+    monkeypatch.setattr(m.didit_client, "verify_signature", lambda *a, **k: True)
     resp = client.post("/identity/kyc/webhook", json={
         "webhook_type": "status.updated", "session_id": "sess-4",
         "decision": {"status": "Declined"},
@@ -106,7 +124,7 @@ def test_webhook_ignores_already_terminal_session(client, db_session, monkeypatc
 
 
 def test_webhook_unknown_session_returns_404(client, monkeypatch):
-    monkeypatch.setattr(m, "_WEBHOOK_SECRET", "")
+    monkeypatch.setattr(m.didit_client, "verify_signature", lambda *a, **k: True)
     resp = client.post("/identity/kyc/webhook", json={
         "webhook_type": "status.updated", "session_id": "ghost",
         "decision": {"status": "Approved"},

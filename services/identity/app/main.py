@@ -47,6 +47,14 @@ def _user_id(principal: Principal) -> int:
 settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
 
+if not _WEBHOOK_SECRET:
+    import logging
+    logging.getLogger("semsar-service").warning(
+        "DIDIT_WEBHOOK_SECRET non configuré — le webhook KYC rejettera TOUTES les requêtes "
+        "(fail-closed, aucune vérification KYC ne pourra être appliquée via Didit tant que "
+        "ce secret n'est pas défini)."
+    )
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
