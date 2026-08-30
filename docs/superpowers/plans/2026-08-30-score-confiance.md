@@ -822,7 +822,24 @@ git commit -m "feat(m3a-frontend): VerifiedBadge branché sur le vrai score de c
   ajouté en Task 3) ✓ — corrigé après une première passe incomplète du plan qui
   ne propageait le KYC qu'au niveau `user`.
 - **Downgrade suspension/fraude** (Task 1) ✓, **lecture publique + batch**
-  (Task 1) ✓, **front des deux plateformes** (Task 5, Task 6) ✓.
+  (Task 1) ✓, **front semsarout** (Task 5) ✓ complet.
+- **Front m3a-l3achrane (Task 6) : livré partiellement, écart assumé
+  découvert à l'implémentation** — seul `Securite.jsx` (badge de l'utilisateur
+  courant) est branché sur le vrai score. Non fait, et pourquoi :
+  - `ListingDetail.jsx` (bloc hôte "Hajar B.") : entièrement mocké en dur,
+    aucune donnée réelle de propriétaire n'existe sur cette page (commentaire
+    dans le code : `GET /listings/:id` n'expose pas `owner_id`). Brancher un
+    vrai score nécessiterait d'abord d'exposer `owner_id` côté
+    `coloc-listing` — hors spec, à traiter comme chantier séparé.
+  - `ListingDetail.jsx` (`listing.verifiee`) et `ListingCard.jsx`
+    (`verified`) : ce booléen signifie en réalité "annonce publiée"
+    (`status === 'PUBLIEE'`), pas "identité vérifiée" — aucun rapport avec le
+    score de confiance, laissé intact à dessein.
+  - `BackOffice.jsx` (liste de modération utilisateurs) : `u.is_verified`
+    est un vrai champ backend, mais brancher un vrai score par ligne
+    nécessiterait soit N requêtes séquentielles au montage (mauvais pour une
+    liste potentiellement longue), soit un nouvel endpoint BFF batché
+    (`/api/v1/trust/batch`, non spec-é) — laissé inchangé plutôt que de créer
+    une régression de perf ou un faux branchement.
 - **Hors périmètre confirmé non traité** : licence/RC/ICE, score par annonce
-  individuelle (Task 6 Step 3 le documente explicitement au lieu de l'ignorer
-  silencieusement), pondération sur rejet KYC répété.
+  individuelle, pondération sur rejet KYC répété.
