@@ -481,6 +481,15 @@ export async function createReport({ target_type, target_id, reason, description
   return data
 }
 
+// Score de confiance réel (KYC + transactions conclues) — `GET /api/v1/trust/:type/:id` →
+// trust-safety `GET /trust/:type/:id`. `entityType` vaut `'user'` ou `'agency'`.
+export async function getTrust(entityType, entityId) {
+  if (!entityId) return { level: 'none', deal_count: 0 }
+  if (isMocked('backoffice')) return delay({ level: 'verified', deal_count: 0 })
+  const { data } = await api.get(`/trust/${entityType}/${entityId}`)
+  return data
+}
+
 // Pondération active du scoring matching (super-admin, lecture + édition), fan-out BFF
 // `GET/PUT /api/v1/backoffice/matching-weights` → service matching `/internal/weights`
 // (table `matching_weights`, versionnée — cf. services/matching/app/models.py).
