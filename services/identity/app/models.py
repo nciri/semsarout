@@ -31,8 +31,12 @@ class KycVerification(Base):
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     user_id = Column(Integer, nullable=False, index=True)
-    cin = Column(String(32), nullable=False)  # chiffré au repos en cible (pgcrypto)
+    cin = Column(String(32), nullable=True)  # chiffré au repos en cible (pgcrypto) ; optionnel
+                                              # depuis le flux Didit (le CNIE n'est pas toujours
+                                              # renvoyé en clair selon la config du workflow)
     status = Column(String(20), nullable=False, default="pending")  # pending|verified|rejected
+    didit_session_id = Column(String(64), nullable=True, index=True)
+    decision = Column(JSON, nullable=True)  # décision brute Didit, usage interne/audit uniquement
     created_at = Column(
         DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
     )

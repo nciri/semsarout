@@ -30,6 +30,7 @@ def test_open_generates_and_sends(db_session, monkeypatch):
     _accepted(db_session)
     monkeypatch.setattr(main.commission_client, "gate", lambda **k: {"state": "OPEN"})
     monkeypatch.setattr(main.signing, "signing_enabled", lambda: True)
+    monkeypatch.setattr(main.identity_client, "status", lambda uid: "verified")
     monkeypatch.setattr(main.signing, "create_envelope", lambda *a, **k: "env")
     monkeypatch.setattr(main.signing, "add_document", lambda *a, **k: ("doc", 1))
     monkeypatch.setattr(main.signing, "add_recipient", lambda *a, **k: "r")
@@ -42,3 +43,30 @@ def test_open_generates_and_sends(db_session, monkeypatch):
     sig = db_session.query(models.SignatureRequest).first()
     assert sig.doc_type == "compromis" and sig.status == "sent"
     assert db_session.query(models.Compromis).first().status == "sent"
+
+
+def test_kyc_not_verified_blocks_signature(db_session, monkeypatch):
+    _accepted(db_session)
+    monkeypatch.setattr(main.commission_client, "gate", lambda **k: {"state": "OPEN"})
+    monkeypatch.setattr(main.signing, "signing_enabled", lambda: True)
+    monkeypatch.setattr(main.identity_client, "status", lambda uid: "none")
+    seller = make_client(db_session, uid="5")
+    r = seller.post("/vente/purchase-inquiries/1/compromis", json=_DATA)
+    assert r.status_code == 422
+    assert db_session.query(models.SignatureRequest).count() == 0
+
+
+def test_kyc_verified_both_parties_allows_signature(db_session, monkeypatch):
+    _accepted(db_session)
+    monkeypatch.setattr(main.commission_client, "gate", lambda **k: {"state": "OPEN"})
+    monkeypatch.setattr(main.signing, "signing_enabled", lambda: True)
+    monkeypatch.setattr(main.identity_client, "status", lambda uid: "verified")
+    monkeypatch.setattr(main.signing, "create_envelope", lambda *a, **k: "env")
+    monkeypatch.setattr(main.signing, "add_document", lambda *a, **k: ("doc", 1))
+    monkeypatch.setattr(main.signing, "add_recipient", lambda *a, **k: "r")
+    monkeypatch.setattr(main.signing, "place_signature_field", lambda *a, **k: None)
+    monkeypatch.setattr(main.signing, "send_envelope", lambda *a, **k: None)
+    monkeypatch.setattr(main.compromis_pdf, "render", lambda d: b"%PDF-")
+    seller = make_client(db_session, uid="5")
+    r = seller.post("/vente/purchase-inquiries/1/compromis", json=_DATA)
+    assert r.status_code == 200

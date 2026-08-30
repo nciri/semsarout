@@ -21,7 +21,7 @@ from semsar_events import enqueue
 
 import semsar_signing as signing
 
-from . import commission_client, events
+from . import commission_client, events, identity_client
 from .db import get_db, init_db
 from .models import (ApplicationDocument, ChargeRegularization, ClientRO, CrgReport,
                      DeductionLine, DepositSettlement, Inventory, InventoryItem, InventoryPhoto,
@@ -428,6 +428,12 @@ async def owner_request_lease_signature(lease_id: int, request: Request,
     if decision.get("state") == "BLOCKED":
         return JSONResponse({"error": "Commission due avant signature.",
                              "pay_url": decision.get("pay_url")}, status_code=402)
+    # 2bis) Verrou KYC (fail-closed) — les deux parties doivent être vérifiées.
+    if identity_client.status(uid) != "verified" or identity_client.status(l.tenant_user_id) != "verified":
+        return JSONResponse(
+            {"error": "KYC requis avant signature — propriétaire et locataire doivent "
+                      "avoir vérifié leur identité."},
+            status_code=422)
     # 3) Lancer la e-signature (OPEN)
     data = await json_body(request)
     owner_email = _owner_email(uid)

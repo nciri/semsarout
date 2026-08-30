@@ -150,12 +150,19 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+  env-examples:
+    name: Cohérence des .env.example
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/check_env_examples.py
+
   # Porte unique à exiger dans la protection de branche : réussit si aucun job
   # requis n'a échoué/annulé. Les jobs "skipped" (non pertinents) sont OK.
   ci-ok:
     name: CI passed
     if: always()
-    needs: [changes, backend, frontend-m3a-l3achrane, frontend-semsarout]
+    needs: [changes, backend, frontend-m3a-l3achrane, frontend-semsarout, env-examples]
     runs-on: ubuntu-latest
     steps:
       - name: Vérifier les résultats
@@ -164,8 +171,10 @@ jobs:
           echo "backend=${{ needs.backend.result }}"
           echo "frontend-m3a=${{ needs.frontend-m3a-l3achrane.result }}"
           echo "frontend-semsarout=${{ needs.frontend-semsarout.result }}"
+          echo "env-examples=${{ needs.env-examples.result }}"
           for r in "${{ needs.changes.result }}" "${{ needs.backend.result }}" \
-                   "${{ needs.frontend-m3a-l3achrane.result }}" "${{ needs.frontend-semsarout.result }}"; do
+                   "${{ needs.frontend-m3a-l3achrane.result }}" "${{ needs.frontend-semsarout.result }}" \
+                   "${{ needs.env-examples.result }}"; do
             if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then
               echo "::error::Un job requis a échoué ($r)"; exit 1
             fi

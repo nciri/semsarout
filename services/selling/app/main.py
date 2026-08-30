@@ -13,7 +13,7 @@ from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 from semsar_events import enqueue
 
-from . import commission_client, compromis_pdf, events, listing_client, storage
+from . import commission_client, compromis_pdf, events, identity_client, listing_client, storage
 from .db import get_db, init_db  # noqa: F401
 from .models import Compromis, Offer, ProcessedMessage, PurchaseInquiry, SignatureRequest  # noqa: F401
 from .util import err, iso, json_body  # noqa: F401
@@ -139,6 +139,14 @@ async def prepare_compromis(inquiry_id: int, request: Request,
         db.commit()
         return JSONResponse({"error": "Commission due avant signature.",
                              "pay_url": decision.get("pay_url")}, status_code=402)
+    # Verrou KYC (fail-closed) — vendeur et acheteur doivent être vérifiés.
+    if identity_client.status(inq.seller_party) != "verified" \
+            or identity_client.status(inq.buyer_party) != "verified":
+        db.commit()  # persiste le Compromis créé plus haut (draft) même si on bloque ici
+        return JSONResponse(
+            {"error": "KYC requis avant signature — vendeur et acheteur doivent "
+                      "avoir vérifié leur identité."},
+            status_code=422)
     # OPEN → PDF + e-signature
     vendeur_email = (data.get("vendeur_email") or "").strip()
     acheteur_email = (data.get("acheteur_email") or "").strip()

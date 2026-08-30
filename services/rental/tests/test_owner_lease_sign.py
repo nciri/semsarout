@@ -39,6 +39,7 @@ def test_open_launches_signature(db_session, monkeypatch):
     _lease(db_session)
     monkeypatch.setattr(main.commission_client, "gate", lambda **k: {"state": "OPEN", "billable": False})
     monkeypatch.setattr(main.signing, "signing_enabled", lambda: True)
+    monkeypatch.setattr(main.identity_client, "status", lambda uid: "verified")
     monkeypatch.setattr(main.signing, "create_envelope", lambda *a, **k: "env-1")
     monkeypatch.setattr(main.signing, "add_document", lambda *a, **k: ("doc-1", 1))
     monkeypatch.setattr(main.signing, "add_recipient", lambda *a, **k: "r-1")
@@ -52,3 +53,32 @@ def test_open_launches_signature(db_session, monkeypatch):
     assert r.status_code == 200
     sig = db_session.query(models.SignatureRequest).first()
     assert sig.doc_type == "lease" and sig.doc_ref_id == 3 and sig.status == "sent"
+
+
+def test_kyc_not_verified_blocks_signature(db_session, monkeypatch):
+    _lease(db_session)
+    monkeypatch.setattr(main.commission_client, "gate", lambda **k: {"state": "OPEN", "billable": False})
+    monkeypatch.setattr(main.signing, "signing_enabled", lambda: True)
+    monkeypatch.setattr(main.identity_client, "status", lambda uid: "none")
+    client = make_owner_client(db_session, uid="5")
+    r = client.post("/gestion-locative/owner/leases/3/request-signature", json={})
+    assert r.status_code == 422
+    assert db_session.query(models.SignatureRequest).count() == 0
+
+
+def test_kyc_verified_both_parties_allows_signature(db_session, monkeypatch):
+    _lease(db_session)
+    monkeypatch.setattr(main.commission_client, "gate", lambda **k: {"state": "OPEN", "billable": False})
+    monkeypatch.setattr(main.signing, "signing_enabled", lambda: True)
+    monkeypatch.setattr(main.identity_client, "status", lambda uid: "verified")
+    monkeypatch.setattr(main.signing, "create_envelope", lambda *a, **k: "env-1")
+    monkeypatch.setattr(main.signing, "add_document", lambda *a, **k: ("doc-1", 1))
+    monkeypatch.setattr(main.signing, "add_recipient", lambda *a, **k: "r-1")
+    monkeypatch.setattr(main.signing, "place_signature_field", lambda *a, **k: None)
+    monkeypatch.setattr(main.signing, "send_envelope", lambda *a, **k: None)
+    monkeypatch.setattr(main, "_owner_lease_pdf_bytes", lambda db, l: b"%PDF-")
+    monkeypatch.setattr(main, "_owner_email", lambda uid: "owner@x.c")
+    monkeypatch.setattr(main, "_applicant_email_for_lease", lambda db, l: "tenant@x.c")
+    client = make_owner_client(db_session, uid="5")
+    r = client.post("/gestion-locative/owner/leases/3/request-signature", json={})
+    assert r.status_code == 200
