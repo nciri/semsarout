@@ -42,13 +42,15 @@ class Agency(Base):
     owner_id = Column(Integer)
     settings = Column(JSON)  # config backoffice (commission, notifications, SMTP…) — hors to_dict
 
-    def to_dict(self, properties_count: int = 0) -> dict:
+    def to_dict(self, properties_count: int = 0, trust: dict | None = None) -> dict:
+        trust = trust or {"level": "none", "deal_count": 0}
         return {
             "id": self.id, "name": self.name, "slug": self.slug,
             "description": self.description, "email": self.email, "phone": self.phone,
             "website": self.website, "address": self.address, "city": self.city,
             "postal_code": self.postal_code, "logo_url": self.logo_url,
             "cover_image_url": self.cover_image_url, "is_verified": self.is_verified,
+            "trust_level": trust["level"], "deal_count": trust["deal_count"],
             "properties_count": properties_count,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "is_suspended": bool(self.is_suspended), "suspended_reason": self.suspended_reason,
