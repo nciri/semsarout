@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { FiMapPin, FiPhone, FiMail, FiGlobe, FiArrowRight, FiSend } from 'react-icons/fi'
 import PropertyCard from '../components/common/PropertyCard'
 import DirIcon from '../components/common/DirIcon'
+import TrustBadge from '../components/common/TrustBadge'
 import { agencyService } from '../services/agencyService'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
@@ -122,9 +123,9 @@ function AgencyDetail() {
                 <FiMapPin className="w-4 h-4 me-1" />
                 <span>{agency.city}{agency.address && `, ${agency.address}`}</span>
               </div>
-              {agency.is_verified && (
-                <span className="mt-2 inline-block badge-success">{t('public:agencyDetail.verifiedBadge')}</span>
-              )}
+              <div className="mt-2">
+                <TrustBadge level={agency.trust_level} dealCount={agency.deal_count} />
+              </div>
             </div>
           </div>
         </div>

@@ -6,6 +6,7 @@ import { FiMapPin, FiHome, FiSearch, FiChevronLeft, FiChevronRight, FiMap, FiGri
 import { agencyService } from '../services/agencyService'
 import AgencyMap from '../components/map/AgencyMap'
 import DirIcon from '../components/common/DirIcon'
+import TrustBadge from '../components/common/TrustBadge'
 
 const MOROCCAN_CITIES = [
   'Casablanca', 'Rabat', 'Marrakech', 'Fès', 'Tanger',
@@ -249,9 +250,7 @@ function AgencyList() {
                           <div className="text-sm font-medium text-gray-900">
                             {t('public:agencyList.listingsCount', { count: agency.properties_count })}
                           </div>
-                          {agency.is_verified && (
-                            <span className="text-xs text-green-600">{t('public:agencyList.verifiedShort')}</span>
-                          )}
+                          <TrustBadge level={agency.trust_level} dealCount={agency.deal_count} size="sm" />
                         </div>
                       </div>
                     </div>
@@ -316,9 +315,7 @@ function AgencyList() {
                               <FiHome className="w-4 h-4 me-1" />
                               <span>{t('public:agencyList.listingsCount', { count: agency.properties_count })}</span>
                             </div>
-                            {agency.is_verified && (
-                              <span className="badge-success">{t('public:agencyList.verifiedFull')}</span>
-                            )}
+                            <TrustBadge level={agency.trust_level} dealCount={agency.deal_count} />
                           </div>
                         </div>
                       </Link>

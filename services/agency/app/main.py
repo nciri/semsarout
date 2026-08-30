@@ -18,7 +18,7 @@ from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 from semsar_events import enqueue
 
-from . import events, listing_client, members_client
+from . import events, listing_client, members_client, trust_client
 from .db import get_db, init_db
 from .models import Agency, ListingRO
 
@@ -212,11 +212,16 @@ def _mod_state(a: Agency) -> str:
 
 
 @app.get("/internal/agencies", include_in_schema=False)
-def internal_agencies(request: Request, db: Session = Depends(get_db)):
-    """Dump léger de toutes les agences (super-admin `/admin/accounts`) — agrégé par analytics."""
+def internal_agencies(request: Request, owner_id: int | None = None, db: Session = Depends(get_db)):
+    """Dump léger de toutes les agences (super-admin `/admin/accounts`) — agrégé par analytics.
+    `owner_id` filtre sur les agences possédées par cet utilisateur (consommé par
+    trust-safety/app/worker.py pour propager le KYC owner → agences)."""
     if request.headers.get("x-internal-token") != settings.internal_token:
         return _err("Forbidden", 403)
-    rows = db.query(Agency).all()
+    q = db.query(Agency)
+    if owner_id is not None:
+        q = q.filter(Agency.owner_id == owner_id)
+    rows = q.all()
     return {"agencies": [{"id": a.id, "name": a.name, "email": a.email,
                           "status": _mod_state(a), "owner_id": a.owner_id} for a in rows]}
 
@@ -317,8 +322,10 @@ def list_agencies(request: Request, db: Session = Depends(get_db)) -> dict:
     items = q.offset((page - 1) * per_page).limit(per_page).all()
     pages = (total + per_page - 1) // per_page if per_page else 1
     counts = _counts(db, [a.id for a in items])
+    trust = trust_client.batch([a.id for a in items])
     return {
-        "agencies": [a.to_dict(properties_count=counts.get(a.id, 0)) for a in items],
+        "agencies": [a.to_dict(properties_count=counts.get(a.id, 0), trust=trust.get(a.id))
+                     for a in items],
         "total": total, "pages": pages, "current_page": page,
     }
 
@@ -333,7 +340,8 @@ def my_agency(principal: Principal = Depends(get_principal), db: Session = Depen
     if agency is None:
         return _err("You do not belong to an agency", 404)
     cnt = _counts(db, [agency.id]).get(agency.id, 0)
-    data = agency.to_dict(properties_count=cnt)
+    trust = trust_client.batch([agency.id]).get(agency.id)
+    data = agency.to_dict(properties_count=cnt, trust=trust)
     data["members"] = members_client.members_of(agency.id)
     return {"agency": data}
 
@@ -356,7 +364,8 @@ def get_agency(slug: str, db: Session = Depends(get_db)):
     if agency is None:
         return _err("Not found", 404)
     cnt = _counts(db, [agency.id]).get(agency.id, 0)
-    return {"agency": agency.to_dict(properties_count=cnt)}
+    trust = trust_client.batch([agency.id]).get(agency.id)
+    return {"agency": agency.to_dict(properties_count=cnt, trust=trust)}
 
 
 # ---- Écritures agence (self-service pro) — parité `agencies.py` create/update/regenerate ----

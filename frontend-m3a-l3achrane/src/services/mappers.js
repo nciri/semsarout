@@ -119,6 +119,7 @@ export function mapSearchFilters(filtres = {}) {
 export function mapProfile(p) {
   const lifestyleAnswers = p.lifestyle ?? []
   return {
+    id: p.user_id ?? null,
     prenom: p.display_name ?? '',
     avatar: null,
     verifiee: Boolean(p.is_verified),
