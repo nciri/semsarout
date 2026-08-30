@@ -81,7 +81,7 @@ for pair in $SVCS; do
       # gitignoré du service selling (sous-shell pour ne pas polluer l'env du script parent).
       SELLING_SIGN_VARS="$( [ -f services/selling/.env ] && ( set -a; . services/selling/.env; set +a; \
         echo "SIGN_API_URL=${SIGN_API_URL:-} SIGN_API_KEY=${SIGN_API_KEY:-}" ) )"
-      extra="LISTING_URL=http://localhost:8012 COMMISSION_URL=http://localhost:8519 $SELLING_SIGN_VARS";;
+      extra="LISTING_URL=http://localhost:8012 COMMISSION_URL=http://localhost:8519 IDENTITY_URL=http://localhost:8501 $SELLING_SIGN_VARS";;
   esac
   case "$svc" in listing|search) extra="$extra $TS_HIDDEN";; esac
   [ "$svc" = "listing" ] && extra="$extra AGENCY_URL=http://localhost:8512 IDENTITY_URL=http://localhost:8501 $S3 MEDIA_BUCKET=semsar-media"
