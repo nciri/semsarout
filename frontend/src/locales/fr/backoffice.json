@@ -1596,6 +1596,7 @@
           "listingType": "Type d'annonce",
           "status": "Statut",
           "price": "Prix ({{currency}})",
+          "pricePeriod": "Périodicité du prix",
           "surface": "Surface (m²)",
           "rooms": "Pièces",
           "bedrooms": "Chambres",
@@ -1632,7 +1633,12 @@
         "toastImagesRequired": "Ajoutez au moins une photo.",
         "cancelButton": "Annuler",
         "createButton": "Créer le bien",
-        "updateButton": "Mettre à jour"
+        "updateButton": "Mettre à jour",
+        "pricePeriods": {
+          "day": "Par jour",
+          "week": "Par semaine",
+          "month": "Par mois"
+        }
       }
     }
   },

@@ -742,6 +742,8 @@
     "favoriteAriaLabel": "مفضلة",
     "removeFromFavoritesTitle": "إزالة من المفضلة",
     "viewsCount": "{{n}} مشاهدة",
+    "perDay": "/يوم",
+    "perWeek": "/أسبوع",
     "perMonth": "/شهريًا",
     "expiresIn": "تنتهي خلال: {{time}}",
     "timeUnits": {

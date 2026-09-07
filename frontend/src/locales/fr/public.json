@@ -742,6 +742,8 @@
     "favoriteAriaLabel": "Favori",
     "removeFromFavoritesTitle": "Retirer des favoris",
     "viewsCount": "{{n}} vue(s)",
+    "perDay": "/jour",
+    "perWeek": "/semaine",
     "perMonth": "/mois",
     "expiresIn": "Expire dans: {{time}}",
     "timeUnits": {

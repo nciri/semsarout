@@ -54,6 +54,7 @@ function PropertyList() {
     neighborhood: searchParams.get('neighborhood') || '',
     min_price: searchParams.get('min_price') || '',
     max_price: searchParams.get('max_price') || '',
+    short_term: searchParams.get('short_term') || '',
     min_surface: searchParams.get('min_surface') || '',
     max_surface: searchParams.get('max_surface') || '',
     min_rooms: searchParams.get('min_rooms') || '',

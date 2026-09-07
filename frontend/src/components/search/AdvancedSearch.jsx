@@ -69,6 +69,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
     neighborhood: initialFilters.neighborhood || searchParams.get('neighborhood') || '',
     min_price: initialFilters.min_price || searchParams.get('min_price') || '',
     max_price: initialFilters.max_price || searchParams.get('max_price') || '',
+    short_term: initialFilters.short_term || searchParams.get('short_term') === 'true',
     min_surface: initialFilters.min_surface || searchParams.get('min_surface') || '',
     max_surface: initialFilters.max_surface || searchParams.get('max_surface') || '',
     min_rooms: initialFilters.min_rooms || searchParams.get('min_rooms') || '',
@@ -87,7 +88,13 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
   })
 
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }))
+    setFilters(prev => ({
+      ...prev,
+      [key]: value,
+      // La bascule courte durée n'a de sens qu'en location — on l'efface en quittant "rent"
+      // pour ne pas envoyer un short_term=true fantôme sur une recherche vente.
+      ...(key === 'transaction_type' && value !== 'rent' ? { short_term: false } : {})
+    }))
   }
 
   const handlePropertyTypeToggle = (value) => {
@@ -154,6 +161,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
       neighborhood: '',
       min_price: '',
       max_price: '',
+      short_term: false,
       min_surface: '',
       max_surface: '',
       min_rooms: '',
@@ -271,12 +279,25 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
           {/* Advanced filters panel for compact variant */}
           {showAdvanced && (
             <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
+              {/* Location courte durée (jour/semaine) — visible seulement en location */}
+              {filters.transaction_type === 'rent' && (
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.short_term}
+                    onChange={(e) => handleFilterChange('short_term', e.target.checked)}
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">{t('common:advancedSearch.shortTermToggle')}</span>
+                </label>
+              )}
+
               {/* Price range */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     <FiDollarSign className="inline w-4 h-4 mr-1" />
-                    {t('common:advancedSearch.priceMin')}
+                    {t(filters.short_term ? 'common:advancedSearch.priceMinPerDay' : 'common:advancedSearch.priceMin')}
                   </label>
                   <input
                     type="number"
@@ -287,7 +308,9 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('common:advancedSearch.priceMax')}</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {t(filters.short_term ? 'common:advancedSearch.priceMaxPerDay' : 'common:advancedSearch.priceMax')}
+                  </label>
                   <input
                     type="number"
                     placeholder="Max"
@@ -531,6 +554,20 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
           </div>
         </div>
 
+        {filters.transaction_type === 'rent' && (
+          <div className="flex justify-center mb-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={filters.short_term}
+                onChange={(e) => handleFilterChange('short_term', e.target.checked)}
+                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              />
+              <span className="text-sm font-medium text-gray-700">{t('common:advancedSearch.shortTermToggle')}</span>
+            </label>
+          </div>
+        )}
+
         {/* Main filters row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
           {/* Location */}
@@ -572,7 +609,7 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               <FiDollarSign className="inline w-4 h-4 mr-1" />
-              {t('common:advancedSearch.budget')}
+              {t(filters.short_term ? 'common:advancedSearch.budgetPerDay' : 'common:advancedSearch.budget')}
             </label>
             <div className="flex gap-2">
               <input

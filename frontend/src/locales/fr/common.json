@@ -48,6 +48,8 @@
     "favoriteAria": "Favori",
     "maxCompare": "Vous pouvez comparer {{max}} biens maximum",
     "rooms": "{{count}} pièces",
+    "perDay": "/jour",
+    "perWeek": "/semaine",
     "perMonth": "/mois"
   },
   "impersonation": {
@@ -120,8 +122,11 @@
     "filtersActiveCount_one": "{{count}} actif",
     "filtersActiveCount_other": "{{count}} actifs",
     "priceMin": "Prix min",
+    "priceMinPerDay": "Prix min /jour",
     "priceMax": "Prix max",
+    "priceMaxPerDay": "Prix max /jour",
     "budget": "Budget",
+    "budgetPerDay": "Budget /jour",
     "surfaceMin": "Surface min (m²)",
     "surfaceMax": "Surface max (m²)",
     "surface": "Surface (m²)",
@@ -180,7 +185,8 @@
       "vueMer": "Vue mer",
       "vueMontagne": "Vue montagne",
       "duplex": "Duplex"
-    }
+    },
+    "shortTermToggle": "Location courte durée (jour/semaine)"
   },
   "search": {
     "allTypes": "Tous types",
