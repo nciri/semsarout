@@ -48,6 +48,8 @@
     "favoriteAria": "مفضلة",
     "maxCompare": "يمكنك مقارنة {{max}} عقارات كحد أقصى",
     "rooms": "{{count}} غرف",
+    "perDay": "/يوم",
+    "perWeek": "/أسبوع",
     "perMonth": "/شهرياً"
   },
   "impersonation": {
@@ -120,8 +122,11 @@
     "filtersActiveCount_one": "{{count}} نشط",
     "filtersActiveCount_other": "{{count}} نشطة",
     "priceMin": "السعر الأدنى",
+    "priceMinPerDay": "السعر الأدنى /يوم",
     "priceMax": "السعر الأقصى",
+    "priceMaxPerDay": "السعر الأقصى /يوم",
     "budget": "الميزانية",
+    "budgetPerDay": "الميزانية /يوم",
     "surfaceMin": "المساحة الدنيا (م²)",
     "surfaceMax": "المساحة القصوى (م²)",
     "surface": "المساحة (م²)",
@@ -180,7 +185,8 @@
       "vueMer": "إطلالة على البحر",
       "vueMontagne": "إطلالة على الجبل",
       "duplex": "دوبلكس"
-    }
+    },
+    "shortTermToggle": "كراء قصير المدى (يوم/أسبوع)"
   },
   "search": {
     "allTypes": "جميع الأنواع",

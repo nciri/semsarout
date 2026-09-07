@@ -14,7 +14,7 @@ import { propertyService } from '../services/propertyService'
 import { buyerService } from '../services/buyerService'
 import { applicantService } from '../services/rentalService'
 import api from '../services/api'
-import { formatPrice } from '../utils/currency'
+import { formatPrice, pricePeriodKey } from '../utils/currency'
 import PhotoLightbox from '../components/common/PhotoLightbox'
 import PriceGauge from '../components/common/PriceGauge'
 import BookVisitWidget from '../components/common/BookVisitWidget'
@@ -431,7 +431,11 @@ function PropertyDetail() {
               <div className="text-end">
                 <div className={`font-display text-[28px] font-extrabold ${property.is_premium ? 'premium-price' : property.is_urgent ? 'text-red-600' : 'text-midnight'}`}>
                   {formatPrice(property.price)}
-                  {property.transaction_type === 'rent' && <span className="text-sm font-semibold text-slate-500">{t('public:propertyDetail.perMonth')}</span>}
+                  {property.transaction_type === 'rent' && (
+                    <span className="text-sm font-semibold text-slate-500">
+                      {t(`public:propertyDetail.${pricePeriodKey(property.price_period)}`)}
+                    </span>
+                  )}
                 </div>
                 {property.price_per_sqm && (
                   <div className="text-sm text-gray-500">

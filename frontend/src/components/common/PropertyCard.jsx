@@ -4,7 +4,7 @@ import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { FiMapPin, FiMaximize, FiHome, FiHeart, FiBarChart2, FiCheck } from 'react-icons/fi'
 import { IoBedOutline } from 'react-icons/io5'
-import { formatPrice, DIRHAM_SYMBOL } from '../../utils/currency'
+import { formatPrice, DIRHAM_SYMBOL, pricePeriodKey } from '../../utils/currency'
 import useAuthStore from '../../store/authStore'
 import { buyerService } from '../../services/buyerService'
 import useCompareStore, { MAX_COMPARE_PROPERTIES } from '../../store/compareStore'
@@ -122,7 +122,9 @@ function PropertyCard({ property, variant = 'vertical' }) {
     <div className="font-display font-extrabold text-[20px] text-midnight">
       {formatPrice(property.price, { suffix: false })}
       <span className="text-[13px] font-semibold text-slate-500 ml-1">
-        {property.transaction_type === 'rent' ? `${DIRHAM_SYMBOL}${t('common:propertyCard.perMonth')}` : DIRHAM_SYMBOL}
+        {property.transaction_type === 'rent'
+          ? `${DIRHAM_SYMBOL}${t(`common:propertyCard.${pricePeriodKey(property.price_period)}`)}`
+          : DIRHAM_SYMBOL}
       </span>
     </div>
   )
