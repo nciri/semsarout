@@ -29,6 +29,8 @@ class Property(Base):
     property_type = Column(String(20), nullable=False)
     transaction_type = Column(String(20), nullable=False)
     price = Column(Numeric(12, 2), nullable=False)
+    price_period = Column(String(10))  # day|week|month — pertinent seulement si transaction_type=rent
+    price_per_day = Column(Numeric(12, 2))  # dérivé (price ou price/7) — comparaison courte durée uniquement
     price_per_sqm = Column(Numeric(10, 2))
     charges = Column(Numeric(10, 2))
     is_condo = Column(Boolean, default=False)
