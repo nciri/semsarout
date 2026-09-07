@@ -1596,6 +1596,7 @@
           "listingType": "نوع الإعلان",
           "status": "الحالة",
           "price": "السعر ({{currency}})",
+          "pricePeriod": "دورية السعر",
           "surface": "المساحة (م²)",
           "rooms": "الغرف",
           "bedrooms": "غرف النوم",
@@ -1632,7 +1633,12 @@
         "toastImagesRequired": "أضف صورة واحدة على الأقل.",
         "cancelButton": "إلغاء",
         "createButton": "إنشاء العقار",
-        "updateButton": "تحديث"
+        "updateButton": "تحديث",
+        "pricePeriods": {
+          "day": "باليوم",
+          "week": "بالأسبوع",
+          "month": "بالشهر"
+        }
       }
     }
   },
