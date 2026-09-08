@@ -8,9 +8,11 @@ suit la chorégraphie paiement v2 (abonnement *incomplete* + facture *unpaid* +
 `billing.invoice.created` → service payment → worker billing active). Le monolithe 500ait ici
 (tables `payment_methods`/`invoices` absentes) — v2 le rend fonctionnel.
 
-Écart assumé : les features du plan (gating) restent projetées par identity (`agency_ro.features`) ;
-billing ne les pilote pas encore (décommissionnement final).
-"""
+Entitlements : le gating par plan (`has_*`) est dérivé en liste de features par `plan_features()`
+et projeté vers `identity.AgencyRO.features` (source des claims JWT) de deux façons — événement
+`billing.subscription.activated` (émis par le worker à l'activation/prolongation) et repli via
+`/internal/subscription` (identity l'interroge si sa projection est vide, ex. abonnement déjà
+actif avant l'ajout de l'événement)."""
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
@@ -26,6 +28,7 @@ from semsar_events import enqueue
 from . import events, seats_client
 from .db import get_db, init_db
 from .models import Invoice, Subscription, SubscriptionPlan
+from .plans import plan_features
 from .util import err, iso, json_body
 
 settings = get_settings()
@@ -63,7 +66,7 @@ def _plan_dict(p: SubscriptionPlan) -> dict:
         "has_dedicated_account_manager": p.has_dedicated_account_manager,
         "has_programs": p.has_programs, "max_programs": p.max_programs,
         "has_contracts": p.has_contracts, "has_legal": p.has_legal, "has_artisans": p.has_artisans,
-        "has_rental": p.has_rental,
+        "has_rental": p.has_rental, "has_design3d": p.has_design3d,
         "max_seats": p.max_seats, "max_teams": p.max_teams,
         "price_monthly": float(p.price_monthly),
         "price_yearly": float(p.price_yearly) if p.price_yearly else None,
@@ -116,7 +119,8 @@ def internal_subscription(request: Request, x_internal_token: str = Header(defau
     return {"subscription": {"plan": plan.name if plan else None, "status": sub.status,
                              "has_programs": bool(plan.has_programs) if plan else False,
                              "max_programs": plan.max_programs if plan else 0,
-                             "has_staymanager_sync": bool(plan.has_staymanager_sync) if plan else False}}
+                             "has_staymanager_sync": bool(plan.has_staymanager_sync) if plan else False,
+                             "features": plan_features(plan) if plan else []}}
 
 
 @app.get("/internal/subscriptions", include_in_schema=False)

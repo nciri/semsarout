@@ -5,7 +5,11 @@
 - `payment.released` : active l'abonnement *pending/incomplete* de l'agence (période +30 j),
   marque la facture impayée comme payée, émet `billing.subscription.activated`.
 - `payment.completed` : confirmation passerelle (webhook payment) → crée/prolonge l'abonnement
-  actif de l'agence (parité du webhook du monolithe, sans écriture cross-domaine).
+  actif de l'agence (parité du webhook du monolithe, sans écriture cross-domaine), émet aussi
+  `billing.subscription.activated`.
+
+Le payload de `billing.subscription.activated` porte `agency_id` + `features` (dérivées du plan
+via `plan_features()`) — consommé par `identity` pour projeter `AgencyRO.features` (claims JWT).
 **Idempotent** (dédup par message_id).
 """
 from datetime import datetime, timedelta, timezone
@@ -15,7 +19,8 @@ from semsar_events import EventConsumer, enqueue
 
 from . import events
 from .db import SessionLocal, init_db
-from .models import Invoice, ProcessedMessage, Subscription
+from .models import Invoice, ProcessedMessage, Subscription, SubscriptionPlan
+from .plans import plan_features
 
 
 def _handle(routing_key: str, payload: dict, message_id: str) -> None:
@@ -78,8 +83,10 @@ def _activate_pending(db, agency_id) -> None:
                .filter(Invoice.subscription_id == sub.id, Invoice.status == "unpaid").first())
     if invoice is not None:
         invoice.status = "paid"
+    plan = db.get(SubscriptionPlan, sub.plan_id)
     enqueue(db, "subscription", sub.id, events.SUBSCRIPTION_ACTIVATED,
-            {"subscription_id": sub.id, "agency_id": agency_id})
+            {"subscription_id": sub.id, "agency_id": agency_id,
+             "features": plan_features(plan) if plan else []})
 
 
 def _create_or_extend(db, payload, agency_id) -> None:
@@ -90,10 +97,18 @@ def _create_or_extend(db, payload, agency_id) -> None:
            .filter(Subscription.agency_id == agency_id, Subscription.status == "active").first())
     if sub is not None:
         sub.end_date = (sub.end_date or now) + timedelta(days=days)
+        plan_id = sub.plan_id
     else:
-        db.add(Subscription(agency_id=agency_id, plan_id=payload.get("plan_id"),
-                            billing_cycle=payload.get("billing_cycle"), amount=payload.get("amount"),
-                            status="active", start_date=now, end_date=now + timedelta(days=days)))
+        plan_id = payload.get("plan_id")
+        sub = Subscription(agency_id=agency_id, plan_id=plan_id,
+                           billing_cycle=payload.get("billing_cycle"), amount=payload.get("amount"),
+                           status="active", start_date=now, end_date=now + timedelta(days=days))
+        db.add(sub)
+        db.flush()
+    plan = db.get(SubscriptionPlan, plan_id) if plan_id else None
+    enqueue(db, "subscription", sub.id, events.SUBSCRIPTION_ACTIVATED,
+            {"subscription_id": sub.id, "agency_id": agency_id,
+             "features": plan_features(plan) if plan else []})
 
 
 def main() -> None:

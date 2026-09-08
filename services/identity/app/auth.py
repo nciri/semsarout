@@ -73,10 +73,22 @@ async def _json(request: Request) -> dict:
 
 
 def _features(db: Session, agency_id: int | None) -> list[str]:
+    """Features (entitlements de plan) de l'agence, source des claims JWT. Repli auto-réparateur :
+    si la projection locale (`AgencyRO.features`, alimentée par `billing.subscription.activated`)
+    est vide, interroge billing directement — nécessaire pour tout abonnement déjà actif avant
+    l'ajout de la projection événementielle (aucun événement ne sera rejoué pour lui). Best-effort,
+    ne doit jamais faire échouer le login."""
     if not agency_id:
         return []
     ag = db.get(AgencyRO, agency_id)
-    return list(ag.features or []) if ag else []
+    if ag and ag.features:
+        return list(ag.features)
+    from . import billing_client
+    features = billing_client.features_of(agency_id)
+    if features and ag is not None:
+        ag.features = features  # auto-répare la projection pour les prochains logins
+        db.commit()
+    return features
 
 
 def _claims(db: Session, user: UserRO) -> dict:

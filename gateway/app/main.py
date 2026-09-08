@@ -495,6 +495,11 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         path == "/api/v1/partner" or path.startswith("/api/v1/partner/")
     ):
         return app.state.partner, path.replace("/api/v1", "", 1)
+    if settings.design3d_url and (
+        path.startswith("/api/v1/design3d/") or path == "/api/v1/design3d"
+        or path.startswith("/api/v1/public/design3d/")
+    ):
+        return app.state.design3d, path.replace("/api/v1", "", 1)
     # Monolithe décommissionné : plus de repli. Toute route non mappée → 404 (client None).
     return None, path
 
@@ -537,6 +542,7 @@ async def lifespan(app: FastAPI):
     app.state.partner = _client_or_none(settings.partner_url)
     app.state.matching = _client_or_none(settings.matching_url)
     app.state.translation = _client_or_none(settings.translation_url)
+    app.state.design3d = _client_or_none(settings.design3d_url)
     yield
     for client in (
         app.state.monolith, app.state.identity, app.state.search,
@@ -548,6 +554,7 @@ async def lifespan(app: FastAPI):
         app.state.messaging, app.state.trust_safety, app.state.agency, app.state.audit,
         app.state.commission, app.state.selling, app.state.coloc_listing,
         app.state.coloc_profile, app.state.partner, app.state.matching, app.state.translation,
+        app.state.design3d,
     ):
         if client is not None:
             await client.aclose()

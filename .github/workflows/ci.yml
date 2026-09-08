@@ -42,7 +42,7 @@ jobs:
           # Liste faisant autorité des dirs backend (garder synchronisée avec la matrice).
           ALL="gateway services/agency services/analytics services/billing services/catalog \
           services/coloc-listing services/coloc-profile services/commission \
-          services/contract services/crm services/directory services/identity \
+          services/contract services/crm services/design3d services/directory services/identity \
           services/legal services/listing services/marketplace services/matching \
           services/messaging services/notification services/partner services/payment services/rental \
           services/search services/selling services/translation services/trust-safety"
