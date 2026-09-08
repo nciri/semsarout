@@ -1,8 +1,11 @@
 import { useTranslation } from 'react-i18next'
 import { FiPlus } from 'react-icons/fi'
 
-/** Onglets de niveaux (RDC, R+1…). Cibles ≥ 44 px, défilement horizontal au doigt. */
-export default function LevelTabs({ levels, currentId, onSelect, onCreate }) {
+/**
+ * Onglets de niveaux (RDC, R+1…). Cibles ≥ 44 px, défilement horizontal au doigt.
+ * `readOnly` : consultation seule (visionneuse publique) — pas de bouton « ajouter ».
+ */
+export default function LevelTabs({ levels, currentId, onSelect, onCreate, readOnly = false }) {
   const { t } = useTranslation(['dashboard'])
   return (
     <div className="flex items-center gap-2 overflow-x-auto" role="tablist" aria-label={t('dashboard:designEditor.levels.label')}>
@@ -20,15 +23,17 @@ export default function LevelTabs({ levels, currentId, onSelect, onCreate }) {
           {lv.name}
         </button>
       ))}
-      <button
-        type="button"
-        onClick={onCreate}
-        aria-label={t('dashboard:designEditor.levels.add')}
-        title={t('dashboard:designEditor.levels.add')}
-        className="min-w-[44px] min-h-[44px] rounded-md border border-dashed border-gray-400 text-gray-600 flex items-center justify-center"
-      >
-        <FiPlus className="w-5 h-5" />
-      </button>
+      {!readOnly && (
+        <button
+          type="button"
+          onClick={onCreate}
+          aria-label={t('dashboard:designEditor.levels.add')}
+          title={t('dashboard:designEditor.levels.add')}
+          className="min-w-[44px] min-h-[44px] rounded-md border border-dashed border-gray-400 text-gray-600 flex items-center justify-center"
+        >
+          <FiPlus className="w-5 h-5" />
+        </button>
+      )}
     </div>
   )
 }

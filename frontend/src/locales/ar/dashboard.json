@@ -1282,6 +1282,9 @@
       "door": "باب",
       "window": "نافذة"
     },
+    "viewer": {
+      "legendLabel": "أنواع الغرف"
+    },
     "panel": {
       "title": "الخصائص",
       "totalArea": "المساحة الإجمالية: {{area}} م²",

@@ -1282,6 +1282,9 @@
       "door": "Porte",
       "window": "Fenêtre"
     },
+    "viewer": {
+      "legendLabel": "Types de pièces"
+    },
     "panel": {
       "title": "Propriétés",
       "totalArea": "Surface totale : {{area}} m²",

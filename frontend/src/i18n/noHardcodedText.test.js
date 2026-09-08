@@ -160,6 +160,7 @@ const MIGRATED_FILES = [
   'src/components/design/ShelfDialog.jsx',
   'src/components/design/Design3dGate.jsx',
   'src/components/design/Design3dEntry.jsx',
+  'src/components/design/DesignViewer.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {

@@ -17,7 +17,7 @@ import { DEFAULT_WALL_THICKNESS_M, OPENING_DEFAULTS, hitTest, hitVertex, opening
  * appui long = menu contextuel. Aucun comportement ne dépend du survol.
  */
 
-const ROOM_FILL = {
+export const ROOM_FILL = {
   living: '#dbeafe', bedroom: '#ede9fe', kitchen: '#fef3c7', bathroom: '#cffafe',
   wc: '#e0f2fe', hallway: '#f3f4f6', balcony: '#dcfce7', garage: '#e5e7eb', other: '#f5f5f4',
 }

@@ -230,6 +230,9 @@
     "validationNameAndPhone": "الاسم والهاتف مطلوبان",
     "sentMessage": "تم إرسال طلبك بنجاح. سيتواصل معك المطوّر.",
     "lotFallback": "قطعة",
+    "viewPlanButton": "عرض المخطط الداخلي",
+    "planModalTitle": "المخطط الداخلي — {{reference}}",
+    "closeButton": "إغلاق",
     "status": {
       "available": "متاحة",
       "reserved": "محجوزة",

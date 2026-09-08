@@ -230,6 +230,9 @@
     "validationNameAndPhone": "Nom et téléphone requis",
     "sentMessage": "Votre demande a bien été envoyée. Le promoteur vous recontactera.",
     "lotFallback": "Lot",
+    "viewPlanButton": "Voir le plan intérieur",
+    "planModalTitle": "Plan intérieur — {{reference}}",
+    "closeButton": "Fermer",
     "status": {
       "available": "Disponible",
       "reserved": "Réservé",
