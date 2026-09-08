@@ -10,6 +10,7 @@ function fakeApi(overrides = {}) {
   return {
     createProject: vi.fn(async (p) => ({ ...p, levels: [lvl()] })),
     updateLevel: vi.fn(async (id, body) => ({ ...lvl(), revision: body.base_revision + 1, shelved: false })),
+    updateProject: vi.fn(async (id, p) => ({ id, ...p })),
     sync: vi.fn(async () => ({ projects: [] })),
     getProject: vi.fn(async () => ({ id: 'p'.repeat(32), levels: [lvl({ revision: 3 })] })),
     ...overrides,
@@ -255,6 +256,7 @@ describe('design3d sync engine', () => {
 
   it('5xx received while a newer edit is queued does not mark it as already sent — it still reaches the server', async () => {
     let calls = 0
+    let dirtyBeforeSecondSend
     const api = fakeApi({
       updateLevel: vi.fn(async (id, body) => {
         calls++
@@ -262,6 +264,9 @@ describe('design3d sync engine', () => {
           await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'V2', geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
           throw { response: { status: 500, data: { error: 'boom' } } }
         }
+        // Observe l'état laissé par markSyncError : l'édition en attente doit être restée
+        // `dirty` (sans quoi un refreshFromServer concurrent l'écraserait).
+        dirtyBeforeSecondSend = (await local.getLevel(id)).dirty
         return { ...lvl(), name: body.name, revision: body.base_revision + 1, shelved: false }
       }),
     })
@@ -269,6 +274,7 @@ describe('design3d sync engine', () => {
     const r = await runOnce({ api, local, onState: () => {} })
     expect(api.updateLevel).toHaveBeenCalledTimes(2)
     expect(api.updateLevel.mock.calls[1][1].name).toBe('V2')
+    expect(dirtyBeforeSecondSend).toBe(true)
     expect(await local.pendingCount()).toBe(0)
     const stored = await local.getLevel(lvl().id)
     expect(stored.name).toBe('V2')
@@ -296,6 +302,72 @@ describe('design3d sync engine', () => {
     const stored = await local.getLevel(lvl().id)
     expect(stored.dirty).toBe(true)
     expect(stored.name).toBe('V2')
+  })
+
+  it('an edit applied while a SUCCESSFUL request is in flight survives and is sent afterwards', async () => {
+    let calls = 0
+    const api = fakeApi({
+      updateLevel: vi.fn(async (id, body) => {
+        calls++
+        if (calls === 1) {
+          // L'utilisateur réédite pendant que la requête de V1 est en vol — et celle-ci réussit.
+          await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'V2', geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+        }
+        return { ...lvl(), name: body.name, revision: body.base_revision + 1, shelved: false }
+      }),
+    })
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'V1', geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+    const r = await runOnce({ api, local, onState: () => {} })
+    // Le succès de V1 ne doit ni restaurer le contenu d'avant V2 ni effacer son compteur :
+    // V2 repart donc réellement, avec la révision de base rapportée par le serveur.
+    expect(api.updateLevel).toHaveBeenCalledTimes(2)
+    expect(api.updateLevel.mock.calls[1][1].name).toBe('V2')
+    expect(api.updateLevel.mock.calls[1][1].base_revision).toBe(1)
+    expect(await local.pendingCount()).toBe(0)
+    const stored = await local.getLevel(lvl().id)
+    expect(stored.name).toBe('V2')
+    expect(stored.revision).toBe(2)
+    expect(stored.dirty).toBe(false)
+    expect(r.synced).toBe(2)
+    expect(r.hasError).toBeFalsy()
+  })
+
+  it('a plain successful update (no concurrent edit) still marks the level synced and dedups a truly redundant op', async () => {
+    const api = fakeApi()
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'V1', geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+    await runOnce({ api, local, onState: () => {} })
+    let stored = await local.getLevel(lvl().id)
+    expect(stored.dirty).toBe(false)
+    expect(stored.revision).toBe(1)
+    expect(stored.base_revision).toBe(1)
+    // Une opération redondante (même contenu déjà transmis) doit rester dédoublonnée.
+    await local.enqueue({ type: 'level.update', payload: { id: lvl().id }, client_seq: stored.synced_seq })
+    const r = await runOnce({ api, local, onState: () => {} })
+    expect(api.updateLevel).toHaveBeenCalledTimes(1)
+    expect(r.synced).toBe(1)
+    expect(await local.pendingCount()).toBe(0)
+    stored = await local.getLevel(lvl().id)
+    expect(stored).toMatchObject({ dirty: false, revision: 1, base_revision: 1 })
+  })
+
+  it('a project edit applied while its creation request is in flight is not reverted by the server echo', async () => {
+    const pid = 'p'.repeat(32)
+    const api = fakeApi({
+      createProject: vi.fn(async (p) => {
+        // L'utilisateur renomme le projet pendant que la création est en vol.
+        await applyLocal({ type: 'project.update', payload: { id: pid, title: 'B' } }, { local })
+        return { ...p, owner_id: 42, created_at: '2026-01-01T00:00:00Z', levels: [lvl()] }
+      }),
+    })
+    await applyLocal({ type: 'project.create', payload: { id: pid, target_type: 'property', target_id: 1, title: 'A' } }, { local })
+    await runOnce({ api, local, onState: () => {} })
+    const stored = await local.getProject(pid)
+    expect(stored.title).toBe('B')
+    expect(stored.synced).toBe(true)
+    expect(stored.owner_id).toBe(42)
+    // Le renommage a bien été transmis au serveur, pas seulement conservé en local.
+    expect(api.updateProject).toHaveBeenCalledWith(pid, expect.objectContaining({ title: 'B' }))
+    expect(await local.pendingCount()).toBe(0)
   })
 
   it('a new local edit clears a previous sync_error trace', async () => {

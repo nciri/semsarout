@@ -30,9 +30,14 @@ export async function applyLocal(op, { local = defaultLocal } = {}) {
       })
       break
     }
-    case 'project.update':
-      await local.putProject({ ...(await local.getProject(p.id)), ...p })
+    case 'project.update': {
+      const cur = (await local.getProject(p.id)) ?? { id: p.id }
+      // Même compteur d'édition que pour les niveaux : il permet à send()
+      // de reconnaître une édition survenue pendant qu'une requête portant
+      // l'état précédent était en vol.
+      await local.putProject({ ...cur, ...p, edit_seq: (cur.edit_seq ?? 0) + 1 })
       break
+    }
     case 'project.delete':
       await local.deleteProjectLocal(p.id)
       break
@@ -117,8 +122,20 @@ async function send(op, api, local) {
   const p = op.payload
   switch (op.type) {
     case 'project.create': {
+      const attemptedSeq = (await local.getProject(p.id))?.edit_seq ?? 0
       const r = await api.createProject(p)
-      await local.putProject({ ...(await local.getProject(p.id)), ...r, synced: true })
+      const after = await local.getProject(p.id)
+      if ((after?.edit_seq ?? 0) > attemptedSeq) {
+        // La réponse du serveur n'est que l'écho de ce qui a été envoyé avant
+        // l'édition concurrente : elle ne doit pas restaurer le titre d'avant.
+        // Le local (plus récent) gagne champ par champ ; on ne prend du
+        // serveur que les champs qu'il est seul à connaître (created_at,
+        // owner_id, tenant…). L'opération `project.update` encore en file
+        // transmettra le nouveau contenu.
+        await local.putProject({ ...r, ...after, synced: true })
+        return
+      }
+      await local.putProject({ ...after, ...r, synced: true })
       return
     }
     case 'project.update':
@@ -147,6 +164,10 @@ async function send(op, api, local) {
       if (op.client_seq != null && cur.synced_seq != null && op.client_seq <= cur.synced_seq) {
         return undefined
       }
+      // L'edit_seq réellement transmis par cette tentative, figé avant tout
+      // await réseau : sert aussi bien à markSyncError (chemins d'échec) qu'à
+      // la réécriture ci-dessous (chemin du succès).
+      const attemptedSeq = cur.edit_seq ?? 0
       let r
       try {
         r = await api.updateLevel(p.id, {
@@ -159,15 +180,31 @@ async function send(op, api, local) {
           show_background_public: cur.show_background_public,
         })
       } catch (e) {
-        // Capturé avant tout await réseau : l'edit_seq réellement transmis
-        // dans cette tentative, pour que markSyncError puisse détecter une
-        // édition plus récente survenue pendant que la requête était en vol.
-        e.attemptedSeq = cur.edit_seq ?? 0
+        e.attemptedSeq = attemptedSeq
         throw e
       }
+      // `cur` est une copie d'AVANT la requête, et putLevel remplace
+      // l'enregistrement entier (aucune fusion en base) : réécrire `cur` ici
+      // restaurerait l'état d'avant une éventuelle édition concurrente.
+      // On relit donc l'entité après l'attente réseau.
+      const after = (await local.getLevel(p.id)) ?? cur
+      if ((after.edit_seq ?? 0) > attemptedSeq) {
+        // L'utilisateur a réédité pendant que la requête était en vol : son
+        // contenu et son `edit_seq` doivent survivre intacts (l'opération
+        // correspondante est encore en file). Du succès on ne retient que ce
+        // qui reste pertinent, c'est-à-dire l'information de synchronisation
+        // venue du serveur : la révision atteinte — reportée aussi sur
+        // `base_revision`, pour que l'édition en attente reparte sur la bonne
+        // base et ne se heurte pas à un 409 immédiat — et `synced_seq`, qui
+        // n'acquitte que la séquence réellement transmise (donc sans jamais
+        // faire sauter l'édition plus récente au dédoublonnage). `dirty` reste
+        // vrai : cette édition-là n'a pas encore atteint le serveur.
+        await local.putLevel({ ...after, revision: r.revision, base_revision: r.revision, synced_seq: attemptedSeq })
+        return r.shelved ? 'shelved' : undefined
+      }
       // eslint-disable-next-line no-unused-vars -- déstructuration volontaire pour omettre `sync_error`
-      const { sync_error, ...rest } = cur
-      await local.putLevel({ ...rest, ...r, base_revision: r.revision, dirty: false, synced_seq: cur.edit_seq ?? 0 })
+      const { sync_error, ...rest } = after
+      await local.putLevel({ ...rest, ...r, base_revision: r.revision, dirty: false, synced_seq: attemptedSeq })
       return r.shelved ? 'shelved' : undefined
     }
     case 'level.delete':
