@@ -14,8 +14,18 @@ def wall_length(wall: dict) -> float:
     return math.hypot(b["x"] - a["x"], b["y"] - a["y"])
 
 
+def _is_finite_number(v) -> bool:
+    """Vérifier que v est un nombre fini (pas bool, NaN, ou Infinity)."""
+    if isinstance(v, bool):
+        return False
+    if not isinstance(v, (int, float)):
+        return False
+    return math.isfinite(v)
+
+
 def _is_point(p) -> bool:
-    return isinstance(p, dict) and all(isinstance(p.get(k), (int, float)) for k in ("x", "y"))
+    """Vérifier qu'un point est un dict avec coordonnées x, y finies."""
+    return isinstance(p, dict) and all(_is_finite_number(p.get(k)) for k in ("x", "y"))
 
 
 def validate_geometry(geometry: dict, wall_height_m: float) -> list[str]:
@@ -24,43 +34,134 @@ def validate_geometry(geometry: dict, wall_height_m: float) -> list[str]:
         return ["geometry doit être un objet"]
     if len(json.dumps(geometry, separators=(",", ":"))) > MAX_GEOMETRY_BYTES:
         errors.append("geometry dépasse 512 Ko")
-    walls = geometry.get("walls") or []
-    rooms = geometry.get("rooms") or []
-    openings = geometry.get("openings") or []
+
+    # Vérifier que wall_height_m est fini
+    if not _is_finite_number(wall_height_m):
+        errors.append("wall_height_m invalide")
+        return errors
+
+    # Vérifier et récupérer les collections (doivent être des listes)
+    walls_raw = geometry.get("walls")
+    rooms_raw = geometry.get("rooms")
+    openings_raw = geometry.get("openings")
+
+    if walls_raw is not None and not isinstance(walls_raw, list):
+        errors.append("walls: liste attendue")
+        walls = []
+    else:
+        walls = walls_raw or []
+
+    if rooms_raw is not None and not isinstance(rooms_raw, list):
+        errors.append("rooms: liste attendue")
+        rooms = []
+    else:
+        rooms = rooms_raw or []
+
+    if openings_raw is not None and not isinstance(openings_raw, list):
+        errors.append("openings: liste attendue")
+        openings = []
+    else:
+        openings = openings_raw or []
+
+    # Vérifier identifiants manquants/vides/dupliqués pour chaque collection
     for coll, name in ((walls, "walls"), (rooms, "rooms"), (openings, "openings")):
-        ids = [e.get("id") for e in coll if isinstance(e, dict)]
-        if len(ids) != len(set(ids)) or any(not i for i in ids):
+        ids = []
+        for idx, e in enumerate(coll):
+            if not isinstance(e, dict):
+                errors.append(f"{name}[{idx}]: objet attendu")
+                continue
+            e_id = e.get("id")
+            if not e_id:
+                errors.append(f"{name}: identifiants manquants ou en double")
+                break
+            ids.append(e_id)
+        if ids and len(ids) != len(set(ids)):
             errors.append(f"{name}: identifiants manquants ou en double")
+
     by_id = {}
-    for w in walls:
-        if not (_is_point(w.get("a")) and _is_point(w.get("b"))) or wall_length(w) <= 0:
-            errors.append(f"mur {w.get('id')}: deux points distincts requis")
+    for idx, w in enumerate(walls):
+        if not isinstance(w, dict):
+            # Erreur déjà enregistrée ci-dessus
             continue
+
+        w_id = w.get("id")
+        a = w.get("a")
+        b = w.get("b")
+
+        if not (_is_point(a) and _is_point(b)):
+            errors.append(f"mur {w_id}: deux points distincts requis")
+            continue
+
+        try:
+            wlen = wall_length(w)
+            if wlen <= 0:
+                errors.append(f"mur {w_id}: deux points distincts requis")
+                continue
+        except (ValueError, TypeError):
+            errors.append(f"mur {w_id}: deux points distincts requis")
+            continue
+
         t = w.get("thickness_m")
-        if not isinstance(t, (int, float)) or not (0 < t <= 1):
-            errors.append(f"mur {w.get('id')}: thickness_m dans ]0, 1]")
-        by_id[w["id"]] = w
-    for r in rooms:
+        if not _is_finite_number(t) or not (0 < t <= 1):
+            errors.append(f"mur {w_id}: thickness_m dans ]0, 1]")
+
+        by_id[w_id] = w
+
+    for idx, r in enumerate(rooms):
+        if not isinstance(r, dict):
+            # Erreur déjà enregistrée ci-dessus
+            continue
+
+        r_id = r.get("id")
         poly = r.get("polygon") or []
+
         if len(poly) < 3 or not all(_is_point(p) for p in poly):
-            errors.append(f"pièce {r.get('id')}: polygone ≥ 3 points")
+            errors.append(f"pièce {r_id}: polygone ≥ 3 points")
+
         if r.get("type") not in ROOM_TYPES:
-            errors.append(f"pièce {r.get('id')}: type inconnu")
-    for o in openings:
-        if o.get("type") not in OPENING_TYPES:
-            errors.append(f"ouverture {o.get('id')}: type inconnu")
-        w = by_id.get(o.get("wall_id"))
+            errors.append(f"pièce {r_id}: type inconnu")
+
+    for idx, o in enumerate(openings):
+        if not isinstance(o, dict):
+            # Erreur déjà enregistrée ci-dessus
+            continue
+
+        o_id = o.get("id")
+        o_type = o.get("type")
+
+        if o_type not in OPENING_TYPES:
+            errors.append(f"ouverture {o_id}: type inconnu")
+
+        wall_id = o.get("wall_id")
+        w = by_id.get(wall_id)
         if w is None:
-            errors.append(f"ouverture {o.get('id')}: mur introuvable")
+            errors.append(f"ouverture {o_id}: mur introuvable")
             continue
-        off, wd, h, sill = (o.get(k, 0) for k in ("offset_m", "width_m", "height_m", "sill_m"))
-        if not all(isinstance(v, (int, float)) for v in (off, wd, h, sill)) or wd <= 0 or off < 0:
-            errors.append(f"ouverture {o.get('id')}: dimensions invalides")
+
+        off = o.get("offset_m", 0)
+        wd = o.get("width_m", 0)
+        h = o.get("height_m", 0)
+        sill = o.get("sill_m", 0)
+
+        # Vérifier que les dimensions sont des nombres finis
+        if not all(_is_finite_number(v) for v in (off, wd, h, sill)):
+            errors.append(f"ouverture {o_id}: dimensions invalides")
             continue
-        if off + wd > wall_length(w) + 1e-6:
-            errors.append(f"ouverture {o.get('id')}: dépasse le mur")
+
+        if wd <= 0 or off < 0:
+            errors.append(f"ouverture {o_id}: dimensions invalides")
+            continue
+
+        try:
+            wlen = wall_length(w)
+            if off + wd > wlen + 1e-6:
+                errors.append(f"ouverture {o_id}: dépasse le mur")
+        except (ValueError, TypeError):
+            errors.append(f"ouverture {o_id}: dépasse le mur")
+
         if sill + h > float(wall_height_m) + 1e-6:
-            errors.append(f"ouverture {o.get('id')}: dépasse la hauteur du mur")
+            errors.append(f"ouverture {o_id}: dépasse la hauteur du mur")
+
     return errors
 
 
