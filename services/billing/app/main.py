@@ -302,6 +302,15 @@ def cancel_subscription(principal: Principal = Depends(get_principal), db: Sessi
         return err("No active subscription to cancel", 404)
     sub.status = "cancelled"
     sub.cancelled_at = datetime.utcnow()
+    # L'accès reste actif jusqu'à la fin de la période payée (message ci-dessous) : les
+    # entitlements ne changent PAS immédiatement — on réémet l'état courant du plan pour que
+    # `AgencyRO.features` (sinon figée à jamais, faute de tout autre événement pour cet
+    # abonnement) reste synchronisée, plutôt qu'une liste vide qui serait fausse tant que
+    # `end_date` n'est pas atteinte.
+    plan = db.get(SubscriptionPlan, sub.plan_id)
+    enqueue(db, "subscription", sub.id, events.SUBSCRIPTION_ACTIVATED,
+            {"subscription_id": sub.id, "agency_id": principal.agency_id,
+             "features": plan_features(plan) if plan else []})
     db.commit()
     return {"message": "Subscription cancelled. Access continues until end of billing period.",
             "subscription": _sub_dict(db, sub)}

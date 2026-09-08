@@ -54,3 +54,28 @@ def test_subscription_activated_is_idempotent(monkeypatch, tmp_path):
     _handle("billing.subscription.activated",
             {"subscription_id": 3, "agency_id": 9, "features": ["design3d"]}, "b:3")
     assert s.query(AgencyRO).filter_by(id=9).count() == 1
+
+
+def test_cancellation_reprojects_current_features(monkeypatch, tmp_path):
+    """billing réémet `billing.subscription.activated` à la résiliation (accès conservé jusqu'à
+    la fin de la période payée) : le worker doit resynchroniser `AgencyRO.features` sur ce que
+    billing envoie, qu'il s'agisse d'un état inchangé ou (si billing en décidait autrement un
+    jour) d'une liste vidée — le worker ne fait aucune hypothèse, il projette le payload reçu."""
+    s = _session(monkeypatch, tmp_path)
+    s.add(AgencyRO(id=13, name="Agence", features=["contracts", "design3d", "rental"],
+                   max_seats=0, max_teams=0, is_suspended=False, is_deleted=False))
+    s.commit()
+
+    # Résiliation : accès conservé jusqu'à `end_date`, le plan (donc les features) est inchangé.
+    _handle("billing.subscription.activated",
+            {"subscription_id": 4, "agency_id": 13,
+             "features": ["contracts", "design3d", "rental"]}, "b:4")
+    ag = s.get(AgencyRO, 13)
+    assert set(ag.features) == {"contracts", "design3d", "rental"}
+
+    # Coupure effective (ex. fin de période) : le worker retire bien les features s'il en est
+    # informé — vérifie qu'aucun résidu ne survit à une projection vide.
+    _handle("billing.subscription.activated",
+            {"subscription_id": 4, "agency_id": 13, "features": []}, "b:5")
+    ag = s.get(AgencyRO, 13)
+    assert ag.features == []
