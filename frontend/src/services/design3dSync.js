@@ -343,7 +343,14 @@ export async function refreshFromServer({ api = defaultApi, local = defaultLocal
 export function startEngine({ api = defaultApi, local = defaultLocal, onState, intervalMs = 30000 } = {}) {
   let running = false
   const tick = async () => {
-    if (running || !navigator.onLine) return
+    if (running) return
+    if (!navigator.onLine) {
+      // Hors ligne, aucune requête n'est tentée — mais le badge doit tout de
+      // même dire combien d'éditions attendent. Sans cet appel il resterait
+      // figé sur « À jour » pendant qu'on dessine Wi-Fi coupé (cf. tâche 11).
+      onState?.({ state: 'offline', pending: await local.pendingCount() })
+      return
+    }
     running = true
     try {
       const r = await runOnce({ api, local, onState })
@@ -355,10 +362,12 @@ export function startEngine({ api = defaultApi, local = defaultLocal, onState, i
     }
   }
   const onOnline = () => tick()
+  const onOffline = () => tick()
   const onVisibility = () => {
     if (document.visibilityState === 'visible') tick()
   }
   window.addEventListener('online', onOnline)
+  window.addEventListener('offline', onOffline)
   document.addEventListener('visibilitychange', onVisibility)
   const timer = setInterval(tick, intervalMs)
   tick()
@@ -367,6 +376,7 @@ export function startEngine({ api = defaultApi, local = defaultLocal, onState, i
     stop() {
       clearInterval(timer)
       window.removeEventListener('online', onOnline)
+      window.removeEventListener('offline', onOffline)
       document.removeEventListener('visibilitychange', onVisibility)
     },
   }

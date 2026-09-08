@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import * as local from './design3dLocal'
-import { applyLocal, runOnce, refreshFromServer } from './design3dSync'
+import { applyLocal, runOnce, refreshFromServer, startEngine } from './design3dSync'
 
 const lvl = (over = {}) => ({ id: 'l'.repeat(32), project_id: 'p'.repeat(32), name: 'RDC', position: 0, revision: 0,
   wall_height_m: 2.7, calibration: null, geometry: { walls: [], rooms: [], openings: [] }, dirty: false, ...over })
@@ -368,6 +368,22 @@ describe('design3d sync engine', () => {
     // Le renommage a bien été transmis au serveur, pas seulement conservé en local.
     expect(api.updateProject).toHaveBeenCalledWith(pid, expect.objectContaining({ title: 'B' }))
     expect(await local.pendingCount()).toBe(0)
+  })
+
+  it("hors ligne, le moteur annonce l'état offline et le nombre d'éditions en attente", async () => {
+    const api = fakeApi()
+    const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
+    try {
+      await applyLocal({ type: 'level.update', payload: { id: lvl().id, geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+      const states = []
+      const engine = startEngine({ api, local, onState: (s) => states.push(s), intervalMs: 1000000 })
+      await engine.tick()
+      engine.stop()
+      expect(api.sync).not.toHaveBeenCalled()
+      expect(states.at(-1)).toEqual({ state: 'offline', pending: 1 })
+    } finally {
+      onLine.mockRestore()
+    }
   })
 
   it('a new local edit clears a previous sync_error trace', async () => {

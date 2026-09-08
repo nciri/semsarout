@@ -1814,3 +1814,26 @@ describe('floorplan editor reducer', () => {
 - **Écart de la spec** : la spec prévoyait `PUT /levels/{id}` pour la recalibration ; le plan la sépare en `POST /recalibrate` (revision check strict) pour éviter qu'une recalibration passe par la règle « propriétaire prime » et écrase silencieusement — cohérent avec l'intention.
 - **Point à vérifier en T1/T6** : nom exact de l'en-tête des features entre BFF et services (`x-semsar-features`) — il n'existe peut-être pas encore ; le plan l'ajoute des deux côtés.
 - **Hors périmètre respecté** : pas de 3D, pas de rendu IA, pas de catalogue, pas d'add-on payant (le flag `has_design3d` est seedé, pas vendu), pas de PDF→image, pas de fusion automatique.
+
+## Revue appareils (tâche 11)
+
+**Automatisé (fait, CI)** — `frontend/e2e/design-editor.spec.js` joue 6 scénarios sur
+6 formats de tablette (768×1024, 1024×768, 820×1180, 1180×820, 1024×1366, 1366×1024),
+tactile activé, API simulée : tracé de mur au doigt, pose d'une porte, repli/dépli du
+panneau sous 900 px, pinch à deux doigts, rotation de l'écran, aller-retour hors-ligne
+(file d'attente + badge). 36/36 verts.
+
+**À faire par un humain (non réalisable par un agent)** — la revue sur matériel réel
+reste ouverte. Protocole, à consigner ici avec les constats et les correctifs :
+
+- [ ] iPad réel (Safari) : installer la PWA depuis le mesh de dev exposé sur le réseau local (« Sur l'écran d'accueil »), vérifier l'icône, le nom « SemsarOut » et le lancement en `standalone` (pas de barre d'URL).
+- [ ] Tablette Android réelle (Chrome) : même installation via la bannière/menu « Installer l'application ».
+- [ ] Tracer un plan complet : import d'un fond, calibration à deux points, 4 murs, 2 pièces, 1 porte, 1 fenêtre.
+- [ ] Couper le Wi-Fi, continuer à éditer : le badge doit passer à « Hors connexion — n en attente », aucune action ne doit bloquer.
+- [ ] Fermer l'application, la rouvrir **toujours hors ligne** : le plan doit être là (IndexedDB), l'éditeur doit démarrer (pré-cache du service worker).
+- [ ] Rétablir le Wi-Fi : le badge doit repasser à « À jour » sans intervention.
+- [ ] Précision du doigt : les poignées et les cibles font 44 px ; vérifier la sélection d'un sommet, l'accrochage et la lisibilité au zoom maximal.
+- [ ] Rotation portrait ↔ paysage en cours d'édition : rien ne doit être perdu ni recadré de travers.
+- [ ] Pavé numérique en portrait : saisie d'une longueur de mur au clavier virtuel, sans que le champ passe sous le clavier.
+
+**Constats :** _(à remplir lors de la revue)_
