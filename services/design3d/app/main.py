@@ -5,19 +5,22 @@ Cloisonnement : agence → même agency_id ; sans agence → owner_id (patron li
 """
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, Request, Response
+from fastapi import Depends, FastAPI, File, Request, Response, UploadFile
 from fastapi.responses import JSONResponse
+from fastapi.responses import Response as RawResponse
 from prometheus_fastapi_instrumentator import Instrumentator
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, require_feature
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 from semsar_events import enqueue
 
-from . import events
+from . import events, storage
 from .db import get_db, init_db
+from .geometry import calibration_scale, rescale
 from .models import EMPTY_GEOMETRY, DesignLevel, DesignLevelShelf, DesignProject, _now, _uuid
-from .schemas import LevelCreateIn, LevelUpdateIn, ProjectCreateIn, ProjectUpdateIn, validate_geometry
+from .schemas import CalibrationIn, LevelCreateIn, LevelUpdateIn, ProjectCreateIn, ProjectUpdateIn, validate_geometry
 
 settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
@@ -270,3 +273,86 @@ def sync_summary(principal: Principal = Depends(_design3d), db: Session = Depend
             levels.append({"id": lv.id, "revision": lv.revision, "updated_at": lv.to_dict()["updated_at"], "shelved_count": shelved})
         out.append({"id": p.id, "status": p.status, "updated_at": p.to_dict()["updated_at"], "levels": levels})
     return {"projects": out}
+
+
+_IMAGE_TYPES = {"image/png": "png", "image/jpeg": "jpg"}
+_MAX_BG = 10 * 1024 * 1024
+
+
+class RecalibrateIn(BaseModel):
+    base_revision: int
+    calibration: CalibrationIn
+
+
+@app.post("/design3d/levels/{level_id}/recalibrate")
+def recalibrate(level_id: str, body: RecalibrateIn, principal: Principal = Depends(_design3d), db: Session = Depends(get_db)):
+    lv, p, err = _load_level(db, level_id, principal)
+    if err:
+        return err
+    if body.base_revision != lv.revision:
+        return JSONResponse({"error": "Version obsolète", "level": lv.to_dict()}, status_code=409)
+    new = body.calibration.model_dump()
+    lv.geometry = rescale(lv.geometry or dict(EMPTY_GEOMETRY), calibration_scale(lv.calibration, new))
+    lv.calibration = new
+    lv.revision += 1
+    lv.revision_author_id = _uid(principal)
+    enqueue(db, "design_level", lv.id, events.LEVEL_UPDATED, {"id": lv.id, "project_id": p.id, "revision": lv.revision})
+    db.commit()
+    return lv.to_dict()
+
+
+@app.post("/design3d/levels/{level_id}/background")
+async def upload_background(level_id: str, file: UploadFile = File(...), principal: Principal = Depends(_design3d), db: Session = Depends(get_db)):
+    lv, p, err = _load_level(db, level_id, principal)
+    if err:
+        return err
+    ext = _IMAGE_TYPES.get(file.content_type or "")
+    if ext is None:
+        return _err("Image PNG ou JPEG requise", 400)
+    data = await file.read()
+    if len(data) > _MAX_BG:
+        return _err("Image trop volumineuse (10 Mo max)", 413)
+    key = f"design3d/{p.id}/{lv.id}/background.{ext}"
+    storage.plans().put(key, data, file.content_type)
+    lv.background_image_key = key
+    db.commit()
+    return lv.to_dict()
+
+
+def _stream_background(lv: DesignLevel):
+    if not lv.background_image_key:
+        return _err("Not found", 404)
+    data = storage.plans().get(lv.background_image_key)
+    ctype = "image/png" if lv.background_image_key.endswith(".png") else "image/jpeg"
+    return RawResponse(content=data, media_type=ctype, headers={"Cache-Control": "private, max-age=3600"})
+
+
+@app.get("/design3d/levels/{level_id}/background")
+def get_background(level_id: str, principal: Principal = Depends(_design3d), db: Session = Depends(get_db)):
+    lv, p, err = _load_level(db, level_id, principal)
+    return err or _stream_background(lv)
+
+
+@app.get("/public/design3d/projects/{project_id}")
+def public_project(project_id: str, db: Session = Depends(get_db)):
+    p = db.get(DesignProject, project_id)
+    if p is None or p.status != "ready":
+        return _err("Not found", 404)
+    return {**p.to_dict(), "levels": [lv.to_dict(public=True) for lv in _levels(db, p.id)]}
+
+
+@app.get("/public/design3d/by-target")
+def public_by_target(target_type: str, target_id: int, db: Session = Depends(get_db)):
+    q = db.query(DesignProject).filter(DesignProject.target_type == target_type, DesignProject.target_id == target_id,
+                                        DesignProject.status == "ready")
+    projects = q.order_by(DesignProject.updated_at.desc()).all()
+    return {"projects": [{**p.to_dict(), "levels": [lv.to_dict(public=True) for lv in _levels(db, p.id)]} for p in projects]}
+
+
+@app.get("/public/design3d/levels/{level_id}/background")
+def public_background(level_id: str, db: Session = Depends(get_db)):
+    lv = db.get(DesignLevel, level_id)
+    p = db.get(DesignProject, lv.project_id) if lv else None
+    if lv is None or p is None or p.status != "ready" or not lv.show_background_public:
+        return _err("Not found", 404)
+    return _stream_background(lv)

@@ -15,6 +15,7 @@ dependencies = [
     "semsar-auth",
     "semsar-events",
     "semsar-storage",
+    "python-multipart>=0.0.9",
 ]
 
 [project.optional-dependencies]
