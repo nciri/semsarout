@@ -1238,5 +1238,124 @@
         "loadFailed": "Erreur lors du chargement des réservations"
       }
     }
+  },
+  "designEditor": {
+    "title": "Éditeur de plan",
+    "entry": "Concevoir en 3D",
+    "canvasLabel": "Plan du niveau",
+    "footer": "Niveau {{level}} · surface tracée {{area}} m²",
+    "entitlement": {
+      "title": "Module conception 3D",
+      "body": "Ce module vous permet de relever un plan sur tablette, même sans connexion, puis de le publier en 3D sur vos annonces.",
+      "cta": "Activer dans mon abonnement",
+      "upsell": "Module conception 3D — à activer"
+    },
+    "tools": {
+      "select": "Sélectionner",
+      "wall": "Mur",
+      "room": "Pièce",
+      "door": "Porte",
+      "window": "Fenêtre",
+      "finishRoom": "Terminer la pièce",
+      "cancelRoom": "Abandonner la pièce",
+      "undo": "Annuler",
+      "redo": "Rétablir",
+      "delete": "Supprimer la sélection",
+      "zoomIn": "Zoomer",
+      "zoomOut": "Dézoomer",
+      "grid": "Grille",
+      "dimensions": "Cotes",
+      "fullscreen": "Plein écran"
+    },
+    "roomTypes": {
+      "living": "Séjour",
+      "bedroom": "Chambre",
+      "kitchen": "Cuisine",
+      "bathroom": "Salle de bain",
+      "wc": "WC",
+      "hallway": "Couloir",
+      "balcony": "Balcon",
+      "garage": "Garage",
+      "other": "Autre"
+    },
+    "openingTypes": {
+      "door": "Porte",
+      "window": "Fenêtre"
+    },
+    "panel": {
+      "title": "Propriétés",
+      "totalArea": "Surface totale : {{area}} m²",
+      "noSelection": "Touchez un élément du plan pour le modifier.",
+      "length": "Longueur",
+      "thickness": "Épaisseur",
+      "roomType": "Type de pièce",
+      "roomName": "Nom de la pièce",
+      "area": "Surface : {{area}} m²",
+      "openingType": "Type d'ouverture",
+      "openingWidth": "Largeur",
+      "openingHeight": "Hauteur",
+      "openingSill": "Allège",
+      "openingOffset": "Position sur le mur",
+      "wallHeight": "Hauteur sous plafond"
+    },
+    "pad": {
+      "backspace": "Effacer le dernier chiffre",
+      "validate": "Valider"
+    },
+    "levels": {
+      "label": "Niveaux",
+      "add": "Ajouter un niveau",
+      "newName": "R+{{n}}"
+    },
+    "sync": {
+      "synced": "À jour",
+      "syncing": "Synchronisation…",
+      "offline": "Hors connexion",
+      "offlinePending": "Hors connexion — {{n}} en attente",
+      "conflict": "Version mise de côté",
+      "auth_expired": "Session expirée",
+      "error": "Erreur de synchronisation"
+    },
+    "calibration": {
+      "action": "Calibrer",
+      "title": "Calibration du plan",
+      "pickPoints": "Touchez les deux extrémités d'une longueur connue ({{n}}/2).",
+      "enterLength": "Saisissez la longueur réelle entre les deux points.",
+      "lengthLabel": "Longueur réelle",
+      "required": "Calibrez le plan avant de dessiner : sans échelle, les longueurs seraient fausses.",
+      "reset": "Reprendre les points"
+    },
+    "background": {
+      "import": "Importer un plan"
+    },
+    "menu": {
+      "properties": "Propriétés",
+      "delete": "Supprimer",
+      "close": "Fermer"
+    },
+    "shelf": {
+      "badge": "Versions mises de côté ({{n}})",
+      "title": "Versions mises de côté",
+      "intro": "Un collègue a enregistré une version pendant que vous modifiiez ce niveau. Prévisualisez-la, puis récupérez-la si elle vous convient.",
+      "empty": "Aucune version en attente.",
+      "item": "Basée sur la révision {{revision}} · {{area}} m² tracés",
+      "recover": "Récupérer",
+      "dismiss": "Ignorer",
+      "close": "Fermer"
+    },
+    "projects": {
+      "title": "Conception 3D",
+      "subtitle": "Relevez le plan de ce bien, niveau par niveau. Tout fonctionne sans connexion.",
+      "back": "Retour",
+      "create": "Nouveau projet",
+      "defaultTitle": "Plan sans titre",
+      "empty": "Aucun projet pour ce bien.",
+      "markReady": "Marquer prêt",
+      "notSynced": "non synchronisé",
+      "status": {
+        "draft": "Brouillon",
+        "ready": "Prêt"
+      }
+    }
   }
 }

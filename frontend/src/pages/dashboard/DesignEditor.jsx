@@ -1,0 +1,550 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { FiArrowLeft, FiImage, FiLayers, FiSliders, FiTarget } from 'react-icons/fi'
+import * as local from '../../services/design3dLocal'
+import * as api from '../../services/design3dApi'
+import { applyLocal, refreshFromServer, startEngine } from '../../services/design3dSync'
+import {
+  EMPTY_GEOMETRY, newId, normalizedToMeters, polygonArea, rescaleGeometry, validateGeometry,
+} from '../../utils/floorplan'
+import useAuthStore from '../../store/authStore'
+import useFloorplanEditor from '../../components/design/useFloorplanEditor'
+import FloorplanCanvas from '../../components/design/FloorplanCanvas'
+import Toolbar from '../../components/design/Toolbar'
+import PropertiesPanel from '../../components/design/PropertiesPanel'
+import LevelTabs from '../../components/design/LevelTabs'
+import CalibrationOverlay from '../../components/design/CalibrationOverlay'
+import SyncBadge from '../../components/design/SyncBadge'
+import ShelfDialog from '../../components/design/ShelfDialog'
+import Design3dGate from '../../components/design/Design3dGate'
+
+/**
+ * Éditeur de plan 2D, hors-ligne d'abord.
+ *
+ * Règles de fonctionnement qui expliquent la forme du composant :
+ *  - Aucune action utilisateur n'attend le réseau. Toute mutation passe par
+ *    `applyLocal` (IndexedDB + file d'attente) ; le moteur de synchronisation
+ *    tourne en fond et n'est visible que par le badge.
+ *  - Le rafraîchissement de fond ne réamorce JAMAIS l'éditeur. La géométrie
+ *    n'est chargée depuis le local qu'au changement de niveau (`seededRef`),
+ *    jamais sur simple mise à jour du store : sans cela, un rafraîchissement
+ *    survenu pendant que l'utilisateur dessine ferait disparaître son brouillon
+ *    sous ses doigts (cf. tâche 8).
+ *  - L'enregistrement est différé de 500 ms et comparé à un instantané
+ *    (`savedRef`) : ni sauvegarde à vide au chargement, ni perte au démontage
+ *    (le dernier état en attente est écrit dans le nettoyage).
+ */
+
+const SAVE_DEBOUNCE_MS = 500
+const FREE_EXTENT_M = 20 // largeur visible par défaut en dessin libre (sans plan importé)
+
+const snapshotOf = (levelId, form, geometry) =>
+  JSON.stringify({ id: levelId, name: form.name, wall_height_m: form.wall_height_m, calibration: form.calibration, geometry })
+
+export default function DesignEditor() {
+  const { t } = useTranslation(['dashboard'])
+  const { projectId } = useParams()
+  const hasFeature = useAuthStore((s) => s.hasFeature)
+  const editor = useFloorplanEditor()
+  const { state, dispatch, undo, redo, canUndo, canRedo } = editor
+
+  const [levels, setLevels] = useState([])
+  const [levelId, setLevelId] = useState(null)
+  const [form, setForm] = useState({ name: '', wall_height_m: 2.7, calibration: null })
+  const [sync, setSync] = useState({ state: 'synced', pending: 0 })
+  const [background, setBackground] = useState(null)
+  const [calibrating, setCalibrating] = useState(false)
+  const [calPoints, setCalPoints] = useState([])
+  const [shelf, setShelf] = useState(null)
+  const [shelfCount, setShelfCount] = useState(0)
+  const [menu, setMenu] = useState(null)
+  const [fullscreen, setFullscreen] = useState(false)
+  const [compact, setCompact] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
+
+  const seededRef = useRef(null)
+  const savedRef = useRef('')
+  const pendingRef = useRef(null)
+  const engineRef = useRef(null)
+  const rootRef = useRef(null)
+
+  // --- niveaux ------------------------------------------------------------
+  const loadLevels = useCallback(async () => {
+    const rows = (await local.listLevels(projectId)).filter((l) => !l.deleted)
+    rows.sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+    setLevels(rows)
+    return rows
+  }, [projectId])
+
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      let rows = await loadLevels()
+      if (!rows.length) {
+        // Rien en local : première ouverture sur cet appareil. On tente le
+        // serveur, mais son échec n'empêche pas d'utiliser la page.
+        try {
+          await refreshFromServer()
+          rows = alive ? await loadLevels() : rows
+        } catch {
+          return
+        }
+      }
+      if (alive) setLevelId((cur) => cur ?? rows[0]?.id ?? null)
+    })()
+    return () => {
+      alive = false
+    }
+  }, [loadLevels])
+
+  // --- amorçage de l'éditeur (au changement de niveau UNIQUEMENT) ---------
+  useEffect(() => {
+    if (!levelId || seededRef.current === levelId) return
+    let alive = true
+    ;(async () => {
+      const lv = await local.getLevel(levelId)
+      if (!lv || !alive) return
+      seededRef.current = levelId
+      const nextForm = {
+        name: lv.name || '',
+        wall_height_m: Number(lv.wall_height_m) || 2.7,
+        calibration: lv.calibration || null,
+      }
+      const geometry = lv.geometry || EMPTY_GEOMETRY
+      savedRef.current = snapshotOf(levelId, nextForm, geometry)
+      setForm(nextForm)
+      dispatch({ type: 'LOAD_GEOMETRY', geometry, resetHistory: true })
+    })()
+    return () => {
+      alive = false
+    }
+  }, [levelId, dispatch])
+
+  // --- enregistrement local différé ---------------------------------------
+  useEffect(() => {
+    if (!levelId || seededRef.current !== levelId) return undefined
+    const payload = {
+      id: levelId,
+      name: form.name,
+      wall_height_m: form.wall_height_m,
+      calibration: form.calibration,
+      geometry: state.geometry,
+    }
+    const snap = snapshotOf(levelId, form, state.geometry)
+    if (snap === savedRef.current) return undefined
+    pendingRef.current = payload
+    const timer = setTimeout(async () => {
+      savedRef.current = snap
+      pendingRef.current = null
+      await applyLocal({ type: 'level.update', payload })
+      engineRef.current?.tick()
+    }, SAVE_DEBOUNCE_MS)
+    return () => clearTimeout(timer)
+  }, [levelId, form, state.geometry])
+
+  // Démontage : ce qui n'a pas encore atteint la temporisation doit tout de
+  // même être écrit, sinon les 500 dernières millisecondes de travail sont
+  // perdues en quittant la page.
+  useEffect(
+    () => () => {
+      if (pendingRef.current) applyLocal({ type: 'level.update', payload: pendingRef.current })
+    },
+    [],
+  )
+
+  // --- moteur de synchronisation -----------------------------------------
+  useEffect(() => {
+    const engine = startEngine({ onState: setSync })
+    engineRef.current = engine
+    return () => engine.stop()
+  }, [])
+
+  // --- versions mises de côté (étagère, propriétaire seulement) -----------
+  const refreshShelf = useCallback(async () => {
+    if (!levelId || !navigator.onLine) return
+    try {
+      const { items } = await api.listShelf(levelId)
+      setShelfCount(items.length)
+    } catch {
+      setShelfCount(0)
+    }
+  }, [levelId])
+
+  useEffect(() => {
+    refreshShelf()
+  }, [refreshShelf, sync.state])
+
+  // --- image de fond ------------------------------------------------------
+  useEffect(() => {
+    if (!levelId) return undefined
+    let url = null
+    let alive = true
+    ;(async () => {
+      const bg = await local.getBackground(levelId)
+      if (!bg || !alive) {
+        setBackground(null)
+        return
+      }
+      url = URL.createObjectURL(bg.blob)
+      const img = new Image()
+      img.onload = () => alive && setBackground({ url, aspect: img.naturalWidth / img.naturalHeight || 1 })
+      img.src = url
+    })()
+    return () => {
+      alive = false
+      if (url) URL.revokeObjectURL(url)
+    }
+  }, [levelId])
+
+  async function importBackground(e) {
+    const file = e.target.files?.[0]
+    if (!file || !levelId) return
+    await applyLocal({ type: 'level.background', payload: { id: levelId, blob: file, type: file.type } })
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => setBackground({ url, aspect: img.naturalWidth / img.naturalHeight || 1 })
+    img.src = url
+    setCalibrating(true)
+    setCalPoints([])
+  }
+
+  // --- échelle ------------------------------------------------------------
+  const imageSize = useMemo(() => {
+    if (!background) return null
+    if (!form.calibration) return { widthM: FREE_EXTENT_M, heightM: FREE_EXTENT_M / background.aspect }
+    // `normalizedToMeters({x:1,y:0})` donne exactement la largeur de l'image en
+    // mètres : on évite de redériver la formule de calibration ici.
+    const widthM = normalizedToMeters({ x: 1, y: 0 }, form.calibration, background.aspect).x
+    return { widthM, heightM: widthM / background.aspect }
+  }, [background, form.calibration])
+
+  const extentM = imageSize?.widthM || FREE_EXTENT_M
+  const needsCalibration = !!background && !form.calibration
+  const locked = needsCalibration && !calibrating
+
+  function onCalibrationPoint(p) {
+    setCalPoints((pts) => (pts.length >= 2 ? [p] : [...pts, p]))
+  }
+
+  function commitCalibration(meters) {
+    if (calPoints.length < 2 || !background) return
+    const next = { p1: calPoints[0], p2: calPoints[1], meters }
+    if (form.calibration) {
+      // Recalibrage : la géométrie déjà tracée doit suivre la nouvelle échelle,
+      // exactement comme le fait le serveur (app/geometry.py::rescale).
+      const before = normalizedToMeters({ x: 1, y: 0 }, form.calibration, background.aspect).x
+      const after = normalizedToMeters({ x: 1, y: 0 }, next, background.aspect).x
+      dispatch({ type: 'LOAD_GEOMETRY', geometry: rescaleGeometry(state.geometry, after / before) })
+    }
+    setForm((f) => ({ ...f, calibration: next }))
+    setCalibrating(false)
+    setCalPoints([])
+  }
+
+  // --- actions ------------------------------------------------------------
+  async function addLevel() {
+    const id = newId()
+    await applyLocal({
+      type: 'level.create',
+      payload: {
+        id,
+        project_id: projectId,
+        name: t('dashboard:designEditor.levels.newName', { n: levels.length }),
+        position: levels.length,
+        wall_height_m: 2.7,
+        calibration: null,
+        geometry: { ...EMPTY_GEOMETRY },
+      },
+    })
+    await loadLevels()
+    setLevelId(id)
+  }
+
+  function finishRoom() {
+    if (state.draft?.kind !== 'room' || state.draft.points.length < 3) return
+    dispatch({
+      type: 'ADD_ROOM',
+      room: { id: newId(), type: 'living', polygon: state.draft.points, name: '' },
+    })
+  }
+
+  function zoomBy(factor) {
+    dispatch({ type: 'SET_VIEW', view: { zoom: Math.min(40, Math.max(0.2, state.zoom * factor)) } })
+  }
+
+  function toggleOption(key) {
+    if (key === 'grid') dispatch({ type: 'SET_OPTION', key: 'grid', value: { ...state.grid, visible: !state.grid.visible } })
+    else dispatch({ type: 'SET_OPTION', key: 'dimensions', value: !state.dimensions })
+  }
+
+  function toggleFullscreen() {
+    const el = rootRef.current
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.()
+      setFullscreen(false)
+      return
+    }
+    if (el?.requestFullscreen) {
+      // Le repli (classe plein écran) couvre les navigateurs iOS qui refusent
+      // l'API sur un élément quelconque.
+      el.requestFullscreen().catch(() => {})
+    }
+    setFullscreen(true)
+  }
+
+  async function openShelf() {
+    try {
+      const { items } = await api.listShelf(levelId)
+      setShelf({ items, error: null })
+    } catch {
+      setShelf({ items: [], error: 'offline' })
+    }
+  }
+
+  async function recoverShelf(item) {
+    dispatch({ type: 'LOAD_GEOMETRY', geometry: item.geometry || EMPTY_GEOMETRY })
+    setForm((f) => ({
+      ...f,
+      wall_height_m: Number(item.wall_height_m) || f.wall_height_m,
+      calibration: item.calibration ?? f.calibration,
+    }))
+    try {
+      await api.dismissShelf(levelId, item.id)
+    } catch {
+      // Sans réseau la version reste sur l'étagère : ce n'est pas grave, elle
+      // est déjà chargée dans l'éditeur et l'enregistrement suit la file.
+    }
+    setShelf(null)
+    refreshShelf()
+  }
+
+  async function dismissShelfItem(item) {
+    try {
+      await api.dismissShelf(levelId, item.id)
+    } catch {
+      return
+    }
+    setShelf((s) => ({ ...s, items: s.items.filter((i) => i.id !== item.id) }))
+    refreshShelf()
+  }
+
+  // --- clavier (en plus des boutons, toujours visibles) -------------------
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault()
+        if (e.shiftKey) redo()
+        else undo()
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (document.activeElement?.tagName === 'INPUT') return
+        dispatch({ type: 'DELETE_SELECTED' })
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [undo, redo, dispatch])
+
+  useEffect(() => {
+    const mq = window.matchMedia?.('(max-width: 899px)')
+    if (!mq) return undefined
+    const apply = () => setCompact(mq.matches)
+    apply()
+    mq.addEventListener?.('change', apply)
+    return () => mq.removeEventListener?.('change', apply)
+  }, [])
+
+  const problems = useMemo(
+    () => validateGeometry(state.geometry, form.wall_height_m),
+    [state.geometry, form.wall_height_m],
+  )
+  const currentLevel = levels.find((l) => l.id === levelId)
+
+  const toolbar = (
+    <Toolbar
+      tool={state.tool}
+      onTool={(id) => dispatch({ type: 'SET_TOOL', tool: id })}
+      onUndo={undo}
+      onRedo={redo}
+      canUndo={canUndo}
+      canRedo={canRedo}
+      onZoom={zoomBy}
+      onDelete={() => dispatch({ type: 'DELETE_SELECTED' })}
+      canDelete={!!state.selection}
+      draft={state.draft}
+      onFinishDraft={finishRoom}
+      onCancelDraft={() => dispatch({ type: 'SET_DRAFT', draft: null })}
+      dimensions={state.dimensions}
+      grid={state.grid.visible}
+      onToggle={toggleOption}
+      fullscreen={fullscreen}
+      onFullscreen={toggleFullscreen}
+      disabled={locked}
+      disabledReason={locked ? t('dashboard:designEditor.calibration.required') : null}
+      vertical={!compact}
+    />
+  )
+
+  const panel = (
+    <PropertiesPanel
+      state={state}
+      dispatch={dispatch}
+      wallHeightM={form.wall_height_m}
+      onWallHeightChange={(v) => setForm((f) => ({ ...f, wall_height_m: v }))}
+      problems={problems}
+    />
+  )
+
+  return (
+    <Design3dGate hasFeature={hasFeature('design3d')}>
+      <div ref={rootRef} className={`bg-gray-50 ${fullscreen ? 'fixed inset-0 z-40' : ''}`}>
+        <div className="flex flex-wrap items-center gap-3 p-3 border-b border-gray-200 bg-white">
+          <Link to="/dashboard/conception" className="inline-flex items-center gap-2 text-gray-600 min-h-[44px]">
+            <FiArrowLeft className="w-4 h-4 rtl:rotate-180" />
+            {t('dashboard:designEditor.projects.back')}
+          </Link>
+          <h1 className="text-lg font-semibold text-gray-900">{t('dashboard:designEditor.title')}</h1>
+          <SyncBadge sync={sync} />
+          {shelfCount > 0 && (
+            <button type="button" className="btn-secondary min-h-[44px] inline-flex items-center gap-2" onClick={openShelf}>
+              <FiLayers className="w-4 h-4" />
+              {t('dashboard:designEditor.shelf.badge', { n: shelfCount })}
+            </button>
+          )}
+          <label className="btn-secondary min-h-[44px] inline-flex items-center gap-2 cursor-pointer">
+            <FiImage className="w-4 h-4" />
+            {t('dashboard:designEditor.background.import')}
+            <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={importBackground} />
+          </label>
+          {background && (
+            <button
+              type="button"
+              className="btn-secondary min-h-[44px] inline-flex items-center gap-2"
+              onClick={() => {
+                setCalibrating(true)
+                setCalPoints([])
+              }}
+            >
+              <FiTarget className="w-4 h-4" />
+              {t('dashboard:designEditor.calibration.action')}
+            </button>
+          )}
+        </div>
+
+        <div className="p-3 bg-white border-b border-gray-200">
+          <LevelTabs levels={levels} currentId={levelId} onSelect={setLevelId} onCreate={addLevel} />
+        </div>
+
+        <div className={`flex ${compact ? 'flex-col' : 'flex-row'} gap-0`}>
+          {!compact && <div className="p-3 bg-white border-e border-gray-200">{toolbar}</div>}
+
+          <div className="relative flex-1 h-[60vh] sm:h-[70vh]">
+            <FloorplanCanvas
+              state={state}
+              dispatch={dispatch}
+              background={background?.url || null}
+              imageSize={imageSize}
+              extentM={extentM}
+              locked={locked}
+              calibration={calibrating ? { active: true, points: calPoints, onPoint: onCalibrationPoint } : { points: calPoints }}
+              onLongPress={({ client, hit }) => {
+                dispatch({ type: 'SELECT', selection: hit })
+                setMenu(hit ? { client, hit } : null)
+              }}
+            />
+
+            {locked && (
+              <div className="absolute inset-x-0 top-0 p-2 bg-amber-50 border-b border-amber-200 text-amber-800 text-sm">
+                {t('dashboard:designEditor.calibration.required')}
+              </div>
+            )}
+
+            {calibrating && (
+              <CalibrationOverlay
+                points={calPoints}
+                meters={form.calibration?.meters}
+                required={needsCalibration}
+                onReset={() => setCalPoints([])}
+                onCancel={() => setCalibrating(false)}
+                onCommit={commitCalibration}
+              />
+            )}
+
+            {menu && (
+              <div
+                className="fixed z-50 bg-white rounded-lg shadow-lg border border-gray-200 p-2 space-y-1"
+                style={{ left: Math.max(8, menu.client.x - 80), top: Math.max(8, menu.client.y - 60) }}
+              >
+                <button
+                  type="button"
+                  className="block w-full text-start min-h-[44px] px-3 rounded hover:bg-gray-50"
+                  onClick={() => {
+                    setSheetOpen(true)
+                    setMenu(null)
+                  }}
+                >
+                  {t('dashboard:designEditor.menu.properties')}
+                </button>
+                <button
+                  type="button"
+                  className="block w-full text-start min-h-[44px] px-3 rounded text-red-600 hover:bg-red-50"
+                  onClick={() => {
+                    dispatch({ type: 'DELETE_SELECTED' })
+                    setMenu(null)
+                  }}
+                >
+                  {t('dashboard:designEditor.menu.delete')}
+                </button>
+                <button
+                  type="button"
+                  className="block w-full text-start min-h-[44px] px-3 rounded hover:bg-gray-50"
+                  onClick={() => setMenu(null)}
+                >
+                  {t('dashboard:designEditor.menu.close')}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {!compact && <aside className="w-80 p-3 bg-white border-s border-gray-200 overflow-y-auto">{panel}</aside>}
+        </div>
+
+        {compact && (
+          <>
+            <div className="sticky bottom-0 p-2 bg-white border-t border-gray-200 overflow-x-auto">{toolbar}</div>
+            <div className="bg-white border-t border-gray-200">
+              <button
+                type="button"
+                className="w-full min-h-[44px] flex items-center justify-center gap-2 text-gray-700"
+                aria-expanded={sheetOpen}
+                onClick={() => setSheetOpen((v) => !v)}
+              >
+                <FiSliders className="w-4 h-4" />
+                {t('dashboard:designEditor.panel.title')}
+              </button>
+              {sheetOpen && <div className="p-3 max-h-[40vh] overflow-y-auto">{panel}</div>}
+            </div>
+          </>
+        )}
+
+        {currentLevel && (
+          <p className="p-3 text-xs text-gray-500">
+            {t('dashboard:designEditor.footer', {
+              level: currentLevel.name,
+              area: state.geometry.rooms.reduce((s, r) => s + polygonArea(r.polygon), 0).toFixed(1),
+            })}
+          </p>
+        )}
+
+        {shelf && (
+          <ShelfDialog
+            items={shelf.items}
+            onRecover={recoverShelf}
+            onDismiss={dismissShelfItem}
+            onClose={() => setShelf(null)}
+          />
+        )}
+      </div>
+    </Design3dGate>
+  )
+}

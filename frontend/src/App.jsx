@@ -37,6 +37,8 @@ import DashboardPrograms from './pages/dashboard/Programs'
 import DashboardProgramForm from './pages/dashboard/ProgramForm'
 import ProgramPlanEditor from './pages/dashboard/ProgramPlanEditor'
 import MarketPrices from './pages/dashboard/MarketPrices'
+import DesignProjects from './pages/dashboard/DesignProjects'
+import DesignEditor from './pages/dashboard/DesignEditor'
 import StayManagerTabs from './pages/dashboard/integrations/StayManagerTabs'
 import StayManagerIntegration from './pages/dashboard/integrations/StayManager'
 import StayManagerProperties from './pages/dashboard/integrations/StayManagerProperties'
@@ -182,6 +184,10 @@ function App() {
           <Route path="disponibilites" element={<Availability />} />
 
           <Route path="prix-marche" element={<MarketPrices />} />
+
+          {/* Conception 3D : projets d'un bien puis éditeur de plan (hors-ligne d'abord) */}
+          <Route path="conception" element={<DesignProjects />} />
+          <Route path="conception/:projectId" element={<DesignEditor />} />
 
           {/* StayManager : connexion / biens / réservations regroupés en onglets */}
           <Route path="staymanager" element={<StayManagerTabs />}>

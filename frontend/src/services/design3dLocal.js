@@ -31,6 +31,8 @@ export const deleteProjectLocal = async (id) => {
   await tx.done
 }
 
+export const listAllProjects = async () => (await openDb()).getAll('projects')
+
 export const listProjects = async (targetType, targetId) =>
   (await (await openDb()).getAll('projects')).filter((p) => p.target_type === targetType && p.target_id === targetId)
 

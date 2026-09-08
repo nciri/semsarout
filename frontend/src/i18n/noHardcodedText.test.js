@@ -148,6 +148,18 @@ const MIGRATED_FILES = [
   'src/components/map/PropertyMap.jsx',
   'src/components/dashboard/MesBiensTabs.jsx',
   'src/components/common/CompareBar.jsx',
+  'src/pages/dashboard/DesignProjects.jsx',
+  'src/pages/dashboard/DesignEditor.jsx',
+  'src/components/design/FloorplanCanvas.jsx',
+  'src/components/design/Toolbar.jsx',
+  'src/components/design/PropertiesPanel.jsx',
+  'src/components/design/NumericPad.jsx',
+  'src/components/design/LevelTabs.jsx',
+  'src/components/design/CalibrationOverlay.jsx',
+  'src/components/design/SyncBadge.jsx',
+  'src/components/design/ShelfDialog.jsx',
+  'src/components/design/Design3dGate.jsx',
+  'src/components/design/Design3dEntry.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {

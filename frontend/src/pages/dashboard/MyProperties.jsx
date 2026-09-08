@@ -8,6 +8,7 @@ import { propertyService } from '../../services/propertyService'
 import { buyerService } from '../../services/buyerService'
 import { formatPrice } from '../../utils/currency'
 import MesBiensTabs from '../../components/dashboard/MesBiensTabs'
+import Design3dEntry from '../../components/design/Design3dEntry'
 
 function MyProperties() {
   const { t } = useTranslation(['dashboard', 'common'])
@@ -233,6 +234,7 @@ function MyProperties() {
                             >
                               <FiEdit2 className="w-4 h-4" />
                             </Link>
+                            <Design3dEntry targetType="property" targetId={property.id} compact />
                             <button
                               onClick={() => setDeleteId(property.id)}
                               className="p-2 text-gray-400 hover:text-red-600"

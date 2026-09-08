@@ -2,6 +2,21 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import api from '../services/api'
 
+// Entitlements de plan. Le serveur les pose dans les claims du jeton d'accès
+// (identity/app/auth.py::_claims, monolithe backend/app/api/v1/auth.py) : c'est
+// la source qui fait foi côté passerelle, et la seule disponible pour les
+// sessions déjà ouvertes. `user.features` (renvoyé par /auth/me) la double pour
+// les comptes rafraîchis depuis le profil.
+function claimsOf(token) {
+  if (!token) return {}
+  try {
+    const payload = token.split('.')[1]
+    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
+  } catch {
+    return {}
+  }
+}
+
 const useAuthStore = create(
   persist(
     (set, get) => ({
@@ -80,6 +95,13 @@ const useAuthStore = create(
           refreshToken: null,
           isAuthenticated: false
         })
+      },
+
+      hasFeature: (name) => {
+        const { user, accessToken } = get()
+        if (Array.isArray(user?.features)) return user.features.includes(name)
+        const features = claimsOf(accessToken).features
+        return Array.isArray(features) && features.includes(name)
       },
 
       updateUser: (userData) => {

@@ -159,7 +159,11 @@ def me(principal: Principal = Depends(get_principal), db: Session = Depends(get_
     user = db.get(UserRO, uid) if uid else None
     if not user:
         return _err("User not found", 404)
-    return {"user": user.to_dict()}
+    # `features` accompagne le profil : le front en a besoin pour n'afficher les
+    # entrées d'un module (conception 3D…) qu'aux comptes qui y ont droit. Même
+    # source que les claims du jeton, pour qu'un rafraîchissement de profil ne
+    # puisse pas contredire la passerelle.
+    return {"user": {**user.to_dict(), "features": _features(db, user.agency_id)}}
 
 
 @router.post("/auth/register", status_code=201)
