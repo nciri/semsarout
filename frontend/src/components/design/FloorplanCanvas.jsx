@@ -4,6 +4,7 @@ import {
   newId, polygonArea, projectPointOnWall, snapAngle, snapToGrid, snapToPoints, wallLength,
 } from '../../utils/floorplan'
 import { DEFAULT_WALL_THICKNESS_M, OPENING_DEFAULTS, hitTest, hitVertex, openingSpan } from './useFloorplanEditor'
+import { ROOM_FILL } from './roomColors'
 
 /**
  * Canevas SVG de l'éditeur de plan. Tout est dessiné EN MÈTRES : le viewBox porte
@@ -16,11 +17,6 @@ import { DEFAULT_WALL_THICKNESS_M, OPENING_DEFAULTS, hitTest, hitVertex, opening
  * le pinch), un doigt = l'outil courant, deux doigts = déplacement + zoom,
  * appui long = menu contextuel. Aucun comportement ne dépend du survol.
  */
-
-export const ROOM_FILL = {
-  living: '#dbeafe', bedroom: '#ede9fe', kitchen: '#fef3c7', bathroom: '#cffafe',
-  wc: '#e0f2fe', hallway: '#f3f4f6', balcony: '#dcfce7', garage: '#e5e7eb', other: '#f5f5f4',
-}
 
 const MIN_ZOOM = 0.2
 const MAX_ZOOM = 40
