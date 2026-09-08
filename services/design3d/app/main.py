@@ -16,8 +16,8 @@ from semsar_events import enqueue
 
 from . import events
 from .db import get_db, init_db
-from .models import EMPTY_GEOMETRY, DesignLevel, DesignProject, _uuid
-from .schemas import LevelCreateIn, ProjectCreateIn, ProjectUpdateIn
+from .models import EMPTY_GEOMETRY, DesignLevel, DesignLevelShelf, DesignProject, _now, _uuid
+from .schemas import LevelCreateIn, LevelUpdateIn, ProjectCreateIn, ProjectUpdateIn, validate_geometry
 
 settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
@@ -176,3 +176,97 @@ def delete_level(level_id: str, principal: Principal = Depends(_design3d), db: S
     db.delete(lv)
     db.commit()
     return Response(status_code=204)
+
+
+def _shelve(db: Session, lv: DesignLevel, author_id: int, geometry, calibration, wall_height_m, base_revision: int) -> None:
+    """Une seule entrée non revue par (niveau, auteur) : la précédente est remplacée."""
+    prev = db.query(DesignLevelShelf).filter(DesignLevelShelf.level_id == lv.id, DesignLevelShelf.author_id == author_id,
+                                              DesignLevelShelf.reviewed_at.is_(None)).first()
+    if prev is not None:
+        db.delete(prev)
+    db.add(DesignLevelShelf(level_id=lv.id, author_id=author_id, geometry=geometry, calibration=calibration,
+                            wall_height_m=wall_height_m, base_revision=base_revision))
+
+
+@app.put("/design3d/levels/{level_id}")
+def update_level(level_id: str, body: LevelUpdateIn, principal: Principal = Depends(_design3d), db: Session = Depends(get_db)):
+    lv, p, err = _load_level(db, level_id, principal)
+    if err:
+        return err
+    uid = _uid(principal)
+    is_owner = uid == p.owner_id
+    height = body.wall_height_m if body.wall_height_m is not None else float(lv.wall_height_m)
+    if body.geometry is not None:
+        problems = validate_geometry(body.geometry, height)
+        if problems:
+            return JSONResponse({"error": "Géométrie invalide", "details": problems}, status_code=422)
+    shelved = False
+    if body.base_revision < lv.revision:
+        if not is_owner:
+            _shelve(db, lv, uid, body.geometry if body.geometry is not None else lv.geometry,
+                    body.calibration.model_dump() if body.calibration else lv.calibration, height, body.base_revision)
+            db.commit()
+            return JSONResponse({"error": "Version obsolète : le propriétaire a modifié ce niveau",
+                                 "level": lv.to_dict()}, status_code=409)
+        if lv.revision_author_id not in (None, p.owner_id):
+            _shelve(db, lv, lv.revision_author_id, lv.geometry, lv.calibration, float(lv.wall_height_m), lv.revision)
+            shelved = True
+    for field in ("name", "position", "show_background_public"):
+        v = getattr(body, field)
+        if v is not None:
+            setattr(lv, field, v)
+    if body.wall_height_m is not None:
+        lv.wall_height_m = body.wall_height_m
+    if body.calibration is not None:
+        lv.calibration = body.calibration.model_dump()
+    if body.geometry is not None:
+        lv.geometry = body.geometry
+    lv.revision += 1
+    lv.revision_author_id = uid
+    enqueue(db, "design_level", lv.id, events.LEVEL_UPDATED, {"id": lv.id, "project_id": p.id, "revision": lv.revision})
+    db.commit()
+    return {**lv.to_dict(), "shelved": shelved}
+
+
+def _owner_only(p: DesignProject, principal: Principal):
+    return None if _uid(principal) == p.owner_id else _err("Réservé au propriétaire du projet", 403)
+
+
+@app.get("/design3d/levels/{level_id}/shelf")
+def list_shelf(level_id: str, principal: Principal = Depends(_design3d), db: Session = Depends(get_db)):
+    lv, p, err = _load_level(db, level_id, principal)
+    if err:
+        return err
+    if (d := _owner_only(p, principal)) is not None:
+        return d
+    rows = db.query(DesignLevelShelf).filter(DesignLevelShelf.level_id == lv.id, DesignLevelShelf.reviewed_at.is_(None)).all()
+    return {"items": [s.to_dict() for s in rows]}
+
+
+@app.post("/design3d/levels/{level_id}/shelf/{shelf_id}/dismiss")
+def dismiss_shelf(level_id: str, shelf_id: str, principal: Principal = Depends(_design3d), db: Session = Depends(get_db)):
+    lv, p, err = _load_level(db, level_id, principal)
+    if err:
+        return err
+    if (d := _owner_only(p, principal)) is not None:
+        return d
+    s = db.get(DesignLevelShelf, shelf_id)
+    if s is None or s.level_id != lv.id:
+        return _err("Not found", 404)
+    s.reviewed_at = _now()
+    db.commit()
+    return s.to_dict()
+
+
+@app.get("/design3d/sync")
+def sync_summary(principal: Principal = Depends(_design3d), db: Session = Depends(get_db)):
+    q = db.query(DesignProject)
+    q = q.filter(DesignProject.agency_id == principal.agency_id) if principal.agency_id else q.filter(DesignProject.owner_id == _uid(principal))
+    out = []
+    for p in q.all():
+        levels = []
+        for lv in _levels(db, p.id):
+            shelved = db.query(DesignLevelShelf).filter(DesignLevelShelf.level_id == lv.id, DesignLevelShelf.reviewed_at.is_(None)).count()
+            levels.append({"id": lv.id, "revision": lv.revision, "updated_at": lv.to_dict()["updated_at"], "shelved_count": shelved})
+        out.append({"id": p.id, "status": p.status, "updated_at": p.to_dict()["updated_at"], "levels": levels})
+    return {"projects": out}
