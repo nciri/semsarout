@@ -338,7 +338,7 @@ def public_project(project_id: str, db: Session = Depends(get_db)):
     p = db.get(DesignProject, project_id)
     if p is None or p.status != "ready":
         return _err("Not found", 404)
-    return {**p.to_dict(), "levels": [lv.to_dict(public=True) for lv in _levels(db, p.id)]}
+    return {**p.to_dict(public=True), "levels": [lv.to_dict(public=True) for lv in _levels(db, p.id)]}
 
 
 @app.get("/public/design3d/by-target")
@@ -346,7 +346,8 @@ def public_by_target(target_type: str, target_id: int, db: Session = Depends(get
     q = db.query(DesignProject).filter(DesignProject.target_type == target_type, DesignProject.target_id == target_id,
                                         DesignProject.status == "ready")
     projects = q.order_by(DesignProject.updated_at.desc()).all()
-    return {"projects": [{**p.to_dict(), "levels": [lv.to_dict(public=True) for lv in _levels(db, p.id)]} for p in projects]}
+    return {"projects": [{**p.to_dict(public=True), "levels": [lv.to_dict(public=True) for lv in _levels(db, p.id)]}
+                          for p in projects]}
 
 
 @app.get("/public/design3d/levels/{level_id}/background")

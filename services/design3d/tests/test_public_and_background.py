@@ -69,6 +69,63 @@ def test_public_read_requires_ready_and_hides_background(client, headers, monkey
     assert client.get(f"/public/design3d/levels/{lid}/background").status_code == 200
 
 
+def test_recalibrate_uses_general_scale_ratio_not_naive_meters_ratio(client, headers):
+    """R6 : retracer un segment de longueur normalisée différente. Ancien segment 0,4 → 4 m
+    (échelle 10 m/unité), nouveau segment 0,2 → 4 m (échelle 20 m/unité) : facteur attendu 2.
+    La formule naïve (new.meters / old.meters) donnerait ici 4/4 = 1, donc ce test échouerait
+    avec elle."""
+    _, lid = _project(client, headers)
+    client.put(f"/design3d/levels/{lid}", json={"base_revision": 0, "geometry": G,
+               "calibration": {"p1": {"x": 0, "y": 0}, "p2": {"x": 0.4, "y": 0}, "meters": 4}}, headers=headers())
+    r = client.post(f"/design3d/levels/{lid}/recalibrate",
+                    json={"base_revision": 1, "calibration": {"p1": {"x": 0, "y": 0}, "p2": {"x": 0.2, "y": 0}, "meters": 4}},
+                    headers=headers())
+    assert r.status_code == 200
+    body = r.json()
+    assert body["geometry"]["walls"][0]["b"] == {"x": 8, "y": 0}
+    assert body["geometry"]["openings"][0]["offset_m"] == 2
+
+
+def test_recalibrate_degenerate_new_segment_keeps_scale(client, headers):
+    """R6 : nouveau segment dégénéré (p1 == p2) → facteur 1.0, pas de division par zéro, pas de
+    déformation de la géométrie existante."""
+    _, lid = _project(client, headers)
+    client.put(f"/design3d/levels/{lid}", json={"base_revision": 0, "geometry": G,
+               "calibration": {"p1": {"x": 0.1, "y": 0.1}, "p2": {"x": 0.5, "y": 0.1}, "meters": 4}}, headers=headers())
+    r = client.post(f"/design3d/levels/{lid}/recalibrate",
+                    json={"base_revision": 1, "calibration": {"p1": {"x": 0.3, "y": 0.3}, "p2": {"x": 0.3, "y": 0.3}, "meters": 4}},
+                    headers=headers())
+    assert r.status_code == 200
+    body = r.json()
+    assert body["geometry"]["walls"][0]["b"] == {"x": 4, "y": 0}
+    assert body["geometry"]["openings"][0]["offset_m"] == 1
+
+
+def test_public_project_hides_owner_agency_tenant(client, headers, monkeypatch):
+    import app.main as m
+    monkeypatch.setattr(m.storage, "plans", lambda: type("S", (), {"put": lambda *a, **k: None, "get": lambda *a: b"img"})())
+    pid, _ = _project(client, headers)
+    client.put(f"/design3d/projects/{pid}", json={"status": "ready"}, headers=headers())
+    body = client.get(f"/public/design3d/projects/{pid}").json()
+    assert "owner_id" not in body and "agency_id" not in body and "tenant" not in body
+
+
+def test_public_by_target_hides_owner_agency_tenant(client, headers, monkeypatch):
+    import app.main as m
+    monkeypatch.setattr(m.storage, "plans", lambda: type("S", (), {"put": lambda *a, **k: None, "get": lambda *a: b"img"})())
+    pid, _ = _project(client, headers)
+    client.put(f"/design3d/projects/{pid}", json={"status": "ready"}, headers=headers())
+    r = client.get("/public/design3d/by-target", params={"target_type": "property", "target_id": 1})
+    body = r.json()["projects"][0]
+    assert "owner_id" not in body and "agency_id" not in body and "tenant" not in body
+
+
+def test_authenticated_project_still_exposes_owner_and_agency(client, headers):
+    pid, _ = _project(client, headers)
+    body = client.get(f"/design3d/projects/{pid}", headers=headers()).json()
+    assert "owner_id" in body and "agency_id" in body
+
+
 def test_public_by_target_lists_ready_projects_only(client, headers, monkeypatch):
     import app.main as m
     monkeypatch.setattr(m.storage, "plans", lambda: type("S", (), {"put": lambda *a, **k: None, "get": lambda *a: b"img"})())

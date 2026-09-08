@@ -48,10 +48,11 @@ class DesignProject(Base):
 
     levels = relationship("DesignLevel", cascade="all, delete-orphan", back_populates="project")
 
-    def to_dict(self, levels: list | None = None) -> dict:
-        d = {"id": self.id, "tenant": self.tenant, "agency_id": self.agency_id, "owner_id": self.owner_id,
-             "target_type": self.target_type, "target_id": self.target_id, "title": self.title,
+    def to_dict(self, levels: list | None = None, public: bool = False) -> dict:
+        d = {"id": self.id, "target_type": self.target_type, "target_id": self.target_id, "title": self.title,
              "status": self.status, "created_at": _iso(self.created_at), "updated_at": _iso(self.updated_at)}
+        if not public:
+            d.update(tenant=self.tenant, agency_id=self.agency_id, owner_id=self.owner_id)
         if levels is not None:
             d["levels"] = [lv.to_dict() for lv in levels]
         return d
