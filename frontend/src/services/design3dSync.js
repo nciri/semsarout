@@ -47,7 +47,12 @@ export async function applyLocal(op, { local = defaultLocal } = {}) {
       // (son contenu a déjà été transmis) d'une opération dont l'entité
       // paraît juste « propre » à cet instant — cf. runOnce/send.
       const edit_seq = (cur.edit_seq ?? 0) + 1
-      await local.putLevel({ ...cur, ...p, base_revision: cur.dirty ? cur.base_revision : cur.revision, dirty: true, edit_seq })
+      // eslint-disable-next-line no-unused-vars -- déstructuration volontaire pour omettre `sync_error`
+      const { sync_error, ...curRest } = cur
+      // Une nouvelle édition locale purge la trace d'un échec révolu :
+      // sinon l'interface afficherait l'erreur d'une tentative dépassée à
+      // côté d'un état qui vient d'être modifié à nouveau.
+      await local.putLevel({ ...curRest, ...p, base_revision: cur.dirty ? cur.base_revision : cur.revision, dirty: true, edit_seq })
       toEnqueue = { ...op, client_seq: edit_seq }
       break
     }
@@ -204,7 +209,23 @@ export async function runOnce({ api = defaultApi, local = defaultLocal, onState 
 
       if (status === 409 && op.type === 'level.update') {
         const server = e.response.data?.level
-        if (server) await local.putLevel({ ...server, base_revision: server.revision, dirty: false })
+        const curLevel = await local.getLevel(op.payload.id)
+        const supersededByNewerEdit = e.attemptedSeq != null && (curLevel?.edit_seq ?? 0) > e.attemptedSeq
+        if (supersededByNewerEdit) {
+          // Une édition plus récente que celle qui a été envoyée est déjà en
+          // file (op suivante) : remplacer l'entité par la version serveur
+          // effacerait cette édition sans trace. On garde le contenu local
+          // le plus récent (donc `dirty: true`, elle sera bien renvoyée) et
+          // on aligne seulement `base_revision` sur celle du serveur pour
+          // que le prochain envoi ne reparte pas avec une révision déjà
+          // périmée.
+          if (server) await local.putLevel({ ...curLevel, base_revision: server.revision })
+        } else if (server) {
+          // Aucune édition plus récente : le serveur a gagné, comme convenu
+          // — le travail de cette opération est archivé côté serveur
+          // (cf. tâche 4), on remplace intégralement par sa version.
+          await local.putLevel({ ...server, base_revision: server.revision, dirty: false })
+        }
         await local.remove(op.seq)
         conflict = true
         continue
@@ -231,8 +252,11 @@ export async function runOnce({ api = defaultApi, local = defaultLocal, onState 
       }
 
       // Autre erreur serveur inattendue (5xx…) : ne pas bloquer la file
-      // dessus, mais la mémoriser comme pour les erreurs 4xx ci-dessus.
-      await markSyncError(op, e, local)
+      // dessus, mais la mémoriser comme pour les erreurs 4xx ci-dessus — en
+      // lui transmettant aussi la séquence tentée, sinon une édition plus
+      // récente encore en file se ferait à tort marquer « propre » et
+      // deviendrait la cible d'un rafraîchissement concurrent.
+      await markSyncError(op, e, local, e.attemptedSeq)
       await local.remove(op.seq)
       hasError = true
       onState?.({ state: 'error', error: e.response?.data, pending: await local.pendingCount() })

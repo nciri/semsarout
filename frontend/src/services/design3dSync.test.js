@@ -201,4 +201,109 @@ describe('design3d sync engine', () => {
     expect(stored.revision).toBe(3)
     expect(stored.sync_error).toMatchObject({ code: 422, message: 'Géométrie invalide' })
   })
+
+  it('409 received while a newer edit is queued does not discard it nor count it as synced without sending it', async () => {
+    const server = lvl({ revision: 5, name: 'Serveur' })
+    let calls = 0
+    const api = fakeApi({
+      updateLevel: vi.fn(async (id, body) => {
+        calls++
+        if (calls === 1) {
+          // Simule l'utilisateur qui réédite (édition B) pendant que op1 est en vol.
+          await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'V2', geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+          throw { response: { status: 409, data: { level: server } } }
+        }
+        return { ...lvl(), name: body.name, revision: body.base_revision + 1, shelved: false }
+      }),
+    })
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'V1', geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+    const r = await runOnce({ api, local, onState: () => {} })
+    // L'édition B doit vraiment partir sur le réseau, avec la révision de base du serveur.
+    expect(api.updateLevel).toHaveBeenCalledTimes(2)
+    expect(api.updateLevel.mock.calls[1][1].base_revision).toBe(5)
+    expect(api.updateLevel.mock.calls[1][1].name).toBe('V2')
+    expect(await local.pendingCount()).toBe(0)
+    const stored = await local.getLevel(lvl().id)
+    expect(stored.name).toBe('V2')
+    expect(stored.dirty).toBe(false)
+    expect(r.conflict).toBe(true)
+  })
+
+  it('a refresh right after a 409 superseded by a newer edit does not overwrite that edit', async () => {
+    const server = lvl({ revision: 5, name: 'Serveur' })
+    let calls = 0
+    const api = fakeApi({
+      updateLevel: vi.fn(async () => {
+        calls++
+        if (calls === 1) {
+          await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'V2', geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+          throw { response: { status: 409, data: { level: server } } }
+        }
+        // La seconde tentative (l'édition B) échoue à son tour, en réseau cette fois : elle reste en file.
+        throw Object.assign(new Error('net'), { code: 'ERR_NETWORK' })
+      }),
+      sync: vi.fn(async () => ({ projects: [{ id: 'p'.repeat(32), levels: [{ id: lvl().id, revision: 9, shelved_count: 0 }] }] })),
+    })
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'V1', geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+    await runOnce({ api, local, onState: () => {} })
+    expect(await local.pendingCount()).toBe(1)
+    await refreshFromServer({ api, local })
+    const stored = await local.getLevel(lvl().id)
+    expect(stored.dirty).toBe(true)
+    expect(stored.name).toBe('V2')
+  })
+
+  it('5xx received while a newer edit is queued does not mark it as already sent — it still reaches the server', async () => {
+    let calls = 0
+    const api = fakeApi({
+      updateLevel: vi.fn(async (id, body) => {
+        calls++
+        if (calls === 1) {
+          await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'V2', geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+          throw { response: { status: 500, data: { error: 'boom' } } }
+        }
+        return { ...lvl(), name: body.name, revision: body.base_revision + 1, shelved: false }
+      }),
+    })
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'V1', geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+    const r = await runOnce({ api, local, onState: () => {} })
+    expect(api.updateLevel).toHaveBeenCalledTimes(2)
+    expect(api.updateLevel.mock.calls[1][1].name).toBe('V2')
+    expect(await local.pendingCount()).toBe(0)
+    const stored = await local.getLevel(lvl().id)
+    expect(stored.name).toBe('V2')
+    expect(stored.dirty).toBe(false)
+    expect(r.hasError).toBe(true)
+  })
+
+  it('a refresh right after a 5xx superseded by a newer edit does not overwrite that edit', async () => {
+    let calls = 0
+    const api = fakeApi({
+      updateLevel: vi.fn(async () => {
+        calls++
+        if (calls === 1) {
+          await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'V2', geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+          throw { response: { status: 500, data: { error: 'boom' } } }
+        }
+        throw Object.assign(new Error('net'), { code: 'ERR_NETWORK' })
+      }),
+      sync: vi.fn(async () => ({ projects: [{ id: 'p'.repeat(32), levels: [{ id: lvl().id, revision: 9, shelved_count: 0 }] }] })),
+    })
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'V1', geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+    await runOnce({ api, local, onState: () => {} })
+    expect(await local.pendingCount()).toBe(1)
+    await refreshFromServer({ api, local })
+    const stored = await local.getLevel(lvl().id)
+    expect(stored.dirty).toBe(true)
+    expect(stored.name).toBe('V2')
+  })
+
+  it('a new local edit clears a previous sync_error trace', async () => {
+    await local.putLevel(lvl({ dirty: false, sync_error: { code: 422, message: 'Ancien échec', at: 1 } }))
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'V2', geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+    const stored = await local.getLevel(lvl().id)
+    expect(stored.sync_error).toBeUndefined()
+    expect(stored.dirty).toBe(true)
+    expect(stored.name).toBe('V2')
+  })
 })
