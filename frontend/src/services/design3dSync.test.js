@@ -163,4 +163,42 @@ describe('design3d sync engine', () => {
     expect(r.synced).toBe(2)
     expect(await local.pendingCount()).toBe(0)
   })
+
+  it('an edit applied while a request is in flight is sent to the server, never silently dropped, when that request fails', async () => {
+    let calls = 0
+    const api = fakeApi({
+      updateLevel: vi.fn(async (id, body) => {
+        calls++
+        if (calls === 1) {
+          // Simule l'utilisateur qui réédite pendant que cette première requête (op1) est en vol.
+          await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'V2', geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+          throw { response: { status: 422, data: { error: 'invalide' } } }
+        }
+        return { ...lvl(), name: body.name, revision: body.base_revision + 1, shelved: false }
+      }),
+    })
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'V1', geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+    const r = await runOnce({ api, local, onState: () => {} })
+    // La seconde édition (V2) doit avoir été réellement envoyée — jamais sautée par le
+    // dédoublonnage ni retirée de la file sans avoir été transmise au serveur.
+    expect(api.updateLevel).toHaveBeenCalledTimes(2)
+    expect(api.updateLevel.mock.calls[1][1].name).toBe('V2')
+    expect(await local.pendingCount()).toBe(0)
+    const stored = await local.getLevel(lvl().id)
+    expect(stored.dirty).toBe(false)
+    expect(stored.name).toBe('V2')
+    // L'échec de la première tentative a bien été noté, puis effacé par le second envoi réussi.
+    expect(stored.sync_error).toBeUndefined()
+    expect(r.synced).toBe(1)
+    expect(r.hasError).toBe(true)
+  })
+
+  it('refreshFromServer preserves sync_error across a successful background refresh', async () => {
+    await local.putLevel(lvl({ revision: 1, dirty: false, sync_error: { code: 422, message: 'Géométrie invalide', at: 111 } }))
+    const api = fakeApi({ sync: vi.fn(async () => ({ projects: [{ id: 'p'.repeat(32), levels: [{ id: lvl().id, revision: 3, shelved_count: 0 }] }] })) })
+    await refreshFromServer({ api, local })
+    const stored = await local.getLevel(lvl().id)
+    expect(stored.revision).toBe(3)
+    expect(stored.sync_error).toMatchObject({ code: 422, message: 'Géométrie invalide' })
+  })
 })

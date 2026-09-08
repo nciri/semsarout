@@ -11,6 +11,7 @@ let failures = 0
 // dans la file d'attente pour rejeu par le moteur de synchronisation.
 export async function applyLocal(op, { local = defaultLocal } = {}) {
   const p = op.payload
+  let toEnqueue = op
   switch (op.type) {
     case 'project.create': {
       const id = p.id ?? newId()
@@ -40,7 +41,14 @@ export async function applyLocal(op, { local = defaultLocal } = {}) {
       break
     case 'level.update': {
       const cur = (await local.getLevel(p.id)) ?? { id: p.id, revision: 0 }
-      await local.putLevel({ ...cur, ...p, base_revision: cur.dirty ? cur.base_revision : cur.revision, dirty: true })
+      // `edit_seq` compte les éditions locales successives de ce niveau. On
+      // rattache l'opération à la valeur qu'elle produit (`client_seq`) pour
+      // pouvoir, plus tard, distinguer une opération réellement redondante
+      // (son contenu a déjà été transmis) d'une opération dont l'entité
+      // paraît juste « propre » à cet instant — cf. runOnce/send.
+      const edit_seq = (cur.edit_seq ?? 0) + 1
+      await local.putLevel({ ...cur, ...p, base_revision: cur.dirty ? cur.base_revision : cur.revision, dirty: true, edit_seq })
+      toEnqueue = { ...op, client_seq: edit_seq }
       break
     }
     case 'level.delete':
@@ -52,14 +60,23 @@ export async function applyLocal(op, { local = defaultLocal } = {}) {
     default:
       throw new Error(`op inconnue: ${op.type}`)
   }
-  await local.enqueue(op)
+  await local.enqueue(toEnqueue)
 }
 
 // Persiste un échec non rejouable (422/403/404/…) sur l'entité locale
 // concernée, pour qu'il survive à un rechargement de page — sans ce champ,
 // l'opération retirée de la file disparaît sans laisser de trace et le
 // travail local devient invisible (cf. revue tâche 8).
-async function markSyncError(op, error, local) {
+//
+// `attemptedSeq` est l'`edit_seq` du niveau tel qu'il était au moment où LA
+// REQUÊTE QUI VIENT D'ÉCHOUER a été envoyée (capturé dans send(), avant tout
+// await réseau). S'il diffère de l'`edit_seq` courant de l'entité, c'est que
+// l'utilisateur a réédité pendant que cette requête était en vol : une
+// opération plus récente est encore en file pour cette édition-là, et il ne
+// faut surtout pas la faire passer pour « déjà à jour » en effaçant `dirty`
+// — ce serait la perdre silencieusement au prochain passage de la file
+// (cf. revue tâche 8, round 2).
+async function markSyncError(op, error, local, attemptedSeq) {
   const status = error?.response?.status
   const message = error?.response?.data?.error ?? error?.message ?? 'Erreur de synchronisation'
   const sync_error = { code: status, message, at: Date.now() }
@@ -67,14 +84,24 @@ async function markSyncError(op, error, local) {
   if (!id) return
   if (op.type.startsWith('level.')) {
     const cur = await local.getLevel(id)
-    // Redevient rafraîchissable par le serveur (dirty: false) plutôt que
-    // bloqué en édition invisible pour toujours : l'opération qui a échoué
-    // ne se rejouera jamais telle quelle (422/403/404 sont définitifs), donc
-    // continuer à protéger ce niveau du rafraîchissement ne ferait
-    // qu'enterrer la donnée. La tentative ratée reste consultable via
-    // `sync_error` ; si l'utilisateur rouvre l'éditeur et corrige, une
-    // nouvelle édition remettra `dirty: true` normalement.
-    if (cur) await local.putLevel({ ...cur, dirty: false, sync_error })
+    if (!cur) return
+    const supersededByNewerEdit = attemptedSeq != null && (cur.edit_seq ?? 0) > attemptedSeq
+    if (supersededByNewerEdit) {
+      // Une édition plus récente existe déjà (encore en file) : on note
+      // l'échec pour information mais on laisse `dirty` tel quel, pour que
+      // cette édition plus récente soit bien envoyée au prochain tour.
+      await local.putLevel({ ...cur, sync_error })
+    } else {
+      // Aucune édition n'est survenue depuis la tentative ratée : le niveau
+      // redevient rafraîchissable par le serveur (dirty: false) plutôt que
+      // bloqué en édition invisible pour toujours — l'opération qui a
+      // échoué ne se rejouera jamais telle quelle (422/403/404 sont
+      // définitifs), donc continuer à le protéger du rafraîchissement ne
+      // ferait qu'enterrer la donnée. La tentative ratée reste consultable
+      // via `sync_error` ; si l'utilisateur rouvre l'éditeur et corrige,
+      // une nouvelle édition remettra `dirty: true` normalement.
+      await local.putLevel({ ...cur, dirty: false, sync_error })
+    }
   } else if (op.type.startsWith('project.')) {
     const cur = await local.getProject(id)
     if (cur) await local.putProject({ ...cur, sync_error })
@@ -100,25 +127,42 @@ async function send(op, api, local) {
       return
     case 'level.update': {
       const cur = await local.getLevel(p.id)
-      // Deux éditions consécutives du même niveau, empilées avant toute
-      // synchronisation, partagent la même entité locale (fusionnée par
-      // applyLocal) : une fois la première rejouée avec succès, l'entité
-      // n'est plus « dirty » et porte déjà l'état voulu par la seconde
-      // opération encore en file — la rejouer enverrait une requête
-      // identique et incrémenterait la révision serveur pour rien.
-      if (!cur?.dirty) return undefined
-      const r = await api.updateLevel(p.id, {
-        base_revision: cur.base_revision ?? 0,
-        name: cur.name,
-        position: cur.position,
-        wall_height_m: cur.wall_height_m,
-        calibration: cur.calibration,
-        geometry: cur.geometry,
-        show_background_public: cur.show_background_public,
-      })
+      if (!cur) return undefined
+      // Dédoublonnage : deux éditions consécutives du même niveau, empilées
+      // avant toute synchronisation, partagent la même entité locale
+      // (fusionnée par applyLocal). On ne saute l'envoi que si le contenu
+      // de CETTE opération précise a déjà été transmis par une opération
+      // antérieure du même lot — jamais simplement parce que l'entité
+      // paraît « propre » à cet instant (`dirty: false` peut aussi venir
+      // d'un échec définitif traité entre-temps, cf. markSyncError, auquel
+      // cas cette opération peut porter une édition jamais envoyée).
+      // `synced_seq` n'est posé que par un envoi réussi juste en dessous :
+      // c'est la seule preuve fiable qu'un `edit_seq` donné a atteint le
+      // serveur.
+      if (op.client_seq != null && cur.synced_seq != null && op.client_seq <= cur.synced_seq) {
+        return undefined
+      }
+      let r
+      try {
+        r = await api.updateLevel(p.id, {
+          base_revision: cur.base_revision ?? 0,
+          name: cur.name,
+          position: cur.position,
+          wall_height_m: cur.wall_height_m,
+          calibration: cur.calibration,
+          geometry: cur.geometry,
+          show_background_public: cur.show_background_public,
+        })
+      } catch (e) {
+        // Capturé avant tout await réseau : l'edit_seq réellement transmis
+        // dans cette tentative, pour que markSyncError puisse détecter une
+        // édition plus récente survenue pendant que la requête était en vol.
+        e.attemptedSeq = cur.edit_seq ?? 0
+        throw e
+      }
       // eslint-disable-next-line no-unused-vars -- déstructuration volontaire pour omettre `sync_error`
       const { sync_error, ...rest } = cur
-      await local.putLevel({ ...rest, ...r, base_revision: r.revision, dirty: false })
+      await local.putLevel({ ...rest, ...r, base_revision: r.revision, dirty: false, synced_seq: cur.edit_seq ?? 0 })
       return r.shelved ? 'shelved' : undefined
     }
     case 'level.delete':
@@ -172,7 +216,7 @@ export async function runOnce({ api = defaultApi, local = defaultLocal, onState 
         // l'entité locale (survit au rechargement) plutôt que de laisser
         // filer un événement éphémère — sinon le travail local devient
         // invisible et injoignable (cf. revue tâche 8).
-        await markSyncError(op, e, local)
+        await markSyncError(op, e, local, e.attemptedSeq)
         await local.remove(op.seq)
         hasError = true
         onState?.({ state: 'error', error: e.response?.data, pending: await local.pendingCount() })
@@ -212,7 +256,21 @@ export async function refreshFromServer({ api = defaultApi, local = defaultLocal
       if (!cur || lv.revision > cur.revision) {
         const full = await api.getProject(p.id)
         const fresh = full.levels.find((l) => l.id === lv.id)
-        if (fresh) await local.putLevel({ ...fresh, base_revision: fresh.revision, dirty: false })
+        if (fresh) {
+          // Un rafraîchissement de fond n'acquitte jamais une erreur de
+          // synchronisation : la trace de l'échec (`sync_error`) doit
+          // rester consultable après coup, même quand le contenu du niveau
+          // est remplacé par la version serveur — sinon la preuve de
+          // l'échec disparaît avant même que l'utilisateur ne l'ait vue
+          // (cf. revue tâche 8, round 2). Seul un nouvel envoi réussi
+          // (send(), ci-dessus) l'efface explicitement.
+          await local.putLevel({
+            ...fresh,
+            base_revision: fresh.revision,
+            dirty: false,
+            ...(cur?.sync_error ? { sync_error: cur.sync_error } : {}),
+          })
+        }
         // eslint-disable-next-line no-unused-vars -- déstructuration volontaire pour omettre `levels`
         const { levels, ...projectFields } = full
         await local.putProject({ ...(await local.getProject(p.id)), ...projectFields, synced: true })
