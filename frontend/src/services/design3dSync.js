@@ -55,6 +55,32 @@ export async function applyLocal(op, { local = defaultLocal } = {}) {
   await local.enqueue(op)
 }
 
+// Persiste un échec non rejouable (422/403/404/…) sur l'entité locale
+// concernée, pour qu'il survive à un rechargement de page — sans ce champ,
+// l'opération retirée de la file disparaît sans laisser de trace et le
+// travail local devient invisible (cf. revue tâche 8).
+async function markSyncError(op, error, local) {
+  const status = error?.response?.status
+  const message = error?.response?.data?.error ?? error?.message ?? 'Erreur de synchronisation'
+  const sync_error = { code: status, message, at: Date.now() }
+  const id = op.payload?.id
+  if (!id) return
+  if (op.type.startsWith('level.')) {
+    const cur = await local.getLevel(id)
+    // Redevient rafraîchissable par le serveur (dirty: false) plutôt que
+    // bloqué en édition invisible pour toujours : l'opération qui a échoué
+    // ne se rejouera jamais telle quelle (422/403/404 sont définitifs), donc
+    // continuer à protéger ce niveau du rafraîchissement ne ferait
+    // qu'enterrer la donnée. La tentative ratée reste consultable via
+    // `sync_error` ; si l'utilisateur rouvre l'éditeur et corrige, une
+    // nouvelle édition remettra `dirty: true` normalement.
+    if (cur) await local.putLevel({ ...cur, dirty: false, sync_error })
+  } else if (op.type.startsWith('project.')) {
+    const cur = await local.getProject(id)
+    if (cur) await local.putProject({ ...cur, sync_error })
+  }
+}
+
 async function send(op, api, local) {
   const p = op.payload
   switch (op.type) {
@@ -74,6 +100,13 @@ async function send(op, api, local) {
       return
     case 'level.update': {
       const cur = await local.getLevel(p.id)
+      // Deux éditions consécutives du même niveau, empilées avant toute
+      // synchronisation, partagent la même entité locale (fusionnée par
+      // applyLocal) : une fois la première rejouée avec succès, l'entité
+      // n'est plus « dirty » et porte déjà l'état voulu par la seconde
+      // opération encore en file — la rejouer enverrait une requête
+      // identique et incrémenterait la révision serveur pour rien.
+      if (!cur?.dirty) return undefined
       const r = await api.updateLevel(p.id, {
         base_revision: cur.base_revision ?? 0,
         name: cur.name,
@@ -83,7 +116,9 @@ async function send(op, api, local) {
         geometry: cur.geometry,
         show_background_public: cur.show_background_public,
       })
-      await local.putLevel({ ...cur, ...r, base_revision: r.revision, dirty: false })
+      // eslint-disable-next-line no-unused-vars -- déstructuration volontaire pour omettre `sync_error`
+      const { sync_error, ...rest } = cur
+      await local.putLevel({ ...rest, ...r, base_revision: r.revision, dirty: false })
       return r.shelved ? 'shelved' : undefined
     }
     case 'level.delete':
@@ -104,6 +139,7 @@ async function send(op, api, local) {
 export async function runOnce({ api = defaultApi, local = defaultLocal, onState } = {}) {
   let synced = 0
   let conflict = false
+  let hasError = false
   onState?.({ state: 'syncing', pending: await local.pendingCount() })
   for (;;) {
     const op = await local.peek()
@@ -132,8 +168,13 @@ export async function runOnce({ api = defaultApi, local = defaultLocal, onState 
 
       if (status === 422 || status === 403 || status === 404) {
         // Opération irrécupérable côté serveur : la garder bloquerait toute
-        // la file indéfiniment, on la retire et on signale l'erreur.
+        // la file indéfiniment. On la retire, mais on persiste l'échec sur
+        // l'entité locale (survit au rechargement) plutôt que de laisser
+        // filer un événement éphémère — sinon le travail local devient
+        // invisible et injoignable (cf. revue tâche 8).
+        await markSyncError(op, e, local)
         await local.remove(op.seq)
+        hasError = true
         onState?.({ state: 'error', error: e.response?.data, pending: await local.pendingCount() })
         continue
       }
@@ -145,13 +186,18 @@ export async function runOnce({ api = defaultApi, local = defaultLocal, onState 
         return { synced, pending: await local.pendingCount(), conflict, retryInMs }
       }
 
-      // Autre erreur serveur inattendue : ne pas bloquer la file dessus.
+      // Autre erreur serveur inattendue (5xx…) : ne pas bloquer la file
+      // dessus, mais la mémoriser comme pour les erreurs 4xx ci-dessus.
+      await markSyncError(op, e, local)
       await local.remove(op.seq)
+      hasError = true
+      onState?.({ state: 'error', error: e.response?.data, pending: await local.pendingCount() })
     }
   }
   const pending = await local.pendingCount()
-  onState?.({ state: conflict ? 'conflict' : 'synced', pending, at: Date.now() })
-  return { synced, pending, conflict }
+  const state = conflict ? 'conflict' : hasError ? 'error' : 'synced'
+  onState?.({ state, pending, at: Date.now() })
+  return { synced, pending, conflict, hasError }
 }
 
 // Recharge depuis le serveur les niveaux dont la révision a avancé, sans

@@ -102,4 +102,65 @@ describe('design3d sync engine', () => {
     await refreshFromServer({ api, local })
     expect((await local.getLevel(lvl().id)).name).toBe('Local')
   })
+
+  it('422 persists the error on the local level, unblocks it and exposes a distinct state', async () => {
+    const api = fakeApi({ updateLevel: vi.fn(async () => { throw { response: { status: 422, data: { error: 'Géométrie invalide' } } } }) })
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+    const states = []
+    const r = await runOnce({ api, local, onState: (s) => states.push(s) })
+    expect(await local.pendingCount()).toBe(0)
+    const stored = await local.getLevel(lvl().id)
+    expect(stored.dirty).toBe(false)
+    expect(stored.sync_error).toMatchObject({ code: 422, message: 'Géométrie invalide' })
+    expect(stored.sync_error.at).toEqual(expect.any(Number))
+    expect(states.at(-1).state).toBe('error')
+    expect(r.hasError).toBe(true)
+  })
+
+  it('403 also persists the error on the local level and removes the op', async () => {
+    const api = fakeApi({ updateLevel: vi.fn(async () => { throw { response: { status: 403, data: { error: 'Interdit' } } } }) })
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+    await runOnce({ api, local, onState: () => {} })
+    expect((await local.getLevel(lvl().id)).sync_error).toMatchObject({ code: 403 })
+    expect(await local.pendingCount()).toBe(0)
+  })
+
+  it('404 also persists the error on the local level and removes the op', async () => {
+    const api = fakeApi({ updateLevel: vi.fn(async () => { throw { response: { status: 404, data: { error: 'Introuvable' } } } }) })
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+    await runOnce({ api, local, onState: () => {} })
+    expect((await local.getLevel(lvl().id)).sync_error).toMatchObject({ code: 404 })
+    expect(await local.pendingCount()).toBe(0)
+  })
+
+  it('keeps processing later ops in the queue after a non-retryable error on an earlier one', async () => {
+    const otherId = 'o'.repeat(32)
+    const calls = []
+    const api = fakeApi({
+      updateLevel: vi.fn(async (id) => {
+        calls.push(id)
+        if (id === lvl().id) throw { response: { status: 422, data: { error: 'invalide' } } }
+        return { ...lvl({ id }), revision: 1, shelved: false }
+      }),
+    })
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+    await applyLocal({ type: 'level.update', payload: { id: otherId, geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+    const r = await runOnce({ api, local, onState: () => {} })
+    expect(calls).toEqual([lvl().id, otherId])
+    expect(r.synced).toBe(1)
+    const other = await local.getLevel(otherId)
+    expect(other.dirty).toBe(false)
+    expect(other.revision).toBe(1)
+  })
+
+  it('only sends one request for two consecutive edits of the same level queued before sync', async () => {
+    const api = fakeApi()
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'V1', geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'V2', geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+    const r = await runOnce({ api, local, onState: () => {} })
+    expect(api.updateLevel).toHaveBeenCalledTimes(1)
+    expect(api.updateLevel.mock.calls[0][1].name).toBe('V2')
+    expect(r.synced).toBe(2)
+    expect(await local.pendingCount()).toBe(0)
+  })
 })
