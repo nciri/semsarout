@@ -32,6 +32,15 @@ Périmètre biens : vente (existant), location, programmes neufs (VEFA).
 - **Multi-niveaux** dès le modèle, un niveau affiché à la fois.
 - Géométrie stockée **en mètres** (pas en coordonnées normalisées) : la 3D et
   les meubles des briques suivantes en dépendent.
+- **Hors-ligne par défaut** : l'éditeur travaille sur une copie locale
+  (IndexedDB), la synchronisation se fait en arrière-plan sans bloquer ;
+  portée limitée au module de conception (pas au reste du backoffice).
+- **Conflits** : les changements du **propriétaire du projet priment
+  toujours** ; il est averti des modifications faites par d'autres et peut
+  les récupérer, à charge pour lui de résoudre les conflits manuellement.
+- **Tablette d'abord** : UI tactile (doigts, pas de stylet requis), adaptée
+  aux tailles 8" → 13" en portrait et paysage ; installable en PWA
+  (plein écran, ouverture hors-ligne).
 
 ## Service `services/design3d`
 
@@ -42,19 +51,34 @@ jobs de rendu et catalogue (briques 2-4) — un seul domaine.
 
 ### Modèle de données
 
-**`DesignProject`** — `id` (BigInteger), `tenant` (String 30), `agency_id`
-(Integer, nullable, index), `owner_id` (Integer, index), `target_type`
+Les identifiants de projet et de niveau sont des **UUID générés côté
+client** (String 36, patron `partner`) : un projet créé hors-ligne a déjà son
+identifiant définitif, aucune réécriture d'id à la synchronisation. Le serveur
+refuse un UUID déjà pris par un autre tenant/propriétaire (409).
+
+**`DesignProject`** — `id` (UUID str), `tenant` (String 30), `agency_id`
+(Integer, nullable, index), `owner_id` (Integer, index — **le propriétaire
+du projet**, dont les changements priment), `target_type`
 (`property` | `program_lot`), `target_id` (BigInteger), `title` (String 200),
 `status` (`draft` | `ready`, défaut `draft`), `created_at`, `updated_at`.
 Index `(target_type, target_id)`. Un bien peut avoir plusieurs projets.
 
-**`DesignLevel`** — `id`, `project_id` (FK cascade), `name` (String 60),
+**`DesignLevel`** — `id` (UUID str), `project_id` (FK cascade), `name` (String 60),
 `position` (Integer), `background_image_key` (String 255, nullable — objet
 MinIO), `show_background_public` (Boolean, défaut false), `calibration` (JSON
 nullable : `{"p1": {"x","y"}, "p2": {"x","y"}, "meters": float}` — `p1`/`p2`
 en coordonnées normalisées 0-1 de l'image de fond), `wall_height_m` (Numeric
 4,2, défaut 2.70), `geometry` (JSON, défaut `{"walls": [], "rooms": [],
-"openings": []}`), `revision` (Integer, défaut 0), `created_at`, `updated_at`.
+"openings": []}`), `revision` (Integer, défaut 0), `revision_author_id`
+(Integer — qui a écrit la révision courante), `created_at`, `updated_at`.
+
+**`DesignLevelShelf`** — version « mise de côté » : `id`, `level_id` (FK
+cascade), `author_id`, `geometry` JSON, `calibration` JSON, `wall_height_m`,
+`base_revision` (révision sur laquelle l'auteur travaillait), `created_at`,
+`reviewed_at` (nullable). Une seule entrée non revue par (`level_id`,
+`author_id`) : une nouvelle écriture déplacée remplace la précédente du même
+auteur. C'est ce qui permet d'avertir le propriétaire et de lui laisser
+récupérer le travail d'un collègue sans jamais l'écraser silencieusement.
 
 **Document `geometry`** (mètres, origine en haut à gauche, y vers le bas) :
 
@@ -99,7 +123,10 @@ cette brique (la brique 3 s'en servira pour invalider des rendus).
 | PUT | `/design3d/projects/{id}` | titre, statut |
 | DELETE | `/design3d/projects/{id}` | suppression (cascade niveaux + objets MinIO) |
 | POST | `/design3d/projects/{id}/levels` | ajoute un niveau |
-| PUT | `/design3d/levels/{id}` | nom, position, `wall_height_m`, `calibration`, `geometry`, `show_background_public` — corps porte `revision` attendu ; **409** si ≠ révision courante, sinon révision +1 |
+| PUT | `/design3d/levels/{id}` | nom, position, `wall_height_m`, `calibration`, `geometry`, `show_background_public` — corps porte `base_revision` (révision sur laquelle le client travaillait). Règle de conflit ci-dessous. |
+| GET | `/design3d/levels/{id}/shelf` | versions mises de côté non revues (propriétaire seulement) |
+| POST | `/design3d/levels/{id}/shelf/{shelf_id}/dismiss` | marque revue sans récupérer |
+| GET | `/design3d/sync?since=` | résumé des révisions courantes des projets du principal (id, revision, updated_at, nb de versions mises de côté) — un seul appel pour savoir quoi rafraîchir |
 | DELETE | `/design3d/levels/{id}` | suppression (refusée si dernier niveau) |
 | POST | `/design3d/levels/{id}/background` | upload image (PNG/JPEG ≤ 10 Mo) → MinIO, retourne l'URL signée |
 | POST | `/design3d/levels/{id}/recalibrate` | nouvelle calibration + remise à l'échelle proportionnelle de la géométrie existante (serveur, pour garder une seule implémentation) |
@@ -107,6 +134,101 @@ cette brique (la brique 3 s'en servira pour invalider des rendus).
 
 Réponses JSON (`to_dict`), erreurs `{"error": msg}` (patron legacy des
 services métier).
+
+### Règle de conflit sur `PUT /design3d/levels/{id}`
+
+Soit `R` la révision courante du serveur et `base` celle envoyée par le client.
+
+- `base == R` → écriture acceptée, `R+1`, `revision_author_id` = principal.
+- `base < R` et le principal est **le propriétaire du projet** → écriture
+  acceptée quand même (le propriétaire prime), `R+1` ; la version serveur
+  déplacée est **mise de côté** (`DesignLevelShelf`, auteur = ancien
+  `revision_author_id`) si elle n'est pas du propriétaire lui-même. La réponse
+  porte `shelved: true` pour que l'éditeur avertisse immédiatement.
+- `base < R` et le principal **n'est pas** le propriétaire → **409** avec la
+  version courante dans le corps ; sa version locale est mise de côté
+  (`author_id` = principal) pour que le propriétaire puisse la récupérer.
+  L'éditeur du collègue recharge la version serveur (son travail n'est pas
+  perdu : il est sur l'étagère du propriétaire).
+- Récupération par le propriétaire : l'éditeur charge une version mise de côté
+  **à la place** de la géométrie courante (aperçu avant confirmation), le
+  propriétaire l'ajuste à la main, puis sauvegarde normalement (nouvelle
+  révision) ; l'entrée est marquée `reviewed_at`. Aucune fusion automatique.
+
+## Hors-ligne et synchronisation (éditeur uniquement)
+
+- **Source de vérité locale** : IndexedDB (via la petite lib `idb`, ~1 Ko),
+  base `semsar-design3d`, stores `projects`, `levels`, `backgrounds` (Blob
+  de l'image de fond), `outbox` (opérations en attente : `project.create`,
+  `project.update`, `level.create`, `level.update`, `level.background`,
+  `level.recalibrate`, `project.delete`, `level.delete`). Chaque niveau local
+  garde `revision` (dernière connue du serveur) et `dirty`.
+- **Édition** : toute action écrit d'abord en local (synchrone du point de vue
+  de l'UI), puis empile une opération dans `outbox`. L'éditeur n'attend jamais
+  le réseau.
+- **Synchronisation en arrière-plan** : une boucle `useSyncEngine` tourne
+  tant que l'éditeur ou le tableau de bord de conception est ouvert :
+  déclenchée par `online`, `visibilitychange`, un intervalle de 30 s et
+  après chaque opération locale. Elle rejoue `outbox` dans l'ordre (une
+  opération à la fois, retrait après succès, backoff exponentiel plafonné à
+  5 min sur erreur réseau, arrêt sur 401 jusqu'à ré-authentification —
+  la file persiste). L'API **Background Sync** du navigateur n'est **pas**
+  utilisée (absente sur Safari/iPad) : la synchronisation est portée par
+  l'application ouverte.
+- **Rafraîchissement** : `GET /design3d/sync` au démarrage et à chaque cycle ;
+  un niveau dont la révision serveur a avancé et qui n'est pas `dirty`
+  localement est rechargé ; s'il est `dirty`, la règle de conflit s'applique
+  à la prochaine écriture. Les versions mises de côté font apparaître un
+  badge « modifications d'un collègue à examiner ».
+- **Image de fond hors-ligne** : stockée en Blob local dès l'upload, affichée
+  depuis le Blob ; l'envoi au serveur est une opération d'`outbox` comme les
+  autres.
+- **Indicateur d'état** permanent dans l'éditeur : *Hors-ligne — N
+  modifications en attente* / *Synchronisation…* / *Synchronisé à HH:MM* /
+  *Conflit à examiner* / *Session expirée — reconnectez-vous pour
+  synchroniser*.
+- **PWA** : `vite-plugin-pwa` (Workbox) — précache de l'app shell et des
+  routes `/dashboard/conception/*` ; `NetworkFirst` pour l'API ; manifeste
+  (icône, `display: standalone`, orientation `any`). Nouvelle dépendance de
+  build, à documenter (CHANGELOG, `.env.example` inchangé).
+- **Session** : les cookies httpOnly ne se rafraîchissent qu'en ligne ;
+  l'édition ne nécessite aucune auth, seule la synchronisation en dépend.
+- **Limites assumées** : pas de fusion automatique ; l'espace IndexedDB
+  peut être purgé par l'OS après une longue inactivité (Safari : ~7 jours
+  sans usage) — l'indicateur incite à synchroniser dès qu'une connexion
+  existe, et une purge locale n'affecte jamais ce qui a déjà été synchronisé.
+
+## Tablette (UI tactile)
+
+- **Cibles** : 8" (1024×768 iPad mini / Android 8"), 10-11" (1180×820 iPad,
+  1280×800 Android), 13" (1366×1024 iPad Pro), en portrait et paysage. Points
+  de rupture : `< 900px` de large → mode compact (barre d'outils en bas,
+  panneau latéral en **bottom sheet** dépliable) ; `≥ 900px` → outils à
+  gauche, panneau à droite ; `≥ 1200px` → panneau élargi avec aperçu du
+  niveau.
+- **Cibles tactiles** ≥ 44×44 px partout (outils, poignées de sommets,
+  onglets), poignées de sélection agrandies sur `pointerType === "touch"`.
+- **Gestes** : un doigt = action de l'outil courant (tracer, sélectionner,
+  déplacer) ; deux doigts = déplacement + pinch-zoom du plan (calcul sur
+  `PointerEvent`s multiples, `touch-action: none` sur le canevas) ; appui
+  long = menu contextuel (supprimer, propriétés). Aucune fonction ne dépend du
+  survol ni du clavier : undo/redo sont des boutons toujours visibles, les
+  longueurs se saisissent via un **pavé numérique** intégré (pas seulement le
+  clavier virtuel, qui masque la moitié de l'écran en portrait).
+- **Précision** : l'accrochage (grille/extrémités) compense l'imprécision du
+  doigt ; un **loupe** flottante apparaît sous le doigt pendant un tracé fin.
+- **Orientation** : la disposition se recalcule à la rotation sans perdre
+  l'état ; le canevas conserve le centre de vue.
+- **Plein écran** : bouton « plein écran » masquant la navigation du
+  backoffice ; en PWA installée c'est le mode par défaut.
+- **Performance** : rendu SVG limité aux éléments visibles au-delà de 500
+  segments (rare pour un plan de logement, mais un plan de villa multi-
+  niveaux importé peut y arriver) ; `requestAnimationFrame` pour le drag.
+- **Vérification** : tests Playwright sur les 6 viewports (3 tailles × 2
+  orientations) couvrant : tracer un mur, poser une porte, ouvrir/fermer le
+  bottom sheet, pinch-zoom simulé, rotation ; plus une **revue manuelle sur
+  un vrai iPad et une vraie tablette Android** avant de marquer la brique
+  livrée (le tactile réel ne se simule pas entièrement).
 
 ### Stockage
 
@@ -159,8 +281,13 @@ en 3D » (visible seulement avec l'entitlement `design3d`, sinon vignette
    largeur, hauteur, allège). Surface totale du niveau en permanence.
 7. **Niveaux** : onglets, ajout/renommage/suppression (dernier niveau
    protégé).
-8. **Sauvegarde** : bouton + auto-sauvegarde 30 s si modifié ; 409 → dialogue
-   « modifié ailleurs : recharger / écraser ». Ctrl+Z / Ctrl+Y.
+8. **Sauvegarde** : locale et immédiate à chaque action (IndexedDB), pas de
+   bouton « enregistrer » — l'indicateur d'état montre ce qui reste à
+   synchroniser. Propriétaire : avertissement « un collègue a modifié ce
+   niveau » avec aperçu et bouton « Récupérer sa version » ; collègue :
+   « le propriétaire a modifié ce niveau, votre version lui a été transmise »
+   puis rechargement. Undo/redo par boutons (Ctrl+Z / Ctrl+Y aussi, sur
+   clavier physique).
 9. **Publication** : « Marquer prêt » (`status=ready`) → visible sur la fiche
    publique.
 
@@ -192,6 +319,11 @@ types de pièce sont des clés stables traduites à l'affichage.
   comme `design3d` (même chemin que `has_artisans` → `artisans`). La brique 5
   fera de ce flag un add-on payant avec crédits ; ici il gate seulement.
 - `tools/check_env_examples.py` : port 8526 → `design3d` dans `KNOWN_PORTS`.
+- Frontend : nouvelles dépendances `idb` (runtime) et `vite-plugin-pwa`
+  (build) + `fake-indexeddb` (tests) — à ajouter avec leur lockfile, entrée
+  CHANGELOG, et `npm audit` passé (hygiène de dépendances du projet).
+- Migration : nouveau service → `create_all` au démarrage suffit ; côté
+  `billing`, `db/migrate_design3d.sql` (ALTER ADD COLUMN `has_design3d`).
 
 ## Tests
 
@@ -199,7 +331,12 @@ types de pièce sont des clés stables traduites à l'affichage.
 entitlement (403 sans `design3d`) ; cloisonnement croisé agence/propriétaire ;
 CRUD projets/niveaux ; création de projet crée un niveau par défaut ;
 suppression du dernier niveau refusée ; `PUT /levels/{id}` incrémente
-`revision`, 409 sur révision obsolète ; chaque règle de validation de
+`revision` ; **règle de conflit** : propriétaire avec `base_revision` obsolète
+→ accepté + version déplacée mise de côté (`shelved: true`), collègue avec
+`base_revision` obsolète → 409 + sa version mise de côté, une seule entrée non
+revue par auteur, `dismiss` marque revue ; `GET /sync` ne renvoie que les
+projets du principal ; UUID client déjà pris par un autre propriétaire → 409 ;
+chaque règle de validation de
 `geometry` (mur dégénéré, ouverture hors mur, ouverture orpheline, polygone à
 2 points, allège + hauteur > hauteur de mur) ; `recalibrate` remet à l'échelle
 murs/pièces/ouvertures proportionnellement ; lecture publique 404 tant que
@@ -209,7 +346,14 @@ murs/pièces/ouvertures proportionnellement ; lecture publique 404 tant que
 `utils/floorplan.js` avec cas limites (mur vertical/horizontal/diagonal,
 polygone concave, point hors segment, calibration dégénérée) ;
 `DesignEditor.test.jsx` rendu FR/AR (patron `PropertyForm.test.jsx`) ;
-`noHardcodedText` et parité i18n.
+`noHardcodedText` et parité i18n. **Moteur de synchronisation**
+(`syncEngine.test.js`, IndexedDB simulée par `fake-indexeddb`) : une action
+écrit en local avant tout réseau ; rejeu de l'`outbox` dans l'ordre ; retrait
+après succès seulement ; backoff sur erreur réseau ; arrêt sur 401 avec file
+conservée ; reprise sur `online` ; création hors-ligne d'un projet puis
+synchronisation sans changement d'id ; conflit propriétaire (`shelved`) et
+collègue (409 → rechargement) reflétés dans l'indicateur d'état. **Tablette** :
+Playwright, 6 viewports (cf. section Tablette), scénarios tactiles simulés.
 
 ## Hors périmètre (briques suivantes ou plus tard)
 
@@ -218,4 +362,8 @@ polygone concave, point hors segment, calibration dégénérée) ;
 - Conversion PDF → image côté serveur (image uniquement dans un premier temps).
 - Import DXF/IFC, détection automatique des pièces, sens d'ouverture des
   portes, murs courbes, escaliers.
-- Collaboration temps réel (le `revision` + 409 suffit pour l'instant).
+- Collaboration temps réel et fusion automatique (la règle « le propriétaire
+  prime + étagère » suffit ; à revoir si des agences travaillent réellement
+  à plusieurs sur un même projet).
+- Hors-ligne pour le reste du backoffice, et support stylet dédié (le stylet
+  se comporte comme un doigt).
