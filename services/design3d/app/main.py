@@ -80,8 +80,8 @@ def create_project(body: ProjectCreateIn, request: Request, principal: Principal
     uid = _uid(principal)
     if uid is None:
         return _err("Authentification requise", 401)
-    if body.id and db.get(DesignProject, body.id) is not None:
-        existing = db.get(DesignProject, body.id)
+    existing = db.get(DesignProject, body.id) if body.id else None
+    if existing is not None:
         if existing.owner_id != uid:
             return _err("Identifiant déjà utilisé", 409)
         return JSONResponse(existing.to_dict(_levels(db, existing.id)), status_code=201)  # idempotent (rejeu outbox)
@@ -145,8 +145,11 @@ def create_level(project_id: str, body: LevelCreateIn, principal: Principal = De
     p, err = _load(db, project_id, principal)
     if err:
         return err
-    if body.id and db.get(DesignLevel, body.id) is not None:
-        return JSONResponse(db.get(DesignLevel, body.id).to_dict(), status_code=201)
+    existing = db.get(DesignLevel, body.id) if body.id else None
+    if existing is not None:
+        if existing.project_id != p.id:
+            return _err("Identifiant déjà utilisé", 409)
+        return JSONResponse(existing.to_dict(), status_code=201)  # idempotent (rejeu outbox)
     position = body.position or len(_levels(db, p.id))
     lv = DesignLevel(id=body.id or _uuid(), project_id=p.id, name=body.name, position=position,
                      geometry=dict(EMPTY_GEOMETRY), revision_author_id=_uid(principal))

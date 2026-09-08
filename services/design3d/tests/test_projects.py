@@ -63,3 +63,28 @@ def test_status_ready_emits_event_and_delete_works(client, headers, db_session):
     assert db_session.query(OutboxEvent).filter_by(event_type="design3d.project.ready").count() == 1
     assert client.delete(f"/design3d/projects/{pid}", headers=headers()).status_code == 204
     assert client.get(f"/design3d/projects/{pid}", headers=headers()).status_code == 404
+
+
+def test_create_level_with_id_from_other_owner_project_is_409_no_leak(client, headers):
+    project_a = _create(client, headers(user_id=1, agency_id=9)).json()
+    level_a_id = project_a["levels"][0]["id"]
+    project_b = _create(client, headers(user_id=2, agency_id=10)).json()
+
+    r = client.post(f"/design3d/projects/{project_b['id']}/levels", json={"name": "Intrus", "id": level_a_id},
+                    headers=headers(user_id=2, agency_id=10))
+    assert r.status_code == 409
+    body = r.json()
+    assert "geometry" not in body
+    assert "calibration" not in body
+    assert "background_image_key" not in body
+
+
+def test_create_level_idempotent_same_project(client, headers):
+    pid = _create(client, headers()).json()["id"]
+    level_id = "c" * 32
+    first = client.post(f"/design3d/projects/{pid}/levels", json={"name": "Étage 1", "id": level_id}, headers=headers())
+    second = client.post(f"/design3d/projects/{pid}/levels", json={"name": "Étage 1", "id": level_id}, headers=headers())
+    assert first.status_code == 201 and second.status_code == 201
+    assert first.json()["id"] == second.json()["id"]
+    levels = client.get(f"/design3d/projects/{pid}", headers=headers()).json()["levels"]
+    assert len([lv for lv in levels if lv["id"] == level_id]) == 1
