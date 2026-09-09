@@ -53,12 +53,14 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
   visionneuse muets. Les URLs inter-services ont une source unique
   (`semsar_service_urls`), la variable est documentée dans `gateway/.env.example`, et le
   healthcheck de déploiement traverse désormais le BFF jusqu'à design3d.
-- Provisionnement du service `design3d` : le rôle et le schéma PostgreSQL manquaient à
-  `semsar_db_roles` alors que design3d était déjà déclaré en `mesh_apps`/`mesh_relays`,
-  ce qui faisait échouer le playbook Ansible entier (indexation sans garde de
-  `PG_PASSWORD_DESIGN3D`). Le gabarit du relais reçoit la même garde que celui du worker,
-  et un serveur déjà provisionné se voit compléter son `secrets.env` (jamais réécrit)
-  avec les seules entrées manquantes.
+- Provisionnement du service `design3d` en production : un service ajouté au dépôt après
+  l'installation du serveur n'avait ni rôle PostgreSQL, ni fichier d'environnement, ni
+  unité systemd, et serait resté indéfiniment absent du mesh — `deploy-remote.sh` les crée
+  désormais s'ils manquent, sans jamais toucher aux services déjà déployés, et un banc
+  d'essai (`infra/prod/tests/deploy-remote.test.sh`) vérifie l'idempotence du script.
+  Côté playbook Ansible, conservé par cohérence : `design3d` rejoint `semsar_db_roles`, le
+  gabarit du relais reçoit la même garde que celui du worker, et un `secrets.env`
+  préexistant se voit compléter ses seules entrées manquantes.
 - Les migrations additives sont jouées par `infra/prod/deploy-remote.sh`, seule chaîne de
   déploiement réellement branchée (`infra/prod/ansible` n'est appelé par aucun workflow).
   `billing/migrate_design3d.sql` en fait partie : sans elle, la colonne `has_design3d`
