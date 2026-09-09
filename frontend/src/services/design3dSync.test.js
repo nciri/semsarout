@@ -631,6 +631,21 @@ describe('design3d sync engine', () => {
     }
   })
 
+  it("une nouvelle édition de projet efface une trace d'échec dépassée — sauf si la création a été refusée", async () => {
+    const pid = 'p'.repeat(32)
+    // Projet connu du serveur : l'échec porte sur une mise à jour, une nouvelle
+    // édition le rend caduc.
+    await local.putProject({ id: pid, title: 'A', synced: true, sync_error: { code: 422, message: 'Statut invalide', at: 1 } })
+    await applyLocal({ type: 'project.update', payload: { id: pid, status: 'ready' } }, { local })
+    expect((await local.getProject(pid)).sync_error).toBeUndefined()
+
+    // Création refusée : la trace DOIT survivre, `targetRefusalError` en dépend
+    // pour ne pas laisser partir des opérations vers un projet inexistant (C1).
+    await local.putProject({ id: pid, title: 'A', synced: false, sync_error: { code: 403, message: 'Cible refusée', at: 1 } })
+    await applyLocal({ type: 'project.update', payload: { id: pid, title: 'B' } }, { local })
+    expect((await local.getProject(pid)).sync_error).toMatchObject({ code: 403 })
+  })
+
   it('a new local edit clears a previous sync_error trace', async () => {
     await local.putLevel(lvl({ dirty: false, sync_error: { code: 422, message: 'Ancien échec', at: 1 } }))
     await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'V2', geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })

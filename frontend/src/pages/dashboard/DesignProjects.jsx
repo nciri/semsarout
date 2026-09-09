@@ -90,6 +90,15 @@ export default function DesignProjects() {
                   {t(`dashboard:designEditor.projects.status.${p.status === 'ready' ? 'ready' : 'draft'}`)}
                   {!p.synced && ` · ${t('dashboard:designEditor.projects.notSynced')}`}
                 </p>
+                {/* Le statut affiché vient du local : « Prêt » y apparaît dès le
+                    clic, même si le serveur a refusé la mise à jour. Sans cette
+                    ligne, l'agent croit son plan publié — et `synced` reste vrai
+                    dans ce cas, donc le marqueur ci-dessus ne dit rien. */}
+                {p.sync_error && (
+                  <p role="alert" className="text-sm text-red-700">
+                    {t('dashboard:designEditor.projects.syncError', { message: p.sync_error.message })}
+                  </p>
+                )}
               </div>
               {p.status !== 'ready' && (
                 <button type="button" className="btn-secondary min-h-[44px] inline-flex items-center gap-2" onClick={() => markReady(p)}>

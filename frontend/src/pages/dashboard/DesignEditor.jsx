@@ -236,10 +236,17 @@ export default function DesignEditor() {
       try {
         await loadLevels()
         const proj = await local.getProject(projectId)
-        // Un projet dont la création a été refusée (403 de cible, cf. C3) n'est
-        // jamais `synced` : ses niveaux ne partiront jamais, quelle que soit la
-        // réédition. C'est la cause racine, elle prime sur l'erreur du niveau.
-        const err = proj && !proj.synced ? (proj.sync_error ?? null) : null
+        // Toute erreur de projet est remontée, pas seulement celle d'une
+        // création : `markSyncError` en écrit aussi sur un `project.update`
+        // échoué — un « Marquer prêt » refusé, par exemple — où `synced` reste
+        // vrai. Ne regarder que `!synced` rendait ce cas parfaitement invisible.
+        //
+        // `refused` distingue le cul-de-sac : une CRÉATION refusée pour cause de
+        // cible (403, cf. C3) ne sera jamais retentée avec succès et bloque tous
+        // les niveaux du projet ; les autres échecs, eux, peuvent aboutir en
+        // réessayant.
+        const se = proj?.sync_error ?? null
+        const err = se ? { ...se, refused: !proj.synced && se.code === 403 } : null
         if (alive) setProjectError((cur) => (JSON.stringify(cur) === JSON.stringify(err) ? cur : err))
       } catch {
         // Le stockage local a son propre message (`seedError`) : ne pas le doubler.
@@ -250,10 +257,6 @@ export default function DesignEditor() {
     }
   }, [loadLevels, projectId, sync])
 
-  // Reprise manuelle : ré-enfile le niveau tel qu'il est en local (une édition
-  // de plus, donc `dirty` à nouveau et trace d'échec effacée), puis relance le
-  // moteur. Aucun contenu n'est touché — c'est bien le travail conservé sur
-  // l'appareil qui repart.
   // Seule sortie du cul-de-sac : le projet refusé est retiré de l'appareil avec
   // ses niveaux et ses opérations en file, après annonce de ce qui sera perdu.
   async function discardProject() {
@@ -262,10 +265,25 @@ export default function DesignEditor() {
     if (done) navigate('/dashboard/conception')
   }
 
+  // Reprise manuelle : ré-enfile le niveau tel qu'il est en local (une édition
+  // de plus, donc `dirty` à nouveau et trace d'échec effacée), puis relance le
+  // moteur. Aucun contenu n'est touché — c'est bien le travail conservé sur
+  // l'appareil qui repart.
   async function retryLevelSync() {
     if (!levelId) return
     await applyLocal({ type: 'level.update', payload: { id: levelId } })
     await loadLevels()
+    engineRef.current?.tick()
+  }
+
+  // Même reprise pour le projet : l'état local (titre, statut) est renvoyé tel
+  // quel. Le payload porte les champs, car c'est lui — et non l'enregistrement
+  // local — que `send` transmet au serveur.
+  async function retryProjectSync() {
+    const proj = await local.getProject(projectId)
+    if (!proj) return
+    await applyLocal({ type: 'project.update', payload: { id: projectId, title: proj.title, status: proj.status } })
+    setProjectError(null)
     engineRef.current?.tick()
   }
 
@@ -582,9 +600,10 @@ export default function DesignEditor() {
             className="p-3 bg-red-50 border-b border-red-200 text-red-800 text-sm flex flex-wrap items-center gap-3"
           >
             <span>
-              {projectError
-                ? t('dashboard:designEditor.syncError.project', { message: projectError.message })
-                : t('dashboard:designEditor.syncError.level', { message: currentLevel.sync_error.message })}
+              {!projectError && t('dashboard:designEditor.syncError.level', { message: currentLevel.sync_error.message })}
+              {projectError?.refused && t('dashboard:designEditor.syncError.project', { message: projectError.message })}
+              {projectError && !projectError.refused
+                && t('dashboard:designEditor.syncError.projectUpdate', { message: projectError.message })}
             </span>
             {/* Un refus de cible ne se lève pas en réessayant : ne proposer la
                 reprise que là où elle peut aboutir. Là où elle ne le peut pas,
@@ -595,12 +614,17 @@ export default function DesignEditor() {
                 {t('dashboard:designEditor.syncError.retry')}
               </button>
             )}
-            {projectError && !confirmingDiscard && (
+            {projectError && !projectError.refused && (
+              <button type="button" className="btn-secondary min-h-[44px]" onClick={retryProjectSync}>
+                {t('dashboard:designEditor.syncError.projectRetry')}
+              </button>
+            )}
+            {projectError?.refused && !confirmingDiscard && (
               <button type="button" className="btn-secondary min-h-[44px]" onClick={() => setConfirmingDiscard(true)}>
                 {t('dashboard:designEditor.syncError.projectDiscard')}
               </button>
             )}
-            {projectError && confirmingDiscard && (
+            {projectError?.refused && confirmingDiscard && (
               <>
                 <span className="font-medium">{t('dashboard:designEditor.syncError.projectDiscardWarning')}</span>
                 <button type="button" className="btn-secondary min-h-[44px]" onClick={discardProject}>

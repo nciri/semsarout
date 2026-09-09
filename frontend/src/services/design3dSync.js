@@ -52,7 +52,15 @@ export async function applyLocal(op, { local = defaultLocal } = {}) {
       // compteur et la première serait perdue.
       await local.mutateProject(p.id, (cur0) => {
         const cur = cur0 ?? { id: p.id }
-        return { ...cur, ...p, edit_seq: (cur.edit_seq ?? 0) + 1 }
+        // eslint-disable-next-line no-unused-vars -- déstructuration volontaire pour omettre `sync_error`
+        const { sync_error, ...curRest } = cur
+        // Comme pour un niveau, une nouvelle édition rend caduque la trace d'un
+        // échec dépassé — SAUF quand c'est la création elle-même qui a été
+        // refusée : `targetRefusalError` s'appuie sur cette trace pour ne pas
+        // laisser partir des opérations vers un projet qui n'existe pas côté
+        // serveur (le défaut C1). Ce refus-là n'est levé que par l'abandon
+        // explicite du projet (discardRefusedProject).
+        return { ...(cur.synced ? curRest : cur), ...p, edit_seq: (cur.edit_seq ?? 0) + 1 }
       })
       break
     }

@@ -1327,7 +1327,9 @@
       "projectDiscard": "Supprimer ce projet et ses plans",
       "projectDiscardWarning": "Suppression définitive : les plans de ce projet, qui n'ont jamais atteint le serveur, seront perdus. Créez ensuite un projet sur un bien de votre agence.",
       "projectDiscardConfirm": "Confirmer la suppression",
-      "cancel": "Annuler"
+      "cancel": "Annuler",
+      "projectUpdate": "La dernière modification de ce projet n'a pas été acceptée par le serveur : {{message}}. Elle n'est appliquée que sur cet appareil.",
+      "projectRetry": "Renvoyer ce projet"
     },
     "calibration": {
       "action": "Calibrer",
@@ -1372,7 +1374,8 @@
       "status": {
         "draft": "Brouillon",
         "ready": "Prêt"
-      }
+      },
+      "syncError": "Non enregistré sur le serveur : {{message}}"
     },
     "seedError": {
       "read": "Lecture du niveau impossible : le stockage local de cet appareil n'a pas répondu. L'éditeur reste bloqué tant qu'elle n'a pas abouti.",

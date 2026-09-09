@@ -365,6 +365,27 @@ describe('DesignEditor', () => {
     expect(alert).not.toHaveTextContent(/tant que ce refus/i)
   })
 
+  it('dit qu’une mise à jour de projet a échoué, même quand le projet existe côté serveur', async () => {
+    // `markSyncError` écrit aussi `sync_error` sur un `project.update` échoué,
+    // où `synced` reste vrai : ne remonter l'erreur que si `!synced` rendait ce
+    // cas totalement invisible.
+    await local.putProject({
+      id: PROJECT_ID, target_type: 'property', target_id: 1, title: 'Test', status: 'ready', synced: true,
+      sync_error: { code: 422, message: 'Statut invalide', at: 1 },
+    })
+    renderEditor()
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Statut invalide')
+    // Ce refus-là, contrairement à celui d'une cible, peut aboutir en réessayant.
+    expect(screen.queryByRole('button', { name: 'Supprimer ce projet et ses plans' })).not.toBeInTheDocument()
+
+    const before = await local.pendingCount()
+    fireEvent.click(screen.getByRole('button', { name: 'Renvoyer ce projet' }))
+    await waitFor(async () => expect(await local.pendingCount()).toBe(before + 1))
+    await waitFor(async () => expect((await local.getProject(PROJECT_ID)).sync_error).toBeUndefined())
+  })
+
   it('offre une sortie explicite au projet définitivement refusé, en disant ce qui sera perdu', async () => {
     await local.putProject({
       id: PROJECT_ID, target_type: 'property', target_id: 1, title: 'Test', status: 'draft', synced: false,
