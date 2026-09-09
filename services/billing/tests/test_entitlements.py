@@ -63,6 +63,86 @@ def test_internal_subscription_exposes_features(monkeypatch, tmp_path):
         db.close()
 
 
+def test_internal_subscription_hides_features_for_unpaid_plan_change(monkeypatch, tmp_path):
+    """Trou de revenu (round 2, découvert en relecture) : une agence neuve choisit un plan payant
+    via change_plan (statut `incomplete`, facture `unpaid`) puis se connecte AVANT d'avoir payé.
+    Le repli identity (`_features`, quand `features_synced_at` est NULL) interroge cet endpoint —
+    qui renvoyait `plan_features(plan)` sans jamais regarder `sub.status`, donnant l'accès payant
+    à un abonnement jamais réglé, et cette réponse était alors écrite EN BASE par identity
+    (`ag.features_synced_at` posé), donc de façon durable, jusqu'au prochain
+    `billing.subscription.activated`. `features` (et les autres champs dérivés du plan) ne
+    doivent refléter QUE des abonnements avec accès effectif (`active`/`cancelled` en grâce),
+    jamais `incomplete`."""
+    from app import main as m
+    monkeypatch.setattr(m.settings, "internal_token", "tok")
+    db = _db_session(tmp_path)
+    plan = _plan(has_design3d=True, has_programs=True, has_staymanager_sync=True, max_programs=10)
+    db.add(plan)
+    db.commit()
+    db.add(Subscription(agency_id=20, plan_id=plan.id, amount=499, status="incomplete"))
+    db.commit()
+    app.dependency_overrides[get_db] = lambda: db
+    try:
+        with TestClient(app) as client:
+            resp = client.get("/internal/subscription", params={"agency_id": 20},
+                              headers={"x-internal-token": "tok"})
+        assert resp.status_code == 200
+        sub = resp.json()["subscription"]
+        assert sub["status"] == "incomplete"
+        assert sub["features"] == []
+        assert sub["has_programs"] is False
+        assert sub["max_programs"] == 0
+        assert sub["has_staymanager_sync"] is False
+    finally:
+        app.dependency_overrides.clear()
+        db.close()
+
+
+def test_internal_subscription_still_exposes_features_when_paid(monkeypatch, tmp_path):
+    """Symétrique de la précédente : un abonnement PAYÉ (`active`) ne doit rien perdre à tort."""
+    from app import main as m
+    monkeypatch.setattr(m.settings, "internal_token", "tok")
+    db = _db_session(tmp_path)
+    plan = _plan(has_design3d=True)
+    db.add(plan)
+    db.commit()
+    db.add(Subscription(agency_id=21, plan_id=plan.id, amount=499, status="active"))
+    db.commit()
+    app.dependency_overrides[get_db] = lambda: db
+    try:
+        with TestClient(app) as client:
+            resp = client.get("/internal/subscription", params={"agency_id": 21},
+                              headers={"x-internal-token": "tok"})
+        assert resp.status_code == 200
+        assert resp.json()["subscription"]["features"] == ["design3d"]
+    finally:
+        app.dependency_overrides.clear()
+        db.close()
+
+
+def test_internal_subscription_still_exposes_features_when_cancelled_in_grace_period(monkeypatch, tmp_path):
+    """Symétrique : une résiliation garde l'accès jusqu'à la fin de la période payée
+    (`cancel_subscription`) — `cancelled` doit rester entitled, pas seulement `active`."""
+    from app import main as m
+    monkeypatch.setattr(m.settings, "internal_token", "tok")
+    db = _db_session(tmp_path)
+    plan = _plan(has_design3d=True)
+    db.add(plan)
+    db.commit()
+    db.add(Subscription(agency_id=22, plan_id=plan.id, amount=499, status="cancelled"))
+    db.commit()
+    app.dependency_overrides[get_db] = lambda: db
+    try:
+        with TestClient(app) as client:
+            resp = client.get("/internal/subscription", params={"agency_id": 22},
+                              headers={"x-internal-token": "tok"})
+        assert resp.status_code == 200
+        assert resp.json()["subscription"]["features"] == ["design3d"]
+    finally:
+        app.dependency_overrides.clear()
+        db.close()
+
+
 def test_agency_sub_reconciles_expired_incomplete_change(tmp_path):
     """I8 : un changement de plan resté impayé au-delà de sa période de grâce (`end_date`) ne doit
     pas figer les entitlements de l'ancien plan indéfiniment. Faute d'ordonnanceur d'expiration

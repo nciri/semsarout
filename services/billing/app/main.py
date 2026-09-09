@@ -129,6 +129,12 @@ async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
 
 
+# Statuts avec accès effectif au plan. `cancelled` y figure : `cancel_subscription` garde l'accès
+# jusqu'à la fin de la période payée (résiliation différée). `incomplete` (changement de plan pas
+# encore payé) et `expired` (I8) en sont volontairement absents.
+_ENTITLED_STATUSES = {"active", "cancelled"}
+
+
 @app.get("/internal/subscription", include_in_schema=False)
 def internal_subscription(request: Request, x_internal_token: str = Header(default=""),
                           db: Session = Depends(get_db)):
@@ -140,11 +146,19 @@ def internal_subscription(request: Request, x_internal_token: str = Header(defau
     if sub is None:
         return {"subscription": None}
     plan = db.get(SubscriptionPlan, sub.plan_id)
+    # I7/I8 (round 2) : `features`/`has_*` ne doivent JAMAIS refléter un abonnement sans accès
+    # payé effectif — sinon le repli `_features()` d'identity (déclenché dès qu'une agence n'a
+    # pas encore de projection locale) écrit ces entitlements EN BASE, en les marquant
+    # `features_synced_at`, donc durablement, dès la première connexion suivant un changement de
+    # plan `incomplete` jamais réglé. Une agence obtiendrait alors le module payant sans jamais
+    # avoir payé. Symétrique par construction : `active`/`cancelled` (grâce) restent entitled et
+    # ne perdent rien.
+    entitled = plan is not None and sub.status in _ENTITLED_STATUSES
     return {"subscription": {"plan": plan.name if plan else None, "status": sub.status,
-                             "has_programs": bool(plan.has_programs) if plan else False,
-                             "max_programs": plan.max_programs if plan else 0,
-                             "has_staymanager_sync": bool(plan.has_staymanager_sync) if plan else False,
-                             "features": plan_features(plan) if plan else []}}
+                             "has_programs": bool(plan.has_programs) if entitled else False,
+                             "max_programs": plan.max_programs if entitled else 0,
+                             "has_staymanager_sync": bool(plan.has_staymanager_sync) if entitled else False,
+                             "features": plan_features(plan) if entitled else []}}
 
 
 @app.get("/internal/subscriptions", include_in_schema=False)
