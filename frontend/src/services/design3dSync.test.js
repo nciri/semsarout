@@ -69,6 +69,33 @@ describe('design3d sync engine', () => {
     expect((await local.getProject('p'.repeat(32))).sync_error).toBeUndefined()
   })
 
+  it('a target refusal (403) on project.create does not turn the queued level.update into a misleading 404 — the drawing stays local with a truthful error', async () => {
+    const pid = 'p'.repeat(32)
+    const message = 'Cible hors du périmètre de votre agence'
+    const api = fakeApi({
+      createProject: vi.fn(async () => { throw { response: { status: 403, data: { error: message } } } }),
+    })
+    await applyLocal({ type: 'project.create', payload: { id: pid, target_type: 'property', target_id: 1, title: 'A' } }, { local })
+    const [seeded] = await local.listLevels(pid)
+    const geometry = { walls: [{ id: 'w1', a: { x: 0, y: 0 }, b: { x: 4, y: 0 }, thickness_m: 0.2 }], rooms: [], openings: [] }
+    await applyLocal({ type: 'level.update', payload: { id: seeded.id, geometry } }, { local })
+    const r = await runOnce({ api, local, onState: () => {} })
+    // Le refus de la cible ne doit jamais faire partir un appel réseau vers un
+    // projet qui n'a jamais existé côté serveur : sans ce court-circuit,
+    // `updateLevel` serait appelé et échouerait par un 404 sans rapport avec
+    // la vraie cause — reproduisant exactement le défaut C1 sur ce cas précis.
+    expect(api.updateLevel).not.toHaveBeenCalled()
+    expect(await local.pendingCount()).toBe(0)
+    const project = await local.getProject(pid)
+    expect(project.sync_error).toMatchObject({ code: 403, message })
+    const level = await local.getLevel(seeded.id)
+    // Le dessin n'est pas perdu : il reste en local, avec une erreur qui
+    // reflète la vraie cause (403, refus de cible) plutôt qu'un 404 trompeur.
+    expect(level.geometry).toEqual(geometry)
+    expect(level.sync_error).toMatchObject({ code: 403, message })
+    expect(r.hasError).toBe(true)
+  })
+
   it('stops on 401 keeping the queue', async () => {
     const api = fakeApi({ updateLevel: vi.fn(async () => { throw { response: { status: 401 } } }) })
     await applyLocal({ type: 'level.update', payload: { id: lvl().id, geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })

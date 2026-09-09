@@ -167,6 +167,29 @@ async function adoptInitialLevel(projectId, serverLevels, local) {
   await local.putLevel({ ...cur, server_id: initial.id, revision: initial.revision ?? 0, base_revision: initial.revision ?? 0 })
 }
 
+// Le projet a-t-il été définitivement refusé par le serveur à sa création
+// (cible hors périmètre de l'agence/propriétaire, cf. C3, 403) ? `synced`
+// n'est posé qu'après une création réussie : s'il est toujours faux alors
+// qu'un `sync_error` de code 403 est déjà consigné, la création n'a jamais
+// abouti et n'aboutira jamais — un `project.update` refusé pour une tout
+// autre raison, lui, laisse `synced` à `true`, donc ne déclenche pas ce
+// court-circuit.
+async function targetRefusalError(projectId, local) {
+  if (!projectId) return null
+  const proj = await local.getProject(projectId)
+  if (!proj || proj.synced || proj.sync_error?.code !== 403) return null
+  // Sans ce court-circuit, toute opération sur un niveau de ce projet (déjà
+  // en file, ou empilée par une édition ultérieure) partirait vers un projet
+  // qui n'a jamais existé côté serveur et recevrait un 404 sans rapport avec
+  // la vraie cause — masquant le refus de cible derrière une erreur « Not
+  // Found » trompeuse, et rejouant ainsi exactement le défaut C1 (travail
+  // piégé côté client, sans que la trace conservée (`sync_error`) n'en
+  // explique la vraie raison) sur ce cas précis.
+  return Object.assign(new Error(proj.sync_error.message), {
+    response: { status: 403, data: { error: proj.sync_error.message } },
+  })
+}
+
 async function send(op, api, local) {
   const p = op.payload
   switch (op.type) {
@@ -188,18 +211,32 @@ async function send(op, api, local) {
       await local.putProject({ ...after, ...r, synced: true })
       return
     }
-    case 'project.update':
+    case 'project.update': {
+      const refused = await targetRefusalError(p.id, local)
+      if (refused) throw refused
       await api.updateProject(p.id, p)
       return
-    case 'project.delete':
+    }
+    case 'project.delete': {
+      const refused = await targetRefusalError(p.id, local)
+      if (refused) throw refused
       await api.deleteProject(p.id)
       return
-    case 'level.create':
+    }
+    case 'level.create': {
+      const refused = await targetRefusalError(p.project_id, local)
+      if (refused) throw refused
       await api.createLevel(p.project_id, p)
       return
+    }
     case 'level.update': {
       const cur = await local.getLevel(p.id)
       if (!cur) return undefined
+      const refused = await targetRefusalError(cur.project_id, local)
+      if (refused) {
+        refused.attemptedSeq = cur.edit_seq ?? 0
+        throw refused
+      }
       // Dédoublonnage : deux éditions consécutives du même niveau, empilées
       // avant toute synchronisation, partagent la même entité locale
       // (fusionnée par applyLocal). On ne saute l'envoi que si le contenu
@@ -257,10 +294,17 @@ async function send(op, api, local) {
       await local.putLevel(mergedWithServer(rest, r, { base_revision: r.revision, dirty: false, synced_seq: attemptedSeq }))
       return r.shelved ? 'shelved' : undefined
     }
-    case 'level.delete':
+    case 'level.delete': {
+      const cur = await local.getLevel(p.id)
+      const refused = cur && (await targetRefusalError(cur.project_id, local))
+      if (refused) throw refused
       await api.deleteLevel(await remoteLevelId(p.id, local))
       return
+    }
     case 'level.background': {
+      const cur = await local.getLevel(p.id)
+      const refused = cur && (await targetRefusalError(cur.project_id, local))
+      if (refused) throw refused
       const bg = await local.getBackground(p.id)
       await api.uploadBackground(await remoteLevelId(p.id, local), bg.blob, bg.type)
       return
