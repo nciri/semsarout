@@ -1,11 +1,13 @@
 import { Suspense, lazy, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { applyDirection } from './i18n/rtl'
 import Layout from './components/layout/Layout'
 import PrivateRoute from './components/auth/PrivateRoute'
 import SuperAdminRoute from './components/auth/SuperAdminRoute'
 import ImpersonationBanner from './components/admin/ImpersonationBanner'
+import RouteErrorBoundary from './components/common/RouteErrorBoundary'
+import { RouteFallback } from './components/common/RouteOutlet'
 
 // Chaque page est chargee a la demande (code splitting) : sans cela tout le
 // portail, le backoffice, l'administration et leurs dependances lourdes
@@ -117,20 +119,9 @@ const PipelineAnalytics = lazy(() => import('./pages/backoffice/analytics/Pipeli
 const TeamAnalytics = lazy(() => import('./pages/backoffice/analytics/TeamAnalytics'))
 const Subscription = lazy(() => import('./pages/dashboard/Subscription'))
 
-// Ecran d'attente entre deux fragments de page. Volontairement sans texte
-// (le libelle passe par aria-label) pour ne pas faire clignoter un mot pendant
-// les quelques dizaines de millisecondes de chargement d'un fragment.
-function RouteFallback() {
-  const { t } = useTranslation()
-  return (
-    <div className="flex min-h-[50vh] items-center justify-center" role="status" aria-label={t('loading')}>
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600" />
-    </div>
-  )
-}
-
 function App() {
   const { i18n } = useTranslation()
+  const location = useLocation()
   useEffect(() => {
     applyDirection(i18n.language)
     const onChange = (lng) => applyDirection(lng)
@@ -141,6 +132,12 @@ function App() {
   return (
     <>
       <ImpersonationBanner />
+      {/* La barriere d'erreur enveloppe le Suspense, jamais l'inverse : le
+          Suspense rattrape la SUSPENSION d'un fragment, pas le REJET de son
+          import(). Ce Suspense-ci ne sert qu'aux mises en page elles-memes
+          (BackofficeLayout, AdminLayout sont paresseuses) ; les pages, elles,
+          suspendent sous l'en-tete via RouteOutlet. */}
+      <RouteErrorBoundary resetKey={location.pathname}>
       <Suspense fallback={<RouteFallback />}>
       <Routes>
       {/* Public routes */}
@@ -315,6 +312,7 @@ function App() {
       </Route>
       </Routes>
       </Suspense>
+      </RouteErrorBoundary>
     </>
   )
 }

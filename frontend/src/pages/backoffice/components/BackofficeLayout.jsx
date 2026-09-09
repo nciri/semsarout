@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Link, useLocation, Outlet, Navigate } from 'react-router-dom'
+import { Link, useLocation, Navigate } from 'react-router-dom'
+import RouteOutlet from '../../../components/common/RouteOutlet'
 import { useTranslation } from 'react-i18next'
 import {
   FiHome, FiUsers, FiFileText, FiCalendar,
@@ -305,7 +306,7 @@ export default function BackofficeLayout() {
 
         {/* Page content */}
         <div className="p-4 lg:p-6 pt-20 lg:pt-6">
-          <Outlet />
+          <RouteOutlet />
         </div>
       </main>
     </div>

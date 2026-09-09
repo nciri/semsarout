@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
+import RouteOutlet from '../../components/common/RouteOutlet'
 import { useTranslation } from 'react-i18next'
 import { FiGrid, FiUsers, FiActivity, FiTool, FiShoppingBag, FiPackage } from 'react-icons/fi'
 
@@ -22,7 +23,7 @@ function AdminLayout() {
           <NavLink to="/admin/commandes" className={link}><FiPackage /> {t('admin:shared.nav.orders')}</NavLink>
         </nav>
       </aside>
-      <main className="flex-1 p-8"><Outlet /></main>
+      <main className="flex-1 p-8"><RouteOutlet /></main>
     </div>
   )
 }

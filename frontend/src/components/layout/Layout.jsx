@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom'
+import RouteOutlet from '../common/RouteOutlet'
 import Header from './Header'
 import Footer from './Footer'
 
@@ -7,7 +7,7 @@ function Layout() {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow">
-        <Outlet />
+        <RouteOutlet />
       </main>
       <Footer />
     </div>
