@@ -15,6 +15,10 @@ export default defineConfig({
     // par IndexedDB + la file d'attente (services/design3dLocal, design3dSync).
     VitePWA({
       registerType: 'autoUpdate',
+      // Épinglé plutôt que laissé au défaut du plugin : à `false`, un fichier
+      // au-dessus de `maximumFileSizeToCacheInBytes` fait ÉCHOUER le build au
+      // lieu d'être exclu du pré-cache sur un simple avertissement.
+      showMaximumFileSizeToCacheInBytesWarning: false,
       includeAssets: ['apple-touch-icon.png'],
       manifest: {
         name: 'SemsarOut',
