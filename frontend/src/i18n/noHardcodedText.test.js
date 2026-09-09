@@ -161,6 +161,8 @@ const MIGRATED_FILES = [
   'src/components/design/Design3dGate.jsx',
   'src/components/design/Design3dEntry.jsx',
   'src/components/design/DesignViewer.jsx',
+  'src/components/common/RouteErrorBoundary.jsx',
+  'src/components/common/RouteOutlet.jsx',
 ]
 
 describe('noHardcodedText (garde-fou heuristique)', () => {

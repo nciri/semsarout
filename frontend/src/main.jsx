@@ -8,6 +8,21 @@ import './i18n'
 import './assets/styles/index.css'
 import 'react-toastify/dist/ReactToastify.css'
 
+// Le service worker est genere en `autoUpdate` : skipWaiting + clientsClaim +
+// cleanupOutdatedCaches. Un deploiement pendant qu'un agent travaille prend donc
+// le controle immediatement ET purge les fragments haches que l'onglet ouvert —
+// qui execute toujours l'ancien index-*.js — reclamera a la navigation suivante.
+// Sans ce rechargement, la page suivante echoue a se charger. Le drapeau evite
+// toute boucle : apres le reload, le nouveau worker controle deja la page.
+if ('serviceWorker' in navigator) {
+  let reloading = false
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloading) return
+    reloading = true
+    window.location.reload()
+  })
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

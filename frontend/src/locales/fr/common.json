@@ -345,5 +345,10 @@
     "toggle": "Bien en copropriété",
     "label": "Charges de copropriété"
   },
-  "loading": "Chargement…"
+  "loading": "Chargement…",
+  "routeError": {
+    "title": "Cette page n'a pas pu être chargée",
+    "hint": "Le contenu n'est pas arrivé jusqu'à vous. Rechargez la page : si une mise à jour de l'application vient d'être publiée, cela suffit à la récupérer.",
+    "reload": "Recharger la page"
+  }
 }
