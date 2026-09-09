@@ -163,6 +163,13 @@ class AgencyRO(Base):
     is_deleted = Column(Boolean, default=False)
     suspended_reason = Column(Text)
     features = Column(JSON, default=list)
+    # I7 : distingue « projection jamais synchronisée » de « synchronisée, et vide ». Sans ce
+    # marqueur, une agence dont le plan n'accorde légitimement aucune feature (offre gratuite/
+    # starter) redéclenchait l'appel HTTP synchrone à billing (`_features`) à chaque login et
+    # chaque /auth/refresh, pour toujours — `features` vide ne se distinguant jamais de
+    # `features` "pas encore rempli". Posé par le worker (`billing.subscription.activated`) et
+    # par le repli auto-réparateur de `auth.py::_features`.
+    features_synced_at = Column(DateTime, nullable=True)
     owner_id = Column(Integer)
     max_seats = Column(Integer, default=0)
     max_teams = Column(Integer, default=0)

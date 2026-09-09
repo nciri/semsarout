@@ -74,19 +74,25 @@ async def _json(request: Request) -> dict:
 
 def _features(db: Session, agency_id: int | None) -> list[str]:
     """Features (entitlements de plan) de l'agence, source des claims JWT. Repli auto-réparateur :
-    si la projection locale (`AgencyRO.features`, alimentée par `billing.subscription.activated`)
-    est vide, interroge billing directement — nécessaire pour tout abonnement déjà actif avant
-    l'ajout de la projection événementielle (aucun événement ne sera rejoué pour lui). Best-effort,
-    ne doit jamais faire échouer le login."""
+    si la projection locale (`AgencyRO.features_synced_at`) n'a JAMAIS été renseignée, interroge
+    billing directement — nécessaire pour tout abonnement déjà actif avant l'ajout de la
+    projection événementielle (aucun événement ne sera rejoué pour lui). Best-effort, ne doit
+    jamais faire échouer le login.
+
+    `features_synced_at` (pas `features` seul) est le marqueur : une agence dont le plan
+    n'accorde légitimement AUCUNE feature a `features == []` en régime permanent, et ce repli
+    ne doit se déclencher qu'une fois pour elle — pas à chaque login et chaque /auth/refresh,
+    pour toujours (I7)."""
     if not agency_id:
         return []
     ag = db.get(AgencyRO, agency_id)
-    if ag and ag.features:
+    if ag and ag.features_synced_at is not None:
         return list(ag.features)
     from . import billing_client
     features = billing_client.features_of(agency_id)
-    if features and ag is not None:
+    if ag is not None:
         ag.features = features  # auto-répare la projection pour les prochains logins
+        ag.features_synced_at = datetime.utcnow()
         db.commit()
     return features
 

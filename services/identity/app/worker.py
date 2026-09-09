@@ -68,6 +68,7 @@ def _handle(routing_key: str, payload: dict, message_id: str) -> None:
                                   is_suspended=False, is_deleted=False)
                     db.add(ag)
                 ag.features = payload.get("features", [])
+                ag.features_synced_at = datetime.utcnow()
             if message_id:
                 db.add(ProcessedMessage(message_id=message_id))
             db.commit()

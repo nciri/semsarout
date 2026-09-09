@@ -31,6 +31,8 @@ def test_subscription_activated_creates_agency_row_with_features(monkeypatch, tm
     ag = s.get(AgencyRO, 42)
     assert ag is not None
     assert set(ag.features) == {"contracts", "design3d"}
+    # I7 : marquée synchronisée, pour que le repli de `_features` ne rappelle plus billing
+    assert ag.features_synced_at is not None
 
 
 def test_subscription_activated_updates_existing_agency_row(monkeypatch, tmp_path):
