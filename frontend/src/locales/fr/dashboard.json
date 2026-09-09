@@ -751,7 +751,8 @@
             "API & Intégrations",
             "Programmes immobiliers",
             "StayManager sync",
-            "CRM & Pipeline"
+            "CRM & Pipeline",
+            "Conception 3D des plans"
           ]
         },
         "pro": {
@@ -768,7 +769,8 @@
             "Programmes immobiliers (10 max)",
             "StayManager sync illimité",
             "Support prioritaire",
-            "Account manager dédié"
+            "Account manager dédié",
+            "Conception 3D des plans"
           ]
         },
         "enterprise": {
@@ -785,7 +787,8 @@
             "Programmes illimités",
             "StayManager sync illimité",
             "Support prioritaire 24/7",
-            "Account manager dédié"
+            "Account manager dédié",
+            "Conception 3D des plans"
           ]
         }
       }

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import {
   FiCheck, FiX, FiCreditCard, FiDownload, FiCheckCircle, FiClock,
-  FiAlertCircle, FiCalendar, FiStar, FiZap, FiAward,
+  FiAlertCircle, FiCalendar,
   FiPlus, FiTrash2, FiRefreshCw
 } from 'react-icons/fi'
 import { jsPDF } from 'jspdf'
@@ -13,6 +13,7 @@ import { formatPrice } from '../../utils/currency'
 import api from '../../services/api'
 import { CONTACT } from '../../constants/contact'
 import { useFormat } from '../../utils/format'
+import { INDIVIDUAL_PLANS, AGENCY_PLANS } from './subscriptionPlans'
 
 // Generate invoice PDF (t: fonction de traduction i18n, injectée par l'appelant)
 const generateInvoicePDF = (invoice, user, t) => {
@@ -171,62 +172,6 @@ const PayPalIcon = ({ className }) => (
     <path d="M19.167 6.515c-.03.139-.063.277-.1.412-.573 2.258-1.686 3.977-3.24 4.988-1.498.975-3.372 1.433-5.604 1.433h-1.66a.778.778 0 0 0-.768.654l-.822 5.205-.466 2.947a.641.641 0 0 0 .633.74h3.378a.778.778 0 0 0 .768-.654l.676-4.283a.778.778 0 0 1 .768-.654h1.66c2.232 0 4.106-.458 5.604-1.433 1.554-1.011 2.667-2.73 3.24-4.988.037-.135.07-.273.1-.412.407-1.927.01-3.53-1.117-4.643-.41-.404-.907-.738-1.487-1.005.407.937.587 1.988.437 3.093z"/>
   </svg>
 )
-
-// Plans pour les particuliers (libellés/descriptions/features traduits via dashboard:subscription.plans.individual.ID)
-const INDIVIDUAL_PLANS = [
-  {
-    id: 'free',
-    price: 0,
-    icon: FiStar,
-    color: 'gray',
-    featuresIncluded: [true, true, true, true, false, false, false],
-    popular: false
-  },
-  {
-    id: 'basic',
-    price: 99,
-    icon: FiZap,
-    color: 'blue',
-    featuresIncluded: [true, true, true, true, true, false, false],
-    popular: true
-  },
-  {
-    id: 'premium',
-    price: 199,
-    icon: FiAward,
-    color: 'purple',
-    featuresIncluded: [true, true, true, true, true, true, true],
-    popular: false
-  }
-]
-
-// Plans pour les agences (libellés/descriptions/features traduits via dashboard:subscription.plans.agency.ID)
-const AGENCY_PLANS = [
-  {
-    id: 'starter',
-    price: 299,
-    icon: FiStar,
-    color: 'gray',
-    featuresIncluded: [true, true, true, true, false, false, false, false, false],
-    popular: false
-  },
-  {
-    id: 'pro',
-    price: 799,
-    icon: FiZap,
-    color: 'blue',
-    featuresIncluded: [true, true, true, true, true, true, true, true, false, false],
-    popular: true
-  },
-  {
-    id: 'enterprise',
-    price: 1999,
-    icon: FiAward,
-    color: 'purple',
-    featuresIncluded: [true, true, true, true, true, true, true, true, true, true],
-    popular: false
-  }
-]
 
 const STATUS_ICONS = {
   paid: { icon: FiCheckCircle, color: 'text-green-600 bg-green-100' },
