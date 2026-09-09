@@ -89,8 +89,8 @@ export default function BackofficeLayout() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile header */}
-      <div className="lg:hidden fixed top-0 start-0 end-0 z-50 bg-white border-b border-gray-200 px-4 py-3">
-        <div className="flex items-center justify-between">
+      <div className="lg:hidden fixed top-0 start-0 end-0 z-50 bg-white border-b border-gray-200 safe-top safe-inline">
+        <div className="px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => setMobileMenuOpen(true)}
             className="p-2 text-gray-500 hover:text-gray-700"
@@ -113,7 +113,7 @@ export default function BackofficeLayout() {
       {mobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setMobileMenuOpen(false)}>
           <div
-            className="absolute start-0 top-0 bottom-0 w-72 bg-white shadow-xl"
+            className="absolute start-0 top-0 bottom-0 w-72 bg-white shadow-xl safe-top safe-bottom safe-inline"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 border-b">
@@ -149,7 +149,7 @@ export default function BackofficeLayout() {
 
       {/* Desktop sidebar */}
       <aside
-        className={`hidden lg:flex flex-col fixed start-0 top-0 bottom-0 z-40 bg-white border-e border-gray-200 transition-all duration-300 ${
+        className={`hidden lg:flex flex-col fixed start-0 top-0 bottom-0 z-40 bg-white border-e border-gray-200 transition-all duration-300 safe-top safe-bottom safe-inline ${
           sidebarOpen ? 'w-64' : 'w-20'
         }`}
       >

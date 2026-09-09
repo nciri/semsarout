@@ -212,4 +212,13 @@ html[lang='ar'] {
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+
+  /* Bord haut : réservé aux barres ancrées en haut (en-têtes collants,
+     bandeaux fixes, rail latéral). Le <body> ne porte volontairement PAS de
+     `padding-top` : une barre `sticky top-0` se colle au bord de la fenêtre,
+     pas au bord du <body>, donc la marge y serait comptée deux fois — une fois
+     en haut de page, jamais quand la barre est collée. */
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
 }
