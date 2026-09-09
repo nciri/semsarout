@@ -14,7 +14,7 @@ import 'react-toastify/dist/ReactToastify.css'
 // qui execute toujours l'ancien index-*.js — reclamera a la navigation suivante.
 // Sans ce rechargement, la page suivante echoue a se charger. Le drapeau evite
 // toute boucle : apres le reload, le nouveau worker controle deja la page.
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
   let reloading = false
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (reloading) return
