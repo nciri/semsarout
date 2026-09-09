@@ -154,6 +154,23 @@ export default function DesignEditor() {
   }, [levelId, dispatch, seedAttempt])
 
   // --- enregistrement local différé ---------------------------------------
+  // Écrit l'édition en attente, quelle qu'en soit la cause : temporisation
+  // échue, changement de niveau, démontage, onglet qui disparaît. Vide
+  // `pendingRef` AVANT tout await pour qu'aucun de ces chemins ne puisse
+  // enfiler deux fois la même édition, et avance `savedRef` pour que l'effet
+  // différé ne la réenfile pas au rendu suivant.
+  const flushPending = useCallback(() => {
+    const p = pendingRef.current
+    if (!p) return
+    pendingRef.current = null
+    savedRef.current = p.snap
+    // Le moteur n'est relancé qu'une fois l'écriture locale faite : plus tôt,
+    // il ne trouverait pas encore l'opération dans la file.
+    applyLocal({ type: 'level.update', payload: p.payload })
+      .then(() => engineRef.current?.tick())
+      .catch(() => {})
+  }, [])
+
   useEffect(() => {
     if (!levelId || seededRef.current !== levelId) return undefined
     const payload = {
@@ -165,25 +182,33 @@ export default function DesignEditor() {
     }
     const snap = snapshotOf(levelId, form, state.geometry)
     if (snap === savedRef.current) return undefined
-    pendingRef.current = payload
-    const timer = setTimeout(async () => {
-      savedRef.current = snap
-      pendingRef.current = null
-      await applyLocal({ type: 'level.update', payload })
-      engineRef.current?.tick()
-    }, SAVE_DEBOUNCE_MS)
+    pendingRef.current = { payload, snap }
+    const timer = setTimeout(() => flushPending(), SAVE_DEBOUNCE_MS)
     return () => clearTimeout(timer)
-  }, [levelId, form, state.geometry])
+  }, [levelId, form, state.geometry, flushPending])
 
-  // Démontage : ce qui n'a pas encore atteint la temporisation doit tout de
-  // même être écrit, sinon les 500 dernières millisecondes de travail sont
-  // perdues en quittant la page.
-  useEffect(
-    () => () => {
-      if (pendingRef.current) applyLocal({ type: 'level.update', payload: pendingRef.current })
-    },
-    [],
-  )
+  // Tout ce qui n'a pas atteint la temporisation doit être écrit avant que
+  // l'éditeur ne quitte le niveau : le nettoyage ci-dessus se contente
+  // d'annuler le minuteur, et `pendingRef` — qui porte encore le payload de
+  // l'ANCIEN niveau — était écrasé à la première édition sur le nouveau. Cet
+  // effet-ci est cadencé sur `levelId` : son nettoyage part au changement de
+  // niveau ET au démontage, mais jamais à chaque trait.
+  useEffect(() => () => flushPending(), [levelId, flushPending])
+
+  // Filet pour les sorties que React ne voit pas : fermeture d'onglet, passage
+  // en arrière-plan, rechargement de page (main.jsx, RouteErrorBoundary) — le
+  // démontage n'y a pas lieu.
+  useEffect(() => {
+    const onHidden = () => {
+      if (document.visibilityState === 'hidden') flushPending()
+    }
+    window.addEventListener('beforeunload', flushPending)
+    document.addEventListener('visibilitychange', onHidden)
+    return () => {
+      window.removeEventListener('beforeunload', flushPending)
+      document.removeEventListener('visibilitychange', onHidden)
+    }
+  }, [flushPending])
 
   // --- moteur de synchronisation -----------------------------------------
   useEffect(() => {

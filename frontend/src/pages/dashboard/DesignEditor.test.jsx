@@ -260,6 +260,56 @@ describe('DesignEditor', () => {
     expect(lv.geometry.walls[0].b.x - lv.geometry.walls[0].a.x).toBeCloseTo(5, 1)
   })
 
+  it('n’oublie pas le trait qui vient d’être fait quand on change de niveau dans la seconde', async () => {
+    // L'enregistrement est différé de 500 ms : bascule d'onglet plus tôt, le
+    // `pendingRef` de l'ancien niveau était simplement écrasé (I3).
+    const SECOND_ID = 'l2'
+    await local.putLevel({
+      id: SECOND_ID, project_id: PROJECT_ID, name: 'R+1', position: 1, revision: 0, base_revision: 0,
+      wall_height_m: 2.7, calibration: null, geometry: { walls: [], rooms: [], openings: [] }, dirty: false,
+    })
+    renderEditor()
+    await screen.findByRole('tab', { name: 'R+1' })
+
+    await pickTool('Mur')
+    const canvas = screen.getByTestId('floorplan-canvas')
+    fireEvent.pointerDown(canvas, { pointerId: 1, clientX: 100, clientY: 100 })
+    fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 300, clientY: 100 })
+    fireEvent.pointerUp(canvas, { pointerId: 1, clientX: 300, clientY: 100 })
+
+    // Sans laisser passer la temporisation, on change de niveau.
+    fireEvent.click(screen.getByRole('tab', { name: 'R+1' }))
+
+    await waitFor(async () => {
+      const lv = await local.getLevel(LEVEL_ID)
+      expect(lv.geometry.walls).toHaveLength(1)
+    })
+    // Le niveau où l'on a basculé, lui, n'a rien reçu.
+    expect((await local.getLevel(SECOND_ID)).geometry.walls).toHaveLength(0)
+  })
+
+  it('n’oublie pas le trait qui vient d’être fait quand l’onglet passe en arrière-plan', async () => {
+    renderEditor()
+    await screen.findByRole('tab', { name: 'RDC' })
+
+    await pickTool('Mur')
+    const canvas = screen.getByTestId('floorplan-canvas')
+    fireEvent.pointerDown(canvas, { pointerId: 1, clientX: 100, clientY: 100 })
+    fireEvent.pointerUp(canvas, { pointerId: 1, clientX: 300, clientY: 100 })
+
+    const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+    document.dispatchEvent(new Event('visibilitychange'))
+
+    // Fenêtre volontairement plus courte que la temporisation de 500 ms : sans
+    // le filet, l'écriture n'aurait lieu qu'après, si tant est que la page
+    // survive (fermeture d'onglet, rechargement de déploiement).
+    await waitFor(async () => {
+      const lv = await local.getLevel(LEVEL_ID)
+      expect(lv.geometry.walls).toHaveLength(1)
+    }, { timeout: 300, interval: 10 })
+    visibility.mockRestore()
+  })
+
   it('dit qu’une synchronisation de niveau a échoué et permet de la relancer', async () => {
     // Sans cela, `sync_error` n'est lu par aucun composant : l'échec est
     // invisible et le travail local n'a aucune voie de reprise (I2).
