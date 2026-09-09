@@ -35,6 +35,9 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
+- La migration `billing/migrate_design3d.sql` est désormais jouée par le playbook Ansible :
+  sans elle, la colonne `has_design3d` manquait en production et toute lecture des plans
+  d'abonnement échouait (`UndefinedColumn`), mettant billing entièrement hors service.
 - Un fragment de page qui ne se charge pas (déploiement pendant la session, coupure
   réseau) affiche un message et un bouton de rechargement au lieu d'un écran blanc :
   barrière d'erreur autour des routes + rechargement automatique du service worker
