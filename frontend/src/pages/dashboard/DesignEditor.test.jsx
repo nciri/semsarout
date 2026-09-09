@@ -34,7 +34,10 @@ vi.mock('../../services/design3dApi', () => {
 // `background` reste vrai tant qu'on ne le baisse pas : l'image de fond est lue
 // par un effet distinct de l'amorçage, et c'est précisément leur indépendance
 // qui permet aux deux bandeaux d'apparaître ensemble.
-const storage = vi.hoisted(() => ({ mode: null, background: false }))
+// `writeFails` fait échouer les N prochaines ÉCRITURES de niveau — un quota
+// IndexedDB saturé, par exemple. L'écriture est le seul endroit où le travail
+// de l'agent quitte la mémoire de la page : son échec ne peut pas être muet.
+const storage = vi.hoisted(() => ({ mode: null, background: false, writeFails: 0 }))
 
 vi.mock('../../services/design3dLocal', async (importOriginal) => {
   const actual = await importOriginal()
@@ -46,6 +49,13 @@ vi.mock('../../services/design3dLocal', async (importOriginal) => {
       if (mode === 'reject') return Promise.reject(new Error('IndexedDB indisponible'))
       if (mode === 'missing') return Promise.resolve(undefined)
       return actual.getLevel(...args)
+    },
+    mutateLevel: (...args) => {
+      if (storage.writeFails > 0) {
+        storage.writeFails -= 1
+        return Promise.reject(new Error('QuotaExceededError'))
+      }
+      return actual.mutateLevel(...args)
     },
     getBackground: (...args) => {
       if (!storage.background) return actual.getBackground(...args)
@@ -124,6 +134,7 @@ describe('DesignEditor', () => {
   beforeEach(async () => {
     storage.mode = null
     storage.background = false
+    storage.writeFails = 0
     await i18n.changeLanguage('fr')
     await seedLevel()
     stubCanvasBox()
@@ -363,6 +374,30 @@ describe('DesignEditor', () => {
     // Et le message ne doit rien promettre : aucun chemin de l'application ne
     // peut lever ce refus.
     expect(alert).not.toHaveTextContent(/tant que ce refus/i)
+  })
+
+  it('ne croit pas une édition enregistrée quand le stockage la refuse', async () => {
+    renderEditor()
+    await screen.findByRole('tab', { name: 'RDC' })
+    await pickTool('Mur')
+
+    storage.writeFails = 1
+    const canvas = screen.getByTestId('floorplan-canvas')
+    fireEvent.pointerDown(canvas, { pointerId: 1, clientX: 100, clientY: 100 })
+    fireEvent.pointerUp(canvas, { pointerId: 1, clientX: 300, clientY: 100 })
+
+    // L'échec était avalé par un `catch` vide alors que l'instantané « déjà
+    // enregistré » avait déjà avancé : le trait était perdu et l'éditeur le
+    // croyait sauvé, sans la moindre trace.
+    const alert = await screen.findByRole('alert', {}, { timeout: 3000 })
+    expect(alert).toHaveTextContent(/n'a pas pu être enregistrée|n’a pas pu être enregistrée/)
+
+    fireEvent.click(screen.getByRole('button', { name: "Réessayer l'enregistrement" }))
+    await waitFor(async () => {
+      const lv = await local.getLevel(LEVEL_ID)
+      expect(lv.geometry.walls).toHaveLength(1)
+    })
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument())
   })
 
   it('montre le détail d’un 422 plutôt que le seul intitulé', async () => {

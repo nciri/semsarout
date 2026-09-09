@@ -1332,6 +1332,10 @@
       "projectRetry": "Renvoyer ce projet",
       "levelInternal": "Une erreur interne a empêché l'envoi de ce niveau. Votre travail reste enregistré sur cet appareil : réessayez, et signalez-le si cela se reproduit."
     },
+    "saveError": {
+      "message": "Cette modification n'a pas pu être enregistrée sur cet appareil — stockage saturé ou indisponible. Elle n'existe que dans cet écran : ne fermez pas cette page, libérez de l'espace, puis réessayez.",
+      "retry": "Réessayer l'enregistrement"
+    },
     "calibration": {
       "action": "Calibrer",
       "title": "Calibration du plan",

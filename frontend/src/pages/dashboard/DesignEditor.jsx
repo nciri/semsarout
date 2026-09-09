@@ -77,6 +77,9 @@ export default function DesignEditor() {
   // Confirmation de l'abandon d'un projet refusé : la conséquence est annoncée
   // avant la suppression, jamais après.
   const [confirmingDiscard, setConfirmingDiscard] = useState(false)
+  // Échec d'écriture locale : le seul moment où le travail quitte la mémoire
+  // de la page. Il ne peut être ni silencieux, ni sans reprise.
+  const [saveError, setSaveError] = useState(false)
   // Échec d'amorçage : 'read' (le stockage local n'a pas répondu) ou 'missing'
   // (le niveau n'y est plus). `seedAttempt` sert uniquement à relancer l'effet.
   const [seedError, setSeedError] = useState(null)
@@ -170,12 +173,26 @@ export default function DesignEditor() {
     const p = pendingRef.current
     if (!p) return
     pendingRef.current = null
-    savedRef.current = p.snap
     // Le moteur n'est relancé qu'une fois l'écriture locale faite : plus tôt,
     // il ne trouverait pas encore l'opération dans la file.
     applyLocal({ type: 'level.update', payload: p.payload })
-      .then(() => engineRef.current?.tick())
-      .catch(() => {})
+      .then(() => {
+        // `savedRef` n'avance qu'après une écriture CONFIRMÉE : l'avancer avant
+        // faisait tenir pour enregistrée une édition qui pouvait échouer, et
+        // l'échec était avalé — travail perdu, et éditeur convaincu du
+        // contraire. Et seulement si l'on est encore sur ce niveau, sinon on
+        // écraserait l'instantané que l'amorçage du suivant vient de poser.
+        if (p.payload.id === seededRef.current) savedRef.current = p.snap
+        setSaveError(false)
+        engineRef.current?.tick()
+      })
+      .catch(() => {
+        // L'édition redevient en attente (sauf si une plus récente l'a déjà
+        // remplacée) et l'échec est dit : c'est le seul moment où le travail
+        // de l'agent quitte la mémoire de la page.
+        pendingRef.current = pendingRef.current ?? p
+        setSaveError(true)
+      })
   }, [])
 
   useEffect(() => {
@@ -593,6 +610,18 @@ export default function DesignEditor() {
             </button>
           )}
         </div>
+
+        {saveError && (
+          <div
+            role="alert"
+            className="p-3 bg-red-50 border-b border-red-200 text-red-800 text-sm flex flex-wrap items-center gap-3"
+          >
+            <span>{t('dashboard:designEditor.saveError.message')}</span>
+            <button type="button" className="btn-secondary min-h-[44px]" onClick={flushPending}>
+              {t('dashboard:designEditor.saveError.retry')}
+            </button>
+          </div>
+        )}
 
         {(projectError || currentLevel?.sync_error) && (
           <div
