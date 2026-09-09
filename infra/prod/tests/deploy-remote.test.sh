@@ -16,10 +16,12 @@
 # Couvre : provisionnement d'un service ajouté après l'installation (rôle + schéma
 # PostgreSQL, fichiers d'environnement app-<svc>.env/relay-<svc>.env root-only,
 # instanciation des unités template), diffusion de l'URL inter-services dans
-# secrets.env, migrations additives résilientes (une migration héritée qui échoue ne
-# doit pas empêcher les suivantes de tourner, ni faire disparaître l'échec global), et
-# surtout IDEMPOTENCE — une seconde exécution ne doit rien changer, ni pour le nouveau
-# service ni pour les services déjà déployés.
+# secrets.env, migrations additives résilientes (l'échec CONNU d'une migration
+# héritée visant des tables du monolithe jamais migrées sur semsar_prod n'empêche ni
+# les suivantes de tourner ni le déploiement nominal de sortir en succès — mais une
+# VRAIE migration cassée, elle, reste fatale et visible, jamais confondue avec le cas
+# légitime), et surtout IDEMPOTENCE — une seconde exécution ne doit rien changer, ni
+# pour le nouveau service ni pour les services déjà déployés.
 #
 #   bash infra/prod/tests/deploy-remote.test.sh
 set -uo pipefail
@@ -47,16 +49,25 @@ cat > "$BIN/runuser" <<'STUB'
 # runuser -u postgres -- psql … : le banc d'essai n'a ni root ni accès à un rôle
 # postgres réel, donc on ne peut pas rejouer un vrai serveur. On simule néanmoins un
 # psql qui EXÉCUTE (au sens : journalise le SQL reçu ET échoue réellement) plutôt
-# qu'un psql qui avale tout sans jamais échouer : toute requête référençant
-# public.subscriptions / public.subscription_plans échoue avec un code de sortie non
-# nul (comme un vrai serveur PostgreSQL le ferait — ces tables du monolithe legacy
-# n'existent pas sur semsar_prod, cf. commentaire deploy-remote.sh §5). Tout le reste
-# réussit, comme le ferait un serveur convergé pour du SQL idempotent visant des
-# tables déjà créées par create_all.
+# qu'un psql qui avale tout sans jamais échouer :
+#  - toute requête référençant public.subscriptions / public.subscription_plans
+#    échoue avec le message d'erreur PostgreSQL réaliste pour une relation absente
+#    (comme un vrai serveur le ferait — ces tables du monolithe legacy n'existent pas
+#    sur semsar_prod, cf. commentaire deploy-remote.sh §5) ;
+#  - une requête marquée TEST_GENUINE_FAILURE_MARKER (injectée par le banc d'essai
+#    dans une copie de travail d'une migration, sans rapport avec le monolithe legacy)
+#    échoue avec une AUTRE erreur, pour vérifier qu'une vraie casse n'est jamais
+#    confondue avec le cas légitime connu ;
+#  - tout le reste réussit, comme le ferait un serveur convergé pour du SQL idempotent
+#    visant des tables déjà créées par create_all.
 sql="$(cat)"
 { echo "--- psql $* ---"; printf '%s\n' "$sql"; } >> "$SQL_LOG"
 if printf '%s' "$sql" | grep -qiE 'public\.(subscriptions|subscription_plans)'; then
   echo 'psql:<stdin>: ERROR:  relation "public.subscriptions" does not exist' >&2
+  exit 1
+fi
+if printf '%s' "$sql" | grep -q 'TEST_GENUINE_FAILURE_MARKER'; then
+  echo 'psql:<stdin>: ERROR:  syntax error at or near "BROKEN"' >&2
   exit 1
 fi
 STUB
@@ -146,19 +157,23 @@ chmod 600 "$ENV_DIR/relay-listing.env"
 printf 'semsar-app@listing.service\nsemsar-relay@listing.service\n' > "$UNITS_LIST"
 
 # --- exécution 1 --------------------------------------------------------------
-echo "== exécution 1 (serveur sans design3d) =="
+echo "== exécution 1 (déploiement nominal, serveur sans design3d) =="
 bash "$SCRIPT" > "$TMP/run1.out" 2>&1
 run1_status=$?
-# Le déploiement DOIT échouer ici : la migration héritée identity/add_rental_feature.sql
-# vise des tables (public.subscriptions/subscription_plans) absentes de semsar_prod —
-# préexistant, hors périmètre de ce correctif (cf. rapport) — mais elle ne doit ni
-# arrêter les migrations suivantes ni faire disparaître l'échec global (vérifié plus bas).
-if [ "$run1_status" -ne 0 ]; then
-  ok "le déploiement échoue (migration héritée identity/add_rental_feature.sql cassée)"
+# Un déploiement NOMINAL doit sortir en SUCCÈS : la migration héritée identity/
+# add_rental_feature.sql vise des tables (public.subscriptions/subscription_plans)
+# qui n'ont jamais été et ne seront pas migrées sur semsar_prod — son échec pour
+# CETTE cause précise est connu et absorbé (cf. deploy-remote.sh §5), pas fatal.
+# Sans ça, CHAQUE déploiement sortirait en erreur, y compris un déploiement par
+# ailleurs parfaitement sain — personne ne pourrait plus distinguer un déploiement
+# réussi d'un déploiement raté.
+if [ "$run1_status" -eq 0 ]; then
+  ok "un déploiement nominal sort en succès (l'échec connu et non bloquant n'y fait pas obstacle)"
 else
-  ko "le déploiement échoue (migration héritée identity/add_rental_feature.sql cassée)"
+  ko "un déploiement nominal sort en succès (l'échec connu et non bloquant n'y fait pas obstacle)"
   sed 's/^/      /' "$TMP/run1.out"
 fi
+contains "…et le dit explicitement" "DÉPLOIEMENT OK" "$TMP/run1.out"
 
 contains "rôle PostgreSQL design3d créé si absent" "CREATE ROLE design3d LOGIN PASSWORD" "$SQL_LOG"
 contains "schéma design3d créé" "CREATE SCHEMA IF NOT EXISTS design3d" "$SQL_LOG"
@@ -210,18 +225,41 @@ check "le mot de passe du service déjà déployé est inchangé" \
   "MOTDEPASSEEXISTANT"
 absent "aucun CREATE ROLE pour un service déjà déployé" "CREATE ROLE listing" "$SQL_LOG"
 
-# --- défaut n°4 (ordre des migrations : une migration héritée ne doit pas bloquer
-#     les suivantes, ni faire disparaître l'échec global) ----------------------
+# --- défaut n°4 (migration héritée : échec connu absorbé, pas fatal, mais visible ;
+#     les suivantes tournent quand même) ---------------------------------------
 contains "la migration héritée sur les tables monolithe échoue réellement" \
   "public.subscriptions" "$SQL_LOG"
 contains "…mais migrate_design3d.sql tourne quand même ensuite" "has_design3d" "$SQL_LOG"
 contains "…et migrate_commission_invoice.sql aussi" "commission" "$SQL_LOG"
-contains "l'échec de la migration héritée reste visible" "add_rental_feature.sql a échoué" "$TMP/run1.out"
-if grep -q "DÉPLOIEMENT OK" "$TMP/run1.out"; then
-  ko "le déploiement global reste en échec malgré la convergence du mesh"
+contains "l'échec connu reste visible dans les logs (pas juste avalé en silence)" \
+  "add_rental_feature.sql a échoué pour une cause connue et non bloquante" "$TMP/run1.out"
+absent "…mais n'est PAS compté comme un échec fatal" \
+  "identity/add_rental_feature.sql a échoué (voir le message psql" "$TMP/run1.out"
+
+# --- une VRAIE migration cassée (sans rapport avec le monolithe legacy) doit rester
+#     fatale : le même mécanisme qui absorbe le cas connu ne doit rien absorber
+#     d'autre. Copie de travail corrompue d'une migration existante, restaurée après. -
+echo "== exécution 1bis (une migration réellement cassée, sans rapport avec le monolithe) =="
+messaging_migration="$APP/services/messaging/db/migrate_conversation.sql"
+cp "$messaging_migration" "$TMP/migrate_conversation.sql.bak"
+printf -- '-- TEST_GENUINE_FAILURE_MARKER\nSELECT BROKEN SQL;\n' > "$messaging_migration"
+: > "$SQL_LOG"
+bash "$SCRIPT" > "$TMP/run_genuine.out" 2>&1
+genuine_status=$?
+cp "$TMP/migrate_conversation.sql.bak" "$messaging_migration"
+
+if [ "$genuine_status" -ne 0 ]; then
+  ok "une migration réellement cassée fait toujours échouer le déploiement"
 else
-  ok "le déploiement global reste en échec malgré la convergence du mesh"
+  ko "une migration réellement cassée fait toujours échouer le déploiement"
+  sed 's/^/      /' "$TMP/run_genuine.out"
 fi
+contains "…et le dit explicitement, comme un échec fatal (pas un avertissement)" \
+  "messaging/migrate_conversation.sql a échoué (voir le message psql" "$TMP/run_genuine.out"
+absent "…sans être confondue avec le cas légitime connu (message différent)" \
+  "messaging/migrate_conversation.sql a échoué pour une cause connue" "$TMP/run_genuine.out"
+contains "les migrations suivantes tournent quand même après cet échec fatal" \
+  "has_design3d" "$SQL_LOG"
 
 # --- exécution 2 : idempotence ------------------------------------------------
 echo "== exécution 2 (rejeu sur le même serveur) =="
@@ -231,9 +269,12 @@ before_env="$(md5sum "$ENV_DIR"/*.env | sort)"
 : > "$SQL_LOG"
 
 bash "$SCRIPT" > "$TMP/run2.out" 2>&1
-# (le script sort toujours en erreur : la migration héritée échoue à chaque rejeu —
-# c'est un défaut préexistant hors périmètre, cf. rapport. On ne vérifie ici que
-# l'idempotence de ce qui est sous notre contrôle.)
+run2_status=$?
+if [ "$run2_status" -eq 0 ]; then
+  ok "le rejeu reste un déploiement nominal en succès"
+else
+  ko "le rejeu reste un déploiement nominal en succès"
+fi
 
 check "aucun fichier d'unité systemd modifié (gabarits inchangés, pas de copie)" \
   "$(md5sum "$SYSTEMD_DIR"/*.service | sort)" "$before_units_dir"
