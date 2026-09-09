@@ -1329,7 +1329,8 @@
       "projectDiscardConfirm": "Confirmer la suppression",
       "cancel": "Annuler",
       "projectUpdate": "La dernière modification de ce projet n'a pas été acceptée par le serveur : {{message}}. Elle n'est appliquée que sur cet appareil.",
-      "projectRetry": "Renvoyer ce projet"
+      "projectRetry": "Renvoyer ce projet",
+      "levelInternal": "Une erreur interne a empêché l'envoi de ce niveau. Votre travail reste enregistré sur cet appareil : réessayez, et signalez-le si cela se reproduit."
     },
     "calibration": {
       "action": "Calibrer",

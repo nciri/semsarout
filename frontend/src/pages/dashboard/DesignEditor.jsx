@@ -600,11 +600,25 @@ export default function DesignEditor() {
             className="p-3 bg-red-50 border-b border-red-200 text-red-800 text-sm flex flex-wrap items-center gap-3"
           >
             <span>
-              {!projectError && t('dashboard:designEditor.syncError.level', { message: currentLevel.sync_error.message })}
+              {!projectError && (
+                currentLevel.sync_error.kind === 'client'
+                  // Un message d'exception JavaScript n'apprend rien à un agent
+                  // et l'inquiète pour rien : dire la nature du problème et
+                  // l'action possible, garder le texte technique dans la trace.
+                  ? t('dashboard:designEditor.syncError.levelInternal')
+                  : t('dashboard:designEditor.syncError.level', { message: currentLevel.sync_error.message })
+              )}
               {projectError?.refused && t('dashboard:designEditor.syncError.project', { message: projectError.message })}
               {projectError && !projectError.refused
                 && t('dashboard:designEditor.syncError.projectUpdate', { message: projectError.message })}
             </span>
+            {/* Le serveur dit précisément ce qui cloche (422) : le taire
+                obligerait l'agent à deviner ce qu'il doit corriger. */}
+            {!projectError && currentLevel.sync_error.details?.length > 0 && (
+              <ul className="list-disc ps-5 w-full">
+                {currentLevel.sync_error.details.map((d) => <li key={d}>{d}</li>)}
+              </ul>
+            )}
             {/* Un refus de cible ne se lève pas en réessayant : ne proposer la
                 reprise que là où elle peut aboutir. Là où elle ne le peut pas,
                 proposer la seule sortie réelle — l'abandon du projet piégé,

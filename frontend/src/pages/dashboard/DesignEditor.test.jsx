@@ -365,6 +365,35 @@ describe('DesignEditor', () => {
     expect(alert).not.toHaveTextContent(/tant que ce refus/i)
   })
 
+  it('montre le détail d’un 422 plutôt que le seul intitulé', async () => {
+    await local.putLevel({
+      id: LEVEL_ID, project_id: PROJECT_ID, name: 'RDC', position: 0, revision: 0, base_revision: 0,
+      wall_height_m: 2.7, calibration: null, geometry: { walls: [], rooms: [], openings: [] }, dirty: false,
+      sync_error: { code: 422, message: 'Géométrie invalide', details: ['ouverture o1 : dépasse la hauteur du mur'], at: 1 },
+    })
+    renderEditor()
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Géométrie invalide')
+    // Sans le détail, l'agent sait qu'il y a un problème mais pas lequel.
+    expect(alert).toHaveTextContent('ouverture o1 : dépasse la hauteur du mur')
+  })
+
+  it('n’affiche jamais un message d’exception JavaScript à l’agent', async () => {
+    await local.putLevel({
+      id: LEVEL_ID, project_id: PROJECT_ID, name: 'RDC', position: 0, revision: 0, base_revision: 0,
+      wall_height_m: 2.7, calibration: null, geometry: { walls: [], rooms: [], openings: [] }, dirty: false,
+      sync_error: { code: undefined, kind: 'client', message: "Cannot read properties of undefined (reading 'blob')", at: 1 },
+    })
+    renderEditor()
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).not.toHaveTextContent('Cannot read properties')
+    expect(alert).toHaveTextContent(/erreur interne/i)
+    // La reprise reste offerte : c'est la seule action utile face à ce cas.
+    expect(screen.getByRole('button', { name: 'Renvoyer ce niveau' })).toBeInTheDocument()
+  })
+
   it('dit qu’une mise à jour de projet a échoué, même quand le projet existe côté serveur', async () => {
     // `markSyncError` écrit aussi `sync_error` sur un `project.update` échoué,
     // où `synced` reste vrai : ne remonter l'erreur que si `!synced` rendait ce

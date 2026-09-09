@@ -315,6 +315,33 @@ describe('design3d sync engine', () => {
     expect(r.hasError).toBe(true)
   })
 
+  it('un 422 conserve le détail des problèmes renvoyé par le serveur', async () => {
+    // `{"error": "Géométrie invalide", "details": [...]}` (main.py) : sans les
+    // `details`, le message ne dit pas CE QUI est invalide, donc n'est pas
+    // exploitable par l'agent.
+    const details = ['ouverture o1 : dépasse la hauteur du mur', 'mur w2 : deux points distincts requis']
+    const api = fakeApi({
+      updateLevel: vi.fn(async () => { throw { response: { status: 422, data: { error: 'Géométrie invalide', details } } } }),
+    })
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, geometry: { walls: [], rooms: [], openings: [] } } }, { local })
+    await runOnce({ api, local, onState: () => {} })
+    const stored = await local.getLevel(lvl().id)
+    expect(stored.sync_error).toMatchObject({ code: 422, message: 'Géométrie invalide', details })
+  })
+
+  it("une mise en quarantaine marque l'échec comme interne, sans en faire un message pour l'agent", async () => {
+    const api = fakeApi({
+      updateLevel: vi.fn(async () => { throw new TypeError("Cannot read properties of undefined (reading 'blob')") }),
+    })
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, geometry: { walls: [], rooms: [], openings: [] } } }, { local })
+    for (let i = 0; i < 3; i++) await runOnce({ api, local, onState: () => {} })
+    const stored = await local.getLevel(lvl().id)
+    // Le texte brut reste consigné pour le diagnostic, mais il est marqué comme
+    // interne : l'interface ne doit pas le servir tel quel à un agent.
+    expect(stored.sync_error.kind).toBe('client')
+    expect(stored.sync_error.message).toContain('blob')
+  })
+
   it('403 also persists the error on the local level and removes the op', async () => {
     const api = fakeApi({ updateLevel: vi.fn(async () => { throw { response: { status: 403, data: { error: 'Interdit' } } } }) })
     await applyLocal({ type: 'level.update', payload: { id: lvl().id, geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })

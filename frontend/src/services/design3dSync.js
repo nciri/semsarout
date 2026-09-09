@@ -121,10 +121,22 @@ export async function applyLocal(op, { local = defaultLocal } = {}) {
 // faut surtout pas la faire passer pour « déjà à jour » en effaçant `dirty`
 // — ce serait la perdre silencieusement au prochain passage de la file
 // (cf. revue tâche 8, round 2).
-async function markSyncError(op, error, local, attemptedSeq) {
+async function markSyncError(op, error, local, attemptedSeq, kind = null) {
   const status = error?.response?.status
-  const message = error?.response?.data?.error ?? error?.message ?? 'Erreur de synchronisation'
-  const sync_error = { code: status, message, at: Date.now() }
+  const data = error?.response?.data
+  const message = data?.error ?? error?.message ?? 'Erreur de synchronisation'
+  const sync_error = {
+    code: status,
+    message,
+    at: Date.now(),
+    // Le serveur détaille ce qui cloche (422 : `details`, cf. main.py) ; sans
+    // ces lignes, l'agent apprend qu'il y a un problème mais pas lequel.
+    ...(Array.isArray(data?.details) && data.details.length ? { details: data.details } : {}),
+    // `kind: 'client'` marque une exception du client mise en quarantaine : son
+    // message est un texte technique, que l'interface ne doit pas servir tel
+    // quel à un agent. Il reste consigné pour le diagnostic.
+    ...(kind ? { kind } : {}),
+  }
   const id = op.payload?.id
   if (!id) return
   if (op.type.startsWith('level.')) {
@@ -466,7 +478,7 @@ export async function runOnce({ api = defaultApi, local = defaultLocal, onState 
           onState?.({ state: 'error', error: { error: e?.message }, pending })
           return { synced, pending, conflict, hasError }
         }
-        await markSyncError(op, e, local, e.attemptedSeq)
+        await markSyncError(op, e, local, e.attemptedSeq, 'client')
         await local.remove(op.seq)
         onState?.({ state: 'error', error: { error: e?.message }, pending: await local.pendingCount() })
         continue
