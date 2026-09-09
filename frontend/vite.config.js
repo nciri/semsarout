@@ -5,6 +5,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 // ici doit porter le nom que `authStore.logout()` supprime, et ne couvrir que
 // les routes que le test `runtimeCache.test.js` autorise.
 import { API_RUNTIME_CACHE, matchDesign3dRead } from './src/utils/runtimeCache.js'
+// La limite de pré-cache est appliquée par une erreur, pas par un avertissement :
+// voir le commentaire en tête de precacheGuard.js.
+import { assertPrecacheSizes, WORKBOX_NO_SIZE_FILTER } from './src/utils/precacheGuard.js'
 
 export default defineConfig({
   plugins: [
@@ -35,14 +38,13 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: '/index.html',
-        // Pas de `maximumFileSizeToCacheInBytes` : depuis le découpage des
-        // routes (App.jsx, `lazy`), aucun fragment ne dépasse la limite
-        // Workbox par défaut de 2 Mio, donc tout est pré-caché sans
-        // relever le plafond. Si un fragment repassait au-dessus, il serait
-        // silencieusement exclu du pré-cache et l'application cesserait de
-        // démarrer hors ligne : c'est le fragment qu'il faudrait alors
-        // redécouper, pas cette limite qu'il faudrait relever.
-        //
+        // Depuis le découpage des routes (App.jsx, `lazy`), aucun fragment ne
+        // dépasse la limite de 2 Mio et tout est pré-caché sans relever aucun
+        // plafond. Le filtrage natif de Workbox est neutralisé ici parce qu'il
+        // se contente d'AVERTIR avant d'exclure en silence : la limite réelle
+        // est appliquée par `assertPrecacheSizes`, qui fait échouer le build.
+        maximumFileSizeToCacheInBytes: WORKBOX_NO_SIZE_FILTER,
+        manifestTransforms: [assertPrecacheSizes],
         // Une navigation vers l'API ou un média ne doit jamais recevoir la
         // coquille HTML : sans cette liste, un GET /api/... hors ligne
         // renverrait du HTML là où le client attend du JSON.
