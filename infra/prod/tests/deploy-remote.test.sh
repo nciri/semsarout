@@ -5,11 +5,21 @@
 # script tourne donc ici sur une arborescence jetable, avec psql/systemctl/curl/pip
 # simulés, et l'on vérifie ce qu'il aurait fait sur le serveur.
 #
+# Les fixtures modélisent le serveur RÉEL, pas une réinvention : les unités systemd sont
+# les gabarits TEMPLATE effectivement installés par le rôle Ansible mesh
+# (infra/prod/ansible/roles/mesh/templates/semsar-app@.service.j2 /
+# semsar-relay@.service.j2 — copiés/rendus depuis le dépôt ci-dessous, pas réinventés),
+# et le fichier d'environnement partagé est l'unique secrets.env
+# (roles/base/templates/secrets.env.j2), jamais un urls.env séparé qui n'existe nulle
+# part dans le dépôt.
+#
 # Couvre : provisionnement d'un service ajouté après l'installation (rôle + schéma
-# PostgreSQL, fichier d'environnement root-only, unités systemd copiées du gabarit),
-# diffusion des URLs inter-services, migrations additives, et surtout IDEMPOTENCE —
-# une seconde exécution ne doit rien changer, ni pour le nouveau service ni pour les
-# services déjà déployés.
+# PostgreSQL, fichiers d'environnement app-<svc>.env/relay-<svc>.env root-only,
+# instanciation des unités template), diffusion de l'URL inter-services dans
+# secrets.env, migrations additives résilientes (une migration héritée qui échoue ne
+# doit pas empêcher les suivantes de tourner, ni faire disparaître l'échec global), et
+# surtout IDEMPOTENCE — une seconde exécution ne doit rien changer, ni pour le nouveau
+# service ni pour les services déjà déployés.
 #
 #   bash infra/prod/tests/deploy-remote.test.sh
 set -uo pipefail
@@ -22,7 +32,8 @@ ok() { printf '  \033[32m✓\033[0m %s\n' "$1"; }
 ko() { printf '  \033[31m✗\033[0m %s\n' "$1"; FAILURES=$((FAILURES + 1)); }
 check() { if [ "$2" = "$3" ]; then ok "$1"; else ko "$1 (attendu: $3 / obtenu: $2)"; fi; }
 contains() { if grep -qF -- "$2" "$3" 2>/dev/null; then ok "$1"; else ko "$1"; fi; }
-absent() { if grep -qF -- "$2" "$3" 2>/dev/null; then ko "$1"; else ok "$1"; fi; }
+absent() { if [ -e "$3" ] && grep -qF -- "$2" "$3" 2>/dev/null; then ko "$1"; else ok "$1"; fi; }
+file_absent() { if [ -e "$2" ]; then ko "$1"; else ok "$1"; fi; }
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
@@ -33,8 +44,21 @@ export SQL_LOG="$TMP/sql.log" SYSTEMCTL_LOG="$TMP/systemctl.log" CURL_LOG="$TMP/
 
 cat > "$BIN/runuser" <<'STUB'
 #!/usr/bin/env bash
-# runuser -u postgres -- psql … : on journalise le SQL reçu sur stdin.
-{ echo "--- psql $* ---"; cat; } >> "$SQL_LOG"
+# runuser -u postgres -- psql … : le banc d'essai n'a ni root ni accès à un rôle
+# postgres réel, donc on ne peut pas rejouer un vrai serveur. On simule néanmoins un
+# psql qui EXÉCUTE (au sens : journalise le SQL reçu ET échoue réellement) plutôt
+# qu'un psql qui avale tout sans jamais échouer : toute requête référençant
+# public.subscriptions / public.subscription_plans échoue avec un code de sortie non
+# nul (comme un vrai serveur PostgreSQL le ferait — ces tables du monolithe legacy
+# n'existent pas sur semsar_prod, cf. commentaire deploy-remote.sh §5). Tout le reste
+# réussit, comme le ferait un serveur convergé pour du SQL idempotent visant des
+# tables déjà créées par create_all.
+sql="$(cat)"
+{ echo "--- psql $* ---"; printf '%s\n' "$sql"; } >> "$SQL_LOG"
+if printf '%s' "$sql" | grep -qiE 'public\.(subscriptions|subscription_plans)'; then
+  echo 'psql:<stdin>: ERROR:  relation "public.subscriptions" does not exist' >&2
+  exit 1
+fi
 STUB
 cat > "$BIN/systemctl" <<'STUB'
 #!/usr/bin/env bash
@@ -42,6 +66,22 @@ echo "systemctl $*" >> "$SYSTEMCTL_LOG"
 case "$1" in
   is-active) echo active ;;
   list-units) for u in $(cat "$UNITS_LIST" 2>/dev/null); do echo "$u loaded active running $u"; done ;;
+  daemon-reload) : ;;
+  enable)
+    unit="${*: -1}"
+    case "$unit" in
+      *@*.service)
+        # Un vrai systemd refuse d'activer une instance dont le gabarit n'existe pas :
+        # `Failed to enable unit: Unit … does not exist.` (code de sortie non nul).
+        tmpl="${unit%%@*}@.service"
+        if [ ! -f "$SYSTEMD_DIR/$tmpl" ]; then
+          echo "Failed to enable unit: Unit file $tmpl does not exist." >&2
+          exit 1
+        fi
+        ;;
+    esac
+    grep -qxF "$unit" "$UNITS_LIST" 2>/dev/null || echo "$unit" >> "$UNITS_LIST"
+    ;;
 esac
 STUB
 cat > "$BIN/curl" <<'STUB'
@@ -64,47 +104,60 @@ export PATH="$BIN:$PATH"
 # Arborescence : le code rsync-é (réel, depuis le dépôt) + l'état du serveur.
 export APP="$TMP/opt/semsar" PIP="$BIN/pip" DB=semsar_test
 export ENV_DIR="$TMP/etc/semsar/env" SYSTEMD_DIR="$TMP/etc/systemd/system"
-export URLS_ENV="$TMP/etc/semsar/urls.env"
-mkdir -p "$APP" "$ENV_DIR" "$SYSTEMD_DIR"
-printf 'LISTING_URL=http://localhost:8012\nBILLING_URL=http://localhost:8508\n' > "$URLS_ENV"
+export SECRETS_FILE="$TMP/etc/semsar/secrets.env"
+mkdir -p "$APP" "$ENV_DIR" "$SYSTEMD_DIR" "$(dirname "$SECRETS_FILE")"
 cp -r "$ROOT/services" "$APP/services"
 mkdir -p "$APP/libs" "$APP/gateway"
 export UNITS_LIST="$TMP/units"
 
-# Un service déjà déployé, qui sert de gabarit : ses unités sont celles de la machine.
-cat > "$SYSTEMD_DIR/semsar-listing.service" <<'UNIT'
-[Unit]
-Description=SemsarOut listing (API)
-[Service]
-EnvironmentFile=/etc/semsar/common.env
-EnvironmentFile=/etc/semsar/urls.env
-EnvironmentFile=/etc/semsar/env/listing.env
-WorkingDirectory=/opt/semsar/services/listing
-ExecStart=/opt/semsar/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8012
-[Install]
-WantedBy=multi-user.target
-UNIT
-cat > "$SYSTEMD_DIR/semsar-listing-relay.service" <<'UNIT'
-[Unit]
-Description=SemsarOut listing (relais outbox)
-[Service]
-EnvironmentFile=/etc/semsar/env/listing.env
-WorkingDirectory=/opt/semsar/services/listing
-ExecStart=/opt/semsar/venv/bin/python -m app.relay
-[Install]
-WantedBy=multi-user.target
-UNIT
-printf 'DATABASE_URL=postgresql+psycopg://listing:MOTDEPASSEEXISTANT@localhost:5432/semsar_test\n' \
-  > "$ENV_DIR/listing.env"
-chmod 600 "$ENV_DIR/listing.env"
-printf 'semsar-listing.service\nsemsar-listing-relay.service\n' > "$UNITS_LIST"
+# secrets.env : fichier UNIQUE (roles/base/templates/secrets.env.j2) — un extrait
+# minimal mais réaliste (mots de passe PG + URLs inter-services cohabitent).
+cat > "$SECRETS_FILE" <<'ENVF'
+PG_PASSWORD_LISTING=existant
+RABBITMQ_URL=amqp://semsar:x@localhost:5672/
+LISTING_URL=http://localhost:8012
+BILLING_URL=http://localhost:8508
+ENVF
+chmod 600 "$SECRETS_FILE"
+
+# Unités TEMPLATE réelles, dérivées des gabarits Ansible du dépôt (pas réinventées) :
+# c'est la convention systemd effective de la machine — semsar-app@.service et
+# semsar-relay@.service, jamais de semsar-<svc>.service nommé en clair.
+render_unit() {
+  sed -e 's#{{ *semsar_user *}}#semsar#g' -e 's#{{ *semsar_group *}}#semsar#g' \
+      -e "s#{{ *semsar_app_dir *}}#$APP#g" -e "s#{{ *semsar_secrets_file *}}#$SECRETS_FILE#g" \
+      -e "s#{{ *semsar_env_dir *}}#$ENV_DIR#g" -e "s#{{ *semsar_venv_dir *}}#$APP/venv#g" \
+      "$1"
+}
+render_unit "$ROOT/infra/prod/ansible/roles/mesh/templates/semsar-app@.service.j2" \
+  > "$SYSTEMD_DIR/semsar-app@.service"
+render_unit "$ROOT/infra/prod/ansible/roles/mesh/templates/semsar-relay@.service.j2" \
+  > "$SYSTEMD_DIR/semsar-relay@.service"
+
+# Un service déjà déployé (listing) : ses fichiers d'environnement suivent la
+# convention réelle app-<svc>.env / relay-<svc>.env (env-app.j2 / env-relay.j2), et
+# ses instances sont déjà "chargées" côté systemd (UNITS_LIST).
+printf 'SERVICE_NAME=listing\nPORT=8012\nTRUST_GATEWAY_HEADERS=true\nDATABASE_URL=postgresql+psycopg://listing:MOTDEPASSEEXISTANT@localhost:5432/semsar_test\n' \
+  > "$ENV_DIR/app-listing.env"
+chmod 600 "$ENV_DIR/app-listing.env"
+printf 'SERVICE_NAME=listing\nDATABASE_URL=postgresql+psycopg://listing:MOTDEPASSEEXISTANT@localhost:5432/semsar_test\nPYTHONPATH=%s/services/listing\n' "$APP" \
+  > "$ENV_DIR/relay-listing.env"
+chmod 600 "$ENV_DIR/relay-listing.env"
+printf 'semsar-app@listing.service\nsemsar-relay@listing.service\n' > "$UNITS_LIST"
 
 # --- exécution 1 --------------------------------------------------------------
 echo "== exécution 1 (serveur sans design3d) =="
-if ! bash "$SCRIPT" > "$TMP/run1.out" 2>&1; then
-  ko "le script sort en erreur"; sed 's/^/      /' "$TMP/run1.out"
+bash "$SCRIPT" > "$TMP/run1.out" 2>&1
+run1_status=$?
+# Le déploiement DOIT échouer ici : la migration héritée identity/add_rental_feature.sql
+# vise des tables (public.subscriptions/subscription_plans) absentes de semsar_prod —
+# préexistant, hors périmètre de ce correctif (cf. rapport) — mais elle ne doit ni
+# arrêter les migrations suivantes ni faire disparaître l'échec global (vérifié plus bas).
+if [ "$run1_status" -ne 0 ]; then
+  ok "le déploiement échoue (migration héritée identity/add_rental_feature.sql cassée)"
 else
-  ok "le script s'exécute sans erreur"
+  ko "le déploiement échoue (migration héritée identity/add_rental_feature.sql cassée)"
+  sed 's/^/      /' "$TMP/run1.out"
 fi
 
 contains "rôle PostgreSQL design3d créé si absent" "CREATE ROLE design3d LOGIN PASSWORD" "$SQL_LOG"
@@ -113,55 +166,82 @@ contains "search_path du rôle posé" "ALTER ROLE design3d SET search_path = des
 contains "migration billing/migrate_design3d.sql jouée" "has_design3d" "$SQL_LOG"
 contains "migration billing/migrate_commission_invoice.sql jouée" "commission" "$SQL_LOG"
 
-if [ -f "$ENV_DIR/design3d.env" ]; then
-  ok "fichier d'environnement design3d.env créé"
-  check "il est root-only (0600)" "$(stat -c '%a' "$ENV_DIR/design3d.env")" "600"
-  contains "il porte le DATABASE_URL du rôle" "postgresql+psycopg://design3d:" "$ENV_DIR/design3d.env"
-  pass1="$(sed -n 's|^DATABASE_URL=postgresql+psycopg://design3d:\([^@]*\)@.*|\1|p' "$ENV_DIR/design3d.env")"
+# --- défaut n°3 (nom de fichier d'environnement) -------------------------------
+if [ -f "$ENV_DIR/app-design3d.env" ]; then
+  ok "fichier d'environnement app-design3d.env créé (nom attendu par semsar-app@.service.j2)"
+  check "il est root-only (0600)" "$(stat -c '%a' "$ENV_DIR/app-design3d.env")" "600"
+  contains "il porte le DATABASE_URL du rôle" "postgresql+psycopg://design3d:" "$ENV_DIR/app-design3d.env"
+  contains "il porte le PORT du service" "PORT=8526" "$ENV_DIR/app-design3d.env"
+  pass1="$(sed -n 's|^DATABASE_URL=postgresql+psycopg://design3d:\([^@]*\)@.*|\1|p' "$ENV_DIR/app-design3d.env")"
   if [ "${#pass1}" -ge 32 ]; then ok "le mot de passe est tiré au sort (${#pass1} caractères)"
   else ko "mot de passe trop court ou absent (${#pass1})"; fi
 else
-  ko "fichier d'environnement design3d.env créé"; pass1=""
+  ko "fichier d'environnement app-design3d.env créé"; pass1=""
+fi
+file_absent "aucun fichier design3d.env fantôme (mauvais nom, ignoré de l'unité)" "$ENV_DIR/design3d.env"
+
+if [ -f "$ENV_DIR/relay-design3d.env" ]; then
+  ok "fichier d'environnement relay-design3d.env créé (design3d a un relais outbox)"
+  check "il est root-only (0600)" "$(stat -c '%a' "$ENV_DIR/relay-design3d.env")" "600"
+  contains "il porte le même DATABASE_URL" "postgresql+psycopg://design3d:$pass1@" "$ENV_DIR/relay-design3d.env"
+else
+  ko "fichier d'environnement relay-design3d.env créé"
 fi
 
-for u in semsar-design3d.service semsar-design3d-relay.service; do
-  if [ -f "$SYSTEMD_DIR/$u" ]; then ok "unité $u créée depuis le gabarit"; else ko "unité $u créée depuis le gabarit"; fi
-done
-contains "le port du service y remplace celui du gabarit" "--port 8526" "$SYSTEMD_DIR/semsar-design3d.service"
-absent "aucune trace du service gabarit dans l'unité" "listing" "$SYSTEMD_DIR/semsar-design3d.service"
-contains "le répertoire de travail suit" "/opt/semsar/services/design3d" "$SYSTEMD_DIR/semsar-design3d.service"
-contains "le fichier d'environnement suit" "/etc/semsar/env/design3d.env" "$SYSTEMD_DIR/semsar-design3d.service"
+# --- défaut n°1 (unités template, pas de copie de gabarit nommé en clair) -----
+contains "l'instance semsar-app@design3d.service est activée+démarrée" \
+  "systemctl enable --now semsar-app@design3d.service" "$SYSTEMCTL_LOG"
+contains "l'instance semsar-relay@design3d.service est activée+démarrée" \
+  "systemctl enable --now semsar-relay@design3d.service" "$SYSTEMCTL_LOG"
+file_absent "aucune unité semsar-design3d.service copiée-renommée n'est créée" \
+  "$SYSTEMD_DIR/semsar-design3d.service"
+file_absent "aucune unité semsar-design3d-relay.service copiée-renommée n'est créée" \
+  "$SYSTEMD_DIR/semsar-design3d-relay.service"
 
-contains "DESIGN3D_URL diffusée aux units (urls.env)" "DESIGN3D_URL=http://localhost:8526" "$URLS_ENV"
+# --- défaut n°2 (secrets.env unique, pas de urls.env fantôme) -----------------
+contains "DESIGN3D_URL diffusée dans le fichier réellement lu par les unités (secrets.env)" \
+  "DESIGN3D_URL=http://localhost:8526" "$SECRETS_FILE"
+file_absent "aucun fichier urls.env fantôme n'est créé" "$TMP/etc/semsar/urls.env"
 contains "le routage BFF vers design3d est vérifié" "/api/v1/public/design3d/by-target" "$CURL_LOG"
 
 # Le service déjà déployé n'a été touché en rien.
 check "le mot de passe du service déjà déployé est inchangé" \
-  "$(sed -n 's|^DATABASE_URL=postgresql+psycopg://listing:\([^@]*\)@.*|\1|p' "$ENV_DIR/listing.env")" \
+  "$(sed -n 's|^DATABASE_URL=postgresql+psycopg://listing:\([^@]*\)@.*|\1|p' "$ENV_DIR/app-listing.env")" \
   "MOTDEPASSEEXISTANT"
 absent "aucun CREATE ROLE pour un service déjà déployé" "CREATE ROLE listing" "$SQL_LOG"
 
+# --- défaut n°4 (ordre des migrations : une migration héritée ne doit pas bloquer
+#     les suivantes, ni faire disparaître l'échec global) ----------------------
+contains "la migration héritée sur les tables monolithe échoue réellement" \
+  "public.subscriptions" "$SQL_LOG"
+contains "…mais migrate_design3d.sql tourne quand même ensuite" "has_design3d" "$SQL_LOG"
+contains "…et migrate_commission_invoice.sql aussi" "commission" "$SQL_LOG"
+contains "l'échec de la migration héritée reste visible" "add_rental_feature.sql a échoué" "$TMP/run1.out"
+if grep -q "DÉPLOIEMENT OK" "$TMP/run1.out"; then
+  ko "le déploiement global reste en échec malgré la convergence du mesh"
+else
+  ok "le déploiement global reste en échec malgré la convergence du mesh"
+fi
+
 # --- exécution 2 : idempotence ------------------------------------------------
 echo "== exécution 2 (rejeu sur le même serveur) =="
-printf 'semsar-listing.service\nsemsar-listing-relay.service\nsemsar-design3d.service\nsemsar-design3d-relay.service\n' \
-  > "$UNITS_LIST"
-before_units="$(md5sum "$SYSTEMD_DIR"/*.service | sort)"
-before_urls="$(md5sum "$URLS_ENV")"
+before_units_dir="$(md5sum "$SYSTEMD_DIR"/*.service | sort)"
+before_secrets="$(md5sum "$SECRETS_FILE")"
 before_env="$(md5sum "$ENV_DIR"/*.env | sort)"
 : > "$SQL_LOG"
 
-if ! bash "$SCRIPT" > "$TMP/run2.out" 2>&1; then
-  ko "le rejeu sort en erreur"; sed 's/^/      /' "$TMP/run2.out"
-else
-  ok "le rejeu s'exécute sans erreur"
-fi
+bash "$SCRIPT" > "$TMP/run2.out" 2>&1
+# (le script sort toujours en erreur : la migration héritée échoue à chaque rejeu —
+# c'est un défaut préexistant hors périmètre, cf. rapport. On ne vérifie ici que
+# l'idempotence de ce qui est sous notre contrôle.)
 
-check "aucune unité systemd modifiée" "$(md5sum "$SYSTEMD_DIR"/*.service | sort)" "$before_units"
+check "aucun fichier d'unité systemd modifié (gabarits inchangés, pas de copie)" \
+  "$(md5sum "$SYSTEMD_DIR"/*.service | sort)" "$before_units_dir"
 check "aucun fichier d'environnement modifié" "$(md5sum "$ENV_DIR"/*.env | sort)" "$before_env"
-check "urls.env inchangé (pas de doublon de DESIGN3D_URL)" "$(md5sum "$URLS_ENV")" "$before_urls"
-check "les URLs des services déjà déployés sont intactes" "$(grep -c '^LISTING_URL=' "$URLS_ENV")" "1"
+check "secrets.env inchangé (pas de doublon de DESIGN3D_URL)" "$(md5sum "$SECRETS_FILE")" "$before_secrets"
+check "les URLs des services déjà déployés sont intactes" "$(grep -c '^LISTING_URL=' "$SECRETS_FILE")" "1"
 check "le mot de passe de design3d est conservé" \
-  "$(sed -n 's|^DATABASE_URL=postgresql+psycopg://design3d:\([^@]*\)@.*|\1|p' "$ENV_DIR/design3d.env")" "$pass1"
+  "$(sed -n 's|^DATABASE_URL=postgresql+psycopg://design3d:\([^@]*\)@.*|\1|p' "$ENV_DIR/app-design3d.env")" "$pass1"
 # Le CREATE ROLE est toujours ÉMIS — il est gardé côté SQL (`IF NOT EXISTS`), pas côté
 # shell. Ce qui compte est qu'aucun mot de passe neuf ne soit tiré au rejeu : le rôle
 # se voit réappliquer celui du fichier d'environnement, donc rien ne se désynchronise.
@@ -181,6 +261,17 @@ else
   ok "un BFF qui ne route pas vers design3d fait échouer le déploiement"
 fi
 contains "et le dit explicitement" "le BFF ne route pas vers design3d" "$TMP/run3.out"
+
+# --- exécution 4 : le gabarit systemd manquant doit faire échouer bruyamment --
+echo "== exécution 4 (gabarit semsar-app@.service absent du serveur) =="
+mv "$SYSTEMD_DIR/semsar-app@.service" "$TMP/semsar-app@.service.bak"
+if bash "$SCRIPT" > "$TMP/run4.out" 2>&1; then
+  ko "un gabarit systemd absent fait échouer le déploiement (au lieu d'un simple avertissement)"
+else
+  ok "un gabarit systemd absent fait échouer le déploiement (au lieu d'un simple avertissement)"
+fi
+contains "et le dit explicitement" "gabarit systemd" "$TMP/run4.out"
+mv "$TMP/semsar-app@.service.bak" "$SYSTEMD_DIR/semsar-app@.service"
 
 # --- garde-fou : aucun secret en dur dans le script ---------------------------
 if grep -nE "PASSWORD *'[A-Za-z0-9]{6,}'" "$SCRIPT" | grep -v '\$pass' > /dev/null; then
