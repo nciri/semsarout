@@ -35,12 +35,14 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: '/index.html',
-        // Le bundle applicatif dépasse la limite Workbox de 2 Mio ; sans ce
-        // relèvement il ne serait PAS pré-caché et l'application ne
-        // démarrerait pas hors ligne — ce qui viderait la PWA de son intérêt
-        // pour l'éditeur de plan. À redescendre le jour où le bundle est
-        // découpé (code splitting).
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // Pas de `maximumFileSizeToCacheInBytes` : depuis le découpage des
+        // routes (App.jsx, `lazy`), aucun fragment ne dépasse la limite
+        // Workbox par défaut de 2 Mio, donc tout est pré-caché sans
+        // relever le plafond. Si un fragment repassait au-dessus, il serait
+        // silencieusement exclu du pré-cache et l'application cesserait de
+        // démarrer hors ligne : c'est le fragment qu'il faudrait alors
+        // redécouper, pas cette limite qu'il faudrait relever.
+        //
         // Une navigation vers l'API ou un média ne doit jamais recevoir la
         // coquille HTML : sans cette liste, un GET /api/... hors ligne
         // renverrait du HTML là où le client attend du JSON.

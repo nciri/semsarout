@@ -344,5 +344,6 @@
   "condoFees": {
     "toggle": "Bien en copropriété",
     "label": "Charges de copropriété"
-  }
+  },
+  "loading": "Chargement…"
 }
