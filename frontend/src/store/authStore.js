@@ -40,6 +40,11 @@ const useAuthStore = create(
           localStorage.setItem('token', access_token)
           localStorage.setItem('userId', String(user.id))
 
+          // Une connexion directe, sans déconnexion explicite préalable, ne
+          // doit pas hériter du cache design3d de l'identité précédente sur
+          // une tablette partagée (I10).
+          purgeRuntimeCaches()
+
           set({
             user,
             accessToken: access_token,
@@ -67,6 +72,9 @@ const useAuthStore = create(
           // Store in localStorage for backoffice API calls
           localStorage.setItem('token', access_token)
           localStorage.setItem('userId', String(user.id))
+
+          // Même tablette, même garde qu'à la connexion (I10).
+          purgeRuntimeCaches()
 
           set({
             user,
@@ -138,6 +146,9 @@ const useAuthStore = create(
         }))
         localStorage.setItem('token', token)
         localStorage.setItem('userId', String(targetUser.id))
+        // L'agence usurpée n'est pas celle du super-admin : le cache design3d
+        // de l'un ne doit jamais fuiter vers l'autre (I10).
+        purgeRuntimeCaches()
         set({
           user: targetUser, accessToken: token, refreshToken: null,
           isAuthenticated: true, impersonating: true, impersonatedUser: targetUser,
@@ -151,6 +162,8 @@ const useAuthStore = create(
         const admin = JSON.parse(raw)
         localStorage.setItem('token', admin.accessToken)
         localStorage.setItem('userId', String(admin.user.id))
+        // Retour au super-admin : même garde qu'à l'entrée en usurpation (I10).
+        purgeRuntimeCaches()
         set({
           user: admin.user, accessToken: admin.accessToken, refreshToken: admin.refreshToken,
           isAuthenticated: true, impersonating: false, impersonatedUser: null,

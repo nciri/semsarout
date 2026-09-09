@@ -1,6 +1,11 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import { API_RUNTIME_CACHE, matchDesign3dRead, purgeRuntimeCaches } from './runtimeCache'
 import useAuthStore from '../store/authStore'
+import api from '../services/api'
+
+vi.mock('../services/api', () => ({
+  default: { post: vi.fn() }
+}))
 
 const req = (path) => ({ url: new URL(`https://semsarout.com${path}`) })
 
@@ -77,5 +82,66 @@ describe('déconnexion', () => {
     useAuthStore.setState({ user: { id: 1 }, accessToken: 'a', isAuthenticated: true })
     expect(() => useAuthStore.getState().logout()).not.toThrow()
     expect(useAuthStore.getState().isAuthenticated).toBe(false)
+  })
+})
+
+// I10 : sur une tablette partagée, l'agent B qui se connecte directement (sans
+// que A se soit déconnecté), s'inscrit, ou usurpe/quitte une identité, ne doit
+// jamais hériter du cache design3d-api constitué sous une autre identité.
+describe('changement d’identité', () => {
+  afterEach(() => {
+    useAuthStore.setState({
+      user: null, accessToken: null, refreshToken: null, isAuthenticated: false,
+      impersonating: false, impersonatedUser: null
+    })
+    localStorage.clear()
+    vi.clearAllMocks()
+  })
+
+  it('purge le cache du service worker à la connexion', async () => {
+    const del = vi.fn(async () => true)
+    stubCaches({ delete: del })
+    api.post.mockResolvedValueOnce({
+      data: { user: { id: 2 }, access_token: 'a', refresh_token: 'r' }
+    })
+
+    await useAuthStore.getState().login('b@example.com', 'pw')
+
+    expect(del).toHaveBeenCalledWith(API_RUNTIME_CACHE)
+  })
+
+  it('purge le cache du service worker à l’inscription', async () => {
+    const del = vi.fn(async () => true)
+    stubCaches({ delete: del })
+    api.post.mockResolvedValueOnce({
+      data: { user: { id: 3 }, access_token: 'a', refresh_token: 'r' }
+    })
+
+    await useAuthStore.getState().register({ email: 'c@example.com' })
+
+    expect(del).toHaveBeenCalledWith(API_RUNTIME_CACHE)
+  })
+
+  it('purge le cache du service worker au démarrage d’une usurpation d’identité', () => {
+    const del = vi.fn(async () => true)
+    stubCaches({ delete: del })
+    useAuthStore.setState({ user: { id: 1 }, accessToken: 'admin-token', refreshToken: 'admin-refresh' })
+
+    useAuthStore.getState().startImpersonation({ id: 42 }, 'target-token')
+
+    expect(del).toHaveBeenCalledWith(API_RUNTIME_CACHE)
+  })
+
+  it('purge le cache du service worker à la sortie d’une usurpation d’identité', () => {
+    const del = vi.fn(async () => true)
+    stubCaches({ delete: del })
+    localStorage.setItem('semsar.adminAuth', JSON.stringify({
+      user: { id: 1 }, accessToken: 'admin-token', refreshToken: 'admin-refresh'
+    }))
+    useAuthStore.setState({ user: { id: 42 }, accessToken: 'target-token', impersonating: true, impersonatedUser: { id: 42 } })
+
+    useAuthStore.getState().stopImpersonation()
+
+    expect(del).toHaveBeenCalledWith(API_RUNTIME_CACHE)
   })
 })
