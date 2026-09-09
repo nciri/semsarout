@@ -38,6 +38,23 @@
   delay: 3
   until: semsar_facade_health_tenant.rc == 0
 
+# Un service peut tourner (systemctl actif, ci-dessous) tout en étant injoignable
+# à travers le BFF si son URL manque au secrets.env : le routage est conditionné à
+# `settings.design3d_url` et retombe sinon sur un 404 sans repli (gateway/app/main.py).
+# Cette lecture publique ne demande ni authentification ni entitlement et répond
+# `{"projects": []}` sur une cible inexistante : un 200 prouve la traversée
+# Traefik → BFF → design3d.
+- name: "Healthcheck — le BFF route bien vers design3d ({{ semsar_domain }})"
+  ansible.builtin.command:
+    cmd: >-
+      curl -ksf --resolve {{ semsar_domain }}:443:127.0.0.1
+      "https://{{ semsar_domain }}/api/v1/public/design3d/by-target?target_type=property&target_id=0"
+  changed_when: false
+  register: semsar_facade_health_design3d
+  retries: 5
+  delay: 3
+  until: semsar_facade_health_design3d.rc == 0
+
 - name: Healthcheck — lister toutes les units systemd du mesh
   ansible.builtin.set_fact:
     semsar_mesh_units: >-

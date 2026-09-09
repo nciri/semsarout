@@ -168,6 +168,14 @@
   loop: "{{ semsar_db_roles }}"
   when: ('PG_PASSWORD_' + (item | upper)) not in semsar_secrets
 
+- name: Relever les URLs inter-services absentes du secrets.env existant
+  ansible.builtin.set_fact:
+    semsar_backfilled_secrets: "{{ semsar_backfilled_secrets | default({}) | combine({item.key: item.value}) }}"
+  loop: "{{ semsar_service_urls | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  when: item.key not in semsar_secrets
+
 - name: Compléter {{ semsar_secrets_file }} avec les entrées manquantes
   ansible.builtin.lineinfile:
     path: "{{ semsar_secrets_file }}"

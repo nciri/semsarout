@@ -35,6 +35,11 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
+- `DESIGN3D_URL` est désormais diffusée en production : sans elle le BFF répondait 404 à
+  tout `/api/v1/design3d/*` et `/api/v1/public/design3d/*`, rendant l'éditeur et la
+  visionneuse muets. Les URLs inter-services ont une source unique
+  (`semsar_service_urls`), la variable est documentée dans `gateway/.env.example`, et le
+  healthcheck de déploiement traverse désormais le BFF jusqu'à design3d.
 - Provisionnement du service `design3d` : le rôle et le schéma PostgreSQL manquaient à
   `semsar_db_roles` alors que design3d était déjà déclaré en `mesh_apps`/`mesh_relays`,
   ce qui faisait échouer le playbook Ansible entier (indexation sans garde de
