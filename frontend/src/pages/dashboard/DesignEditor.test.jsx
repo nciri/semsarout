@@ -106,7 +106,10 @@ describe('DesignEditor', () => {
     await waitFor(async () => {
       const lv = await local.getLevel(LEVEL_ID)
       expect(lv.geometry.walls).toHaveLength(1)
-    }, { timeout: 4000 })
+      // Marge large : l'écriture attend la temporisation de 500 ms de
+      // l'éditeur puis un aller-retour IndexedDB. 4 s suffisaient en isolation
+      // mais ont expiré une fois sur une suite complète (machine chargée).
+    }, { timeout: 10000 })
 
     expect(await local.pendingCount()).toBeGreaterThan(0)
     const lv = await local.getLevel(LEVEL_ID)
