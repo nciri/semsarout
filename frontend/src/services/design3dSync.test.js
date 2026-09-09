@@ -161,6 +161,28 @@ describe('design3d sync engine', () => {
     expect(levels[0].revision).toBe(4)
   })
 
+  it('refreshFromServer adopts the initial level instead of duplicating it when creation already landed server-side but adoption has not happened yet (second tab / in-flight creation)', async () => {
+    const pid = 'p'.repeat(32)
+    const serverLevelId = newId()
+    // Le projet a été créé localement, mais `runOnce` n'a jamais tourné : le
+    // niveau initial est encore `seeded` et sans `server_id`, exactement comme
+    // si la réponse de `POST /projects` était encore en vol, ou comme si ce
+    // rafraîchissement venait d'un second onglet.
+    await applyLocal({ type: 'project.create', payload: { id: pid, target_type: 'property', target_id: 1, title: 'A' } }, { local })
+    const api = fakeApi({
+      sync: vi.fn(async () => ({ projects: [{ id: pid, levels: [{ id: serverLevelId, revision: 0, shelved_count: 0 }] }] })),
+      getProject: vi.fn(async () => ({ id: pid, levels: [lvl({ id: serverLevelId, project_id: pid, revision: 0 })] })),
+    })
+    await refreshFromServer({ api, local })
+    const levels = await local.listLevels(pid)
+    // Sans le rattrapage, le niveau serveur serait inséré comme un second
+    // enregistrement local (le double « RDC » indiscernable de C1, par une
+    // autre porte).
+    expect(levels).toHaveLength(1)
+    expect(levels[0].server_id).toBe(serverLevelId)
+    expect(levels[0].seeded).toBe(true)
+  })
+
   it('refreshFromServer reloads non-dirty levels whose revision advanced', async () => {
     await local.putLevel(lvl({ revision: 1 }))
     const api = fakeApi({ sync: vi.fn(async () => ({ projects: [{ id: 'p'.repeat(32), levels: [{ id: lvl().id, revision: 3, shelved_count: 0 }] }] })) })

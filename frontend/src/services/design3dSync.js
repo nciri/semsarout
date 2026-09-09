@@ -369,7 +369,35 @@ export async function refreshFromServer({ api = defaultApi, local = defaultLocal
     // dans `server_id` : sans cette résolution, le niveau renvoyé par le serveur
     // serait inséré une seconde fois et le projet afficherait deux onglets
     // « RDC » indiscernables, dont un seul porterait le travail.
-    const byServerId = new Map((await local.listLevels(p.id)).filter((l) => l.server_id).map((l) => [l.server_id, l]))
+    const localLevels = await local.listLevels(p.id)
+    const byServerId = new Map(localLevels.filter((l) => l.server_id).map((l) => [l.server_id, l]))
+    // Rattrapage : le projet existe déjà côté serveur alors que l'adoption de son
+    // niveau initial n'a pas encore eu lieu — réponse de création encore en vol,
+    // retour vers la liste des projets (qui appelle `refreshFromServer` hors moteur,
+    // cf. DesignProjects.jsx) ou second onglet. Quand les deux côtés n'ont qu'un
+    // seul niveau et que le nôtre est celui semé à la création, ce sont
+    // nécessairement les mêmes : on adopte au lieu d'insérer, sans quoi le niveau
+    // serveur deviendrait un second enregistrement — le double « RDC » de C1, par
+    // une autre porte. Toute situation plus riche retombe sur le comportement
+    // normal, faute de pouvoir apparier de façon certaine.
+    const unadopted = localLevels.filter((l) => l.seeded && !l.server_id)
+    if (unadopted.length === 1 && localLevels.length === 1 && p.levels.length === 1) {
+      const cur = (await local.getLevel(unadopted[0].id)) ?? unadopted[0]
+      const adopted = {
+        ...cur,
+        server_id: p.levels[0].id,
+        // Aligné sur adoptInitialLevel : sans ce report, un niveau non modifié
+        // depuis la création (dirty: false, revision: 0) serait ensuite jugé
+        // périmé par la boucle ci-dessous (`lv.revision > cur.revision`) dès
+        // que le serveur avance sa révision, et écrasé par un `getProject`
+        // dont l'objet fusionné garde heureusement `server_id` — mais autant
+        // partir sur la même base que le reste du fichier.
+        revision: cur.dirty ? cur.revision : (p.levels[0].revision ?? cur.revision),
+        base_revision: cur.dirty ? cur.base_revision : (p.levels[0].revision ?? cur.base_revision),
+      }
+      await local.putLevel(adopted)
+      byServerId.set(p.levels[0].id, adopted)
+    }
     for (const lv of p.levels) {
       const cur = (await local.getLevel(lv.id)) ?? byServerId.get(lv.id)
       if (lv.shelved_count > 0) onShelved?.(cur?.id ?? lv.id, lv.shelved_count)
