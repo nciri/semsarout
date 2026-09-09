@@ -133,7 +133,7 @@ jobs:
       - run: npm run build
 
   frontend-semsarout:
-    name: front semsarout (build + e2e tablette)
+    name: front semsarout (lint + test + build + e2e tablette)
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
@@ -148,6 +148,12 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
+      # Aligné sur frontend-m3a-l3achrane : sans lint ni tests unitaires ici,
+      # un lint rouge et des tests cassés passaient inaperçus jusqu'au build.
+      # `npm test` = vitest (les tests Playwright ont leur propre étape,
+      # après le build et l'installation du navigateur).
+      - run: npm run lint
+      - run: npm test
       - run: npm run build
       # E2E tablette de l'éditeur de plan (6 viewports iPad, API simulée).
       # Après le build : `vite preview` sert dist/.
