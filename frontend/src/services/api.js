@@ -49,9 +49,15 @@ api.interceptors.response.use(
               headers: { Authorization: `Bearer ${state.refreshToken}` }
             })
 
-            // Update stored token
-            const newState = { ...state, accessToken: response.data.access_token }
-            localStorage.setItem('auth-storage', JSON.stringify({ state: newState }))
+            // Passer par le store plutôt qu'écrire `localStorage` en direct :
+            // `hasFeature` lit `accessToken` depuis la mémoire du store, pas
+            // depuis `localStorage`. Un achat de module en cours de session
+            // resterait invisible jusqu'à un rechargement complet sinon (I11).
+            // `useAuthStore.setState` persiste lui-même dans `localStorage`
+            // (middleware `persist`), donc les deux restent synchronisés.
+            // Import différé pour éviter le cycle statique authStore -> api.
+            const { default: useAuthStore } = await import('../store/authStore')
+            useAuthStore.setState({ accessToken: response.data.access_token })
 
             // Retry original request
             originalRequest.headers.Authorization = `Bearer ${response.data.access_token}`
