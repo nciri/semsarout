@@ -96,6 +96,58 @@ describe('design3d sync engine', () => {
     expect(r.hasError).toBe(true)
   })
 
+  it("une cible introuvable (404) à la création est un refus définitif, comme le 403 hors périmètre", async () => {
+    // `_target_denied` (main.py) refuse une création avec DEUX codes : 403 hors
+    // périmètre et 404 cible introuvable — une cible supprimée entre le
+    // chargement du formulaire et la soumission. Les deux sont définitifs.
+    const pid = 'p'.repeat(32)
+    const message = 'Cible introuvable'
+    const api = fakeApi({
+      createProject: vi.fn(async () => { throw { response: { status: 404, data: { error: message } } } }),
+    })
+    await applyLocal({ type: 'project.create', payload: { id: pid, target_type: 'property', target_id: 1, title: 'A' } }, { local })
+    const [seeded] = await local.listLevels(pid)
+    const geometry = { walls: [{ id: 'w1', a: { x: 0, y: 0 }, b: { x: 4, y: 0 }, thickness_m: 0.2 }], rooms: [], openings: [] }
+    await applyLocal({ type: 'level.update', payload: { id: seeded.id, geometry } }, { local })
+    const r = await runOnce({ api, local, onState: () => {} })
+
+    // Sans court-circuit, le `level.update` partait vers un niveau que le
+    // serveur ne connaît pas et récoltait un 404 de `_load_level` masquant la
+    // vraie cause — le défaut C1, par la porte du 404.
+    expect(api.updateLevel).not.toHaveBeenCalled()
+    expect((await local.getProject(pid)).sync_error).toMatchObject({ code: 404, message })
+    expect((await local.getLevel(seeded.id)).sync_error).toMatchObject({ code: 404, message })
+    expect((await local.getLevel(seeded.id)).geometry).toEqual(geometry)
+    expect(r.hasError).toBe(true)
+    // Et la sortie du cul-de-sac doit être ouverte, comme pour un 403.
+    expect(await discardRefusedProject(pid, { local })).toBe(true)
+  })
+
+  it("un 404 ordinaire n'est jamais pris pour un refus de cible", async () => {
+    // Piège à éviter : tous les 404 ne se valent pas. Celui-ci vient d'une
+    // ressource disparue sur une mise à jour, pas du refus d'une cible à la
+    // création — le confondre transformerait un échec récupérable en abandon
+    // définitif, et couperait le projet de toute nouvelle tentative.
+    const pid = 'p'.repeat(32)
+    const api = fakeApi({
+      updateProject: vi.fn(async () => { throw { response: { status: 404, data: { error: 'Not found' } } } }),
+    })
+    await local.putProject({ id: pid, title: 'A' })
+    await applyLocal({ type: 'project.update', payload: { id: pid, title: 'B' } }, { local })
+    await runOnce({ api, local, onState: () => {} })
+
+    const proj = await local.getProject(pid)
+    expect(proj.sync_error).toMatchObject({ code: 404 })
+    expect(proj.synced).toBeUndefined()
+    // Ni abandon proposé, ni court-circuit : ce projet garde toutes ses chances.
+    expect(await discardRefusedProject(pid, { local })).toBe(false)
+    expect(await local.getProject(pid)).toBeTruthy()
+    api.updateProject.mockClear()
+    await applyLocal({ type: 'project.update', payload: { id: pid, title: 'C' } }, { local })
+    await runOnce({ api, local, onState: () => {} })
+    expect(api.updateProject).toHaveBeenCalled()
+  })
+
   it('un projet définitivement refusé peut être abandonné : projet, niveaux et file partent ensemble', async () => {
     const pid = 'p'.repeat(32)
     const api = fakeApi({

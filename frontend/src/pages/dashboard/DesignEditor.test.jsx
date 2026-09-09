@@ -363,13 +363,14 @@ describe('DesignEditor', () => {
   it('dit que la cible du projet a été refusée (403) au lieu de laisser le travail invisible', async () => {
     await local.putProject({
       id: PROJECT_ID, target_type: 'property', target_id: 1, title: 'Test', status: 'draft', synced: false,
-      sync_error: { code: 403, message: 'Cible hors du périmètre de votre agence', at: 1 },
+      sync_error: { code: 403, message: 'Cible hors du périmètre de votre agence', at: 1, target_refusal: true },
     })
     renderEditor()
 
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('Cible hors du périmètre de votre agence')
     // Rien à renvoyer : le refus ne se lève pas en réessayant.
+    expect(screen.queryByRole('button', { name: 'Renvoyer ce projet' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Renvoyer ce niveau' })).not.toBeInTheDocument()
     // Et le message ne doit rien promettre : aucun chemin de l'application ne
     // peut lever ce refus.
@@ -450,10 +451,29 @@ describe('DesignEditor', () => {
     await waitFor(async () => expect((await local.getProject(PROJECT_ID)).sync_error).toBeUndefined())
   })
 
+  it('offre la même sortie quand la cible du projet est introuvable (404)', async () => {
+    // Une cible supprimée entre le chargement du formulaire et la soumission :
+    // refus tout aussi définitif que le 403, et jusqu'ici sans aucune sortie —
+    // seul « Renvoyer ce projet » était proposé, qui réémet vers un
+    // identifiant que le serveur n'a jamais connu.
+    await local.putProject({
+      id: PROJECT_ID, target_type: 'property', target_id: 1, title: 'Test', status: 'draft', synced: false,
+      sync_error: { code: 404, message: 'Cible introuvable', at: 1, target_refusal: true },
+    })
+    renderEditor()
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Cible introuvable')
+    expect(screen.queryByRole('button', { name: 'Renvoyer ce projet' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Supprimer ce projet et ses plans' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmer la suppression' }))
+    await waitFor(async () => expect(await local.getProject(PROJECT_ID)).toBeUndefined())
+  })
+
   it('offre une sortie explicite au projet définitivement refusé, en disant ce qui sera perdu', async () => {
     await local.putProject({
       id: PROJECT_ID, target_type: 'property', target_id: 1, title: 'Test', status: 'draft', synced: false,
-      sync_error: { code: 403, message: 'Cible hors du périmètre de votre agence', at: 1 },
+      sync_error: { code: 403, message: 'Cible hors du périmètre de votre agence', at: 1, target_refusal: true },
     })
     renderEditor()
     await screen.findByRole('alert')

@@ -125,10 +125,25 @@ async function markSyncError(op, error, local, attemptedSeq, kind = null) {
   const status = error?.response?.status
   const data = error?.response?.data
   const message = data?.error ?? error?.message ?? 'Erreur de synchronisation'
+  // Refus DÉFINITIF de la cible d'un projet. `_target_denied` (main.py) refuse
+  // une création avec deux codes — 403 « hors du périmètre » et 404 « cible
+  // introuvable » (cible supprimée ou invalide) — et aucun des deux ne se lève
+  // en réessayant. Le 503 du mode dégradé, lui, est rejouable et n'arrive
+  // jamais ici : il repart par la voie de la reprise réseau.
+  //
+  // Le critère est le TYPE D'OPÉRATION, pas le seul code : sur
+  // `POST /design3d/projects`, le projet n'existe pas encore, aucun `_load`
+  // n'est fait, et le seul 403/404 que la route puisse produire vient de
+  // `_target_denied`. Les 404 rencontrés ailleurs désignent une ressource
+  // disparue sur une entité existante — souvent récupérable — et les traiter
+  // comme des refus de cible transformerait des échecs rattrapables en
+  // abandons définitifs, pire que le défaut corrigé.
+  const target_refusal = op.type === 'project.create' && (status === 403 || status === 404)
   const sync_error = {
     code: status,
     message,
     at: Date.now(),
+    ...(target_refusal ? { target_refusal: true } : {}),
     // Le serveur détaille ce qui cloche (422 : `details`, cf. main.py) ; sans
     // ces lignes, l'agent apprend qu'il y a un problème mais pas lequel.
     ...(Array.isArray(data?.details) && data.details.length ? { details: data.details } : {}),
@@ -213,16 +228,17 @@ async function adoptInitialLevel(projectId, serverLevels, local) {
 }
 
 // Le projet a-t-il été définitivement refusé par le serveur à sa création
-// (cible hors périmètre de l'agence/propriétaire, cf. C3, 403) ? `synced`
-// n'est posé qu'après une création réussie : s'il est toujours faux alors
-// qu'un `sync_error` de code 403 est déjà consigné, la création n'a jamais
-// abouti et n'aboutira jamais — un `project.update` refusé pour une tout
-// autre raison, lui, laisse `synced` à `true`, donc ne déclenche pas ce
-// court-circuit.
+// (cible hors périmètre, ou cible introuvable — cf. C3 et `_target_denied`) ?
+// `target_refusal` n'est posé que par l'échec d'un `project.create`
+// (markSyncError, qui explique le critère) ; `synced`, lui, n'est posé
+// qu'après une création réussie. Les deux ensemble ne désignent qu'une chose :
+// une création qui n'a jamais abouti et n'aboutira jamais. Un échec sur une
+// autre opération, quel que soit son code, ne déclenche donc pas ce
+// court-circuit et garde toutes ses chances d'être rejoué.
 async function targetRefusalError(projectId, local) {
   if (!projectId) return null
   const proj = await local.getProject(projectId)
-  if (!proj || proj.synced || proj.sync_error?.code !== 403) return null
+  if (!proj || proj.synced || !proj.sync_error?.target_refusal) return null
   // Sans ce court-circuit, toute opération sur un niveau de ce projet (déjà
   // en file, ou empilée par une édition ultérieure) partirait vers un projet
   // qui n'a jamais existé côté serveur et recevrait un 404 sans rapport avec
@@ -230,29 +246,33 @@ async function targetRefusalError(projectId, local) {
   // Found » trompeuse, et rejouant ainsi exactement le défaut C1 (travail
   // piégé côté client, sans que la trace conservée (`sync_error`) n'en
   // explique la vraie raison) sur ce cas précis.
+  // Le code d'origine est conservé (403 hors périmètre, 404 cible introuvable) :
+  // la trace laissée sur les niveaux doit dire la vraie cause, pas une autre.
   return Object.assign(new Error(proj.sync_error.message), {
-    response: { status: 403, data: { error: proj.sync_error.message } },
+    response: { status: proj.sync_error.code ?? 403, data: { error: proj.sync_error.message } },
   })
 }
 
 /**
- * Abandonne un projet dont la CRÉATION a été définitivement refusée (403 de
- * cible), avec tout ce qui en dépend : niveaux, images de fond, opérations
- * encore en file.
+ * Abandonne un projet dont la CRÉATION a été définitivement refusée par la
+ * vérification de cible (403 hors périmètre ou 404 cible introuvable), avec
+ * tout ce qui en dépend : niveaux, images de fond, opérations encore en file.
  *
  * C'est la seule sortie de ce cul-de-sac : aucun chemin de l'application ne
  * réenfile un `project.create`, et `targetRefusalError` court-circuite pour
  * toujours toute opération de tous les niveaux du projet. Sans elle, l'agent
  * reste devant un projet qui ne partira jamais et qu'il ne peut pas retirer.
  *
- * Le refus définitif est revérifié ici : cette fonction ne doit jamais pouvoir
- * servir à supprimer un projet que le serveur connaît, dont le travail serait
- * alors détruit sans copie. Renvoie `true` si l'abandon a bien eu lieu.
+ * Le refus définitif est revérifié ici, avec le critère exact de
+ * `targetRefusalError` : cette fonction ne doit jamais pouvoir servir à
+ * supprimer un projet que le serveur connaît, ni un projet dont l'échec est
+ * rattrapable — le travail serait alors détruit sans copie. Renvoie `true` si
+ * l'abandon a bien eu lieu.
  */
 export async function discardRefusedProject(projectId, { local = defaultLocal } = {}) {
   if (!projectId) return false
   const proj = await local.getProject(projectId)
-  if (!proj || proj.synced || proj.sync_error?.code !== 403) return false
+  if (!proj || proj.synced || !proj.sync_error?.target_refusal) return false
   const levelIds = new Set((await local.listLevels(projectId)).map((lv) => lv.id))
   await local.dropQueued((op) => {
     const p = op.payload ?? {}

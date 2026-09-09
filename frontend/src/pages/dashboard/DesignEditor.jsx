@@ -258,12 +258,13 @@ export default function DesignEditor() {
         // échoué — un « Marquer prêt » refusé, par exemple — où `synced` reste
         // vrai. Ne regarder que `!synced` rendait ce cas parfaitement invisible.
         //
-        // `refused` distingue le cul-de-sac : une CRÉATION refusée pour cause de
-        // cible (403, cf. C3) ne sera jamais retentée avec succès et bloque tous
-        // les niveaux du projet ; les autres échecs, eux, peuvent aboutir en
-        // réessayant.
+        // `refused` distingue le cul-de-sac : une CRÉATION refusée par la
+        // vérification de cible (403 hors périmètre ou 404 cible introuvable,
+        // cf. C3 et markSyncError) ne sera jamais retentée avec succès et
+        // bloque tous les niveaux du projet ; les autres échecs, eux, peuvent
+        // aboutir en réessayant — y compris les 404 d'une tout autre origine.
         const se = proj?.sync_error ?? null
-        const err = se ? { ...se, refused: !proj.synced && se.code === 403 } : null
+        const err = se ? { ...se, refused: !proj.synced && !!se.target_refusal } : null
         if (alive) setProjectError((cur) => (JSON.stringify(cur) === JSON.stringify(err) ? cur : err))
       } catch {
         // Le stockage local a son propre message (`seedError`) : ne pas le doubler.
