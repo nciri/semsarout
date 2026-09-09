@@ -59,9 +59,11 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
   `PG_PASSWORD_DESIGN3D`). Le gabarit du relais reçoit la même garde que celui du worker,
   et un serveur déjà provisionné se voit compléter son `secrets.env` (jamais réécrit)
   avec les seules entrées manquantes.
-- La migration `billing/migrate_design3d.sql` est désormais jouée par le playbook Ansible :
-  sans elle, la colonne `has_design3d` manquait en production et toute lecture des plans
-  d'abonnement échouait (`UndefinedColumn`), mettant billing entièrement hors service.
+- Les migrations additives sont jouées par `infra/prod/deploy-remote.sh`, seule chaîne de
+  déploiement réellement branchée (`infra/prod/ansible` n'est appelé par aucun workflow).
+  `billing/migrate_design3d.sql` en fait partie : sans elle, la colonne `has_design3d`
+  manquait en production et toute lecture des plans d'abonnement échouait
+  (`UndefinedColumn`), mettant billing entièrement hors service.
 - Un fragment de page qui ne se charge pas (déploiement pendant la session, coupure
   réseau) affiche un message et un bouton de rechargement au lieu d'un écran blanc :
   barrière d'erreur autour des routes + rechargement automatique du service worker
