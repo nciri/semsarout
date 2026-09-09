@@ -114,6 +114,26 @@ export const peek = async () => {
   return all[0] ?? null
 }
 export const remove = async (seq) => (await openDb()).delete('outbox', seq)
+
+/**
+ * Compte les tentatives d'une opération, sur l'enregistrement lui-même — un
+ * compteur en mémoire repartirait de zéro à chaque rechargement de page, et une
+ * opération qui échoue toujours de la même façon gèlerait la file pour
+ * toujours. Renvoie le nombre de tentatives après incrément (0 si l'opération
+ * a déjà été retirée).
+ */
+export const markAttempt = async (seq) => {
+  const tx = (await openDb()).transaction('outbox', 'readwrite')
+  const op = await tx.store.get(seq)
+  if (!op) {
+    await tx.done
+    return 0
+  }
+  const attempts = (op.attempts ?? 0) + 1
+  await tx.store.put({ ...op, attempts })
+  await tx.done
+  return attempts
+}
 export const pendingCount = async () => (await openDb()).count('outbox')
 
 export const clearAll = async () => {

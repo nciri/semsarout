@@ -4,6 +4,15 @@ import { newId } from '../utils/floorplan'
 
 const isNetworkError = (e) => !e?.response && (e?.code === 'ERR_NETWORK' || e?.message === 'net' || !navigator.onLine)
 
+// Nombre de tours accordés à une exception du CLIENT (aucune réponse HTTP, et
+// le réseau n'est pas en cause) avant mise en quarantaine. Deux exigences
+// contraires : une panne passagère du stockage local, traversée par `send()`,
+// ne doit pas faire jeter du travail au premier faux pas ; mais une exception
+// déterministe ne doit pas rejouer à l'identique indéfiniment, ce qui gelait la
+// file entière — pour tous les niveaux et tous les projets — sans autre issue
+// que de vider IndexedDB.
+const MAX_CLIENT_ERROR_ATTEMPTS = 3
+
 let failures = 0
 
 // Point d'entrée unique pour toute mutation de l'éditeur : écrit d'abord en
@@ -372,6 +381,29 @@ export async function runOnce({ api = defaultApi, local = defaultLocal, onState 
         await local.remove(op.seq)
         hasError = true
         onState?.({ state: 'error', error: e.response?.data, pending: await local.pendingCount() })
+        continue
+      }
+
+      // Exception du client : aucune réponse HTTP, et le réseau n'est pas en
+      // cause. La traiter comme une panne réseau — ce que faisait le `!status`
+      // ci-dessous — la rejouait à l'identique à chaque tour, bloquait toute la
+      // file et affichait « hors ligne » alors que la connexion allait bien.
+      // On la retente, mais un nombre borné de fois, puis on la met en
+      // quarantaine comme un échec non rejouable : l'opération est retirée et
+      // la cause reste consultable sur l'entité locale (`sync_error`, cf. I2).
+      if (!status && !isNetworkError(e)) {
+        const attempts = await local.markAttempt(op.seq)
+        hasError = true
+        if (attempts < MAX_CLIENT_ERROR_ATTEMPTS) {
+          // Rien n'est retiré : le travail que porte l'opération est intact,
+          // le prochain tour du moteur la retentera.
+          const pending = await local.pendingCount()
+          onState?.({ state: 'error', error: { error: e?.message }, pending })
+          return { synced, pending, conflict, hasError }
+        }
+        await markSyncError(op, e, local, e.attemptedSeq)
+        await local.remove(op.seq)
+        onState?.({ state: 'error', error: { error: e?.message }, pending: await local.pendingCount() })
         continue
       }
 

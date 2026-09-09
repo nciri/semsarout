@@ -314,6 +314,54 @@ describe('design3d sync engine', () => {
     expect(r.hasError).toBe(true)
   })
 
+  it("une exception sans réponse HTTP ne gèle pas la file et n'annonce pas « hors ligne »", async () => {
+    const otherId = 'o'.repeat(32)
+    const api = fakeApi({
+      updateLevel: vi.fn(async (id) => {
+        // Forme exacte du défaut : une exception du CLIENT, sans réponse HTTP,
+        // alors que le réseau va très bien (cf. `bg.blob` sur un fond absent).
+        if (id === lvl().id) throw new TypeError("Cannot read properties of undefined (reading 'blob')")
+        return { ...lvl({ id }), revision: 1, shelved: false }
+      }),
+    })
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, geometry: { walls: [], rooms: [], openings: [] } } }, { local })
+    await applyLocal({ type: 'level.update', payload: { id: otherId, geometry: { walls: [], rooms: [], openings: [] } } }, { local })
+
+    const states = []
+    let r
+    // Quelques tours du moteur : l'opération doit finir en quarantaine, pas
+    // rejouer à l'identique pour toujours en bloquant tout le reste.
+    for (let i = 0; i < 3; i++) r = await runOnce({ api, local, onState: (s) => states.push(s) })
+
+    expect(states.some((s) => s.state === 'offline')).toBe(false)
+    expect(await local.pendingCount()).toBe(0)
+    expect(r.hasError).toBe(true)
+    const stuck = await local.getLevel(lvl().id)
+    expect(stuck.sync_error).toMatchObject({ message: expect.stringContaining('blob') })
+    // Le reste de la file, pour tous les autres niveaux, a bien pu repartir.
+    expect((await local.getLevel(otherId)).revision).toBe(1)
+  })
+
+  it('une exception du client transitoire est rejouée avant toute quarantaine', async () => {
+    let calls = 0
+    const api = fakeApi({
+      updateLevel: vi.fn(async (id, body) => {
+        calls++
+        if (calls === 1) throw new TypeError('stockage momentanément indisponible')
+        return { ...lvl(), name: body.name, revision: body.base_revision + 1, shelved: false }
+      }),
+    })
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'V1', geometry: { walls: [], rooms: [], openings: [] } } }, { local })
+    await runOnce({ api, local, onState: () => {} })
+    expect(await local.pendingCount()).toBe(1)
+    await runOnce({ api, local, onState: () => {} })
+    expect(await local.pendingCount()).toBe(0)
+    const stored = await local.getLevel(lvl().id)
+    expect(stored.name).toBe('V1')
+    expect(stored.dirty).toBe(false)
+    expect(stored.sync_error).toBeUndefined()
+  })
+
   it('refreshFromServer preserves sync_error across a successful background refresh', async () => {
     await local.putLevel(lvl({ revision: 1, dirty: false, sync_error: { code: 422, message: 'Géométrie invalide', at: 111 } }))
     const api = fakeApi({ sync: vi.fn(async () => ({ projects: [{ id: 'p'.repeat(32), levels: [{ id: lvl().id, revision: 3, shelved_count: 0 }] }] })) })
