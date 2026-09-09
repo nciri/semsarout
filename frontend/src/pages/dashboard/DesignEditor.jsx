@@ -62,6 +62,11 @@ export default function DesignEditor() {
   const [fullscreen, setFullscreen] = useState(false)
   const [compact, setCompact] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
+  // Niveau réellement chargé dans l'éditeur. Tant qu'il ne correspond pas à
+  // `levelId`, l'amorçage (lecture IndexedDB, asynchrone) n'a pas encore rendu
+  // la main : dessiner à ce moment-là serait perdu, le `LOAD_GEOMETRY` de
+  // l'amorçage écrasant le tracé — l'outil reste donc désactivé jusque-là.
+  const [readyLevelId, setReadyLevelId] = useState(null)
 
   const seededRef = useRef(null)
   const savedRef = useRef('')
@@ -115,6 +120,7 @@ export default function DesignEditor() {
       savedRef.current = snapshotOf(levelId, nextForm, geometry)
       setForm(nextForm)
       dispatch({ type: 'LOAD_GEOMETRY', geometry, resetHistory: true })
+      setReadyLevelId(levelId)
     })()
     return () => {
       alive = false
@@ -222,6 +228,10 @@ export default function DesignEditor() {
   const extentM = imageSize?.widthM || FREE_EXTENT_M
   const needsCalibration = !!background && !form.calibration
   const locked = needsCalibration && !calibrating
+  // Amorçage terminé pour CE niveau ? Sinon rien n'est modifiable : la lecture
+  // locale est asynchrone et son `LOAD_GEOMETRY` effacerait sans bruit ce qui
+  // aurait été tracé entre-temps.
+  const ready = !!levelId && readyLevelId === levelId
 
   function onCalibrationPoint(p) {
     setCalPoints((pts) => (pts.length >= 2 ? [p] : [...pts, p]))
@@ -379,7 +389,7 @@ export default function DesignEditor() {
       onToggle={toggleOption}
       fullscreen={fullscreen}
       onFullscreen={toggleFullscreen}
-      disabled={locked}
+      disabled={locked || !ready}
       disabledReason={locked ? t('dashboard:designEditor.calibration.required') : null}
       vertical={!compact}
     />
@@ -397,7 +407,7 @@ export default function DesignEditor() {
 
   return (
     <Design3dGate hasFeature={hasFeature('design3d')}>
-      <div ref={rootRef} className={`bg-gray-50 ${fullscreen ? 'fixed inset-0 z-40 safe-inline safe-bottom' : ''}`}>
+      <div ref={rootRef} className={`bg-gray-50 ${fullscreen ? 'fixed inset-0 z-40 safe-top safe-inline safe-bottom' : ''}`}>
         <div className="flex flex-wrap items-center gap-3 p-3 border-b border-gray-200 bg-white">
           <Link to="/dashboard/conception" className="inline-flex items-center gap-2 text-gray-600 min-h-[44px]">
             <FiArrowLeft className="w-4 h-4 rtl:rotate-180" />
@@ -445,7 +455,7 @@ export default function DesignEditor() {
               background={background?.url || null}
               imageSize={imageSize}
               extentM={extentM}
-              locked={locked}
+              locked={locked || !ready}
               calibration={calibrating ? { active: true, points: calPoints, onPoint: onCalibrationPoint } : { points: calPoints }}
               onLongPress={({ client, hit }) => {
                 dispatch({ type: 'SELECT', selection: hit })
@@ -511,7 +521,7 @@ export default function DesignEditor() {
 
         {compact && (
           <>
-            {/* La barre collante est hors du flux du <body> : elle porte
+            {/* La barre collante est hors du flux normal de la page : elle porte
                 elle-même les marges de zone sûre, sinon elle passe sous la
                 barre d'accueil de la tablette. */}
             <div className="sticky bottom-0 bg-white border-t border-gray-200 safe-inline safe-bottom">

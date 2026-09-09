@@ -40,6 +40,17 @@ async function seedLevel() {
   })
 }
 
+// Signal explicite d'un éditeur prêt à recevoir un tracé : la barre d'outils
+// n'est active qu'une fois le niveau lu depuis IndexedDB. Attendre l'onglet du
+// niveau ne suffit PAS — il apparaît avant, et dessiner à ce moment-là faisait
+// écraser le tracé par l'amorçage (cf. correctif round 2).
+async function pickTool(name) {
+  const btn = screen.getByRole('button', { name })
+  await waitFor(() => expect(btn).toBeEnabled())
+  fireEvent.click(btn)
+  return btn
+}
+
 function renderEditor() {
   return render(
     <MemoryRouter initialEntries={[`/dashboard/conception/${PROJECT_ID}`]}>
@@ -93,11 +104,19 @@ describe('DesignEditor', () => {
     expect(screen.queryByRole('button', { name: 'Mur' })).not.toBeInTheDocument()
   })
 
+  it('n’accepte aucun tracé tant que le niveau n’est pas chargé', async () => {
+    renderEditor()
+    // Au montage, la lecture IndexedDB du niveau n'a pas encore rendu la main :
+    // un tracé accepté ici serait effacé par l'amorçage qui suit.
+    expect(screen.getByRole('button', { name: 'Mur' })).toBeDisabled()
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Mur' })).toBeEnabled())
+  })
+
   it('trace un mur au doigt et met l’édition en file sans réseau', async () => {
     renderEditor()
     await screen.findByRole('tab', { name: 'RDC' })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Mur' }))
+    await pickTool('Mur')
     const canvas = screen.getByTestId('floorplan-canvas')
     fireEvent.pointerDown(canvas, { pointerId: 1, clientX: 100, clientY: 100 })
     fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 300, clientY: 100 })
@@ -106,10 +125,8 @@ describe('DesignEditor', () => {
     await waitFor(async () => {
       const lv = await local.getLevel(LEVEL_ID)
       expect(lv.geometry.walls).toHaveLength(1)
-      // Marge large : l'écriture attend la temporisation de 500 ms de
-      // l'éditeur puis un aller-retour IndexedDB. 4 s suffisaient en isolation
-      // mais ont expiré une fois sur une suite complète (machine chargée).
-    }, { timeout: 10000 })
+      // Temporisation de 500 ms de l'éditeur + aller-retour IndexedDB.
+    }, { timeout: 4000 })
 
     expect(await local.pendingCount()).toBeGreaterThan(0)
     const lv = await local.getLevel(LEVEL_ID)
@@ -122,7 +139,7 @@ describe('DesignEditor', () => {
     renderEditor()
     await screen.findByRole('tab', { name: 'RDC' })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Mur' }))
+    await pickTool('Mur')
     const canvas = screen.getByTestId('floorplan-canvas')
     fireEvent.pointerDown(canvas, { pointerId: 1, clientX: 100, clientY: 100 })
     fireEvent.pointerUp(canvas, { pointerId: 1, clientX: 300, clientY: 100 })
