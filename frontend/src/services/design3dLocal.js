@@ -1,12 +1,32 @@
-import { openDB } from 'idb'
+import { deleteDB, openDB } from 'idb'
 
 const DB = 'semsar-design3d'
 const VERSION = 1
 
 let dbp
+let dbName
 
-export function openDb() {
-  dbp ??= openDB(DB, VERSION, {
+/**
+ * Identité de la session, telle que le store d'authentification la pose au
+ * login (`localStorage.userId`). Une base PAR COMPTE : sur la tablette
+ * partagée — le cas d'usage explicite de la spec — l'agent suivant ne peut ni
+ * lire les projets du précédent, ni voir sa file d'attente repartir sous son
+ * propre jeton (403/404 destructeurs, ou révisions signées du mauvais auteur).
+ * Sans compte identifié (session fermée), on retombe sur la base historique,
+ * qui n'a alors rien à montrer.
+ */
+const currentUserId = () => {
+  try {
+    return localStorage.getItem('userId') || null
+  } catch {
+    return null
+  }
+}
+
+const dbNameFor = (userId) => (userId ? `${DB}-u${userId}` : DB)
+
+const open = (name) =>
+  openDB(name, VERSION, {
     upgrade(db) {
       db.createObjectStore('projects', { keyPath: 'id' })
       db.createObjectStore('levels', { keyPath: 'id' }).createIndex('project_id', 'project_id')
@@ -14,7 +34,52 @@ export function openDb() {
       db.createObjectStore('outbox', { keyPath: 'seq', autoIncrement: true })
     },
   })
+
+// Oublie la connexion mémorisée (sans la fermer : l'appelant s'en charge quand
+// il détient la poignée).
+function forgetDb() {
+  const prev = dbp
+  dbp = undefined
+  dbName = undefined
+  return prev
+}
+
+export function openDb() {
+  const name = dbNameFor(currentUserId())
+  if (!dbp || dbName !== name) {
+    // Changement de compte : la connexion précédente est fermée, sinon la base
+    // du compte partant resterait ouverte (et bloquerait sa suppression).
+    forgetDb()?.then((db) => db.close()).catch(() => {})
+    dbName = name
+    dbp = open(name)
+  }
   return dbp
+}
+
+/**
+ * Purge appelée à la déconnexion, sur les mêmes chemins que
+ * `purgeRuntimeCaches()`.
+ *
+ * Règle : ne jamais détruire un travail que le serveur n'a pas reçu. Si la file
+ * d'attente est vide, la base du compte partant est supprimée ; s'il reste des
+ * éditions en attente, elle est conservée — elle porte le nom de ce compte, et
+ * reste donc invisible pour l'agent suivant, tout en attendant le retour du
+ * sien. Ne lève jamais : la déconnexion ne doit dépendre d'aucun stockage.
+ */
+export async function purgeLocalData(userId = currentUserId()) {
+  const name = dbNameFor(userId)
+  try {
+    const isCurrent = dbName === name && !!dbp
+    const db = await (isCurrent ? dbp : open(name))
+    const pending = await db.count('outbox')
+    if (isCurrent) forgetDb()
+    db.close()
+    if (pending > 0) return 'kept'
+    await deleteDB(name)
+    return 'deleted'
+  } catch {
+    return 'unavailable'
+  }
 }
 
 export const getProject = async (id) => (await openDb()).get('projects', id)

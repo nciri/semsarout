@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import api from '../services/api'
 import { purgeRuntimeCaches } from '../utils/runtimeCache'
+import { purgeLocalData } from '../services/design3dLocal'
 
 // Entitlements de plan. Le serveur les pose dans les claims du jeton d'accès
 // (identity/app/auth.py::_claims, monolithe backend/app/api/v1/auth.py) : c'est
@@ -86,6 +87,14 @@ const useAuthStore = create(
       },
 
       logout: () => {
+        // Les plans hors-ligne (IndexedDB) appartiennent eux aussi au compte
+        // qui se déconnecte : sans cette purge, l'agent suivant sur la même
+        // tablette ouvrirait ses projets, ses niveaux et ses images de fond, et
+        // sa file d'attente repartirait sous le jeton du nouveau venu.
+        // L'identifiant est passé explicitement : `localStorage` est vidé juste
+        // en dessous. Purge non attendue, comme celle du service worker.
+        const purged = purgeLocalData(get().user?.id ?? null)
+
         // Clear localStorage
         localStorage.removeItem('token')
         localStorage.removeItem('userId')
@@ -104,6 +113,10 @@ const useAuthStore = create(
           refreshToken: null,
           isAuthenticated: false
         })
+
+        // Rendue pour les seuls appelants qui veulent attendre la purge (tests) ;
+        // la déconnexion, elle, est immédiate.
+        return purged
       },
 
       hasFeature: (name) => {
