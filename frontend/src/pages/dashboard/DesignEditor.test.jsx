@@ -260,6 +260,44 @@ describe('DesignEditor', () => {
     expect(lv.geometry.walls[0].b.x - lv.geometry.walls[0].a.x).toBeCloseTo(5, 1)
   })
 
+  it('dit qu’une synchronisation de niveau a échoué et permet de la relancer', async () => {
+    // Sans cela, `sync_error` n'est lu par aucun composant : l'échec est
+    // invisible et le travail local n'a aucune voie de reprise (I2).
+    await local.putLevel({
+      id: LEVEL_ID, project_id: PROJECT_ID, name: 'RDC', position: 0, revision: 0, base_revision: 0,
+      wall_height_m: 2.7, calibration: null, geometry: { walls: [], rooms: [], openings: [] }, dirty: false,
+      sync_error: { code: 422, message: 'Géométrie invalide', at: 1 },
+    })
+    renderEditor()
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Géométrie invalide')
+
+    const before = await local.pendingCount()
+    fireEvent.click(screen.getByRole('button', { name: 'Renvoyer ce niveau' }))
+    // La reprise doit vraiment remettre le niveau en file (et non seulement
+    // masquer le message) et effacer la trace de l'échec dépassé.
+    await waitFor(async () => expect(await local.pendingCount()).toBe(before + 1))
+    await waitFor(async () => {
+      const lv = await local.getLevel(LEVEL_ID)
+      expect(lv.sync_error).toBeUndefined()
+      expect(lv.dirty).toBe(true)
+    })
+  })
+
+  it('dit que la cible du projet a été refusée (403) au lieu de laisser le travail invisible', async () => {
+    await local.putProject({
+      id: PROJECT_ID, target_type: 'property', target_id: 1, title: 'Test', status: 'draft', synced: false,
+      sync_error: { code: 403, message: 'Cible hors du périmètre de votre agence', at: 1 },
+    })
+    renderEditor()
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Cible hors du périmètre de votre agence')
+    // Rien à renvoyer : le refus ne se lève pas en réessayant.
+    expect(screen.queryByRole('button', { name: 'Renvoyer ce niveau' })).not.toBeInTheDocument()
+  })
+
   it('ne réinitialise pas le travail en cours quand le niveau local change sous l’éditeur', async () => {
     renderEditor()
     await screen.findByRole('tab', { name: 'RDC' })

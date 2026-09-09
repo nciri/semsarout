@@ -1319,6 +1319,12 @@
       "auth_expired": "Session expirée",
       "error": "Erreur de synchronisation"
     },
+    "syncError": {
+      "level": "Ce niveau n'a pas pu être synchronisé : {{message}}. Votre travail reste enregistré sur cet appareil.",
+      "project": "Ce projet n'a pas pu être créé sur le serveur : {{message}}. Vos plans restent enregistrés sur cet appareil, mais ils ne seront ni partagés ni publiés tant que ce refus n'est pas levé.",
+      "retry": "Renvoyer ce niveau",
+      "tab": "Synchronisation échouée"
+    },
     "calibration": {
       "action": "Calibrer",
       "title": "Calibration du plan",

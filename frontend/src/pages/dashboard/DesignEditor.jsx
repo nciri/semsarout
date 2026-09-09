@@ -67,6 +67,9 @@ export default function DesignEditor() {
   // la main : dessiner à ce moment-là serait perdu, le `LOAD_GEOMETRY` de
   // l'amorçage écrasant le tracé — l'outil reste donc désactivé jusque-là.
   const [readyLevelId, setReadyLevelId] = useState(null)
+  // Échec de synchronisation du PROJET (création refusée) : distinct de celui
+  // d'un niveau, et prioritaire — tant qu'il dure, aucun niveau ne partira.
+  const [projectError, setProjectError] = useState(null)
   // Échec d'amorçage : 'read' (le stockage local n'a pas répondu) ou 'missing'
   // (le niveau n'y est plus). `seedAttempt` sert uniquement à relancer l'effet.
   const [seedError, setSeedError] = useState(null)
@@ -82,7 +85,10 @@ export default function DesignEditor() {
   const loadLevels = useCallback(async () => {
     const rows = (await local.listLevels(projectId)).filter((l) => !l.deleted)
     rows.sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-    setLevels(rows)
+    // Cette relecture est aussi déclenchée par chaque état du moteur de
+    // synchronisation (pour voir apparaître `sync_error`) : garder la même
+    // référence quand rien n'a bougé évite d'inonder l'éditeur de rendus.
+    setLevels((cur) => (JSON.stringify(cur) === JSON.stringify(rows) ? cur : rows))
     return rows
   }, [projectId])
 
@@ -185,6 +191,43 @@ export default function DesignEditor() {
     engineRef.current = engine
     return () => engine.stop()
   }, [])
+
+  // --- échecs de synchronisation persistés --------------------------------
+  // `sync_error` est écrit par le moteur sur l'entité locale à chaque échec non
+  // rejouable (422/403/404/5xx). Sans cette relecture, il n'était lu par aucun
+  // composant : l'agent voyait le badge repasser à « À jour » alors que son
+  // niveau n'avait jamais atteint le serveur, sans message ni voie de reprise.
+  // Relu à chaque état du moteur, donc dès que l'échec est consigné.
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      try {
+        await loadLevels()
+        const proj = await local.getProject(projectId)
+        // Un projet dont la création a été refusée (403 de cible, cf. C3) n'est
+        // jamais `synced` : ses niveaux ne partiront jamais, quelle que soit la
+        // réédition. C'est la cause racine, elle prime sur l'erreur du niveau.
+        const err = proj && !proj.synced ? (proj.sync_error ?? null) : null
+        if (alive) setProjectError((cur) => (JSON.stringify(cur) === JSON.stringify(err) ? cur : err))
+      } catch {
+        // Le stockage local a son propre message (`seedError`) : ne pas le doubler.
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [loadLevels, projectId, sync])
+
+  // Reprise manuelle : ré-enfile le niveau tel qu'il est en local (une édition
+  // de plus, donc `dirty` à nouveau et trace d'échec effacée), puis relance le
+  // moteur. Aucun contenu n'est touché — c'est bien le travail conservé sur
+  // l'appareil qui repart.
+  async function retryLevelSync() {
+    if (!levelId) return
+    await applyLocal({ type: 'level.update', payload: { id: levelId } })
+    await loadLevels()
+    engineRef.current?.tick()
+  }
 
   // --- versions mises de côté (étagère, propriétaire seulement) -----------
   // Ces appels sortent du moteur de synchronisation : ils doivent traduire
@@ -478,8 +521,34 @@ export default function DesignEditor() {
           )}
         </div>
 
+        {(projectError || currentLevel?.sync_error) && (
+          <div
+            role="alert"
+            className="p-3 bg-red-50 border-b border-red-200 text-red-800 text-sm flex flex-wrap items-center gap-3"
+          >
+            <span>
+              {projectError
+                ? t('dashboard:designEditor.syncError.project', { message: projectError.message })
+                : t('dashboard:designEditor.syncError.level', { message: currentLevel.sync_error.message })}
+            </span>
+            {/* Un refus de cible ne se lève pas en réessayant : ne proposer la
+                reprise que là où elle peut aboutir. */}
+            {!projectError && (
+              <button type="button" className="btn-secondary min-h-[44px]" onClick={retryLevelSync}>
+                {t('dashboard:designEditor.syncError.retry')}
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="p-3 bg-white border-b border-gray-200">
-          <LevelTabs levels={levels} currentId={levelId} onSelect={setLevelId} onCreate={addLevel} />
+          <LevelTabs
+            levels={levels}
+            currentId={levelId}
+            onSelect={setLevelId}
+            onCreate={addLevel}
+            errorLabel={t('dashboard:designEditor.syncError.tab')}
+          />
         </div>
 
         <div className={`flex ${compact ? 'flex-col' : 'flex-row'} gap-0`}>
