@@ -25,6 +25,7 @@ PIP="${PIP:-$APP/venv/bin/pip}"
 DB="${DB:-semsar_prod}"
 ENV_DIR="${ENV_DIR:-/etc/semsar/env}"
 SYSTEMD_DIR="${SYSTEMD_DIR:-/etc/systemd/system}"
+URLS_ENV="${URLS_ENV:-/etc/semsar/urls.env}"
 
 # Services introduits APRÈS le provisioning initial du serveur. Ansible ne les
 # installera pas : il n'est plus dans la chaîne de déploiement. Chaque entrée
@@ -107,6 +108,21 @@ SQL
   fi
 }
 
+# URL inter-services. Toutes les units partagent /etc/semsar/urls.env : sans l'entrée
+# du service, le BFF a l'URL amont à None et répond 404 sur TOUTES ses routes — le
+# service tourne, mais reste injoignable, silencieusement. Ajout seul, jamais de
+# réécriture d'une entrée existante.
+ensure_service_url() {
+  local svc="$1" port="$2" var
+  var="$(printf '%s' "$svc" | tr '[:lower:]-' '[:upper:]_')_URL"
+  if grep -q "^$var=" "$URLS_ENV" 2>/dev/null; then
+    return 0
+  fi
+  mkdir -p "$(dirname "$URLS_ENV")"
+  printf '%s=http://localhost:%s\n' "$var" "$port" >> "$URLS_ENV"
+  echo "  + $var dans $URLS_ENV"
+}
+
 # Unités systemd du service, copiées de celles d'un service existant : ni le nom des
 # unités, ni leur contenu ne sont devinés ici — on reprend la convention réelle de la
 # machine (une unité d'API + une de relais pour le gabarit choisi) en substituant le
@@ -139,6 +155,7 @@ while [ "$#" -ge 3 ]; do
       "$SYSTEMD_DIR/semsar-$tmpl_svc.service" 2>/dev/null | head -n 1)"
   echo "  · $svc (port $port, gabarit $tmpl_svc${tmpl_port:+:$tmpl_port})"
   ensure_db_role "$svc"
+  ensure_service_url "$svc" "$port"
   if [ -n "$tmpl_port" ]; then
     ensure_units "$svc" "$port" "$tmpl_svc" "$tmpl_port"
   else
@@ -163,6 +180,19 @@ echo "  gateway/BFF health: ${code:-000}"
 FAIL=0
 [ "$code" = "200" ] || FAIL=1
 sleep 3  # laisser les dernières unités finir leur démarrage
+
+# Un service peut être « active » et rester injoignable À TRAVERS le BFF si son URL
+# manque à urls.env : le routage y est conditionné à l'URL amont et retombe sinon sur
+# un 404 sans repli. Le contrôle d'unités seul ne l'aurait jamais vu. Ces lectures ne
+# demandent ni authentification ni entitlement et répondent 200 sur une cible
+# inexistante — une entrée par service dont le routage BFF doit être prouvé.
+ROUTING_CHECKS="design3d:/api/v1/public/design3d/by-target?target_type=property&target_id=0"
+for rc in $ROUTING_CHECKS; do
+  rc_svc="${rc%%:*}"; rc_path="${rc#*:}"
+  rc_code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:8099$rc_path" 2>/dev/null || true)
+  echo "  routage BFF -> $rc_svc: ${rc_code:-000}"
+  [ "$rc_code" = "200" ] || { echo "  ✗ le BFF ne route pas vers $rc_svc" >&2; FAIL=1; }
+done
 
 echo "== 5. migrations additives (ALTER sur des tables créées par create_all) =="
 # Jouées après la convergence du mesh, donc après le create_all de chaque service : la

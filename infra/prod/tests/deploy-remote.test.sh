@@ -29,7 +29,7 @@ trap 'rm -rf "$TMP"' EXIT
 
 # --- serveur simulé -----------------------------------------------------------
 BIN="$TMP/bin"; mkdir -p "$BIN"
-export SQL_LOG="$TMP/sql.log" SYSTEMCTL_LOG="$TMP/systemctl.log"
+export SQL_LOG="$TMP/sql.log" SYSTEMCTL_LOG="$TMP/systemctl.log" CURL_LOG="$TMP/curl.log"
 
 cat > "$BIN/runuser" <<'STUB'
 #!/usr/bin/env bash
@@ -46,7 +46,13 @@ esac
 STUB
 cat > "$BIN/curl" <<'STUB'
 #!/usr/bin/env bash
-echo 200
+# Journalise l'URL demandée et répond 200, sauf si CURL_FAIL_MATCH la couvre.
+url="${*: -1}"
+echo "$url" >> "$CURL_LOG"
+case "${CURL_FAIL_MATCH:-}" in
+  "") echo 200 ;;
+  *) case "$url" in *"$CURL_FAIL_MATCH"*) echo 502 ;; *) echo 200 ;; esac ;;
+esac
 STUB
 cat > "$BIN/pip" <<'STUB'
 #!/usr/bin/env bash
@@ -58,7 +64,9 @@ export PATH="$BIN:$PATH"
 # Arborescence : le code rsync-é (réel, depuis le dépôt) + l'état du serveur.
 export APP="$TMP/opt/semsar" PIP="$BIN/pip" DB=semsar_test
 export ENV_DIR="$TMP/etc/semsar/env" SYSTEMD_DIR="$TMP/etc/systemd/system"
+export URLS_ENV="$TMP/etc/semsar/urls.env"
 mkdir -p "$APP" "$ENV_DIR" "$SYSTEMD_DIR"
+printf 'LISTING_URL=http://localhost:8012\nBILLING_URL=http://localhost:8508\n' > "$URLS_ENV"
 cp -r "$ROOT/services" "$APP/services"
 mkdir -p "$APP/libs" "$APP/gateway"
 export UNITS_LIST="$TMP/units"
@@ -124,6 +132,9 @@ absent "aucune trace du service gabarit dans l'unité" "listing" "$SYSTEMD_DIR/s
 contains "le répertoire de travail suit" "/opt/semsar/services/design3d" "$SYSTEMD_DIR/semsar-design3d.service"
 contains "le fichier d'environnement suit" "/etc/semsar/env/design3d.env" "$SYSTEMD_DIR/semsar-design3d.service"
 
+contains "DESIGN3D_URL diffusée aux units (urls.env)" "DESIGN3D_URL=http://localhost:8526" "$URLS_ENV"
+contains "le routage BFF vers design3d est vérifié" "/api/v1/public/design3d/by-target" "$CURL_LOG"
+
 # Le service déjà déployé n'a été touché en rien.
 check "le mot de passe du service déjà déployé est inchangé" \
   "$(sed -n 's|^DATABASE_URL=postgresql+psycopg://listing:\([^@]*\)@.*|\1|p' "$ENV_DIR/listing.env")" \
@@ -135,6 +146,7 @@ echo "== exécution 2 (rejeu sur le même serveur) =="
 printf 'semsar-listing.service\nsemsar-listing-relay.service\nsemsar-design3d.service\nsemsar-design3d-relay.service\n' \
   > "$UNITS_LIST"
 before_units="$(md5sum "$SYSTEMD_DIR"/*.service | sort)"
+before_urls="$(md5sum "$URLS_ENV")"
 before_env="$(md5sum "$ENV_DIR"/*.env | sort)"
 : > "$SQL_LOG"
 
@@ -146,6 +158,8 @@ fi
 
 check "aucune unité systemd modifiée" "$(md5sum "$SYSTEMD_DIR"/*.service | sort)" "$before_units"
 check "aucun fichier d'environnement modifié" "$(md5sum "$ENV_DIR"/*.env | sort)" "$before_env"
+check "urls.env inchangé (pas de doublon de DESIGN3D_URL)" "$(md5sum "$URLS_ENV")" "$before_urls"
+check "les URLs des services déjà déployés sont intactes" "$(grep -c '^LISTING_URL=' "$URLS_ENV")" "1"
 check "le mot de passe de design3d est conservé" \
   "$(sed -n 's|^DATABASE_URL=postgresql+psycopg://design3d:\([^@]*\)@.*|\1|p' "$ENV_DIR/design3d.env")" "$pass1"
 # Le CREATE ROLE est toujours ÉMIS — il est gardé côté SQL (`IF NOT EXISTS`), pas côté
@@ -158,6 +172,15 @@ else
   ko "le rejeu réapplique le mot de passe existant, sans en tirer un nouveau"
 fi
 contains "les migrations additives sont rejouées (idempotentes)" "has_design3d" "$SQL_LOG"
+
+# --- exécution 3 : le contrôle de routage BFF doit mordre ---------------------
+echo "== exécution 3 (BFF ne routant pas vers design3d) =="
+if CURL_FAIL_MATCH="/api/v1/public/design3d" bash "$SCRIPT" > "$TMP/run3.out" 2>&1; then
+  ko "un BFF qui ne route pas vers design3d fait échouer le déploiement"
+else
+  ok "un BFF qui ne route pas vers design3d fait échouer le déploiement"
+fi
+contains "et le dit explicitement" "le BFF ne route pas vers design3d" "$TMP/run3.out"
 
 # --- garde-fou : aucun secret en dur dans le script ---------------------------
 if grep -nE "PASSWORD *'[A-Za-z0-9]{6,}'" "$SCRIPT" | grep -v '\$pass' > /dev/null; then

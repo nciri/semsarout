@@ -48,11 +48,13 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
   niveau initial, n'a jamais connu — chaque enregistrement partait en 404 et le travail
   restait prisonnier du navigateur, invisible et impubliable. Le projet n'affiche plus non
   plus deux onglets « RDC » après le premier rafraîchissement de fond.
-- `DESIGN3D_URL` est désormais diffusée en production : sans elle le BFF répondait 404 à
-  tout `/api/v1/design3d/*` et `/api/v1/public/design3d/*`, rendant l'éditeur et la
-  visionneuse muets. Les URLs inter-services ont une source unique
-  (`semsar_service_urls`), la variable est documentée dans `gateway/.env.example`, et le
-  healthcheck de déploiement traverse désormais le BFF jusqu'à design3d.
+- `DESIGN3D_URL` est désormais diffusée en production par `deploy-remote.sh` : sans elle
+  le BFF répondait 404 à tout `/api/v1/design3d/*` et `/api/v1/public/design3d/*`, rendant
+  l'éditeur et la visionneuse muets. Le déploiement vérifie maintenant qu'il route bien
+  jusqu'à design3d et échoue sinon — un service actif mais injoignable à travers le BFF ne
+  passera plus inaperçu. La variable est documentée dans `gateway/.env.example`, et les
+  URLs inter-services du playbook Ansible ont au passage une source unique
+  (`semsar_service_urls`).
 - Provisionnement du service `design3d` en production : un service ajouté au dépôt après
   l'installation du serveur n'avait ni rôle PostgreSQL, ni fichier d'environnement, ni
   unité systemd, et serait resté indéfiniment absent du mesh — `deploy-remote.sh` les crée
