@@ -230,8 +230,12 @@ def update_level(level_id: str, body: LevelUpdateIn, principal: Principal = Depe
     uid = _uid(principal)
     is_owner = uid == p.owner_id
     height = body.wall_height_m if body.wall_height_m is not None else float(lv.wall_height_m)
-    if body.geometry is not None:
-        problems = validate_geometry(body.geometry, height)
+    # Une hauteur de mur envoyée seule — ce que fait le panneau de propriétés
+    # quand seule la hauteur change — doit être confrontée à la géométrie DÉJÀ
+    # stockée : la baisser laissait sinon passer des ouvertures dont l'allège
+    # plus la hauteur dépassent le mur, l'invariant même que la 3D consommera.
+    if body.geometry is not None or body.wall_height_m is not None:
+        problems = validate_geometry(body.geometry if body.geometry is not None else lv.geometry, height)
         if problems:
             return JSONResponse({"error": "Géométrie invalide", "details": problems}, status_code=422)
     shelved = False

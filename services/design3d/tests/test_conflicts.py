@@ -102,6 +102,36 @@ def test_shelf_author_sees_only_its_own_entries(client, headers):
                        headers=headers(user_id=2, agency_id=9)).status_code == 403
 
 
+_WINDOW = {"id": "o1", "type": "window", "wall_id": "w1", "offset_m": 1.0,
+           "width_m": 1.0, "height_m": 1.2, "sill_m": 1.0}
+G_WINDOW = {"walls": [W], "rooms": [], "openings": [_WINDOW]}
+
+
+def test_lowering_wall_height_alone_revalidates_stored_geometry(client, headers):
+    """La hauteur seule ne contournait pas la validation : les ouvertures la débordaient.
+
+    C'est pourtant l'invariant que les briques 3D consommeront (allège + hauteur
+    d'ouverture ≤ hauteur de mur).
+    """
+    pid, lid = _project(client, headers)
+    assert _put(client, headers, lid, 0, G_WINDOW, user_id=1, agency_id=9).status_code == 200
+    r = client.put(f"/design3d/levels/{lid}", json={"base_revision": 1, "wall_height_m": 2.0},
+                   headers=headers(user_id=1, agency_id=9))
+    assert r.status_code == 422
+    assert "dépasse la hauteur du mur" in " ".join(r.json()["details"])
+    # Rien n'a été enregistré : ni la hauteur, ni une révision de plus.
+    lv = client.get(f"/design3d/projects/{pid}", headers=headers(user_id=1, agency_id=9)).json()["levels"][0]
+    assert float(lv["wall_height_m"]) == 2.7 and lv["revision"] == 1
+
+
+def test_raising_wall_height_alone_stays_allowed(client, headers):
+    pid, lid = _project(client, headers)
+    _put(client, headers, lid, 0, G_WINDOW, user_id=1, agency_id=9)
+    r = client.put(f"/design3d/levels/{lid}", json={"base_revision": 1, "wall_height_m": 3.0},
+                   headers=headers(user_id=1, agency_id=9))
+    assert r.status_code == 200 and float(r.json()["wall_height_m"]) == 3.0
+
+
 def test_sync_summary_scoped(client, headers):
     pid, lid = _project(client, headers)
     _project(client, headers, owner=5, agency=10)
