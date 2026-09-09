@@ -1,5 +1,8 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
-import { API_RUNTIME_CACHE, matchDesign3dRead, purgeRuntimeCaches } from './runtimeCache'
+import {
+  API_RUNTIME_CACHE, PUBLIC_RUNTIME_CACHE,
+  matchDesign3dAgentRead, matchDesign3dPublicRead, purgeRuntimeCaches
+} from './runtimeCache'
 import useAuthStore from '../store/authStore'
 import api from '../services/api'
 
@@ -20,10 +23,19 @@ afterEach(() => {
 })
 
 describe('périmètre du cache d’exécution', () => {
-  it('met en cache les lectures de plans, côté agent et côté public', () => {
-    expect(matchDesign3dRead(req('/api/v1/design3d/sync'))).toBe(true)
-    expect(matchDesign3dRead(req('/api/v1/design3d/projects/abc'))).toBe(true)
-    expect(matchDesign3dRead(req('/api/v1/public/design3d/by-target'))).toBe(true)
+  it('met en cache les lectures de plans de l’agent, dans son propre cache', () => {
+    expect(matchDesign3dAgentRead(req('/api/v1/design3d/sync'))).toBe(true)
+    expect(matchDesign3dAgentRead(req('/api/v1/design3d/projects/abc'))).toBe(true)
+  })
+
+  it('met en cache les lectures publiques, dans un cache SÉPARÉ de celui de l’agent (I12)', () => {
+    // Un plan de masse de plus de soixante lots ne doit plus pouvoir évincer
+    // le cache hors-ligne que l'agent a constitué pour son propre chantier :
+    // les deux catégories de lecture ne doivent JAMAIS partager un matcher
+    // (donc un cache Workbox) commun.
+    expect(matchDesign3dPublicRead(req('/api/v1/public/design3d/by-target'))).toBe(true)
+    expect(matchDesign3dAgentRead(req('/api/v1/public/design3d/by-target'))).toBe(false)
+    expect(matchDesign3dPublicRead(req('/api/v1/design3d/sync'))).toBe(false)
   })
 
   it("ne met en cache AUCUNE autre réponse authentifiée de l'application", () => {
@@ -37,12 +49,18 @@ describe('périmètre du cache d’exécution', () => {
       '/api/v1/design3dz/hack',
       '/uploads/plan.png',
     ]) {
-      expect(matchDesign3dRead(req(path)), path).toBe(false)
+      expect(matchDesign3dAgentRead(req(path)), path).toBe(false)
+      expect(matchDesign3dPublicRead(req(path)), path).toBe(false)
     }
   })
 })
 
 describe('purgeRuntimeCaches', () => {
+  it('a un nom distinct du cache public (I12)', () => {
+    expect(API_RUNTIME_CACHE).not.toBe(PUBLIC_RUNTIME_CACHE)
+  })
+
+
   it('ne fait rien et ne lève pas sans Cache Storage', async () => {
     await expect(purgeRuntimeCaches()).resolves.toBe(false)
   })

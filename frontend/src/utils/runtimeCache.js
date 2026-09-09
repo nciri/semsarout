@@ -10,19 +10,37 @@
  * Le nom du cache est partagé avec `vite.config.js` (option `cacheName` du
  * runtimeCaching Workbox) — la même constante des deux côtés, pour que la purge
  * ci-dessous ne puisse pas rater le cache à cause d'un nom désynchronisé.
+ *
+ * Deux caches DISTINCTS, volontairement : `API_RUNTIME_CACHE` pour les plans de
+ * l'agent authentifié (son outil de travail hors-ligne), `PUBLIC_RUNTIME_CACHE`
+ * pour les lectures publiques (fiches biens, plans de masse). Un plan de masse
+ * de plus de soixante lots — `LotPlanViewer` fait une requête par lot — ne doit
+ * jamais évincer le cache que l'agent a constitué pour son propre chantier (I12).
  */
 export const API_RUNTIME_CACHE = 'design3d-api'
+export const PUBLIC_RUNTIME_CACHE = 'design3d-public-api'
 
 /**
- * Routes mises en cache : lectures de plans, côté agent comme côté visionneuse
- * publique. Les écritures sont exclues par l'option `method: 'GET'` de Workbox.
+ * Lectures de plans de l'agent authentifié (éditeur design3d). Les écritures
+ * sont exclues par l'option `method: 'GET'` de Workbox.
  *
  * ⚠️ Cette fonction est SÉRIALISÉE TELLE QUELLE dans `sw.js` par workbox-build :
  * elle doit rester autonome — aucune référence à une constante, un import ou
  * une autre fonction de ce module, sinon le service worker plante à l'exécution.
  */
-export const matchDesign3dRead = ({ url }) =>
-  url.pathname.startsWith('/api/v1/design3d/') || url.pathname.startsWith('/api/v1/public/design3d/')
+export const matchDesign3dAgentRead = ({ url }) =>
+  url.pathname.startsWith('/api/v1/design3d/')
+
+/**
+ * Lectures publiques de plans (visionneuse d'un bien, plan de masse d'un
+ * programme). Volume potentiellement élevé — une visite de programme peut
+ * déclencher une requête par lot — donc dans son propre cache, plus petit,
+ * plutôt que dans celui de l'agent.
+ *
+ * ⚠️ Même contrainte de sérialisation que ci-dessus : fonction autonome.
+ */
+export const matchDesign3dPublicRead = ({ url }) =>
+  url.pathname.startsWith('/api/v1/public/design3d/')
 
 /**
  * Vide le cache d'exécution. Appelée à la déconnexion : sur une tablette

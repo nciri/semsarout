@@ -4,7 +4,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 // Source unique du périmètre et du nom du cache d'exécution : le cache déclaré
 // ici doit porter le nom que `authStore.logout()` supprime, et ne couvrir que
 // les routes que le test `runtimeCache.test.js` autorise.
-import { API_RUNTIME_CACHE, matchDesign3dRead } from './src/utils/runtimeCache.js'
+import {
+  API_RUNTIME_CACHE, PUBLIC_RUNTIME_CACHE,
+  matchDesign3dAgentRead, matchDesign3dPublicRead
+} from './src/utils/runtimeCache.js'
 
 export default defineConfig({
   plugins: [
@@ -65,7 +68,7 @@ export default defineConfig({
             // les écritures design3d ne sont donc jamais servies depuis le
             // cache — elles échouent hors ligne et repartent par la file
             // d'attente IndexedDB.
-            urlPattern: matchDesign3dRead,
+            urlPattern: matchDesign3dAgentRead,
             method: 'GET',
             handler: 'NetworkFirst',
             options: {
@@ -73,6 +76,24 @@ export default defineConfig({
               networkTimeoutSeconds: 5,
               // Borné dans le temps et en volume : un plan ne doit pas rester
               // consultable indéfiniment après une déconnexion oubliée.
+              expiration: { maxEntries: 60, maxAgeSeconds: 7 * 24 * 60 * 60, purgeOnQuotaError: true },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
+          {
+            // Cache SÉPARÉ de celui ci-dessus (I12) : une page programme peut
+            // déclencher une requête par lot (LotPlanViewer) vers les lectures
+            // publiques design3d. Sans ce cloisonnement, une seule visite d'un
+            // plan de masse de plus de soixante lots évincerait l'intégralité
+            // du cache hors-ligne que l'agent a constitué pour son propre
+            // chantier — exactement la promesse « utilisable Wi-Fi coupé »
+            // que la PWA doit tenir pour lui.
+            urlPattern: matchDesign3dPublicRead,
+            method: 'GET',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: PUBLIC_RUNTIME_CACHE,
+              networkTimeoutSeconds: 5,
               expiration: { maxEntries: 60, maxAgeSeconds: 7 * 24 * 60 * 60, purgeOnQuotaError: true },
               cacheableResponse: { statuses: [200] },
             },
