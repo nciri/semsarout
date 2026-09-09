@@ -35,6 +35,12 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
+- Provisionnement du service `design3d` : le rôle et le schéma PostgreSQL manquaient à
+  `semsar_db_roles` alors que design3d était déjà déclaré en `mesh_apps`/`mesh_relays`,
+  ce qui faisait échouer le playbook Ansible entier (indexation sans garde de
+  `PG_PASSWORD_DESIGN3D`). Le gabarit du relais reçoit la même garde que celui du worker,
+  et un serveur déjà provisionné se voit compléter son `secrets.env` (jamais réécrit)
+  avec les seules entrées manquantes.
 - La migration `billing/migrate_design3d.sql` est désormais jouée par le playbook Ansible :
   sans elle, la colonne `has_design3d` manquait en production et toute lecture des plans
   d'abonnement échouait (`UndefinedColumn`), mettant billing entièrement hors service.

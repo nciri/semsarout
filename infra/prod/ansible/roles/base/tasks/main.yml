@@ -153,3 +153,35 @@
   vars:
     semsar_secrets_lines: "{{ (semsar_secrets_raw.content | b64decode).splitlines() | select('match', '^[A-Za-z_][A-Za-z0-9_]*=') | list }}"
     semsar_secrets_yaml: "{{ semsar_secrets_lines | map('regex_replace', '^([A-Za-z_][A-Za-z0-9_]*)=(.*)$', '\\1: \"\\2\"') | join('\n') }}"
+
+# Complétion d'un secrets.env PRÉEXISTANT. Le fichier n'est jamais réécrit (cf.
+# plus haut : `when: not ...stat.exists`), donc toute entrée ajoutée au gabarit
+# après la première exécution manquerait à jamais sur un serveur déjà provisionné.
+# Les gabarits qui l'indexent sans garde (roles/mesh/templates/env-app.j2) font
+# alors échouer le playbook ENTIER, y compris pour les services sans rapport —
+# c'est ce qui serait arrivé en ajoutant `design3d` à `semsar_db_roles`. Seules
+# les clés absentes sont ajoutées : un mot de passe déjà attribué à un rôle
+# PostgreSQL n'est jamais réécrit.
+- name: Générer les mots de passe PostgreSQL absents du secrets.env existant
+  ansible.builtin.set_fact:
+    semsar_backfilled_secrets: "{{ semsar_backfilled_secrets | default({}) | combine({('PG_PASSWORD_' + (item | upper)): lookup('password', '/dev/null length=32 chars=ascii_letters,digits')}) }}"
+  loop: "{{ semsar_db_roles }}"
+  when: ('PG_PASSWORD_' + (item | upper)) not in semsar_secrets
+
+- name: Compléter {{ semsar_secrets_file }} avec les entrées manquantes
+  ansible.builtin.lineinfile:
+    path: "{{ semsar_secrets_file }}"
+    line: "{{ item.key }}={{ item.value }}"
+    insertafter: EOF
+    owner: root
+    group: root
+    mode: "0600"
+  loop: "{{ semsar_backfilled_secrets | default({}) | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  no_log: true
+
+- name: Recharger les secrets complétés
+  ansible.builtin.set_fact:
+    semsar_secrets: "{{ semsar_secrets | combine(semsar_backfilled_secrets | default({})) }}"
+  when: semsar_backfilled_secrets is defined
