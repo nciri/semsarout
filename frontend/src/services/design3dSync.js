@@ -331,7 +331,12 @@ export async function runOnce({ api = defaultApi, local = defaultLocal, onState 
         continue
       }
 
-      if (isNetworkError(e) || !status) {
+      // 502/503/504 : le service est momentanément indisponible, l'opération
+      // n'a rien d'invalide — la retirer de la file perdrait le travail qu'elle
+      // porte. C'est aussi la réponse du serveur quand il ne peut pas vérifier
+      // la propriété de la cible d'un projet et refuse par prudence : ce refus
+      // doit être rejouable, contrairement à un 403.
+      if (isNetworkError(e) || !status || [502, 503, 504].includes(status)) {
         failures++
         const retryInMs = Math.min(2 ** failures * 1000, 300000)
         onState?.({ state: 'offline', pending: await local.pendingCount(), retryInMs })

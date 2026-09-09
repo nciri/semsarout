@@ -9,6 +9,9 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- `GET /internal/program-lots/{id}/owner` (programs) et `agency_id` dans
+  `GET /internal/properties/{id}/owner` (listing) : résolution de l'autorité sur la cible
+  d'un projet de conception. Le service `programs` entre au passage dans la matrice CI.
 - Éditeur de plan 2D (design3d) — hors-ligne, PWA, tablette : logique géométrique pure
   (`frontend/src/utils/floorplan.js`) et dépendances associées (`idb`, `fake-indexeddb`,
   `vite-plugin-pwa`, `@playwright/test`).
@@ -35,6 +38,11 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
+- Un projet de conception ne peut plus viser un bien ou un lot hors du périmètre de son
+  auteur : la propriété de la cible est vérifiée à la création auprès du service qui en
+  fait autorité (`listing`, `programs`), et la création est refusée si celui-ci ne répond
+  pas. Sans ce contrôle, un abonné pouvait publier son plan sur la fiche publique du bien
+  d'une autre agence, qui n'avait aucun moyen de l'en retirer.
 - Le plan dessiné sur le niveau initial (« RDC ») d'un projet de conception atteint enfin le
   serveur : le client tirait pour ce niveau un identifiant que le serveur, seul auteur du
   niveau initial, n'a jamais connu — chaque enregistrement partait en 404 et le travail

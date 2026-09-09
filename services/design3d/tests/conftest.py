@@ -29,6 +29,20 @@ def db_session(tmp_path):
     session.close()
 
 
+@pytest.fixture(autouse=True)
+def allow_any_target(monkeypatch):
+    """Neutralise la vérification de propriété de la cible hors des tests qui la visent.
+
+    Cette vérification interroge listing/programs en HTTP et refuse la création
+    quand ils ne répondent pas (fail-closed) : sans neutralisation, tous les tests
+    de création prendraient 503. Elle est exercée pour de vrai — service simulé
+    compris — dans `tests/test_target_ownership.py`.
+    """
+    from app import main
+
+    monkeypatch.setattr(main, "_target_denied", lambda *a, **k: None)
+
+
 @pytest.fixture
 def client(db_session):
     from fastapi.testclient import TestClient

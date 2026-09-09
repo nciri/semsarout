@@ -57,6 +57,18 @@ describe('design3d sync engine', () => {
     expect(r.retryInMs).toBeGreaterThan(0)
   })
 
+  it('keeps a project creation refused with 503 in the queue instead of losing it', async () => {
+    const api = fakeApi({
+      createProject: vi.fn(async () => { throw { response: { status: 503, data: { error: 'Vérification de la cible indisponible' } } } }),
+    })
+    await applyLocal({ type: 'project.create', payload: { id: 'p'.repeat(32), target_type: 'property', target_id: 1, title: 'A' } }, { local })
+    const states = []
+    const r = await runOnce({ api, local, onState: (s) => states.push(s.state) })
+    expect(r.pending).toBe(1)
+    expect(states.at(-1)).toBe('offline')
+    expect((await local.getProject('p'.repeat(32))).sync_error).toBeUndefined()
+  })
+
   it('stops on 401 keeping the queue', async () => {
     const api = fakeApi({ updateLevel: vi.fn(async () => { throw { response: { status: 401 } } }) })
     await applyLocal({ type: 'level.update', payload: { id: lvl().id, geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })

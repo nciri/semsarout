@@ -16,7 +16,7 @@ from semsar_auth import Principal, require_feature
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 from semsar_events import enqueue
 
-from . import events, storage
+from . import events, storage, targets
 from .db import get_db, init_db
 from .geometry import calibration_scale, rescale
 from .models import EMPTY_GEOMETRY, DesignLevel, DesignLevelShelf, DesignProject, _now, _uuid
@@ -77,12 +77,43 @@ def _load(db: Session, project_id: str, principal: Principal):
     return (None, denied) if denied else (p, None)
 
 
+def _target_denied(target_type: str, target_id: int, principal: Principal, uid: int):
+    """La cible visée doit relever du périmètre de l'appelant.
+
+    Sans ce contrôle, le cloisonnement agence ne s'applique qu'aux projets, jamais
+    à la désignation de leur cible : n'importe quel abonné pouvait créer un projet
+    visant le bien d'une AUTRE agence, le publier, et faire apparaître son plan sur
+    la fiche publique de cette agence — sans que la victime puisse le retirer,
+    `_access` la tenant à l'écart du projet de l'attaquant.
+
+    Mode dégradé : si le service qui fait autorité sur la cible ne répond pas, la
+    création est REFUSÉE. Sur ce dépôt, l'incertitude d'autorisation se tranche en
+    fermant (précédent : le webhook KYC d'identity rejette quand aucun secret n'est
+    configuré). Le 503 est explicitement rejouable, contrairement à un 403.
+    """
+    try:
+        owner = targets.fetch_owner(target_type, target_id)
+    except targets.TargetUnavailable:
+        return _err("Vérification de la cible indisponible, réessayez", 503)
+    if owner.get("owner_id") is None and owner.get("agency_id") is None:
+        return _err("Cible introuvable", 404)
+    if principal.agency_id:
+        if owner.get("agency_id") != principal.agency_id:
+            return _err("Cible hors du périmètre de votre agence", 403)
+    elif owner.get("owner_id") != uid:
+        return _err("Cible hors de votre périmètre", 403)
+    return None
+
+
 @app.post("/design3d/projects", status_code=201)
 def create_project(body: ProjectCreateIn, request: Request, principal: Principal = Depends(_design3d),
                    db: Session = Depends(get_db)):
     uid = _uid(principal)
     if uid is None:
         return _err("Authentification requise", 401)
+    denied = _target_denied(body.target_type, body.target_id, principal, uid)
+    if denied is not None:
+        return denied
     existing = db.get(DesignProject, body.id) if body.id else None
     if existing is not None:
         if existing.owner_id != uid:
