@@ -67,6 +67,10 @@ export default function DesignEditor() {
   // la main : dessiner à ce moment-là serait perdu, le `LOAD_GEOMETRY` de
   // l'amorçage écrasant le tracé — l'outil reste donc désactivé jusque-là.
   const [readyLevelId, setReadyLevelId] = useState(null)
+  // Échec d'amorçage : 'read' (le stockage local n'a pas répondu) ou 'missing'
+  // (le niveau n'y est plus). `seedAttempt` sert uniquement à relancer l'effet.
+  const [seedError, setSeedError] = useState(null)
+  const [seedAttempt, setSeedAttempt] = useState(0)
 
   const seededRef = useRef(null)
   const savedRef = useRef('')
@@ -104,12 +108,28 @@ export default function DesignEditor() {
   }, [loadLevels])
 
   // --- amorçage de l'éditeur (au changement de niveau UNIQUEMENT) ---------
+  // L'amorçage conditionne tout : tant qu'il n'a pas abouti, l'éditeur reste
+  // verrouillé (cf. `ready`). Un échec silencieux le verrouillerait donc pour
+  // toujours — la lecture locale peut échouer (stockage indisponible, quota,
+  // version) ou ne rien trouver (niveau supprimé ailleurs). Les deux cas sont
+  // distingués, dits à l'utilisateur, et rejouables par `seedAttempt`.
   useEffect(() => {
-    if (!levelId || seededRef.current === levelId) return
+    if (!levelId || seededRef.current === levelId) return undefined
     let alive = true
     ;(async () => {
-      const lv = await local.getLevel(levelId)
-      if (!lv || !alive) return
+      let lv
+      try {
+        lv = await local.getLevel(levelId)
+      } catch {
+        if (alive) setSeedError('read')
+        return
+      }
+      if (!alive) return
+      if (!lv) {
+        setSeedError('missing')
+        return
+      }
+      setSeedError(null)
       seededRef.current = levelId
       const nextForm = {
         name: lv.name || '',
@@ -125,7 +145,7 @@ export default function DesignEditor() {
     return () => {
       alive = false
     }
-  }, [levelId, dispatch])
+  }, [levelId, dispatch, seedAttempt])
 
   // --- enregistrement local différé ---------------------------------------
   useEffect(() => {
@@ -269,6 +289,20 @@ export default function DesignEditor() {
     })
     await loadLevels()
     setLevelId(id)
+  }
+
+  // Reprise après un amorçage raté. La liste des niveaux est relue au passage :
+  // si le niveau a disparu ailleurs, les onglets doivent refléter la réalité
+  // pour que l'utilisateur puisse en choisir un autre.
+  async function retrySeed() {
+    setSeedError(null)
+    try {
+      await loadLevels()
+    } catch {
+      // Le stockage ne répond toujours pas : la nouvelle tentative
+      // d'amorçage ci-dessous le dira, avec le même message.
+    }
+    setSeedAttempt((n) => n + 1)
   }
 
   function finishRoom() {
@@ -466,6 +500,18 @@ export default function DesignEditor() {
             {locked && (
               <div className="absolute inset-x-0 top-0 p-2 bg-amber-50 border-b border-amber-200 text-amber-800 text-sm">
                 {t('dashboard:designEditor.calibration.required')}
+              </div>
+            )}
+
+            {seedError && (
+              <div
+                role="alert"
+                className="absolute inset-x-0 top-0 p-3 bg-red-50 border-b border-red-200 text-red-800 text-sm flex flex-wrap items-center gap-3"
+              >
+                <span>{t(`dashboard:designEditor.seedError.${seedError}`)}</span>
+                <button type="button" className="btn-secondary min-h-[44px]" onClick={retrySeed}>
+                  {t('dashboard:designEditor.seedError.retry')}
+                </button>
               </div>
             )}
 

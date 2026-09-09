@@ -28,6 +28,25 @@ vi.mock('../../services/design3dApi', () => {
   }
 })
 
+// Panne simulée de la lecture locale : `mode` s'applique au PROCHAIN
+// `getLevel` puis se réarme à null, ce qui reproduit exactement une lecture
+// qui échoue une fois puis repasse (le cas d'une reprise réussie).
+const storage = vi.hoisted(() => ({ mode: null }))
+
+vi.mock('../../services/design3dLocal', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    getLevel: (...args) => {
+      const mode = storage.mode
+      storage.mode = null
+      if (mode === 'reject') return Promise.reject(new Error('IndexedDB indisponible'))
+      if (mode === 'missing') return Promise.resolve(undefined)
+      return actual.getLevel(...args)
+    },
+  }
+})
+
 const PROJECT_ID = 'p1'
 const LEVEL_ID = 'l1'
 
@@ -72,6 +91,7 @@ function stubCanvasBox() {
 
 describe('DesignEditor', () => {
   beforeEach(async () => {
+    storage.mode = null
     await i18n.changeLanguage('fr')
     await seedLevel()
     stubCanvasBox()
@@ -109,6 +129,48 @@ describe('DesignEditor', () => {
     // Au montage, la lecture IndexedDB du niveau n'a pas encore rendu la main :
     // un tracé accepté ici serait effacé par l'amorçage qui suit.
     expect(screen.getByRole('button', { name: 'Mur' })).toBeDisabled()
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Mur' })).toBeEnabled())
+  })
+
+  it('dit que la lecture du niveau a échoué et rend l’éditeur pleinement utilisable après reprise', async () => {
+    storage.mode = 'reject'
+    renderEditor()
+
+    // Sans message, l'éditeur resterait grisé pour toujours : l'effet
+    // d'amorçage ne se rejoue pas tout seul.
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent(/le stockage local de cet appareil n’a pas répondu|le stockage local de cet appareil n'a pas répondu/)
+    expect(screen.getByRole('button', { name: 'Mur' })).toBeDisabled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Réessayer' }))
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument())
+
+    // « Pleinement utilisable » : pas seulement dégrisé — un tracé doit à
+    // nouveau atteindre le stockage local et la file de synchronisation.
+    await pickTool('Mur')
+    const canvas = screen.getByTestId('floorplan-canvas')
+    fireEvent.pointerDown(canvas, { pointerId: 1, clientX: 100, clientY: 100 })
+    fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 300, clientY: 100 })
+    fireEvent.pointerUp(canvas, { pointerId: 1, clientX: 300, clientY: 100 })
+
+    await waitFor(async () => {
+      const lv = await local.getLevel(LEVEL_ID)
+      expect(lv.geometry.walls).toHaveLength(1)
+    }, { timeout: 4000 })
+    expect(await local.pendingCount()).toBeGreaterThan(0)
+  })
+
+  it('distingue le niveau absent du stockage en erreur', async () => {
+    storage.mode = 'missing'
+    renderEditor()
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Ce niveau est introuvable dans le stockage local de cet appareil.')
+    expect(screen.getByRole('button', { name: 'Mur' })).toBeDisabled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Réessayer' }))
+    // Le niveau est de nouveau lisible : l'éditeur repart.
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument())
     await waitFor(() => expect(screen.getByRole('button', { name: 'Mur' })).toBeEnabled())
   })
 
