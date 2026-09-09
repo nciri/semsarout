@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { FiArrowLeft, FiImage, FiLayers, FiSliders, FiTarget } from 'react-icons/fi'
 import * as local from '../../services/design3dLocal'
 import * as api from '../../services/design3dApi'
-import { applyLocal, refreshFromServer, startEngine } from '../../services/design3dSync'
+import { applyLocal, refreshFromServer, remoteLevelId, startEngine } from '../../services/design3dSync'
 import {
   EMPTY_GEOMETRY, newId, normalizedToMeters, polygonArea, rescaleGeometry, validateGeometry,
 } from '../../utils/floorplan'
@@ -187,10 +187,13 @@ export default function DesignEditor() {
   }, [])
 
   // --- versions mises de côté (étagère, propriétaire seulement) -----------
+  // Ces appels sortent du moteur de synchronisation : ils doivent traduire
+  // eux-mêmes la clé locale en identité serveur, faute de quoi l'étagère du
+  // niveau initial d'un projet répond 404 (cf. `remoteLevelId`).
   const refreshShelf = useCallback(async () => {
     if (!levelId || !navigator.onLine) return
     try {
-      const { items } = await api.listShelf(levelId)
+      const { items } = await api.listShelf(await remoteLevelId(levelId))
       setShelfCount(items.length)
     } catch {
       setShelfCount(0)
@@ -339,7 +342,7 @@ export default function DesignEditor() {
 
   async function openShelf() {
     try {
-      const { items } = await api.listShelf(levelId)
+      const { items } = await api.listShelf(await remoteLevelId(levelId))
       setShelf({ items, error: null })
     } catch {
       setShelf({ items: [], error: 'offline' })
@@ -354,7 +357,7 @@ export default function DesignEditor() {
       calibration: item.calibration ?? f.calibration,
     }))
     try {
-      await api.dismissShelf(levelId, item.id)
+      await api.dismissShelf(await remoteLevelId(levelId), item.id)
     } catch {
       // Sans réseau la version reste sur l'étagère : ce n'est pas grave, elle
       // est déjà chargée dans l'éditeur et l'enregistrement suit la file.
@@ -365,7 +368,7 @@ export default function DesignEditor() {
 
   async function dismissShelfItem(item) {
     try {
-      await api.dismissShelf(levelId, item.id)
+      await api.dismissShelf(await remoteLevelId(levelId), item.id)
     } catch {
       return
     }

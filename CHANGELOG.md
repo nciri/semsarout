@@ -35,6 +35,11 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
+- Le plan dessiné sur le niveau initial (« RDC ») d'un projet de conception atteint enfin le
+  serveur : le client tirait pour ce niveau un identifiant que le serveur, seul auteur du
+  niveau initial, n'a jamais connu — chaque enregistrement partait en 404 et le travail
+  restait prisonnier du navigateur, invisible et impubliable. Le projet n'affiche plus non
+  plus deux onglets « RDC » après le premier rafraîchissement de fond.
 - `DESIGN3D_URL` est désormais diffusée en production : sans elle le BFF répondait 404 à
   tout `/api/v1/design3d/*` et `/api/v1/public/design3d/*`, rendant l'éditeur et la
   visionneuse muets. Les URLs inter-services ont une source unique

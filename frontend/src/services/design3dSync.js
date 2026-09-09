@@ -27,6 +27,11 @@ export async function applyLocal(op, { local = defaultLocal } = {}) {
         calibration: null,
         geometry: { walls: [], rooms: [], openings: [] },
         dirty: false,
+        // Ce niveau-là n'a jamais été soumis au serveur : `ProjectCreateIn` ne
+        // porte pas d'identifiant de niveau initial, c'est le serveur qui crée
+        // le sien. Le drapeau permet à send() de reconnaître, dans la réponse de
+        // création, à quel niveau local rattacher l'identité serveur.
+        seeded: true,
       })
       break
     }
@@ -118,12 +123,57 @@ async function markSyncError(op, error, local, attemptedSeq) {
   }
 }
 
+// Identifiant du niveau tel que LE SERVEUR le connaît. Il ne diffère de la clé
+// locale que pour le niveau initial d'un projet, dont le serveur est seul auteur
+// de l'identité (cf. adoptInitialLevel).
+export async function remoteLevelId(id, local = defaultLocal) {
+  return (await local.getLevel(id))?.server_id ?? id
+}
+
+// Fusionne la version renvoyée par le serveur dans l'enregistrement local sans
+// jamais laisser l'identité serveur écraser la clé locale : `to_dict()` renvoie
+// `id` (celui du serveur), et l'écrire tel quel créerait un doublon de niveau.
+const mergedWithServer = (cur, server, extra = {}) => ({
+  ...cur,
+  ...server,
+  id: cur.id,
+  ...(cur.server_id ? { server_id: cur.server_id } : {}),
+  ...extra,
+})
+
+// Reporte sur le niveau initial local l'identité du niveau que le serveur vient
+// de créer avec le projet.
+//
+// `POST /design3d/projects` crée toujours un niveau « RDC » avec son propre UUID
+// (services/design3d/app/main.py) et `ProjectCreateIn` n'offre aucun champ pour
+// lui imposer celui tiré côté client. Sans ce report, chaque `PUT` sur le niveau
+// initial partait donc vers un identifiant que le serveur n'a jamais connu : 404
+// définitif, opération retirée de la file, et tout le plan dessiné sur le RDC de
+// chaque projet restait prisonnier de l'IndexedDB de l'appareil — pour de bon.
+//
+// C'est bien le serveur qui fait autorité : son identifiant est celui employé
+// pour toute opération réseau. L'enregistrement local, lui, garde sa clé — le
+// contenu en cours d'édition, la file d'attente, l'image de fond et l'onglet
+// ouvert dans l'éditeur y sont tous rattachés, et une bascule de clé les
+// perdrait au premier enregistrement différé encore en vol.
+async function adoptInitialLevel(projectId, serverLevels, local) {
+  const initial = serverLevels?.[0]
+  if (!initial) return
+  const seeded = (await local.listLevels(projectId)).find((lv) => lv.seeded && !lv.server_id)
+  if (!seeded) return
+  // Relecture après l'attente : le dessin en cours ne doit pas être remplacé par
+  // l'instantané lu avant la requête (putLevel remplace l'enregistrement entier).
+  const cur = (await local.getLevel(seeded.id)) ?? seeded
+  await local.putLevel({ ...cur, server_id: initial.id, revision: initial.revision ?? 0, base_revision: initial.revision ?? 0 })
+}
+
 async function send(op, api, local) {
   const p = op.payload
   switch (op.type) {
     case 'project.create': {
       const attemptedSeq = (await local.getProject(p.id))?.edit_seq ?? 0
       const r = await api.createProject(p)
+      await adoptInitialLevel(p.id, r.levels, local)
       const after = await local.getProject(p.id)
       if ((after?.edit_seq ?? 0) > attemptedSeq) {
         // La réponse du serveur n'est que l'écho de ce qui a été envoyé avant
@@ -170,7 +220,7 @@ async function send(op, api, local) {
       const attemptedSeq = cur.edit_seq ?? 0
       let r
       try {
-        r = await api.updateLevel(p.id, {
+        r = await api.updateLevel(cur.server_id ?? p.id, {
           base_revision: cur.base_revision ?? 0,
           name: cur.name,
           position: cur.position,
@@ -204,15 +254,15 @@ async function send(op, api, local) {
       }
       // eslint-disable-next-line no-unused-vars -- déstructuration volontaire pour omettre `sync_error`
       const { sync_error, ...rest } = after
-      await local.putLevel({ ...rest, ...r, base_revision: r.revision, dirty: false, synced_seq: attemptedSeq })
+      await local.putLevel(mergedWithServer(rest, r, { base_revision: r.revision, dirty: false, synced_seq: attemptedSeq }))
       return r.shelved ? 'shelved' : undefined
     }
     case 'level.delete':
-      await api.deleteLevel(p.id)
+      await api.deleteLevel(await remoteLevelId(p.id, local))
       return
     case 'level.background': {
       const bg = await local.getBackground(p.id)
-      await api.uploadBackground(p.id, bg.blob, bg.type)
+      await api.uploadBackground(await remoteLevelId(p.id, local), bg.blob, bg.type)
       return
     }
     default:
@@ -261,7 +311,7 @@ export async function runOnce({ api = defaultApi, local = defaultLocal, onState 
           // Aucune édition plus récente : le serveur a gagné, comme convenu
           // — le travail de cette opération est archivé côté serveur
           // (cf. tâche 4), on remplace intégralement par sa version.
-          await local.putLevel({ ...server, base_revision: server.revision, dirty: false })
+          await local.putLevel(mergedWithServer(curLevel ?? { id: op.payload.id }, server, { base_revision: server.revision, dirty: false }))
         }
         await local.remove(op.seq)
         conflict = true
@@ -310,9 +360,14 @@ export async function runOnce({ api = defaultApi, local = defaultLocal, onState 
 export async function refreshFromServer({ api = defaultApi, local = defaultLocal, onShelved } = {}) {
   const { projects } = await api.sync()
   for (const p of projects) {
+    // Le niveau initial adopté garde sa clé locale et porte l'identité serveur
+    // dans `server_id` : sans cette résolution, le niveau renvoyé par le serveur
+    // serait inséré une seconde fois et le projet afficherait deux onglets
+    // « RDC » indiscernables, dont un seul porterait le travail.
+    const byServerId = new Map((await local.listLevels(p.id)).filter((l) => l.server_id).map((l) => [l.server_id, l]))
     for (const lv of p.levels) {
-      const cur = await local.getLevel(lv.id)
-      if (lv.shelved_count > 0) onShelved?.(lv.id, lv.shelved_count)
+      const cur = (await local.getLevel(lv.id)) ?? byServerId.get(lv.id)
+      if (lv.shelved_count > 0) onShelved?.(cur?.id ?? lv.id, lv.shelved_count)
       if (cur?.dirty) continue
       if (!cur || lv.revision > cur.revision) {
         const full = await api.getProject(p.id)
@@ -325,12 +380,11 @@ export async function refreshFromServer({ api = defaultApi, local = defaultLocal
           // l'échec disparaît avant même que l'utilisateur ne l'ait vue
           // (cf. revue tâche 8, round 2). Seul un nouvel envoi réussi
           // (send(), ci-dessus) l'efface explicitement.
-          await local.putLevel({
-            ...fresh,
+          await local.putLevel(mergedWithServer(cur ?? { id: fresh.id }, fresh, {
             base_revision: fresh.revision,
             dirty: false,
             ...(cur?.sync_error ? { sync_error: cur.sync_error } : {}),
-          })
+          }))
         }
         // eslint-disable-next-line no-unused-vars -- déstructuration volontaire pour omettre `levels`
         const { levels, ...projectFields } = full

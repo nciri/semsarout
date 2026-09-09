@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import * as local from './design3dLocal'
+import { newId } from '../utils/floorplan'
 import { applyLocal, runOnce, refreshFromServer, startEngine } from './design3dSync'
 
 const lvl = (over = {}) => ({ id: 'l'.repeat(32), project_id: 'p'.repeat(32), name: 'RDC', position: 0, revision: 0,
@@ -8,7 +9,10 @@ const lvl = (over = {}) => ({ id: 'l'.repeat(32), project_id: 'p'.repeat(32), na
 
 function fakeApi(overrides = {}) {
   return {
-    createProject: vi.fn(async (p) => ({ ...p, levels: [lvl()] })),
+    // Le serveur crée le niveau initial avec SON propre UUID (main.py::create_project) :
+    // le double doit donc en tirer un au hasard. Un id fixe, égal à celui qu'utilisent
+    // les autres tests, masquerait toute divergence entre l'id local et l'id serveur.
+    createProject: vi.fn(async (p) => ({ ...p, levels: [lvl({ id: newId(), project_id: p.id })] })),
     updateLevel: vi.fn(async (id, body) => ({ ...lvl(), revision: body.base_revision + 1, shelved: false })),
     updateProject: vi.fn(async (id, p) => ({ id, ...p })),
     sync: vi.fn(async () => ({ projects: [] })),
@@ -88,6 +92,61 @@ describe('design3d sync engine', () => {
     await runOnce({ api, local, onState: () => {} })
     expect(api.createProject.mock.calls[0][0].id).toBe('p'.repeat(32))
     expect((await local.getProject('p'.repeat(32))).synced).toBe(true)
+  })
+
+  it('the drawing made on the initial level of a freshly created project reaches the server', async () => {
+    const pid = 'p'.repeat(32)
+    const geometry = { walls: [{ id: 'w1', a: { x: 0, y: 0 }, b: { x: 4, y: 0 }, thickness_m: 0.2 }], rooms: [], openings: [] }
+    let serverLevelId
+    const api = fakeApi({
+      createProject: vi.fn(async (p) => {
+        serverLevelId = newId()
+        return { ...p, levels: [lvl({ id: serverLevelId, project_id: p.id })] }
+      }),
+      // Le serveur ne connaît que les niveaux qu'il a lui-même créés : tout autre
+      // identifiant est un 404 (main.py::_load_level).
+      updateLevel: vi.fn(async (id, body) => {
+        if (id !== serverLevelId) throw { response: { status: 404, data: { error: 'Not found' } } }
+        return { ...lvl({ id, project_id: pid }), ...body, revision: body.base_revision + 1, shelved: false }
+      }),
+    })
+
+    await applyLocal({ type: 'project.create', payload: { id: pid, target_type: 'property', target_id: 1, title: 'A' } }, { local })
+    const [seeded] = await local.listLevels(pid)
+    await applyLocal({ type: 'level.update', payload: { id: seeded.id, geometry } }, { local })
+    await runOnce({ api, local, onState: () => {} })
+
+    // Le dessin doit avoir atteint le serveur, sous l'identifiant que LE SERVEUR
+    // a attribué au niveau initial.
+    expect(api.updateLevel).toHaveBeenCalledTimes(1)
+    expect(api.updateLevel.mock.calls[0][0]).toBe(serverLevelId)
+    expect(api.updateLevel.mock.calls[0][1].geometry).toEqual(geometry)
+    const stored = await local.getLevel(seeded.id)
+    expect(stored.geometry).toEqual(geometry)
+    expect(stored.dirty).toBe(false)
+    expect(stored.sync_error).toBeUndefined()
+    expect(await local.pendingCount()).toBe(0)
+  })
+
+  it('a background refresh after a project creation does not duplicate the initial level', async () => {
+    const pid = 'p'.repeat(32)
+    let serverLevelId
+    const api = fakeApi({
+      createProject: vi.fn(async (p) => {
+        serverLevelId = newId()
+        return { ...p, levels: [lvl({ id: serverLevelId, project_id: p.id })] }
+      }),
+    })
+    await applyLocal({ type: 'project.create', payload: { id: pid, target_type: 'property', target_id: 1, title: 'A' } }, { local })
+    await runOnce({ api, local, onState: () => {} })
+
+    api.sync = vi.fn(async () => ({ projects: [{ id: pid, levels: [{ id: serverLevelId, revision: 4, shelved_count: 0 }] }] }))
+    api.getProject = vi.fn(async () => ({ id: pid, levels: [lvl({ id: serverLevelId, project_id: pid, revision: 4, name: 'RDC' })] }))
+    await refreshFromServer({ api, local })
+
+    const levels = await local.listLevels(pid)
+    expect(levels).toHaveLength(1)
+    expect(levels[0].revision).toBe(4)
   })
 
   it('refreshFromServer reloads non-dirty levels whose revision advanced', async () => {
