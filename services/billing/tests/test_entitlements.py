@@ -63,6 +63,61 @@ def test_internal_subscription_exposes_features(monkeypatch, tmp_path):
         db.close()
 
 
+def test_agency_sub_reconciles_expired_incomplete_change(tmp_path):
+    """I8 : un changement de plan resté impayé au-delà de sa période de grâce (`end_date`) ne doit
+    pas figer les entitlements de l'ancien plan indéfiniment. Faute d'ordonnanceur d'expiration
+    dédié côté billing, la réévaluation se fait à la prochaine lecture de l'abonnement de
+    l'agence (`_agency_sub`, appelée par `/internal/subscription`, `change-plan`,
+    `cancel-subscription`)."""
+    from datetime import datetime, timedelta
+
+    from semsar_events import OutboxEvent
+
+    from app.main import _agency_sub
+
+    db = _db_session(tmp_path)
+    plan = _plan(has_design3d=True)
+    db.add(plan)
+    db.commit()
+    sub = Subscription(agency_id=30, plan_id=plan.id, amount=100, status="incomplete",
+                       end_date=datetime.utcnow() - timedelta(days=1))
+    db.add(sub)
+    db.commit()
+
+    result = _agency_sub(db, 30)
+
+    assert result.status == "expired"
+    ev = db.query(OutboxEvent).filter_by(
+        event_type="billing.subscription.activated").order_by(OutboxEvent.id.desc()).first()
+    assert ev is not None
+    assert ev.payload["agency_id"] == 30
+    assert ev.payload["features"] == []
+
+
+def test_agency_sub_does_not_reconcile_before_grace_period_ends(tmp_path):
+    """Contre-épreuve : tant que la période de grâce (`end_date`) n'est pas passée, les
+    entitlements de l'ancien plan restent — le repli ne doit pas révoquer trop tôt."""
+    from datetime import datetime, timedelta
+
+    from semsar_events import OutboxEvent
+
+    from app.main import _agency_sub
+
+    db = _db_session(tmp_path)
+    plan = _plan(has_design3d=True)
+    db.add(plan)
+    db.commit()
+    sub = Subscription(agency_id=31, plan_id=plan.id, amount=100, status="incomplete",
+                       end_date=datetime.utcnow() + timedelta(days=10))
+    db.add(sub)
+    db.commit()
+
+    result = _agency_sub(db, 31)
+
+    assert result.status == "incomplete"
+    assert db.query(OutboxEvent).count() == 0
+
+
 def test_cancel_subscription_emits_current_features(tmp_path):
     """La résiliation ne coupe pas l'accès immédiatement (message : « Access continues until end
     of billing period »). L'événement doit donc porter les features COURANTES du plan, pas une

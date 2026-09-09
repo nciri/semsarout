@@ -93,11 +93,35 @@ def _invoice_dict(i: Invoice) -> dict:
             "period_label": i.period_label, "issued_at": iso(i.issued_at), "paid_at": iso(i.paid_at)}
 
 
+def _reconcile_expired(db: Session, sub: Subscription | None) -> None:
+    """I8 : `change_plan` bascule l'abonnement en `incomplete` (nouveau plan, facture impayée)
+    sans jamais réévaluer les entitlements ensuite — si la facture n'est jamais réglée, l'agence
+    conserve indéfiniment les features de l'ancien plan (dernier `billing.subscription.activated`
+    reçu par identity). Faute d'ordonnanceur d'expiration dédié côté billing (chantier plus
+    large), la période de grâce déjà posée par `change_plan` (`end_date`) sert de repère : une
+    fois dépassée sans paiement, l'abonnement passe `expired` et l'événement réémis vide les
+    features, pour qu'identity cesse de les projeter dans le JWT.
+
+    Best-effort et lazy (pas de garantie de délai) : appelée à chaque lecture d'un abonnement via
+    `_agency_sub`, donc au prochain `/internal/subscription` (repli identity),
+    `change-plan` ou `cancel-subscription` de l'agence."""
+    if sub is None or sub.status != "incomplete" or sub.end_date is None:
+        return
+    if sub.end_date > datetime.utcnow():
+        return
+    sub.status = "expired"
+    enqueue(db, "subscription", sub.id, events.SUBSCRIPTION_ACTIVATED,
+            {"subscription_id": sub.id, "agency_id": sub.agency_id, "features": []})
+    db.commit()
+
+
 def _agency_sub(db: Session, agency_id: int, status: str | None = None) -> Subscription | None:
     q = db.query(Subscription).filter(Subscription.agency_id == agency_id)
     if status:
         q = q.filter(Subscription.status == status)
-    return q.first()
+    sub = q.first()
+    _reconcile_expired(db, sub)
+    return sub
 
 
 @app.get("/health", include_in_schema=False)
