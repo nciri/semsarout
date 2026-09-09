@@ -131,14 +131,20 @@ async function markSyncError(op, error, local, attemptedSeq, kind = null) {
   // en réessayant. Le 503 du mode dégradé, lui, est rejouable et n'arrive
   // jamais ici : il repart par la voie de la reprise réseau.
   //
-  // Le critère est le TYPE D'OPÉRATION, pas le seul code : sur
-  // `POST /design3d/projects`, le projet n'existe pas encore, aucun `_load`
-  // n'est fait, et le seul 403/404 que la route puisse produire vient de
-  // `_target_denied`. Les 404 rencontrés ailleurs désignent une ressource
-  // disparue sur une entité existante — souvent récupérable — et les traiter
-  // comme des refus de cible transformerait des échecs rattrapables en
-  // abandons définitifs, pire que le défaut corrigé.
-  const target_refusal = op.type === 'project.create' && (status === 403 || status === 404)
+  // Le critère N'EST PAS le statut HTTP : sur `POST /design3d/projects`, le 403
+  // est aussi rendu par `require_feature("design3d")` (Depends, donc exécutée
+  // AVANT `_target_denied`) quand l'agence a perdu son entitlement de plan — un
+  // refus rejouable (l'agence peut réactiver son abonnement), pas définitif.
+  // Confondre les deux a déjà produit deux défauts round sur round : un agent
+  // qui dessine hors-ligne pendant que l'entitlement expire recevrait, au rejeu,
+  // un 403 identique à celui d'un vrai refus de cible, et se ferait proposer un
+  // abandon qui détruit un travail parfaitement récupérable.
+  //
+  // Le serveur tranche donc explicitement : seul `_target_denied` pose
+  // `error_code: "target_denied"` sur sa réponse. Son ABSENCE ne doit jamais se
+  // traduire par un abandon définitif par défaut — mieux vaut un projet
+  // retenté en vain qu'un projet détruit à tort.
+  const target_refusal = op.type === 'project.create' && data?.error_code === 'target_denied'
   const sync_error = {
     code: status,
     message,

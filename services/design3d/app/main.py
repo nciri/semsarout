@@ -43,8 +43,8 @@ except Exception:  # noqa: BLE001
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
 
-def _err(msg: str, code: int) -> JSONResponse:
-    return JSONResponse({"error": msg}, status_code=code)
+def _err(msg: str, code: int, **extra) -> JSONResponse:
+    return JSONResponse({"error": msg, **extra}, status_code=code)
 
 
 def _uid(principal: Principal) -> int | None:
@@ -90,18 +90,27 @@ def _target_denied(target_type: str, target_id: int, principal: Principal, uid: 
     création est REFUSÉE. Sur ce dépôt, l'incertitude d'autorisation se tranche en
     fermant (précédent : le webhook KYC d'identity rejette quand aucun secret n'est
     configuré). Le 503 est explicitement rejouable, contrairement à un 403.
+
+    `error_code="target_denied"` marque les deux refus DÉFINITIFS ci-dessous (403
+    et 404). Il existe parce que `POST /design3d/projects` a une autre garde,
+    `require_feature("design3d")` (Depends, donc exécutée avant même ce contrôle),
+    qui répond aussi 403 — pour une tout autre raison, l'absence d'entitlement de
+    plan, qui elle EST rejouable (l'agence peut réactiver son abonnement). Le
+    client (`design3dSync.js`) ne doit marquer un projet comme définitivement
+    perdu que sur la foi de ce code explicite, jamais en déduisant l'intention du
+    seul statut HTTP 403 partagé par les deux gardes.
     """
     try:
         owner = targets.fetch_owner(target_type, target_id)
     except targets.TargetUnavailable:
         return _err("Vérification de la cible indisponible, réessayez", 503)
     if owner.get("owner_id") is None and owner.get("agency_id") is None:
-        return _err("Cible introuvable", 404)
+        return _err("Cible introuvable", 404, error_code="target_denied")
     if principal.agency_id:
         if owner.get("agency_id") != principal.agency_id:
-            return _err("Cible hors du périmètre de votre agence", 403)
+            return _err("Cible hors du périmètre de votre agence", 403, error_code="target_denied")
     elif owner.get("owner_id") != uid:
-        return _err("Cible hors de votre périmètre", 403)
+        return _err("Cible hors de votre périmètre", 403, error_code="target_denied")
     return None
 
 

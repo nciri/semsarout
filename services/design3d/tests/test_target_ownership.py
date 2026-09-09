@@ -54,12 +54,29 @@ def test_cross_agency_target_is_refused(client, headers, target):
     target(owner_id=1, agency_id=9)
     r = _create(client, headers(user_id=3, agency_id=10))
     assert r.status_code == 403
+    assert r.json()["error_code"] == "target_denied"
     assert client.get("/design3d/projects", headers=headers(user_id=3, agency_id=10)).json()["projects"] == []
 
 
 def test_unknown_target_is_refused(client, headers, target):
     target()
-    assert _create(client, headers()).status_code == 404
+    r = _create(client, headers())
+    assert r.status_code == 404
+    assert r.json()["error_code"] == "target_denied"
+
+
+def test_entitlement_403_is_not_a_target_denial(client, headers):
+    """`require_feature("design3d")` (Depends) répond aussi 403 sur cette route,
+    mais AVANT tout contrôle de cible — quand l'agence a simplement perdu son
+    entitlement de plan. Ce refus-là est rejouable (réactivation d'abonnement),
+    contrairement à celui de `_target_denied` : la réponse ne doit donc jamais
+    porter `error_code: "target_denied"`, sous peine de faire croire au client
+    (design3dSync.js) à un refus définitif et de le pousser à détruire un projet
+    parfaitement récupérable.
+    """
+    r = _create(client, headers(features=()))
+    assert r.status_code == 403
+    assert "error_code" not in r.json()
 
 
 def test_creation_is_refused_when_the_target_service_is_down(client, headers, target):

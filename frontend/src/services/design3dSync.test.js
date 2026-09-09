@@ -73,7 +73,7 @@ describe('design3d sync engine', () => {
     const pid = 'p'.repeat(32)
     const message = 'Cible hors du périmètre de votre agence'
     const api = fakeApi({
-      createProject: vi.fn(async () => { throw { response: { status: 403, data: { error: message } } } }),
+      createProject: vi.fn(async () => { throw { response: { status: 403, data: { error: message, error_code: 'target_denied' } } } }),
     })
     await applyLocal({ type: 'project.create', payload: { id: pid, target_type: 'property', target_id: 1, title: 'A' } }, { local })
     const [seeded] = await local.listLevels(pid)
@@ -87,13 +87,38 @@ describe('design3d sync engine', () => {
     expect(api.updateLevel).not.toHaveBeenCalled()
     expect(await local.pendingCount()).toBe(0)
     const project = await local.getProject(pid)
-    expect(project.sync_error).toMatchObject({ code: 403, message })
+    expect(project.sync_error).toMatchObject({ code: 403, message, target_refusal: true })
     const level = await local.getLevel(seeded.id)
     // Le dessin n'est pas perdu : il reste en local, avec une erreur qui
     // reflète la vraie cause (403, refus de cible) plutôt qu'un 404 trompeur.
     expect(level.geometry).toEqual(geometry)
     expect(level.sync_error).toMatchObject({ code: 403, message })
     expect(r.hasError).toBe(true)
+  })
+
+  it("un 403 d'entitlement (plan expiré) à la création n'est jamais pris pour un refus de cible", async () => {
+    // Sur `POST /design3d/projects`, `require_feature("design3d")` (Depends) et
+    // `_target_denied` (dans le corps de la route) peuvent tous deux répondre
+    // 403 — mais pour des raisons opposées : l'un est rejouable (l'agence
+    // réactive son abonnement), l'autre définitif. Seul `_target_denied` pose
+    // `error_code: "target_denied"` ; son absence ici (agence sans entitlement)
+    // ne doit jamais faire croire à un refus définitif, sous peine de proposer
+    // l'abandon — donc la destruction — d'un projet parfaitement récupérable.
+    const pid = 'p'.repeat(32)
+    const message = 'Fonction réservée aux plans Pro et Entreprise.'
+    const api = fakeApi({
+      createProject: vi.fn(async () => { throw { response: { status: 403, data: { error: message } } } }),
+    })
+    await applyLocal({ type: 'project.create', payload: { id: pid, target_type: 'property', target_id: 1, title: 'A' } }, { local })
+    await runOnce({ api, local, onState: () => {} })
+
+    const project = await local.getProject(pid)
+    expect(project.sync_error).toMatchObject({ code: 403, message })
+    expect(project.sync_error.target_refusal).toBeUndefined()
+    // Aucune sortie par abandon ne doit être ouverte : le projet garde toutes
+    // ses chances d'être rejoué avec succès une fois l'entitlement rétabli.
+    expect(await discardRefusedProject(pid, { local })).toBe(false)
+    expect(await local.getProject(pid)).toBeTruthy()
   })
 
   it("une cible introuvable (404) à la création est un refus définitif, comme le 403 hors périmètre", async () => {
@@ -103,7 +128,7 @@ describe('design3d sync engine', () => {
     const pid = 'p'.repeat(32)
     const message = 'Cible introuvable'
     const api = fakeApi({
-      createProject: vi.fn(async () => { throw { response: { status: 404, data: { error: message } } } }),
+      createProject: vi.fn(async () => { throw { response: { status: 404, data: { error: message, error_code: 'target_denied' } } } }),
     })
     await applyLocal({ type: 'project.create', payload: { id: pid, target_type: 'property', target_id: 1, title: 'A' } }, { local })
     const [seeded] = await local.listLevels(pid)
@@ -151,7 +176,7 @@ describe('design3d sync engine', () => {
   it('un projet définitivement refusé peut être abandonné : projet, niveaux et file partent ensemble', async () => {
     const pid = 'p'.repeat(32)
     const api = fakeApi({
-      createProject: vi.fn(async () => { throw { response: { status: 403, data: { error: 'Cible hors périmètre' } } } }),
+      createProject: vi.fn(async () => { throw { response: { status: 403, data: { error: 'Cible hors périmètre', error_code: 'target_denied' } } } }),
     })
     await applyLocal({ type: 'project.create', payload: { id: pid, target_type: 'property', target_id: 1, title: 'A' } }, { local })
     const [seeded] = await local.listLevels(pid)
