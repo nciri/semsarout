@@ -497,21 +497,32 @@ export default function DesignEditor() {
               }}
             />
 
-            {locked && (
-              <div className="absolute inset-x-0 top-0 p-2 bg-amber-50 border-b border-amber-200 text-amber-800 text-sm">
-                {t('dashboard:designEditor.calibration.required')}
-              </div>
-            )}
+            {/* Les deux bandeaux peuvent être vrais EN MÊME TEMPS : l'image de
+                fond et le niveau sont deux lectures IndexedDB indépendantes, si
+                bien qu'un fond orphelin (niveau supprimé, quota partiel) donne
+                `locked` alors que l'amorçage a échoué. Superposés en absolu ils
+                se masquaient l'un l'autre, et l'erreur — donc son bouton de
+                reprise, seule sortie du verrou — devenait inatteignable. Ils
+                sont donc empilés dans un seul conteneur, l'erreur d'abord. */}
+            {(seedError || locked) && (
+              <div className="absolute inset-x-0 top-0">
+                {seedError && (
+                  <div
+                    role="alert"
+                    className="p-3 bg-red-50 border-b border-red-200 text-red-800 text-sm flex flex-wrap items-center gap-3"
+                  >
+                    <span>{t(`dashboard:designEditor.seedError.${seedError}`)}</span>
+                    <button type="button" className="btn-secondary min-h-[44px]" onClick={retrySeed}>
+                      {t('dashboard:designEditor.seedError.retry')}
+                    </button>
+                  </div>
+                )}
 
-            {seedError && (
-              <div
-                role="alert"
-                className="absolute inset-x-0 top-0 p-3 bg-red-50 border-b border-red-200 text-red-800 text-sm flex flex-wrap items-center gap-3"
-              >
-                <span>{t(`dashboard:designEditor.seedError.${seedError}`)}</span>
-                <button type="button" className="btn-secondary min-h-[44px]" onClick={retrySeed}>
-                  {t('dashboard:designEditor.seedError.retry')}
-                </button>
+                {locked && (
+                  <div className="p-2 bg-amber-50 border-b border-amber-200 text-amber-800 text-sm">
+                    {t('dashboard:designEditor.calibration.required')}
+                  </div>
+                )}
               </div>
             )}
 

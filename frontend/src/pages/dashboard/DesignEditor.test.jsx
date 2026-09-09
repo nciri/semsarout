@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, onTestFinished, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import i18n from '../../i18n'
@@ -31,7 +31,10 @@ vi.mock('../../services/design3dApi', () => {
 // Panne simulée de la lecture locale : `mode` s'applique au PROCHAIN
 // `getLevel` puis se réarme à null, ce qui reproduit exactement une lecture
 // qui échoue une fois puis repasse (le cas d'une reprise réussie).
-const storage = vi.hoisted(() => ({ mode: null }))
+// `background` reste vrai tant qu'on ne le baisse pas : l'image de fond est lue
+// par un effet distinct de l'amorçage, et c'est précisément leur indépendance
+// qui permet aux deux bandeaux d'apparaître ensemble.
+const storage = vi.hoisted(() => ({ mode: null, background: false }))
 
 vi.mock('../../services/design3dLocal', async (importOriginal) => {
   const actual = await importOriginal()
@@ -43,6 +46,10 @@ vi.mock('../../services/design3dLocal', async (importOriginal) => {
       if (mode === 'reject') return Promise.reject(new Error('IndexedDB indisponible'))
       if (mode === 'missing') return Promise.resolve(undefined)
       return actual.getLevel(...args)
+    },
+    getBackground: (...args) => {
+      if (!storage.background) return actual.getBackground(...args)
+      return Promise.resolve({ level_id: args[0], blob: new Blob(['x']), type: 'image/png' })
     },
   }
 })
@@ -89,9 +96,34 @@ function stubCanvasBox() {
   })
 }
 
+// jsdom ne décode aucune image et n'implémente pas `createObjectURL` : sans ce
+// relais, `img.onload` ne partirait jamais et l'éditeur ne verrait pas de fond.
+// Rend une fonction de restauration, l'`Image` étant globale au fichier.
+function stubBackgroundImage() {
+  const src = Object.getOwnPropertyDescriptor(window.Image.prototype, 'src')
+  const { createObjectURL, revokeObjectURL } = URL
+  URL.createObjectURL = () => 'blob:plan'
+  URL.revokeObjectURL = () => {}
+  Object.defineProperty(window.Image.prototype, 'src', {
+    configurable: true,
+    // `naturalWidth` n'est qu'un accesseur en lecture dans jsdom : y écrire
+    // lèverait. Le composant retombe seul sur un rapport de 1.
+    set() {
+      queueMicrotask(() => this.onload?.())
+    },
+  })
+  return () => {
+    if (src) Object.defineProperty(window.Image.prototype, 'src', src)
+    else delete window.Image.prototype.src
+    URL.createObjectURL = createObjectURL
+    URL.revokeObjectURL = revokeObjectURL
+  }
+}
+
 describe('DesignEditor', () => {
   beforeEach(async () => {
     storage.mode = null
+    storage.background = false
     await i18n.changeLanguage('fr')
     await seedLevel()
     stubCanvasBox()
@@ -172,6 +204,37 @@ describe('DesignEditor', () => {
     // Le niveau est de nouveau lisible : l'éditeur repart.
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument())
     await waitFor(() => expect(screen.getByRole('button', { name: 'Mur' })).toBeEnabled())
+  })
+
+  it('garde l’erreur d’amorçage atteignable quand la calibration verrouille aussi l’éditeur', async () => {
+    // Fond présent mais niveau illisible : deux lectures IndexedDB distinctes,
+    // rien ne les synchronise (fond orphelin, quota partiel, panne d'un seul
+    // magasin). Les deux bandeaux s'affichent alors ensemble.
+    onTestFinished(stubBackgroundImage())
+    storage.background = true
+    storage.mode = 'reject'
+    renderEditor()
+
+    const alert = await screen.findByRole('alert')
+    const retry = screen.getByRole('button', { name: 'Réessayer' })
+    const stack = alert.parentElement
+    await waitFor(() => expect(stack).toHaveTextContent('Calibrez le plan avant de dessiner'))
+
+    // Le défaut : les deux bandeaux étaient positionnés en absolu au même
+    // `top-0` et se recouvraient. Ils doivent s'empiler dans un même flux,
+    // l'erreur en premier — sinon le message et sa reprise disparaissent
+    // sous le bandeau de calibration, et le verrou redevient muet.
+    expect(stack.firstElementChild).toBe(alert)
+    expect(alert.className).not.toMatch(/\babsolute\b/)
+    expect(stack.lastElementChild.className).not.toMatch(/\babsolute\b/)
+    expect(alert).toBeVisible()
+    expect(retry).toBeVisible()
+
+    // Et la reprise reste opérante : l'erreur part, le verrou de calibration
+    // — lui légitime — demeure.
+    fireEvent.click(retry)
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument())
+    expect(screen.getAllByText(/Calibrez le plan avant de dessiner/).length).toBeGreaterThan(0)
   })
 
   it('trace un mur au doigt et met l’édition en file sans réseau', async () => {
