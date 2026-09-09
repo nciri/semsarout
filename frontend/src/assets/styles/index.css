@@ -19,7 +19,14 @@ html[lang='ar'] {
 
   body {
     @apply bg-ivory text-slate-700 antialiased;
+    /* `viewport-fit=cover` (index.html) laisse la page occuper toute la dalle,
+       encoche et coins arrondis compris : sans ces marges, le contenu passe
+       dessous en paysage sur iPad/iPhone. Valeur nulle partout ailleurs. */
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+
 
   h1, h2, h3, h4, h5 {
     @apply font-display text-midnight tracking-tight;
@@ -189,4 +196,20 @@ html[lang='ar'] {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+@layer utilities {
+  /* Zones sûres (encoche, coins arrondis, barre d'accueil). Le <body> les
+     applique déjà pour le flux normal (voir @layer base), mais un élément
+     `fixed` ou `sticky` sort de ce flux : il doit compenser lui-même, sinon il
+     passe sous l'encoche en paysage ou sous la barre d'accueil en portrait.
+     Déclarées en couche `utilities` pour l'emporter sur un `p-*` de Tailwind. */
+  .safe-inline {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }

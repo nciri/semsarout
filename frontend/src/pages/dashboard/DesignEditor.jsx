@@ -397,7 +397,7 @@ export default function DesignEditor() {
 
   return (
     <Design3dGate hasFeature={hasFeature('design3d')}>
-      <div ref={rootRef} className={`bg-gray-50 ${fullscreen ? 'fixed inset-0 z-40' : ''}`}>
+      <div ref={rootRef} className={`bg-gray-50 ${fullscreen ? 'fixed inset-0 z-40 safe-inline safe-bottom' : ''}`}>
         <div className="flex flex-wrap items-center gap-3 p-3 border-b border-gray-200 bg-white">
           <Link to="/dashboard/conception" className="inline-flex items-center gap-2 text-gray-600 min-h-[44px]">
             <FiArrowLeft className="w-4 h-4 rtl:rotate-180" />
@@ -511,7 +511,12 @@ export default function DesignEditor() {
 
         {compact && (
           <>
-            <div className="sticky bottom-0 p-2 bg-white border-t border-gray-200 overflow-x-auto">{toolbar}</div>
+            {/* La barre collante est hors du flux du <body> : elle porte
+                elle-même les marges de zone sûre, sinon elle passe sous la
+                barre d'accueil de la tablette. */}
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 safe-inline safe-bottom">
+              <div className="p-2 overflow-x-auto">{toolbar}</div>
+            </div>
             <div className="bg-white border-t border-gray-200">
               <button
                 type="button"
