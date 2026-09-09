@@ -360,6 +360,27 @@ describe('DesignEditor', () => {
     expect(alert).toHaveTextContent('Cible hors du périmètre de votre agence')
     // Rien à renvoyer : le refus ne se lève pas en réessayant.
     expect(screen.queryByRole('button', { name: 'Renvoyer ce niveau' })).not.toBeInTheDocument()
+    // Et le message ne doit rien promettre : aucun chemin de l'application ne
+    // peut lever ce refus.
+    expect(alert).not.toHaveTextContent(/tant que ce refus/i)
+  })
+
+  it('offre une sortie explicite au projet définitivement refusé, en disant ce qui sera perdu', async () => {
+    await local.putProject({
+      id: PROJECT_ID, target_type: 'property', target_id: 1, title: 'Test', status: 'draft', synced: false,
+      sync_error: { code: 403, message: 'Cible hors du périmètre de votre agence', at: 1 },
+    })
+    renderEditor()
+    await screen.findByRole('alert')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Supprimer ce projet et ses plans' }))
+    // La confirmation doit dire la conséquence, pas seulement la demander.
+    expect(await screen.findByText(/définitive/i)).toBeInTheDocument()
+    expect(screen.getByText(/n'ont jamais atteint le serveur|n’ont jamais atteint le serveur/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmer la suppression' }))
+    await waitFor(async () => expect(await local.getProject(PROJECT_ID)).toBeUndefined())
+    await waitFor(async () => expect(await local.listLevels(PROJECT_ID)).toEqual([]))
   })
 
   it('ne réinitialise pas le travail en cours quand le niveau local change sous l’éditeur', async () => {

@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import * as local from './design3dLocal'
 import { newId } from '../utils/floorplan'
-import { applyLocal, runOnce, refreshFromServer, startEngine } from './design3dSync'
+import { applyLocal, discardRefusedProject, runOnce, refreshFromServer, startEngine } from './design3dSync'
 
 const lvl = (over = {}) => ({ id: 'l'.repeat(32), project_id: 'p'.repeat(32), name: 'RDC', position: 0, revision: 0,
   wall_height_m: 2.7, calibration: null, geometry: { walls: [], rooms: [], openings: [] }, dirty: false, ...over })
@@ -94,6 +94,38 @@ describe('design3d sync engine', () => {
     expect(level.geometry).toEqual(geometry)
     expect(level.sync_error).toMatchObject({ code: 403, message })
     expect(r.hasError).toBe(true)
+  })
+
+  it('un projet définitivement refusé peut être abandonné : projet, niveaux et file partent ensemble', async () => {
+    const pid = 'p'.repeat(32)
+    const api = fakeApi({
+      createProject: vi.fn(async () => { throw { response: { status: 403, data: { error: 'Cible hors périmètre' } } } }),
+    })
+    await applyLocal({ type: 'project.create', payload: { id: pid, target_type: 'property', target_id: 1, title: 'A' } }, { local })
+    const [seeded] = await local.listLevels(pid)
+    await applyLocal({ type: 'level.update', payload: { id: seeded.id, name: 'RDC' } }, { local })
+    await runOnce({ api, local, onState: () => {} })
+
+    // Sans cette sortie, le projet reste piégé pour toujours : aucun chemin ne
+    // réenfile un `project.create`, et `targetRefusalError` court-circuite
+    // définitivement toute opération de tous ses niveaux.
+    expect(await discardRefusedProject(pid, { local })).toBe(true)
+    expect(await local.getProject(pid)).toBeUndefined()
+    expect(await local.listLevels(pid)).toEqual([])
+    // Aucune opération orpheline ne doit rester en file, sinon elle repartirait
+    // vers un projet inexistant et récolterait des 404 sans objet.
+    expect(await local.pendingCount()).toBe(0)
+  })
+
+  it("n'abandonne jamais un projet qui n'est pas définitivement refusé", async () => {
+    const pid = 'p'.repeat(32)
+    await local.putProject({ id: pid, title: 'A', synced: true, sync_error: { code: 403, message: 'Interdit' } })
+    expect(await discardRefusedProject(pid, { local })).toBe(false)
+    expect(await local.getProject(pid)).toBeTruthy()
+
+    await local.putProject({ id: pid, title: 'A', synced: false, sync_error: { code: 422, message: 'Invalide' } })
+    expect(await discardRefusedProject(pid, { local })).toBe(false)
+    expect(await local.getProject(pid)).toBeTruthy()
   })
 
   it('stops on 401 keeping the queue', async () => {

@@ -1321,9 +1321,13 @@
     },
     "syncError": {
       "level": "Ce niveau n'a pas pu être synchronisé : {{message}}. Votre travail reste enregistré sur cet appareil.",
-      "project": "Ce projet n'a pas pu être créé sur le serveur : {{message}}. Vos plans restent enregistrés sur cet appareil, mais ils ne seront ni partagés ni publiés tant que ce refus n'est pas levé.",
+      "project": "Ce projet n'a pas pu être créé sur le serveur : {{message}}. Ce refus est définitif, rien dans l'application ne peut le lever : ses plans resteront sur cet appareil, sans jamais être partagés ni publiés.",
       "retry": "Renvoyer ce niveau",
-      "tab": "Synchronisation échouée"
+      "tab": "Synchronisation échouée",
+      "projectDiscard": "Supprimer ce projet et ses plans",
+      "projectDiscardWarning": "Suppression définitive : les plans de ce projet, qui n'ont jamais atteint le serveur, seront perdus. Créez ensuite un projet sur un bien de votre agence.",
+      "projectDiscardConfirm": "Confirmer la suppression",
+      "cancel": "Annuler"
     },
     "calibration": {
       "action": "Calibrer",

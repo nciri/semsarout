@@ -161,6 +161,25 @@ export const markAttempt = async (seq) => {
 }
 export const pendingCount = async () => (await openDb()).count('outbox')
 
+/**
+ * Retire de la file toutes les opérations que `match` désigne, en une seule
+ * transaction. Sert à abandonner un projet que le serveur a définitivement
+ * refusé : ses opérations resteraient sinon en file, à repartir vers un projet
+ * qui n'existe ni ici ni là-bas.
+ */
+export const dropQueued = async (match) => {
+  const tx = (await openDb()).transaction('outbox', 'readwrite')
+  let removed = 0
+  for (const op of await tx.store.getAll()) {
+    if (match(op)) {
+      await tx.store.delete(op.seq)
+      removed += 1
+    }
+  }
+  await tx.done
+  return removed
+}
+
 export const clearAll = async () => {
   const db = await openDb()
   await Promise.all(['projects', 'levels', 'backgrounds', 'outbox'].map((s) => db.clear(s)))

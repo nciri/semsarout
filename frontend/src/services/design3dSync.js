@@ -215,6 +215,33 @@ async function targetRefusalError(projectId, local) {
   })
 }
 
+/**
+ * Abandonne un projet dont la CRÉATION a été définitivement refusée (403 de
+ * cible), avec tout ce qui en dépend : niveaux, images de fond, opérations
+ * encore en file.
+ *
+ * C'est la seule sortie de ce cul-de-sac : aucun chemin de l'application ne
+ * réenfile un `project.create`, et `targetRefusalError` court-circuite pour
+ * toujours toute opération de tous les niveaux du projet. Sans elle, l'agent
+ * reste devant un projet qui ne partira jamais et qu'il ne peut pas retirer.
+ *
+ * Le refus définitif est revérifié ici : cette fonction ne doit jamais pouvoir
+ * servir à supprimer un projet que le serveur connaît, dont le travail serait
+ * alors détruit sans copie. Renvoie `true` si l'abandon a bien eu lieu.
+ */
+export async function discardRefusedProject(projectId, { local = defaultLocal } = {}) {
+  if (!projectId) return false
+  const proj = await local.getProject(projectId)
+  if (!proj || proj.synced || proj.sync_error?.code !== 403) return false
+  const levelIds = new Set((await local.listLevels(projectId)).map((lv) => lv.id))
+  await local.dropQueued((op) => {
+    const p = op.payload ?? {}
+    return p.id === projectId || p.project_id === projectId || levelIds.has(p.id)
+  })
+  await local.deleteProjectLocal(projectId)
+  return true
+}
+
 async function send(op, api, local) {
   const p = op.payload
   switch (op.type) {

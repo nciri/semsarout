@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { FiArrowLeft, FiImage, FiLayers, FiSliders, FiTarget } from 'react-icons/fi'
 import * as local from '../../services/design3dLocal'
 import * as api from '../../services/design3dApi'
-import { applyLocal, refreshFromServer, remoteLevelId, startEngine } from '../../services/design3dSync'
+import { applyLocal, discardRefusedProject, refreshFromServer, remoteLevelId, startEngine } from '../../services/design3dSync'
 import {
   EMPTY_GEOMETRY, newId, normalizedToMeters, polygonArea, rescaleGeometry, validateGeometry,
 } from '../../utils/floorplan'
@@ -45,6 +45,7 @@ const snapshotOf = (levelId, form, geometry) =>
 export default function DesignEditor() {
   const { t } = useTranslation(['dashboard'])
   const { projectId } = useParams()
+  const navigate = useNavigate()
   const hasFeature = useAuthStore((s) => s.hasFeature)
   // L'étagère est aussi ouverte à l'auteur d'une version écartée : il faut
   // pouvoir reconnaître ses propres entrées de celles d'un collègue.
@@ -73,6 +74,9 @@ export default function DesignEditor() {
   // Échec de synchronisation du PROJET (création refusée) : distinct de celui
   // d'un niveau, et prioritaire — tant qu'il dure, aucun niveau ne partira.
   const [projectError, setProjectError] = useState(null)
+  // Confirmation de l'abandon d'un projet refusé : la conséquence est annoncée
+  // avant la suppression, jamais après.
+  const [confirmingDiscard, setConfirmingDiscard] = useState(false)
   // Échec d'amorçage : 'read' (le stockage local n'a pas répondu) ou 'missing'
   // (le niveau n'y est plus). `seedAttempt` sert uniquement à relancer l'effet.
   const [seedError, setSeedError] = useState(null)
@@ -250,6 +254,14 @@ export default function DesignEditor() {
   // de plus, donc `dirty` à nouveau et trace d'échec effacée), puis relance le
   // moteur. Aucun contenu n'est touché — c'est bien le travail conservé sur
   // l'appareil qui repart.
+  // Seule sortie du cul-de-sac : le projet refusé est retiré de l'appareil avec
+  // ses niveaux et ses opérations en file, après annonce de ce qui sera perdu.
+  async function discardProject() {
+    const done = await discardRefusedProject(projectId, { local })
+    setConfirmingDiscard(false)
+    if (done) navigate('/dashboard/conception')
+  }
+
   async function retryLevelSync() {
     if (!levelId) return
     await applyLocal({ type: 'level.update', payload: { id: levelId } })
@@ -575,11 +587,29 @@ export default function DesignEditor() {
                 : t('dashboard:designEditor.syncError.level', { message: currentLevel.sync_error.message })}
             </span>
             {/* Un refus de cible ne se lève pas en réessayant : ne proposer la
-                reprise que là où elle peut aboutir. */}
+                reprise que là où elle peut aboutir. Là où elle ne le peut pas,
+                proposer la seule sortie réelle — l'abandon du projet piégé,
+                conséquence annoncée. */}
             {!projectError && (
               <button type="button" className="btn-secondary min-h-[44px]" onClick={retryLevelSync}>
                 {t('dashboard:designEditor.syncError.retry')}
               </button>
+            )}
+            {projectError && !confirmingDiscard && (
+              <button type="button" className="btn-secondary min-h-[44px]" onClick={() => setConfirmingDiscard(true)}>
+                {t('dashboard:designEditor.syncError.projectDiscard')}
+              </button>
+            )}
+            {projectError && confirmingDiscard && (
+              <>
+                <span className="font-medium">{t('dashboard:designEditor.syncError.projectDiscardWarning')}</span>
+                <button type="button" className="btn-secondary min-h-[44px]" onClick={discardProject}>
+                  {t('dashboard:designEditor.syncError.projectDiscardConfirm')}
+                </button>
+                <button type="button" className="btn-secondary min-h-[44px]" onClick={() => setConfirmingDiscard(false)}>
+                  {t('dashboard:designEditor.syncError.cancel')}
+                </button>
+              </>
             )}
           </div>
         )}
