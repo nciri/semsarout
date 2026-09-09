@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import api from '../services/api'
+import { purgeRuntimeCaches } from '../utils/runtimeCache'
 
 // Entitlements de plan. Le serveur les pose dans les claims du jeton d'accès
 // (identity/app/auth.py::_claims, monolithe backend/app/api/v1/auth.py) : c'est
@@ -88,6 +89,14 @@ const useAuthStore = create(
         // Clear localStorage
         localStorage.removeItem('token')
         localStorage.removeItem('userId')
+
+        // Les réponses design3d mises en cache par le service worker
+        // appartiennent au compte qui se déconnecte : sur une tablette
+        // partagée elles resteraient lisibles par l'utilisateur suivant.
+        // Purge asynchrone volontairement non attendue — la déconnexion est
+        // immédiate et ne doit jamais dépendre du Cache Storage (absent en
+        // navigation privée ou hors contexte sécurisé).
+        purgeRuntimeCaches()
 
         set({
           user: null,

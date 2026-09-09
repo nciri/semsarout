@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { purgeRuntimeCaches } from '../utils/runtimeCache'
 
 const api = axios.create({
   baseURL: '/api/v1',
@@ -58,6 +59,9 @@ api.interceptors.response.use(
           } catch (refreshError) {
             // Clear auth on refresh failure
             localStorage.removeItem('auth-storage')
+            // Déconnexion implicite : purger aussi le cache d'exécution du
+            // service worker, comme le fait authStore.logout().
+            purgeRuntimeCaches()
             window.location.href = '/connexion'
           }
         }

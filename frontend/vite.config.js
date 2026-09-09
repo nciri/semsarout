@@ -1,6 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+// Source unique du périmètre et du nom du cache d'exécution : le cache déclaré
+// ici doit porter le nom que `authStore.logout()` supprime, et ne couvrir que
+// les routes que le test `runtimeCache.test.js` autorise.
+import { API_RUNTIME_CACHE, matchDesign3dRead } from './src/utils/runtimeCache.js'
 
 export default defineConfig({
   plugins: [
@@ -43,13 +47,29 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/api\//, /^\/uploads\//],
         runtimeCaching: [
           {
-            // NetworkFirst : le réseau fait foi, le cache n'est qu'un filet
-            // hors-ligne. Workbox ne met en cache que les GET : les écritures
-            // design3d (POST/PUT/DELETE) ne sont donc jamais servies depuis le
-            // cache — elles échouent et repartent par la file d'attente.
-            urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
+            // Portée VOLONTAIREMENT étroite : seules les LECTURES de plans
+            // design3d sont mises en cache. Un `/api/` global mettrait en
+            // cache toutes les réponses authentifiées de l'application (leads,
+            // données de compte…) : sur une tablette partagée, elles
+            // resteraient lisibles par l'agent suivant, et un NetworkFirst y
+            // retomberait dès que le réseau est lent. La spec ne demande
+            // l'hors-ligne que pour design3d.
+            //
+            // `method: 'GET'` est explicite (c'est déjà le défaut Workbox) :
+            // les écritures design3d ne sont donc jamais servies depuis le
+            // cache — elles échouent hors ligne et repartent par la file
+            // d'attente IndexedDB.
+            urlPattern: matchDesign3dRead,
+            method: 'GET',
             handler: 'NetworkFirst',
-            options: { cacheName: 'api', networkTimeoutSeconds: 5 },
+            options: {
+              cacheName: API_RUNTIME_CACHE,
+              networkTimeoutSeconds: 5,
+              // Borné dans le temps et en volume : un plan ne doit pas rester
+              // consultable indéfiniment après une déconnexion oubliée.
+              expiration: { maxEntries: 60, maxAgeSeconds: 7 * 24 * 60 * 60, purgeOnQuotaError: true },
+              cacheableResponse: { statuses: [200] },
+            },
           },
         ],
       },
