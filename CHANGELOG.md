@@ -27,3 +27,16 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
   bundle monolithique, est supprimé.
 - CI : le job `frontend-semsarout` lance désormais `lint` et les tests unitaires avant
   le build, comme `frontend-m3a-l3achrane`.
+- L'attente de chargement d'une page passe sous l'en-tête (les trois mises en page
+  partagent `RouteOutlet`) et un bandeau signale une navigation en cours, que
+  `startTransition` rendait jusqu'ici invisible.
+
+### Fixed
+
+- Un fragment de page qui ne se charge pas (déploiement pendant la session, coupure
+  réseau) affiche un message et un bouton de rechargement au lieu d'un écran blanc :
+  barrière d'erreur autour des routes + rechargement automatique du service worker
+  sur `controllerchange`.
+- La limite de taille du pré-cache PWA fait désormais échouer le build : Workbox se
+  contentait d'un avertissement avant d'exclure le fichier en silence, ce qui aurait
+  cassé le démarrage hors ligne sans rien faire échouer en CI.
