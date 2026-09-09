@@ -1346,8 +1346,12 @@
       "badge": "Versions mises de côté ({{n}})",
       "title": "Versions mises de côté",
       "intro": "Un collègue a enregistré une version pendant que vous modifiiez ce niveau. Prévisualisez-la, puis récupérez-la si elle vous convient.",
+      "notice": "Version mise de côté : le propriétaire a modifié ce niveau, votre version lui a été transmise. Vous la retrouvez dans « Versions mises de côté ».",
+      "noticeDismiss": "J'ai compris",
+      "introOwn": "Votre version a été mise de côté au profit de celle du propriétaire. Prévisualisez-la, puis récupérez-la si vous voulez la reprendre.",
       "empty": "Aucune version en attente.",
       "item": "Basée sur la révision {{revision}} · {{area}} m² tracés",
+      "itemOwn": "Votre version, basée sur la révision {{revision}} · {{area}} m² tracés",
       "recover": "Récupérer",
       "dismiss": "Ignorer",
       "close": "Fermer"

@@ -351,6 +351,12 @@ export async function runOnce({ api = defaultApi, local = defaultLocal, onState 
         const server = e.response.data?.level
         const curLevel = await local.getLevel(op.payload.id)
         const supersededByNewerEdit = e.attemptedSeq != null && (curLevel?.edit_seq ?? 0) > e.attemptedSeq
+        // La version que portait cette opération vient d'être archivée côté
+        // serveur au profit de celle du propriétaire (main.py::_shelve). La
+        // trace est persistée sur le niveau : le badge « conflit » est fugace,
+        // et sans elle l'auteur n'apprend jamais ce qui est arrivé à son
+        // travail — la spec §288 lui promet pourtant ce message.
+        const shelved_notice = { at: Date.now(), revision: server?.revision }
         if (supersededByNewerEdit) {
           // Une édition plus récente que celle qui a été envoyée est déjà en
           // file (op suivante) : remplacer l'entité par la version serveur
@@ -359,12 +365,12 @@ export async function runOnce({ api = defaultApi, local = defaultLocal, onState 
           // on aligne seulement `base_revision` sur celle du serveur pour
           // que le prochain envoi ne reparte pas avec une révision déjà
           // périmée.
-          if (server) await local.putLevel({ ...curLevel, base_revision: server.revision })
+          if (server) await local.putLevel({ ...curLevel, base_revision: server.revision, shelved_notice })
         } else if (server) {
           // Aucune édition plus récente : le serveur a gagné, comme convenu
           // — le travail de cette opération est archivé côté serveur
           // (cf. tâche 4), on remplace intégralement par sa version.
-          await local.putLevel(mergedWithServer(curLevel ?? { id: op.payload.id }, server, { base_revision: server.revision, dirty: false }))
+          await local.putLevel(mergedWithServer(curLevel ?? { id: op.payload.id }, server, { base_revision: server.revision, dirty: false, shelved_notice }))
         }
         await local.remove(op.seq)
         conflict = true

@@ -116,6 +116,17 @@ describe('design3d sync engine', () => {
     expect(states.at(-1).state).toBe('conflict')
   })
 
+  it('409 laisse une trace persistante disant que la version a été mise de côté', async () => {
+    // Le badge « conflit » est fugace : sans trace sur le niveau, l'auteur de
+    // la version écrasée n'apprend jamais ce qui lui est arrivé (I5).
+    const server = lvl({ revision: 5, name: 'Serveur' })
+    const api = fakeApi({ updateLevel: vi.fn(async () => { throw { response: { status: 409, data: { level: server } } } }) })
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })
+    await runOnce({ api, local, onState: () => {} })
+    const stored = await local.getLevel(lvl().id)
+    expect(stored.shelved_notice).toMatchObject({ revision: 5, at: expect.any(Number) })
+  })
+
   it('owner shelved response flags conflict but keeps own version', async () => {
     const api = fakeApi({ updateLevel: vi.fn(async () => ({ ...lvl(), revision: 7, shelved: true })) })
     await applyLocal({ type: 'level.update', payload: { id: lvl().id, geometry: { walls: [], rooms: [], openings: [] }, base_revision: 0 } }, { local })

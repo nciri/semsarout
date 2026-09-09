@@ -335,6 +335,20 @@ describe('DesignEditor', () => {
     })
   })
 
+  it('dit à l’auteur que sa version a été mise de côté au profit du propriétaire', async () => {
+    await local.putLevel({
+      id: LEVEL_ID, project_id: PROJECT_ID, name: 'RDC', position: 0, revision: 5, base_revision: 5,
+      wall_height_m: 2.7, calibration: null, geometry: { walls: [], rooms: [], openings: [] }, dirty: false,
+      shelved_notice: { at: 1, revision: 5 },
+    })
+    renderEditor()
+
+    expect(await screen.findByText(/le propriétaire a modifié ce niveau/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: "J'ai compris" }))
+    await waitFor(async () => expect((await local.getLevel(LEVEL_ID)).shelved_notice).toBeUndefined())
+  })
+
   it('dit que la cible du projet a été refusée (403) au lieu de laisser le travail invisible', async () => {
     await local.putProject({
       id: PROJECT_ID, target_type: 'property', target_id: 1, title: 'Test', status: 'draft', synced: false,

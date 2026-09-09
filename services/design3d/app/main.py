@@ -268,13 +268,20 @@ def _owner_only(p: DesignProject, principal: Principal):
 
 @app.get("/design3d/levels/{level_id}/shelf")
 def list_shelf(level_id: str, principal: Principal = Depends(_design3d), db: Session = Depends(get_db)):
+    """Le propriétaire voit toutes les versions mises de côté ; tout autre auteur, les siennes.
+
+    L'étagère entièrement réservée au propriétaire laissait le collègue qui perd
+    la course sans aucun moyen de consulter sa propre version : elle était bien
+    archivée, mais invisible pour lui — de son point de vue, son travail avait
+    disparu. Voir la sienne ne lui donne rien de plus que ce qu'il a écrit.
+    """
     lv, p, err = _load_level(db, level_id, principal)
     if err:
         return err
-    if (d := _owner_only(p, principal)) is not None:
-        return d
-    rows = db.query(DesignLevelShelf).filter(DesignLevelShelf.level_id == lv.id, DesignLevelShelf.reviewed_at.is_(None)).all()
-    return {"items": [s.to_dict() for s in rows]}
+    q = db.query(DesignLevelShelf).filter(DesignLevelShelf.level_id == lv.id, DesignLevelShelf.reviewed_at.is_(None))
+    if _owner_only(p, principal) is not None:
+        q = q.filter(DesignLevelShelf.author_id == _uid(principal))
+    return {"items": [s.to_dict() for s in q.all()]}
 
 
 @app.post("/design3d/levels/{level_id}/shelf/{shelf_id}/dismiss")
@@ -282,11 +289,13 @@ def dismiss_shelf(level_id: str, shelf_id: str, principal: Principal = Depends(_
     lv, p, err = _load_level(db, level_id, principal)
     if err:
         return err
-    if (d := _owner_only(p, principal)) is not None:
-        return d
     s = db.get(DesignLevelShelf, shelf_id)
     if s is None or s.level_id != lv.id:
         return _err("Not found", 404)
+    # Le propriétaire revoit toute l'étagère du niveau ; un autre auteur ne
+    # peut écarter que sa propre version.
+    if _owner_only(p, principal) is not None and s.author_id != _uid(principal):
+        return _err("Réservé au propriétaire du projet", 403)
     s.reviewed_at = _now()
     db.commit()
     return s.to_dict()

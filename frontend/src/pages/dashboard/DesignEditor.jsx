@@ -46,6 +46,9 @@ export default function DesignEditor() {
   const { t } = useTranslation(['dashboard'])
   const { projectId } = useParams()
   const hasFeature = useAuthStore((s) => s.hasFeature)
+  // L'étagère est aussi ouverte à l'auteur d'une version écartée : il faut
+  // pouvoir reconnaître ses propres entrées de celles d'un collègue.
+  const userId = useAuthStore((s) => s.user?.id)
   const editor = useFloorplanEditor()
   const { state, dispatch, undo, redo, canUndo, canRedo } = editor
 
@@ -254,7 +257,19 @@ export default function DesignEditor() {
     engineRef.current?.tick()
   }
 
-  // --- versions mises de côté (étagère, propriétaire seulement) -----------
+  // Le message de mise à l'écart n'est plus utile une fois lu : seul
+  // l'utilisateur le retire, pour qu'un rafraîchissement ne l'escamote pas
+  // avant qu'il ne l'ait vu.
+  async function dismissShelvedNotice() {
+    const lv = await local.getLevel(levelId)
+    if (!lv) return
+    // eslint-disable-next-line no-unused-vars -- déstructuration volontaire pour omettre `shelved_notice`
+    const { shelved_notice, ...rest } = lv
+    await local.putLevel(rest)
+    await loadLevels()
+  }
+
+  // --- versions mises de côté (étagère) -----------------------------------
   // Ces appels sortent du moteur de synchronisation : ils doivent traduire
   // eux-mêmes la clé locale en identité serveur, faute de quoi l'étagère du
   // niveau initial d'un projet répond 404 (cf. `remoteLevelId`).
@@ -566,6 +581,18 @@ export default function DesignEditor() {
           </div>
         )}
 
+        {currentLevel?.shelved_notice && (
+          <div
+            role="status"
+            className="p-3 bg-amber-50 border-b border-amber-200 text-amber-900 text-sm flex flex-wrap items-center gap-3"
+          >
+            <span>{t('dashboard:designEditor.shelf.notice')}</span>
+            <button type="button" className="btn-secondary min-h-[44px]" onClick={dismissShelvedNotice}>
+              {t('dashboard:designEditor.shelf.noticeDismiss')}
+            </button>
+          </div>
+        )}
+
         <div className="p-3 bg-white border-b border-gray-200">
           <LevelTabs
             levels={levels}
@@ -708,6 +735,7 @@ export default function DesignEditor() {
         {shelf && (
           <ShelfDialog
             items={shelf.items}
+            ownAuthorId={userId}
             onRecover={recoverShelf}
             onDismiss={dismissShelfItem}
             onClose={() => setShelf(null)}

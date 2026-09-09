@@ -60,14 +60,46 @@ def test_one_unreviewed_entry_per_author(client, headers):
     assert len(shelf) == 1
 
 
-def test_shelf_only_for_owner_and_dismiss(client, headers):
+def test_shelf_dismiss_by_owner(client, headers):
     _, lid = _project(client, headers)
     _put(client, headers, lid, 0, G1, user_id=1, agency_id=9)
     _put(client, headers, lid, 0, G2, user_id=2, agency_id=9)
-    assert client.get(f"/design3d/levels/{lid}/shelf", headers=headers(user_id=2, agency_id=9)).status_code == 403
     sid = client.get(f"/design3d/levels/{lid}/shelf", headers=headers(user_id=1, agency_id=9)).json()["items"][0]["id"]
     assert client.post(f"/design3d/levels/{lid}/shelf/{sid}/dismiss", headers=headers(user_id=1, agency_id=9)).status_code == 200
     assert client.get(f"/design3d/levels/{lid}/shelf", headers=headers(user_id=1, agency_id=9)).json()["items"] == []
+
+
+def test_shelf_author_reads_and_dismisses_its_own_entry(client, headers):
+    """Le collègue qui perd la course doit pouvoir consulter ce qui a été mis de côté.
+
+    Son travail est bien archivé côté serveur, mais l'étagère était réservée au
+    propriétaire : de son point de vue, sa version avait purement disparu.
+    """
+    _, lid = _project(client, headers)
+    _put(client, headers, lid, 0, G1, user_id=1, agency_id=9)
+    assert _put(client, headers, lid, 0, G2, user_id=2, agency_id=9).status_code == 409
+    r = client.get(f"/design3d/levels/{lid}/shelf", headers=headers(user_id=2, agency_id=9))
+    assert r.status_code == 200
+    items = r.json()["items"]
+    assert len(items) == 1 and items[0]["author_id"] == 2 and items[0]["geometry"] == G2
+    assert client.post(f"/design3d/levels/{lid}/shelf/{items[0]['id']}/dismiss",
+                       headers=headers(user_id=2, agency_id=9)).status_code == 200
+    assert client.get(f"/design3d/levels/{lid}/shelf", headers=headers(user_id=2, agency_id=9)).json()["items"] == []
+
+
+def test_shelf_author_sees_only_its_own_entries(client, headers):
+    """Ouvrir l'étagère à son auteur n'ouvre pas celle des autres."""
+    _, lid = _project(client, headers)
+    _put(client, headers, lid, 0, G1, user_id=1, agency_id=9)
+    _put(client, headers, lid, 0, G2, user_id=2, agency_id=9)
+    _put(client, headers, lid, 0, G2, user_id=3, agency_id=9)
+    items = client.get(f"/design3d/levels/{lid}/shelf", headers=headers(user_id=2, agency_id=9)).json()["items"]
+    assert [s["author_id"] for s in items] == [2]
+    owner_items = client.get(f"/design3d/levels/{lid}/shelf", headers=headers(user_id=1, agency_id=9)).json()["items"]
+    assert sorted(s["author_id"] for s in owner_items) == [2, 3]
+    foreign = next(s for s in owner_items if s["author_id"] == 3)
+    assert client.post(f"/design3d/levels/{lid}/shelf/{foreign['id']}/dismiss",
+                       headers=headers(user_id=2, agency_id=9)).status_code == 403
 
 
 def test_sync_summary_scoped(client, headers):

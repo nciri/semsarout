@@ -30,13 +30,20 @@ function Preview({ geometry }) {
   )
 }
 
-export default function ShelfDialog({ items, onRecover, onDismiss, onClose, busyId }) {
+export default function ShelfDialog({ items, onRecover, onDismiss, onClose, busyId, ownAuthorId = null }) {
   const { t } = useTranslation(['dashboard'])
+  // L'étagère est aussi ouverte à l'auteur d'une version écartée (il n'y voit
+  // que la sienne) : lui dire qu'« un collègue a enregistré une version »
+  // serait faux. `ownAuthorId` distingue les deux lectures du même écran.
+  const isOwn = (item) => ownAuthorId != null && item.author_id === ownAuthorId
+  const onlyOwn = items.length > 0 && items.every(isOwn)
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="bg-white w-full sm:max-w-lg rounded-t-xl sm:rounded-xl p-4 max-h-[85vh] overflow-y-auto">
         <h2 className="text-lg font-semibold text-gray-900">{t('dashboard:designEditor.shelf.title')}</h2>
-        <p className="text-sm text-gray-600 mb-3">{t('dashboard:designEditor.shelf.intro')}</p>
+        <p className="text-sm text-gray-600 mb-3">
+          {t(`dashboard:designEditor.shelf.${onlyOwn ? 'introOwn' : 'intro'}`)}
+        </p>
 
         {items.length === 0 && <p className="text-sm text-gray-500">{t('dashboard:designEditor.shelf.empty')}</p>}
 
@@ -44,7 +51,7 @@ export default function ShelfDialog({ items, onRecover, onDismiss, onClose, busy
           {items.map((item) => (
             <li key={item.id} className="border border-gray-200 rounded-lg p-3">
               <p className="text-sm text-gray-700 mb-2">
-                {t('dashboard:designEditor.shelf.item', {
+                {t(`dashboard:designEditor.shelf.${isOwn(item) ? 'itemOwn' : 'item'}`, {
                   revision: item.base_revision,
                   area: levelArea(item.geometry || {}).toFixed(1),
                 })}
