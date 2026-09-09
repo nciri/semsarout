@@ -103,6 +103,31 @@ export const listProjects = async (targetType, targetId) =>
 
 export const getLevel = async (id) => (await openDb()).get('levels', id)
 export const putLevel = async (lv) => (await openDb()).put('levels', lv)
+
+/**
+ * Lit et réécrit un enregistrement dans UNE SEULE transaction `readwrite`.
+ *
+ * `putLevel` remplace l'enregistrement entier (aucune fusion en base) : un
+ * couple lecture/écriture séparé par un `await` laisse une fenêtre où un autre
+ * flux — la sauvegarde différée de l'éditeur, le tick du moteur — écrit entre
+ * les deux, et la seconde écriture efface la première. Toute la mécanique
+ * `edit_seq`/`attemptedSeq` du moteur de synchronisation suppose cette
+ * atomicité ; c'est ici qu'elle devient vraie.
+ *
+ * `fn` reçoit l'enregistrement courant (ou `undefined`) et renvoie celui à
+ * écrire — ou `undefined` pour ne rien écrire. Elle doit être SYNCHRONE : une
+ * attente extérieure refermerait la transaction.
+ */
+const mutate = (store) => async (id, fn) => {
+  const tx = (await openDb()).transaction(store, 'readwrite')
+  const next = fn(await tx.store.get(id))
+  if (next !== undefined) await tx.store.put(next)
+  await tx.done
+  return next
+}
+
+export const mutateLevel = mutate('levels')
+export const mutateProject = mutate('projects')
 export const listLevels = async (projectId) => (await openDb()).getAllFromIndex('levels', 'project_id', projectId)
 
 export const putBackground = async (level_id, blob, type) => (await openDb()).put('backgrounds', { level_id, blob, type })

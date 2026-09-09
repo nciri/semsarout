@@ -261,11 +261,14 @@ export default function DesignEditor() {
   // l'utilisateur le retire, pour qu'un rafraîchissement ne l'escamote pas
   // avant qu'il ne l'ait vu.
   async function dismissShelvedNotice() {
-    const lv = await local.getLevel(levelId)
-    if (!lv) return
-    // eslint-disable-next-line no-unused-vars -- déstructuration volontaire pour omettre `shelved_notice`
-    const { shelved_notice, ...rest } = lv
-    await local.putLevel(rest)
+    // Lecture et écriture dans la même transaction : un enregistrement différé
+    // qui tomberait entre les deux serait purement et simplement effacé.
+    await local.mutateLevel(levelId, (lv) => {
+      if (!lv) return undefined
+      // eslint-disable-next-line no-unused-vars -- déstructuration volontaire pour omettre `shelved_notice`
+      const { shelved_notice, ...rest } = lv
+      return rest
+    })
     await loadLevels()
   }
 

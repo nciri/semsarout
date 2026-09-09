@@ -228,6 +228,40 @@ describe('design3d sync engine', () => {
     expect((await local.getLevel(lvl().id)).revision).toBe(3)
   })
 
+  it('deux éditions concurrentes du même niveau sont toutes deux comptées (lire-puis-écrire atomique)', async () => {
+    // Le compteur `edit_seq` — sur lequel reposent tout le dédoublonnage et la
+    // détection d'édition concurrente (quatre rounds de correctifs) — suppose
+    // que lire puis écrire un niveau est atomique. Avec deux transactions
+    // séparées, les deux flux lisent 0, écrivent 1, et une édition disparaît.
+    await local.putLevel(lvl({ name: 'V0' }))
+    // Double dont la LECTURE traîne : reproduit l'entrelacement réel entre la
+    // sauvegarde différée de l'éditeur et le tick du moteur.
+    const slow = { ...local, getLevel: async (id) => { const v = await local.getLevel(id); await new Promise((r) => { setTimeout(r, 5) }); return v } }
+    await Promise.all([
+      applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'A' } }, { local: slow }),
+      applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'B' } }, { local: slow }),
+    ])
+    expect((await local.getLevel(lvl().id)).edit_seq).toBe(2)
+    expect(await local.pendingCount()).toBe(2)
+  })
+
+  it("refreshFromServer n'écrase pas une édition survenue pendant l'appel réseau", async () => {
+    await local.putLevel(lvl({ revision: 1, dirty: false, name: 'Serveur' }))
+    const api = fakeApi({
+      sync: vi.fn(async () => ({ projects: [{ id: 'p'.repeat(32), levels: [{ id: lvl().id, revision: 3, shelved_count: 0 }] }] })),
+      getProject: vi.fn(async () => {
+        // L'agent dessine pendant que la requête est en vol : le niveau était
+        // propre à la lecture d'avant l'attente, il ne l'est plus à l'écriture.
+        await applyLocal({ type: 'level.update', payload: { id: lvl().id, name: 'Local' } }, { local })
+        return { id: 'p'.repeat(32), levels: [lvl({ revision: 3, name: 'Serveur' })] }
+      }),
+    })
+    await refreshFromServer({ api, local })
+    const stored = await local.getLevel(lvl().id)
+    expect(stored.name).toBe('Local')
+    expect(stored.dirty).toBe(true)
+  })
+
   it('refreshFromServer leaves dirty levels alone', async () => {
     await local.putLevel(lvl({ revision: 1, dirty: true, name: 'Local' }))
     const api = fakeApi({ sync: vi.fn(async () => ({ projects: [{ id: 'p'.repeat(32), levels: [{ id: lvl().id, revision: 3, shelved_count: 0 }] }] })) })
