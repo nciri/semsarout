@@ -182,6 +182,12 @@ contains "migration billing/migrate_design3d.sql jouée" "has_design3d" "$SQL_LO
 contains "migration billing/migrate_design3d_entitlement.sql jouée (pro/enterprise activés)" \
   "IN ('pro', 'enterprise')" "$SQL_LOG"
 contains "migration billing/migrate_commission_invoice.sql jouée" "commission" "$SQL_LOG"
+# La colonne `features_synced_at` est MAPPÉE par identity (app/models.py::AgencyRO) : sans sa
+# migration dans MIGRATIONS, chaque /auth/login et /auth/refresh d'un compte d'agence SELECTe une
+# colonne inexistante (UndefinedColumn) et tous les comptes d'agence sont dehors dès le
+# déploiement. Une colonne mappée dont l'ALTER n'est pas joué est une panne totale, pas un détail.
+contains "migration identity/add_features_synced_at.sql jouée (colonne mappée par AgencyRO)" \
+  "ADD COLUMN IF NOT EXISTS features_synced_at" "$SQL_LOG"
 
 # --- défaut n°3 (nom de fichier d'environnement) -------------------------------
 if [ -f "$ENV_DIR/app-design3d.env" ]; then

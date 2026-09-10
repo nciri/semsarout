@@ -51,8 +51,18 @@ NEW_SERVICES="design3d 8526"
 # idempotentes (IF NOT EXISTS / DO $$ … duplicate_object) : elles sont rejouées à
 # chaque déploiement sans effet de bord tant qu'elles réussissent. Une entrée par
 # `services/*/db/*.sql` hors schema.sql et migrate_from_monolith.sql.
+#
+# Toute colonne MAPPÉE par un modèle SQLAlchemy doit y figurer : init_db() ne fait qu'un
+# create_all, qui n'ALTERe JAMAIS une table existante. Une colonne mappée dont l'ALTER n'est
+# pas joué ici n'est donc pas un détail cosmétique, c'est une panne totale de tous les chemins
+# qui lisent le modèle (identity.agency_ro.features_synced_at → UndefinedColumn sur chaque
+# /auth/login et /auth/refresh d'un compte d'agence, donc tous les agents dehors).
+# add_features_synced_at.sql est placée AVANT identity/add_rental_feature.sql, la seule entrée
+# dont l'échec est connu : la boucle plus bas n'arrête jamais la séquence, mais rien ne justifie
+# de faire dépendre une migration critique de cette propriété.
 MIGRATIONS="
 identity/add_tenant.sql
+identity/add_features_synced_at.sql
 identity/add_rental_feature.sql
 messaging/migrate_conversation.sql
 rental/migrate_particulier_lease.sql
