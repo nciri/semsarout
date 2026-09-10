@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import i18n from '../../i18n'
 import * as local from '../../services/design3dLocal'
+import * as api from '../../services/design3dApi'
 import useAuthStore from '../../store/authStore'
 import DesignEditor from './DesignEditor'
 
@@ -25,6 +26,7 @@ vi.mock('../../services/design3dApi', () => {
     listShelf: vi.fn(() => Promise.reject(netErr())),
     dismissShelf: vi.fn(() => Promise.reject(netErr())),
     sync: vi.fn(() => Promise.reject(netErr())),
+    listAgencyProjects: vi.fn(() => Promise.resolve([])),
   }
 })
 
@@ -508,5 +510,38 @@ describe('DesignEditor', () => {
     await waitFor(() => {
       expect(screen.getByTestId('floorplan-canvas').querySelectorAll('line').length).toBeGreaterThan(0)
     })
+  })
+
+  it('demande confirmation avant de reprendre un plan si un trait tout juste tracé n’est pas encore enregistré (débounce)', async () => {
+    // La vacuité doit porter sur l'éditeur vivant, pas sur l'enregistrement local
+    // (rechargé à froid) : le débounce de 500 ms laisse une fenêtre où le niveau
+    // local est encore vide alors que l'éditeur, lui, ne l'est plus.
+    api.listAgencyProjects.mockResolvedValueOnce([{
+      id: 'other', title: 'Autre projet',
+      levels: [{
+        id: 'ol1', name: 'Autre niveau', wall_height_m: 2.5,
+        geometry: { walls: [{ id: 'w9', a: { x: 0, y: 0 }, b: { x: 2, y: 0 }, thickness_m: 0.2 }], rooms: [], openings: [] },
+      }],
+    }])
+    renderEditor()
+    await screen.findByRole('tab', { name: 'RDC' })
+
+    await pickTool('Mur')
+    const canvas = screen.getByTestId('floorplan-canvas')
+    fireEvent.pointerDown(canvas, { pointerId: 1, clientX: 100, clientY: 100 })
+    fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 300, clientY: 100 })
+    fireEvent.pointerUp(canvas, { pointerId: 1, clientX: 300, clientY: 100 })
+    expect(screen.getByTestId('floorplan-canvas').querySelectorAll('line')).toHaveLength(1)
+
+    // Avant que le débounce n'ait écrit ce trait en IndexedDB (`local.getLevel`
+    // reste vide à cet instant) : la confirmation doit quand même être demandée.
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    fireEvent.click(screen.getByRole('button', { name: 'Reprendre un plan existant' }))
+    fireEvent.click(await screen.findByText(/Autre niveau/i))
+
+    expect(confirmSpy).toHaveBeenCalled()
+    // Refusée : le trait tout juste tracé n'a pas été écrasé.
+    expect(screen.getByTestId('floorplan-canvas').querySelectorAll('line')).toHaveLength(1)
+    confirmSpy.mockRestore()
   })
 })

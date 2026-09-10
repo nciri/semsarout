@@ -529,12 +529,17 @@ export default function DesignEditor() {
   // --- reprise d'un plan existant (Task 10) --------------------------------
   // Le remplacement écrase le plan courant : seule protection contre la perte
   // du travail en place, on demande confirmation si le niveau courant n'est
-  // pas vide (`isLevelEmpty`, déjà posée par la tâche 8 — pas de second test
-  // de vacuité ici). La copie régénère ses identifiants (`copyGeometry`) : la
-  // source, niveau d'un autre projet ou d'un autre étage, n'est jamais touchée.
+  // pas vide. La vacuité doit porter sur l'éditeur VIVANT (`state.geometry`,
+  // l'image de fond en cours, la calibration en cours) — jamais sur `currentLevel`,
+  // qui vient de `levels` (rechargé depuis IndexedDB) : avec le débounce de 500 ms
+  // de l'enregistrement, un trait tout juste tracé n'y est pas encore répercuté, et
+  // interroger l'enregistrement plutôt que l'édition en cours contournerait la
+  // confirmation — exactement la perte de travail que ce chantier combat. On
+  // réutilise `isLevelEmpty` (tâche 8) sur un niveau reconstitué depuis l'état vivant,
+  // pas un second test de vacuité.
   function pickReuseLevel(level) {
-    if (currentLevel && !local.isLevelEmpty(currentLevel)
-      && !window.confirm(t('dashboard:designEditor.reuse.confirm'))) {
+    const live = { geometry: state.geometry, background_image_key: background ? 'live' : null, calibration: form.calibration }
+    if (!local.isLevelEmpty(live) && !window.confirm(t('dashboard:designEditor.reuse.confirm'))) {
       return
     }
     dispatch({
