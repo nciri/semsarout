@@ -106,6 +106,21 @@ def test_liste_sans_cible_bornee_par_limit_par_defaut(client, headers):
     assert len(r.json()["projects"]) == 50
 
 
+def test_limite_hors_bornes_refusee_avant_la_base(client, headers):
+    """`limit` doit être validé par l'API, pas par le moteur de base.
+
+    SQLite ignore un LIMIT négatif (d'où des suites vertes trompeuses) alors que
+    PostgreSQL, sur lequel tourne la production, le REFUSE : une requête
+    malformée y produisait un 500 au lieu d'un 422. La borne haute protège
+    accessoirement la réponse, qui porte désormais les résumés de niveaux.
+    """
+    for value in (-1, 0, 1000):
+        r = client.get("/design3d/projects", params={"limit": value}, headers=headers())
+        assert r.status_code == 422, f"limit={value} devrait être refusé"
+    assert client.get("/design3d/projects", params={"limit": 1}, headers=headers()).status_code == 200
+    assert client.get("/design3d/projects", params={"limit": 100}, headers=headers()).status_code == 200
+
+
 def test_create_level_idempotent_same_project(client, headers):
     pid = _create(client, headers()).json()["id"]
     level_id = "c" * 32
