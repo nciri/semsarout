@@ -211,7 +211,9 @@ class CalibrationIn(BaseModel):
 class LevelCreateIn(BaseModel):
     id: str | None = Field(default=None, min_length=32, max_length=32)
     name: str = Field(min_length=1, max_length=60)
-    position: int = 0
+    # `None` et non `0` : l'absence doit rester distinguable de la position 0, que
+    # demande tout niveau inséré en premier (un sous-sol).
+    position: int | None = None
 
 
 class LevelUpdateIn(BaseModel):

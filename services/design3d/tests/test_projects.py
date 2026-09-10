@@ -150,3 +150,25 @@ def test_create_level_idempotent_same_project(client, headers):
     assert first.json()["id"] == second.json()["id"]
     levels = client.get(f"/design3d/projects/{pid}", headers=headers()).json()["levels"]
     assert len([lv for lv in levels if lv["id"] == level_id]) == 1
+
+
+def test_create_level_position_zero_est_respectee(client, headers):
+    """B6 : `position = body.position or len(...)` confond 0 et « absent ».
+
+    `LevelCreateIn.position` valant 0 par défaut, `0 or N` vaut N : demander
+    explicitement la position 0 — insérer un niveau en premier, ce que fait un
+    sous-sol — donnait la DERNIÈRE position.
+    """
+    pid = _create(client, headers()).json()["id"]
+    sous_sol = client.post(f"/design3d/projects/{pid}/levels",
+                           json={"name": "Sous-sol", "position": 0}, headers=headers())
+    assert sous_sol.status_code == 201
+    assert sous_sol.json()["position"] == 0, "la position demandée doit être respectée"
+
+
+def test_create_level_sans_position_prend_la_suivante(client, headers):
+    """Le champ absent garde son comportement : position = nombre de niveaux existants."""
+    pid = _create(client, headers()).json()["id"]
+    lv = client.post(f"/design3d/projects/{pid}/levels", json={"name": "Étage 1"}, headers=headers())
+    assert lv.status_code == 201
+    assert lv.json()["position"] == 1, "un projet neuf a déjà son RDC en position 0"

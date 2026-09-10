@@ -229,7 +229,7 @@ def create_level(project_id: str, body: LevelCreateIn, principal: Principal = De
         if existing.project_id != p.id:
             return _err("Identifiant déjà utilisé", 409)
         return JSONResponse(existing.to_dict(), status_code=201)  # idempotent (rejeu outbox)
-    position = body.position or len(_levels(db, p.id))
+    position = body.position if body.position is not None else len(_levels(db, p.id))
     lv = DesignLevel(id=body.id or _uuid(), project_id=p.id, name=body.name, position=position,
                      geometry=dict(EMPTY_GEOMETRY), revision_author_id=_uid(principal))
     db.add(lv)
