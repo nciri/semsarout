@@ -90,7 +90,17 @@ def _features(db: Session, agency_id: int | None) -> list[str]:
         return list(ag.features)
     from . import billing_client
     features = billing_client.features_of(agency_id)
+    if features is None:
+        # L'appel n'a pas abouti (billing injoignable, délai dépassé, 5xx) : on ne sait RIEN des
+        # droits de l'agence. Ne rien persister et surtout ne pas estampiller
+        # `features_synced_at` — sinon ce repli, seul chemin capable de réparer la projection,
+        # s'éteint définitivement sur une simple panne de facturation (et notamment pendant la
+        # fenêtre où deploy-remote.sh a redémarré le mesh mais pas encore joué les migrations de
+        # facturation). Le login continue, avec la projection locale telle quelle.
+        return list(ag.features or []) if ag is not None else []
     if ag is not None:
+        # Appel abouti — y compris quand il renvoie une liste vide, ce qui est légitime pour une
+        # offre gratuite : on estampille, et le prochain login ne rappellera plus billing (I7).
         ag.features = features  # auto-répare la projection pour les prochains logins
         ag.features_synced_at = datetime.utcnow()
         db.commit()
