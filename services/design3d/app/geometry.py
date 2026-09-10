@@ -2,17 +2,49 @@
 import math
 
 
-def _pt(p: dict, f: float) -> dict:
+def _num(v) -> bool:
+    return isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
+
+
+def _pt(p, f: float):
+    """Un point incomplet est renvoyé tel quel.
+
+    L'indexation directe faisait remonter un `KeyError` en 500 sur une entrée
+    partielle — et une ouverture sans `offset_m`, par exemple, traverse
+    `validate_geometry` (qui la fait défaut à 0) : la géométrie stockée peut donc
+    légitimement en contenir. Mettre à l'échelle une coordonnée absente
+    reviendrait à inventer de la géométrie.
+    """
+    if not isinstance(p, dict) or not (_num(p.get("x")) and _num(p.get("y"))):
+        return p
     return {"x": p["x"] * f, "y": p["y"] * f}
+
+
+def _scaled_wall(w, f: float):
+    if not isinstance(w, dict):
+        return w
+    return {**w, **{k: _pt(w[k], f) for k in ("a", "b") if k in w}}
+
+
+def _scaled_room(r, f: float):
+    if not isinstance(r, dict) or not isinstance(r.get("polygon"), list):
+        return r
+    return {**r, "polygon": [_pt(p, f) for p in r["polygon"]]}
+
+
+def _scaled_opening(o, f: float):
+    if not isinstance(o, dict) or not _num(o.get("offset_m")):
+        return o
+    return {**o, "offset_m": o["offset_m"] * f}
 
 
 def rescale(geometry: dict, factor: float) -> dict:
     """Remet à l'échelle positions/longueurs (recalibration). Épaisseurs, largeurs d'ouverture,
     hauteurs et allèges sont des dimensions réelles saisies : elles ne changent pas."""
     return {
-        "walls": [{**w, "a": _pt(w["a"], factor), "b": _pt(w["b"], factor)} for w in geometry.get("walls", [])],
-        "rooms": [{**r, "polygon": [_pt(p, factor) for p in r["polygon"]]} for r in geometry.get("rooms", [])],
-        "openings": [{**o, "offset_m": o["offset_m"] * factor} for o in geometry.get("openings", [])],
+        "walls": [_scaled_wall(w, factor) for w in geometry.get("walls") or []],
+        "rooms": [_scaled_room(r, factor) for r in geometry.get("rooms") or []],
+        "openings": [_scaled_opening(o, factor) for o in geometry.get("openings") or []],
     }
 
 

@@ -191,9 +191,20 @@ class ProjectUpdateIn(BaseModel):
         return v
 
 
+class PointIn(BaseModel):
+    """Point de calibration en coordonnées normalisées (0-1, relatives à l'image).
+
+    Typé, et non `dict` : un `{"p1": {}, "p2": {}}` traversait sinon la validation
+    et faisait remonter un `KeyError` en 500 au premier calcul d'échelle. La forme
+    sérialisée par `model_dump()` est inchangée (`{"x": …, "y": …}`).
+    """
+    x: float
+    y: float
+
+
 class CalibrationIn(BaseModel):
-    p1: dict
-    p2: dict
+    p1: PointIn
+    p2: PointIn
     meters: float = Field(gt=0)
 
 

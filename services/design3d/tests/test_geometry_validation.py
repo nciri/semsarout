@@ -193,3 +193,34 @@ def test_bool_not_accepted_as_number():
     # bool is instance of int in Python, but should not be accepted as a valid number
     g = _g(walls=[{**W, "thickness_m": True}])
     assert any("w1" in e for e in validate_geometry(g, 2.7))
+
+
+def test_rescale_ne_leve_pas_sur_des_cles_absentes():
+    """B3 : `rescale` indexait `o["offset_m"]`, `w["a"]` et `r["polygon"]` directement.
+
+    Une ouverture sans `offset_m` traverse pourtant `validate_geometry` (qui la
+    fait défaut à 0) et se retrouve donc en base : la recalibration du niveau
+    remontait alors un `KeyError` en 500. Une entrée incomplète est laissée
+    telle quelle — mettre à l'échelle une valeur absente reviendrait à inventer
+    de la géométrie.
+    """
+    from app.geometry import rescale
+
+    g = rescale({"walls": [{"id": "w1"}, {"id": "w2", "a": {"x": 1, "y": 2}}],
+                 "rooms": [{"id": "r1"}],
+                 "openings": [{"id": "o1", "wall_id": "w1"}, {"id": "o2", "offset_m": 1}]}, 2)
+    assert g["walls"][0] == {"id": "w1"}
+    assert g["walls"][1]["a"] == {"x": 2, "y": 4} and "b" not in g["walls"][1]
+    assert g["rooms"][0] == {"id": "r1"}
+    assert g["openings"][0] == {"id": "o1", "wall_id": "w1"}
+    assert g["openings"][1]["offset_m"] == 2
+
+
+def test_rescale_accepte_une_ouverture_sans_offset_conservee_en_base():
+    """L'ouverture sans `offset_m` est acceptée par la validation : rescale doit tenir."""
+    from app.geometry import rescale
+    from app.schemas import validate_geometry
+
+    g = _g(openings=[{"id": "o1", "wall_id": "w1", "type": "door", "width_m": 0.9, "height_m": 2.1, "sill_m": 0}])
+    assert validate_geometry(g, 2.7) == []
+    assert rescale(g, 0.5)["walls"][0]["b"] == {"x": 2, "y": 0}

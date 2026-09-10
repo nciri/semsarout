@@ -170,3 +170,27 @@ def test_recalibrate_a_la_baisse_refuse_une_geometrie_devenue_invalide(client, h
     assert lv["revision"] == 1
     assert lv["geometry"] == G
     assert lv["calibration"]["meters"] == 4
+
+
+def test_calibration_sans_coordonnees_est_refusee_par_la_validation(client, headers):
+    """B3 : `CalibrationIn` déclarait `p1: dict` / `p2: dict`, sans structure.
+
+    Un `{"p1": {}, "p2": {}}` traversait la validation, était stocké tel quel,
+    puis `_dist_norm` remontait un `KeyError` en 500 à la recalibration
+    suivante. Une entrée malformée doit être refusée en 422, comme toute autre.
+    """
+    _, lid = _project(client, headers)
+    bad = {"p1": {}, "p2": {}, "meters": 4}
+    r = client.put(f"/design3d/levels/{lid}", json={"base_revision": 0, "calibration": bad}, headers=headers())
+    assert r.status_code == 422, r.text
+    r = client.post(f"/design3d/levels/{lid}/recalibrate", json={"base_revision": 0, "calibration": bad},
+                    headers=headers())
+    assert r.status_code == 422, r.text
+
+
+def test_calibration_valide_garde_sa_forme_serialisee(client, headers):
+    """Contrat de sérialisation : la calibration stockée reste `{p1:{x,y}, p2:{x,y}, meters}`."""
+    _, lid = _project(client, headers)
+    r = client.put(f"/design3d/levels/{lid}", json={"base_revision": 0, "calibration": _CAL_4M}, headers=headers())
+    assert r.status_code == 200
+    assert r.json()["calibration"] == {"p1": {"x": 0, "y": 0}, "p2": {"x": 0.4, "y": 0}, "meters": 4}
