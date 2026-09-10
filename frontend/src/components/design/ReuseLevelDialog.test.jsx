@@ -81,6 +81,31 @@ describe('ReuseLevelDialog', () => {
     expect(onPick).not.toHaveBeenCalled()
   })
 
+  it('redevient utilisable quand la confirmation de remplacement est refusée', async () => {
+    // Refuser la confirmation laisse le dialogue MONTÉ (l'appelant retourne sans
+    // le fermer) : s'il garde `picking`, toutes les entrées restent désactivées
+    // sous un faux « Chargement du plan choisi… », et l'agent n'a plus qu'à
+    // fermer et rouvrir. Le refus doit rendre le dialogue au même état qu'avant.
+    const api = {
+      listAgencyProjects: vi.fn(async () => [
+        { id: 'p2', title: 'Projet agence', levels: [{ id: 'lv2', name: 'Plan du RDC', position: 0, wall_height_m: 2.9 }] },
+      ]),
+      getLevelGeometry: vi.fn(async () => ({ id: 'lv2', name: 'Plan du RDC', wall_height_m: 2.9, geometry: { walls: [], rooms: [], openings: [] } })),
+    }
+    // L'appelant qui refuse : il ne ferme pas le dialogue.
+    const onPick = vi.fn()
+    render(<ReuseLevelDialog online local={makeLocal()} api={api} onPick={onPick} onClose={() => {}} />)
+    const entry = await screen.findByRole('button', { name: /Plan du RDC/i })
+    await userEvent.click(entry)
+    expect(onPick).toHaveBeenCalled()
+
+    expect(screen.queryByText(/Chargement du plan choisi/i)).not.toBeInTheDocument()
+    expect(entry).toBeEnabled()
+    // Et un second choix aboutit encore, sans passer par une fermeture.
+    await userEvent.click(entry)
+    expect(api.getLevelGeometry).toHaveBeenCalledTimes(2)
+  })
+
   it('remonte la géométrie et la hauteur du niveau choisi', async () => {
     const local = makeLocal()
     const api = makeApi()

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 /**
@@ -26,6 +26,11 @@ export default function ReuseLevelDialog({ online, local, api, onPick, onClose }
   const [projects, setProjects] = useState(null)
   const [picking, setPicking] = useState(null)
   const [pickFailed, setPickFailed] = useState(false)
+  // Le chargement du niveau choisi peut aboutir après le démontage du dialogue
+  // (l'appelant le ferme dès qu'il tient le plan) : même garde que l'effet de
+  // chargement de la liste, appliquée au chemin du choix.
+  const mounted = useRef(true)
+  useEffect(() => () => { mounted.current = false }, [])
 
   useEffect(() => {
     let alive = true
@@ -54,6 +59,7 @@ export default function ReuseLevelDialog({ online, local, api, onPick, onClose }
     setPicking(level.id)
     try {
       const full = await api.getLevelGeometry(project.id, level.id)
+      if (!mounted.current) return
       if (!full) {
         // Le niveau a disparu entre l'affichage de la liste et le choix : le
         // dire, plutôt que reprendre un plan vide en croyant reprendre celui-là.
@@ -62,7 +68,14 @@ export default function ReuseLevelDialog({ online, local, api, onPick, onClose }
         return
       }
       onPick(full)
+      // Le plan est remonté, ce chargement est terminé. Sans cette remise à
+      // zéro, un refus de la confirmation de remplacement — qui laisse le
+      // dialogue MONTÉ, l'appelant retournant sans le fermer — laisserait toutes
+      // les entrées désactivées sous un faux « Chargement du plan choisi… », et
+      // l'agent n'aurait plus qu'à fermer et rouvrir.
+      setPicking(null)
     } catch {
+      if (!mounted.current) return
       setPickFailed(true)
       setPicking(null)
     }
