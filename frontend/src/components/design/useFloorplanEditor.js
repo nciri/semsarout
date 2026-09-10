@@ -19,6 +19,7 @@ import { dist, projectPointOnWall, wallLength } from '../../utils/floorplan'
 export const HISTORY_MAX = 50
 
 export const DEFAULT_WALL_THICKNESS_M = 0.2
+export const MIN_WALL_M = 0.05
 export const OPENING_DEFAULTS = {
   door: { width_m: 0.9, height_m: 2.1, sill_m: 0 },
   window: { width_m: 1.2, height_m: 1.2, sill_m: 1 },
@@ -157,11 +158,18 @@ export function hitVertex(geometry, p, tolerance) {
   return best
 }
 
+// Longueur minimale d'un mur, en mètres. Vaut à la création comme au déplacement de
+// sommet : un mur de longueur nulle est refusé par le serveur, donc un niveau qui en
+// contient un ne peut plus jamais être synchronisé.
 function moveVertex(geometry, ref, point) {
   if (ref.kind === 'wall') {
     return {
       ...geometry,
-      walls: geometry.walls.map((w) => (w.id === ref.id ? { ...w, [ref.end]: { x: point.x, y: point.y } } : w)),
+      walls: geometry.walls.map((w) => {
+        if (w.id !== ref.id) return w
+        const moved = { ...w, [ref.end]: { x: point.x, y: point.y } }
+        return wallLength(moved) < MIN_WALL_M ? w : moved
+      }),
     }
   }
   return {

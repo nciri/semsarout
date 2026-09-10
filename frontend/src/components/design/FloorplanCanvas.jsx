@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import {
   newId, polygonArea, projectPointOnWall, snapAngle, snapToGrid, snapToPoints, wallLength,
 } from '../../utils/floorplan'
-import { DEFAULT_WALL_THICKNESS_M, OPENING_DEFAULTS, hitTest, hitVertex, openingSpan } from './useFloorplanEditor'
+import { DEFAULT_WALL_THICKNESS_M, MIN_WALL_M, OPENING_DEFAULTS, hitTest, hitVertex, openingSpan } from './useFloorplanEditor'
 import { ROOM_FILL } from './roomColors'
 import { isolateLtr } from '../../utils/format'
 
@@ -23,7 +23,6 @@ const MIN_ZOOM = 0.2
 const MAX_ZOOM = 40
 const TAP_SLOP_PX = 8
 const LONG_PRESS_MS = 500
-const MIN_WALL_M = 0.05
 // Rayon de la zone tactile : 22 px de rayon = 44 px de cible, le minimum retenu
 // pour le tactile (cf. cahier des charges).
 const TOUCH_RADIUS_PX = 22

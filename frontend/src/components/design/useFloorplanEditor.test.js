@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { reducer, initialState, HISTORY_MAX, resizedWall, hitTest } from './useFloorplanEditor'
+import { reducer, initialState, HISTORY_MAX, resizedWall, hitTest, MIN_WALL_M } from './useFloorplanEditor'
 
 const wall = (id, x = 0, len = 4) => ({ id, a: { x, y: 0 }, b: { x: x + len, y: 0 }, thickness_m: 0.2 })
 const s0 = () => initialState({ geometry: { walls: [], rooms: [], openings: [] } })
@@ -98,6 +98,35 @@ describe('reducer — édition des éléments', () => {
     let s = reducer(s0(), { type: 'ADD_ROOM', room: { id: 'r1', type: 'living', polygon: [{ x: 0, y: 0 }, { x: 3, y: 0 }, { x: 3, y: 3 }] } })
     s = reducer(s, { type: 'MOVE_VERTEX', ref: { kind: 'room', id: 'r1', index: 1 }, point: { x: 2, y: 0.5 } })
     expect(s.geometry.rooms[0].polygon[1]).toEqual({ x: 2, y: 0.5 })
+  })
+
+  it('refuse de rendre un mur plus court que le minimum en déplaçant un sommet', () => {
+    const wallState = () => ({
+      ...initialState(),
+      geometry: {
+        walls: [{ id: 'w1', a: { x: 0, y: 0 }, b: { x: 3, y: 0 }, thickness_m: 0.2 }],
+        rooms: [], openings: [],
+      },
+    })
+    const s = reducer(wallState(), {
+      type: 'MOVE_VERTEX', ref: { kind: 'wall', id: 'w1', end: 'b' }, point: { x: 0, y: 0 },
+    })
+    expect(s.geometry.walls[0].b).toEqual({ x: 3, y: 0 })
+  })
+
+  it('accepte un déplacement qui laisse le mur au-dessus du minimum', () => {
+    const wallState = () => ({
+      ...initialState(),
+      geometry: {
+        walls: [{ id: 'w1', a: { x: 0, y: 0 }, b: { x: 3, y: 0 }, thickness_m: 0.2 }],
+        rooms: [], openings: [],
+      },
+    })
+    const s = reducer(wallState(), {
+      type: 'MOVE_VERTEX', ref: { kind: 'wall', id: 'w1', end: 'b' }, point: { x: 1, y: 0 },
+    })
+    expect(s.geometry.walls[0].b).toEqual({ x: 1, y: 0 })
+    expect(MIN_WALL_M).toBe(0.05)
   })
 
   it('UPDATE_ELEMENT applique un correctif et SET_ROOM_TYPE change le type', () => {
