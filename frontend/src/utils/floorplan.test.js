@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
   polygonArea, wallLength, snapToGrid, snapToPoints, snapAngle, projectPointOnWall,
-  normalizedToMeters, metersToNormalized, rescaleGeometry, validateGeometry, levelArea, bbox, newId,
+  normalizedToMeters, metersToNormalized, rescaleGeometry, validateGeometry, geometryProblems, levelArea, bbox, newId,
+  copyGeometry,
 } from './floorplan'
 
 const W = { id: 'w1', a: { x: 0, y: 0 }, b: { x: 4, y: 0 }, thickness_m: 0.2 }
@@ -140,6 +141,62 @@ describe('floorplan geometry', () => {
     it('rejects invalid opening dimensions (negative width, negative offset)', () => {
       expect(validateGeometry({ walls: [W], rooms: [], openings: [{ id: 'o', wall_id: 'w1', type: 'door', offset_m: 1, width_m: -0.5, height_m: 2.1, sill_m: 0 }] }, 2.7).length).toBeGreaterThan(0)
       expect(validateGeometry({ walls: [W], rooms: [], openings: [{ id: 'o', wall_id: 'w1', type: 'door', offset_m: -1, width_m: 0.9, height_m: 2.1, sill_m: 0 }] }, 2.7).length).toBeGreaterThan(0)
+    })
+  })
+
+  describe('geometryProblems (validation structurée)', () => {
+    const degenerate = {
+      walls: [{ id: 'W1', a: { x: 0, y: 0 }, b: { x: 0, y: 0 }, thickness_m: 0.2 }],
+      openings: [{ id: 'O1', wall_id: 'W1', type: 'door', offset_m: 1, width_m: 0.9 }],
+      rooms: [],
+    }
+
+    it('signale la cause et marque la conséquence comme dérivée', () => {
+      expect(geometryProblems(degenerate, 2.7)).toEqual([
+        { code: 'wall_too_short', kind: 'wall', id: 'W1', derived: false },
+        { code: 'opening_orphan', kind: 'opening', id: 'O1', derived: true },
+      ])
+    })
+
+    it('garde le miroir exact du serveur, conséquence incluse', () => {
+      expect(validateGeometry(degenerate, 2.7)).toEqual([
+        'mur W1: deux points distincts requis',
+        'ouverture O1: mur introuvable',
+      ])
+    })
+  })
+
+  describe('copyGeometry', () => {
+    it('régénère les identifiants et préserve le lien ouverture → mur', () => {
+      const src = {
+        walls: [{ id: 'w1', a: { x: 0, y: 0 }, b: { x: 3, y: 0 }, thickness_m: 0.2 }],
+        openings: [{ id: 'o1', wall_id: 'w1', type: 'door', offset_m: 1, width_m: 0.9 }],
+        rooms: [{ id: 'r1', type: 'living', polygon: [{ x: 0, y: 0 }, { x: 3, y: 0 }, { x: 3, y: 2 }] }],
+      }
+      const out = copyGeometry(src)
+      expect(out.walls[0].id).not.toBe('w1')
+      expect(out.openings[0].wall_id).toBe(out.walls[0].id)
+      expect(out.walls[0].a).toEqual({ x: 0, y: 0 })
+      expect(out.rooms[0].id).not.toBe('r1')
+      expect(src.walls[0].id).toBe('w1')
+    })
+
+    it('écarte une ouverture dont le mur ne fait pas partie de la copie', () => {
+      const out = copyGeometry({ walls: [], rooms: [], openings: [{ id: 'o', wall_id: 'absent' }] })
+      expect(out.openings).toEqual([])
+    })
+
+    it('ne partage aucun point ni polygone par référence avec la source', () => {
+      const src = {
+        walls: [{ id: 'w1', a: { x: 0, y: 0 }, b: { x: 3, y: 0 }, thickness_m: 0.2 }],
+        rooms: [{ id: 'r1', type: 'living', polygon: [{ x: 0, y: 0 }, { x: 3, y: 0 }] }],
+        openings: [],
+      }
+      const out = copyGeometry(src)
+      expect(out.walls[0].a).not.toBe(src.walls[0].a)
+      expect(out.walls[0].b).not.toBe(src.walls[0].b)
+      expect(out.rooms[0].polygon).not.toBe(src.rooms[0].polygon)
+      expect(out.rooms[0].polygon[0]).not.toBe(src.rooms[0].polygon[0])
     })
   })
 })

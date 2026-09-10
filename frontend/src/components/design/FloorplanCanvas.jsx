@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next'
 import {
   newId, polygonArea, projectPointOnWall, snapAngle, snapToGrid, snapToPoints, wallLength,
 } from '../../utils/floorplan'
-import { DEFAULT_WALL_THICKNESS_M, OPENING_DEFAULTS, hitTest, hitVertex, openingSpan } from './useFloorplanEditor'
+import {
+  DEFAULT_WALL_THICKNESS_M, MIN_WALL_M, OPENING_DEFAULTS, hitTest, hitVertex, openingSpan, selectionItems,
+} from './useFloorplanEditor'
 import { ROOM_FILL } from './roomColors'
 import { isolateLtr } from '../../utils/format'
 
@@ -23,7 +25,6 @@ const MIN_ZOOM = 0.2
 const MAX_ZOOM = 40
 const TAP_SLOP_PX = 8
 const LONG_PRESS_MS = 500
-const MIN_WALL_M = 0.05
 // Rayon de la zone tactile : 22 px de rayon = 44 px de cible, le minimum retenu
 // pour le tactile (cf. cahier des charges).
 const TOUCH_RADIUS_PX = 22
@@ -52,8 +53,17 @@ export default function FloorplanCanvas({
   const pointers = useRef(new Map())
   const gesture = useRef(null)
   const drag = useRef(null)
+  // Origine (en mètres) d'un glissé de bloc : dernier point pointeur connu, pour
+  // dispatcher MOVE_SELECTION avec un delta relatif à chaque mouvement — même
+  // patron que `drag` (déplacement de sommet), mais sur toute la sélection.
+  const moveSel = useRef(null)
   const longPress = useRef(null)
   const moved = useRef(false)
+  // Origine (en mètres) d'un glissé de sélection au rectangle avec l'outil
+  // « Sélectionner » sur une zone vide. `areaRect` ne sert qu'au rendu du
+  // rectangle en cours ; l'action SELECT_AREA n'est dispatchée qu'au relâché.
+  const area = useRef(null)
+  const [areaRect, setAreaRect] = useState(null)
   const [size, setSize] = useState({ w: 800, h: 600 })
 
   useEffect(() => {
@@ -121,6 +131,9 @@ export default function FloorplanCanvas({
       // navigation, pas un dessin.
       clearLongPress()
       drag.current = null
+      moveSel.current = null
+      area.current = null
+      setAreaRect(null)
       if (draft?.kind === 'wall') dispatch({ type: 'SET_DRAFT', draft: null })
       const pts = [...pointers.current.values()]
       gesture.current = {
@@ -149,7 +162,26 @@ export default function FloorplanCanvas({
         drag.current = v
         return
       }
-      dispatch({ type: 'SELECT', selection: hitTest(geometry, p, touchM) })
+      const hit = hitTest(geometry, p, touchM)
+      // Toucher un objet déjà sélectionné démarre un glissé de bloc plutôt qu'une
+      // re-sélection : `selectionItems` couvre indifféremment le cas à un ou
+      // plusieurs objets. Restreint à mur/pièce : une ouverture n'a rien à
+      // translater (elle suit son mur via son offset), la glisser ne doit donc
+      // pas déclencher MOVE_SELECTION.
+      if (
+        hit && (hit.kind === 'wall' || hit.kind === 'room') &&
+        selectionItems(selection).some((i) => i.kind === hit.kind && i.id === hit.id)
+      ) {
+        moveSel.current = p
+        return
+      }
+      if (hit) {
+        dispatch({ type: 'SELECT', selection: hit })
+        return
+      }
+      // Zone vide : geste encore ambigu entre appui simple (déselection) et
+      // glissé (rectangle) — la décision se prend au relâché, sur `moved.current`.
+      area.current = p
       return
     }
     if (tool === 'wall') {
@@ -199,10 +231,20 @@ export default function FloorplanCanvas({
 
     if (!interactive || calibrating) return
     const p = toMeters(e)
+    if (area.current) {
+      setAreaRect({ x1: area.current.x, y1: area.current.y, x2: p.x, y2: p.y })
+      return
+    }
     if (drag.current) {
       const ref = drag.current
       const origin = ref.kind === 'wall' ? geometry.walls.find((w) => w.id === ref.id)?.[ref.end === 'a' ? 'b' : 'a'] : null
       dispatch({ type: 'MOVE_VERTEX', ref, point: snapped(p, origin), dragging: true })
+      return
+    }
+    if (moveSel.current) {
+      const origin = moveSel.current
+      moveSel.current = p
+      dispatch({ type: 'MOVE_SELECTION', delta: { x: p.x - origin.x, y: p.y - origin.y }, dragging: true })
       return
     }
     if (tool === 'wall' && draft?.kind === 'wall') {
@@ -243,7 +285,23 @@ export default function FloorplanCanvas({
       dispatch({ type: 'END_DRAG' })
       return
     }
+    if (moveSel.current) {
+      moveSel.current = null
+      dispatch({ type: 'END_DRAG' })
+      return
+    }
     const p = toMeters(e)
+    if (area.current) {
+      const origin = area.current
+      area.current = null
+      setAreaRect(null)
+      if (moved.current) {
+        dispatch({ type: 'SELECT_AREA', rect: { x1: origin.x, y1: origin.y, x2: p.x, y2: p.y } })
+      } else {
+        dispatch({ type: 'SELECT', selection: hitTest(geometry, p, touchM) })
+      }
+      return
+    }
     if (calibrating) {
       if (!moved.current && imageSize) {
         calibration.onPoint({ x: p.x / imageSize.widthM, y: p.y / imageSize.heightM })
@@ -275,6 +333,12 @@ export default function FloorplanCanvas({
   const label = px(13)
   const handleR = Math.max(0.06, px(11))
   const selectedId = selection?.id
+  // Étend la mise en évidence à la sélection multiple sans changer le cas à un
+  // élément : `selectedId` (utilisé partout ailleurs) reste la voie normale, ces
+  // ensembles ne servent qu'à repérer les objets d'une sélection `multi`.
+  const selItems = selectionItems(selection)
+  const multiWallIds = selection?.kind === 'multi' ? new Set(selItems.filter((i) => i.kind === 'wall').map((i) => i.id)) : null
+  const multiRoomIds = selection?.kind === 'multi' ? new Set(selItems.filter((i) => i.kind === 'room').map((i) => i.id)) : null
 
   const roomLabel = (r) => {
     const area = polygonArea(r.polygon)
@@ -316,8 +380,8 @@ export default function FloorplanCanvas({
             points={(r.polygon || []).map((p) => `${p.x},${p.y}`).join(' ')}
             fill={ROOM_FILL[r.type] || ROOM_FILL.other}
             fillOpacity={0.75}
-            stroke={selectedId === r.id ? '#2563eb' : '#9ca3af'}
-            strokeWidth={selectedId === r.id ? px(2) : hair}
+            stroke={selectedId === r.id || multiRoomIds?.has(r.id) ? '#2563eb' : '#9ca3af'}
+            strokeWidth={selectedId === r.id || multiRoomIds?.has(r.id) ? px(2) : hair}
           />
           {(r.polygon || []).length >= 3 && (
             <text
@@ -338,22 +402,31 @@ export default function FloorplanCanvas({
         <g key={w.id}>
           <line
             x1={w.a.x} y1={w.a.y} x2={w.b.x} y2={w.b.y}
-            stroke={selectedId === w.id ? '#2563eb' : '#374151'}
+            stroke={selectedId === w.id || multiWallIds?.has(w.id) ? '#2563eb' : '#374151'}
             strokeWidth={w.thickness_m}
             strokeLinecap="square"
           />
-          {dimensions && (
-            <text
-              x={(w.a.x + w.b.x) / 2}
-              y={(w.a.y + w.b.y) / 2 - px(6)}
-              fontSize={label}
-              textAnchor="middle"
-              fill="#1f2937"
-              style={{ pointerEvents: 'none' }}
-            >
-              {isolateLtr(`${fmt(wallLength(w))} m`)}
-            </text>
-          )}
+          {dimensions && (() => {
+            // Décalage perpendiculaire au mur, selon sa normale (déterminée par l'ordre a→b).
+            // Garantit que la cote ne retombe jamais sur le trait.
+            // Limitation connue : deux cotes de murs parallèles proches peuvent se chevaucher.
+            const dx = w.b.x - w.a.x
+            const dy = w.b.y - w.a.y
+            const len = Math.hypot(dx, dy) || 1
+            const off = px(10) + (w.thickness_m || DEFAULT_WALL_THICKNESS_M) / 2
+            return (
+              <text
+                x={(w.a.x + w.b.x) / 2 + (-dy / len) * off}
+                y={(w.a.y + w.b.y) / 2 + (dx / len) * off}
+                fontSize={label}
+                textAnchor="middle"
+                fill="#1f2937"
+                style={{ pointerEvents: 'none' }}
+              >
+                {isolateLtr(`${fmt(wallLength(w))} m`)}
+              </text>
+            )
+          })()}
         </g>
       ))}
 
@@ -388,6 +461,19 @@ export default function FloorplanCanvas({
             <circle key={i} cx={p.x} cy={p.y} r={handleR} fill="#2563eb" />
           ))}
         </g>
+      )}
+
+      {areaRect && (
+        <rect
+          x={Math.min(areaRect.x1, areaRect.x2)}
+          y={Math.min(areaRect.y1, areaRect.y2)}
+          width={Math.abs(areaRect.x2 - areaRect.x1)}
+          height={Math.abs(areaRect.y2 - areaRect.y1)}
+          fill="rgba(37,99,235,0.08)"
+          stroke="#2563eb"
+          strokeWidth={px(1.5)}
+          strokeDasharray={`${px(6)} ${px(4)}`}
+        />
       )}
 
       {calibration?.points?.map((p, i) =>

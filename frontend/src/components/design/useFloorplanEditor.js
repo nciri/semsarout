@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useReducer } from 'react'
-import { dist, projectPointOnWall, wallLength } from '../../utils/floorplan'
+import { dist, isPoint, projectPointOnWall, wallLength } from '../../utils/floorplan'
 
 /**
  * Cœur logique de l'éditeur de plan : un réducteur pur (aucun DOM, aucun réseau)
@@ -19,6 +19,7 @@ import { dist, projectPointOnWall, wallLength } from '../../utils/floorplan'
 export const HISTORY_MAX = 50
 
 export const DEFAULT_WALL_THICKNESS_M = 0.2
+export const MIN_WALL_M = 0.05
 export const OPENING_DEFAULTS = {
   door: { width_m: 0.9, height_m: 2.1, sill_m: 0 },
   window: { width_m: 1.2, height_m: 1.2, sill_m: 1 },
@@ -62,11 +63,37 @@ function withGeometry(state, geometry, push = true) {
 const listOf = (g, kind) => g[kind === 'wall' ? 'walls' : kind === 'room' ? 'rooms' : 'openings'] || []
 const keyOf = (kind) => (kind === 'wall' ? 'walls' : kind === 'room' ? 'rooms' : 'openings')
 
+// Sélection unique ou multiple ramenée à une liste : c'est la seule fonction que
+// Task 7 (déplacement en bloc) et le panneau des propriétés doivent connaître pour
+// traiter les deux formes sans distinguer de cas particulier.
+export const selectionItems = (selection) =>
+  !selection ? [] : selection.kind === 'multi' ? selection.items : [selection]
+
+const inRect = (p, r) =>
+  p.x >= Math.min(r.x1, r.x2) && p.x <= Math.max(r.x1, r.x2) &&
+  p.y >= Math.min(r.y1, r.y2) && p.y <= Math.max(r.y1, r.y2)
+
+// Un objet n'est pris que s'il est ENTIÈREMENT dans le rectangle : c'est la règle la plus
+// prévisible, et elle tranche le cas des pièces à moitié englobées. Les ouvertures suivent
+// leur mur, elles ne sont jamais prises seules.
+function itemsInRect(geometry, rect) {
+  const items = []
+  for (const w of geometry.walls || []) {
+    if (inRect(w.a, rect) && inRect(w.b, rect)) items.push({ kind: 'wall', id: w.id })
+  }
+  for (const r of geometry.rooms || []) {
+    if ((r.polygon || []).length >= 3 && r.polygon.every((p) => inRect(p, rect))) {
+      items.push({ kind: 'room', id: r.id })
+    }
+  }
+  return items
+}
+
 // Longueur d'un mur imposée depuis le panneau (saisie au pavé numérique) : on
 // garde l'origine et la direction, seule l'extrémité b bouge.
 export function resizedWall(w, lengthM) {
   const len = wallLength(w)
-  if (!(lengthM > 0) || !(len > 0)) return w
+  if (!(lengthM > 0) || !(len > 0) || lengthM < MIN_WALL_M) return w
   const k = lengthM / len
   return { ...w, b: { x: w.a.x + (w.b.x - w.a.x) * k, y: w.a.y + (w.b.y - w.a.y) * k } }
 }
@@ -157,11 +184,18 @@ export function hitVertex(geometry, p, tolerance) {
   return best
 }
 
+// Longueur minimale d'un mur, en mètres. Vaut à la création comme au déplacement de
+// sommet : un mur de longueur nulle est refusé par le serveur, donc un niveau qui en
+// contient un ne peut plus jamais être synchronisé.
 function moveVertex(geometry, ref, point) {
   if (ref.kind === 'wall') {
     return {
       ...geometry,
-      walls: geometry.walls.map((w) => (w.id === ref.id ? { ...w, [ref.end]: { x: point.x, y: point.y } } : w)),
+      walls: geometry.walls.map((w) => {
+        if (w.id !== ref.id) return w
+        const moved = { ...w, [ref.end]: { x: point.x, y: point.y } }
+        return wallLength(moved) < MIN_WALL_M ? w : moved
+      }),
     }
   }
   return {
@@ -197,6 +231,14 @@ export function reducer(state, action) {
     case 'SELECT':
       return { ...state, selection: action.selection ?? null }
 
+    case 'SELECT_AREA': {
+      const items = itemsInRect(state.geometry, action.rect)
+      const selection = items.length === 0 ? null
+        : items.length === 1 ? items[0]
+        : { kind: 'multi', items }
+      return { ...state, selection, draft: null }
+    }
+
     case 'SET_DRAFT':
       return { ...state, draft: action.draft ?? null }
 
@@ -221,6 +263,30 @@ export function reducer(state, action) {
       return { ...withGeometry(state, geometry, !continuing), dragging: !!action.dragging }
     }
 
+    case 'MOVE_SELECTION': {
+      const items = selectionItems(state.selection)
+      const wallIds = new Set(items.filter((i) => i.kind === 'wall').map((i) => i.id))
+      const roomIds = new Set(items.filter((i) => i.kind === 'room').map((i) => i.id))
+      // Une ouverture (ou toute sélection sans mur ni pièce) n'a rien à translater :
+      // sans ce retour anticipé, on pousserait quand même une entrée d'historique
+      // identique à l'état courant — un cran d'annulation consommé pour rien.
+      if (wallIds.size === 0 && roomIds.size === 0) return state
+      const { x: dx, y: dy } = action.delta
+      const shift = (p) => ({ x: p.x + dx, y: p.y + dy })
+      // Une translation conserve les longueurs : elle ne peut pas produire le mur
+      // dégénéré que la garde de MIN_WALL_M empêche par ailleurs. Et les ouvertures,
+      // positionnées par un décalage le long de leur mur, suivent sans traitement.
+      const geometry = {
+        ...state.geometry,
+        walls: state.geometry.walls.map((w) =>
+          wallIds.has(w.id) ? { ...w, a: shift(w.a), b: shift(w.b) } : w),
+        rooms: state.geometry.rooms.map((r) =>
+          roomIds.has(r.id) ? { ...r, polygon: r.polygon.map(shift) } : r),
+      }
+      const continuing = action.dragging && state.dragging
+      return { ...withGeometry(state, geometry, !continuing), dragging: !!action.dragging }
+    }
+
     case 'END_DRAG':
       return state.dragging ? { ...state, dragging: false } : state
 
@@ -239,10 +305,40 @@ export function reducer(state, action) {
       })
 
     case 'DELETE_SELECTED': {
-      if (!state.selection) return state
-      const geometry = deleteSelected(state.geometry, state.selection)
+      const items = selectionItems(state.selection)
+      if (items.length === 0) return state
+      const geometry = items.reduce((g, item) => deleteSelected(g, item), state.geometry)
       return { ...withGeometry(state, geometry), selection: null }
     }
+
+    // Répare les murs sous MIN_WALL_M (dégénérés, refusés par le serveur) en les
+    // supprimant avec leurs ouvertures — même geste que DELETE_SELECTED sur un mur,
+    // mais déclenché depuis le bandeau des problèmes plutôt qu'une sélection.
+    case 'REPAIR_GEOMETRY': {
+      // Le critère est celui du miroir serveur (`geometryProblems`), qui signale
+      // `wall_too_short` aussi bien pour un mur trop court que pour un mur dont
+      // une extrémité n'est PAS un point. Sur ce second cas, `wallLength` lève
+      // (extrémité absente) ou renvoie NaN : la réparation échouait donc sans le
+      // dire et le bouton « Corriger » restait muet, sur un niveau que le serveur
+      // refuse — une impasse. Tester les extrémités d'abord ferme les deux cas.
+      const keep = state.geometry.walls.filter((w) => isPoint(w?.a) && isPoint(w?.b) && wallLength(w) >= MIN_WALL_M)
+      if (keep.length === state.geometry.walls.length) return state
+      const ids = new Set(keep.map((w) => w.id))
+      const geometry = {
+        ...state.geometry,
+        walls: keep,
+        openings: (state.geometry.openings || []).filter((o) => ids.has(o.wall_id)),
+      }
+      return { ...withGeometry(state, geometry), selection: null }
+    }
+
+    // Reprise d'un plan existant (Task 10) : remplace la géométrie courante par une
+    // copie déjà régénérée (`copyGeometry`, appelée par l'appelant) et reste
+    // annulable, contrairement à l'amorçage initial (`LOAD_GEOMETRY` avec
+    // `resetHistory`) — c'est un geste de l'agent en cours d'édition, pas
+    // l'ouverture du plan.
+    case 'REPLACE_GEOMETRY':
+      return { ...withGeometry(state, { ...EMPTY, ...action.geometry }), selection: null, draft: null }
 
     case 'LOAD_GEOMETRY': {
       const geometry = { ...EMPTY, ...action.geometry }

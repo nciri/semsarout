@@ -8,6 +8,7 @@ import {
 import AdvancedSearch from '../components/search/AdvancedSearch'
 import PropertyCard from '../components/common/PropertyCard'
 import DirIcon from '../components/common/DirIcon'
+import RedCartouche from '../components/common/RedCartouche'
 import { propertyService } from '../services/propertyService'
 import { DIRHAM_SYMBOL, formatPrice } from '../utils/currency'
 
@@ -267,7 +268,7 @@ function Home() {
                 <div className="mb-2">
                   <span className="inline-flex items-baseline gap-[5px] font-display font-extrabold text-[22px] tracking-tight text-primary-400">
                     <span>Semsar</span>
-                    <span className="inline-flex items-center text-white text-[18px] px-[9px] py-[2px] rounded-[5px] shadow-red -rotate-[4deg]" style={{ background: 'linear-gradient(150deg, rgb(193, 18, 31) 0%, rgb(135, 11, 21) 100%)' }}>Out</span>
+                    <RedCartouche className="text-[18px]">Out</RedCartouche>
                   </span>
                 </div>
                 <div className="font-display text-[46px] font-extrabold text-primary-400">{formatPrice(4900)}</div>

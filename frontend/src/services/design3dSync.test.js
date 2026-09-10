@@ -1,8 +1,9 @@
 import 'fake-indexeddb/auto'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import * as local from './design3dLocal'
+import { isLevelEmpty } from './design3dLocal'
 import { newId } from '../utils/floorplan'
-import { applyLocal, discardRefusedProject, runOnce, refreshFromServer, startEngine } from './design3dSync'
+import { applyLocal, cleanupEmpty, discardRefusedProject, runOnce, refreshFromServer, startEngine } from './design3dSync'
 
 const lvl = (over = {}) => ({ id: 'l'.repeat(32), project_id: 'p'.repeat(32), name: 'RDC', position: 0, revision: 0,
   wall_height_m: 2.7, calibration: null, geometry: { walls: [], rooms: [], openings: [] }, dirty: false, ...over })
@@ -757,5 +758,156 @@ describe('design3d sync engine', () => {
     expect(stored.sync_error).toBeUndefined()
     expect(stored.dirty).toBe(true)
     expect(stored.name).toBe('V2')
+  })
+})
+
+describe('isLevelEmpty / cleanupEmpty — niveaux et projets laissés vides', () => {
+  const emptyGeo = { walls: [], rooms: [], openings: [] }
+
+  // Écrit un projet et ses niveaux directement en local (hors file d'attente,
+  // hors réseau) : ces tests portent sur le nettoyage lui-même, pas sur la
+  // synchronisation.
+  async function seedProject({ status = 'draft', synced = true, levels = [{}] } = {}) {
+    const projectId = newId()
+    await local.putProject({ id: projectId, title: 'A', status, synced, target_type: 'property', target_id: 1 })
+    for (const over of levels) {
+      const { walls = [], rooms = [], openings = [], ...rest } = over
+      await local.putLevel(lvl({ id: newId(), project_id: projectId, geometry: { walls, rooms, openings }, ...rest }))
+    }
+    return projectId
+  }
+
+  // Instantané des révisions serveur du chemin EN LIGNE : le `sync` vient
+  // d'aboutir et ne signale rien de plus récent que la copie locale. Il est
+  // indispensable pour qu'un projet déjà synchronisé soit candidat au
+  // nettoyage : sans instantané, la copie locale ne dit rien de ce que le
+  // serveur détient, et le nettoyage reste purement local.
+  const upToDate = () => new Map()
+
+  it('ne considère pas vide un niveau qui porte une image ou une calibration', () => {
+    expect(isLevelEmpty({ geometry: emptyGeo })).toBe(true)
+    expect(isLevelEmpty({ geometry: emptyGeo, background_image_key: 'k' })).toBe(false)
+    expect(isLevelEmpty({ geometry: emptyGeo, calibration: { scale: 1 } })).toBe(false)
+    expect(isLevelEmpty({ geometry: { ...emptyGeo, walls: [{ id: 'w' }] } })).toBe(false)
+  })
+
+  it('supprime le projet quand tous ses niveaux sont vides', async () => {
+    const api = fakeApi()
+    const projectId = await seedProject({ levels: [{}, {}] })
+    expect(await cleanupEmpty(projectId, { api, local, serverRevisions: upToDate() })).toEqual({ removedLevels: 2, removedProject: true })
+    expect(await local.getProject(projectId)).toBeUndefined()
+  })
+
+  it('ne touche jamais un projet publié', async () => {
+    const api = fakeApi()
+    const projectId = await seedProject({ status: 'ready', levels: [{}] })
+    expect(await cleanupEmpty(projectId, { api, local })).toEqual({ removedLevels: 0, removedProject: false })
+    expect(await local.getProject(projectId)).toBeDefined()
+  })
+
+  it("ne supprime que les niveaux vides quand d'autres portent du travail", async () => {
+    const api = fakeApi()
+    const projectId = await seedProject({ levels: [{}, { walls: [{ id: 'w' }] }] })
+    expect(await cleanupEmpty(projectId, { api, local, serverRevisions: upToDate() })).toEqual({ removedLevels: 1, removedProject: false })
+  })
+
+  it('purge localement un projet jamais synchronisé, sans envoyer de suppression', async () => {
+    const api = fakeApi({ deleteProject: vi.fn() })
+    const projectId = await seedProject({ synced: false, levels: [{}] })
+    await cleanupEmpty(projectId, { api, local })
+    expect(api.deleteProject).not.toHaveBeenCalled()
+    expect(await local.pendingCount()).toBe(0)
+  })
+
+  // --- C2 : ne jamais supprimer sur la foi d'une copie locale périmée -------
+  it("ne supprime pas un projet dont le serveur détient une version plus récente que la copie locale", async () => {
+    const api = fakeApi({ deleteProject: vi.fn() })
+    const projectId = await seedProject({ synced: true, levels: [{}] })
+    const [level] = await local.listLevels(projectId)
+    // La tablette a tiré ce niveau quand il était vide (revision 0) ; un
+    // collègue l'a tracé depuis un autre appareil (revision 4).
+    const serverRevisions = new Map([[level.id, 4]])
+
+    expect(await cleanupEmpty(projectId, { api, local, serverRevisions })).toEqual({ removedLevels: 0, removedProject: false })
+    expect(await local.getProject(projectId)).toBeDefined()
+    await runOnce({ api, local, onState: () => {} })
+    expect(api.deleteProject).not.toHaveBeenCalled()
+  })
+
+  it("ne supprime pas un niveau vide dont l'édition locale n'a pas encore été transmise", async () => {
+    const api = fakeApi({ deleteProject: vi.fn() })
+    const projectId = await seedProject({ synced: true, levels: [{ dirty: true }] })
+    expect(await cleanupEmpty(projectId, { api, local, serverRevisions: upToDate() })).toEqual({ removedLevels: 0, removedProject: false })
+    expect(await local.getProject(projectId)).toBeDefined()
+  })
+
+  // --- L1 : sans instantané serveur, le nettoyage reste purement local ------
+  // Scénario de DESTRUCTION, pas seulement la condition : l'agent ouvre HORS
+  // LIGNE un projet de l'agence pour regarder le plan, ne trace rien, et
+  // ressort. Le démontage de l'éditeur appelle `cleanupEmpty` sans instantané
+  // (DesignEditor.jsx n'en a pas : il n'y a pas de réseau pour l'obtenir), et
+  // depuis que la liste des projets REPORTE son balayage hors ligne, c'est le
+  // seul chemin de nettoyage qui s'exécute sans réseau. La copie locale est
+  // vide et non modifiée — mais elle ne dit rien de ce que le serveur détient :
+  // un collègue a pu tracer le plan depuis un autre appareil. Sans garde,
+  // `project.delete` part en file et, au retour du réseau, le plan disparaît
+  // pour TOUTE L'AGENCE.
+  it("ne fait partir aucune suppression au serveur quand le nettoyage n'a pas d'instantané", async () => {
+    const api = fakeApi({ deleteProject: vi.fn(), deleteLevel: vi.fn() })
+    const projectId = await seedProject({ synced: true, levels: [{}] })
+
+    expect(await cleanupEmpty(projectId, { api, local })).toEqual({ removedLevels: 0, removedProject: false })
+    expect(await local.getProject(projectId)).toBeDefined()
+    await runOnce({ api, local, onState: () => {} })
+    expect(api.deleteProject).not.toHaveBeenCalled()
+    expect(api.deleteLevel).not.toHaveBeenCalled()
+  })
+
+  // --- C1 : la photo du plan papier compte comme du travail -----------------
+  // Scénario de DESTRUCTION, pas seulement la condition : l'agent photographie
+  // le plan papier, quitte avant de calibrer, et la liste des projets balaie.
+  // Sans marqueur sur l'enregistrement du NIVEAU, `isLevelEmpty` le juge vide
+  // et le projet part — jusque sur le serveur, pour toute l'agence.
+  it('ne détruit pas un niveau qui porte une photo de plan importée mais pas encore calibrée', async () => {
+    const api = fakeApi({ deleteProject: vi.fn() })
+    const projectId = await seedProject({ synced: true, levels: [{}] })
+    const [level] = await local.listLevels(projectId)
+
+    await applyLocal(
+      { type: 'level.background', payload: { id: level.id, blob: new Blob(['photo'], { type: 'image/jpeg' }), type: 'image/jpeg' } },
+      { local },
+    )
+
+    expect(isLevelEmpty(await local.getLevel(level.id))).toBe(false)
+    expect(await cleanupEmpty(projectId, { api, local, serverRevisions: upToDate() })).toEqual({ removedLevels: 0, removedProject: false })
+    expect(await local.getProject(projectId)).toBeDefined()
+    // La photo elle-même survit : `deleteProjectLocal` purge aussi le magasin
+    // `backgrounds`, donc la juger vide la détruirait sur l'appareil.
+    expect(await local.getBackground(level.id)).toBeDefined()
+
+    // Et rien ne part vers le serveur : c'est là que la destruction devenait
+    // irréversible pour toute l'agence et tous ses appareils.
+    await runOnce({ api, local, onState: () => {} })
+    expect(api.deleteProject).not.toHaveBeenCalled()
+  })
+
+  it("l'écho du serveur, qui ignore encore la photo, n'efface pas le marqueur local", async () => {
+    // `upload_background` ne fait pas avancer `revision` côté serveur (dette
+    // consignée) : son `background_image_key: null` ne doit jamais reprendre le
+    // dessus sur une photo bel et bien présente sur cet appareil, sinon le
+    // chemin destructif se rouvre au premier rafraîchissement.
+    const projectId = await seedProject({ synced: true, levels: [{}] })
+    const [level] = await local.listLevels(projectId)
+    await applyLocal(
+      { type: 'level.background', payload: { id: level.id, blob: new Blob(['photo'], { type: 'image/jpeg' }), type: 'image/jpeg' } },
+      { local },
+    )
+    const server = lvl({ id: level.id, project_id: projectId, revision: 7, background_image_key: null })
+    const api = fakeApi({
+      sync: vi.fn(async () => ({ projects: [{ id: projectId, levels: [{ id: level.id, revision: 7, shelved_count: 0 }] }] })),
+      getProject: vi.fn(async () => ({ id: projectId, levels: [server] })),
+    })
+    await refreshFromServer({ api, local })
+    expect(isLevelEmpty(await local.getLevel(level.id))).toBe(false)
   })
 })

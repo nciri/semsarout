@@ -20,6 +20,35 @@ export const getProject = async (id) => {
   return data
 }
 
+/**
+ * Tous les projets de l'agence pour la reprise d'un plan existant (Task 10), en
+ * UN SEUL appel : la liste sans cible porte désormais le RÉSUMÉ de ses niveaux
+ * (identifiant, nom, position, hauteur sous plafond) et jamais leur géométrie,
+ * qui n'est chargée que pour le niveau effectivement choisi
+ * (`getLevelGeometry`).
+ *
+ * C'est la correction d'un N+1 qui vidait le cache hors-ligne par la porte de
+ * derrière : un `getProject` par projet, jusqu'à 51 requêtes, toutes dans le
+ * cache Workbox `design3d-api` plafonné à 60 entrées (vite.config.js) — soit
+ * l'éviction de tout ce que l'agent avait mis de côté pour travailler Wi-Fi
+ * coupé. `listProjects()` sans cible reste borné et filtré par agence (Task 9) :
+ * cette liste ne fait donc jamais fuiter un autre périmètre.
+ */
+export const listAgencyProjects = async () => {
+  const { projects } = await listProjects()
+  return projects.map((p) => ({ id: p.id, title: p.title, levels: p.levels || [] }))
+}
+
+/**
+ * Le niveau CHOISI, géométrie comprise : une seule requête, celle de son projet.
+ * Renvoie `null` si le niveau n'y figure plus (supprimé entre l'affichage de la
+ * liste et le choix) — l'appelant doit le dire plutôt que reprendre un plan vide.
+ */
+export const getLevelGeometry = async (projectId, levelId) => {
+  const full = await getProject(projectId)
+  return (full.levels || []).find((lv) => lv.id === levelId) ?? null
+}
+
 export const updateProject = async (id, payload) => {
   const { data } = await api.put(`/design3d/projects/${id}`, payload)
   return data

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { FiArrowLeft, FiImage, FiLayers, FiSliders, FiTarget } from 'react-icons/fi'
+import { FiArrowLeft, FiLayers, FiSliders, FiTarget } from 'react-icons/fi'
 import * as local from '../../services/design3dLocal'
 import * as api from '../../services/design3dApi'
-import { applyLocal, discardRefusedProject, refreshFromServer, remoteLevelId, startEngine } from '../../services/design3dSync'
+import { applyLocal, cleanupEmpty, discardRefusedProject, refreshFromServer, remoteLevelId, startEngine } from '../../services/design3dSync'
 import {
-  EMPTY_GEOMETRY, newId, normalizedToMeters, polygonArea, rescaleGeometry, validateGeometry,
+  EMPTY_GEOMETRY, newId, normalizedToMeters, polygonArea, rescaleGeometry, geometryProblems, copyGeometry,
 } from '../../utils/floorplan'
 import useAuthStore from '../../store/authStore'
 import useFloorplanEditor from '../../components/design/useFloorplanEditor'
@@ -17,7 +17,10 @@ import LevelTabs from '../../components/design/LevelTabs'
 import CalibrationOverlay from '../../components/design/CalibrationOverlay'
 import SyncBadge from '../../components/design/SyncBadge'
 import ShelfDialog from '../../components/design/ShelfDialog'
+import ReuseLevelDialog from '../../components/design/ReuseLevelDialog'
+import EditorActionsMenu from '../../components/design/EditorActionsMenu'
 import Design3dGate from '../../components/design/Design3dGate'
+import RedCartouche from '../../components/common/RedCartouche'
 
 /**
  * Éditeur de plan 2D, hors-ligne d'abord.
@@ -61,6 +64,7 @@ export default function DesignEditor() {
   const [calibrating, setCalibrating] = useState(false)
   const [calPoints, setCalPoints] = useState([])
   const [shelf, setShelf] = useState(null)
+  const [reuseOpen, setReuseOpen] = useState(false)
   const [shelfCount, setShelfCount] = useState(0)
   const [menu, setMenu] = useState(null)
   const [fullscreen, setFullscreen] = useState(false)
@@ -122,6 +126,19 @@ export default function DesignEditor() {
       alive = false
     }
   }, [loadLevels])
+
+  useEffect(() => {
+    if (!projectId) return undefined
+    // Au démontage : le cas nominal. On ne s'appuie pas sur `beforeunload`, dont
+    // l'écriture asynchrone n'est pas garantie (établi en brique 1) — mais on ne
+    // nettoie PAS aussi à l'ouverture ici : un projet tout juste créé arrive dans
+    // l'éditeur avec un unique niveau vide, et un nettoyage immédiat le supprimerait
+    // avant même que l'agent ait pu y tracer un trait. La session interrompue (onglet
+    // fermé, tablette éteinte) que ce démontage ne peut pas rattraper est ramassée
+    // ailleurs, sans ce risque : au chargement de la liste des projets
+    // (DesignProjects), qu'il faut retraverser pour rouvrir un projet existant.
+    return () => { cleanupEmpty(projectId).catch(() => {}) }
+  }, [projectId])
 
   // --- amorçage de l'éditeur (au changement de niveau UNIQUEMENT) ---------
   // L'amorçage conditionne tout : tant qu'il n'a pas abouti, l'éditeur reste
@@ -510,6 +527,44 @@ export default function DesignEditor() {
     refreshShelf()
   }
 
+  // --- reprise d'un plan existant (Task 10) --------------------------------
+  // Le remplacement écrase le plan courant : seule protection contre la perte
+  // du travail en place, on demande confirmation si le niveau courant n'est
+  // pas vide. La vacuité doit porter sur l'éditeur VIVANT (`state.geometry`,
+  // l'image de fond en cours, la calibration en cours) — jamais sur `currentLevel`,
+  // qui vient de `levels` (rechargé depuis IndexedDB) : avec le débounce de 500 ms
+  // de l'enregistrement, un trait tout juste tracé n'y est pas encore répercuté, et
+  // interroger l'enregistrement plutôt que l'édition en cours contournerait la
+  // confirmation — exactement la perte de travail que ce chantier combat. On
+  // réutilise `isLevelEmpty` (tâche 8) sur un niveau reconstitué depuis l'état vivant,
+  // pas un second test de vacuité.
+  function pickReuseLevel(level) {
+    // Même marqueur que celui posé sur l'enregistrement du niveau par
+    // `putBackground` : les deux gardes de vacuité (celle-ci, sur l'éditeur
+    // vivant, et celle de `cleanupEmpty`, sur les niveaux persistés) parlent
+    // désormais du même champ, avec la même valeur.
+    const live = {
+      geometry: state.geometry,
+      background_image_key: background ? local.LOCAL_BACKGROUND_KEY : null,
+      calibration: form.calibration,
+    }
+    // L'outil « pièce » pose ses sommets un clic à la fois (`state.draft`, cf.
+    // useFloorplanEditor / FloorplanCanvas) : entre deux clics, `state.geometry`
+    // est encore vide alors que l'agent a déjà posé deux ou trois sommets à l'écran.
+    // `REPLACE_GEOMETRY` efface aussi le brouillon (`draft: null`) — sans ce test,
+    // ce tracé non finalisé disparaîtrait sans un mot, exactement la perte de
+    // travail que ce chantier interdit.
+    if ((!local.isLevelEmpty(live) || state.draft) && !window.confirm(t('dashboard:designEditor.reuse.confirm'))) {
+      return
+    }
+    // Pas de `wallHeightM` ici : le réducteur ne tient que la géométrie, et la
+    // hauteur sous plafond vit dans `form` — la passer serait une charge utile
+    // morte, qui laisserait croire que le réducteur s'en occupe.
+    dispatch({ type: 'REPLACE_GEOMETRY', geometry: copyGeometry(level.geometry || EMPTY_GEOMETRY) })
+    setForm((f) => ({ ...f, wall_height_m: Number(level.wall_height_m) || f.wall_height_m }))
+    setReuseOpen(false)
+  }
+
   // --- clavier (en plus des boutons, toujours visibles) -------------------
   useEffect(() => {
     const onKey = (e) => {
@@ -536,9 +591,15 @@ export default function DesignEditor() {
   }, [])
 
   const problems = useMemo(
-    () => validateGeometry(state.geometry, form.wall_height_m),
+    () => geometryProblems(state.geometry, form.wall_height_m),
     [state.geometry, form.wall_height_m],
   )
+  const onProblemSelect = useCallback((selection) => dispatch({ type: 'SELECT', selection }), [dispatch])
+  const onProblemRepair = useCallback(() => {
+    if (window.confirm(t('dashboard:designEditor.problems.repairConfirm'))) {
+      dispatch({ type: 'REPAIR_GEOMETRY' })
+    }
+  }, [dispatch, t])
   const currentLevel = levels.find((l) => l.id === levelId)
 
   const toolbar = (
@@ -573,6 +634,8 @@ export default function DesignEditor() {
       wallHeightM={form.wall_height_m}
       onWallHeightChange={(v) => setForm((f) => ({ ...f, wall_height_m: v }))}
       problems={problems}
+      onProblemSelect={onProblemSelect}
+      onProblemRepair={onProblemRepair}
     />
   )
 
@@ -584,7 +647,9 @@ export default function DesignEditor() {
             <FiArrowLeft className="w-4 h-4 rtl:rotate-180" />
             {t('dashboard:designEditor.projects.back')}
           </Link>
-          <h1 className="text-lg font-semibold text-gray-900">{t('dashboard:designEditor.title')}</h1>
+          <h1 className="text-lg font-display font-extrabold">
+            <RedCartouche>{t('dashboard:designEditor.title')}</RedCartouche>
+          </h1>
           <SyncBadge sync={sync} />
           {shelfCount > 0 && (
             <button type="button" className="btn-secondary min-h-[44px] inline-flex items-center gap-2" onClick={openShelf}>
@@ -592,11 +657,6 @@ export default function DesignEditor() {
               {t('dashboard:designEditor.shelf.badge', { n: shelfCount })}
             </button>
           )}
-          <label className="btn-secondary min-h-[44px] inline-flex items-center gap-2 cursor-pointer">
-            <FiImage className="w-4 h-4" />
-            {t('dashboard:designEditor.background.import')}
-            <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={importBackground} />
-          </label>
           {background && (
             <button
               type="button"
@@ -610,6 +670,14 @@ export default function DesignEditor() {
               {t('dashboard:designEditor.calibration.action')}
             </button>
           )}
+          {/* Actions secondaires à l'extrême droite : l'en-tête tient ainsi sur
+              une seule ligne, et ne consomme plus 263 px des 1024 de la plus
+              petite tablette supportée. Ce qui reste au-dessus est un ÉTAT à
+              surveiller (synchronisation, versions mises de côté, calibration
+              requise), pas une action lancée une fois par plan. */}
+          <div className="ms-auto">
+            <EditorActionsMenu onImportBackground={importBackground} onReuse={() => setReuseOpen(true)} />
+          </div>
         </div>
 
         {saveError && (
@@ -840,6 +908,16 @@ export default function DesignEditor() {
             onRecover={recoverShelf}
             onDismiss={dismissShelfItem}
             onClose={() => setShelf(null)}
+          />
+        )}
+
+        {reuseOpen && (
+          <ReuseLevelDialog
+            online={navigator.onLine}
+            local={local}
+            api={api}
+            onPick={pickReuseLevel}
+            onClose={() => setReuseOpen(false)}
           />
         )}
       </div>

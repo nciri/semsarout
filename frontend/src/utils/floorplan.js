@@ -103,6 +103,25 @@ export const rescaleGeometry = (geometry, factor) => ({
   openings: (geometry.openings || []).map((o) => ({ ...o, offset_m: o.offset_m * factor })),
 })
 
+// Copie ponctuelle et indépendante : aucun lien n'est gardé avec la source, qui n'est
+// jamais modifiée. Les identifiants sont régénérés pour éviter toute collision, et la
+// correspondance ouverture → mur est réécrite en conséquence.
+// Les points de murs et les sommets de polygones sont eux-mêmes copiés (pas seulement
+// les objets qui les portent) : un spread superficiel laisserait `a`/`b`/`polygon[i]`
+// partagés par référence avec la source, et un futur glissé qui les muterait en place
+// (patron courant en édition graphique) déplacerait alors un mur de la source depuis
+// la copie. Indépendance réelle, pas seulement apparente tant que rien ne mute en place.
+export function copyGeometry(geometry) {
+  const wallIds = new Map((geometry.walls || []).map((w) => [w.id, newId()]))
+  return {
+    walls: (geometry.walls || []).map((w) => ({ ...w, id: wallIds.get(w.id), a: { ...w.a }, b: { ...w.b } })),
+    rooms: (geometry.rooms || []).map((r) => ({ ...r, id: newId(), polygon: (r.polygon || []).map((p) => ({ ...p })) })),
+    openings: (geometry.openings || [])
+      .filter((o) => wallIds.has(o.wall_id))
+      .map((o) => ({ ...o, id: newId(), wall_id: wallIds.get(o.wall_id) })),
+  }
+}
+
 export function bbox(geometry) {
   const pts = [
     ...(geometry.walls || []).flatMap((w) => [w.a, w.b]),
@@ -117,7 +136,7 @@ export function bbox(geometry) {
   }
 }
 
-// --- validateGeometry : miroir exact de app/schemas.py::validate_geometry ---
+// --- geometryProblems / validateGeometry : miroir exact de app/schemas.py::validate_geometry ---
 // Aucune entrée (même absurde) ne doit lever d'exception : uniquement des gardes numériques,
 // jamais de try/catch défensif — le comportement observable doit être identique au serveur,
 // pas sa forme interne.
@@ -126,23 +145,37 @@ const isFiniteNumber = (v) => typeof v === 'number' && Number.isFinite(v)
 
 const isPlainObject = (v) => typeof v === 'object' && v !== null && !Array.isArray(v)
 
-const isPoint = (p) => isPlainObject(p) && isFiniteNumber(p.x) && isFiniteNumber(p.y)
+// Exporté : la réparation depuis le bandeau des problèmes doit écarter un mur
+// EXACTEMENT sur le critère qui l'a signalé, sans redériver sa propre notion de
+// point valide (cf. REPAIR_GEOMETRY).
+export const isPoint = (p) => isPlainObject(p) && isFiniteNumber(p.x) && isFiniteNumber(p.y)
 
-export function validateGeometry(geometry, wallHeightM) {
-  const errors = []
+// Problèmes structurés : même parcours que le miroir serveur, mais chaque entrée porte
+// son code, l'élément concerné, et si elle n'est qu'une CONSÉQUENCE d'un autre problème
+// (`derived`). L'interface n'affiche que les causes ; le miroir chaînes, lui, doit rester
+// identique au serveur, conséquences comprises, sous peine de fausser la parité.
+//
+// `geometry_object`, `list_expected`, `entry_object` et `ids_duplicate` couvrent des entrées
+// d'entrée malformées (pas des éléments métier) : elles ne portent pas de `kind`/`id`
+// exploitable et ne sont pas exposées dans la liste de codes de l'interface, réservée aux
+// problèmes qu'un agent peut voir et corriger sur le plan.
+export function geometryProblems(geometry, wallHeightM) {
+  const problems = []
 
-  if (!isPlainObject(geometry)) return ['geometry doit être un objet']
+  if (!isPlainObject(geometry)) return [{ code: 'geometry_object', kind: null, id: null, derived: false }]
 
-  if (JSON.stringify(geometry).length > MAX_GEOMETRY_BYTES) errors.push('geometry dépasse 512 Ko')
+  if (JSON.stringify(geometry).length > MAX_GEOMETRY_BYTES) {
+    problems.push({ code: 'geometry_too_large', kind: null, id: null, derived: false })
+  }
 
   if (!isFiniteNumber(wallHeightM)) {
-    errors.push('wall_height_m invalide')
-    return errors
+    problems.push({ code: 'wall_height', kind: null, id: null, derived: false })
+    return problems
   }
 
   const collect = (raw, name) => {
     if (raw != null && !Array.isArray(raw)) {
-      errors.push(`${name}: liste attendue`)
+      problems.push({ code: 'list_expected', kind: null, id: null, derived: false, name })
       return []
     }
     return raw || []
@@ -156,18 +189,18 @@ export function validateGeometry(geometry, wallHeightM) {
     for (let idx = 0; idx < coll.length; idx++) {
       const e = coll[idx]
       if (!isPlainObject(e)) {
-        errors.push(`${name}[${idx}]: objet attendu`)
+        problems.push({ code: 'entry_object', kind: null, id: null, derived: false, name, idx })
         continue
       }
       const eId = e.id
       if (!eId) {
-        errors.push(`${name}: identifiants manquants ou en double`)
+        problems.push({ code: 'ids_duplicate', kind: null, id: null, derived: false, name })
         break
       }
       ids.push(eId)
     }
     if (ids.length && ids.length !== new Set(ids).size) {
-      errors.push(`${name}: identifiants manquants ou en double`)
+      problems.push({ code: 'ids_duplicate', kind: null, id: null, derived: false, name })
     }
   }
 
@@ -177,15 +210,17 @@ export function validateGeometry(geometry, wallHeightM) {
 
     const wId = w.id
     if (!isPoint(w.a) || !isPoint(w.b)) {
-      errors.push(`mur ${wId}: deux points distincts requis`)
+      problems.push({ code: 'wall_too_short', kind: 'wall', id: wId, derived: false })
       continue
     }
     if (!(wallLength(w) > 0)) {
-      errors.push(`mur ${wId}: deux points distincts requis`)
+      problems.push({ code: 'wall_too_short', kind: 'wall', id: wId, derived: false })
       continue
     }
     const t = w.thickness_m
-    if (!isFiniteNumber(t) || !(t > 0 && t <= 1)) errors.push(`mur ${wId}: thickness_m dans ]0, 1]`)
+    if (!isFiniteNumber(t) || !(t > 0 && t <= 1)) {
+      problems.push({ code: 'wall_thickness', kind: 'wall', id: wId, derived: false })
+    }
     byId[wId] = w
   }
 
@@ -194,19 +229,25 @@ export function validateGeometry(geometry, wallHeightM) {
 
     const rId = r.id
     const poly = Array.isArray(r.polygon) ? r.polygon : []
-    if (poly.length < 3 || !poly.every(isPoint)) errors.push(`pièce ${rId}: polygone ≥ 3 points`)
-    if (!ROOM_TYPES.includes(r.type)) errors.push(`pièce ${rId}: type inconnu`)
+    if (poly.length < 3 || !poly.every(isPoint)) {
+      problems.push({ code: 'room_polygon', kind: 'room', id: rId, derived: false })
+    }
+    if (!ROOM_TYPES.includes(r.type)) problems.push({ code: 'room_type', kind: 'room', id: rId, derived: false })
   }
 
   for (const o of openings) {
     if (!isPlainObject(o)) continue // erreur déjà enregistrée ci-dessus
 
     const oId = o.id
-    if (!OPENING_TYPES.includes(o.type)) errors.push(`ouverture ${oId}: type inconnu`)
+    if (!OPENING_TYPES.includes(o.type)) {
+      problems.push({ code: 'opening_type', kind: 'opening', id: oId, derived: false })
+    }
 
     const w = byId[o.wall_id]
     if (!w) {
-      errors.push(`ouverture ${oId}: mur introuvable`)
+      // Conséquence d'un mur invalide (absent de byId) : ne pas la traiter comme la
+      // cause du problème, sous peine de masquer le vrai coupable à l'agent.
+      problems.push({ code: 'opening_orphan', kind: 'opening', id: oId, derived: true })
       continue
     }
 
@@ -216,17 +257,43 @@ export function validateGeometry(geometry, wallHeightM) {
     const sill = 'sill_m' in o ? o.sill_m : 0
 
     if (![off, wd, h, sill].every(isFiniteNumber)) {
-      errors.push(`ouverture ${oId}: dimensions invalides`)
+      problems.push({ code: 'opening_dimensions', kind: 'opening', id: oId, derived: false })
       continue
     }
     if (wd <= 0 || off < 0) {
-      errors.push(`ouverture ${oId}: dimensions invalides`)
+      problems.push({ code: 'opening_dimensions', kind: 'opening', id: oId, derived: false })
       continue
     }
 
-    if (off + wd > wallLength(w) + 1e-6) errors.push(`ouverture ${oId}: dépasse le mur`)
-    if (sill + h > wallHeightM + 1e-6) errors.push(`ouverture ${oId}: dépasse la hauteur du mur`)
+    if (off + wd > wallLength(w) + 1e-6) {
+      problems.push({ code: 'opening_overflows', kind: 'opening', id: oId, derived: false })
+    }
+    if (sill + h > wallHeightM + 1e-6) {
+      problems.push({ code: 'opening_wall_height', kind: 'opening', id: oId, derived: false })
+    }
   }
 
-  return errors
+  return problems
+}
+
+const MESSAGES = {
+  geometry_object: () => 'geometry doit être un objet',
+  geometry_too_large: () => 'geometry dépasse 512 Ko',
+  wall_height: () => 'wall_height_m invalide',
+  list_expected: (p) => `${p.name}: liste attendue`,
+  entry_object: (p) => `${p.name}[${p.idx}]: objet attendu`,
+  ids_duplicate: (p) => `${p.name}: identifiants manquants ou en double`,
+  wall_too_short: (p) => `mur ${p.id}: deux points distincts requis`,
+  wall_thickness: (p) => `mur ${p.id}: thickness_m dans ]0, 1]`,
+  room_polygon: (p) => `pièce ${p.id}: polygone ≥ 3 points`,
+  room_type: (p) => `pièce ${p.id}: type inconnu`,
+  opening_orphan: (p) => `ouverture ${p.id}: mur introuvable`,
+  opening_type: (p) => `ouverture ${p.id}: type inconnu`,
+  opening_dimensions: (p) => `ouverture ${p.id}: dimensions invalides`,
+  opening_overflows: (p) => `ouverture ${p.id}: dépasse le mur`,
+  opening_wall_height: (p) => `ouverture ${p.id}: dépasse la hauteur du mur`,
+}
+
+export function validateGeometry(geometry, wallHeightM) {
+  return geometryProblems(geometry, wallHeightM).map((p) => MESSAGES[p.code](p))
 }

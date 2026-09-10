@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ROOM_TYPES, levelArea, polygonArea, wallLength } from '../../utils/floorplan'
 import { isolateLtr } from '../../utils/format'
-import { resizedWall } from './useFloorplanEditor'
+import { resizedWall, MIN_WALL_M } from './useFloorplanEditor'
 import NumericPad from './NumericPad'
+import GeometryProblems from './GeometryProblems'
 
 // Champ numérique en cours de saisie → clé i18n de son libellé.
 const PAD_LABELS = {
@@ -17,9 +18,12 @@ const PAD_LABELS = {
  * champs à choix restreint restent des `<select>` natifs, qui ouvrent le sélecteur
  * du système — le plus fiable au doigt.
  */
-export default function PropertiesPanel({ state, dispatch, wallHeightM, onWallHeightChange, problems = [] }) {
+export default function PropertiesPanel({
+  state, dispatch, wallHeightM, onWallHeightChange, problems = [], onProblemSelect, onProblemRepair,
+}) {
   const { t } = useTranslation(['dashboard'])
   const [padField, setPadField] = useState(null)
+  const [lengthError, setLengthError] = useState(null)
   const { geometry, selection } = state
   const selected =
     selection?.kind === 'wall' ? geometry.walls.find((w) => w.id === selection.id)
@@ -42,11 +46,21 @@ export default function PropertiesPanel({ state, dispatch, wallHeightM, onWallHe
 
   const commitPad = (value) => {
     if (padField === 'length') {
-      dispatch({ type: 'UPDATE_ELEMENT', kind: 'wall', id: selected.id, patch: resizedWall(selected, value) })
+      const resized = resizedWall(selected, value)
+      if (resized === selected) {
+        // resizedWall a refusé le changement
+        setLengthError(t('dashboard:designEditor.panel.wallTooShort', { min: MIN_WALL_M.toFixed(2) }))
+        setTimeout(() => setLengthError(null), 3000)
+      } else {
+        dispatch({ type: 'UPDATE_ELEMENT', kind: 'wall', id: selected.id, patch: resized })
+        setLengthError(null)
+      }
     } else if (padField === 'wallHeight') {
       onWallHeightChange(value)
+      setLengthError(null)
     } else if (padField) {
       patch({ [padField]: value })
+      setLengthError(null)
     }
     setPadField(null)
   }
@@ -64,15 +78,21 @@ export default function PropertiesPanel({ state, dispatch, wallHeightM, onWallHe
         </span>
       </div>
 
-      {problems.length > 0 && (
-        <ul className="text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2 space-y-1">
-          {problems.slice(0, 5).map((p) => (
-            <li key={p}>{p}</li>
-          ))}
-        </ul>
+      <GeometryProblems problems={problems} onSelect={onProblemSelect} onRepair={onProblemRepair} />
+
+      {lengthError && (
+        <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2">
+          {lengthError}
+        </p>
       )}
 
-      {!selected && <p className="text-sm text-gray-500">{t('dashboard:designEditor.panel.noSelection')}</p>}
+      {selection?.kind === 'multi' ? (
+        <p className="text-sm text-gray-700">
+          {t('dashboard:designEditor.selection.count', { n: selection.items.length })}
+        </p>
+      ) : (
+        !selected && <p className="text-sm text-gray-500">{t('dashboard:designEditor.panel.noSelection')}</p>
+      )}
 
       {selection?.kind === 'wall' && selected && (
         <div className="space-y-2">

@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { FiArrowLeft, FiCheckCircle, FiPlus } from 'react-icons/fi'
 import * as local from '../../services/design3dLocal'
-import { applyLocal, refreshFromServer } from '../../services/design3dSync'
+import { applyLocal, cleanupEmpty, refreshFromServer } from '../../services/design3dSync'
 import { newId } from '../../utils/floorplan'
 import useAuthStore from '../../store/authStore'
 import Design3dGate from '../../components/design/Design3dGate'
@@ -22,6 +22,7 @@ export default function DesignProjects() {
   const targetId = params.get('target_id') ? Number(params.get('target_id')) : null
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
+  const [emptyRemoved, setEmptyRemoved] = useState(false)
 
   const reload = useCallback(async () => {
     const rows = targetId == null ? await local.listAllProjects() : await local.listProjects(targetType, targetId)
@@ -32,20 +33,49 @@ export default function DesignProjects() {
   useEffect(() => {
     let alive = true
     ;(async () => {
+      // La liste locale s'affiche d'abord, sans attendre le réseau : l'éditeur
+      // est hors-ligne d'abord.
       await reload()
+
       // Rafraîchissement d'appoint : s'il échoue (hors ligne), la liste locale
-      // affichée ci-dessus reste la vérité de travail.
+      // affichée ci-dessus reste la vérité de travail — et AUCUN nettoyage n'a
+      // lieu, cf. ci-dessous.
+      let serverRevisions
       try {
-        await refreshFromServer()
+        serverRevisions = await refreshFromServer()
       } catch {
         return
       }
-      if (alive) await reload()
+      if (!alive) return
+      await reload()
+
+      // Rattrape ici une session que l'éditeur n'a pas pu nettoyer en quittant (onglet
+      // fermé, tablette éteinte — `beforeunload` n'est pas fiable, acquis de la brique 1) :
+      // cette liste est le passage obligé pour rouvrir un projet, donc l'endroit sûr pour
+      // ce balayage. Un projet listé ici PEUT être en cours de dessin ailleurs — dans un
+      // second onglet, que ce dépôt prend explicitement en compte, ou depuis un autre
+      // appareil de l'agence — donc le balayage n'a lieu qu'APRÈS un `refreshFromServer`
+      // réussi, et `cleanupEmpty` reçoit l'instantané des révisions serveur pour écarter
+      // tout niveau `dirty` ou plus ancien que la version distante. Hors ligne, il est
+      // simplement reporté au prochain passage en ligne : un projet vide qui survit
+      // quelques minutes est sans conséquence, détruire le travail d'un collègue non.
+      const known = targetId == null ? await local.listAllProjects() : await local.listProjects(targetType, targetId)
+      let removed = false
+      for (const p of known) {
+        if (!alive) return
+        const r = await cleanupEmpty(p.id, { serverRevisions }).catch(() => ({ removedProject: false }))
+        if (r.removedProject) removed = true
+      }
+      if (!alive) return
+      if (removed) {
+        setEmptyRemoved(true)
+        await reload()
+      }
     })()
     return () => {
       alive = false
     }
-  }, [reload])
+  }, [reload, targetType, targetId])
 
   async function create() {
     const id = newId()
@@ -70,6 +100,12 @@ export default function DesignProjects() {
         </Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-2">{t('dashboard:designEditor.projects.title')}</h1>
         <p className="text-gray-600 mb-4">{t('dashboard:designEditor.projects.subtitle')}</p>
+
+        {emptyRemoved && (
+          <p role="status" className="text-sm text-gray-500 mb-4">
+            {t('dashboard:designEditor.projects.emptyRemoved')}
+          </p>
+        )}
 
         <button type="button" className="btn-primary min-h-[44px] inline-flex items-center gap-2 mb-4" onClick={create}>
           <FiPlus className="w-5 h-5" />

@@ -79,6 +79,68 @@ def test_create_level_with_id_from_other_owner_project_is_409_no_leak(client, he
     assert "background_image_key" not in body
 
 
+def test_liste_sans_cible_renvoie_les_projets_de_l_agence(client, headers, other_agency_client):
+    client.post("/design3d/projects", headers=headers(agency_id=9),
+               json={"id": "a" * 32, "target_type": "property", "target_id": 1, "title": "A"})
+    other_agency_client.post("/design3d/projects",
+                             json={"id": "b" * 32, "target_type": "property", "target_id": 2, "title": "B"})
+    r = client.get("/design3d/projects", headers=headers(agency_id=9))
+    assert r.status_code == 200
+    assert [p["id"] for p in r.json()["projects"]] == ["a" * 32]
+
+
+def test_liste_avec_cible_reste_filtree(client, headers):
+    client.post("/design3d/projects", headers=headers(),
+               json={"id": "c" * 32, "target_type": "property", "target_id": 7, "title": "C"})
+    r = client.get("/design3d/projects", params={"target_type": "property", "target_id": 8}, headers=headers())
+    assert r.status_code == 200
+    assert r.json()["projects"] == []
+
+
+def test_liste_sans_cible_bornee_par_limit_par_defaut(client, headers):
+    for i in range(51):
+        client.post("/design3d/projects", headers=headers(),
+                   json={"target_type": "property", "target_id": i, "title": str(i)})
+    r = client.get("/design3d/projects", headers=headers())
+    assert r.status_code == 200
+    assert len(r.json()["projects"]) == 50
+
+
+def test_liste_sans_cible_porte_les_resumes_de_niveaux_sans_geometrie(client, headers):
+    """Le dialogue de reprise doit tenir en un appel, sans transporter la géométrie."""
+    pid = _create(client, headers()).json()["id"]
+    r = client.get("/design3d/projects", headers=headers())
+    assert r.status_code == 200
+    (project,) = [p for p in r.json()["projects"] if p["id"] == pid]
+    assert len(project["levels"]) == 1
+    assert set(project["levels"][0]) == {"id", "name", "position", "wall_height_m"}
+
+
+def test_liste_avec_cible_garde_sa_forme_sans_niveaux(client, headers):
+    """Les appelants qui fournissent une cible ne doivent voir aucun changement."""
+    client.post("/design3d/projects", headers=headers(),
+                json={"id": "d" * 32, "target_type": "property", "target_id": 42, "title": "D"})
+    r = client.get("/design3d/projects", params={"target_type": "property", "target_id": 42}, headers=headers())
+    assert r.status_code == 200
+    (project,) = r.json()["projects"]
+    assert "levels" not in project
+
+
+def test_limite_hors_bornes_refusee_avant_la_base(client, headers):
+    """`limit` doit être validé par l'API, pas par le moteur de base.
+
+    SQLite ignore un LIMIT négatif (d'où des suites vertes trompeuses) alors que
+    PostgreSQL, sur lequel tourne la production, le REFUSE : une requête
+    malformée y produisait un 500 au lieu d'un 422. La borne haute protège
+    accessoirement la réponse, qui porte désormais les résumés de niveaux.
+    """
+    for value in (-1, 0, 1000):
+        r = client.get("/design3d/projects", params={"limit": value}, headers=headers())
+        assert r.status_code == 422, f"limit={value} devrait être refusé"
+    assert client.get("/design3d/projects", params={"limit": 1}, headers=headers()).status_code == 200
+    assert client.get("/design3d/projects", params={"limit": 100}, headers=headers()).status_code == 200
+
+
 def test_create_level_idempotent_same_project(client, headers):
     pid = _create(client, headers()).json()["id"]
     level_id = "c" * 32

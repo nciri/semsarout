@@ -1244,6 +1244,7 @@
   },
   "designEditor": {
     "title": "Éditeur de plan",
+    "actionsMenu": "Actions du plan",
     "entry": "Concevoir en 3D",
     "canvasLabel": "Plan du niveau",
     "footer": "Niveau {{level}} · surface tracée {{area}} m²",
@@ -1251,7 +1252,8 @@
       "title": "Module conception 3D",
       "body": "Ce module vous permet de relever un plan sur tablette, même sans connexion, puis de le publier en 3D sur vos annonces.",
       "cta": "Activer dans mon abonnement",
-      "upsell": "Module conception 3D — à activer"
+      "upsell": "Module conception 3D — à activer",
+      "needsSave": "Concevoir en 3D — enregistrez d'abord le bien"
     },
     "tools": {
       "select": "Sélectionner",
@@ -1302,7 +1304,22 @@
       "openingHeight": "Hauteur",
       "openingSill": "Allège",
       "openingOffset": "Position sur le mur",
-      "wallHeight": "Hauteur sous plafond"
+      "wallHeight": "Hauteur sous plafond",
+      "wallTooShort": "Un mur doit mesurer au minimum {{min}} m"
+    },
+    "problems": {
+      "wall_too_short": "Un mur est trop court pour être enregistré. Touchez pour le voir.",
+      "wall_thickness": "L'épaisseur d'un mur est hors limites. Touchez pour le voir.",
+      "room_polygon": "Une pièce a moins de trois points. Touchez pour la voir.",
+      "room_type": "Une pièce n'a pas de type. Touchez pour la voir.",
+      "opening_type": "Une ouverture n'a pas de type. Touchez pour la voir.",
+      "opening_dimensions": "Les dimensions d'une ouverture sont invalides. Touchez pour la voir.",
+      "opening_overflows": "Une ouverture dépasse de son mur. Touchez pour la voir.",
+      "opening_wall_height": "Une ouverture dépasse la hauteur du mur. Touchez pour la voir.",
+      "geometry_too_large": "Le plan est trop volumineux pour être enregistré.",
+      "wall_height": "La hauteur sous plafond est invalide.",
+      "repair": "Corriger",
+      "repairConfirm": "Le mur trop court et ses ouvertures seront supprimés. Continuer ?"
     },
     "pad": {
       "backspace": "Effacer le dernier chiffre",
@@ -1377,6 +1394,7 @@
       "create": "Nouveau projet",
       "defaultTitle": "Plan sans titre",
       "empty": "Aucun projet pour ce bien.",
+      "emptyRemoved": "Projet vide supprimé.",
       "markReady": "Marquer prêt",
       "notSynced": "non synchronisé",
       "status": {
@@ -1389,6 +1407,19 @@
       "read": "Lecture du niveau impossible : le stockage local de cet appareil n'a pas répondu. L'éditeur reste bloqué tant qu'elle n'a pas abouti.",
       "missing": "Ce niveau est introuvable dans le stockage local de cet appareil. Réessayez, ou choisissez un autre niveau.",
       "retry": "Réessayer"
+    },
+    "selection": {
+      "count": "{{n}} objets sélectionnés"
+    },
+    "reuse": {
+      "action": "Reprendre un plan existant",
+      "title": "Reprendre un plan existant",
+      "offlineLimited": "Liste limitée aux plans déjà présents sur cet appareil, faute de connexion.",
+      "loading": "Chargement des plans disponibles…",
+      "empty": "Aucun autre plan disponible.",
+      "confirm": "Le plan actuel de ce niveau sera remplacé. Continuer ?",
+      "picking": "Chargement du plan choisi…",
+      "pickFailed": "Ce plan n’a pas pu être chargé. Réessayez ou choisissez-en un autre."
     }
   }
 }
