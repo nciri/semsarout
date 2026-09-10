@@ -1,3 +1,5 @@
+import RedCartouche from './RedCartouche'
+
 /**
  * Wordmark SemsarOut — "Semsar" + carton rouge "Out" incliné (design system).
  * `dark` : variante pour fonds midnight (texte ivoire).
@@ -10,12 +12,7 @@ function Wordmark({ dark = false, className = '' }) {
       } ${className}`}
     >
       <span>Semsar</span>
-      <span
-        className="inline-flex items-center text-white text-[18px] px-[9px] py-[2px] rounded-[5px] shadow-red -rotate-[4deg]"
-        style={{ background: 'linear-gradient(150deg,#C1121F 0%,#870B15 100%)' }}
-      >
-        Out
-      </span>
+      <RedCartouche className="text-[18px]">Out</RedCartouche>
     </span>
   )
 }

@@ -18,6 +18,7 @@ import CalibrationOverlay from '../../components/design/CalibrationOverlay'
 import SyncBadge from '../../components/design/SyncBadge'
 import ShelfDialog from '../../components/design/ShelfDialog'
 import Design3dGate from '../../components/design/Design3dGate'
+import RedCartouche from '../../components/common/RedCartouche'
 
 /**
  * Éditeur de plan 2D, hors-ligne d'abord.
@@ -592,7 +593,9 @@ export default function DesignEditor() {
             <FiArrowLeft className="w-4 h-4 rtl:rotate-180" />
             {t('dashboard:designEditor.projects.back')}
           </Link>
-          <h1 className="text-lg font-semibold text-gray-900">{t('dashboard:designEditor.title')}</h1>
+          <h1 className="text-lg font-display font-extrabold">
+            <RedCartouche>{t('dashboard:designEditor.title')}</RedCartouche>
+          </h1>
           <SyncBadge sync={sync} />
           {shelfCount > 0 && (
             <button type="button" className="btn-secondary min-h-[44px] inline-flex items-center gap-2" onClick={openShelf}>
@@ -600,7 +603,7 @@ export default function DesignEditor() {
               {t('dashboard:designEditor.shelf.badge', { n: shelfCount })}
             </button>
           )}
-          <label className="btn-secondary min-h-[44px] inline-flex items-center gap-2 cursor-pointer">
+          <label className="btn-secondary min-h-[36px] inline-flex items-center gap-2 cursor-pointer">
             <FiImage className="w-4 h-4" />
             {t('dashboard:designEditor.background.import')}
             <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={importBackground} />
