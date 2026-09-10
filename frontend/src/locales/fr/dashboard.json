@@ -1414,6 +1414,7 @@
       "action": "Reprendre un plan existant",
       "title": "Reprendre un plan existant",
       "offlineLimited": "Liste limitée aux plans déjà présents sur cet appareil, faute de connexion.",
+      "loading": "Chargement des plans disponibles…",
       "empty": "Aucun autre plan disponible.",
       "confirm": "Le plan actuel de ce niveau sera remplacé. Continuer ?"
     }

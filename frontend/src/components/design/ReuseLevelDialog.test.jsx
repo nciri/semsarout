@@ -38,6 +38,17 @@ describe('ReuseLevelDialog', () => {
     expect(api.listAgencyProjects).toHaveBeenCalled()
   })
 
+  it('affiche un indicateur de chargement tant que la liste n’est pas prête', async () => {
+    let resolveList
+    const local = makeLocal()
+    const api = { listAgencyProjects: vi.fn(() => new Promise((resolve) => { resolveList = resolve })) }
+    render(<ReuseLevelDialog online local={local} api={api} onPick={() => {}} onClose={() => {}} />)
+    expect(await screen.findByText(/chargement/i)).toBeInTheDocument()
+    resolveList([])
+    await screen.findByText(/Aucun autre plan/i)
+    expect(screen.queryByText(/chargement/i)).not.toBeInTheDocument()
+  })
+
   it('remonte la géométrie et la hauteur du niveau choisi', async () => {
     const local = makeLocal()
     const api = makeApi()

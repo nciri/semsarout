@@ -48,6 +48,10 @@ export default function ReuseLevelDialog({ online, local, api, onPick, onClose }
           </p>
         )}
 
+        {projects === null && (
+          <p role="status" className="text-sm text-gray-500 mt-2">{t('dashboard:designEditor.reuse.loading')}</p>
+        )}
+
         {projects !== null && entries.length === 0 && (
           <p className="text-sm text-gray-500 mt-2">{t('dashboard:designEditor.reuse.empty')}</p>
         )}
