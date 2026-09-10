@@ -8,7 +8,7 @@ import NumericPad from './NumericPad'
  * de dessin restent désactivés — tracer sans échelle produirait des mètres faux,
  * impossibles à rattraper autrement qu'en recommençant.
  */
-export default function CalibrationOverlay({ points, meters, onReset, onCommit, onCancel, required }) {
+export default function CalibrationOverlay({ points, meters, onReset, onCommit, onCancel, required, error = null }) {
   const { t } = useTranslation(['dashboard'])
   const step = points.length < 2 ? 'points' : 'length'
 
@@ -23,6 +23,7 @@ export default function CalibrationOverlay({ points, meters, onReset, onCommit, 
               : t('dashboard:designEditor.calibration.enterLength')}
           </p>
           {required && <p className="text-sm text-amber-700 mt-1">{t('dashboard:designEditor.calibration.required')}</p>}
+          {error && <p role="alert" className="text-sm text-red-700 mt-1">{error}</p>}
         </div>
         <div className="flex gap-2">
           <button

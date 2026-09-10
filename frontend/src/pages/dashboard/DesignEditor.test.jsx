@@ -292,6 +292,63 @@ describe('DesignEditor', () => {
     expect(screen.getByRole('button', { name: 'Calibrer' })).toBeInTheDocument()
   })
 
+  it('refuse une recalibration dégénérée (deux points confondus) au lieu de détruire la géométrie tracée (D3)', async () => {
+    onTestFinished(stubBackgroundImage())
+    renderEditor()
+    await screen.findByRole('tab', { name: 'RDC' })
+
+    // Un mur déjà tracé, dont la destruction par un recalibrage dégénéré est le
+    // scénario grave du défaut : ses coordonnées doivent rester finies.
+    await pickTool('Mur')
+    const canvas = screen.getByTestId('floorplan-canvas')
+    fireEvent.pointerDown(canvas, { pointerId: 1, clientX: 100, clientY: 100 })
+    fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 300, clientY: 100 })
+    fireEvent.pointerUp(canvas, { pointerId: 1, clientX: 300, clientY: 100 })
+    await waitFor(async () => {
+      const lv = await local.getLevel(LEVEL_ID)
+      expect(lv.geometry.walls).toHaveLength(1)
+    }, { timeout: 4000 })
+
+    // Importe un fond puis calibre une première fois avec deux points distincts :
+    // une calibration initiale valide, qui ne touche pas la géométrie.
+    openActionsMenu()
+    const file = new File(['x'], 'plan.png', { type: 'image/png' })
+    fireEvent.change(screen.getByLabelText('Importer un plan'), { target: { files: [file] } })
+    await screen.findByRole('heading', { name: 'Calibration du plan' })
+    fireEvent.pointerDown(canvas, { pointerId: 2, clientX: 100, clientY: 400 })
+    fireEvent.pointerUp(canvas, { pointerId: 2, clientX: 100, clientY: 400 })
+    fireEvent.pointerDown(canvas, { pointerId: 2, clientX: 300, clientY: 400 })
+    fireEvent.pointerUp(canvas, { pointerId: 2, clientX: 300, clientY: 400 })
+    fireEvent.change(screen.getByLabelText('Longueur réelle'), { target: { value: '4' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Valider' }))
+    await waitFor(() => expect(screen.queryByLabelText('Longueur réelle')).not.toBeInTheDocument())
+
+    const beforeRecal = (await local.getLevel(LEVEL_ID)).geometry
+
+    // Recalibre avec deux points confondus — geste banal au doigt sur tablette.
+    fireEvent.click(screen.getByRole('button', { name: 'Calibrer' }))
+    fireEvent.pointerDown(canvas, { pointerId: 3, clientX: 150, clientY: 150 })
+    fireEvent.pointerUp(canvas, { pointerId: 3, clientX: 150, clientY: 150 })
+    fireEvent.pointerDown(canvas, { pointerId: 3, clientX: 150, clientY: 150 })
+    fireEvent.pointerUp(canvas, { pointerId: 3, clientX: 150, clientY: 150 })
+    await waitFor(() => expect(screen.getByLabelText('Longueur réelle')).toBeInTheDocument())
+    fireEvent.change(screen.getByLabelText('Longueur réelle'), { target: { value: '4' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Valider' }))
+
+    // Message en français, exploitable — pas de NaN à l'écran, pas de plantage.
+    expect(await screen.findByText(/deux points/)).toBeInTheDocument()
+
+    // La géométrie déjà tracée n'a pas bougé : ni Infinity, ni NaN.
+    const afterRecal = (await local.getLevel(LEVEL_ID)).geometry
+    expect(afterRecal).toEqual(beforeRecal)
+    for (const w of afterRecal.walls) {
+      expect(Number.isFinite(w.a.x)).toBe(true)
+      expect(Number.isFinite(w.a.y)).toBe(true)
+      expect(Number.isFinite(w.b.x)).toBe(true)
+      expect(Number.isFinite(w.b.y)).toBe(true)
+    }
+  })
+
   it('trace un mur au doigt et met l’édition en file sans réseau', async () => {
     renderEditor()
     await screen.findByRole('tab', { name: 'RDC' })

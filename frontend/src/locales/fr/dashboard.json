@@ -1363,7 +1363,8 @@
       "enterLength": "Saisissez la longueur réelle entre les deux points.",
       "lengthLabel": "Longueur réelle",
       "required": "Calibrez le plan avant de dessiner : sans échelle, les longueurs seraient fausses.",
-      "reset": "Reprendre les points"
+      "reset": "Reprendre les points",
+      "degenerate": "Les deux points touchés sont trop proches pour mesurer une distance. Touchez deux points bien écartés l'un de l'autre."
     },
     "background": {
       "import": "Importer un plan"

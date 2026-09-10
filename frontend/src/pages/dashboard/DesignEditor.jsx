@@ -63,6 +63,7 @@ export default function DesignEditor() {
   const [background, setBackground] = useState(null)
   const [calibrating, setCalibrating] = useState(false)
   const [calPoints, setCalPoints] = useState([])
+  const [calibrationError, setCalibrationError] = useState(null)
   const [shelf, setShelf] = useState(null)
   const [reuseOpen, setReuseOpen] = useState(false)
   const [shelfCount, setShelfCount] = useState(0)
@@ -412,22 +413,44 @@ export default function DesignEditor() {
   const ready = !!levelId && readyLevelId === levelId
 
   function onCalibrationPoint(p) {
+    setCalibrationError(null)
     setCalPoints((pts) => (pts.length >= 2 ? [p] : [...pts, p]))
   }
 
   function commitCalibration(meters) {
     if (calPoints.length < 2 || !background) return
     const next = { p1: calPoints[0], p2: calPoints[1], meters }
+    // Deux points confondus (double appui au même endroit, geste banal au doigt
+    // sur tablette) donnent une distance nulle et une largeur d'image infinie :
+    // on refuse AVANT que ça n'atteigne le formulaire, et a fortiori la
+    // géométrie déjà tracée. Première barrière.
+    const after = normalizedToMeters({ x: 1, y: 0 }, next, background.aspect).x
+    if (!Number.isFinite(after) || after <= 0) {
+      setCalibrationError(t('dashboard:designEditor.calibration.degenerate'))
+      setCalPoints([])
+      return
+    }
     if (form.calibration) {
       // Recalibrage : la géométrie déjà tracée doit suivre la nouvelle échelle,
       // exactement comme le fait le serveur (app/geometry.py::rescale).
       const before = normalizedToMeters({ x: 1, y: 0 }, form.calibration, background.aspect).x
-      const after = normalizedToMeters({ x: 1, y: 0 }, next, background.aspect).x
-      dispatch({ type: 'LOAD_GEOMETRY', geometry: rescaleGeometry(state.geometry, after / before) })
+      const factor = after / before
+      // Seconde barrière, indépendante de la première : même si le nouveau
+      // segment est valide, le facteur qui sera appliqué à la géométrie doit
+      // lui-même être fini et strictement positif avant d'atteindre
+      // `rescaleGeometry` — la dernière ligne de défense avant que les
+      // coordonnées ne partent en Infinity/NaN.
+      if (!Number.isFinite(factor) || factor <= 0) {
+        setCalibrationError(t('dashboard:designEditor.calibration.degenerate'))
+        setCalPoints([])
+        return
+      }
+      dispatch({ type: 'LOAD_GEOMETRY', geometry: rescaleGeometry(state.geometry, factor) })
     }
     setForm((f) => ({ ...f, calibration: next }))
     setCalibrating(false)
     setCalPoints([])
+    setCalibrationError(null)
   }
 
   // --- actions ------------------------------------------------------------
@@ -828,8 +851,9 @@ export default function DesignEditor() {
                 points={calPoints}
                 meters={form.calibration?.meters}
                 required={needsCalibration}
-                onReset={() => setCalPoints([])}
-                onCancel={() => setCalibrating(false)}
+                error={calibrationError}
+                onReset={() => { setCalibrationError(null); setCalPoints([]) }}
+                onCancel={() => { setCalibrationError(null); setCalibrating(false) }}
                 onCommit={commitCalibration}
               />
             )}
