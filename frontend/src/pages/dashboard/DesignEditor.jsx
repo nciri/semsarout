@@ -6,7 +6,7 @@ import * as local from '../../services/design3dLocal'
 import * as api from '../../services/design3dApi'
 import { applyLocal, discardRefusedProject, refreshFromServer, remoteLevelId, startEngine } from '../../services/design3dSync'
 import {
-  EMPTY_GEOMETRY, newId, normalizedToMeters, polygonArea, rescaleGeometry, validateGeometry,
+  EMPTY_GEOMETRY, newId, normalizedToMeters, polygonArea, rescaleGeometry, geometryProblems,
 } from '../../utils/floorplan'
 import useAuthStore from '../../store/authStore'
 import useFloorplanEditor from '../../components/design/useFloorplanEditor'
@@ -536,9 +536,15 @@ export default function DesignEditor() {
   }, [])
 
   const problems = useMemo(
-    () => validateGeometry(state.geometry, form.wall_height_m),
+    () => geometryProblems(state.geometry, form.wall_height_m),
     [state.geometry, form.wall_height_m],
   )
+  const onProblemSelect = useCallback((selection) => dispatch({ type: 'SELECT', selection }), [dispatch])
+  const onProblemRepair = useCallback(() => {
+    if (window.confirm(t('dashboard:designEditor.problems.repairConfirm'))) {
+      dispatch({ type: 'REPAIR_GEOMETRY' })
+    }
+  }, [dispatch, t])
   const currentLevel = levels.find((l) => l.id === levelId)
 
   const toolbar = (
@@ -573,6 +579,8 @@ export default function DesignEditor() {
       wallHeightM={form.wall_height_m}
       onWallHeightChange={(v) => setForm((f) => ({ ...f, wall_height_m: v }))}
       problems={problems}
+      onProblemSelect={onProblemSelect}
+      onProblemRepair={onProblemRepair}
     />
   )
 

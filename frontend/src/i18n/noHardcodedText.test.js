@@ -153,6 +153,7 @@ const MIGRATED_FILES = [
   'src/components/design/FloorplanCanvas.jsx',
   'src/components/design/Toolbar.jsx',
   'src/components/design/PropertiesPanel.jsx',
+  'src/components/design/GeometryProblems.jsx',
   'src/components/design/NumericPad.jsx',
   'src/components/design/LevelTabs.jsx',
   'src/components/design/CalibrationOverlay.jsx',

@@ -4,6 +4,7 @@ import { ROOM_TYPES, levelArea, polygonArea, wallLength } from '../../utils/floo
 import { isolateLtr } from '../../utils/format'
 import { resizedWall, MIN_WALL_M } from './useFloorplanEditor'
 import NumericPad from './NumericPad'
+import GeometryProblems from './GeometryProblems'
 
 // Champ numérique en cours de saisie → clé i18n de son libellé.
 const PAD_LABELS = {
@@ -17,7 +18,9 @@ const PAD_LABELS = {
  * champs à choix restreint restent des `<select>` natifs, qui ouvrent le sélecteur
  * du système — le plus fiable au doigt.
  */
-export default function PropertiesPanel({ state, dispatch, wallHeightM, onWallHeightChange, problems = [] }) {
+export default function PropertiesPanel({
+  state, dispatch, wallHeightM, onWallHeightChange, problems = [], onProblemSelect, onProblemRepair,
+}) {
   const { t } = useTranslation(['dashboard'])
   const [padField, setPadField] = useState(null)
   const [lengthError, setLengthError] = useState(null)
@@ -75,13 +78,7 @@ export default function PropertiesPanel({ state, dispatch, wallHeightM, onWallHe
         </span>
       </div>
 
-      {problems.length > 0 && (
-        <ul className="text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2 space-y-1">
-          {problems.slice(0, 5).map((p) => (
-            <li key={p}>{p}</li>
-          ))}
-        </ul>
-      )}
+      <GeometryProblems problems={problems} onSelect={onProblemSelect} onRepair={onProblemRepair} />
 
       {lengthError && (
         <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2">
