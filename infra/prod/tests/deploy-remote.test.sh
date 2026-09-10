@@ -189,6 +189,25 @@ contains "migration billing/migrate_commission_invoice.sql jouée" "commission" 
 contains "migration identity/add_features_synced_at.sql jouée (colonne mappée par AgencyRO)" \
   "ADD COLUMN IF NOT EXISTS features_synced_at" "$SQL_LOG"
 
+# A4 : activer `has_design3d` sur les plans pro/enterprise ne suffit pas — rien ne réémet
+# `billing.subscription.activated`, et le repli synchrone d'identity ne se déclenche que si
+# `features_synced_at IS NULL`, que add_features_synced_at.sql a justement estampillé. Sans
+# réamorçage du marqueur, une agence Pro existante ne verrait jamais le module 3D avant sa
+# prochaine activation d'abonnement (jusqu'à un an en facturation annuelle).
+contains "migration identity/reset_features_sync_design3d.sql jouée (réamorce le repli)" \
+  "SET features_synced_at = NULL" "$SQL_LOG"
+# L'ordre compte ici, contrairement au reste de la liste : réamorcer AVANT que billing n'ait
+# activé l'entitlement laisserait la première agence à se connecter dans l'intervalle
+# réestampiller une liste encore sans design3d — et le seul chemin capable de lui accorder le
+# module se rééteindrait, pour de bon.
+ent_line="$(grep -n "IN ('pro', 'enterprise')" "$SQL_LOG" | head -n 1 | cut -d: -f1)"
+reset_line="$(grep -n 'SET features_synced_at = NULL' "$SQL_LOG" | head -n 1 | cut -d: -f1)"
+if [ -n "$ent_line" ] && [ -n "$reset_line" ] && [ "$reset_line" -gt "$ent_line" ]; then
+  ok "…et APRÈS billing/migrate_design3d_entitlement.sql (l'ordre compte ici)"
+else
+  ko "…et APRÈS billing/migrate_design3d_entitlement.sql (l'ordre compte ici)"
+fi
+
 # --- défaut n°3 (nom de fichier d'environnement) -------------------------------
 if [ -f "$ENV_DIR/app-design3d.env" ]; then
   ok "fichier d'environnement app-design3d.env créé (nom attendu par semsar-app@.service.j2)"

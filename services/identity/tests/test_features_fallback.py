@@ -159,3 +159,22 @@ def test_billing_client_distinguishes_failure_from_legitimately_empty(monkeypatc
     monkeypatch.setattr(billing_client.httpx, "get",
                         lambda *a, **kw: _Resp(200, {"subscription": {"features": []}}))
     assert billing_client.features_of(1) == [], "une offre sans feature est un appel abouti"
+
+
+def test_features_consults_billing_when_marker_reset_even_with_non_empty_projection(db_session, monkeypatch):
+    """A4 : le réamorçage du marqueur (identity/db/reset_features_sync_design3d.sql) est le seul
+    chemin par lequel une agence Pro EXISTANTE peut recevoir une feature nouvellement ajoutée —
+    aucun `billing.subscription.activated` n'est réémis par une migration d'entitlement. Il
+    repose sur le fait que `features_synced_at IS NULL` redéclenche le repli MÊME quand
+    `features` est déjà non vide : c'est ce que ce test verrouille."""
+    db_session.add(AgencyRO(id=8, features=["rental"], features_synced_at=None,
+                            max_seats=0, max_teams=0, is_suspended=False, is_deleted=False))
+    db_session.commit()
+
+    from app import billing_client
+    monkeypatch.setattr(billing_client, "features_of", lambda agency_id: ["rental", "design3d"])
+
+    assert set(_features(db_session, 8)) == {"rental", "design3d"}
+    ag = db_session.get(AgencyRO, 8)
+    assert set(ag.features) == {"rental", "design3d"}
+    assert ag.features_synced_at is not None

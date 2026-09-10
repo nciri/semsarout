@@ -60,6 +60,11 @@ NEW_SERVICES="design3d 8526"
 # add_features_synced_at.sql est placée AVANT identity/add_rental_feature.sql, la seule entrée
 # dont l'échec est connu : la boucle plus bas n'arrête jamais la séquence, mais rien ne justifie
 # de faire dépendre une migration critique de cette propriété.
+#
+# identity/reset_features_sync_design3d.sql est en QUEUE de liste, et c'est la seule entrée dont
+# la position est contrainte : elle réamorce le repli auto-réparateur d'identity pour que les
+# agences Pro existantes reçoivent `design3d`, ce qui n'a de sens qu'une fois l'entitlement
+# activé côté billing par billing/migrate_design3d_entitlement.sql.
 MIGRATIONS="
 identity/add_tenant.sql
 identity/add_features_synced_at.sql
@@ -69,6 +74,7 @@ rental/migrate_particulier_lease.sql
 billing/migrate_commission_invoice.sql
 billing/migrate_design3d.sql
 billing/migrate_design3d_entitlement.sql
+identity/reset_features_sync_design3d.sql
 "
 
 # psql en tant que rôle postgres (patron roles/postgres d'Ansible : become_user postgres).
