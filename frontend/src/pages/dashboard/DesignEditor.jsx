@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { FiArrowLeft, FiImage, FiLayers, FiSliders, FiTarget } from 'react-icons/fi'
+import { FiArrowLeft, FiImage, FiLayers, FiRefreshCw, FiSliders, FiTarget } from 'react-icons/fi'
 import * as local from '../../services/design3dLocal'
 import * as api from '../../services/design3dApi'
 import { applyLocal, cleanupEmpty, discardRefusedProject, refreshFromServer, remoteLevelId, startEngine } from '../../services/design3dSync'
 import {
-  EMPTY_GEOMETRY, newId, normalizedToMeters, polygonArea, rescaleGeometry, geometryProblems,
+  EMPTY_GEOMETRY, newId, normalizedToMeters, polygonArea, rescaleGeometry, geometryProblems, copyGeometry,
 } from '../../utils/floorplan'
 import useAuthStore from '../../store/authStore'
 import useFloorplanEditor from '../../components/design/useFloorplanEditor'
@@ -17,6 +17,7 @@ import LevelTabs from '../../components/design/LevelTabs'
 import CalibrationOverlay from '../../components/design/CalibrationOverlay'
 import SyncBadge from '../../components/design/SyncBadge'
 import ShelfDialog from '../../components/design/ShelfDialog'
+import ReuseLevelDialog from '../../components/design/ReuseLevelDialog'
 import Design3dGate from '../../components/design/Design3dGate'
 import RedCartouche from '../../components/common/RedCartouche'
 
@@ -62,6 +63,7 @@ export default function DesignEditor() {
   const [calibrating, setCalibrating] = useState(false)
   const [calPoints, setCalPoints] = useState([])
   const [shelf, setShelf] = useState(null)
+  const [reuseOpen, setReuseOpen] = useState(false)
   const [shelfCount, setShelfCount] = useState(0)
   const [menu, setMenu] = useState(null)
   const [fullscreen, setFullscreen] = useState(false)
@@ -524,6 +526,26 @@ export default function DesignEditor() {
     refreshShelf()
   }
 
+  // --- reprise d'un plan existant (Task 10) --------------------------------
+  // Le remplacement écrase le plan courant : seule protection contre la perte
+  // du travail en place, on demande confirmation si le niveau courant n'est
+  // pas vide (`isLevelEmpty`, déjà posée par la tâche 8 — pas de second test
+  // de vacuité ici). La copie régénère ses identifiants (`copyGeometry`) : la
+  // source, niveau d'un autre projet ou d'un autre étage, n'est jamais touchée.
+  function pickReuseLevel(level) {
+    if (currentLevel && !local.isLevelEmpty(currentLevel)
+      && !window.confirm(t('dashboard:designEditor.reuse.confirm'))) {
+      return
+    }
+    dispatch({
+      type: 'REPLACE_GEOMETRY',
+      geometry: copyGeometry(level.geometry || EMPTY_GEOMETRY),
+      wallHeightM: level.wall_height_m,
+    })
+    setForm((f) => ({ ...f, wall_height_m: Number(level.wall_height_m) || f.wall_height_m }))
+    setReuseOpen(false)
+  }
+
   // --- clavier (en plus des boutons, toujours visibles) -------------------
   useEffect(() => {
     const onKey = (e) => {
@@ -621,6 +643,14 @@ export default function DesignEditor() {
             {t('dashboard:designEditor.background.import')}
             <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={importBackground} />
           </label>
+          <button
+            type="button"
+            className="btn-secondary min-h-[44px] inline-flex items-center gap-2"
+            onClick={() => setReuseOpen(true)}
+          >
+            <FiRefreshCw className="w-4 h-4" />
+            {t('dashboard:designEditor.reuse.action')}
+          </button>
           {background && (
             <button
               type="button"
@@ -864,6 +894,16 @@ export default function DesignEditor() {
             onRecover={recoverShelf}
             onDismiss={dismissShelfItem}
             onClose={() => setShelf(null)}
+          />
+        )}
+
+        {reuseOpen && (
+          <ReuseLevelDialog
+            online={navigator.onLine}
+            local={local}
+            api={api}
+            onPick={pickReuseLevel}
+            onClose={() => setReuseOpen(false)}
           />
         )}
       </div>
