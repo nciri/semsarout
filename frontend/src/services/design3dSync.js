@@ -321,6 +321,12 @@ export async function cleanupEmpty(projectId, { api = defaultApi, local = defaul
   const project = await local.getProject(projectId)
   const none = { removedLevels: 0, removedProject: false }
   if (!project || project.status === 'ready') return none
+  // Sans instantané serveur, on ne peut rien affirmer d'un projet que le serveur
+  // connaît : le nettoyage reste alors purement local (projet jamais synchronisé).
+  // C'est exactement le cas de l'appel du démontage de l'éditeur, qui n'a pas de
+  // réseau pour obtenir l'instantané ; le cas nominal qu'il vise — un projet tout
+  // juste créé, jamais parvenu au serveur — reste couvert (`synced: false`).
+  if (!serverRevisions && project.synced) return none
 
   const levels = await local.listLevels(projectId)
   if (levels.length === 0) return none

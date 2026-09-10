@@ -777,6 +777,13 @@ describe('isLevelEmpty / cleanupEmpty — niveaux et projets laissés vides', ()
     return projectId
   }
 
+  // Instantané des révisions serveur du chemin EN LIGNE : le `sync` vient
+  // d'aboutir et ne signale rien de plus récent que la copie locale. Il est
+  // indispensable pour qu'un projet déjà synchronisé soit candidat au
+  // nettoyage : sans instantané, la copie locale ne dit rien de ce que le
+  // serveur détient, et le nettoyage reste purement local.
+  const upToDate = () => new Map()
+
   it('ne considère pas vide un niveau qui porte une image ou une calibration', () => {
     expect(isLevelEmpty({ geometry: emptyGeo })).toBe(true)
     expect(isLevelEmpty({ geometry: emptyGeo, background_image_key: 'k' })).toBe(false)
@@ -787,7 +794,7 @@ describe('isLevelEmpty / cleanupEmpty — niveaux et projets laissés vides', ()
   it('supprime le projet quand tous ses niveaux sont vides', async () => {
     const api = fakeApi()
     const projectId = await seedProject({ levels: [{}, {}] })
-    expect(await cleanupEmpty(projectId, { api, local })).toEqual({ removedLevels: 2, removedProject: true })
+    expect(await cleanupEmpty(projectId, { api, local, serverRevisions: upToDate() })).toEqual({ removedLevels: 2, removedProject: true })
     expect(await local.getProject(projectId)).toBeUndefined()
   })
 
@@ -801,7 +808,7 @@ describe('isLevelEmpty / cleanupEmpty — niveaux et projets laissés vides', ()
   it("ne supprime que les niveaux vides quand d'autres portent du travail", async () => {
     const api = fakeApi()
     const projectId = await seedProject({ levels: [{}, { walls: [{ id: 'w' }] }] })
-    expect(await cleanupEmpty(projectId, { api, local })).toEqual({ removedLevels: 1, removedProject: false })
+    expect(await cleanupEmpty(projectId, { api, local, serverRevisions: upToDate() })).toEqual({ removedLevels: 1, removedProject: false })
   })
 
   it('purge localement un projet jamais synchronisé, sans envoyer de suppression', async () => {
@@ -830,8 +837,30 @@ describe('isLevelEmpty / cleanupEmpty — niveaux et projets laissés vides', ()
   it("ne supprime pas un niveau vide dont l'édition locale n'a pas encore été transmise", async () => {
     const api = fakeApi({ deleteProject: vi.fn() })
     const projectId = await seedProject({ synced: true, levels: [{ dirty: true }] })
+    expect(await cleanupEmpty(projectId, { api, local, serverRevisions: upToDate() })).toEqual({ removedLevels: 0, removedProject: false })
+    expect(await local.getProject(projectId)).toBeDefined()
+  })
+
+  // --- L1 : sans instantané serveur, le nettoyage reste purement local ------
+  // Scénario de DESTRUCTION, pas seulement la condition : l'agent ouvre HORS
+  // LIGNE un projet de l'agence pour regarder le plan, ne trace rien, et
+  // ressort. Le démontage de l'éditeur appelle `cleanupEmpty` sans instantané
+  // (DesignEditor.jsx n'en a pas : il n'y a pas de réseau pour l'obtenir), et
+  // depuis que la liste des projets REPORTE son balayage hors ligne, c'est le
+  // seul chemin de nettoyage qui s'exécute sans réseau. La copie locale est
+  // vide et non modifiée — mais elle ne dit rien de ce que le serveur détient :
+  // un collègue a pu tracer le plan depuis un autre appareil. Sans garde,
+  // `project.delete` part en file et, au retour du réseau, le plan disparaît
+  // pour TOUTE L'AGENCE.
+  it("ne fait partir aucune suppression au serveur quand le nettoyage n'a pas d'instantané", async () => {
+    const api = fakeApi({ deleteProject: vi.fn(), deleteLevel: vi.fn() })
+    const projectId = await seedProject({ synced: true, levels: [{}] })
+
     expect(await cleanupEmpty(projectId, { api, local })).toEqual({ removedLevels: 0, removedProject: false })
     expect(await local.getProject(projectId)).toBeDefined()
+    await runOnce({ api, local, onState: () => {} })
+    expect(api.deleteProject).not.toHaveBeenCalled()
+    expect(api.deleteLevel).not.toHaveBeenCalled()
   })
 
   // --- C1 : la photo du plan papier compte comme du travail -----------------
@@ -850,7 +879,7 @@ describe('isLevelEmpty / cleanupEmpty — niveaux et projets laissés vides', ()
     )
 
     expect(isLevelEmpty(await local.getLevel(level.id))).toBe(false)
-    expect(await cleanupEmpty(projectId, { api, local })).toEqual({ removedLevels: 0, removedProject: false })
+    expect(await cleanupEmpty(projectId, { api, local, serverRevisions: upToDate() })).toEqual({ removedLevels: 0, removedProject: false })
     expect(await local.getProject(projectId)).toBeDefined()
     // La photo elle-même survit : `deleteProjectLocal` purge aussi le magasin
     // `backgrounds`, donc la juger vide la détruirait sur l'appareil.
