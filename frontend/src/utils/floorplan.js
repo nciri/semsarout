@@ -103,6 +103,20 @@ export const rescaleGeometry = (geometry, factor) => ({
   openings: (geometry.openings || []).map((o) => ({ ...o, offset_m: o.offset_m * factor })),
 })
 
+// Copie ponctuelle et indépendante : aucun lien n'est gardé avec la source, qui n'est
+// jamais modifiée. Les identifiants sont régénérés pour éviter toute collision, et la
+// correspondance ouverture → mur est réécrite en conséquence.
+export function copyGeometry(geometry) {
+  const wallIds = new Map((geometry.walls || []).map((w) => [w.id, newId()]))
+  return {
+    walls: (geometry.walls || []).map((w) => ({ ...w, id: wallIds.get(w.id) })),
+    rooms: (geometry.rooms || []).map((r) => ({ ...r, id: newId() })),
+    openings: (geometry.openings || [])
+      .filter((o) => wallIds.has(o.wall_id))
+      .map((o) => ({ ...o, id: newId(), wall_id: wallIds.get(o.wall_id) })),
+  }
+}
+
 export function bbox(geometry) {
   const pts = [
     ...(geometry.walls || []).flatMap((w) => [w.a, w.b]),

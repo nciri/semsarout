@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   polygonArea, wallLength, snapToGrid, snapToPoints, snapAngle, projectPointOnWall,
   normalizedToMeters, metersToNormalized, rescaleGeometry, validateGeometry, geometryProblems, levelArea, bbox, newId,
+  copyGeometry,
 } from './floorplan'
 
 const W = { id: 'w1', a: { x: 0, y: 0 }, b: { x: 4, y: 0 }, thickness_m: 0.2 }
@@ -162,6 +163,27 @@ describe('floorplan geometry', () => {
         'mur W1: deux points distincts requis',
         'ouverture O1: mur introuvable',
       ])
+    })
+  })
+
+  describe('copyGeometry', () => {
+    it('régénère les identifiants et préserve le lien ouverture → mur', () => {
+      const src = {
+        walls: [{ id: 'w1', a: { x: 0, y: 0 }, b: { x: 3, y: 0 }, thickness_m: 0.2 }],
+        openings: [{ id: 'o1', wall_id: 'w1', type: 'door', offset_m: 1, width_m: 0.9 }],
+        rooms: [{ id: 'r1', type: 'living', polygon: [{ x: 0, y: 0 }, { x: 3, y: 0 }, { x: 3, y: 2 }] }],
+      }
+      const out = copyGeometry(src)
+      expect(out.walls[0].id).not.toBe('w1')
+      expect(out.openings[0].wall_id).toBe(out.walls[0].id)
+      expect(out.walls[0].a).toEqual({ x: 0, y: 0 })
+      expect(out.rooms[0].id).not.toBe('r1')
+      expect(src.walls[0].id).toBe('w1')
+    })
+
+    it('écarte une ouverture dont le mur ne fait pas partie de la copie', () => {
+      const out = copyGeometry({ walls: [], rooms: [], openings: [{ id: 'o', wall_id: 'absent' }] })
+      expect(out.openings).toEqual([])
     })
   })
 })
