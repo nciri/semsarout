@@ -556,11 +556,10 @@ export default function DesignEditor() {
     if ((!local.isLevelEmpty(live) || state.draft) && !window.confirm(t('dashboard:designEditor.reuse.confirm'))) {
       return
     }
-    dispatch({
-      type: 'REPLACE_GEOMETRY',
-      geometry: copyGeometry(level.geometry || EMPTY_GEOMETRY),
-      wallHeightM: level.wall_height_m,
-    })
+    // Pas de `wallHeightM` ici : le réducteur ne tient que la géométrie, et la
+    // hauteur sous plafond vit dans `form` — la passer serait une charge utile
+    // morte, qui laisserait croire que le réducteur s'en occupe.
+    dispatch({ type: 'REPLACE_GEOMETRY', geometry: copyGeometry(level.geometry || EMPTY_GEOMETRY) })
     setForm((f) => ({ ...f, wall_height_m: Number(level.wall_height_m) || f.wall_height_m }))
     setReuseOpen(false)
   }
