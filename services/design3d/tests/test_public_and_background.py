@@ -144,3 +144,29 @@ def test_public_by_target_lists_ready_projects_only(client, headers, monkeypatch
     # autre bien : rien
     r2 = client.get("/public/design3d/by-target", params={"target_type": "property", "target_id": 999})
     assert r2.status_code == 200 and r2.json()["projects"] == []
+
+
+_CAL_4M = {"p1": {"x": 0, "y": 0}, "p2": {"x": 0.4, "y": 0}, "meters": 4}
+
+
+def test_recalibrate_a_la_baisse_refuse_une_geometrie_devenue_invalide(client, headers):
+    """B2 : `rescale` ne met PAS à l'échelle les largeurs d'ouverture (dimensions réelles saisies).
+
+    Une recalibration à la baisse raccourcit donc le mur sans réduire l'ouverture
+    qu'il porte : `offset_m + width_m` finit par dépasser sa longueur. C'est
+    l'invariant que la 3D consommera, et `recalibrate` ne le contrôlait pas.
+    """
+    pid, lid = _project(client, headers)
+    assert client.put(f"/design3d/levels/{lid}",
+                      json={"base_revision": 0, "geometry": G, "calibration": _CAL_4M},
+                      headers=headers()).status_code == 200
+    r = client.post(f"/design3d/levels/{lid}/recalibrate",
+                    json={"base_revision": 1, "calibration": {**_CAL_4M, "meters": 1}},
+                    headers=headers())
+    assert r.status_code == 422, r.text
+    assert "dépasse le mur" in " ".join(r.json()["details"])
+    # Rien n'a été écrit : ni la géométrie, ni la calibration, ni une révision de plus.
+    lv = client.get(f"/design3d/projects/{pid}", headers=headers()).json()["levels"][0]
+    assert lv["revision"] == 1
+    assert lv["geometry"] == G
+    assert lv["calibration"]["meters"] == 4

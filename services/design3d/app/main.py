@@ -417,6 +417,13 @@ def recalibrate(level_id: str, body: RecalibrateIn, principal: Principal = Depen
         return JSONResponse({"error": "Version obsolète", "level": lv.to_dict()}, status_code=409)
     new = body.calibration.model_dump()
     geometry = rescale(lv.geometry or dict(EMPTY_GEOMETRY), calibration_scale(lv.calibration, new))
+    # `rescale` ne met délibérément pas à l'échelle les dimensions réelles saisies
+    # (largeurs d'ouverture, hauteurs, allèges) : une recalibration à la baisse
+    # raccourcit le mur sans réduire l'ouverture qu'il porte, et rompt l'invariant
+    # que la 3D consommera. Seule la revalidation le rattrape.
+    problems = validate_geometry(geometry, float(lv.wall_height_m))
+    if problems:
+        return JSONResponse({"error": "Géométrie invalide", "details": problems}, status_code=422)
     if not _claim_level(db, lv):
         db.rollback()
         return _concurrent_write()
