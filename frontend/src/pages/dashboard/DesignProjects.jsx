@@ -33,26 +33,44 @@ export default function DesignProjects() {
   useEffect(() => {
     let alive = true
     ;(async () => {
-      // Rattrape ici une session que l'éditeur n'a pas pu nettoyer en quittant (onglet
-      // fermé, tablette éteinte — `beforeunload` n'est pas fiable, acquis de la brique 1) :
-      // cette liste est le passage obligé pour rouvrir un projet, donc l'endroit sûr pour
-      // ce balayage — aucun projet listé ici n'est en cours de dessin.
-      const known = targetId == null ? await local.listAllProjects() : await local.listProjects(targetType, targetId)
-      let removed = false
-      for (const p of known) {
-        const r = await cleanupEmpty(p.id).catch(() => ({ removedProject: false }))
-        if (r.removedProject) removed = true
-      }
-      if (alive && removed) setEmptyRemoved(true)
+      // La liste locale s'affiche d'abord, sans attendre le réseau : l'éditeur
+      // est hors-ligne d'abord.
       await reload()
+
       // Rafraîchissement d'appoint : s'il échoue (hors ligne), la liste locale
-      // affichée ci-dessus reste la vérité de travail.
+      // affichée ci-dessus reste la vérité de travail — et AUCUN nettoyage n'a
+      // lieu, cf. ci-dessous.
+      let serverRevisions
       try {
-        await refreshFromServer()
+        serverRevisions = await refreshFromServer()
       } catch {
         return
       }
-      if (alive) await reload()
+      if (!alive) return
+      await reload()
+
+      // Rattrape ici une session que l'éditeur n'a pas pu nettoyer en quittant (onglet
+      // fermé, tablette éteinte — `beforeunload` n'est pas fiable, acquis de la brique 1) :
+      // cette liste est le passage obligé pour rouvrir un projet, donc l'endroit sûr pour
+      // ce balayage. Un projet listé ici PEUT être en cours de dessin ailleurs — dans un
+      // second onglet, que ce dépôt prend explicitement en compte, ou depuis un autre
+      // appareil de l'agence — donc le balayage n'a lieu qu'APRÈS un `refreshFromServer`
+      // réussi, et `cleanupEmpty` reçoit l'instantané des révisions serveur pour écarter
+      // tout niveau `dirty` ou plus ancien que la version distante. Hors ligne, il est
+      // simplement reporté au prochain passage en ligne : un projet vide qui survit
+      // quelques minutes est sans conséquence, détruire le travail d'un collègue non.
+      const known = targetId == null ? await local.listAllProjects() : await local.listProjects(targetType, targetId)
+      let removed = false
+      for (const p of known) {
+        if (!alive) return
+        const r = await cleanupEmpty(p.id, { serverRevisions }).catch(() => ({ removedProject: false }))
+        if (r.removedProject) removed = true
+      }
+      if (!alive) return
+      if (removed) {
+        setEmptyRemoved(true)
+        await reload()
+      }
     })()
     return () => {
       alive = false

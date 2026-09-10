@@ -812,6 +812,28 @@ describe('isLevelEmpty / cleanupEmpty — niveaux et projets laissés vides', ()
     expect(await local.pendingCount()).toBe(0)
   })
 
+  // --- C2 : ne jamais supprimer sur la foi d'une copie locale périmée -------
+  it("ne supprime pas un projet dont le serveur détient une version plus récente que la copie locale", async () => {
+    const api = fakeApi({ deleteProject: vi.fn() })
+    const projectId = await seedProject({ synced: true, levels: [{}] })
+    const [level] = await local.listLevels(projectId)
+    // La tablette a tiré ce niveau quand il était vide (revision 0) ; un
+    // collègue l'a tracé depuis un autre appareil (revision 4).
+    const serverRevisions = new Map([[level.id, 4]])
+
+    expect(await cleanupEmpty(projectId, { api, local, serverRevisions })).toEqual({ removedLevels: 0, removedProject: false })
+    expect(await local.getProject(projectId)).toBeDefined()
+    await runOnce({ api, local, onState: () => {} })
+    expect(api.deleteProject).not.toHaveBeenCalled()
+  })
+
+  it("ne supprime pas un niveau vide dont l'édition locale n'a pas encore été transmise", async () => {
+    const api = fakeApi({ deleteProject: vi.fn() })
+    const projectId = await seedProject({ synced: true, levels: [{ dirty: true }] })
+    expect(await cleanupEmpty(projectId, { api, local })).toEqual({ removedLevels: 0, removedProject: false })
+    expect(await local.getProject(projectId)).toBeDefined()
+  })
+
   // --- C1 : la photo du plan papier compte comme du travail -----------------
   // Scénario de DESTRUCTION, pas seulement la condition : l'agent photographie
   // le plan papier, quitte avant de calibrer, et la liste des projets balaie.

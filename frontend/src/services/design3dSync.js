@@ -317,14 +317,37 @@ export async function discardRefusedProject(projectId, { local = defaultLocal } 
  * retirerait un plan public sans que personne l'ait demandé.
  */
 // eslint-disable-next-line no-unused-vars -- `api` fait partie de l'interface (cohérente avec les autres fonctions de ce module) ; ce nettoyage est purement local, sans réseau.
-export async function cleanupEmpty(projectId, { api = defaultApi, local = defaultLocal } = {}) {
+export async function cleanupEmpty(projectId, { api = defaultApi, local = defaultLocal, serverRevisions = null } = {}) {
   const project = await local.getProject(projectId)
   const none = { removedLevels: 0, removedProject: false }
   if (!project || project.status === 'ready') return none
 
   const levels = await local.listLevels(projectId)
   if (levels.length === 0) return none
-  const empty = levels.filter(isLevelEmpty)
+
+  // Un niveau n'est candidat au nettoyage que si sa copie locale dit la vérité
+  // ENTIÈRE à son sujet. Deux cas où elle ne la dit pas :
+  //
+  //  - `dirty` : une édition locale n'a pas encore été transmise. La juger vide
+  //    reviendrait à supprimer un niveau dont le contenu réel n'est connu que
+  //    d'ici, et à faire partir cette suppression au serveur.
+  //  - copie plus ancienne que celle du serveur (`serverRevisions`, l'instantané
+  //    du `sync` que le caller vient d'obtenir) : la tablette a pu tirer le
+  //    projet quand il était encore vide pendant qu'un collègue traçait le plan
+  //    depuis un autre appareil. Supprimer sur cette base détruirait SON travail
+  //    au retour du réseau, sans qu'aucun verrou optimiste ne s'y oppose.
+  //
+  // Un niveau écarté compte comme non vide : ni lui ni le projet ne partent, et
+  // le balayage est simplement reporté au prochain passage — coût nul, la seule
+  // conséquence étant qu'un projet vide survit un peu plus longtemps.
+  const stale = (lv) => {
+    if (lv.dirty) return true
+    if (!serverRevisions) return false
+    const known = serverRevisions.get(lv.server_id ?? lv.id)
+    return known != null && known > (lv.revision ?? 0)
+  }
+
+  const empty = levels.filter((lv) => !stale(lv) && isLevelEmpty(lv))
   if (empty.length === 0) return none
 
   if (empty.length === levels.length) {
@@ -597,9 +620,16 @@ export async function runOnce({ api = defaultApi, local = defaultLocal, onState 
 
 // Recharge depuis le serveur les niveaux dont la révision a avancé, sans
 // jamais écraser un niveau modifié localement et non encore synchronisé.
+//
+// Renvoie l'instantané des révisions que LE SERVEUR détient, indexé par
+// identifiant serveur de niveau : c'est la seule preuve qu'une copie locale est
+// à jour, et `cleanupEmpty` en a besoin pour ne jamais supprimer sur la foi de
+// données périmées (cf. son commentaire).
 export async function refreshFromServer({ api = defaultApi, local = defaultLocal, onShelved } = {}) {
   const { projects } = await api.sync()
+  const serverRevisions = new Map()
   for (const p of projects) {
+    for (const lv of p.levels) serverRevisions.set(lv.id, lv.revision ?? 0)
     // Le niveau initial adopté garde sa clé locale et porte l'identité serveur
     // dans `server_id` : sans cette résolution, le niveau renvoyé par le serveur
     // serait inséré une seconde fois et le projet afficherait deux onglets
@@ -668,6 +698,7 @@ export async function refreshFromServer({ api = defaultApi, local = defaultLocal
       }
     }
   }
+  return serverRevisions
 }
 
 export function startEngine({ api = defaultApi, local = defaultLocal, onState, intervalMs = 30000 } = {}) {

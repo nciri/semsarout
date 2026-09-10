@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import i18n from '../../i18n'
 import * as local from '../../services/design3dLocal'
@@ -60,5 +60,26 @@ describe('DesignProjects', () => {
     renderList()
     expect(await screen.findByText('Villa')).toBeInTheDocument()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  // --- C2 : hors ligne, le nettoyage ne supprime rien sur le serveur --------
+  // Scénario de DESTRUCTION : la tablette B a tiré le projet quand il était
+  // encore vide, un collègue a tracé le plan depuis A, et B ouvre la liste sans
+  // réseau. Balayer sur cet instantané périmé met un `project.delete` en file ;
+  // au retour du réseau, le travail du collègue est détruit.
+  it('ne met aucune suppression en file quand le serveur est injoignable', async () => {
+    await local.putProject({ id: PROJECT_ID, target_type: 'property', target_id: 1, title: 'Villa', synced: true })
+    await local.putLevel({
+      id: 'l1', project_id: PROJECT_ID, name: 'RDC', position: 0, revision: 0, base_revision: 0,
+      wall_height_m: 2.7, calibration: null, geometry: { walls: [], rooms: [], openings: [] }, dirty: false,
+    })
+    renderList()
+
+    // Le projet reste affiché tel qu'il est connu ici : hors ligne, le
+    // nettoyage est reporté, pas exécuté sur des données périmées.
+    expect(await screen.findByText('Villa')).toBeInTheDocument()
+    await waitFor(async () => expect(await local.pendingCount()).toBe(0))
+    expect(await local.getProject(PROJECT_ID)).toBeDefined()
+    expect(await local.getLevel('l1')).toBeDefined()
   })
 })
