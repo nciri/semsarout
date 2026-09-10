@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { localeFor, formatDate, formatNumber, formatCurrency } from './format'
+import { localeFor, formatDate, formatNumber, formatCurrency, isolateLtr } from './format'
 
 describe('format utils', () => {
   it('localeFor mappe fr et ar', () => {
@@ -36,5 +36,13 @@ describe('format utils', () => {
   it('formatDate: entrée vide/invalide renvoie chaîne vide', () => {
     expect(formatDate(null, 'fr')).toBe('')
     expect(formatDate('not-a-date', 'fr')).toBe('')
+  })
+
+  it('isolateLtr: encadre le texte de marqueurs LRI/PDI sans en changer le contenu', () => {
+    const wrapped = isolateLtr('5.00 m')
+    expect(wrapped).toBe('⁦5.00 m⁩')
+    // Le contenu (ordre nombre → unité) n'est pas altéré, seuls des marqueurs
+    // d'isolation directionnelle l'entourent.
+    expect(wrapped.replace(/[⁦⁩]/g, '')).toBe('5.00 m')
   })
 })

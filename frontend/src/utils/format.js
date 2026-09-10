@@ -46,6 +46,18 @@ export function formatNumber(n, lang, opts = {}) {
   return new Intl.NumberFormat(localeFor(lang), { numberingSystem: 'latn', ...opts }).format(num)
 }
 
+// Caractères d'isolation Unicode (LRI ... PDI) : forcent un fragment de texte
+// « nombre + unité latine » (ex. « 5.00 m ») à rester lu de gauche à droite
+// quelle que soit la direction du document environnant (page arabe en RTL).
+// Sans eux, l'algorithme bidi peut réordonner ce fragment isolé (ex. « m 5.00 »)
+// faute d'un caractère fort autour de lui pour ancrer le sens de lecture.
+const LTR_ISOLATE_START = '⁦'
+const LTR_ISOLATE_END = '⁩'
+
+export function isolateLtr(text) {
+  return `${LTR_ISOLATE_START}${text}${LTR_ISOLATE_END}`
+}
+
 export function formatCurrency(n, lang, opts = {}) {
   const { currency = 'MAD', ...rest } = opts
   if (n === null || n === undefined || n === '') return ''

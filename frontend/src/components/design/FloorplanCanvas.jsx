@@ -5,6 +5,7 @@ import {
 } from '../../utils/floorplan'
 import { DEFAULT_WALL_THICKNESS_M, OPENING_DEFAULTS, hitTest, hitVertex, openingSpan } from './useFloorplanEditor'
 import { ROOM_FILL } from './roomColors'
+import { isolateLtr } from '../../utils/format'
 
 /**
  * Canevas SVG de l'éditeur de plan. Tout est dessiné EN MÈTRES : le viewBox porte
@@ -277,7 +278,7 @@ export default function FloorplanCanvas({
 
   const roomLabel = (r) => {
     const area = polygonArea(r.polygon)
-    return `${r.name || t(`dashboard:designEditor.roomTypes.${r.type}`)} · ${fmt(area, 1)} m²`
+    return `${r.name || t(`dashboard:designEditor.roomTypes.${r.type}`)} · ${isolateLtr(`${fmt(area, 1)} m²`)}`
   }
 
   return (
@@ -350,7 +351,7 @@ export default function FloorplanCanvas({
               fill="#1f2937"
               style={{ pointerEvents: 'none' }}
             >
-              {`${fmt(wallLength(w))} m`}
+              {isolateLtr(`${fmt(wallLength(w))} m`)}
             </text>
           )}
         </g>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ROOM_TYPES, levelArea, polygonArea, wallLength } from '../../utils/floorplan'
+import { isolateLtr } from '../../utils/format'
 import { resizedWall } from './useFloorplanEditor'
 import NumericPad from './NumericPad'
 
@@ -35,7 +36,7 @@ export default function PropertiesPanel({ state, dispatch, wallHeightM, onWallHe
       onClick={() => setPadField(padField === field ? null : field)}
     >
       <span className="text-sm text-gray-600">{t(`dashboard:designEditor.panel.${labelKey}`)}</span>
-      <span className="font-mono text-gray-900">{`${Number(current).toFixed(2)} ${unit}`}</span>
+      <span className="font-mono text-gray-900">{isolateLtr(`${Number(current).toFixed(2)} ${unit}`)}</span>
     </button>
   )
 
