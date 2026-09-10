@@ -372,6 +372,27 @@ describe('design3d sync engine', () => {
     expect(stored.dirty).toBe(true)
   })
 
+  it("refreshFromServer ne fait pas régresser un niveau dont l'envoi a abouti pendant l'appel réseau (C3)", async () => {
+    await local.putLevel(lvl({ revision: 1, dirty: false, name: 'Ancien' }))
+    const api = fakeApi({
+      sync: vi.fn(async () => ({ projects: [{ id: 'p'.repeat(32), levels: [{ id: lvl().id, revision: 2, shelved_count: 0 }] }] })),
+      getProject: vi.fn(async () => {
+        // Un envoi (send()) a abouti pour ce niveau pendant que CET appel
+        // réseau était en vol : sa révision locale est désormais PLUS AVANCÉE
+        // que celle que `fresh` (lue avant l'attente) s'apprête à écrire.
+        await local.mutateLevel(lvl().id, (cur) => ({ ...cur, revision: 5, base_revision: 5, dirty: false, name: 'Nouveau', synced_seq: 9 }))
+        return { id: 'p'.repeat(32), levels: [lvl({ revision: 2, name: 'Ancien' })] }
+      }),
+    })
+    await refreshFromServer({ api, local })
+    const stored = await local.getLevel(lvl().id)
+    // Sans reprendre le test de fraîcheur DANS la transaction d'écriture (et
+    // pas seulement celui de saleté), le niveau régresserait silencieusement
+    // vers la révision 2 malgré son avance à la 5.
+    expect(stored.revision).toBe(5)
+    expect(stored.name).toBe('Nouveau')
+  })
+
   it('refreshFromServer leaves dirty levels alone', async () => {
     await local.putLevel(lvl({ revision: 1, dirty: true, name: 'Local' }))
     const api = fakeApi({ sync: vi.fn(async () => ({ projects: [{ id: 'p'.repeat(32), levels: [{ id: lvl().id, revision: 3, shelved_count: 0 }] }] })) })

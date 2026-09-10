@@ -692,6 +692,15 @@ export async function refreshFromServer({ api = defaultApi, local = defaultLocal
           // remplacée par la version serveur sans laisser de trace.
           await local.mutateLevel(cur?.id ?? fresh.id, (now) => {
             if (now?.dirty) return undefined
+            // Le test de saleté ne suffit pas : un ENVOI a pu réussir pour ce
+            // niveau entre la lecture d'avant l'appel réseau (`cur`) et cette
+            // transaction — `dirty` est retombé à `false`, `revision` a
+            // avancé au-delà de celle de `fresh`. Écrire quand même
+            // remplacerait par une version plus ancienne : une régression
+            // silencieuse (C3). `now` n'est absent que pour un niveau que ce
+            // dispositif n'a encore jamais vu (première fois qu'il apparaît
+            // ici) : dans ce seul cas il n'y a rien de plus récent à protéger.
+            if (now && (now.revision ?? 0) >= fresh.revision) return undefined
             // Un rafraîchissement de fond n'acquitte jamais une erreur de
             // synchronisation : la trace de l'échec (`sync_error`) doit
             // rester consultable après coup, même quand le contenu du niveau

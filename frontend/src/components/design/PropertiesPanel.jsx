@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ROOM_TYPES, levelArea, polygonArea, wallLength } from '../../utils/floorplan'
 import { isolateLtr } from '../../utils/format'
@@ -31,7 +31,19 @@ export default function PropertiesPanel({
         : selection?.kind === 'opening' ? geometry.openings.find((o) => o.id === selection.id)
           : null
 
-  const patch = (p) => dispatch({ type: 'UPDATE_ELEMENT', kind: selection.kind, id: selection.id, patch: p })
+  // `selection` peut être devenue `null` entre le rendu qui a posé ce gestionnaire
+  // et son déclenchement (élément supprimé pendant l'attente d'un geste) : sans
+  // cette garde, `selection.kind` plante.
+  const patch = (p) => {
+    if (!selection) return
+    dispatch({ type: 'UPDATE_ELEMENT', kind: selection.kind, id: selection.id, patch: p })
+  }
+
+  // L'invariant que tout `padField` (hors hauteur de mur, propriété du niveau et
+  // non d'un élément) suppose est « l'élément visé existe encore et la sélection
+  // reste unique » — il se perd dès qu'un élément est supprimé ou qu'une
+  // sélection rectangulaire (multi) lui succède pendant que le pavé est ouvert.
+  const padTargetValid = padField === 'wallHeight' || (selection?.kind !== 'multi' && !!selected)
 
   const numberRow = (labelKey, field, current, unit = 'm') => (
     <button
@@ -44,7 +56,17 @@ export default function PropertiesPanel({
     </button>
   )
 
+  // Ferme le pavé au lieu de planter quand l'invariant ci-dessus se perd pendant
+  // qu'il est ouvert : c'est là, et non sur `wallLength`, que la garde doit vivre.
+  useEffect(() => {
+    if (padField && !padTargetValid) setPadField(null)
+  }, [padField, padTargetValid])
+
   const commitPad = (value) => {
+    if (!padTargetValid) {
+      setPadField(null)
+      return
+    }
     if (padField === 'length') {
       const resized = resizedWall(selected, value)
       if (resized === selected) {
@@ -65,9 +87,10 @@ export default function PropertiesPanel({
     setPadField(null)
   }
 
-  const padValue = padField === 'length' ? wallLength(selected)
-    : padField === 'wallHeight' ? wallHeightM
-      : padField ? selected?.[padField] : null
+  const padValue = !padTargetValid ? null
+    : padField === 'length' ? wallLength(selected)
+      : padField === 'wallHeight' ? wallHeightM
+        : selected?.[padField]
 
   return (
     <div className="space-y-3" data-testid="properties-panel">
@@ -154,7 +177,7 @@ export default function PropertiesPanel({
 
       <div className="pt-2 border-t border-gray-200">{numberRow('wallHeight', 'wallHeight', wallHeightM)}</div>
 
-      {padField && (
+      {padField && padTargetValid && (
         <NumericPad
           label={t(`dashboard:designEditor.panel.${PAD_LABELS[padField]}`)}
           value={padValue}
