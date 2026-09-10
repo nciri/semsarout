@@ -342,8 +342,9 @@ export default function FloorplanCanvas({
             strokeLinecap="square"
           />
           {dimensions && (() => {
-            // Décalage perpendiculaire au mur, vers l'extérieur : une cote posée sur le
-            // trait est illisible dès que le mur est horizontal.
+            // Décalage perpendiculaire au mur, selon sa normale (déterminée par l'ordre a→b).
+            // Garantit que la cote ne retombe jamais sur le trait.
+            // Limitation connue : deux cotes de murs parallèles proches peuvent se chevaucher.
             const dx = w.b.x - w.a.x
             const dy = w.b.y - w.a.y
             const len = Math.hypot(dx, dy) || 1
