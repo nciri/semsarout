@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { reducer, initialState, HISTORY_MAX, resizedWall, hitTest, MIN_WALL_M } from './useFloorplanEditor'
+import { reducer, initialState, HISTORY_MAX, resizedWall, hitTest, MIN_WALL_M, selectionItems } from './useFloorplanEditor'
 
 const wall = (id, x = 0, len = 4) => ({ id, a: { x, y: 0 }, b: { x: x + len, y: 0 }, thickness_m: 0.2 })
 const s0 = () => initialState({ geometry: { walls: [], rooms: [], openings: [] } })
@@ -220,5 +220,50 @@ describe('hitTest', () => {
 
   it('ne trouve rien hors de portée', () => {
     expect(hitTest(geometry, { x: 20, y: 20 }, 0.3)).toBeNull()
+  })
+})
+
+describe('SELECT_AREA — sélection multiple par rectangle', () => {
+  const grid = {
+    walls: [
+      { id: 'in', a: { x: 1, y: 1 }, b: { x: 2, y: 1 }, thickness_m: 0.2 },
+      { id: 'half', a: { x: 1, y: 1 }, b: { x: 9, y: 1 }, thickness_m: 0.2 },
+    ],
+    rooms: [{ id: 'r', type: 'living', polygon: [{ x: 1, y: 1 }, { x: 2, y: 1 }, { x: 2, y: 2 }] }],
+    openings: [{ id: 'o', wall_id: 'in', type: 'door', offset_m: 0.1, width_m: 0.5 }],
+  }
+
+  it('ne prend que les objets entièrement contenus dans le rectangle', () => {
+    const s = reducer({ ...initialState(), geometry: grid }, {
+      type: 'SELECT_AREA', rect: { x1: 0, y1: 0, x2: 3, y2: 3 },
+    })
+    expect(selectionItems(s.selection)).toEqual([
+      { kind: 'wall', id: 'in' },
+      { kind: 'room', id: 'r' },
+    ])
+  })
+
+  it('supprime toute la sélection, ouvertures des murs comprises', () => {
+    let s = reducer({ ...initialState(), geometry: grid }, {
+      type: 'SELECT_AREA', rect: { x1: 0, y1: 0, x2: 3, y2: 3 },
+    })
+    s = reducer(s, { type: 'DELETE_SELECTED' })
+    expect(s.geometry.walls.map((w) => w.id)).toEqual(['half'])
+    expect(s.geometry.openings).toEqual([])
+    expect(s.geometry.rooms).toEqual([])
+  })
+
+  it('laisse la sélection unique strictement inchangée', () => {
+    const s = reducer({ ...initialState(), geometry: grid }, {
+      type: 'SELECT', selection: { kind: 'wall', id: 'in' },
+    })
+    expect(s.selection).toEqual({ kind: 'wall', id: 'in' })
+  })
+
+  it('ne sélectionne rien quand le rectangle ne contient aucun objet entier', () => {
+    const s = reducer({ ...initialState(), geometry: grid }, {
+      type: 'SELECT_AREA', rect: { x1: 20, y1: 20, x2: 21, y2: 21 },
+    })
+    expect(s.selection).toBeNull()
   })
 })

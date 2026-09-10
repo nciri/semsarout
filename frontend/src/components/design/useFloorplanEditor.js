@@ -63,6 +63,32 @@ function withGeometry(state, geometry, push = true) {
 const listOf = (g, kind) => g[kind === 'wall' ? 'walls' : kind === 'room' ? 'rooms' : 'openings'] || []
 const keyOf = (kind) => (kind === 'wall' ? 'walls' : kind === 'room' ? 'rooms' : 'openings')
 
+// Sélection unique ou multiple ramenée à une liste : c'est la seule fonction que
+// Task 7 (déplacement en bloc) et le panneau des propriétés doivent connaître pour
+// traiter les deux formes sans distinguer de cas particulier.
+export const selectionItems = (selection) =>
+  !selection ? [] : selection.kind === 'multi' ? selection.items : [selection]
+
+const inRect = (p, r) =>
+  p.x >= Math.min(r.x1, r.x2) && p.x <= Math.max(r.x1, r.x2) &&
+  p.y >= Math.min(r.y1, r.y2) && p.y <= Math.max(r.y1, r.y2)
+
+// Un objet n'est pris que s'il est ENTIÈREMENT dans le rectangle : c'est la règle la plus
+// prévisible, et elle tranche le cas des pièces à moitié englobées. Les ouvertures suivent
+// leur mur, elles ne sont jamais prises seules.
+function itemsInRect(geometry, rect) {
+  const items = []
+  for (const w of geometry.walls || []) {
+    if (inRect(w.a, rect) && inRect(w.b, rect)) items.push({ kind: 'wall', id: w.id })
+  }
+  for (const r of geometry.rooms || []) {
+    if ((r.polygon || []).length >= 3 && r.polygon.every((p) => inRect(p, rect))) {
+      items.push({ kind: 'room', id: r.id })
+    }
+  }
+  return items
+}
+
 // Longueur d'un mur imposée depuis le panneau (saisie au pavé numérique) : on
 // garde l'origine et la direction, seule l'extrémité b bouge.
 export function resizedWall(w, lengthM) {
@@ -205,6 +231,14 @@ export function reducer(state, action) {
     case 'SELECT':
       return { ...state, selection: action.selection ?? null }
 
+    case 'SELECT_AREA': {
+      const items = itemsInRect(state.geometry, action.rect)
+      const selection = items.length === 0 ? null
+        : items.length === 1 ? items[0]
+        : { kind: 'multi', items }
+      return { ...state, selection, draft: null }
+    }
+
     case 'SET_DRAFT':
       return { ...state, draft: action.draft ?? null }
 
@@ -247,8 +281,9 @@ export function reducer(state, action) {
       })
 
     case 'DELETE_SELECTED': {
-      if (!state.selection) return state
-      const geometry = deleteSelected(state.geometry, state.selection)
+      const items = selectionItems(state.selection)
+      if (items.length === 0) return state
+      const geometry = items.reduce((g, item) => deleteSelected(g, item), state.geometry)
       return { ...withGeometry(state, geometry), selection: null }
     }
 

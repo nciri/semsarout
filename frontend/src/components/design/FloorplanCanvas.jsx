@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next'
 import {
   newId, polygonArea, projectPointOnWall, snapAngle, snapToGrid, snapToPoints, wallLength,
 } from '../../utils/floorplan'
-import { DEFAULT_WALL_THICKNESS_M, MIN_WALL_M, OPENING_DEFAULTS, hitTest, hitVertex, openingSpan } from './useFloorplanEditor'
+import {
+  DEFAULT_WALL_THICKNESS_M, MIN_WALL_M, OPENING_DEFAULTS, hitTest, hitVertex, openingSpan, selectionItems,
+} from './useFloorplanEditor'
 import { ROOM_FILL } from './roomColors'
 import { isolateLtr } from '../../utils/format'
 
@@ -53,6 +55,11 @@ export default function FloorplanCanvas({
   const drag = useRef(null)
   const longPress = useRef(null)
   const moved = useRef(false)
+  // Origine (en mètres) d'un glissé de sélection au rectangle avec l'outil
+  // « Sélectionner » sur une zone vide. `areaRect` ne sert qu'au rendu du
+  // rectangle en cours ; l'action SELECT_AREA n'est dispatchée qu'au relâché.
+  const area = useRef(null)
+  const [areaRect, setAreaRect] = useState(null)
   const [size, setSize] = useState({ w: 800, h: 600 })
 
   useEffect(() => {
@@ -120,6 +127,8 @@ export default function FloorplanCanvas({
       // navigation, pas un dessin.
       clearLongPress()
       drag.current = null
+      area.current = null
+      setAreaRect(null)
       if (draft?.kind === 'wall') dispatch({ type: 'SET_DRAFT', draft: null })
       const pts = [...pointers.current.values()]
       gesture.current = {
@@ -148,7 +157,14 @@ export default function FloorplanCanvas({
         drag.current = v
         return
       }
-      dispatch({ type: 'SELECT', selection: hitTest(geometry, p, touchM) })
+      const hit = hitTest(geometry, p, touchM)
+      if (hit) {
+        dispatch({ type: 'SELECT', selection: hit })
+        return
+      }
+      // Zone vide : geste encore ambigu entre appui simple (déselection) et
+      // glissé (rectangle) — la décision se prend au relâché, sur `moved.current`.
+      area.current = p
       return
     }
     if (tool === 'wall') {
@@ -198,6 +214,10 @@ export default function FloorplanCanvas({
 
     if (!interactive || calibrating) return
     const p = toMeters(e)
+    if (area.current) {
+      setAreaRect({ x1: area.current.x, y1: area.current.y, x2: p.x, y2: p.y })
+      return
+    }
     if (drag.current) {
       const ref = drag.current
       const origin = ref.kind === 'wall' ? geometry.walls.find((w) => w.id === ref.id)?.[ref.end === 'a' ? 'b' : 'a'] : null
@@ -243,6 +263,17 @@ export default function FloorplanCanvas({
       return
     }
     const p = toMeters(e)
+    if (area.current) {
+      const origin = area.current
+      area.current = null
+      setAreaRect(null)
+      if (moved.current) {
+        dispatch({ type: 'SELECT_AREA', rect: { x1: origin.x, y1: origin.y, x2: p.x, y2: p.y } })
+      } else {
+        dispatch({ type: 'SELECT', selection: hitTest(geometry, p, touchM) })
+      }
+      return
+    }
     if (calibrating) {
       if (!moved.current && imageSize) {
         calibration.onPoint({ x: p.x / imageSize.widthM, y: p.y / imageSize.heightM })
@@ -274,6 +305,12 @@ export default function FloorplanCanvas({
   const label = px(13)
   const handleR = Math.max(0.06, px(11))
   const selectedId = selection?.id
+  // Étend la mise en évidence à la sélection multiple sans changer le cas à un
+  // élément : `selectedId` (utilisé partout ailleurs) reste la voie normale, ces
+  // ensembles ne servent qu'à repérer les objets d'une sélection `multi`.
+  const selItems = selectionItems(selection)
+  const multiWallIds = selection?.kind === 'multi' ? new Set(selItems.filter((i) => i.kind === 'wall').map((i) => i.id)) : null
+  const multiRoomIds = selection?.kind === 'multi' ? new Set(selItems.filter((i) => i.kind === 'room').map((i) => i.id)) : null
 
   const roomLabel = (r) => {
     const area = polygonArea(r.polygon)
@@ -315,8 +352,8 @@ export default function FloorplanCanvas({
             points={(r.polygon || []).map((p) => `${p.x},${p.y}`).join(' ')}
             fill={ROOM_FILL[r.type] || ROOM_FILL.other}
             fillOpacity={0.75}
-            stroke={selectedId === r.id ? '#2563eb' : '#9ca3af'}
-            strokeWidth={selectedId === r.id ? px(2) : hair}
+            stroke={selectedId === r.id || multiRoomIds?.has(r.id) ? '#2563eb' : '#9ca3af'}
+            strokeWidth={selectedId === r.id || multiRoomIds?.has(r.id) ? px(2) : hair}
           />
           {(r.polygon || []).length >= 3 && (
             <text
@@ -337,7 +374,7 @@ export default function FloorplanCanvas({
         <g key={w.id}>
           <line
             x1={w.a.x} y1={w.a.y} x2={w.b.x} y2={w.b.y}
-            stroke={selectedId === w.id ? '#2563eb' : '#374151'}
+            stroke={selectedId === w.id || multiWallIds?.has(w.id) ? '#2563eb' : '#374151'}
             strokeWidth={w.thickness_m}
             strokeLinecap="square"
           />
@@ -396,6 +433,19 @@ export default function FloorplanCanvas({
             <circle key={i} cx={p.x} cy={p.y} r={handleR} fill="#2563eb" />
           ))}
         </g>
+      )}
+
+      {areaRect && (
+        <rect
+          x={Math.min(areaRect.x1, areaRect.x2)}
+          y={Math.min(areaRect.y1, areaRect.y2)}
+          width={Math.abs(areaRect.x2 - areaRect.x1)}
+          height={Math.abs(areaRect.y2 - areaRect.y1)}
+          fill="rgba(37,99,235,0.08)"
+          stroke="#2563eb"
+          strokeWidth={px(1.5)}
+          strokeDasharray={`${px(6)} ${px(4)}`}
+        />
       )}
 
       {calibration?.points?.map((p, i) =>

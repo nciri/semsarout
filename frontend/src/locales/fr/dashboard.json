@@ -1405,6 +1405,9 @@
       "read": "Lecture du niveau impossible : le stockage local de cet appareil n'a pas répondu. L'éditeur reste bloqué tant qu'elle n'a pas abouti.",
       "missing": "Ce niveau est introuvable dans le stockage local de cet appareil. Réessayez, ou choisissez un autre niveau.",
       "retry": "Réessayer"
+    },
+    "selection": {
+      "count": "{{n}} objets sélectionnés"
     }
   }
 }

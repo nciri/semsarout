@@ -86,7 +86,13 @@ export default function PropertiesPanel({
         </p>
       )}
 
-      {!selected && <p className="text-sm text-gray-500">{t('dashboard:designEditor.panel.noSelection')}</p>}
+      {selection?.kind === 'multi' ? (
+        <p className="text-sm text-gray-700">
+          {t('dashboard:designEditor.selection.count', { n: selection.items.length })}
+        </p>
+      ) : (
+        !selected && <p className="text-sm text-gray-500">{t('dashboard:designEditor.panel.noSelection')}</p>
+      )}
 
       {selection?.kind === 'wall' && selected && (
         <div className="space-y-2">
