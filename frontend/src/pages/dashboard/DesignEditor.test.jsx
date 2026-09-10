@@ -544,4 +544,38 @@ describe('DesignEditor', () => {
     expect(screen.getByTestId('floorplan-canvas').querySelectorAll('line')).toHaveLength(1)
     confirmSpy.mockRestore()
   })
+
+  it('demande confirmation avant de reprendre un plan quand un brouillon de pièce est en cours (aucun mur committé)', async () => {
+    // L'outil « pièce » pose ses sommets un clic à la fois (`state.draft`) : tant
+    // que la pièce n'est pas terminée, `state.geometry` reste vide alors que
+    // l'agent a déjà posé des sommets à l'écran. `REPLACE_GEOMETRY` efface aussi
+    // le brouillon : sans ce test de vacuité étendu, il disparaîtrait sans un mot.
+    api.listAgencyProjects.mockResolvedValueOnce([{
+      id: 'other', title: 'Autre projet',
+      levels: [{
+        id: 'ol1', name: 'Autre niveau', wall_height_m: 2.5,
+        geometry: { walls: [{ id: 'w9', a: { x: 0, y: 0 }, b: { x: 2, y: 0 }, thickness_m: 0.2 }], rooms: [], openings: [] },
+      }],
+    }])
+    renderEditor()
+    await screen.findByRole('tab', { name: 'RDC' })
+
+    await pickTool('Pièce')
+    const canvas = screen.getByTestId('floorplan-canvas')
+    // Deux clics francs (sans déplacement) posent deux sommets du brouillon,
+    // sans jamais committer de géométrie (`ADD_ROOM` n'est déclenché qu'à la
+    // finalisation, hors de ce test).
+    fireEvent.pointerDown(canvas, { pointerId: 1, clientX: 150, clientY: 100 })
+    fireEvent.pointerUp(canvas, { pointerId: 1, clientX: 150, clientY: 100 })
+    fireEvent.pointerDown(canvas, { pointerId: 1, clientX: 250, clientY: 100 })
+    fireEvent.pointerUp(canvas, { pointerId: 1, clientX: 250, clientY: 100 })
+    expect(screen.getByTestId('floorplan-canvas').querySelectorAll('line')).toHaveLength(0)
+
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    fireEvent.click(screen.getByRole('button', { name: 'Reprendre un plan existant' }))
+    fireEvent.click(await screen.findByText(/Autre niveau/i))
+
+    expect(confirmSpy).toHaveBeenCalled()
+    confirmSpy.mockRestore()
+  })
 })

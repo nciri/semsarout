@@ -539,7 +539,13 @@ export default function DesignEditor() {
   // pas un second test de vacuité.
   function pickReuseLevel(level) {
     const live = { geometry: state.geometry, background_image_key: background ? 'live' : null, calibration: form.calibration }
-    if (!local.isLevelEmpty(live) && !window.confirm(t('dashboard:designEditor.reuse.confirm'))) {
+    // L'outil « pièce » pose ses sommets un clic à la fois (`state.draft`, cf.
+    // useFloorplanEditor / FloorplanCanvas) : entre deux clics, `state.geometry`
+    // est encore vide alors que l'agent a déjà posé deux ou trois sommets à l'écran.
+    // `REPLACE_GEOMETRY` efface aussi le brouillon (`draft: null`) — sans ce test,
+    // ce tracé non finalisé disparaîtrait sans un mot, exactement la perte de
+    // travail que ce chantier interdit.
+    if ((!local.isLevelEmpty(live) || state.draft) && !window.confirm(t('dashboard:designEditor.reuse.confirm'))) {
       return
     }
     dispatch({
