@@ -24,8 +24,20 @@ afterEach(() => {
 
 describe('périmètre du cache d’exécution', () => {
   it('met en cache les lectures de plans de l’agent, dans son propre cache', () => {
-    expect(matchDesign3dAgentRead(req('/api/v1/design3d/sync'))).toBe(true)
     expect(matchDesign3dAgentRead(req('/api/v1/design3d/projects/abc'))).toBe(true)
+    expect(matchDesign3dAgentRead(req('/api/v1/design3d/levels/abc/background'))).toBe(true)
+  })
+
+  it("ne met JAMAIS en cache la sonde de fraîcheur /design3d/sync", () => {
+    // `cleanupEmpty` se sert de cette route pour établir qu'un projet est bien
+    // vide côté serveur AVANT de le supprimer. Mise en cache, elle rendait —
+    // hors ligne, ou dès que le réseau dépassait les cinq secondes du
+    // `networkTimeoutSeconds` — un instantané vieux de plusieurs jours dans
+    // lequel aucun niveau ne paraissait plus récent que la copie locale : le
+    // plan qu'un collègue venait de tracer depuis un autre appareil était
+    // jugé inexistant, et détruit. Cette assertion tenait auparavant le
+    // contraire pour souhaitable ; c'était le défaut, pas le contrat.
+    expect(matchDesign3dAgentRead(req('/api/v1/design3d/sync'))).toBe(false)
   })
 
   it('met en cache les lectures publiques, dans un cache SÉPARÉ de celui de l’agent (I12)', () => {

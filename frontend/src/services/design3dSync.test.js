@@ -863,6 +863,36 @@ describe('isLevelEmpty / cleanupEmpty — niveaux et projets laissés vides', ()
     expect(api.deleteLevel).not.toHaveBeenCalled()
   })
 
+  // --- C1 (lot C) : un instantané servi depuis un cache ne prouve rien ------
+  // Le service worker sert les lectures design3d en `NetworkFirst` avec une
+  // rétention d'une semaine : hors ligne, `api.sync()` RÉUSSISSAIT en rendant
+  // un instantané vieux de plusieurs jours. Non nul mais périmé, il ne
+  // signalait aucun niveau plus récent que la copie locale — donc le projet
+  // était jugé vide et `project.delete` partait détruire le plan qu'un collègue
+  // avait tracé entre-temps depuis un autre appareil.
+  it("hors ligne, un instantané périmé ne fait partir aucune suppression alors qu'un collègue a avancé le plan", async () => {
+    const projectId = await seedProject({ synced: true, levels: [{}] })
+    const [level] = await local.listLevels(projectId)
+    const api = fakeApi({
+      // Ce que rend le CACHE : l'état de la semaine dernière, où le niveau
+      // était encore vide à la révision de la copie locale.
+      sync: vi.fn(async () => ({ projects: [{ id: projectId, levels: [{ id: level.id, revision: level.revision ?? 0, shelved_count: 0 }] }] })),
+      deleteProject: vi.fn(),
+      deleteLevel: vi.fn(),
+    })
+    const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
+    try {
+      const serverRevisions = await refreshFromServer({ api, local })
+      expect(await cleanupEmpty(projectId, { api, local, serverRevisions })).toEqual({ removedLevels: 0, removedProject: false })
+      expect(await local.getProject(projectId)).toBeDefined()
+    } finally {
+      onLine.mockRestore()
+    }
+    await runOnce({ api, local, onState: () => {} })
+    expect(api.deleteProject).not.toHaveBeenCalled()
+    expect(api.deleteLevel).not.toHaveBeenCalled()
+  })
+
   // --- C1 : la photo du plan papier compte comme du travail -----------------
   // Scénario de DESTRUCTION, pas seulement la condition : l'agent photographie
   // le plan papier, quitte avant de calibrer, et la liste des projets balaie.

@@ -632,6 +632,14 @@ export async function runOnce({ api = defaultApi, local = defaultLocal, onState 
 // à jour, et `cleanupEmpty` en a besoin pour ne jamais supprimer sur la foi de
 // données périmées (cf. son commentaire).
 export async function refreshFromServer({ api = defaultApi, local = defaultLocal, onShelved } = {}) {
+  // Hors ligne, AUCUNE affirmation sur l'état du serveur n'est possible — et
+  // surtout pas « ce projet est vide chez lui ». Le service worker sert les
+  // lectures design3d en `NetworkFirst` : `api.sync()` y répondait avec succès
+  // depuis son cache, rendant un instantané périmé que `cleanupEmpty` prenait
+  // pour la vérité du moment. `/design3d/sync` en est désormais exclu
+  // (utils/runtimeCache.js), mais on ne fait pas dépendre l'intégrité des
+  // données d'une seule barrière : sans réseau, on ne rend pas d'instantané.
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return null
   const { projects } = await api.sync()
   const serverRevisions = new Map()
   for (const p of projects) {

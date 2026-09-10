@@ -24,12 +24,22 @@ export const PUBLIC_RUNTIME_CACHE = 'design3d-public-api'
  * Lectures de plans de l'agent authentifié (éditeur design3d). Les écritures
  * sont exclues par l'option `method: 'GET'` de Workbox.
  *
+ * `/design3d/sync` en est EXCLU, et ce n'est pas un détail de performance :
+ * cette route est la sonde de fraîcheur dont `cleanupEmpty` se sert pour
+ * décider qu'un projet est bien vide côté serveur avant de le supprimer. Servie
+ * depuis un cache — jusqu'à sept jours de rétention, ou dès que le réseau
+ * dépasse les cinq secondes du `networkTimeoutSeconds` — elle rendait un
+ * instantané périmé mais d'apparence valide : aucun niveau n'y semblait plus
+ * récent que la copie locale, donc le plan qu'un collègue venait de tracer
+ * depuis un autre appareil était jugé inexistant et détruit. Une sonde de
+ * fraîcheur mise en cache est une contradiction.
+ *
  * ⚠️ Cette fonction est SÉRIALISÉE TELLE QUELLE dans `sw.js` par workbox-build :
  * elle doit rester autonome — aucune référence à une constante, un import ou
  * une autre fonction de ce module, sinon le service worker plante à l'exécution.
  */
 export const matchDesign3dAgentRead = ({ url }) =>
-  url.pathname.startsWith('/api/v1/design3d/')
+  url.pathname.startsWith('/api/v1/design3d/') && url.pathname !== '/api/v1/design3d/sync'
 
 /**
  * Lectures publiques de plans (visionneuse d'un bien, plan de masse d'un
