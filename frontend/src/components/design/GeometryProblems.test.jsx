@@ -44,6 +44,22 @@ describe('GeometryProblems', () => {
     expect(screen.queryByRole('button', { name: /corriger/i })).not.toBeInTheDocument()
   })
 
+  it('ne présente pas comme touchable un problème qui ne mène à aucun élément', () => {
+    // `geometry_too_large` (comme `wall_height`) ne porte ni `kind` ni `id` :
+    // il n'y a rien à sélectionner. Le rendre en bouton de 44 px promettait une
+    // action qui n'arrivait jamais.
+    render(
+      <GeometryProblems
+        problems={[{ code: 'geometry_too_large', kind: null, id: null, derived: false }]}
+        onSelect={() => {}}
+        onRepair={() => {}}
+      />,
+    )
+    // Son texte ne dit d'ailleurs pas « Touchez pour… », contrairement aux autres.
+    expect(screen.getByText(/trop volumineux/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+
   it('ne rend rien quand il n’y a aucun problème non dérivé', () => {
     const { container } = render(
       <GeometryProblems problems={[{ code: 'opening_orphan', kind: 'opening', id: 'o1', derived: true }]} onSelect={() => {}} onRepair={() => {}} />,

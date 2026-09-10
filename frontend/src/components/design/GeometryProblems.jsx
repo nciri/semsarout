@@ -20,15 +20,24 @@ export default function GeometryProblems({ problems, onSelect, onRepair }) {
       <ul className="space-y-1">
         {causes.map((p, index) => (
           <li key={`${p.code}-${p.kind}-${p.id ?? index}`}>
-            <button
-              type="button"
-              className="w-full min-h-[44px] text-left"
-              onClick={() => {
-                if (p.id) onSelect({ kind: p.kind, id: p.id })
-              }}
-            >
-              {t(`dashboard:designEditor.problems.${p.code}`)}
-            </button>
+            {/*
+              Certains problèmes ne désignent aucun élément du plan
+              (`geometry_too_large`, `wall_height`) : il n'y a rien à
+              sélectionner, et leur texte ne dit d'ailleurs pas « Touchez pour
+              le voir ». Les rendre en bouton de 44 px promettait une action qui
+              n'arrivait jamais ; ils sont donc du simple texte.
+            */}
+            {p.kind && p.id ? (
+              <button
+                type="button"
+                className="w-full min-h-[44px] text-left"
+                onClick={() => onSelect({ kind: p.kind, id: p.id })}
+              >
+                {t(`dashboard:designEditor.problems.${p.code}`)}
+              </button>
+            ) : (
+              <p className="min-h-[44px] flex items-center">{t(`dashboard:designEditor.problems.${p.code}`)}</p>
+            )}
           </li>
         ))}
       </ul>
