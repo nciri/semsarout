@@ -179,6 +179,8 @@ contains "rôle PostgreSQL design3d créé si absent" "CREATE ROLE design3d LOGI
 contains "schéma design3d créé" "CREATE SCHEMA IF NOT EXISTS design3d" "$SQL_LOG"
 contains "search_path du rôle posé" "ALTER ROLE design3d SET search_path = design3d" "$SQL_LOG"
 contains "migration billing/migrate_design3d.sql jouée" "has_design3d" "$SQL_LOG"
+contains "migration billing/migrate_design3d_entitlement.sql jouée (pro/enterprise activés)" \
+  "IN ('pro', 'enterprise')" "$SQL_LOG"
 contains "migration billing/migrate_commission_invoice.sql jouée" "commission" "$SQL_LOG"
 
 # --- défaut n°3 (nom de fichier d'environnement) -------------------------------
@@ -260,6 +262,7 @@ absent "…sans être confondue avec le cas légitime connu (message différent)
   "messaging/migrate_conversation.sql a échoué pour une cause connue" "$TMP/run_genuine.out"
 contains "les migrations suivantes tournent quand même après cet échec fatal" \
   "has_design3d" "$SQL_LOG"
+contains "…y compris migrate_design3d_entitlement.sql" "IN ('pro', 'enterprise')" "$SQL_LOG"
 
 # --- exécution 2 : idempotence ------------------------------------------------
 echo "== exécution 2 (rejeu sur le même serveur) =="
@@ -293,6 +296,8 @@ else
   ko "le rejeu réapplique le mot de passe existant, sans en tirer un nouveau"
 fi
 contains "les migrations additives sont rejouées (idempotentes)" "has_design3d" "$SQL_LOG"
+contains "…migrate_design3d_entitlement.sql aussi, sans effet de bord au rejeu" \
+  "IN ('pro', 'enterprise')" "$SQL_LOG"
 
 # --- exécution 3 : le contrôle de routage BFF doit mordre ---------------------
 echo "== exécution 3 (BFF ne routant pas vers design3d) =="

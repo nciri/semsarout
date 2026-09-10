@@ -58,6 +58,7 @@ messaging/migrate_conversation.sql
 rental/migrate_particulier_lease.sql
 billing/migrate_commission_invoice.sql
 billing/migrate_design3d.sql
+billing/migrate_design3d_entitlement.sql
 "
 
 # psql en tant que rôle postgres (patron roles/postgres d'Ansible : become_user postgres).
