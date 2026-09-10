@@ -66,3 +66,42 @@ describe('FloorplanCanvas — cotes en contexte RTL', () => {
     expect(roomText).toBe(`غرفة المعيشة · ${LRI}12.5 m²${PDI}`)
   })
 })
+
+describe('FloorplanCanvas — cotes decalees perpendiculairement', () => {
+  beforeEach(async () => {
+    stubCanvasBox()
+    await i18n.changeLanguage('en')
+  })
+
+  it('pose la cote a cote du mur horizontal, jamais sur son axe', () => {
+    const geometryHorizontal = {
+      walls: [{ id: 'w1', a: { x: 0, y: 2 }, b: { x: 4, y: 2 }, thickness_m: 0.2 }],
+      rooms: [],
+      openings: [],
+    }
+    const state = initialState({ geometry: geometryHorizontal })
+    state.dimensions = true
+    const { container } = render(
+      <FloorplanCanvas state={state} dispatch={() => {}} />,
+    )
+    const label = [...container.querySelectorAll('text')].find((t) => t.textContent.includes('4.00'))
+    const y = Number(label.getAttribute('y'))
+    expect(Math.abs(y - 2)).toBeGreaterThan(0.2 / 2)
+  })
+
+  it('pose la cote a cote du mur vertical, jamais sur son axe', () => {
+    const geometryVertical = {
+      walls: [{ id: 'w1', a: { x: 2, y: 0 }, b: { x: 2, y: 4 }, thickness_m: 0.2 }],
+      rooms: [],
+      openings: [],
+    }
+    const state = initialState({ geometry: geometryVertical })
+    state.dimensions = true
+    const { container } = render(
+      <FloorplanCanvas state={state} dispatch={() => {}} />,
+    )
+    const label = [...container.querySelectorAll('text')].find((t) => t.textContent.includes('4.00'))
+    const x = Number(label.getAttribute('x'))
+    expect(Math.abs(x - 2)).toBeGreaterThan(0.2 / 2)
+  })
+})

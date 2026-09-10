@@ -341,18 +341,26 @@ export default function FloorplanCanvas({
             strokeWidth={w.thickness_m}
             strokeLinecap="square"
           />
-          {dimensions && (
-            <text
-              x={(w.a.x + w.b.x) / 2}
-              y={(w.a.y + w.b.y) / 2 - px(6)}
-              fontSize={label}
-              textAnchor="middle"
-              fill="#1f2937"
-              style={{ pointerEvents: 'none' }}
-            >
-              {isolateLtr(`${fmt(wallLength(w))} m`)}
-            </text>
-          )}
+          {dimensions && (() => {
+            // Décalage perpendiculaire au mur, vers l'extérieur : une cote posée sur le
+            // trait est illisible dès que le mur est horizontal.
+            const dx = w.b.x - w.a.x
+            const dy = w.b.y - w.a.y
+            const len = Math.hypot(dx, dy) || 1
+            const off = px(10) + (w.thickness_m || DEFAULT_WALL_THICKNESS_M) / 2
+            return (
+              <text
+                x={(w.a.x + w.b.x) / 2 + (-dy / len) * off}
+                y={(w.a.y + w.b.y) / 2 + (dx / len) * off}
+                fontSize={label}
+                textAnchor="middle"
+                fill="#1f2937"
+                style={{ pointerEvents: 'none' }}
+              >
+                {isolateLtr(`${fmt(wallLength(w))} m`)}
+              </text>
+            )
+          })()}
         </g>
       ))}
 
