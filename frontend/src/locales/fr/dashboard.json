@@ -1244,6 +1244,7 @@
   },
   "designEditor": {
     "title": "Éditeur de plan",
+    "actionsMenu": "Actions du plan",
     "entry": "Concevoir en 3D",
     "canvasLabel": "Plan du niveau",
     "footer": "Niveau {{level}} · surface tracée {{area}} m²",

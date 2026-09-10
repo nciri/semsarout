@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { FiArrowLeft, FiImage, FiLayers, FiRefreshCw, FiSliders, FiTarget } from 'react-icons/fi'
+import { FiArrowLeft, FiLayers, FiSliders, FiTarget } from 'react-icons/fi'
 import * as local from '../../services/design3dLocal'
 import * as api from '../../services/design3dApi'
 import { applyLocal, cleanupEmpty, discardRefusedProject, refreshFromServer, remoteLevelId, startEngine } from '../../services/design3dSync'
@@ -18,6 +18,7 @@ import CalibrationOverlay from '../../components/design/CalibrationOverlay'
 import SyncBadge from '../../components/design/SyncBadge'
 import ShelfDialog from '../../components/design/ShelfDialog'
 import ReuseLevelDialog from '../../components/design/ReuseLevelDialog'
+import EditorActionsMenu from '../../components/design/EditorActionsMenu'
 import Design3dGate from '../../components/design/Design3dGate'
 import RedCartouche from '../../components/common/RedCartouche'
 
@@ -656,19 +657,6 @@ export default function DesignEditor() {
               {t('dashboard:designEditor.shelf.badge', { n: shelfCount })}
             </button>
           )}
-          <label className="btn-secondary min-h-[36px] inline-flex items-center gap-2 cursor-pointer">
-            <FiImage className="w-4 h-4" />
-            {t('dashboard:designEditor.background.import')}
-            <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={importBackground} />
-          </label>
-          <button
-            type="button"
-            className="btn-secondary min-h-[44px] inline-flex items-center gap-2"
-            onClick={() => setReuseOpen(true)}
-          >
-            <FiRefreshCw className="w-4 h-4" />
-            {t('dashboard:designEditor.reuse.action')}
-          </button>
           {background && (
             <button
               type="button"
@@ -682,6 +670,14 @@ export default function DesignEditor() {
               {t('dashboard:designEditor.calibration.action')}
             </button>
           )}
+          {/* Actions secondaires à l'extrême droite : l'en-tête tient ainsi sur
+              une seule ligne, et ne consomme plus 263 px des 1024 de la plus
+              petite tablette supportée. Ce qui reste au-dessus est un ÉTAT à
+              surveiller (synchronisation, versions mises de côté, calibration
+              requise), pas une action lancée une fois par plan. */}
+          <div className="ms-auto">
+            <EditorActionsMenu onImportBackground={importBackground} onReuse={() => setReuseOpen(true)} />
+          </div>
         </div>
 
         {saveError && (

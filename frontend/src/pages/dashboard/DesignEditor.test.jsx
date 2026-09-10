@@ -82,6 +82,15 @@ async function seedLevel() {
 // n'est active qu'une fois le niveau lu depuis IndexedDB. Attendre l'onglet du
 // niveau ne suffit PAS — il apparaît avant, et dessiner à ce moment-là faisait
 // écraser le tracé par l'amorçage (cf. correctif round 2).
+/**
+ * Les deux actions secondaires (import d'une photo de plan, reprise d'un plan
+ * existant) vivent dans le menu à trois points de l'en-tête, pas dans l'en-tête
+ * lui-même : il faut l'ouvrir pour les atteindre.
+ */
+function openActionsMenu() {
+  fireEvent.click(screen.getByRole('button', { name: 'Actions du plan' }))
+}
+
 async function pickTool(name) {
   const btn = screen.getByRole('button', { name })
   await waitFor(() => expect(btn).toBeEnabled())
@@ -512,6 +521,26 @@ describe('DesignEditor', () => {
     })
   })
 
+  it('regroupe l’import et la reprise dans un menu à trois points, hors de l’en-tête', async () => {
+    // Demande du propriétaire : ces deux actions se lancent une fois par plan,
+    // alors que l'en-tête est lu en permanence. En boutons d'en-tête, elles le
+    // faisaient passer sur une seconde ligne — 263 px sur les 1024 de la plus
+    // petite tablette supportée, dans un éditeur doigts-seulement.
+    renderEditor()
+    await screen.findByRole('tab', { name: 'RDC' })
+
+    expect(screen.queryByRole('button', { name: 'Reprendre un plan existant' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Importer un plan')).not.toBeInTheDocument()
+
+    openActionsMenu()
+    expect(screen.getByRole('button', { name: 'Reprendre un plan existant' })).toBeInTheDocument()
+    expect(screen.getByText('Importer un plan')).toBeInTheDocument()
+
+    // Le badge de synchronisation, lui, reste dans l'en-tête : c'est un état à
+    // surveiller, pas une action à aller chercher.
+    expect(screen.getByTestId('sync-badge')).toBeInTheDocument()
+  })
+
   it('demande confirmation avant de reprendre un plan si un trait tout juste tracé n’est pas encore enregistré (débounce)', async () => {
     // La vacuité doit porter sur l'éditeur vivant, pas sur l'enregistrement local
     // (rechargé à froid) : le débounce de 500 ms laisse une fenêtre où le niveau
@@ -536,6 +565,7 @@ describe('DesignEditor', () => {
     // Avant que le débounce n'ait écrit ce trait en IndexedDB (`local.getLevel`
     // reste vide à cet instant) : la confirmation doit quand même être demandée.
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    openActionsMenu()
     fireEvent.click(screen.getByRole('button', { name: 'Reprendre un plan existant' }))
     fireEvent.click(await screen.findByText(/Autre niveau/i))
 
@@ -572,6 +602,7 @@ describe('DesignEditor', () => {
     expect(screen.getByTestId('floorplan-canvas').querySelectorAll('line')).toHaveLength(0)
 
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    openActionsMenu()
     fireEvent.click(screen.getByRole('button', { name: 'Reprendre un plan existant' }))
     fireEvent.click(await screen.findByText(/Autre niveau/i))
 
