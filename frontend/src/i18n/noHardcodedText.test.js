@@ -159,6 +159,7 @@ const MIGRATED_FILES = [
   'src/components/design/CalibrationOverlay.jsx',
   'src/components/design/SyncBadge.jsx',
   'src/components/design/ShelfDialog.jsx',
+  'src/components/design/ReuseLevelDialog.jsx',
   'src/components/design/Design3dGate.jsx',
   'src/components/design/Design3dEntry.jsx',
   'src/components/design/DesignViewer.jsx',
