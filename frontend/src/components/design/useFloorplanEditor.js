@@ -263,6 +263,27 @@ export function reducer(state, action) {
       return { ...withGeometry(state, geometry, !continuing), dragging: !!action.dragging }
     }
 
+    case 'MOVE_SELECTION': {
+      const items = selectionItems(state.selection)
+      if (items.length === 0) return state
+      const { x: dx, y: dy } = action.delta
+      const wallIds = new Set(items.filter((i) => i.kind === 'wall').map((i) => i.id))
+      const roomIds = new Set(items.filter((i) => i.kind === 'room').map((i) => i.id))
+      const shift = (p) => ({ x: p.x + dx, y: p.y + dy })
+      // Une translation conserve les longueurs : elle ne peut pas produire le mur
+      // dégénéré que la garde de MIN_WALL_M empêche par ailleurs. Et les ouvertures,
+      // positionnées par un décalage le long de leur mur, suivent sans traitement.
+      const geometry = {
+        ...state.geometry,
+        walls: state.geometry.walls.map((w) =>
+          wallIds.has(w.id) ? { ...w, a: shift(w.a), b: shift(w.b) } : w),
+        rooms: state.geometry.rooms.map((r) =>
+          roomIds.has(r.id) ? { ...r, polygon: r.polygon.map(shift) } : r),
+      }
+      const continuing = action.dragging && state.dragging
+      return { ...withGeometry(state, geometry, !continuing), dragging: !!action.dragging }
+    }
+
     case 'END_DRAG':
       return state.dragging ? { ...state, dragging: false } : state
 

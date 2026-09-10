@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { reducer, initialState, HISTORY_MAX, resizedWall, hitTest, MIN_WALL_M, selectionItems } from './useFloorplanEditor'
+import { wallLength } from '../../utils/floorplan'
 
 const wall = (id, x = 0, len = 4) => ({ id, a: { x, y: 0 }, b: { x: x + len, y: 0 }, thickness_m: 0.2 })
 const s0 = () => initialState({ geometry: { walls: [], rooms: [], openings: [] } })
@@ -265,5 +266,25 @@ describe('SELECT_AREA — sélection multiple par rectangle', () => {
       type: 'SELECT_AREA', rect: { x1: 20, y1: 20, x2: 21, y2: 21 },
     })
     expect(s.selection).toBeNull()
+  })
+
+  it('translate toute la sélection sans changer les longueurs', () => {
+    let s = reducer({ ...initialState(), geometry: grid }, {
+      type: 'SELECT_AREA', rect: { x1: 0, y1: 0, x2: 3, y2: 3 },
+    })
+    const before = wallLength(s.geometry.walls.find((w) => w.id === 'in'))
+    s = reducer(s, { type: 'MOVE_SELECTION', delta: { x: 5, y: 0 } })
+    const moved = s.geometry.walls.find((w) => w.id === 'in')
+    expect(moved.a).toEqual({ x: 6, y: 1 })
+    expect(wallLength(moved)).toBeCloseTo(before, 10)
+    expect(s.geometry.walls.find((w) => w.id === 'half').a).toEqual({ x: 1, y: 1 })
+  })
+
+  it('laisse les ouvertures suivre leur mur sans traitement', () => {
+    let s = reducer({ ...initialState(), geometry: grid }, {
+      type: 'SELECT_AREA', rect: { x1: 0, y1: 0, x2: 3, y2: 3 },
+    })
+    s = reducer(s, { type: 'MOVE_SELECTION', delta: { x: 5, y: 0 } })
+    expect(s.geometry.openings[0]).toEqual(grid.openings[0])
   })
 })
