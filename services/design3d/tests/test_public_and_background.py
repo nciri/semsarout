@@ -231,3 +231,64 @@ def test_background_abandonne_la_lecture_des_le_depassement(client, headers, db_
     assert r.status_code == 413
     assert upload.served < 2 * m._MAX_BG, f"{upload.served} octets lus pour un plafond de {m._MAX_BG}"
     assert upload.served <= m._MAX_BG + m._BG_CHUNK
+
+
+def _ready_project(client, headers):
+    pid, lid = _project(client, headers)
+    client.put(f"/design3d/projects/{pid}", json={"status": "ready"}, headers=headers())
+    return pid, lid
+
+
+def test_public_by_target_bornee_et_sans_requete_par_projet(client, headers, db_session):
+    """B5 : route ANONYME, non bornée, avec une requête de niveaux par projet.
+
+    Elle ramenait tous les projets prêts de la cible et, pour chacun, la
+    géométrie complète de chaque niveau (jusqu'à 512 Ko par niveau) — là où
+    `list_projects`, authentifiée, borne et ne renvoie que des résumés.
+    """
+    from sqlalchemy import event
+
+    for _ in range(11):
+        _ready_project(client, headers)
+
+    engine = db_session.get_bind()
+    statements: list[str] = []
+
+    def _spy(conn, cursor, statement, parameters, context, executemany):
+        statements.append(statement)
+
+    event.listen(engine, "before_cursor_execute", _spy)
+    try:
+        r = client.get("/public/design3d/by-target", params={"target_type": "property", "target_id": 1})
+    finally:
+        event.remove(engine, "before_cursor_execute", _spy)
+
+    assert r.status_code == 200
+    assert len(r.json()["projects"]) == 10, "la réponse publique doit être bornée"
+    level_queries = [s for s in statements if "FROM design_level" in s]
+    assert len(level_queries) == 1, f"{len(level_queries)} requêtes de niveaux"
+
+
+def test_public_by_target_limite_hors_bornes_refusee(client, headers):
+    for value in (-1, 0, 1000):
+        r = client.get("/public/design3d/by-target",
+                       params={"target_type": "property", "target_id": 1, "limit": value})
+        assert r.status_code == 422, f"limit={value} devrait être refusé"
+
+
+def test_public_by_target_garde_son_contrat_pour_un_cas_normal(client, headers, monkeypatch):
+    """Le front consomme cette réponse : forme et contenu inchangés pour un projet."""
+    import app.main as m
+    monkeypatch.setattr(m.storage, "plans", lambda: type("S", (), {"put": lambda *a, **k: None, "get": lambda *a: b"img"})())
+    pid, lid = _project(client, headers)
+    assert client.put(f"/design3d/levels/{lid}", json={"base_revision": 0, "geometry": G},
+                      headers=headers()).status_code == 200
+    client.post(f"/design3d/projects/{pid}/levels", json={"name": "Étage 1", "position": 1}, headers=headers())
+    client.put(f"/design3d/projects/{pid}", json={"status": "ready"}, headers=headers())
+
+    body = client.get("/public/design3d/by-target", params={"target_type": "property", "target_id": 1}).json()
+    (project,) = body["projects"]
+    reference = client.get(f"/public/design3d/projects/{pid}").json()
+    assert project == reference
+    assert [lv["name"] for lv in project["levels"]] == ["RDC", "Étage 1"]
+    assert project["levels"][0]["geometry"] == G

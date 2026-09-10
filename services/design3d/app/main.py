@@ -491,12 +491,29 @@ def public_project(project_id: str, db: Session = Depends(get_db)):
 
 
 @app.get("/public/design3d/by-target")
-def public_by_target(target_type: str, target_id: int, db: Session = Depends(get_db)):
-    q = db.query(DesignProject).filter(DesignProject.target_type == target_type, DesignProject.target_id == target_id,
-                                        DesignProject.status == "ready")
-    projects = q.order_by(DesignProject.updated_at.desc()).all()
-    return {"projects": [{**p.to_dict(public=True), "levels": [lv.to_dict(public=True) for lv in _levels(db, p.id)]}
-                          for p in projects]}
+def public_by_target(target_type: str, target_id: int,
+                     # Route ANONYME, et la seule qui renvoie la géométrie COMPLÈTE de
+                     # chaque niveau (jusqu'à 512 Ko l'un) : sans borne, tout projet prêt
+                     # de la cible partait dans la réponse. Bornée des deux côtés comme
+                     # `list_projects`, pour la même raison (un `limit` négatif, ignoré par
+                     # SQLite, est REFUSÉ par PostgreSQL — un 500 au lieu d'un 422).
+                     limit: int = Query(10, ge=1, le=50),
+                     db: Session = Depends(get_db)):
+    projects = (db.query(DesignProject)
+                  .filter(DesignProject.target_type == target_type, DesignProject.target_id == target_id,
+                          DesignProject.status == "ready")
+                  .order_by(DesignProject.updated_at.desc()).limit(limit).all())
+    if not projects:
+        return {"projects": []}
+    # Les niveaux en UNE requête, jamais un `SELECT` par projet : la fiche publique
+    # d'un bien ne doit pas coûter un aller-retour de plus par plan publié.
+    rows = (db.query(DesignLevel)
+              .filter(DesignLevel.project_id.in_([p.id for p in projects]))
+              .order_by(DesignLevel.position, DesignLevel.created_at).all())
+    by_project: dict[str, list[dict]] = {}
+    for lv in rows:
+        by_project.setdefault(lv.project_id, []).append(lv.to_dict(public=True))
+    return {"projects": [{**p.to_dict(public=True), "levels": by_project.get(p.id, [])} for p in projects]}
 
 
 @app.get("/public/design3d/levels/{level_id}/background")
