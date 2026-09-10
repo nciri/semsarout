@@ -326,6 +326,14 @@ export function reducer(state, action) {
       return { ...withGeometry(state, geometry), selection: null }
     }
 
+    // Reprise d'un plan existant (Task 10) : remplace la géométrie courante par une
+    // copie déjà régénérée (`copyGeometry`, appelée par l'appelant) et reste
+    // annulable, contrairement à l'amorçage initial (`LOAD_GEOMETRY` avec
+    // `resetHistory`) — c'est un geste de l'agent en cours d'édition, pas
+    // l'ouverture du plan.
+    case 'REPLACE_GEOMETRY':
+      return { ...withGeometry(state, { ...EMPTY, ...action.geometry }), selection: null, draft: null }
+
     case 'LOAD_GEOMETRY': {
       const geometry = { ...EMPTY, ...action.geometry }
       // `resetHistory` : chargement initial d'un niveau (on n'annule pas
