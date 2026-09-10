@@ -120,6 +120,22 @@ describe('design3d sync engine', () => {
     // ses chances d'être rejoué avec succès une fois l'entitlement rétabli.
     expect(await discardRefusedProject(pid, { local })).toBe(false)
     expect(await local.getProject(pid)).toBeTruthy()
+
+    // La seule sortie que l'interface offre à ce stade est le bouton
+    // « Renvoyer ce projet » (DesignEditor.jsx::retryProjectSync), qui réenfile
+    // un `project.update` avec l'état local. Le projet n'a jamais existé côté
+    // serveur (`synced` reste faux) : le rejouer en `project.update` partirait
+    // vers un identifiant qu'aucun `PUT` ne connaît — un 404 sans rapport avec
+    // la vraie cause, pour toujours (cf. C2). C'est bien la CRÉATION qui doit
+    // repartir.
+    api.createProject.mockImplementation(async (p) => ({ ...p, levels: [lvl({ id: newId(), project_id: p.id })] }))
+    const proj = await local.getProject(pid)
+    await applyLocal({ type: 'project.update', payload: { id: pid, title: proj.title, status: proj.status } }, { local })
+    await runOnce({ api, local, onState: () => {} })
+
+    expect(api.updateProject).not.toHaveBeenCalled()
+    expect(api.createProject).toHaveBeenCalledTimes(2)
+    expect((await local.getProject(pid)).synced).toBe(true)
   })
 
   it("une cible introuvable (404) à la création est un refus définitif, comme le 403 hors périmètre", async () => {
@@ -158,13 +174,17 @@ describe('design3d sync engine', () => {
     const api = fakeApi({
       updateProject: vi.fn(async () => { throw { response: { status: 404, data: { error: 'Not found' } } } }),
     })
-    await local.putProject({ id: pid, title: 'A' })
+    // `synced: true` : ce projet a été créé avec succès par le passé — c'est
+    // bien une MISE À JOUR qui échoue en 404 ici, pas la création elle-même
+    // (cf. C2 : un projet jamais synchronisé doit repartir en `project.create`,
+    // pas en `project.update`, ce qui n'est pas le cas testé ici).
+    await local.putProject({ id: pid, title: 'A', synced: true })
     await applyLocal({ type: 'project.update', payload: { id: pid, title: 'B' } }, { local })
     await runOnce({ api, local, onState: () => {} })
 
     const proj = await local.getProject(pid)
     expect(proj.sync_error).toMatchObject({ code: 404 })
-    expect(proj.synced).toBeUndefined()
+    expect(proj.synced).toBe(true)
     // Ni abandon proposé, ni court-circuit : ce projet garde toutes ses chances.
     expect(await discardRefusedProject(pid, { local })).toBe(false)
     expect(await local.getProject(pid)).toBeTruthy()

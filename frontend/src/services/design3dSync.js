@@ -51,7 +51,7 @@ export async function applyLocal(op, { local = defaultLocal } = {}) {
       // l'état précédent était en vol. Lu et réécrit dans une seule
       // transaction, faute de quoi deux éditions rapprochées liraient le même
       // compteur et la première serait perdue.
-      await local.mutateProject(p.id, (cur0) => {
+      const after = await local.mutateProject(p.id, (cur0) => {
         const cur = cur0 ?? { id: p.id }
         // eslint-disable-next-line no-unused-vars -- déstructuration volontaire pour omettre `sync_error`
         const { sync_error, ...curRest } = cur
@@ -63,6 +63,24 @@ export async function applyLocal(op, { local = defaultLocal } = {}) {
         // explicite du projet (discardRefusedProject).
         return { ...(cur.synced ? curRest : cur), ...p, edit_seq: (cur.edit_seq ?? 0) + 1 }
       })
+      // Un `project.create` refusé pour une cause NON définitive (403
+      // d'entitlement, 422…) est retiré de la file par `markSyncError` sans
+      // qu'aucun chemin ne le réenfile (cf. C2) : `synced` reste faux, mais
+      // plus aucune opération n'est en attente pour ce projet. La reprise
+      // manuelle du projet (DesignEditor.jsx::retryProjectSync) empile un
+      // `project.update` — le seul geste que l'interface connaît — qui
+      // partirait sinon vers un identifiant que le serveur n'a jamais connu :
+      // un 404 sans rapport avec la vraie cause, indéfiniment. Tant que le
+      // refus n'est pas définitif (`target_refusal`, qui verrouille pour de
+      // bon — cf. targetRefusalError), toute reprise doit donc redevenir une
+      // création, avec les seuls champs qu'`applyLocal('project.create')` a
+      // écrits à l'origine.
+      if (!after.synced && !after.sync_error?.target_refusal) {
+        toEnqueue = {
+          type: 'project.create',
+          payload: { id: after.id, target_type: after.target_type, target_id: after.target_id, title: after.title },
+        }
+      }
       break
     }
     case 'project.delete':
