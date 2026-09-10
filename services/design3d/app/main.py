@@ -140,7 +140,7 @@ def create_project(body: ProjectCreateIn, request: Request, principal: Principal
 
 
 @app.get("/design3d/projects")
-def list_projects(target_type: str | None = None, target_id: int | None = None,
+def list_projects(target_type: str | None = None, target_id: int | None = None, limit: int = 50,
                   principal: Principal = Depends(_design3d), db: Session = Depends(get_db)):
     q = db.query(DesignProject)
     q = q.filter(DesignProject.agency_id == principal.agency_id) if principal.agency_id else q.filter(DesignProject.owner_id == _uid(principal))
@@ -148,7 +148,10 @@ def list_projects(target_type: str | None = None, target_id: int | None = None,
         q = q.filter(DesignProject.target_type == target_type)
     if target_id is not None:
         q = q.filter(DesignProject.target_id == target_id)
-    return {"projects": [p.to_dict() for p in q.order_by(DesignProject.updated_at.desc()).all()]}
+    q = q.order_by(DesignProject.updated_at.desc())
+    if not target_type and target_id is None:
+        q = q.limit(limit)
+    return {"projects": [p.to_dict() for p in q.all()]}
 
 
 @app.get("/design3d/projects/{project_id}")

@@ -56,6 +56,25 @@ def client(db_session):
     app.dependency_overrides.clear()
 
 
+@pytest.fixture
+def other_agency_client(db_session):
+    """Client d'une agence AUTRE que celle des appels `client`/`headers()` par défaut.
+
+    Partage la même base que `client` (même `db_session`) mais porte des en-têtes
+    d'une agence différente, pour exercer pour de vrai le cloisonnement inter-
+    agences (voir `test_target_ownership.py`) plutôt que de le neutraliser.
+    """
+    from fastapi.testclient import TestClient
+
+    from app.db import get_db
+    from app.main import app
+
+    app.dependency_overrides[get_db] = lambda: db_session
+    with TestClient(app, headers=_headers(user_id=999, agency_id=999)) as c:
+        yield c
+    app.dependency_overrides.clear()
+
+
 def _headers(user_id: int = 7, *, agency_id: int | None = None, features=("design3d",),
              superadmin: bool = False, tenant: str = "semsar") -> dict:
     """En-têtes x-semsar-* comme injectés par le BFF (TRUST_GATEWAY_HEADERS)."""
