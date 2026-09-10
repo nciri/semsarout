@@ -811,4 +811,52 @@ describe('isLevelEmpty / cleanupEmpty — niveaux et projets laissés vides', ()
     expect(api.deleteProject).not.toHaveBeenCalled()
     expect(await local.pendingCount()).toBe(0)
   })
+
+  // --- C1 : la photo du plan papier compte comme du travail -----------------
+  // Scénario de DESTRUCTION, pas seulement la condition : l'agent photographie
+  // le plan papier, quitte avant de calibrer, et la liste des projets balaie.
+  // Sans marqueur sur l'enregistrement du NIVEAU, `isLevelEmpty` le juge vide
+  // et le projet part — jusque sur le serveur, pour toute l'agence.
+  it('ne détruit pas un niveau qui porte une photo de plan importée mais pas encore calibrée', async () => {
+    const api = fakeApi({ deleteProject: vi.fn() })
+    const projectId = await seedProject({ synced: true, levels: [{}] })
+    const [level] = await local.listLevels(projectId)
+
+    await applyLocal(
+      { type: 'level.background', payload: { id: level.id, blob: new Blob(['photo'], { type: 'image/jpeg' }), type: 'image/jpeg' } },
+      { local },
+    )
+
+    expect(isLevelEmpty(await local.getLevel(level.id))).toBe(false)
+    expect(await cleanupEmpty(projectId, { api, local })).toEqual({ removedLevels: 0, removedProject: false })
+    expect(await local.getProject(projectId)).toBeDefined()
+    // La photo elle-même survit : `deleteProjectLocal` purge aussi le magasin
+    // `backgrounds`, donc la juger vide la détruirait sur l'appareil.
+    expect(await local.getBackground(level.id)).toBeDefined()
+
+    // Et rien ne part vers le serveur : c'est là que la destruction devenait
+    // irréversible pour toute l'agence et tous ses appareils.
+    await runOnce({ api, local, onState: () => {} })
+    expect(api.deleteProject).not.toHaveBeenCalled()
+  })
+
+  it("l'écho du serveur, qui ignore encore la photo, n'efface pas le marqueur local", async () => {
+    // `upload_background` ne fait pas avancer `revision` côté serveur (dette
+    // consignée) : son `background_image_key: null` ne doit jamais reprendre le
+    // dessus sur une photo bel et bien présente sur cet appareil, sinon le
+    // chemin destructif se rouvre au premier rafraîchissement.
+    const projectId = await seedProject({ synced: true, levels: [{}] })
+    const [level] = await local.listLevels(projectId)
+    await applyLocal(
+      { type: 'level.background', payload: { id: level.id, blob: new Blob(['photo'], { type: 'image/jpeg' }), type: 'image/jpeg' } },
+      { local },
+    )
+    const server = lvl({ id: level.id, project_id: projectId, revision: 7, background_image_key: null })
+    const api = fakeApi({
+      sync: vi.fn(async () => ({ projects: [{ id: projectId, levels: [{ id: level.id, revision: 7, shelved_count: 0 }] }] })),
+      getProject: vi.fn(async () => ({ id: projectId, levels: [server] })),
+    })
+    await refreshFromServer({ api, local })
+    expect(isLevelEmpty(await local.getLevel(level.id))).toBe(false)
+  })
 })

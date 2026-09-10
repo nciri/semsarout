@@ -538,7 +538,15 @@ export default function DesignEditor() {
   // réutilise `isLevelEmpty` (tâche 8) sur un niveau reconstitué depuis l'état vivant,
   // pas un second test de vacuité.
   function pickReuseLevel(level) {
-    const live = { geometry: state.geometry, background_image_key: background ? 'live' : null, calibration: form.calibration }
+    // Même marqueur que celui posé sur l'enregistrement du niveau par
+    // `putBackground` : les deux gardes de vacuité (celle-ci, sur l'éditeur
+    // vivant, et celle de `cleanupEmpty`, sur les niveaux persistés) parlent
+    // désormais du même champ, avec la même valeur.
+    const live = {
+      geometry: state.geometry,
+      background_image_key: background ? local.LOCAL_BACKGROUND_KEY : null,
+      calibration: form.calibration,
+    }
     // L'outil « pièce » pose ses sommets un clic à la fois (`state.draft`, cf.
     // useFloorplanEditor / FloorplanCanvas) : entre deux clics, `state.geometry`
     // est encore vide alors que l'agent a déjà posé deux ou trois sommets à l'écran.

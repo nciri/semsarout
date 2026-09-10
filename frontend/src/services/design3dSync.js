@@ -202,6 +202,15 @@ const mergedWithServer = (cur, server, extra = {}) => ({
   ...server,
   id: cur.id,
   ...(cur.server_id ? { server_id: cur.server_id } : {}),
+  // Une image de fond présente sur CET appareil ne disparaît pas parce que le
+  // serveur l'ignore encore (`upload_background` ne fait pas avancer `revision`,
+  // dette consignée) : son `background_image_key: null` effacerait le marqueur
+  // local et rouvrirait le chemin destructif du nettoyage automatique — la
+  // photo du plan papier jugée « vide ». L'inverse reste vrai : dès que le
+  // serveur connaît une clé, c'est la sienne qui fait foi.
+  ...(cur.background_image_key && !server.background_image_key
+    ? { background_image_key: cur.background_image_key }
+    : {}),
   ...extra,
 })
 

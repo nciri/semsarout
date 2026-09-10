@@ -130,7 +130,36 @@ export const mutateLevel = mutate('levels')
 export const mutateProject = mutate('projects')
 export const listLevels = async (projectId) => (await openDb()).getAllFromIndex('levels', 'project_id', projectId)
 
-export const putBackground = async (level_id, blob, type) => (await openDb()).put('backgrounds', { level_id, blob, type })
+/**
+ * Marqueur posé sur l'enregistrement du NIVEAU quand une image de fond existe
+ * sur cet appareil. Le serveur, lui, met dans ce champ la clé de l'objet
+ * stocké ; ici la valeur importe peu, seule sa présence compte — c'est ce que
+ * lit `isLevelEmpty`.
+ */
+export const LOCAL_BACKGROUND_KEY = 'local'
+
+/**
+ * Écrit l'image de fond ET le marqueur sur le niveau, DANS LA MÊME
+ * TRANSACTION. Les deux ne peuvent donc jamais divulguer l'un sans l'autre.
+ *
+ * Sans ce marqueur, `isLevelEmpty` — la seule notion de vacuité du projet —
+ * jugeait vide un niveau portant la photo du plan papier : le nettoyage
+ * automatique détruisait la photo, et pour un projet déjà synchronisé envoyait
+ * `project.delete` au serveur, faisant disparaître le projet pour toute
+ * l'agence et tous ses appareils. Le magasin `backgrounds` seul ne pouvait pas
+ * fermer ce trou : le lire depuis `cleanupEmpty` rendrait la vacuité asynchrone
+ * et dupliquerait la source de vérité.
+ */
+export const putBackground = async (level_id, blob, type) => {
+  const tx = (await openDb()).transaction(['backgrounds', 'levels'], 'readwrite')
+  await tx.objectStore('backgrounds').put({ level_id, blob, type })
+  const levels = tx.objectStore('levels')
+  const lv = await levels.get(level_id)
+  // Pas d'enregistrement de niveau : rien à protéger du nettoyage, qui ne
+  // balaie que ce que `listLevels` renvoie.
+  if (lv && !lv.background_image_key) await levels.put({ ...lv, background_image_key: LOCAL_BACKGROUND_KEY })
+  await tx.done
+}
 export const getBackground = async (level_id) => (await openDb()).get('backgrounds', level_id)
 
 export const enqueue = async (op) => (await openDb()).add('outbox', { ...op, created_at: op.created_at ?? Date.now() })
