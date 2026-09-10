@@ -81,6 +81,25 @@ describe('reducer — suppression', () => {
   })
 })
 
+describe('reducer — REPAIR_GEOMETRY', () => {
+  it('supprime les murs sous MIN_WALL_M et leurs ouvertures', () => {
+    let s = reducer(s0(), { type: 'ADD_WALL', wall: wall('w1') })
+    s = reducer(s, { type: 'ADD_WALL', wall: { id: 'w2', a: { x: 0, y: 3 }, b: { x: 0, y: 3 }, thickness_m: 0.2 } })
+    s = reducer(s, { type: 'ADD_OPENING', opening: { id: 'o1', wall_id: 'w1', type: 'door', offset_m: 1, width_m: 0.9, height_m: 2.1, sill_m: 0 } })
+    s = reducer(s, { type: 'ADD_OPENING', opening: { id: 'o2', wall_id: 'w2', type: 'door', offset_m: 0, width_m: 0.9, height_m: 2.1, sill_m: 0 } })
+    s = reducer(s, { type: 'SELECT', selection: { kind: 'wall', id: 'w2' } })
+    s = reducer(s, { type: 'REPAIR_GEOMETRY' })
+    expect(s.geometry.walls.map((w) => w.id)).toEqual(['w1'])
+    expect(s.geometry.openings.map((o) => o.id)).toEqual(['o1'])
+    expect(s.selection).toBeNull()
+  })
+
+  it('ne change rien si aucun mur n’est sous MIN_WALL_M', () => {
+    const s = reducer(s0(), { type: 'ADD_WALL', wall: wall('w1') })
+    expect(reducer(s, { type: 'REPAIR_GEOMETRY' })).toBe(s)
+  })
+})
+
 describe('reducer — édition des éléments', () => {
   it('déplace un sommet de mur et coalesce le glissé dans une seule entrée d’historique', () => {
     let s = reducer(s0(), { type: 'ADD_WALL', wall: wall('w1') })

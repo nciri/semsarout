@@ -252,6 +252,21 @@ export function reducer(state, action) {
       return { ...withGeometry(state, geometry), selection: null }
     }
 
+    // Répare les murs sous MIN_WALL_M (dégénérés, refusés par le serveur) en les
+    // supprimant avec leurs ouvertures — même geste que DELETE_SELECTED sur un mur,
+    // mais déclenché depuis le bandeau des problèmes plutôt qu'une sélection.
+    case 'REPAIR_GEOMETRY': {
+      const keep = state.geometry.walls.filter((w) => wallLength(w) >= MIN_WALL_M)
+      if (keep.length === state.geometry.walls.length) return state
+      const ids = new Set(keep.map((w) => w.id))
+      const geometry = {
+        ...state.geometry,
+        walls: keep,
+        openings: (state.geometry.openings || []).filter((o) => ids.has(o.wall_id)),
+      }
+      return { ...withGeometry(state, geometry), selection: null }
+    }
+
     case 'LOAD_GEOMETRY': {
       const geometry = { ...EMPTY, ...action.geometry }
       // `resetHistory` : chargement initial d'un niveau (on n'annule pas
