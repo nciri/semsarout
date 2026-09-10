@@ -53,6 +53,10 @@ export default function FloorplanCanvas({
   const pointers = useRef(new Map())
   const gesture = useRef(null)
   const drag = useRef(null)
+  // Origine (en mètres) d'un glissé de bloc : dernier point pointeur connu, pour
+  // dispatcher MOVE_SELECTION avec un delta relatif à chaque mouvement — même
+  // patron que `drag` (déplacement de sommet), mais sur toute la sélection.
+  const moveSel = useRef(null)
   const longPress = useRef(null)
   const moved = useRef(false)
   // Origine (en mètres) d'un glissé de sélection au rectangle avec l'outil
@@ -127,6 +131,7 @@ export default function FloorplanCanvas({
       // navigation, pas un dessin.
       clearLongPress()
       drag.current = null
+      moveSel.current = null
       area.current = null
       setAreaRect(null)
       if (draft?.kind === 'wall') dispatch({ type: 'SET_DRAFT', draft: null })
@@ -158,6 +163,13 @@ export default function FloorplanCanvas({
         return
       }
       const hit = hitTest(geometry, p, touchM)
+      // Toucher un objet déjà sélectionné démarre un glissé de bloc plutôt qu'une
+      // re-sélection : `selectionItems` couvre indifféremment le cas à un ou
+      // plusieurs objets.
+      if (hit && selectionItems(selection).some((i) => i.kind === hit.kind && i.id === hit.id)) {
+        moveSel.current = p
+        return
+      }
       if (hit) {
         dispatch({ type: 'SELECT', selection: hit })
         return
@@ -224,6 +236,12 @@ export default function FloorplanCanvas({
       dispatch({ type: 'MOVE_VERTEX', ref, point: snapped(p, origin), dragging: true })
       return
     }
+    if (moveSel.current) {
+      const origin = moveSel.current
+      moveSel.current = p
+      dispatch({ type: 'MOVE_SELECTION', delta: { x: p.x - origin.x, y: p.y - origin.y }, dragging: true })
+      return
+    }
     if (tool === 'wall' && draft?.kind === 'wall') {
       dispatch({ type: 'SET_DRAFT', draft: { ...draft, b: snapped(p, draft.a) } })
     }
@@ -259,6 +277,11 @@ export default function FloorplanCanvas({
 
     if (drag.current) {
       drag.current = null
+      dispatch({ type: 'END_DRAG' })
+      return
+    }
+    if (moveSel.current) {
+      moveSel.current = null
       dispatch({ type: 'END_DRAG' })
       return
     }
