@@ -362,7 +362,11 @@ export default function DesignEditor() {
     let alive = true
     ;(async () => {
       const bg = await local.getBackground(levelId)
-      if (!bg || !alive) {
+      // Effet remplacé (changement de niveau pendant la lecture) : ce rendu n'est
+      // plus le courant, il ne doit plus rien écrire — ni l'image lue, ni son
+      // absence, qui écraserait à tort le fond du niveau réellement affiché.
+      if (!alive) return
+      if (!bg) {
         setBackground(null)
         return
       }

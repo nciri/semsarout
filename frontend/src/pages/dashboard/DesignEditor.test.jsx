@@ -39,7 +39,7 @@ vi.mock('../../services/design3dApi', () => {
 // `writeFails` fait échouer les N prochaines ÉCRITURES de niveau — un quota
 // IndexedDB saturé, par exemple. L'écriture est le seul endroit où le travail
 // de l'agent quitte la mémoire de la page : son échec ne peut pas être muet.
-const storage = vi.hoisted(() => ({ mode: null, background: false, writeFails: 0 }))
+const storage = vi.hoisted(() => ({ mode: null, background: false, writeFails: 0, bgReads: {} }))
 
 vi.mock('../../services/design3dLocal', async (importOriginal) => {
   const actual = await importOriginal()
@@ -60,6 +60,10 @@ vi.mock('../../services/design3dLocal', async (importOriginal) => {
       return actual.mutateLevel(...args)
     },
     getBackground: (...args) => {
+      // `bgReads` permet de contrôler, niveau par niveau, l'ordre de résolution
+      // des lectures — indispensable pour reproduire une lecture qui se résout
+      // APRÈS que l'éditeur a changé de niveau (D2).
+      if (storage.bgReads[args[0]]) return storage.bgReads[args[0]]
       if (!storage.background) return actual.getBackground(...args)
       return Promise.resolve({ level_id: args[0], blob: new Blob(['x']), type: 'image/png' })
     },
@@ -146,6 +150,7 @@ describe('DesignEditor', () => {
     storage.mode = null
     storage.background = false
     storage.writeFails = 0
+    storage.bgReads = {}
     await i18n.changeLanguage('fr')
     await seedLevel()
     stubCanvasBox()
@@ -257,6 +262,34 @@ describe('DesignEditor', () => {
     fireEvent.click(retry)
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument())
     expect(screen.getAllByText(/Calibrez le plan avant de dessiner/).length).toBeGreaterThan(0)
+  })
+
+  it('ne perd pas l’image de fond du niveau d’arrivée quand la lecture du niveau quitté se résout après coup (D2)', async () => {
+    // RDC a un fond dont la lecture reste en vol ; R+1 a le sien, résolu tout de
+    // suite. On bascule sur R+1 avant que la lecture de RDC ne se termine : elle
+    // doit alors être sans effet, l'effet qui l'a lancée n'étant plus le rendu
+    // courant.
+    onTestFinished(stubBackgroundImage())
+    await local.putLevel({
+      id: 'l2', project_id: PROJECT_ID, name: 'R+1', position: 1, revision: 0, base_revision: 0,
+      wall_height_m: 2.7, calibration: null, geometry: { walls: [], rooms: [], openings: [] }, dirty: false,
+    })
+    let resolveRdc
+    storage.bgReads[LEVEL_ID] = new Promise((res) => { resolveRdc = res })
+    storage.bgReads.l2 = Promise.resolve({ level_id: 'l2', blob: new Blob(['b']), type: 'image/png' })
+
+    renderEditor()
+    await screen.findByRole('tab', { name: 'RDC' })
+    fireEvent.click(screen.getByRole('tab', { name: 'R+1' }))
+
+    // Le fond de R+1 s'affiche (bouton « Calibrer », visible dès qu'un fond existe).
+    await screen.findByRole('button', { name: 'Calibrer' })
+
+    // La lecture tardive de RDC se résout maintenant que R+1 est affiché.
+    resolveRdc({ level_id: LEVEL_ID, blob: new Blob(['a']), type: 'image/png' })
+    await new Promise((r) => setTimeout(r, 0))
+
+    expect(screen.getByRole('button', { name: 'Calibrer' })).toBeInTheDocument()
   })
 
   it('trace un mur au doigt et met l’édition en file sans réseau', async () => {
