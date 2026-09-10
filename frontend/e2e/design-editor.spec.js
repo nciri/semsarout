@@ -125,9 +125,48 @@ async function touchSession(page) {
   }
 }
 
-/** Deux points de tracé horizontaux, au centre du canevas. */
+/**
+ * Partie VISIBLE de la boîte englobante du canevas, une fois qu'elle a cessé de
+ * bouger.
+ *
+ * Les points tactiles partent par CDP, en coordonnées viewport : ils ne suivent
+ * aucun élément, et un point hors du viewport n'atteint rien. Deux pièges
+ * mesurés sur ipad-mini-portrait :
+ *
+ *  - une boîte lue trop tôt, ou avant le clic d'outil qui recompose l'en-tête et
+ *    fait descendre le haut du canevas, envoie les appuis à côté ;
+ *  - quand le canevas se dispose plus haut que le viewport (mesuré : 1452 px
+ *    pour 1024), son centre GÉOMÉTRIQUE tombe sous la feuille de propriétés
+ *    ancrée en bas, qui reçoit l'appui à sa place — et le geste ne se produit
+ *    jamais.
+ *
+ * D'où : relire la boîte juste avant d'envoyer les points, attendre deux
+ * lectures identiques consécutives, et la RESTREINDRE au viewport, de sorte que
+ * son centre soit toujours un point réellement touchable. Dans la disposition
+ * nominale, où le canevas tient entièrement à l'écran, ce découpage ne change
+ * rien.
+ */
+async function visibleCanvasBox(canvas) {
+  const page = canvas.page()
+  let previous = null
+  let box = null
+  for (let i = 0; i < 30; i++) {
+    box = await canvas.boundingBox()
+    if (previous && box && ['x', 'y', 'width', 'height'].every((k) => box[k] === previous[k])) break
+    previous = box
+    await page.waitForTimeout(50)
+  }
+  const vp = page.viewportSize()
+  const left = Math.max(box.x, 0)
+  const top = Math.max(box.y, 0)
+  const right = Math.min(box.x + box.width, vp.width)
+  const bottom = Math.min(box.y + box.height, vp.height)
+  return { x: left, y: top, width: right - left, height: bottom - top }
+}
+
+/** Deux points de tracé horizontaux, au centre de la partie visible du canevas. */
 async function wallPoints(canvas) {
-  const box = await canvas.boundingBox()
+  const box = await visibleCanvasBox(canvas)
   const y = box.y + box.height / 2
   return {
     a: { x: box.x + box.width * 0.3, y },
@@ -143,8 +182,10 @@ async function selectTool(page, label) {
 
 async function drawWall(page, canvas) {
   const touch = await touchSession(page)
-  const { a, b } = await wallPoints(canvas)
+  // L'outil est choisi AVANT de mesurer : le clic sur la barre d'outils peut
+  // recomposer l'en-tête et déplacer le canevas.
   await selectTool(page, 'Mur')
+  const { a, b } = await wallPoints(canvas)
   await touch.drag(a, b)
   await expect(canvas.locator('line')).toHaveCount(1)
 }
@@ -162,8 +203,8 @@ test.describe('éditeur de plan sur tablette', () => {
     const canvas = await openEditor(page)
     await drawWall(page, canvas)
     const touch = await touchSession(page)
-    const { middle } = await wallPoints(canvas)
     await selectTool(page, 'Porte')
+    const { middle } = await wallPoints(canvas)
     await touch.tap(middle)
     // L'ouverture est dessinée par-dessus le mur, en blanc (percement).
     await expect(canvas.locator('line[stroke="#ffffff"]')).toHaveCount(1)
