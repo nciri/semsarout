@@ -1350,7 +1350,12 @@
       "cancel": "Annuler",
       "projectUpdate": "La dernière modification de ce projet n'a pas été acceptée par le serveur : {{message}}. Elle n'est appliquée que sur cet appareil.",
       "projectRetry": "Renvoyer ce projet",
-      "levelInternal": "Une erreur interne a empêché l'envoi de ce niveau. Votre travail reste enregistré sur cet appareil : réessayez, et signalez-le si cela se reproduit."
+      "levelInternal": "Une erreur interne a empêché l'envoi de ce niveau. Votre travail reste enregistré sur cet appareil : réessayez, et signalez-le si cela se reproduit.",
+      "projectNeverCreated": "Ce projet n'a jamais été créé sur le serveur : {{message}}. Ses plans restent enregistrés sur cet appareil ; renvoyez-le une fois la cause levée.",
+      "levelReplace": "Remplacer par la version du serveur",
+      "levelReplaceWarning": "Le contenu de ce niveau tel qu'il est sur cet appareil sera abandonné au profit de celui du serveur, qui n'a jamais reçu votre dernière modification.",
+      "levelReplaceConfirm": "Confirmer le remplacement",
+      "levelReplaceFailed": "Le remplacement n'a pas pu aboutir : la version du serveur n'a pas pu être lue. Vérifiez la connexion et réessayez ; rien n'a été modifié."
     },
     "saveError": {
       "message": "Cette modification n'a pas pu être enregistrée sur cet appareil — stockage saturé ou indisponible. Elle n'existe que dans cet écran : ne fermez pas cette page, libérez de l'espace, puis réessayez.",

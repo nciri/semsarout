@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { FiArrowLeft, FiLayers, FiSliders, FiTarget } from 'react-icons/fi'
 import * as local from '../../services/design3dLocal'
 import * as api from '../../services/design3dApi'
-import { applyLocal, cleanupEmpty, discardRefusedProject, refreshFromServer, remoteLevelId, startEngine } from '../../services/design3dSync'
+import { applyLocal, cleanupEmpty, discardLocalLevelEdit, discardRefusedProject, refreshFromServer, remoteLevelId, startEngine } from '../../services/design3dSync'
 import {
   EMPTY_GEOMETRY, newId, normalizedToMeters, polygonArea, rescaleGeometry, geometryProblems, copyGeometry,
 } from '../../utils/floorplan'
@@ -82,6 +82,8 @@ export default function DesignEditor() {
   // Confirmation de l'abandon d'un projet refusé : la conséquence est annoncée
   // avant la suppression, jamais après.
   const [confirmingDiscard, setConfirmingDiscard] = useState(false)
+  const [confirmingLevelReplace, setConfirmingLevelReplace] = useState(false)
+  const [levelReplaceFailed, setLevelReplaceFailed] = useState(false)
   // Échec d'écriture locale : le seul moment où le travail quitte la mémoire
   // de la page. Il ne peut être ni silencieux, ni sans reprise.
   const [saveError, setSaveError] = useState(false)
@@ -282,7 +284,12 @@ export default function DesignEditor() {
         // bloque tous les niveaux du projet ; les autres échecs, eux, peuvent
         // aboutir en réessayant — y compris les 404 d'une tout autre origine.
         const se = proj?.sync_error ?? null
-        const err = se ? { ...se, refused: !proj.synced && !!se.target_refusal } : null
+        // `neverCreated` : rien de ce projet n'a jamais atteint le serveur. Le
+        // message doit le dire, et non parler d'une « dernière modification »
+        // que l'agent n'a pas faite et qu'il irait chercher en vain.
+        const err = se
+          ? { ...se, refused: !proj.synced && !!se.target_refusal, neverCreated: !proj.synced }
+          : null
         if (alive) setProjectError((cur) => (JSON.stringify(cur) === JSON.stringify(err) ? cur : err))
       } catch {
         // Le stockage local a son propre message (`seedError`) : ne pas le doubler.
@@ -299,6 +306,32 @@ export default function DesignEditor() {
     const done = await discardRefusedProject(projectId, { local })
     setConfirmingDiscard(false)
     if (done) navigate('/dashboard/conception')
+  }
+
+  // Seule sortie du cul-de-sac d'un échec DÉFINITIF sur un niveau : l'écriture
+  // refusée n'a jamais atteint le serveur, donc sa révision n'a pas bougé et
+  // `refreshFromServer` ne remplacera jamais ce niveau (cf. C4). Le contenu
+  // local est abandonné au profit de celui du serveur — geste destructif, donc
+  // annoncé et confirmé, jamais automatique.
+  async function replaceLevelFromServer() {
+    if (!levelId) return
+    setLevelReplaceFailed(false)
+    let done = false
+    try {
+      done = await discardLocalLevelEdit(levelId, { local })
+    } catch {
+      // Le remplacement doit LIRE la version du serveur : hors ligne il ne peut
+      // pas aboutir. Le dire, plutôt que de laisser un bouton qui ne fait
+      // visiblement rien — et surtout ne rien toucher au contenu local.
+      setLevelReplaceFailed(true)
+      setConfirmingLevelReplace(false)
+      return
+    }
+    setConfirmingLevelReplace(false)
+    // `false` sans exception : le serveur ne connaît pas ce niveau. Il n'y a
+    // alors aucune version à adopter, et le contenu local est tout ce qui existe.
+    setLevelReplaceFailed(!done)
+    if (done) await loadLevels()
   }
 
   // Reprise manuelle : ré-enfile le niveau tel qu'il est en local (une édition
@@ -734,8 +767,12 @@ export default function DesignEditor() {
                   : t('dashboard:designEditor.syncError.level', { message: currentLevel.sync_error.message })
               )}
               {projectError?.refused && t('dashboard:designEditor.syncError.project', { message: projectError.message })}
-              {projectError && !projectError.refused
-                && t('dashboard:designEditor.syncError.projectUpdate', { message: projectError.message })}
+              {projectError && !projectError.refused && t(
+                projectError.neverCreated
+                  ? 'dashboard:designEditor.syncError.projectNeverCreated'
+                  : 'dashboard:designEditor.syncError.projectUpdate',
+                { message: projectError.message },
+              )}
             </span>
             {/* Le serveur dit précisément ce qui cloche (422) : le taire
                 obligerait l'agent à deviner ce qu'il doit corriger. */}
@@ -752,6 +789,30 @@ export default function DesignEditor() {
               <button type="button" className="btn-secondary min-h-[44px]" onClick={retryLevelSync}>
                 {t('dashboard:designEditor.syncError.retry')}
               </button>
+            )}
+            {/* Renvoyer le niveau tel quel ne peut pas aboutir quand le serveur
+                l'a refusé sur le fond (422 : géométrie invalide) : sans cette
+                seconde sortie, l'agent n'a qu'un bouton qui échouera toujours. */}
+            {levelReplaceFailed && (
+              <span className="font-medium">{t('dashboard:designEditor.syncError.levelReplaceFailed')}</span>
+            )}
+            {!projectError && !confirmingLevelReplace && (
+              <button type="button" className="btn-secondary min-h-[44px]"
+                      onClick={() => setConfirmingLevelReplace(true)}>
+                {t('dashboard:designEditor.syncError.levelReplace')}
+              </button>
+            )}
+            {!projectError && confirmingLevelReplace && (
+              <>
+                <span className="font-medium">{t('dashboard:designEditor.syncError.levelReplaceWarning')}</span>
+                <button type="button" className="btn-secondary min-h-[44px]" onClick={replaceLevelFromServer}>
+                  {t('dashboard:designEditor.syncError.levelReplaceConfirm')}
+                </button>
+                <button type="button" className="btn-secondary min-h-[44px]"
+                        onClick={() => setConfirmingLevelReplace(false)}>
+                  {t('dashboard:designEditor.syncError.cancel')}
+                </button>
+              </>
             )}
             {projectError && !projectError.refused && (
               <button type="button" className="btn-secondary min-h-[44px]" onClick={retryProjectSync}>

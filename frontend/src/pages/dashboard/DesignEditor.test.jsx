@@ -552,6 +552,84 @@ describe('DesignEditor', () => {
     await waitFor(async () => expect((await local.getProject(PROJECT_ID)).sync_error).toBeUndefined())
   })
 
+  it("dit que la CRÉATION du projet n'a jamais abouti, au lieu de parler d'une modification (C2)", async () => {
+    // Un `project.create` refusé pour une cause NON définitive (403 d'entitlement,
+    // 422) laisse `synced` faux. Le message affiché parlait pourtant de « la
+    // dernière modification de ce projet », ce qui est faux et envoie l'agent
+    // chercher une modification qu'il n'a pas faite : rien de ce projet n'a
+    // jamais atteint le serveur.
+    await local.putProject({
+      id: PROJECT_ID, target_type: 'property', target_id: 1, title: 'Test', status: 'draft', synced: false,
+      sync_error: { code: 403, message: "Votre abonnement ne comprend pas le module de plans", at: 1 },
+    })
+    renderEditor()
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent("n'a jamais été créé sur le serveur")
+    expect(alert).not.toHaveTextContent('dernière modification')
+    // Le refus n'est pas définitif : la reprise doit rester proposée.
+    expect(screen.getByRole('button', { name: 'Renvoyer ce projet' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Supprimer ce projet et ses plans' })).not.toBeInTheDocument()
+  })
+
+  it("ouvre une sortie au niveau dont l'édition a été définitivement refusée (C4)", async () => {
+    // `markSyncError` remet `dirty: false` après un 422, mais la révision
+    // serveur n'a pas bougé : `refreshFromServer` ne remplacera donc JAMAIS ce
+    // niveau. Sans cette sortie, il affiche indéfiniment un contenu que le
+    // serveur n'a jamais eu et n'aura jamais.
+    await local.putLevel({
+      id: LEVEL_ID, project_id: PROJECT_ID, name: 'RDC', position: 0, revision: 0, base_revision: 0,
+      wall_height_m: 2.7, calibration: null, dirty: false,
+      geometry: { walls: [{ id: 'w1', a: { x: 0, y: 0 }, b: { x: 3, y: 0 }, thickness_m: 0.2 }], rooms: [], openings: [] },
+      sync_error: { code: 422, message: 'Géométrie invalide', at: 1 },
+    })
+    renderEditor()
+
+    // Le remplacement LIT la version du serveur : c'est ce que le serveur a,
+    // et non un vidage local, qui remplace le contenu refusé.
+    api.getProject.mockResolvedValueOnce({
+      id: PROJECT_ID,
+      levels: [{ id: LEVEL_ID, name: 'RDC', position: 0, revision: 4, wall_height_m: 2.7,
+                 geometry: { walls: [], rooms: [], openings: [] }, calibration: null }],
+    })
+
+    await screen.findByRole('alert')
+    fireEvent.click(screen.getByRole('button', { name: 'Remplacer par la version du serveur' }))
+    // Geste destructif : annoncé avant d'être exécuté, comme l'abandon d'un projet.
+    expect(screen.getByRole('button', { name: 'Confirmer le remplacement' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmer le remplacement' }))
+
+    await waitFor(async () => {
+      const lv = await local.getLevel(LEVEL_ID)
+      expect(lv.sync_error).toBeUndefined()
+      expect(lv.geometry.walls).toHaveLength(0)
+      expect(lv.revision).toBe(4)
+    })
+  })
+
+  it("dit pourquoi le remplacement n'a pas abouti hors ligne, sans toucher au contenu local (C4)", async () => {
+    // Le remplacement doit lire la version du serveur : sur une tablette hors
+    // couverture, c'est le cas COURANT. Un bouton qui ne fait visiblement rien
+    // laisserait l'agent croire que son travail vient d'être écrasé.
+    await local.putLevel({
+      id: LEVEL_ID, project_id: PROJECT_ID, name: 'RDC', position: 0, revision: 0, base_revision: 0,
+      wall_height_m: 2.7, calibration: null, dirty: false,
+      geometry: { walls: [{ id: 'w1', a: { x: 0, y: 0 }, b: { x: 3, y: 0 }, thickness_m: 0.2 }], rooms: [], openings: [] },
+      sync_error: { code: 422, message: 'Géométrie invalide', at: 1 },
+    })
+    renderEditor()
+
+    await screen.findByRole('alert')
+    fireEvent.click(screen.getByRole('button', { name: 'Remplacer par la version du serveur' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmer le remplacement' }))
+
+    await waitFor(() => expect(screen.getByRole('alert'))
+      .toHaveTextContent('la version du serveur n\'a pas pu être lue'))
+    const lv = await local.getLevel(LEVEL_ID)
+    expect(lv.geometry.walls).toHaveLength(1)
+    expect(lv.sync_error).toBeDefined()
+  })
+
   it('offre la même sortie quand la cible du projet est introuvable (404)', async () => {
     // Une cible supprimée entre le chargement du formulaire et la soumission :
     // refus tout aussi définitif que le 403, et jusqu'ici sans aucune sortie —
