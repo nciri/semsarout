@@ -1,4 +1,4 @@
-import { deleteDB, openDB } from 'idb'
+import { openDB } from 'idb'
 
 const DB = 'semsar-design3d'
 const VERSION = 1
