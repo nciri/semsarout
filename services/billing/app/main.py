@@ -93,6 +93,12 @@ def _invoice_dict(i: Invoice) -> dict:
             "period_label": i.period_label, "issued_at": iso(i.issued_at), "paid_at": iso(i.paid_at)}
 
 
+# Statuts dont la fin de période payée (`end_date`) vaut révocation des entitlements :
+# `incomplete` (changement de plan jamais réglé, I8) et `cancelled` (résiliation différée dont la
+# période payée est écoulée, A3). `active` en est absent : sa prolongation passe par le worker.
+_REVOCABLE_ON_PERIOD_END = {"incomplete", "cancelled"}
+
+
 def _reconcile_expired(db: Session, sub: Subscription | None) -> None:
     """I8 : `change_plan` bascule l'abonnement en `incomplete` (nouveau plan, facture impayée)
     sans jamais réévaluer les entitlements ensuite — si la facture n'est jamais réglée, l'agence
@@ -102,10 +108,20 @@ def _reconcile_expired(db: Session, sub: Subscription | None) -> None:
     fois dépassée sans paiement, l'abonnement passe `expired` et l'événement réémis vide les
     features, pour qu'identity cesse de les projeter dans le JWT.
 
+    A3 : `cancelled` relève du même traitement, pour la raison symétrique. `cancel_subscription`
+    est une résiliation DIFFÉRÉE — l'accès court jusqu'à la fin de la période payée, et
+    `cancelled` est donc entitlé (cf. `_ENTITLED_STATUSES`) — mais rien ne le révoquait ensuite :
+    l'événement émis à la résiliation porte les features COURANTES du plan et c'est le dernier
+    que cet abonnement émettra jamais. Un abonnement résilié gardait ses fonctionnalités pour
+    toujours. Passé `end_date`, il devient `expired` et l'événement réémis vide les features.
+    Un abonnement résilié mais encore DANS sa période payée n'est pas touché : un client qui a
+    payé ne doit jamais perdre ses fonctionnalités à tort. Sans `end_date`, la fin de la période
+    est inconnue et on ne révoque pas — même sens.
+
     Best-effort et lazy (pas de garantie de délai) : appelée à chaque lecture d'un abonnement via
     `_agency_sub`, donc au prochain `/internal/subscription` (repli identity),
     `change-plan` ou `cancel-subscription` de l'agence."""
-    if sub is None or sub.status != "incomplete" or sub.end_date is None:
+    if sub is None or sub.status not in _REVOCABLE_ON_PERIOD_END or sub.end_date is None:
         return
     if sub.end_date > datetime.utcnow():
         return
@@ -116,10 +132,18 @@ def _reconcile_expired(db: Session, sub: Subscription | None) -> None:
 
 
 def _agency_sub(db: Session, agency_id: int, status: str | None = None) -> Subscription | None:
+    """Abonnement COURANT de l'agence — la ligne la plus récente, jamais une ligne arbitraire.
+
+    A3 : une agence peut porter plusieurs lignes. `cancel_subscription` laisse la ligne résiliée
+    en base, et le worker (`_create_or_extend`) en CRÉE une nouvelle dès qu'aucune n'est
+    `active` : après une résiliation suivie d'un réabonnement, le `q.first()` sans `ORDER BY`
+    rendait le plus souvent la ligne périmée, et les fonctionnalités du mauvais plan étaient
+    projetées dans les claims JWT. `id` décroissant (même critère que
+    `worker._activate_pending`) désigne sans ambiguïté le réabonnement."""
     q = db.query(Subscription).filter(Subscription.agency_id == agency_id)
     if status:
         q = q.filter(Subscription.status == status)
-    sub = q.first()
+    sub = q.order_by(Subscription.id.desc()).first()
     _reconcile_expired(db, sub)
     return sub
 

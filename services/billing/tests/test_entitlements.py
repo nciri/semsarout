@@ -231,3 +231,122 @@ def test_cancel_subscription_emits_current_features(tmp_path):
     finally:
         app.dependency_overrides.clear()
         db.close()
+
+
+def test_agency_sub_revokes_cancelled_subscription_after_period_end(tmp_path):
+    """A3 : `cancelled` est entitlé (résiliation différée : l'accès court jusqu'à la fin de la
+    période payée) mais RIEN ne le révoquait ensuite — `_reconcile_expired` ne traitait que
+    `incomplete`, et aucun autre événement n'est jamais émis pour un abonnement résilié. Un
+    abonnement résilié gardait donc ses fonctionnalités pour toujours."""
+    from datetime import datetime, timedelta
+
+    from semsar_events import OutboxEvent
+
+    from app.main import _agency_sub
+
+    db = _db_session(tmp_path)
+    plan = _plan(has_design3d=True)
+    db.add(plan)
+    db.commit()
+    db.add(Subscription(agency_id=40, plan_id=plan.id, amount=499, status="cancelled",
+                        end_date=datetime.utcnow() - timedelta(days=1)))
+    db.commit()
+
+    result = _agency_sub(db, 40)
+
+    assert result.status == "expired"
+    ev = db.query(OutboxEvent).filter_by(
+        event_type="billing.subscription.activated").order_by(OutboxEvent.id.desc()).first()
+    assert ev is not None
+    assert ev.payload["agency_id"] == 40
+    assert ev.payload["features"] == []
+    db.close()
+
+
+def test_agency_sub_keeps_cancelled_subscription_entitled_until_period_end(monkeypatch, tmp_path):
+    """Symétrique, non négociable : un client qui a PAYÉ sa période ne perd rien à tort. Tant
+    que `end_date` n'est pas passée, une résiliation reste `cancelled` et entitlée."""
+    from datetime import datetime, timedelta
+
+    from semsar_events import OutboxEvent
+
+    from app import main as m
+    monkeypatch.setattr(m.settings, "internal_token", "tok")
+    db = _db_session(tmp_path)
+    plan = _plan(has_design3d=True)
+    db.add(plan)
+    db.commit()
+    db.add(Subscription(agency_id=41, plan_id=plan.id, amount=499, status="cancelled",
+                        end_date=datetime.utcnow() + timedelta(days=10)))
+    db.commit()
+
+    app.dependency_overrides[get_db] = lambda: db
+    try:
+        with TestClient(app) as client:
+            resp = client.get("/internal/subscription", params={"agency_id": 41},
+                              headers={"x-internal-token": "tok"})
+        assert resp.status_code == 200
+        assert resp.json()["subscription"]["status"] == "cancelled"
+        assert resp.json()["subscription"]["features"] == ["design3d"]
+        assert db.query(OutboxEvent).count() == 0
+    finally:
+        app.dependency_overrides.clear()
+        db.close()
+
+
+def test_agency_sub_does_not_revoke_cancelled_subscription_without_end_date(tmp_path):
+    """Contre-épreuve : sans `end_date`, la fin de la période payée est inconnue — on ne révoque
+    pas au hasard (le sens « le client qui paie ne perd rien » l'emporte)."""
+    from semsar_events import OutboxEvent
+
+    from app.main import _agency_sub
+
+    db = _db_session(tmp_path)
+    plan = _plan(has_design3d=True)
+    db.add(plan)
+    db.commit()
+    db.add(Subscription(agency_id=42, plan_id=plan.id, amount=499, status="cancelled",
+                        end_date=None))
+    db.commit()
+
+    assert _agency_sub(db, 42).status == "cancelled"
+    assert db.query(OutboxEvent).count() == 0
+    db.close()
+
+
+def test_internal_subscription_projects_the_latest_subscription_after_resubscription(monkeypatch, tmp_path):
+    """A3 : `_agency_sub` faisait un `q.first()` sans `ORDER BY`. Après une résiliation suivie
+    d'un réabonnement (le worker `_create_or_extend` crée une NOUVELLE ligne quand aucune n'est
+    `active`), la ligne périmée gagnait le plus souvent et les fonctionnalités du MAUVAIS plan
+    étaient projetées dans les claims JWT."""
+    from datetime import datetime, timedelta
+
+    from app import main as m
+    monkeypatch.setattr(m.settings, "internal_token", "tok")
+    db = _db_session(tmp_path)
+    starter = _plan(name="Starter", slug="starter", price_monthly=99)
+    pro = _plan(name="Pro", slug="pro", has_design3d=True, has_rental=True)
+    db.add_all([starter, pro])
+    db.commit()
+    # l'ancien abonnement résilié, encore en base, période payée déjà écoulée
+    db.add(Subscription(agency_id=50, plan_id=starter.id, amount=99, status="cancelled",
+                        end_date=datetime.utcnow() - timedelta(days=30)))
+    db.commit()
+    # le réabonnement : nouvelle ligne active sur un autre plan
+    db.add(Subscription(agency_id=50, plan_id=pro.id, amount=499, status="active",
+                        end_date=datetime.utcnow() + timedelta(days=30)))
+    db.commit()
+
+    app.dependency_overrides[get_db] = lambda: db
+    try:
+        with TestClient(app) as client:
+            resp = client.get("/internal/subscription", params={"agency_id": 50},
+                              headers={"x-internal-token": "tok"})
+        assert resp.status_code == 200
+        sub = resp.json()["subscription"]
+        assert sub["plan"] == "Pro", "l'abonnement courant est celui du réabonnement"
+        assert sub["status"] == "active"
+        assert set(sub["features"]) == {"design3d", "rental"}
+    finally:
+        app.dependency_overrides.clear()
+        db.close()
