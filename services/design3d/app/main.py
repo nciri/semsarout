@@ -401,6 +401,7 @@ def sync_summary(principal: Principal = Depends(_design3d), db: Session = Depend
 
 _IMAGE_TYPES = {"image/png": "png", "image/jpeg": "jpg"}
 _MAX_BG = 10 * 1024 * 1024
+_BG_CHUNK = 1024 * 1024
 
 
 class RecalibrateIn(BaseModel):
@@ -446,9 +447,20 @@ async def upload_background(level_id: str, file: UploadFile = File(...), princip
     ext = _IMAGE_TYPES.get(file.content_type or "")
     if ext is None:
         return _err("Image PNG ou JPEG requise", 400)
-    data = await file.read()
-    if len(data) > _MAX_BG:
-        return _err("Image trop volumineuse (10 Mo max)", 413)
+    # Lecture par morceaux, abandonnée dès le dépassement : le plafond appliqué
+    # après un `read()` intégral tamponnait d'abord l'envoi tout entier, donc ne
+    # protégeait rien. La mémoire du gestionnaire reste bornée par `_MAX_BG`.
+    chunks: list[bytes] = []
+    read = 0
+    while True:
+        chunk = await file.read(_BG_CHUNK)
+        if not chunk:
+            break
+        read += len(chunk)
+        if read > _MAX_BG:
+            return _err("Image trop volumineuse (10 Mo max)", 413)
+        chunks.append(chunk)
+    data = b"".join(chunks)
     key = f"design3d/{p.id}/{lv.id}/background.{ext}"
     storage.plans().put(key, data, file.content_type)
     lv.background_image_key = key

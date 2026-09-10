@@ -194,3 +194,40 @@ def test_calibration_valide_garde_sa_forme_serialisee(client, headers):
     r = client.put(f"/design3d/levels/{lid}", json={"base_revision": 0, "calibration": _CAL_4M}, headers=headers())
     assert r.status_code == 200
     assert r.json()["calibration"] == {"p1": {"x": 0, "y": 0}, "p2": {"x": 0.4, "y": 0}, "meters": 4}
+
+
+def test_background_abandonne_la_lecture_des_le_depassement(client, headers, db_session, monkeypatch):
+    """B4 : le plafond était appliqué APRÈS `await file.read()`, donc après tout tamponner.
+
+    Un envoi de 2 Go était intégralement chargé en mémoire avant d'être refusé :
+    le plafond ne protégeait rien. On mesure ici le nombre d'octets réellement
+    servis au gestionnaire, pas seulement le code de retour.
+    """
+    import asyncio
+
+    from semsar_auth import Principal
+
+    import app.main as m
+
+    monkeypatch.setattr(m.storage, "plans", lambda: None)  # toute écriture stockage échouerait
+    _, lid = _project(client, headers)
+
+    class _EnormousUpload:
+        content_type = "image/png"
+
+        def __init__(self, size: int) -> None:
+            self.size = size
+            self.served = 0
+
+        async def read(self, size: int = -1) -> bytes:
+            wanted = self.size - self.served if size is None or size < 0 else size
+            n = max(0, min(wanted, self.size - self.served))
+            self.served += n
+            return b"0" * n
+
+    upload = _EnormousUpload(64 * 1024 * 1024)
+    r = asyncio.run(m.upload_background(lid, file=upload,
+                                        principal=Principal(sub="7", features=["design3d"]), db=db_session))
+    assert r.status_code == 413
+    assert upload.served < 2 * m._MAX_BG, f"{upload.served} octets lus pour un plafond de {m._MAX_BG}"
+    assert upload.served <= m._MAX_BG + m._BG_CHUNK
