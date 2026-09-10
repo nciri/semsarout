@@ -287,4 +287,13 @@ describe('SELECT_AREA — sélection multiple par rectangle', () => {
     s = reducer(s, { type: 'MOVE_SELECTION', delta: { x: 5, y: 0 } })
     expect(s.geometry.openings[0]).toEqual(grid.openings[0])
   })
+
+  it('ne fait rien — ni géométrie ni historique — pour une sélection sans mur ni pièce', () => {
+    const s0 = reducer({ ...initialState(), geometry: grid }, {
+      type: 'SELECT', selection: { kind: 'opening', id: 'o' },
+    })
+    const s = reducer(s0, { type: 'MOVE_SELECTION', delta: { x: 5, y: 0 } })
+    expect(s.geometry).toBe(s0.geometry)
+    expect(s.past.length).toBe(s0.past.length)
+  })
 })

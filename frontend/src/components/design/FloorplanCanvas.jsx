@@ -165,8 +165,13 @@ export default function FloorplanCanvas({
       const hit = hitTest(geometry, p, touchM)
       // Toucher un objet déjà sélectionné démarre un glissé de bloc plutôt qu'une
       // re-sélection : `selectionItems` couvre indifféremment le cas à un ou
-      // plusieurs objets.
-      if (hit && selectionItems(selection).some((i) => i.kind === hit.kind && i.id === hit.id)) {
+      // plusieurs objets. Restreint à mur/pièce : une ouverture n'a rien à
+      // translater (elle suit son mur via son offset), la glisser ne doit donc
+      // pas déclencher MOVE_SELECTION.
+      if (
+        hit && (hit.kind === 'wall' || hit.kind === 'room') &&
+        selectionItems(selection).some((i) => i.kind === hit.kind && i.id === hit.id)
+      ) {
         moveSel.current = p
         return
       }

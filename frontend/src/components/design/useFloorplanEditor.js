@@ -265,10 +265,13 @@ export function reducer(state, action) {
 
     case 'MOVE_SELECTION': {
       const items = selectionItems(state.selection)
-      if (items.length === 0) return state
-      const { x: dx, y: dy } = action.delta
       const wallIds = new Set(items.filter((i) => i.kind === 'wall').map((i) => i.id))
       const roomIds = new Set(items.filter((i) => i.kind === 'room').map((i) => i.id))
+      // Une ouverture (ou toute sélection sans mur ni pièce) n'a rien à translater :
+      // sans ce retour anticipé, on pousserait quand même une entrée d'historique
+      // identique à l'état courant — un cran d'annulation consommé pour rien.
+      if (wallIds.size === 0 && roomIds.size === 0) return state
+      const { x: dx, y: dy } = action.delta
       const shift = (p) => ({ x: p.x + dx, y: p.y + dy })
       // Une translation conserve les longueurs : elle ne peut pas produire le mur
       // dégénéré que la garde de MIN_WALL_M empêche par ailleurs. Et les ouvertures,
