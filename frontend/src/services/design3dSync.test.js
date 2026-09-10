@@ -1,8 +1,9 @@
 import 'fake-indexeddb/auto'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import * as local from './design3dLocal'
+import { isLevelEmpty } from './design3dLocal'
 import { newId } from '../utils/floorplan'
-import { applyLocal, discardRefusedProject, runOnce, refreshFromServer, startEngine } from './design3dSync'
+import { applyLocal, cleanupEmpty, discardRefusedProject, runOnce, refreshFromServer, startEngine } from './design3dSync'
 
 const lvl = (over = {}) => ({ id: 'l'.repeat(32), project_id: 'p'.repeat(32), name: 'RDC', position: 0, revision: 0,
   wall_height_m: 2.7, calibration: null, geometry: { walls: [], rooms: [], openings: [] }, dirty: false, ...over })
@@ -757,5 +758,57 @@ describe('design3d sync engine', () => {
     expect(stored.sync_error).toBeUndefined()
     expect(stored.dirty).toBe(true)
     expect(stored.name).toBe('V2')
+  })
+})
+
+describe('isLevelEmpty / cleanupEmpty — niveaux et projets laissés vides', () => {
+  const emptyGeo = { walls: [], rooms: [], openings: [] }
+
+  // Écrit un projet et ses niveaux directement en local (hors file d'attente,
+  // hors réseau) : ces tests portent sur le nettoyage lui-même, pas sur la
+  // synchronisation.
+  async function seedProject({ status = 'draft', synced = true, levels = [{}] } = {}) {
+    const projectId = newId()
+    await local.putProject({ id: projectId, title: 'A', status, synced, target_type: 'property', target_id: 1 })
+    for (const over of levels) {
+      const { walls = [], rooms = [], openings = [], ...rest } = over
+      await local.putLevel(lvl({ id: newId(), project_id: projectId, geometry: { walls, rooms, openings }, ...rest }))
+    }
+    return projectId
+  }
+
+  it('ne considère pas vide un niveau qui porte une image ou une calibration', () => {
+    expect(isLevelEmpty({ geometry: emptyGeo })).toBe(true)
+    expect(isLevelEmpty({ geometry: emptyGeo, background_image_key: 'k' })).toBe(false)
+    expect(isLevelEmpty({ geometry: emptyGeo, calibration: { scale: 1 } })).toBe(false)
+    expect(isLevelEmpty({ geometry: { ...emptyGeo, walls: [{ id: 'w' }] } })).toBe(false)
+  })
+
+  it('supprime le projet quand tous ses niveaux sont vides', async () => {
+    const api = fakeApi()
+    const projectId = await seedProject({ levels: [{}, {}] })
+    expect(await cleanupEmpty(projectId, { api, local })).toEqual({ removedLevels: 2, removedProject: true })
+    expect(await local.getProject(projectId)).toBeUndefined()
+  })
+
+  it('ne touche jamais un projet publié', async () => {
+    const api = fakeApi()
+    const projectId = await seedProject({ status: 'ready', levels: [{}] })
+    expect(await cleanupEmpty(projectId, { api, local })).toEqual({ removedLevels: 0, removedProject: false })
+    expect(await local.getProject(projectId)).toBeDefined()
+  })
+
+  it("ne supprime que les niveaux vides quand d'autres portent du travail", async () => {
+    const api = fakeApi()
+    const projectId = await seedProject({ levels: [{}, { walls: [{ id: 'w' }] }] })
+    expect(await cleanupEmpty(projectId, { api, local })).toEqual({ removedLevels: 1, removedProject: false })
+  })
+
+  it('purge localement un projet jamais synchronisé, sans envoyer de suppression', async () => {
+    const api = fakeApi({ deleteProject: vi.fn() })
+    const projectId = await seedProject({ synced: false, levels: [{}] })
+    await cleanupEmpty(projectId, { api, local })
+    expect(api.deleteProject).not.toHaveBeenCalled()
+    expect(await local.pendingCount()).toBe(0)
   })
 })

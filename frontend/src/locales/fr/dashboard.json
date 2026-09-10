@@ -1393,6 +1393,7 @@
       "create": "Nouveau projet",
       "defaultTitle": "Plan sans titre",
       "empty": "Aucun projet pour ce bien.",
+      "emptyRemoved": "Projet vide supprimé.",
       "markReady": "Marquer prêt",
       "notSynced": "non synchronisé",
       "status": {

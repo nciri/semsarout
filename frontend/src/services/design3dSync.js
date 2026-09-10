@@ -1,6 +1,7 @@
 import * as defaultLocal from './design3dLocal'
 import * as defaultApi from './design3dApi'
 import { newId } from '../utils/floorplan'
+import { isLevelEmpty } from './design3dLocal'
 
 const isNetworkError = (e) => !e?.response && (e?.code === 'ERR_NETWORK' || e?.message === 'net' || !navigator.onLine)
 
@@ -275,17 +276,63 @@ async function targetRefusalError(projectId, local) {
  * rattrapable — le travail serait alors détruit sans copie. Renvoie `true` si
  * l'abandon a bien eu lieu.
  */
-export async function discardRefusedProject(projectId, { local = defaultLocal } = {}) {
-  if (!projectId) return false
-  const proj = await local.getProject(projectId)
-  if (!proj || proj.synced || !proj.sync_error?.target_refusal) return false
+/**
+ * Purge purement locale d'un projet : ses niveaux, ses images de fond et ses
+ * opérations encore en file — sans jamais toucher le réseau. Extraite pour
+ * `discardRefusedProject` (projet refusé) et `cleanupEmpty` (projet jamais
+ * synchronisé) : un projet que le serveur n'a jamais connu ne doit recevoir
+ * aucun ordre de suppression, seulement disparaître d'ici.
+ */
+async function discardLocalProject(projectId, { local = defaultLocal } = {}) {
   const levelIds = new Set((await local.listLevels(projectId)).map((lv) => lv.id))
   await local.dropQueued((op) => {
     const p = op.payload ?? {}
     return p.id === projectId || p.project_id === projectId || levelIds.has(p.id)
   })
   await local.deleteProjectLocal(projectId)
+}
+
+export async function discardRefusedProject(projectId, { local = defaultLocal } = {}) {
+  if (!projectId) return false
+  const proj = await local.getProject(projectId)
+  if (!proj || proj.synced || !proj.sync_error?.target_refusal) return false
+  await discardLocalProject(projectId, { local })
   return true
+}
+
+/**
+ * Nettoyage des niveaux laissés vides, à la sortie de l'éditeur et au chargement
+ * de la liste des projets (qui rattrape ce qu'une session interrompue — onglet
+ * fermé, tablette éteinte — n'a pas pu nettoyer en quittant).
+ * Ne touche JAMAIS un projet publié : il est affiché sur la fiche du bien, le supprimer
+ * retirerait un plan public sans que personne l'ait demandé.
+ */
+// eslint-disable-next-line no-unused-vars -- `api` fait partie de l'interface (cohérente avec les autres fonctions de ce module) ; ce nettoyage est purement local, sans réseau.
+export async function cleanupEmpty(projectId, { api = defaultApi, local = defaultLocal } = {}) {
+  const project = await local.getProject(projectId)
+  const none = { removedLevels: 0, removedProject: false }
+  if (!project || project.status === 'ready') return none
+
+  const levels = await local.listLevels(projectId)
+  if (levels.length === 0) return none
+  const empty = levels.filter(isLevelEmpty)
+  if (empty.length === 0) return none
+
+  if (empty.length === levels.length) {
+    // Jamais parvenu au serveur : purge locale, sans envoyer de suppression pour un
+    // identifiant qu'il n'a jamais connu (même mécanique que l'abandon d'un projet refusé).
+    if (!project.synced) {
+      await discardLocalProject(projectId, { local })
+    } else {
+      await applyLocal({ type: 'project.delete', payload: { id: projectId } }, { local })
+    }
+    return { removedLevels: empty.length, removedProject: true }
+  }
+
+  for (const lv of empty) {
+    await applyLocal({ type: 'level.delete', payload: { id: lv.id, project_id: projectId } }, { local })
+  }
+  return { removedLevels: empty.length, removedProject: false }
 }
 
 async function send(op, api, local) {

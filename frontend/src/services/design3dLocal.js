@@ -180,6 +180,15 @@ export const dropQueued = async (match) => {
   return removed
 }
 
+// Un niveau qui porte une image de fond ou une calibration n'est PAS vide : l'agent a
+// photographié un plan et l'a mis à l'échelle pour tracer plus tard, c'est du travail.
+export const isLevelEmpty = (lv) => {
+  const g = lv?.geometry || {}
+  const none = (a) => !(a || []).length
+  return none(g.walls) && none(g.rooms) && none(g.openings)
+    && !lv?.background_image_key && !lv?.calibration
+}
+
 export const clearAll = async () => {
   const db = await openDb()
   await Promise.all(['projects', 'levels', 'backgrounds', 'outbox'].map((s) => db.clear(s)))

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { FiArrowLeft, FiImage, FiLayers, FiSliders, FiTarget } from 'react-icons/fi'
 import * as local from '../../services/design3dLocal'
 import * as api from '../../services/design3dApi'
-import { applyLocal, discardRefusedProject, refreshFromServer, remoteLevelId, startEngine } from '../../services/design3dSync'
+import { applyLocal, cleanupEmpty, discardRefusedProject, refreshFromServer, remoteLevelId, startEngine } from '../../services/design3dSync'
 import {
   EMPTY_GEOMETRY, newId, normalizedToMeters, polygonArea, rescaleGeometry, geometryProblems,
 } from '../../utils/floorplan'
@@ -123,6 +123,19 @@ export default function DesignEditor() {
       alive = false
     }
   }, [loadLevels])
+
+  useEffect(() => {
+    if (!projectId) return undefined
+    // Au démontage : le cas nominal. On ne s'appuie pas sur `beforeunload`, dont
+    // l'écriture asynchrone n'est pas garantie (établi en brique 1) — mais on ne
+    // nettoie PAS aussi à l'ouverture ici : un projet tout juste créé arrive dans
+    // l'éditeur avec un unique niveau vide, et un nettoyage immédiat le supprimerait
+    // avant même que l'agent ait pu y tracer un trait. La session interrompue (onglet
+    // fermé, tablette éteinte) que ce démontage ne peut pas rattraper est ramassée
+    // ailleurs, sans ce risque : au chargement de la liste des projets
+    // (DesignProjects), qu'il faut retraverser pour rouvrir un projet existant.
+    return () => { cleanupEmpty(projectId).catch(() => {}) }
+  }, [projectId])
 
   // --- amorçage de l'éditeur (au changement de niveau UNIQUEMENT) ---------
   // L'amorçage conditionne tout : tant qu'il n'a pas abouti, l'éditeur reste
