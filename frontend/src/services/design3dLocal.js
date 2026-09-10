@@ -189,6 +189,21 @@ export const isLevelEmpty = (lv) => {
     && !lv?.background_image_key && !lv?.calibration
 }
 
+/**
+ * Tous les projets déjà présents sur cet appareil, niveaux inclus, pour la reprise
+ * d'un plan existant (Task 10) quand le réseau manque : c'est alors la seule
+ * source disponible, et forcément plus étroite que l'agence entière — l'appelant
+ * en informe l'agent, cette fonction ne fait que renvoyer ce qu'il y a.
+ */
+export const listKnownProjects = async () => {
+  const projects = (await listAllProjects()).filter((p) => !p.deleted)
+  return Promise.all(projects.map(async (p) => ({
+    id: p.id,
+    title: p.title,
+    levels: (await listLevels(p.id)).filter((lv) => !lv.deleted),
+  })))
+}
+
 export const clearAll = async () => {
   const db = await openDb()
   await Promise.all(['projects', 'levels', 'backgrounds', 'outbox'].map((s) => db.clear(s)))

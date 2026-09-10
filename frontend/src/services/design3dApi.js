@@ -20,6 +20,26 @@ export const getProject = async (id) => {
   return data
 }
 
+/**
+ * Tous les projets de l'agence, niveaux inclus, pour la reprise d'un plan existant
+ * (Task 10). `listProjects()` sans cible est déjà borné à 50 et filtré par agence
+ * (Task 9) — la liste elle-même ne fait donc jamais fuiter un autre périmètre ;
+ * `getProject` complète chaque ligne avec ses niveaux, absents de la liste brute.
+ * Un projet dont les niveaux ne peuvent pas être lus est gardé avec une liste vide
+ * plutôt que de faire échouer tout le dialogue de reprise pour un seul voisin.
+ */
+export const listAgencyProjects = async () => {
+  const { projects } = await listProjects()
+  return Promise.all(projects.map(async (p) => {
+    try {
+      const full = await getProject(p.id)
+      return { id: p.id, title: p.title, levels: full.levels || [] }
+    } catch {
+      return { id: p.id, title: p.title, levels: [] }
+    }
+  }))
+}
+
 export const updateProject = async (id, payload) => {
   const { data } = await api.put(`/design3d/projects/${id}`, payload)
   return data
