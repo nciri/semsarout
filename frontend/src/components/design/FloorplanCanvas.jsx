@@ -128,8 +128,13 @@ export default function FloorplanCanvas({
 
     if (pointers.current.size === 2) {
       // Deux doigts : on abandonne tout tracé en cours — le geste est une
-      // navigation, pas un dessin.
+      // navigation, pas un dessin. Un glissé (sommet ou sélection en bloc) en
+      // cours doit fermer son entrée d'historique exactement comme au relâché
+      // normal : sans ce END_DRAG, `state.dragging` restait vrai indéfiniment
+      // et tout l'historique d'annulation de la suite de la session se
+      // repliait en une seule étape.
       clearLongPress()
+      if (drag.current || moveSel.current) dispatch({ type: 'END_DRAG' })
       drag.current = null
       moveSel.current = null
       area.current = null

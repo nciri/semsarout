@@ -248,6 +248,51 @@ test.describe('éditeur de plan sur tablette', () => {
     await expect(canvas.locator('line')).toHaveCount(1)
   })
 
+  test('un second doigt pendant un glissé ferme l’historique au lieu de le laisser collé (D4)', async ({ page }) => {
+    // Régression : un pincement démarré pendant le glissé d'une extrémité de
+    // mur laissait `state.dragging` vrai indéfiniment (aucun END_DRAG
+    // dispatché à l'abandon du glissé) — tout glissé suivant se repliait alors
+    // dans l'entrée d'historique du premier au lieu d'en créer une à lui.
+    const canvas = await openEditor(page)
+    await drawWall(page, canvas)
+    const { a } = await wallPoints(canvas)
+    await selectTool(page, 'Sélectionner')
+
+    const cdp = await page.context().newCDPSession(page)
+    const touchEvent = (type, points) =>
+      cdp.send('Input.dispatchTouchEvent', {
+        type,
+        touchPoints: points.map((p) => ({ x: Math.round(p.x), y: Math.round(p.y), id: p.id })),
+      })
+
+    // Premier doigt : saisit l'extrémité du mur et la déplace — un glissé démarre.
+    await touchEvent('touchStart', [{ x: a.x, y: a.y, id: 1 }])
+    const moved1 = { x: a.x + 40, y: a.y + 10 }
+    await touchEvent('touchMove', [{ x: moved1.x, y: moved1.y, id: 1 }])
+    // Second doigt : un pincement commence PENDANT le glissé, puis les deux
+    // doigts se relèvent ensemble.
+    await touchEvent('touchStart', [{ x: moved1.x, y: moved1.y, id: 1 }, { x: moved1.x + 150, y: moved1.y + 150, id: 2 }])
+    await touchEvent('touchEnd', [])
+
+    // Un second glissé, complètement indépendant, sur la même extrémité :
+    // sans correctif, il se serait replié dans l'entrée du premier.
+    await touchEvent('touchStart', [{ x: moved1.x, y: moved1.y, id: 3 }])
+    const moved2 = { x: moved1.x + 40, y: moved1.y + 10 }
+    await touchEvent('touchMove', [{ x: moved2.x, y: moved2.y, id: 3 }])
+    await touchEvent('touchEnd', [])
+
+    // Trois étapes annulables distinctes : le tracé du mur, le premier glissé,
+    // le second — pas deux.
+    const undo = page.getByRole('button', { name: 'Annuler' })
+    await expect(undo).toBeEnabled()
+    await undo.click()
+    await expect(undo).toBeEnabled()
+    await undo.click()
+    await expect(undo).toBeEnabled()
+    await undo.click()
+    await expect(undo).toBeDisabled()
+  })
+
   test('hors ligne, les modifications sont mises en attente puis synchronisées', async ({ page, context }) => {
     const canvas = await openEditor(page)
     const badge = page.getByTestId('sync-badge')

@@ -166,3 +166,31 @@ describe('FloorplanCanvas — sélection par rectangle (outil Sélectionner)', (
     expect(dispatch).toHaveBeenCalledWith({ type: 'SELECT', selection: { kind: 'wall', id: 'w1' } })
   })
 })
+
+describe('FloorplanCanvas — second doigt pendant un glissé (D4)', () => {
+  beforeEach(async () => {
+    stubCanvasBox()
+    await i18n.changeLanguage('fr')
+  })
+
+  const selectState = () => ({ ...initialState({ geometry }), tool: 'select' })
+
+  it('abandonne le glissé et ferme son entrée d’historique dès qu’un second doigt se pose', () => {
+    const dispatch = vi.fn()
+    render(<FloorplanCanvas state={selectState()} dispatch={dispatch} />)
+    const canvas = screen.getByTestId('floorplan-canvas')
+
+    // Premier doigt : saisit l'extrémité a du mur (x=0, y=0 → 0px, 0px à 40px/m)
+    // et la déplace, ce qui pose `drag.current` et pousserait `state.dragging`.
+    fireEvent.pointerDown(canvas, { pointerId: 1, clientX: 0, clientY: 0 })
+    fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 40, clientY: 0 })
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'MOVE_VERTEX', dragging: true }))
+    dispatch.mockClear()
+
+    // Second doigt : un pincement commence. Sans correctif, `drag.current`
+    // était nettoyé en mémoire mais AUCUN `END_DRAG` n'était dispatché — l'état
+    // `dragging` du réducteur restait vrai indéfiniment.
+    fireEvent.pointerDown(canvas, { pointerId: 2, clientX: 400, clientY: 300 })
+    expect(dispatch).toHaveBeenCalledWith({ type: 'END_DRAG' })
+  })
+})
