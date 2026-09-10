@@ -1305,6 +1305,20 @@
       "wallHeight": "Hauteur sous plafond",
       "wallTooShort": "Un mur doit mesurer au minimum {{min}} m"
     },
+    "problems": {
+      "wall_too_short": "Un mur est trop court pour être enregistré. Touchez pour le voir.",
+      "wall_thickness": "L'épaisseur d'un mur est hors limites. Touchez pour le voir.",
+      "room_polygon": "Une pièce a moins de trois points. Touchez pour la voir.",
+      "room_type": "Une pièce n'a pas de type. Touchez pour la voir.",
+      "opening_type": "Une ouverture n'a pas de type. Touchez pour la voir.",
+      "opening_dimensions": "Les dimensions d'une ouverture sont invalides. Touchez pour la voir.",
+      "opening_overflows": "Une ouverture dépasse de son mur. Touchez pour la voir.",
+      "opening_wall_height": "Une ouverture dépasse la hauteur du mur. Touchez pour la voir.",
+      "geometry_too_large": "Le plan est trop volumineux pour être enregistré.",
+      "wall_height": "La hauteur sous plafond est invalide.",
+      "repair": "Corriger",
+      "repairConfirm": "Le mur trop court et ses ouvertures seront supprimés. Continuer ?"
+    },
     "pad": {
       "backspace": "Effacer le dernier chiffre",
       "validate": "Valider"
