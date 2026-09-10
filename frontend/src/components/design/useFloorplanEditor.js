@@ -67,7 +67,7 @@ const keyOf = (kind) => (kind === 'wall' ? 'walls' : kind === 'room' ? 'rooms' :
 // garde l'origine et la direction, seule l'extrémité b bouge.
 export function resizedWall(w, lengthM) {
   const len = wallLength(w)
-  if (!(lengthM > 0) || !(len > 0)) return w
+  if (!(lengthM > 0) || !(len > 0) || lengthM < MIN_WALL_M) return w
   const k = lengthM / len
   return { ...w, b: { x: w.a.x + (w.b.x - w.a.x) * k, y: w.a.y + (w.b.y - w.a.y) * k } }
 }

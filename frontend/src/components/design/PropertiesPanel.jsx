@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ROOM_TYPES, levelArea, polygonArea, wallLength } from '../../utils/floorplan'
 import { isolateLtr } from '../../utils/format'
-import { resizedWall } from './useFloorplanEditor'
+import { resizedWall, MIN_WALL_M } from './useFloorplanEditor'
 import NumericPad from './NumericPad'
 
 // Champ numérique en cours de saisie → clé i18n de son libellé.
@@ -20,6 +20,7 @@ const PAD_LABELS = {
 export default function PropertiesPanel({ state, dispatch, wallHeightM, onWallHeightChange, problems = [] }) {
   const { t } = useTranslation(['dashboard'])
   const [padField, setPadField] = useState(null)
+  const [lengthError, setLengthError] = useState(null)
   const { geometry, selection } = state
   const selected =
     selection?.kind === 'wall' ? geometry.walls.find((w) => w.id === selection.id)
@@ -42,11 +43,21 @@ export default function PropertiesPanel({ state, dispatch, wallHeightM, onWallHe
 
   const commitPad = (value) => {
     if (padField === 'length') {
-      dispatch({ type: 'UPDATE_ELEMENT', kind: 'wall', id: selected.id, patch: resizedWall(selected, value) })
+      const resized = resizedWall(selected, value)
+      if (resized === selected) {
+        // resizedWall a refusé le changement
+        setLengthError(t('dashboard:designEditor.panel.wallTooShort', { min: MIN_WALL_M.toFixed(2) }))
+        setTimeout(() => setLengthError(null), 3000)
+      } else {
+        dispatch({ type: 'UPDATE_ELEMENT', kind: 'wall', id: selected.id, patch: resized })
+        setLengthError(null)
+      }
     } else if (padField === 'wallHeight') {
       onWallHeightChange(value)
+      setLengthError(null)
     } else if (padField) {
       patch({ [padField]: value })
+      setLengthError(null)
     }
     setPadField(null)
   }
@@ -70,6 +81,12 @@ export default function PropertiesPanel({ state, dispatch, wallHeightM, onWallHe
             <li key={p}>{p}</li>
           ))}
         </ul>
+      )}
+
+      {lengthError && (
+        <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2">
+          {lengthError}
+        </p>
       )}
 
       {!selected && <p className="text-sm text-gray-500">{t('dashboard:designEditor.panel.noSelection')}</p>}

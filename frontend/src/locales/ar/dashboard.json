@@ -1302,7 +1302,8 @@
       "openingHeight": "الارتفاع",
       "openingSill": "ارتفاع العتبة",
       "openingOffset": "الموضع على الجدار",
-      "wallHeight": "ارتفاع السقف"
+      "wallHeight": "ارتفاع السقف",
+      "wallTooShort": "يجب أن يكون الجدار بطول أدنى قدره {{min}} م"
     },
     "pad": {
       "backspace": "حذف آخر رقم",

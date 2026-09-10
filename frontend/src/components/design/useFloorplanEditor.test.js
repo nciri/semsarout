@@ -138,6 +138,14 @@ describe('reducer — édition des éléments', () => {
     expect(s.geometry.rooms[0].type).toBe('kitchen')
   })
 
+  it('UPDATE_ELEMENT refuse un redimensionnement qui rendrait le mur plus court que MIN_WALL_M', () => {
+    let s = reducer(s0(), { type: 'ADD_WALL', wall: wall('w1') }) // mur de 4 m
+    const tooShort = resizedWall(s.geometry.walls[0], MIN_WALL_M - 0.01)
+    s = reducer(s, { type: 'UPDATE_ELEMENT', kind: 'wall', id: 'w1', patch: tooShort })
+    // Le mur ne change pas car resizedWall a refusé le patch
+    expect(s.geometry.walls[0].b).toEqual({ x: 4, y: 0 })
+  })
+
   it('LOAD_GEOMETRY remplace la géométrie et peut réinitialiser l’historique', () => {
     let s = reducer(s0(), { type: 'ADD_WALL', wall: wall('w1') })
     const loaded = { walls: [wall('x1')], rooms: [], openings: [] }
@@ -165,6 +173,13 @@ describe('resizedWall', () => {
     expect(resizedWall(w, 0)).toBe(w)
     const degenerate = { id: 'w', a: { x: 1, y: 1 }, b: { x: 1, y: 1 }, thickness_m: 0.2 }
     expect(resizedWall(degenerate, 3)).toBe(degenerate)
+  })
+
+  it('refuse une longueur plus courte que MIN_WALL_M', () => {
+    const w = wall('w1') // longueur 4 m
+    expect(resizedWall(w, MIN_WALL_M - 0.01)).toBe(w)
+    expect(resizedWall(w, MIN_WALL_M)).not.toBe(w)
+    expect(resizedWall(w, 0.1)).not.toBe(w)
   })
 })
 

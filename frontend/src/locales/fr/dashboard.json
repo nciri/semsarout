@@ -1302,7 +1302,8 @@
       "openingHeight": "Hauteur",
       "openingSill": "Allège",
       "openingOffset": "Position sur le mur",
-      "wallHeight": "Hauteur sous plafond"
+      "wallHeight": "Hauteur sous plafond",
+      "wallTooShort": "Un mur doit mesurer au minimum {{min}} m"
     },
     "pad": {
       "backspace": "Effacer le dernier chiffre",
