@@ -15,10 +15,17 @@ import { useTranslation } from 'react-i18next'
  * La copie elle-même (régénération des identifiants) est faite par l'appelant
  * (`copyGeometry`) : ce composant ne fait que choisir un niveau et le remonter
  * via `onPick`, géométrie source incluse.
+ *
+ * La liste en ligne ne porte que des RÉSUMÉS de niveaux, sans géométrie : c'est
+ * ici, au moment du choix, qu'une seule requête va la chercher pour le niveau
+ * retenu. Hors ligne, `local.listKnownProjects` renvoie déjà les niveaux
+ * complets, et aucune requête n'est tentée.
  */
 export default function ReuseLevelDialog({ online, local, api, onPick, onClose }) {
   const { t } = useTranslation(['dashboard'])
   const [projects, setProjects] = useState(null)
+  const [picking, setPicking] = useState(null)
+  const [pickFailed, setPickFailed] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -36,6 +43,30 @@ export default function ReuseLevelDialog({ online, local, api, onPick, onClose }
   }, [online, api, local])
 
   const entries = (projects || []).flatMap((p) => (p.levels || []).map((level) => ({ project: p, level })))
+
+  async function pick(project, level) {
+    // Déjà complet (hors ligne, ou niveau du projet courant) : rien à charger.
+    if (level.geometry) {
+      onPick(level)
+      return
+    }
+    setPickFailed(false)
+    setPicking(level.id)
+    try {
+      const full = await api.getLevelGeometry(project.id, level.id)
+      if (!full) {
+        // Le niveau a disparu entre l'affichage de la liste et le choix : le
+        // dire, plutôt que reprendre un plan vide en croyant reprendre celui-là.
+        setPickFailed(true)
+        setPicking(null)
+        return
+      }
+      onPick(full)
+    } catch {
+      setPickFailed(true)
+      setPicking(null)
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -56,13 +87,24 @@ export default function ReuseLevelDialog({ online, local, api, onPick, onClose }
           <p className="text-sm text-gray-500 mt-2">{t('dashboard:designEditor.reuse.empty')}</p>
         )}
 
+        {pickFailed && (
+          <p role="alert" className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md p-2 mt-2">
+            {t('dashboard:designEditor.reuse.pickFailed')}
+          </p>
+        )}
+
+        {picking && (
+          <p role="status" className="text-sm text-gray-500 mt-2">{t('dashboard:designEditor.reuse.picking')}</p>
+        )}
+
         <ul className="space-y-2 mt-2">
           {entries.map(({ project, level }) => (
             <li key={level.id}>
               <button
                 type="button"
-                className="w-full text-start min-h-[44px] px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
-                onClick={() => onPick(level)}
+                disabled={!!picking}
+                className="w-full text-start min-h-[44px] px-3 py-2 rounded border border-gray-200 hover:bg-gray-50 disabled:opacity-60"
+                onClick={() => pick(project, level)}
               >
                 <span className="block font-medium text-gray-900">{project.title}</span>
                 <span className="block text-sm text-gray-500">{level.name}</span>

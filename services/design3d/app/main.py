@@ -155,9 +155,36 @@ def list_projects(target_type: str | None = None, target_id: int | None = None,
     if target_id is not None:
         q = q.filter(DesignProject.target_id == target_id)
     q = q.order_by(DesignProject.updated_at.desc())
-    if not target_type and target_id is None:
+    no_target = not target_type and target_id is None
+    if no_target:
         q = q.limit(limit)
-    return {"projects": [p.to_dict() for p in q.all()]}
+    projects = q.all()
+    out = [p.to_dict() for p in projects]
+
+    # Sans cible, c'est la liste du dialogue de reprise d'un plan : elle porte le
+    # RÉSUMÉ des niveaux — identifiant, nom, position, hauteur sous plafond — et
+    # JAMAIS leur géométrie, que l'appelant ne charge que pour le niveau
+    # effectivement choisi. Le client faisait sinon un `GET` par projet, jusqu'à
+    # 51, tous dans un cache hors-ligne plafonné à 60 entrées : la reprise vidait
+    # le cache de l'agent par la porte de derrière. Renvoyer les niveaux
+    # COMPLETS serait pire : la géométrie peut atteindre 512 Ko par niveau.
+    #
+    # Les niveaux sont lus en une seule requête (jamais un `SELECT` par projet),
+    # et la forme de la réponse est inchangée pour les appelants qui fournissent
+    # une cible : eux n'ont pas de clé `levels`, comme avant.
+    if no_target and projects:
+        rows = (db.query(DesignLevel)
+                  .filter(DesignLevel.project_id.in_([p.id for p in projects]))
+                  .order_by(DesignLevel.position)
+                  .all())
+        by_project: dict[str, list[dict]] = {}
+        for lv in rows:
+            by_project.setdefault(lv.project_id, []).append(
+                {"id": lv.id, "name": lv.name, "position": lv.position, "wall_height_m": float(lv.wall_height_m)})
+        for d in out:
+            d["levels"] = by_project.get(d["id"], [])
+
+    return {"projects": out}
 
 
 @app.get("/design3d/projects/{project_id}")

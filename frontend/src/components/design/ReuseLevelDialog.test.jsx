@@ -49,6 +49,38 @@ describe('ReuseLevelDialog', () => {
     expect(screen.queryByText(/chargement/i)).not.toBeInTheDocument()
   })
 
+  it('ne charge la géométrie qu’au choix, pour le seul niveau retenu', async () => {
+    // La liste en ligne ne porte que des résumés : c'est le prix de la
+    // suppression du N+1 qui vidait le cache hors-ligne (jusqu'à 51 requêtes
+    // dans un cache plafonné à 60 entrées).
+    const geometry = { walls: [{ id: 'w1' }], rooms: [], openings: [] }
+    const api = {
+      listAgencyProjects: vi.fn(async () => [
+        { id: 'p2', title: 'Projet agence', levels: [{ id: 'lv2', name: 'Plan du RDC', position: 0, wall_height_m: 2.9 }] },
+      ]),
+      getLevelGeometry: vi.fn(async () => ({ id: 'lv2', name: 'Plan du RDC', wall_height_m: 2.9, geometry })),
+    }
+    const onPick = vi.fn()
+    render(<ReuseLevelDialog online local={makeLocal()} api={api} onPick={onPick} onClose={() => {}} />)
+    await userEvent.click(await screen.findByText(/Plan du RDC/i))
+    expect(api.getLevelGeometry).toHaveBeenCalledExactlyOnceWith('p2', 'lv2')
+    expect(onPick).toHaveBeenCalledWith(expect.objectContaining({ geometry, wall_height_m: 2.9 }))
+  })
+
+  it('dit que le plan choisi n’a pas pu être chargé, au lieu d’en reprendre un vide', async () => {
+    const api = {
+      listAgencyProjects: vi.fn(async () => [
+        { id: 'p2', title: 'Projet agence', levels: [{ id: 'lv2', name: 'Plan du RDC', position: 0, wall_height_m: 2.9 }] },
+      ]),
+      getLevelGeometry: vi.fn(async () => { throw new Error('net') }),
+    }
+    const onPick = vi.fn()
+    render(<ReuseLevelDialog online local={makeLocal()} api={api} onPick={onPick} onClose={() => {}} />)
+    await userEvent.click(await screen.findByText(/Plan du RDC/i))
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(onPick).not.toHaveBeenCalled()
+  })
+
   it('remonte la géométrie et la hauteur du niveau choisi', async () => {
     const local = makeLocal()
     const api = makeApi()

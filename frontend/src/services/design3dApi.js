@@ -21,23 +21,32 @@ export const getProject = async (id) => {
 }
 
 /**
- * Tous les projets de l'agence, niveaux inclus, pour la reprise d'un plan existant
- * (Task 10). `listProjects()` sans cible est déjà borné à 50 et filtré par agence
- * (Task 9) — la liste elle-même ne fait donc jamais fuiter un autre périmètre ;
- * `getProject` complète chaque ligne avec ses niveaux, absents de la liste brute.
- * Un projet dont les niveaux ne peuvent pas être lus est gardé avec une liste vide
- * plutôt que de faire échouer tout le dialogue de reprise pour un seul voisin.
+ * Tous les projets de l'agence pour la reprise d'un plan existant (Task 10), en
+ * UN SEUL appel : la liste sans cible porte désormais le RÉSUMÉ de ses niveaux
+ * (identifiant, nom, position, hauteur sous plafond) et jamais leur géométrie,
+ * qui n'est chargée que pour le niveau effectivement choisi
+ * (`getLevelGeometry`).
+ *
+ * C'est la correction d'un N+1 qui vidait le cache hors-ligne par la porte de
+ * derrière : un `getProject` par projet, jusqu'à 51 requêtes, toutes dans le
+ * cache Workbox `design3d-api` plafonné à 60 entrées (vite.config.js) — soit
+ * l'éviction de tout ce que l'agent avait mis de côté pour travailler Wi-Fi
+ * coupé. `listProjects()` sans cible reste borné et filtré par agence (Task 9) :
+ * cette liste ne fait donc jamais fuiter un autre périmètre.
  */
 export const listAgencyProjects = async () => {
   const { projects } = await listProjects()
-  return Promise.all(projects.map(async (p) => {
-    try {
-      const full = await getProject(p.id)
-      return { id: p.id, title: p.title, levels: full.levels || [] }
-    } catch {
-      return { id: p.id, title: p.title, levels: [] }
-    }
-  }))
+  return projects.map((p) => ({ id: p.id, title: p.title, levels: p.levels || [] }))
+}
+
+/**
+ * Le niveau CHOISI, géométrie comprise : une seule requête, celle de son projet.
+ * Renvoie `null` si le niveau n'y figure plus (supprimé entre l'affichage de la
+ * liste et le choix) — l'appelant doit le dire plutôt que reprendre un plan vide.
+ */
+export const getLevelGeometry = async (projectId, levelId) => {
+  const full = await getProject(projectId)
+  return (full.levels || []).find((lv) => lv.id === levelId) ?? null
 }
 
 export const updateProject = async (id, payload) => {
