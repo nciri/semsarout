@@ -185,5 +185,18 @@ describe('floorplan geometry', () => {
       const out = copyGeometry({ walls: [], rooms: [], openings: [{ id: 'o', wall_id: 'absent' }] })
       expect(out.openings).toEqual([])
     })
+
+    it('ne partage aucun point ni polygone par référence avec la source', () => {
+      const src = {
+        walls: [{ id: 'w1', a: { x: 0, y: 0 }, b: { x: 3, y: 0 }, thickness_m: 0.2 }],
+        rooms: [{ id: 'r1', type: 'living', polygon: [{ x: 0, y: 0 }, { x: 3, y: 0 }] }],
+        openings: [],
+      }
+      const out = copyGeometry(src)
+      expect(out.walls[0].a).not.toBe(src.walls[0].a)
+      expect(out.walls[0].b).not.toBe(src.walls[0].b)
+      expect(out.rooms[0].polygon).not.toBe(src.rooms[0].polygon)
+      expect(out.rooms[0].polygon[0]).not.toBe(src.rooms[0].polygon[0])
+    })
   })
 })

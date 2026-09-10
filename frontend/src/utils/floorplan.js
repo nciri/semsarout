@@ -106,11 +106,16 @@ export const rescaleGeometry = (geometry, factor) => ({
 // Copie ponctuelle et indépendante : aucun lien n'est gardé avec la source, qui n'est
 // jamais modifiée. Les identifiants sont régénérés pour éviter toute collision, et la
 // correspondance ouverture → mur est réécrite en conséquence.
+// Les points de murs et les sommets de polygones sont eux-mêmes copiés (pas seulement
+// les objets qui les portent) : un spread superficiel laisserait `a`/`b`/`polygon[i]`
+// partagés par référence avec la source, et un futur glissé qui les muterait en place
+// (patron courant en édition graphique) déplacerait alors un mur de la source depuis
+// la copie. Indépendance réelle, pas seulement apparente tant que rien ne mute en place.
 export function copyGeometry(geometry) {
   const wallIds = new Map((geometry.walls || []).map((w) => [w.id, newId()]))
   return {
-    walls: (geometry.walls || []).map((w) => ({ ...w, id: wallIds.get(w.id) })),
-    rooms: (geometry.rooms || []).map((r) => ({ ...r, id: newId() })),
+    walls: (geometry.walls || []).map((w) => ({ ...w, id: wallIds.get(w.id), a: { ...w.a }, b: { ...w.b } })),
+    rooms: (geometry.rooms || []).map((r) => ({ ...r, id: newId(), polygon: (r.polygon || []).map((p) => ({ ...p })) })),
     openings: (geometry.openings || [])
       .filter((o) => wallIds.has(o.wall_id))
       .map((o) => ({ ...o, id: newId(), wall_id: wallIds.get(o.wall_id) })),
