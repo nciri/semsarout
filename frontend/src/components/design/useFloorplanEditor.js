@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useReducer } from 'react'
-import { dist, projectPointOnWall, wallLength } from '../../utils/floorplan'
+import { dist, isPoint, projectPointOnWall, wallLength } from '../../utils/floorplan'
 
 /**
  * Cœur logique de l'éditeur de plan : un réducteur pur (aucun DOM, aucun réseau)
@@ -315,7 +315,13 @@ export function reducer(state, action) {
     // supprimant avec leurs ouvertures — même geste que DELETE_SELECTED sur un mur,
     // mais déclenché depuis le bandeau des problèmes plutôt qu'une sélection.
     case 'REPAIR_GEOMETRY': {
-      const keep = state.geometry.walls.filter((w) => wallLength(w) >= MIN_WALL_M)
+      // Le critère est celui du miroir serveur (`geometryProblems`), qui signale
+      // `wall_too_short` aussi bien pour un mur trop court que pour un mur dont
+      // une extrémité n'est PAS un point. Sur ce second cas, `wallLength` lève
+      // (extrémité absente) ou renvoie NaN : la réparation échouait donc sans le
+      // dire et le bouton « Corriger » restait muet, sur un niveau que le serveur
+      // refuse — une impasse. Tester les extrémités d'abord ferme les deux cas.
+      const keep = state.geometry.walls.filter((w) => isPoint(w?.a) && isPoint(w?.b) && wallLength(w) >= MIN_WALL_M)
       if (keep.length === state.geometry.walls.length) return state
       const ids = new Set(keep.map((w) => w.id))
       const geometry = {

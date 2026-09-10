@@ -145,7 +145,10 @@ const isFiniteNumber = (v) => typeof v === 'number' && Number.isFinite(v)
 
 const isPlainObject = (v) => typeof v === 'object' && v !== null && !Array.isArray(v)
 
-const isPoint = (p) => isPlainObject(p) && isFiniteNumber(p.x) && isFiniteNumber(p.y)
+// Exporté : la réparation depuis le bandeau des problèmes doit écarter un mur
+// EXACTEMENT sur le critère qui l'a signalé, sans redériver sa propre notion de
+// point valide (cf. REPAIR_GEOMETRY).
+export const isPoint = (p) => isPlainObject(p) && isFiniteNumber(p.x) && isFiniteNumber(p.y)
 
 // Problèmes structurés : même parcours que le miroir serveur, mais chaque entrée porte
 // son code, l'élément concerné, et si elle n'est qu'une CONSÉQUENCE d'un autre problème

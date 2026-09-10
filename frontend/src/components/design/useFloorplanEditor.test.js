@@ -99,6 +99,25 @@ describe('reducer — REPAIR_GEOMETRY', () => {
     const s = reducer(s0(), { type: 'ADD_WALL', wall: wall('w1') })
     expect(reducer(s, { type: 'REPAIR_GEOMETRY' })).toBe(s)
   })
+
+  it('répare un mur dont une extrémité n’est pas un point, au lieu de laisser « Corriger » sans effet', () => {
+    // Le miroir serveur signale ce mur comme `wall_too_short` — donc le bouton
+    // « Corriger » s'affiche — mais `wallLength` lève sur une extrémité absente :
+    // la réparation échouait sans le dire, laissant l'agent devant un niveau
+    // insynchronisable et un bouton muet.
+    let s = reducer(s0(), { type: 'ADD_WALL', wall: wall('w1') })
+    s = reducer(s, { type: 'ADD_OPENING', opening: { id: 'o1', wall_id: 'w1', type: 'door', offset_m: 1, width_m: 0.9, height_m: 2.1, sill_m: 0 } })
+    for (const [id, broken] of [['w2', { a: null, b: { x: 1, y: 0 } }], ['w3', {}], ['w4', { a: { x: 'x', y: 0 }, b: { x: 1, y: 0 } }]]) {
+      s = { ...s, geometry: { ...s.geometry, walls: [...s.geometry.walls, { id, thickness_m: 0.2, ...broken }] } }
+      s = { ...s, geometry: { ...s.geometry, openings: [...s.geometry.openings, { id: `o-${id}`, wall_id: id, type: 'door', offset_m: 0, width_m: 0.9, height_m: 2.1, sill_m: 0 }] } }
+    }
+
+    const repaired = reducer(s, { type: 'REPAIR_GEOMETRY' })
+
+    expect(repaired.geometry.walls.map((w) => w.id)).toEqual(['w1'])
+    expect(repaired.geometry.openings.map((o) => o.id)).toEqual(['o1'])
+    expect(repaired.selection).toBeNull()
+  })
 })
 
 describe('reducer — édition des éléments', () => {
