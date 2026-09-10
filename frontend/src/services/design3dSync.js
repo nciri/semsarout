@@ -328,6 +328,42 @@ export async function discardRefusedProject(projectId, { local = defaultLocal } 
 }
 
 /**
+ * Remplace le contenu local d'un niveau par sa version serveur, À LA DEMANDE
+ * explicite de l'utilisateur — jamais automatiquement.
+ *
+ * Sort du cul-de-sac laissé par un échec définitif (422/403/404) sur ce
+ * niveau (cf. C4) : `markSyncError` remet `dirty: false` une fois l'échec
+ * consigné, sans quoi le niveau resterait protégé du rafraîchissement pour
+ * toujours ; mais comme l'écriture refusée n'a jamais atteint le serveur, sa
+ * révision n'a pas bougé — `refreshFromServer` ne le remplacera donc JAMAIS
+ * (son test de fraîcheur, `lv.revision > cur.revision`, reste faux à jamais).
+ * Le niveau affiche alors indéfiniment un contenu que le serveur n'a jamais
+ * eu et n'aura jamais, sans autre issue que celle-ci.
+ *
+ * Contrairement à `refreshFromServer`, ignore délibérément `dirty` et la
+ * révision locale : ce n'est pas un rafraîchissement de fond, c'est un abandon
+ * explicite du contenu local au profit de celui du serveur. Toute opération
+ * encore en file pour ce niveau est retirée : la laisser repartirait avec le
+ * contenu qu'on vient précisément d'écarter.
+ */
+export async function discardLocalLevelEdit(levelId, { api = defaultApi, local = defaultLocal } = {}) {
+  const cur = await local.getLevel(levelId)
+  if (!cur) return false
+  const full = await api.getProject(cur.project_id)
+  const targetId = cur.server_id ?? levelId
+  const fresh = full.levels?.find((l) => l.id === targetId)
+  if (!fresh) return false
+  await local.dropQueued((op) => op.payload?.id === levelId)
+  await local.mutateLevel(levelId, (now0) => {
+    const now = now0 ?? cur
+    // eslint-disable-next-line no-unused-vars -- déstructuration volontaire pour omettre `sync_error`
+    const { sync_error, ...rest } = now
+    return mergedWithServer(rest, fresh, { base_revision: fresh.revision, dirty: false })
+  })
+  return true
+}
+
+/**
  * Nettoyage des niveaux laissés vides, à la sortie de l'éditeur et au chargement
  * de la liste des projets (qui rattrape ce qu'une session interrompue — onglet
  * fermé, tablette éteinte — n'a pas pu nettoyer en quittant).

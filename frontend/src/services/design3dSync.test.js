@@ -3,7 +3,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import * as local from './design3dLocal'
 import { isLevelEmpty } from './design3dLocal'
 import { newId } from '../utils/floorplan'
-import { applyLocal, cleanupEmpty, discardRefusedProject, runOnce, refreshFromServer, startEngine } from './design3dSync'
+import {
+  applyLocal, cleanupEmpty, discardRefusedProject, discardLocalLevelEdit, runOnce, refreshFromServer, startEngine,
+} from './design3dSync'
 
 const lvl = (over = {}) => ({ id: 'l'.repeat(32), project_id: 'p'.repeat(32), name: 'RDC', position: 0, revision: 0,
   wall_height_m: 2.7, calibration: null, geometry: { walls: [], rooms: [], openings: [] }, dirty: false, ...over })
@@ -432,6 +434,46 @@ describe('design3d sync engine', () => {
     expect(stored.sync_error.at).toEqual(expect.any(Number))
     expect(states.at(-1).state).toBe('error')
     expect(r.hasError).toBe(true)
+  })
+
+  it("un niveau refusé en 422 reste divergent pour toujours si rien ne peut le remplacer (C4) — discardLocalLevelEdit ouvre la sortie", async () => {
+    // Après le 422, le niveau est propre (dirty: false), sans opération en
+    // file, et sa géométrie locale — celle que le serveur a refusée — n'a
+    // aucune chance d'être un jour remplacée par refreshFromServer : la
+    // révision serveur n'a pas bougé (l'écriture a été rejetée), donc
+    // `lv.revision > cur.revision` ne sera jamais vrai. Sans une sortie
+    // explicite, ce niveau affiche indéfiniment un contenu que le serveur n'a
+    // jamais eu et n'aura jamais.
+    const api = fakeApi({
+      updateLevel: vi.fn(async () => { throw { response: { status: 422, data: { error: 'Géométrie invalide' } } } }),
+    })
+    const invalidGeometry = { walls: [{ id: 'w1', a: { x: 0, y: 0 }, b: { x: 0, y: 0 }, thickness_m: 0.2 }], rooms: [], openings: [] }
+    await applyLocal({ type: 'level.update', payload: { id: lvl().id, geometry: invalidGeometry, base_revision: 0 } }, { local })
+    await runOnce({ api, local, onState: () => {} })
+    let stored = await local.getLevel(lvl().id)
+    expect(stored.dirty).toBe(false)
+    expect(stored.sync_error).toBeTruthy()
+
+    // Rejouer refreshFromServer confirme l'impasse : rien ne change.
+    const validGeometry = { walls: [], rooms: [], openings: [] }
+    const apiRefresh = fakeApi({
+      sync: vi.fn(async () => ({ projects: [{ id: 'p'.repeat(32), levels: [{ id: lvl().id, revision: 0, shelved_count: 0 }] }] })),
+      getProject: vi.fn(async () => ({ id: 'p'.repeat(32), levels: [lvl({ revision: 0, geometry: validGeometry })] })),
+    })
+    await refreshFromServer({ api: apiRefresh, local })
+    stored = await local.getLevel(lvl().id)
+    expect(stored.geometry).toEqual(invalidGeometry)
+
+    // Remplacement explicite, à la demande de l'utilisateur : le contenu
+    // local refusé cède la place à la version serveur, et la trace d'échec
+    // est levée — sans jamais toucher au réseau au-delà de la lecture.
+    const replaced = await discardLocalLevelEdit(lvl().id, { api: apiRefresh, local })
+    expect(replaced).toBe(true)
+    stored = await local.getLevel(lvl().id)
+    expect(stored.geometry).toEqual(validGeometry)
+    expect(stored.dirty).toBe(false)
+    expect(stored.sync_error).toBeUndefined()
+    expect(await local.pendingCount()).toBe(0)
   })
 
   it('un 422 conserve le détail des problèmes renvoyé par le serveur', async () => {
