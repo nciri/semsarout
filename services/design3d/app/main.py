@@ -237,12 +237,44 @@ def create_level(project_id: str, body: LevelCreateIn, principal: Principal = De
     return JSONResponse(lv.to_dict(), status_code=201)
 
 
-def _load_level(db: Session, level_id: str, principal: Principal):
-    lv = db.get(DesignLevel, level_id)
+def _load_level(db: Session, level_id: str, principal: Principal, *, for_update: bool = False):
+    """`for_update` : à réserver aux chemins qui ÉCRIVENT le niveau (voir `_claim_level`).
+
+    Un verrou de ligne pris sur les lectures — publiques comprises — sérialiserait
+    l'affichage d'une annonce derrière la moindre édition en cours.
+    """
+    lv = db.get(DesignLevel, level_id, with_for_update=for_update or None)
     if lv is None:
         return None, None, _err("Not found", 404)
     p, err = _load(db, lv.project_id, principal)
     return (None, None, err) if err else (lv, p, None)
+
+
+def _claim_level(db: Session, lv: DesignLevel) -> bool:
+    """Réserve la révision suivante du niveau, ou renonce si un autre l'a déjà prise.
+
+    Le contrôle `base_revision` ne compare qu'à la révision LUE au début de la
+    requête : deux écritures concurrentes du même auteur, parties de la même
+    `base_revision`, le passaient toutes les deux, la seconde écrasant la
+    première sans conflit ni mise sur l'étagère — et la révision n'avançait que
+    d'un cran pour deux écritures. La politique « le propriétaire gagne +
+    étagère » est inchangée : elle s'applique toujours en amont, sur la révision
+    lue sous verrou.
+
+    Deux protections superposées, parce qu'aucune ne suffit seule :
+    `_load_level(for_update=True)` sérialise les transactions sur PostgreSQL (la
+    seconde attend, puis relit la révision publiée par la première) ; ce
+    `UPDATE … WHERE revision = :lue` garantit l'absence de mise à jour perdue
+    même là où le verrou n'est pas honoré — SQLite, sur lequel tourne la suite.
+    """
+    claimed = (db.query(DesignLevel)
+                 .filter(DesignLevel.id == lv.id, DesignLevel.revision == lv.revision)
+                 .update({DesignLevel.revision: DesignLevel.revision + 1}, synchronize_session=False))
+    return claimed == 1
+
+
+def _concurrent_write() -> JSONResponse:
+    return _err("Ce niveau vient d'être modifié, réessayez", 409)
 
 
 @app.delete("/design3d/levels/{level_id}", status_code=204)
@@ -269,7 +301,7 @@ def _shelve(db: Session, lv: DesignLevel, author_id: int, geometry, calibration,
 
 @app.put("/design3d/levels/{level_id}")
 def update_level(level_id: str, body: LevelUpdateIn, principal: Principal = Depends(_design3d), db: Session = Depends(get_db)):
-    lv, p, err = _load_level(db, level_id, principal)
+    lv, p, err = _load_level(db, level_id, principal, for_update=True)
     if err:
         return err
     uid = _uid(principal)
@@ -294,6 +326,9 @@ def update_level(level_id: str, body: LevelUpdateIn, principal: Principal = Depe
         if lv.revision_author_id not in (None, p.owner_id):
             _shelve(db, lv, lv.revision_author_id, lv.geometry, lv.calibration, float(lv.wall_height_m), lv.revision)
             shelved = True
+    if not _claim_level(db, lv):
+        db.rollback()
+        return _concurrent_write()
     for field in ("name", "position", "show_background_public"):
         v = getattr(body, field)
         if v is not None:
@@ -375,13 +410,17 @@ class RecalibrateIn(BaseModel):
 
 @app.post("/design3d/levels/{level_id}/recalibrate")
 def recalibrate(level_id: str, body: RecalibrateIn, principal: Principal = Depends(_design3d), db: Session = Depends(get_db)):
-    lv, p, err = _load_level(db, level_id, principal)
+    lv, p, err = _load_level(db, level_id, principal, for_update=True)
     if err:
         return err
     if body.base_revision != lv.revision:
         return JSONResponse({"error": "Version obsolète", "level": lv.to_dict()}, status_code=409)
     new = body.calibration.model_dump()
-    lv.geometry = rescale(lv.geometry or dict(EMPTY_GEOMETRY), calibration_scale(lv.calibration, new))
+    geometry = rescale(lv.geometry or dict(EMPTY_GEOMETRY), calibration_scale(lv.calibration, new))
+    if not _claim_level(db, lv):
+        db.rollback()
+        return _concurrent_write()
+    lv.geometry = geometry
     lv.calibration = new
     lv.revision += 1
     lv.revision_author_id = _uid(principal)
@@ -392,7 +431,9 @@ def recalibrate(level_id: str, body: RecalibrateIn, principal: Principal = Depen
 
 @app.post("/design3d/levels/{level_id}/background")
 async def upload_background(level_id: str, file: UploadFile = File(...), principal: Principal = Depends(_design3d), db: Session = Depends(get_db)):
-    lv, p, err = _load_level(db, level_id, principal)
+    # Verrou de ligne comme les autres écritures ; pas de réservation de révision,
+    # le fond de plan n'incrémente pas `revision` (contrat du client hors-ligne).
+    lv, p, err = _load_level(db, level_id, principal, for_update=True)
     if err:
         return err
     ext = _IMAGE_TYPES.get(file.content_type or "")

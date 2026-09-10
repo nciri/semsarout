@@ -141,3 +141,47 @@ def test_sync_summary_scoped(client, headers):
     assert [p["id"] for p in r["projects"]] == [pid]
     lv = r["projects"][0]["levels"][0]
     assert lv["id"] == lid and lv["revision"] == 1 and lv["shelved_count"] == 1
+
+
+def test_deux_ecritures_concurrentes_du_meme_auteur_ne_se_perdent_pas(client, headers, db_session, monkeypatch):
+    """B1 : la lecture-modification-écriture d'un niveau doit être sérialisée.
+
+    Le contrôle `base_revision` ne voit que la révision lue AVANT la requête
+    concurrente : deux écritures du même auteur partant de la même révision
+    passaient toutes les deux, la seconde écrasant la première sans conflit ni
+    mise sur l'étagère — la révision n'avançant que d'un cran pour deux
+    écritures.
+    """
+    from sqlalchemy.orm import sessionmaker
+
+    import app.main as m
+    from app.models import DesignLevel
+
+    _, lid = _project(client, headers)
+    assert _put(client, headers, lid, 0, G1, user_id=1, agency_id=9).status_code == 200
+
+    other_session = sessionmaker(bind=db_session.get_bind(), autoflush=False, expire_on_commit=False)
+    real_validate = m.validate_geometry
+    fired: list[bool] = []
+
+    def _concurrent_write(*args, **kwargs):
+        # Une AUTRE transaction publie sa révision entre notre lecture et notre écriture.
+        if not fired:
+            fired.append(True)
+            s = other_session()
+            lv = s.get(DesignLevel, lid)
+            lv.geometry = G2
+            lv.revision += 1
+            lv.revision_author_id = 1
+            s.commit()
+            s.close()
+        return real_validate(*args, **kwargs)
+
+    monkeypatch.setattr(m, "validate_geometry", _concurrent_write)
+    r = _put(client, headers, lid, 1, G1, user_id=1, agency_id=9)
+    assert fired, "le point d'injection n'a pas été atteint"
+    assert r.status_code == 409, r.text
+    db_session.expire_all()
+    stored = db_session.get(DesignLevel, lid)
+    assert stored.geometry == G2, "l'écriture concurrente a été perdue"
+    assert stored.revision == 2
