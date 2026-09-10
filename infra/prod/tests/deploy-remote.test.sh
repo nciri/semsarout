@@ -37,6 +37,31 @@ contains() { if grep -qF -- "$2" "$3" 2>/dev/null; then ok "$1"; else ko "$1"; f
 absent() { if [ -e "$3" ] && grep -qF -- "$2" "$3" 2>/dev/null; then ko "$1"; else ok "$1"; fi; }
 file_absent() { if [ -e "$2" ]; then ko "$1"; else ok "$1"; fi; }
 
+# --- garde-fou : MIGRATIONS porte une entrée par migration additive sur disque ---
+# L'en-tête de MIGRATIONS dans deploy-remote.sh énonce l'invariant « une entrée par
+# `services/*/db/*.sql` hors schema.sql et migrate_from_monolith.sql », mais rien ne le
+# vérifiait jusqu'ici — c'est précisément ce qui a laissé passer identity/
+# add_features_synced_at.sql (corrigé en f6fc320) puis cinq autres. Une migration
+# additive absente de MIGRATIONS n'est JAMAIS jouée en production : create_all crée les
+# tables manquantes mais n'ALTERe jamais une table existante.
+# Exclusion motivée, pas une liste d'exceptions à rallonge :
+#  - schema.sql n'est jamais rejoué tel quel (son CREATE ROLE nu n'est pas idempotent,
+#    cf. le commentaire au-dessus de `ensure_db_and_env` dans deploy-remote.sh) ;
+#  - migrate_from_monolith.sql vise la bascule depuis le monolithe legacy, hors
+#    périmètre du mesh (jouée une fois, hors de ce script).
+echo "== garde-fou : une entrée MIGRATIONS par migration additive sur disque =="
+declared_migrations="$(sed -n '/^MIGRATIONS="$/,/^"$/p' "$SCRIPT" | sed '1d;$d' | sort)"
+disk_migrations="$(find "$ROOT/services" -path '*/db/*.sql' \
+  ! -name 'schema.sql' ! -name 'migrate_from_monolith.sql' \
+  | sed -E 's#.*/services/([^/]+)/db/#\1/#' | sort)"
+missing_migrations="$(comm -23 <(printf '%s\n' "$disk_migrations") <(printf '%s\n' "$declared_migrations"))"
+if [ -z "$missing_migrations" ]; then
+  ok "toute migration additive sur disque figure dans MIGRATIONS"
+else
+  ko "toute migration additive sur disque figure dans MIGRATIONS"
+  echo "$missing_migrations" | sed 's/^/      manquante: /'
+fi
+
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
@@ -323,6 +348,24 @@ fi
 contains "les migrations additives sont rejouées (idempotentes)" "has_design3d" "$SQL_LOG"
 contains "…migrate_design3d_entitlement.sql aussi, sans effet de bord au rejeu" \
   "IN ('pro', 'enterprise')" "$SQL_LOG"
+# Les cinq migrations ajoutées par A5 (identity/migrate_didit.sql, listing/migrate_condo.sql,
+# listing/migrate_price_period.sql, coloc-listing/migrate_condo.sql,
+# messaging/migrate_notification.sql) sont rejouées ici sans erreur pour la SECONDE fois
+# consécutive (run1 puis run2) : run2_status déjà vérifié à 0 ci-dessus le prouve pour
+# l'ensemble de MIGRATIONS, mais on vérifie aussi que chacune est bien réémise (donc pas
+# silencieusement sautée) et non pas la cause d'un échec absorbé par erreur.
+contains "…identity/migrate_didit.sql rejouée au 2e passage sans erreur" \
+  "ADD COLUMN IF NOT EXISTS didit_session_id" "$SQL_LOG"
+contains "…listing/migrate_condo.sql rejouée au 2e passage sans erreur" \
+  "listing.property ADD COLUMN IF NOT EXISTS is_condo" "$SQL_LOG"
+contains "…listing/migrate_price_period.sql rejouée au 2e passage sans erreur" \
+  "listing.property ADD COLUMN IF NOT EXISTS price_period" "$SQL_LOG"
+contains "…coloc-listing/migrate_condo.sql rejouée au 2e passage sans erreur" \
+  "coloc_listing.listings ADD COLUMN IF NOT EXISTS is_condo" "$SQL_LOG"
+contains "…messaging/migrate_notification.sql rejouée au 2e passage sans erreur" \
+  "messaging.conversation" "$SQL_LOG"
+contains "…et son ALTER de colonne tenant précisément" \
+  "ADD COLUMN IF NOT EXISTS tenant" "$SQL_LOG"
 
 # --- exécution 3 : le contrôle de routage BFF doit mordre ---------------------
 echo "== exécution 3 (BFF ne routant pas vers design3d) =="

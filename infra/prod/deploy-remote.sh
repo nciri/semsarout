@@ -68,9 +68,14 @@ NEW_SERVICES="design3d 8526"
 MIGRATIONS="
 identity/add_tenant.sql
 identity/add_features_synced_at.sql
+identity/migrate_didit.sql
 identity/add_rental_feature.sql
 messaging/migrate_conversation.sql
+messaging/migrate_notification.sql
 rental/migrate_particulier_lease.sql
+listing/migrate_condo.sql
+listing/migrate_price_period.sql
+coloc-listing/migrate_condo.sql
 billing/migrate_commission_invoice.sql
 billing/migrate_design3d.sql
 billing/migrate_design3d_entitlement.sql
