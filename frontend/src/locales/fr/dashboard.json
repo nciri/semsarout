@@ -1251,7 +1251,8 @@
       "title": "Module conception 3D",
       "body": "Ce module vous permet de relever un plan sur tablette, même sans connexion, puis de le publier en 3D sur vos annonces.",
       "cta": "Activer dans mon abonnement",
-      "upsell": "Module conception 3D — à activer"
+      "upsell": "Module conception 3D — à activer",
+      "needsSave": "Concevoir en 3D — enregistrez d'abord le bien"
     },
     "tools": {
       "select": "Sélectionner",

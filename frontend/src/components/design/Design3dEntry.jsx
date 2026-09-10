@@ -8,7 +8,7 @@ import useAuthStore from '../../store/authStore'
  * point d'entrée disparaît (variante `compact`, dans une ligne de tableau) ou
  * devient une invitation à l'activer (variante pleine).
  */
-export default function Design3dEntry({ targetType, targetId, compact = false, className = '' }) {
+export default function Design3dEntry({ targetType, targetId, compact = false, disabled = false, className = '' }) {
   const { t } = useTranslation(['dashboard'])
   const hasFeature = useAuthStore((s) => s.hasFeature)
   const to = `/dashboard/conception?target_type=${targetType}&target_id=${targetId}`
@@ -23,6 +23,18 @@ export default function Design3dEntry({ targetType, targetId, compact = false, c
         <FiBox className="w-4 h-4" />
         {t('dashboard:designEditor.entitlement.upsell')}
       </Link>
+    )
+  }
+
+  if (disabled) {
+    return (
+      <span
+        className={`inline-flex items-center gap-2 min-h-[44px] px-3 text-gray-400 ${className}`}
+        title={t('dashboard:designEditor.entitlement.needsSave')}
+      >
+        <FiBox className="w-4 h-4" />
+        {t('dashboard:designEditor.entitlement.needsSave')}
+      </span>
     )
   }
 

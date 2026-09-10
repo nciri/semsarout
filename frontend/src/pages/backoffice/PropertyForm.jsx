@@ -11,6 +11,7 @@ import { DIRHAM_SYMBOL } from '../../utils/currency'
 import DirIcon from '../../components/common/DirIcon'
 import api from '../../services/api'
 import { CondoFeesField } from '../../components/property/CondoFeesField'
+import Design3dEntry from '../../components/design/Design3dEntry'
 
 const backofficeService = {
   getProperty: async (id) => {
@@ -606,6 +607,7 @@ export default function BackofficePropertyForm() {
 
         {/* Submit */}
         <div className="flex items-center justify-end gap-4">
+          <Design3dEntry targetType="property" targetId={id} disabled={!id} />
           <button
             type="button"
             onClick={() => navigate('/backoffice/biens')}

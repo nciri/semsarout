@@ -1555,6 +1555,7 @@
         "edit": "تعديل",
         "newTransaction": "معاملة جديدة",
         "delete": "حذف",
+        "actionsMenu": "الإجراءات",
         "viewsCount_one": "{{count}} مشاهدة",
         "viewsCount_other": "{{count}} مشاهدة",
         "previous": "السابق",

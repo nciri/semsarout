@@ -1555,6 +1555,7 @@
         "edit": "Modifier",
         "newTransaction": "Nouvelle transaction",
         "delete": "Supprimer",
+        "actionsMenu": "Actions",
         "viewsCount_one": "{{count}} vue",
         "viewsCount_other": "{{count}} vues",
         "previous": "Précédent",
