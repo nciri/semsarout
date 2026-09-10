@@ -61,22 +61,39 @@ export function openDb() {
  * `purgeRuntimeCaches()`.
  *
  * Règle : ne jamais détruire un travail que le serveur n'a pas reçu. Si la file
- * d'attente est vide, la base du compte partant est supprimée ; s'il reste des
+ * d'attente est vide, la base du compte partant est vidée ; s'il reste des
  * éditions en attente, elle est conservée — elle porte le nom de ce compte, et
  * reste donc invisible pour l'agent suivant, tout en attendant le retour du
  * sien. Ne lève jamais : la déconnexion ne doit dépendre d'aucun stockage.
+ *
+ * Compter l'outbox puis décider (garder / effacer) DANS LA MÊME transaction
+ * `readwrite`, portant sur les quatre magasins : IndexedDB sérialise les
+ * transactions qui se recouvrent, donc aucune écriture concurrente — une
+ * édition de l'éditeur, un rejeu du moteur — ne peut plus s'intercaler entre
+ * le comptage et la suppression (cf. C5). Une transaction bloquée en attente
+ * de la nôtre s'exécute normalement une fois la nôtre validée : si elle ajoute
+ * une opération après que nous avons vidé les magasins, cette opération
+ * survit dans la base (désormais vide) au lieu d'être détruite avec elle.
+ *
+ * Vider les magasins plutôt qu'appeler `deleteDB` : cette dernière exige la
+ * fermeture de TOUTES les connexions puis agit hors transaction — elle
+ * rouvrirait exactement la fenêtre non atomique que cette fonction referme.
  */
 export async function purgeLocalData(userId = currentUserId()) {
   const name = dbNameFor(userId)
   try {
     const isCurrent = dbName === name && !!dbp
     const db = await (isCurrent ? dbp : open(name))
-    const pending = await db.count('outbox')
+    const stores = ['projects', 'levels', 'backgrounds', 'outbox']
+    const tx = db.transaction(stores, 'readwrite')
+    const pending = await tx.objectStore('outbox').count()
+    if (pending === 0) {
+      await Promise.all(stores.map((s) => tx.objectStore(s).clear()))
+    }
+    await tx.done
     if (isCurrent) forgetDb()
     db.close()
-    if (pending > 0) return 'kept'
-    await deleteDB(name)
-    return 'deleted'
+    return pending > 0 ? 'kept' : 'deleted'
   } catch {
     return 'unavailable'
   }

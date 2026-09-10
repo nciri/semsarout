@@ -73,6 +73,26 @@ describe('design3dLocal — cloisonnement par compte et purge à la déconnexion
     expect(await local.pendingCount()).toBe(1)
   })
 
+  it("une édition qui entre dans la file PENDANT la purge n'est jamais détruite (C5)", async () => {
+    asUser(8)
+    await local.putProject(project('f'.repeat(32)))
+    // Rien en file au moment de lancer la purge : elle est censée tout effacer.
+    expect(await local.pendingCount()).toBe(0)
+
+    const purge = local.purgeLocalData(8)
+    // Le moteur (ou l'éditeur) empile une édition PENDANT que la purge est en
+    // cours — la fenêtre entre le comptage de l'outbox et la suppression de
+    // la base, que le comptage et la décision doivent fermer.
+    const enqueued = local.enqueue({ type: 'level.update', payload: { id: 'l'.repeat(32) } })
+    await Promise.all([purge, enqueued])
+
+    asUser(8)
+    // Quel que soit le résultat rendu par purgeLocalData ('kept' ou 'deleted'),
+    // le travail entré dans la file pendant la purge ne doit jamais avoir
+    // disparu : c'est précisément la règle que sa docstring promet.
+    expect(await local.pendingCount()).toBeGreaterThan(0)
+  })
+
   it('logout() purge la base des plans, comme il purge le cache du service worker', async () => {
     asUser(6)
     useAuthStore.setState({ user: { id: 6 }, accessToken: 'jeton', isAuthenticated: true })
