@@ -89,6 +89,61 @@ class Invoice(Base):
     last_reminder_at = Column(DateTime)           # date de la dernière relance (cadence)
 
 
+class ServicePrice(Base):
+    """Catalogue des prestations facturables — SEULE source d'un montant de prestation.
+
+    Le prix vivait auparavant en quatre endroits, dont un seul (`payment.SERVICE_PRICES`) faisait
+    autorité sur ce qui était réellement prélevé : porter le forfait de 4 900 à 9 900 demandait
+    d'en toucher huit, et en oublier un affichait un prix pour en prélever un autre.
+
+    `code` est l'identifiant que porte `Payment.service_id` : il n'est jamais renommé ni
+    supprimé, sans quoi l'historique des paiements déjà encaissés deviendrait illisible. Une
+    prestation retirée de l'offre passe `is_active = False` (I7).
+    """
+
+    __tablename__ = "service_price"
+
+    code = Column(String(40), primary_key=True)
+    amount = Column(Numeric(10, 2), nullable=False)
+    currency = Column(String(3), nullable=False, default="MAD")
+    kind = Column(String(20), nullable=False, default="one_off")  # one_off | recurring_monthly
+    is_active = Column(Boolean, nullable=False, default=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_by = Column(Integer)
+
+    def to_dict(self, internal: bool = False) -> dict:
+        d = {"code": self.code, "amount": float(self.amount), "currency": self.currency,
+             "kind": self.kind}
+        if internal:
+            d["is_active"] = bool(self.is_active)
+        return d
+
+
+class PriceChange(Base):
+    """Historique des changements de prix. Écrit dans la MÊME transaction que la mutation : un
+    montant modifié sans trace est un montant dont personne ne peut dire d'où il vient (I4).
+
+    `code` vaut le code de prestation, ou `plan:<slug>:monthly` / `plan:<slug>:yearly` pour un
+    abonnement — dont le prix reste porté par `subscription_plan`, qui contient bien plus qu'un
+    montant (quotas, indicateurs `has_*`).
+    """
+
+    __tablename__ = "price_change"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    code = Column(String(60), nullable=False, index=True)
+    old_amount = Column(Numeric(10, 2))
+    new_amount = Column(Numeric(10, 2), nullable=False)
+    changed_by = Column(Integer)
+    changed_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self) -> dict:
+        return {"id": self.id, "code": self.code,
+                "old_amount": float(self.old_amount) if self.old_amount is not None else None,
+                "new_amount": float(self.new_amount), "changed_by": self.changed_by,
+                "changed_at": self.changed_at.isoformat() if self.changed_at else None}
+
+
 class ProcessedMessage(Base):
     __tablename__ = "processed_message"
 

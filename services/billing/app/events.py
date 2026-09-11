@@ -1,3 +1,5 @@
 """Événements publiés par billing."""
 INVOICE_CREATED = "billing.invoice.created"
 SUBSCRIPTION_ACTIVATED = "billing.subscription.activated"
+SERVICE_PRICE_CHANGED = "billing.service_price.changed"
+PLAN_CHANGED = "billing.plan.changed"

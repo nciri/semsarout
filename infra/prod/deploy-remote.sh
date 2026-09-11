@@ -81,6 +81,7 @@ billing/migrate_commission_invoice.sql
 billing/migrate_design3d.sql
 billing/migrate_design3d_entitlement.sql
 billing/migrate_payment_failure.sql
+billing/migrate_pricing.sql
 identity/reset_features_sync_design3d.sql
 "
 

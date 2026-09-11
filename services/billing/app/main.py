@@ -16,18 +16,18 @@ actif avant l'ajout de l'événement)."""
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
-from fastapi import Depends, FastAPI, Header, Request, Response
+from fastapi import Depends, FastAPI, Header, Query, Request, Response
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import extract
 from sqlalchemy.orm import Session
 
-from semsar_auth import Principal, get_principal
+from semsar_auth import Principal, get_principal, require_superadmin
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 from semsar_events import enqueue
 
 from . import events, seats_client
 from .db import get_db, init_db
-from .models import Invoice, Subscription, SubscriptionPlan
+from .models import Invoice, PriceChange, ServicePrice, Subscription, SubscriptionPlan
 from .plans import plan_features
 from .util import err, iso, json_body
 
@@ -349,6 +349,131 @@ def internal_issue_renewals(x_internal_token: str = Header(default=""), db: Sess
                        "agency_id": sub.agency_id})
     db.commit()
     return {"issued": issued}
+
+
+# ---- Catalogue tarifaire (spec 2026-09-12) -----------------------------------------------
+# `service_price` est la SEULE source d'un montant de prestation : le site l'affiche et payment
+# s'en sert pour prélever, via une projection. Les abonnements gardent `subscription_plan`, qui
+# porte bien plus qu'un prix.
+
+
+def _uid(principal: Principal) -> int | None:
+    """`Principal.sub` est une chaîne (revendication JWT) : l'auteur d'un changement de prix est
+    consigné en entier, ou pas du tout plutôt que faux."""
+    try:
+        return int(principal.sub)
+    except (TypeError, ValueError):
+        return None
+
+
+def _plan_price_dict(p: SubscriptionPlan) -> dict:
+    return {"id": p.id, "slug": p.slug, "name": p.name,
+            "price_monthly": float(p.price_monthly) if p.price_monthly is not None else None,
+            "price_yearly": float(p.price_yearly) if p.price_yearly is not None else None}
+
+
+def _trace_price(db: Session, code: str, old, new, by: int | None) -> None:
+    """Historique écrit dans la MÊME transaction que la mutation (I4)."""
+    db.add(PriceChange(code=code, old_amount=old, new_amount=new, changed_by=by))
+
+
+@app.get("/pricing")
+def public_pricing(db: Session = Depends(get_db)):
+    """Tarifs publics — une seule requête pour tout le site. N'expose que l'actif : une
+    prestation retirée de l'offre ne doit plus s'afficher, même si elle reste en base."""
+    services = (db.query(ServicePrice).filter(ServicePrice.is_active.is_(True))
+                .order_by(ServicePrice.code).all())
+    plans = (db.query(SubscriptionPlan).filter(SubscriptionPlan.is_active.is_(True))
+             .order_by(SubscriptionPlan.price_monthly).all())
+    return {"services": [s.to_dict() for s in services],
+            "plans": [_plan_price_dict(p) for p in plans]}
+
+
+@app.get("/internal/service-prices", include_in_schema=False)
+def internal_service_prices(x_internal_token: str = Header(default=""),
+                            db: Session = Depends(get_db)):
+    """Amorçage de la projection de payment. Porte AUSSI l'inactif : payment doit pouvoir
+    refuser un code retiré de l'offre en le connaissant, plutôt que de le confondre avec un
+    code inexistant. Sans cet endpoint, un payment neuf refuserait tout paiement jusqu'au
+    premier changement de prix."""
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    services = db.query(ServicePrice).order_by(ServicePrice.code).all()
+    plans = db.query(SubscriptionPlan).all()
+    return {"services": [s.to_dict(internal=True) for s in services],
+            "plans": [_plan_price_dict(p) for p in plans]}
+
+
+@app.put("/admin/service-prices/{code}")
+def admin_set_service_price(code: str, body: dict = Depends(json_body),
+                            principal: Principal = Depends(require_superadmin),
+                            db: Session = Depends(get_db)):
+    try:
+        amount = float(body.get("amount"))
+    except (TypeError, ValueError):
+        return err("Montant invalide", 422)
+    # Fail-closed : un montant nul ou négatif prélèverait ou rendrait de l'argent à tort.
+    if amount <= 0:
+        return err("Le montant doit être strictement positif", 422)
+    sp = db.get(ServicePrice, code)
+    if sp is None:
+        return err("Prestation inconnue", 404)
+    _trace_price(db, code, sp.amount, amount, _uid(principal))
+    sp.amount = amount
+    sp.updated_by = _uid(principal)
+    enqueue(db, "service_price", code, events.SERVICE_PRICE_CHANGED,
+            {"code": code, "amount": amount, "kind": sp.kind, "is_active": bool(sp.is_active)})
+    db.commit()
+    return {"service_price": sp.to_dict(internal=True)}
+
+
+@app.patch("/admin/service-prices/{code}")
+def admin_toggle_service_price(code: str, body: dict = Depends(json_body),
+                               principal: Principal = Depends(require_superadmin),
+                               db: Session = Depends(get_db)):
+    """Retirer une prestation de l'offre sans la supprimer : son code reste porté par des
+    paiements passés (I7)."""
+    sp = db.get(ServicePrice, code)
+    if sp is None:
+        return err("Prestation inconnue", 404)
+    sp.is_active = bool(body.get("is_active"))
+    sp.updated_by = _uid(principal)
+    enqueue(db, "service_price", code, events.SERVICE_PRICE_CHANGED,
+            {"code": code, "amount": float(sp.amount), "kind": sp.kind,
+             "is_active": bool(sp.is_active)})
+    db.commit()
+    return {"service_price": sp.to_dict(internal=True)}
+
+
+@app.put("/admin/subscription-plans/{plan_id}")
+def admin_set_plan_price(plan_id: int, body: dict = Depends(json_body),
+                         principal: Principal = Depends(require_superadmin),
+                         db: Session = Depends(get_db)):
+    plan = db.get(SubscriptionPlan, plan_id)
+    if plan is None:
+        return err("Plan inconnu", 404)
+    by = _uid(principal)
+    for field, cycle in (("price_monthly", "monthly"), ("price_yearly", "yearly")):
+        if body.get(field) is None:
+            continue
+        try:
+            amount = float(body[field])
+        except (TypeError, ValueError):
+            return err("Montant invalide", 422)
+        if amount <= 0:
+            return err("Le montant doit être strictement positif", 422)
+        _trace_price(db, f"plan:{plan.slug}:{cycle}", getattr(plan, field), amount, by)
+        setattr(plan, field, amount)
+    enqueue(db, "subscription_plan", plan.id, events.PLAN_CHANGED, _plan_price_dict(plan))
+    db.commit()
+    return {"plan": _plan_price_dict(plan)}
+
+
+@app.get("/admin/price-changes")
+def admin_price_changes(principal: Principal = Depends(require_superadmin),
+                        db: Session = Depends(get_db), limit: int = Query(10, ge=1, le=100)):
+    rows = db.query(PriceChange).order_by(PriceChange.id.desc()).limit(limit).all()
+    return {"changes": [r.to_dict() for r in rows]}
 
 
 @app.get("/subscription-plans")
