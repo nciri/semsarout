@@ -56,6 +56,24 @@ describe('floorplan geometry', () => {
     expect(metersToNormalized(m, cal, aspect)).toEqual({ x: 0.5, y: 0.75 })
   })
 
+  it("rescaleGeometry tolère les champs absents, comme le serveur (miroir)", () => {
+    // `app/geometry.py::rescale` renvoie désormais un point ou une ouverture
+    // incomplets TELS QUELS (B3) : `validate_geometry` fait défaut `offset_m` à
+    // 0, donc la géométrie stockée peut légitimement en être dépourvue. Le
+    // miroir client, lui, faisait `o.offset_m * factor` — soit `NaN`, sérialisé
+    // `null`, que le serveur rejette ensuite en 422 sur un champ que l'agent
+    // n'a jamais touché. Et `scalePoint(w.a)` levait sur un mur sans `a`.
+    const g = rescaleGeometry({
+      walls: [{ id: 'w1', b: { x: 3, y: 0 }, thickness_m: 0.2 }],
+      rooms: [{ id: 'r1' }],
+      openings: [{ id: 'o1', wall_id: 'w1', type: 'door', width_m: 0.9 }],
+    }, 2)
+    expect(g.openings[0].offset_m).toBeUndefined()
+    expect(g.walls[0].a).toBeUndefined()
+    expect(g.walls[0].b).toEqual({ x: 6, y: 0 })
+    expect(g.rooms[0]).toEqual({ id: 'r1' })
+  })
+
   it('rescaleGeometry mirrors server (positions/offset only, not real dimensions)', () => {
     const g = rescaleGeometry({ walls: [W], rooms: [], openings: [{ id: 'o', wall_id: 'w1', type: 'door', offset_m: 1, width_m: 0.9, height_m: 2.1, sill_m: 0 }] }, 2)
     expect(g.walls[0].b).toEqual({ x: 8, y: 0 })

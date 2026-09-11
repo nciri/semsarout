@@ -92,15 +92,35 @@ export function metersToNormalized(pM, calibration, imageAspect) {
   return { x: pM.x / widthM, y: pM.y / heightM }
 }
 
-const scalePoint = (p, factor) => ({ x: p.x * factor, y: p.y * factor })
+const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
+
+// Un point incomplet est renvoyé tel quel, comme `app/geometry.py::_pt` : mettre à
+// l'échelle une coordonnée absente reviendrait à inventer de la géométrie, et
+// `undefined * factor` vaut `NaN` — sérialisé `null`, que le serveur rejette ensuite
+// en 422 sur un champ que l'agent n'a jamais touché.
+const scalePoint = (p, factor) => (
+  p && isNum(p.x) && isNum(p.y) ? { x: p.x * factor, y: p.y * factor } : p
+)
 
 // Miroir exact de app/geometry.py::rescale : seules les positions (points de murs, sommets de
 // polygones) et offset_m sont mises à l'échelle. thickness_m, width_m, height_m et sill_m sont
 // des dimensions réelles saisies par l'agent — elles ne changent jamais avec la calibration.
+//
+// La tolérance aux champs absents fait PARTIE du miroir : `validate_geometry` fait
+// défaut `offset_m` à 0, donc une géométrie stockée peut légitimement en être
+// dépourvue, et le serveur la traverse sans la dénaturer.
 export const rescaleGeometry = (geometry, factor) => ({
-  walls: (geometry.walls || []).map((w) => ({ ...w, a: scalePoint(w.a, factor), b: scalePoint(w.b, factor) })),
-  rooms: (geometry.rooms || []).map((r) => ({ ...r, polygon: (r.polygon || []).map((p) => scalePoint(p, factor)) })),
-  openings: (geometry.openings || []).map((o) => ({ ...o, offset_m: o.offset_m * factor })),
+  walls: (geometry.walls || []).map((w) => ({
+    ...w,
+    ...('a' in w ? { a: scalePoint(w.a, factor) } : {}),
+    ...('b' in w ? { b: scalePoint(w.b, factor) } : {}),
+  })),
+  rooms: (geometry.rooms || []).map((r) => (
+    Array.isArray(r.polygon) ? { ...r, polygon: r.polygon.map((p) => scalePoint(p, factor)) } : r
+  )),
+  openings: (geometry.openings || []).map((o) => (
+    isNum(o.offset_m) ? { ...o, offset_m: o.offset_m * factor } : o
+  )),
 })
 
 // Copie ponctuelle et indépendante : aucun lien n'est gardé avec la source, qui n'est
