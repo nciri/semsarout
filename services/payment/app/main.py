@@ -179,6 +179,14 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
         db.commit()
     elif status == "failed":
         p.status = "failed"
+        # Un échec n'émettait rien : ni billing ni l'agence n'en apprenaient l'existence. La
+        # passerelle simulée ne fournit pas de motif ; le câblage le porte déjà pour l'intégration
+        # CMI réelle. `failed` est terminal (`_TERMINAL`) : un webhook rejoué n'émet pas deux fois.
+        enqueue(db, "payment", p.id, events.PAYMENT_FAILED, {
+            "payment_id": p.id, "agency_id": p.agency_id, "user_id": p.user_id,
+            "purpose": p.payment_type,
+            "reason_code": str(data.get("reason_code") or "unknown")[:50],
+            "reason_label": str(data["reason"])[:255] if data.get("reason") else None})
         db.commit()
 
     return {"status": "ok"}
