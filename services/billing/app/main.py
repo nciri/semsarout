@@ -256,6 +256,14 @@ def internal_subscriptions_stats(x_internal_token: str = Header(default=""),
 _FIRST_REMINDER_DAYS = 3
 _REMINDER_INTERVAL_DAYS = 7
 _MAX_REMINDERS = 3
+# Délai de grâce d'un renouvellement impayé : l'accès est réduit un intervalle après la dernière
+# relance, pour que celle-ci puisse annoncer la date au lieu de coïncider avec elle (3 + 3 × 7 j).
+_GRACE_DAYS = _FIRST_REMINDER_DAYS + _MAX_REMINDERS * _REMINDER_INTERVAL_DAYS
+
+
+def _next_invoice_reference(db: Session, now: datetime) -> str:
+    count = db.query(Invoice).filter(extract("year", Invoice.issued_at) == now.year).count()
+    return f"INV-{now.year}-{str(count + 1).zfill(3)}"
 
 
 @app.get("/internal/invoices/due-reminders", include_in_schema=False)
@@ -276,9 +284,11 @@ def internal_invoices_due_reminders(x_internal_token: str = Header(default=""),
             due = inv.last_reminder_at is not None and \
                 inv.last_reminder_at <= now - timedelta(days=_REMINDER_INTERVAL_DAYS)
         if due:
+            sub = db.get(Subscription, inv.subscription_id) if inv.subscription_id else None
             out.append({"id": inv.id, "reference": inv.reference, "agency_id": inv.agency_id,
                         "amount": float(inv.amount or 0), "period_label": inv.period_label,
-                        "issued_at": iso(inv.issued_at), "reminder_count": count})
+                        "issued_at": iso(inv.issued_at), "reminder_count": count,
+                        "grace_until": iso(sub.grace_until) if sub else None})
     return {"invoices": out}
 
 
@@ -293,6 +303,47 @@ def internal_invoice_reminder_sent(invoice_id: int, x_internal_token: str = Head
         inv.last_reminder_at = datetime.utcnow()
         db.commit()
     return {"ok": True}
+
+
+@app.post("/internal/subscriptions/issue-renewals", include_in_schema=False)
+def internal_issue_renewals(x_internal_token: str = Header(default=""), db: Session = Depends(get_db)):
+    """Émet la facture de renouvellement des abonnements échus — réveillé par l'ordonnanceur
+    notification. Sans cet appel, une échéance passait sans qu'aucun paiement ne soit jamais
+    redemandé : seul `change_plan` créait une facture d'abonnement. POST : la mutation
+    appartient à billing, l'ordonnanceur ne fait que la déclencher."""
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    now = datetime.utcnow()
+    # I4 : une facture d'abonnement encore impayée exclut toute seconde émission.
+    open_subs = {sid for (sid,) in db.query(Invoice.subscription_id)
+                 .filter(Invoice.status == "unpaid", Invoice.invoice_type == "subscription")}
+    issued = []
+    for sub in db.query(Subscription).filter(Subscription.status == "active",
+                                              Subscription.end_date <= now).all():
+        if sub.id in open_subs:
+            continue
+        plan = db.get(SubscriptionPlan, sub.plan_id)
+        invoice = Invoice(reference=_next_invoice_reference(db, now), subscription_id=sub.id,
+                          agency_id=sub.agency_id, amount=sub.amount, status="unpaid",
+                          period_label=f"{_MONTHS[now.month - 1]} {now.year}", issued_at=now)
+        db.add(invoice)
+        db.flush()
+        sub.status = "past_due"
+        sub.grace_until = now + timedelta(days=_GRACE_DAYS)
+        enqueue(db, "invoice", invoice.id, events.INVOICE_CREATED, {
+            "invoice_id": invoice.id, "agency_id": sub.agency_id, "amount": float(sub.amount),
+            "plan": plan.slug if plan else None, "purpose": "subscription",
+            "reference": invoice.reference, "period_label": invoice.period_label,
+            "renewal": True, "grace_until": iso(sub.grace_until)})
+        # Droits inchangés pendant la grâce, mais leur terme est désormais connu d'identity.
+        enqueue(db, "subscription", sub.id, events.SUBSCRIPTION_ACTIVATED, {
+            "subscription_id": sub.id, "agency_id": sub.agency_id,
+            "features": plan_features(plan) if plan else [],
+            "features_until": iso(_features_until(sub))})
+        issued.append({"subscription_id": sub.id, "invoice_id": invoice.id,
+                       "agency_id": sub.agency_id})
+    db.commit()
+    return {"issued": issued}
 
 
 @app.get("/subscription-plans")
@@ -464,15 +515,15 @@ async def change_plan(request: Request, principal: Principal = Depends(get_princ
         db.add(sub)
         db.flush()
 
-    count = db.query(Invoice).filter(extract("year", Invoice.issued_at) == now.year).count()
-    invoice = Invoice(reference=f"INV-{now.year}-{str(count + 1).zfill(3)}",
+    invoice = Invoice(reference=_next_invoice_reference(db, now),
                       subscription_id=sub.id, agency_id=principal.agency_id, amount=amount,
                       status="unpaid", period_label=f"{_MONTHS[now.month - 1]} {now.year}")
     db.add(invoice)
     db.flush()
     enqueue(db, "invoice", invoice.id, events.INVOICE_CREATED, {
         "invoice_id": invoice.id, "agency_id": principal.agency_id, "amount": float(amount),
-        "plan": plan.slug, "purpose": "subscription",
+        "plan": plan.slug, "purpose": "subscription", "reference": invoice.reference,
+        "period_label": invoice.period_label, "renewal": False, "grace_until": None,
     })
     db.commit()
     return {"message": "Subscription updated successfully",

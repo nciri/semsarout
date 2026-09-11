@@ -502,3 +502,113 @@ def test_internal_subscriptions_expose_grace_et_dernier_echec(monkeypatch, tmp_p
     finally:
         app.dependency_overrides.clear()
         db.close()
+
+
+def _renewal_env(monkeypatch, tmp_path, **sub_fields):
+    from app import main as m
+    monkeypatch.setattr(m.settings, "internal_token", "tok")
+    db = _db_session(tmp_path)
+    plan = _plan(has_design3d=True)
+    db.add(plan)
+    db.commit()
+    sub = Subscription(agency_id=50, plan_id=plan.id, amount=499, **sub_fields)
+    db.add(sub)
+    db.commit()
+    app.dependency_overrides[get_db] = lambda: db
+    return db, sub
+
+
+def test_issue_renewals_emet_la_facture_et_ouvre_la_grace(monkeypatch, tmp_path):
+    from datetime import datetime, timedelta
+
+    from semsar_events import OutboxEvent
+
+    from app.models import Invoice
+    db, sub = _renewal_env(monkeypatch, tmp_path, status="active",
+                           end_date=datetime.utcnow() - timedelta(hours=1))
+    try:
+        with TestClient(app) as client:
+            resp = client.post("/internal/subscriptions/issue-renewals",
+                               headers={"x-internal-token": "tok"})
+        assert resp.status_code == 200
+        assert [i["subscription_id"] for i in resp.json()["issued"]] == [sub.id]
+        invoices = db.query(Invoice).filter_by(subscription_id=sub.id).all()
+        assert len(invoices) == 1 and invoices[0].status == "unpaid"
+        stored = db.get(Subscription, sub.id)
+        assert stored.status == "past_due"
+        assert stored.grace_until - invoices[0].issued_at == timedelta(days=24)
+        created = db.query(OutboxEvent).filter_by(event_type="billing.invoice.created").one()
+        assert created.payload["renewal"] is True
+        assert created.payload["reference"] == invoices[0].reference
+        activated = (db.query(OutboxEvent).filter_by(event_type="billing.subscription.activated")
+                     .order_by(OutboxEvent.id.desc()).first())
+        assert activated.payload["features"] == ["design3d"]
+        assert activated.payload["features_until"] == stored.grace_until.isoformat()
+    finally:
+        app.dependency_overrides.clear()
+        db.close()
+
+
+def test_issue_renewals_est_idempotent(monkeypatch, tmp_path):
+    """I4 : réveillé deux fois, l'ordonnanceur ne doit jamais faire émettre deux factures."""
+    from datetime import datetime, timedelta
+
+    from app.models import Invoice
+    db, sub = _renewal_env(monkeypatch, tmp_path, status="active",
+                           end_date=datetime.utcnow() - timedelta(hours=1))
+    try:
+        with TestClient(app) as client:
+            client.post("/internal/subscriptions/issue-renewals", headers={"x-internal-token": "tok"})
+            second = client.post("/internal/subscriptions/issue-renewals",
+                                 headers={"x-internal-token": "tok"})
+        assert second.json()["issued"] == []
+        assert db.query(Invoice).filter_by(subscription_id=sub.id).count() == 1
+    finally:
+        app.dependency_overrides.clear()
+        db.close()
+
+
+def test_issue_renewals_ignore_un_abonnement_non_echu(monkeypatch, tmp_path):
+    from datetime import datetime, timedelta
+    db, sub = _renewal_env(monkeypatch, tmp_path, status="active",
+                           end_date=datetime.utcnow() + timedelta(days=3))
+    try:
+        with TestClient(app) as client:
+            resp = client.post("/internal/subscriptions/issue-renewals",
+                               headers={"x-internal-token": "tok"})
+        assert resp.json()["issued"] == []
+        assert db.get(Subscription, sub.id).status == "active"
+    finally:
+        app.dependency_overrides.clear()
+        db.close()
+
+
+def test_issue_renewals_exige_le_jeton_interne(monkeypatch, tmp_path):
+    from datetime import datetime
+    db, _ = _renewal_env(monkeypatch, tmp_path, status="active", end_date=datetime.utcnow())
+    try:
+        with TestClient(app) as client:
+            assert client.post("/internal/subscriptions/issue-renewals").status_code == 403
+    finally:
+        app.dependency_overrides.clear()
+        db.close()
+
+
+def test_due_reminders_porte_l_echeance_de_grace(monkeypatch, tmp_path):
+    """La dernière relance doit pouvoir annoncer la date de réduction d'accès."""
+    from datetime import datetime, timedelta
+
+    from app.models import Invoice
+    grace = datetime.utcnow() + timedelta(days=7)
+    db, sub = _renewal_env(monkeypatch, tmp_path, status="past_due", grace_until=grace)
+    db.add(Invoice(reference="INV-TEST-001", subscription_id=sub.id, agency_id=50, amount=499,
+                   status="unpaid", issued_at=datetime.utcnow() - timedelta(days=4)))
+    db.commit()
+    try:
+        with TestClient(app) as client:
+            invs = client.get("/internal/invoices/due-reminders",
+                              headers={"x-internal-token": "tok"}).json()["invoices"]
+        assert invs[0]["grace_until"] == grace.isoformat()
+    finally:
+        app.dependency_overrides.clear()
+        db.close()
