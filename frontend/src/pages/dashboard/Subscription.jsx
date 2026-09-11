@@ -14,6 +14,7 @@ import api from '../../services/api'
 import { CONTACT } from '../../constants/contact'
 import { useFormat } from '../../utils/format'
 import { INDIVIDUAL_PLANS, AGENCY_PLANS } from './subscriptionPlans'
+import BillingStatusBanner from '../../components/billing/BillingStatusBanner'
 
 // Generate invoice PDF (t: fonction de traduction i18n, injectée par l'appelant)
 const generateInvoicePDF = (invoice, user, t) => {
@@ -736,6 +737,8 @@ export default function Subscription() {
             : t('dashboard:subscription.subtitleIndividual')}
         </p>
       </div>
+
+      <BillingStatusBanner subscription={subscriptionData?.subscription} />
 
       {/* Tabs */}
       <div className="flex gap-4 mb-8 border-b border-gray-200">

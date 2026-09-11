@@ -163,6 +163,7 @@ const MIGRATED_FILES = [
   'src/components/design/EditorActionsMenu.jsx',
   'src/components/design/Design3dGate.jsx',
   'src/components/design/Design3dEntry.jsx',
+  'src/components/billing/BillingStatusBanner.jsx',
   'src/components/design/DesignViewer.jsx',
   'src/components/common/RouteErrorBoundary.jsx',
   'src/components/common/RouteOutlet.jsx',

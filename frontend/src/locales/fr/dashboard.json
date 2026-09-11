@@ -1427,5 +1427,12 @@
       "picking": "Chargement du plan choisi…",
       "pickFailed": "Ce plan n’a pas pu être chargé. Réessayez ou choisissez-en un autre."
     }
+  },
+  "billingStatus": {
+    "pastDue": "Votre renouvellement n'est pas encore réglé. Votre abonnement reste entier jusqu'au {{date}} ; passé cette date, l'accès sera réduit à la facturation.",
+    "restricted": "Votre accès est réduit à la facturation : réglez votre facture pour retrouver toutes vos fonctionnalités.",
+    "lastFailure": "Motif indiqué par votre banque : {{reason}}.",
+    "lastFailureGeneric": "Votre dernier paiement n'a pas abouti. Vérifiez votre carte ou contactez votre banque, puis réessayez.",
+    "payNow": "Payer maintenant"
   }
 }
