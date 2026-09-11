@@ -1,116 +1,127 @@
-import { useEffect } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { applyDirection } from './i18n/rtl'
 import Layout from './components/layout/Layout'
-import Home from './pages/Home'
-import PropertyList from './pages/PropertyList'
-import PropertyDetail from './pages/PropertyDetail'
-import AgencyList from './pages/AgencyList'
-import AgencyDetail from './pages/AgencyDetail'
-import AgencyPricing from './pages/AgencyPricing'
-import Services from './pages/Services'
-import Contact from './pages/Contact'
-import SellProperty from './pages/SellProperty'
-import Login from './pages/auth/Login'
-import Register from './pages/auth/Register'
-import ForgotPassword from './pages/auth/ForgotPassword'
-import ResetPassword from './pages/auth/ResetPassword'
-import AcceptInvitation from './pages/auth/AcceptInvitation'
-import About from './pages/About'
-import LegalPage from './pages/LegalPage'
-import CheckoutConfirmation from './pages/CheckoutConfirmation'
-import PaymentGateway from './pages/PaymentGateway'
-import Dashboard from './pages/dashboard/Dashboard'
-import MyProperties from './pages/dashboard/MyProperties'
-import CreateProperty from './pages/dashboard/CreateProperty'
-import MyLeads from './pages/dashboard/MyLeads'
-import MyApplications from './pages/dashboard/MyApplications'
-import MyApplicationDetail from './pages/dashboard/MyApplicationDetail'
-import MyAgency from './pages/dashboard/MyAgency'
-import Checkout from './pages/Checkout'
-import NotFound from './pages/NotFound'
 import PrivateRoute from './components/auth/PrivateRoute'
-import ProgramList from './pages/ProgramList'
-import ProgramDetail from './pages/ProgramDetail'
-import DashboardPrograms from './pages/dashboard/Programs'
-import DashboardProgramForm from './pages/dashboard/ProgramForm'
-import ProgramPlanEditor from './pages/dashboard/ProgramPlanEditor'
-import MarketPrices from './pages/dashboard/MarketPrices'
-import StayManagerTabs from './pages/dashboard/integrations/StayManagerTabs'
-import StayManagerIntegration from './pages/dashboard/integrations/StayManager'
-import StayManagerProperties from './pages/dashboard/integrations/StayManagerProperties'
-import StayManagerReservations from './pages/dashboard/integrations/StayManagerReservations'
-import AccountTabs from './pages/dashboard/AccountTabs'
 import SuperAdminRoute from './components/auth/SuperAdminRoute'
-import AdminLayout from './pages/admin/AdminLayout'
-import AdminOverview from './pages/admin/AdminOverview'
-import AdminAccounts from './pages/admin/AdminAccounts'
-import AdminAccountDetail from './pages/admin/AdminAccountDetail'
-import AdminSharedArtisans from './pages/admin/AdminSharedArtisans'
-import AdminProducts from './pages/admin/AdminProducts'
-import AdminOrders from './pages/admin/AdminOrders'
-import SavedSearches from './pages/dashboard/SavedSearches'
-import BuyerMessages from './pages/dashboard/BuyerMessages'
-import AgencyMessages from './pages/dashboard/AgencyMessages'
-import Availability from './pages/dashboard/Availability'
-import MortgageSimulator from './pages/MortgageSimulator'
-import CompareProperties from './pages/CompareProperties'
-
-// Backoffice imports
-import BackofficeLayout from './pages/backoffice/components/BackofficeLayout'
-import BackofficeDashboard from './pages/backoffice/Dashboard'
-import BackofficeProperties from './pages/backoffice/Properties'
-import BackofficePropertyForm from './pages/backoffice/PropertyForm'
-import BackofficeClients from './pages/backoffice/Clients'
-import BackofficeClientForm from './pages/backoffice/ClientForm'
-import BackofficeClientDetail from './pages/backoffice/ClientDetail'
-import BackofficeLeads from './pages/backoffice/Leads'
-import BackofficeVisits from './pages/backoffice/Visits'
-import BackofficePipeline from './pages/backoffice/Pipeline'
-import BackofficeTransactions from './pages/backoffice/Transactions'
-import TransactionCreate from './pages/backoffice/TransactionCreate'
-import BackofficeTransactionDetail from './pages/backoffice/TransactionDetail'
-import BackofficeTeam from './pages/backoffice/Team'
-import OverviewAnalytics from './pages/backoffice/analytics/OverviewAnalytics'
-import SettingsHub from './pages/backoffice/SettingsHub'
-import BackofficeStripeConfig from './pages/backoffice/StripeConfig'
-import ContractsList from './pages/backoffice/contracts/ContractsList'
-import ContractCreate from './pages/backoffice/contracts/ContractCreate'
-import ContractEditor from './pages/backoffice/contracts/ContractEditor'
-import TemplatesManager from './pages/backoffice/contracts/TemplatesManager'
-import NotariesDirectory from './pages/backoffice/legal/NotariesDirectory'
-import NotairesLayout from './pages/backoffice/legal/NotairesLayout'
-import ArtisansLayout from './pages/backoffice/artisans/ArtisansLayout'
-import ArtisansDirectory from './pages/backoffice/artisans/ArtisansDirectory'
-import WorkOrdersList from './pages/backoffice/artisans/WorkOrdersList'
-import WorkOrderDetail from './pages/backoffice/artisans/WorkOrderDetail'
-import RentalLayout from './pages/backoffice/rental/RentalLayout'
-import MandatesList from './pages/backoffice/rental/MandatesList'
-import MandateDetail from './pages/backoffice/rental/MandateDetail'
-import LeasesList from './pages/backoffice/rental/LeasesList'
-import LeaseDetail from './pages/backoffice/rental/LeaseDetail'
-import ApplicationsList from './pages/backoffice/rental/ApplicationsList'
-import ApplicationDetail from './pages/backoffice/rental/ApplicationDetail'
-import InventoryEditor from './pages/backoffice/rental/InventoryEditor'
-import SettlementEditor from './pages/backoffice/rental/SettlementEditor'
-import LegalCasesList from './pages/backoffice/legal/LegalCasesList'
-import LegalCaseDetail from './pages/backoffice/legal/LegalCaseDetail'
-import AnalyticsLayout from './pages/backoffice/analytics/AnalyticsLayout'
-import ShopCatalog from './pages/backoffice/shop/ShopCatalog'
-import ProductDetail from './pages/backoffice/shop/ProductDetail'
-import Cart from './pages/backoffice/shop/Cart'
-import OrdersList from './pages/backoffice/shop/OrdersList'
-import OrderDetail from './pages/backoffice/shop/OrderDetail'
-import FinancialAnalytics from './pages/backoffice/analytics/FinancialAnalytics'
-import MarketAnalytics from './pages/backoffice/analytics/MarketAnalytics'
-import PipelineAnalytics from './pages/backoffice/analytics/PipelineAnalytics'
-import TeamAnalytics from './pages/backoffice/analytics/TeamAnalytics'
-import Subscription from './pages/dashboard/Subscription'
 import ImpersonationBanner from './components/admin/ImpersonationBanner'
+import RouteErrorBoundary from './components/common/RouteErrorBoundary'
+import { RouteFallback } from './components/common/RouteOutlet'
+
+// Chaque page est chargee a la demande (code splitting) : sans cela tout le
+// portail, le backoffice, l'administration et leurs dependances lourdes
+// (leaflet, recharts, quill, jspdf) partent dans un unique bundle de plusieurs
+// Mio, que le service worker de la PWA ne peut pre-cacher qu'en relevant sa
+// limite. Seuls les elements presents sur tout ecran restent statiques :
+// la coquille, les gardes de route et le bandeau d'usurpation.
+
+const Home = lazy(() => import('./pages/Home'))
+const PropertyList = lazy(() => import('./pages/PropertyList'))
+const PropertyDetail = lazy(() => import('./pages/PropertyDetail'))
+const AgencyList = lazy(() => import('./pages/AgencyList'))
+const AgencyDetail = lazy(() => import('./pages/AgencyDetail'))
+const AgencyPricing = lazy(() => import('./pages/AgencyPricing'))
+const Services = lazy(() => import('./pages/Services'))
+const Contact = lazy(() => import('./pages/Contact'))
+const SellProperty = lazy(() => import('./pages/SellProperty'))
+const Login = lazy(() => import('./pages/auth/Login'))
+const Register = lazy(() => import('./pages/auth/Register'))
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'))
+const AcceptInvitation = lazy(() => import('./pages/auth/AcceptInvitation'))
+const About = lazy(() => import('./pages/About'))
+const LegalPage = lazy(() => import('./pages/LegalPage'))
+const CheckoutConfirmation = lazy(() => import('./pages/CheckoutConfirmation'))
+const PaymentGateway = lazy(() => import('./pages/PaymentGateway'))
+const Dashboard = lazy(() => import('./pages/dashboard/Dashboard'))
+const MyProperties = lazy(() => import('./pages/dashboard/MyProperties'))
+const CreateProperty = lazy(() => import('./pages/dashboard/CreateProperty'))
+const MyLeads = lazy(() => import('./pages/dashboard/MyLeads'))
+const MyApplications = lazy(() => import('./pages/dashboard/MyApplications'))
+const MyApplicationDetail = lazy(() => import('./pages/dashboard/MyApplicationDetail'))
+const MyAgency = lazy(() => import('./pages/dashboard/MyAgency'))
+const Checkout = lazy(() => import('./pages/Checkout'))
+const NotFound = lazy(() => import('./pages/NotFound'))
+const ProgramList = lazy(() => import('./pages/ProgramList'))
+const ProgramDetail = lazy(() => import('./pages/ProgramDetail'))
+const DashboardPrograms = lazy(() => import('./pages/dashboard/Programs'))
+const DashboardProgramForm = lazy(() => import('./pages/dashboard/ProgramForm'))
+const ProgramPlanEditor = lazy(() => import('./pages/dashboard/ProgramPlanEditor'))
+const MarketPrices = lazy(() => import('./pages/dashboard/MarketPrices'))
+const DesignProjects = lazy(() => import('./pages/dashboard/DesignProjects'))
+const DesignEditor = lazy(() => import('./pages/dashboard/DesignEditor'))
+const StayManagerTabs = lazy(() => import('./pages/dashboard/integrations/StayManagerTabs'))
+const StayManagerIntegration = lazy(() => import('./pages/dashboard/integrations/StayManager'))
+const StayManagerProperties = lazy(() => import('./pages/dashboard/integrations/StayManagerProperties'))
+const StayManagerReservations = lazy(() => import('./pages/dashboard/integrations/StayManagerReservations'))
+const AccountTabs = lazy(() => import('./pages/dashboard/AccountTabs'))
+const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'))
+const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'))
+const AdminAccounts = lazy(() => import('./pages/admin/AdminAccounts'))
+const AdminAccountDetail = lazy(() => import('./pages/admin/AdminAccountDetail'))
+const AdminSharedArtisans = lazy(() => import('./pages/admin/AdminSharedArtisans'))
+const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'))
+const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'))
+const SavedSearches = lazy(() => import('./pages/dashboard/SavedSearches'))
+const BuyerMessages = lazy(() => import('./pages/dashboard/BuyerMessages'))
+const AgencyMessages = lazy(() => import('./pages/dashboard/AgencyMessages'))
+const Availability = lazy(() => import('./pages/dashboard/Availability'))
+const MortgageSimulator = lazy(() => import('./pages/MortgageSimulator'))
+const CompareProperties = lazy(() => import('./pages/CompareProperties'))
+const BackofficeLayout = lazy(() => import('./pages/backoffice/components/BackofficeLayout'))
+const BackofficeDashboard = lazy(() => import('./pages/backoffice/Dashboard'))
+const BackofficeProperties = lazy(() => import('./pages/backoffice/Properties'))
+const BackofficePropertyForm = lazy(() => import('./pages/backoffice/PropertyForm'))
+const BackofficeClients = lazy(() => import('./pages/backoffice/Clients'))
+const BackofficeClientForm = lazy(() => import('./pages/backoffice/ClientForm'))
+const BackofficeClientDetail = lazy(() => import('./pages/backoffice/ClientDetail'))
+const BackofficeLeads = lazy(() => import('./pages/backoffice/Leads'))
+const BackofficeVisits = lazy(() => import('./pages/backoffice/Visits'))
+const BackofficePipeline = lazy(() => import('./pages/backoffice/Pipeline'))
+const BackofficeTransactions = lazy(() => import('./pages/backoffice/Transactions'))
+const TransactionCreate = lazy(() => import('./pages/backoffice/TransactionCreate'))
+const BackofficeTransactionDetail = lazy(() => import('./pages/backoffice/TransactionDetail'))
+const BackofficeTeam = lazy(() => import('./pages/backoffice/Team'))
+const OverviewAnalytics = lazy(() => import('./pages/backoffice/analytics/OverviewAnalytics'))
+const SettingsHub = lazy(() => import('./pages/backoffice/SettingsHub'))
+const BackofficeStripeConfig = lazy(() => import('./pages/backoffice/StripeConfig'))
+const ContractsList = lazy(() => import('./pages/backoffice/contracts/ContractsList'))
+const ContractCreate = lazy(() => import('./pages/backoffice/contracts/ContractCreate'))
+const ContractEditor = lazy(() => import('./pages/backoffice/contracts/ContractEditor'))
+const TemplatesManager = lazy(() => import('./pages/backoffice/contracts/TemplatesManager'))
+const NotariesDirectory = lazy(() => import('./pages/backoffice/legal/NotariesDirectory'))
+const NotairesLayout = lazy(() => import('./pages/backoffice/legal/NotairesLayout'))
+const ArtisansLayout = lazy(() => import('./pages/backoffice/artisans/ArtisansLayout'))
+const ArtisansDirectory = lazy(() => import('./pages/backoffice/artisans/ArtisansDirectory'))
+const WorkOrdersList = lazy(() => import('./pages/backoffice/artisans/WorkOrdersList'))
+const WorkOrderDetail = lazy(() => import('./pages/backoffice/artisans/WorkOrderDetail'))
+const RentalLayout = lazy(() => import('./pages/backoffice/rental/RentalLayout'))
+const MandatesList = lazy(() => import('./pages/backoffice/rental/MandatesList'))
+const MandateDetail = lazy(() => import('./pages/backoffice/rental/MandateDetail'))
+const LeasesList = lazy(() => import('./pages/backoffice/rental/LeasesList'))
+const LeaseDetail = lazy(() => import('./pages/backoffice/rental/LeaseDetail'))
+const ApplicationsList = lazy(() => import('./pages/backoffice/rental/ApplicationsList'))
+const ApplicationDetail = lazy(() => import('./pages/backoffice/rental/ApplicationDetail'))
+const InventoryEditor = lazy(() => import('./pages/backoffice/rental/InventoryEditor'))
+const SettlementEditor = lazy(() => import('./pages/backoffice/rental/SettlementEditor'))
+const LegalCasesList = lazy(() => import('./pages/backoffice/legal/LegalCasesList'))
+const LegalCaseDetail = lazy(() => import('./pages/backoffice/legal/LegalCaseDetail'))
+const AnalyticsLayout = lazy(() => import('./pages/backoffice/analytics/AnalyticsLayout'))
+const ShopCatalog = lazy(() => import('./pages/backoffice/shop/ShopCatalog'))
+const ProductDetail = lazy(() => import('./pages/backoffice/shop/ProductDetail'))
+const Cart = lazy(() => import('./pages/backoffice/shop/Cart'))
+const OrdersList = lazy(() => import('./pages/backoffice/shop/OrdersList'))
+const OrderDetail = lazy(() => import('./pages/backoffice/shop/OrderDetail'))
+const FinancialAnalytics = lazy(() => import('./pages/backoffice/analytics/FinancialAnalytics'))
+const MarketAnalytics = lazy(() => import('./pages/backoffice/analytics/MarketAnalytics'))
+const PipelineAnalytics = lazy(() => import('./pages/backoffice/analytics/PipelineAnalytics'))
+const TeamAnalytics = lazy(() => import('./pages/backoffice/analytics/TeamAnalytics'))
+const Subscription = lazy(() => import('./pages/dashboard/Subscription'))
 
 function App() {
   const { i18n } = useTranslation()
+  const location = useLocation()
   useEffect(() => {
     applyDirection(i18n.language)
     const onChange = (lng) => applyDirection(lng)
@@ -121,6 +132,13 @@ function App() {
   return (
     <>
       <ImpersonationBanner />
+      {/* La barriere d'erreur enveloppe le Suspense, jamais l'inverse : le
+          Suspense rattrape la SUSPENSION d'un fragment, pas le REJET de son
+          import(). Ce Suspense-ci ne sert qu'aux mises en page elles-memes
+          (BackofficeLayout, AdminLayout sont paresseuses) ; les pages, elles,
+          suspendent sous l'en-tete via RouteOutlet. */}
+      <RouteErrorBoundary resetKey={location.pathname}>
+      <Suspense fallback={<RouteFallback />}>
       <Routes>
       {/* Public routes */}
       <Route path="/" element={<Layout />}>
@@ -182,6 +200,10 @@ function App() {
           <Route path="disponibilites" element={<Availability />} />
 
           <Route path="prix-marche" element={<MarketPrices />} />
+
+          {/* Conception 3D : projets d'un bien puis éditeur de plan (hors-ligne d'abord) */}
+          <Route path="conception" element={<DesignProjects />} />
+          <Route path="conception/:projectId" element={<DesignEditor />} />
 
           {/* StayManager : connexion / biens / réservations regroupés en onglets */}
           <Route path="staymanager" element={<StayManagerTabs />}>
@@ -289,6 +311,8 @@ function App() {
         </Route>
       </Route>
       </Routes>
+      </Suspense>
+      </RouteErrorBoundary>
     </>
   )
 }

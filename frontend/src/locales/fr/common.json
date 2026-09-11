@@ -230,6 +230,9 @@
     "validationNameAndPhone": "Nom et téléphone requis",
     "sentMessage": "Votre demande a bien été envoyée. Le promoteur vous recontactera.",
     "lotFallback": "Lot",
+    "viewPlanButton": "Voir le plan intérieur",
+    "planModalTitle": "Plan intérieur — {{reference}}",
+    "closeButton": "Fermer",
     "status": {
       "available": "Disponible",
       "reserved": "Réservé",
@@ -341,5 +344,11 @@
   "condoFees": {
     "toggle": "Bien en copropriété",
     "label": "Charges de copropriété"
+  },
+  "loading": "Chargement…",
+  "routeError": {
+    "title": "Cette page n'a pas pu être chargée",
+    "hint": "Le contenu n'est pas arrivé jusqu'à vous. Rechargez la page : si une mise à jour de l'application vient d'être publiée, cela suffit à la récupérer.",
+    "reload": "Recharger la page"
   }
 }

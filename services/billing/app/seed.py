@@ -5,9 +5,11 @@ DEFAULT_PLANS = [
     {"slug": "starter", "name": "Starter", "price": 0, "max_seats": 1,
      "has_contracts": False, "has_legal": False, "has_artisans": False, "has_rental": False},
     {"slug": "pro", "name": "Pro", "price": 499, "max_seats": 5,
-     "has_contracts": True, "has_legal": True, "has_artisans": True, "has_rental": True},
+     "has_contracts": True, "has_legal": True, "has_artisans": True, "has_rental": True,
+     "has_design3d": True},
     {"slug": "enterprise", "name": "Entreprise", "price": 1499, "max_seats": -1,
-     "has_contracts": True, "has_legal": True, "has_artisans": True, "has_rental": True},
+     "has_contracts": True, "has_legal": True, "has_artisans": True, "has_rental": True,
+     "has_design3d": True},
 ]
 
 

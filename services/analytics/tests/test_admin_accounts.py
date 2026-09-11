@@ -64,3 +64,33 @@ def test_admin_accounts_no_tenant_backward_compatible(monkeypatch):
         resp = client.get("/admin/accounts", headers=_superadmin_headers())
     assert resp.status_code == 200
     assert seen["tenant"] is None
+
+
+def test_admin_accounts_expose_et_filtre_le_statut_de_facturation(monkeypatch):
+    import app.sources as sources
+    monkeypatch.setattr(sources, "users_list", lambda tenant=None: [])
+    monkeypatch.setattr(sources, "property_counts", lambda: {})
+    monkeypatch.setattr(sources, "agencies_list", lambda: [
+        {"id": 1, "name": "Agence A", "email": "a@example.test", "status": "active"},
+        {"id": 2, "name": "Agence B", "email": "b@example.test", "status": "active"}])
+    monkeypatch.setattr(sources, "subscriptions_map", lambda: {
+        "1": {"status": "restricted", "plan": {"slug": "pro"}},
+        "2": {"status": "active", "plan": {"slug": "pro"}}})
+
+    with TestClient(app) as client:
+        resp = client.get("/admin/accounts", params={"type": "agency", "billing_status": "restricted"},
+                          headers=_superadmin_headers())
+    items = resp.json()["items"]
+    assert [i["name"] for i in items] == ["Agence A"]
+    assert items[0]["billing_status"] == "restricted"
+
+
+def test_admin_overview_expose_les_impayes(monkeypatch):
+    import app.sources as sources
+    monkeypatch.setattr(sources, "users_stats", lambda: {})
+    monkeypatch.setattr(sources, "agencies_stats", lambda: {})
+    monkeypatch.setattr(sources, "subscriptions_stats",
+                        lambda: {"unpaid_subscriptions": {"past_due": 3, "restricted": 1}})
+    with TestClient(app) as client:
+        body = client.get("/admin/overview", headers=_superadmin_headers()).json()
+    assert body["unpaid_subscriptions"] == {"past_due": 3, "restricted": 1}

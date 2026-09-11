@@ -73,10 +73,51 @@ async def _json(request: Request) -> dict:
 
 
 def _features(db: Session, agency_id: int | None) -> list[str]:
+    """Features (entitlements de plan) de l'agence, source des claims JWT. Repli auto-réparateur :
+    si la projection locale (`AgencyRO.features_synced_at`) n'a JAMAIS été renseignée, interroge
+    billing directement — nécessaire pour tout abonnement déjà actif avant l'ajout de la
+    projection événementielle (aucun événement ne sera rejoué pour lui). Best-effort, ne doit
+    jamais faire échouer le login.
+
+    `features_synced_at` (pas `features` seul) est le marqueur : une agence dont le plan
+    n'accorde légitimement AUCUNE feature a `features == []` en régime permanent, et ce repli
+    ne doit se déclencher qu'une fois pour elle — pas à chaque login et chaque /auth/refresh,
+    pour toujours (I7)."""
     if not agency_id:
         return []
     ag = db.get(AgencyRO, agency_id)
-    return list(ag.features or []) if ag else []
+    # Échéance dépassée : la période payée d'un abonnement résilié est terminée, donc la
+    # projection ne dit plus la vérité. Elle est traitée comme non synchronisée, ce qui
+    # réinterroge billing une fois — et cet appel est justement ce qui déclenche enfin
+    # `_reconcile_expired` côté billing, qu'aucun balayage n'appelait (A3).
+    expired = ag is not None and ag.features_until is not None and ag.features_until <= datetime.utcnow()
+    if ag and ag.features_synced_at is not None and not expired:
+        return list(ag.features)
+    from . import billing_client
+    answer = billing_client.features_of(agency_id)
+    if answer is None:
+        # L'appel n'a pas abouti (billing injoignable, délai dépassé, 5xx) : on ne sait RIEN des
+        # droits de l'agence. Ne rien persister et surtout ne pas estampiller
+        # `features_synced_at` — sinon ce repli, seul chemin capable de réparer la projection,
+        # s'éteint définitivement sur une simple panne de facturation (et notamment pendant la
+        # fenêtre où deploy-remote.sh a redémarré le mesh mais pas encore joué les migrations de
+        # facturation). Le login continue, avec la projection locale telle quelle — SAUF si
+        # son échéance est dépassée : une panne de facturation ne doit jamais prolonger un
+        # droit échu, sans quoi une agence résiliée resterait entitlée aussi longtemps que
+        # billing est indisponible. La résiliation porte sur tout, le module payant compris :
+        # l'échéance l'emporte sur l'indisponibilité.
+        if expired:
+            return []
+        return list(ag.features or []) if ag is not None else []
+    features = answer["features"]
+    if ag is not None:
+        # Appel abouti — y compris quand il renvoie une liste vide, ce qui est légitime pour une
+        # offre gratuite : on estampille, et le prochain login ne rappellera plus billing (I7).
+        ag.features = features  # auto-répare la projection pour les prochains logins
+        ag.features_synced_at = datetime.utcnow()
+        ag.features_until = answer["until"]
+        db.commit()
+    return features
 
 
 def _claims(db: Session, user: UserRO) -> dict:
@@ -147,7 +188,11 @@ def me(principal: Principal = Depends(get_principal), db: Session = Depends(get_
     user = db.get(UserRO, uid) if uid else None
     if not user:
         return _err("User not found", 404)
-    return {"user": user.to_dict()}
+    # `features` accompagne le profil : le front en a besoin pour n'afficher les
+    # entrées d'un module (conception 3D…) qu'aux comptes qui y ont droit. Même
+    # source que les claims du jeton, pour qu'un rafraîchissement de profil ne
+    # puisse pas contredire la passerelle.
+    return {"user": {**user.to_dict(), "features": _features(db, user.agency_id)}}
 
 
 @router.post("/auth/register", status_code=201)

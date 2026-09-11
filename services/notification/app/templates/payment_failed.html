@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% from "_components.html" import button, lucide with context %}
+{% block subject %}Votre paiement SemsarOut n'a pas abouti{% endblock %}
+{% block preheader %}Votre abonnement reste actif pour l'instant : réessayez ou corrigez votre moyen de paiement.{% endblock %}
+{% block badge %}{{ lucide("credit-card") }}{% endblock %}
+{% block hero_title %}Votre paiement n'a pas abouti{% endblock %}
+{% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if agency_name %} {{ agency_name }}{% endif %}.</p>{% endblock %}
+{% block content %}
+<p style="text-align:left; color:{{ brand.ink }};">{% if reason_label %}Votre banque a indiqué : <strong>{{ reason_label }}</strong>.{% else %}Votre dernier paiement n'a pas pu être finalisé.{% endif %}</p>
+<p style="text-align:left; color:{{ brand.ink }};">Vérifiez les informations de votre carte, sa date d'expiration et son plafond, ou contactez votre banque si une autorisation a été refusée. Vous pouvez ensuite réessayer depuis votre espace.</p>
+<table role="presentation" width="100%"><tr><td align="center">{{ button(app.base_url ~ "/dashboard/compte/abonnement", "Réessayer le paiement") }}</td></tr></table>
+{% endblock %}

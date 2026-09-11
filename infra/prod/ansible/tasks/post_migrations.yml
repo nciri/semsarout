@@ -9,7 +9,7 @@
 # s'applique jamais sur une base prod neuve, cf. Global Constraints du plan) :
 #   identity/add_tenant.sql, identity/add_rental_feature.sql,
 #   messaging/migrate_conversation.sql, rental/migrate_particulier_lease.sql,
-#   billing/migrate_commission_invoice.sql
+#   billing/migrate_commission_invoice.sql, billing/migrate_design3d.sql
 
 - name: Attendre que les services dont dépendent les migrations additives répondent
   ansible.builtin.wait_for:
@@ -18,7 +18,7 @@
     timeout: 60
   loop:
     - 8501 # identity  -> identity.user_ro (add_tenant, add_rental_feature)
-    - 8508 # billing   -> billing.invoice (migrate_commission_invoice)
+    - 8508 # billing   -> billing.invoice (migrate_commission_invoice), billing.subscription_plan (migrate_design3d)
     - 8510 # messaging -> tables créées par CREATE TABLE IF NOT EXISTS, sans dépendance stricte
     - 8518 # rental    -> rental.lease (migrate_particulier_lease)
 
@@ -32,6 +32,7 @@
     - { service: messaging, file: migrate_conversation.sql }
     - { service: rental, file: migrate_particulier_lease.sql }
     - { service: billing, file: migrate_commission_invoice.sql }
+    - { service: billing, file: migrate_design3d.sql }
   loop_control:
     label: "{{ item.service }}/{{ item.file }}"
   become: true

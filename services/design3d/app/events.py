@@ -1,0 +1,5 @@
+"""Événements publiés par design3d."""
+PROJECT_CREATED = "design3d.project.created"
+PROJECT_READY = "design3d.project.ready"
+PROJECT_DELETED = "design3d.project.deleted"
+LEVEL_UPDATED = "design3d.level.updated"

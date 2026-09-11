@@ -317,11 +317,18 @@ def internal_property_counts(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/internal/properties/{property_id}/owner", include_in_schema=False)
 def internal_owner(property_id: int, x_internal_token: str = Header(default=""), db: Session = Depends(get_db)):
-    """Propriétaire d'un bien (uid opaque) — résolution du seller pour le flux vente médiée."""
+    """Propriétaire d'un bien (uid opaque) — résolution du seller pour le flux vente médiée.
+
+    `agency_id` complète la réponse pour design3d, qui vérifie qu'un projet de
+    conception vise bien une cible du périmètre de son auteur : un bien confié à
+    une agence appartient nominalement à un membre, et le seul `owner_id`
+    refuserait à ses collègues une cible pourtant légitime. Ajout purement
+    additif — `selling` (listing_client.owner_of) ne lit que `owner_id`.
+    """
     if x_internal_token != settings.internal_token:
         return _err("Forbidden", 403)
     p = db.get(Property, property_id)
-    return {"owner_id": p.owner_id if p else None}
+    return {"owner_id": p.owner_id if p else None, "agency_id": p.agency_id if p else None}
 
 
 @app.get("/internal/property/{property_id}", include_in_schema=False)

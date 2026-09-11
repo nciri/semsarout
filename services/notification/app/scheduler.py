@@ -96,6 +96,18 @@ def _job_visit_follow_ups(db) -> int:
     return sent
 
 
+def _job_subscription_renewals() -> int:
+    """Réveille billing pour qu'il émette les factures de renouvellement échues. La logique est
+    chez billing, propriétaire des abonnements ; les courriels partent sur l'événement
+    `billing.invoice.created` qu'il publie, pas d'ici."""
+    try:
+        r = httpx.post(f"{_billing()}/internal/subscriptions/issue-renewals",
+                       headers=_headers(), timeout=10.0)
+        return len(r.json().get("issued", [])) if r.status_code == 200 else 0
+    except (httpx.HTTPError, ValueError):
+        return 0
+
+
 def _job_unpaid_invoice_reminders(db) -> int:
     """Relance impayé : factures d'abonnement non réglées, cadence J+3 puis toutes les 7 j (max 3)."""
     try:
@@ -111,7 +123,8 @@ def _job_unpaid_invoice_reminders(db) -> int:
             _try_send(db, to, "invoice_reminder.html", "invoice_reminder", from_email=_contact(),
                       agency_name=agency.get("name"), reference=inv.get("reference"),
                       amount=inv.get("amount"), period_label=inv.get("period_label"),
-                      reminder_count=inv.get("reminder_count", 0))
+                      reminder_count=inv.get("reminder_count", 0),
+                      grace_until=_fmt_fr(inv.get("grace_until"))[0] or None)
             db.commit()
             sent += 1
         # Marque relancé même si email absent/invalide → pas de re-traitement en boucle.
@@ -289,6 +302,9 @@ def run_once() -> None:
         f = _job_visit_follow_ups(db)
         if f:
             logger.info("avis post-visite envoyés", extra={"count": f})
+        rn = _job_subscription_renewals()
+        if rn:
+            logger.info("factures de renouvellement émises", extra={"count": rn})
         i = _job_unpaid_invoice_reminders(db)
         if i:
             logger.info("relances impayé envoyées", extra={"count": i})

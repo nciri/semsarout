@@ -1,5 +1,12 @@
 import '@testing-library/jest-dom'
 
+// IndexedDB n'existe pas dans jsdom : le moteur hors-ligne de l'éditeur de
+// plans (design3dLocal) en a besoin pour ses tests. `import.meta.env.MODE`
+// vaut 'test' sous vitest — on n'active ce polyfill que là, jamais en prod.
+if (import.meta.env.MODE === 'test') {
+  await import('fake-indexeddb/auto')
+}
+
 // Node's built-in global `localStorage` (stable since ~Node 22) can shadow
 // jsdom's working implementation and end up non-functional in this environment
 // (setItem missing). Fall back to a minimal in-memory Storage so any test that

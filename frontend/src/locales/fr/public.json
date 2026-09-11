@@ -760,6 +760,7 @@
     "noDescription": "Aucune description fournie.",
     "featuresTitle": "Caractéristiques",
     "detailsTitle": "Détails",
+    "planTitle": "Plan du bien",
     "typeLabel": "Type",
     "transactionLabel": "Transaction",
     "transactionTypes": {

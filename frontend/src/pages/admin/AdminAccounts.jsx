@@ -15,9 +15,10 @@ function AdminAccounts() {
   const [q, setQ] = useState('')
   const [type, setType] = useState('')
   const [status, setStatus] = useState('')
+  const [billingStatus, setBillingStatus] = useState('')
   const { data, isLoading } = useQuery(
-    ['admin', 'accounts', { q, type, status }],
-    () => adminService.getAccounts({ q, type, status, per_page: 50 }),
+    ['admin', 'accounts', { q, type, status, billingStatus }],
+    () => adminService.getAccounts({ q, type, status, billing_status: billingStatus, per_page: 50 }),
     { keepPreviousData: true }
   )
   const items = data?.items || []
@@ -39,6 +40,12 @@ function AdminAccounts() {
           <option value="active">{t('admin:accounts.filterStatus.active')}</option>
           <option value="suspended">{t('admin:accounts.filterStatus.suspended')}</option>
           <option value="deleted">{t('admin:accounts.filterStatus.deleted')}</option>
+        </select>
+        <select value={billingStatus} onChange={(e) => setBillingStatus(e.target.value)}
+                className="border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800">
+          <option value="">{t('admin:accounts.filterBilling.all')}</option>
+          <option value="past_due">{t('admin:accounts.filterBilling.past_due')}</option>
+          <option value="restricted">{t('admin:accounts.filterBilling.restricted')}</option>
         </select>
       </div>
       {isLoading ? <p>{t('admin:shared.loading')}</p> : (
@@ -68,6 +75,11 @@ function AdminAccounts() {
                     <span className={`text-xs px-2 py-1 rounded-full ${STATUS_BADGE[it.status]}`}>
                       {t(`admin:accounts.status.${it.status}`, { defaultValue: it.status })}
                     </span>
+                    {(it.billing_status === 'past_due' || it.billing_status === 'restricted') && (
+                      <span className="ms-2 text-xs px-2 py-1 rounded-full bg-red-100 text-red-700">
+                        {t(`admin:accounts.filterBilling.${it.billing_status}`)}
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))}

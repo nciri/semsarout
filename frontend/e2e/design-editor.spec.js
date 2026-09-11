@@ -1,0 +1,312 @@
+import { expect, test } from '@playwright/test'
+
+/**
+ * Éditeur de plan 2D — parcours tactile sur les six formats de tablette.
+ *
+ * L'API est entièrement simulée (`page.route`) : ces tests portent sur
+ * l'ergonomie doigts-seulement et sur le comportement hors-ligne du front, pas
+ * sur le service design3d (couvert par ses propres tests Python).
+ *
+ * Les gestes passent par CDP (`Input.dispatchTouchEvent`) et non par
+ * `page.touchscreen.tap` seul : l'outil « Mur » se trace par appui-glissé-relâché
+ * (un simple tap produit un mur de longueur nulle, rejeté par le canevas), et le
+ * pinch demande deux points de contact simultanés.
+ */
+
+const PROJECT_ID = 'a'.repeat(32)
+const LEVEL_ID = 'b'.repeat(32)
+
+const emptyGeometry = { walls: [], rooms: [], openings: [] }
+
+const serverLevel = (over = {}) => ({
+  id: LEVEL_ID,
+  project_id: PROJECT_ID,
+  name: 'RDC',
+  position: 0,
+  revision: 1,
+  wall_height_m: 2.7,
+  calibration: null,
+  geometry: emptyGeometry,
+  shelved_count: 0,
+  ...over,
+})
+
+async function mockApi(page) {
+  // Révision côté « serveur » : incrémentée par chaque PUT accepté, comme le
+  // fait le vrai service (verrou optimiste sur base_revision).
+  const state = { revision: 1 }
+
+  await page.route('**/api/v1/**', async (route) => {
+    const req = route.request()
+    const url = new URL(req.url())
+    const path = url.pathname.replace('/api/v1', '')
+    const json = (body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) })
+
+    if (path === '/auth/me') return json({ id: 1, email: 'agent@example.com', role: 'agency', features: ['design3d'] })
+    if (path === '/design3d/sync') return json({ projects: [{ id: PROJECT_ID, levels: [serverLevel({ revision: state.revision })] }] })
+    if (path === `/design3d/projects/${PROJECT_ID}`) {
+      return json({ id: PROJECT_ID, title: 'Plan de test', status: 'draft', levels: [serverLevel({ revision: state.revision })] })
+    }
+    if (path === `/design3d/levels/${LEVEL_ID}` && req.method() === 'PUT') {
+      state.revision += 1
+      return json({ ...serverLevel({ revision: state.revision }), ...JSON.parse(req.postData() || '{}'), revision: state.revision, shelved: false })
+    }
+    if (path.endsWith('/shelf')) return json({ items: [] })
+    return json({})
+  })
+}
+
+async function seedSession(page) {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('lang', 'fr')
+    window.localStorage.setItem(
+      'auth-storage',
+      JSON.stringify({
+        state: {
+          user: { id: 1, email: 'agent@example.com', role: 'agency', features: ['design3d'] },
+          accessToken: 'e2e-token',
+          refreshToken: 'e2e-refresh',
+          isAuthenticated: true,
+          impersonating: false,
+          impersonatedUser: null,
+        },
+        version: 0,
+      }),
+    )
+  })
+}
+
+/** Ouvre l'éditeur et attend que le niveau distant soit chargé localement. */
+async function openEditor(page) {
+  await seedSession(page)
+  await mockApi(page)
+  await page.goto(`/dashboard/conception/${PROJECT_ID}`)
+  const canvas = page.getByTestId('floorplan-canvas')
+  await expect(canvas).toBeVisible()
+  // Le pied de page n'apparaît qu'une fois le niveau amorcé depuis IndexedDB :
+  // c'est le signal fiable que l'éditeur est prêt à enregistrer.
+  await expect(page.getByText(/Niveau RDC/)).toBeVisible({ timeout: 15000 })
+  return canvas
+}
+
+async function touchSession(page) {
+  const cdp = await page.context().newCDPSession(page)
+  const send = (type, points) =>
+    cdp.send('Input.dispatchTouchEvent', {
+      type,
+      touchPoints: points.map((p, i) => ({ x: Math.round(p.x), y: Math.round(p.y), id: p.id ?? i })),
+    })
+  return {
+    async tap(p) {
+      await send('touchStart', [p])
+      await send('touchEnd', [])
+    },
+    async drag(from, to, steps = 10) {
+      await send('touchStart', [from])
+      for (let i = 1; i <= steps; i++) {
+        await send('touchMove', [{
+          x: from.x + ((to.x - from.x) * i) / steps,
+          y: from.y + ((to.y - from.y) * i) / steps,
+        }])
+      }
+      await send('touchEnd', [])
+    },
+    async pinch(center, fromGap, toGap, steps = 10) {
+      const pts = (gap) => [
+        { x: center.x - gap / 2, y: center.y, id: 1 },
+        { x: center.x + gap / 2, y: center.y, id: 2 },
+      ]
+      await send('touchStart', pts(fromGap))
+      for (let i = 1; i <= steps; i++) {
+        await send('touchMove', pts(fromGap + ((toGap - fromGap) * i) / steps))
+      }
+      await send('touchEnd', [])
+    },
+  }
+}
+
+/**
+ * Partie VISIBLE de la boîte englobante du canevas, une fois qu'elle a cessé de
+ * bouger.
+ *
+ * Les points tactiles partent par CDP, en coordonnées viewport : ils ne suivent
+ * aucun élément, et un point hors du viewport n'atteint rien. Deux pièges
+ * mesurés sur ipad-mini-portrait :
+ *
+ *  - une boîte lue trop tôt, ou avant le clic d'outil qui recompose l'en-tête et
+ *    fait descendre le haut du canevas, envoie les appuis à côté ;
+ *  - quand le canevas se dispose plus haut que le viewport (mesuré : 1452 px
+ *    pour 1024), son centre GÉOMÉTRIQUE tombe sous la feuille de propriétés
+ *    ancrée en bas, qui reçoit l'appui à sa place — et le geste ne se produit
+ *    jamais.
+ *
+ * D'où : relire la boîte juste avant d'envoyer les points, attendre deux
+ * lectures identiques consécutives, et la RESTREINDRE au viewport, de sorte que
+ * son centre soit toujours un point réellement touchable. Dans la disposition
+ * nominale, où le canevas tient entièrement à l'écran, ce découpage ne change
+ * rien.
+ */
+async function visibleCanvasBox(canvas) {
+  const page = canvas.page()
+  let previous = null
+  let box = null
+  for (let i = 0; i < 30; i++) {
+    box = await canvas.boundingBox()
+    if (previous && box && ['x', 'y', 'width', 'height'].every((k) => box[k] === previous[k])) break
+    previous = box
+    await page.waitForTimeout(50)
+  }
+  const vp = page.viewportSize()
+  const left = Math.max(box.x, 0)
+  const top = Math.max(box.y, 0)
+  const right = Math.min(box.x + box.width, vp.width)
+  const bottom = Math.min(box.y + box.height, vp.height)
+  return { x: left, y: top, width: right - left, height: bottom - top }
+}
+
+/** Deux points de tracé horizontaux, au centre de la partie visible du canevas. */
+async function wallPoints(canvas) {
+  const box = await visibleCanvasBox(canvas)
+  const y = box.y + box.height / 2
+  return {
+    a: { x: box.x + box.width * 0.3, y },
+    b: { x: box.x + box.width * 0.7, y },
+    middle: { x: box.x + box.width * 0.5, y },
+    box,
+  }
+}
+
+async function selectTool(page, label) {
+  await page.getByRole('button', { name: label, exact: true }).first().click()
+}
+
+async function drawWall(page, canvas) {
+  const touch = await touchSession(page)
+  // L'outil est choisi AVANT de mesurer : le clic sur la barre d'outils peut
+  // recomposer l'en-tête et déplacer le canevas.
+  await selectTool(page, 'Mur')
+  const { a, b } = await wallPoints(canvas)
+  await touch.drag(a, b)
+  await expect(canvas.locator('line')).toHaveCount(1)
+}
+
+test.describe('éditeur de plan sur tablette', () => {
+  test('trace un mur au doigt', async ({ page }) => {
+    const canvas = await openEditor(page)
+    await drawWall(page, canvas)
+    // Le mur est bien un segment épais (épaisseur en mètres), pas un trait d'aide.
+    const thickness = await canvas.locator('line').first().getAttribute('stroke-width')
+    expect(Number(thickness)).toBeGreaterThan(0)
+  })
+
+  test('pose une porte sur un mur existant', async ({ page }) => {
+    const canvas = await openEditor(page)
+    await drawWall(page, canvas)
+    const touch = await touchSession(page)
+    await selectTool(page, 'Porte')
+    const { middle } = await wallPoints(canvas)
+    await touch.tap(middle)
+    // L'ouverture est dessinée par-dessus le mur, en blanc (percement).
+    await expect(canvas.locator('line[stroke="#ffffff"]')).toHaveCount(1)
+    await expect(canvas.locator('line')).toHaveCount(2)
+  })
+
+  test('le panneau des propriétés suit la largeur disponible', async ({ page }, testInfo) => {
+    await openEditor(page)
+    const width = testInfo.project.use.viewport.width
+    const sheet = page.locator('button[aria-expanded]')
+
+    if (width < 900) {
+      // Étroit : panneau replié dans une feuille en bas, dépliable au doigt.
+      await expect(sheet).toHaveAttribute('aria-expanded', 'false')
+      await expect(page.getByText('Touchez un élément du plan pour le modifier.')).toBeHidden()
+      await sheet.click()
+      await expect(sheet).toHaveAttribute('aria-expanded', 'true')
+      await expect(page.getByText('Touchez un élément du plan pour le modifier.')).toBeVisible()
+    } else {
+      // Large : le panneau est en colonne latérale, toujours visible.
+      await expect(sheet).toHaveCount(0)
+      await expect(page.getByText('Touchez un élément du plan pour le modifier.')).toBeVisible()
+    }
+  })
+
+  test('le pinch à deux doigts modifie la vue', async ({ page }) => {
+    const canvas = await openEditor(page)
+    const before = await canvas.getAttribute('viewBox')
+    const touch = await touchSession(page)
+    const { middle } = await wallPoints(canvas)
+    await touch.pinch(middle, 120, 340)
+    await expect.poll(async () => canvas.getAttribute('viewBox')).not.toBe(before)
+  })
+
+  test('la rotation de la tablette conserve le plan', async ({ page }, testInfo) => {
+    const canvas = await openEditor(page)
+    await drawWall(page, canvas)
+    const { width, height } = testInfo.project.use.viewport
+    await page.setViewportSize({ width: height, height: width })
+    await expect(canvas).toBeVisible()
+    await expect(canvas.locator('line')).toHaveCount(1)
+  })
+
+  test('un second doigt pendant un glissé ferme l’historique au lieu de le laisser collé (D4)', async ({ page }) => {
+    // Régression : un pincement démarré pendant le glissé d'une extrémité de
+    // mur laissait `state.dragging` vrai indéfiniment (aucun END_DRAG
+    // dispatché à l'abandon du glissé) — tout glissé suivant se repliait alors
+    // dans l'entrée d'historique du premier au lieu d'en créer une à lui.
+    const canvas = await openEditor(page)
+    await drawWall(page, canvas)
+    const { a } = await wallPoints(canvas)
+    await selectTool(page, 'Sélectionner')
+
+    const cdp = await page.context().newCDPSession(page)
+    const touchEvent = (type, points) =>
+      cdp.send('Input.dispatchTouchEvent', {
+        type,
+        touchPoints: points.map((p) => ({ x: Math.round(p.x), y: Math.round(p.y), id: p.id })),
+      })
+
+    // Premier doigt : saisit l'extrémité du mur et la déplace — un glissé démarre.
+    await touchEvent('touchStart', [{ x: a.x, y: a.y, id: 1 }])
+    const moved1 = { x: a.x + 40, y: a.y + 10 }
+    await touchEvent('touchMove', [{ x: moved1.x, y: moved1.y, id: 1 }])
+    // Second doigt : un pincement commence PENDANT le glissé, puis les deux
+    // doigts se relèvent ensemble.
+    await touchEvent('touchStart', [{ x: moved1.x, y: moved1.y, id: 1 }, { x: moved1.x + 150, y: moved1.y + 150, id: 2 }])
+    await touchEvent('touchEnd', [])
+
+    // Un second glissé, complètement indépendant, sur la même extrémité :
+    // sans correctif, il se serait replié dans l'entrée du premier.
+    await touchEvent('touchStart', [{ x: moved1.x, y: moved1.y, id: 3 }])
+    const moved2 = { x: moved1.x + 40, y: moved1.y + 10 }
+    await touchEvent('touchMove', [{ x: moved2.x, y: moved2.y, id: 3 }])
+    await touchEvent('touchEnd', [])
+
+    // Trois étapes annulables distinctes : le tracé du mur, le premier glissé,
+    // le second — pas deux.
+    const undo = page.getByRole('button', { name: 'Annuler' })
+    await expect(undo).toBeEnabled()
+    await undo.click()
+    await expect(undo).toBeEnabled()
+    await undo.click()
+    await expect(undo).toBeEnabled()
+    await undo.click()
+    await expect(undo).toBeDisabled()
+  })
+
+  test('hors ligne, les modifications sont mises en attente puis synchronisées', async ({ page, context }) => {
+    const canvas = await openEditor(page)
+    const badge = page.getByTestId('sync-badge')
+    await expect(badge).toHaveAttribute('data-pending', '0')
+
+    await context.setOffline(true)
+    await drawWall(page, canvas)
+    await expect(badge).toHaveAttribute('data-pending', '1', { timeout: 15000 })
+    await expect(badge).toContainText('Hors connexion')
+
+    await context.setOffline(false)
+    await expect(badge).toHaveAttribute('data-pending', '0', { timeout: 30000 })
+    await expect(badge).toContainText('À jour')
+    // Le mur n'a jamais disparu de l'écran pendant l'aller-retour réseau.
+    await expect(canvas.locator('line')).toHaveCount(1)
+  })
+})

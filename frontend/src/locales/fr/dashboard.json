@@ -751,7 +751,8 @@
             "API & Intégrations",
             "Programmes immobiliers",
             "StayManager sync",
-            "CRM & Pipeline"
+            "CRM & Pipeline",
+            "Conception 3D des plans"
           ]
         },
         "pro": {
@@ -768,7 +769,8 @@
             "Programmes immobiliers (10 max)",
             "StayManager sync illimité",
             "Support prioritaire",
-            "Account manager dédié"
+            "Account manager dédié",
+            "Conception 3D des plans"
           ]
         },
         "enterprise": {
@@ -785,7 +787,8 @@
             "Programmes illimités",
             "StayManager sync illimité",
             "Support prioritaire 24/7",
-            "Account manager dédié"
+            "Account manager dédié",
+            "Conception 3D des plans"
           ]
         }
       }
@@ -1238,5 +1241,198 @@
         "loadFailed": "Erreur lors du chargement des réservations"
       }
     }
+  },
+  "designEditor": {
+    "title": "Éditeur de plan",
+    "actionsMenu": "Actions du plan",
+    "entry": "Concevoir en 3D",
+    "canvasLabel": "Plan du niveau",
+    "footer": "Niveau {{level}} · surface tracée {{area}} m²",
+    "entitlement": {
+      "title": "Module conception 3D",
+      "body": "Ce module vous permet de relever un plan sur tablette, même sans connexion, puis de le publier en 3D sur vos annonces.",
+      "cta": "Activer dans mon abonnement",
+      "upsell": "Module conception 3D — à activer",
+      "needsSave": "Concevoir en 3D — enregistrez d'abord le bien"
+    },
+    "tools": {
+      "select": "Sélectionner",
+      "wall": "Mur",
+      "room": "Pièce",
+      "door": "Porte",
+      "window": "Fenêtre",
+      "finishRoom": "Terminer la pièce",
+      "cancelRoom": "Abandonner la pièce",
+      "undo": "Annuler",
+      "redo": "Rétablir",
+      "delete": "Supprimer la sélection",
+      "zoomIn": "Zoomer",
+      "zoomOut": "Dézoomer",
+      "grid": "Grille",
+      "dimensions": "Cotes",
+      "fullscreen": "Plein écran"
+    },
+    "roomTypes": {
+      "living": "Séjour",
+      "bedroom": "Chambre",
+      "kitchen": "Cuisine",
+      "bathroom": "Salle de bain",
+      "wc": "WC",
+      "hallway": "Couloir",
+      "balcony": "Balcon",
+      "garage": "Garage",
+      "other": "Autre"
+    },
+    "openingTypes": {
+      "door": "Porte",
+      "window": "Fenêtre"
+    },
+    "viewer": {
+      "legendLabel": "Types de pièces"
+    },
+    "panel": {
+      "title": "Propriétés",
+      "totalArea": "Surface totale : {{area}} m²",
+      "noSelection": "Touchez un élément du plan pour le modifier.",
+      "length": "Longueur",
+      "thickness": "Épaisseur",
+      "roomType": "Type de pièce",
+      "roomName": "Nom de la pièce",
+      "area": "Surface : {{area}} m²",
+      "openingType": "Type d'ouverture",
+      "openingWidth": "Largeur",
+      "openingHeight": "Hauteur",
+      "openingSill": "Allège",
+      "openingOffset": "Position sur le mur",
+      "wallHeight": "Hauteur sous plafond",
+      "wallTooShort": "Un mur doit mesurer au minimum {{min}} m"
+    },
+    "problems": {
+      "wall_too_short": "Un mur est trop court pour être enregistré. Touchez pour le voir.",
+      "wall_thickness": "L'épaisseur d'un mur est hors limites. Touchez pour le voir.",
+      "room_polygon": "Une pièce a moins de trois points. Touchez pour la voir.",
+      "room_type": "Une pièce n'a pas de type. Touchez pour la voir.",
+      "opening_type": "Une ouverture n'a pas de type. Touchez pour la voir.",
+      "opening_dimensions": "Les dimensions d'une ouverture sont invalides. Touchez pour la voir.",
+      "opening_overflows": "Une ouverture dépasse de son mur. Touchez pour la voir.",
+      "opening_wall_height": "Une ouverture dépasse la hauteur du mur. Touchez pour la voir.",
+      "geometry_too_large": "Le plan est trop volumineux pour être enregistré.",
+      "wall_height": "La hauteur sous plafond est invalide.",
+      "repair": "Corriger",
+      "repairConfirm": "Le mur trop court et ses ouvertures seront supprimés. Continuer ?"
+    },
+    "pad": {
+      "backspace": "Effacer le dernier chiffre",
+      "validate": "Valider"
+    },
+    "levels": {
+      "label": "Niveaux",
+      "add": "Ajouter un niveau",
+      "newName": "R+{{n}}"
+    },
+    "sync": {
+      "synced": "À jour",
+      "syncing": "Synchronisation…",
+      "offline": "Hors connexion",
+      "offlinePending": "Hors connexion — {{n}} en attente",
+      "conflict": "Version mise de côté",
+      "auth_expired": "Session expirée",
+      "error": "Erreur de synchronisation"
+    },
+    "syncError": {
+      "level": "Ce niveau n'a pas pu être synchronisé : {{message}}. Votre travail reste enregistré sur cet appareil.",
+      "project": "Ce projet n'a pas pu être créé sur le serveur : {{message}}. Ce refus est définitif, rien dans l'application ne peut le lever : ses plans resteront sur cet appareil, sans jamais être partagés ni publiés.",
+      "retry": "Renvoyer ce niveau",
+      "tab": "Synchronisation échouée",
+      "projectDiscard": "Supprimer ce projet et ses plans",
+      "projectDiscardWarning": "Suppression définitive : les plans de ce projet, qui n'ont jamais atteint le serveur, seront perdus. Créez ensuite un projet sur un bien de votre agence.",
+      "projectDiscardConfirm": "Confirmer la suppression",
+      "cancel": "Annuler",
+      "projectUpdate": "La dernière modification de ce projet n'a pas été acceptée par le serveur : {{message}}. Elle n'est appliquée que sur cet appareil.",
+      "projectRetry": "Renvoyer ce projet",
+      "levelInternal": "Une erreur interne a empêché l'envoi de ce niveau. Votre travail reste enregistré sur cet appareil : réessayez, et signalez-le si cela se reproduit.",
+      "projectNeverCreated": "Ce projet n'a jamais été créé sur le serveur : {{message}}. Ses plans restent enregistrés sur cet appareil ; renvoyez-le une fois la cause levée.",
+      "levelReplace": "Remplacer par la version du serveur",
+      "levelReplaceWarning": "Le contenu de ce niveau tel qu'il est sur cet appareil sera abandonné au profit de celui du serveur, qui n'a jamais reçu votre dernière modification.",
+      "levelReplaceConfirm": "Confirmer le remplacement",
+      "levelReplaceFailed": "Le remplacement n'a pas pu aboutir : la version du serveur n'a pas pu être lue. Vérifiez la connexion et réessayez ; rien n'a été modifié."
+    },
+    "saveError": {
+      "message": "Cette modification n'a pas pu être enregistrée sur cet appareil — stockage saturé ou indisponible. Elle n'existe que dans cet écran : ne fermez pas cette page, libérez de l'espace, puis réessayez.",
+      "retry": "Réessayer l'enregistrement"
+    },
+    "calibration": {
+      "action": "Calibrer",
+      "title": "Calibration du plan",
+      "pickPoints": "Touchez les deux extrémités d'une longueur connue ({{n}}/2).",
+      "enterLength": "Saisissez la longueur réelle entre les deux points.",
+      "lengthLabel": "Longueur réelle",
+      "required": "Calibrez le plan avant de dessiner : sans échelle, les longueurs seraient fausses.",
+      "reset": "Reprendre les points",
+      "degenerate": "Les deux points touchés sont trop proches pour mesurer une distance. Touchez deux points bien écartés l'un de l'autre."
+    },
+    "background": {
+      "import": "Importer un plan"
+    },
+    "menu": {
+      "properties": "Propriétés",
+      "delete": "Supprimer",
+      "close": "Fermer"
+    },
+    "shelf": {
+      "badge": "Versions mises de côté ({{n}})",
+      "title": "Versions mises de côté",
+      "intro": "Un collègue a enregistré une version pendant que vous modifiiez ce niveau. Prévisualisez-la, puis récupérez-la si elle vous convient.",
+      "notice": "Version mise de côté : le propriétaire a modifié ce niveau, votre version lui a été transmise. Vous la retrouvez dans « Versions mises de côté ».",
+      "noticeDismiss": "J'ai compris",
+      "introOwn": "Votre version a été mise de côté au profit de celle du propriétaire. Prévisualisez-la, puis récupérez-la si vous voulez la reprendre.",
+      "empty": "Aucune version en attente.",
+      "item": "Basée sur la révision {{revision}} · {{area}} m² tracés",
+      "itemOwn": "Votre version, basée sur la révision {{revision}} · {{area}} m² tracés",
+      "recover": "Récupérer",
+      "dismiss": "Ignorer",
+      "close": "Fermer"
+    },
+    "projects": {
+      "title": "Conception 3D",
+      "subtitle": "Relevez le plan de ce bien, niveau par niveau. Tout fonctionne sans connexion.",
+      "back": "Retour",
+      "create": "Nouveau projet",
+      "defaultTitle": "Plan sans titre",
+      "empty": "Aucun projet pour ce bien.",
+      "emptyRemoved": "Projet vide supprimé.",
+      "markReady": "Marquer prêt",
+      "notSynced": "non synchronisé",
+      "status": {
+        "draft": "Brouillon",
+        "ready": "Prêt"
+      },
+      "syncError": "Non enregistré sur le serveur : {{message}}"
+    },
+    "seedError": {
+      "read": "Lecture du niveau impossible : le stockage local de cet appareil n'a pas répondu. L'éditeur reste bloqué tant qu'elle n'a pas abouti.",
+      "missing": "Ce niveau est introuvable dans le stockage local de cet appareil. Réessayez, ou choisissez un autre niveau.",
+      "retry": "Réessayer"
+    },
+    "selection": {
+      "count": "{{n}} objets sélectionnés"
+    },
+    "reuse": {
+      "action": "Reprendre un plan existant",
+      "title": "Reprendre un plan existant",
+      "offlineLimited": "Liste limitée aux plans déjà présents sur cet appareil, faute de connexion.",
+      "loading": "Chargement des plans disponibles…",
+      "empty": "Aucun autre plan disponible.",
+      "confirm": "Le plan actuel de ce niveau sera remplacé. Continuer ?",
+      "picking": "Chargement du plan choisi…",
+      "pickFailed": "Ce plan n’a pas pu être chargé. Réessayez ou choisissez-en un autre."
+    }
+  },
+  "billingStatus": {
+    "pastDue": "Votre renouvellement n'est pas encore réglé. Votre abonnement reste entier jusqu'au {{date}} ; passé cette date, l'accès sera réduit à la facturation.",
+    "restricted": "Votre accès est réduit à la facturation : réglez votre facture pour retrouver toutes vos fonctionnalités.",
+    "lastFailure": "Motif indiqué par votre banque : {{reason}}.",
+    "lastFailureGeneric": "Votre dernier paiement n'a pas abouti. Vérifiez votre carte ou contactez votre banque, puis réessayez.",
+    "payNow": "Payer maintenant"
   }
 }

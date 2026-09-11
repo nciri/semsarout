@@ -5,6 +5,11 @@
 Le monolithe reste source de vérité pour les écritures utilisateur (register, profil,
 suspension via trust-safety) et émet `user.created/updated/deleted` ; identity projette ces
 changements pour que l'émission des JWT (login) reflète l'état courant (dont les suspensions).
+
+`billing.subscription.activated` (émis par billing à l'activation/prolongation d'un abonnement)
+alimente `AgencyRO.features` — les entitlements de plan (claims JWT). Sans cette projection,
+aucune feature de plan (artisans, contracts, design3d…) n'atteindrait le JWT (repli côté
+`auth.py::_features` pour les abonnements déjà actifs, cf. celui-ci).
 Idempotent (dédup par message_id).
 """
 from datetime import datetime
@@ -14,6 +19,17 @@ from semsar_events import EventConsumer
 
 from .db import SessionLocal, init_db
 from .models import AgencyRO, ProcessedMessage, UserRO
+
+
+def _event_dt(v):
+    """Une échéance absente ou illisible vaut « pas d'échéance connue » : un événement
+    malformé ne doit pas faire échouer la projection, ni inventer une expiration."""
+    if not isinstance(v, str):
+        return None
+    try:
+        return datetime.fromisoformat(v.replace("Z", "+00:00")).replace(tzinfo=None)
+    except ValueError:
+        return None
 
 _COLS = (
     "email", "password_hash", "first_name", "last_name", "phone", "avatar_url", "user_type",
@@ -50,6 +66,24 @@ def _handle(routing_key: str, payload: dict, message_id: str) -> None:
                     u.agency_id = uid
                     u.user_type = "professional"
                     enqueue(db, "user", u.id, "user.updated", _user_event_doc(u))
+            if message_id:
+                db.add(ProcessedMessage(message_id=message_id))
+            db.commit()
+            return
+        if routing_key == "billing.subscription.activated":
+            agency_id = payload.get("agency_id")
+            if agency_id is not None:
+                ag = db.get(AgencyRO, agency_id)
+                if ag is None:
+                    ag = AgencyRO(id=agency_id, features=[], max_seats=0, max_teams=0,
+                                  is_suspended=False, is_deleted=False)
+                    db.add(ag)
+                ag.features = payload.get("features", [])
+                ag.features_synced_at = datetime.utcnow()
+                # Échéance des droits (fin de la période payée d'un abonnement résilié).
+                # Sans elle, la projection resterait vraie pour toujours et une agence
+                # résiliée garderait ses droits indéfiniment (A3).
+                ag.features_until = _event_dt(payload.get("features_until"))
             if message_id:
                 db.add(ProcessedMessage(message_id=message_id))
             db.commit()
@@ -104,7 +138,7 @@ def main() -> None:
         init_db()
     consumer = EventConsumer(
         settings.rabbitmq_url, service_name=settings.service_name,
-        bindings=["user.#", "agency.#"], exchange=settings.events_exchange,
+        bindings=["user.#", "agency.#", "billing.#"], exchange=settings.events_exchange,
     )
     consumer.run(handler=_handle)
 

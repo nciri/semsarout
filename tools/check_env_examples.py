@@ -15,6 +15,7 @@ KNOWN_PORTS = {
     "8514": "transactions", "8515": "buyer", "8516": "programs", "8517": "staymanager",
     "8518": "rental", "8519": "commission", "8520": "selling", "8521": "coloc-listing",
     "8522": "coloc-profile", "8523": "matching", "8524": "translation", "8525": "partner",
+    "8526": "design3d",
 }
 
 URL_RE = re.compile(r"^([A-Z0-9_]+)_URL=https?://[^:/]+:(\d+)")

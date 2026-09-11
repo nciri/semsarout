@@ -111,8 +111,11 @@ function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // `safe-top` seulement : collé en haut de la fenêtre, l'en-tête doit dégager
+  // l'encoche ; ses marges latérales viennent déjà du corps de page, dont il ne
+  // sort pas (sticky, et non fixed).
   return (
-    <header className="sticky top-0 z-50 bg-white/[.92] backdrop-blur-md border-b border-slate-200">
+    <header className="sticky top-0 z-50 bg-white/[.92] backdrop-blur-md border-b border-slate-200 safe-top">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-[68px]">
           {/* Logo */}

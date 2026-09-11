@@ -28,7 +28,8 @@ def main() -> None:
                   "rental.deposit.returned", "rental.deposit.settled",
                   "rental.inventory.signed", "rental.settlement.signed", "rental.lease.revised",
                   "rental.charge_regularization.sent",
-                  "rental.application.received", "rental.application.decided"],
+                  "rental.application.received", "rental.application.decided",
+                  "billing.invoice.created", "payment.failed"],
         exchange=settings.events_exchange,
     )
     consumer.run(handler=handle_event)

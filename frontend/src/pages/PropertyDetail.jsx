@@ -23,6 +23,8 @@ import useAuthStore from '../store/authStore'
 import { getAmenityIcon } from '../utils/amenityIcons'
 import { DOC_TYPES } from './dashboard/applicationStatus'
 import { useFormat } from '../utils/format'
+import { getPublishedByTarget } from '../services/design3dPublic'
+import DesignViewer from '../components/design/DesignViewer'
 
 const MAX_DOC_SIZE = 10 * 1024 * 1024
 
@@ -67,6 +69,15 @@ function PropertyDetail() {
     () => propertyService.getPricePosition(id),
     { enabled: !!id }
   )
+
+  // Visionneuse de plan (design3d) : lecture publique, aucune authentification
+  // requise — le service ne renvoie que des projets publiés (`ready`).
+  const { data: designProjects } = useQuery(
+    ['design3d-public', 'property', id],
+    () => getPublishedByTarget('property', id),
+    { enabled: !!id }
+  )
+  const designProject = designProjects?.[0] || null
 
   const isBuyer = !isAuthenticated || user?.account_role === 'buyer'
 
@@ -570,6 +581,14 @@ function PropertyDetail() {
               )}
             </div>
           </div>
+
+          {/* Plan (design3d) — n'apparaît que si l'agent a publié un plan */}
+          {designProject && (
+            <div className="mb-8">
+              <h2 className="font-semibold text-lg mb-4">{t('public:propertyDetail.planTitle')}</h2>
+              <DesignViewer project={designProject} />
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}

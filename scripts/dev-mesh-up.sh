@@ -51,7 +51,7 @@ SVCS="identity:8501 notification:8502 analytics:8504 contract:8505 legal:8506 pa
 catalog:8009 marketplace:8010 directory:8011 listing:8012 crm:8013 search:8103 geo:8509 \
 messaging:8510 trust-safety:8511 agency:8512 audit:8513 transactions:8514 buyer:8515 programs:8516 staymanager:8517 \
 rental:8518 commission:8519 selling:8520 coloc-listing:8521 coloc-profile:8522 matching:8523 \
-translation:8524 partner:8525"
+translation:8524 partner:8525 design3d:8526"
 S3="S3_ENDPOINT_URL=http://localhost:9000 S3_ACCESS_KEY=semsar S3_SECRET_KEY=semsar-secret AWS_ACCESS_KEY_ID=semsar AWS_SECRET_ACCESS_KEY=semsar-secret"
 # Masquage (§6) : listing/search lisent les comptes cachés depuis trust-safety (souverain),
 # plus le monolithe — prérequis au décommissionnement.
@@ -76,6 +76,7 @@ for pair in $SVCS; do
         echo "SIGN_API_URL=${SIGN_API_URL:-} SIGN_API_KEY=${SIGN_API_KEY:-}" ) )"
       extra="IDENTITY_URL=http://localhost:8501 CRM_URL=http://localhost:8013 LISTING_URL=http://localhost:8012 $S3 RENTAL_DOCS_BUCKET=semsar-rental-docs COMMISSION_URL=http://localhost:8519 $SIGN_VARS";;
     commission) extra="PAYMENT_URL=http://localhost:8507";;
+    design3d) extra="$S3 DESIGN_PLANS_BUCKET=semsar-design-plans";;
     selling)
       # Même secret local 3a9dSign que rental (§SIGN_VARS ci-dessus), lu depuis le .env
       # gitignoré du service selling (sous-shell pour ne pas polluer l'env du script parent).
@@ -107,6 +108,7 @@ env UPSTREAM_URL="$MONO" JWT_SECRET_KEY="$JWT" INTERNAL_TOKEN="$ITOK" TENANT_DEV
   COLOC_LISTING_URL=http://localhost:8521 COLOC_PROFILE_URL=http://localhost:8522 \
   MATCHING_URL=http://localhost:8523 TRANSLATION_URL=http://localhost:8524 \
   PARTNER_URL=http://localhost:8525 \
+  DESIGN3D_URL=http://localhost:8526 \
   nohup python3 -m uvicorn app.main:app --app-dir gateway --host 127.0.0.1 --port "$BFF_PORT" \
   > "$LOG/bff.log" 2>&1 &
 sleep 4
@@ -118,7 +120,7 @@ relay() { env SERVICE_NAME="$1" DATABASE_URL="$(dburl "$1")" RABBITMQ_URL="$RMQ"
 worker() { env SERVICE_NAME="$1" DATABASE_URL="$(dburl "$1")" RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" \
   OPENSEARCH_URL="$OS" MONOLITH_URL="$MONO" INTERNAL_TOKEN="$ITOK" \
   PYTHONPATH="services/$1" nohup python3 -m app.worker > "$LOG/$1-worker.log" 2>&1 & }
-for r in listing catalog identity contract payment billing transactions programs agency crm directory rental commission selling coloc-listing coloc-profile partner; do relay "$r"; done
+for r in listing catalog identity contract payment billing transactions programs agency crm directory rental commission selling coloc-listing coloc-profile partner design3d; do relay "$r"; done
 for w in search crm marketplace geo agency messaging analytics billing notification identity audit transactions legal contract rental commission coloc-profile matching partner trust-safety; do worker "$w"; done
 # Ordonnanceur (Vague 2) : emails temporels (rappels de visite J-1, …).
 env SERVICE_NAME=notification DATABASE_URL="$(dburl notification)" RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" \
@@ -136,7 +138,7 @@ for e in "monolithe:7000:/api/v1/properties?per_page=1" "BFF:$BFF_PORT:/health" 
   geo:8509 messaging:8510 trust-safety:8511 agency:8512 audit:8513 notification:8502 analytics:8504 \
   contract:8505 legal:8506 payment:8507 billing:8508 transactions:8514 buyer:8515 programs:8516 staymanager:8517 \
   rental:8518 commission:8519 selling:8520 coloc-listing:8521 coloc-profile:8522 matching:8523 \
-  translation:8524 partner:8525; do
+  translation:8524 partner:8525 design3d:8526; do
   n="${e%%:*}"; rest="${e#*:}"; p="${rest%%:*}"; path="${rest#*:}"; [ "$path" = "$p" ] && path="/health"
   printf "   %-13s -> %s\n" "$n" "$(curl -s -o /dev/null -w '%{http_code}' -m3 "http://localhost:$p$path")"
 done

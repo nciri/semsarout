@@ -42,9 +42,9 @@ jobs:
           # Liste faisant autorité des dirs backend (garder synchronisée avec la matrice).
           ALL="gateway services/agency services/analytics services/billing services/catalog \
           services/coloc-listing services/coloc-profile services/commission \
-          services/contract services/crm services/directory services/identity \
+          services/contract services/crm services/design3d services/directory services/identity \
           services/legal services/listing services/marketplace services/matching \
-          services/messaging services/notification services/partner services/payment services/rental \
+          services/messaging services/notification services/partner services/payment services/programs services/rental \
           services/search services/selling services/translation services/trust-safety"
 
           if [ "$EVENT" = "pull_request" ]; then
@@ -133,7 +133,7 @@ jobs:
       - run: npm run build
 
   frontend-semsarout:
-    name: front semsarout (build)
+    name: front semsarout (lint + test + build + e2e tablette)
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
@@ -148,7 +148,23 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
+      # Aligné sur frontend-m3a-l3achrane : sans lint ni tests unitaires ici,
+      # un lint rouge et des tests cassés passaient inaperçus jusqu'au build.
+      # `npm test` = vitest (les tests Playwright ont leur propre étape,
+      # après le build et l'installation du navigateur).
+      - run: npm run lint
+      - run: npm test
       - run: npm run build
+      # E2E tablette de l'éditeur de plan (6 viewports iPad, API simulée).
+      # Après le build : `vite preview` sert dist/.
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7
 
   env-examples:
     name: Cohérence des .env.example
