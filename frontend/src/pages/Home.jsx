@@ -21,7 +21,6 @@ function Home() {
 
   const bullets = [t('public:home.bullet1'), t('public:home.bullet2'), t('public:home.bullet3')]
   const stats = [
-    ['0%', t('public:home.statCommission')],
     [formatPrice(4900), t('public:home.statFlatFee')],
     ['100%', t('public:home.statTransparent')],
     ['24h', t('public:home.statPublication')]
@@ -105,8 +104,8 @@ function Home() {
             <AdvancedSearch />
           </div>
 
-          {/* Stats */}
-          <div className="mt-11 flex flex-wrap gap-x-14 gap-y-6">
+          {/* Stats — centrés sur la largeur du bloc de recherche au-dessus */}
+          <div className="mt-11 max-w-5xl flex flex-wrap justify-center gap-x-14 gap-y-6">
             {stats.map(([n, l]) => (
               <div key={l}>
                 <div className="font-display font-extrabold text-[34px] text-primary-400">{n}</div>

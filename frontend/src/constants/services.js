@@ -12,7 +12,7 @@ export const SERVICE_OPTIONS = {
   vente: {
     label: 'Vendre mon bien',
     shortLabel: 'Forfait Vente',
-    description: `Forfait fixe ${priceLabel(PRICING.agencyForfait)} ${DIRHAM_SYMBOL}, sans commission`,
+    description: `Forfait fixe ${priceLabel(PRICING.agencyForfait)} ${DIRHAM_SYMBOL}`,
     icon: FiHome
   },
   'mise-en-location': {
