@@ -350,3 +350,64 @@ def test_internal_subscription_projects_the_latest_subscription_after_resubscrip
     finally:
         app.dependency_overrides.clear()
         db.close()
+
+
+def test_internal_subscription_dit_jusqua_quand_les_droits_valent(monkeypatch, tmp_path):
+    """A3 (suite) : sans borne, identity n'a AUCUN moyen d'apprendre l'échéance.
+
+    Une résiliation garde l'accès jusqu'à la fin de la période payée. Passé ce
+    terme, plus rien ne le révoquait : `_reconcile_expired` ne tire que depuis
+    `_agency_sub`, et identity ne réinterroge jamais billing une fois
+    `features_synced_at` posé (I7). L'agence gardait donc ses droits — le module
+    payant compris — indéfiniment. La projection doit porter son échéance pour
+    expirer d'elle-même.
+    """
+    from datetime import datetime, timedelta
+
+    from app import main as m
+    monkeypatch.setattr(m.settings, "internal_token", "tok")
+    db = _db_session(tmp_path)
+    plan = _plan(has_design3d=True)
+    db.add(plan)
+    db.commit()
+    fin = datetime.utcnow() + timedelta(days=12)
+    db.add(Subscription(agency_id=30, plan_id=plan.id, amount=499, status="cancelled", end_date=fin))
+    db.commit()
+    app.dependency_overrides[get_db] = lambda: db
+    try:
+        with TestClient(app) as client:
+            resp = client.get("/internal/subscription", params={"agency_id": 30},
+                              headers={"x-internal-token": "tok"})
+        assert resp.status_code == 200
+        sub = resp.json()["subscription"]
+        # En grâce : les droits valent encore, mais leur terme est dit.
+        assert sub["features"] == ["design3d"]
+        assert sub["features_until"] == fin.isoformat()
+    finally:
+        app.dependency_overrides.clear()
+        db.close()
+
+
+def test_internal_subscription_sans_echeance_pour_un_abonnement_actif(monkeypatch, tmp_path):
+    """Un abonnement `active` n'a pas d'échéance de droits : sa prolongation passe
+    par le worker, qui réémet l'événement. Poser une borne ici ferait réinterroger
+    billing à chaque login dès la fin de période, ce que I7 existe pour éviter."""
+    from app import main as m
+    monkeypatch.setattr(m.settings, "internal_token", "tok")
+    db = _db_session(tmp_path)
+    plan = _plan(has_design3d=True)
+    db.add(plan)
+    db.commit()
+    from datetime import datetime, timedelta
+    db.add(Subscription(agency_id=31, plan_id=plan.id, amount=499, status="active",
+                        end_date=datetime.utcnow() + timedelta(days=30)))
+    db.commit()
+    app.dependency_overrides[get_db] = lambda: db
+    try:
+        with TestClient(app) as client:
+            resp = client.get("/internal/subscription", params={"agency_id": 31},
+                              headers={"x-internal-token": "tok"})
+        assert resp.json()["subscription"]["features_until"] is None
+    finally:
+        app.dependency_overrides.clear()
+        db.close()

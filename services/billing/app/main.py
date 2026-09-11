@@ -99,6 +99,24 @@ def _invoice_dict(i: Invoice) -> dict:
 _REVOCABLE_ON_PERIOD_END = {"incomplete", "cancelled"}
 
 
+def _features_until(sub: Subscription) -> "datetime | None":
+    """Instant au-delà duquel les features de cet abonnement ne valent plus.
+
+    Un abonnement révocable en fin de période reste entitlé jusqu'à `end_date`, puis
+    ne l'est plus. Sans cette borne dans la projection, identity n'avait AUCUN moyen
+    d'apprendre l'échéance : `_reconcile_expired` ne tire que depuis `_agency_sub`,
+    aucun balayage ne l'appelle, et identity ne réinterroge jamais billing une fois
+    `features_synced_at` posé (I7). Une agence qui résiliait et ne revenait pas sur
+    ses pages de facturation gardait donc ses droits — le module payant compris —
+    indéfiniment après l'échéance.
+
+    `active` n'a pas d'échéance de droits : sa prolongation passe par le worker, qui
+    réémet l'événement. Y poser `end_date` ferait réinterroger billing à chaque login
+    dès la fin de période, ce que I7 existe précisément pour éviter.
+    """
+    return sub.end_date if sub.status in _REVOCABLE_ON_PERIOD_END else None
+
+
 def _reconcile_expired(db: Session, sub: Subscription | None) -> None:
     """I8 : `change_plan` bascule l'abonnement en `incomplete` (nouveau plan, facture impayée)
     sans jamais réévaluer les entitlements ensuite — si la facture n'est jamais réglée, l'agence
@@ -127,7 +145,8 @@ def _reconcile_expired(db: Session, sub: Subscription | None) -> None:
         return
     sub.status = "expired"
     enqueue(db, "subscription", sub.id, events.SUBSCRIPTION_ACTIVATED,
-            {"subscription_id": sub.id, "agency_id": sub.agency_id, "features": []})
+            {"subscription_id": sub.id, "agency_id": sub.agency_id, "features": [],
+             "features_until": None})
     db.commit()
 
 
@@ -182,7 +201,8 @@ def internal_subscription(request: Request, x_internal_token: str = Header(defau
                              "has_programs": bool(plan.has_programs) if entitled else False,
                              "max_programs": plan.max_programs if entitled else 0,
                              "has_staymanager_sync": bool(plan.has_staymanager_sync) if entitled else False,
-                             "features": plan_features(plan) if entitled else []}}
+                             "features": plan_features(plan) if entitled else [],
+                             "features_until": iso(_features_until(sub))}}
 
 
 @app.get("/internal/subscriptions", include_in_schema=False)
@@ -372,7 +392,10 @@ def cancel_subscription(principal: Principal = Depends(get_principal), db: Sessi
     plan = db.get(SubscriptionPlan, sub.plan_id)
     enqueue(db, "subscription", sub.id, events.SUBSCRIPTION_ACTIVATED,
             {"subscription_id": sub.id, "agency_id": principal.agency_id,
-             "features": plan_features(plan) if plan else []})
+             "features": plan_features(plan) if plan else [],
+             # Le terme de la période payée EST l'échéance des droits : sans lui,
+             # cette projection resterait vraie pour toujours.
+             "features_until": iso(_features_until(sub))})
     db.commit()
     return {"message": "Subscription cancelled. Access continues until end of billing period.",
             "subscription": _sub_dict(db, sub)}

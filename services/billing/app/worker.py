@@ -86,7 +86,10 @@ def _activate_pending(db, agency_id) -> None:
     plan = db.get(SubscriptionPlan, sub.plan_id)
     enqueue(db, "subscription", sub.id, events.SUBSCRIPTION_ACTIVATED,
             {"subscription_id": sub.id, "agency_id": agency_id,
-             "features": plan_features(plan) if plan else []})
+             "features": plan_features(plan) if plan else [],
+             # Activation/prolongation : l'abonnement est `active`, donc sans échéance
+             # de droits (la prolongation suivante repassera par ici).
+             "features_until": None})
 
 
 def _create_or_extend(db, payload, agency_id) -> None:
@@ -108,7 +111,10 @@ def _create_or_extend(db, payload, agency_id) -> None:
     plan = db.get(SubscriptionPlan, plan_id) if plan_id else None
     enqueue(db, "subscription", sub.id, events.SUBSCRIPTION_ACTIVATED,
             {"subscription_id": sub.id, "agency_id": agency_id,
-             "features": plan_features(plan) if plan else []})
+             "features": plan_features(plan) if plan else [],
+             # Activation/prolongation : l'abonnement est `active`, donc sans échéance
+             # de droits (la prolongation suivante repassera par ici).
+             "features_until": None})
 
 
 def main() -> None:
