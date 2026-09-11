@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { PRICING } from '../constants/pricing'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -11,7 +12,7 @@ import DirIcon from '../components/common/DirIcon'
 const SERVICES = {
   'forfait-vente': {
     name: 'Forfait Vente',
-    price: 4900,
+    price: PRICING.agencyForfait,
     description: 'Service complet de vente immobilière'
   },
   'photos-pro': {

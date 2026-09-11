@@ -63,7 +63,7 @@ class Payment(db.Model):
 
 # Service prices
 SERVICE_PRICES = {
-    'forfait-vente': 4900,
+    'forfait-vente': 9900,
     'photos-pro': 990,
     'photos-pro-360': 1490,
     'photos-pro-drone': 1790

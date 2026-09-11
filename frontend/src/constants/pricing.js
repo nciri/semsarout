@@ -9,7 +9,7 @@ import { DIRHAM_SYMBOL } from '../utils/currency'
 
 export const PRICING = {
   // Forfait « Service d'agence en ligne » (vente) — tarif fixe.
-  agencyForfait: 4900,
+  agencyForfait: 9900,
   // Options média ponctuelles (add-ons).
   addons: { virtualTour360: 500, drone: 800, video: 1200 },
   // Gestion locative (StayManager) — par bien / mois.
@@ -23,5 +23,5 @@ export const PRICING = {
 }
 
 // Helpers d'affichage : format français + symbole dirham.
-export const priceLabel = (n) => Number(n).toLocaleString('fr-FR') // 4900 -> "4 900"
-export const priceWithSymbol = (n) => `${priceLabel(n)} ${DIRHAM_SYMBOL}` // "4 900 Đh"
+export const priceLabel = (n) => Number(n).toLocaleString('fr-FR') // 9900 -> "9 900"
+export const priceWithSymbol = (n) => `${priceLabel(n)} ${DIRHAM_SYMBOL}` // "9 900 Đh"

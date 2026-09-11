@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { PRICING } from '../constants/pricing'
 import { Link } from 'react-router-dom'
 import { Trans, useTranslation } from 'react-i18next'
 import {
@@ -356,7 +357,7 @@ function SellProperty() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="font-display text-3xl font-bold mb-2">{t('public:sellProperty.title')}</h1>
           <p className="text-gray-300">
-            {t('public:sellProperty.subtitle', { price: formatPrice(4900) })}
+            {t('public:sellProperty.subtitle', { price: formatPrice(PRICING.agencyForfait) })}
           </p>
         </div>
       </section>
@@ -900,7 +901,7 @@ function SellProperty() {
                   <span className="text-sm text-gray-600">
                     <Trans
                       i18nKey="public:sellProperty.step5.consentText"
-                      values={{ price: formatPrice(4900) }}
+                      values={{ price: formatPrice(PRICING.agencyForfait) }}
                       components={{ link: <Link to="/cgu" target="_blank" className="text-primary-600 underline" /> }}
                     />
                   </span>

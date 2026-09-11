@@ -36,7 +36,7 @@ _TERMINAL = {"completed", "failed", "refunded"}
 
 # Prix des services ponctuels — parité `SERVICE_PRICES` du monolithe.
 SERVICE_PRICES = {
-    "forfait-vente": 4900,
+    "forfait-vente": 9900,
     "photos-pro": 990,
     "photos-pro-360": 1490,
     "photos-pro-drone": 1790,

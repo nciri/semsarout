@@ -1,4 +1,5 @@
 import { useQuery } from 'react-query'
+import { PRICING } from '../constants/pricing'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -21,7 +22,7 @@ function Home() {
 
   const bullets = [t('public:home.bullet1'), t('public:home.bullet2'), t('public:home.bullet3')]
   const stats = [
-    [formatPrice(4900), t('public:home.statFlatFee')],
+    [formatPrice(PRICING.agencyForfait), t('public:home.statFlatFee')],
     ['100%', t('public:home.statTransparent')],
     ['24h', t('public:home.statPublication')]
   ]
@@ -29,7 +30,7 @@ function Home() {
     {
       t: t('public:home.problem1Title'),
       p: t('public:home.problem1Text', { currency: DIRHAM_SYMBOL, amount: formatPrice(100000) }),
-      s: t('public:home.problem1Solution', { amount: formatPrice(4900) })
+      s: t('public:home.problem1Solution', { amount: formatPrice(PRICING.agencyForfait) })
     },
     {
       t: t('public:home.problem2Title'),
@@ -171,7 +172,7 @@ function Home() {
                   </h3>
                 </div>
                 <div className="text-end">
-                  <div className="text-3xl font-bold text-primary-600">{formatPrice(4900)}</div>
+                  <div className="text-3xl font-bold text-primary-600">{formatPrice(PRICING.agencyForfait)}</div>
                   <div className="text-sm text-gray-500">{t('public:home.saleFlatFeeNote')}</div>
                 </div>
               </div>
@@ -270,7 +271,7 @@ function Home() {
                     <RedCartouche className="text-[18px]">Out</RedCartouche>
                   </span>
                 </div>
-                <div className="font-display text-[46px] font-extrabold text-primary-400">{formatPrice(4900)}</div>
+                <div className="font-display text-[46px] font-extrabold text-primary-400">{formatPrice(PRICING.agencyForfait)}</div>
                 <div className="text-[13px] text-ivory/50">{t('public:home.compareUsFlatFeeNote')}</div>
               </div>
               <div className="text-center">

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { PRICING } from '../../constants/pricing'
 import { useTranslation } from 'react-i18next'
 import { FiFacebook, FiInstagram, FiLinkedin, FiTwitter, FiYoutube } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
@@ -45,7 +46,7 @@ function Footer() {
           <div>
             <h4 className="font-semibold text-white mb-4">{t('common:footer.saleTitle')}</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/nos-services" className="hover:text-white transition-colors">{t('common:footer.salePackage', { price: formatPrice(4900) })}</Link></li>
+              <li><Link to="/nos-services" className="hover:text-white transition-colors">{t('common:footer.salePackage', { price: formatPrice(PRICING.agencyForfait) })}</Link></li>
               <li><Link to="/nos-services" className="hover:text-white transition-colors">{t('common:footer.professionalPhotos')}</Link></li>
               <li><Link to="/nos-services" className="hover:text-white transition-colors">{t('common:footer.freeEstimate')}</Link></li>
               <li><Link to="/annonces?transaction_type=sale" className="hover:text-white transition-colors">{t('common:footer.buyProperty')}</Link></li>
