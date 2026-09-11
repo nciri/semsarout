@@ -46,6 +46,13 @@ jamais à `cancelled`** : il est consigné, la facture reste impayée, le statut
 `past_due` rejoint `_ENTITLED_STATUSES` et `_REVOCABLE_ON_PERIOD_END`. `restricted` n'est
 dans aucun des deux.
 
+**L'échéance de `past_due` n'est pas `end_date`.** Au renouvellement, `end_date` est déjà
+dépassée : c'est justement ce qui déclenche la facture. La lire comme échéance réduirait
+l'accès immédiatement. `past_due` porte donc sa propre échéance, `grace_until`, et un seul
+helper `_deadline(sub)` la choisit : `grace_until` pour `past_due`, `end_date` pour
+`cancelled` et `incomplete`. `_features_until` et `_reconcile_expired` passent tous deux par
+ce helper, pour ne jamais diverger.
+
 ### Délai de grâce
 
 Dérivé des constantes de relance existantes, sans nouvelle constante magique :
@@ -59,7 +66,7 @@ La dernière relance peut ainsi annoncer la date de réduction au lieu de coïnc
 
 ### Révocation
 
-`past_due` pose `features_until = issued_at + GRACE`. La révocation passe par le chemin
+`past_due` pose `grace_until = issued_at + GRACE`, que `_deadline` projette en `features_until`. La révocation passe par le chemin
 déjà construit pour A3 : à l'échéance, identity traite sa projection comme périmée,
 réinterroge billing, `_agency_sub` → `_reconcile_expired`, qui passe l'abonnement en
 `restricted` (et non `expired`) et émet `billing.subscription.activated` avec `features: []`.
@@ -74,7 +81,7 @@ Si billing est injoignable à ce moment, identity sert déjà `[]` (propriété 
 
 1. crée la facture de renouvellement (`invoice_type = "subscription"`, montant du plan
    et du cycle courants, `subscription_id` renseigné) ;
-2. passe l'abonnement en `past_due`, `features_until = issued_at + GRACE` ;
+2. passe l'abonnement en `past_due`, `grace_until = issued_at + GRACE` ;
 3. émet `billing.invoice.created` et `billing.subscription.activated`
    (features inchangées + `features_until`), dans la même transaction.
 
@@ -116,12 +123,16 @@ n'émet pas deux fois.
   statut.**
 - `payment.completed` (existant, `_create_or_extend`) : l'abonnement courant est retrouvé
   même en `past_due` ou `restricted` (aujourd'hui seul `active` l'est, ce qui créerait une
-  seconde ligne). Il est prolongé depuis son `end_date`, repasse en `active`, la facture
-  ouverte passe `paid`, et l'événement porte `features_until: None`.
+  seconde ligne). Il repasse en `active`, `grace_until` est effacé, la facture ouverte passe
+  `paid`, et l'événement porte `features_until: None`. Point de départ de la nouvelle
+  période : `end_date` si l'abonnement était `past_due` (payé dans la grâce, aucun jour offert
+  ni perdu) ; maintenant s'il était `restricted` (sinon une longue réduction donnerait une
+  période déjà échue, et une nouvelle facture partirait aussitôt).
 - `/my-subscription` expose `status`, `features_until`, `last_payment_failure_at`,
   `last_payment_failure_reason`, et la référence de la facture ouverte.
 
-Migration `services/billing/db/migrate_payment_failure.sql` (colonnes nullables, idempotente),
+Migration `services/billing/db/migrate_payment_failure.sql` : `grace_until`,
+`last_payment_failure_at`, `last_payment_failure_reason` (colonnes nullables, idempotente),
 ajoutée à `MIGRATIONS` de `deploy-remote.sh` — le garde-fou d'A5 l'exige.
 
 ### 3.5 frontend agence
@@ -151,7 +162,8 @@ Pas de notification poussée par superadmin : l'état est surfacé par requête.
 - I3 — `restricted` n'empêche jamais le login.
 - I4 — Émettre le renouvellement deux fois ne crée pas deux factures.
 - I5 — Un paiement reçu en `past_due` ou `restricted` prolonge l'abonnement existant,
-  sans créer de seconde ligne.
+  sans créer de seconde ligne ; une période payée ne commence jamais dans le passé.
+- I7 — `_features_until` et `_reconcile_expired` lisent la même échéance (`_deadline`).
 - I6 — Le motif d'échec atteint l'agence par courriel et par sa page d'abonnement.
 
 ## 5. Tests attendus
