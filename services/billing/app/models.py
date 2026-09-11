@@ -57,6 +57,13 @@ class Subscription(Base):
     end_date = Column(DateTime)
     trial_end = Column(DateTime)
     cancelled_at = Column(DateTime)
+    # Échéance de grâce d'un renouvellement impayé (`past_due`). Distincte de `end_date` : au
+    # renouvellement, `end_date` est déjà dépassée — c'est elle qui déclenche la facture — et
+    # la lire comme échéance réduirait l'accès le jour même.
+    grace_until = Column(DateTime)
+    last_payment_failure_at = Column(DateTime)
+    # Libellé renvoyé par la passerelle, montré tel quel à l'agence : jamais un code technique.
+    last_payment_failure_reason = Column(String(255))
     listings_used = Column(Integer, default=0)
     featured_used = Column(Integer, default=0)
     urgent_used = Column(Integer, default=0)

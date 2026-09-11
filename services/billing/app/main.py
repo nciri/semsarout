@@ -84,6 +84,9 @@ def _sub_dict(db: Session, s: Subscription) -> dict:
         "billing_cycle": s.billing_cycle, "amount": float(s.amount), "status": s.status,
         "start_date": iso(s.start_date), "end_date": iso(s.end_date),
         "listings_used": s.listings_used, "listings_remaining": remaining,
+        "grace_until": iso(s.grace_until), "features_until": iso(_features_until(s)),
+        "last_payment_failure_at": iso(s.last_payment_failure_at),
+        "last_payment_failure_reason": s.last_payment_failure_reason,
     }
 
 
@@ -93,10 +96,18 @@ def _invoice_dict(i: Invoice) -> dict:
             "period_label": i.period_label, "issued_at": iso(i.issued_at), "paid_at": iso(i.paid_at)}
 
 
-# Statuts dont la fin de période payée (`end_date`) vaut révocation des entitlements :
-# `incomplete` (changement de plan jamais réglé, I8) et `cancelled` (résiliation différée dont la
-# période payée est écoulée, A3). `active` en est absent : sa prolongation passe par le worker.
-_REVOCABLE_ON_PERIOD_END = {"incomplete", "cancelled"}
+# Statuts dont l'échéance vaut révocation des entitlements : `incomplete` (changement de plan
+# jamais réglé, I8), `cancelled` (résiliation différée dont la période payée est écoulée, A3) et
+# `past_due` (renouvellement impayé dont la grâce est écoulée). `active` en est absent : sa
+# prolongation passe par le worker ou par l'émission du renouvellement.
+_REVOCABLE_ON_PERIOD_END = {"incomplete", "cancelled", "past_due"}
+
+
+def _deadline(sub: Subscription) -> "datetime | None":
+    """Échéance des droits d'un abonnement révocable. Seul point de vérité, lu à la fois par
+    `_features_until` (ce qu'identity projette) et par `_reconcile_expired` (ce que billing
+    applique) : s'ils divergeaient, identity révoquerait à une date et billing à une autre."""
+    return sub.grace_until if sub.status == "past_due" else sub.end_date
 
 
 def _features_until(sub: Subscription) -> "datetime | None":
@@ -114,7 +125,7 @@ def _features_until(sub: Subscription) -> "datetime | None":
     réémet l'événement. Y poser `end_date` ferait réinterroger billing à chaque login
     dès la fin de période, ce que I7 existe précisément pour éviter.
     """
-    return sub.end_date if sub.status in _REVOCABLE_ON_PERIOD_END else None
+    return _deadline(sub) if sub.status in _REVOCABLE_ON_PERIOD_END else None
 
 
 def _reconcile_expired(db: Session, sub: Subscription | None) -> None:
@@ -139,11 +150,14 @@ def _reconcile_expired(db: Session, sub: Subscription | None) -> None:
     Best-effort et lazy (pas de garantie de délai) : appelée à chaque lecture d'un abonnement via
     `_agency_sub`, donc au prochain `/internal/subscription` (repli identity),
     `change-plan` ou `cancel-subscription` de l'agence."""
-    if sub is None or sub.status not in _REVOCABLE_ON_PERIOD_END or sub.end_date is None:
+    if sub is None or sub.status not in _REVOCABLE_ON_PERIOD_END:
         return
-    if sub.end_date > datetime.utcnow():
+    deadline = _deadline(sub)
+    if deadline is None or deadline > datetime.utcnow():
         return
-    sub.status = "expired"
+    # `past_due` devient `restricted`, pas `expired` : l'agence reste abonnée, garde son login,
+    # et repart en réglant sa facture. `expired` clôt un abonnement résilié ou jamais payé.
+    sub.status = "restricted" if sub.status == "past_due" else "expired"
     enqueue(db, "subscription", sub.id, events.SUBSCRIPTION_ACTIVATED,
             {"subscription_id": sub.id, "agency_id": sub.agency_id, "features": [],
              "features_until": None})
@@ -172,10 +186,10 @@ async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
 
 
-# Statuts avec accès effectif au plan. `cancelled` y figure : `cancel_subscription` garde l'accès
-# jusqu'à la fin de la période payée (résiliation différée). `incomplete` (changement de plan pas
-# encore payé) et `expired` (I8) en sont volontairement absents.
-_ENTITLED_STATUSES = {"active", "cancelled"}
+# Statuts avec accès effectif au plan. `cancelled` : résiliation différée, l'accès court jusqu'à
+# la fin de la période payée. `past_due` : renouvellement impayé, l'accès court jusqu'à la fin de
+# la grâce. `incomplete`, `expired` et `restricted` en sont volontairement absents.
+_ENTITLED_STATUSES = {"active", "cancelled", "past_due"}
 
 
 @app.get("/internal/subscription", include_in_schema=False)

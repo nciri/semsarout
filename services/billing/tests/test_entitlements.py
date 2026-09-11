@@ -411,3 +411,94 @@ def test_internal_subscription_sans_echeance_pour_un_abonnement_actif(monkeypatc
     finally:
         app.dependency_overrides.clear()
         db.close()
+
+
+def test_past_due_reste_entitle_pendant_la_grace(monkeypatch, tmp_path):
+    """Renouvellement impayé mais grâce en cours : les droits valent encore, et leur terme
+    est la fin de la grâce — pas `end_date`, déjà dépassée au moment du renouvellement."""
+    from datetime import datetime, timedelta
+
+    from app import main as m
+    monkeypatch.setattr(m.settings, "internal_token", "tok")
+    db = _db_session(tmp_path)
+    plan = _plan(has_design3d=True)
+    db.add(plan)
+    db.commit()
+    grace = datetime.utcnow() + timedelta(days=10)
+    db.add(Subscription(agency_id=40, plan_id=plan.id, amount=499, status="past_due",
+                        end_date=datetime.utcnow() - timedelta(days=14), grace_until=grace))
+    db.commit()
+    app.dependency_overrides[get_db] = lambda: db
+    try:
+        with TestClient(app) as client:
+            sub = client.get("/internal/subscription", params={"agency_id": 40},
+                             headers={"x-internal-token": "tok"}).json()["subscription"]
+        assert sub["status"] == "past_due"
+        assert sub["features"] == ["design3d"]
+        assert sub["features_until"] == grace.isoformat()
+    finally:
+        app.dependency_overrides.clear()
+        db.close()
+
+
+def test_past_due_grace_ecoulee_passe_restricted_et_vide_les_droits(monkeypatch, tmp_path):
+    """Grâce écoulée sans paiement : accès réduit (`restricted`), pas `expired` — l'agence
+    reste abonnée et repart en payant. L'événement réémis vide les features."""
+    from datetime import datetime, timedelta
+
+    from semsar_events import OutboxEvent
+
+    from app import main as m
+    monkeypatch.setattr(m.settings, "internal_token", "tok")
+    db = _db_session(tmp_path)
+    plan = _plan(has_design3d=True)
+    db.add(plan)
+    db.commit()
+    sub = Subscription(agency_id=41, plan_id=plan.id, amount=499, status="past_due",
+                       end_date=datetime.utcnow() - timedelta(days=30),
+                       grace_until=datetime.utcnow() - timedelta(days=1))
+    db.add(sub)
+    db.commit()
+    app.dependency_overrides[get_db] = lambda: db
+    try:
+        with TestClient(app) as client:
+            body = client.get("/internal/subscription", params={"agency_id": 41},
+                              headers={"x-internal-token": "tok"}).json()["subscription"]
+        assert body["status"] == "restricted"
+        assert body["features"] == []
+        assert db.get(Subscription, sub.id).status == "restricted"
+        ev = (db.query(OutboxEvent).filter_by(event_type="billing.subscription.activated")
+              .order_by(OutboxEvent.id.desc()).first())
+        assert ev is not None and ev.payload["features"] == []
+    finally:
+        app.dependency_overrides.clear()
+        db.close()
+
+
+def test_internal_subscriptions_expose_grace_et_dernier_echec(monkeypatch, tmp_path):
+    from datetime import datetime, timedelta
+
+    from app import main as m
+    monkeypatch.setattr(m.settings, "internal_token", "tok")
+    db = _db_session(tmp_path)
+    plan = _plan()
+    db.add(plan)
+    db.commit()
+    grace = datetime.utcnow() + timedelta(days=5)
+    echec = datetime.utcnow() - timedelta(hours=2)
+    db.add(Subscription(agency_id=42, plan_id=plan.id, amount=499, status="past_due",
+                        grace_until=grace, last_payment_failure_at=echec,
+                        last_payment_failure_reason="Carte refusée"))
+    db.commit()
+    app.dependency_overrides[get_db] = lambda: db
+    try:
+        with TestClient(app) as client:
+            row = client.get("/internal/subscriptions",
+                             headers={"x-internal-token": "tok"}).json()["subscriptions"]["42"]
+        assert row["grace_until"] == grace.isoformat()
+        assert row["features_until"] == grace.isoformat()
+        assert row["last_payment_failure_at"] == echec.isoformat()
+        assert row["last_payment_failure_reason"] == "Carte refusée"
+    finally:
+        app.dependency_overrides.clear()
+        db.close()
