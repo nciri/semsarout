@@ -20,7 +20,9 @@
       "mrrEstimate": "الإيراد الشهري المقدر (درهم)",
       "signups30d": "التسجيلات خلال 30 يومًا",
       "suspended": "الحسابات الموقوفة",
-      "pendingPurge": "بانتظار الحذف النهائي"
+      "pendingPurge": "بانتظار الحذف النهائي",
+      "pastDue": "مستحقات غير مدفوعة (مهلة)",
+      "restricted": "وصول مقيَّد"
     },
     "activeSubscriptions": "الاشتراكات النشطة",
     "none": "لا يوجد."
@@ -54,6 +56,11 @@
       "active": "نشط",
       "suspended": "موقوف",
       "deleted": "محذوف"
+    },
+    "filterBilling": {
+      "all": "كل حالات الفوترة",
+      "past_due": "غير مدفوع (ضمن المهلة)",
+      "restricted": "وصول مقيَّد"
     }
   },
   "accountDetail": {

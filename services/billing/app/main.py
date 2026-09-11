@@ -224,7 +224,9 @@ def internal_subscriptions(x_internal_token: str = Header(default=""), db: Sessi
     """Abonnement (dict complet) par agence — pour `/admin/accounts` (plan) et le détail agence."""
     if x_internal_token != settings.internal_token:
         return err("Forbidden", 403)
-    subs = db.query(Subscription).all()
+    # Plus récente d'abord : `setdefault` garde ainsi la ligne courante d'une agence qui en
+    # porte plusieurs (résiliation puis réabonnement), comme `_agency_sub`.
+    subs = db.query(Subscription).order_by(Subscription.id.desc()).all()
     out: dict[str, dict] = {}
     for s in subs:
         out.setdefault(str(s.agency_id), _sub_dict(db, s))  # 1 par agence (parité `a.subscription`)
@@ -248,7 +250,10 @@ def internal_subscriptions_stats(x_internal_token: str = Header(default=""),
             by_plan[slug] = by_plan.get(slug, 0) + 1
         amt = float(s.amount or 0)
         mrr += amt / 12.0 if s.billing_cycle == "yearly" else amt
-    return {"active_subscriptions": by_plan, "mrr_estimate": round(mrr, 2)}
+    unpaid = {st: db.query(Subscription).filter(Subscription.status == st).count()
+              for st in ("past_due", "restricted")}
+    return {"active_subscriptions": by_plan, "mrr_estimate": round(mrr, 2),
+            "unpaid_subscriptions": unpaid}
 
 
 # Cadence de relance impayé (dunning) : 1re relance J+3 après émission, puis toutes les 7 j,

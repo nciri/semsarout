@@ -612,3 +612,48 @@ def test_due_reminders_porte_l_echeance_de_grace(monkeypatch, tmp_path):
     finally:
         app.dependency_overrides.clear()
         db.close()
+
+
+def test_stats_comptent_les_impayes(monkeypatch, tmp_path):
+    from app import main as m
+    monkeypatch.setattr(m.settings, "internal_token", "tok")
+    db = _db_session(tmp_path)
+    plan = _plan()
+    db.add(plan)
+    db.commit()
+    for aid, st in ((60, "past_due"), (61, "past_due"), (62, "restricted"), (63, "active")):
+        db.add(Subscription(agency_id=aid, plan_id=plan.id, amount=499, status=st))
+    db.commit()
+    app.dependency_overrides[get_db] = lambda: db
+    try:
+        with TestClient(app) as client:
+            stats = client.get("/internal/subscriptions/stats",
+                               headers={"x-internal-token": "tok"}).json()
+        assert stats["unpaid_subscriptions"] == {"past_due": 2, "restricted": 1}
+    finally:
+        app.dependency_overrides.clear()
+        db.close()
+
+
+def test_internal_subscriptions_garde_la_ligne_la_plus_recente(monkeypatch, tmp_path):
+    """Une agence résiliée puis réabonnée porte deux lignes : l'administration doit voir le
+    statut courant, pas celui d'une ligne périmée (même critère que `_agency_sub`)."""
+    from app import main as m
+    monkeypatch.setattr(m.settings, "internal_token", "tok")
+    db = _db_session(tmp_path)
+    plan = _plan()
+    db.add(plan)
+    db.commit()
+    db.add(Subscription(agency_id=70, plan_id=plan.id, amount=499, status="cancelled"))
+    db.commit()
+    db.add(Subscription(agency_id=70, plan_id=plan.id, amount=499, status="past_due"))
+    db.commit()
+    app.dependency_overrides[get_db] = lambda: db
+    try:
+        with TestClient(app) as client:
+            row = client.get("/internal/subscriptions",
+                             headers={"x-internal-token": "tok"}).json()["subscriptions"]["70"]
+        assert row["status"] == "past_due"
+    finally:
+        app.dependency_overrides.clear()
+        db.close()

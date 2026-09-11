@@ -20,7 +20,9 @@
       "mrrEstimate": "MRR estimé (Đh)",
       "signups30d": "Inscriptions 30j",
       "suspended": "Comptes suspendus",
-      "pendingPurge": "En attente de purge"
+      "pendingPurge": "En attente de purge",
+      "pastDue": "Impayés en grâce",
+      "restricted": "Accès réduits"
     },
     "activeSubscriptions": "Abonnements actifs",
     "none": "Aucun."
@@ -54,6 +56,11 @@
       "active": "Actif",
       "suspended": "Suspendu",
       "deleted": "Supprimé"
+    },
+    "filterBilling": {
+      "all": "Toutes facturations",
+      "past_due": "Impayé (en grâce)",
+      "restricted": "Accès réduit"
     }
   },
   "accountDetail": {
