@@ -68,6 +68,7 @@ NEW_SERVICES="design3d 8526"
 MIGRATIONS="
 identity/add_tenant.sql
 identity/add_features_synced_at.sql
+identity/add_features_until.sql
 identity/migrate_didit.sql
 identity/add_rental_feature.sql
 messaging/migrate_conversation.sql

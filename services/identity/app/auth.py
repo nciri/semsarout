@@ -86,23 +86,36 @@ def _features(db: Session, agency_id: int | None) -> list[str]:
     if not agency_id:
         return []
     ag = db.get(AgencyRO, agency_id)
-    if ag and ag.features_synced_at is not None:
+    # Échéance dépassée : la période payée d'un abonnement résilié est terminée, donc la
+    # projection ne dit plus la vérité. Elle est traitée comme non synchronisée, ce qui
+    # réinterroge billing une fois — et cet appel est justement ce qui déclenche enfin
+    # `_reconcile_expired` côté billing, qu'aucun balayage n'appelait (A3).
+    expired = ag is not None and ag.features_until is not None and ag.features_until <= datetime.utcnow()
+    if ag and ag.features_synced_at is not None and not expired:
         return list(ag.features)
     from . import billing_client
-    features = billing_client.features_of(agency_id)
-    if features is None:
+    answer = billing_client.features_of(agency_id)
+    if answer is None:
         # L'appel n'a pas abouti (billing injoignable, délai dépassé, 5xx) : on ne sait RIEN des
         # droits de l'agence. Ne rien persister et surtout ne pas estampiller
         # `features_synced_at` — sinon ce repli, seul chemin capable de réparer la projection,
         # s'éteint définitivement sur une simple panne de facturation (et notamment pendant la
         # fenêtre où deploy-remote.sh a redémarré le mesh mais pas encore joué les migrations de
-        # facturation). Le login continue, avec la projection locale telle quelle.
+        # facturation). Le login continue, avec la projection locale telle quelle — SAUF si
+        # son échéance est dépassée : une panne de facturation ne doit jamais prolonger un
+        # droit échu, sans quoi une agence résiliée resterait entitlée aussi longtemps que
+        # billing est indisponible. La résiliation porte sur tout, le module payant compris :
+        # l'échéance l'emporte sur l'indisponibilité.
+        if expired:
+            return []
         return list(ag.features or []) if ag is not None else []
+    features = answer["features"]
     if ag is not None:
         # Appel abouti — y compris quand il renvoie une liste vide, ce qui est légitime pour une
         # offre gratuite : on estampille, et le prochain login ne rappellera plus billing (I7).
         ag.features = features  # auto-répare la projection pour les prochains logins
         ag.features_synced_at = datetime.utcnow()
+        ag.features_until = answer["until"]
         db.commit()
     return features
 

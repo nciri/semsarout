@@ -16,7 +16,7 @@ def test_features_returns_local_projection_without_calling_billing(db_session, m
 
     def fake_features_of(agency_id):
         called.append(agency_id)
-        return ["should-not-be-used"]
+        return {"features": ["should-not-be-used"], "until": None}
 
     from app import billing_client
     monkeypatch.setattr(billing_client, "features_of", fake_features_of)
@@ -31,7 +31,8 @@ def test_features_falls_back_to_billing_when_projection_empty(db_session, monkey
     db_session.commit()
 
     from app import billing_client
-    monkeypatch.setattr(billing_client, "features_of", lambda agency_id: ["design3d", "artisans"])
+    monkeypatch.setattr(billing_client, "features_of",
+                        lambda agency_id: {"features": ["design3d", "artisans"], "until": None})
 
     result = _features(db_session, 2)
     assert set(result) == {"design3d", "artisans"}
@@ -55,7 +56,7 @@ def test_features_does_not_call_billing_again_once_synced_even_if_empty(db_sessi
 
     def fake_features_of(agency_id):
         called.append(agency_id)
-        return ["should-not-be-called"]
+        return {"features": ["should-not-be-called"], "until": None}
 
     from app import billing_client
     monkeypatch.setattr(billing_client, "features_of", fake_features_of)
@@ -113,7 +114,8 @@ def test_features_retries_billing_on_next_login_after_a_failure(db_session, monk
     monkeypatch.setattr(billing_client, "features_of", lambda agency_id: None)
     assert _features(db_session, 6) == []
 
-    monkeypatch.setattr(billing_client, "features_of", lambda agency_id: ["design3d"])
+    monkeypatch.setattr(billing_client, "features_of",
+                        lambda agency_id: {"features": ["design3d"], "until": None})
     assert _features(db_session, 6) == ["design3d"]
     ag = db_session.get(AgencyRO, 6)
     assert list(ag.features) == ["design3d"]
@@ -129,7 +131,8 @@ def test_features_persists_empty_list_when_call_succeeded(db_session, monkeypatc
     db_session.commit()
 
     from app import billing_client
-    monkeypatch.setattr(billing_client, "features_of", lambda agency_id: [])
+    monkeypatch.setattr(billing_client, "features_of",
+                        lambda agency_id: {"features": [], "until": None})
 
     assert _features(db_session, 7) == []
     ag = db_session.get(AgencyRO, 7)
@@ -154,11 +157,13 @@ def test_billing_client_distinguishes_failure_from_legitimately_empty(monkeypatc
 
     monkeypatch.setattr(billing_client.httpx, "get",
                         lambda *a, **kw: _Resp(200, {"subscription": None}))
-    assert billing_client.features_of(1) == [], "« pas d'abonnement » est un appel abouti"
+    assert billing_client.features_of(1) == {"features": [], "until": None}, \
+        "« pas d'abonnement » est un appel abouti"
 
     monkeypatch.setattr(billing_client.httpx, "get",
                         lambda *a, **kw: _Resp(200, {"subscription": {"features": []}}))
-    assert billing_client.features_of(1) == [], "une offre sans feature est un appel abouti"
+    assert billing_client.features_of(1) == {"features": [], "until": None}, \
+        "une offre sans feature est un appel abouti"
 
 
 def test_features_consults_billing_when_marker_reset_even_with_non_empty_projection(db_session, monkeypatch):
@@ -172,9 +177,72 @@ def test_features_consults_billing_when_marker_reset_even_with_non_empty_project
     db_session.commit()
 
     from app import billing_client
-    monkeypatch.setattr(billing_client, "features_of", lambda agency_id: ["rental", "design3d"])
+    monkeypatch.setattr(billing_client, "features_of",
+                        lambda agency_id: {"features": ["rental", "design3d"], "until": None})
 
     assert set(_features(db_session, 8)) == {"rental", "design3d"}
     ag = db_session.get(AgencyRO, 8)
     assert set(ag.features) == {"rental", "design3d"}
     assert ag.features_synced_at is not None
+
+
+def test_features_expirees_ne_sont_plus_servies_meme_si_billing_est_injoignable(db_session, monkeypatch):
+    """A3, propriété de sûreté : une panne de facturation ne prolonge JAMAIS un droit échu.
+
+    `features_until` dépassé signifie que la période payée est terminée. Servir la
+    projection locale dans ce cas — ce que fait le repli quand billing ne répond pas
+    (A2, pour ne jamais casser un login) — rendrait un abonnement résilié entitlé
+    aussi longtemps que billing reste indisponible. La résiliation porte sur tout, le
+    module payant compris : l'échéance l'emporte sur l'indisponibilité.
+    """
+    from datetime import timedelta
+    db_session.add(AgencyRO(id=40, features=["design3d", "contracts"],
+                            features_synced_at=datetime.utcnow() - timedelta(days=40),
+                            features_until=datetime.utcnow() - timedelta(days=1),
+                            max_seats=0, max_teams=0, is_suspended=False, is_deleted=False))
+    db_session.commit()
+
+    from app import billing_client
+    monkeypatch.setattr(billing_client, "features_of", lambda agency_id: None)
+
+    assert _features(db_session, 40) == []
+
+
+def test_features_expirees_sont_remplacees_par_la_reponse_de_billing(db_session, monkeypatch):
+    """L'échéance dépassée rend la projection non fiable : billing est réinterrogé une
+    fois, et c'est SA réponse qui fait foi — c'est cet appel qui déclenche enfin la
+    réconciliation côté billing (`_agency_sub` -> `_reconcile_expired`)."""
+    from datetime import timedelta
+    db_session.add(AgencyRO(id=41, features=["design3d"],
+                            features_synced_at=datetime.utcnow() - timedelta(days=40),
+                            features_until=datetime.utcnow() - timedelta(days=1),
+                            max_seats=0, max_teams=0, is_suspended=False, is_deleted=False))
+    db_session.commit()
+
+    from app import billing_client
+    monkeypatch.setattr(billing_client, "features_of",
+                        lambda agency_id: {"features": [], "until": None})
+
+    assert _features(db_session, 41) == []
+    ag = db_session.get(AgencyRO, 41)
+    assert ag.features == []
+    assert ag.features_until is None
+
+
+def test_features_en_grace_valent_encore_et_ne_rappellent_pas_billing(db_session, monkeypatch):
+    """Symétrique : une échéance À VENIR est une période payée en cours. Les droits
+    valent, et le repli ne doit pas se redéclencher à chaque login (I7)."""
+    from datetime import timedelta
+    fin = datetime.utcnow() + timedelta(days=10)
+    db_session.add(AgencyRO(id=42, features=["design3d"], features_synced_at=datetime.utcnow(),
+                            features_until=fin, max_seats=0, max_teams=0,
+                            is_suspended=False, is_deleted=False))
+    db_session.commit()
+
+    called = []
+    from app import billing_client
+    monkeypatch.setattr(billing_client, "features_of",
+                        lambda agency_id: called.append(agency_id) or {"features": [], "until": None})
+
+    assert _features(db_session, 42) == ["design3d"]
+    assert called == []

@@ -170,6 +170,12 @@ class AgencyRO(Base):
     # `features` "pas encore rempli". Posé par le worker (`billing.subscription.activated`) et
     # par le repli auto-réparateur de `auth.py::_features`.
     features_synced_at = Column(DateTime, nullable=True)
+    # A3 : instant au-delà duquel `features` ne vaut plus (fin de période payée d'un
+    # abonnement résilié). NULL = pas d'échéance connue, le cas de tout abonnement actif.
+    # Sans cette borne, rien ne révoquait les droits d'une agence résiliée : la
+    # réconciliation de billing ne tire que sur appel, et I7 interdit de réinterroger
+    # billing à chaque login. Lue par `auth.py::_features`, posée par le worker.
+    features_until = Column(DateTime, nullable=True)
     owner_id = Column(Integer)
     max_seats = Column(Integer, default=0)
     max_teams = Column(Integer, default=0)

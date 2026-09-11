@@ -20,6 +20,17 @@ from semsar_events import EventConsumer
 from .db import SessionLocal, init_db
 from .models import AgencyRO, ProcessedMessage, UserRO
 
+
+def _event_dt(v):
+    """Une échéance absente ou illisible vaut « pas d'échéance connue » : un événement
+    malformé ne doit pas faire échouer la projection, ni inventer une expiration."""
+    if not isinstance(v, str):
+        return None
+    try:
+        return datetime.fromisoformat(v.replace("Z", "+00:00")).replace(tzinfo=None)
+    except ValueError:
+        return None
+
 _COLS = (
     "email", "password_hash", "first_name", "last_name", "phone", "avatar_url", "user_type",
     "account_role", "interest", "is_active", "is_verified", "suspended_reason",
@@ -69,6 +80,10 @@ def _handle(routing_key: str, payload: dict, message_id: str) -> None:
                     db.add(ag)
                 ag.features = payload.get("features", [])
                 ag.features_synced_at = datetime.utcnow()
+                # Échéance des droits (fin de la période payée d'un abonnement résilié).
+                # Sans elle, la projection resterait vraie pour toujours et une agence
+                # résiliée garderait ses droits indéfiniment (A3).
+                ag.features_until = _event_dt(payload.get("features_until"))
             if message_id:
                 db.add(ProcessedMessage(message_id=message_id))
             db.commit()
