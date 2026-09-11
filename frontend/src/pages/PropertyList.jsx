@@ -7,7 +7,6 @@ import {
   FiFilter, FiGrid, FiList, FiChevronLeft, FiChevronRight,
   FiMap, FiSliders, FiX, FiBell
 } from 'react-icons/fi'
-import { HiSparkles } from 'react-icons/hi2'
 import PropertyCard from '../components/common/PropertyCard'
 import AdvancedSearch from '../components/search/AdvancedSearch'
 import PropertyMap from '../components/map/PropertyMap'
@@ -70,8 +69,7 @@ function PropertyList() {
     has_photos: searchParams.get('has_photos') || '',
     is_featured: searchParams.get('is_featured') || '',
     sort: searchParams.get('sort') || 'newest',
-    q: searchParams.get('q') || '',
-    ai_query: searchParams.get('ai_query') || ''
+    q: searchParams.get('q') || ''
   }
 
   const { data, isLoading, error } = useQuery(
@@ -217,23 +215,6 @@ function PropertyList() {
           </div>
 
           <div className="flex items-center gap-3 mt-4 md:mt-0">
-            {/* AI Query indicator */}
-            {filters.ai_query && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-sm">
-                <HiSparkles className="w-4 h-4" />
-                <span className="max-w-[200px] truncate">&quot;{filters.ai_query}&quot;</span>
-                <button
-                  onClick={() => {
-                    const newParams = new URLSearchParams(searchParams)
-                    newParams.delete('ai_query')
-                    setSearchParams(newParams)
-                  }}
-                  className="p-0.5 hover:bg-purple-200 rounded"
-                >
-                  <FiX className="w-3 h-3" />
-                </button>
-              </div>
-            )}
 
             {/* Active filters summary */}
             {activeFiltersCount > 0 && (

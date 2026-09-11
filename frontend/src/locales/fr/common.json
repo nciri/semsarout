@@ -8,7 +8,7 @@
     "logout": "Déconnexion"
   },
   "footer": {
-    "tagline": "L'immobilier sans les intermédiaires douteux. Vendez, louez et gérez votre bien à tarif fixe, sans commission, avec un accompagnement professionnel.",
+    "tagline": "L'immobilier sans les intermédiaires douteux. Vendez, louez et gérez votre bien à tarif fixe, avec un accompagnement professionnel.",
     "comingSoon": "Bientôt disponible",
     "socialAria": "{{network}} (bientôt disponible)",
     "saleTitle": "Vente",
@@ -106,10 +106,6 @@
     "myAccount": "Mon compte"
   },
   "advancedSearch": {
-    "aiSearchTitle": "Recherche IA",
-    "aiComingSoon": "Bientôt disponible",
-    "aiPlaceholder": "Ex: Appartement 3 chambres avec terrasse à Casablanca, proche des écoles, budget max 1.5M {{currency}}...",
-    "aiTooltip": "Dans la v2, l'IA comprendra votre demande en langage naturel et trouvera les biens correspondants.",
     "buy": "Acheter",
     "rent": "Louer",
     "cityPlaceholderCompact": "Ville, quartier...",
