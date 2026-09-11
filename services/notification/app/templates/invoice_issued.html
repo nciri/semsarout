@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_components.html" import button, card, lucide with context %}
+{% block subject %}Votre facture {{ reference }} est disponible{% endblock %}
+{% block preheader %}{% if renewal %}Votre abonnement SemsarOut arrive à échéance : réglez-le pour le prolonger.{% else %}Votre nouvelle facture SemsarOut est disponible.{% endif %}{% endblock %}
+{% block badge %}{{ lucide("credit-card") }}{% endblock %}
+{% block hero_title %}{% if renewal %}Votre abonnement arrive à échéance{% else %}Votre facture est disponible{% endif %}{% endblock %}
+{% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if agency_name %} {{ agency_name }}{% endif %}.</p>{% endblock %}
+{% block content %}
+<p style="text-align:left; color:{{ brand.ink }};">{% if renewal %}Pour prolonger votre abonnement, merci de régler la facture ci-dessous. Votre accès reste entier{% if grace_until %} jusqu'au {{ grace_until }}{% endif %} ; passé ce délai sans règlement, il sera réduit à la facturation.{% else %}Merci de régler la facture ci-dessous pour activer votre abonnement.{% endif %}</p>
+{{ card(
+  [("Référence", reference)]
+  + ([("Période", period_label)] if period_label else [])
+  + [("Montant dû", "{:,.0f}".format(amount|float).replace(",", " ") ~ " " ~ currency)]) }}
+<table role="presentation" width="100%"><tr><td align="center">{{ button(app.base_url ~ "/dashboard/compte/abonnement", "Régler ma facture") }}</td></tr></table>
+<p style="margin-top:22px; font-size:13px; color:{{ brand.muted }}; text-align:left;">Une question sur votre facturation&nbsp;? Écrivez-nous à <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
+{% endblock %}
