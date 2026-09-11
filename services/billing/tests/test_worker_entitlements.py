@@ -85,3 +85,86 @@ def test_payment_completed_extends_existing_subscription(monkeypatch):
     payload = _last_outbox_payload(s)
     assert payload["agency_id"] == 3
     assert set(payload["features"]) == {"contracts", "design3d"}
+
+
+def test_payment_failed_consigne_sans_changer_le_statut(monkeypatch):
+    """I1 : un paiement qui échoue n'est pas une résiliation."""
+    s = _session(monkeypatch)
+    plan = _pro_plan(s)
+    sub = Subscription(agency_id=5, plan_id=plan.id, amount=499, status="past_due")
+    s.add(sub)
+    s.commit()
+
+    _handle("payment.failed", {"purpose": "subscription", "agency_id": 5,
+                               "reason_code": "card_declined", "reason_label": "Carte refusée"},
+            "m:failed:1")
+
+    stored = s.get(Subscription, sub.id)
+    assert stored.status == "past_due"
+    assert stored.last_payment_failure_reason == "Carte refusée"
+    assert stored.last_payment_failure_at is not None
+
+
+def test_payment_failed_sans_libelle_ne_stocke_aucun_code_technique(monkeypatch):
+    """La passerelle simulée n'envoie que `reason_code: unknown` : ce code ne doit jamais
+    finir affiché à l'agence."""
+    s = _session(monkeypatch)
+    plan = _pro_plan(s)
+    sub = Subscription(agency_id=6, plan_id=plan.id, amount=499, status="active")
+    s.add(sub)
+    s.commit()
+
+    _handle("payment.failed", {"purpose": "subscription", "agency_id": 6,
+                               "reason_code": "unknown", "reason_label": None}, "m:failed:2")
+
+    stored = s.get(Subscription, sub.id)
+    assert stored.last_payment_failure_at is not None
+    assert stored.last_payment_failure_reason is None
+
+
+def test_payment_completed_en_acces_reduit_prolonge_la_meme_ligne_depuis_aujourdhui(monkeypatch):
+    """I5 : payer en `restricted` rétablit l'abonnement existant, sans seconde ligne, et la
+    nouvelle période commence maintenant — pas à une échéance vieille de plusieurs semaines."""
+    from datetime import datetime, timedelta
+
+    from app.models import Invoice
+    s = _session(monkeypatch)
+    plan = _pro_plan(s)
+    sub = Subscription(agency_id=7, plan_id=plan.id, amount=499, status="restricted",
+                       end_date=datetime.utcnow() - timedelta(days=40),
+                       grace_until=datetime.utcnow() - timedelta(days=16))
+    s.add(sub)
+    s.commit()
+    s.add(Invoice(reference="INV-R-1", subscription_id=sub.id, agency_id=7, amount=499,
+                  status="unpaid"))
+    s.commit()
+
+    _handle("payment.completed", {"purpose": "subscription", "agency_id": 7, "plan_id": plan.id,
+                                  "billing_cycle": "monthly", "amount": 499}, "m:paid:1")
+
+    assert s.query(Subscription).filter_by(agency_id=7).count() == 1
+    stored = s.get(Subscription, sub.id)
+    assert stored.status == "active"
+    assert stored.grace_until is None
+    assert stored.end_date > datetime.utcnow() + timedelta(days=29)
+    assert s.query(Invoice).filter_by(subscription_id=sub.id).one().status == "paid"
+    assert _last_outbox_payload(s)["features_until"] is None
+
+
+def test_payment_completed_pendant_la_grace_prolonge_depuis_l_echeance(monkeypatch):
+    """Payé dans la grâce : la période repart de l'ancienne échéance — aucun jour offert ni perdu."""
+    from datetime import datetime, timedelta
+    s = _session(monkeypatch)
+    plan = _pro_plan(s)
+    old_end = datetime.utcnow() - timedelta(days=5)
+    sub = Subscription(agency_id=8, plan_id=plan.id, amount=499, status="past_due",
+                       end_date=old_end, grace_until=datetime.utcnow() + timedelta(days=19))
+    s.add(sub)
+    s.commit()
+
+    _handle("payment.completed", {"purpose": "subscription", "agency_id": 8, "plan_id": plan.id,
+                                  "billing_cycle": "monthly", "amount": 499}, "m:paid:2")
+
+    stored = s.get(Subscription, sub.id)
+    assert stored.status == "active"
+    assert stored.end_date == old_end + timedelta(days=30)
