@@ -607,6 +607,43 @@ describe('DesignEditor', () => {
     })
   })
 
+  it("ne propose PAS le remplacement quand une correction est encore en file (C4)", async () => {
+    // `markSyncError` garde `dirty: true` quand une édition plus récente a été
+    // empilée pendant que la requête ratée était en vol : ce niveau porte donc
+    // à la fois une trace d'échec ET une correction jamais tentée, qui peut
+    // très bien aboutir au prochain tour. Proposer « Remplacer par la version
+    // du serveur » ici, c'est proposer de détruire un travail que le serveur
+    // n'a jamais vu ni refusé — l'agent croit abandonner l'ancienne géométrie
+    // invalide et perd sa correction.
+    await local.putLevel({
+      id: LEVEL_ID, project_id: PROJECT_ID, name: 'RDC', position: 0, revision: 0, base_revision: 0,
+      wall_height_m: 2.7, calibration: null, dirty: true, edit_seq: 7,
+      geometry: { walls: [{ id: 'w1', a: { x: 0, y: 0 }, b: { x: 3, y: 0 }, thickness_m: 0.2 }], rooms: [], openings: [] },
+      sync_error: { code: 422, message: 'Géométrie invalide', at: 1 },
+    })
+    renderEditor()
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Géométrie invalide')
+    // La reprise, elle, reste légitime : c'est la correction en file qui repart.
+    expect(screen.getByRole('button', { name: 'Renvoyer ce niveau' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Remplacer par la version du serveur' })).not.toBeInTheDocument()
+  })
+
+  it("refuse le remplacement au niveau d'un service même appelé directement sur une édition en attente (C4)", async () => {
+    // Seconde barrière, sous l'interface : le geste est destructif, il ne doit
+    // pas dépendre du seul affichage d'un bouton.
+    const sync = await import('../../services/design3dSync')
+    await local.putLevel({
+      id: LEVEL_ID, project_id: PROJECT_ID, name: 'RDC', position: 0, revision: 0, base_revision: 0,
+      wall_height_m: 2.7, calibration: null, dirty: true,
+      geometry: { walls: [{ id: 'w1', a: { x: 0, y: 0 }, b: { x: 3, y: 0 }, thickness_m: 0.2 }], rooms: [], openings: [] },
+      sync_error: { code: 422, message: 'Géométrie invalide', at: 1 },
+    })
+    expect(await sync.discardLocalLevelEdit(LEVEL_ID, { local })).toBe(false)
+    expect((await local.getLevel(LEVEL_ID)).geometry.walls).toHaveLength(1)
+  })
+
   it("dit pourquoi le remplacement n'a pas abouti hors ligne, sans toucher au contenu local (C4)", async () => {
     // Le remplacement doit lire la version du serveur : sur une tablette hors
     // couverture, c'est le cas COURANT. Un bouton qui ne fait visiblement rien

@@ -796,13 +796,19 @@ export default function DesignEditor() {
             {levelReplaceFailed && (
               <span className="font-medium">{t('dashboard:designEditor.syncError.levelReplaceFailed')}</span>
             )}
-            {!projectError && !confirmingLevelReplace && (
+            {/* Jamais quand le niveau est encore `dirty` : `markSyncError` garde
+                cet état lorsqu'une édition plus récente a été empilée pendant
+                que la requête ratée était en vol. Le niveau porte alors une
+                trace d'échec ET une correction jamais tentée, qui peut très
+                bien aboutir. Offrir le remplacement ici, c'est offrir de
+                détruire un travail que le serveur n'a jamais vu ni refusé. */}
+            {!projectError && !currentLevel.dirty && !confirmingLevelReplace && (
               <button type="button" className="btn-secondary min-h-[44px]"
                       onClick={() => setConfirmingLevelReplace(true)}>
                 {t('dashboard:designEditor.syncError.levelReplace')}
               </button>
             )}
-            {!projectError && confirmingLevelReplace && (
+            {!projectError && !currentLevel.dirty && confirmingLevelReplace && (
               <>
                 <span className="font-medium">{t('dashboard:designEditor.syncError.levelReplaceWarning')}</span>
                 <button type="button" className="btn-secondary min-h-[44px]" onClick={replaceLevelFromServer}>

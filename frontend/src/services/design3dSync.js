@@ -340,15 +340,24 @@ export async function discardRefusedProject(projectId, { local = defaultLocal } 
  * Le niveau affiche alors indéfiniment un contenu que le serveur n'a jamais
  * eu et n'aura jamais, sans autre issue que celle-ci.
  *
- * Contrairement à `refreshFromServer`, ignore délibérément `dirty` et la
- * révision locale : ce n'est pas un rafraîchissement de fond, c'est un abandon
- * explicite du contenu local au profit de celui du serveur. Toute opération
- * encore en file pour ce niveau est retirée : la laisser repartirait avec le
- * contenu qu'on vient précisément d'écarter.
+ * Contrairement à `refreshFromServer`, ignore délibérément la révision locale :
+ * ce n'est pas un rafraîchissement de fond, c'est un abandon explicite du
+ * contenu local au profit de celui du serveur. Toute opération encore en file
+ * pour ce niveau est retirée : la laisser repartirait avec le contenu qu'on
+ * vient précisément d'écarter — ce qui est justement pourquoi un niveau encore
+ * `dirty` est refusé (voir la garde ci-dessous).
  */
 export async function discardLocalLevelEdit(levelId, { api = defaultApi, local = defaultLocal } = {}) {
   const cur = await local.getLevel(levelId)
   if (!cur) return false
+  // Seconde barrière, sous l'interface : un niveau encore `dirty` porte une
+  // édition que le serveur n'a NI reçue NI refusée — `markSyncError` laisse cet
+  // état quand une édition plus récente a été empilée pendant que la requête
+  // ratée était en vol. L'abandonner ici détruirait un travail parfaitement
+  // récupérable, et `dropQueued` ci-dessous retirerait en plus l'opération qui
+  // allait le transmettre. Un geste destructif ne doit pas dépendre du seul
+  // affichage d'un bouton.
+  if (cur.dirty) return false
   const full = await api.getProject(cur.project_id)
   const targetId = cur.server_id ?? levelId
   const fresh = full.levels?.find((l) => l.id === targetId)
