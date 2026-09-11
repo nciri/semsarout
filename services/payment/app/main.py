@@ -9,7 +9,7 @@ import hashlib
 import hmac
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import Depends, FastAPI, Header, Request
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -21,7 +21,7 @@ from semsar_events import enqueue
 
 from . import events, gateway
 from .db import get_db, init_db
-from .models import Payment, PlanRO
+from .models import Payment, PlanRO, ServicePriceRO
 from .util import err, iso, json_body, opt_int
 
 settings = get_settings()
@@ -34,13 +34,25 @@ _WEBHOOK_SECRET = os.environ.get("PAYMENT_WEBHOOK_SECRET", "")
 # prolongation d'abonnement).
 _TERMINAL = {"completed", "failed", "refunded"}
 
-# Prix des services ponctuels — parité `SERVICE_PRICES` du monolithe.
-SERVICE_PRICES = {
-    "forfait-vente": 9900,
-    "photos-pro": 990,
-    "photos-pro-360": 1490,
-    "photos-pro-drone": 1790,
-}
+# Le prix d'une prestation vient de `ServicePriceRO`, projection du catalogue de billing : une
+# grille en dur ici faisait autorité sur ce qui était prélevé, indépendamment de ce que le site
+# affichait. Rien ne remplace un prix absent — voir `_service_amount`.
+#
+# Durée de réutilisation d'une intention non payée : au-delà, une nouvelle intention est créée
+# au prix courant, l'ancienne restant en base sans être ni annulée ni facturée. En deçà, le
+# client retrouve son intention et donc SON prix (I5).
+_INTENT_REUSE_HOURS = 24
+
+
+def _service_amount(db: Session, code: str) -> float | None:
+    """Montant d'une prestation, ou `None` si elle est inconnue ou retirée de l'offre.
+
+    Fail-closed : jamais de montant par défaut, jamais de montant venu du client. Un prix
+    deviné est un prix faux, et ici c'est de l'argent (I3)."""
+    sp = db.get(ServicePriceRO, code)
+    if sp is None or not sp.is_active:
+        return None
+    return float(sp.amount)
 
 
 @asynccontextmanager
@@ -95,8 +107,11 @@ async def create_payment_intent(request: Request, db: Session = Depends(get_db),
         except (TypeError, ValueError):
             amount = 0
         payment_type = "commission"
-    elif service_id and service_id in SERVICE_PRICES:
-        amount = SERVICE_PRICES[service_id]
+    elif service_id:
+        resolved = _service_amount(db, service_id)
+        if resolved is None:
+            return err("Prestation indisponible", 422)
+        amount = resolved
         payment_type = "service"
     elif plan_id:
         plan = db.query(PlanRO).filter(PlanRO.slug == plan_id).first()
@@ -109,20 +124,34 @@ async def create_payment_intent(request: Request, db: Session = Depends(get_db),
     if amount <= 0:
         return err("Invalid service or plan", 400)
 
-    p = Payment(
-        reference=gateway.new_reference(), payment_type=payment_type,
-        service_id=commission_ref if payment_type == "commission" else (
-            service_id if payment_type == "service" else None),
-        plan_id=resolved_plan_id if payment_type == "subscription" else None,
-        billing_cycle=billing_cycle if payment_type == "subscription" else None,
-        amount=amount, payment_method=payment_method,
-        user_id=opt_int(x_semsar_user_id), agency_id=opt_int(x_semsar_agency_id),
-        customer_name=customer.get("name"), customer_email=customer.get("email"),
-        customer_phone=customer.get("phone"), customer_address=customer.get("address"),
-        customer_city=customer.get("city"),
-    )
-    db.add(p)
-    db.commit()
+    # I5 : le client paie le prix affiché au départ. Une intention récente est donc rendue telle
+    # quelle, avec SON montant, même si le tarif a changé depuis. Au-delà du délai de
+    # réutilisation, on en crée une neuve au prix courant sans toucher à l'ancienne.
+    uid = opt_int(x_semsar_user_id)
+    existing = (db.query(Payment)
+                .filter(Payment.status == "pending", Payment.user_id == uid,
+                        Payment.payment_type == payment_type,
+                        Payment.service_id == (service_id if payment_type == "service" else None),
+                        Payment.plan_id == (resolved_plan_id if payment_type == "subscription" else None),
+                        Payment.created_at >= datetime.utcnow() - timedelta(hours=_INTENT_REUSE_HOURS))
+                .order_by(Payment.id.desc()).first())
+    if existing is not None:
+        p, amount = existing, float(existing.amount)
+    else:
+        p = Payment(
+            reference=gateway.new_reference(), payment_type=payment_type,
+            service_id=commission_ref if payment_type == "commission" else (
+                service_id if payment_type == "service" else None),
+            plan_id=resolved_plan_id if payment_type == "subscription" else None,
+            billing_cycle=billing_cycle if payment_type == "subscription" else None,
+            amount=amount, payment_method=payment_method,
+            user_id=opt_int(x_semsar_user_id), agency_id=opt_int(x_semsar_agency_id),
+            customer_name=customer.get("name"), customer_email=customer.get("email"),
+            customer_phone=customer.get("phone"), customer_address=customer.get("address"),
+            customer_city=customer.get("city"),
+        )
+        db.add(p)
+        db.commit()
 
     if payment_method == "card":
         return {"payment_id": p.id, "reference": p.reference,
