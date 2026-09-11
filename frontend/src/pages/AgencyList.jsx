@@ -81,6 +81,9 @@ function AgencyList() {
               <p className="text-gray-600">
                 {t('public:agencyList.verifiedCount', { count: data?.total || 0 })}
               </p>
+              <p className="mt-2 max-w-2xl text-sm text-gray-500">
+                {t('public:agencyList.onlineFirst')}
+              </p>
             </div>
 
             {/* View toggle */}

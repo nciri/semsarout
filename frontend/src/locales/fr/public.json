@@ -249,7 +249,8 @@
     "empty": "Aucune agence trouvée.",
     "previous": "Précédent",
     "next": "Suivant",
-    "pageOf": "Page {{page}} sur {{pages}}"
+    "pageOf": "Page {{page}} sur {{pages}}",
+    "onlineFirst": "SemsarOut est une agence immobilière 100 % en ligne. Notre objectif : ouvrir des agences physiques dans plusieurs villes du Maroc."
   },
   "agencyDetail": {
     "notFound": "Agence non trouvée",
