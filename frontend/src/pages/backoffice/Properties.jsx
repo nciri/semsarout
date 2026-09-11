@@ -105,7 +105,7 @@ function PropertyCard({ property, onDelete, viewMode, t }) {
               >
                 <FiEdit2 className="w-4 h-4" /> {t('backoffice:crm.properties.list.edit')}
               </Link>
-              <Design3dEntry targetType="property" targetId={property.id} className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 w-full" />
+              <Design3dEntry targetType="property" targetId={property.id} asMenuItem />
               <Link
                 to={txHref}
                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
@@ -168,7 +168,7 @@ function PropertyCard({ property, onDelete, viewMode, t }) {
               >
                 <FiEdit2 className="w-4 h-4" /> {t('backoffice:crm.properties.list.edit')}
               </Link>
-              <Design3dEntry targetType="property" targetId={property.id} className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 w-full" />
+              <Design3dEntry targetType="property" targetId={property.id} asMenuItem />
               <Link
                 to={txHref}
                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"

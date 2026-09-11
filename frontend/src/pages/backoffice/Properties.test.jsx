@@ -80,6 +80,21 @@ describe('BackofficeProperties — entrée design3d', () => {
     expect(screen.getByText(/Concevoir en 3D/i)).toBeInTheDocument()
   })
 
+  it("rend « Concevoir en 3D » comme les autres items du menu, pas comme un bouton", async () => {
+    // L'entrée pleine est stylée `btn-secondary` : au milieu d'une liste de
+    // lignes de menu, elle apparaissait en bouton, seule de son espèce.
+    renderPropertiesWithData({ features: ['design3d'] })
+    await userEvent.click((await screen.findAllByRole('button', { name: /actions/i }))[0])
+    const item = screen.getByRole('link', { name: /Concevoir en 3D/i })
+    const sibling = screen.getByRole('link', { name: /Modifier/i })
+    expect(item.className).not.toMatch(/btn-secondary/)
+    // Mêmes classes de mise en forme que ses voisins, à l'identique.
+    for (const cls of ['flex', 'items-center', 'gap-2', 'px-4', 'py-2', 'text-sm', 'text-gray-700']) {
+      expect(sibling.className).toContain(cls)
+      expect(item.className).toContain(cls)
+    }
+  })
+
   it('ne propose rien quand le module est inactif', async () => {
     renderPropertiesWithData({ features: [] })
     await userEvent.click((await screen.findAllByRole('button', { name: /actions/i }))[0])
