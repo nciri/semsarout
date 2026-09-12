@@ -62,6 +62,7 @@ const AdminAccounts = lazy(() => import('./pages/admin/AdminAccounts'))
 const AdminAccountDetail = lazy(() => import('./pages/admin/AdminAccountDetail'))
 const AdminSharedArtisans = lazy(() => import('./pages/admin/AdminSharedArtisans'))
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'))
+const AdminPricing = lazy(() => import('./pages/admin/AdminPricing'))
 const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'))
 const SavedSearches = lazy(() => import('./pages/dashboard/SavedSearches'))
 const BuyerMessages = lazy(() => import('./pages/dashboard/BuyerMessages'))
@@ -307,6 +308,7 @@ function App() {
           <Route path="activite" element={<AdminOverview />} />
           <Route path="artisans-partages" element={<AdminSharedArtisans />} />
           <Route path="produits" element={<AdminProducts />} />
+          <Route path="tarifs" element={<AdminPricing />} />
           <Route path="commandes" element={<AdminOrders />} />
         </Route>
       </Route>

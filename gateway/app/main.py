@@ -469,6 +469,14 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path == "/api/v1/cancel-subscription"
         or path == "/api/v1/invoices"
         or path.startswith("/api/v1/invoices/")  # factures (liste + PDF)
+        # Catalogue tarifaire : lecture publique, et administration superadmin. Déclaré ici et
+        # non sous `/admin/*` générique, ce préfixe étant déjà partagé avec analytics et
+        # trust-safety — le routage du BFF est explicite par chemin, jamais par famille.
+        or path == "/api/v1/pricing"
+        or path == "/api/v1/admin/pricing"
+        or path == "/api/v1/admin/price-changes"
+        or path.startswith("/api/v1/admin/service-prices/")
+        or path.startswith("/api/v1/admin/subscription-plans/")
     ):
         return app.state.billing, path.replace("/api/v1", "", 1)
     # M3a-L3achrane (coloc) : GET /api/v1/listings est désormais l'endpoint composite

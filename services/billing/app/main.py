@@ -469,6 +469,17 @@ def admin_set_plan_price(plan_id: int, body: dict = Depends(json_body),
     return {"plan": _plan_price_dict(plan)}
 
 
+@app.get("/admin/pricing")
+def admin_pricing(principal: Principal = Depends(require_superadmin),
+                  db: Session = Depends(get_db)):
+    """Vue d'administration : contrairement à `/pricing`, porte aussi les prestations retirées
+    de l'offre — c'est depuis cet écran qu'on les remet en vente."""
+    services = db.query(ServicePrice).order_by(ServicePrice.code).all()
+    plans = (db.query(SubscriptionPlan).order_by(SubscriptionPlan.price_monthly).all())
+    return {"services": [s.to_dict(internal=True) for s in services],
+            "plans": [_plan_price_dict(p) for p in plans]}
+
+
 @app.get("/admin/price-changes")
 def admin_price_changes(principal: Principal = Depends(require_superadmin),
                         db: Session = Depends(get_db), limit: int = Query(10, ge=1, le=100)):
