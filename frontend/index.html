@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Repli explicite : sans ce lien, le navigateur demande /favicon.ico à la racine du
+         site. semsarout.com étant co-hébergé avec tabiblib, c'est l'icône de CE dernier qui
+         était servie — d'où une favicon étrangère au projet. -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
     <!-- viewport-fit=cover : l'éditeur de plan passe en plein écran sur tablette,
          le canevas doit pouvoir occuper les zones sous encoche/arrondis. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
