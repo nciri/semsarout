@@ -15,7 +15,7 @@ Plateforme immobilière moderne pour le Maroc, inspirée de SeLoger.com avec des
 ## Prérequis
 
 - Python 3.10+
-- Node.js 18+
+- Node.js 24+
 - PostgreSQL 14+
 - Docker & Docker Compose (pour Redis)
 
