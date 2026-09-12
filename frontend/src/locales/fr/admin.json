@@ -7,7 +7,8 @@
       "activity": "Activité",
       "sharedArtisans": "Artisans partagés",
       "products": "Produits",
-      "orders": "Commandes"
+      "orders": "Commandes",
+      "pricing": "Tarifs"
     },
     "loading": "Chargement…",
     "back": "Retour"
@@ -183,6 +184,35 @@
       "serrurier": "Serrurier",
       "jardinier": "Jardinier",
       "autre": "Autre"
+    }
+  },
+  "pricing": {
+    "title": "Tarifs",
+    "subtitle": "Une seule grille : ce qui est enregistré ici est affiché sur le site et prélevé au client.",
+    "servicesTitle": "Prestations",
+    "plansTitle": "Abonnements agence",
+    "historyTitle": "Derniers changements",
+    "noHistory": "Aucun changement enregistré.",
+    "saved": "Tarif enregistré.",
+    "saveError": "Le tarif n'a pas pu être enregistré.",
+    "invalidAmount": "Le montant doit être un nombre strictement positif.",
+    "save": "Enregistrer {{name}}",
+    "activateLabel": "Activer {{code}}",
+    "monthlyLabel": "{{name}} — mensuel",
+    "yearlyLabel": "{{name}} — annuel",
+    "changedBy": "par #{{id}} le {{date}}",
+    "kinds": {
+      "one_off": "Ponctuel",
+      "recurring_monthly": "Mensuel"
+    },
+    "table": {
+      "code": "Code",
+      "amount": "Montant",
+      "kind": "Type",
+      "active": "Proposé",
+      "plan": "Plan",
+      "monthly": "Mensuel",
+      "yearly": "Annuel"
     }
   }
 }

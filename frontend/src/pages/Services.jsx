@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { usePricing } from '../hooks/usePricing'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -6,18 +7,22 @@ import {
   FiMail, FiClock, FiDollarSign, FiKey,
   FiUsers, FiShield, FiCalendar
 } from 'react-icons/fi'
-import { DIRHAM_SYMBOL } from '../utils/currency'
+import { DIRHAM_SYMBOL, priceLabel, priceWithSymbol } from '../utils/currency'
 import StayManagerWordmark from '../components/common/StayManagerWordmark'
 import DirIcon from '../components/common/DirIcon'
 import { CONTACT } from '../constants/contact'
-import { PRICING, priceLabel, priceWithSymbol } from '../constants/pricing'
 
-function buildServices(t) {
+// Aucun montant de repli : le catalogue injoignable se dit, il ne s'invente pas.
+const label = (t, amount) => (amount === null ? t('common:pricing.unavailable') : priceLabel(amount))
+const plus = (t, amount) => (amount === null ? t('common:pricing.unavailable') : `+${priceWithSymbol(amount)}`)
+
+
+function buildServices(t, amountOf) {
   return {
     vente: {
       title: t('public:services.vente.title'),
       subtitle: t('public:services.vente.subtitle'),
-      price: priceLabel(PRICING.agencyForfait),
+      price: label(t, amountOf('forfait-vente')),
       priceNote: t('public:services.vente.priceNote'),
       description: t('public:services.vente.description'),
       features: t('public:services.vente.features', { returnObjects: true }),
@@ -25,9 +30,9 @@ function buildServices(t) {
         title: t('public:services.vente.photoService.title'),
         features: t('public:services.vente.photoService.features', { returnObjects: true }),
         options: [
-          { name: t('public:services.vente.photoService.options.virtualTour360'), price: `+${priceWithSymbol(PRICING.addons.virtualTour360)}` },
-          { name: t('public:services.vente.photoService.options.drone'), price: `+${priceWithSymbol(PRICING.addons.drone)}` },
-          { name: t('public:services.vente.photoService.options.video'), price: `+${priceWithSymbol(PRICING.addons.video)}` }
+          { name: t('public:services.vente.photoService.options.virtualTour360'), price: plus(t, amountOf('photos-pro-360')) },
+          { name: t('public:services.vente.photoService.options.drone'), price: plus(t, amountOf('photos-pro-drone')) },
+          { name: t('public:services.vente.photoService.options.video'), price: plus(t, amountOf('photos-pro-video')) }
         ]
       },
       notIncluded: t('public:services.vente.notIncluded', { returnObjects: true }),
@@ -62,8 +67,8 @@ function buildServices(t) {
         title: t('public:services.mise-en-location.photoService.title'),
         features: t('public:services.mise-en-location.photoService.features', { returnObjects: true }),
         options: [
-          { name: t('public:services.mise-en-location.photoService.options.virtualTour360'), price: `+${priceWithSymbol(PRICING.addons.virtualTour360)}` },
-          { name: t('public:services.mise-en-location.photoService.options.video'), price: `+${priceWithSymbol(PRICING.addons.video)}` }
+          { name: t('public:services.mise-en-location.photoService.options.virtualTour360'), price: plus(t, amountOf('photos-pro-360')) },
+          { name: t('public:services.mise-en-location.photoService.options.video'), price: plus(t, amountOf('photos-pro-video')) }
         ]
       },
       notIncluded: t('public:services.mise-en-location.notIncluded', { returnObjects: true }),
@@ -81,9 +86,9 @@ function buildServices(t) {
       features: t('public:services.courte-duree.features', { returnObjects: true }),
       optionsTitle: t('public:services.courte-duree.optionsTitle'),
       options: [
-        { name: t('public:services.courte-duree.options.manage'), price: t('public:services.courte-duree.optionPrice', { amount: PRICING.staymanager.manage, currency: DIRHAM_SYMBOL }) },
-        { name: t('public:services.courte-duree.options.automate'), price: t('public:services.courte-duree.optionPrice', { amount: PRICING.staymanager.automate, currency: DIRHAM_SYMBOL }) },
-        { name: t('public:services.courte-duree.options.optimize'), price: t('public:services.courte-duree.optionPrice', { amount: PRICING.staymanager.optimize, currency: DIRHAM_SYMBOL }) }
+        { name: t('public:services.courte-duree.options.manage'), price: t('public:services.courte-duree.optionPrice', { amount: amountOf('staymanager-manage'), currency: DIRHAM_SYMBOL }) },
+        { name: t('public:services.courte-duree.options.automate'), price: t('public:services.courte-duree.optionPrice', { amount: amountOf('staymanager-automate'), currency: DIRHAM_SYMBOL }) },
+        { name: t('public:services.courte-duree.options.optimize'), price: t('public:services.courte-duree.optionPrice', { amount: amountOf('staymanager-optimize'), currency: DIRHAM_SYMBOL }) }
       ],
       partnership: {
         name: 'StayManager.ma',
@@ -111,9 +116,10 @@ function buildServices(t) {
 }
 
 function Services() {
-  const { t } = useTranslation(['public'])
+  const { t } = useTranslation(['public', 'common'])
   const [activeService, setActiveService] = useState('gestion-locative')
-  const SERVICES = buildServices(t)
+  const { amountOf } = usePricing()
+  const SERVICES = buildServices(t, amountOf)
   const service = SERVICES[activeService]
   const Icon = service.icon
 

@@ -1,4 +1,5 @@
 import { useQuery } from 'react-query'
+import { usePricing } from '../hooks/usePricing'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -14,6 +15,10 @@ import { DIRHAM_SYMBOL, formatPrice } from '../utils/currency'
 
 function Home() {
   const { t } = useTranslation(['public', 'common'])
+  const { amountOf } = usePricing()
+  const forfait = amountOf('forfait-vente')
+  // Aucun montant de repli : un prix faux coûte plus cher qu'un prix absent.
+  const forfaitLabel = forfait === null ? t('common:pricing.unavailable') : formatPrice(forfait)
   const { data: featuredData } = useQuery(
     'featured-properties',
     () => propertyService.getProperties({ per_page: 6, sort: 'newest' })
@@ -21,8 +26,6 @@ function Home() {
 
   const bullets = [t('public:home.bullet1'), t('public:home.bullet2'), t('public:home.bullet3')]
   const stats = [
-    ['0%', t('public:home.statCommission')],
-    [formatPrice(4900), t('public:home.statFlatFee')],
     ['100%', t('public:home.statTransparent')],
     ['24h', t('public:home.statPublication')]
   ]
@@ -30,7 +33,7 @@ function Home() {
     {
       t: t('public:home.problem1Title'),
       p: t('public:home.problem1Text', { currency: DIRHAM_SYMBOL, amount: formatPrice(100000) }),
-      s: t('public:home.problem1Solution', { amount: formatPrice(4900) })
+      s: t('public:home.problem1Solution', { amount: forfaitLabel })
     },
     {
       t: t('public:home.problem2Title'),
@@ -105,8 +108,8 @@ function Home() {
             <AdvancedSearch />
           </div>
 
-          {/* Stats */}
-          <div className="mt-11 flex flex-wrap gap-x-14 gap-y-6">
+          {/* Stats — centrés sur la largeur du bloc de recherche au-dessus */}
+          <div className="mt-11 max-w-5xl flex flex-wrap justify-center gap-x-14 gap-y-6">
             {stats.map(([n, l]) => (
               <div key={l}>
                 <div className="font-display font-extrabold text-[34px] text-primary-400">{n}</div>
@@ -172,7 +175,7 @@ function Home() {
                   </h3>
                 </div>
                 <div className="text-end">
-                  <div className="text-3xl font-bold text-primary-600">{formatPrice(4900)}</div>
+                  <div className="text-3xl font-bold text-primary-600">{forfaitLabel}</div>
                   <div className="text-sm text-gray-500">{t('public:home.saleFlatFeeNote')}</div>
                 </div>
               </div>
@@ -271,7 +274,7 @@ function Home() {
                     <RedCartouche className="text-[18px]">Out</RedCartouche>
                   </span>
                 </div>
-                <div className="font-display text-[46px] font-extrabold text-primary-400">{formatPrice(4900)}</div>
+                <div className="font-display text-[46px] font-extrabold text-primary-400">{forfaitLabel}</div>
                 <div className="text-[13px] text-ivory/50">{t('public:home.compareUsFlatFeeNote')}</div>
               </div>
               <div className="text-center">

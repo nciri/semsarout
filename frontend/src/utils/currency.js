@@ -68,3 +68,9 @@ export function formatPrice(amount, options = {}) {
 export function pricePeriodKey(pricePeriod) {
   return { day: 'perDay', week: 'perWeek', month: 'perMonth' }[pricePeriod] || 'perMonth'
 }
+
+// Montant sans symbole, format français (9900 -> "9 900"). Vient de l'ancien constants/pricing.js,
+// supprimé : les montants ne sont plus des constantes, ils viennent du catalogue (billing).
+export const priceLabel = (n) => Number(n).toLocaleString('fr-FR')
+
+export const priceWithSymbol = (n) => `${priceLabel(n)} ${DIRHAM_SYMBOL}`

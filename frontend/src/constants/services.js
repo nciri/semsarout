@@ -1,50 +1,23 @@
 import {
   FiHome, FiKey, FiUsers, FiCalendar, FiDollarSign, FiHelpCircle
 } from 'react-icons/fi'
-import { DIRHAM_SYMBOL } from '../utils/currency'
-import { PRICING, priceLabel } from './pricing'
 
 /**
  * Référentiel des services proposés — clés partagées entre la page Services,
  * la page Contact, l'inscription (users.interest) et les leads (leads.service).
+ *
+ * Ne porte plus ni texte ni montant : les libellés vivent dans les catalogues i18n
+ * (`common:services.<clé>.*`) et les prix dans le catalogue de billing (`usePricing`). Les
+ * garder ici imposait du français en dur et un montant qui divergeait du prix prélevé.
+ * `priceCode` relie une option à sa prestation facturable, quand elle en a une.
  */
 export const SERVICE_OPTIONS = {
-  vente: {
-    label: 'Vendre mon bien',
-    shortLabel: 'Forfait Vente',
-    description: `Forfait fixe ${priceLabel(PRICING.agencyForfait)} ${DIRHAM_SYMBOL}, sans commission`,
-    icon: FiHome
-  },
-  'mise-en-location': {
-    label: 'Mettre en location',
-    shortLabel: 'Mise en Location',
-    description: 'Nous trouvons le locataire idéal (1 mois de loyer)',
-    icon: FiUsers
-  },
-  'gestion-locative': {
-    label: 'Faire gérer ma location',
-    shortLabel: 'Gestion Locative',
-    description: 'Gestion complète pour 5% du loyer',
-    icon: FiKey
-  },
-  'courte-duree': {
-    label: 'Location courte durée',
-    shortLabel: 'Location Courte Durée',
-    description: `Plateforme StayManager.ma, dès ${PRICING.staymanager.manage} ${DIRHAM_SYMBOL}/bien/mois`,
-    icon: FiCalendar
-  },
-  estimation: {
-    label: 'Estimer mon bien',
-    shortLabel: 'Estimation Gratuite',
-    description: 'Estimation gratuite et sans engagement',
-    icon: FiDollarSign
-  },
-  autre: {
-    label: 'Autre demande',
-    shortLabel: 'Autre',
-    description: 'Une question, un projet particulier',
-    icon: FiHelpCircle
-  }
+  vente: { icon: FiHome, priceCode: 'forfait-vente' },
+  'mise-en-location': { icon: FiUsers, priceCode: null },
+  'gestion-locative': { icon: FiKey, priceCode: null },
+  'courte-duree': { icon: FiCalendar, priceCode: 'staymanager-manage' },
+  estimation: { icon: FiDollarSign, priceCode: null },
+  autre: { icon: FiHelpCircle, priceCode: null },
 }
 
 export const isValidService = (key) => Boolean(key && SERVICE_OPTIONS[key])

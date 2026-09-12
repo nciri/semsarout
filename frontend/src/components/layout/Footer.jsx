@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { usePricing } from '../../hooks/usePricing'
 import { useTranslation } from 'react-i18next'
 import { FiFacebook, FiInstagram, FiLinkedin, FiTwitter, FiYoutube } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
@@ -15,6 +16,8 @@ const SOCIAL_NETWORKS = [
 
 function Footer() {
   const { t } = useTranslation(['common'])
+  const { amountOf } = usePricing()
+  const forfait = amountOf('forfait-vente')
   return (
     <footer className="bg-midnight text-ivory/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -45,7 +48,11 @@ function Footer() {
           <div>
             <h4 className="font-semibold text-white mb-4">{t('common:footer.saleTitle')}</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/nos-services" className="hover:text-white transition-colors">{t('common:footer.salePackage', { price: formatPrice(4900) })}</Link></li>
+              {/* Sans tarif connu, l'entrée disparaît : le pied de page n'a pas la place
+                  d'expliquer une indisponibilité, et un montant inventé serait pire. */}
+              {forfait !== null && (
+                <li><Link to="/nos-services" className="hover:text-white transition-colors">{t('common:footer.salePackage', { price: formatPrice(forfait) })}</Link></li>
+              )}
               <li><Link to="/nos-services" className="hover:text-white transition-colors">{t('common:footer.professionalPhotos')}</Link></li>
               <li><Link to="/nos-services" className="hover:text-white transition-colors">{t('common:footer.freeEstimate')}</Link></li>
               <li><Link to="/annonces?transaction_type=sale" className="hover:text-white transition-colors">{t('common:footer.buyProperty')}</Link></li>

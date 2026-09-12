@@ -38,12 +38,22 @@ def check_file(path: Path) -> list[str]:
     return errors
 
 
+_IGNORED_DIRS = {"node_modules", ".venv", "venv", ".git", "dist", "build"}
+
+
+def _env_examples(root: Path) -> list[Path]:
+    """Tous les `.env.example` du dépôt, racine comprise."""
+    return [p for p in root.rglob(".env.example")
+            if not _IGNORED_DIRS & set(p.relative_to(root).parts)]
+
+
 def main() -> int:
     root = Path(__file__).resolve().parent.parent
     all_errors = []
-    for path in sorted(root.glob("services/*/.env.example")):
-        all_errors.extend(check_file(path))
-    for path in sorted(root.glob("*/.env.example")):  # gateway, etc.
+    # Découverte unique plutôt que deux motifs : les deux globs précédents
+    # (`services/*/` puis `*/`) énuméraient à la main, et laissaient de côté le
+    # `.env.example` de la racine — donc jamais vérifié.
+    for path in sorted(_env_examples(root)):
         all_errors.extend(check_file(path))
     if all_errors:
         print("Incohérences .env.example détectées :")
