@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { priceWithSymbol } from '../utils/currency'
+import { usePricing } from '../hooks/usePricing'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { Trans, useTranslation } from 'react-i18next'
@@ -72,6 +74,16 @@ function Contact() {
   }
 
   const serviceMeta = selectedService ? SERVICE_OPTIONS[selectedService] : null
+  // Libellés depuis l'i18n, montant depuis le catalogue : la description d'une option qui a un
+  // prix se construit à l'affichage, plus dans une constante.
+  const { amountOf } = usePricing()
+  const serviceDescription = (key) => {
+    const code = SERVICE_OPTIONS[key]?.priceCode
+    const amount = code ? amountOf(code) : null
+    return t(`common:services.${key}.description`, {
+      price: amount === null ? t('common:pricing.unavailable') : priceWithSymbol(amount),
+    })
+  }
 
   /* --------- Écran de succès --------- */
   if (submitted) {
@@ -90,7 +102,7 @@ function Contact() {
               ? (
                 <Trans
                   i18nKey="public:contact.successMessageWithService"
-                  values={{ service: serviceMeta.shortLabel }}
+                  values={{ service: t(`common:services.${selectedService}.shortLabel`) }}
                   components={{ b: <strong /> }}
                 />
               )
@@ -169,9 +181,9 @@ function Contact() {
                       >
                         <OptIcon className={`w-5 h-5 mb-2 ${active ? 'text-primary-600' : 'text-gray-400'}`} />
                         <div className={`font-medium text-sm ${active ? 'text-primary-700' : 'text-gray-900'}`}>
-                          {opt.label}
+                          {t(`common:services.${key}.label`)}
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">{opt.description}</div>
+                        <div className="text-xs text-gray-500 mt-1">{serviceDescription(key)}</div>
                       </button>
                     )
                   })}
@@ -306,7 +318,7 @@ function Contact() {
                       className="input resize-none"
                       placeholder={
                         serviceMeta
-                          ? t('public:contact.messagePlaceholderWithService', { service: serviceMeta.label.toLowerCase() })
+                          ? t('public:contact.messagePlaceholderWithService', { service: t(`common:services.${selectedService}.label`).toLowerCase() })
                           : t('public:contact.messagePlaceholder')
                       }
                     />

@@ -1,12 +1,27 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { QueryClient, QueryClientProvider } from 'react-query'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import i18n from '../i18n'
 import Checkout from './Checkout'
 
+// La page résout son montant depuis le catalogue : sans catalogue, elle renvoie vers les
+// services plutôt que d'afficher un prix inventé. Le test doit donc le servir.
+vi.mock('../services/api', () => ({
+  default: {
+    get: vi.fn(async () => ({
+      data: { services: [{ code: 'photos-pro-360', amount: 500, currency: 'MAD', kind: 'one_off' }], plans: [] },
+    })),
+    post: vi.fn(),
+  },
+}))
+
 function renderPage() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
-    <MemoryRouter initialEntries={['/panier?service=photos-pro']}><Checkout /></MemoryRouter>,
+    <QueryClientProvider client={qc}>
+      <MemoryRouter initialEntries={['/panier?service=photos-pro-360']}><Checkout /></MemoryRouter>
+    </QueryClientProvider>,
   )
 }
 

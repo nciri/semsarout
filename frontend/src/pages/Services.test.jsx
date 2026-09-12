@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest'
+import { QueryClient, QueryClientProvider } from 'react-query'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import i18n from '../i18n'
 import Services from './Services'
 
 function renderPage() {
-  return render(<MemoryRouter initialEntries={['/nos-services']}><Services /></MemoryRouter>)
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(<QueryClientProvider client={qc}><MemoryRouter initialEntries={['/nos-services']}><Services /></MemoryRouter></QueryClientProvider>)
 }
 
 describe('Services i18n', () => {

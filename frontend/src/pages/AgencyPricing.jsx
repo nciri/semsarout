@@ -6,12 +6,11 @@ import { FiCheck, FiX, FiArrowRight, FiZap, FiPhone } from 'react-icons/fi'
 import api from '../services/api'
 import { DIRHAM_SYMBOL, formatPrice } from '../utils/currency'
 import { CONTACT } from '../constants/contact'
-import { PRICING } from '../constants/pricing'
 import DirIcon from '../components/common/DirIcon'
 import { useFormat } from '../utils/format'
 
 function AgencyPricing() {
-  const { t } = useTranslation(['public'])
+  const { t } = useTranslation(['public', 'common'])
   const { fmtNumber } = useFormat()
   const [billingCycle, setBillingCycle] = useState('yearly')
 
@@ -20,62 +19,9 @@ function AgencyPricing() {
     return response.data.plans
   })
 
-  const defaultPlans = [
-    {
-      name: t('public:agencyPricing.plans.starter.name'),
-      slug: 'starter',
-      description: t('public:agencyPricing.plans.starter.description'),
-      max_listings: 10,
-      max_featured: 1,
-      max_urgent: 1,
-      has_api_access: false,
-      has_csv_import: false,
-      has_staymanager_sync: false,
-      has_lead_contact: true,
-      has_analytics: false,
-      has_priority_support: false,
-      has_dedicated_account_manager: false,
-      price_monthly: PRICING.plans.starter.monthly,
-      price_yearly: PRICING.plans.starter.yearly
-    },
-    {
-      name: t('public:agencyPricing.plans.pro.name'),
-      slug: 'pro',
-      description: t('public:agencyPricing.plans.pro.description'),
-      max_listings: 50,
-      max_featured: 5,
-      max_urgent: 5,
-      has_api_access: true,
-      has_csv_import: true,
-      has_staymanager_sync: true,
-      has_lead_contact: true,
-      has_analytics: true,
-      has_priority_support: false,
-      has_dedicated_account_manager: false,
-      price_monthly: PRICING.plans.pro.monthly,
-      price_yearly: PRICING.plans.pro.yearly,
-      popular: true
-    },
-    {
-      name: t('public:agencyPricing.plans.enterprise.name'),
-      slug: 'enterprise',
-      description: t('public:agencyPricing.plans.enterprise.description'),
-      max_listings: -1,
-      max_featured: 20,
-      max_urgent: 20,
-      has_api_access: true,
-      has_csv_import: true,
-      has_staymanager_sync: true,
-      has_lead_contact: true,
-      has_analytics: true,
-      has_priority_support: true,
-      has_dedicated_account_manager: true,
-      price_monthly: PRICING.plans.enterprise.monthly,
-      price_yearly: PRICING.plans.enterprise.yearly
-    }
-  ]
-
-  const displayPlans = plans || defaultPlans
+  // Aucune grille de repli : elle dupliquait les prix des plans, donc divergeait du
+  // catalogue dès la première édition. Plans absents, on le dit.
+  const displayPlans = plans || []
 
   const getPrice = (plan) => {
     return billingCycle === 'yearly' ? plan.price_yearly : plan.price_monthly
@@ -142,6 +88,11 @@ function AgencyPricing() {
       <section className="py-20 -mt-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {displayPlans.length === 0 && (
+              <p className="col-span-full text-center text-gray-500">
+                {t('common:pricing.unavailable')}
+              </p>
+            )}
             {displayPlans.map((plan) => (
               <div
                 key={plan.slug}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { PRICING } from '../constants/pricing'
+import { usePricing } from '../hooks/usePricing'
 import { Link } from 'react-router-dom'
 import { Trans, useTranslation } from 'react-i18next'
 import {
@@ -81,6 +81,10 @@ function loadSaved() {
 
 function SellProperty() {
   const { t } = useTranslation(['public', 'common'])
+  const { amountOf } = usePricing()
+  const forfait = amountOf('forfait-vente')
+  // Aucun montant de repli : un prix faux coûte plus cher qu'un prix absent.
+  const forfaitLabel = forfait === null ? t('common:pricing.unavailable') : formatPrice(forfait)
   const { isAuthenticated } = useAuthStore()
 
   const saved = loadSaved()
@@ -357,7 +361,7 @@ function SellProperty() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="font-display text-3xl font-bold mb-2">{t('public:sellProperty.title')}</h1>
           <p className="text-gray-300">
-            {t('public:sellProperty.subtitle', { price: formatPrice(PRICING.agencyForfait) })}
+            {t('public:sellProperty.subtitle', { price: forfaitLabel })}
           </p>
         </div>
       </section>
@@ -901,7 +905,7 @@ function SellProperty() {
                   <span className="text-sm text-gray-600">
                     <Trans
                       i18nKey="public:sellProperty.step5.consentText"
-                      values={{ price: formatPrice(PRICING.agencyForfait) }}
+                      values={{ price: forfaitLabel }}
                       components={{ link: <Link to="/cgu" target="_blank" className="text-primary-600 underline" /> }}
                     />
                   </span>

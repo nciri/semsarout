@@ -62,7 +62,7 @@ function Register() {
             <serviceMeta.icon className="w-5 h-5 text-primary-600 me-3 flex-shrink-0" />
             <div className="text-sm">
               <span className="text-gray-600">{t('auth:register.interestedIn')}</span>{' '}
-              <span className="font-semibold text-primary-700">{serviceMeta.shortLabel}</span>
+              <span className="font-semibold text-primary-700">{t(`common:services.${serviceContext}.shortLabel`)}</span>
               <div className="text-gray-500 text-xs mt-0.5">
                 {t('auth:register.serviceFollowUp')}
               </div>
@@ -171,7 +171,7 @@ function Register() {
                         className="sr-only"
                       />
                       <OptIcon className={`w-4 h-4 me-2 flex-shrink-0 ${active ? 'text-primary-600' : 'text-gray-400'}`} />
-                      {opt.label}
+                      {t(`common:services.${key}.label`)}
                     </label>
                   )
                 })}
