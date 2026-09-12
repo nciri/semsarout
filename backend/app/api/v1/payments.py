@@ -1,7 +1,10 @@
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime, timedelta
+import os
 import uuid
+
+import requests
 from app import db
 from app.api.v1 import api_v1_bp
 from app.models import User, Agency, Subscription, SubscriptionPlan
@@ -61,13 +64,38 @@ class Payment(db.Model):
         }
 
 
-# Service prices
-SERVICE_PRICES = {
-    'forfait-vente': 9900,
-    'photos-pro': 990,
-    'photos-pro-360': 1490,
-    'photos-pro-drone': 1790
-}
+# Prix des prestations : lus dans le catalogue de billing, jamais en dur ici.
+#
+# Une grille en dur vivait à cet endroit. Le BFF route désormais /api/v1/payments/* vers le
+# service payment, donc elle n'était plus servie — mais elle restait le repli d'une
+# configuration incomplète, et aurait alors prélevé un tarif périmé sans que rien ne le dise.
+_BILLING_URL = os.environ.get('BILLING_URL', 'http://localhost:8508')
+_INTERNAL_TOKEN = os.environ.get('INTERNAL_TOKEN') or os.environ.get('SEMSAR_INTERNAL_TOKEN', '')
+
+
+def _service_amount(service_id):
+    """Montant d'une prestation active, ou None.
+
+    Fail-closed : catalogue injoignable, prestation inconnue ou retirée de l'offre renvoient
+    None, et l'appelant refuse le paiement. Refuser un paiement coûte moins cher que le
+    prélever au mauvais prix.
+    """
+    if not service_id:
+        return None
+    try:
+        resp = requests.get(
+            f'{_BILLING_URL}/internal/service-prices',
+            headers={'x-internal-token': _INTERNAL_TOKEN}, timeout=5,
+        )
+        if resp.status_code != 200:
+            return None
+        services = resp.json().get('services', [])
+    except (requests.RequestException, ValueError):
+        return None
+    for svc in services:
+        if svc.get('code') == service_id and svc.get('is_active'):
+            return float(svc['amount'])
+    return None
 
 
 @api_v1_bp.route('/payments/create-intent', methods=['POST'])
@@ -86,8 +114,9 @@ def create_payment_intent():
     amount = 0
     payment_type = None
 
-    if service_id and service_id in SERVICE_PRICES:
-        amount = SERVICE_PRICES[service_id]
+    resolved = _service_amount(service_id)
+    if resolved is not None:
+        amount = resolved
         payment_type = 'service'
     elif plan_id:
         plan = SubscriptionPlan.query.filter_by(slug=plan_id).first()
