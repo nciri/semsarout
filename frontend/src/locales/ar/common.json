@@ -8,7 +8,7 @@
     "logout": "تسجيل الخروج"
   },
   "footer": {
-    "tagline": "العقارات دون وسطاء مشبوهين. بيعوا واستأجروا وأدروا عقاركم بسعر ثابت، دون عمولة، بمرافقة احترافية.",
+    "tagline": "العقارات دون وسطاء مشبوهين. بيعوا واستأجروا وأدروا عقاركم بسعر ثابت، بمرافقة احترافية.",
     "comingSoon": "قريباً",
     "socialAria": "{{network}} (قريباً)",
     "saleTitle": "بيع",
@@ -48,6 +48,8 @@
     "favoriteAria": "مفضلة",
     "maxCompare": "يمكنك مقارنة {{max}} عقارات كحد أقصى",
     "rooms": "{{count}} غرف",
+    "perDay": "/يوم",
+    "perWeek": "/أسبوع",
     "perMonth": "/شهرياً"
   },
   "impersonation": {
@@ -104,10 +106,6 @@
     "myAccount": "حسابي"
   },
   "advancedSearch": {
-    "aiSearchTitle": "بحث بالذكاء الاصطناعي",
-    "aiComingSoon": "قريباً",
-    "aiPlaceholder": "مثال: شقة من 3 غرف مع تراس في الدار البيضاء، قريبة من المدارس، بميزانية أقصاها 1.5 مليون {{currency}}...",
-    "aiTooltip": "في الإصدار 2، سيفهم الذكاء الاصطناعي طلبك بلغة طبيعية ويجد العقارات المطابقة.",
     "buy": "شراء",
     "rent": "كراء",
     "cityPlaceholderCompact": "المدينة، الحي...",
@@ -120,8 +118,11 @@
     "filtersActiveCount_one": "{{count}} نشط",
     "filtersActiveCount_other": "{{count}} نشطة",
     "priceMin": "السعر الأدنى",
+    "priceMinPerDay": "السعر الأدنى /يوم",
     "priceMax": "السعر الأقصى",
+    "priceMaxPerDay": "السعر الأقصى /يوم",
     "budget": "الميزانية",
+    "budgetPerDay": "الميزانية /يوم",
     "surfaceMin": "المساحة الدنيا (م²)",
     "surfaceMax": "المساحة القصوى (م²)",
     "surface": "المساحة (م²)",
@@ -180,7 +181,8 @@
       "vueMer": "إطلالة على البحر",
       "vueMontagne": "إطلالة على الجبل",
       "duplex": "دوبلكس"
-    }
+    },
+    "shortTermToggle": "كراء قصير المدى (يوم/أسبوع)"
   },
   "search": {
     "allTypes": "جميع الأنواع",
@@ -224,6 +226,9 @@
     "validationNameAndPhone": "الاسم والهاتف مطلوبان",
     "sentMessage": "تم إرسال طلبك بنجاح. سيتواصل معك المطوّر.",
     "lotFallback": "قطعة",
+    "viewPlanButton": "عرض المخطط الداخلي",
+    "planModalTitle": "المخطط الداخلي — {{reference}}",
+    "closeButton": "إغلاق",
     "status": {
       "available": "متاحة",
       "reserved": "محجوزة",
@@ -335,5 +340,66 @@
   "condoFees": {
     "toggle": "عقار في ملكية مشتركة",
     "label": "مصاريف الملكية المشتركة"
+  },
+  "loading": "جارٍ التحميل…",
+  "routeError": {
+    "title": "تعذّر تحميل هذه الصفحة",
+    "hint": "لم يصل المحتوى إليك. أعد تحميل الصفحة: إذا صدر تحديث للتطبيق للتوّ، فهذا يكفي لاستعادته.",
+    "reload": "إعادة تحميل الصفحة"
+  },
+  "pricing": {
+    "unavailable": "السعر غير متوفر مؤقتًا"
+  },
+  "services": {
+    "vente": {
+      "label": "بيع عقاري",
+      "shortLabel": "صيغة البيع",
+      "name": "صيغة البيع",
+      "description": "سعر ثابت {{price}}"
+    },
+    "mise-en-location": {
+      "label": "عرض للإيجار",
+      "shortLabel": "العرض للإيجار",
+      "description": "نجد لك المستأجر المناسب (شهر إيجار واحد)"
+    },
+    "gestion-locative": {
+      "label": "تدبير إيجاري",
+      "shortLabel": "التدبير الإيجاري",
+      "description": "تدبير كامل مقابل 5٪ من الإيجار"
+    },
+    "courte-duree": {
+      "label": "الإيجار القصير المدة",
+      "shortLabel": "الإيجار القصير المدة",
+      "description": "منصة StayManager.ma، انطلاقًا من {{price}}/عقار/شهر"
+    },
+    "estimation": {
+      "label": "تقييم عقاري",
+      "shortLabel": "تقييم مجاني",
+      "description": "تقييم مجاني ودون التزام"
+    },
+    "autre": {
+      "label": "طلب آخر",
+      "shortLabel": "أخرى",
+      "description": "سؤال أو مشروع خاص"
+    },
+    "forfait-vente": {
+      "name": "صيغة البيع",
+      "description": "خدمة كاملة لبيع عقارك"
+    },
+    "photos-pro-360": {
+      "name": "صور وزيارة افتراضية 360°",
+      "description": "تصوير احترافي وزيارة افتراضية"
+    },
+    "photos-pro-drone": {
+      "name": "صور وتصوير جوي",
+      "description": "تصوير احترافي وصور بالطائرة المسيّرة"
+    },
+    "photos-pro-video": {
+      "name": "صور وفيديو",
+      "description": "تصوير احترافي وفيديو تقديمي"
+    },
+    "subscription": {
+      "description": "اشتراك وكالة"
+    }
   }
 }

@@ -344,6 +344,35 @@ def _handle_application_decided(db, payload):
               property_title=payload.get("property_title"))
 
 
+def _handle_invoice_created(db, payload: dict) -> None:
+    """`billing.invoice.created` : annonce à l'agence la facture d'abonnement à régler. Publié de
+    longue date, l'événement n'était consommé par personne. Les factures de commission (compte
+    particulier, sans agence) ne sont pas concernées."""
+    if payload.get("purpose") != "subscription" or not payload.get("agency_id"):
+        return
+    agency = recipients.agency(payload["agency_id"])
+    to = (agency.get("email") or "").strip()
+    if not _valid_email(to):
+        return
+    _try_send(db, to, "invoice_issued.html", "invoice_issued", from_email=_contact(),
+              agency_name=agency.get("name"), reference=payload.get("reference"),
+              amount=payload.get("amount"), period_label=payload.get("period_label"),
+              renewal=bool(payload.get("renewal")),
+              grace_until=_fmt_fr(payload.get("grace_until"))[0] or None)
+
+
+def _handle_payment_failed(db, payload: dict) -> None:
+    """`payment.failed` : dit à l'agence que son paiement n'a pas abouti, et quoi faire."""
+    if payload.get("purpose") != "subscription" or not payload.get("agency_id"):
+        return
+    agency = recipients.agency(payload["agency_id"])
+    to = (agency.get("email") or "").strip()
+    if not _valid_email(to):
+        return
+    _try_send(db, to, "payment_failed.html", "payment_failed", from_email=_contact(),
+              agency_name=agency.get("name"), reason_label=payload.get("reason_label"))
+
+
 def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
     db = SessionLocal()
     try:
@@ -361,6 +390,10 @@ def handle_event(routing_key: str, payload: dict, message_id: str) -> None:
             _handle_work_order(db, payload)
         elif routing_key == "contract.signed":
             _handle_contract_signed(db, payload)
+        elif routing_key == "billing.invoice.created":
+            _handle_invoice_created(db, payload)
+        elif routing_key == "payment.failed":
+            _handle_payment_failed(db, payload)
         elif routing_key == "rental.mandate.signed":
             _handle_mandate_signed(db, payload)
         elif routing_key == "rental.lease.signed":

@@ -1,6 +1,7 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
+import RouteOutlet from '../../components/common/RouteOutlet'
 import { useTranslation } from 'react-i18next'
-import { FiGrid, FiUsers, FiActivity, FiTool, FiShoppingBag, FiPackage } from 'react-icons/fi'
+import { FiGrid, FiUsers, FiActivity, FiTool, FiShoppingBag, FiPackage, FiDollarSign } from 'react-icons/fi'
 
 const link = ({ isActive }) =>
   `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium ${
@@ -18,11 +19,12 @@ function AdminLayout() {
           <NavLink to="/admin/comptes" className={link}><FiUsers /> {t('admin:shared.nav.accounts')}</NavLink>
           <NavLink to="/admin/activite" className={link}><FiActivity /> {t('admin:shared.nav.activity')}</NavLink>
           <NavLink to="/admin/artisans-partages" className={link}><FiTool /> {t('admin:shared.nav.sharedArtisans')}</NavLink>
+          <NavLink to="/admin/tarifs" className={link}><FiDollarSign /> {t('admin:shared.nav.pricing')}</NavLink>
           <NavLink to="/admin/produits" className={link}><FiShoppingBag /> {t('admin:shared.nav.products')}</NavLink>
           <NavLink to="/admin/commandes" className={link}><FiPackage /> {t('admin:shared.nav.orders')}</NavLink>
         </nav>
       </aside>
-      <main className="flex-1 p-8"><Outlet /></main>
+      <main className="flex-1 p-8"><RouteOutlet /></main>
     </div>
   )
 }

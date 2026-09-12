@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fi'
 import DirIcon from '../../components/common/DirIcon'
 import { lotPlanService, LOT_STATUS } from '../../services/lotPlanService'
+import Design3dEntry from '../../components/design/Design3dEntry'
 
 const LOT_TYPE_VALUES = ['apartment', 'villa', 'duplex', 'studio', 'terrain', 'commercial', 'office']
 const LOT_STATUS_KEYS = Object.keys(LOT_STATUS)
@@ -545,6 +546,7 @@ export default function ProgramPlanEditor() {
                     <button onClick={() => handleDeleteLot(selectedLot)} className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg"><FiTrash2 className="w-4 h-4" /></button>
                   )}
                 </div>
+                {selectedLot && <Design3dEntry targetType="program_lot" targetId={selectedLot.id} className="w-full justify-center" />}
               </div>
             ) : (
               <div className="card p-5 text-sm text-gray-500 sticky top-24">

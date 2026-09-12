@@ -37,6 +37,7 @@ mesh_apps:
   - { name: selling, port: 8520 }
   - { name: translation, port: 8524 }
   - { name: partner, port: 8525 }
+  - { name: design3d, port: 8526 }
 
 mesh_relays:
   - listing
@@ -54,6 +55,7 @@ mesh_relays:
   - commission
   - selling
   - partner
+  - design3d
 
 mesh_workers:
   - search

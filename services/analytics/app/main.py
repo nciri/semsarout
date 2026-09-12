@@ -105,6 +105,7 @@ def admin_overview(principal: Principal = Depends(get_principal)):
         "total_agencies": ag.get("total_agencies", 0),
         "active_subscriptions": sub.get("active_subscriptions", {}),
         "mrr_estimate": sub.get("mrr_estimate", 0.0),
+        "unpaid_subscriptions": sub.get("unpaid_subscriptions", {"past_due": 0, "restricted": 0}),
         "signups_last_30d": us.get("signups_last_30d", 0),
         "suspended_count": us.get("suspended_users", 0) + ag.get("suspended_agencies", 0),
         "deleted_pending_purge_count": (us.get("deleted_pending_users", 0)
@@ -137,7 +138,7 @@ def admin_accounts(request: Request, principal: Principal = Depends(get_principa
                          "status": u["status"], "plan": None, "last_login": u["last_login"],
                          "tenant": u.get("tenant"), "account_role": u.get("account_role"),
                          "user_type": u.get("user_type"), "is_verified": u.get("is_verified"),
-                         "created_at": u.get("created_at"),
+                         "created_at": u.get("created_at"), "billing_status": None,
                          "listings_count": by_owner.get(str(u["id"]), 0)})
     if kind in (None, "agency"):
         subs = sources.subscriptions_map()
@@ -148,11 +149,14 @@ def admin_accounts(request: Request, principal: Principal = Depends(get_principa
             plan = (sub or {}).get("plan")
             rows.append({"kind": "agency", "id": a["id"], "name": a["name"], "email": a["email"],
                          "status": a["status"], "plan": plan.get("slug") if plan else None,
-                         "last_login": None, "listings_count": by_agency.get(str(a["id"]), 0)})
+                         "last_login": None, "listings_count": by_agency.get(str(a["id"]), 0),
+                         "billing_status": (sub or {}).get("status")})
     if status:
         rows = [r for r in rows if r["status"] == status]
     if qp.get("plan"):
         rows = [r for r in rows if r["plan"] == qp.get("plan")]
+    if qp.get("billing_status"):
+        rows = [r for r in rows if r.get("billing_status") == qp.get("billing_status")]
     rows.sort(key=lambda r: (r["name"] or "").lower())
     total = len(rows)
     items = rows[(page - 1) * per_page:(page - 1) * per_page + per_page]

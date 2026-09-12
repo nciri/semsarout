@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'react-toastify'
-import { FiMapPin, FiX, FiCheck } from 'react-icons/fi'
+import { FiMapPin, FiX, FiCheck, FiGrid } from 'react-icons/fi'
 import { lotPlanService, LOT_STATUS } from '../../services/lotPlanService'
 import { formatPrice } from '../../utils/currency'
+import { getPublishedByTarget } from '../../services/design3dPublic'
+import DesignViewer from '../design/DesignViewer'
 import useAuthStore from '../../store/authStore'
 
 const svgPoints = (zone) => (zone || []).map(p => `${p.x * 1000},${p.y * 1000}`).join(' ')
@@ -25,6 +27,37 @@ export default function LotPlanViewer({ programId }) {
   const [sent, setSent] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' })
   const containerRef = useRef(null)
+  // Plan intérieur (design3d) d'un lot : { [lotId]: project | null }, `null` =
+  // vérifié sans résultat. Rempli paresseusement au survol pour ne pas bombarder
+  // le service d'une requête par lot au premier rendu.
+  const [designPlans, setDesignPlans] = useState({})
+  const [detailLot, setDetailLot] = useState(null)
+
+  // Plans design3d disponibles pour les lots du plan actif, une seule fois par
+  // plan (pas à chaque survol) : la plupart des programmes comptent quelques
+  // dizaines de lots, un lot sans plan publié reste simplement invisible ici.
+  const fetchedPlanIdsRef = useRef(new Set())
+  useEffect(() => {
+    const active = plans.find(p => p.id === activePlanId)
+    if (!active || fetchedPlanIdsRef.current.has(active.id)) return undefined
+    fetchedPlanIdsRef.current.add(active.id)
+    let alive = true
+    Promise.all(
+      (active.lots || []).map(async (lot) => {
+        try {
+          const projects = await getPublishedByTarget('program_lot', lot.id)
+          return [lot.id, projects[0] || null]
+        } catch {
+          return [lot.id, null]
+        }
+      }),
+    ).then((entries) => {
+      if (alive) setDesignPlans(prev => ({ ...prev, ...Object.fromEntries(entries) }))
+    })
+    return () => {
+      alive = false
+    }
+  }, [plans, activePlanId])
 
   useEffect(() => {
     lotPlanService.getPlans(programId)
@@ -162,12 +195,21 @@ export default function LotPlanViewer({ programId }) {
 
         {/* Tooltip */}
         {hovered && (
-          <div className="absolute z-10 pointer-events-none bg-midnight text-white text-xs rounded-lg px-3 py-2 shadow-lg"
+          <div className="absolute z-10 bg-midnight text-white text-xs rounded-lg px-3 py-2 shadow-lg"
             style={{ left: hovered.x + 12, top: hovered.y + 12, maxWidth: 200 }}>
             <div className="font-bold">{hovered.lot.reference || t('common:lotPlan.lotFallback')}</div>
             <div className="opacity-80">{t(`common:lotPlan.status.${hovered.lot.status}`)}</div>
             {hovered.lot.surface > 0 && <div>{hovered.lot.surface} m²</div>}
             {hovered.lot.price > 0 && <div className="text-primary-300 font-semibold">{formatPrice(hovered.lot.price)}</div>}
+            {designPlans[hovered.lot.id] && (
+              <button
+                type="button"
+                onClick={() => setDetailLot(hovered.lot)}
+                className="mt-1.5 inline-flex items-center gap-1 text-primary-300 hover:text-primary-200 font-medium"
+              >
+                <FiGrid className="w-3 h-3" /> {t('common:lotPlan.viewPlanButton')}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -215,6 +257,28 @@ export default function LotPlanViewer({ programId }) {
               {sending ? t('common:lotPlan.sendingButton') : t('common:lotPlan.sendButton')}
             </button>
           </form>
+        </div>
+      )}
+
+      {/* Plan intérieur d'un lot (design3d, lecture seule) */}
+      {detailLot && designPlans[detailLot.id] && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-lg">
+                {t('common:lotPlan.planModalTitle', { reference: detailLot.reference || t('common:lotPlan.lotFallback') })}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setDetailLot(null)}
+                aria-label={t('common:lotPlan.closeButton')}
+                className="p-1 text-gray-400 hover:text-gray-600"
+              >
+                <FiX className="w-5 h-5" />
+              </button>
+            </div>
+            <DesignViewer project={designPlans[detailLot.id]} />
+          </div>
         </div>
       )}
     </div>

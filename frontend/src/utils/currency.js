@@ -62,16 +62,15 @@ export function formatPrice(amount, options = {}) {
 }
 
 /**
- * Format price for display in property cards (compact)
+ * i18n key (namespace `common:propertyCard`) for a rental price period suffix.
+ * Defaults to monthly for legacy listings with no `price_period` set.
  */
-export function formatPropertyPrice(price, transactionType = 'sale') {
-  if (!price) return '-'
-
-  const formatted = formatPrice(price, { compact: true })
-
-  if (transactionType === 'rent') {
-    return `${formatted}/mois`
-  }
-
-  return formatted
+export function pricePeriodKey(pricePeriod) {
+  return { day: 'perDay', week: 'perWeek', month: 'perMonth' }[pricePeriod] || 'perMonth'
 }
+
+// Montant sans symbole, format français (9900 -> "9 900"). Vient de l'ancien constants/pricing.js,
+// supprimé : les montants ne sont plus des constantes, ils viennent du catalogue (billing).
+export const priceLabel = (n) => Number(n).toLocaleString('fr-FR')
+
+export const priceWithSymbol = (n) => `${priceLabel(n)} ${DIRHAM_SYMBOL}`

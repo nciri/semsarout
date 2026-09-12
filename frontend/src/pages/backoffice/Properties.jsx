@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fi'
 import { formatPrice } from '../../utils/currency'
 import api from '../../services/api'
+import Design3dEntry from '../../components/design/Design3dEntry'
 
 const backofficeService = {
   getProperties: async (params) => {
@@ -84,6 +85,7 @@ function PropertyCard({ property, onDelete, viewMode, t }) {
         <div className="relative">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
+            aria-label={t('backoffice:crm.properties.list.actionsMenu')}
             className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
           >
             <FiMoreVertical className="w-5 h-5" />
@@ -103,6 +105,7 @@ function PropertyCard({ property, onDelete, viewMode, t }) {
               >
                 <FiEdit2 className="w-4 h-4" /> {t('backoffice:crm.properties.list.edit')}
               </Link>
+              <Design3dEntry targetType="property" targetId={property.id} asMenuItem />
               <Link
                 to={txHref}
                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
@@ -145,6 +148,7 @@ function PropertyCard({ property, onDelete, viewMode, t }) {
         <div className="absolute top-2 end-2">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
+            aria-label={t('backoffice:crm.properties.list.actionsMenu')}
             className="p-2 bg-white/90 text-gray-600 hover:bg-white rounded-lg shadow"
           >
             <FiMoreVertical className="w-4 h-4" />
@@ -164,6 +168,7 @@ function PropertyCard({ property, onDelete, viewMode, t }) {
               >
                 <FiEdit2 className="w-4 h-4" /> {t('backoffice:crm.properties.list.edit')}
               </Link>
+              <Design3dEntry targetType="property" targetId={property.id} asMenuItem />
               <Link
                 to={txHref}
                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"

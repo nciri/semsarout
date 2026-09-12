@@ -34,12 +34,33 @@ settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
 
 _UPDATABLE = [
-    "title", "description", "property_type", "transaction_type", "price", "price_per_sqm",
-    "charges", "surface", "land_surface", "rooms", "bedrooms", "bathrooms", "floor",
-    "total_floors", "construction_year", "features", "energy_class", "ges_class",
+    "title", "description", "property_type", "transaction_type", "price", "price_period",
+    "price_per_sqm", "charges", "surface", "land_surface", "rooms", "bedrooms", "bathrooms",
+    "floor", "total_floors", "construction_year", "features", "energy_class", "ges_class",
     "address", "city", "neighborhood", "postal_code", "latitude", "longitude",
 ]
 _CREATE_REQUIRED = ["title", "property_type", "transaction_type", "price", "city"]
+_PRICE_PERIODS = {"day", "week", "month"}
+
+
+def _apply_price_period(p: Property) -> None:
+    """price_period n'a de sens que pour la location (défaut 'month' si absent/invalide) ;
+    calcule price_per_day, dérivé server-side (jamais client-writable), pour comparer les
+    annonces courte durée (jour/semaine) entre elles sans confusion avec le prix mensuel."""
+    if p.transaction_type != "rent":
+        p.price_period = None
+        p.price_per_day = None
+        return
+    if p.price_period not in _PRICE_PERIODS:
+        p.price_period = "month"
+    if p.price is None:
+        p.price_per_day = None
+    elif p.price_period == "day":
+        p.price_per_day = p.price
+    elif p.price_period == "week":
+        p.price_per_day = p.price / 7
+    else:
+        p.price_per_day = None
 
 
 @asynccontextmanager
@@ -85,6 +106,8 @@ def _prop_dict(db: Session, p: Property, include_images: bool = True) -> dict:
         "id": p.id, "reference": p.reference, "title": p.title, "description": p.description,
         "property_type": p.property_type, "transaction_type": p.transaction_type,
         "price": float(p.price) if p.price is not None else None,
+        "price_period": p.price_period,
+        "price_per_day": float(p.price_per_day) if p.price_per_day is not None else None,
         "price_per_sqm": float(p.price_per_sqm) if p.price_per_sqm is not None else None,
         "charges": float(p.charges) if p.charges is not None else None,
         "surface": p.surface, "land_surface": p.land_surface, "rooms": p.rooms,
@@ -191,6 +214,7 @@ async def create_property(request: Request, principal: Principal = Depends(get_p
     )
     if p.features is None:
         p.features = []
+    _apply_price_period(p)
     db.add(p)
     db.flush()
     _emit(db, p, events.LISTING_CREATED)
@@ -216,6 +240,7 @@ async def update_property(property_id: int, request: Request, principal: Princip
     for field in _UPDATABLE:
         if field in data:
             setattr(p, field, data[field])
+    _apply_price_period(p)
     _emit(db, p, events.LISTING_UPDATED)
     db.commit()
     return {"message": "Property updated successfully", "property": _prop_dict(db, p)}
@@ -292,11 +317,18 @@ def internal_property_counts(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/internal/properties/{property_id}/owner", include_in_schema=False)
 def internal_owner(property_id: int, x_internal_token: str = Header(default=""), db: Session = Depends(get_db)):
-    """Propriétaire d'un bien (uid opaque) — résolution du seller pour le flux vente médiée."""
+    """Propriétaire d'un bien (uid opaque) — résolution du seller pour le flux vente médiée.
+
+    `agency_id` complète la réponse pour design3d, qui vérifie qu'un projet de
+    conception vise bien une cible du périmètre de son auteur : un bien confié à
+    une agence appartient nominalement à un membre, et le seul `owner_id`
+    refuserait à ses collègues une cible pourtant légitime. Ajout purement
+    additif — `selling` (listing_client.owner_of) ne lit que `owner_id`.
+    """
     if x_internal_token != settings.internal_token:
         return _err("Forbidden", 403)
     p = db.get(Property, property_id)
-    return {"owner_id": p.owner_id if p else None}
+    return {"owner_id": p.owner_id if p else None, "agency_id": p.agency_id if p else None}
 
 
 @app.get("/internal/property/{property_id}", include_in_schema=False)
@@ -355,7 +387,8 @@ async def estimate_price(request: Request, db: Session = Depends(get_db)):
 
 
 # ---- Gestion des biens en backoffice (cloisonnée agence) — parité `backoffice/properties.py` ----
-_BO_WRITABLE = ["title", "description", "property_type", "transaction_type", "price", "charges",
+_BO_WRITABLE = ["title", "description", "property_type", "transaction_type", "price",
+                "price_period", "charges",
                 "surface", "land_surface", "rooms", "bedrooms", "bathrooms", "floor", "total_floors",
                 "construction_year", "features", "energy_class", "address", "city", "neighborhood",
                 "postal_code", "latitude", "longitude", "status", "is_premium", "is_urgent", "is_featured"]
@@ -438,6 +471,7 @@ async def bo_create_property(request: Request, principal: Principal = Depends(ge
                  **{k: data.get(k) for k in _BO_WRITABLE if k in data and k != "status"})
     if p.features is None:
         p.features = data.get("features", [])
+    _apply_price_period(p)
     db.add(p)
     db.flush()
     _emit(db, p, events.LISTING_CREATED)
@@ -457,6 +491,7 @@ async def bo_update_property(property_id: int, request: Request, principal: Prin
     for field in _BO_WRITABLE:
         if field in data:
             setattr(p, field, data[field])
+    _apply_price_period(p)
     p.updated_at = datetime.utcnow()
     _emit(db, p, events.LISTING_UPDATED)
     db.commit()

@@ -31,8 +31,12 @@ class KycVerification(Base):
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     user_id = Column(Integer, nullable=False, index=True)
-    cin = Column(String(32), nullable=False)  # chiffré au repos en cible (pgcrypto)
+    cin = Column(String(32), nullable=True)  # chiffré au repos en cible (pgcrypto) ; optionnel
+                                              # depuis le flux Didit (le CNIE n'est pas toujours
+                                              # renvoyé en clair selon la config du workflow)
     status = Column(String(20), nullable=False, default="pending")  # pending|verified|rejected
+    didit_session_id = Column(String(64), nullable=True, index=True)
+    decision = Column(JSON, nullable=True)  # décision brute Didit, usage interne/audit uniquement
     created_at = Column(
         DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
     )
@@ -159,6 +163,19 @@ class AgencyRO(Base):
     is_deleted = Column(Boolean, default=False)
     suspended_reason = Column(Text)
     features = Column(JSON, default=list)
+    # I7 : distingue « projection jamais synchronisée » de « synchronisée, et vide ». Sans ce
+    # marqueur, une agence dont le plan n'accorde légitimement aucune feature (offre gratuite/
+    # starter) redéclenchait l'appel HTTP synchrone à billing (`_features`) à chaque login et
+    # chaque /auth/refresh, pour toujours — `features` vide ne se distinguant jamais de
+    # `features` "pas encore rempli". Posé par le worker (`billing.subscription.activated`) et
+    # par le repli auto-réparateur de `auth.py::_features`.
+    features_synced_at = Column(DateTime, nullable=True)
+    # A3 : instant au-delà duquel `features` ne vaut plus (fin de période payée d'un
+    # abonnement résilié). NULL = pas d'échéance connue, le cas de tout abonnement actif.
+    # Sans cette borne, rien ne révoquait les droits d'une agence résiliée : la
+    # réconciliation de billing ne tire que sur appel, et I7 interdit de réinterroger
+    # billing à chaque login. Lue par `auth.py::_features`, posée par le worker.
+    features_until = Column(DateTime, nullable=True)
     owner_id = Column(Integer)
     max_seats = Column(Integer, default=0)
     max_teams = Column(Integer, default=0)

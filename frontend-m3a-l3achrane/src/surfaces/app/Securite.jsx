@@ -1,8 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Avatar, Badge, Button, Card, Icon, Select, VerifiedBadge } from '../../ds/index.js'
 import { blockedUsers as initialBlockedUsers, reportReasons, reportTargets, safetyTips } from '../../data/securityCenter.js'
+import { getCurrentProfile, getTrust } from '../../services/index.js'
+
+const TRUST_TO_LEVEL = { verified_experience: 'full', verified: 'partial', none: 'none' }
 
 export default function Securite() {
   const { t } = useTranslation(['app', 'common'])
@@ -12,6 +15,16 @@ export default function Securite() {
   const [details, setDetails] = useState('')
   const [blockedUsers, setBlockedUsers] = useState(initialBlockedUsers)
   const [sent, setSent] = useState(false)
+  const [trust, setTrust] = useState({ level: 'none', deal_count: 0 })
+
+  useEffect(() => {
+    let cancelled = false
+    getCurrentProfile()
+      .then((profile) => getTrust('user', profile?.id))
+      .then((t) => { if (!cancelled) setTrust(t) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
 
   const unblock = (id) => setBlockedUsers((list) => list.filter((u) => u.id !== id))
 
@@ -140,7 +153,13 @@ export default function Securite() {
                   <span>{t(`app:securite.tips.${tip.id}`)}</span>
                 </div>
               ))}
-              <VerifiedBadge label={t('app:securite.verifiedBadgeLabel')} level="full" size="sm" />
+              {trust.level !== 'none' && (
+                <VerifiedBadge
+                  label={t('app:securite.verifiedBadgeLabel')}
+                  level={TRUST_TO_LEVEL[trust.level]}
+                  size="sm"
+                />
+              )}
             </div>
 
             <Card padding={18} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

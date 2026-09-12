@@ -728,3 +728,21 @@ async def express_lot_interest(program_id: int, request: Request, db: Session = 
     _emit_contact(db, p, data, extra_msg=f" — Lots: {lot_refs}")
     db.commit()
     return JSONResponse({"message": "Demande envoyée avec succès", "lots": lot_refs}, status_code=201)
+
+
+@app.get("/internal/program-lots/{lot_id}/owner", include_in_schema=False)
+def internal_lot_owner(lot_id: int, request: Request, db: Session = Depends(get_db)):
+    """Agence et auteur du programme portant ce lot (patron `listing./internal/properties/{id}/owner`).
+
+    Consommé par design3d pour vérifier qu'un projet de conception vise bien une
+    cible du périmètre de son auteur. Aucun point d'entrée équivalent n'existait
+    côté programmes : sans lui, cette vérification n'aurait couvert que les biens
+    et le détournement de fiche publique serait resté ouvert pour les lots.
+    """
+    if request.headers.get("x-internal-token") != settings.internal_token:
+        return err("Forbidden", 403)
+    lot = db.get(ProgramLot, lot_id)
+    p = db.get(Program, lot.program_id) if lot else None
+    if p is None:
+        return {"owner_id": None, "agency_id": None}
+    return {"owner_id": p.created_by_id, "agency_id": p.agency_id}

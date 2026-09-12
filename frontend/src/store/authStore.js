@@ -1,6 +1,23 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import api from '../services/api'
+import { purgeRuntimeCaches } from '../utils/runtimeCache'
+import { purgeLocalData } from '../services/design3dLocal'
+
+// Entitlements de plan. Le serveur les pose dans les claims du jeton d'accès
+// (identity/app/auth.py::_claims, monolithe backend/app/api/v1/auth.py) : c'est
+// la source qui fait foi côté passerelle, et la seule disponible pour les
+// sessions déjà ouvertes. `user.features` (renvoyé par /auth/me) la double pour
+// les comptes rafraîchis depuis le profil.
+function claimsOf(token) {
+  if (!token) return {}
+  try {
+    const payload = token.split('.')[1]
+    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
+  } catch {
+    return {}
+  }
+}
 
 const useAuthStore = create(
   persist(
@@ -22,6 +39,11 @@ const useAuthStore = create(
           // Store in localStorage for backoffice API calls
           localStorage.setItem('token', access_token)
           localStorage.setItem('userId', String(user.id))
+
+          // Une connexion directe, sans déconnexion explicite préalable, ne
+          // doit pas hériter du cache design3d de l'identité précédente sur
+          // une tablette partagée (I10).
+          purgeRuntimeCaches()
 
           set({
             user,
@@ -51,6 +73,9 @@ const useAuthStore = create(
           localStorage.setItem('token', access_token)
           localStorage.setItem('userId', String(user.id))
 
+          // Même tablette, même garde qu'à la connexion (I10).
+          purgeRuntimeCaches()
+
           set({
             user,
             accessToken: access_token,
@@ -70,9 +95,25 @@ const useAuthStore = create(
       },
 
       logout: () => {
+        // Les plans hors-ligne (IndexedDB) appartiennent eux aussi au compte
+        // qui se déconnecte : sans cette purge, l'agent suivant sur la même
+        // tablette ouvrirait ses projets, ses niveaux et ses images de fond, et
+        // sa file d'attente repartirait sous le jeton du nouveau venu.
+        // L'identifiant est passé explicitement : `localStorage` est vidé juste
+        // en dessous. Purge non attendue, comme celle du service worker.
+        const purged = purgeLocalData(get().user?.id ?? null)
+
         // Clear localStorage
         localStorage.removeItem('token')
         localStorage.removeItem('userId')
+
+        // Les réponses design3d mises en cache par le service worker
+        // appartiennent au compte qui se déconnecte : sur une tablette
+        // partagée elles resteraient lisibles par l'utilisateur suivant.
+        // Purge asynchrone volontairement non attendue — la déconnexion est
+        // immédiate et ne doit jamais dépendre du Cache Storage (absent en
+        // navigation privée ou hors contexte sécurisé).
+        purgeRuntimeCaches()
 
         set({
           user: null,
@@ -80,6 +121,17 @@ const useAuthStore = create(
           refreshToken: null,
           isAuthenticated: false
         })
+
+        // Rendue pour les seuls appelants qui veulent attendre la purge (tests) ;
+        // la déconnexion, elle, est immédiate.
+        return purged
+      },
+
+      hasFeature: (name) => {
+        const { user, accessToken } = get()
+        if (Array.isArray(user?.features)) return user.features.includes(name)
+        const features = claimsOf(accessToken).features
+        return Array.isArray(features) && features.includes(name)
       },
 
       updateUser: (userData) => {
@@ -94,6 +146,9 @@ const useAuthStore = create(
         }))
         localStorage.setItem('token', token)
         localStorage.setItem('userId', String(targetUser.id))
+        // L'agence usurpée n'est pas celle du super-admin : le cache design3d
+        // de l'un ne doit jamais fuiter vers l'autre (I10).
+        purgeRuntimeCaches()
         set({
           user: targetUser, accessToken: token, refreshToken: null,
           isAuthenticated: true, impersonating: true, impersonatedUser: targetUser,
@@ -107,6 +162,8 @@ const useAuthStore = create(
         const admin = JSON.parse(raw)
         localStorage.setItem('token', admin.accessToken)
         localStorage.setItem('userId', String(admin.user.id))
+        // Retour au super-admin : même garde qu'à l'entrée en usurpation (I10).
+        purgeRuntimeCaches()
         set({
           user: admin.user, accessToken: admin.accessToken, refreshToken: admin.refreshToken,
           isAuthenticated: true, impersonating: false, impersonatedUser: null,

@@ -8,7 +8,7 @@
     "logout": "Déconnexion"
   },
   "footer": {
-    "tagline": "L'immobilier sans les intermédiaires douteux. Vendez, louez et gérez votre bien à tarif fixe, sans commission, avec un accompagnement professionnel.",
+    "tagline": "L'immobilier sans les intermédiaires douteux. Vendez, louez et gérez votre bien à tarif fixe, avec un accompagnement professionnel.",
     "comingSoon": "Bientôt disponible",
     "socialAria": "{{network}} (bientôt disponible)",
     "saleTitle": "Vente",
@@ -48,6 +48,8 @@
     "favoriteAria": "Favori",
     "maxCompare": "Vous pouvez comparer {{max}} biens maximum",
     "rooms": "{{count}} pièces",
+    "perDay": "/jour",
+    "perWeek": "/semaine",
     "perMonth": "/mois"
   },
   "impersonation": {
@@ -104,10 +106,6 @@
     "myAccount": "Mon compte"
   },
   "advancedSearch": {
-    "aiSearchTitle": "Recherche IA",
-    "aiComingSoon": "Bientôt disponible",
-    "aiPlaceholder": "Ex: Appartement 3 chambres avec terrasse à Casablanca, proche des écoles, budget max 1.5M {{currency}}...",
-    "aiTooltip": "Dans la v2, l'IA comprendra votre demande en langage naturel et trouvera les biens correspondants.",
     "buy": "Acheter",
     "rent": "Louer",
     "cityPlaceholderCompact": "Ville, quartier...",
@@ -120,8 +118,11 @@
     "filtersActiveCount_one": "{{count}} actif",
     "filtersActiveCount_other": "{{count}} actifs",
     "priceMin": "Prix min",
+    "priceMinPerDay": "Prix min /jour",
     "priceMax": "Prix max",
+    "priceMaxPerDay": "Prix max /jour",
     "budget": "Budget",
+    "budgetPerDay": "Budget /jour",
     "surfaceMin": "Surface min (m²)",
     "surfaceMax": "Surface max (m²)",
     "surface": "Surface (m²)",
@@ -180,7 +181,8 @@
       "vueMer": "Vue mer",
       "vueMontagne": "Vue montagne",
       "duplex": "Duplex"
-    }
+    },
+    "shortTermToggle": "Location courte durée (jour/semaine)"
   },
   "search": {
     "allTypes": "Tous types",
@@ -224,6 +226,9 @@
     "validationNameAndPhone": "Nom et téléphone requis",
     "sentMessage": "Votre demande a bien été envoyée. Le promoteur vous recontactera.",
     "lotFallback": "Lot",
+    "viewPlanButton": "Voir le plan intérieur",
+    "planModalTitle": "Plan intérieur — {{reference}}",
+    "closeButton": "Fermer",
     "status": {
       "available": "Disponible",
       "reserved": "Réservé",
@@ -335,5 +340,66 @@
   "condoFees": {
     "toggle": "Bien en copropriété",
     "label": "Charges de copropriété"
+  },
+  "loading": "Chargement…",
+  "routeError": {
+    "title": "Cette page n'a pas pu être chargée",
+    "hint": "Le contenu n'est pas arrivé jusqu'à vous. Rechargez la page : si une mise à jour de l'application vient d'être publiée, cela suffit à la récupérer.",
+    "reload": "Recharger la page"
+  },
+  "pricing": {
+    "unavailable": "Tarif momentanément indisponible"
+  },
+  "services": {
+    "vente": {
+      "label": "Vendre mon bien",
+      "shortLabel": "Forfait Vente",
+      "name": "Forfait Vente",
+      "description": "Forfait fixe {{price}}"
+    },
+    "mise-en-location": {
+      "label": "Mettre en location",
+      "shortLabel": "Mise en Location",
+      "description": "Nous trouvons le locataire idéal (1 mois de loyer)"
+    },
+    "gestion-locative": {
+      "label": "Faire gérer ma location",
+      "shortLabel": "Gestion Locative",
+      "description": "Gestion complète pour 5% du loyer"
+    },
+    "courte-duree": {
+      "label": "Location courte durée",
+      "shortLabel": "Location Courte Durée",
+      "description": "Plateforme StayManager.ma, dès {{price}}/bien/mois"
+    },
+    "estimation": {
+      "label": "Estimer mon bien",
+      "shortLabel": "Estimation Gratuite",
+      "description": "Estimation gratuite et sans engagement"
+    },
+    "autre": {
+      "label": "Autre demande",
+      "shortLabel": "Autre",
+      "description": "Une question, un projet particulier"
+    },
+    "forfait-vente": {
+      "name": "Forfait Vente",
+      "description": "Service complet de vente immobilière"
+    },
+    "photos-pro-360": {
+      "name": "Photos + Visite 360°",
+      "description": "Shooting photo et visite virtuelle"
+    },
+    "photos-pro-drone": {
+      "name": "Photos + Drone",
+      "description": "Shooting photo et prises de vue par drone"
+    },
+    "photos-pro-video": {
+      "name": "Photos + Vidéo",
+      "description": "Shooting photo et vidéo de présentation"
+    },
+    "subscription": {
+      "description": "Abonnement agence"
+    }
   }
 }

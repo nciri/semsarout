@@ -416,6 +416,9 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path.startswith("/api/v1/admin/accounts/agencies/")
     ):
         return app.state.trust_safety, path.replace("/api/v1", "", 1)
+    # Score de confiance (trust_level) : lecture publique, proxy direct vers trust-safety.
+    if settings.trust_safety_url and path.startswith("/api/v1/trust/"):
+        return app.state.trust_safety, path.replace("/api/v1", "", 1)
     # Signalements (reports) : création authentifiée + actions de traitement super-admin.
     # La liste back-office (GET /backoffice/reports) reste un endpoint composite dédié
     # (parité backoffice_listings/backoffice_verifications, cf. plus bas).
@@ -466,6 +469,14 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path == "/api/v1/cancel-subscription"
         or path == "/api/v1/invoices"
         or path.startswith("/api/v1/invoices/")  # factures (liste + PDF)
+        # Catalogue tarifaire : lecture publique, et administration superadmin. Déclaré ici et
+        # non sous `/admin/*` générique, ce préfixe étant déjà partagé avec analytics et
+        # trust-safety — le routage du BFF est explicite par chemin, jamais par famille.
+        or path == "/api/v1/pricing"
+        or path == "/api/v1/admin/pricing"
+        or path == "/api/v1/admin/price-changes"
+        or path.startswith("/api/v1/admin/service-prices/")
+        or path.startswith("/api/v1/admin/subscription-plans/")
     ):
         return app.state.billing, path.replace("/api/v1", "", 1)
     # M3a-L3achrane (coloc) : GET /api/v1/listings est désormais l'endpoint composite
@@ -492,6 +503,11 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         path == "/api/v1/partner" or path.startswith("/api/v1/partner/")
     ):
         return app.state.partner, path.replace("/api/v1", "", 1)
+    if settings.design3d_url and (
+        path.startswith("/api/v1/design3d/") or path == "/api/v1/design3d"
+        or path.startswith("/api/v1/public/design3d/")
+    ):
+        return app.state.design3d, path.replace("/api/v1", "", 1)
     # Monolithe décommissionné : plus de repli. Toute route non mappée → 404 (client None).
     return None, path
 
@@ -534,6 +550,7 @@ async def lifespan(app: FastAPI):
     app.state.partner = _client_or_none(settings.partner_url)
     app.state.matching = _client_or_none(settings.matching_url)
     app.state.translation = _client_or_none(settings.translation_url)
+    app.state.design3d = _client_or_none(settings.design3d_url)
     yield
     for client in (
         app.state.monolith, app.state.identity, app.state.search,
@@ -545,6 +562,7 @@ async def lifespan(app: FastAPI):
         app.state.messaging, app.state.trust_safety, app.state.agency, app.state.audit,
         app.state.commission, app.state.selling, app.state.coloc_listing,
         app.state.coloc_profile, app.state.partner, app.state.matching, app.state.translation,
+        app.state.design3d,
     ):
         if client is not None:
             await client.aclose()

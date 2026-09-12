@@ -2,6 +2,11 @@ import api from './api'
 
 export const adminService = {
   getOverview: async () => (await api.get('/admin/overview')).data,
+  getPricing: async () => (await api.get('/admin/pricing')).data,
+  getPriceChanges: async () => (await api.get('/admin/price-changes')).data,
+  setServicePrice: async (code, amount) => (await api.put(`/admin/service-prices/${code}`, { amount })).data,
+  toggleServicePrice: async (code, isActive) => (await api.patch(`/admin/service-prices/${code}`, { is_active: isActive })).data,
+  setPlanPrice: async (id, prices) => (await api.put(`/admin/subscription-plans/${id}`, prices)).data,
   getAccounts: async (params = {}) => (await api.get('/admin/accounts', { params })).data,
   getUser: async (id) => (await api.get(`/admin/accounts/users/${id}`)).data,
   getAgency: async (id) => (await api.get(`/admin/accounts/agencies/${id}`)).data,

@@ -14,7 +14,7 @@ import { propertyService } from '../services/propertyService'
 import { buyerService } from '../services/buyerService'
 import { applicantService } from '../services/rentalService'
 import api from '../services/api'
-import { formatPrice } from '../utils/currency'
+import { formatPrice, pricePeriodKey } from '../utils/currency'
 import PhotoLightbox from '../components/common/PhotoLightbox'
 import PriceGauge from '../components/common/PriceGauge'
 import BookVisitWidget from '../components/common/BookVisitWidget'
@@ -23,6 +23,8 @@ import useAuthStore from '../store/authStore'
 import { getAmenityIcon } from '../utils/amenityIcons'
 import { DOC_TYPES } from './dashboard/applicationStatus'
 import { useFormat } from '../utils/format'
+import { getPublishedByTarget } from '../services/design3dPublic'
+import DesignViewer from '../components/design/DesignViewer'
 
 const MAX_DOC_SIZE = 10 * 1024 * 1024
 
@@ -67,6 +69,15 @@ function PropertyDetail() {
     () => propertyService.getPricePosition(id),
     { enabled: !!id }
   )
+
+  // Visionneuse de plan (design3d) : lecture publique, aucune authentification
+  // requise — le service ne renvoie que des projets publiés (`ready`).
+  const { data: designProjects } = useQuery(
+    ['design3d-public', 'property', id],
+    () => getPublishedByTarget('property', id),
+    { enabled: !!id }
+  )
+  const designProject = designProjects?.[0] || null
 
   const isBuyer = !isAuthenticated || user?.account_role === 'buyer'
 
@@ -431,7 +442,11 @@ function PropertyDetail() {
               <div className="text-end">
                 <div className={`font-display text-[28px] font-extrabold ${property.is_premium ? 'premium-price' : property.is_urgent ? 'text-red-600' : 'text-midnight'}`}>
                   {formatPrice(property.price)}
-                  {property.transaction_type === 'rent' && <span className="text-sm font-semibold text-slate-500">{t('public:propertyDetail.perMonth')}</span>}
+                  {property.transaction_type === 'rent' && (
+                    <span className="text-sm font-semibold text-slate-500">
+                      {t(`public:propertyDetail.${pricePeriodKey(property.price_period)}`)}
+                    </span>
+                  )}
                 </div>
                 {property.price_per_sqm && (
                   <div className="text-sm text-gray-500">
@@ -566,6 +581,14 @@ function PropertyDetail() {
               )}
             </div>
           </div>
+
+          {/* Plan (design3d) — n'apparaît que si l'agent a publié un plan */}
+          {designProject && (
+            <div className="mb-8">
+              <h2 className="font-semibold text-lg mb-4">{t('public:propertyDetail.planTitle')}</h2>
+              <DesignViewer project={designProject} />
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}

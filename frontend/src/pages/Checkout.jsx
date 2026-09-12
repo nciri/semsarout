@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { usePricing } from '../hooks/usePricing'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -8,34 +9,10 @@ import api from '../services/api'
 import { formatPrice } from '../utils/currency'
 import DirIcon from '../components/common/DirIcon'
 
-const SERVICES = {
-  'forfait-vente': {
-    name: 'Forfait Vente',
-    price: 4900,
-    description: 'Service complet de vente immobilière'
-  },
-  'photos-pro': {
-    name: 'Photos Professionnelles',
-    price: 990,
-    description: 'Shooting photo professionnel'
-  },
-  'photos-pro-360': {
-    name: 'Photos + Visite 360°',
-    price: 1490,
-    description: 'Shooting photo + visite virtuelle'
-  },
-  'photos-pro-drone': {
-    name: 'Photos + Drone',
-    price: 1790,
-    description: 'Shooting photo + prises de vue drone'
-  }
-}
-
-const SUBSCRIPTION_PLANS = {
-  starter: { name: 'Starter', monthly: 299, yearly: 2990 },
-  pro: { name: 'Pro', monthly: 799, yearly: 7990 },
-  enterprise: { name: 'Enterprise', monthly: 1999, yearly: 19990 }
-}
+// Les prestations payables et leurs prix viennent du catalogue (billing) ; leurs libellés, des
+// catalogues i18n. Les deux grilles en dur qui vivaient ici donnaient un prix affiché pouvant
+// différer du prix prélevé.
+const PAYABLE_SERVICES = ['forfait-vente', 'photos-pro-360', 'photos-pro-drone', 'photos-pro-video']
 
 function Checkout() {
   const { t } = useTranslation(['public', 'common'])
@@ -58,23 +35,31 @@ function Checkout() {
     }
   })
 
-  // Determine what we're paying for
+  // Ce qu'on paie, résolu depuis le catalogue. Un prix absent laisse `item` nul : mieux vaut
+  // renvoyer vers les services que faire payer un montant inventé.
+  const { amountOf, plans, isLoading: loadingPricing } = usePricing()
   let item = null
   let price = 0
 
-  if (serviceId && SERVICES[serviceId]) {
-    item = SERVICES[serviceId]
-    price = item.price
-  } else if (planId && SUBSCRIPTION_PLANS[planId]) {
-    item = SUBSCRIPTION_PLANS[planId]
-    price = billingCycle === 'yearly' ? item.yearly : item.monthly
+  if (serviceId && PAYABLE_SERVICES.includes(serviceId) && amountOf(serviceId) !== null) {
+    item = { name: t(`common:services.${serviceId}.name`),
+             description: t(`common:services.${serviceId}.description`) }
+    price = amountOf(serviceId)
+  } else if (planId) {
+    const plan = plans.find((pl) => pl.slug === planId)
+    const planPrice = plan && (billingCycle === 'yearly' ? plan.price_yearly : plan.price_monthly)
+    if (planPrice) {
+      item = { name: plan.name, description: t('common:services.subscription.description') }
+      price = planPrice
+    }
   }
 
   useEffect(() => {
-    if (!item) {
+    // Tant que le catalogue charge, on ne conclut pas à l'absence de prestation.
+    if (!item && !loadingPricing) {
       navigate('/nos-services')
     }
-  }, [item, navigate])
+  }, [item, loadingPricing, navigate])
 
   const onSubmit = async (data) => {
     setIsProcessing(true)

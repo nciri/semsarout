@@ -70,5 +70,8 @@ uploads/
 
 # Artefacts locaux (agents, playwright, screenshots) — non versionnés
 .playwright-mcp/
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
 .superpowers/
 smoke-*.png

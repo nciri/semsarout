@@ -26,6 +26,8 @@ MAPPING: dict[str, Any] = {
             "transaction_type": {"type": "keyword"},
             "status": {"type": "keyword"},
             "price": {"type": "double"},
+            "price_period": {"type": "keyword"},
+            "price_per_day": {"type": "double"},
             "surface": {"type": "double"},
             "land_surface": {"type": "double"},
             "rooms": {"type": "integer"},
@@ -87,10 +89,16 @@ def _resolve_sort(criteria: dict) -> list[dict]:
     Ajoute `id desc` en départage pour une pagination déterministe (parité)."""
     if criteria.get("sort_profile") == "search":
         base = _SEARCH_SORTS.get(criteria.get("sort") or "relevance", _SEARCH_SORTS["relevance"])
-        return [*base, _ID]
-    # profil « list » (GET /properties) : primaire + featured/urgent (toujours appendus).
-    base = _SORTS.get(criteria.get("sort", "newest"), _SORTS["newest"])
-    return [*base, _FEAT, _URG, _ID]
+        sort = [*base, _ID]
+    else:
+        # profil « list » (GET /properties) : primaire + featured/urgent (toujours appendus).
+        base = _SORTS.get(criteria.get("sort", "newest"), _SORTS["newest"])
+        sort = [*base, _FEAT, _URG, _ID]
+    if criteria.get("short_term"):
+        # Courte durée (jour/semaine) : trie sur le prix normalisé par jour, jamais le prix
+        # brut — sinon "1000/semaine" (≈142/jour) semble plus cher que "200/jour".
+        sort = [{"price_per_day": s["price"]} if "price" in s else s for s in sort]
+    return sort
 
 
 def os_client(url: str) -> OpenSearch:
@@ -159,8 +167,18 @@ def build_query(criteria: dict, hidden_users: list[int], hidden_agencies: list[i
     if criteria.get("neighborhoods"):
         should_or.append([_substr("neighborhood", n) for n in criteria["neighborhoods"]])
 
+    # Courte durée (location jour/semaine) : hors du flux par défaut (mois), pour ne pas
+    # mélanger des unités de prix différentes dans la même liste. Activé, le filtre/tri prix
+    # porte sur `price_per_day` (normalisé), jamais le prix brut saisi.
+    if criteria.get("short_term"):
+        must.append({"terms": {"price_period": ["day", "week"]}})
+        price_field = "price_per_day"
+    else:
+        must_not.append({"terms": {"price_period": ["day", "week"]}})
+        price_field = "price"
+
     for field, lo, hi in (
-        ("price", "min_price", "max_price"),
+        (price_field, "min_price", "max_price"),
         ("surface", "min_surface", "max_surface"),
         ("land_surface", "min_land_surface", "max_land_surface"),
         ("rooms", "min_rooms", "max_rooms"),

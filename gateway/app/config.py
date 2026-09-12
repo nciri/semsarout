@@ -65,6 +65,7 @@ class GatewaySettings(BaseSettings):
     partner_url: str | None = None
     matching_url: str | None = None
     translation_url: str | None = None
+    design3d_url: str | None = None
     # Jeton interne partagé (appels BFF → APIs internes des services, ex. matching).
     internal_token: str = ""
 

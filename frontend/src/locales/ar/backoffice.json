@@ -1555,6 +1555,7 @@
         "edit": "تعديل",
         "newTransaction": "معاملة جديدة",
         "delete": "حذف",
+        "actionsMenu": "الإجراءات",
         "viewsCount_one": "{{count}} مشاهدة",
         "viewsCount_other": "{{count}} مشاهدة",
         "previous": "السابق",
@@ -1596,6 +1597,7 @@
           "listingType": "نوع الإعلان",
           "status": "الحالة",
           "price": "السعر ({{currency}})",
+          "pricePeriod": "دورية السعر",
           "surface": "المساحة (م²)",
           "rooms": "الغرف",
           "bedrooms": "غرف النوم",
@@ -1632,7 +1634,12 @@
         "toastImagesRequired": "أضف صورة واحدة على الأقل.",
         "cancelButton": "إلغاء",
         "createButton": "إنشاء العقار",
-        "updateButton": "تحديث"
+        "updateButton": "تحديث",
+        "pricePeriods": {
+          "day": "باليوم",
+          "week": "بالأسبوع",
+          "month": "بالشهر"
+        }
       }
     }
   },

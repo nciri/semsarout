@@ -110,6 +110,7 @@ reconstructibles). Validation JWT **locale** au BFF (frontière d'auth sévrée)
 | matching | 8523 | **M3a-L3achrane** : scores de compatibilité — API interne, composée par le BFF sur `GET /listings` |
 | translation | 8524 | traduction FR↔AR à la volée (Azure Translator + cache PostgreSQL) — support i18n |
 | partner | 8525 | **M3a-L3achrane** : portail partenaires/affiliés (`/partner/*` : clés API, webhooks, reporting) |
+| design3d | 8526 | éditeur de plan 2D — projets/niveaux/géométrie, synchro hors-ligne (`/design3d/*`), lecture publique (`/public/design3d/*`) — gate feature `has_design3d` (billing) |
 
 **Services additifs (nouvelles surfaces, PAS consommées par le front — voir reste à faire) :**
 identity(KYC) · notification 8502

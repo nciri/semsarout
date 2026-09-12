@@ -11,6 +11,7 @@ import { DIRHAM_SYMBOL } from '../../utils/currency'
 import DirIcon from '../../components/common/DirIcon'
 import api from '../../services/api'
 import { CondoFeesField } from '../../components/property/CondoFeesField'
+import Design3dEntry from '../../components/design/Design3dEntry'
 
 const backofficeService = {
   getProperty: async (id) => {
@@ -32,6 +33,10 @@ const PROPERTY_TYPES = ['apartment', 'house', 'villa', 'land', 'commercial', 'of
 
 // Libellés via t('backoffice:crm.shared.listingTypes'), keyés sur l'enum API.
 const LISTING_TYPES = ['sale', 'rent']
+
+// Périodicité du prix, pertinente seulement pour transaction_type=rent — libellés via
+// t('backoffice:crm.properties.form.pricePeriods').
+const PRICE_PERIODS = ['day', 'week', 'month']
 
 // Statut du formulaire (sous-ensemble de crm.properties.status, libellés propres au
 // contexte de saisie) : libellés via t('backoffice:crm.properties.form.statusOptions').
@@ -62,8 +67,9 @@ export default function BackofficePropertyForm() {
     title: '',
     description: '',
     property_type: 'apartment',
-    listing_type: 'sale',
+    transaction_type: 'sale',
     price: '',
+    price_period: 'month',
     surface: '',
     rooms: '',
     bedrooms: '',
@@ -99,8 +105,9 @@ export default function BackofficePropertyForm() {
         title: propertyData.title || '',
         description: propertyData.description || '',
         property_type: propertyData.property_type || 'apartment',
-        listing_type: propertyData.listing_type || 'sale',
+        transaction_type: propertyData.transaction_type || 'sale',
         price: propertyData.price || '',
+        price_period: propertyData.price_period || 'month',
         surface: propertyData.surface || '',
         rooms: propertyData.rooms || '',
         bedrooms: propertyData.bedrooms || '',
@@ -311,8 +318,8 @@ export default function BackofficePropertyForm() {
                   {t('backoffice:crm.properties.form.fields.listingType')}
                 </label>
                 <select
-                  value={formData.listing_type}
-                  onChange={(e) => setFormData({ ...formData, listing_type: e.target.value })}
+                  value={formData.transaction_type}
+                  onChange={(e) => setFormData({ ...formData, transaction_type: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   {LISTING_TYPES.map(type => (
@@ -361,6 +368,25 @@ export default function BackofficePropertyForm() {
               />
               {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price}</p>}
             </div>
+
+            {formData.transaction_type === 'rent' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('backoffice:crm.properties.form.fields.pricePeriod')}
+                </label>
+                <select
+                  value={formData.price_period}
+                  onChange={(e) => setFormData({ ...formData, price_period: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  {PRICE_PERIODS.map(period => (
+                    <option key={period} value={period}>
+                      {t(`backoffice:crm.properties.form.pricePeriods.${period}`)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -581,6 +607,7 @@ export default function BackofficePropertyForm() {
 
         {/* Submit */}
         <div className="flex items-center justify-end gap-4">
+          <Design3dEntry targetType="property" targetId={id} disabled={!id} />
           <button
             type="button"
             onClick={() => navigate('/backoffice/biens')}

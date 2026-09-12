@@ -7,7 +7,8 @@
       "activity": "النشاط",
       "sharedArtisans": "الحرفيون المشتركون",
       "products": "المنتجات",
-      "orders": "الطلبات"
+      "orders": "الطلبات",
+      "pricing": "الأسعار"
     },
     "loading": "جارٍ التحميل…",
     "back": "رجوع"
@@ -20,7 +21,9 @@
       "mrrEstimate": "الإيراد الشهري المقدر (درهم)",
       "signups30d": "التسجيلات خلال 30 يومًا",
       "suspended": "الحسابات الموقوفة",
-      "pendingPurge": "بانتظار الحذف النهائي"
+      "pendingPurge": "بانتظار الحذف النهائي",
+      "pastDue": "مستحقات غير مدفوعة (مهلة)",
+      "restricted": "وصول مقيَّد"
     },
     "activeSubscriptions": "الاشتراكات النشطة",
     "none": "لا يوجد."
@@ -54,6 +57,11 @@
       "active": "نشط",
       "suspended": "موقوف",
       "deleted": "محذوف"
+    },
+    "filterBilling": {
+      "all": "كل حالات الفوترة",
+      "past_due": "غير مدفوع (ضمن المهلة)",
+      "restricted": "وصول مقيَّد"
     }
   },
   "accountDetail": {
@@ -176,6 +184,35 @@
       "serrurier": "قفال",
       "jardinier": "بستاني",
       "autre": "أخرى"
+    }
+  },
+  "pricing": {
+    "title": "الأسعار",
+    "subtitle": "قائمة واحدة: ما يُسجَّل هنا يُعرض على الموقع ويُستوفى من العميل.",
+    "servicesTitle": "الخدمات",
+    "plansTitle": "اشتراكات الوكالات",
+    "historyTitle": "آخر التغييرات",
+    "noHistory": "لا تغييرات مسجَّلة.",
+    "saved": "تم تسجيل السعر.",
+    "saveError": "تعذّر تسجيل السعر.",
+    "invalidAmount": "يجب أن يكون المبلغ رقمًا أكبر من صفر.",
+    "save": "تسجيل {{name}}",
+    "activateLabel": "تنشيط {{code}}",
+    "monthlyLabel": "{{name}} — شهري",
+    "yearlyLabel": "{{name}} — سنوي",
+    "changedBy": "من طرف #{{id}} في {{date}}",
+    "kinds": {
+      "one_off": "لمرة واحدة",
+      "recurring_monthly": "شهري"
+    },
+    "table": {
+      "code": "الرمز",
+      "amount": "المبلغ",
+      "kind": "النوع",
+      "active": "معروض",
+      "plan": "الخطة",
+      "monthly": "شهري",
+      "yearly": "سنوي"
     }
   }
 }

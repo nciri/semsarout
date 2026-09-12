@@ -27,6 +27,8 @@ function AdminOverview() {
         <Kpi label={t('admin:overview.kpi.signups30d')} value={d.signups_last_30d} />
         <Kpi label={t('admin:overview.kpi.suspended')} value={d.suspended_count} />
         <Kpi label={t('admin:overview.kpi.pendingPurge')} value={d.deleted_pending_purge_count} />
+        <Kpi label={t('admin:overview.kpi.pastDue')} value={d.unpaid_subscriptions?.past_due ?? 0} />
+        <Kpi label={t('admin:overview.kpi.restricted')} value={d.unpaid_subscriptions?.restricted ?? 0} />
       </div>
       <h2 className="text-lg font-semibold text-midnight mt-8 mb-3">{t('admin:overview.activeSubscriptions')}</h2>
       <div className="flex gap-4">
