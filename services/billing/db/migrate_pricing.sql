@@ -29,19 +29,24 @@ CREATE TABLE IF NOT EXISTS billing.price_change (
 CREATE INDEX IF NOT EXISTS ix_price_change_code ON billing.price_change (code);
 CREATE INDEX IF NOT EXISTS ix_price_change_changed_at ON billing.price_change (changed_at);
 
+-- `create_all` crée cette table au démarrage du service AVANT que cette migration ne soit jouée,
+-- et le défaut `MAD` de SQLAlchemy est côté Python : la colonne s'y retrouve NOT NULL sans défaut
+-- côté base, et un INSERT qui l'omet échoue. Constaté en production le 2026-09-13.
+ALTER TABLE billing.service_price ALTER COLUMN currency SET DEFAULT 'MAD';
+
 -- Semis des tarifs en vigueur. `ON CONFLICT DO NOTHING` : un tarif déjà édité par un
 -- administrateur ne doit jamais être réécrit par un redéploiement.
 --
 -- `photos-pro` (photo seule, 990) est semée INACTIVE : elle quitte l'offre, mais des paiements
 -- passés portent ce `service_id` et leur historique doit rester lisible (I7). Les prestations
 -- photo payables sont désormais les options elles-mêmes.
-INSERT INTO billing.service_price (code, amount, kind, is_active, updated_at) VALUES
-    ('forfait-vente',          9900, 'one_off',           true,  now()),
-    ('photos-pro-360',          500, 'one_off',           true,  now()),
-    ('photos-pro-drone',        800, 'one_off',           true,  now()),
-    ('photos-pro-video',       1200, 'one_off',           true,  now()),
-    ('photos-pro',              990, 'one_off',           false, now()),
-    ('staymanager-manage',      179, 'recurring_monthly', true,  now()),
-    ('staymanager-automate',    299, 'recurring_monthly', true,  now()),
-    ('staymanager-optimize',    449, 'recurring_monthly', true,  now())
+INSERT INTO billing.service_price (code, amount, currency, kind, is_active, updated_at) VALUES
+    ('forfait-vente',          9900, 'MAD', 'one_off',           true,  now()),
+    ('photos-pro-360',          500, 'MAD', 'one_off',           true,  now()),
+    ('photos-pro-drone',        800, 'MAD', 'one_off',           true,  now()),
+    ('photos-pro-video',       1200, 'MAD', 'one_off',           true,  now()),
+    ('photos-pro',              990, 'MAD', 'one_off',           false, now()),
+    ('staymanager-manage',      179, 'MAD', 'recurring_monthly', true,  now()),
+    ('staymanager-automate',    299, 'MAD', 'recurring_monthly', true,  now()),
+    ('staymanager-optimize',    449, 'MAD', 'recurring_monthly', true,  now())
 ON CONFLICT (code) DO NOTHING;
