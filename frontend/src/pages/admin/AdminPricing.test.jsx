@@ -10,6 +10,7 @@ vi.mock('../../services/adminService', () => ({
     getPricing: vi.fn(),
     getPriceChanges: vi.fn(),
     setServicePrice: vi.fn(),
+    createServicePrice: vi.fn(),
     toggleServicePrice: vi.fn(),
     setPlanPrice: vi.fn(),
   },
@@ -38,6 +39,7 @@ describe('AdminPricing', () => {
                   changed_by: 7, changed_at: '2026-09-12T08:00:00' }],
     })
     adminService.setServicePrice.mockResolvedValue({})
+    adminService.createServicePrice.mockResolvedValue({})
     adminService.toggleServicePrice.mockResolvedValue({})
     adminService.setPlanPrice.mockResolvedValue({})
   })
@@ -85,5 +87,21 @@ describe('AdminPricing', () => {
     fireEvent.click(screen.getByRole('button', { name: /Enregistrer Pro/i }))
     await waitFor(() => expect(adminService.setPlanPrice)
       .toHaveBeenCalledWith(2, { price_monthly: 899, price_yearly: 7990 }))
+  })
+
+  it('crée une prestation', async () => {
+    renderPage()
+    fireEvent.change(await screen.findByLabelText('Code'), { target: { value: 'diagnostic-energetique' } })
+    fireEvent.change(screen.getByLabelText('Montant'), { target: { value: '1500' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Ajouter la prestation' }))
+    await waitFor(() => expect(adminService.createServicePrice)
+      .toHaveBeenCalledWith({ code: 'diagnostic-energetique', amount: 1500, kind: 'one_off' }))
+  })
+
+  it("refuse une création sans code ou sans montant valable, sans appeler le serveur", async () => {
+    renderPage()
+    fireEvent.click(await screen.findByRole('button', { name: 'Ajouter la prestation' }))
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
+    expect(adminService.createServicePrice).not.toHaveBeenCalled()
   })
 })

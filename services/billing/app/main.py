@@ -13,6 +13,7 @@ et projeté vers `identity.AgencyRO.features` (source des claims JWT) de deux fa
 `billing.subscription.activated` (émis par le worker à l'activation/prolongation) et repli via
 `/internal/subscription` (identity l'interroge si sa projection est vide, ex. abonnement déjà
 actif avant l'ajout de l'événement)."""
+import re
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
@@ -402,6 +403,44 @@ def internal_service_prices(x_internal_token: str = Header(default=""),
     plans = db.query(SubscriptionPlan).all()
     return {"services": [s.to_dict(internal=True) for s in services],
             "plans": [_plan_price_dict(p) for p in plans]}
+
+
+# Un code de prestation voyage dans les URL, les événements et `Payment.service_id` : on le
+# restreint à ce qui reste lisible et stable partout.
+_CODE_RE = re.compile(r"^[a-z0-9][a-z0-9-]{1,39}$")
+_KINDS = ("one_off", "recurring_monthly")
+
+
+@app.post("/admin/service-prices", status_code=201)
+def admin_create_service_price(body: dict = Depends(json_body),
+                               principal: Principal = Depends(require_superadmin),
+                               db: Session = Depends(get_db)):
+    """Crée une prestation facturable. Sans cette route, un catalogue vide restait vide : la
+    page d'administration ne savait que modifier l'existant."""
+    code = (body.get("code") or "").strip().lower()
+    if not _CODE_RE.match(code):
+        return err("Code invalide : lettres minuscules, chiffres et tirets, 2 à 40 caractères", 422)
+    kind = body.get("kind") or "one_off"
+    if kind not in _KINDS:
+        return err("Type invalide", 422)
+    try:
+        amount = float(body.get("amount"))
+    except (TypeError, ValueError):
+        return err("Montant invalide", 422)
+    if amount <= 0:
+        return err("Le montant doit être strictement positif", 422)
+    # Jamais d'écrasement : le code d'une prestation déjà vendue est porté par des paiements
+    # passés, et le remplacer changerait leur tarif sans trace de modification (I7).
+    if db.get(ServicePrice, code) is not None:
+        return err("Ce code existe déjà", 409)
+    sp = ServicePrice(code=code, amount=amount, kind=kind, is_active=True,
+                      updated_by=_uid(principal))
+    db.add(sp)
+    _trace_price(db, code, None, amount, _uid(principal))
+    enqueue(db, "service_price", code, events.SERVICE_PRICE_CHANGED,
+            {"code": code, "amount": amount, "kind": kind, "is_active": True})
+    db.commit()
+    return {"service_price": sp.to_dict(internal=True)}
 
 
 @app.put("/admin/service-prices/{code}")

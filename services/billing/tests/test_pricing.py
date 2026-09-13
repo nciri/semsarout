@@ -171,3 +171,73 @@ def test_endpoint_interne_sert_l_amorcage_de_payment(tmp_path):
     finally:
         app.dependency_overrides.clear()
         db.close()
+
+
+def test_superadmin_cree_une_prestation(tmp_path):
+    """Sans création, un catalogue vide restait vide : la page d'administration n'offrait
+    aucun moyen de définir un tarif."""
+    from app.models import PriceChange
+    db = _seeded(tmp_path)
+    try:
+        with TestClient(app) as client:
+            r = client.post("/admin/service-prices",
+                            json={"code": "diagnostic-energetique", "amount": 1500,
+                                  "kind": "one_off"}, headers=_admin())
+        assert r.status_code == 201
+        sp = db.get(ServicePrice, "diagnostic-energetique")
+        assert sp is not None and float(sp.amount) == 1500.0
+        assert sp.kind == "one_off" and sp.is_active is True
+        # Une création est un changement de prix comme un autre : elle laisse une trace (I4).
+        trace = db.query(PriceChange).filter_by(code="diagnostic-energetique").one()
+        assert trace.old_amount is None and float(trace.new_amount) == 1500.0
+        ev = _last_event(db, "billing.service_price.changed")
+        assert ev.payload["code"] == "diagnostic-energetique"
+    finally:
+        app.dependency_overrides.clear()
+        db.close()
+
+
+def test_creation_refuse_un_code_deja_pris(tmp_path):
+    """I7 : écraser un code existant changerait le prix d'une prestation déjà vendue sans
+    laisser la trace d'une modification."""
+    db = _seeded(tmp_path)
+    try:
+        with TestClient(app) as client:
+            r = client.post("/admin/service-prices",
+                            json={"code": "forfait-vente", "amount": 1, "kind": "one_off"},
+                            headers=_admin())
+        assert r.status_code == 409
+        assert float(db.get(ServicePrice, "forfait-vente").amount) == 9900.0
+    finally:
+        app.dependency_overrides.clear()
+        db.close()
+
+
+def test_creation_valide_le_code_le_montant_et_le_type(tmp_path):
+    db = _seeded(tmp_path)
+    try:
+        with TestClient(app) as client:
+            for body in ({"code": "", "amount": 10, "kind": "one_off"},
+                         {"code": "Code Invalide!", "amount": 10, "kind": "one_off"},
+                         {"code": "ok-code", "amount": 0, "kind": "one_off"},
+                         {"code": "ok-code", "amount": 10, "kind": "inconnu"}):
+                assert client.post("/admin/service-prices", json=body,
+                                   headers=_admin()).status_code == 422, body
+        assert db.get(ServicePrice, "ok-code") is None
+    finally:
+        app.dependency_overrides.clear()
+        db.close()
+
+
+def test_creation_reservee_au_superadmin(tmp_path):
+    db = _seeded(tmp_path)
+    try:
+        with TestClient(app) as client:
+            r = client.post("/admin/service-prices",
+                            json={"code": "peu-importe", "amount": 10, "kind": "one_off"},
+                            headers={"x-semsar-user-id": "7"})
+        assert r.status_code == 403
+        assert db.get(ServicePrice, "peu-importe") is None
+    finally:
+        app.dependency_overrides.clear()
+        db.close()

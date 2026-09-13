@@ -27,6 +27,7 @@ function AdminPricing() {
   const qc = useQueryClient()
   const [drafts, setDrafts] = useState({})
   const [error, setError] = useState('')
+  const [draftNew, setDraftNew] = useState({ code: '', amount: '', kind: 'one_off' })
 
   const { data, isLoading } = useQuery(['admin', 'pricing'], adminService.getPricing)
   const { data: history } = useQuery(['admin', 'price-changes'], adminService.getPriceChanges)
@@ -46,6 +47,14 @@ function AdminPricing() {
     { onSuccess: refresh, onError })
   const savePlan = useMutation(({ id, prices }) => adminService.setPlanPrice(id, prices),
     { onSuccess: () => { toast.success(t('admin:pricing.saved')); refresh() }, onError })
+  const createService = useMutation((payload) => adminService.createServicePrice(payload), {
+    onSuccess: () => {
+      toast.success(t('admin:pricing.created'))
+      setDraftNew({ code: '', amount: '', kind: 'one_off' })
+      refresh()
+    },
+    onError: (e) => toast.error(e?.response?.data?.error || t('admin:pricing.saveError')),
+  })
 
   if (isLoading) return <p>{t('admin:shared.loading')}</p>
 
@@ -80,6 +89,23 @@ function AdminPricing() {
     }
     setError('')
     savePlan.mutate({ id: plan.id, prices: { price_monthly: monthly, price_yearly: yearly } })
+  }
+
+  // Le serveur refuse déjà ces cas ; les dire ici évite un aller-retour et explique la règle
+  // là où elle est enfreinte.
+  const submitNew = () => {
+    const code = draftNew.code.trim().toLowerCase()
+    const amount = Number(draftNew.amount)
+    if (!/^[a-z0-9][a-z0-9-]{1,39}$/.test(code)) {
+      setError(t('admin:pricing.invalidCode'))
+      return
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setError(t('admin:pricing.invalidAmount'))
+      return
+    }
+    setError('')
+    createService.mutate({ code, amount, kind: draftNew.kind })
   }
 
   const amountField = (label, key, value) => (
@@ -138,6 +164,47 @@ function AdminPricing() {
             ))}
           </tbody>
         </table>
+      </Section>
+
+      <Section title={t('admin:pricing.newTitle')}>
+        <div className="p-4 flex flex-wrap items-end gap-3">
+          <label className="text-sm">
+            <span className="block text-slate-500 mb-1">{t('admin:pricing.table.code')}</span>
+            <input
+              aria-label={t('admin:pricing.table.code')}
+              value={draftNew.code}
+              onChange={(e) => setDraftNew((d) => ({ ...d, code: e.target.value }))}
+              placeholder="diagnostic-energetique"
+              className="w-64 border border-slate-300 rounded-md px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="text-sm">
+            <span className="block text-slate-500 mb-1">{t('admin:pricing.table.amount')}</span>
+            <input
+              aria-label={t('admin:pricing.table.amount')}
+              type="number"
+              min="1"
+              value={draftNew.amount}
+              onChange={(e) => setDraftNew((d) => ({ ...d, amount: e.target.value }))}
+              className="w-32 border border-slate-300 rounded-md px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="text-sm">
+            <span className="block text-slate-500 mb-1">{t('admin:pricing.table.kind')}</span>
+            <select
+              aria-label={t('admin:pricing.table.kind')}
+              value={draftNew.kind}
+              onChange={(e) => setDraftNew((d) => ({ ...d, kind: e.target.value }))}
+              className="border border-slate-300 rounded-md px-3 py-2 text-sm"
+            >
+              <option value="one_off">{t('admin:pricing.kinds.one_off')}</option>
+              <option value="recurring_monthly">{t('admin:pricing.kinds.recurring_monthly')}</option>
+            </select>
+          </label>
+          <button type="button" className="btn-primary min-h-[44px]" onClick={submitNew}>
+            {t('admin:pricing.add')}
+          </button>
+        </div>
       </Section>
 
       <Section title={t('admin:pricing.plansTitle')}>
