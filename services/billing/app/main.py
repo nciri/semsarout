@@ -65,6 +65,7 @@ def _plan_dict(p: SubscriptionPlan) -> dict:
         "has_staymanager_sync": p.has_staymanager_sync, "has_lead_contact": p.has_lead_contact,
         "has_analytics": p.has_analytics, "has_priority_support": p.has_priority_support,
         "has_dedicated_account_manager": p.has_dedicated_account_manager,
+        "audience": p.audience,
         "has_programs": p.has_programs, "max_programs": p.max_programs,
         "has_contracts": p.has_contracts, "has_legal": p.has_legal, "has_artisans": p.has_artisans,
         "has_rental": p.has_rental, "has_design3d": p.has_design3d,
@@ -368,7 +369,7 @@ def _uid(principal: Principal) -> int | None:
 
 
 def _plan_price_dict(p: SubscriptionPlan) -> dict:
-    return {"id": p.id, "slug": p.slug, "name": p.name,
+    return {"id": p.id, "slug": p.slug, "name": p.name, "audience": p.audience,
             "price_monthly": float(p.price_monthly) if p.price_monthly is not None else None,
             "price_yearly": float(p.price_yearly) if p.price_yearly is not None else None}
 
