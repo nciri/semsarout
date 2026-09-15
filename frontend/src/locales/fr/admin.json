@@ -213,6 +213,10 @@
       "plan": "Plan",
       "monthly": "Mensuel",
       "yearly": "Annuel"
-    }
+    },
+    "newTitle": "Ajouter une prestation",
+    "add": "Ajouter la prestation",
+    "created": "Prestation créée.",
+    "invalidCode": "Code invalide : lettres minuscules, chiffres et tirets, 2 à 40 caractères."
   }
 }

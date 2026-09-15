@@ -21,7 +21,8 @@ function AgencyPricing() {
 
   // Aucune grille de repli : elle dupliquait les prix des plans, donc divergeait du
   // catalogue dès la première édition. Plans absents, on le dit.
-  const displayPlans = plans || []
+  // Les deux publics partagent la table : cette page n'affiche que les offres agence.
+  const displayPlans = (plans || []).filter((p) => p.audience !== 'individual')
 
   const getPrice = (plan) => {
     return billingCycle === 'yearly' ? plan.price_yearly : plan.price_monthly

@@ -19,6 +19,9 @@ class SubscriptionPlan(Base):
     name = Column(String(50), nullable=False)
     slug = Column(String(50), unique=True, nullable=False)
     description = Column(Text)
+    # `agency` ou `individual` : les deux publics partagent cette table, et sans ce champ la
+    # page d'une agence afficherait les offres particuliers, et l'inverse.
+    audience = Column(String(20), nullable=False, default="agency", server_default="agency")
     max_listings = Column(Integer, nullable=False)
     max_featured = Column(Integer, default=0)
     max_urgent = Column(Integer, default=0)
