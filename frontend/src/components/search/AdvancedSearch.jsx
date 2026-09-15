@@ -6,7 +6,6 @@ import {
   FiMapPin, FiHome, FiDollarSign, FiMaximize, FiLayers,
   FiDroplet, FiSun, FiStar
 } from 'react-icons/fi'
-import { DIRHAM_SYMBOL } from '../../utils/currency'
 import MultiSelectDropdown from './MultiSelectDropdown'
 
 // Normalise une valeur de type de bien (tableau, chaîne "a,b" ou vide) en tableau
@@ -163,7 +162,6 @@ export default function AdvancedSearch({ onSearch, initialFilters = {}, variant 
       is_featured: false,
       q: ''
     })
-    setAiQuery('')
   }
 
   const activeFiltersCount = Object.entries(filters).filter(([key, value]) => {
