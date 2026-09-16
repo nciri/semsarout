@@ -15,11 +15,13 @@
 #            après l'installation initiale du serveur n'a ni rôle PostgreSQL, ni fichier
 #            d'environnement, ni instance systemd, et resterait donc éternellement absent
 #            de la production (cf. NEW_SERVICES).
-#   - restart : tout le mesh. Les unités API/relais sont des UNITÉS TEMPLATE systemd
-#            (semsar-app@.service, semsar-relay@.service — cf.
-#            infra/prod/ansible/roles/mesh/templates/*.j2) : il n'existe PAS de
-#            semsar-<svc>.service nommé en clair sur le serveur réel. On instancie
-#            (semsar-app@<svc>.service) plutôt que de copier/renommer un gabarit.
+#   - restart : tout le mesh. Les 64 unités du serveur réel sont NOMMÉES EN CLAIR
+#            (semsar-<svc>.service, semsar-<svc>-relay.service) : il n'y a AUCUNE unité
+#            template sur la machine. Une version antérieure de ce fichier affirmait
+#            l'inverse et instanciait semsar-app@<svc>.service ; le gabarit n'existant
+#            pas, design3d n'a jamais été instancié et chaque déploiement sortait en
+#            erreur (constaté par inspection SSH le 2026-09-16). On écrit donc les
+#            unités manquantes, sur le patron des unités déjà installées.
 set -euo pipefail
 
 # Chemins surchargeables uniquement pour le banc d'essai (infra/prod/tests) : en
@@ -29,12 +31,14 @@ PIP="${PIP:-$APP/venv/bin/pip}"
 DB="${DB:-semsar_prod}"
 ENV_DIR="${ENV_DIR:-/etc/semsar/env}"
 SYSTEMD_DIR="${SYSTEMD_DIR:-/etc/systemd/system}"
-# Fichier UNIQUE partagé par toutes les unités du mesh (cf.
-# infra/prod/ansible/roles/base/templates/secrets.env.j2) : secrets PostgreSQL,
-# RabbitMQ, MinIO ET urls inter-services y cohabitent, référencé par
-# EnvironmentFile= dans semsar-app@.service.j2 / semsar-gateway.service.j2. Il n'y
-# a pas de /etc/semsar/urls.env séparé sur le serveur réel.
-SECRETS_FILE="${SECRETS_FILE:-/etc/semsar/secrets.env}"
+VENV="${VENV:-$APP/venv}"
+# Fichiers d'environnement partagés par TOUTES les unités du serveur réel, dans cet
+# ordre (cf. EnvironmentFile= des unités installées) : common.env (JWT, RabbitMQ, S3,
+# ENVIRONMENT, TENANT_HOSTS) puis urls.env (toutes les *_URL inter-services).
+# Une version antérieure écrivait les URL dans /etc/semsar/secrets.env, qu'AUCUNE unité
+# ne lit : DESIGN3D_URL y a dormi sans effet et le BFF a répondu 404 (2026-09-16).
+COMMON_ENV="${COMMON_ENV:-/etc/semsar/common.env}"
+URLS_FILE="${URLS_FILE:-/etc/semsar/urls.env}"
 
 # Services introduits APRÈS le provisioning initial du serveur. Ansible ne les
 # installera pas : il n'est plus dans la chaîne de déploiement. Chaque entrée
@@ -111,24 +115,23 @@ done
 
 # Rôle + schéma PostgreSQL du service (sur le patron de `services/*/db/schema.sql`
 # rendu idempotent — le CREATE ROLE nu du fichier ne l'est pas, c'est pourquoi les
-# schema.sql ne sont jamais rejoués tels quels), PUIS ses fichiers d'environnement :
-# app-<svc>.env pour l'unité API (semsar-app@<svc>.service, lit
-# EnvironmentFile=.../app-%i.env — cf. semsar-app@.service.j2:12 et
-# mesh/tasks/main.yml:65) et, si le service émet des événements (services/<svc>/app/
-# relay.py présent), relay-<svc>.env pour son relais outbox (semsar-relay@<svc>.service,
-# EnvironmentFile=.../relay-%i.env).
+# schema.sql ne sont jamais rejoués tels quels), PUIS son fichier d'environnement.
 #
-# Le mot de passe fait autorité DEPUIS app-<svc>.env : s'il existe déjà, il est relu et
+# UN SEUL fichier par service sur le serveur réel : /etc/semsar/env/<svc>.env, lu à la
+# fois par l'unité API et par son relais (`EnvironmentFile=-/etc/semsar/env/<svc>.env`
+# dans les deux). Il n'y a ni app-<svc>.env ni relay-<svc>.env : ceux qu'une version
+# antérieure a écrits (app-design3d.env) ne sont lus par personne.
+#
+# Le mot de passe fait autorité DEPUIS <svc>.env : s'il existe déjà, il est relu et
 # réappliqué au rôle (rejouable sans dérive) ; sinon il est tiré au sort ici et
-# n'apparaît jamais ailleurs que dans ces fichiers root-only.
+# n'apparaît jamais ailleurs que dans ce fichier root-only.
 ensure_db_and_env() {
-  local svc="$1" port="$2" role pass appf relayf
+  local svc="$1" port="$2" role pass envf
   role="${svc//-/_}"
-  appf="$ENV_DIR/app-$svc.env"
-  relayf="$ENV_DIR/relay-$svc.env"
+  envf="$ENV_DIR/$svc.env"
   pass=""
-  if [ -f "$appf" ]; then
-    pass="$(sed -n 's|^DATABASE_URL=postgresql+psycopg://[^:]*:\([^@]*\)@.*|\1|p' "$appf" | head -n 1)"
+  if [ -f "$envf" ]; then
+    pass="$(sed -n 's|^DATABASE_URL=postgresql+psycopg://[^:]*:\([^@]*\)@.*|\1|p' "$envf" | head -n 1)"
   fi
   # `od` plutôt qu'un pipe tronqué par `head` : sous `set -o pipefail`, un SIGPIPE
   # ferait échouer le déploiement entier.
@@ -148,78 +151,100 @@ ALTER ROLE $role SET search_path = $role;
 GRANT ALL ON SCHEMA $role TO $role;
 SQL
 
-  if [ ! -f "$appf" ]; then
+  if [ ! -f "$envf" ]; then
     mkdir -p "$ENV_DIR"
     (umask 077; {
       printf 'SERVICE_NAME=%s\n' "$svc"
       printf 'PORT=%s\n' "$port"
       printf 'TRUST_GATEWAY_HEADERS=true\n'
       printf 'DATABASE_URL=postgresql+psycopg://%s:%s@localhost:5432/%s\n' "$role" "$pass" "$DB"
-    } > "$appf")
-    chmod 600 "$appf"
-    echo "  + $appf"
-  fi
-
-  if [ -f "$APP/services/$svc/app/relay.py" ] && [ ! -f "$relayf" ]; then
-    mkdir -p "$ENV_DIR"
-    (umask 077; {
-      printf 'SERVICE_NAME=%s\n' "$svc"
-      printf 'DATABASE_URL=postgresql+psycopg://%s:%s@localhost:5432/%s\n' "$role" "$pass" "$DB"
-      printf 'PYTHONPATH=%s/services/%s\n' "$APP" "$svc"
-    } > "$relayf")
-    chmod 600 "$relayf"
-    echo "  + $relayf"
+    } > "$envf")
+    chmod 600 "$envf"
+    echo "  + $envf"
   fi
 }
 
-# URL inter-services. Toutes les unités partagent /etc/semsar/secrets.env (cf. plus
-# haut) : sans l'entrée du service, le BFF a l'URL amont à None et répond 404 sur
-# TOUTES ses routes — le service tourne, mais reste injoignable, silencieusement.
+# URL inter-services. Toutes les unités lisent /etc/semsar/urls.env (cf. plus haut) :
+# sans l'entrée du service, le BFF a l'URL amont à None et répond 404 sur TOUTES ses
+# routes — le service tourne, mais reste injoignable, silencieusement.
 # Ajout seul, jamais de réécriture d'une entrée existante.
 ensure_service_url() {
   local svc="$1" port="$2" var
   var="$(printf '%s' "$svc" | tr '[:lower:]-' '[:upper:]_')_URL"
-  if grep -q "^$var=" "$SECRETS_FILE" 2>/dev/null; then
+  if grep -q "^$var=" "$URLS_FILE" 2>/dev/null; then
     return 0
   fi
-  if [ ! -f "$SECRETS_FILE" ]; then
-    mkdir -p "$(dirname "$SECRETS_FILE")"
-    (umask 077; : > "$SECRETS_FILE")
+  if [ ! -f "$URLS_FILE" ]; then
+    mkdir -p "$(dirname "$URLS_FILE")"
+    (umask 077; : > "$URLS_FILE")
   fi
-  printf '%s=http://localhost:%s\n' "$var" "$port" >> "$SECRETS_FILE"
-  echo "  + $var dans $SECRETS_FILE"
+  printf '%s=http://localhost:%s\n' "$var" "$port" >> "$URLS_FILE"
+  echo "  + $var dans $URLS_FILE"
 }
 
-# Instances systemd du service, sur les unités TEMPLATE réelles de la machine
-# (semsar-app@.service, semsar-relay@.service — jamais de semsar-<svc>.service nommé
-# en clair, cf. en-tête). On n'écrit ni ne copie aucun fichier d'unité : on active +
-# démarre l'instance %i=<svc>, que systemd résout depuis le gabarit déjà installé.
-# Contrairement à l'ancienne version (copie de gabarit), l'ABSENCE du gabarit template
-# est un échec bruyant (FAIL=1), jamais un simple avertissement avalé.
-ensure_units() {
-  local svc="$1" app_tmpl="$SYSTEMD_DIR/semsar-app@.service" relay_tmpl="$SYSTEMD_DIR/semsar-relay@.service"
-  if [ ! -f "$app_tmpl" ]; then
-    echo "  ✗ gabarit systemd $app_tmpl introuvable : semsar-app@$svc.service NON instanciée" >&2
-    FAIL=1
-    return
-  fi
-  if systemctl enable --now "semsar-app@$svc.service" >/dev/null 2>&1; then
-    echo "  + semsar-app@$svc.service (instance de $app_tmpl)"
+# Unités systemd du service, à la convention EXACTE des 64 unités déjà installées :
+# semsar-<svc>.service (API) et semsar-<svc>-relay.service (relais outbox), nommées en
+# clair. Le contenu est copié du patron réel (semsar-billing.service /
+# semsar-billing-relay.service lus sur la machine le 2026-09-16) : mêmes EnvironmentFile
+# dans le même ordre, mêmes Restart/OOMScoreAdjust, uvicorn --app-dir pour l'API et
+# `python -m app.relay` avec PYTHONPATH pour le relais.
+#
+# Écriture seulement si l'unité MANQUE : une unité déjà installée fait autorité et n'est
+# jamais réécrite (ce script ne doit rien changer pour les services déjà déployés).
+write_unit() {
+  local path="$1" content="$2" name
+  name="$(basename "$path")"
+  if [ -f "$path" ]; then
+    echo "  = $name déjà installée, inchangée"
   else
-    echo "  ✗ échec de l'activation de semsar-app@$svc.service" >&2
+    printf '%s' "$content" > "$path"
+    # Relecture AVANT enable : systemd ignore une unité qu'il n'a pas encore vue.
+    systemctl daemon-reload
+    echo "  + $path"
+  fi
+  if systemctl enable --now "$name" >/dev/null 2>&1; then
+    echo "  + $name active"
+  else
+    echo "  ✗ échec de l'activation de $name" >&2
     FAIL=1
   fi
+}
+
+ensure_units() {
+  local svc="$1" port="$2"
+  write_unit "$SYSTEMD_DIR/semsar-$svc.service" "[Unit]
+Description=semsar $svc (API)
+After=network.target postgresql.service docker.service
+[Service]
+EnvironmentFile=$COMMON_ENV
+EnvironmentFile=$URLS_FILE
+EnvironmentFile=-$ENV_DIR/$svc.env
+Environment=SERVICE_NAME=$svc
+ExecStart=$VENV/bin/uvicorn app.main:app --app-dir $APP/services/$svc --host 127.0.0.1 --port $port
+Restart=always
+RestartSec=3
+OOMScoreAdjust=500
+[Install]
+WantedBy=multi-user.target
+"
 
   if [ -f "$APP/services/$svc/app/relay.py" ]; then
-    if [ ! -f "$relay_tmpl" ]; then
-      echo "  ✗ gabarit systemd $relay_tmpl introuvable : semsar-relay@$svc.service NON instanciée" >&2
-      FAIL=1
-    elif systemctl enable --now "semsar-relay@$svc.service" >/dev/null 2>&1; then
-      echo "  + semsar-relay@$svc.service (instance de $relay_tmpl)"
-    else
-      echo "  ✗ échec de l'activation de semsar-relay@$svc.service" >&2
-      FAIL=1
-    fi
+    write_unit "$SYSTEMD_DIR/semsar-$svc-relay.service" "[Unit]
+Description=semsar $svc-relay
+After=network.target postgresql.service docker.service
+[Service]
+EnvironmentFile=$COMMON_ENV
+EnvironmentFile=$URLS_FILE
+EnvironmentFile=-$ENV_DIR/$svc.env
+Environment=SERVICE_NAME=$svc
+Environment=PYTHONPATH=$APP/services/$svc
+ExecStart=$VENV/bin/python -m app.relay
+Restart=always
+RestartSec=5
+OOMScoreAdjust=600
+[Install]
+WantedBy=multi-user.target
+"
   fi
 }
 
@@ -231,7 +256,7 @@ while [ "$#" -ge 2 ]; do
   echo "  · $svc (port $port)"
   ensure_db_and_env "$svc" "$port"
   ensure_service_url "$svc" "$port"
-  ensure_units "$svc"
+  ensure_units "$svc" "$port"
 done
 
 echo "== 3. redémarrage du mesh (create_all au boot = migrations légères) =="

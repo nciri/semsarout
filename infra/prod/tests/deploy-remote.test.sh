@@ -5,18 +5,22 @@
 # script tourne donc ici sur une arborescence jetable, avec psql/systemctl/curl/pip
 # simulés, et l'on vérifie ce qu'il aurait fait sur le serveur.
 #
-# Les fixtures modélisent le serveur RÉEL, pas une réinvention : les unités systemd sont
-# les gabarits TEMPLATE effectivement installés par le rôle Ansible mesh
-# (infra/prod/ansible/roles/mesh/templates/semsar-app@.service.j2 /
-# semsar-relay@.service.j2 — copiés/rendus depuis le dépôt ci-dessous, pas réinventés),
-# et le fichier d'environnement partagé est l'unique secrets.env
-# (roles/base/templates/secrets.env.j2), jamais un urls.env séparé qui n'existe nulle
-# part dans le dépôt.
+# Les fixtures modélisent le serveur RÉEL — celui qu'on a sous SSH, PAS les gabarits
+# Ansible du dépôt. La distinction a coûté un déploiement : les fixtures rendaient
+# elles-mêmes semsar-app@.service.j2 / semsar-relay@.service.j2, donc le banc d'essai
+# validait une machine imaginaire pendant que la vraie sortait en erreur. Inspection du
+# 2026-09-16 sur 46.62.203.126, qui fait foi ici :
+#   - 64 unités NOMMÉES EN CLAIR (semsar-<svc>.service, semsar-<svc>-relay.service) ;
+#     aucune unité template, aucun « @ » dans /etc/systemd/system ;
+#   - un SEUL fichier d'environnement par service, /etc/semsar/env/<svc>.env, lu par
+#     l'API comme par son relais (ni app-<svc>.env ni relay-<svc>.env) ;
+#   - les URL inter-services vivent dans /etc/semsar/urls.env (et les secrets partagés
+#     dans /etc/semsar/common.env) ; secrets.env n'est lu par AUCUNE unité.
 #
 # Couvre : provisionnement d'un service ajouté après l'installation (rôle + schéma
-# PostgreSQL, fichiers d'environnement app-<svc>.env/relay-<svc>.env root-only,
-# instanciation des unités template), diffusion de l'URL inter-services dans
-# secrets.env, migrations additives résilientes (l'échec CONNU d'une migration
+# PostgreSQL, fichier d'environnement <svc>.env root-only, écriture des unités
+# manquantes à la convention nommée en clair), diffusion de l'URL inter-services dans
+# urls.env, migrations additives résilientes (l'échec CONNU d'une migration
 # héritée visant des tables du monolithe jamais migrées sur semsar_prod n'empêche ni
 # les suivantes de tourner ni le déploiement nominal de sortir en succès — mais une
 # VRAIE migration cassée, elle, reste fatale et visible, jamais confondue avec le cas
@@ -140,46 +144,69 @@ export PATH="$BIN:$PATH"
 # Arborescence : le code rsync-é (réel, depuis le dépôt) + l'état du serveur.
 export APP="$TMP/opt/semsar" PIP="$BIN/pip" DB=semsar_test
 export ENV_DIR="$TMP/etc/semsar/env" SYSTEMD_DIR="$TMP/etc/systemd/system"
-export SECRETS_FILE="$TMP/etc/semsar/secrets.env"
-mkdir -p "$APP" "$ENV_DIR" "$SYSTEMD_DIR" "$(dirname "$SECRETS_FILE")"
+export COMMON_ENV="$TMP/etc/semsar/common.env" URLS_FILE="$TMP/etc/semsar/urls.env"
+export VENV="$APP/venv"
+mkdir -p "$APP" "$ENV_DIR" "$SYSTEMD_DIR" "$(dirname "$URLS_FILE")"
 cp -r "$ROOT/services" "$APP/services"
 mkdir -p "$APP/libs" "$APP/gateway"
 export UNITS_LIST="$TMP/units"
 
-# secrets.env : fichier UNIQUE (roles/base/templates/secrets.env.j2) — un extrait
-# minimal mais réaliste (mots de passe PG + URLs inter-services cohabitent).
-cat > "$SECRETS_FILE" <<'ENVF'
-PG_PASSWORD_LISTING=existant
+# common.env + urls.env : les deux fichiers que TOUTES les unités du serveur lisent,
+# dans cet ordre. Les URL inter-services sont dans urls.env, jamais dans secrets.env.
+cat > "$COMMON_ENV" <<'ENVF'
+ENVIRONMENT=prod
 RABBITMQ_URL=amqp://semsar:x@localhost:5672/
+ENVF
+chmod 600 "$COMMON_ENV"
+cat > "$URLS_FILE" <<'ENVF'
 LISTING_URL=http://localhost:8012
 BILLING_URL=http://localhost:8508
 ENVF
-chmod 600 "$SECRETS_FILE"
+chmod 600 "$URLS_FILE"
 
-# Unités TEMPLATE réelles, dérivées des gabarits Ansible du dépôt (pas réinventées) :
-# c'est la convention systemd effective de la machine — semsar-app@.service et
-# semsar-relay@.service, jamais de semsar-<svc>.service nommé en clair.
-render_unit() {
-  sed -e 's#{{ *semsar_user *}}#semsar#g' -e 's#{{ *semsar_group *}}#semsar#g' \
-      -e "s#{{ *semsar_app_dir *}}#$APP#g" -e "s#{{ *semsar_secrets_file *}}#$SECRETS_FILE#g" \
-      -e "s#{{ *semsar_env_dir *}}#$ENV_DIR#g" -e "s#{{ *semsar_venv_dir *}}#$APP/venv#g" \
-      "$1"
-}
-render_unit "$ROOT/infra/prod/ansible/roles/mesh/templates/semsar-app@.service.j2" \
-  > "$SYSTEMD_DIR/semsar-app@.service"
-render_unit "$ROOT/infra/prod/ansible/roles/mesh/templates/semsar-relay@.service.j2" \
-  > "$SYSTEMD_DIR/semsar-relay@.service"
+# Unités du serveur réel, recopiées telles quelles depuis /etc/systemd/system (patron
+# semsar-billing.service / semsar-billing-relay.service, lu en SSH le 2026-09-16) :
+# nommées EN CLAIR, jamais de gabarit template.
+cat > "$SYSTEMD_DIR/semsar-listing.service" <<UNIT
+[Unit]
+Description=semsar listing (API)
+After=network.target postgresql.service docker.service
+[Service]
+EnvironmentFile=$COMMON_ENV
+EnvironmentFile=$URLS_FILE
+EnvironmentFile=-$ENV_DIR/listing.env
+Environment=SERVICE_NAME=listing
+ExecStart=$APP/venv/bin/uvicorn app.main:app --app-dir $APP/services/listing --host 127.0.0.1 --port 8012
+Restart=always
+RestartSec=3
+OOMScoreAdjust=500
+[Install]
+WantedBy=multi-user.target
+UNIT
+cat > "$SYSTEMD_DIR/semsar-listing-relay.service" <<UNIT
+[Unit]
+Description=semsar listing-relay
+After=network.target postgresql.service docker.service
+[Service]
+EnvironmentFile=$COMMON_ENV
+EnvironmentFile=$URLS_FILE
+EnvironmentFile=-$ENV_DIR/listing.env
+Environment=SERVICE_NAME=listing
+Environment=PYTHONPATH=$APP/services/listing
+ExecStart=$APP/venv/bin/python -m app.relay
+Restart=always
+RestartSec=5
+OOMScoreAdjust=600
+[Install]
+WantedBy=multi-user.target
+UNIT
 
-# Un service déjà déployé (listing) : ses fichiers d'environnement suivent la
-# convention réelle app-<svc>.env / relay-<svc>.env (env-app.j2 / env-relay.j2), et
-# ses instances sont déjà "chargées" côté systemd (UNITS_LIST).
+# Un service déjà déployé (listing) : UN SEUL fichier d'environnement, <svc>.env, lu par
+# son API comme par son relais. Ses unités sont déjà "chargées" côté systemd (UNITS_LIST).
 printf 'SERVICE_NAME=listing\nPORT=8012\nTRUST_GATEWAY_HEADERS=true\nDATABASE_URL=postgresql+psycopg://listing:MOTDEPASSEEXISTANT@localhost:5432/semsar_test\n' \
-  > "$ENV_DIR/app-listing.env"
-chmod 600 "$ENV_DIR/app-listing.env"
-printf 'SERVICE_NAME=listing\nDATABASE_URL=postgresql+psycopg://listing:MOTDEPASSEEXISTANT@localhost:5432/semsar_test\nPYTHONPATH=%s/services/listing\n' "$APP" \
-  > "$ENV_DIR/relay-listing.env"
-chmod 600 "$ENV_DIR/relay-listing.env"
-printf 'semsar-app@listing.service\nsemsar-relay@listing.service\n' > "$UNITS_LIST"
+  > "$ENV_DIR/listing.env"
+chmod 600 "$ENV_DIR/listing.env"
+printf 'semsar-listing.service\nsemsar-listing-relay.service\n' > "$UNITS_LIST"
 
 # --- exécution 1 --------------------------------------------------------------
 echo "== exécution 1 (déploiement nominal, serveur sans design3d) =="
@@ -234,46 +261,61 @@ else
 fi
 
 # --- défaut n°3 (nom de fichier d'environnement) -------------------------------
-if [ -f "$ENV_DIR/app-design3d.env" ]; then
-  ok "fichier d'environnement app-design3d.env créé (nom attendu par semsar-app@.service.j2)"
-  check "il est root-only (0600)" "$(stat -c '%a' "$ENV_DIR/app-design3d.env")" "600"
-  contains "il porte le DATABASE_URL du rôle" "postgresql+psycopg://design3d:" "$ENV_DIR/app-design3d.env"
-  contains "il porte le PORT du service" "PORT=8526" "$ENV_DIR/app-design3d.env"
-  pass1="$(sed -n 's|^DATABASE_URL=postgresql+psycopg://design3d:\([^@]*\)@.*|\1|p' "$ENV_DIR/app-design3d.env")"
+if [ -f "$ENV_DIR/design3d.env" ]; then
+  ok "fichier d'environnement design3d.env créé (nom lu par les unités du serveur)"
+  check "il est root-only (0600)" "$(stat -c '%a' "$ENV_DIR/design3d.env")" "600"
+  contains "il porte le DATABASE_URL du rôle" "postgresql+psycopg://design3d:" "$ENV_DIR/design3d.env"
+  contains "il porte le PORT du service" "PORT=8526" "$ENV_DIR/design3d.env"
+  pass1="$(sed -n 's|^DATABASE_URL=postgresql+psycopg://design3d:\([^@]*\)@.*|\1|p' "$ENV_DIR/design3d.env")"
   if [ "${#pass1}" -ge 32 ]; then ok "le mot de passe est tiré au sort (${#pass1} caractères)"
   else ko "mot de passe trop court ou absent (${#pass1})"; fi
 else
-  ko "fichier d'environnement app-design3d.env créé"; pass1=""
+  ko "fichier d'environnement design3d.env créé"; pass1=""
 fi
-file_absent "aucun fichier design3d.env fantôme (mauvais nom, ignoré de l'unité)" "$ENV_DIR/design3d.env"
+# Les deux noms qu'une version antérieure écrivait, que RIEN sur le serveur ne lit : les
+# recréer ferait croire le service configuré alors qu'il démarrerait sans DATABASE_URL.
+file_absent "aucun app-design3d.env fantôme (nom lu par personne)" "$ENV_DIR/app-design3d.env"
+file_absent "aucun relay-design3d.env fantôme (nom lu par personne)" "$ENV_DIR/relay-design3d.env"
 
-if [ -f "$ENV_DIR/relay-design3d.env" ]; then
-  ok "fichier d'environnement relay-design3d.env créé (design3d a un relais outbox)"
-  check "il est root-only (0600)" "$(stat -c '%a' "$ENV_DIR/relay-design3d.env")" "600"
-  contains "il porte le même DATABASE_URL" "postgresql+psycopg://design3d:$pass1@" "$ENV_DIR/relay-design3d.env"
+# --- défaut n°1 (unités nommées en clair, écrites si manquantes) ---------------
+if [ -f "$SYSTEMD_DIR/semsar-design3d.service" ]; then
+  ok "l'unité API semsar-design3d.service est écrite (le serveur n'a pas de gabarit template)"
+  contains "elle lit l'environnement du service" "EnvironmentFile=-$ENV_DIR/design3d.env" \
+    "$SYSTEMD_DIR/semsar-design3d.service"
+  contains "elle lit les URL inter-services" "EnvironmentFile=$URLS_FILE" \
+    "$SYSTEMD_DIR/semsar-design3d.service"
+  contains "elle sert le bon service sur le bon port" \
+    "--app-dir $APP/services/design3d --host 127.0.0.1 --port 8526" \
+    "$SYSTEMD_DIR/semsar-design3d.service"
 else
-  ko "fichier d'environnement relay-design3d.env créé"
+  ko "l'unité API semsar-design3d.service est écrite"
 fi
+if [ -f "$SYSTEMD_DIR/semsar-design3d-relay.service" ]; then
+  ok "l'unité de relais semsar-design3d-relay.service est écrite (design3d a un relay.py)"
+  contains "elle lance le relais outbox" "ExecStart=$VENV/bin/python -m app.relay" \
+    "$SYSTEMD_DIR/semsar-design3d-relay.service"
+  contains "…avec le PYTHONPATH du service" "PYTHONPATH=$APP/services/design3d" \
+    "$SYSTEMD_DIR/semsar-design3d-relay.service"
+else
+  ko "l'unité de relais semsar-design3d-relay.service est écrite"
+fi
+contains "l'unité API est activée+démarrée" \
+  "systemctl enable --now semsar-design3d.service" "$SYSTEMCTL_LOG"
+contains "l'unité de relais est activée+démarrée" \
+  "systemctl enable --now semsar-design3d-relay.service" "$SYSTEMCTL_LOG"
+file_absent "aucune instance de gabarit template (inexistant sur le serveur)" \
+  "$SYSTEMD_DIR/semsar-app@design3d.service"
+absent "…et aucun enable d'une instance semsar-app@" "semsar-app@" "$SYSTEMCTL_LOG"
 
-# --- défaut n°1 (unités template, pas de copie de gabarit nommé en clair) -----
-contains "l'instance semsar-app@design3d.service est activée+démarrée" \
-  "systemctl enable --now semsar-app@design3d.service" "$SYSTEMCTL_LOG"
-contains "l'instance semsar-relay@design3d.service est activée+démarrée" \
-  "systemctl enable --now semsar-relay@design3d.service" "$SYSTEMCTL_LOG"
-file_absent "aucune unité semsar-design3d.service copiée-renommée n'est créée" \
-  "$SYSTEMD_DIR/semsar-design3d.service"
-file_absent "aucune unité semsar-design3d-relay.service copiée-renommée n'est créée" \
-  "$SYSTEMD_DIR/semsar-design3d-relay.service"
-
-# --- défaut n°2 (secrets.env unique, pas de urls.env fantôme) -----------------
-contains "DESIGN3D_URL diffusée dans le fichier réellement lu par les unités (secrets.env)" \
-  "DESIGN3D_URL=http://localhost:8526" "$SECRETS_FILE"
-file_absent "aucun fichier urls.env fantôme n'est créé" "$TMP/etc/semsar/urls.env"
+# --- défaut n°2 (urls.env, le fichier réellement lu — pas secrets.env) --------
+contains "DESIGN3D_URL diffusée dans le fichier réellement lu par les unités (urls.env)" \
+  "DESIGN3D_URL=http://localhost:8526" "$URLS_FILE"
+file_absent "aucun secrets.env fantôme n'est créé (aucune unité ne le lit)" "$TMP/etc/semsar/secrets.env"
 contains "le routage BFF vers design3d est vérifié" "/api/v1/public/design3d/by-target" "$CURL_LOG"
 
 # Le service déjà déployé n'a été touché en rien.
 check "le mot de passe du service déjà déployé est inchangé" \
-  "$(sed -n 's|^DATABASE_URL=postgresql+psycopg://listing:\([^@]*\)@.*|\1|p' "$ENV_DIR/app-listing.env")" \
+  "$(sed -n 's|^DATABASE_URL=postgresql+psycopg://listing:\([^@]*\)@.*|\1|p' "$ENV_DIR/listing.env")" \
   "MOTDEPASSEEXISTANT"
 absent "aucun CREATE ROLE pour un service déjà déployé" "CREATE ROLE listing" "$SQL_LOG"
 
@@ -317,7 +359,7 @@ contains "…y compris migrate_design3d_entitlement.sql" "IN ('pro', 'enterprise
 # --- exécution 2 : idempotence ------------------------------------------------
 echo "== exécution 2 (rejeu sur le même serveur) =="
 before_units_dir="$(md5sum "$SYSTEMD_DIR"/*.service | sort)"
-before_secrets="$(md5sum "$SECRETS_FILE")"
+before_urls="$(md5sum "$URLS_FILE")"
 before_env="$(md5sum "$ENV_DIR"/*.env | sort)"
 : > "$SQL_LOG"
 
@@ -329,13 +371,13 @@ else
   ko "le rejeu reste un déploiement nominal en succès"
 fi
 
-check "aucun fichier d'unité systemd modifié (gabarits inchangés, pas de copie)" \
+check "aucun fichier d'unité systemd modifié (celles déjà écrites ne sont pas réécrites)" \
   "$(md5sum "$SYSTEMD_DIR"/*.service | sort)" "$before_units_dir"
 check "aucun fichier d'environnement modifié" "$(md5sum "$ENV_DIR"/*.env | sort)" "$before_env"
-check "secrets.env inchangé (pas de doublon de DESIGN3D_URL)" "$(md5sum "$SECRETS_FILE")" "$before_secrets"
-check "les URLs des services déjà déployés sont intactes" "$(grep -c '^LISTING_URL=' "$SECRETS_FILE")" "1"
+check "urls.env inchangé (pas de doublon de DESIGN3D_URL)" "$(md5sum "$URLS_FILE")" "$before_urls"
+check "les URLs des services déjà déployés sont intactes" "$(grep -c '^LISTING_URL=' "$URLS_FILE")" "1"
 check "le mot de passe de design3d est conservé" \
-  "$(sed -n 's|^DATABASE_URL=postgresql+psycopg://design3d:\([^@]*\)@.*|\1|p' "$ENV_DIR/app-design3d.env")" "$pass1"
+  "$(sed -n 's|^DATABASE_URL=postgresql+psycopg://design3d:\([^@]*\)@.*|\1|p' "$ENV_DIR/design3d.env")" "$pass1"
 # Le CREATE ROLE est toujours ÉMIS — il est gardé côté SQL (`IF NOT EXISTS`), pas côté
 # shell. Ce qui compte est qu'aucun mot de passe neuf ne soit tiré au rejeu : le rôle
 # se voit réappliquer celui du fichier d'environnement, donc rien ne se désynchronise.
@@ -376,16 +418,16 @@ else
 fi
 contains "et le dit explicitement" "le BFF ne route pas vers design3d" "$TMP/run3.out"
 
-# --- exécution 4 : le gabarit systemd manquant doit faire échouer bruyamment --
-echo "== exécution 4 (gabarit semsar-app@.service absent du serveur) =="
-mv "$SYSTEMD_DIR/semsar-app@.service" "$TMP/semsar-app@.service.bak"
-if bash "$SCRIPT" > "$TMP/run4.out" 2>&1; then
-  ko "un gabarit systemd absent fait échouer le déploiement (au lieu d'un simple avertissement)"
-else
-  ok "un gabarit systemd absent fait échouer le déploiement (au lieu d'un simple avertissement)"
-fi
-contains "et le dit explicitement" "gabarit systemd" "$TMP/run4.out"
-mv "$TMP/semsar-app@.service.bak" "$SYSTEMD_DIR/semsar-app@.service"
+# --- exécution 4 : une unité installée à la main fait autorité -----------------
+# Le serveur porte 64 unités posées hors de ce script ; les réécrire silencieusement
+# effacerait tout réglage local (port, OOMScoreAdjust, dépendances ajoutées après coup).
+echo "== exécution 4 (unité déjà installée, personnalisée à la main) =="
+printf '# MARQUEUR_REGLAGE_LOCAL\n%s' "$(cat "$SYSTEMD_DIR/semsar-design3d.service")" \
+  > "$TMP/unit-custom" && mv "$TMP/unit-custom" "$SYSTEMD_DIR/semsar-design3d.service"
+bash "$SCRIPT" > "$TMP/run4.out" 2>&1
+contains "une unité déjà installée n'est jamais réécrite" \
+  "# MARQUEUR_REGLAGE_LOCAL" "$SYSTEMD_DIR/semsar-design3d.service"
+contains "…et le script le dit" "déjà installée, inchangée" "$TMP/run4.out"
 
 # --- garde-fou : aucun secret en dur dans le script ---------------------------
 if grep -nE "PASSWORD *'[A-Za-z0-9]{6,}'" "$SCRIPT" | grep -v '\$pass' > /dev/null; then
