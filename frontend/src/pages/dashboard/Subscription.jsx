@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { usePricing } from '../../hooks/usePricing'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import {
   FiCheck, FiX, FiCreditCard, FiDownload, FiCheckCircle, FiClock,
@@ -228,7 +229,9 @@ function PlanCard({ plan, planGroup, isCurrentPlan, onSelect }) {
         <p className="text-sm text-gray-500 mt-1">{t(`${base}.description`)}</p>
         <div className="mt-4">
           <span className="text-4xl font-bold text-gray-900">
-            {plan.price === 0 ? t('dashboard:subscription.free') : formatPrice(plan.price)}
+            {plan.price === null
+              ? t('common:pricing.unavailable')
+              : (plan.price === 0 ? t('dashboard:subscription.free') : formatPrice(plan.price))}
           </span>
           {plan.price > 0 && <span className="text-gray-500">{t('dashboard:subscription.perMonth')}</span>}
         </div>
@@ -484,8 +487,14 @@ export default function Subscription() {
   const isAgency = user?.user_type === 'professional' || user?.user_type === 'admin'
   const planGroup = isAgency ? 'agency' : 'individual'
 
-  // Plans from frontend constants (can also fetch from backend)
-  const plans = isAgency ? AGENCY_PLANS : INDIVIDUAL_PLANS
+  // Présentation locale (icône, couleurs, cases cochées) + prix du catalogue, seule source.
+  // `price` à null = tarif indisponible : on ne montre jamais un montant inventé.
+  const { plans: catalogue } = usePricing()
+  const audience = isAgency ? 'agency' : 'individual'
+  const plans = (isAgency ? AGENCY_PLANS : INDIVIDUAL_PLANS).map((p) => {
+    const priced = catalogue.find((c) => c.slug === p.id && c.audience === audience)
+    return { ...p, price: priced ? priced.price_monthly : null }
+  })
 
   // Fetch current subscription from backend
   const { data: subscriptionData, isLoading: loadingSubscription, refetch: refetchSubscription } = useQuery(
