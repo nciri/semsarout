@@ -22,4 +22,41 @@ export const SERVICE_OPTIONS = {
 
 export const isValidService = (key) => Boolean(key && SERVICE_OPTIONS[key])
 
+/**
+ * Intentions déclarées à l'inscription par un ACHETEUR/chercheur.
+ *
+ * SERVICE_OPTIONS ci-dessus est le catalogue des prestations VENDUES (page Services, page
+ * Contact, tunnel de paiement) : ses six entrées décrivent toutes ce qu'un propriétaire veut
+ * faire de son bien. Un acheteur n'en coche aucune — d'où une question « Qu'est-ce qui vous
+ * amène ? » qui ne le concernait pas. Ces intentions-ci ne sont pas des prestations : elles
+ * ne portent ni prix ni `priceCode`, et leurs libellés vivent dans le catalogue auth
+ * (`auth:register.buyerIntents.*`), pas dans `common:services.*`.
+ */
+export const BUYER_INTENT_OPTIONS = {
+  acheter: { icon: FiHome },
+  louer: { icon: FiKey },
+  colocation: { icon: FiUsers },
+  investir: { icon: FiDollarSign },
+  autre: { icon: FiHelpCircle },
+}
+
+/**
+ * Options de la question d'intention, selon le rôle choisi plus haut dans le formulaire.
+ * Rend une liste uniforme `{ key, icon, labelKey }` : l'appelant n'a pas à savoir de quel
+ * catalogue i18n vient le libellé.
+ */
+export const intentOptionsFor = (accountRole) =>
+  accountRole === 'buyer'
+    ? Object.entries(BUYER_INTENT_OPTIONS).map(([key, opt]) => ({
+        key, icon: opt.icon, labelKey: `auth:register.buyerIntents.${key}`,
+      }))
+    : Object.entries(SERVICE_OPTIONS).map(([key, opt]) => ({
+        key, icon: opt.icon, labelKey: `common:services.${key}.label`,
+      }))
+
+// `autre` appartient aux deux listes : une intention valide pour un rôle ne l'est pas
+// forcément pour l'autre, d'où le rôle en second argument.
+export const isValidIntent = (key, accountRole) =>
+  Boolean(key && intentOptionsFor(accountRole).some((o) => o.key === key))
+
 export const STAYMANAGER_REGISTER_URL = 'https://staymanager.ma/register'
