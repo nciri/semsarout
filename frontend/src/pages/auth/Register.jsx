@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { FiUser, FiMail, FiLock, FiPhone, FiEye, FiEyeOff } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
-import { SERVICE_OPTIONS, isValidService, intentOptionsFor, isValidIntent } from '../../constants/services'
+import { SERVICE_OPTIONS, isValidService, intentOptionsFor } from '../../constants/services'
 
 function Register() {
   const { t } = useTranslation(['auth', 'common'])
@@ -31,16 +31,18 @@ function Register() {
   const userType = watch('user_type', 'particular')
   const interest = watch('interest', serviceContext || '')
   const accountRole = watch('account_role', defaultRole)
-  const intentOptions = intentOptionsFor(accountRole)
+  // useMemo pour la stabilité de la référence, pas pour le coût : sans lui, l'effet plus bas
+  // se redéclencherait à chaque rendu.
+  const intentOptions = useMemo(() => intentOptionsFor(accountRole), [accountRole])
 
   // Changer de rôle change la liste : une intention cochée dans l'ancienne n'a plus de case
   // à l'écran, mais resterait envoyée — le backend la rejetterait en silence et l'utilisateur
   // croirait avoir déclaré quelque chose. On la vide plutôt que de la laisser invisible.
   useEffect(() => {
-    if (interest && !isValidIntent(interest, accountRole)) {
+    if (interest && !intentOptions.some((o) => o.key === interest)) {
       setValue('interest', '')
     }
-  }, [accountRole, interest, setValue])
+  }, [intentOptions, interest, setValue])
 
   const onSubmit = async (data) => {
     setError('')
