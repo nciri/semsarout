@@ -23,7 +23,12 @@ from . import audit
 from .db import get_db
 from .models import AgencyRO, UserRO
 
-_VALID_INTERESTS = {"vente", "mise-en-location", "gestion-locative", "courte-duree", "estimation", "autre"}
+# Intentions déclarées à l'inscription, un jeu par rôle : les six premières sont les
+# prestations du catalogue (ce qu'un VENDEUR veut faire de son bien), les autres décrivent le
+# projet d'un ACHETEUR. `autre` appartient aux deux, d'où la validation par rôle plus bas.
+_SELLER_INTERESTS = {"vente", "mise-en-location", "gestion-locative", "courte-duree", "estimation", "autre"}
+_BUYER_INTERESTS = {"acheter", "louer", "colocation", "investir", "autre"}
+_VALID_ACCOUNT_ROLES = {"buyer", "agent"}
 
 
 def _user_event_doc(u: UserRO) -> dict:
@@ -204,11 +209,16 @@ async def register(request: Request, db: Session = Depends(get_db)):
     tenant = _tenant(request)
     if db.query(UserRO).filter(UserRO.email == data["email"], UserRO.tenant == tenant).first():
         return _err("Email already registered", 409)
-    interest = data.get("interest") if data.get("interest") in _VALID_INTERESTS else None
+    # Le rôle choisi au formulaire était jusqu'ici écrasé par "buyer" en dur : un agent
+    # s'inscrivait, et ressortait acheteur. L'intention est ensuite validée CONTRE ce rôle —
+    # sans quoi une intention de vendeur pourrait être enregistrée sur un compte acheteur.
+    account_role = data.get("account_role") if data.get("account_role") in _VALID_ACCOUNT_ROLES else "buyer"
+    allowed = _BUYER_INTERESTS if account_role == "buyer" else _SELLER_INTERESTS
+    interest = data.get("interest") if data.get("interest") in allowed else None
     user = UserRO(
         email=data["email"], password_hash=generate_password_hash(data["password"]),
         first_name=data["first_name"], last_name=data["last_name"], phone=data.get("phone"),
-        user_type=data.get("user_type", "particular"), account_role="buyer",
+        user_type=data.get("user_type", "particular"), account_role=account_role,
         interest=interest, is_active=True, is_verified=False, created_at=datetime.utcnow(),
         tenant=tenant,
     )
