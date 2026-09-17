@@ -48,13 +48,21 @@ def register():
     if User.query.filter_by(email=data['email']).first():
         return jsonify({'error': 'Email already registered'}), 409
 
-    # Declared interest is optional and must match the known service keys
-    valid_interests = {
+    # Declared interest is optional, and the valid set depends on the role: a seller picks a
+    # catalogue service, a buyer describes their search. 'autre' belongs to both.
+    seller_interests = {
         'vente', 'mise-en-location', 'gestion-locative',
         'courte-duree', 'estimation', 'autre'
     }
+    buyer_interests = {'acheter', 'louer', 'colocation', 'investir', 'autre'}
+
+    # The role picked in the form used to be dropped here entirely, leaving every account on
+    # the column default: an agent signed up and came back a buyer.
+    account_role = data.get('account_role')
+    if account_role not in {'buyer', 'agent'}:
+        account_role = 'buyer'
     interest = data.get('interest')
-    if interest not in valid_interests:
+    if interest not in (buyer_interests if account_role == 'buyer' else seller_interests):
         interest = None
 
     # Create user
@@ -64,6 +72,7 @@ def register():
         last_name=data['last_name'],
         phone=data.get('phone'),
         user_type=data.get('user_type', 'particular'),
+        account_role=account_role,
         interest=interest
     )
     user.set_password(data['password'])
