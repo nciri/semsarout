@@ -42,6 +42,10 @@ def main(props, leads, clients, visits, txns) -> dict:
     visits_this_week = sum(1 for v in visits if v["scheduled_at"]
                            and sow <= _pd(v["scheduled_at"]) < week_end)
     pending_visits = sum(1 for v in visits if v["status"] in ("scheduled", "confirmed"))
+    # Badge « visites à venir » du back-office : ni `pending` (qui compte aussi les visites
+    # passées restées au statut planifié) ni `upcoming_visits` (tronqué à 5) ne donnent ce total.
+    upcoming_visits = sum(1 for v in visits if v["scheduled_at"] and _pd(v["scheduled_at"]) >= now
+                          and v["status"] in ("scheduled", "confirmed"))
 
     active_transactions = sum(1 for t in txns if t["status"] == "active")
     won_this_month = sum(1 for t in txns if t["status"] == "won"
@@ -69,7 +73,8 @@ def main(props, leads, clients, visits, txns) -> dict:
                   "this_week": leads_this_week, "conversion_rate": round(conversion_rate, 1)},
         "clients": {"total": total_clients, "active": active_clients,
                     "new_this_month": new_clients_this_month},
-        "visits": {"today": visits_today, "this_week": visits_this_week, "pending": pending_visits},
+        "visits": {"today": visits_today, "this_week": visits_this_week, "pending": pending_visits,
+                   "upcoming": upcoming_visits},
         "transactions": {"active": active_transactions, "won_this_month": won_this_month,
                          "pipeline_value": float(pipeline_value)},
         "revenue": {"this_month": float(revenue_this_month)},
