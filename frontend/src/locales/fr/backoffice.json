@@ -310,7 +310,8 @@
         "status": "Statut"
       },
       "actions": {
-        "shortlist": "Présélectionner"
+        "shortlist": "Présélectionner",
+        "unshortlist": "Retirer de la présélection"
       },
       "propertyFallback": "Bien #{{id}}",
       "groupCount_one": "· {{count}} candidature",
@@ -349,7 +350,8 @@
         "created": "Dossier déposé",
         "shortlisted": "Candidature présélectionnée",
         "fileTooLarge": "Fichier trop volumineux (max 10 Mo)",
-        "uploadFailed": "Échec de l'envoi de « {{filename}} »"
+        "uploadFailed": "Échec de l'envoi de « {{filename}} »",
+        "unshortlisted": "Candidature retirée de la présélection"
       },
       "detail": {
         "backToList": "Retour aux candidatures",
@@ -357,7 +359,8 @@
         "actions": {
           "shortlist": "Présélectionner",
           "accept": "Accepter",
-          "reject": "Refuser"
+          "reject": "Refuser",
+          "unshortlist": "Retirer de la présélection"
         },
         "fields": {
           "status": "Statut",

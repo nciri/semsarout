@@ -38,6 +38,10 @@ function ApplicationDetail() {
     onSuccess: () => { toast.success(t('backoffice:rental.application.toasts.shortlisted')); refresh() },
     onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
   })
+  const unshortlist = useMutation(() => rentalService.unshortlistApplication(id), {
+    onSuccess: () => { toast.success(t('backoffice:rental.application.toasts.unshortlisted')); refresh() },
+    onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
+  })
   const validateDoc = useMutation(({ docId, status }) => rentalService.validateDocument(id, docId, { status }), {
     onSuccess: () => { toast.success(t('backoffice:rental.application.detail.docs.toast')); refresh() },
     onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
@@ -71,6 +75,9 @@ function ApplicationDetail() {
       <Panel title={t('backoffice:rental.application.detail.title', { name: a.applicant_name || `#${a.id}` })} action={pending && <div className="flex gap-2">
         {['received', 'reviewing'].includes(a.status) && (
           <button disabled={shortlist.isLoading} onClick={() => shortlist.mutate()} className={SECONDARY_BTN}><FiStar className="w-5 h-5" /> {t('backoffice:rental.application.detail.actions.shortlist')}</button>
+        )}
+        {a.status === 'shortlist' && (
+          <button disabled={unshortlist.isLoading} onClick={() => unshortlist.mutate()} className={SECONDARY_BTN}><FiStar className="w-5 h-5" /> {t('backoffice:rental.application.detail.actions.unshortlist')}</button>
         )}
         <button disabled={decide.isLoading} onClick={() => decide.mutate({ decision: 'accepted' })} className={PRIMARY_BTN}><FiCheck className="w-5 h-5" /> {t('backoffice:rental.application.detail.actions.accept')}</button>
         <button onClick={() => setRejectOpen(true)} className={SECONDARY_BTN}><FiX className="w-5 h-5" /> {t('backoffice:rental.application.detail.actions.reject')}</button>
