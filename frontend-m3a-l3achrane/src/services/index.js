@@ -420,6 +420,12 @@ export async function acceptCandidature(id) {
   return data
 }
 
+export async function unshortlistCandidature(id) {
+  if (isMocked('candidatures')) return delay(_mockCandidature({ id, status: 'received' }))
+  const { data } = await api.post(`/candidatures/${id}/unshortlist`)
+  return data
+}
+
 export async function rejectCandidature(id) {
   if (isMocked('candidatures')) return delay(_mockCandidature({ id, status: 'rejected' }))
   const { data } = await api.post(`/candidatures/${id}/reject`)

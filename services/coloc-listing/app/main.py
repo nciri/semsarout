@@ -491,6 +491,22 @@ def shortlist_candidature(candidature_id: str, principal: Principal = Depends(ge
     return candidature.to_dict()
 
 
+@router.post("/candidatures/{candidature_id}/unshortlist")
+def unshortlist_candidature(candidature_id: str, principal: Principal = Depends(get_principal),
+                            db: Session = Depends(get_db)):
+    """Retire une candidature de la présélection (clic par erreur, candidat qui ne l'est plus) :
+    elle revient à `received`, seul état d'où l'on peut présélectionner."""
+    candidature, err = _owned_candidature(db, candidature_id, principal)
+    if err is not None:
+        return err
+    if candidature.status != "shortlisted":
+        return _err(f"Transition interdite : {candidature.status} → received", 409)
+    candidature.status = "received"
+    db.commit()
+    db.refresh(candidature)
+    return candidature.to_dict()
+
+
 @router.post("/candidatures/{candidature_id}/accept")
 def accept_candidature(candidature_id: str, principal: Principal = Depends(get_principal),
                        db: Session = Depends(get_db)):

@@ -110,6 +110,31 @@ def test_shortlist_reserved_to_owner(client, db_session):
     assert resp.json()["status"] == "shortlisted"
 
 
+def test_unshortlist_returns_to_received(client, db_session):
+    listing_id = _create_and_publish_listing(client, db_session)
+    cand = _apply(client, listing_id).json()
+    client.post(f"/candidatures/{cand['id']}/shortlist", headers=headers(OWNER_ID))
+
+    resp = client.post(f"/candidatures/{cand['id']}/unshortlist", headers=headers(OWNER_ID))
+
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "received"
+    # Elle redevient présélectionnable.
+    resp = client.post(f"/candidatures/{cand['id']}/shortlist", headers=headers(OWNER_ID))
+    assert resp.json()["status"] == "shortlisted"
+
+
+def test_unshortlist_reserved_to_owner_and_to_shortlisted(client, db_session):
+    listing_id = _create_and_publish_listing(client, db_session)
+    cand = _apply(client, listing_id).json()
+    # Pas encore présélectionnée : rien à retirer.
+    resp = client.post(f"/candidatures/{cand['id']}/unshortlist", headers=headers(OWNER_ID))
+    assert resp.status_code == 409
+    client.post(f"/candidatures/{cand['id']}/shortlist", headers=headers(OWNER_ID))
+    resp = client.post(f"/candidatures/{cand['id']}/unshortlist", headers=headers(STRANGER_ID))
+    assert resp.status_code == 403
+
+
 def test_accept_direct_when_room_free(client, db_session):
     listing_id = _create_and_publish_listing(client, db_session)
     cand = _apply(client, listing_id).json()
