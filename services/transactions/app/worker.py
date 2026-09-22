@@ -1,4 +1,4 @@
-"""Consumer transactions — maintient `property_ro` (titre/ville) via `listing.*`, et copie les
+"""Consumer transactions — maintient `property_ro` (titre/ville/statut) via `listing.*`, et copie les
 contrats finalisés/signés dans les documents de transaction via `contract.finalized`/`.signed`
 (la finalisation appartient au service contract ; la transaction reçoit une copie du PDF).
 
@@ -32,6 +32,7 @@ def _handle(routing_key: str, payload: dict, message_id: str) -> None:
                 db.add(ro)
             ro.title = payload.get("title")
             ro.city = payload.get("city")
+            ro.status = payload.get("status")
         elif routing_key == "contract.finalized":
             tid = payload.get("transaction_id")
             key = payload.get("pdf_url")
