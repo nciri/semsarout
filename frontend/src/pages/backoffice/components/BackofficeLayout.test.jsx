@@ -1,14 +1,20 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from 'react-query'
 import i18n from '../../../i18n'
 import BackofficeLayout from './BackofficeLayout'
 
+// La sidebar lit le tableau de bord pour ses badges (leads, visites) : elle a besoin du
+// fournisseur react-query que l'application pose à sa racine.
 function renderLayout() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
-    <MemoryRouter initialEntries={['/backoffice']}>
-      <BackofficeLayout />
-    </MemoryRouter>,
+    <QueryClientProvider client={qc}>
+      <MemoryRouter initialEntries={['/backoffice']}>
+        <BackofficeLayout />
+      </MemoryRouter>
+    </QueryClientProvider>,
   )
 }
 

@@ -1,312 +1,184 @@
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useQuery } from 'react-query'
-import {
-  FiHome, FiUsers, FiMail, FiCalendar, FiTrendingUp,
-  FiTrendingDown, FiDollarSign, FiEye, FiArrowRight
-} from 'react-icons/fi'
-import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import DirIcon from '../../components/common/DirIcon'
-import { formatPrice } from '../../utils/currency'
+import { FiCalendar, FiGrid, FiHome, FiMail, FiPlus, FiTrendingUp, FiUserPlus } from 'react-icons/fi'
 import api from '../../services/api'
 import { useFormat } from '../../utils/format'
+import { IconAction, Widget } from './components/kit'
+import { LeadsCompact, LeadsDetail } from './dashboard/LeadsWidget'
+import { VisitsCompact, VisitsDetail } from './dashboard/VisitsWidget'
+import { ResultsCompact, ResultsDetail } from './dashboard/ResultsWidget'
+import { PipelineCompact, PipelineDetail } from './dashboard/PipelineWidget'
+import { PortfolioCompact, PortfolioDetail } from './dashboard/PortfolioWidget'
 
-// Mock service - replace with actual API service
-const backofficeService = {
-  getDashboard: async () => {
-    const { data } = await api.get('/backoffice/dashboard')
-    return data
-  }
+// Même clé et même requête que la sidebar (badges) : react-query partage la réponse.
+const fetchDashboard = async () => (await api.get('/backoffice/dashboard')).data
+
+const WIDGETS = [
+  { key: 'leads', icon: FiMail, Compact: LeadsCompact, Detail: LeadsDetail,
+    props: (w) => ({ leads: w.new_leads || [] }) },
+  { key: 'visits', icon: FiCalendar, Compact: VisitsCompact, Detail: VisitsDetail,
+    props: (w) => ({ visits: w.upcoming_visits || [], outcomes: w.recent_visit_outcomes }) },
+  { key: 'results', icon: FiTrendingUp, Compact: ResultsCompact, Detail: ResultsDetail,
+    props: (w) => ({ closed: w.closed || [] }) },
+  { key: 'pipe', icon: FiGrid, span: 'md:col-span-2', Compact: PipelineCompact, Detail: PipelineDetail,
+    props: (w) => ({ pipeline: w.pipeline, weekly: w.leads_weekly || [], closed: w.closed || [] }) },
+  { key: 'props', icon: FiHome, Compact: PortfolioCompact, Detail: PortfolioDetail,
+    props: (w) => ({ listings: w.listings }) },
+]
+const TITLE_KEYS = { leads: 'leads.title', visits: 'visits.title', results: 'results.title', pipe: 'pipeline.title', props: 'portfolio.title' }
+
+const STORE = 'dash-open'
+function readOpen() {
+  // Le pipeline est ouvert au premier passage, pour montrer le mécanisme ; ensuite on retrouve
+  // l'état laissé par l'agent (y compris « tout replié », stocké comme chaîne vide).
+  try { const s = localStorage.getItem(STORE); return s === null ? 'pipe' : s || null } catch { return 'pipe' }
 }
-
-function StatCard({ title, value, change, icon: Icon, color = 'primary', suffix = '' }) {
-  const { t } = useTranslation('backoffice')
-  const isPositive = change >= 0
-
-  const colorClasses = {
-    primary: 'bg-primary-50 text-primary-600',
-    blue: 'bg-blue-50 text-blue-600',
-    green: 'bg-green-50 text-green-600',
-    yellow: 'bg-yellow-50 text-yellow-600',
-    purple: 'bg-purple-50 text-purple-600'
-  }
-
-  return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
-            {value}{suffix}
-          </p>
-          {change !== undefined && (
-            <div className={`flex items-center mt-2 text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-              {isPositive ? <FiTrendingUp className="w-4 h-4 me-1" /> : <FiTrendingDown className="w-4 h-4 me-1" />}
-              <span>{t('dashboard.vsLastMonth', { value: Math.abs(change) })}</span>
-            </div>
-          )}
-        </div>
-        <div className={`p-3 rounded-xl ${colorClasses[color]}`}>
-          <Icon className="w-6 h-6" />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function RecentLeadCard({ lead }) {
-  const { t } = useTranslation('backoffice')
-  const { fmtDate } = useFormat()
-  const sourceColors = {
-    contact_form: 'bg-blue-100 text-blue-700',
-    phone_reveal: 'bg-green-100 text-green-700',
-    callback_request: 'bg-purple-100 text-purple-700'
-  }
-
-  return (
-    <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-          <span className="text-sm font-medium text-gray-600">
-            {lead.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-          </span>
-        </div>
-        <div>
-          <p className="font-medium text-gray-900">{lead.name}</p>
-          <p className="text-sm text-gray-500">{lead.email}</p>
-        </div>
-      </div>
-      <div className="text-end">
-        <span className={`text-xs px-2 py-1 rounded-full ${sourceColors[lead.source] || 'bg-gray-100 text-gray-700'}`}>
-          {t(`crm.pipeline.leads.source.${lead.source}`, { defaultValue: lead.source })}
-        </span>
-        <p className="text-xs text-gray-400 mt-1">
-          {fmtDate(lead.created_at)}
-        </p>
-      </div>
-    </div>
-  )
-}
-
-function UpcomingVisitCard({ visit }) {
-  const { t } = useTranslation('backoffice')
-  const { fmtDate, fmtTime } = useFormat()
-  const statusColors = {
-    scheduled: 'bg-gray-100 text-gray-700',
-    confirmed: 'bg-blue-100 text-blue-700'
-  }
-
-  return (
-    <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-      <div className="flex items-center gap-3">
-        <div className="text-center bg-primary-50 rounded-lg p-2 min-w-[50px]">
-          <p className="text-xs text-primary-600 font-medium">
-            {fmtDate(visit.scheduled_at, { weekday: 'short' })}
-          </p>
-          <p className="text-lg font-bold text-primary-700">
-            {new Date(visit.scheduled_at).getDate()}
-          </p>
-        </div>
-        <div>
-          <p className="font-medium text-gray-900 line-clamp-1">{visit.property_title || t('dashboard.visitFallback')}</p>
-          <p className="text-sm text-gray-500">
-            {fmtTime(visit.scheduled_at)}
-            {' - '}{visit.contact_name}
-          </p>
-        </div>
-      </div>
-      <span className={`text-xs px-2 py-1 rounded-full ${statusColors[visit.status] || 'bg-gray-100'}`}>
-        {t(`crm.pipeline.visits.status.${visit.status}`, { defaultValue: visit.status })}
-      </span>
-    </div>
-  )
-}
+function writeOpen(key) { try { localStorage.setItem(STORE, key || '') } catch { /* stockage indisponible */ } }
 
 export default function BackofficeDashboard() {
   const { t } = useTranslation('backoffice')
-  const { data, isLoading } = useQuery('backoffice-dashboard', backofficeService.getDashboard, {
-    refetchInterval: 60000 // Refresh every minute
-  })
+  const { fmtDate } = useFormat()
+  const { data, isLoading, isError } = useQuery('backoffice-dashboard', fetchDashboard, { refetchInterval: 60000 })
+  const now = new Date()
+  const w = data?.widgets || {}
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white rounded-xl p-6 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
-              <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
+  const [openKey, setOpenKey] = useState(readOpen)
+  const [shown, setShown] = useState(false)
+  const [place, setPlace] = useState({ after: null, notch: 0 })
+  const [tick, setTick] = useState(0)
+  const gridRef = useRef(null)
+  const cardRefs = useRef({})
+  const titleRef = useRef(null)
+  const focusTitle = useRef(false)
+  const closeTimer = useRef(null)
+
+  const close = useCallback(() => {
+    if (!openKey) return
+    const k = openKey
+    setShown(false)
+    writeOpen(null)
+    closeTimer.current = setTimeout(() => setOpenKey(null), 240)
+    cardRefs.current[k]?.querySelector('[aria-expanded]')?.focus({ preventScroll: true })
+  }, [openKey])
+
+  const toggle = (key) => {
+    if (key === openKey) { close(); return }
+    clearTimeout(closeTimer.current)
+    focusTitle.current = true
+    setShown(false)
+    setOpenKey(key)
+    writeOpen(key)
   }
 
+  // Place le détail après la DERNIÈRE carte de la rangée du widget ouvert, et aligne le repère
+  // sur ce widget. Mesuré avant affichage, et recalculé quand la largeur change la grille.
+  useLayoutEffect(() => {
+    if (!openKey || !data) return
+    const card = cardRefs.current[openKey]
+    const grid = gridRef.current
+    if (!card || !grid) return
+    const row = WIDGETS.map((x) => cardRefs.current[x.key]).filter((el) => el && el.offsetTop === card.offsetTop)
+    const after = WIDGETS.find((x) => cardRefs.current[x.key] === row.at(-1))?.key || openKey
+    const g = grid.getBoundingClientRect()
+    const c = card.getBoundingClientRect()
+    const rtl = getComputedStyle(grid).direction === 'rtl'
+    const notch = (rtl ? g.right - c.right : c.left - g.left) + c.width / 2
+    setPlace((p) => (p.after === after && Math.abs(p.notch - notch) < 1 ? p : { after, notch }))
+  }, [openKey, data, tick])
+
+  useEffect(() => {
+    const onResize = () => setTick((n) => n + 1)
+    addEventListener('resize', onResize)
+    return () => removeEventListener('resize', onResize)
+  }, [])
+
+  useEffect(() => {
+    if (!openKey) return undefined
+    const id = requestAnimationFrame(() => {
+      setShown(true)
+      if (focusTitle.current) {
+        focusTitle.current = false
+        titleRef.current?.focus({ preventScroll: true })
+        const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+        setTimeout(() => gridRef.current?.querySelector('#dashboard-detail')?.scrollIntoView?.({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' }), 60)
+      }
+    })
+    return () => cancelAnimationFrame(id)
+  }, [openKey])
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') close() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [close])
+
+  const open = WIDGETS.find((x) => x.key === openKey)
+  const after = place.after && WIDGETS.some((x) => x.key === place.after) ? place.after : openKey
+  const title = (x) => (x.key === 'results'
+    ? t('dashboard.results.title', { month: fmtDate(now, { month: 'long' }) })
+    : t(`dashboard.${TITLE_KEYS[x.key]}`))
+
+  const detail = open && (
+    <div
+      id="dashboard-detail"
+      role="region"
+      aria-labelledby="dashboard-detail-title"
+      className="col-span-full grid transition-[grid-template-rows] duration-[240ms] ease-[cubic-bezier(.16,1,.3,1)] motion-reduce:transition-none"
+      style={{ gridTemplateRows: shown ? '1fr' : '0fr' }}
+    >
+      <div className="min-h-0 overflow-hidden pt-2.5">
+        <div className="relative rounded-xl border border-primary-400 bg-white shadow-[0_1px_2px_rgba(11,18,32,.04),0_14px_30px_-20px_rgba(11,18,32,.25)]">
+          <span aria-hidden="true" className="absolute -top-[8px] h-3.5 w-3.5 -ms-[7px] rotate-45 border-s border-t border-primary-400 bg-white" style={{ insetInlineStart: place.notch }} />
+          <open.Detail {...open.props(w)} now={now} onClose={close} titleRef={titleRef} />
+        </div>
+      </div>
+    </div>
+  )
+
   return (
-    <div className="space-y-6">
-      {/* Page header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="mx-auto grid w-full max-w-[1360px] gap-5">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('dashboard.title')}</h1>
-          <p className="text-gray-500">{t('dashboard.subtitle')}</p>
+          <h1 className="font-display text-[26px] font-extrabold leading-tight tracking-tight">{t('dashboard.title')}</h1>
+          <p className="mt-1 text-gray-500">{fmtDate(now, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <select className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm">
-            <option value="30">{t('dashboard.period.last30')}</option>
-            <option value="7">{t('dashboard.period.last7')}</option>
-            <option value="90">{t('dashboard.period.last90')}</option>
-          </select>
+        <div className="flex items-center gap-1.5">
+          <IconAction icon={FiCalendar} label={t('dashboard.actions.planVisit')} to="/backoffice/visites/nouvelle" className="border border-gray-200 bg-white" />
+          <IconAction icon={FiUserPlus} label={t('dashboard.actions.newClient')} to="/backoffice/clients/nouveau" className="border border-gray-200 bg-white" />
+          <IconAction icon={FiPlus} label={t('dashboard.actions.addProperty')} to="/backoffice/biens/nouveau" tone="primary" tipAlign="end" />
         </div>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title={t('dashboard.stats.activeProperties')}
-          value={data?.properties?.active || 0}
-          change={12}
-          icon={FiHome}
-          color="primary"
-        />
-        <StatCard
-          title={t('dashboard.stats.newLeads')}
-          value={data?.leads?.this_week || 0}
-          change={data?.leads?.conversion_rate}
-          icon={FiMail}
-          color="blue"
-        />
-        <StatCard
-          title={t('dashboard.stats.plannedVisits')}
-          value={data?.visits?.this_week || 0}
-          icon={FiCalendar}
-          color="green"
-        />
-        <StatCard
-          title={t('dashboard.stats.activePipeline')}
-          value={formatPrice(data?.transactions?.pipeline_value || 0)}
-          icon={FiDollarSign}
-          color="purple"
-        />
-      </div>
-
-      {/* Second row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent leads */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between p-4 border-b border-gray-100">
-            <h2 className="font-semibold text-gray-900">{t('dashboard.latestLeads')}</h2>
-            <Link to="/backoffice/leads" className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1">
-              {t('dashboard.viewAll')} <DirIcon icon={FiArrowRight} className="w-4 h-4" />
-            </Link>
-          </div>
-          <div className="p-4">
-            {data?.recent_leads?.length > 0 ? (
-              data.recent_leads.map(lead => (
-                <RecentLeadCard key={lead.id} lead={lead} />
-              ))
-            ) : (
-              <p className="text-gray-500 text-center py-4">{t('dashboard.noRecentLead')}</p>
-            )}
-          </div>
+      {isError && <p className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-800">{t('dashboard.loadError')}</p>}
+      {isLoading && (
+        <div aria-busy="true" aria-label={t('dashboard.loading')} className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {WIDGETS.map((x) => <div key={x.key} className={`h-56 animate-pulse rounded-xl border border-gray-200 bg-white motion-reduce:animate-none ${x.span || ''}`} />)}
         </div>
+      )}
 
-        {/* Upcoming visits */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between p-4 border-b border-gray-100">
-            <h2 className="font-semibold text-gray-900">{t('dashboard.upcomingVisits')}</h2>
-            <Link to="/backoffice/visites" className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1">
-              {t('dashboard.viewAll')} <DirIcon icon={FiArrowRight} className="w-4 h-4" />
-            </Link>
-          </div>
-          <div className="p-4">
-            {data?.upcoming_visits?.length > 0 ? (
-              data.upcoming_visits.map(visit => (
-                <UpcomingVisitCard key={visit.id} visit={visit} />
-              ))
-            ) : (
-              <p className="text-gray-500 text-center py-4">{t('dashboard.noPlannedVisit')}</p>
-            )}
-          </div>
+      {data && (
+        <div ref={gridRef} className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {WIDGETS.map((x) => {
+            const C = x.Compact
+            return [
+              <Widget
+                key={x.key}
+                id={x.key}
+                title={title(x)}
+                icon={x.icon}
+                open={openKey === x.key}
+                onToggle={() => toggle(x.key)}
+                className={x.span || ''}
+                cardRef={(el) => { cardRefs.current[x.key] = el }}
+              >
+                <C {...x.props(w)} now={now} />
+              </Widget>,
+              after === x.key ? <div key="detail" className="contents">{detail}</div> : null,
+            ]
+          })}
         </div>
-
-        {/* Quick stats */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <h2 className="font-semibold text-gray-900 mb-4">{t('dashboard.monthSummary')}</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <FiDollarSign className="w-5 h-5 text-green-600" />
-                </div>
-                <span className="text-gray-600">{t('dashboard.revenue')}</span>
-              </div>
-              <span className="font-bold text-gray-900">{formatPrice(data?.revenue?.this_month || 0)}</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <FiHome className="w-5 h-5 text-blue-600" />
-                </div>
-                <span className="text-gray-600">{t('dashboard.soldProperties')}</span>
-              </div>
-              <span className="font-bold text-gray-900">{data?.properties?.sold_this_month || 0}</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <FiUsers className="w-5 h-5 text-purple-600" />
-                </div>
-                <span className="text-gray-600">{t('dashboard.newClients')}</span>
-              </div>
-              <span className="font-bold text-gray-900">{data?.clients?.new_this_month || 0}</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <FiEye className="w-5 h-5 text-yellow-600" />
-                </div>
-                <span className="text-gray-600">{t('dashboard.activeTransactions')}</span>
-              </div>
-              <span className="font-bold text-gray-900">{data?.transactions?.active || 0}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick actions */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">{t('dashboard.quickActions')}</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Link
-            to="/backoffice/biens/nouveau"
-            className="flex flex-col items-center p-4 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors"
-          >
-            <FiHome className="w-8 h-8 text-primary-600 mb-2" />
-            <span className="text-sm font-medium text-primary-700">{t('dashboard.addProperty')}</span>
-          </Link>
-          <Link
-            to="/backoffice/clients/nouveau"
-            className="flex flex-col items-center p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors"
-          >
-            <FiUsers className="w-8 h-8 text-blue-600 mb-2" />
-            <span className="text-sm font-medium text-blue-700">{t('dashboard.newClient')}</span>
-          </Link>
-          <Link
-            to="/backoffice/visites/nouvelle"
-            className="flex flex-col items-center p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-colors"
-          >
-            <FiCalendar className="w-8 h-8 text-green-600 mb-2" />
-            <span className="text-sm font-medium text-green-700">{t('dashboard.planVisit')}</span>
-          </Link>
-          <Link
-            to="/backoffice/pipeline"
-            className="flex flex-col items-center p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors"
-          >
-            <FiTrendingUp className="w-8 h-8 text-purple-600 mb-2" />
-            <span className="text-sm font-medium text-purple-700">{t('dashboard.viewPipeline')}</span>
-          </Link>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
