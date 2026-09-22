@@ -227,6 +227,8 @@ def _listing_match(path: str, method: str) -> bool:
     # Gestion des biens en backoffice (liste/détail/CRUD, cloisonnée agence).
     if path == "/api/v1/backoffice/properties" and method in ("GET", "POST"):
         return True
+    if path == "/api/v1/backoffice/properties/insights" and method == "GET":  # page Biens
+        return True
     if _BO_PROPERTY_ID.match(path) and method in ("GET", "PUT", "DELETE"):
         return True
     return False

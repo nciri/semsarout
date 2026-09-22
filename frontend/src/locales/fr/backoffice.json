@@ -1843,33 +1843,339 @@
         "subtitle": "Gérez votre portefeuille de biens",
         "newButton": "Ajouter un bien",
         "addFirstButton": "Ajouter un bien",
-        "searchPlaceholder": "Rechercher par titre, ville...",
-        "filtersButton": "Filtres",
+        "searchPlaceholder": "Titre, référence, ville ou quartier",
         "filterStatusLabel": "Statut",
-        "filterStatusAll": "Tous les statuts",
         "filterTypeLabel": "Type de bien",
         "filterTypeAll": "Tous les types",
         "resetFilters": "Réinitialiser",
-        "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce bien ?",
+        "confirmDelete": "Supprimer « {{title}} » ? Cette action est définitive.",
         "viewOnline": "Voir en ligne",
         "edit": "Modifier",
         "newTransaction": "Nouvelle transaction",
         "delete": "Supprimer",
-        "actionsMenu": "Actions",
-        "viewsCount_one": "{{count}} vue",
-        "viewsCount_other": "{{count}} vues",
         "previous": "Précédent",
         "next": "Suivant",
         "pageOf": "Page {{page}} sur {{pages}}",
         "empty": {
           "title": "Aucun bien trouvé",
-          "filtered": "Aucun bien ne correspond à vos critères.",
+          "filtered": "Aucun bien ne correspond à la recherche ou aux filtres.",
           "default": "Commencez par ajouter votre premier bien."
+        }
+      },
+      "board": {
+        "subtitle_one": "{{count}} bien au portefeuille",
+        "subtitle_other": "{{count}} biens au portefeuille",
+        "loadError": "Impossible de charger les biens. Réessayez plus tard.",
+        "loading": "Chargement des biens…",
+        "units": {
+          "dh": "Dh",
+          "perMonth": "Dh/mois",
+          "perWeek": "Dh/semaine",
+          "perDay": "Dh/nuit",
+          "sqm": "Dh/m²",
+          "sqmMonth": "Dh/m²/mois"
+        },
+        "signals": {
+          "none": "Rien à signaler",
+          "status": "Statut à corriger",
+          "draft": "À republier",
+          "noPhoto": "Sans photo",
+          "priceTimes": "Prix × {{ratio}}",
+          "priceAbove": "Prix +{{pct}} %",
+          "priceBelow": "Prix −{{pct}} %",
+          "newLeads_one": "{{count}} demande à traiter",
+          "newLeads_other": "{{count}} demandes à traiter",
+          "noSurface": "Surface manquante"
+        },
+        "checks": {
+          "title": "Fiche de l'annonce",
+          "none": "Aucune",
+          "chars_one": "{{count}} caractère",
+          "chars_other": "{{count}} caractères",
+          "missing": "Non renseigné",
+          "noDate": "Date absente",
+          "photos": "Photos",
+          "description": "Description",
+          "surface": "Surface",
+          "rooms": "Pièces",
+          "energy": "Classe énergie",
+          "published": "Mise en ligne"
+        },
+        "tags": {
+          "featured": "À la une",
+          "urgent": "Urgent"
+        },
+        "overview": {
+          "label": "Vue d'ensemble du portefeuille",
+          "online": "En ligne",
+          "onlineSub": "{{sale}} ventes · {{rent}} locations",
+          "views": "Vues des annonces en ligne",
+          "viewsSub_one": "{{count}} contact, soit {{rate}} %",
+          "viewsSub_other": "{{count}} contacts, soit {{rate}} %",
+          "visits": "Visites à venir",
+          "visitsSub_one": "sur {{count}} bien, jusqu'au {{date}}",
+          "visitsSub_other": "sur {{count}} biens, jusqu'au {{date}}",
+          "visitsNone": "aucune planifiée",
+          "leads": "Demandes non traitées",
+          "leadsSub_one": "sur {{count}} bien",
+          "leadsSub_other": "sur {{count}} biens",
+          "leadsNone": "tout est traité",
+          "barLabel": "{{total}} biens : {{active}} en ligne, {{pending}} sous option, {{draft}} brouillons, {{closed}} loués ou vendus",
+          "buckets": {
+            "active": "En ligne",
+            "pending": "Sous option",
+            "draft": "Brouillons",
+            "closed": "Loués ou vendus"
+          }
+        },
+        "queue": {
+          "title": "À traiter",
+          "sub": "Ce qui freine vos annonces, repéré dans les données du portefeuille"
+        },
+        "list": {
+          "title": "Tous les biens",
+          "count_one": "{{count}} bien",
+          "count_other": "{{count}} biens",
+          "countOf_one": "{{count}} bien sur {{total}}",
+          "countOf_other": "{{count}} biens sur {{total}}",
+          "noPhoto": "Aucune photo",
+          "photos_one": "{{count}} photo",
+          "photos_other": "{{count}} photos",
+          "stats": "{{views}} vues · {{contacts}} contacts",
+          "views_one": "vue",
+          "views_other": "vues",
+          "contacts_one": "contact",
+          "contacts_other": "contacts",
+          "visits_one": "visite",
+          "visits_other": "visites"
+        },
+        "filters": {
+          "all": "Tous",
+          "allCount": "Tous les statuts ({{count}})",
+          "search": "Rechercher un bien",
+          "sort": "Trier",
+          "view": "Affichage",
+          "status": {
+            "active": "En ligne",
+            "pending": "Sous option",
+            "draft": "Brouillons",
+            "rented": "Loués",
+            "sold": "Vendus"
+          },
+          "sorts": {
+            "todo": "À traiter d'abord",
+            "views": "Plus vus",
+            "price": "Prix décroissant"
+          },
+          "views": {
+            "rows": "Liste",
+            "cards": "Grille"
+          }
+        },
+        "columns": {
+          "property": "Bien",
+          "status": "Statut",
+          "price": "Prix",
+          "views": "Vues",
+          "contacts": "Contacts",
+          "visits": "Visites",
+          "todo": "À traiter"
+        },
+        "pager": {
+          "range": "{{from}} à {{to}} sur {{total}}"
+        },
+        "toast": {
+          "status": "« {{title}} » : {{status}}",
+          "error": "La mise à jour a échoué. Réessayez."
+        },
+        "photos": {
+          "title": "Annonces sans photo",
+          "allGood": "Toutes les annonces en ligne ont au moins une photo.",
+          "figure": "en ligne sans aucune photo",
+          "figureNoContact": "en ligne, aucun contact reçu",
+          "barsLabel": "Contacts reçus selon la présence de photos",
+          "with": "Avec photos",
+          "without": "Sans photo",
+          "viewsNote": "Contacts pour {{with}} vues d'un côté, {{without}} de l'autre.",
+          "detailSub_one": "{{count}} annonce en ligne sans aucune photo, classée par nombre de vues",
+          "detailSub_other": "{{count}} annonces en ligne sans aucune photo, classées par nombre de vues",
+          "columns": {
+            "listing": "Annonce",
+            "views": "Vues",
+            "contacts": "Contacts",
+            "description": "Description",
+            "visits": "Visites à venir",
+            "actions": "Actions"
+          },
+          "chars_one": "{{count}} car.",
+          "chars_other": "{{count}} car.",
+          "complete": "Compléter la fiche",
+          "asideTitle": "Photos et contacts, annonces en ligne",
+          "withCount": "Avec photos ({{n}})",
+          "withoutCount": "Sans photo ({{n}})",
+          "ratio": "{{contacts}} contacts / {{views}} vues",
+          "shortAlert_one": "<strong>Cette fiche a aussi une description de moins de {{min}} caractères</strong> : rien ne retient l'acheteur.",
+          "shortAlert_other": "<strong>{{count}} de ces fiches ont aussi une description de moins de {{min}} caractères</strong> : rien ne retient l'acheteur.",
+          "visitsAlert_one": "<strong>{{title}}</strong> : {{count}} visite prévue alors que l'annonce n'a aucune photo. Ce visiteur vient d'ailleurs.",
+          "visitsAlert_other": "<strong>{{title}}</strong> : {{count}} visites prévues alors que l'annonce n'a aucune photo. Ces visiteurs viennent d'ailleurs."
+        },
+        "price": {
+          "title": "Prix hors marché",
+          "unavailable": "Référentiel des prix de quartier indisponible pour le moment.",
+          "allGood_one": "L'annonce comparée est dans la fourchette de son quartier.",
+          "allGood_other": "Les {{count}} annonces comparées sont dans la fourchette de leur quartier.",
+          "figure": "hors de la fourchette du quartier",
+          "barLabel": "{{count}} annonces : {{above}} au-dessus de la fourchette, {{below}} en dessous",
+          "aboveCount": "Au-dessus · {{n}}",
+          "belowCount": "En dessous · {{n}}",
+          "vsAvg": "{{value}} pour {{avg}} en moyenne",
+          "detailSub_one": "{{count}} annonce en ligne comparée au prix moyen au m² de son quartier, même type de transaction",
+          "detailSub_other": "{{count}} annonces en ligne comparées au prix moyen au m² de leur quartier, même type de transaction",
+          "none": "Aucune annonce en ligne n'a de référence de quartier.",
+          "chartTitle": "Prix au m², en % de la moyenne du quartier",
+          "axisName": "Annonce",
+          "axisAvg": "moyenne",
+          "axisGap": "écart",
+          "tx": {
+            "sale": "vente",
+            "rent": "location"
+          },
+          "aboveAlert_one": "<strong>{{count}} annonce au-dessus de la fourchette</strong>, {{contacts}} contacts reçus. Vérifiez d'abord la saisie du prix et de la surface.",
+          "aboveAlert_other": "<strong>{{count}} annonces au-dessus de la fourchette</strong>, {{contacts}} contacts reçus en tout. Vérifiez d'abord la saisie du prix et de la surface.",
+          "typoAlert": "À {{price}}, « {{title}} » serait à {{sqm}}, dans la fourchette du quartier ({{min}} à {{max}}). Un zéro de trop est plausible.",
+          "belowAlert_one": "<strong>{{count}} annonce sous la fourchette.</strong> {{title}} : {{price}} pour {{surface}} m², soit {{sqm}} quand le quartier se situe entre {{min}} et {{max}}.",
+          "belowAlert_other": "<strong>{{count}} annonces sous la fourchette.</strong> La plus basse, {{title}} : {{price}} pour {{surface}} m², soit {{sqm}} quand le quartier se situe entre {{min}} et {{max}}.",
+          "noSurface_one": "« {{title}} » n'a pas de surface : elle ne peut pas être comparée.",
+          "noSurface_other": "{{count}} annonces n'ont pas de surface, dont « {{title}} » : elles ne peuvent pas être comparées.",
+          "noRef_one": "{{count}} annonce n'a pas de référence pour son quartier.",
+          "noRef_other": "{{count}} annonces n'ont pas de référence pour leur quartier.",
+          "legendBand": "Fourchette du quartier",
+          "legendAvg": "Moyenne",
+          "legendPoint": "Prix au m² de l'annonce",
+          "rowLabel": "{{name}} : {{value}}, fourchette du quartier {{min}} à {{max}}",
+          "tipThis": "Ce bien",
+          "tipAvg": "Moyenne du quartier",
+          "tipRange": "Fourchette",
+          "range": "{{min}} à {{max}}"
+        },
+        "status": {
+          "title": "Statuts à corriger",
+          "unavailable": "Dossiers de transaction indisponibles : les statuts ne peuvent pas être vérifiés.",
+          "allGood": "Aucun statut contredit par les dossiers de transaction.",
+          "figure": "contredits par leurs dossiers",
+          "detailSub": "Biens dont le statut affiché contredit les dossiers de transaction",
+          "allTransactions": "Toutes les transactions",
+          "columns": {
+            "property": "Bien",
+            "shown": "Statut affiché",
+            "what": "Ce que disent les dossiers",
+            "fix": "Correction proposée"
+          },
+          "fix": {
+            "sold": "Passer en vendu",
+            "rented": "Passer en loué",
+            "pending": "Passer sous option",
+            "active": "Remettre en ligne"
+          },
+          "apply": "Appliquer : {{fix}}",
+          "why": "Un statut faux fausse tout le reste : un bien vendu affiché sous option reste compté dans le stock, un bien loué en cours de vente disparaît des recherches.",
+          "what": {
+            "won": "Dossier gagné au stade {{stage}} le {{date}}, à {{amount}}.",
+            "wonNoAmount": "Dossier gagné au stade {{stage}} le {{date}}.",
+            "openDeal": "{{stage}} en cours à {{amount}} (probabilité {{probability}} %).",
+            "openDealNoAmount": "Dossier ouvert au stade {{stage}}.",
+            "lost_one": "Son seul dossier a été perdu au stade {{stage}} le {{date}}.",
+            "lost_other": "Ses {{count}} dossiers ont été perdus, le dernier au stade {{stage}} le {{date}}.",
+            "noDeal": "Aucun dossier de transaction ouvert sur ce bien.",
+            "openOthers_one": "Un autre dossier reste ouvert.",
+            "openOthers_other": "{{count}} autres dossiers restent ouverts."
+          }
+        },
+        "draft": {
+          "title_one": "Brouillon à republier",
+          "title_other": "Brouillons à republier",
+          "none": "Aucun brouillon en attente.",
+          "photos_one": "{{count}} photo",
+          "photos_other": "{{count}} photos",
+          "favorites": "Mis en favori",
+          "viewsBefore": "Vues avant retrait",
+          "urgentRunning": "Le badge <strong>Urgent</strong> payé expire le {{date}} : en brouillon, il ne sert à rien.",
+          "urgentExpired": "Le badge <strong>Urgent</strong> payé a expiré le {{date}} sans servir.",
+          "others_one": "et {{count}} autre brouillon",
+          "others_other": "et {{count}} autres brouillons",
+          "othersTitle_one": "{{count}} autre brouillon",
+          "othersTitle_other": "{{count}} autres brouillons",
+          "republish": "Republier",
+          "kpi": {
+            "price": "Prix",
+            "contacts_one": "{{count}} contact",
+            "contacts_other": "{{count}} contacts",
+            "toNotify": "acheteurs à prévenir",
+            "photos": "Photos",
+            "description_one": "description de {{count}} car.",
+            "description_other": "description de {{count}} car."
+          },
+          "favoritesAlert_one": "{{count}} personne l'a mise en favori : la republier la prévient.",
+          "favoritesAlert_other": "{{count}} personnes l'ont mise en favori : la republier les prévient.",
+          "noRef": "Pas de fourchette de prix pour le quartier {{neighborhood}} dans le référentiel."
+        },
+        "detail": {
+          "price": "Prix",
+          "noSurface": "surface non renseignée",
+          "views": "Vues",
+          "favorites_one": "{{count}} mise en favori",
+          "favorites_other": "{{count}} mises en favori",
+          "contacts": "Contacts",
+          "rate": "{{rate}} % des vues",
+          "visits": "Visites",
+          "upcomingUnit": "à venir",
+          "completedOf_one": "{{done}} honorée sur {{count}}",
+          "completedOf_other": "{{done}} honorées sur {{count}}",
+          "noPast": "aucune passée",
+          "priceTitle": "Prix au m² dans le quartier {{neighborhood}}",
+          "thisOne": "Ce bien",
+          "statusAlert": "Statut à corriger : {{fix}}.",
+          "noPhotoAlert": "<strong>Aucune photo.</strong> Une annonce sans photo retient rarement l'acheteur.",
+          "aboveAlert": "<strong>Au-dessus de la fourchette du quartier</strong> ({{min}} à {{max}}). Vérifiez le prix et la surface saisis.",
+          "belowAlert": "<strong>Sous la fourchette du quartier</strong> ({{min}} à {{max}}). Prix ou surface à vérifier.",
+          "unrecordedAlert_one": "{{count}} contact compté sur l'annonce, mais aucun lead dans le CRM : cette demande n'a pas été enregistrée.",
+          "unrecordedAlert_other": "{{count}} contacts comptés sur l'annonce, mais aucun lead dans le CRM : ces demandes n'ont pas été enregistrées.",
+          "leadsTitle_one": "Demandes ({{count}})",
+          "leadsTitle_other": "Demandes ({{count}})",
+          "loadError": "Chargement impossible.",
+          "noLeads": "Aucun lead rattaché à ce bien.",
+          "visitsTitle_one": "Visites à venir ({{count}})",
+          "visitsTitle_other": "Visites à venir ({{count}})",
+          "noVisits": "Aucune visite planifiée.",
+          "dealsTitle_one": "Dossiers ({{count}})",
+          "dealsTitle_other": "Dossiers ({{count}})",
+          "noDeals": "Aucun dossier de transaction.",
+          "probability": "probabilité {{value}} %",
+          "closedOn": "clos le {{date}}",
+          "leadStatus": {
+            "new": "Nouveau",
+            "contacted": "Contacté",
+            "qualified": "Qualifié",
+            "converted": "Converti",
+            "lost": "Perdu"
+          },
+          "visitStatus": {
+            "scheduled": "À confirmer",
+            "confirmed": "Confirmée",
+            "completed": "Honorée",
+            "cancelled": "Annulée",
+            "no_show": "Absent"
+          },
+          "dealStatus": {
+            "active": "En cours",
+            "won": "Gagné",
+            "lost": "Perdu"
+          }
         }
       },
       "status": {
         "active": "En ligne",
-        "pending": "En attente",
+        "pending": "Sous option",
         "sold": "Vendu",
         "rented": "Loué",
         "draft": "Brouillon"
@@ -1922,7 +2228,7 @@
         "statusOptions": {
           "draft": "Brouillon",
           "active": "Publié",
-          "pending": "En attente"
+          "pending": "Sous option"
         },
         "validation": {
           "titleRequired": "Le titre est requis",
@@ -1933,6 +2239,8 @@
         },
         "toastImagesRequired": "Ajoutez au moins une photo.",
         "cancelButton": "Annuler",
+        "backToList": "Retour aux biens",
+        "removePhoto": "Retirer la photo",
         "createButton": "Créer le bien",
         "updateButton": "Mettre à jour",
         "pricePeriods": {
