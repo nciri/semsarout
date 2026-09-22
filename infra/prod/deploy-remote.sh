@@ -61,9 +61,6 @@ NEW_SERVICES="design3d 8526"
 # pas joué ici n'est donc pas un détail cosmétique, c'est une panne totale de tous les chemins
 # qui lisent le modèle (identity.agency_ro.features_synced_at → UndefinedColumn sur chaque
 # /auth/login et /auth/refresh d'un compte d'agence, donc tous les agents dehors).
-# add_features_synced_at.sql est placée AVANT identity/add_rental_feature.sql, la seule entrée
-# dont l'échec est connu : la boucle plus bas n'arrête jamais la séquence, mais rien ne justifie
-# de faire dépendre une migration critique de cette propriété.
 #
 # identity/reset_features_sync_design3d.sql est en QUEUE de liste, et c'est la seule entrée dont
 # la position est contrainte : elle réamorce le repli auto-réparateur d'identity pour que les
@@ -296,24 +293,8 @@ echo "== 5. migrations additives (ALTER sur des tables créées par create_all) 
 # table visée existe forcément (pour les migrations dont le schéma appartient à un
 # service du mesh).
 #
-# identity/add_rental_feature.sql fait exception : elle interroge public.subscriptions
-# / public.subscription_plans, des tables du monolithe LEGACY qui n'ont jamais été (et
-# ne seront pas) migrées sur semsar_prod — les tables réelles sont billing.subscription
-# / billing.subscription_plan (schéma dédié, singulier). Réécrire cette migration pour
-# viser billing.* est hors périmètre de ce lot (design3d). Sans traitement particulier,
-# son échec est donc systématique et ferait sortir CHAQUE déploiement en erreur, y
-# compris un déploiement par ailleurs parfaitement sain — personne ne pourrait plus
-# distinguer un déploiement réussi d'un déploiement raté.
-#
-# Le critère qui suit ne rend PAS cette migration inconditionnellement non bloquante
-# (ça masquerait une vraie régression qui la ferait échouer différemment) : seul un
-# échec dont le message psql confirme PRÉCISÉMENT cette cause connue (relation
-# "public.subscriptions" ou "public.subscription_plans" absente) est absorbé et loggé
-# comme tel ; tout autre échec — sur cette migration comme sur n'importe quelle autre —
-# reste fatal et visible. L'échec d'UNE migration (fatal ou absorbé) ne doit jamais
-# arrêter les suivantes : une colonne manquante sur un autre service resterait alors
-# non réparée à chaque déploiement.
-KNOWN_MISSING_LEGACY_TABLE_ERROR='relation "public\.(subscriptions|subscription_plans)" does not exist'
+# L'échec d'UNE migration ne doit jamais arrêter les suivantes : une colonne manquante sur
+# un autre service resterait alors non réparée à chaque déploiement.
 MIGRATION_FAIL=0
 for m in $MIGRATIONS; do
   f="$APP/services/${m%%/*}/db/${m#*/}"
@@ -325,10 +306,6 @@ for m in $MIGRATIONS; do
   errfile="$(mktemp)"
   if psql_stdin < "$f" 2>"$errfile"; then
     echo "  ✓ $m"
-  elif grep -qE "$KNOWN_MISSING_LEGACY_TABLE_ERROR" "$errfile"; then
-    cat "$errfile" >&2
-    echo "  ~ $m a échoué pour une cause connue et non bloquante (table monolithe" \
-         "legacy jamais migrée sur semsar_prod) — ignoré, à traiter séparément" >&2
   else
     cat "$errfile" >&2
     echo "  ✗ $m a échoué (voir le message psql ci-dessus)" >&2
