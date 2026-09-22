@@ -2,6 +2,7 @@
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, Request
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
@@ -40,12 +41,14 @@ def _visit_dict(db: Session, v: Visit) -> dict:
         "property_title": ro.title if ro else None,
         "property_address": f"{ro.address}, {ro.city}" if ro else None,
         "client_id": v.client_id, "contact_name": contact_name, "contact_phone": contact_phone,
+        "visitor_name": v.visitor_name, "visitor_phone": v.visitor_phone,
         "visitor_email": v.visitor_email or (client.email if client else None),
         "agent_id": v.agent_id, "agent_name": users_client.name_of(v.agency_id, v.agent_id),
         "scheduled_at": iso(v.scheduled_at), "duration_minutes": v.duration_minutes,
         "status": v.status, "visit_type": v.visit_type, "notes": v.notes, "report": v.report,
         "client_feedback": v.client_feedback, "client_comments": v.client_comments,
-        "confirmed_at": iso(v.confirmed_at), "created_at": iso(v.created_at),
+        "confirmed_at": iso(v.confirmed_at), "completed_at": iso(v.completed_at),
+        "cancelled_at": iso(v.cancelled_at), "created_at": iso(v.created_at),
     }
 
 
@@ -57,6 +60,14 @@ def _event_dict(e: CalendarEvent) -> dict:
         "property_id": e.property_id, "user_id": e.user_id, "status": e.status, "color": e.color,
         "created_at": iso(e.created_at),
     }
+
+
+def _touch_client(db: Session, v: Visit) -> None:
+    """Une visite honorée compte comme un échange avec le client (champ « dernier échange »)."""
+    client = db.get(Client, v.client_id) if v.client_id else None
+    when = min(v.scheduled_at or datetime.utcnow(), datetime.utcnow())
+    if client and (client.last_contact_at is None or client.last_contact_at < when):
+        client.last_contact_at = when
 
 
 def _owned(db: Session, visit_id: int, principal: Principal):
@@ -131,6 +142,46 @@ def calendar(request: Request, principal: Principal = Depends(get_principal), db
     return {"items": items}
 
 
+_OPEN = ("scheduled", "confirmed")
+RECENT_DAYS = 90
+OVERDUE_LIMIT = 50
+
+
+def summarize(visits, now: datetime, days: int = RECENT_DAYS) -> dict:
+    """Synthèse de l'agenda. Une visite passée encore planifiée ou confirmée n'a pas été
+    requalifiée : elle ne compte ni dans « à venir » ni dans le taux de présence."""
+    start = now - timedelta(days=days)
+    upcoming = sorted((v for v in visits if v.status in _OPEN and v.scheduled_at >= now), key=lambda v: v.scheduled_at)
+    overdue = sorted((v for v in visits if v.status in _OPEN and v.scheduled_at < now), key=lambda v: v.scheduled_at)
+    recent = {"days": days, "completed": 0, "cancelled": 0, "no_show": 0, "unresolved": 0, "total": 0}
+    for v in visits:
+        if start <= v.scheduled_at < now:
+            recent["total"] += 1
+            recent[v.status if v.status in ("completed", "cancelled", "no_show") else "unresolved"] += 1
+    return {
+        "upcoming": len(upcoming),
+        "to_confirm": sum(1 for v in upcoming if v.status == "scheduled"),
+        "next": upcoming[0] if upcoming else None,
+        "overdue": overdue,
+        "recent": recent,
+    }
+
+
+# Déclarée avant /{visit_id} : sinon « summary » est pris pour un identifiant (422).
+@router.get("/backoffice/visits/summary")
+def visits_summary(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
+    now = datetime.utcnow()
+    query = db.query(Visit).filter(Visit.scheduled_at.isnot(None), or_(
+        Visit.status.in_(_OPEN), Visit.scheduled_at >= now - timedelta(days=RECENT_DAYS)))
+    if principal.agency_id:
+        query = query.filter(Visit.agency_id == principal.agency_id)
+    out = summarize(query.all(), now)
+    out["overdue_total"] = len(out["overdue"])
+    out["overdue"] = [_visit_dict(db, v) for v in out["overdue"][:OVERDUE_LIMIT]]
+    out["next"] = _visit_dict(db, out["next"]) if out["next"] else None
+    return out
+
+
 @router.get("/backoffice/visits/{visit_id}")
 def get_visit(visit_id: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
     v, e = _owned(db, visit_id, principal)
@@ -170,7 +221,16 @@ async def update_visit(visit_id: int, request: Request, principal: Principal = D
             setattr(v, f, data[f])
     if "scheduled_at" in data:
         v.scheduled_at = _dt(data["scheduled_at"])
-    v.updated_at = datetime.utcnow()
+    now = datetime.utcnow()
+    # Requalification depuis l'agenda : l'horodatage suit le statut, comme /complete.
+    if data.get("status") == "completed" and not v.completed_at:
+        v.completed_at = now
+    if data.get("status") == "cancelled" and not v.cancelled_at:
+        v.cancelled_at = now
+    # Une visite honorée est un contact avec le client : sa fiche doit le refléter.
+    if v.status == "completed":
+        _touch_client(db, v)
+    v.updated_at = now
     db.commit()
     return _visit_dict(db, v)
 
@@ -207,6 +267,7 @@ async def complete_visit(visit_id: int, request: Request, principal: Principal =
     for f in ("report", "client_feedback", "client_comments"):
         if f in data:
             setattr(v, f, data[f])
+    _touch_client(db, v)
     db.commit()
     return _visit_dict(db, v)
 

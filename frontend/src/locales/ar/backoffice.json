@@ -903,100 +903,211 @@
     }
   },
   "shop": {
-    "shared": {
-      "pageTitle": "المتجر",
-      "loading": "جارٍ التحميل…",
-      "back": "رجوع",
-      "notFound": "العنصر غير موجود.",
-      "loadError": "حدث خطأ أثناء التحميل. حاول مرة أخرى لاحقًا."
+    "title": "المتجر",
+    "subtitle": "أثاث وأجهزة منزلية لتجهيز عقاراتكم المعروضة للكراء",
+    "groups": {
+      "all": "الكل",
+      "furniture": "أثاث",
+      "appliance": "أجهزة منزلية"
+    },
+    "categories": {
+      "lit": "سرير",
+      "canape": "أريكة",
+      "table": "طاولة",
+      "armoire": "خزانة",
+      "chaise": "كرسي",
+      "bureau": "مكتب",
+      "refrigerateur": "ثلاجة",
+      "lave_linge": "غسالة",
+      "four": "فرن",
+      "micro_ondes": "ميكروويف",
+      "climatiseur": "مكيف",
+      "television": "تلفاز"
+    },
+    "stock": {
+      "out": "نفد المخزون",
+      "onlyLeft_one": "بقي {{count}} فقط في المخزون",
+      "onlyLeft_other": "بقي {{count}} فقط في المخزون",
+      "inStock_one": "{{count}} في المخزون",
+      "inStock_other": "{{count}} في المخزون"
+    },
+    "status": {
+      "pending": "في انتظار الدفع",
+      "paid": "مدفوعة",
+      "preparing": "قيد التحضير",
+      "shipped": "تم الشحن",
+      "delivered": "تم التسليم",
+      "cancelled": "ملغاة"
+    },
+    "steps": {
+      "pending": "تم الطلب",
+      "paid": "تم الدفع",
+      "preparing": "التحضير",
+      "shipped": "الشحن",
+      "delivered": "التسليم"
+    },
+    "stepState": {
+      "done": "مرحلة منجزة",
+      "now": "مرحلة جارية",
+      "todo": "مرحلة قادمة"
+    },
+    "toasts": {
+      "added": "أضيف إلى السلة",
+      "orderCreated": "تم إنشاء الطلب",
+      "paid": "تم الدفع",
+      "payError": "فشل الدفع",
+      "cancelled": "تم إلغاء الطلب"
+    },
+    "summary": {
+      "orders": {
+        "title": "الطلبات الجارية",
+        "follow": "تتبع الطلبات",
+        "figure_one": "طلب جارٍ",
+        "figure_other": "طلبات جارية",
+        "figureNoShip_one": "طلب، لم يُشحن بعد",
+        "figureNoShip_other": "طلبات، لم يُشحن أي منها",
+        "toPay_one": "{{count}} في انتظار الدفع",
+        "toPay_other": "{{count}} في انتظار الدفع",
+        "barLabel": "الطلبات: {{pending}} في انتظار الدفع، {{paid}} مدفوعة، {{preparing}} قيد التحضير، {{shipped}} مشحونة، {{delivered}} مسلّمة",
+        "retiredAlert_one": "<strong>الطلب غير المدفوع يخص منتجًا سُحب من الكتالوج</strong> (« {{names}} »، {{amount}}). من الأفضل إلغاؤه بدل دفعه.",
+        "retiredAlert_other": "<strong>الطلبات الـ{{count}} غير المدفوعة تخص منتجًا سُحب من الكتالوج</strong> (« {{names}} »، {{amount}} في المجموع). من الأفضل إلغاؤها بدل دفعها."
+      },
+      "carts": {
+        "title": "سلال لم تُطلب",
+        "empty": "لا توجد سلة معلّقة لدى الفريق.",
+        "inCarts_one": "في {{count}} سلة للفريق",
+        "inCarts_other": "في {{count}} سلال للفريق",
+        "listLabel": "سلال الفريق",
+        "mine_one": "أنت · {{count}} منتج",
+        "mine_other": "أنت · {{count}} منتجات",
+        "andOthers_one": "{{name}} و{{count}} آخر",
+        "andOthers_other": "{{name}} و{{count}} أخرى",
+        "lowStock": "مخزون منخفض"
+      }
+    },
+    "spend": {
+      "title": "مصاريف الوكالة",
+      "detailSub": "الطلبات حسب الفئة وحسب الشخص، باستثناء الملغاة",
+      "empty": "لا توجد مصاريف مسجلة.",
+      "paidIn": "مدفوعة في {{month}}",
+      "paid": "مدفوع",
+      "pending": "في انتظار الدفع",
+      "pendingAmount": "{{amount}} في الانتظار",
+      "nothing": "لا شيء مدفوع",
+      "retiredRow": "{{name}} (مسحوب)",
+      "byCategory": "حسب الفئة",
+      "chartLabel": "المصاريف حسب الفئة، المدفوعة وفي الانتظار",
+      "barLabel": "{{label}}: {{paid}} مدفوعة، {{pending}} في الانتظار",
+      "columns": {
+        "buyer": "طلبه",
+        "items": "المنتجات",
+        "paid": "مدفوع",
+        "pending": "للدفع"
+      },
+      "fromTo": "{{name}} من {{from}} إلى {{to}}",
+      "risesAlert": "<strong>ارتفعت الأسعار منذ مشترياتكم</strong>: {{list}}. لم يعد ممكنًا إعادة الطلب بنفس السعر.",
+      "rebuyAlert_one": "<strong>من أصل {{count}} منتج مشترى، {{rising}} أغلى اليوم</strong>: {{list}}. إعادة شراء نفس الكمية ستكلف {{amount}} إضافية.",
+      "rebuyAlert_other": "<strong>من أصل {{count}} منتجات مشتراة، {{rising}} أغلى اليوم</strong>: {{list}}. إعادة شراء نفس الكميات ستكلف {{amount}} إضافية.",
+      "noPropertyAlert": "<strong>لا يوجد أي طلب مرتبط بعقار.</strong> يستحيل معرفة المسكن الذي تم تأثيثه، أو إعادة الفوترة للمالك.",
+      "neverOrdered_one": "لم تطلبه الوكالة قط: {{list}}.",
+      "neverOrdered_other": "لم تطلبها الوكالة قط: {{list}}."
     },
     "catalog": {
-      "subtitle": "أثاث وأجهزة كهرومنزلية لتجهيز عقاراتك الكرائية",
-      "myOrders": "طلباتي",
-      "cart": "السلة",
-      "filters": {
-        "allGroups": "كل الفئات",
-        "group": {
-          "furniture": "أثاث",
-          "appliance": "أجهزة كهرومنزلية"
-        },
-        "allCategories": "كل الأصناف"
-      },
-      "searchPlaceholder": "ابحث عن منتج…",
-      "empty": {
-        "title": "لا يوجد منتج",
-        "description": "لا يوجد عنصر مطابق لعوامل التصفية حاليًا."
-      },
-      "outOfStock": "غير متوفر",
-      "addButton": "إضافة",
-      "toasts": {
-        "added": "تمت الإضافة إلى السلة"
-      }
+      "title": "الكتالوج",
+      "sub_one": "{{count}} منتج معروض · {{low}} بمخزون منخفض · {{never}} لم تطلبها الوكالة قط",
+      "sub_other": "{{count}} منتجات معروضة · {{low}} بمخزون منخفض · {{never}} لم تطلبها الوكالة قط",
+      "groupLabel": "مجموعة المنتجات",
+      "categoryLabel": "الفئة",
+      "allCategories": "كل الفئات",
+      "categoryEmpty": "{{label}} · لا توجد منتجات",
+      "search": "ابحث عن منتج…",
+      "empty": "لا يوجد منتج يطابق هذه المرشحات.",
+      "neverOrdered": "لم يُطلب قط",
+      "ordered": "طلبته الوكالة ×{{count}}",
+      "since": "{{delta}} منذ ذلك",
+      "add": "أضف « {{name}} » إلى السلة",
+      "addAnother_one": "أضف نسخة أخرى من « {{name}} » ({{count}} في السلة)",
+      "addAnother_other": "أضف نسخة أخرى من « {{name}} » ({{count}} في السلة)"
     },
     "product": {
+      "back": "العودة إلى المتجر",
       "notFound": "المنتج غير موجود.",
-      "notFoundBack": "العودة إلى المتجر",
-      "outOfStock": "غير متوفر في المخزون",
-      "inStock": "{{n}} متوفر في المخزون",
-      "addButton": "إضافة إلى السلة"
+      "inCart_one": "{{count}} في سلتك",
+      "inCart_other": "{{count}} في سلتك",
+      "quantity": "الكمية",
+      "add": "أضف إلى السلة · {{amount}}"
     },
     "cart": {
-      "backToShop": "متابعة التسوق",
-      "pageTitle": "سلتي",
-      "empty": {
-        "title": "سلتك فارغة",
-        "description": "تصفح المتجر لإضافة الأثاث والأجهزة الكهرومنزلية.",
-        "action": "الانتقال إلى المتجر"
-      },
-      "removeTitle": "إزالة",
-      "total": "المجموع",
-      "deliverToProperty": "التوصيل إلى عقار (اختياري)",
-      "freeAddressPlaceholder": "— عنوان حر —",
-      "propertySearchPlaceholder": "ابحث عن عقار…",
-      "deliveryAddress": "عنوان التوصيل",
-      "orderButton": "إتمام الطلب",
-      "toasts": {
-        "orderCreated": "تم إنشاء الطلب"
-      }
+      "title": "سلتي",
+      "button_one": "سلتي، {{count}} منتج",
+      "button_other": "سلتي، {{count}} منتجات",
+      "sub_one": "{{count}} منتج · {{amount}}",
+      "sub_other": "{{count}} منتجات · {{amount}}",
+      "emptyTitle": "سلتك فارغة",
+      "empty": "تصفح الكتالوج لإضافة أثاث أو أجهزة منزلية.",
+      "backToShop": "مواصلة التسوق",
+      "less": "إزالة نسخة",
+      "more": "إضافة نسخة",
+      "remove": "إزالة « {{name}} » من السلة",
+      "deliverToProperty": "التسليم إلى عقار",
+      "freeAddress": "عنوان حر",
+      "propertySearch": "ابحث عن عقار…",
+      "deliveryAddress": "عنوان التسليم",
+      "addressPlaceholder": "الرقم، الشارع، المدينة",
+      "linkHint": "ربط الطلب بعقار يتيح معرفة تكلفته بالنسبة لهذا المسكن.",
+      "linkHintNone_one": "ربط الطلب بعقار يتيح معرفة تكلفته بالنسبة لهذا المسكن. الطلب السابق غير مرتبط بأي عقار.",
+      "linkHintNone_other": "ربط الطلب بعقار يتيح معرفة تكلفته بالنسبة لهذا المسكن. لا يرتبط أي من الطلبات الـ{{count}} السابقة بعقار.",
+      "lowStock_one": "<strong>{{name}}: بقي {{count}} فقط في المخزون.</strong> لا يُحجز المخزون إلا عند الدفع؛ الطلب ثم الدفع فورًا يجنب فقدانه.",
+      "lowStock_other": "<strong>{{name}}: بقي {{count}} فقط في المخزون.</strong> لا يُحجز المخزون إلا عند الدفع؛ الطلب ثم الدفع فورًا يجنب فقدانه.",
+      "order": "اطلب · {{amount}}"
     },
-    "order": {
+    "orders": {
+      "title": "تتبع الطلبات",
+      "sub": "كل طلبات الوكالة، من الأحدث إلى الأقدم",
       "pageTitle": "طلباتي",
-      "subtitle": "تتبع طلباتك من الأثاث والأجهزة الكهرومنزلية",
-      "shopButton": "المتجر",
-      "stats": {
-        "total": "المجموع",
-        "pending": "قيد الانتظار",
-        "inProgress": "قيد التنفيذ",
-        "delivered": "تم التسليم"
+      "pageSub": "الأثاث والأجهزة المنزلية التي طلبتها الوكالة",
+      "toShop": "الذهاب إلى المتجر",
+      "backToList": "كل الطلبات",
+      "notFound": "الطلب غير موجود.",
+      "filterLabel": "التصفية حسب الحالة",
+      "filters": {
+        "all": "الكل",
+        "pending": "للدفع",
+        "progress": "جارية",
+        "done": "مسلّمة"
       },
       "columns": {
         "reference": "المرجع",
-        "items": "العناصر",
+        "buyer": "طلبه",
+        "delivery": "التسليم",
         "total": "المجموع",
-        "status": "الحالة",
-        "date": "التاريخ"
+        "status": "الحالة"
       },
-      "status": {
-        "pending": "قيد الانتظار",
-        "paid": "مدفوعة",
-        "preparing": "قيد التحضير",
-        "shipped": "تم الشحن",
-        "delivered": "تم التسليم",
-        "cancelled": "ملغاة"
-      },
-      "empty": {
-        "title": "لا توجد طلبات",
-        "description": "ستظهر هنا طلباتك المنجزة من المتجر.",
-        "action": "الانتقال إلى المتجر"
-      },
-      "backToList": "طلباتي",
-      "notFound": "الطلب غير موجود.",
-      "payButton": "الدفع الآن",
-      "paymentReference": "مرجع الدفع: {{reference}}",
-      "toasts": {
-        "paymentSuccess": "تم الدفع بنجاح",
-        "paymentError": "خطأ"
-      }
+      "empty": "لا توجد طلبات حاليًا: ستظهر هنا بمجرد طلب أول سلة.",
+      "emptyFilter": "لا توجد طلبات بهذه الحالة.",
+      "toggle": "تفاصيل الطلب {{reference}}",
+      "open": "فتح الطلب {{reference}}",
+      "items_one": "{{count}} منتج",
+      "items_other": "{{count}} منتجات",
+      "you": "(أنت)",
+      "memberUnknown": "العضو رقم {{id}}",
+      "orderedBy": "طُلب في {{date}} من طرف {{name}}",
+      "noAddress": "العنوان غير محدد",
+      "noProperty": "غير مرتبط بأي عقار",
+      "unit": "{{amount}} للوحدة",
+      "retired": "مسحوب من الكتالوج",
+      "priceNow": "اليوم {{amount}} ({{delta}})",
+      "priceSame": "السعر لم يتغير",
+      "total": "المجموع",
+      "progress": "التقدم: {{status}}",
+      "paidRef": "الدفع {{reference}}، بتاريخ {{date}}",
+      "waiting_one": "في انتظار الدفع منذ {{count}} يوم",
+      "waiting_other": "في انتظار الدفع منذ {{count}} أيام",
+      "noPayment": "لا يوجد دفع",
+      "retiredAlert": "<strong>منتج مسحوب من الكتالوج.</strong> لا يمكن حجز أي مخزون: لن يُسلَّم شيء. ألغوا الطلب.",
+      "pay": "ادفع {{amount}}",
+      "cancel": "إلغاء الطلب",
+      "cancelConfirm": "إلغاء الطلب {{reference}}؟ لن يعود بالإمكان دفعه."
     }
   },
   "ui": {
@@ -1548,13 +1659,340 @@
       }
     },
     "clients": {
+      "page": {
+        "title": "العملاء",
+        "clientsCount_zero": "لا يوجد عميل متابَع",
+        "clientsCount_one": "عميل واحد متابَع",
+        "clientsCount_two": "عميلان متابَعان",
+        "clientsCount_few": "{{count}} عملاء متابَعين",
+        "clientsCount_many": "{{count}} عميلًا متابَعًا",
+        "clientsCount_other": "{{count}} عميل متابَع",
+        "agentsCount_zero": "بدون وكيل",
+        "agentsCount_one": "من طرف وكيل واحد",
+        "agentsCount_two": "من طرف وكيلين",
+        "agentsCount_few": "من طرف {{count}} وكلاء",
+        "agentsCount_many": "من طرف {{count}} وكيلًا",
+        "agentsCount_other": "من طرف {{count}} وكيل",
+        "never": "أبدًا",
+        "today": "اليوم",
+        "noAgent": "بدون وكيل مسؤول",
+        "noAgentShort": "لا أحد",
+        "followedBy": "يتابعه {{name}}",
+        "cameFrom": "المصدر: {{source}}",
+        "budget": "الميزانية",
+        "budgetRange": "من {{min}} إلى {{max}}",
+        "contact": "معلومات الاتصال",
+        "search": "البحث",
+        "historyTitle": "تاريخ العلاقة",
+        "friseLabel": "خط زمني للطلبات والتواصل والزيارات والمعاملات الخاصة بـ {{name}}",
+        "noHistory": "لا يوجد أي طلب أو تواصل أو زيارة أو معاملة مسجلة لهذا العميل.",
+        "openFiche": "فتح ملف {{name}}",
+        "confirmDelete": "حذف ملف {{name}}؟ لا يمكن التراجع عن هذا الإجراء.",
+        "summaryUnavailable": "ملخص التواصل والزيارات والطلبات غير متاح: آخر تواصل والمراحل والملاحظات تعتمد على الملفات وحدها.",
+        "lanes": {
+          "lead": "الطلبات",
+          "inter": "التواصل",
+          "visit": "الزيارات",
+          "tx": "المعاملات"
+        },
+        "shapes": {
+          "done": "تم",
+          "todo": "قادم",
+          "ko": "ملغى أو غياب أو خسارة"
+        },
+        "stages": {
+          "all": "الكل",
+          "tx": "في معاملة",
+          "visited": "زار",
+          "planned": "زيارة مبرمجة",
+          "contact": "على تواصل",
+          "none": "بدون تواصل"
+        },
+        "cols": {
+          "client": "العميل",
+          "status": "الحالة",
+          "agent": "الوكيل",
+          "current": "قيد الإنجاز",
+          "lastExchange": "آخر تواصل",
+          "date": "التاريخ",
+          "type": "النوع",
+          "detail": "التفاصيل",
+          "outcome": "النتيجة",
+          "silence": "بدون تواصل",
+          "actions": "الإجراءات",
+          "property": "العقار المزار",
+          "visit": "الزيارة",
+          "feedback": "الانطباع",
+          "since": "منذ ذلك",
+          "problem": "المشكلة",
+          "finding": "الملاحظة"
+        },
+        "actions": {
+          "newClient": "عميل جديد",
+          "edit": "تعديل",
+          "delete": "حذف العميل",
+          "fullFiche": "الملف الكامل",
+          "call": "اتصال",
+          "write": "مراسلة",
+          "backToList": "العودة إلى العملاء",
+          "newTx": {
+            "sale": "بيع جديد",
+            "rent": "كراء جديد"
+          }
+        },
+        "current": {
+          "nothing": "لا شيء قيد الإنجاز",
+          "txMany_zero": "لا توجد معاملة جارية",
+          "txMany_one": "معاملة واحدة جارية",
+          "txMany_two": "معاملتان جاريتان",
+          "txMany_few": "{{count}} معاملات جارية",
+          "txMany_many": "{{count}} معاملة جارية",
+          "txMany_other": "{{count}} معاملة جارية",
+          "visitOn": "زيارة يوم {{date}}",
+          "visited": "زار {{property}}"
+        },
+        "flags": {
+          "staleLead": "طلب غير معالج",
+          "txUnfollowed": "معاملة بلا متابعة",
+          "reviewStatus": "الحالة تحتاج مراجعة",
+          "hotNoOffer": "مهتم جدًا، بلا عرض",
+          "duplicate": "تكرار محتمل"
+        },
+        "list": {
+          "title": "كل العملاء",
+          "order": "من أقدم تواصل إلى أحدثه",
+          "stageLabel": "مرحلة العلاقة",
+          "searchPlaceholder": "الاسم، المدينة، الوسم، الهاتف…",
+          "searchLabel": "البحث عن عميل",
+          "expand": "عرض ملف {{name}}",
+          "emptyFiltered": "لا يوجد عميل يطابق هذه المرشحات.",
+          "footer_zero": "لا يوجد عميل معروض",
+          "footer_one": "عميل واحد معروض",
+          "footer_two": "عميلان معروضان",
+          "footer_few": "{{count}} عملاء معروضين",
+          "footer_many": "{{count}} عميلًا معروضًا",
+          "footer_other": "{{count}} عميل معروض",
+          "footerOf": "من أصل {{total}}",
+          "inactiveLast": "غير النشطين في آخر القائمة"
+        },
+        "events": {
+          "lead": "طلب · {{source}}",
+          "visit": "زيارة · {{property}}",
+          "tx": {
+            "sale": "بيع · {{property}}",
+            "rent": "كراء · {{property}}"
+          }
+        },
+        "interactionTypes": {
+          "call": "مكالمة",
+          "email": "بريد إلكتروني",
+          "meeting": "موعد",
+          "whatsapp": "واتساب",
+          "visit": "زيارة",
+          "sms": "رسالة نصية",
+          "note": "ملاحظة"
+        },
+        "direction": {
+          "inbound": "وارد",
+          "outbound": "صادر"
+        },
+        "feedback": {
+          "very_interested": "مهتم جدًا",
+          "interested": "مهتم",
+          "neutral": "محايد",
+          "not_interested": "غير مهتم"
+        },
+        "leadStatus": {
+          "new": "لم يعالج قط",
+          "contacted": "تم التواصل",
+          "qualified": "مؤهل",
+          "converted": "تم التحويل",
+          "lost": "ضائع"
+        },
+        "txStatus": {
+          "active": "جارية",
+          "won": "ناجحة",
+          "lost": "خاسرة"
+        },
+        "alerts": {
+          "txNever_zero": "<strong>لا توجد معاملة جارية</strong> ولا أي تواصل مسجل مع هذا العميل.",
+          "txNever_one": "<strong>معاملة واحدة جارية</strong> دون أي تواصل مسجل مع هذا العميل. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "txNever_two": "<strong>معاملتان جاريتان</strong> دون أي تواصل مسجل مع هذا العميل. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "txNever_few": "<strong>{{count}} معاملات جارية</strong> دون أي تواصل مسجل مع هذا العميل. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "txNever_many": "<strong>{{count}} معاملة جارية</strong> دون أي تواصل مسجل مع هذا العميل. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "txNever_other": "<strong>{{count}} معاملة جارية</strong> دون أي تواصل مسجل مع هذا العميل. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "txLate_zero": "<strong>لا توجد معاملة جارية</strong> ولا تواصل منذ {{days}} يومًا.",
+          "txLate_one": "<strong>معاملة واحدة جارية</strong> دون تواصل منذ {{days}} يومًا. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "txLate_two": "<strong>معاملتان جاريتان</strong> دون تواصل منذ {{days}} يومًا. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "txLate_few": "<strong>{{count}} معاملات جارية</strong> دون تواصل منذ {{days}} يومًا. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "txLate_many": "<strong>{{count}} معاملة جارية</strong> دون تواصل منذ {{days}} يومًا. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "txLate_other": "<strong>{{count}} معاملة جارية</strong> دون تواصل منذ {{days}} يومًا. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "never": "<strong>لا يوجد أي تواصل مسجل</strong> منذ إنشاء الملف.",
+          "late": "<strong>آخر تواصل قبل {{days}} يومًا</strong>، يوم {{date}}.",
+          "staleLead": "<strong>طلب لم يعالج قط</strong> منذ {{date}} ({{days}} ي) بخصوص {{property}}. العميل مسجل بالفعل، لكن الطلب غير مرتبط بملفه.",
+          "hotNoOffer": "<strong>مهتم جدًا بـ {{property}}</strong> يوم {{date}}، دون أي عرض منذ ذلك الحين.",
+          "revisit": "زيارة جديدة مبرمجة يوم {{date}}: إنها فرصة للحديث عن العرض.",
+          "inactiveTx_zero": "<strong>مصنف غير نشط</strong> ولا توجد له معاملة جارية.",
+          "inactiveTx_one": "<strong>مصنف غير نشط</strong> رغم أن لديه معاملة جارية.",
+          "inactiveTx_two": "<strong>مصنف غير نشط</strong> رغم أن لديه معاملتين جاريتين.",
+          "inactiveTx_few": "<strong>مصنف غير نشط</strong> رغم أن لديه {{count}} معاملات جارية.",
+          "inactiveTx_many": "<strong>مصنف غير نشط</strong> رغم أن لديه {{count}} معاملة جارية.",
+          "inactiveTx_other": "<strong>مصنف غير نشط</strong> رغم أن لديه {{count}} معاملة جارية.",
+          "inactiveVisit": "<strong>مصنف غير نشط</strong> رغم أنه زار عقارًا يوم {{date}}.",
+          "duplicate": "<strong>تكرار محتمل</strong> مع ملف {{name}} ({{type}}، {{city}}). يجب التحقق قبل الدمج.",
+          "badBudget": "<strong>ميزانية مسجلة بالملايين</strong> ({{budget}}) لمكترٍ: لا يمكن لأي إيجار أن يطابقها.",
+          "noAgent": "<strong>لا يوجد وكيل مسؤول</strong>: لا أحد مكلف بمتابعة هذا العميل."
+        },
+        "relances": {
+          "title": "متابعات متأخرة",
+          "figure_zero": "لا يوجد عميل بلا تواصل منذ أكثر من 3 أسابيع",
+          "figure_one": "عميل بلا تواصل منذ أكثر من 3 أسابيع",
+          "figure_two": "عميلان بلا تواصل منذ أكثر من 3 أسابيع",
+          "figure_few": "عملاء بلا تواصل منذ أكثر من 3 أسابيع",
+          "figure_many": "عميلًا بلا تواصل منذ أكثر من 3 أسابيع",
+          "figure_other": "عميل بلا تواصل منذ أكثر من 3 أسابيع",
+          "barLabel": "آخر تواصل مع العملاء النشطين أو المحتملين: {{fresh}} أقل من 8 أيام، {{mid}} بين 8 و21 يومًا، {{late}} أكثر من 21 يومًا، {{never}} أبدًا",
+          "buckets": {
+            "fresh": "< 8 ي",
+            "mid": "8 إلى 21 ي",
+            "late": "> 21 ي",
+            "never": "أبدًا"
+          },
+          "topLabel": "المتابعات الأكثر استعجالًا",
+          "staleLead": "طلب {{date}} لم يعالج قط",
+          "detailSub_zero": "لا يوجد عميل نشط أو محتمل بلا تواصل منذ أكثر من {{days}} يومًا",
+          "detailSub_one": "عميل واحد نشط أو محتمل بلا تواصل منذ أكثر من {{days}} يومًا، منهم {{never}} لم يتم التواصل معهم قط",
+          "detailSub_two": "عميلان نشطان أو محتملان بلا تواصل منذ أكثر من {{days}} يومًا، منهم {{never}} لم يتم التواصل معهم قط",
+          "detailSub_few": "{{count}} عملاء نشطين أو محتملين بلا تواصل منذ أكثر من {{days}} يومًا، منهم {{never}} لم يتم التواصل معهم قط",
+          "detailSub_many": "{{count}} عميلًا نشطًا أو محتملًا بلا تواصل منذ أكثر من {{days}} يومًا، منهم {{never}} لم يتم التواصل معهم قط",
+          "detailSub_other": "{{count}} عميل نشط أو محتمل بلا تواصل منذ أكثر من {{days}} يومًا، منهم {{never}} لم يتم التواصل معهم قط",
+          "none": "كل العملاء النشطين أو المحتملين تم التواصل معهم خلال الأسابيع الثلاثة الأخيرة.",
+          "unfollowed_zero": "<strong>لا يوجد عميل في معاملة بلا متابعة.</strong>",
+          "unfollowed_one": "<strong>عميل واحد في معاملة لم يعد متابَعًا</strong>: {{names}}.",
+          "unfollowed_two": "<strong>عميلان في معاملة لم يعودا متابَعين</strong>: {{names}}.",
+          "unfollowed_few": "<strong>{{count}} عملاء في معاملة لم يعودوا متابَعين</strong>: {{names}}.",
+          "unfollowed_many": "<strong>{{count}} عميلًا في معاملة لم يعودوا متابَعين</strong>: {{names}}.",
+          "unfollowed_other": "<strong>{{count}} عميل في معاملة لم يعودوا متابَعين</strong>: {{names}}.",
+          "staleLeads_zero": "<strong>لا يوجد طلب في الانتظار.</strong>",
+          "staleLeads_one": "<strong>عميل واحد لديه طلب لم يعالج قط</strong>: {{names}}. هو مسجل بالفعل، لكن صفحة الطلبات لا تعلم بذلك.",
+          "staleLeads_two": "<strong>عميلان لديهما طلب لم يعالج قط</strong>: {{names}}. هما مسجلان بالفعل، لكن صفحة الطلبات لا تعلم بذلك.",
+          "staleLeads_few": "<strong>{{count}} عملاء لديهم طلب لم يعالج قط</strong>: {{names}}. هم مسجلون بالفعل، لكن صفحة الطلبات لا تعلم بذلك.",
+          "staleLeads_many": "<strong>{{count}} عميلًا لديهم طلب لم يعالج قط</strong>: {{names}}. هم مسجلون بالفعل، لكن صفحة الطلبات لا تعلم بذلك.",
+          "staleLeads_other": "<strong>{{count}} عميل لديهم طلب لم يعالج قط</strong>: {{names}}. هم مسجلون بالفعل، لكن صفحة الطلبات لا تعلم بذلك.",
+          "perAgent": "المتابعات المتأخرة حسب الوكيل",
+          "agentLine": "{{name}} · {{late}} من {{total}}",
+          "perAgentNote": "نسبة العملاء النشطين أو المحتملين لكل وكيل."
+        },
+        "offers": {
+          "title": "زيارات بلا عرض",
+          "figure_zero": "لا توجد زيارة بلا عرض",
+          "figure_one": "عميل زار دون تقديم عرض",
+          "figure_two": "عميلان زارا دون تقديم عرض",
+          "figure_few": "عملاء زاروا دون تقديم عرض",
+          "figure_many": "عميلًا زاروا دون تقديم عرض",
+          "figure_other": "عميل زاروا دون تقديم عرض",
+          "hotChip_zero": "لا أحد مهتم جدًا",
+          "hotChip_one": "واحد مهتم جدًا",
+          "hotChip_two": "اثنان مهتمان جدًا",
+          "hotChip_few": "{{count}} مهتمين جدًا",
+          "hotChip_many": "{{count}} مهتمًا جدًا",
+          "hotChip_other": "{{count}} مهتم جدًا",
+          "topLabel": "عملاء مهتمون جدًا بلا عرض",
+          "revisits": "يعود يوم {{date}}",
+          "markedInactive": "ملف مصنف غير نشط",
+          "otherTx": "معاملة على عقار آخر",
+          "visitedOn": "زيارة يوم {{date}}",
+          "budgetNone_zero": "<strong>لا يوجد مشترٍ أو مستثمر</strong> بميزانية مسجلة.",
+          "budgetNone_one": "<strong>لا يوجد عقار منشور</strong> يطابق مدينة وميزانية مشتريك أو مستثمرك.",
+          "budgetNone_two": "<strong>لا يوجد عقار منشور</strong> يطابق مدينة وميزانية مشتريَيك أو مستثمريك.",
+          "budgetNone_few": "<strong>لا يوجد عقار منشور</strong> يطابق مدينة وميزانية مشترييك ومستثمريك الـ{{count}}.",
+          "budgetNone_many": "<strong>لا يوجد عقار منشور</strong> يطابق مدينة وميزانية مشترييك ومستثمريك الـ{{count}}.",
+          "budgetNone_other": "<strong>لا يوجد عقار منشور</strong> يطابق مدينة وميزانية مشترييك ومستثمريك الـ{{count}}.",
+          "budgetSome_zero": "<strong>لا يوجد مشترٍ أو مستثمر</strong> بميزانية مسجلة.",
+          "budgetSome_one": "<strong>{{matched}} من أصل {{count}}</strong> من المشترين والمستثمرين لديه عقار منشور على الأقل في مدينته وميزانيته.",
+          "budgetSome_two": "<strong>{{matched}} من أصل {{count}}</strong> من المشترين والمستثمرين لديهم عقار منشور على الأقل في مدينتهم وميزانيتهم.",
+          "budgetSome_few": "<strong>{{matched}} من أصل {{count}}</strong> من المشترين والمستثمرين لديهم عقار منشور على الأقل في مدينتهم وميزانيتهم.",
+          "budgetSome_many": "<strong>{{matched}} من أصل {{count}}</strong> من المشترين والمستثمرين لديهم عقار منشور على الأقل في مدينتهم وميزانيتهم.",
+          "budgetSome_other": "<strong>{{matched}} من أصل {{count}}</strong> من المشترين والمستثمرين لديهم عقار منشور على الأقل في مدينتهم وميزانيتهم.",
+          "detailSub_zero": "لا توجد زيارة منجزة بلا معاملة على العقار المزار",
+          "detailSub_one": "زيارة واحدة منجزة بلا معاملة على العقار المزار",
+          "detailSub_two": "زيارتان منجزتان بلا معاملة على العقار المزار",
+          "detailSub_few": "{{count}} زيارات منجزة بلا معاملة على العقار المزار",
+          "detailSub_many": "{{count}} زيارة منجزة بلا معاملة على العقار المزار",
+          "detailSub_other": "{{count}} زيارة منجزة بلا معاملة على العقار المزار",
+          "none": "كل زيارة منجزة أدت إلى معاملة.",
+          "veryInterested": "مهتمون جدًا",
+          "neutral": "انطباع محايد",
+          "outOf": "من {{count}}",
+          "hotProperty_zero": "<strong>{{property}}</strong>: لا يوجد زائر مهتم جدًا.",
+          "hotProperty_one": "<strong>{{property}}</strong>: زائر واحد مهتم جدًا، {{names}}، دون أي عرض.",
+          "hotProperty_two": "<strong>{{property}}</strong>: زائران مهتمان جدًا، {{names}}، دون أي عرض.",
+          "hotProperty_few": "<strong>{{property}}</strong>: {{count}} زوار مهتمين جدًا، {{names}}، دون أي عرض.",
+          "hotProperty_many": "<strong>{{property}}</strong>: {{count}} زائرًا مهتمًا جدًا، {{names}}، دون أي عرض.",
+          "hotProperty_other": "<strong>{{property}}</strong>: {{count}} زائر مهتم جدًا، {{names}}، دون أي عرض.",
+          "note": "يسجل الانطباع بعد كل زيارة منجزة: إنه أفضل مؤشر لاختيار من تتابعه أولًا."
+        },
+        "fixes": {
+          "title": "ملفات تحتاج تصحيحًا",
+          "figure_zero": "لا يوجد ملف للتحقق",
+          "figure_one": "ملف للتحقق",
+          "figure_two": "ملفان للتحقق",
+          "figure_few": "ملفات للتحقق",
+          "figure_many": "ملفًا للتحقق",
+          "figure_other": "ملف للتحقق",
+          "kinds": {
+            "dups": "تكرارات محتملة",
+            "inactive": "غير نشطين رغم نشاطهم",
+            "budget": "ميزانية مكترٍ بالملايين",
+            "noAgent": "بدون وكيل مسؤول"
+          },
+          "noneFound": "لم يرصد أي تكرار",
+          "pairs_zero": "لا زوج",
+          "pairs_one": "زوج واحد",
+          "pairs_two": "زوجان",
+          "pairs_few": "{{count}} أزواج",
+          "pairs_many": "{{count}} زوجًا",
+          "pairs_other": "{{count}} زوج",
+          "inactiveSub": "زيارة حديثة أو معاملة جارية",
+          "budgetSub": "من {{range}} لإيجار",
+          "budgetOk": "ميزانيات متسقة",
+          "noAgentOk": "لكل عميل وكيله المسؤول",
+          "detailSub_zero": "لا يوجد ملف يناقض النشاط الفعلي",
+          "detailSub_one": "ملف واحد يناقض محتواه النشاط الفعلي",
+          "detailSub_two": "ملفان يناقض محتواهما النشاط الفعلي",
+          "detailSub_few": "{{count}} ملفات يناقض محتواها النشاط الفعلي",
+          "detailSub_many": "{{count}} ملفًا يناقض محتواها النشاط الفعلي",
+          "detailSub_other": "{{count}} ملف يناقض محتواها النشاط الفعلي",
+          "none": "لا يوجد ملف يحتاج تصحيحًا.",
+          "why": {
+            "dups": "{{status}} · الزيارات: {{visits}} · المعاملات: {{tx}}",
+            "inactiveTx_zero": "لا توجد معاملة جارية",
+            "inactiveTx_one": "معاملة واحدة جارية",
+            "inactiveTx_two": "معاملتان جاريتان",
+            "inactiveTx_few": "{{count}} معاملات جارية",
+            "inactiveTx_many": "{{count}} معاملة جارية",
+            "inactiveTx_other": "{{count}} معاملة جارية",
+            "inactiveVisit": "زيارة منجزة يوم {{date}}",
+            "budget": "{{budget}} لكراء",
+            "noAgent": "لا يوجد وكيل مسؤول"
+          },
+          "noAgentAlert_zero": "<strong>لكل العملاء وكيل مسؤول.</strong>",
+          "noAgentAlert_one": "<strong>عميل واحد بدون وكيل مسؤول</strong>: {{names}}. لن يتابعه أحد.",
+          "noAgentAlert_two": "<strong>عميلان بدون وكيل مسؤول</strong>: {{names}}. لن يتابعهما أحد.",
+          "noAgentAlert_few": "<strong>{{count}} عملاء بدون وكيل مسؤول</strong>: {{names}}. لن يتابعهم أحد.",
+          "noAgentAlert_many": "<strong>{{count}} عميلًا بدون وكيل مسؤول</strong>: {{names}}. لن يتابعهم أحد.",
+          "noAgentAlert_other": "<strong>{{count}} عميل بدون وكيل مسؤول</strong>: {{names}}. لن يتابعهم أحد.",
+          "allAssigned": "<strong>لكل العملاء وكيل مسؤول.</strong>",
+          "dupAlert_zero": "<strong>لا توجد ملفات متشابهة للحسم.</strong>",
+          "dupAlert_one": "<strong>زوج واحد من الملفات المتشابهة للحسم</strong>: تحقق من الهاتف والبريد، ولا تدمج إلا بعد مكالمة.",
+          "dupAlert_two": "<strong>زوجان من الملفات المتشابهة للحسم</strong>: تحقق من الهاتف والبريد، ولا تدمج إلا بعد مكالمة.",
+          "dupAlert_few": "<strong>{{count}} أزواج من الملفات المتشابهة للحسم</strong>: تحقق من الهاتف والبريد، ولا تدمج إلا بعد مكالمة.",
+          "dupAlert_many": "<strong>{{count}} زوجًا من الملفات المتشابهة للحسم</strong>: تحقق من الهاتف والبريد، ولا تدمج إلا بعد مكالمة.",
+          "dupAlert_other": "<strong>{{count}} زوج من الملفات المتشابهة للحسم</strong>: تحقق من الهاتف والبريد، ولا تدمج إلا بعد مكالمة.",
+          "note": "تُرصد التكرارات عبر تطابق الاسم أو الهاتف أو البريد داخل الوكالة."
+        }
+      },
       "list": {
-        "pageTitle": "العملاء",
-        "subtitle": "أدر قاعدة عملائك والعملاء المحتملين",
-        "newButton": "عميل جديد",
-        "addFirstButton": "إضافة عميل",
-        "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني أو الهاتف...",
-        "filtersButton": "عوامل التصفية",
         "filterTypeLabel": "نوع العميل",
         "filterTypeAll": "جميع الأنواع",
         "filterStatusLabel": "الحالة",
@@ -1562,33 +2000,22 @@
         "resetFilters": "إعادة التعيين",
         "types": {
           "buyer": {
-            "label": "المشترون",
-            "description": "عملاء يبحثون عن عقار للشراء"
+            "label": "المشترون"
           },
           "seller": {
-            "label": "البائعون",
-            "description": "مالكون يرغبون في بيع عقارهم"
+            "label": "البائعون"
           },
           "landlord": {
-            "label": "الملاك",
-            "description": "ملاك يعرضون عقارهم للكراء"
+            "label": "الملاك"
           },
           "tenant": {
-            "label": "المستأجرون",
-            "description": "عملاء يبحثون عن كراء"
+            "label": "المستأجرون"
           },
           "investor": {
-            "label": "المستثمرون",
-            "description": "مستثمرون عقاريون"
+            "label": "المستثمرون"
           }
         },
-        "emptyCategory": "لا يوجد عميل في هذه الفئة",
-        "newTransaction": "معاملة جديدة",
-        "budget": "الميزانية: {{min}} - {{max}}",
-        "confirmDelete": "هل أنت متأكد من رغبتك في حذف هذا العميل؟",
         "empty": {
-          "title": "لم يتم العثور على أي عميل",
-          "filtered": "لا يوجد عميل يطابق معايير بحثك.",
           "default": "ابدأ بإضافة أول عميل لك."
         }
       },
@@ -1644,29 +2071,16 @@
         "updateButton": "تحديث"
       },
       "detail": {
-        "editButton": "تعديل",
-        "sections": {
-          "contact": "معلومات الاتصال",
-          "searchCriteria": "معايير البحث"
-        },
         "fields": {
           "email": "البريد الإلكتروني",
           "phonePrimary": "الهاتف الرئيسي",
           "phoneSecondary": "الهاتف الثانوي",
-          "city": "المدينة",
           "address": "العنوان",
-          "agentAssigned": "الوكيل المسند",
           "tags": "الوسوم",
           "notes": "ملاحظات"
         },
-        "budget": "الميزانية: {{min}} — {{max}}",
         "propertyTypesWanted": "أنواع العقارات المطلوبة",
-        "preferredCities": "المدن المفضلة",
-        "createTransaction": "إنشاء معاملة ({{type}})",
-        "transactionType": {
-          "rent": "كراء",
-          "sale": "بيع"
-        }
+        "preferredCities": "المدن المفضلة"
       }
     },
     "pipeline": {
@@ -1674,48 +2088,109 @@
         "list": {
           "pageTitle": "العملاء المحتملون",
           "subtitle": "أدر عملاءك المحتملين وحوّلهم إلى عملاء",
-          "stats": {
-            "total": "إجمالي العملاء المحتملين",
-            "new": "جديد",
-            "qualified": "مؤهّل",
-            "converted": "محوّل"
-          },
-          "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني...",
-          "filtersButton": "التصفية",
+          "listTitle_one": "{{count}} عميل محتمل",
+          "listTitle_other": "{{count}} عملاء محتملون",
+          "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني أو الهاتف…",
           "filterStatusLabel": "الحالة",
           "filterStatusAll": "جميع الحالات",
           "filterSourceLabel": "المصدر",
           "filterSourceAll": "جميع المصادر",
-          "resetFilters": "إعادة تعيين",
+          "filterAgentLabel": "الوكيل المسند",
+          "filterAgentAll": "جميع الوكلاء",
+          "resetFilters": "إعادة تعيين عوامل التصفية",
+          "sortBy": "الترتيب حسب {{column}}",
           "columns": {
             "contact": "جهة الاتصال",
             "contactInfo": "بيانات التواصل",
             "source": "المصدر",
             "status": "الحالة",
-            "property": "العقار المرتبط",
-            "date": "التاريخ",
+            "property": "العقار المطلوب",
+            "agent": "الوكيل",
+            "received": "تاريخ الاستلام",
             "actions": "الإجراءات"
           },
-          "viewDetails": "عرض التفاصيل",
+          "viewDetails": "فتح البطاقة",
+          "hideDetails": "طي البطاقة",
           "markLost": "تحديد كمفقود",
+          "unassigned": "غير مسند",
+          "noName": "بدون اسم",
+          "noProperty": "عقار غير محدد",
+          "loading": "جارٍ تحميل العملاء المحتملين",
+          "loadError": "تعذّر تحميل العملاء المحتملين. أعد المحاولة بعد قليل.",
           "paginationInfo": "عرض {{from}} إلى {{to}} من أصل {{total}} عميل محتمل",
-          "prev": "السابق",
-          "next": "التالي",
+          "prev": "الصفحة السابقة",
+          "next": "الصفحة التالية",
           "empty": {
             "title": "لم يتم العثور على أي عميل محتمل",
             "filtered": "لا يوجد عميل محتمل يطابق معايير البحث.",
             "default": "ستظهر العملاء المحتملون هنا عندما يتواصل معك المهتمون."
           }
         },
+        "summary": {
+          "pending": {
+            "title": "عملاء محتملون للمعالجة",
+            "headline_one": "جديد، لم يتم التواصل معه",
+            "headline_other": "جدد، لم يتم التواصل معهم",
+            "oldest_one": "أقدمهم ينتظر منذ {{count}} يوم.",
+            "oldest_other": "أقدمهم ينتظر منذ {{count}} يومًا.",
+            "show": "عرض هؤلاء العملاء، من الأقدم إلى الأحدث",
+            "empty": "لا يوجد عميل محتمل في الانتظار: تمت معالجة الكل."
+          },
+          "sources": {
+            "title": "حسب المصدر",
+            "headline_one": "عميل محتمل مستلم إجمالًا",
+            "headline_other": "عملاء محتملون مستلمون إجمالًا",
+            "filter": "{{source}}: {{count}} عملاء محتملين، تصفية القائمة"
+          },
+          "conversion": {
+            "title": "التحويل",
+            "headline_one": "{{converted}} من أصل {{count}} أصبح عميلًا",
+            "headline_other": "{{converted}} من أصل {{count}} أصبحوا عملاء",
+            "funnel": "المراحل التي اجتازها العملاء المحتملون",
+            "steps": {
+              "received": "مستلمون",
+              "contacted": "تم التواصل",
+              "qualified": "مؤهّلون",
+              "converted": "محوّلون"
+            },
+            "lost_one": "{{count}} عميل محتمل مفقود.",
+            "lost_other": "{{count}} عملاء محتملون مفقودون."
+          }
+        },
         "detail": {
-          "title": "تفاصيل العميل المحتمل",
+          "title": "بطاقة {{name}}",
           "contactInfo": "بيانات التواصل",
+          "email": "مراسلة {{email}}",
+          "call": "الاتصال بالرقم {{phone}}",
           "message": "الرسالة",
+          "noMessage": "لم تُترك أي رسالة.",
           "internalNotes": "ملاحظات داخلية",
-          "source": "المصدر",
-          "createdAt": "تاريخ الإنشاء",
-          "property": "العقار المرتبط",
-          "assignedTo": "مسند إلى"
+          "property": "العقار المطلوب",
+          "openProperty": "فتح بطاقة العقار",
+          "assignedTo": "الإسناد",
+          "assignLabel": "الوكيل المسند إلى {{name}}",
+          "history": {
+            "title": "سجل الحالة",
+            "received": "مستلم",
+            "contacted": "تم التواصل",
+            "qualified": "مؤهّل",
+            "converted": "تحوّل إلى عميل",
+            "lost": "مفقود",
+            "undated": "تاريخ غير مسجّل"
+          },
+          "duplicates": {
+            "title": "نفس الاسم أو نفس الهاتف",
+            "loading": "جارٍ البحث عن التكرارات…",
+            "error": "تعذّر التحقق من التكرارات.",
+            "none": "لا توجد جهة اتصال أخرى بهذا الاسم أو بهذا الرقم.",
+            "leadsAlert_one": "{{count}} طلب آخر من جهة الاتصال هذه: عالجها معًا.",
+            "leadsAlert_other": "{{count}} طلبات أخرى من جهة الاتصال هذه: عالجها معًا.",
+            "leadsLabel": "طلبات أخرى من نفس جهة الاتصال",
+            "clientsLabel": "العملاء المطابقون",
+            "fromThisLead": "عميل أُنشئ من هذا العميل المحتمل",
+            "existingClient": "عميل حالي للوكالة",
+            "openClient": "فتح بطاقة العميل"
+          }
         },
         "status": {
           "new": "جديد",
@@ -1725,11 +2200,12 @@
           "lost": "مفقود"
         },
         "source": {
-          "contact_form": "نموذج التواصل",
-          "phone_reveal": "الهاتف",
-          "callback_request": "طلب اتصال",
-          "website": "الموقع الإلكتروني",
-          "manual": "يدوي",
+          "contact_form": "استمارة الاتصال",
+          "phone_reveal": "رقم الهاتف المعروض",
+          "callback_request": "طلب معاودة الاتصال",
+          "website": "الموقع",
+          "manual": "إدخال يدوي",
+          "service_request": "طلب خدمة",
           "other": "أخرى"
         },
         "nextAction": {
@@ -1746,27 +2222,177 @@
       "pipeline": {
         "list": {
           "pageTitle": "مسار الصفقات",
-          "subtitle": "أدر معاملاتك الجارية",
+          "whatSale_one": "{{count}} عملية بيع",
+          "whatSale_other": "{{count}} عمليات بيع",
+          "whatRent_one": "{{count}} عملية كراء",
+          "whatRent_other": "{{count}} عمليات كراء",
           "listViewLink": "عرض القائمة",
-          "newButton": "معاملة جديدة",
-          "typeSale": "البيع",
-          "typeRent": "الكراء",
+          "newButton": "صفقة جديدة",
+          "typeLabel": "نوع الصفقة",
+          "typeSale": "بيع",
+          "typeRent": "كراء",
+          "agentFilter": "تصفية حسب الوكيل",
           "agentPlaceholder": "جميع الوكلاء",
-          "agentSearchPlaceholder": "البحث عن وكيل…",
-          "totalTransactions": "إجمالي المعاملات:",
-          "totalValue": "القيمة الإجمالية:",
-          "priorityLegend": "دليل الأولويات"
+          "showLabel": "الملفات المعروضة",
+          "showAll": "جميع الملفات",
+          "showTodo": "للمعالجة",
+          "searchLabel": "تصفية ملفات مسار الصفقات",
+          "searchPlaceholder": "تصفية: عميل، عقار، مرجع…",
+          "amountNote": "مبلغ الملف: العرض إن وُجد، وإلا السعر المطلوب",
+          "loading": "جارٍ تحميل مسار الصفقات",
+          "loadError": "تعذّر تحميل مسار الصفقات. أعد المحاولة بعد لحظة.",
+          "subtitle": "{{date}} · {{what}} جارية"
+        },
+        "kpi": {
+          "weighted": "المسار المرجّح",
+          "asOf": "حتى اليوم",
+          "weightedSub_one": "من أصل {{amount}} · ملف واحد",
+          "weightedSub_other": "من أصل {{amount}} · {{count}} ملفات",
+          "commission": " · العمولة المتوقعة {{amount}}",
+          "todo": "ملفات للمعالجة",
+          "critical_one": "{{count}} حرج",
+          "critical_other": "{{count}} حرجة",
+          "todoShare": "{{share}} من الملفات",
+          "nothingBlocking": "لا شيء معطِّل",
+          "idle": "أطول ركود",
+          "days_one": "يوم",
+          "days_other": "أيام",
+          "exits": "الملفات المغلقة خلال 30 يومًا",
+          "won_one": "رابحة",
+          "won_other": "رابحة",
+          "lost_one": "خاسرة",
+          "lost_other": "خاسرة",
+          "lostSub": "{{amount}} ضائعة، منها {{top}} في مرحلة {{stage}}",
+          "lostReason": " ({{reason}})",
+          "noLoss": "لا خسارة",
+          "unavailable": "غير متاح"
+        },
+        "todo": {
+          "title": "للمعالجة بالأولوية",
+          "more": "توسيع ({{count}} إضافية)",
+          "less": "تصغير",
+          "empty": "لا يوجد ملف يتطلب إجراءً",
+          "none": "لا شيء",
+          "goTo": "عرض الملف {{ref}}",
+          "severity": {
+            "crit": "حرج",
+            "warn": "للإنجاز",
+            "info": "للتحقق"
+          }
+        },
+        "agents": {
+          "title": "الحمل حسب الوكيل",
+          "gross": "المبلغ الإجمالي",
+          "weighted": "المرجّح",
+          "files": "الملفات",
+          "todo": "للمعالجة",
+          "todoCount_one": "{{count}} للمعالجة",
+          "todoCount_other": "{{count}} للمعالجة",
+          "nothing": "لا شيء للمعالجة",
+          "hint": "النقر على وكيل يصفّي اللوحة أدناه.",
+          "rowLabel": "{{name}}: {{count}} ملفات، {{weighted}} مرجّحة من أصل {{gross}}، {{todo}} للمعالجة",
+          "unassigned": "بدون وكيل"
+        },
+        "board": {
+          "title": "الملفات الجارية حسب المرحلة",
+          "hint": "اسحب بطاقة لتغيير مرحلتها، أو افتحها لنقلها بلوحة المفاتيح",
+          "laneLabel_one": "{{stage}}: ملف واحد",
+          "laneLabel_other": "{{stage}}: {{count}} ملفات",
+          "weightedOf": "مرجّحة، من أصل {{amount}}",
+          "noFile": "لا يوجد ملف",
+          "dropHere": "أفلت ملفًا هنا",
+          "hiddenByFilter": "مخفية بسبب التصفية"
         },
         "card": {
-          "openDetail": "فتح التفاصيل في تبويب جديد",
+          "openDetail": "فتح البطاقة في علامة تبويب جديدة",
           "edit": "تعديل",
           "archive": "أرشفة",
+          "archiveConfirm": "أرشفة الملف {{ref}}؟ سيخرج من مسار الصفقات.",
           "noPropertyTitle": "عقار بدون عنوان",
           "noClient": "عميل غير محدد",
-          "agent": "الوكيل: {{name}}"
+          "agent": "الوكيل: {{name}}",
+          "idleShort": "{{count}} ي",
+          "expand": "فتح الملف {{ref}}",
+          "collapse": "طي الملف {{ref}}",
+          "label": "{{ref}}، {{client}}، {{amount}}، {{probability}} %",
+          "askingPrice": "السعر المطلوب",
+          "offer": "العرض",
+          "belowAsking": "{{share}} تحت السعر",
+          "expectedClose": "الإغلاق المتوقع",
+          "inDays_one": "بعد يوم واحد",
+          "inDays_other": "بعد {{count}} أيام",
+          "daysAgo_one": "منذ يوم واحد",
+          "daysAgo_other": "منذ {{count}} أيام",
+          "inStageSince": "في المرحلة منذ",
+          "commission": "العمولة ({{rate}} %)",
+          "agentLabel": "الوكيل",
+          "moveLabel": "نقل {{ref}} إلى مرحلة أخرى",
+          "currentStage": "المرحلة: {{stage}}",
+          "moveTo": "نقل إلى {{stage}}",
+          "idle_one": "دون تغيير في المرحلة منذ يوم واحد",
+          "idle_other": "دون تغيير في المرحلة منذ {{count}} أيام"
         },
-        "column": {
-          "empty": "لا توجد معاملات"
+        "move": {
+          "done": "انتقل {{ref}} إلى <strong>{{stage}}</strong>. الاحتمال بقي عند {{probability}} %.",
+          "undo": "تراجع",
+          "failed": "فشل نقل {{ref}}: يبقى الملف في مرحلة {{stage}}."
+        },
+        "flags": {
+          "duplicate": {
+            "title": "تكرار محتمل",
+            "text_won": "نفس العميل ونفس العقار في {{ref}}، الذي رُبح في {{date}} ({{amount}}). لا يمكن لهذا الملف أن يكتمل: أرشِفه أو ادمجه.",
+            "text_active": "نفس العميل ونفس العقار في {{ref}}، وهو ما زال جاريًا. احتفظ بملف واحد فقط."
+          },
+          "stale": {
+            "title_one": "يوم واحد دون تغيير في المرحلة",
+            "title_other": "{{count}} أيام دون تغيير في المرحلة",
+            "text": "الملف في مرحلة {{stage}} دون تقدّم: تواصل مع العميل أو راجع الاحتمال."
+          },
+          "overdue": {
+            "title": "تجاوز تاريخ الإغلاق المتوقع",
+            "text_one": "كان التوقيع متوقعًا في {{date}}، منذ يوم واحد: حدّث التاريخ أو أغلق الملف.",
+            "text_other": "كان التوقيع متوقعًا في {{date}}، منذ {{count}} أيام: حدّث التاريخ أو أغلق الملف."
+          },
+          "unrealistic_close": {
+            "title": "تاريخ إغلاق غير واقعي",
+            "text_one": "التوقيع متوقع في {{date}}، بعد يوم واحد، والملف ما زال في مرحلة {{stage}}.",
+            "text_other": "التوقيع متوقع في {{date}}، بعد {{count}} أيام، والملف ما زال في مرحلة {{stage}}."
+          },
+          "certain_not_closed": {
+            "title": "احتمال 100 % دون إغلاق",
+            "text": "في مرحلة {{stage}}، التوقيع متوقع في {{date}}. إما أن الصفقة وُقّعت ويجب نقل الملف إلى «رابحة»، أو أن الاحتمال خاطئ."
+          },
+          "rival_applicant": {
+            "title": "مرشّحان لنفس العقار",
+            "text": "{{client}} ({{ref}}) مرشّح أيضًا لهذا العقار، في مرحلة {{stage}}. عقد كراء واحد ممكن: يجب الحسم."
+          },
+          "lost_before": {
+            "title": "خسارة سابقة على هذا العقار",
+            "text": "سقط الملف {{ref}} في مرحلة {{stage}} بتاريخ {{date}} ({{amount}})، السبب: {{reason}}."
+          },
+          "property_status": {
+            "title": "العقار مسجّل «{{status}}»",
+            "text": "يشير الكتالوج إلى أن هذا العقار {{status}} بينما الملف ما زال جاريًا: إما البطاقة أو الملف خاطئ."
+          },
+          "unknown": "ملاحظة للتحقق",
+          "noDate": "تاريخ غير محدد",
+          "noReason": "غير محدد",
+          "status": {
+            "sold": "مباع",
+            "rented": "مكترى"
+          }
+        },
+        "stages": {
+          "contact": "تواصل",
+          "visit": "زيارة",
+          "offer": "عرض",
+          "negotiation": "تفاوض",
+          "compromise": "وعد بالبيع",
+          "final_act": "العقد النهائي",
+          "application": "ترشّح",
+          "verification": "تحقق",
+          "lease": "عقد الكراء",
+          "move_in": "الدخول"
         },
         "priority": {
           "low": "منخفضة",
@@ -1776,74 +2402,150 @@
         }
       },
       "visits": {
-        "list": {
-          "pageTitle": "الزيارات والمواعيد",
-          "subtitle": "أدر زياراتك ومواعيدك",
-          "newButton": "جدولة زيارة",
-          "viewToggleCalendar": "التقويم",
-          "viewToggleList": "قائمة",
-          "today": "اليوم",
-          "filterStatusAll": "جميع الحالات",
-          "daysHeader": {
-            "mon": "إثنين",
-            "tue": "ثلاثاء",
-            "wed": "أربعاء",
-            "thu": "خميس",
-            "fri": "جمعة",
-            "sat": "سبت",
-            "sun": "أحد"
-          },
-          "moreCount": "+{{count}} أخرى",
-          "empty": {
-            "title": "لا توجد زيارات",
-            "description": "خطط لزيارتك الأولى."
-          },
-          "legend": "دليل الحالات"
-        },
+        "title": "الزيارات والمواعيد",
+        "subtitle": "أجندة زيارات الوكالة",
+        "plan": "جدولة زيارة",
+        "loadError": "تعذّر تحميل الزيارات.",
+        "visitor": "زائر",
+        "noProperty": "عقار غير محدد",
         "status": {
-          "scheduled": "مجدولة",
+          "scheduled": "في انتظار التأكيد",
           "confirmed": "مؤكدة",
-          "completed": "منجزة",
+          "completed": "تمت",
           "cancelled": "ملغاة",
-          "no_show": "عدم حضور"
+          "no_show": "غياب"
         },
-        "modal": {
-          "title": "تفاصيل الزيارة",
-          "noProperty": "عقار غير محدد",
-          "duration": "- {{minutes}} د",
-          "noVisitor": "زائر غير محدد",
-          "reportLabel": "تقرير الزيارة",
-          "reportPlaceholder": "ملاحظات حول الزيارة...",
-          "feedbackLabel": "ملاحظات العميل",
-          "feedbackOptions": {
-            "select": "اختر...",
-            "very_interested": "مهتم جدًا",
-            "interested": "مهتم",
-            "neutral": "محايد",
-            "not_interested": "غير مهتم"
+        "overdueChip": "بحاجة إلى تحديث",
+        "summary": {
+          "upcoming": "القادمة",
+          "upcomingNone": "لا توجد زيارات مبرمجة.",
+          "next": "التالية",
+          "toConfirm": "في انتظار التأكيد",
+          "toConfirmSub_one": "زيارة قادمة لم تُؤكَّد بعد",
+          "toConfirmSub_other": "زيارات قادمة لم تُؤكَّد بعد",
+          "overdue_one": "{{count}} زيارة سابقة بحاجة إلى تحديث حالتها",
+          "overdue_other": "{{count}} زيارات سابقة بحاجة إلى تحديث حالتها",
+          "attendance": "الحضور · {{days}} يومًا",
+          "attendanceSub": "{{completed}} تمت من أصل {{resolved}} زيارات محدَّثة الحالة",
+          "attendanceNone": "لا توجد زيارات محدَّثة الحالة خلال آخر {{days}} يومًا.",
+          "honoured": "تمت",
+          "cancelled": "ملغاة",
+          "absent": "حالات الغياب",
+          "unresolved": "غير محدَّثة",
+          "outcomesLabel": "{{honoured}} تمت، {{cancelled}} ملغاة، {{absent}} حالات غياب، {{unresolved}} غير محدَّثة"
+        },
+        "overdue": {
+          "title": "بحاجة إلى تحديث",
+          "alert_one": "<strong>{{count}} زيارة سابقة لم تُحدَّث حالتها.</strong> حدّد إن كانت قد تمت أو أُلغيت أو تغيّب العميل: نسبة الحضور تعتمد على ذلك.",
+          "alert_other": "<strong>{{count}} زيارات سابقة لم تُحدَّث حالتها.</strong> حدّد إن كانت قد تمت أو أُلغيت أو تغيّب العميل: نسبة الحضور تعتمد على ذلك.",
+          "more_one": "و{{count}} زيارة أخرى أقدم في القائمة.",
+          "more_other": "و{{count}} زيارات أخرى أقدم في القائمة."
+        },
+        "agenda": {
+          "title": "الأجندة",
+          "mode": "طريقة العرض",
+          "day": "يوم",
+          "week": "أسبوع",
+          "list": "قائمة",
+          "prev": "الفترة السابقة",
+          "next": "الفترة التالية",
+          "today": "اليوم",
+          "tomorrow": "غدًا",
+          "statusFilter": "التصفية حسب الحالة",
+          "allStatuses": "جميع الحالات",
+          "weekRange": "أسبوع {{from}} إلى {{to}}",
+          "count_one": "{{count}} زيارة",
+          "count_other": "{{count}} زيارات",
+          "emptyDay": "لا توجد زيارات",
+          "emptyList": "لا توجد زيارات.",
+          "allVisits": "جميع الزيارات، من الأحدث إلى الأقدم",
+          "page": "الصفحة {{page}} من {{pages}}",
+          "prevPage": "الصفحة السابقة",
+          "nextPage": "الصفحة التالية"
+        },
+        "row": {
+          "expand": "عرض البطاقة",
+          "collapse": "طيّ البطاقة",
+          "duration": "{{minutes}} د"
+        },
+        "fiche": {
+          "property": "العقار",
+          "contact": "جهة الاتصال",
+          "agent": "الوكيل",
+          "noAgent": "غير مُسندة",
+          "confirmation": "التأكيد",
+          "confirmedAt": "أُكِّدت في {{date}}",
+          "notConfirmed": "لم تُؤكَّد بعد",
+          "completedAt": "تمت في {{date}}",
+          "cancelledAt": "أُلغيت في {{date}}",
+          "notes": "ملاحظات",
+          "report": "تقرير الزيارة",
+          "noReport": "لا يوجد تقرير.",
+          "feedback": "رأي العميل",
+          "noFeedback": "لا يوجد رأي للعميل.",
+          "openProperty": "فتح العقار",
+          "openClient": "فتح بطاقة العميل",
+          "call": "اتصال",
+          "email": "إرسال بريد إلكتروني"
+        },
+        "actions": {
+          "confirm": "تأكيد الزيارة",
+          "complete": "تسجيلها كزيارة تمت وكتابة التقرير",
+          "report": "تعديل التقرير",
+          "no_show": "العميل تغيّب",
+          "cancel": "إلغاء الزيارة",
+          "edit": "تعديل الزيارة",
+          "delete": "حذف الزيارة",
+          "deleteConfirm": "حذف هذه الزيارة نهائيًا؟"
+        },
+        "feedback": {
+          "very_interested": "مهتم جدًا",
+          "interested": "مهتم",
+          "neutral": "محايد",
+          "not_interested": "غير مهتم"
+        },
+        "report": {
+          "title": "تقرير الزيارة",
+          "report": "التقرير",
+          "reportPlaceholder": "سير الزيارة، نقاط القوة، الاعتراضات…",
+          "feedback": "رأي العميل",
+          "feedbackNone": "غير محدد",
+          "comments": "تعليقات العميل",
+          "save": "حفظ",
+          "close": "إغلاق التقرير"
+        },
+        "form": {
+          "createTitle": "جدولة زيارة",
+          "editTitle": "تعديل الزيارة",
+          "property": "العقار",
+          "propertyPlaceholder": "اختر عقارًا",
+          "client": "العميل",
+          "clientPlaceholder": "عميل موجود",
+          "visitorName": "اسم الزائر",
+          "visitorHint": "مطلوب إذا لم يُختر أي عميل.",
+          "email": "البريد الإلكتروني",
+          "phone": "الهاتف",
+          "dateTime": "التاريخ والوقت",
+          "duration": "المدة",
+          "durations": {
+            "15": "15 د",
+            "30": "30 د",
+            "45": "45 د",
+            "60": "ساعة واحدة",
+            "90": "ساعة و30 د"
           },
-          "confirmButton": "تأكيد",
-          "cancelButton": "إلغاء",
-          "submitReportButton": "تأكيد التقرير",
-          "markCompletedButton": "التعليم كمنجزة",
-          "closeButton": "إغلاق"
+          "agent": "الوكيل",
+          "agentPlaceholder": "الوكيل المكلف بالزيارة",
+          "notes": "ملاحظات",
+          "notesPlaceholder": "معلومات مفيدة للزائر أو للوكيل…",
+          "save": "حفظ",
+          "close": "إغلاق النموذج"
         },
-        "newModal": {
-          "title": "جدولة زيارة",
-          "visitorNameLabel": "اسم الزائر *",
-          "emailLabel": "البريد الإلكتروني",
-          "phoneLabel": "الهاتف",
-          "dateTimeLabel": "التاريخ والوقت *",
-          "durationLabel": "المدة (دقائق)",
-          "duration15": "15 د",
-          "duration30": "30 د",
-          "duration45": "45 د",
-          "duration60": "ساعة واحدة",
-          "duration90": "ساعة و30 د",
-          "notesLabel": "ملاحظات",
-          "notesPlaceholder": "معلومات إضافية...",
-          "cancelButton": "إلغاء",
-          "submitButton": "جدولة"
+        "toast": {
+          "created": "تمت جدولة الزيارة.",
+          "updated": "تم تحديث الزيارة.",
+          "deleted": "تم حذف الزيارة.",
+          "error": "فشلت العملية."
         }
       }
     },
@@ -1883,37 +2585,105 @@
       },
       "list": {
         "pageTitle": "المعاملات",
-        "subtitle": "عرض قائمة بكل المعاملات",
+        "subtitle": "سجل البيوع والإيجارات الخاصة بالوكالة",
         "pipelineViewLink": "عرض المسار",
         "newButton": "معاملة جديدة",
-        "searchPlaceholder": "البحث بالمرجع...",
-        "filtersButton": "التصفية",
-        "filterTypeLabel": "النوع",
-        "filterTypeAll": "كل الأنواع",
-        "filterStatusLabel": "الحالة",
-        "filterStatusAll": "كل الحالات",
-        "filterStageLabel": "المرحلة",
-        "filterStageAll": "كل المراحل",
-        "resetFilters": "إعادة التعيين",
+        "loading": "جارٍ تحميل المعاملات",
+        "loadError": "تعذّر تحميل المعاملات.",
+        "period": {
+          "label": "الفترة",
+          "30": "30 يومًا",
+          "90": "90 يومًا",
+          "365": "12 شهرًا",
+          "all": "الكل"
+        },
+        "summary": {
+          "title": "الملخص",
+          "since": "الإغلاقات منذ {{date}} · الجارية: الوضع الحالي",
+          "allTime": "كل الإغلاقات · الجارية: الوضع الحالي",
+          "sale": "بيع",
+          "rent": "إيجار",
+          "active": "جارية",
+          "won": "موقّعة",
+          "lost": "ضائعة",
+          "commission": "العمولات المنتظرة",
+          "weighted": "{{amount}} بعد الترجيح",
+          "topReason": "أول سبب للضياع: <strong>{{reason}}</strong> ({{count}})",
+          "noLoss": "لا توجد صفقات ضائعة خلال الفترة.",
+          "separate": "لا يُجمع البيع مع الإيجار: الإيجار مبلغ شهري."
+        },
+        "registry": "السجل",
+        "total_one": "{{count}} معاملة",
+        "total_other": "{{count}} معاملات",
+        "searchPlaceholder": "البحث بالمرجع أو الملاحظة…",
+        "filters": {
+          "label": "مرشحات السجل",
+          "type": "النوع",
+          "typeAll": "كل الأنواع",
+          "stage": "المرحلة",
+          "stageAll": "كل المراحل",
+          "status": "الحالة",
+          "statusAll": "كل الحالات",
+          "agent": "الوكيل",
+          "agentAll": "كل الوكلاء",
+          "agentFallback": "الوكيل #{{id}}",
+          "reset": "إعادة تعيين المرشحات"
+        },
         "columns": {
-          "reference": "المرجع",
           "property": "العقار",
           "client": "العميل",
           "type": "النوع",
           "stage": "المرحلة",
-          "price": "السعر",
+          "amount": "المبلغ",
           "status": "الحالة",
-          "agent": "الوكيل"
+          "agent": "الوكيل",
+          "actions": "الإجراءات"
         },
-        "viewDetails": "عرض",
+        "overdue": "تجاوز تاريخ الإغلاق المتوقع",
+        "lostReason": "السبب: {{reason}}",
+        "lostReasonNone": "سبب غير مذكور",
+        "expand": "فتح البطاقة",
+        "collapse": "طي البطاقة",
+        "viewDetails": "فتح البطاقة الكاملة",
+        "fiche": {
+          "parties": "العقار والأطراف",
+          "property": "العقار",
+          "client": "العميل",
+          "seller": "البائع / الموكِّل",
+          "agent": "الوكيل",
+          "stage": "المرحلة",
+          "amounts": "المبالغ",
+          "asking": "السعر المطلوب",
+          "offer": "آخر عرض",
+          "final": "السعر النهائي",
+          "probability": "الاحتمال",
+          "commission": "العمولة",
+          "commissionRate": "النسبة {{rate}} %",
+          "commissionExpected": "منتظرة",
+          "commissionSigned": "مكتسبة",
+          "milestones": "تواريخ المراحل",
+          "notes": "ملاحظات",
+          "none": "—"
+        },
+        "milestone": {
+          "contact": "أول اتصال",
+          "visit": "الزيارة",
+          "offer": "العرض",
+          "acceptance": "قبول العرض",
+          "compromise": "الوعد بالبيع",
+          "closing": "التوقيع",
+          "closedOn": "وُقّعت في",
+          "lostOn": "ضاعت في",
+          "expected": "الإغلاق المتوقع"
+        },
         "empty": {
           "title": "لا توجد معاملات",
           "filtered": "لا توجد معاملة مطابقة لمعاييرك.",
           "default": "أنشئ أول معاملة.",
           "pipelineLink": "عرض المسار"
         },
-        "prev": "السابق",
-        "next": "التالي",
+        "prev": "الصفحة السابقة",
+        "next": "الصفحة التالية",
         "pageInfo": "الصفحة {{page}} من {{total}}"
       },
       "create": {
@@ -1945,29 +2715,9 @@
         "notFound": "المعاملة غير موجودة.",
         "backToList": "الرجوع إلى القائمة",
         "pipelineLink": "عرض المسار",
-        "propertyPartiesTitle": "العقار والأطراف",
-        "propertyLabel": "العقار",
-        "clientLabel": "العميل",
-        "sellerLabel": "البائع / الموكِّل",
-        "agentLabel": "الوكيل",
-        "trackingTitle": "المتابعة التجارية",
-        "stageLabel": "المرحلة",
-        "priorityLabel": "الأولوية",
-        "probabilityLabel": "الاحتمالية",
-        "firstContactLabel": "أول اتصال",
-        "expectedClosingLabel": "تاريخ الإغلاق المتوقع",
-        "actualClosingLabel": "تاريخ الإغلاق الفعلي",
-        "lostReason": "سبب الخسارة: {{reason}}",
-        "financialTitle": "الجانب المالي",
-        "askingPriceLabel": "السعر المطلوب",
-        "offerPriceLabel": "سعر العرض",
-        "finalPriceLabel": "السعر النهائي",
-        "commissionRateLabel": "نسبة العمولة",
-        "commissionAmountLabel": "مبلغ العمولة",
         "offersTitle": "العروض ({{count}})",
         "offersEmpty": "لا توجد عروض مسجلة.",
-        "offerCreatedBy": " · {{name}}",
-        "notesTitle": "ملاحظات"
+        "offerCreatedBy": " · {{name}}"
       }
     },
     "properties": {
@@ -1976,33 +2726,339 @@
         "subtitle": "أدر محفظة عقاراتك",
         "newButton": "إضافة عقار",
         "addFirstButton": "إضافة عقار",
-        "searchPlaceholder": "ابحث بالعنوان، المدينة...",
-        "filtersButton": "الفلاتر",
+        "searchPlaceholder": "العنوان، المرجع، المدينة أو الحي",
         "filterStatusLabel": "الحالة",
-        "filterStatusAll": "جميع الحالات",
         "filterTypeLabel": "نوع العقار",
         "filterTypeAll": "جميع الأنواع",
         "resetFilters": "إعادة التصفير",
-        "confirmDelete": "هل أنت متأكد من حذف هذا العقار؟",
+        "confirmDelete": "حذف « {{title}} »؟ لا يمكن التراجع عن هذا الإجراء.",
         "viewOnline": "عرض على الموقع",
         "edit": "تعديل",
         "newTransaction": "معاملة جديدة",
         "delete": "حذف",
-        "actionsMenu": "الإجراءات",
-        "viewsCount_one": "{{count}} مشاهدة",
-        "viewsCount_other": "{{count}} مشاهدة",
         "previous": "السابق",
         "next": "التالي",
         "pageOf": "صفحة {{page}} من {{pages}}",
         "empty": {
           "title": "لا يوجد أي عقار",
-          "filtered": "لا يوجد عقار يطابق معايير البحث.",
+          "filtered": "لا يوجد عقار يطابق البحث أو الفلاتر.",
           "default": "ابدأ بإضافة عقارك الأول."
+        }
+      },
+      "board": {
+        "subtitle_one": "عقار واحد في المحفظة",
+        "subtitle_other": "{{count}} عقارات في المحفظة",
+        "loadError": "تعذّر تحميل العقارات. حاول لاحقًا.",
+        "loading": "جارٍ تحميل العقارات…",
+        "units": {
+          "dh": "درهم",
+          "perMonth": "درهم/شهر",
+          "perWeek": "درهم/أسبوع",
+          "perDay": "درهم/ليلة",
+          "sqm": "درهم/م²",
+          "sqmMonth": "درهم/م²/شهر"
+        },
+        "signals": {
+          "none": "لا شيء يستدعي الانتباه",
+          "status": "حالة يجب تصحيحها",
+          "draft": "يجب إعادة نشره",
+          "noPhoto": "بدون صور",
+          "priceTimes": "السعر × {{ratio}}",
+          "priceAbove": "السعر +{{pct}} %",
+          "priceBelow": "السعر −{{pct}} %",
+          "newLeads_one": "طلب واحد للمعالجة",
+          "newLeads_other": "{{count}} طلبات للمعالجة",
+          "noSurface": "المساحة غير محددة"
+        },
+        "checks": {
+          "title": "بطاقة الإعلان",
+          "none": "لا توجد",
+          "chars_one": "حرف واحد",
+          "chars_other": "{{count}} حرفًا",
+          "missing": "غير محدد",
+          "noDate": "بدون تاريخ",
+          "photos": "الصور",
+          "description": "الوصف",
+          "surface": "المساحة",
+          "rooms": "الغرف",
+          "energy": "فئة الطاقة",
+          "published": "تاريخ النشر"
+        },
+        "tags": {
+          "featured": "في الواجهة",
+          "urgent": "عاجل"
+        },
+        "overview": {
+          "label": "نظرة عامة على المحفظة",
+          "online": "منشورة",
+          "onlineSub": "{{sale}} للبيع · {{rent}} للكراء",
+          "views": "مشاهدات الإعلانات المنشورة",
+          "viewsSub_one": "اتصال واحد، أي {{rate}} %",
+          "viewsSub_other": "{{count}} اتصالات، أي {{rate}} %",
+          "visits": "الزيارات القادمة",
+          "visitsSub_one": "على عقار واحد، حتى {{date}}",
+          "visitsSub_other": "على {{count}} عقارات، حتى {{date}}",
+          "visitsNone": "لا توجد زيارة مبرمجة",
+          "leads": "طلبات غير معالجة",
+          "leadsSub_one": "على عقار واحد",
+          "leadsSub_other": "على {{count}} عقارات",
+          "leadsNone": "تمت معالجة كل شيء",
+          "barLabel": "{{total}} عقارات: {{active}} منشورة، {{pending}} محجوزة مبدئيًا، {{draft}} مسودات، {{closed}} مكتراة أو مباعة",
+          "buckets": {
+            "active": "منشورة",
+            "pending": "محجوزة مبدئيًا",
+            "draft": "مسودات",
+            "closed": "مكتراة أو مباعة"
+          }
+        },
+        "queue": {
+          "title": "للمعالجة",
+          "sub": "ما يعيق إعلاناتك، مستخرج من بيانات المحفظة"
+        },
+        "list": {
+          "title": "جميع العقارات",
+          "count_one": "عقار واحد",
+          "count_other": "{{count}} عقارات",
+          "countOf_one": "عقار واحد من {{total}}",
+          "countOf_other": "{{count}} عقارات من {{total}}",
+          "noPhoto": "بدون صور",
+          "photos_one": "صورة واحدة",
+          "photos_other": "{{count}} صور",
+          "stats": "{{views}} مشاهدة · {{contacts}} اتصال",
+          "views_one": "مشاهدة",
+          "views_other": "مشاهدة",
+          "contacts_one": "اتصال",
+          "contacts_other": "اتصال",
+          "visits_one": "زيارة",
+          "visits_other": "زيارة"
+        },
+        "filters": {
+          "all": "الكل",
+          "allCount": "جميع الحالات ({{count}})",
+          "search": "البحث عن عقار",
+          "sort": "الترتيب",
+          "view": "العرض",
+          "status": {
+            "active": "منشورة",
+            "pending": "محجوزة مبدئيًا",
+            "draft": "مسودات",
+            "rented": "مكتراة",
+            "sold": "مباعة"
+          },
+          "sorts": {
+            "todo": "ما يجب معالجته أولًا",
+            "views": "الأكثر مشاهدة",
+            "price": "السعر تنازليًا"
+          },
+          "views": {
+            "rows": "قائمة",
+            "cards": "شبكة"
+          }
+        },
+        "columns": {
+          "property": "العقار",
+          "status": "الحالة",
+          "price": "السعر",
+          "views": "المشاهدات",
+          "contacts": "الاتصالات",
+          "visits": "الزيارات",
+          "todo": "للمعالجة"
+        },
+        "pager": {
+          "range": "{{from}} إلى {{to}} من {{total}}"
+        },
+        "toast": {
+          "status": "« {{title}} »: {{status}}",
+          "error": "فشل التحديث. حاول مجددًا."
+        },
+        "photos": {
+          "title": "إعلانات بدون صور",
+          "allGood": "جميع الإعلانات المنشورة تضم صورة واحدة على الأقل.",
+          "figure": "منشورة بدون أي صورة",
+          "figureNoContact": "منشورة، دون أي اتصال",
+          "barsLabel": "الاتصالات المتلقاة حسب وجود الصور",
+          "with": "مع صور",
+          "without": "بدون صور",
+          "viewsNote": "اتصالات مقابل {{with}} مشاهدة من جهة، و{{without}} من الجهة الأخرى.",
+          "detailSub_one": "إعلان منشور واحد بدون أي صورة",
+          "detailSub_other": "{{count}} إعلانات منشورة بدون أي صورة، مرتبة حسب عدد المشاهدات",
+          "columns": {
+            "listing": "الإعلان",
+            "views": "المشاهدات",
+            "contacts": "الاتصالات",
+            "description": "الوصف",
+            "visits": "الزيارات القادمة",
+            "actions": "الإجراءات"
+          },
+          "chars_one": "حرف واحد",
+          "chars_other": "{{count}} حرفًا",
+          "complete": "إكمال البطاقة",
+          "asideTitle": "الصور والاتصالات، الإعلانات المنشورة",
+          "withCount": "مع صور ({{n}})",
+          "withoutCount": "بدون صور ({{n}})",
+          "ratio": "{{contacts}} اتصال / {{views}} مشاهدة",
+          "shortAlert_one": "<strong>لهذه البطاقة أيضًا وصف يقل عن {{min}} حرف</strong>: لا شيء يستبقي المشتري.",
+          "shortAlert_other": "<strong>{{count}} من هذه البطاقات لها أيضًا وصف يقل عن {{min}} حرف</strong>: لا شيء يستبقي المشتري.",
+          "visitsAlert_one": "<strong>{{title}}</strong>: زيارة واحدة مبرمجة رغم أن الإعلان بلا صور. هذا الزائر قادم من مكان آخر.",
+          "visitsAlert_other": "<strong>{{title}}</strong>: {{count}} زيارات مبرمجة رغم أن الإعلان بلا صور. هؤلاء الزوار قادمون من مكان آخر."
+        },
+        "price": {
+          "title": "أسعار خارج السوق",
+          "unavailable": "مرجع أسعار الأحياء غير متاح حاليًا.",
+          "allGood_one": "الإعلان المقارَن داخل نطاق حيّه.",
+          "allGood_other": "الإعلانات الـ{{count}} المقارَنة داخل نطاق أحيائها.",
+          "figure": "خارج نطاق الحي",
+          "barLabel": "{{count}} إعلانات: {{above}} فوق النطاق، {{below}} تحته",
+          "aboveCount": "فوق النطاق · {{n}}",
+          "belowCount": "تحت النطاق · {{n}}",
+          "vsAvg": "{{value}} مقابل متوسط {{avg}}",
+          "detailSub_one": "إعلان منشور واحد مقارَن بمتوسط سعر المتر المربع في حيّه، لنفس نوع المعاملة",
+          "detailSub_other": "{{count}} إعلانات منشورة مقارَنة بمتوسط سعر المتر المربع في أحيائها، لنفس نوع المعاملة",
+          "none": "لا يوجد أي إعلان منشور له مرجع حي.",
+          "chartTitle": "سعر المتر المربع، كنسبة من متوسط الحي",
+          "axisName": "الإعلان",
+          "axisAvg": "المتوسط",
+          "axisGap": "الفارق",
+          "tx": {
+            "sale": "بيع",
+            "rent": "كراء"
+          },
+          "aboveAlert_one": "<strong>إعلان واحد فوق النطاق</strong>، {{contacts}} اتصال. تحقق أولًا من إدخال السعر والمساحة.",
+          "aboveAlert_other": "<strong>{{count}} إعلانات فوق النطاق</strong>، {{contacts}} اتصال في المجموع. تحقق أولًا من إدخال السعر والمساحة.",
+          "typoAlert": "بسعر {{price}}، سيكون « {{title}} » بـ {{sqm}}، داخل نطاق الحي ({{min}} إلى {{max}}). صفر زائد أمر مرجح.",
+          "belowAlert_one": "<strong>إعلان واحد تحت النطاق.</strong> {{title}}: {{price}} مقابل {{surface}} م²، أي {{sqm}} بينما يتراوح الحي بين {{min}} و{{max}}.",
+          "belowAlert_other": "<strong>{{count}} إعلانات تحت النطاق.</strong> الأدنى، {{title}}: {{price}} مقابل {{surface}} م²، أي {{sqm}} بينما يتراوح الحي بين {{min}} و{{max}}.",
+          "noSurface_one": "« {{title}} » بدون مساحة: لا يمكن مقارنته.",
+          "noSurface_other": "{{count}} إعلانات بدون مساحة، منها « {{title}} »: لا يمكن مقارنتها.",
+          "noRef_one": "إعلان واحد بدون مرجع لحيّه.",
+          "noRef_other": "{{count}} إعلانات بدون مرجع لأحيائها.",
+          "legendBand": "نطاق الحي",
+          "legendAvg": "المتوسط",
+          "legendPoint": "سعر المتر المربع للإعلان",
+          "rowLabel": "{{name}}: {{value}}، نطاق الحي من {{min}} إلى {{max}}",
+          "tipThis": "هذا العقار",
+          "tipAvg": "متوسط الحي",
+          "tipRange": "النطاق",
+          "range": "{{min}} إلى {{max}}"
+        },
+        "status": {
+          "title": "حالات يجب تصحيحها",
+          "unavailable": "ملفات المعاملات غير متاحة: لا يمكن التحقق من الحالات.",
+          "allGood": "لا توجد حالة تناقضها ملفات المعاملات.",
+          "figure": "تناقضها ملفاتها",
+          "detailSub": "عقارات تناقض حالتها المعروضة ملفات المعاملات",
+          "allTransactions": "جميع المعاملات",
+          "columns": {
+            "property": "العقار",
+            "shown": "الحالة المعروضة",
+            "what": "ما تقوله الملفات",
+            "fix": "التصحيح المقترح"
+          },
+          "fix": {
+            "sold": "تحويل إلى مُباع",
+            "rented": "تحويل إلى مُكترى",
+            "pending": "تحويل إلى محجوز مبدئيًا",
+            "active": "إعادة النشر"
+          },
+          "apply": "تطبيق: {{fix}}",
+          "why": "حالة خاطئة تُفسد كل الباقي: عقار مُباع معروض كمحجوز يبقى محسوبًا في المخزون، وعقار مُكترى قيد البيع يختفي من نتائج البحث.",
+          "what": {
+            "won": "ملف ناجح في مرحلة {{stage}} بتاريخ {{date}}، بمبلغ {{amount}}.",
+            "wonNoAmount": "ملف ناجح في مرحلة {{stage}} بتاريخ {{date}}.",
+            "openDeal": "{{stage}} جارية بمبلغ {{amount}} (الاحتمال {{probability}} %).",
+            "openDealNoAmount": "ملف مفتوح في مرحلة {{stage}}.",
+            "lost_one": "ملفه الوحيد خُسر في مرحلة {{stage}} بتاريخ {{date}}.",
+            "lost_other": "خُسرت ملفاته الـ{{count}}، آخرها في مرحلة {{stage}} بتاريخ {{date}}.",
+            "noDeal": "لا يوجد أي ملف معاملة مفتوح على هذا العقار.",
+            "openOthers_one": "ملف آخر ما زال مفتوحًا.",
+            "openOthers_other": "{{count}} ملفات أخرى ما زالت مفتوحة."
+          }
+        },
+        "draft": {
+          "title_one": "مسودة يجب إعادة نشرها",
+          "title_other": "مسودات يجب إعادة نشرها",
+          "none": "لا توجد مسودة في الانتظار.",
+          "photos_one": "صورة واحدة",
+          "photos_other": "{{count}} صور",
+          "favorites": "أُضيف إلى المفضلة",
+          "viewsBefore": "المشاهدات قبل السحب",
+          "urgentRunning": "شارة <strong>عاجل</strong> المدفوعة تنتهي في {{date}}: وهي بلا فائدة ما دام الإعلان مسودة.",
+          "urgentExpired": "انتهت شارة <strong>عاجل</strong> المدفوعة في {{date}} دون فائدة.",
+          "others_one": "ومسودة أخرى",
+          "others_other": "و{{count}} مسودات أخرى",
+          "othersTitle_one": "مسودة أخرى",
+          "othersTitle_other": "{{count}} مسودات أخرى",
+          "republish": "إعادة النشر",
+          "kpi": {
+            "price": "السعر",
+            "contacts_one": "اتصال واحد",
+            "contacts_other": "{{count}} اتصالات",
+            "toNotify": "مشترون يجب إخبارهم",
+            "photos": "الصور",
+            "description_one": "وصف من حرف واحد",
+            "description_other": "وصف من {{count}} حرفًا"
+          },
+          "favoritesAlert_one": "شخص واحد أضافه إلى المفضلة: إعادة نشره تُعلمه.",
+          "favoritesAlert_other": "{{count}} أشخاص أضافوه إلى المفضلة: إعادة نشره تُعلمهم.",
+          "noRef": "لا يوجد نطاق أسعار لحي {{neighborhood}} في المرجع."
+        },
+        "detail": {
+          "price": "السعر",
+          "noSurface": "المساحة غير محددة",
+          "views": "المشاهدات",
+          "favorites_one": "إضافة واحدة إلى المفضلة",
+          "favorites_other": "{{count}} إضافات إلى المفضلة",
+          "contacts": "الاتصالات",
+          "rate": "{{rate}} % من المشاهدات",
+          "visits": "الزيارات",
+          "upcomingUnit": "قادمة",
+          "completedOf_one": "{{done}} منجزة من أصل {{count}}",
+          "completedOf_other": "{{done}} منجزة من أصل {{count}}",
+          "noPast": "لا توجد زيارة سابقة",
+          "priceTitle": "سعر المتر المربع في حي {{neighborhood}}",
+          "thisOne": "هذا العقار",
+          "statusAlert": "حالة يجب تصحيحها: {{fix}}.",
+          "noPhotoAlert": "<strong>لا توجد أي صورة.</strong> نادرًا ما يستبقي إعلان بلا صور المشتري.",
+          "aboveAlert": "<strong>فوق نطاق الحي</strong> ({{min}} إلى {{max}}). تحقق من السعر والمساحة المُدخلين.",
+          "belowAlert": "<strong>تحت نطاق الحي</strong> ({{min}} إلى {{max}}). يجب التحقق من السعر أو المساحة.",
+          "unrecordedAlert_one": "اتصال واحد محسوب على الإعلان، لكن لا يوجد أي طلب في إدارة العملاء: لم يُسجَّل هذا الطلب.",
+          "unrecordedAlert_other": "{{count}} اتصالات محسوبة على الإعلان، لكن لا يوجد أي طلب في إدارة العملاء: لم تُسجَّل هذه الطلبات.",
+          "leadsTitle_one": "الطلبات ({{count}})",
+          "leadsTitle_other": "الطلبات ({{count}})",
+          "loadError": "تعذّر التحميل.",
+          "noLeads": "لا يوجد أي طلب مرتبط بهذا العقار.",
+          "visitsTitle_one": "الزيارات القادمة ({{count}})",
+          "visitsTitle_other": "الزيارات القادمة ({{count}})",
+          "noVisits": "لا توجد زيارة مبرمجة.",
+          "dealsTitle_one": "الملفات ({{count}})",
+          "dealsTitle_other": "الملفات ({{count}})",
+          "noDeals": "لا يوجد أي ملف معاملة.",
+          "probability": "الاحتمال {{value}} %",
+          "closedOn": "أُغلق في {{date}}",
+          "leadStatus": {
+            "new": "جديد",
+            "contacted": "تم الاتصال",
+            "qualified": "مؤهَّل",
+            "converted": "تم التحويل",
+            "lost": "خاسر"
+          },
+          "visitStatus": {
+            "scheduled": "بانتظار التأكيد",
+            "confirmed": "مؤكدة",
+            "completed": "منجزة",
+            "cancelled": "ملغاة",
+            "no_show": "غائب"
+          },
+          "dealStatus": {
+            "active": "جارٍ",
+            "won": "ناجح",
+            "lost": "خاسر"
+          }
         }
       },
       "status": {
         "active": "منشور",
-        "pending": "قيد الانتظار",
+        "pending": "محجوز مبدئيًا",
         "sold": "مُباع",
         "rented": "مُكترى",
         "draft": "مسودة"
@@ -2055,7 +3111,7 @@
         "statusOptions": {
           "draft": "مسودة",
           "active": "منشور",
-          "pending": "قيد الانتظار"
+          "pending": "محجوز مبدئيًا"
         },
         "validation": {
           "titleRequired": "العنوان مطلوب",
@@ -2066,6 +3122,8 @@
         },
         "toastImagesRequired": "أضف صورة واحدة على الأقل.",
         "cancelButton": "إلغاء",
+        "backToList": "العودة إلى العقارات",
+        "removePhoto": "إزالة الصورة",
         "createButton": "إنشاء العقار",
         "updateButton": "تحديث",
         "pricePeriods": {
