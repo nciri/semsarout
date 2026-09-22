@@ -29,6 +29,8 @@ class Transaction(Base):
     transaction_type = Column(String(20), nullable=False)
     stage = Column(String(30), default="contact")
     stage_order = Column(Integer, default=0)
+    # Entrée dans l'étape actuelle : compte les jours sans avancer (constat « immobile »).
+    stage_entered_at = Column(DateTime, default=datetime.utcnow)
 
     asking_price = Column(Numeric(12, 2))
     offer_price = Column(Numeric(12, 2))
@@ -100,12 +102,14 @@ class TransactionDocument(Base):
 
 
 class PropertyRO(Base):
-    """Projection locale du bien (via `listing.*`) : `property_title` / `property_city`."""
+    """Projection locale du bien (via `listing.*`) : `property_title` / `property_city`, et le
+    statut catalogue (vendu/loué) confronté aux dossiers en cours."""
     __tablename__ = "property_ro"
 
     id = Column(BigInteger, primary_key=True)
     title = Column(String(200))
     city = Column(String(100))
+    status = Column(String(20))
 
 
 class ClientRO(Base):

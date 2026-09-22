@@ -114,6 +114,7 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/biens/shared.jsx',
   'src/pages/backoffice/Leads.jsx',
   'src/pages/backoffice/Pipeline.jsx',
+  'src/pages/backoffice/pipeline/Board.jsx',
   'src/pages/backoffice/Visits.jsx',
   'src/pages/backoffice/visits/VisitRow.jsx',
   'src/pages/backoffice/visits/VisitForm.jsx',

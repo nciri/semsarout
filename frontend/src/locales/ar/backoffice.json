@@ -1600,27 +1600,177 @@
       "pipeline": {
         "list": {
           "pageTitle": "مسار الصفقات",
-          "subtitle": "أدر معاملاتك الجارية",
+          "whatSale_one": "{{count}} عملية بيع",
+          "whatSale_other": "{{count}} عمليات بيع",
+          "whatRent_one": "{{count}} عملية كراء",
+          "whatRent_other": "{{count}} عمليات كراء",
           "listViewLink": "عرض القائمة",
-          "newButton": "معاملة جديدة",
-          "typeSale": "البيع",
-          "typeRent": "الكراء",
+          "newButton": "صفقة جديدة",
+          "typeLabel": "نوع الصفقة",
+          "typeSale": "بيع",
+          "typeRent": "كراء",
+          "agentFilter": "تصفية حسب الوكيل",
           "agentPlaceholder": "جميع الوكلاء",
-          "agentSearchPlaceholder": "البحث عن وكيل…",
-          "totalTransactions": "إجمالي المعاملات:",
-          "totalValue": "القيمة الإجمالية:",
-          "priorityLegend": "دليل الأولويات"
+          "showLabel": "الملفات المعروضة",
+          "showAll": "جميع الملفات",
+          "showTodo": "للمعالجة",
+          "searchLabel": "تصفية ملفات مسار الصفقات",
+          "searchPlaceholder": "تصفية: عميل، عقار، مرجع…",
+          "amountNote": "مبلغ الملف: العرض إن وُجد، وإلا السعر المطلوب",
+          "loading": "جارٍ تحميل مسار الصفقات",
+          "loadError": "تعذّر تحميل مسار الصفقات. أعد المحاولة بعد لحظة.",
+          "subtitle": "{{date}} · {{what}} جارية"
+        },
+        "kpi": {
+          "weighted": "المسار المرجّح",
+          "asOf": "حتى اليوم",
+          "weightedSub_one": "من أصل {{amount}} · ملف واحد",
+          "weightedSub_other": "من أصل {{amount}} · {{count}} ملفات",
+          "commission": " · العمولة المتوقعة {{amount}}",
+          "todo": "ملفات للمعالجة",
+          "critical_one": "{{count}} حرج",
+          "critical_other": "{{count}} حرجة",
+          "todoShare": "{{share}} من الملفات",
+          "nothingBlocking": "لا شيء معطِّل",
+          "idle": "أطول ركود",
+          "days_one": "يوم",
+          "days_other": "أيام",
+          "exits": "الملفات المغلقة خلال 30 يومًا",
+          "won_one": "رابحة",
+          "won_other": "رابحة",
+          "lost_one": "خاسرة",
+          "lost_other": "خاسرة",
+          "lostSub": "{{amount}} ضائعة، منها {{top}} في مرحلة {{stage}}",
+          "lostReason": " ({{reason}})",
+          "noLoss": "لا خسارة",
+          "unavailable": "غير متاح"
+        },
+        "todo": {
+          "title": "للمعالجة بالأولوية",
+          "more": "توسيع ({{count}} إضافية)",
+          "less": "تصغير",
+          "empty": "لا يوجد ملف يتطلب إجراءً",
+          "none": "لا شيء",
+          "goTo": "عرض الملف {{ref}}",
+          "severity": {
+            "crit": "حرج",
+            "warn": "للإنجاز",
+            "info": "للتحقق"
+          }
+        },
+        "agents": {
+          "title": "الحمل حسب الوكيل",
+          "gross": "المبلغ الإجمالي",
+          "weighted": "المرجّح",
+          "files": "الملفات",
+          "todo": "للمعالجة",
+          "todoCount_one": "{{count}} للمعالجة",
+          "todoCount_other": "{{count}} للمعالجة",
+          "nothing": "لا شيء للمعالجة",
+          "hint": "النقر على وكيل يصفّي اللوحة أدناه.",
+          "rowLabel": "{{name}}: {{count}} ملفات، {{weighted}} مرجّحة من أصل {{gross}}، {{todo}} للمعالجة",
+          "unassigned": "بدون وكيل"
+        },
+        "board": {
+          "title": "الملفات الجارية حسب المرحلة",
+          "hint": "اسحب بطاقة لتغيير مرحلتها، أو افتحها لنقلها بلوحة المفاتيح",
+          "laneLabel_one": "{{stage}}: ملف واحد",
+          "laneLabel_other": "{{stage}}: {{count}} ملفات",
+          "weightedOf": "مرجّحة، من أصل {{amount}}",
+          "noFile": "لا يوجد ملف",
+          "dropHere": "أفلت ملفًا هنا",
+          "hiddenByFilter": "مخفية بسبب التصفية"
         },
         "card": {
-          "openDetail": "فتح التفاصيل في تبويب جديد",
+          "openDetail": "فتح البطاقة في علامة تبويب جديدة",
           "edit": "تعديل",
           "archive": "أرشفة",
+          "archiveConfirm": "أرشفة الملف {{ref}}؟ سيخرج من مسار الصفقات.",
           "noPropertyTitle": "عقار بدون عنوان",
           "noClient": "عميل غير محدد",
-          "agent": "الوكيل: {{name}}"
+          "agent": "الوكيل: {{name}}",
+          "idleShort": "{{count}} ي",
+          "expand": "فتح الملف {{ref}}",
+          "collapse": "طي الملف {{ref}}",
+          "label": "{{ref}}، {{client}}، {{amount}}، {{probability}} %",
+          "askingPrice": "السعر المطلوب",
+          "offer": "العرض",
+          "belowAsking": "{{share}} تحت السعر",
+          "expectedClose": "الإغلاق المتوقع",
+          "inDays_one": "بعد يوم واحد",
+          "inDays_other": "بعد {{count}} أيام",
+          "daysAgo_one": "منذ يوم واحد",
+          "daysAgo_other": "منذ {{count}} أيام",
+          "inStageSince": "في المرحلة منذ",
+          "commission": "العمولة ({{rate}} %)",
+          "agentLabel": "الوكيل",
+          "moveLabel": "نقل {{ref}} إلى مرحلة أخرى",
+          "currentStage": "المرحلة: {{stage}}",
+          "moveTo": "نقل إلى {{stage}}",
+          "idle_one": "دون تغيير في المرحلة منذ يوم واحد",
+          "idle_other": "دون تغيير في المرحلة منذ {{count}} أيام"
         },
-        "column": {
-          "empty": "لا توجد معاملات"
+        "move": {
+          "done": "انتقل {{ref}} إلى <strong>{{stage}}</strong>. الاحتمال بقي عند {{probability}} %.",
+          "undo": "تراجع",
+          "failed": "فشل نقل {{ref}}: يبقى الملف في مرحلة {{stage}}."
+        },
+        "flags": {
+          "duplicate": {
+            "title": "تكرار محتمل",
+            "text_won": "نفس العميل ونفس العقار في {{ref}}، الذي رُبح في {{date}} ({{amount}}). لا يمكن لهذا الملف أن يكتمل: أرشِفه أو ادمجه.",
+            "text_active": "نفس العميل ونفس العقار في {{ref}}، وهو ما زال جاريًا. احتفظ بملف واحد فقط."
+          },
+          "stale": {
+            "title_one": "يوم واحد دون تغيير في المرحلة",
+            "title_other": "{{count}} أيام دون تغيير في المرحلة",
+            "text": "الملف في مرحلة {{stage}} دون تقدّم: تواصل مع العميل أو راجع الاحتمال."
+          },
+          "overdue": {
+            "title": "تجاوز تاريخ الإغلاق المتوقع",
+            "text_one": "كان التوقيع متوقعًا في {{date}}، منذ يوم واحد: حدّث التاريخ أو أغلق الملف.",
+            "text_other": "كان التوقيع متوقعًا في {{date}}، منذ {{count}} أيام: حدّث التاريخ أو أغلق الملف."
+          },
+          "unrealistic_close": {
+            "title": "تاريخ إغلاق غير واقعي",
+            "text_one": "التوقيع متوقع في {{date}}، بعد يوم واحد، والملف ما زال في مرحلة {{stage}}.",
+            "text_other": "التوقيع متوقع في {{date}}، بعد {{count}} أيام، والملف ما زال في مرحلة {{stage}}."
+          },
+          "certain_not_closed": {
+            "title": "احتمال 100 % دون إغلاق",
+            "text": "في مرحلة {{stage}}، التوقيع متوقع في {{date}}. إما أن الصفقة وُقّعت ويجب نقل الملف إلى «رابحة»، أو أن الاحتمال خاطئ."
+          },
+          "rival_applicant": {
+            "title": "مرشّحان لنفس العقار",
+            "text": "{{client}} ({{ref}}) مرشّح أيضًا لهذا العقار، في مرحلة {{stage}}. عقد كراء واحد ممكن: يجب الحسم."
+          },
+          "lost_before": {
+            "title": "خسارة سابقة على هذا العقار",
+            "text": "سقط الملف {{ref}} في مرحلة {{stage}} بتاريخ {{date}} ({{amount}})، السبب: {{reason}}."
+          },
+          "property_status": {
+            "title": "العقار مسجّل «{{status}}»",
+            "text": "يشير الكتالوج إلى أن هذا العقار {{status}} بينما الملف ما زال جاريًا: إما البطاقة أو الملف خاطئ."
+          },
+          "unknown": "ملاحظة للتحقق",
+          "noDate": "تاريخ غير محدد",
+          "noReason": "غير محدد",
+          "status": {
+            "sold": "مباع",
+            "rented": "مكترى"
+          }
+        },
+        "stages": {
+          "contact": "تواصل",
+          "visit": "زيارة",
+          "offer": "عرض",
+          "negotiation": "تفاوض",
+          "compromise": "وعد بالبيع",
+          "final_act": "العقد النهائي",
+          "application": "ترشّح",
+          "verification": "تحقق",
+          "lease": "عقد الكراء",
+          "move_in": "الدخول"
         },
         "priority": {
           "low": "منخفضة",
