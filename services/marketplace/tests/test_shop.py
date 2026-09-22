@@ -79,3 +79,18 @@ def test_list_with_items_keeps_default_contract(client, db_session, headers):
     assert "items" not in plain and plain["items_count"] == 1
     full = client.get("/backoffice/shop/orders?with_items=true", headers=headers()).json()["orders"][0]
     assert full["items"][0]["current_price"] == 100
+
+
+def test_cancel_pending_order(client, db_session, headers):
+    o = _order(db_session, lines=[(None, "Four à supprimer", 500, 1)])
+    r = client.post(f"/backoffice/shop/orders/{o.id}/cancel", headers=headers())
+    assert r.status_code == 200, r.text
+    assert r.json()["order"]["status"] == "cancelled"
+
+
+def test_cancel_refuses_paid_order_and_other_agency(client, db_session, headers):
+    paid = _order(db_session, status="paid", lines=[(None, "X", 10, 1)])
+    other = _order(db_session, agency=2, lines=[(None, "X", 10, 1)])
+    assert client.post(f"/backoffice/shop/orders/{paid.id}/cancel", headers=headers()).status_code == 409
+    assert client.post(f"/backoffice/shop/orders/{other.id}/cancel", headers=headers()).status_code == 404
+    assert db_session.get(Order, other.id).status == "pending"

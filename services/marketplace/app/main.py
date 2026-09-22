@@ -241,6 +241,22 @@ def pay_order(oid: int, principal: Principal = Depends(get_principal), db: Sessi
     return {"order": order.to_dict(items=order_items)}
 
 
+@app.post("/backoffice/shop/orders/{oid}/cancel")
+def cancel_order(oid: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    err = _require_agency(principal)
+    if err:
+        return err
+    order = db.query(Order).filter(Order.id == oid, Order.agency_id == principal.agency_id).first()
+    if order is None:
+        return _err("Commande introuvable", 404)
+    # Une commande réglée a déjà réservé du stock : son annulation relève de l'administration.
+    if order.status != "pending":
+        return _err("Seule une commande non réglée peut être annulée.", 409)
+    order.status = "cancelled"
+    db.commit()
+    return {"order": _order_payload(db, order, db.query(OrderItem).filter(OrderItem.order_id == order.id).all())}
+
+
 def _items_count_map(db: Session, order_ids: list[int]) -> dict[int, int]:
     if not order_ids:
         return {}
