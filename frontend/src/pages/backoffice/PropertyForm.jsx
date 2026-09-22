@@ -4,14 +4,14 @@ import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import {
-  FiArrowLeft, FiSave, FiUpload, FiX, FiHome, FiMapPin,
+  FiArrowLeft, FiBox, FiSave, FiUpload, FiX, FiHome, FiMapPin,
   FiDollarSign, FiGrid, FiImage, FiInfo
 } from 'react-icons/fi'
 import { DIRHAM_SYMBOL } from '../../utils/currency'
-import DirIcon from '../../components/common/DirIcon'
 import api from '../../services/api'
+import useAuthStore from '../../store/authStore'
 import { CondoFeesField } from '../../components/property/CondoFeesField'
-import Design3dEntry from '../../components/design/Design3dEntry'
+import { IconAction } from './components/kit'
 
 const backofficeService = {
   getProperty: async (id) => {
@@ -55,6 +55,19 @@ const FEATURES = [
   'Balcon', 'Cave', 'Climatisation', 'Chauffage central', 'Sécurité 24/7',
   'Concierge', 'Interphone', 'Digicode', 'Meublé', 'Cuisine équipée'
 ]
+
+/** Entrée « Concevoir en 3D » en icône : active, en attente d'enregistrement, ou invitation à activer le module. */
+function Design3dAction({ id }) {
+  const { t } = useTranslation('dashboard')
+  const hasFeature = useAuthStore((s) => s.hasFeature)
+  if (!hasFeature('design3d')) {
+    return <IconAction icon={FiBox} label={t('designEditor.entitlement.upsell')} to="/dashboard/compte/abonnement" tipAlign="end" className="border border-dashed border-gray-300" />
+  }
+  if (!id) {
+    return <IconAction icon={FiBox} label={t('designEditor.entitlement.needsSave')} disabled tipAlign="end" className="border border-gray-200 opacity-50" />
+  }
+  return <IconAction icon={FiBox} label={t('designEditor.entry')} to={`/dashboard/conception?target_type=property&target_id=${id}`} tipAlign="end" className="border border-gray-200" />
+}
 
 export default function BackofficePropertyForm() {
   const { t } = useTranslation(['backoffice', 'common'])
@@ -210,12 +223,8 @@ export default function BackofficePropertyForm() {
     <div className="max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <button
-          onClick={() => navigate('/backoffice/biens')}
-          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
-        >
-          <DirIcon icon={FiArrowLeft} className="w-5 h-5" />
-        </button>
+        <IconAction icon={FiArrowLeft} label={t('backoffice:crm.properties.form.backToList')} onClick={() => navigate('/backoffice/biens')}
+          className="rtl:[&>svg]:rotate-180" />
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             {isEditing ? t('backoffice:crm.properties.form.titleEdit') : t('backoffice:crm.properties.form.titleNew')}
@@ -581,13 +590,8 @@ export default function BackofficePropertyForm() {
               {images.map((img, i) => (
                 <div key={i} className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
                   <img src={img.url} alt="" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => setImages(images.filter((_, idx) => idx !== i))}
-                    className="absolute top-2 end-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                  >
-                    <FiX className="w-4 h-4" />
-                  </button>
+                  <IconAction icon={FiX} label={t('backoffice:crm.properties.form.removePhoto')} onClick={() => setImages(images.filter((_, idx) => idx !== i))}
+                    tone="danger" tipAlign="end" className="!absolute bottom-2 end-2 bg-white/90" />
                 </div>
               ))}
             </div>
@@ -607,14 +611,9 @@ export default function BackofficePropertyForm() {
 
         {/* Submit */}
         <div className="flex items-center justify-end gap-4">
-          <Design3dEntry targetType="property" targetId={id} disabled={!id} />
-          <button
-            type="button"
-            onClick={() => navigate('/backoffice/biens')}
-            className="px-6 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            {t('backoffice:crm.properties.form.cancelButton')}
-          </button>
+          <Design3dAction id={id} />
+          <IconAction icon={FiX} label={t('backoffice:crm.properties.form.cancelButton')} onClick={() => navigate('/backoffice/biens')}
+            tipAlign="end" className="border border-gray-200" />
           <button
             type="submit"
             disabled={createMutation.isLoading || updateMutation.isLoading}
