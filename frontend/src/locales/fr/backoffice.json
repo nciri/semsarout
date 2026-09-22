@@ -646,100 +646,211 @@
     }
   },
   "shop": {
-    "shared": {
-      "pageTitle": "Boutique",
-      "loading": "Chargement…",
-      "back": "Retour",
-      "notFound": "Élément introuvable.",
-      "loadError": "Une erreur est survenue lors du chargement. Réessayez plus tard."
+    "title": "Boutique",
+    "subtitle": "Mobilier et électroménager pour équiper vos biens en location",
+    "groups": {
+      "all": "Tout",
+      "furniture": "Meubles",
+      "appliance": "Électroménager"
+    },
+    "categories": {
+      "lit": "Lit",
+      "canape": "Canapé",
+      "table": "Table",
+      "armoire": "Armoire",
+      "chaise": "Chaise",
+      "bureau": "Bureau",
+      "refrigerateur": "Réfrigérateur",
+      "lave_linge": "Lave-linge",
+      "four": "Four",
+      "micro_ondes": "Micro-ondes",
+      "climatiseur": "Climatiseur",
+      "television": "Télévision"
+    },
+    "stock": {
+      "out": "Rupture",
+      "onlyLeft_one": "Plus que {{count}} en stock",
+      "onlyLeft_other": "Plus que {{count}} en stock",
+      "inStock_one": "{{count}} en stock",
+      "inStock_other": "{{count}} en stock"
+    },
+    "status": {
+      "pending": "À régler",
+      "paid": "Réglée",
+      "preparing": "En préparation",
+      "shipped": "Expédiée",
+      "delivered": "Livrée",
+      "cancelled": "Annulée"
+    },
+    "steps": {
+      "pending": "Commandée",
+      "paid": "Réglée",
+      "preparing": "Préparation",
+      "shipped": "Expédiée",
+      "delivered": "Livrée"
+    },
+    "stepState": {
+      "done": "étape franchie",
+      "now": "étape en cours",
+      "todo": "étape à venir"
+    },
+    "toasts": {
+      "added": "Ajouté au panier",
+      "orderCreated": "Commande créée",
+      "paid": "Paiement effectué",
+      "payError": "Le paiement a échoué",
+      "cancelled": "Commande annulée"
+    },
+    "summary": {
+      "orders": {
+        "title": "Commandes en cours",
+        "follow": "Suivre les commandes",
+        "figure_one": "commande en cours",
+        "figure_other": "commandes en cours",
+        "figureNoShip_one": "commande, pas encore expédiée",
+        "figureNoShip_other": "commandes, aucune expédiée",
+        "toPay_one": "{{count}} à régler",
+        "toPay_other": "{{count}} à régler",
+        "barLabel": "Commandes : {{pending}} à régler, {{paid}} réglées, {{preparing}} en préparation, {{shipped}} expédiées, {{delivered}} livrées",
+        "retiredAlert_one": "<strong>La commande à régler porte sur un article retiré du catalogue</strong> (« {{names}} », {{amount}}). Mieux vaut l'annuler que la payer.",
+        "retiredAlert_other": "<strong>Les {{count}} commandes à régler portent sur un article retiré du catalogue</strong> (« {{names}} », {{amount}} au total). Mieux vaut les annuler que les payer."
+      },
+      "carts": {
+        "title": "Paniers non commandés",
+        "empty": "Aucun panier en attente dans l'équipe.",
+        "inCarts_one": "dans {{count}} panier de l'équipe",
+        "inCarts_other": "dans {{count}} paniers de l'équipe",
+        "listLabel": "Paniers de l'équipe",
+        "mine_one": "Vous · {{count}} article",
+        "mine_other": "Vous · {{count}} articles",
+        "andOthers_one": "{{name}} et {{count}} autre",
+        "andOthers_other": "{{name}} et {{count}} autres",
+        "lowStock": "stock faible"
+      }
+    },
+    "spend": {
+      "title": "Dépenses de l'agence",
+      "detailSub": "Commandes par catégorie et par personne, annulations exclues",
+      "empty": "Aucune dépense enregistrée.",
+      "paidIn": "réglés en {{month}}",
+      "paid": "Réglé",
+      "pending": "En attente de paiement",
+      "pendingAmount": "{{amount}} en attente",
+      "nothing": "rien de réglé",
+      "retiredRow": "{{name}} (retiré)",
+      "byCategory": "Par catégorie",
+      "chartLabel": "Dépenses par catégorie, réglées et en attente",
+      "barLabel": "{{label}} : {{paid}} réglés, {{pending}} en attente",
+      "columns": {
+        "buyer": "Commandé par",
+        "items": "Articles",
+        "paid": "Réglé",
+        "pending": "À régler"
+      },
+      "fromTo": "{{name}} de {{from}} à {{to}}",
+      "risesAlert": "<strong>Les prix ont monté depuis vos achats</strong> : {{list}}. Recommander au même prix n'est plus possible.",
+      "rebuyAlert_one": "<strong>Sur {{count}} article acheté, {{rising}} coûte plus cher aujourd'hui</strong> : {{list}}. Racheter la même quantité coûterait {{amount}} de plus.",
+      "rebuyAlert_other": "<strong>Sur les {{count}} articles achetés, {{rising}} coûtent plus cher aujourd'hui</strong> : {{list}}. Racheter les mêmes quantités coûterait {{amount}} de plus.",
+      "noPropertyAlert": "<strong>Aucune commande n'est rattachée à un bien.</strong> Impossible de savoir quel logement a été meublé, ni de refacturer au propriétaire.",
+      "neverOrdered_one": "Jamais commandé par l'agence : {{list}}.",
+      "neverOrdered_other": "Jamais commandés par l'agence : {{list}}."
     },
     "catalog": {
-      "subtitle": "Mobilier et électroménager pour équiper vos biens en location",
-      "myOrders": "Mes commandes",
-      "cart": "Panier",
-      "filters": {
-        "allGroups": "Tous les groupes",
-        "group": {
-          "furniture": "Meubles",
-          "appliance": "Électroménager"
-        },
-        "allCategories": "Toutes les catégories"
-      },
-      "searchPlaceholder": "Rechercher un produit…",
-      "empty": {
-        "title": "Aucun produit",
-        "description": "Aucun article ne correspond à vos filtres pour le moment."
-      },
-      "outOfStock": "Rupture",
-      "addButton": "Ajouter",
-      "toasts": {
-        "added": "Ajouté au panier"
-      }
+      "title": "Catalogue",
+      "sub_one": "{{count}} article en vente · {{low}} en stock faible · {{never}} jamais commandés par l'agence",
+      "sub_other": "{{count}} articles en vente · {{low}} en stock faible · {{never}} jamais commandés par l'agence",
+      "groupLabel": "Groupe de produits",
+      "categoryLabel": "Catégorie",
+      "allCategories": "Toutes les catégories",
+      "categoryEmpty": "{{label}} · aucun produit",
+      "search": "Rechercher un produit…",
+      "empty": "Aucun article ne correspond à ces filtres.",
+      "neverOrdered": "Jamais commandé",
+      "ordered": "Commandé ×{{count}} par l'agence",
+      "since": "{{delta}} depuis",
+      "add": "Ajouter « {{name}} » au panier",
+      "addAnother_one": "Ajouter un autre exemplaire de « {{name}} » ({{count}} dans le panier)",
+      "addAnother_other": "Ajouter un autre exemplaire de « {{name}} » ({{count}} dans le panier)"
     },
     "product": {
+      "back": "Retour à la boutique",
       "notFound": "Produit introuvable.",
-      "notFoundBack": "Retour à la boutique",
-      "outOfStock": "En rupture de stock",
-      "inStock": "{{n}} en stock",
-      "addButton": "Ajouter au panier"
+      "inCart_one": "{{count}} dans votre panier",
+      "inCart_other": "{{count}} dans votre panier",
+      "quantity": "Quantité",
+      "add": "Ajouter au panier · {{amount}}"
     },
     "cart": {
+      "title": "Mon panier",
+      "button_one": "Mon panier, {{count}} article",
+      "button_other": "Mon panier, {{count}} articles",
+      "sub_one": "{{count}} article · {{amount}}",
+      "sub_other": "{{count}} articles · {{amount}}",
+      "emptyTitle": "Votre panier est vide",
+      "empty": "Parcourez le catalogue pour ajouter du mobilier ou de l'électroménager.",
       "backToShop": "Continuer mes achats",
-      "pageTitle": "Mon panier",
-      "empty": {
-        "title": "Votre panier est vide",
-        "description": "Parcourez la boutique pour ajouter du mobilier et de l'électroménager.",
-        "action": "Aller à la boutique"
-      },
-      "removeTitle": "Retirer",
-      "total": "Total",
-      "deliverToProperty": "Livrer vers un bien (optionnel)",
-      "freeAddressPlaceholder": "— Adresse libre —",
-      "propertySearchPlaceholder": "Rechercher un bien…",
+      "less": "Retirer un exemplaire",
+      "more": "Ajouter un exemplaire",
+      "remove": "Retirer « {{name}} » du panier",
+      "deliverToProperty": "Livrer vers un bien",
+      "freeAddress": "Adresse libre",
+      "propertySearch": "Rechercher un bien…",
       "deliveryAddress": "Adresse de livraison",
-      "orderButton": "Commander",
-      "toasts": {
-        "orderCreated": "Commande créée"
-      }
+      "addressPlaceholder": "N°, rue, ville",
+      "linkHint": "Rattacher la commande à un bien permet de retrouver ce qu'elle a coûté pour ce logement.",
+      "linkHintNone_one": "Rattacher la commande à un bien permet de retrouver ce qu'elle a coûté pour ce logement. La commande passée ne l'est pas.",
+      "linkHintNone_other": "Rattacher la commande à un bien permet de retrouver ce qu'elle a coûté pour ce logement. Aucune des {{count}} commandes passées ne l'est.",
+      "lowStock_one": "<strong>{{name}} : plus que {{count}} en stock.</strong> Le stock n'est réservé qu'au paiement ; commander puis régler tout de suite évite de le perdre.",
+      "lowStock_other": "<strong>{{name}} : plus que {{count}} en stock.</strong> Le stock n'est réservé qu'au paiement ; commander puis régler tout de suite évite de le perdre.",
+      "order": "Commander · {{amount}}"
     },
-    "order": {
+    "orders": {
+      "title": "Suivi des commandes",
+      "sub": "Toutes les commandes de l'agence, de la plus récente à la plus ancienne",
       "pageTitle": "Mes commandes",
-      "subtitle": "Suivez vos commandes de mobilier et d'électroménager",
-      "shopButton": "Boutique",
-      "stats": {
-        "total": "Total",
-        "pending": "En attente",
-        "inProgress": "En cours",
-        "delivered": "Livrées"
+      "pageSub": "Mobilier et électroménager commandés par l'agence",
+      "toShop": "Aller à la boutique",
+      "backToList": "Toutes les commandes",
+      "notFound": "Commande introuvable.",
+      "filterLabel": "Filtrer par statut",
+      "filters": {
+        "all": "Toutes",
+        "pending": "À régler",
+        "progress": "En cours",
+        "done": "Livrées"
       },
       "columns": {
         "reference": "Référence",
-        "items": "Articles",
+        "buyer": "Commandée par",
+        "delivery": "Livraison",
         "total": "Total",
-        "status": "Statut",
-        "date": "Date"
+        "status": "Statut"
       },
-      "status": {
-        "pending": "En attente",
-        "paid": "Payée",
-        "preparing": "Préparation",
-        "shipped": "Expédiée",
-        "delivered": "Livrée",
-        "cancelled": "Annulée"
-      },
-      "empty": {
-        "title": "Aucune commande",
-        "description": "Vos commandes passées depuis la boutique apparaîtront ici.",
-        "action": "Aller à la boutique"
-      },
-      "backToList": "Mes commandes",
-      "notFound": "Commande introuvable.",
-      "payButton": "Payer maintenant",
-      "paymentReference": "Réf. paiement : {{reference}}",
-      "toasts": {
-        "paymentSuccess": "Paiement effectué",
-        "paymentError": "Erreur"
-      }
+      "empty": "Aucune commande pour l'instant : elles apparaîtront ici dès le premier panier commandé.",
+      "emptyFilter": "Aucune commande dans cet état.",
+      "toggle": "Détail de la commande {{reference}}",
+      "open": "Ouvrir la commande {{reference}}",
+      "items_one": "{{count}} article",
+      "items_other": "{{count}} articles",
+      "you": "(vous)",
+      "memberUnknown": "Membre n° {{id}}",
+      "orderedBy": "Commandée le {{date}} par {{name}}",
+      "noAddress": "Adresse non renseignée",
+      "noProperty": "Aucun bien rattaché",
+      "unit": "{{amount}} l'unité",
+      "retired": "Retiré du catalogue",
+      "priceNow": "aujourd'hui {{amount}} ({{delta}})",
+      "priceSame": "prix inchangé",
+      "total": "Total",
+      "progress": "Avancement : {{status}}",
+      "paidRef": "Paiement {{reference}}, le {{date}}",
+      "waiting_one": "En attente de paiement depuis {{count}} jour",
+      "waiting_other": "En attente de paiement depuis {{count}} jours",
+      "noPayment": "Aucun paiement",
+      "retiredAlert": "<strong>Article retiré du catalogue.</strong> Aucun stock ne peut être réservé : rien ne serait livré. Annulez la commande.",
+      "pay": "Payer {{amount}}",
+      "cancel": "Annuler la commande",
+      "cancelConfirm": "Annuler la commande {{reference}} ? Elle ne pourra plus être payée."
     }
   },
   "ui": {

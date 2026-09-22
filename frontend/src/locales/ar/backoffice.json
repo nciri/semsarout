@@ -646,100 +646,211 @@
     }
   },
   "shop": {
-    "shared": {
-      "pageTitle": "المتجر",
-      "loading": "جارٍ التحميل…",
-      "back": "رجوع",
-      "notFound": "العنصر غير موجود.",
-      "loadError": "حدث خطأ أثناء التحميل. حاول مرة أخرى لاحقًا."
+    "title": "المتجر",
+    "subtitle": "أثاث وأجهزة منزلية لتجهيز عقاراتكم المعروضة للكراء",
+    "groups": {
+      "all": "الكل",
+      "furniture": "أثاث",
+      "appliance": "أجهزة منزلية"
+    },
+    "categories": {
+      "lit": "سرير",
+      "canape": "أريكة",
+      "table": "طاولة",
+      "armoire": "خزانة",
+      "chaise": "كرسي",
+      "bureau": "مكتب",
+      "refrigerateur": "ثلاجة",
+      "lave_linge": "غسالة",
+      "four": "فرن",
+      "micro_ondes": "ميكروويف",
+      "climatiseur": "مكيف",
+      "television": "تلفاز"
+    },
+    "stock": {
+      "out": "نفد المخزون",
+      "onlyLeft_one": "بقي {{count}} فقط في المخزون",
+      "onlyLeft_other": "بقي {{count}} فقط في المخزون",
+      "inStock_one": "{{count}} في المخزون",
+      "inStock_other": "{{count}} في المخزون"
+    },
+    "status": {
+      "pending": "في انتظار الدفع",
+      "paid": "مدفوعة",
+      "preparing": "قيد التحضير",
+      "shipped": "تم الشحن",
+      "delivered": "تم التسليم",
+      "cancelled": "ملغاة"
+    },
+    "steps": {
+      "pending": "تم الطلب",
+      "paid": "تم الدفع",
+      "preparing": "التحضير",
+      "shipped": "الشحن",
+      "delivered": "التسليم"
+    },
+    "stepState": {
+      "done": "مرحلة منجزة",
+      "now": "مرحلة جارية",
+      "todo": "مرحلة قادمة"
+    },
+    "toasts": {
+      "added": "أضيف إلى السلة",
+      "orderCreated": "تم إنشاء الطلب",
+      "paid": "تم الدفع",
+      "payError": "فشل الدفع",
+      "cancelled": "تم إلغاء الطلب"
+    },
+    "summary": {
+      "orders": {
+        "title": "الطلبات الجارية",
+        "follow": "تتبع الطلبات",
+        "figure_one": "طلب جارٍ",
+        "figure_other": "طلبات جارية",
+        "figureNoShip_one": "طلب، لم يُشحن بعد",
+        "figureNoShip_other": "طلبات، لم يُشحن أي منها",
+        "toPay_one": "{{count}} في انتظار الدفع",
+        "toPay_other": "{{count}} في انتظار الدفع",
+        "barLabel": "الطلبات: {{pending}} في انتظار الدفع، {{paid}} مدفوعة، {{preparing}} قيد التحضير، {{shipped}} مشحونة، {{delivered}} مسلّمة",
+        "retiredAlert_one": "<strong>الطلب غير المدفوع يخص منتجًا سُحب من الكتالوج</strong> (« {{names}} »، {{amount}}). من الأفضل إلغاؤه بدل دفعه.",
+        "retiredAlert_other": "<strong>الطلبات الـ{{count}} غير المدفوعة تخص منتجًا سُحب من الكتالوج</strong> (« {{names}} »، {{amount}} في المجموع). من الأفضل إلغاؤها بدل دفعها."
+      },
+      "carts": {
+        "title": "سلال لم تُطلب",
+        "empty": "لا توجد سلة معلّقة لدى الفريق.",
+        "inCarts_one": "في {{count}} سلة للفريق",
+        "inCarts_other": "في {{count}} سلال للفريق",
+        "listLabel": "سلال الفريق",
+        "mine_one": "أنت · {{count}} منتج",
+        "mine_other": "أنت · {{count}} منتجات",
+        "andOthers_one": "{{name}} و{{count}} آخر",
+        "andOthers_other": "{{name}} و{{count}} أخرى",
+        "lowStock": "مخزون منخفض"
+      }
+    },
+    "spend": {
+      "title": "مصاريف الوكالة",
+      "detailSub": "الطلبات حسب الفئة وحسب الشخص، باستثناء الملغاة",
+      "empty": "لا توجد مصاريف مسجلة.",
+      "paidIn": "مدفوعة في {{month}}",
+      "paid": "مدفوع",
+      "pending": "في انتظار الدفع",
+      "pendingAmount": "{{amount}} في الانتظار",
+      "nothing": "لا شيء مدفوع",
+      "retiredRow": "{{name}} (مسحوب)",
+      "byCategory": "حسب الفئة",
+      "chartLabel": "المصاريف حسب الفئة، المدفوعة وفي الانتظار",
+      "barLabel": "{{label}}: {{paid}} مدفوعة، {{pending}} في الانتظار",
+      "columns": {
+        "buyer": "طلبه",
+        "items": "المنتجات",
+        "paid": "مدفوع",
+        "pending": "للدفع"
+      },
+      "fromTo": "{{name}} من {{from}} إلى {{to}}",
+      "risesAlert": "<strong>ارتفعت الأسعار منذ مشترياتكم</strong>: {{list}}. لم يعد ممكنًا إعادة الطلب بنفس السعر.",
+      "rebuyAlert_one": "<strong>من أصل {{count}} منتج مشترى، {{rising}} أغلى اليوم</strong>: {{list}}. إعادة شراء نفس الكمية ستكلف {{amount}} إضافية.",
+      "rebuyAlert_other": "<strong>من أصل {{count}} منتجات مشتراة، {{rising}} أغلى اليوم</strong>: {{list}}. إعادة شراء نفس الكميات ستكلف {{amount}} إضافية.",
+      "noPropertyAlert": "<strong>لا يوجد أي طلب مرتبط بعقار.</strong> يستحيل معرفة المسكن الذي تم تأثيثه، أو إعادة الفوترة للمالك.",
+      "neverOrdered_one": "لم تطلبه الوكالة قط: {{list}}.",
+      "neverOrdered_other": "لم تطلبها الوكالة قط: {{list}}."
     },
     "catalog": {
-      "subtitle": "أثاث وأجهزة كهرومنزلية لتجهيز عقاراتك الكرائية",
-      "myOrders": "طلباتي",
-      "cart": "السلة",
-      "filters": {
-        "allGroups": "كل الفئات",
-        "group": {
-          "furniture": "أثاث",
-          "appliance": "أجهزة كهرومنزلية"
-        },
-        "allCategories": "كل الأصناف"
-      },
-      "searchPlaceholder": "ابحث عن منتج…",
-      "empty": {
-        "title": "لا يوجد منتج",
-        "description": "لا يوجد عنصر مطابق لعوامل التصفية حاليًا."
-      },
-      "outOfStock": "غير متوفر",
-      "addButton": "إضافة",
-      "toasts": {
-        "added": "تمت الإضافة إلى السلة"
-      }
+      "title": "الكتالوج",
+      "sub_one": "{{count}} منتج معروض · {{low}} بمخزون منخفض · {{never}} لم تطلبها الوكالة قط",
+      "sub_other": "{{count}} منتجات معروضة · {{low}} بمخزون منخفض · {{never}} لم تطلبها الوكالة قط",
+      "groupLabel": "مجموعة المنتجات",
+      "categoryLabel": "الفئة",
+      "allCategories": "كل الفئات",
+      "categoryEmpty": "{{label}} · لا توجد منتجات",
+      "search": "ابحث عن منتج…",
+      "empty": "لا يوجد منتج يطابق هذه المرشحات.",
+      "neverOrdered": "لم يُطلب قط",
+      "ordered": "طلبته الوكالة ×{{count}}",
+      "since": "{{delta}} منذ ذلك",
+      "add": "أضف « {{name}} » إلى السلة",
+      "addAnother_one": "أضف نسخة أخرى من « {{name}} » ({{count}} في السلة)",
+      "addAnother_other": "أضف نسخة أخرى من « {{name}} » ({{count}} في السلة)"
     },
     "product": {
+      "back": "العودة إلى المتجر",
       "notFound": "المنتج غير موجود.",
-      "notFoundBack": "العودة إلى المتجر",
-      "outOfStock": "غير متوفر في المخزون",
-      "inStock": "{{n}} متوفر في المخزون",
-      "addButton": "إضافة إلى السلة"
+      "inCart_one": "{{count}} في سلتك",
+      "inCart_other": "{{count}} في سلتك",
+      "quantity": "الكمية",
+      "add": "أضف إلى السلة · {{amount}}"
     },
     "cart": {
-      "backToShop": "متابعة التسوق",
-      "pageTitle": "سلتي",
-      "empty": {
-        "title": "سلتك فارغة",
-        "description": "تصفح المتجر لإضافة الأثاث والأجهزة الكهرومنزلية.",
-        "action": "الانتقال إلى المتجر"
-      },
-      "removeTitle": "إزالة",
-      "total": "المجموع",
-      "deliverToProperty": "التوصيل إلى عقار (اختياري)",
-      "freeAddressPlaceholder": "— عنوان حر —",
-      "propertySearchPlaceholder": "ابحث عن عقار…",
-      "deliveryAddress": "عنوان التوصيل",
-      "orderButton": "إتمام الطلب",
-      "toasts": {
-        "orderCreated": "تم إنشاء الطلب"
-      }
+      "title": "سلتي",
+      "button_one": "سلتي، {{count}} منتج",
+      "button_other": "سلتي، {{count}} منتجات",
+      "sub_one": "{{count}} منتج · {{amount}}",
+      "sub_other": "{{count}} منتجات · {{amount}}",
+      "emptyTitle": "سلتك فارغة",
+      "empty": "تصفح الكتالوج لإضافة أثاث أو أجهزة منزلية.",
+      "backToShop": "مواصلة التسوق",
+      "less": "إزالة نسخة",
+      "more": "إضافة نسخة",
+      "remove": "إزالة « {{name}} » من السلة",
+      "deliverToProperty": "التسليم إلى عقار",
+      "freeAddress": "عنوان حر",
+      "propertySearch": "ابحث عن عقار…",
+      "deliveryAddress": "عنوان التسليم",
+      "addressPlaceholder": "الرقم، الشارع، المدينة",
+      "linkHint": "ربط الطلب بعقار يتيح معرفة تكلفته بالنسبة لهذا المسكن.",
+      "linkHintNone_one": "ربط الطلب بعقار يتيح معرفة تكلفته بالنسبة لهذا المسكن. الطلب السابق غير مرتبط بأي عقار.",
+      "linkHintNone_other": "ربط الطلب بعقار يتيح معرفة تكلفته بالنسبة لهذا المسكن. لا يرتبط أي من الطلبات الـ{{count}} السابقة بعقار.",
+      "lowStock_one": "<strong>{{name}}: بقي {{count}} فقط في المخزون.</strong> لا يُحجز المخزون إلا عند الدفع؛ الطلب ثم الدفع فورًا يجنب فقدانه.",
+      "lowStock_other": "<strong>{{name}}: بقي {{count}} فقط في المخزون.</strong> لا يُحجز المخزون إلا عند الدفع؛ الطلب ثم الدفع فورًا يجنب فقدانه.",
+      "order": "اطلب · {{amount}}"
     },
-    "order": {
+    "orders": {
+      "title": "تتبع الطلبات",
+      "sub": "كل طلبات الوكالة، من الأحدث إلى الأقدم",
       "pageTitle": "طلباتي",
-      "subtitle": "تتبع طلباتك من الأثاث والأجهزة الكهرومنزلية",
-      "shopButton": "المتجر",
-      "stats": {
-        "total": "المجموع",
-        "pending": "قيد الانتظار",
-        "inProgress": "قيد التنفيذ",
-        "delivered": "تم التسليم"
+      "pageSub": "الأثاث والأجهزة المنزلية التي طلبتها الوكالة",
+      "toShop": "الذهاب إلى المتجر",
+      "backToList": "كل الطلبات",
+      "notFound": "الطلب غير موجود.",
+      "filterLabel": "التصفية حسب الحالة",
+      "filters": {
+        "all": "الكل",
+        "pending": "للدفع",
+        "progress": "جارية",
+        "done": "مسلّمة"
       },
       "columns": {
         "reference": "المرجع",
-        "items": "العناصر",
+        "buyer": "طلبه",
+        "delivery": "التسليم",
         "total": "المجموع",
-        "status": "الحالة",
-        "date": "التاريخ"
+        "status": "الحالة"
       },
-      "status": {
-        "pending": "قيد الانتظار",
-        "paid": "مدفوعة",
-        "preparing": "قيد التحضير",
-        "shipped": "تم الشحن",
-        "delivered": "تم التسليم",
-        "cancelled": "ملغاة"
-      },
-      "empty": {
-        "title": "لا توجد طلبات",
-        "description": "ستظهر هنا طلباتك المنجزة من المتجر.",
-        "action": "الانتقال إلى المتجر"
-      },
-      "backToList": "طلباتي",
-      "notFound": "الطلب غير موجود.",
-      "payButton": "الدفع الآن",
-      "paymentReference": "مرجع الدفع: {{reference}}",
-      "toasts": {
-        "paymentSuccess": "تم الدفع بنجاح",
-        "paymentError": "خطأ"
-      }
+      "empty": "لا توجد طلبات حاليًا: ستظهر هنا بمجرد طلب أول سلة.",
+      "emptyFilter": "لا توجد طلبات بهذه الحالة.",
+      "toggle": "تفاصيل الطلب {{reference}}",
+      "open": "فتح الطلب {{reference}}",
+      "items_one": "{{count}} منتج",
+      "items_other": "{{count}} منتجات",
+      "you": "(أنت)",
+      "memberUnknown": "العضو رقم {{id}}",
+      "orderedBy": "طُلب في {{date}} من طرف {{name}}",
+      "noAddress": "العنوان غير محدد",
+      "noProperty": "غير مرتبط بأي عقار",
+      "unit": "{{amount}} للوحدة",
+      "retired": "مسحوب من الكتالوج",
+      "priceNow": "اليوم {{amount}} ({{delta}})",
+      "priceSame": "السعر لم يتغير",
+      "total": "المجموع",
+      "progress": "التقدم: {{status}}",
+      "paidRef": "الدفع {{reference}}، بتاريخ {{date}}",
+      "waiting_one": "في انتظار الدفع منذ {{count}} يوم",
+      "waiting_other": "في انتظار الدفع منذ {{count}} أيام",
+      "noPayment": "لا يوجد دفع",
+      "retiredAlert": "<strong>منتج مسحوب من الكتالوج.</strong> لا يمكن حجز أي مخزون: لن يُسلَّم شيء. ألغوا الطلب.",
+      "pay": "ادفع {{amount}}",
+      "cancel": "إلغاء الطلب",
+      "cancelConfirm": "إلغاء الطلب {{reference}}؟ لن يعود بالإمكان دفعه."
     }
   },
   "ui": {
