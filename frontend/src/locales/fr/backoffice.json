@@ -1486,27 +1486,177 @@
       "pipeline": {
         "list": {
           "pageTitle": "Pipeline",
-          "subtitle": "Gérez vos transactions en cours",
+          "whatSale_one": "{{count}} vente",
+          "whatSale_other": "{{count}} ventes",
+          "whatRent_one": "{{count}} location",
+          "whatRent_other": "{{count}} locations",
           "listViewLink": "Vue liste",
           "newButton": "Nouvelle transaction",
-          "typeSale": "Ventes",
-          "typeRent": "Locations",
+          "typeLabel": "Type de transaction",
+          "typeSale": "Vente",
+          "typeRent": "Location",
+          "agentFilter": "Filtrer par agent",
           "agentPlaceholder": "Tous les agents",
-          "agentSearchPlaceholder": "Rechercher un agent…",
-          "totalTransactions": "Total transactions:",
-          "totalValue": "Valeur totale:",
-          "priorityLegend": "Légende des priorités"
+          "showLabel": "Dossiers affichés",
+          "showAll": "Tous les dossiers",
+          "showTodo": "À traiter",
+          "searchLabel": "Filtrer les dossiers du pipeline",
+          "searchPlaceholder": "Filtrer : client, bien, référence…",
+          "amountNote": "Montant d'un dossier : l'offre si elle est saisie, sinon le prix demandé",
+          "loading": "Chargement du pipeline",
+          "loadError": "Le pipeline n'a pas pu être chargé. Réessayez dans un instant.",
+          "subtitle": "{{date}} · {{what}} en cours"
+        },
+        "kpi": {
+          "weighted": "Pipeline pondéré",
+          "asOf": "à date",
+          "weightedSub_one": "sur {{amount}} · {{count}} dossier",
+          "weightedSub_other": "sur {{amount}} · {{count}} dossiers",
+          "commission": " · commission attendue {{amount}}",
+          "todo": "Dossiers à traiter",
+          "critical_one": "{{count}} critique",
+          "critical_other": "{{count}} critiques",
+          "todoShare": "{{share}} des dossiers",
+          "nothingBlocking": "Rien de bloquant",
+          "idle": "Plus longue immobilité",
+          "days_one": "jour",
+          "days_other": "jours",
+          "exits": "Sorties sur 30 jours",
+          "won_one": "gagnée",
+          "won_other": "gagnées",
+          "lost_one": "perdue",
+          "lost_other": "perdues",
+          "lostSub": "{{amount}} perdus, dont {{top}} en {{stage}}",
+          "lostReason": " ({{reason}})",
+          "noLoss": "Aucune perte",
+          "unavailable": "Indisponible"
+        },
+        "todo": {
+          "title": "À traiter en priorité",
+          "more": "Développer ({{count}} de plus)",
+          "less": "Réduire",
+          "empty": "Aucun dossier ne demande d'action",
+          "none": "Rien",
+          "goTo": "Voir le dossier {{ref}}",
+          "severity": {
+            "crit": "Critique",
+            "warn": "À faire",
+            "info": "À vérifier"
+          }
+        },
+        "agents": {
+          "title": "Charge par agent",
+          "gross": "Montant total",
+          "weighted": "Pondéré",
+          "files": "Dossiers",
+          "todo": "À traiter",
+          "todoCount_one": "{{count}} à traiter",
+          "todoCount_other": "{{count}} à traiter",
+          "nothing": "rien à traiter",
+          "hint": "Cliquer sur un agent filtre le tableau ci-dessous.",
+          "rowLabel": "{{name}} : {{count}} dossiers, {{weighted}} pondérés sur {{gross}}, {{todo}} à traiter",
+          "unassigned": "Sans agent"
+        },
+        "board": {
+          "title": "Dossiers en cours par étape",
+          "hint": "Glisser une carte pour changer d'étape, ou la déplier pour la déplacer au clavier",
+          "laneLabel_one": "{{stage}} : {{count}} dossier",
+          "laneLabel_other": "{{stage}} : {{count}} dossiers",
+          "weightedOf": "pondérés, sur {{amount}}",
+          "noFile": "Aucun dossier",
+          "dropHere": "Déposer un dossier ici",
+          "hiddenByFilter": "Masqués par le filtre"
         },
         "card": {
-          "openDetail": "Ouvrir le détail dans un nouvel onglet",
+          "openDetail": "Ouvrir la fiche dans un nouvel onglet",
           "edit": "Modifier",
           "archive": "Archiver",
+          "archiveConfirm": "Archiver le dossier {{ref}} ? Il sort du pipeline.",
           "noPropertyTitle": "Bien sans titre",
           "noClient": "Client non défini",
-          "agent": "Agent : {{name}}"
+          "agent": "Agent : {{name}}",
+          "idleShort": "{{count}} j",
+          "expand": "Déplier le dossier {{ref}}",
+          "collapse": "Replier le dossier {{ref}}",
+          "label": "{{ref}}, {{client}}, {{amount}}, {{probability}} %",
+          "askingPrice": "Prix demandé",
+          "offer": "Offre",
+          "belowAsking": "{{share}} sous le prix",
+          "expectedClose": "Clôture prévue",
+          "inDays_one": "dans {{count}} jour",
+          "inDays_other": "dans {{count}} jours",
+          "daysAgo_one": "il y a {{count}} jour",
+          "daysAgo_other": "il y a {{count}} jours",
+          "inStageSince": "Dans l'étape depuis",
+          "commission": "Commission ({{rate}} %)",
+          "agentLabel": "Agent",
+          "moveLabel": "Déplacer {{ref}} vers une autre étape",
+          "currentStage": "Étape : {{stage}}",
+          "moveTo": "Déplacer vers {{stage}}",
+          "idle_one": "Sans changement d'étape depuis {{count}} jour",
+          "idle_other": "Sans changement d'étape depuis {{count}} jours"
         },
-        "column": {
-          "empty": "Aucune transaction"
+        "move": {
+          "done": "{{ref}} passé en <strong>{{stage}}</strong>. Probabilité inchangée à {{probability}} %.",
+          "undo": "Annuler",
+          "failed": "Le déplacement de {{ref}} a échoué : le dossier reste en {{stage}}."
+        },
+        "flags": {
+          "duplicate": {
+            "title": "Doublon probable",
+            "text_won": "Même client et même bien que {{ref}}, gagnée le {{date}} ({{amount}}). Ce dossier ne peut plus aboutir : archiver ou fusionner.",
+            "text_active": "Même client et même bien que {{ref}}, encore en cours. Garder un seul des deux dossiers."
+          },
+          "stale": {
+            "title_one": "{{count}} jour sans changement d'étape",
+            "title_other": "{{count}} jours sans changement d'étape",
+            "text": "Dossier en {{stage}} sans avancer : relancer le client ou revoir la probabilité."
+          },
+          "overdue": {
+            "title": "Clôture prévue dépassée",
+            "text_one": "Signature attendue le {{date}}, il y a {{count}} jour : mettre la date à jour ou clôturer le dossier.",
+            "text_other": "Signature attendue le {{date}}, il y a {{count}} jours : mettre la date à jour ou clôturer le dossier."
+          },
+          "unrealistic_close": {
+            "title": "Clôture prévue irréaliste",
+            "text_one": "Signature attendue le {{date}}, dans {{count}} jour, alors que le dossier n'en est qu'à l'étape {{stage}}.",
+            "text_other": "Signature attendue le {{date}}, dans {{count}} jours, alors que le dossier n'en est qu'à l'étape {{stage}}."
+          },
+          "certain_not_closed": {
+            "title": "Probabilité à 100 % sans clôture",
+            "text": "En {{stage}}, signature prévue le {{date}}. Soit l'affaire est signée et le dossier doit passer en « gagné », soit la probabilité est fausse."
+          },
+          "rival_applicant": {
+            "title": "Deux candidats pour le même bien",
+            "text": "{{client}} ({{ref}}) est aussi candidat pour ce bien, à l'étape {{stage}}. Un seul bail possible : trancher."
+          },
+          "lost_before": {
+            "title": "Déjà perdu sur ce bien",
+            "text": "Le dossier {{ref}} est tombé en {{stage}} le {{date}} ({{amount}}), motif : {{reason}}."
+          },
+          "property_status": {
+            "title": "Bien marqué « {{status}} »",
+            "text": "Le catalogue indique ce bien comme {{status}} alors que le dossier est en cours : la fiche ou le dossier est faux."
+          },
+          "unknown": "Constat à vérifier",
+          "noDate": "date non renseignée",
+          "noReason": "non précisé",
+          "status": {
+            "sold": "vendu",
+            "rented": "loué"
+          }
+        },
+        "stages": {
+          "contact": "Contact",
+          "visit": "Visite",
+          "offer": "Offre",
+          "negotiation": "Négociation",
+          "compromise": "Compromis",
+          "final_act": "Acte final",
+          "application": "Candidature",
+          "verification": "Vérification",
+          "lease": "Bail",
+          "move_in": "Entrée"
         },
         "priority": {
           "low": "Basse",

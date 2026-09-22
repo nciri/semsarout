@@ -102,6 +102,7 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/PropertyForm.jsx',
   'src/pages/backoffice/Leads.jsx',
   'src/pages/backoffice/Pipeline.jsx',
+  'src/pages/backoffice/pipeline/Board.jsx',
   'src/pages/backoffice/Visits.jsx',
   'src/pages/backoffice/Transactions.jsx',
   'src/pages/backoffice/TransactionCreate.jsx',
