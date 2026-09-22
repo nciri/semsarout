@@ -1519,74 +1519,150 @@
         }
       },
       "visits": {
-        "list": {
-          "pageTitle": "Visites & RDV",
-          "subtitle": "Gérez vos visites et rendez-vous",
-          "newButton": "Planifier une visite",
-          "viewToggleCalendar": "Calendrier",
-          "viewToggleList": "Liste",
-          "today": "Aujourd'hui",
-          "filterStatusAll": "Tous les statuts",
-          "daysHeader": {
-            "mon": "Lun",
-            "tue": "Mar",
-            "wed": "Mer",
-            "thu": "Jeu",
-            "fri": "Ven",
-            "sat": "Sam",
-            "sun": "Dim"
-          },
-          "moreCount": "+{{count}} autres",
-          "empty": {
-            "title": "Aucune visite",
-            "description": "Planifiez votre première visite."
-          },
-          "legend": "Légende des statuts"
-        },
+        "title": "Visites & RDV",
+        "subtitle": "Agenda des visites de l'agence",
+        "plan": "Planifier une visite",
+        "loadError": "Impossible de charger les visites.",
+        "visitor": "Visiteur",
+        "noProperty": "Bien non défini",
         "status": {
-          "scheduled": "Planifié",
-          "confirmed": "Confirmé",
-          "completed": "Effectuée",
+          "scheduled": "À confirmer",
+          "confirmed": "Confirmée",
+          "completed": "Honorée",
           "cancelled": "Annulée",
-          "no_show": "No-show"
+          "no_show": "Absent"
         },
-        "modal": {
-          "title": "Détails de la visite",
-          "noProperty": "Bien non défini",
-          "duration": "- {{minutes}} min",
-          "noVisitor": "Visiteur non défini",
-          "reportLabel": "Rapport de visite",
-          "reportPlaceholder": "Commentaires sur la visite...",
-          "feedbackLabel": "Feedback client",
-          "feedbackOptions": {
-            "select": "Sélectionner...",
-            "very_interested": "Très intéressé",
-            "interested": "Intéressé",
-            "neutral": "Neutre",
-            "not_interested": "Pas intéressé"
+        "overdueChip": "À requalifier",
+        "summary": {
+          "upcoming": "À venir",
+          "upcomingNone": "Aucune visite planifiée.",
+          "next": "Prochaine",
+          "toConfirm": "À confirmer",
+          "toConfirmSub_one": "visite à venir pas encore confirmée",
+          "toConfirmSub_other": "visites à venir pas encore confirmées",
+          "overdue_one": "{{count}} visite passée à requalifier",
+          "overdue_other": "{{count}} visites passées à requalifier",
+          "attendance": "Présence · {{days}} jours",
+          "attendanceSub": "{{completed}} honorées sur {{resolved}} visites requalifiées",
+          "attendanceNone": "Aucune visite requalifiée ces {{days}} derniers jours.",
+          "honoured": "Honorées",
+          "cancelled": "Annulées",
+          "absent": "Absences",
+          "unresolved": "Non requalifiées",
+          "outcomesLabel": "{{honoured}} honorées, {{cancelled}} annulées, {{absent}} absences, {{unresolved}} non requalifiées"
+        },
+        "overdue": {
+          "title": "À requalifier",
+          "alert_one": "<strong>{{count}} visite passée n'a pas été requalifiée.</strong> Indiquez si elle a été honorée, annulée ou si le client était absent : le taux de présence en dépend.",
+          "alert_other": "<strong>{{count}} visites passées n'ont pas été requalifiées.</strong> Indiquez si elles ont été honorées, annulées ou si le client était absent : le taux de présence en dépend.",
+          "more_one": "Et {{count}} autre, plus ancienne, dans la liste.",
+          "more_other": "Et {{count}} autres, plus anciennes, dans la liste."
+        },
+        "agenda": {
+          "title": "Agenda",
+          "mode": "Affichage",
+          "day": "Jour",
+          "week": "Semaine",
+          "list": "Liste",
+          "prev": "Période précédente",
+          "next": "Période suivante",
+          "today": "Aujourd'hui",
+          "tomorrow": "Demain",
+          "statusFilter": "Filtrer par statut",
+          "allStatuses": "Tous les statuts",
+          "weekRange": "Semaine du {{from}} au {{to}}",
+          "count_one": "{{count}} visite",
+          "count_other": "{{count}} visites",
+          "emptyDay": "Aucune visite",
+          "emptyList": "Aucune visite.",
+          "allVisits": "Toutes les visites, des plus récentes aux plus anciennes",
+          "page": "Page {{page}} sur {{pages}}",
+          "prevPage": "Page précédente",
+          "nextPage": "Page suivante"
+        },
+        "row": {
+          "expand": "Voir la fiche",
+          "collapse": "Replier la fiche",
+          "duration": "{{minutes}} min"
+        },
+        "fiche": {
+          "property": "Bien",
+          "contact": "Contact",
+          "agent": "Agent",
+          "noAgent": "Non attribuée",
+          "confirmation": "Confirmation",
+          "confirmedAt": "Confirmée le {{date}}",
+          "notConfirmed": "Pas encore confirmée",
+          "completedAt": "Honorée le {{date}}",
+          "cancelledAt": "Annulée le {{date}}",
+          "notes": "Notes",
+          "report": "Compte rendu",
+          "noReport": "Pas de compte rendu.",
+          "feedback": "Retour client",
+          "noFeedback": "Pas de retour client.",
+          "openProperty": "Ouvrir le bien",
+          "openClient": "Ouvrir la fiche client",
+          "call": "Appeler",
+          "email": "Écrire un e-mail"
+        },
+        "actions": {
+          "confirm": "Confirmer la visite",
+          "complete": "Marquer honorée et rédiger le compte rendu",
+          "report": "Modifier le compte rendu",
+          "no_show": "Client absent",
+          "cancel": "Annuler la visite",
+          "edit": "Modifier la visite",
+          "delete": "Supprimer la visite",
+          "deleteConfirm": "Supprimer définitivement cette visite ?"
+        },
+        "feedback": {
+          "very_interested": "Très intéressé",
+          "interested": "Intéressé",
+          "neutral": "Neutre",
+          "not_interested": "Pas intéressé"
+        },
+        "report": {
+          "title": "Compte rendu de visite",
+          "report": "Compte rendu",
+          "reportPlaceholder": "Déroulé, points forts, objections…",
+          "feedback": "Retour client",
+          "feedbackNone": "Non renseigné",
+          "comments": "Commentaires du client",
+          "save": "Enregistrer",
+          "close": "Fermer le compte rendu"
+        },
+        "form": {
+          "createTitle": "Planifier une visite",
+          "editTitle": "Modifier la visite",
+          "property": "Bien",
+          "propertyPlaceholder": "Choisir un bien",
+          "client": "Client",
+          "clientPlaceholder": "Client existant",
+          "visitorName": "Nom du visiteur",
+          "visitorHint": "Requis si aucun client n'est choisi.",
+          "email": "E-mail",
+          "phone": "Téléphone",
+          "dateTime": "Date et heure",
+          "duration": "Durée",
+          "durations": {
+            "15": "15 min",
+            "30": "30 min",
+            "45": "45 min",
+            "60": "1 heure",
+            "90": "1 h 30"
           },
-          "confirmButton": "Confirmer",
-          "cancelButton": "Annuler",
-          "submitReportButton": "Valider le rapport",
-          "markCompletedButton": "Marquer effectuée",
-          "closeButton": "Fermer"
+          "agent": "Agent",
+          "agentPlaceholder": "Agent chargé de la visite",
+          "notes": "Notes",
+          "notesPlaceholder": "Informations utiles au visiteur ou à l'agent…",
+          "save": "Enregistrer",
+          "close": "Fermer le formulaire"
         },
-        "newModal": {
-          "title": "Planifier une visite",
-          "visitorNameLabel": "Nom du visiteur *",
-          "emailLabel": "Email",
-          "phoneLabel": "Téléphone",
-          "dateTimeLabel": "Date et heure *",
-          "durationLabel": "Durée (minutes)",
-          "duration15": "15 min",
-          "duration30": "30 min",
-          "duration45": "45 min",
-          "duration60": "1 heure",
-          "duration90": "1h30",
-          "notesLabel": "Notes",
-          "notesPlaceholder": "Informations supplémentaires...",
-          "cancelButton": "Annuler",
-          "submitButton": "Planifier"
+        "toast": {
+          "created": "Visite planifiée.",
+          "updated": "Visite mise à jour.",
+          "deleted": "Visite supprimée.",
+          "error": "L'opération a échoué."
         }
       }
     },
