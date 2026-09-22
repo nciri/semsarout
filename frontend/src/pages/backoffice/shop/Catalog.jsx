@@ -82,18 +82,19 @@ export default function Catalog({ products, categories, history, inCart, isLoadi
             const qty = inCart.get(p.id) || 0
             const full = stockSignal(p.stock) === 'out' || qty >= p.stock
             return (
-              <article key={p.id} className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-gray-200 transition-colors hover:border-[#D9D3C8]">
-                <Link to={`/backoffice/boutique/${p.id}`} tabIndex={-1} aria-hidden="true" className="relative grid aspect-[16/10] place-items-center bg-gray-50">
+              <article key={p.id} className="flex min-w-0 flex-col rounded-lg border border-gray-200 transition-colors hover:border-[#D9D3C8]">
+                <Link to={`/backoffice/boutique/${p.id}`} tabIndex={-1} aria-hidden="true" className="relative grid aspect-[16/10] place-items-center overflow-hidden rounded-t-lg bg-gray-50">
                   <ProductArt product={p} />
                   <span className="absolute start-2 top-2"><StockChip stock={p.stock} /></span>
                 </Link>
-                <div className="grid flex-1 content-start gap-1.5 p-2.5 sm:px-3.5 sm:pb-3.5 sm:pt-3">
+                <div className="flex flex-1 flex-col gap-1.5 p-2.5 sm:px-3.5 sm:pb-3.5 sm:pt-3">
                   <span className="text-xs text-gray-500">
                     {t(`shop.categories.${p.category}`)}{stockSignal(p.stock) === 'ok' && ` · ${t('shop.stock.inStock', { count: p.stock })}`}
                   </span>
                   <Link to={`/backoffice/boutique/${p.id}`} className="font-semibold leading-snug text-gray-900 hover:text-primary-700">{p.name}</Link>
                   <span className="min-h-[18px] text-xs text-gray-500"><PurchaseHistory history={history.get(p.id)} price={p.price} /></span>
-                  <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
+                  {/* Poussée en bas : prix et bouton alignés d'une carte à l'autre, quelle que soit la longueur du nom. */}
+                  <div className="mt-auto flex items-center justify-between gap-2 pt-1">
                     <span className="font-display text-[17px] font-extrabold tabular-nums">{dh.parts(p.price)[0]}<small className="ms-0.5 text-xs font-bold text-gray-600">{dh.parts(p.price)[1]}</small></span>
                     <span className="flex items-center gap-1">
                       {qty > 0 && <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary-700"><FiCheck className="h-3.5 w-3.5" aria-hidden="true" />{qty}</span>}
