@@ -95,7 +95,8 @@
       "shortlist": "Présélectionner",
       "share": "Partager avec le colocataire",
       "validate": "Valider",
-      "refuse": "Refuser"
+      "refuse": "Refuser",
+      "unshortlist": "Retirer de la présélection"
     },
     "statusBadge": {
       "pendingRoommate": "En attente de validation du colocataire",

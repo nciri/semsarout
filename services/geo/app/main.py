@@ -65,13 +65,13 @@ def require_admin(principal: Principal = Depends(get_principal)) -> Principal:
 @app.get("/internal/neighborhood-prices", include_in_schema=False)
 def internal_neighborhood_prices(x_internal_token: str = Header(default=""),
                                  db: Session = Depends(get_db)):
-    """Références de prix par quartier — pour les agrégats marché du service analytics."""
+    """Références de prix par quartier — agrégats marché (analytics) et fourchettes de la page
+    Biens du back-office (listing), d'où le type de bien et les bornes."""
     if x_internal_token != settings.internal_token:
         return _err("Forbidden", 403)
     rows = db.query(NeighborhoodPriceRef).all()
-    return {"refs": [{"city": r.city, "neighborhood": r.neighborhood,
-                      "transaction_type": r.transaction_type,
-                      "avg_price_sqm": float(r.avg_price_sqm) if r.avg_price_sqm is not None else None}
+    return {"refs": [{k: r.to_dict()[k] for k in ("city", "neighborhood", "property_type", "transaction_type",
+                                                   "avg_price_sqm", "min_price_sqm", "max_price_sqm")}
                      for r in rows]}
 
 

@@ -25,13 +25,13 @@ describe('OrdersList i18n', () => {
   it("affiche le titre FR", async () => {
     renderOrdersList()
     expect(await screen.findByText('Mes commandes')).toBeInTheDocument()
-    expect(await screen.findByText('Aucune commande')).toBeInTheDocument()
+    expect(await screen.findByText(/Aucune commande pour l'instant/)).toBeInTheDocument()
   })
 
   it("affiche le titre AR après bascule", async () => {
     await i18n.changeLanguage('ar')
     renderOrdersList()
     expect(await screen.findByText('طلباتي')).toBeInTheDocument()
-    expect(await screen.findByText('لا توجد طلبات')).toBeInTheDocument()
+    expect(await screen.findByText(/لا توجد طلبات حاليًا/)).toBeInTheDocument()
   })
 })

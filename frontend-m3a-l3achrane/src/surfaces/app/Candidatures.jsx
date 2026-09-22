@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Avatar, Badge, Button, Card, Chip, CompatibilityRing, Input } from '../../ds/index.js'
 import {
   acceptCandidature, createLease, createOrOpenConversation, getReceivedCandidatures,
-  rejectCandidature, shortlistCandidature,
+  rejectCandidature, shortlistCandidature, unshortlistCandidature,
 } from '../../services/index.js'
 
 const todayIso = () => new Date().toISOString().slice(0, 10)
@@ -106,7 +106,7 @@ function RoommatesInPlace({ total }) {
   )
 }
 
-function ApplicationActions({ app, onShortlist, onAccept, onRefuse, busy }) {
+function ApplicationActions({ app, onShortlist, onUnshortlist, onAccept, onRefuse, busy }) {
   const { t } = useTranslation(['app', 'common'])
 
   if (app.status === 'received') {
@@ -124,6 +124,7 @@ function ApplicationActions({ app, onShortlist, onAccept, onRefuse, busy }) {
         <Button size="sm" onClick={onAccept} disabled={busy}>
           {app.listing?.room_already_occupied ? t('app:candidatures.actions.share') : t('app:candidatures.actions.validate')}
         </Button>
+        <Button size="sm" variant="ghost" onClick={onUnshortlist} disabled={busy}>{t('app:candidatures.actions.unshortlist')}</Button>
         <Button size="sm" variant="ghost" onClick={onRefuse} disabled={busy}>{t('app:candidatures.actions.refuse')}</Button>
       </div>
     )
@@ -258,6 +259,7 @@ function ApplicationCard({ app, onSetStatus, onLeaseCreated, leaseId }) {
           app={app}
           busy={acting}
           onShortlist={() => runAction(shortlistCandidature)}
+          onUnshortlist={() => runAction(unshortlistCandidature)}
           onAccept={() => runAction(acceptCandidature)}
           onRefuse={() => runAction(rejectCandidature)}
         />

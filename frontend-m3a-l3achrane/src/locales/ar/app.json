@@ -95,7 +95,8 @@
       "shortlist": "ترشيح",
       "share": "المشاركة مع الزميل·ة",
       "validate": "الموافقة",
-      "refuse": "رفض"
+      "refuse": "رفض",
+      "unshortlist": "إلغاء الترشيح"
     },
     "statusBadge": {
       "pendingRoommate": "بانتظار موافقة الزميل·ة",

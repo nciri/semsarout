@@ -64,13 +64,17 @@ def _iso(v):
     return v.isoformat() if v else None
 
 
+def _property_title(db: Session, property_id: int | None) -> str | None:
+    ro = db.get(PropertyRO, property_id) if property_id else None
+    return ro.title if ro else None
+
+
 def _lead_dict(db: Session, l: Lead) -> dict:
-    ro = db.get(PropertyRO, l.property_id) if l.property_id else None
     return {
         "id": l.id, "name": l.name, "email": l.email, "phone": l.phone, "message": l.message,
         "notes": l.notes, "source": l.source, "service": l.service, "status": l.status,
-        "lost_reason": l.lost_reason, "property_id": l.property_id,
-        "property_title": ro.title if ro else None,
+        "lost_reason": l.lost_reason, "lost_at": _iso(l.lost_at), "property_id": l.property_id,
+        "property_title": _property_title(db, l.property_id),
         "agency_id": l.agency_id, "assigned_to_id": l.assigned_to_id,
         "assigned_to_name": users_client.name_of(l.agency_id, l.assigned_to_id),
         "is_charged": l.is_charged, "is_read": l.is_read, "read_at": _iso(l.read_at),
@@ -334,7 +338,9 @@ def get_leads(request: Request, principal: Principal = Depends(get_principal), d
         query = query.filter(Lead.status == qp.get("status"))
     if qp.get("source"):
         query = query.filter(Lead.source == qp.get("source"))
-    if qp.get("assigned_to"):
+    if qp.get("assigned_to") == "none":
+        query = query.filter(Lead.assigned_to_id.is_(None))
+    elif qp.get("assigned_to"):
         query = query.filter(Lead.assigned_to_id == int(qp.get("assigned_to")))
     if qp.get("property_id"):
         query = query.filter(Lead.property_id == int(qp.get("property_id")))
@@ -386,6 +392,48 @@ def get_lead(lead_id: int, principal: Principal = Depends(get_principal), db: Se
         l.read_at = datetime.utcnow()
         db.commit()
     return _lead_dict(db, l)
+
+
+def _bare_phone(col):
+    """Téléphone sans espaces, points ni tirets : « 06 12… » et « 06.12… » sont le même contact."""
+    for ch in (" ", ".", "-"):
+        col = func.replace(col, ch, "")
+    return col
+
+
+@app.get("/backoffice/leads/{lead_id}/duplicates")
+def lead_duplicates(lead_id: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    """Autres demandes et clients de l'agence au même nom ou au même téléphone que ce lead."""
+    l, err = _owned(db, lead_id, principal)
+    if err:
+        return err
+    name = (l.name or "").strip().lower()
+    phone = "".join(c for c in (l.phone or "") if c not in " .-")
+
+    lead_match = []
+    if name:
+        lead_match.append(func.lower(func.trim(Lead.name)) == name)
+    if phone:
+        lead_match.append(_bare_phone(Lead.phone) == phone)
+    leads = (db.query(Lead)
+             .filter(Lead.agency_id == l.agency_id, Lead.id != l.id, or_(*lead_match))
+             .order_by(Lead.created_at.desc()).all()) if lead_match else []
+
+    client_match = [Client.lead_id == l.id]
+    if name:
+        client_match.append(func.lower(func.trim(Client.first_name + " " + Client.last_name)) == name)
+    if phone:
+        client_match.append(_bare_phone(Client.phone) == phone)
+    clients = db.query(Client).filter(Client.agency_id == l.agency_id, or_(*client_match)).all()
+
+    return {
+        "leads": [{"id": d.id, "name": d.name, "phone": d.phone, "status": d.status, "source": d.source,
+                   "property_title": _property_title(db, d.property_id), "created_at": _iso(d.created_at)}
+                  for d in leads],
+        "clients": [{"id": c.id, "name": f"{c.first_name or ''} {c.last_name or ''}".strip(),
+                     "phone": c.phone, "status": c.status, "from_this_lead": c.lead_id == l.id}
+                    for c in clients],
+    }
 
 
 @app.post("/backoffice/leads", status_code=201)
