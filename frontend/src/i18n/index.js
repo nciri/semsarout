@@ -39,4 +39,14 @@ i18n
     },
   })
 
+// Les locales AR ne portent que _one/_other (parité des clés avec le FR). Sans ce repli, les
+// catégories zero/two/few/many de l'arabe (0, 2, 3-10, 11-99…) ne trouvaient aucune clé et
+// l'interface retombait sur le texte français.
+const resolver = i18n.services.pluralResolver
+const baseSuffix = resolver.getSuffix.bind(resolver)
+resolver.getSuffix = (code, count, options = {}) => {
+  const suffix = baseSuffix(code, count, options)
+  return String(code).startsWith('ar') && !options.ordinal && suffix !== '_one' ? '_other' : suffix
+}
+
 export default i18n

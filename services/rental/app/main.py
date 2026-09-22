@@ -1082,6 +1082,26 @@ def shortlist_application(application_id: int, principal: Principal = Depends(ge
     return _application_dict(db, a)
 
 
+@app.post("/backoffice/gestion-locative/applications/{application_id}/unshortlist")
+def unshortlist_application(application_id: int, principal: Principal = Depends(get_principal),
+                            db: Session = Depends(get_db)):
+    """Retire une candidature de la présélection : clic par erreur, ou candidat qui ne l'est plus.
+
+    Elle revient en `reviewing` et non en `received` : elle a été lue, et le locataire, qui voit
+    le statut de sa candidature, n'a pas à la voir redevenir « reçue ».
+    """
+    if (g := _gate(principal)) is not None:
+        return g
+    a = db.get(TenantApplication, application_id)
+    if a is None or a.agency_id != principal.agency_id:
+        return err("Candidature introuvable.", 404)
+    if a.status != "shortlist":
+        return err("Cette candidature n'est pas présélectionnée.", 400)
+    a.status = "reviewing"
+    db.commit()
+    return _application_dict(db, a)
+
+
 @app.get("/internal/applications/due-missing-docs-reminders", include_in_schema=False)
 def internal_apps_due_missing_docs(x_internal_token: str = Header(default=""),
                                    db: Session = Depends(get_db)):

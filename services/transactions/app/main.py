@@ -16,7 +16,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 import uuid
 
-from fastapi import Depends, FastAPI, Header, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
@@ -100,6 +100,21 @@ def _doc_dict(d: TransactionDocument, agency_id: int | None) -> dict:
     }
 
 
+def _deal_value(t: Transaction) -> float:
+    """Meilleur prix connu : final, sinon dernière offre, sinon prix demandé."""
+    return num(t.final_price or t.offer_price or t.asking_price) or 0.0
+
+
+def _expected_commission(t: Transaction) -> float | None:
+    # Le montant saisi prime ; sinon le taux appliqué au meilleur prix connu (règle des
+    # commissions déjà calculées : final_price × taux).
+    if t.commission_amount is not None:
+        return num(t.commission_amount)
+    if t.commission_rate is None:
+        return None
+    return round(_deal_value(t) * float(t.commission_rate) / 100, 2)
+
+
 def _tx_dict(db: Session, t: Transaction, include_property: bool = False,
              include_client: bool = False, include_offers: bool = False) -> dict:
     prop = db.get(PropertyRO, t.property_id) if t.property_id else None
@@ -122,6 +137,10 @@ def _tx_dict(db: Session, t: Transaction, include_property: bool = False,
         "expected_closing_date": iso(t.expected_closing_date), "closing_date": iso(t.closing_date),
         "probability": t.probability, "priority": t.priority, "notes": t.notes,
         "created_at": iso(t.created_at),
+        "visit_date": iso(t.visit_date), "offer_date": iso(t.offer_date),
+        "acceptance_date": iso(t.acceptance_date), "compromise_date": iso(t.compromise_date),
+        "closed_at": iso(t.closed_at), "updated_at": iso(t.updated_at),
+        "expected_commission": _expected_commission(t),
     }
     if include_property and prop:
         data["property"] = {"id": prop.id, "title": prop.title, "city": prop.city}
@@ -146,6 +165,17 @@ def _owned(db: Session, tx_id: int, principal: Principal):
 
 def _parse_dt(v):
     return datetime.fromisoformat(v.replace("Z", "+00:00")) if v else None
+
+
+def _since(query, since: str | None):
+    """Période du registre : les affaires ouvertes, et celles clôturées depuis `since`."""
+    if not since:
+        return query
+    try:
+        start = _parse_dt(since).replace(tzinfo=None)
+    except ValueError:
+        raise HTTPException(400, "Invalid since date")
+    return query.filter(or_(Transaction.closed_at.is_(None), Transaction.closed_at >= start))
 
 
 @app.get("/health", include_in_schema=False)
@@ -205,6 +235,7 @@ def get_transactions(request: Request, principal: Principal = Depends(get_princi
         query = query.filter(Transaction.property_id == int(qp.get("property_id")))
     if qp.get("priority"):
         query = query.filter(Transaction.priority == qp.get("priority"))
+    query = _since(query, qp.get("since"))
     if qp.get("q"):
         term = f"%{qp.get('q')}%"
         query = query.filter(or_(Transaction.reference.ilike(term), Transaction.notes.ilike(term)))
@@ -283,6 +314,56 @@ def get_stats(principal: Principal = Depends(get_principal), db: Session = Depen
         "by_stage": [{"stage": r[0], "count": r[1], "value": float(r[2] or 0)} for r in by_stage],
         "by_agent": [{"name": users_client.name_of(principal.agency_id, r[0]),
                       "count": r[1], "commission": float(r[2] or 0)} for r in by_agent],
+    }
+
+
+@app.get("/backoffice/transactions/summary")
+def get_summary(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
+    """Synthèse du registre : en cours (instantané), signées et perdues depuis `since`.
+    Vente et location restent séparées — un loyer mensuel ne s'additionne pas à un prix."""
+    qp = request.query_params
+    base = db.query(Transaction)
+    if principal.agency_id:
+        base = base.filter(Transaction.agency_id == principal.agency_id)
+    agent_rows = base.with_entities(Transaction.agent_id, func.count(Transaction.id)) \
+        .group_by(Transaction.agent_id).all()
+    if qp.get("agent_id"):
+        base = base.filter(Transaction.agent_id == int(qp.get("agent_id")))
+
+    def bucket() -> dict:
+        return {"active": {"count": 0, "amount": 0.0, "commission": 0.0, "weighted_commission": 0.0},
+                "won": {"count": 0, "amount": 0.0, "commission": 0.0},
+                "lost": {"count": 0, "amount": 0.0}}
+
+    out = {"sale": bucket(), "rent": bucket()}
+    reasons: dict[str, int] = {}
+    for t in _since(base, qp.get("since")).all():
+        kind = out.get(t.transaction_type)
+        if kind is None or t.status not in ("active", "won", "lost"):
+            continue
+        b = kind[t.status]
+        b["count"] += 1
+        b["amount"] += _deal_value(t)
+        commission = _expected_commission(t) or 0.0
+        if t.status == "active":
+            b["commission"] += commission
+            b["weighted_commission"] += commission * (t.probability or 0) / 100
+        elif t.status == "won":
+            b["commission"] += commission
+        else:
+            reason = t.lost_reason or ""
+            reasons[reason] = reasons.get(reason, 0) + 1
+    for kind in out.values():
+        for b in kind.values():
+            for k, v in b.items():
+                if isinstance(v, float):
+                    b[k] = round(v, 2)
+    return {
+        **out,
+        "lost_reasons": sorted(({"reason": r or None, "count": n} for r, n in reasons.items()),
+                               key=lambda x: -x["count"]),
+        "agents": sorted(({"id": a, "name": users_client.name_of(principal.agency_id, a), "count": n}
+                          for a, n in agent_rows), key=lambda x: (x["name"] or "", x["id"])),
     }
 
 

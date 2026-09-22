@@ -90,6 +90,7 @@ billing/migrate_plans.sql
 identity/reset_features_sync_design3d.sql
 transactions/migrate_stage_entered_at.sql
 transactions/migrate_property_status.sql
+marketplace/add_cart_agency.sql
 "
 
 # psql en tant que rôle postgres (patron roles/postgres d'Ansible : become_user postgres).
