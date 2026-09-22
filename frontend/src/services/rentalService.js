@@ -4,6 +4,8 @@ const B = '/backoffice/gestion-locative'
 const C = '/gestion-locative'
 
 export const rentalService = {
+  // Synthèse de l'agence
+  summary: async (days = 90) => (await api.get(`${B}/summary`, { params: { days } })).data,
   // Mandats
   listMandates: async () => (await api.get(`${B}/mandates`)).data,
   getMandate: async (id) => (await api.get(`${B}/mandates/${id}`)).data,

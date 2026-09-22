@@ -643,6 +643,263 @@
         "lineAdded": "تمت إضافة الاقتطاع",
         "finalized": "تم إنهاء التصفية — تم إرسال بريد إلكتروني إلى المستأجر"
       }
+    },
+    "overview": {
+      "loadError": "تعذّر تحميل ملخّص التسيير الكرائي. يبقى السجل متاحًا أدناه.",
+      "newApplication": "طلب كراء جديد",
+      "register": "المحفظة",
+      "registerTabs": "السجل المعروض",
+      "searchPlaceholder": "عقار، مكترٍ، مرجع…",
+      "searchLabel": "تصفية السجل",
+      "noMatch": "لا يوجد عنصر يطابق البحث.",
+      "actions": "الإجراءات",
+      "today": "اليوم",
+      "inDays_one": "بعد {{count}} يوم",
+      "inDays_other": "بعد {{count}} يومًا",
+      "leaseCount_one": "عقد كراء واحد",
+      "leaseCount_other": "{{count}} عقود كراء",
+      "mandateCount_one": "وكالة واحدة",
+      "mandateCount_other": "{{count}} وكالات",
+      "openLease": "بطاقة عقد الكراء",
+      "mandatePdf": "الوكالة PDF",
+      "crgPdf": "تقرير التسيير {{period}} (PDF)",
+      "removeDoc": "حذف الوثيقة",
+      "open": {
+        "lease": "بطاقة عقد الكراء",
+        "mandate": "بطاقة الوكالة",
+        "application": "بطاقة الطلب"
+      },
+      "kind": {
+        "lease": "عقد كراء",
+        "mandate": "وكالة"
+      },
+      "widgets": {
+        "late": "إيجارات متأخرة",
+        "due": "نهاية العقود والوكالات",
+        "apps": "طلبات بلا رد",
+        "cash": "الإيجارات المحصّلة حسب شهر الاستحقاق",
+        "edl": "محاضر المعاينة"
+      },
+      "state": {
+        "paid": "مدفوع",
+        "paid_late": "مدفوع متأخرًا",
+        "partial": "جزئي",
+        "late": "غير مدفوع",
+        "upcoming": "قادم"
+      },
+      "legend": {
+        "paid": "مدفوع",
+        "paid_late": "مدفوع بتأخير يفوق 5 أيام",
+        "partial": "جزئي",
+        "late": "غير مدفوع",
+        "upcoming": "قادم"
+      },
+      "inventoryType": {
+        "entree": "الدخول",
+        "sortie": "الخروج"
+      },
+      "inventoryStatus": {
+        "missing": "غير موجود",
+        "draft": "مسودة",
+        "finalized": "في انتظار التوقيع",
+        "signed": "موقّع",
+        "to_plan": "يجب برمجته"
+      },
+      "kpi": {
+        "collected": "المحصّل في {{month}}",
+        "collectedOf": "من أصل {{amount}} مستحقة · {{rate}}",
+        "noDueThisMonth": "لا استحقاق هذا الشهر",
+        "arrears": "المتأخرات",
+        "arrearsSub_one": "استحقاق واحد على {{leases}}",
+        "arrearsSub_other": "{{count}} استحقاقات على {{leases}}",
+        "noArrears": "لا إيجار متأخر",
+        "occupancy": "نسبة الإشغال",
+        "occupancySub_one": "{{leased}} عقار مكترى من أصل {{count}} تحت وكالة نشطة",
+        "occupancySub_other": "{{leased}} عقارات مكتراة من أصل {{count}} تحت وكالة نشطة",
+        "fees": "أتعاب التسيير، {{month}}",
+        "feesSub": "محسوبة على الإيجارات المحصّلة"
+      },
+      "late": {
+        "title": "إيجارات متأخرة",
+        "none": "لا إيجار متأخر: كل الإيجارات المستحقة مؤداة.",
+        "owedBy_one": "مستحقة على مكترٍ واحد",
+        "owedBy_other": "مستحقة على {{count}} مكترين",
+        "agingLabel": "أقدمية المتأخرات: {{lt15}} أقل من 15 يومًا، {{d15_45}} بين 15 و45 يومًا، {{gt45}} منذ أكثر من 45 يومًا",
+        "buckets": {
+          "lt15": "< 15 يومًا",
+          "d15_45": "15 إلى 45 يومًا",
+          "gt45": "> 45 يومًا"
+        },
+        "listLabel": "المكترون المتأخرون، من أكبر مبلغ مستحق إلى أصغره",
+        "detailSub_one": "استحقاق واحد غير مؤدى",
+        "detailSub_other": "{{count}} استحقاقات غير مؤداة، من الأقدم إلى الأحدث",
+        "viewLeases": "كل عقود الكراء",
+        "columns": {
+          "tenant": "المكتري",
+          "month": "الشهر",
+          "rest": "الباقي",
+          "reminders": "التذكيرات",
+          "age": "التأخير"
+        },
+        "partPaid": "{{amount}} مستلمة",
+        "total": "مجموع المستحق",
+        "share": "أي",
+        "shareSub": "من الإيجارات المطلوبة هذا الشهر",
+        "multiAlert_one": "<strong>على {{name}} مبلغ {{amount}}</strong> عن استحقاق واحد.",
+        "multiAlert_other": "<strong>تراكمت على {{name}} {{count}} استحقاقات غير مؤداة</strong>، بمجموع {{amount}}: يجب إخبار المالك.",
+        "reminderRule": "يُرسل تذكير آلي بعد 3 أيام من الاستحقاق، ثم كل 7 أيام، 3 مرات على الأكثر."
+      },
+      "due": {
+        "title": "نهاية العقود والوكالات",
+        "none_one": "لا نهاية لعقد أو وكالة خلال يوم واحد.",
+        "none_other": "لا نهاية لعقد أو وكالة خلال {{count}} يومًا.",
+        "within_one": "خلال يوم واحد",
+        "within_other": "خلال {{count}} يومًا",
+        "thisWeek_one": "{{count}} هذا الأسبوع",
+        "thisWeek_other": "{{count}} هذا الأسبوع",
+        "endOf": {
+          "lease": "نهاية عقد كراء {{name}}",
+          "mandate": "نهاية وكالة {{name}}"
+        },
+        "party": {
+          "lease": "المكتري {{name}}",
+          "mandate": "المالك {{name}}"
+        },
+        "gap": {
+          "noExit": "لم يُنشأ بعد محضر معاينة الخروج.",
+          "noNotice": "لم يُرسل بعد إشعار انتهاء الوكالة إلى المالك."
+        },
+        "undated": "{{leases}} و{{mandates}} نشطة دون تاريخ نهاية: لن تظهر هنا.",
+        "detailSub_one": "استحقاق واحد إلى غاية {{date}}",
+        "detailSub_other": "{{count}} استحقاقات إلى غاية {{date}}",
+        "columns": {
+          "date": "التاريخ",
+          "contract": "العقد",
+          "property": "العقار",
+          "party": "الطرف",
+          "in": "بعد"
+        },
+        "urgentLease_one": "<strong>ينتهي عقد كراء {{title}} بعد يوم واحد</strong> دون محضر معاينة الخروج: برمجه مع تصفية الضمانة.",
+        "urgentLease_other": "<strong>ينتهي عقد كراء {{title}} بعد {{count}} يومًا</strong> دون محضر معاينة الخروج: برمجه مع تصفية الضمانة.",
+        "noNoticeAlert": "<strong>وكالة {{title}}: تنتهي في {{date}}.</strong> لم يُرسل بعد إشعار الانتهاء إلى {{name}}.",
+        "note": "يُرسل إشعار انتهاء الوكالات آليًا قبل 60 يومًا من نهايتها."
+      },
+      "apps": {
+        "none": "لا طلب في انتظار القرار.",
+        "waiting_one": "في انتظار القرار",
+        "waiting_other": "في انتظار القرار",
+        "vacant_one": "<strong>{{title}} شاغر منذ يوم واحد</strong>. مترشحون في الانتظار: {{candidates}}.",
+        "vacant_other": "<strong>{{title}} شاغر منذ {{count}} يومًا</strong>. مترشحون في الانتظار: {{candidates}}.",
+        "detailTitle": "طلبات الكراء",
+        "detailSub_one": "طلب واحد دون قرار من أصل {{total}}، مجمّعة حسب العقار",
+        "detailSub_other": "{{count}} طلبات دون قرار من أصل {{total}}، مجمّعة حسب العقار",
+        "viewAll": "كل الطلبات",
+        "docs": "الوثائق",
+        "byAgency": "أدخلته الوكالة",
+        "guarantor": "الكفيل {{amount}}",
+        "oldest_one": "<strong>{{name}} ينتظر منذ يوم واحد</strong>، مع {{docs}} وثيقة مودعة.",
+        "oldest_other": "<strong>{{name}} ينتظر منذ {{count}} يومًا</strong>، مع {{docs}} وثيقة مودعة.",
+        "recent": "قرارات حديثة",
+        "noRecent": "لا قرار حديث."
+      },
+      "cash": {
+        "range": "الإيجارات والتكاليف المطلوبة، من {{from}} إلى {{to}}",
+        "collected": "المحصّل",
+        "rest": "الباقي",
+        "chartLabel": "الإيجارات المحصّلة والمتبقية حسب شهر الاستحقاق",
+        "barLabel": "{{month}}: {{collected}} محصّلة من أصل {{expected}}",
+        "called_one": "المطلوب، عقد واحد",
+        "called_other": "المطلوب، {{count}} عقود",
+        "empty": "لا استحقاق إيجار خلال الأشهر الستة الأخيرة.",
+        "detailTitle": "الإيجارات المحصّلة",
+        "detailSub": "حسب شهر الاستحقاق وحسب العقد، من {{from}} إلى {{to}}",
+        "lease": "العقد",
+        "rate": "النسبة",
+        "total": "مجموع المحصّل",
+        "note": "المبالغ بالدرهم، الإيجار والتكاليف. تقارير التسيير المرسلة إلى الملاك تعتمد هذه المداخيل، بعد خصم أتعاب الوكالة."
+      },
+      "edl": {
+        "title": "محاضر المعاينة",
+        "noActive": "لا عقد كراء نشط.",
+        "allSigned": "كل عقود الكراء النشطة لها محضر معاينة دخول موقّع.",
+        "headline_one": "عقد نشط دون محضر معاينة دخول موقّع",
+        "headline_other": "عقود نشطة دون محضر معاينة دخول موقّع",
+        "depositAlert": "دون محضر معاينة دخول موقّع، لن يمكن تبرير أي اقتطاع من الضمانة عند الخروج.",
+        "situation": {
+          "missing": "لا محضر معاينة",
+          "missingSince": "لا محضر معاينة، عقد بتاريخ {{date}}",
+          "draft": "مسودة منذ {{date}}",
+          "finalized": "مكتمل، في انتظار التوقيع",
+          "exit": "انتهى العقد في {{date}}، يجب برمجة الخروج"
+        },
+        "detailSub": "عقود نشطة ينقصها محضر المعاينة أو ما زال يجب إنجازه",
+        "columns": {
+          "property": "العقار",
+          "tenant": "المكتري",
+          "type": "النوع",
+          "situation": "الوضعية"
+        },
+        "resume": "متابعة محضر المعاينة",
+        "entrySigned": "دخول موقّع",
+        "ofLeases_one": "من أصل عقد واحد",
+        "ofLeases_other": "من أصل {{count}} عقود",
+        "exposed": "ضمانات معرّضة",
+        "note": "يُملأ محضر المعاينة غرفة بغرفة، مع الصور، ثم يوقّعه الطرفان إلكترونيًا."
+      },
+      "leases": {
+        "columns": {
+          "lease": "العقار والمكتري",
+          "rent": "الإيجار مع التكاليف",
+          "payments": "الأداءات، آخر 6 أشهر",
+          "end": "نهاية العقد",
+          "inventory": "محضر المعاينة"
+        },
+        "owed": "{{amount}} مستحقة",
+        "upToDate": "لا متأخرات",
+        "noPeriod": "لا استحقاق"
+      },
+      "lease": {
+        "scheduleTitle": "جدول استحقاق الإيجارات",
+        "scheduleNote": "الإيجار والتكاليف، يؤدى يوم {{day}} من الشهر",
+        "dueOn": "يستحق يوم {{day}}",
+        "unpaidSince_one": "غير مدفوع · {{count}} يوم",
+        "unpaidSince_other": "غير مدفوع · {{count}} يومًا",
+        "restAmount": "الباقي {{amount}}",
+        "paidOn": "دُفع في {{date}}",
+        "columns": {
+          "month": "الشهر",
+          "called": "المطلوب",
+          "received": "المستلم"
+        },
+        "recordPayment": "تسجيل أداء",
+        "deposit": "الضمانة",
+        "period": "المدة",
+        "fromTo": "{{from}} ← {{to}}",
+        "noEnd": "دون تاريخ نهاية",
+        "noDates": "التواريخ غير محددة",
+        "atEnd": "عند نهاية العقد",
+        "leaseTitle": "عقد الكراء",
+        "mandate": "الوكالة {{reference}}",
+        "landlord": "المالك {{name}}",
+        "pdf": "عقد الكراء PDF",
+        "findings": {
+          "owed_one": "<strong>{{amount}} مستحقة</strong> عن استحقاق واحد.",
+          "owed_other": "<strong>{{amount}} مستحقة</strong> عن {{count}} استحقاقات: يجب أن يُخبر تقرير الوكالة المالك بذلك.",
+          "paysLate_one": "<strong>يؤدي متأخرًا في {{count}} شهر من أصل {{paid}}</strong>، بمعدل {{avg}} أيام.",
+          "paysLate_other": "<strong>يؤدي متأخرًا في {{count}} أشهر من أصل {{paid}}</strong>، بمعدل {{avg}} أيام.",
+          "entryMissing": "<strong>لا يوجد محضر معاينة الدخول.</strong> لن يمكن اقتطاع ضمانة {{deposit}} في حال وجود أضرار.",
+          "entryUnsigned": "<strong>محضر معاينة الدخول غير موقّع.</strong> لن يمكن اقتطاع ضمانة {{deposit}} في حال وجود أضرار.",
+          "ending": "<strong>ينتهي العقد في {{date}}</strong>، بعد {{days}} يومًا. جدّده، أو برمج محضر معاينة الخروج وتصفية الضمانة."
+        }
+      },
+      "mandates": {
+        "property": "العقار",
+        "landlord": "المالك",
+        "end": "النهاية",
+        "leased": "العقار مكترى",
+        "yes": "نعم",
+        "vacant": "شاغر"
+      }
     }
   },
   "shop": {

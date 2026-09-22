@@ -643,6 +643,263 @@
         "lineAdded": "Retenue ajoutée",
         "finalized": "Décompte finalisé — email envoyé au locataire"
       }
+    },
+    "overview": {
+      "loadError": "La synthèse de gestion locative n'a pas pu être chargée. Le registre reste disponible ci-dessous.",
+      "newApplication": "Nouvelle candidature",
+      "register": "Portefeuille",
+      "registerTabs": "Registre affiché",
+      "searchPlaceholder": "Bien, locataire, référence…",
+      "searchLabel": "Filtrer le registre",
+      "noMatch": "Aucun élément ne correspond à la recherche.",
+      "actions": "Actions",
+      "today": "aujourd'hui",
+      "inDays_one": "dans {{count}} j",
+      "inDays_other": "dans {{count}} j",
+      "leaseCount_one": "{{count}} bail",
+      "leaseCount_other": "{{count}} baux",
+      "mandateCount_one": "{{count}} mandat",
+      "mandateCount_other": "{{count}} mandats",
+      "openLease": "Fiche du bail",
+      "mandatePdf": "Mandat PDF",
+      "crgPdf": "Compte rendu de gestion {{period}} (PDF)",
+      "removeDoc": "Retirer la pièce",
+      "open": {
+        "lease": "Fiche du bail",
+        "mandate": "Fiche du mandat",
+        "application": "Fiche de la candidature"
+      },
+      "kind": {
+        "lease": "Bail",
+        "mandate": "Mandat"
+      },
+      "widgets": {
+        "late": "Loyers en retard",
+        "due": "Fins de bail et de mandat",
+        "apps": "Candidatures sans réponse",
+        "cash": "Loyers encaissés, par mois d'échéance",
+        "edl": "États des lieux"
+      },
+      "state": {
+        "paid": "Payé",
+        "paid_late": "Payé en retard",
+        "partial": "Partiel",
+        "late": "Impayé",
+        "upcoming": "À venir"
+      },
+      "legend": {
+        "paid": "Payé",
+        "paid_late": "Payé avec plus de 5 j de retard",
+        "partial": "Partiel",
+        "late": "Impayé",
+        "upcoming": "À venir"
+      },
+      "inventoryType": {
+        "entree": "Entrée",
+        "sortie": "Sortie"
+      },
+      "inventoryStatus": {
+        "missing": "Manquant",
+        "draft": "Brouillon",
+        "finalized": "À signer",
+        "signed": "Signé",
+        "to_plan": "À planifier"
+      },
+      "kpi": {
+        "collected": "Encaissé en {{month}}",
+        "collectedOf": "sur {{amount}} attendus · {{rate}}",
+        "noDueThisMonth": "aucune échéance ce mois-ci",
+        "arrears": "Impayés",
+        "arrearsSub_one": "{{count}} échéance sur {{leases}}",
+        "arrearsSub_other": "{{count}} échéances sur {{leases}}",
+        "noArrears": "aucun loyer en retard",
+        "occupancy": "Taux d'occupation",
+        "occupancySub_one": "{{leased}} bien loué sur {{count}} sous mandat actif",
+        "occupancySub_other": "{{leased}} biens loués sur {{count}} sous mandat actif",
+        "fees": "Honoraires de gestion, {{month}}",
+        "feesSub": "calculés sur les loyers encaissés"
+      },
+      "late": {
+        "title": "Loyers en retard",
+        "none": "Aucun loyer en retard : tous les loyers échus sont réglés.",
+        "owedBy_one": "dus par {{count}} locataire",
+        "owedBy_other": "dus par {{count}} locataires",
+        "agingLabel": "Ancienneté des impayés : {{lt15}} de moins de 15 jours, {{d15_45}} entre 15 et 45 jours, {{gt45}} depuis plus de 45 jours",
+        "buckets": {
+          "lt15": "< 15 j",
+          "d15_45": "15 à 45 j",
+          "gt45": "> 45 j"
+        },
+        "listLabel": "Locataires en retard, du plus gros montant dû au plus petit",
+        "detailSub_one": "{{count}} échéance impayée, de la plus ancienne à la plus récente",
+        "detailSub_other": "{{count}} échéances impayées, de la plus ancienne à la plus récente",
+        "viewLeases": "Tous les baux",
+        "columns": {
+          "tenant": "Locataire",
+          "month": "Mois",
+          "rest": "Reste dû",
+          "reminders": "Relances",
+          "age": "Retard"
+        },
+        "partPaid": "{{amount}} déjà reçus",
+        "total": "Total dû",
+        "share": "Soit",
+        "shareSub": "des loyers appelés ce mois-ci",
+        "multiAlert_one": "<strong>{{name}} doit {{amount}}</strong> sur {{count}} échéance.",
+        "multiAlert_other": "<strong>{{name}} cumule {{count}} échéances impayées</strong>, {{amount}} au total : le propriétaire doit en être informé.",
+        "reminderRule": "Une relance automatique part 3 jours après l'échéance, puis tous les 7 jours, 3 fois au plus."
+      },
+      "due": {
+        "title": "Fins de bail et de mandat",
+        "none_one": "Aucune fin de bail ni de mandat d'ici {{count}} jour.",
+        "none_other": "Aucune fin de bail ni de mandat d'ici {{count}} jours.",
+        "within_one": "d'ici {{count}} jour",
+        "within_other": "d'ici {{count}} jours",
+        "thisWeek_one": "{{count}} cette semaine",
+        "thisWeek_other": "{{count}} cette semaine",
+        "endOf": {
+          "lease": "Fin du bail de {{name}}",
+          "mandate": "Fin du mandat de {{name}}"
+        },
+        "party": {
+          "lease": "Locataire {{name}}",
+          "mandate": "Propriétaire {{name}}"
+        },
+        "gap": {
+          "noExit": "Aucun état des lieux de sortie n'est encore créé.",
+          "noNotice": "L'avis d'échéance n'a pas encore été envoyé au propriétaire."
+        },
+        "undated": "{{leases}} et {{mandates}} actifs n'ont pas de date de fin : ils n'apparaîtront pas ici.",
+        "detailSub_one": "{{count}} échéance d'ici au {{date}}",
+        "detailSub_other": "{{count}} échéances d'ici au {{date}}",
+        "columns": {
+          "date": "Date",
+          "contract": "Contrat",
+          "property": "Bien",
+          "party": "Partie",
+          "in": "Dans"
+        },
+        "urgentLease_one": "<strong>Le bail de {{title}} se termine dans {{count}} jour</strong>, sans état des lieux de sortie : planifiez-le avec le décompte du dépôt.",
+        "urgentLease_other": "<strong>Le bail de {{title}} se termine dans {{count}} jours</strong>, sans état des lieux de sortie : planifiez-le avec le décompte du dépôt.",
+        "noNoticeAlert": "<strong>Mandat {{title}} : fin le {{date}}.</strong> L'avis d'échéance n'a pas encore été envoyé à {{name}}.",
+        "note": "L'avis d'échéance des mandats part automatiquement 60 jours avant la fin."
+      },
+      "apps": {
+        "none": "Aucune candidature en attente de décision.",
+        "waiting_one": "en attente de décision",
+        "waiting_other": "en attente de décision",
+        "vacant_one": "<strong>{{title}} est vacant depuis {{count}} jour</strong>. Candidats en attente : {{candidates}}.",
+        "vacant_other": "<strong>{{title}} est vacant depuis {{count}} jours</strong>. Candidats en attente : {{candidates}}.",
+        "detailTitle": "Candidatures",
+        "detailSub_one": "{{count}} candidature sans décision sur {{total}}, groupées par bien",
+        "detailSub_other": "{{count}} candidatures sans décision sur {{total}}, groupées par bien",
+        "viewAll": "Toutes les candidatures",
+        "docs": "Pièces",
+        "byAgency": "saisie agence",
+        "guarantor": "garant {{amount}}",
+        "oldest_one": "<strong>{{name}} attend depuis {{count}} jour</strong>, avec {{docs}} pièce(s) déposée(s).",
+        "oldest_other": "<strong>{{name}} attend depuis {{count}} jours</strong>, avec {{docs}} pièce(s) déposée(s).",
+        "recent": "Décidées récemment",
+        "noRecent": "Aucune décision récente."
+      },
+      "cash": {
+        "range": "Loyers et charges appelés, de {{from}} à {{to}}",
+        "collected": "Encaissé",
+        "rest": "Reste dû",
+        "chartLabel": "Loyers encaissés et restant dus, par mois d'échéance",
+        "barLabel": "{{month}} : {{collected}} encaissés sur {{expected}}",
+        "called_one": "Appelé, {{count}} bail",
+        "called_other": "Appelé, {{count}} baux",
+        "empty": "Aucune échéance de loyer sur les six derniers mois.",
+        "detailTitle": "Loyers encaissés",
+        "detailSub": "Par mois d'échéance et par bail, de {{from}} à {{to}}",
+        "lease": "Bail",
+        "rate": "Taux",
+        "total": "Total encaissé",
+        "note": "Montants en dirhams, loyer et charges. Les comptes rendus de gestion envoyés aux propriétaires reprennent ces encaissements, moins les honoraires du mandat."
+      },
+      "edl": {
+        "title": "États des lieux",
+        "noActive": "Aucun bail actif.",
+        "allSigned": "Tous les baux actifs ont un état des lieux d'entrée signé.",
+        "headline_one": "bail actif sans état des lieux d'entrée signé",
+        "headline_other": "baux actifs sans état des lieux d'entrée signé",
+        "depositAlert": "Sans état des lieux d'entrée signé, aucune retenue sur le dépôt de garantie ne sera défendable à la sortie.",
+        "situation": {
+          "missing": "aucun état des lieux",
+          "missingSince": "aucun état des lieux, bail du {{date}}",
+          "draft": "brouillon depuis le {{date}}",
+          "finalized": "finalisé, en attente de signature",
+          "exit": "bail terminé le {{date}}, sortie à planifier"
+        },
+        "detailSub": "Baux actifs dont l'état des lieux manque ou reste à faire",
+        "columns": {
+          "property": "Bien",
+          "tenant": "Locataire",
+          "type": "Type",
+          "situation": "Situation"
+        },
+        "resume": "Reprendre l'état des lieux",
+        "entrySigned": "Entrée signée",
+        "ofLeases_one": "sur {{count}} bail",
+        "ofLeases_other": "sur {{count}} baux",
+        "exposed": "Dépôts exposés",
+        "note": "Un état des lieux se remplit pièce par pièce, avec photos, puis se signe électroniquement par les deux parties."
+      },
+      "leases": {
+        "columns": {
+          "lease": "Bien et locataire",
+          "rent": "Loyer CC",
+          "payments": "Paiements, 6 derniers mois",
+          "end": "Fin du bail",
+          "inventory": "État des lieux"
+        },
+        "owed": "{{amount}} dus",
+        "upToDate": "À jour",
+        "noPeriod": "Aucune échéance"
+      },
+      "lease": {
+        "scheduleTitle": "Échéancier des loyers",
+        "scheduleNote": "loyer et charges, payable le {{day}} du mois",
+        "dueOn": "échéance le {{day}}",
+        "unpaidSince_one": "impayé · {{count}} j",
+        "unpaidSince_other": "impayé · {{count}} j",
+        "restAmount": "reste {{amount}}",
+        "paidOn": "payé le {{date}}",
+        "columns": {
+          "month": "Mois",
+          "called": "Appelé",
+          "received": "Reçu"
+        },
+        "recordPayment": "Enregistrer un paiement",
+        "deposit": "Dépôt de garantie",
+        "period": "Période",
+        "fromTo": "{{from}} → {{to}}",
+        "noEnd": "sans date de fin",
+        "noDates": "dates non renseignées",
+        "atEnd": "en fin de bail",
+        "leaseTitle": "Bail",
+        "mandate": "Mandat {{reference}}",
+        "landlord": "propriétaire {{name}}",
+        "pdf": "Bail PDF",
+        "findings": {
+          "owed_one": "<strong>{{amount}} dus</strong> sur {{count}} échéance.",
+          "owed_other": "<strong>{{amount}} dus</strong> sur {{count}} échéances : le compte rendu du mandat doit en informer le propriétaire.",
+          "paysLate_one": "<strong>Paie en retard {{count}} mois sur {{paid}}</strong>, {{avg}} jours en moyenne.",
+          "paysLate_other": "<strong>Paie en retard {{count}} mois sur {{paid}}</strong>, {{avg}} jours en moyenne.",
+          "entryMissing": "<strong>État des lieux d'entrée absent.</strong> Le dépôt de {{deposit}} ne pourra pas être retenu en cas de dégâts.",
+          "entryUnsigned": "<strong>État des lieux d'entrée non signé.</strong> Le dépôt de {{deposit}} ne pourra pas être retenu en cas de dégâts.",
+          "ending": "<strong>Le bail se termine le {{date}}</strong>, dans {{days}} jours. Renouveler, ou planifier l'état des lieux de sortie et le décompte du dépôt."
+        }
+      },
+      "mandates": {
+        "property": "Bien",
+        "landlord": "Propriétaire",
+        "end": "Fin",
+        "leased": "Bien loué",
+        "yes": "Oui",
+        "vacant": "Vacant"
+      }
     }
   },
   "shop": {
