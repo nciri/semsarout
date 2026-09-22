@@ -37,6 +37,8 @@ class Cart(Base):
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     user_id = Column(Integer, nullable=False, unique=True)
+    # Renseignée à chaque passage de l'utilisateur : permet de montrer les paniers de l'équipe.
+    agency_id = Column(Integer, nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 

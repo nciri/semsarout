@@ -61,11 +61,15 @@ def _uid(principal: Principal) -> int:
     return int(principal.sub) if principal.sub.isdigit() else 0
 
 
-def _get_or_create_cart(db: Session, user_id: int) -> Cart:
+def _get_or_create_cart(db: Session, principal: Principal) -> Cart:
+    user_id = _uid(principal)
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
     if cart is None:
-        cart = Cart(user_id=user_id)
+        cart = Cart(user_id=user_id, agency_id=principal.agency_id)
         db.add(cart)
+        db.commit()
+    elif principal.agency_id is not None and cart.agency_id != principal.agency_id:
+        cart.agency_id = principal.agency_id
         db.commit()
     return cart
 
@@ -93,7 +97,7 @@ async def health() -> dict:
 # ---- Panier ----
 @app.get("/backoffice/shop/cart")
 def get_cart(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
-    return {"cart": _cart_payload(db, _get_or_create_cart(db, _uid(principal)))}
+    return {"cart": _cart_payload(db, _get_or_create_cart(db, principal))}
 
 
 @app.post("/backoffice/shop/cart/items", status_code=201)
@@ -106,7 +110,7 @@ async def add_cart_item(request: Request, principal: Principal = Depends(get_pri
         qty = max(1, int(data.get("quantity")))
     except (TypeError, ValueError):
         qty = 1
-    cart = _get_or_create_cart(db, _uid(principal))
+    cart = _get_or_create_cart(db, principal)
     item = db.query(CartItem).filter(CartItem.cart_id == cart.id, CartItem.product_id == prod.id).first()
     if item is not None:
         item.quantity += qty
@@ -118,7 +122,7 @@ async def add_cart_item(request: Request, principal: Principal = Depends(get_pri
 
 @app.put("/backoffice/shop/cart/items/{item_id}")
 async def update_cart_item(item_id: int, request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
-    cart = _get_or_create_cart(db, _uid(principal))
+    cart = _get_or_create_cart(db, principal)
     item = db.query(CartItem).filter(CartItem.id == item_id, CartItem.cart_id == cart.id).first()
     if item is None:
         return _err("Article introuvable", 404)
@@ -136,7 +140,7 @@ async def update_cart_item(item_id: int, request: Request, principal: Principal 
 
 @app.delete("/backoffice/shop/cart/items/{item_id}")
 def delete_cart_item(item_id: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
-    cart = _get_or_create_cart(db, _uid(principal))
+    cart = _get_or_create_cart(db, principal)
     item = db.query(CartItem).filter(CartItem.id == item_id, CartItem.cart_id == cart.id).first()
     if item is None:
         return _err("Article introuvable", 404)
@@ -150,6 +154,18 @@ def _require_agency(principal: Principal):
     if principal.agency_id is None:
         return _err("Un compte agence est requis pour commander.", 403)
     return None
+
+
+@app.get("/backoffice/shop/carts")
+def team_carts(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    """Paniers non vides des membres de l'agence (le sien compris), pour la synthèse boutique."""
+    err = _require_agency(principal)
+    if err:
+        return err
+    _get_or_create_cart(db, principal)
+    carts = db.query(Cart).filter(Cart.agency_id == principal.agency_id).order_by(Cart.id).all()
+    payloads = [{"user_id": c.user_id, **_cart_payload(db, c)} for c in carts]
+    return {"carts": [c for c in payloads if c["items"]]}
 
 
 def _item_dicts(db: Session, items: list[OrderItem]) -> list[dict]:
@@ -174,7 +190,7 @@ async def checkout(request: Request, principal: Principal = Depends(get_principa
     err = _require_agency(principal)
     if err:
         return err
-    cart = _get_or_create_cart(db, _uid(principal))
+    cart = _get_or_create_cart(db, principal)
     items = db.query(CartItem).filter(CartItem.cart_id == cart.id).all()
     if not items:
         return _err("Votre panier est vide.", 400)

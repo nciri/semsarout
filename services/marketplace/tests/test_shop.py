@@ -64,6 +64,21 @@ def test_pay_reserves_stock_when_all_products_exist(client, db_session, headers,
     assert calls == [[{"product_id": 1, "quantity": 2}]]
 
 
+def test_cancel_pending_order(client, db_session, headers):
+    o = _order(db_session, lines=[(None, "Four à supprimer", 500, 1)])
+    r = client.post(f"/backoffice/shop/orders/{o.id}/cancel", headers=headers())
+    assert r.status_code == 200, r.text
+    assert r.json()["order"]["status"] == "cancelled"
+
+
+def test_cancel_refuses_paid_order_and_other_agency(client, db_session, headers):
+    paid = _order(db_session, status="paid", lines=[(None, "X", 10, 1)])
+    other = _order(db_session, agency=2, lines=[(None, "X", 10, 1)])
+    assert client.post(f"/backoffice/shop/orders/{paid.id}/cancel", headers=headers()).status_code == 409
+    assert client.post(f"/backoffice/shop/orders/{other.id}/cancel", headers=headers()).status_code == 404
+    assert db_session.get(Order, other.id).status == "pending"
+
+
 def test_order_detail_carries_current_price(client, db_session, headers):
     _product(db_session, 4, 4199)
     o = _order(db_session, status="paid", lines=[(4, "Armoire", 3200, 3), (None, "Four à supprimer", 500, 1)])
@@ -79,21 +94,6 @@ def test_list_with_items_keeps_default_contract(client, db_session, headers):
     assert "items" not in plain and plain["items_count"] == 1
     full = client.get("/backoffice/shop/orders?with_items=true", headers=headers()).json()["orders"][0]
     assert full["items"][0]["current_price"] == 100
-
-
-def test_cancel_pending_order(client, db_session, headers):
-    o = _order(db_session, lines=[(None, "Four à supprimer", 500, 1)])
-    r = client.post(f"/backoffice/shop/orders/{o.id}/cancel", headers=headers())
-    assert r.status_code == 200, r.text
-    assert r.json()["order"]["status"] == "cancelled"
-
-
-def test_cancel_refuses_paid_order_and_other_agency(client, db_session, headers):
-    paid = _order(db_session, status="paid", lines=[(None, "X", 10, 1)])
-    other = _order(db_session, agency=2, lines=[(None, "X", 10, 1)])
-    assert client.post(f"/backoffice/shop/orders/{paid.id}/cancel", headers=headers()).status_code == 409
-    assert client.post(f"/backoffice/shop/orders/{other.id}/cancel", headers=headers()).status_code == 404
-    assert db_session.get(Order, other.id).status == "pending"
 
 
 def test_summary_splits_paid_and_pending_and_skips_cancelled(client, db_session, headers):
@@ -114,3 +114,27 @@ def test_summary_splits_paid_and_pending_and_skips_cancelled(client, db_session,
     assert by_product["Four à supprimer"]["pending"] == 1000
     assert by_product["Four à supprimer"]["available"] is False
     assert [b["buyer_id"] for b in s["by_buyer"]] == [17, 18, 22]
+
+
+def test_team_carts_are_scoped_to_agency(client, db_session, headers):
+    _product(db_session, 3, 1900)
+    client.post("/backoffice/shop/cart/items", headers=headers(17), json={"product_id": 3, "quantity": 2})
+    client.post("/backoffice/shop/cart/items", headers=headers(40, agency_id=2), json={"product_id": 3})
+    r = client.get("/backoffice/shop/carts", headers=headers(3))
+    assert r.status_code == 200
+    assert [(c["user_id"], c["total"]) for c in r.json()["carts"]] == [(17, 3800)]
+
+
+def test_cart_touch_stamps_agency_on_legacy_cart(client, db_session, headers):
+    cart = Cart(user_id=21)
+    db_session.add(cart)
+    db_session.commit()
+    _product(db_session, 5, 4500)
+    db_session.add(CartItem(cart_id=cart.id, product_id=5, quantity=1))
+    db_session.commit()
+    client.get("/backoffice/shop/cart", headers=headers(21))
+    assert db_session.get(Cart, cart.id).agency_id == 1
+
+
+def test_team_carts_require_agency(client, headers):
+    assert client.get("/backoffice/shop/carts", headers=headers(3, agency_id=None)).status_code == 403
