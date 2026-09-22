@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { FiCreditCard, FiPackage, FiShoppingCart } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
 import { IconAction, Widget } from '../components/kit'
+import { gridCols, rowEnd } from '../components/kitTokens'
 import Catalog from './Catalog'
 import OrdersTracking from './OrdersTracking'
 import { CartDetail, CartsCompact, OrdersCard, SpendCompact, SpendDetail } from './SummaryWidgets'
@@ -86,8 +87,7 @@ export default function ShopCatalog() {
     const card = cardRefs.current[openKey]
     const grid = gridRef.current
     if (!card || !grid) return
-    const row = CARDS.map((k) => cardRefs.current[k]).filter((el) => el && el.offsetTop === card.offsetTop)
-    const after = CARDS.find((k) => cardRefs.current[k] === row.at(-1)) || openKey
+    const after = rowEnd(CARDS, openKey, gridCols(grid))
     const g = grid.getBoundingClientRect()
     const c = card.getBoundingClientRect()
     const rtl = getComputedStyle(grid).direction === 'rtl'
