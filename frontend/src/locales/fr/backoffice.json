@@ -1528,48 +1528,109 @@
         "list": {
           "pageTitle": "Leads",
           "subtitle": "Gérez vos prospects et convertissez-les en clients",
-          "stats": {
-            "total": "Total leads",
-            "new": "Nouveaux",
-            "qualified": "Qualifiés",
-            "converted": "Convertis"
-          },
-          "searchPlaceholder": "Rechercher par nom, email...",
-          "filtersButton": "Filtres",
+          "listTitle_one": "{{count}} lead",
+          "listTitle_other": "{{count}} leads",
+          "searchPlaceholder": "Rechercher par nom, email, téléphone…",
           "filterStatusLabel": "Statut",
           "filterStatusAll": "Tous les statuts",
           "filterSourceLabel": "Source",
           "filterSourceAll": "Toutes les sources",
-          "resetFilters": "Réinitialiser",
+          "filterAgentLabel": "Agent attribué",
+          "filterAgentAll": "Tous les agents",
+          "resetFilters": "Réinitialiser les filtres",
+          "sortBy": "Trier par {{column}}",
           "columns": {
             "contact": "Contact",
             "contactInfo": "Coordonnées",
             "source": "Source",
             "status": "Statut",
-            "property": "Bien associé",
-            "date": "Date",
+            "property": "Bien demandé",
+            "agent": "Agent",
+            "received": "Reçu le",
             "actions": "Actions"
           },
-          "viewDetails": "Voir les détails",
+          "viewDetails": "Déplier la fiche",
+          "hideDetails": "Replier la fiche",
           "markLost": "Marquer comme perdu",
+          "unassigned": "Non attribué",
+          "noName": "Sans nom",
+          "noProperty": "Bien non précisé",
+          "loading": "Chargement des leads",
+          "loadError": "Impossible de charger les leads. Réessayez dans un instant.",
           "paginationInfo": "Affichage de {{from}} à {{to}} sur {{total}} leads",
-          "prev": "Précédent",
-          "next": "Suivant",
+          "prev": "Page précédente",
+          "next": "Page suivante",
           "empty": {
             "title": "Aucun lead trouvé",
             "filtered": "Aucun lead ne correspond à vos critères.",
             "default": "Les leads apparaîtront ici lorsque des prospects vous contacteront."
           }
         },
+        "summary": {
+          "pending": {
+            "title": "Leads à traiter",
+            "headline_one": "nouveau, jamais contacté",
+            "headline_other": "nouveaux, jamais contactés",
+            "oldest_one": "Le plus ancien attend depuis {{count}} jour.",
+            "oldest_other": "Le plus ancien attend depuis {{count}} jours.",
+            "show": "Lister ces leads, du plus ancien au plus récent",
+            "empty": "Aucun lead en attente : tout est traité."
+          },
+          "sources": {
+            "title": "Par source",
+            "headline_one": "lead reçu au total",
+            "headline_other": "leads reçus au total",
+            "filter": "{{source}} : {{count}} leads, filtrer la liste"
+          },
+          "conversion": {
+            "title": "Conversion",
+            "headline_one": "{{converted}} lead sur {{count}} devenu client",
+            "headline_other": "{{converted}} leads sur {{count}} devenus clients",
+            "funnel": "Étapes franchies par les leads",
+            "steps": {
+              "received": "Reçus",
+              "contacted": "Contactés",
+              "qualified": "Qualifiés",
+              "converted": "Convertis"
+            },
+            "lost_one": "{{count}} lead perdu.",
+            "lost_other": "{{count}} leads perdus."
+          }
+        },
         "detail": {
-          "title": "Détails du lead",
+          "title": "Fiche de {{name}}",
           "contactInfo": "Coordonnées",
+          "email": "Écrire à {{email}}",
+          "call": "Appeler le {{phone}}",
           "message": "Message",
+          "noMessage": "Aucun message laissé.",
           "internalNotes": "Notes internes",
-          "source": "Source",
-          "createdAt": "Date de création",
-          "property": "Bien associé",
-          "assignedTo": "Assigné à"
+          "property": "Bien demandé",
+          "openProperty": "Ouvrir la fiche du bien",
+          "assignedTo": "Attribution",
+          "assignLabel": "Agent attribué à {{name}}",
+          "history": {
+            "title": "Historique du statut",
+            "received": "Reçu",
+            "contacted": "Contacté",
+            "qualified": "Qualifié",
+            "converted": "Converti en client",
+            "lost": "Perdu",
+            "undated": "date non enregistrée"
+          },
+          "duplicates": {
+            "title": "Même nom ou même téléphone",
+            "loading": "Recherche des doublons…",
+            "error": "Impossible de vérifier les doublons.",
+            "none": "Aucun autre contact à ce nom ou à ce numéro.",
+            "leadsAlert_one": "{{count}} autre demande de ce contact : traitez-les ensemble.",
+            "leadsAlert_other": "{{count}} autres demandes de ce contact : traitez-les ensemble.",
+            "leadsLabel": "Autres demandes du même contact",
+            "clientsLabel": "Clients correspondants",
+            "fromThisLead": "Client créé depuis ce lead",
+            "existingClient": "Déjà client de l'agence",
+            "openClient": "Ouvrir la fiche client"
+          }
         },
         "status": {
           "new": "Nouveau",
@@ -1580,10 +1641,11 @@
         },
         "source": {
           "contact_form": "Formulaire",
-          "phone_reveal": "Téléphone",
-          "callback_request": "Rappel",
+          "phone_reveal": "Numéro affiché",
+          "callback_request": "Rappel demandé",
           "website": "Site web",
-          "manual": "Manuel",
+          "manual": "Saisie manuelle",
+          "service_request": "Demande de service",
           "other": "Autre"
         },
         "nextAction": {

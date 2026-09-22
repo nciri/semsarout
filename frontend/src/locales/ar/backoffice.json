@@ -1528,48 +1528,109 @@
         "list": {
           "pageTitle": "العملاء المحتملون",
           "subtitle": "أدر عملاءك المحتملين وحوّلهم إلى عملاء",
-          "stats": {
-            "total": "إجمالي العملاء المحتملين",
-            "new": "جديد",
-            "qualified": "مؤهّل",
-            "converted": "محوّل"
-          },
-          "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني...",
-          "filtersButton": "التصفية",
+          "listTitle_one": "{{count}} عميل محتمل",
+          "listTitle_other": "{{count}} عملاء محتملون",
+          "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني أو الهاتف…",
           "filterStatusLabel": "الحالة",
           "filterStatusAll": "جميع الحالات",
           "filterSourceLabel": "المصدر",
           "filterSourceAll": "جميع المصادر",
-          "resetFilters": "إعادة تعيين",
+          "filterAgentLabel": "الوكيل المسند",
+          "filterAgentAll": "جميع الوكلاء",
+          "resetFilters": "إعادة تعيين عوامل التصفية",
+          "sortBy": "الترتيب حسب {{column}}",
           "columns": {
             "contact": "جهة الاتصال",
             "contactInfo": "بيانات التواصل",
             "source": "المصدر",
             "status": "الحالة",
-            "property": "العقار المرتبط",
-            "date": "التاريخ",
+            "property": "العقار المطلوب",
+            "agent": "الوكيل",
+            "received": "تاريخ الاستلام",
             "actions": "الإجراءات"
           },
-          "viewDetails": "عرض التفاصيل",
+          "viewDetails": "فتح البطاقة",
+          "hideDetails": "طي البطاقة",
           "markLost": "تحديد كمفقود",
+          "unassigned": "غير مسند",
+          "noName": "بدون اسم",
+          "noProperty": "عقار غير محدد",
+          "loading": "جارٍ تحميل العملاء المحتملين",
+          "loadError": "تعذّر تحميل العملاء المحتملين. أعد المحاولة بعد قليل.",
           "paginationInfo": "عرض {{from}} إلى {{to}} من أصل {{total}} عميل محتمل",
-          "prev": "السابق",
-          "next": "التالي",
+          "prev": "الصفحة السابقة",
+          "next": "الصفحة التالية",
           "empty": {
             "title": "لم يتم العثور على أي عميل محتمل",
             "filtered": "لا يوجد عميل محتمل يطابق معايير البحث.",
             "default": "ستظهر العملاء المحتملون هنا عندما يتواصل معك المهتمون."
           }
         },
+        "summary": {
+          "pending": {
+            "title": "عملاء محتملون للمعالجة",
+            "headline_one": "جديد، لم يتم التواصل معه",
+            "headline_other": "جدد، لم يتم التواصل معهم",
+            "oldest_one": "أقدمهم ينتظر منذ {{count}} يوم.",
+            "oldest_other": "أقدمهم ينتظر منذ {{count}} يومًا.",
+            "show": "عرض هؤلاء العملاء، من الأقدم إلى الأحدث",
+            "empty": "لا يوجد عميل محتمل في الانتظار: تمت معالجة الكل."
+          },
+          "sources": {
+            "title": "حسب المصدر",
+            "headline_one": "عميل محتمل مستلم إجمالًا",
+            "headline_other": "عملاء محتملون مستلمون إجمالًا",
+            "filter": "{{source}}: {{count}} عملاء محتملين، تصفية القائمة"
+          },
+          "conversion": {
+            "title": "التحويل",
+            "headline_one": "{{converted}} من أصل {{count}} أصبح عميلًا",
+            "headline_other": "{{converted}} من أصل {{count}} أصبحوا عملاء",
+            "funnel": "المراحل التي اجتازها العملاء المحتملون",
+            "steps": {
+              "received": "مستلمون",
+              "contacted": "تم التواصل",
+              "qualified": "مؤهّلون",
+              "converted": "محوّلون"
+            },
+            "lost_one": "{{count}} عميل محتمل مفقود.",
+            "lost_other": "{{count}} عملاء محتملون مفقودون."
+          }
+        },
         "detail": {
-          "title": "تفاصيل العميل المحتمل",
+          "title": "بطاقة {{name}}",
           "contactInfo": "بيانات التواصل",
+          "email": "مراسلة {{email}}",
+          "call": "الاتصال بالرقم {{phone}}",
           "message": "الرسالة",
+          "noMessage": "لم تُترك أي رسالة.",
           "internalNotes": "ملاحظات داخلية",
-          "source": "المصدر",
-          "createdAt": "تاريخ الإنشاء",
-          "property": "العقار المرتبط",
-          "assignedTo": "مسند إلى"
+          "property": "العقار المطلوب",
+          "openProperty": "فتح بطاقة العقار",
+          "assignedTo": "الإسناد",
+          "assignLabel": "الوكيل المسند إلى {{name}}",
+          "history": {
+            "title": "سجل الحالة",
+            "received": "مستلم",
+            "contacted": "تم التواصل",
+            "qualified": "مؤهّل",
+            "converted": "تحوّل إلى عميل",
+            "lost": "مفقود",
+            "undated": "تاريخ غير مسجّل"
+          },
+          "duplicates": {
+            "title": "نفس الاسم أو نفس الهاتف",
+            "loading": "جارٍ البحث عن التكرارات…",
+            "error": "تعذّر التحقق من التكرارات.",
+            "none": "لا توجد جهة اتصال أخرى بهذا الاسم أو بهذا الرقم.",
+            "leadsAlert_one": "{{count}} طلب آخر من جهة الاتصال هذه: عالجها معًا.",
+            "leadsAlert_other": "{{count}} طلبات أخرى من جهة الاتصال هذه: عالجها معًا.",
+            "leadsLabel": "طلبات أخرى من نفس جهة الاتصال",
+            "clientsLabel": "العملاء المطابقون",
+            "fromThisLead": "عميل أُنشئ من هذا العميل المحتمل",
+            "existingClient": "عميل حالي للوكالة",
+            "openClient": "فتح بطاقة العميل"
+          }
         },
         "status": {
           "new": "جديد",
@@ -1579,11 +1640,12 @@
           "lost": "مفقود"
         },
         "source": {
-          "contact_form": "نموذج التواصل",
-          "phone_reveal": "الهاتف",
-          "callback_request": "طلب اتصال",
-          "website": "الموقع الإلكتروني",
-          "manual": "يدوي",
+          "contact_form": "استمارة الاتصال",
+          "phone_reveal": "رقم الهاتف المعروض",
+          "callback_request": "طلب معاودة الاتصال",
+          "website": "الموقع",
+          "manual": "إدخال يدوي",
+          "service_request": "طلب خدمة",
           "other": "أخرى"
         },
         "nextAction": {
