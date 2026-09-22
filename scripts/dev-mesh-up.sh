@@ -85,7 +85,7 @@ for pair in $SVCS; do
       extra="LISTING_URL=http://localhost:8012 COMMISSION_URL=http://localhost:8519 IDENTITY_URL=http://localhost:8501 $SELLING_SIGN_VARS";;
   esac
   case "$svc" in listing|search) extra="$extra $TS_HIDDEN";; esac
-  [ "$svc" = "listing" ] && extra="$extra AGENCY_URL=http://localhost:8512 IDENTITY_URL=http://localhost:8501 $S3 MEDIA_BUCKET=semsar-media"
+  [ "$svc" = "listing" ] && extra="$extra AGENCY_URL=http://localhost:8512 IDENTITY_URL=http://localhost:8501 GEO_URL=http://localhost:8509 TRANSACTIONS_URL=http://localhost:8514 $S3 MEDIA_BUCKET=semsar-media"
   env SERVICE_NAME="$svc" DATABASE_URL="$(dburl "$svc")" TRUST_GATEWAY_HEADERS=true \
       INTERNAL_TOKEN="$ITOK" MONOLITH_URL="$MONO" RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" \
       OPENSEARCH_URL="$OS" $extra \

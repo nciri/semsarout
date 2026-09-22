@@ -26,7 +26,7 @@ from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 from semsar_events import enqueue
 
-from . import events, moderation
+from . import events, insights, moderation
 from .db import get_db, init_db
 from .models import Property, PropertyDocument, PropertyImage
 
@@ -449,6 +449,72 @@ def bo_list_properties(request: Request, principal: Principal = Depends(get_prin
     pages = (total + per_page - 1) // per_page if per_page else 1
     return {"properties": [_prop_dict(db, p, include_images=True) for p in items],
             "total": total, "pages": pages, "current_page": page}
+
+
+_GEO_URL = os.environ.get("GEO_URL", "http://localhost:8509")
+_TRANSACTIONS_URL = os.environ.get("TRANSACTIONS_URL", "http://localhost:8514")
+
+
+def _internal_get(url: str, params: dict | None = None) -> dict | None:
+    """None si le service est injoignable : la page l'indique au lieu de conclure « rien à signaler »."""
+    try:
+        resp = httpx.get(url, params=params or {}, headers={"x-internal-token": settings.internal_token}, timeout=5.0)
+    except httpx.HTTPError:
+        return None
+    return resp.json() if resp.status_code == 200 else None
+
+
+def _neighborhood_refs() -> list[dict] | None:
+    data = _internal_get(f"{_GEO_URL}/internal/neighborhood-prices")
+    return None if data is None else data.get("refs", [])
+
+
+def _agency_transactions(agency_id: int) -> list[dict] | None:
+    data = _internal_get(f"{_TRANSACTIONS_URL}/internal/transactions", {"agency_id": agency_id})
+    return None if data is None else data.get("transactions", [])
+
+
+# Route littérale AVANT /backoffice/properties/{property_id}.
+@app.get("/backoffice/properties/insights")
+def bo_properties_insights(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
+    """Tout le portefeuille (hors archivés) enrichi pour la page Biens : photos, longueur de
+    description, fourchette de prix du quartier (geo) et contrôle du statut par les dossiers
+    (transactions). Non paginé : le tri « à traiter d'abord » porte sur l'ensemble."""
+    # ponytail: portefeuille entier en une réponse (quelques centaines de biens au plus par agence) ;
+    # paginer côté serveur avec un score calculé ici si une agence dépasse ce volume.
+    q = db.query(Property).filter(Property.status != "archived")
+    if principal.agency_id:
+        q = q.filter(Property.agency_id == principal.agency_id)
+    else:
+        q = q.filter(Property.owner_id == _bo_uid(principal))
+    props = q.order_by(Property.created_at.desc()).all()
+    ids = [p.id for p in props]
+    images: dict[int, list[str]] = {}
+    if ids:
+        for img in (db.query(PropertyImage).filter(PropertyImage.property_id.in_(ids))
+                    .order_by(PropertyImage.position).all()):
+            images.setdefault(img.property_id, []).append(img.url)
+    refs = _neighborhood_refs()
+    txns = _agency_transactions(principal.agency_id) if principal.agency_id else []
+    by_prop: dict[int, list[dict]] = {}
+    for t in txns or []:
+        by_prop.setdefault(t.get("property_id"), []).append(t)
+
+    rows = []
+    for p in props:
+        d = _prop_dict(db, p, include_images=False)
+        mine = by_prop.get(p.id, [])
+        d.update({
+            "images_count": len(images.get(p.id, [])),
+            "cover_url": (images.get(p.id) or [None])[0],
+            "description_length": len((p.description or "").strip()),
+            "price_ref": insights.match_price_ref(refs or [], p.city, p.neighborhood,
+                                                  p.transaction_type, p.property_type),
+            "status_check": insights.status_check(p.status, mine) if txns is not None else None,
+            "transactions": [insights.brief_transaction(t) for t in mine],
+        })
+        rows.append(d)
+    return {"properties": rows, "sources": {"price_refs": refs is not None, "transactions": txns is not None}}
 
 
 @app.get("/backoffice/properties/{property_id}")
