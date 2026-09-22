@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom'
+import { setLogger } from 'react-query'
 
 // IndexedDB n'existe pas dans jsdom : le moteur hors-ligne de l'éditeur de
 // plans (design3dLocal) en a besoin pour ses tests. `import.meta.env.MODE`
@@ -27,3 +28,8 @@ if (typeof globalThis.localStorage?.setItem !== 'function') {
     writable: true
   })
 }
+
+// Sans backend (CI), une requête react-query non mockée échoue souvent après la fin du test,
+// pendant la fermeture du worker : son console.error arrive trop tard et Vitest compte une
+// erreur « Closing rpc while onUserConsoleLog was pending ». Les tests vérifient l'écran, pas ce log.
+setLogger({ log: console.log, warn: console.warn, error: () => {} })
