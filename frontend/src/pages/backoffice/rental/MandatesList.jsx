@@ -1,24 +1,24 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
-import { FiLock, FiPlus, FiFileText } from 'react-icons/fi'
+import { FiExternalLink, FiFileText, FiLock } from 'react-icons/fi'
 import { rentalService } from '../../../services/rentalService'
 import SearchableSelect from '../../../components/common/SearchableSelect'
 import api from '../../../services/api'
-import { StatCard, DataTable, StatusBadge, EmptyState, GatedNotice, Modal, Field, Select, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
-
-const STATUS_TONE = {
-  draft: 'bg-gray-100 text-gray-700',
-  active: 'bg-emerald-50 text-emerald-700',
-  expired: 'bg-amber-100 text-amber-700',
-  terminated: 'bg-red-100 text-red-700',
-}
+import { EmptyState, GatedNotice, Modal, Field, Select, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
+import { Chip, IconAction, TD, TH } from '../components/kit'
+import { MANDATE_TONE, maskEmail, maskPhone, matches } from './model'
+import { DueChip } from './parts'
+import { useRentalFormat } from './hooks'
 
 function MandatesList() {
   const { t } = useTranslation(['backoffice', 'common'])
   const qc = useQueryClient()
+  const f = useRentalFormat()
+  const location = useLocation()
+  const ctx = useOutletContext()
   const { data, isLoading, error } = useQuery('rental-mandates', () => rentalService.listMandates())
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({ property_id: '', landlord_client_id: '', mandate_type: 'gestion', fee_percent: '' })
@@ -29,47 +29,71 @@ function MandatesList() {
   const properties = propsData?.properties || []
   const clients = clientsData?.clients || []
 
+  useEffect(() => { if (location.state?.create) setOpen(true) }, [location.state])
+
   const create = useMutation(() => rentalService.createMandate({
     property_id: Number(form.property_id), landlord_client_id: Number(form.landlord_client_id),
     mandate_type: form.mandate_type, fee_percent: form.fee_percent ? Number(form.fee_percent) : null,
   }), {
-    onSuccess: () => { toast.success(t('backoffice:rental.mandate.toasts.created')); setOpen(false); setForm({ property_id: '', landlord_client_id: '', mandate_type: 'gestion', fee_percent: '' }); qc.invalidateQueries('rental-mandates') },
+    onSuccess: () => { toast.success(t('backoffice:rental.mandate.toasts.created')); setOpen(false); setForm({ property_id: '', landlord_client_id: '', mandate_type: 'gestion', fee_percent: '' }); qc.invalidateQueries('rental-mandates'); qc.invalidateQueries('rental-summary') },
     onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
   })
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const mandates = data?.mandates || []
-  const stats = useMemo(() => ({
-    total: mandates.length,
-    active: mandates.filter((m) => m.status === 'active').length,
-    draft: mandates.filter((m) => m.status === 'draft').length,
-  }), [mandates])
 
   if (error?.response?.status === 403) {
     return <GatedNotice icon={FiLock} title={t('backoffice:rental.shared.pageTitle')} message={t('backoffice:rental.mandate.gated.message')} />
   }
   if (error) return <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-gray-500">{t('backoffice:rental.shared.loadError')}</div>
 
-
-  const columns = [
-    { header: t('backoffice:rental.mandate.columns.reference'), cell: (m) => <Link className="text-primary-600 hover:text-primary-700 font-medium" to={`/backoffice/gestion-locative/mandats/${m.id}`}>{m.reference}</Link> },
-    { header: t('backoffice:rental.mandate.columns.type'), cell: (m) => <span className="text-gray-600">{t(`backoffice:rental.mandate.type.${m.mandate_type}`, { defaultValue: m.mandate_type })}</span> },
-    { header: t('backoffice:rental.mandate.columns.fees'), align: 'right', cell: (m) => <span className="text-gray-700">{m.fee_percent != null ? `${m.fee_percent} %` : '—'}</span> },
-    { header: t('backoffice:rental.mandate.columns.status'), cell: (m) => <StatusBadge label={t(`backoffice:rental.mandate.status.${m.status}`, { defaultValue: m.status })} className={STATUS_TONE[m.status]} /> },
-  ]
+  const q = ctx?.query || ''
+  const mandates = (data?.mandates || []).filter((m) => matches(q, m.reference, m.property_title, m.property_city, m.landlord_name))
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-4">
-        <StatCard label={t('backoffice:rental.mandate.stats.total')} value={stats.total} icon={FiFileText} />
-        <StatCard label={t('backoffice:rental.mandate.stats.active')} value={stats.active} tone="green" />
-        <StatCard label={t('backoffice:rental.mandate.stats.draft')} value={stats.draft} tone="amber" />
-      </div>
-      <div className="flex justify-end">
-        <button onClick={() => setOpen(true)} className={PRIMARY_BTN}><FiPlus className="w-5 h-5" /> {t('backoffice:rental.mandate.newButton')}</button>
-      </div>
-      <DataTable columns={columns} rows={mandates} isLoading={isLoading}
-        empty={<EmptyState icon={FiFileText} title={t('backoffice:rental.mandate.empty.title')} description={t('backoffice:rental.mandate.empty.description')} />} />
+    <div>
+      {isLoading ? <div className="h-24 animate-pulse rounded-lg bg-gray-50 motion-reduce:animate-none" aria-busy="true" /> : !data?.mandates?.length ? (
+        <EmptyState icon={FiFileText} title={t('backoffice:rental.mandate.empty.title')} description={t('backoffice:rental.mandate.empty.description')} />
+      ) : !mandates.length ? <p className="m-0 px-2.5 py-4 text-sm text-gray-500">{t('backoffice:rental.overview.noMatch')}</p> : (
+        <div className="relative overflow-x-auto">
+          <table className="w-full text-[13px]">
+            <thead><tr>
+              <th className={TH}>{t('backoffice:rental.mandate.columns.reference')}</th>
+              <th className={TH}>{t('backoffice:rental.overview.mandates.property')}</th>
+              <th className={TH}>{t('backoffice:rental.overview.mandates.landlord')}</th>
+              <th className={TH}>{t('backoffice:rental.mandate.columns.type')}</th>
+              <th className={`${TH} text-end`}>{t('backoffice:rental.mandate.columns.fees')}</th>
+              <th className={TH}>{t('backoffice:rental.overview.mandates.end')}</th>
+              <th className={TH}>{t('backoffice:rental.mandate.columns.status')}</th>
+              <th className={TH}>{t('backoffice:rental.overview.mandates.leased')}</th>
+              <th className={`${TH} text-end`}><span className="sr-only">{t('backoffice:rental.overview.actions')}</span></th>
+            </tr></thead>
+            <tbody>
+              {mandates.map((m) => (
+                <tr key={m.id} className="hover:bg-gray-50">
+                  <td className={`${TD} whitespace-nowrap tabular-nums`}>
+                    <Link className="font-medium text-primary-700 hover:text-primary-800" to={`/backoffice/gestion-locative/mandats/${m.id}`}>{m.reference}</Link>
+                  </td>
+                  <td className={TD}><b className="font-semibold">{m.property_title || t('backoffice:rental.application.propertyFallback', { id: m.property_id })}</b><span className="block text-xs text-gray-500">{m.property_city}</span></td>
+                  <td className={TD}>{m.landlord_name || '—'}</td>
+                  <td className={TD}>{t(`backoffice:rental.mandate.type.${m.mandate_type}`, { defaultValue: m.mandate_type })}</td>
+                  <td className={`${TD} text-end tabular-nums`}>{m.fee_percent != null ? `${m.fee_percent} %` : '—'}</td>
+                  <td className={`${TD} whitespace-nowrap`}>
+                    {m.end_date ? f.date(m.end_date) : '—'}
+                    {m.days_to_end != null && m.days_to_end >= 0 && m.days_to_end <= 90 && <span className="ms-1.5"><DueChip days={m.days_to_end} /></span>}
+                  </td>
+                  <td className={TD}><Chip tone={MANDATE_TONE[m.status] || 'neutral'}>{t(`backoffice:rental.mandate.status.${m.status}`, { defaultValue: m.status })}</Chip></td>
+                  <td className={TD}>
+                    {m.active_lease_id
+                      ? <Link to={`/backoffice/gestion-locative/baux/${m.active_lease_id}`} className="text-primary-700 hover:text-primary-800">{t('backoffice:rental.overview.mandates.yes')}</Link>
+                      : m.status === 'active' ? <Chip tone="warn">{t('backoffice:rental.overview.mandates.vacant')}</Chip> : '—'}
+                  </td>
+                  <td className={`${TD} text-end`}>
+                    <IconAction icon={FiExternalLink} label={t('backoffice:rental.overview.open.mandate')} to={`/backoffice/gestion-locative/mandats/${m.id}`} tone="gold" tipAlign="end" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <Modal open={open} onClose={() => setOpen(false)} title={t('backoffice:rental.mandate.modal.title')}
         footer={<>
@@ -91,7 +115,7 @@ function MandatesList() {
           <SearchableSelect
             value={form.landlord_client_id}
             onChange={setVal('landlord_client_id')}
-            options={clients.map((c) => ({ value: c.id, label: `${c.first_name} ${c.last_name}`, description: c.email || c.phone }))}
+            options={clients.map((c) => ({ value: c.id, label: `${c.first_name} ${c.last_name}`, description: c.email ? maskEmail(c.email) : maskPhone(c.phone) }))}
             placeholder={t('backoffice:rental.mandate.modal.landlordPlaceholder')}
             searchPlaceholder={t('backoffice:rental.mandate.modal.landlordSearchPlaceholder')}
           />

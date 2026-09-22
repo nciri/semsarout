@@ -1,6 +1,11 @@
-# CI SemsarOut / M3a-L3achrane — tests exigés sur les PR vers develop et main,
-# et revalidation à chaque push sur develop. La CD (déploiement production) est
-# dans deploy.yml et se déclenche au merge develop → main.
+# CI SemsarOut / M3a-L3achrane — tests exigés sur les PR vers main, c'est-à-dire au
+# moment du passage develop → main, juste avant la mise en production. La CD
+# (déploiement production) est dans deploy.yml et se déclenche au merge.
+#
+# Les PR vers develop et les push sur develop ne déclenchent plus rien : la CI ne garde
+# donc QUE la porte d'entrée de la production. Conséquence assumée — un défaut introduit
+# sur une branche de travail n'est vu qu'à la PR develop → main, et c'est l'ensemble des
+# commits accumulés dans develop qui est alors jugé d'un bloc.
 #
 # Filtrage par chemin : un job `changes` détecte ce qui a changé et ne lance que
 # les jobs pertinents (une PR frontend ne lance aucun test backend, etc.).
@@ -8,16 +13,15 @@
 # matrice backend est relancée (couplage par dépendances partagées).
 #
 # ⚠️ Protection de branche : à cause du filtrage, les jobs non pertinents sont
-# "skipped". Un check requis skippé bloque la PR. Le check requis à configurer
-# dans les règles de protection de develop/main est UNIQUEMENT le job final
-# « CI passed » (il agrège les résultats et réussit si rien n'a échoué).
+# "skipped". Un check requis skippé bloque la PR. Le check requis à configurer dans les
+# règles de protection de main est UNIQUEMENT le job final « CI passed » (il agrège les
+# résultats et réussit si rien n'a échoué). Ne rien exiger côté develop : plus aucun
+# check n'y tourne, et un check requis qui ne démarre jamais bloquerait toute PR.
 name: CI
 
 on:
   pull_request:
-    branches: [develop, main]
-  push:
-    branches: [develop]
+    branches: [main]
 
 jobs:
   changes:
@@ -43,9 +47,9 @@ jobs:
           ALL="gateway services/agency services/analytics services/billing services/catalog \
           services/coloc-listing services/coloc-profile services/commission \
           services/contract services/crm services/design3d services/directory services/identity \
-          services/legal services/listing services/marketplace services/matching \
+          services/geo services/legal services/listing services/marketplace services/matching \
           services/messaging services/notification services/partner services/payment services/programs services/rental \
-          services/search services/selling services/translation services/trust-safety"
+          services/search services/selling services/transactions services/translation services/trust-safety"
 
           if [ "$EVENT" = "pull_request" ]; then
             git fetch --no-tags --prune --depth=200 origin "$BASE_REF"

@@ -9,7 +9,7 @@ from semsar_auth import Principal, get_principal
 
 from . import users_client
 from .db import get_db
-from .models import Client, ClientInteraction, Lead, TransactionRO, Visit
+from .models import Client, ClientInteraction, Lead, PropertyRO, TransactionRO, Visit
 from .util import err, iso, json_body
 
 router = APIRouter()
@@ -125,6 +125,126 @@ def client_stats(principal: Principal = Depends(get_principal), db: Session = De
     }
 
 
+def _norm_name(first: str | None, last: str | None) -> str:
+    return " ".join(f"{first or ''} {last or ''}".lower().split())
+
+
+def _norm_phone(phone: str | None) -> str:
+    """Neuf derniers chiffres : « +212 6 12… » et « 06.12… » désignent le même numéro."""
+    digits = "".join(ch for ch in (phone or "") if ch.isdigit())
+    return digits[-9:] if len(digits) >= 9 else ""
+
+
+def _norm_email(email: str | None) -> str:
+    return (email or "").strip().lower()
+
+
+def _client_keys(c: Client) -> dict[str, str]:
+    return {"name": _norm_name(c.first_name, c.last_name), "phone": _norm_phone(c.phone),
+            "email": _norm_email(c.email)}
+
+
+def _duplicate_groups(clients: list[Client]) -> list[dict]:
+    """Fiches de l'agence qui partagent un nom, un téléphone ou un e-mail, avec la raison."""
+    groups: dict[tuple[int, ...], set[str]] = {}
+    for reason in ("name", "phone", "email"):
+        by_key: dict[str, list[int]] = {}
+        for c in clients:
+            key = _client_keys(c)[reason]
+            if key:
+                by_key.setdefault(key, []).append(c.id)
+        for ids in by_key.values():
+            if len(ids) > 1:
+                groups.setdefault(tuple(sorted(ids)), set()).add(reason)
+    return [{"ids": list(ids), "reasons": sorted(r)} for ids, r in sorted(groups.items())]
+
+
+def _last_exchange(db: Session, clients: list[Client], now: datetime) -> dict[int, datetime | None]:
+    """Dernier échange = le plus récent entre `last_contact_at`, un échange noté et une visite
+    honorée passée. Calculé à la lecture : les données importées n'ont jamais renseigné le champ."""
+    ids = [c.id for c in clients]
+    if not ids:
+        return {}
+    inter = dict(db.query(ClientInteraction.client_id, func.max(ClientInteraction.created_at))
+                 .filter(ClientInteraction.client_id.in_(ids)).group_by(ClientInteraction.client_id).all())
+    visit = dict(db.query(Visit.client_id, func.max(Visit.scheduled_at))
+                 .filter(Visit.client_id.in_(ids), Visit.status == "completed", Visit.scheduled_at <= now)
+                 .group_by(Visit.client_id).all())
+    out = {}
+    for c in clients:
+        dates = [d for d in (c.last_contact_at, inter.get(c.id), visit.get(c.id)) if d]
+        out[c.id] = max(dates) if dates else None
+    return out
+
+
+def _linked_leads(clients: list[Client], leads: list[Lead]) -> dict[int, list[Lead]]:
+    """Leads d'un client : celui dont il est issu, puis ceux au même nom, téléphone ou e-mail —
+    aucun lien n'est enregistré quand le client a été saisi à la main."""
+    out: dict[int, list[Lead]] = {c.id: [] for c in clients}
+    index: dict[tuple[str, str], list[int]] = {}
+    for c in clients:
+        for reason, key in _client_keys(c).items():
+            if key:
+                index.setdefault((reason, key), []).append(c.id)
+    for l in leads:
+        keys = {("name", " ".join((l.name or "").lower().split())), ("phone", _norm_phone(l.phone)),
+                ("email", _norm_email(l.email))}
+        owners = {cid for k in keys if k[1] for cid in index.get(k, [])}
+        owners |= {c.id for c in clients if c.lead_id == l.id}
+        for cid in owners:
+            out[cid].append(l)
+    return out
+
+
+def _titles(db: Session, property_ids) -> dict[int, str]:
+    ids = {i for i in property_ids if i}
+    return dict(db.query(PropertyRO.id, PropertyRO.title).filter(PropertyRO.id.in_(ids)).all()) if ids else {}
+
+
+def _lead_brief(l: Lead, titles: dict[int, str]) -> dict:
+    return {"id": l.id, "status": l.status, "source": l.source, "created_at": iso(l.created_at),
+            "property_id": l.property_id, "property_title": titles.get(l.property_id)}
+
+
+def _visit_brief(v: Visit, titles: dict[int, str]) -> dict:
+    return {"id": v.id, "property_id": v.property_id, "property_title": titles.get(v.property_id),
+            "scheduled_at": iso(v.scheduled_at), "status": v.status,
+            "client_feedback": v.client_feedback, "agent_id": v.agent_id,
+            "agent_name": users_client.name_of(v.agency_id, v.agent_id)}
+
+
+def _agency_scope(query, model, principal: Principal):
+    return query.filter(model.agency_id == principal.agency_id) if principal.agency_id else query
+
+
+@router.get("/backoffice/clients/summary")
+def clients_summary(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
+    """Par client : dernier échange, nombre d'échanges, visites et leads rattachés ; plus les
+    groupes de doublons. Une seule requête pour la liste, ses cartes de synthèse et ses fiches."""
+    now = datetime.utcnow()
+    clients = _agency_scope(db.query(Client), Client, principal).all()
+    ids = [c.id for c in clients]
+    last = _last_exchange(db, clients, now)
+    counts = dict(db.query(ClientInteraction.client_id, func.count(ClientInteraction.id))
+                  .filter(ClientInteraction.client_id.in_(ids)).group_by(ClientInteraction.client_id).all()) if ids else {}
+    visits = (db.query(Visit).filter(Visit.client_id.in_(ids)).order_by(Visit.scheduled_at).all()) if ids else []
+    leads = _agency_scope(db.query(Lead), Lead, principal).order_by(Lead.created_at).all()
+    linked = _linked_leads(clients, leads)
+    titles = _titles(db, [v.property_id for v in visits] + [l.property_id for l in leads])
+    by_client: dict[int, list[Visit]] = {}
+    for v in visits:
+        by_client.setdefault(v.client_id, []).append(v)
+    return {
+        "now": iso(now),
+        "clients": [{
+            "id": c.id, "last_exchange_at": iso(last.get(c.id)), "interactions_count": counts.get(c.id, 0),
+            "visits": [_visit_brief(v, titles) for v in by_client.get(c.id, [])],
+            "leads": [_lead_brief(l, titles) for l in linked[c.id]],
+        } for c in clients],
+        "duplicates": _duplicate_groups(clients),
+    }
+
+
 @router.post("/backoffice/clients/convert-lead/{lead_id}", status_code=201)
 async def convert_lead(lead_id: int, request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
     lead = db.get(Lead, lead_id)
@@ -157,6 +277,44 @@ def get_client(client_id: int, principal: Principal = Depends(get_principal), db
     vmap, tmap = _counts(db, [c.id])
     return _client_dict(c, include_interactions=True, db=db,
                         visits_count=vmap.get(c.id, 0), transactions_count=tmap.get(c.id, 0))
+
+
+@router.get("/backoffice/clients/{client_id}/history")
+def client_history(client_id: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    """Leads, échanges et visites du client sur une seule échelle de temps, ses doublons possibles
+    et son dernier échange. Les transactions (autre service) sont fusionnées par le front."""
+    c, e = _owned(db, client_id, principal)
+    if e:
+        return e
+    now = datetime.utcnow()
+    agency_clients = db.query(Client).filter(Client.agency_id == c.agency_id).all()
+    leads = _linked_leads([c], db.query(Lead).filter(Lead.agency_id == c.agency_id).all())[c.id]
+    visits = db.query(Visit).filter(Visit.client_id == c.id).all()
+    interactions = db.query(ClientInteraction).filter(ClientInteraction.client_id == c.id).all()
+    titles = _titles(db, [v.property_id for v in visits] + [l.property_id for l in leads])
+
+    events = (
+        [{"kind": "lead", "date": iso(l.created_at), **_lead_brief(l, titles)} for l in leads]
+        + [{"kind": "interaction", "date": iso(i.created_at), **_interaction_dict(i, c.agency_id)} for i in interactions]
+        + [{"kind": "visit", "date": iso(v.scheduled_at), **_visit_brief(v, titles)} for v in visits]
+    )
+    events.sort(key=lambda ev: ev["date"] or "")
+
+    reasons: dict[int, set[str]] = {}
+    for g in _duplicate_groups(agency_clients):
+        if c.id in g["ids"]:
+            for oid in g["ids"]:
+                if oid != c.id:
+                    reasons.setdefault(oid, set()).update(g["reasons"])
+    by_id = {x.id: x for x in agency_clients}
+    duplicates = [
+        {"id": oid, "name": f"{by_id[oid].first_name or ''} {by_id[oid].last_name or ''}".strip(),
+         "city": by_id[oid].city, "client_type": by_id[oid].client_type, "status": by_id[oid].status,
+         "reasons": sorted(r)}
+        for oid, r in sorted(reasons.items())
+    ]
+    return {"events": events, "duplicates": duplicates,
+            "last_exchange_at": iso(_last_exchange(db, [c], now).get(c.id))}
 
 
 @router.post("/backoffice/clients", status_code=201)

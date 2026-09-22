@@ -21,7 +21,7 @@ from semsar_events import enqueue
 
 import semsar_signing as signing
 
-from . import commission_client, events, identity_client
+from . import commission_client, events, identity_client, overview
 from .db import get_db, init_db
 from .models import (ApplicationDocument, ChargeRegularization, ClientRO, CrgReport,
                      DeductionLine, DepositSettlement, Inventory, InventoryItem, InventoryPhoto,
@@ -145,7 +145,9 @@ def list_mandates(principal: Principal = Depends(get_principal), db: Session = D
     if (g := _gate(principal)) is not None:
         return g
     q = db.query(Mandate).filter(Mandate.agency_id == principal.agency_id)
-    return {"mandates": [_mandate_dict(m) for m in q.order_by(Mandate.created_at.desc()).all()]}
+    rows = [_mandate_dict(m) for m in q.order_by(Mandate.created_at.desc()).all()]
+    return {"mandates": overview.enrich_mandates(db, principal.agency_id, rows, datetime.utcnow(),
+                                                 _lookup_client)}
 
 
 def _mandate_pdf_bytes(db, mandate):
@@ -176,7 +178,8 @@ def get_mandate(mandate_id: int, principal: Principal = Depends(get_principal),
     m = db.get(Mandate, mandate_id)
     if m is None or m.agency_id != principal.agency_id:
         return err("Mandat introuvable.", 404)
-    return _mandate_dict(m)
+    return overview.enrich_mandates(db, principal.agency_id, [_mandate_dict(m)], datetime.utcnow(),
+                                    _lookup_client)[0]
 
 
 @app.post("/backoffice/gestion-locative/mandates", status_code=201)
@@ -301,7 +304,41 @@ def list_leases(principal: Principal = Depends(get_principal), db: Session = Dep
     if (g := _gate(principal)) is not None:
         return g
     q = db.query(Lease).filter(Lease.agency_id == principal.agency_id)
-    return {"leases": [_lease_dict(l) for l in q.order_by(Lease.created_at.desc()).all()]}
+    rows = [_lease_dict(l) for l in q.order_by(Lease.created_at.desc()).all()]
+    return {"leases": overview.enrich_leases(db, principal.agency_id, rows, datetime.utcnow(),
+                                             _lookup_client)}
+
+
+def _lookup_client(client_id: int) -> dict:
+    # Indirection : `_client_lookup` est défini plus bas et remplacé dans les tests.
+    return _client_lookup(client_id)
+
+
+def _days_param(request: Request, default: int = 90) -> int:
+    try:
+        return min(max(int(request.query_params.get("days", default)), 1), 365)
+    except ValueError:
+        return default
+
+
+@app.get("/backoffice/gestion-locative/summary")
+def rental_summary(request: Request, principal: Principal = Depends(get_principal),
+                   db: Session = Depends(get_db)):
+    """Synthèse de l'agence : mois en cours, impayés, occupation, honoraires, points à traiter."""
+    if (g := _gate(principal)) is not None:
+        return g
+    return overview.summary(db, principal.agency_id, datetime.utcnow(), _days_param(request),
+                            _lookup_client)
+
+
+@app.get("/backoffice/gestion-locative/expiring")
+def rental_expiring(request: Request, principal: Principal = Depends(get_principal),
+                    db: Session = Depends(get_db)):
+    """Baux et mandats actifs dont la fin tombe dans les N prochains jours (`?days=`, 90 par défaut)."""
+    if (g := _gate(principal)) is not None:
+        return g
+    return overview.expiring(db, principal.agency_id, datetime.utcnow(), _days_param(request),
+                             _lookup_client)
 
 
 def _lease_pdf_bytes(db, lease):
@@ -336,7 +373,8 @@ def get_lease(lease_id: int, principal: Principal = Depends(get_principal),
     l = db.get(Lease, lease_id)
     if l is None or l.agency_id != principal.agency_id:
         return err("Bail introuvable.", 404)
-    return _lease_dict(l)
+    return overview.enrich_leases(db, principal.agency_id, [_lease_dict(l)], datetime.utcnow(),
+                                  _lookup_client)[0]
 
 
 @app.post("/backoffice/gestion-locative/leases", status_code=201)
@@ -1082,6 +1120,26 @@ def shortlist_application(application_id: int, principal: Principal = Depends(ge
     return _application_dict(db, a)
 
 
+@app.post("/backoffice/gestion-locative/applications/{application_id}/unshortlist")
+def unshortlist_application(application_id: int, principal: Principal = Depends(get_principal),
+                            db: Session = Depends(get_db)):
+    """Retire une candidature de la présélection : clic par erreur, ou candidat qui ne l'est plus.
+
+    Elle revient en `reviewing` et non en `received` : elle a été lue, et le locataire, qui voit
+    le statut de sa candidature, n'a pas à la voir redevenir « reçue ».
+    """
+    if (g := _gate(principal)) is not None:
+        return g
+    a = db.get(TenantApplication, application_id)
+    if a is None or a.agency_id != principal.agency_id:
+        return err("Candidature introuvable.", 404)
+    if a.status != "shortlist":
+        return err("Cette candidature n'est pas présélectionnée.", 400)
+    a.status = "reviewing"
+    db.commit()
+    return _application_dict(db, a)
+
+
 @app.get("/internal/applications/due-missing-docs-reminders", include_in_schema=False)
 def internal_apps_due_missing_docs(x_internal_token: str = Header(default=""),
                                    db: Session = Depends(get_db)):
@@ -1220,7 +1278,7 @@ def agency_applications(principal: Principal = Depends(get_principal), db: Sessi
     q = (db.query(TenantApplication)
          .filter(TenantApplication.agency_id == principal.agency_id)
          .order_by(TenantApplication.created_at.desc()))
-    return {"applications": [_application_dict(db, a) for a in q.all()]}
+    return {"applications": overview.enrich_applications(db, [_application_dict(db, a) for a in q.all()])}
 
 
 @app.get("/backoffice/gestion-locative/applications/{application_id}")

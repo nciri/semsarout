@@ -69,4 +69,28 @@ describe('rafraîchissement silencieux du jeton', () => {
     expect(useAuthStore.getState().accessToken).toBe(newToken)
     expect(useAuthStore.getState().hasFeature('design3d')).toBe(true)
   })
+
+  // Le Header est monté sur TOUTES les pages, publiques comprises, et interroge
+  // /my-leads/summary dès que `isAuthenticated` est vrai — ce que l'état persisté reste
+  // alors même que la session est expirée. Le 401 qui s'ensuivait menait à
+  // `window.location.href = '/connexion'` : un visiteur ouvrant /inscription avec une
+  // vieille session était éjecté sur la page de connexion, formulaire inaccessible.
+  // La session morte doit être purgée, mais la navigation appartient à PrivateRoute,
+  // seul à savoir si la page courante exige d'être connecté.
+  it('déconnecte sans rediriger quand le rafraîchissement échoue', async () => {
+    axiosPost.mockRejectedValueOnce(new Error('401 refresh'))
+    const before = window.location.href
+
+    const [, errorHandler] = responseUse.mock.calls.at(-1)
+    // L'intercepteur relaie l'erreur à l'appelant (`Promise.reject`) : c'est voulu, la
+    // requête a bien échoué. Seule la navigation ne doit plus lui être imposée.
+    await expect(errorHandler({
+      response: { status: 401 },
+      config: { url: '/my-leads/summary', headers: {} }
+    })).rejects.toBeDefined()
+
+    expect(useAuthStore.getState().isAuthenticated).toBe(false)
+    expect(useAuthStore.getState().accessToken).toBeNull()
+    expect(window.location.href).toBe(before)
+  })
 })

@@ -4,6 +4,8 @@ const B = '/backoffice/gestion-locative'
 const C = '/gestion-locative'
 
 export const rentalService = {
+  // Synthèse de l'agence
+  summary: async (days = 90) => (await api.get(`${B}/summary`, { params: { days } })).data,
   // Mandats
   listMandates: async () => (await api.get(`${B}/mandates`)).data,
   getMandate: async (id) => (await api.get(`${B}/mandates/${id}`)).data,
@@ -31,6 +33,7 @@ export const rentalService = {
     { params: { doc_type: docType, filename: file.name }, headers: { 'Content-Type': file.type || 'application/octet-stream' } })).data,
   decideApplication: async (id, data) => (await api.post(`${B}/applications/${id}/decide`, data)).data,
   shortlistApplication: async (id) => (await api.post(`${B}/applications/${id}/shortlist`)).data,
+  unshortlistApplication: async (id) => (await api.post(`${B}/applications/${id}/unshortlist`)).data,
   validateDocument: async (appId, docId, data) => (await api.patch(`${B}/applications/${appId}/documents/${docId}`, data)).data,
   // États des lieux
   listInventories: async (leaseId) => (await api.get(`${B}/leases/${leaseId}/inventories`)).data,

@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { FiUser, FiMail, FiLock, FiPhone, FiEye, FiEyeOff } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
-import { SERVICE_OPTIONS, isValidService } from '../../constants/services'
+import { SERVICE_OPTIONS, isValidService, intentOptionsFor } from '../../constants/services'
 
 function Register() {
   const { t } = useTranslation(['auth', 'common'])
@@ -20,12 +20,29 @@ function Register() {
   // Only allow internal redirects to avoid open-redirect abuse
   const redirectTo = redirectParam && redirectParam.startsWith('/') ? redirectParam : '/dashboard'
 
-  const { register, handleSubmit, formState: { errors }, watch } = useForm({
-    defaultValues: { interest: serviceContext || '', account_role: 'buyer' }
+  // Arriver depuis une page service (?service=vente) est une intention de VENDEUR : garder
+  // le rôle « acheteur » par défaut afficherait la liste acheteur avec, pré-cochée, une
+  // option qui n'y figure pas.
+  const defaultRole = serviceContext ? 'agent' : 'buyer'
+
+  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm({
+    defaultValues: { interest: serviceContext || '', account_role: defaultRole }
   })
   const userType = watch('user_type', 'particular')
   const interest = watch('interest', serviceContext || '')
-  const accountRole = watch('account_role', 'buyer')
+  const accountRole = watch('account_role', defaultRole)
+  // useMemo pour la stabilité de la référence, pas pour le coût : sans lui, l'effet plus bas
+  // se redéclencherait à chaque rendu.
+  const intentOptions = useMemo(() => intentOptionsFor(accountRole), [accountRole])
+
+  // Changer de rôle change la liste : une intention cochée dans l'ancienne n'a plus de case
+  // à l'écran, mais resterait envoyée — le backend la rejetterait en silence et l'utilisateur
+  // croirait avoir déclaré quelque chose. On la vide plutôt que de la laisser invisible.
+  useEffect(() => {
+    if (interest && !intentOptions.some((o) => o.key === interest)) {
+      setValue('interest', '')
+    }
+  }, [intentOptions, interest, setValue])
 
   const onSubmit = async (data) => {
     setError('')
@@ -150,12 +167,12 @@ function Register() {
               </div>
             </div>
 
-            {/* Intent */}
+            {/* Intent — question ET options dépendent du rôle : les prestations du catalogue
+                (vendre, mettre en location…) ne veulent rien dire pour un acheteur. */}
             <div>
-              <label className="label">{t('auth:register.intentLabel')} <span className="text-gray-400 font-normal">{t('auth:register.optional')}</span></label>
+              <label className="label">{t(`auth:register.intentLabel.${accountRole}`)}</label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {Object.entries(SERVICE_OPTIONS).map(([key, opt]) => {
-                  const OptIcon = opt.icon
+                {intentOptions.map(({ key, icon: OptIcon, labelKey }) => {
                   const active = interest === key
                   return (
                     <label
@@ -171,7 +188,7 @@ function Register() {
                         className="sr-only"
                       />
                       <OptIcon className={`w-4 h-4 me-2 flex-shrink-0 ${active ? 'text-primary-600' : 'text-gray-400'}`} />
-                      {t(`common:services.${key}.label`)}
+                      {t(labelKey)}
                     </label>
                   )
                 })}

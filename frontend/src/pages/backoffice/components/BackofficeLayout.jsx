@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useQuery } from 'react-query'
 import { Link, useLocation, Navigate } from 'react-router-dom'
 import RouteOutlet from '../../../components/common/RouteOutlet'
 import { useTranslation } from 'react-i18next'
@@ -10,6 +11,8 @@ import {
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
 import Wordmark from '../../../components/common/Wordmark'
+import RedCartouche from '../../../components/common/RedCartouche'
+import api from '../../../services/api'
 import LanguageSwitcher from '../../../components/common/LanguageSwitcher'
 
 const MENU_ITEMS = [
@@ -25,8 +28,8 @@ const MENU_ITEMS = [
     sectionKey: 'nav.sections.crm',
     items: [
       { path: '/backoffice/clients', icon: FiUsers, labelKey: 'nav.clients' },
-      { path: '/backoffice/leads', icon: FiMail, labelKey: 'nav.leads' },
-      { path: '/backoffice/visites', icon: FiCalendar, labelKey: 'nav.visits' },
+      { path: '/backoffice/leads', icon: FiMail, labelKey: 'nav.leads', badge: 'newLeads' },
+      { path: '/backoffice/visites', icon: FiCalendar, labelKey: 'nav.visits', badge: 'upcomingVisits' },
     ]
   },
   {
@@ -58,6 +61,18 @@ export default function BackofficeLayout() {
   const location = useLocation()
   const { user, logout } = useAuthStore()
 
+  // Même clé que le tableau de bord (Dashboard.jsx) : react-query partage le cache, les
+  // badges ne coûtent donc aucune requête de plus quand on est sur le tableau de bord.
+  const { data: dashboard } = useQuery(
+    'backoffice-dashboard',
+    async () => (await api.get('/backoffice/dashboard')).data,
+    { enabled: Boolean(user?.agency_id), refetchInterval: 60000 }
+  )
+  const badges = {
+    newLeads: dashboard?.leads?.new || 0,
+    upcomingVisits: dashboard?.visits?.upcoming || 0,
+  }
+
   // Le back-office est réservé aux comptes rattachés à une agence : un particulier est renvoyé
   // vers son espace, un superadmin vers la plateforme.
   if (user && !user.agency_id) return <Navigate to={user.is_superadmin ? '/admin' : '/dashboard'} replace />
@@ -82,7 +97,12 @@ export default function BackofficeLayout() {
         }`}
       >
         <Icon className={`w-5 h-5 ${active ? 'text-primary-600' : 'text-gray-400'}`} />
-        {sidebarOpen && <span>{t(item.labelKey)}</span>}
+        {sidebarOpen && <span className="flex-1">{t(item.labelKey)}</span>}
+        {sidebarOpen && badges[item.badge] > 0 && (
+          <RedCartouche className="text-[11px] font-bold leading-4">
+            {badges[item.badge] > 99 ? '99+' : badges[item.badge]}
+          </RedCartouche>
+        )}
       </Link>
     )
   }
@@ -211,16 +231,17 @@ export default function BackofficeLayout() {
                 <p className="text-xs text-gray-500 truncate">{user?.email}</p>
               </div>
             )}
+            {sidebarOpen && (
+              <button
+                onClick={logout}
+                title={t('common:actions.logout')}
+                aria-label={t('common:actions.logout')}
+                className="p-2 flex-shrink-0 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <FiLogOut className="w-5 h-5" />
+              </button>
+            )}
           </div>
-          {sidebarOpen && (
-            <button
-              onClick={logout}
-              className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <FiLogOut className="w-4 h-4" />
-              <span>{t('common:actions.logout')}</span>
-            </button>
-          )}
         </div>
       </aside>
 

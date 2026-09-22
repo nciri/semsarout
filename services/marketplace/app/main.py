@@ -61,11 +61,15 @@ def _uid(principal: Principal) -> int:
     return int(principal.sub) if principal.sub.isdigit() else 0
 
 
-def _get_or_create_cart(db: Session, user_id: int) -> Cart:
+def _get_or_create_cart(db: Session, principal: Principal) -> Cart:
+    user_id = _uid(principal)
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
     if cart is None:
-        cart = Cart(user_id=user_id)
+        cart = Cart(user_id=user_id, agency_id=principal.agency_id)
         db.add(cart)
+        db.commit()
+    elif principal.agency_id is not None and cart.agency_id != principal.agency_id:
+        cart.agency_id = principal.agency_id
         db.commit()
     return cart
 
@@ -93,7 +97,7 @@ async def health() -> dict:
 # ---- Panier ----
 @app.get("/backoffice/shop/cart")
 def get_cart(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
-    return {"cart": _cart_payload(db, _get_or_create_cart(db, _uid(principal)))}
+    return {"cart": _cart_payload(db, _get_or_create_cart(db, principal))}
 
 
 @app.post("/backoffice/shop/cart/items", status_code=201)
@@ -106,7 +110,7 @@ async def add_cart_item(request: Request, principal: Principal = Depends(get_pri
         qty = max(1, int(data.get("quantity")))
     except (TypeError, ValueError):
         qty = 1
-    cart = _get_or_create_cart(db, _uid(principal))
+    cart = _get_or_create_cart(db, principal)
     item = db.query(CartItem).filter(CartItem.cart_id == cart.id, CartItem.product_id == prod.id).first()
     if item is not None:
         item.quantity += qty
@@ -118,7 +122,7 @@ async def add_cart_item(request: Request, principal: Principal = Depends(get_pri
 
 @app.put("/backoffice/shop/cart/items/{item_id}")
 async def update_cart_item(item_id: int, request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
-    cart = _get_or_create_cart(db, _uid(principal))
+    cart = _get_or_create_cart(db, principal)
     item = db.query(CartItem).filter(CartItem.id == item_id, CartItem.cart_id == cart.id).first()
     if item is None:
         return _err("Article introuvable", 404)
@@ -136,7 +140,7 @@ async def update_cart_item(item_id: int, request: Request, principal: Principal 
 
 @app.delete("/backoffice/shop/cart/items/{item_id}")
 def delete_cart_item(item_id: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
-    cart = _get_or_create_cart(db, _uid(principal))
+    cart = _get_or_create_cart(db, principal)
     item = db.query(CartItem).filter(CartItem.id == item_id, CartItem.cart_id == cart.id).first()
     if item is None:
         return _err("Article introuvable", 404)
@@ -152,12 +156,41 @@ def _require_agency(principal: Principal):
     return None
 
 
+@app.get("/backoffice/shop/carts")
+def team_carts(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    """Paniers non vides des membres de l'agence (le sien compris), pour la synthèse boutique."""
+    err = _require_agency(principal)
+    if err:
+        return err
+    _get_or_create_cart(db, principal)
+    carts = db.query(Cart).filter(Cart.agency_id == principal.agency_id).order_by(Cart.id).all()
+    payloads = [{"user_id": c.user_id, **_cart_payload(db, c)} for c in carts]
+    return {"carts": [c for c in payloads if c["items"]]}
+
+
+def _item_dicts(db: Session, items: list[OrderItem]) -> list[dict]:
+    """Lignes figées de la commande, plus le prix ACTUEL du produit (None s'il a quitté le catalogue)."""
+    ids = {i.product_id for i in items if i.product_id}
+    live = {p.id: p for p in db.query(ProductRO).filter(ProductRO.id.in_(ids)).all()} if ids else {}
+    out = []
+    for i in items:
+        p = live.get(i.product_id)
+        available = p is not None and bool(p.is_active)
+        out.append({**i.to_dict(), "available": available,
+                    "current_price": float(p.price or 0) if available else None})
+    return out
+
+
+def _order_payload(db: Session, order: Order, items: list[OrderItem]) -> dict:
+    return {**order.to_dict(items_count=len(items)), "items": _item_dicts(db, items)}
+
+
 @app.post("/backoffice/shop/orders", status_code=201)
 async def checkout(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
     err = _require_agency(principal)
     if err:
         return err
-    cart = _get_or_create_cart(db, _uid(principal))
+    cart = _get_or_create_cart(db, principal)
     items = db.query(CartItem).filter(CartItem.cart_id == cart.id).all()
     if not items:
         return _err("Votre panier est vide.", 400)
@@ -203,6 +236,9 @@ def pay_order(oid: int, principal: Principal = Depends(get_principal), db: Sessi
     if order.status != "pending":
         return _err("Commande déjà réglée ou traitée.", 409)
     order_items = db.query(OrderItem).filter(OrderItem.order_id == order.id).all()
+    # Sans produit, rien ne serait réservé ni livré : le paiement serait encaissé pour rien.
+    if not all(d["available"] for d in _item_dicts(db, order_items)):
+        return _err("Un article de la commande n'est plus au catalogue : annulez la commande.", 409)
     # Réservation autoritaire du stock auprès de catalog (tout ou rien).
     reserve_items = [{"product_id": it.product_id, "quantity": it.quantity} for it in order_items if it.product_id]
     try:
@@ -221,6 +257,64 @@ def pay_order(oid: int, principal: Principal = Depends(get_principal), db: Sessi
     return {"order": order.to_dict(items=order_items)}
 
 
+@app.post("/backoffice/shop/orders/{oid}/cancel")
+def cancel_order(oid: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    err = _require_agency(principal)
+    if err:
+        return err
+    order = db.query(Order).filter(Order.id == oid, Order.agency_id == principal.agency_id).first()
+    if order is None:
+        return _err("Commande introuvable", 404)
+    # Une commande réglée a déjà réservé du stock : son annulation relève de l'administration.
+    if order.status != "pending":
+        return _err("Seule une commande non réglée peut être annulée.", 409)
+    order.status = "cancelled"
+    db.commit()
+    return {"order": _order_payload(db, order, db.query(OrderItem).filter(OrderItem.order_id == order.id).all())}
+
+
+_PAID = {"paid", "preparing", "shipped", "delivered"}
+
+
+@app.get("/backoffice/shop/orders/summary")
+def orders_summary(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
+    """Dépenses de l'agence (commandes annulées exclues) : par mois, par acheteur, par produit."""
+    orders = {o.id: o for o in db.query(Order).filter(
+        Order.agency_id == principal.agency_id, Order.status != "cancelled").all()}
+    items = db.query(OrderItem).filter(OrderItem.order_id.in_(list(orders))).all() if orders else []
+    by_month: dict[str, dict] = {}
+    by_buyer: dict[int | None, dict] = {}
+    by_product: dict = {}
+    for it, d in zip(items, _item_dicts(db, items)):
+        o = orders[it.order_id]
+        kind = "paid" if o.status in _PAID else "pending"
+        amount = d["line_total"]
+        month = o.created_at.strftime("%Y-%m") if o.created_at else None
+        by_month.setdefault(month, {"month": month, "paid": 0.0, "pending": 0.0})[kind] += amount
+        by_buyer.setdefault(o.buyer_id, {"buyer_id": o.buyer_id, "paid": 0.0, "pending": 0.0, "quantity": 0})
+        by_buyer[o.buyer_id][kind] += amount
+        by_buyer[o.buyer_id]["quantity"] += it.quantity
+        # Un produit retiré n'a plus d'id : ses lignes se regroupent sous leur nom figé.
+        key = it.product_id or f"name:{it.product_name}"
+        row = by_product.setdefault(key, {
+            "product_id": it.product_id, "product_name": it.product_name, "quantity": 0,
+            "paid": 0.0, "pending": 0.0, "last_unit_price": None, "_at": None,
+            "current_price": d["current_price"], "available": d["available"],
+        })
+        row["quantity"] += it.quantity
+        row[kind] += amount
+        if row["_at"] is None or (o.created_at and o.created_at >= row["_at"]):
+            row["_at"], row["last_unit_price"] = o.created_at, d["unit_price"]
+    def rnd(r: dict) -> dict:
+        return {k: round(v, 2) if isinstance(v, float) else v for k, v in r.items() if k != "_at"}
+
+    return {
+        "by_month": sorted((rnd(r) for r in by_month.values()), key=lambda r: r["month"] or ""),
+        "by_buyer": sorted((rnd(r) for r in by_buyer.values()), key=lambda r: -(r["paid"] + r["pending"])),
+        "by_product": sorted((rnd(r) for r in by_product.values()), key=lambda r: -(r["paid"] + r["pending"])),
+    }
+
+
 def _items_count_map(db: Session, order_ids: list[int]) -> dict[int, int]:
     if not order_ids:
         return {}
@@ -229,11 +323,18 @@ def _items_count_map(db: Session, order_ids: list[int]) -> dict[int, int]:
 
 
 @app.get("/backoffice/shop/orders")
-def list_orders(status: str | None = None, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
+def list_orders(status: str | None = None, with_items: bool = False,
+                principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
     q = db.query(Order).filter(Order.agency_id == principal.agency_id)
     if status:
         q = q.filter(Order.status == status)
     orders = q.order_by(Order.created_at.desc()).all()
+    if with_items:
+        all_items = db.query(OrderItem).filter(OrderItem.order_id.in_([o.id for o in orders])).all() if orders else []
+        by_order: dict[int, list] = {}
+        for it in all_items:
+            by_order.setdefault(it.order_id, []).append(it)
+        return {"orders": [_order_payload(db, o, by_order.get(o.id, [])) for o in orders]}
     counts = _items_count_map(db, [o.id for o in orders])
     return {"orders": [o.to_dict(items_count=counts.get(o.id, 0)) for o in orders]}
 
@@ -243,8 +344,7 @@ def get_order(oid: int, principal: Principal = Depends(get_principal), db: Sessi
     order = db.query(Order).filter(Order.id == oid, Order.agency_id == principal.agency_id).first()
     if order is None:
         return _err("Commande introuvable", 404)
-    items = db.query(OrderItem).filter(OrderItem.order_id == order.id).all()
-    return {"order": order.to_dict(items=items)}
+    return {"order": _order_payload(db, order, db.query(OrderItem).filter(OrderItem.order_id == order.id).all())}
 
 
 # ---- Admin (super-admin) ----

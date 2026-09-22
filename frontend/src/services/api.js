@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { purgeRuntimeCaches } from '../utils/runtimeCache'
 
 const api = axios.create({
   baseURL: '/api/v1',
@@ -63,12 +62,21 @@ api.interceptors.response.use(
             originalRequest.headers.Authorization = `Bearer ${response.data.access_token}`
             return api(originalRequest)
           } catch (refreshError) {
-            // Clear auth on refresh failure
-            localStorage.removeItem('auth-storage')
-            // Déconnexion implicite : purger aussi le cache d'exécution du
-            // service worker, comme le fait authStore.logout().
-            purgeRuntimeCaches()
-            window.location.href = '/connexion'
+            // Session morte : on purge, mais on NE navigue PAS.
+            //
+            // Le Header est monté sur toutes les pages, publiques comprises, et interroge
+            // /my-leads/summary dès que `isAuthenticated` est vrai — ce que l'état persisté
+            // reste alors même que la session a expiré. La redirection en dur qui vivait ici
+            // éjectait donc vers /connexion un visiteur simplement venu sur /inscription, en
+            // rechargeant tout le document et sans mémoriser d'où il venait (contrairement à
+            // PrivateRoute, qui passe `state.from`).
+            //
+            // `logout()` fait déjà la purge complète (localStorage + caches du service
+            // worker). Sur une page protégée, PrivateRoute voit `isAuthenticated` retomber et
+            // redirige lui-même, avec le retour ; sur une page publique, l'utilisateur reste
+            // où il est. Le routage appartient au routeur.
+            const { default: useAuthStore } = await import('../store/authStore')
+            useAuthStore.getState().logout()
           }
         }
       }

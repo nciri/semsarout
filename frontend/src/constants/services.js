@@ -22,4 +22,31 @@ export const SERVICE_OPTIONS = {
 
 export const isValidService = (key) => Boolean(key && SERVICE_OPTIONS[key])
 
+/**
+ * Intentions déclarées à l'inscription par un ACHETEUR/chercheur. SERVICE_OPTIONS ci-dessus
+ * est le catalogue des prestations VENDUES : ses entrées décrivent ce qu'un propriétaire veut
+ * faire de son bien, un acheteur n'en coche aucune.
+ */
+const BUYER_INTENT_OPTIONS = {
+  acheter: { icon: FiHome },
+  louer: { icon: FiKey },
+  colocation: { icon: FiUsers },
+  investir: { icon: FiDollarSign },
+  autre: { icon: FiHelpCircle },
+}
+
+/**
+ * Options de la question d'intention, selon le rôle choisi plus haut dans le formulaire.
+ * Rend une liste uniforme `{ key, icon, labelKey }` : l'appelant n'a pas à savoir de quel
+ * catalogue i18n vient le libellé.
+ */
+export const intentOptionsFor = (accountRole) =>
+  accountRole === 'buyer'
+    ? Object.entries(BUYER_INTENT_OPTIONS).map(([key, opt]) => ({
+        key, icon: opt.icon, labelKey: `auth:register.buyerIntents.${key}`,
+      }))
+    : Object.entries(SERVICE_OPTIONS).map(([key, opt]) => ({
+        key, icon: opt.icon, labelKey: `common:services.${key}.label`,
+      }))
+
 export const STAYMANAGER_REGISTER_URL = 'https://staymanager.ma/register'

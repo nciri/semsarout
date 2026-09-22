@@ -5,37 +5,33 @@ import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { FiArrowLeft, FiCheck, FiX, FiLock, FiStar } from 'react-icons/fi'
 import { rentalService } from '../../../services/rentalService'
-import { Panel, StatusBadge, DataTable, EmptyState, Modal, Field, PRIMARY_BTN, SECONDARY_BTN, GatedNotice } from '../../../components/backoffice/ui'
+import { Panel, DataTable, EmptyState, Modal, Field, PRIMARY_BTN, SECONDARY_BTN, GatedNotice } from '../../../components/backoffice/ui'
 import DirIcon from '../../../components/common/DirIcon'
+import { Chip, IconAction } from '../components/kit'
+import { APP_TONE, maskEmail, maskPhone } from './model'
+import { useRentalFormat } from './hooks'
 
-const STATUS_TONE = {
-  received: 'bg-blue-100 text-blue-700',
-  reviewing: 'bg-amber-100 text-amber-700',
-  shortlist: 'bg-indigo-100 text-indigo-700',
-  accepted: 'bg-emerald-50 text-emerald-700',
-  rejected: 'bg-red-100 text-red-700',
-  withdrawn: 'bg-gray-100 text-gray-700',
-}
-const DOC_STATUS_TONE = {
-  received: 'bg-blue-100 text-blue-700',
-  validated: 'bg-emerald-50 text-emerald-700',
-  rejected: 'bg-red-100 text-red-700',
-}
+const DOC_TONE = { received: 'neutral', validated: 'good', rejected: 'crit' }
 
 function ApplicationDetail() {
   const { t } = useTranslation(['backoffice', 'common'])
   const { id } = useParams()
+  const f = useRentalFormat()
   const qc = useQueryClient()
   const { data: a, isLoading, error } = useQuery(['rental-application', id], () => rentalService.getApplication(id))
   const [rejectOpen, setRejectOpen] = useState(false)
   const [reason, setReason] = useState('')
-  const refresh = () => qc.invalidateQueries(['rental-application', id])
+  const refresh = () => { qc.invalidateQueries(['rental-application', id]); qc.invalidateQueries('rental-summary'); qc.invalidateQueries('rental-applications') }
   const decide = useMutation((payload) => rentalService.decideApplication(id, payload), {
     onSuccess: () => { toast.success(t('backoffice:rental.application.detail.toasts.decided')); setRejectOpen(false); refresh() },
     onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
   })
   const shortlist = useMutation(() => rentalService.shortlistApplication(id), {
     onSuccess: () => { toast.success(t('backoffice:rental.application.toasts.shortlisted')); refresh() },
+    onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
+  })
+  const unshortlist = useMutation(() => rentalService.unshortlistApplication(id), {
+    onSuccess: () => { toast.success(t('backoffice:rental.application.toasts.unshortlisted')); refresh() },
     onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
   })
   const validateDoc = useMutation(({ docId, status }) => rentalService.validateDocument(id, docId, { status }), {
@@ -55,11 +51,11 @@ function ApplicationDetail() {
   const docColumns = [
     { header: t('backoffice:rental.application.detail.docs.columns.type'), cell: (d) => <span className="text-gray-700">{d.doc_type}</span> },
     { header: t('backoffice:rental.application.detail.docs.columns.file'), cell: (d) => <span className="text-gray-600">{d.filename || '—'}</span> },
-    { header: t('backoffice:rental.application.detail.docs.columns.status'), cell: (d) => <StatusBadge label={t(`backoffice:rental.application.detail.docs.status.${d.status}`, { defaultValue: d.status })} className={DOC_STATUS_TONE[d.status]} /> },
+    { header: t('backoffice:rental.application.detail.docs.columns.status'), cell: (d) => <Chip tone={DOC_TONE[d.status] || 'neutral'}>{t(`backoffice:rental.application.detail.docs.status.${d.status}`, { defaultValue: d.status })}</Chip> },
     { header: '', align: 'right', cell: (d) => (
-      <div className="flex gap-2 justify-end">
-        <button disabled={validateDoc.isLoading} onClick={() => validateDoc.mutate({ docId: d.id, status: 'validated' })} className="text-emerald-600 hover:text-emerald-700 inline-flex items-center gap-1"><FiCheck className="w-4 h-4" /> {t('backoffice:rental.application.detail.docs.validateButton')}</button>
-        <button disabled={validateDoc.isLoading} onClick={() => validateDoc.mutate({ docId: d.id, status: 'rejected' })} className="text-red-600 hover:text-red-700 inline-flex items-center gap-1"><FiX className="w-4 h-4" /> {t('backoffice:rental.application.detail.docs.rejectButton')}</button>
+      <div className="flex justify-end">
+        <IconAction icon={FiCheck} label={t('backoffice:rental.application.detail.docs.validateButton')} disabled={validateDoc.isLoading} onClick={() => validateDoc.mutate({ docId: d.id, status: 'validated' })} className="text-emerald-700 hover:bg-emerald-50" />
+        <IconAction icon={FiX} label={t('backoffice:rental.application.detail.docs.rejectButton')} tone="danger" tipAlign="end" disabled={validateDoc.isLoading} onClick={() => validateDoc.mutate({ docId: d.id, status: 'rejected' })} />
       </div>
     ) },
   ]
@@ -67,19 +63,22 @@ function ApplicationDetail() {
   return (
     <div className="space-y-6">
       <Link to="/backoffice/gestion-locative/candidatures" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"><DirIcon icon={FiArrowLeft} className="w-4 h-4" /> {t('backoffice:rental.application.detail.backToList')}</Link>
-      {a.submitted_by_agent_id && <StatusBadge label={t('backoffice:rental.application.badges.submittedByAgency')} className="bg-gray-100 text-gray-600" />}
-      <Panel title={t('backoffice:rental.application.detail.title', { name: a.applicant_name || `#${a.id}` })} action={pending && <div className="flex gap-2">
+      {a.submitted_by_agent_id && <Chip>{t('backoffice:rental.application.badges.submittedByAgency')}</Chip>}
+      <Panel title={t('backoffice:rental.application.detail.title', { name: a.applicant_name || `#${a.id}` })} action={pending && <div className="flex gap-1">
         {['received', 'reviewing'].includes(a.status) && (
-          <button disabled={shortlist.isLoading} onClick={() => shortlist.mutate()} className={SECONDARY_BTN}><FiStar className="w-5 h-5" /> {t('backoffice:rental.application.detail.actions.shortlist')}</button>
+          <IconAction icon={FiStar} label={t('backoffice:rental.application.detail.actions.shortlist')} tone="gold" disabled={shortlist.isLoading} onClick={() => shortlist.mutate()} className="border border-gray-200" />
         )}
-        <button disabled={decide.isLoading} onClick={() => decide.mutate({ decision: 'accepted' })} className={PRIMARY_BTN}><FiCheck className="w-5 h-5" /> {t('backoffice:rental.application.detail.actions.accept')}</button>
-        <button onClick={() => setRejectOpen(true)} className={SECONDARY_BTN}><FiX className="w-5 h-5" /> {t('backoffice:rental.application.detail.actions.reject')}</button>
+        {a.status === 'shortlist' && (
+          <IconAction icon={FiStar} label={t('backoffice:rental.application.detail.actions.unshortlist')} disabled={unshortlist.isLoading} onClick={() => unshortlist.mutate()} className="border border-gray-200 [&>svg]:fill-current" />
+        )}
+        <IconAction icon={FiCheck} label={t('backoffice:rental.application.detail.actions.accept')} tone="primary" disabled={decide.isLoading} onClick={() => decide.mutate({ decision: 'accepted' })} />
+        <IconAction icon={FiX} label={t('backoffice:rental.application.detail.actions.reject')} tone="danger" tipAlign="end" onClick={() => setRejectOpen(true)} className="border border-gray-200" />
       </div>}>
         <dl className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-          <div><dt className="text-gray-500">{t('backoffice:rental.application.detail.fields.status')}</dt><dd className="mt-1"><StatusBadge label={t(`backoffice:rental.application.status.${a.status}`, { defaultValue: a.status })} className={STATUS_TONE[a.status]} /></dd></div>
-          <div><dt className="text-gray-500">{t('backoffice:rental.application.detail.fields.email')}</dt><dd className="mt-1 text-gray-900">{a.applicant_email || '—'}</dd></div>
-          <div><dt className="text-gray-500">{t('backoffice:rental.application.detail.fields.phone')}</dt><dd className="mt-1 text-gray-900">{a.applicant_phone || '—'}</dd></div>
-          <div><dt className="text-gray-500">{t('backoffice:rental.application.detail.fields.monthlyIncome')}</dt><dd className="mt-1 text-gray-900">{a.monthly_income != null ? `${a.monthly_income} Đh` : '—'}</dd></div>
+          <div><dt className="text-gray-500">{t('backoffice:rental.application.detail.fields.status')}</dt><dd className="mt-1"><Chip tone={APP_TONE[a.status] || 'neutral'}>{t(`backoffice:rental.application.status.${a.status}`, { defaultValue: a.status })}</Chip></dd></div>
+          <div><dt className="text-gray-500">{t('backoffice:rental.application.detail.fields.email')}</dt><dd className="mt-1 text-gray-900">{a.applicant_email ? maskEmail(a.applicant_email) : '—'}</dd></div>
+          <div><dt className="text-gray-500">{t('backoffice:rental.application.detail.fields.phone')}</dt><dd className="mt-1 text-gray-900">{a.applicant_phone ? maskPhone(a.applicant_phone) : '—'}</dd></div>
+          <div><dt className="text-gray-500">{t('backoffice:rental.application.detail.fields.monthlyIncome')}</dt><dd className="mt-1 text-gray-900">{a.monthly_income != null ? f.dh(a.monthly_income) : '—'}</dd></div>
           <div><dt className="text-gray-500">{t('backoffice:rental.application.detail.fields.guarantor')}</dt><dd className="mt-1 text-gray-900">{a.guarantor_name || '—'}</dd></div>
           <div><dt className="text-gray-500">{t('backoffice:rental.application.detail.fields.property')}</dt><dd className="mt-1 text-gray-900">{a.property_title || t('backoffice:rental.application.propertyFallback', { id: a.property_id })}</dd></div>
         </dl>

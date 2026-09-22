@@ -16,7 +16,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 import uuid
 
-from fastapi import Depends, FastAPI, Header, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
@@ -25,7 +25,7 @@ from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 from semsar_events import enqueue
 
-from . import events, users_client
+from . import events, insights, users_client
 from .db import get_db, init_db
 from .models import (
     ClientRO, Offer, PropertyRO, RENT_STAGES, SALE_STAGES, Transaction, TransactionDocument,
@@ -56,6 +56,13 @@ Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_sch
 
 def _reference() -> str:
     return f"TX-{datetime.utcnow().strftime('%Y%m')}-{uuid.uuid4().hex[:6].upper()}"
+
+
+def _set_stage(t: Transaction, stage: str | None) -> None:
+    """Change d'étape en datant l'entrée : seule source fiable des jours sans avancer."""
+    if stage and stage != t.stage:
+        t.stage = stage
+        t.stage_entered_at = datetime.utcnow()
 
 
 def _full_name(c: ClientRO | None) -> str | None:
@@ -93,6 +100,21 @@ def _doc_dict(d: TransactionDocument, agency_id: int | None) -> dict:
     }
 
 
+def _deal_value(t: Transaction) -> float:
+    """Meilleur prix connu : final, sinon dernière offre, sinon prix demandé."""
+    return num(t.final_price or t.offer_price or t.asking_price) or 0.0
+
+
+def _expected_commission(t: Transaction) -> float | None:
+    # Le montant saisi prime ; sinon le taux appliqué au meilleur prix connu (règle des
+    # commissions déjà calculées : final_price × taux).
+    if t.commission_amount is not None:
+        return num(t.commission_amount)
+    if t.commission_rate is None:
+        return None
+    return round(_deal_value(t) * float(t.commission_rate) / 100, 2)
+
+
 def _tx_dict(db: Session, t: Transaction, include_property: bool = False,
              include_client: bool = False, include_offers: bool = False) -> dict:
     prop = db.get(PropertyRO, t.property_id) if t.property_id else None
@@ -107,6 +129,7 @@ def _tx_dict(db: Session, t: Transaction, include_property: bool = False,
         "agent_id": t.agent_id,
         "agent_name": users_client.name_of(t.agency_id, t.agent_id),
         "transaction_type": t.transaction_type, "stage": t.stage, "stage_order": t.stage_order,
+        "stage_entered_at": iso(t.stage_entered_at or t.created_at),
         "asking_price": num(t.asking_price), "offer_price": num(t.offer_price),
         "final_price": num(t.final_price), "commission_rate": num(t.commission_rate),
         "commission_amount": num(t.commission_amount), "status": t.status,
@@ -114,6 +137,10 @@ def _tx_dict(db: Session, t: Transaction, include_property: bool = False,
         "expected_closing_date": iso(t.expected_closing_date), "closing_date": iso(t.closing_date),
         "probability": t.probability, "priority": t.priority, "notes": t.notes,
         "created_at": iso(t.created_at),
+        "visit_date": iso(t.visit_date), "offer_date": iso(t.offer_date),
+        "acceptance_date": iso(t.acceptance_date), "compromise_date": iso(t.compromise_date),
+        "closed_at": iso(t.closed_at), "updated_at": iso(t.updated_at),
+        "expected_commission": _expected_commission(t),
     }
     if include_property and prop:
         data["property"] = {"id": prop.id, "title": prop.title, "city": prop.city}
@@ -138,6 +165,17 @@ def _owned(db: Session, tx_id: int, principal: Principal):
 
 def _parse_dt(v):
     return datetime.fromisoformat(v.replace("Z", "+00:00")) if v else None
+
+
+def _since(query, since: str | None):
+    """Période du registre : les affaires ouvertes, et celles clôturées depuis `since`."""
+    if not since:
+        return query
+    try:
+        start = _parse_dt(since).replace(tzinfo=None)
+    except ValueError:
+        raise HTTPException(400, "Invalid since date")
+    return query.filter(or_(Transaction.closed_at.is_(None), Transaction.closed_at >= start))
 
 
 @app.get("/health", include_in_schema=False)
@@ -197,6 +235,7 @@ def get_transactions(request: Request, principal: Principal = Depends(get_princi
         query = query.filter(Transaction.property_id == int(qp.get("property_id")))
     if qp.get("priority"):
         query = query.filter(Transaction.priority == qp.get("priority"))
+    query = _since(query, qp.get("since"))
     if qp.get("q"):
         term = f"%{qp.get('q')}%"
         query = query.filter(or_(Transaction.reference.ilike(term), Transaction.notes.ilike(term)))
@@ -215,21 +254,45 @@ def get_transactions(request: Request, principal: Principal = Depends(get_princi
 def get_pipeline(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
     qp = request.query_params
     transaction_type = qp.get("type") or "sale"
-    query = db.query(Transaction).filter(
-        Transaction.status == "active", Transaction.transaction_type == transaction_type)
+    query = db.query(Transaction).filter(Transaction.transaction_type == transaction_type)
     if principal.agency_id:
         query = query.filter(Transaction.agency_id == principal.agency_id)
-    if qp.get("agent_id"):
-        query = query.filter(Transaction.agent_id == int(qp.get("agent_id")))
-    items = query.order_by(Transaction.stage_order).all()
+    # Tous les dossiers du type : les constats (doublon, déjà perdu, concurrent) et les sorties
+    # récentes se lisent sur l'ensemble ; le filtre agent ne restreint que les cartes.
+    everything = query.order_by(Transaction.stage_order).all()
+    agent_id = int(qp.get("agent_id")) if qp.get("agent_id") else None
+    now = datetime.utcnow()
+    rows = {t.id: _insight_row(db, t) for t in everything}
+    all_rows = list(rows.values())
 
     stages = SALE_STAGES if transaction_type == "sale" else RENT_STAGES
     pipeline = {s["id"]: {"id": s["id"], "name": s["name"], "color": s["color"],
                           "order": s["order"], "transactions": []} for s in stages}
-    for t in items:
-        if t.stage in pipeline:
-            pipeline[t.stage]["transactions"].append(_tx_dict(db, t))
-    return {"pipeline": list(pipeline.values()), "stages": stages}
+    for t in everything:
+        if t.status != "active" or t.stage not in pipeline or (agent_id and t.agent_id != agent_id):
+            continue
+        d = _tx_dict(db, t)
+        d["days_in_stage"] = insights.days_between(rows[t.id]["stage_entered_at"], now)
+        d["flags"] = insights.flags_for(rows[t.id], all_rows, now)
+        pipeline[t.stage]["transactions"].append(d)
+    return {"pipeline": list(pipeline.values()), "stages": stages, "as_of": now.isoformat(),
+            "closed_recent": insights.closed_recent(all_rows, now)}
+
+
+def _insight_row(db: Session, t: Transaction) -> dict:
+    prop = db.get(PropertyRO, t.property_id) if t.property_id else None
+    return {
+        "id": t.id, "reference": t.reference, "client_id": t.client_id,
+        "client_name": _full_name(db.get(ClientRO, t.client_id)) if t.client_id else None,
+        "property_id": t.property_id, "property_title": prop.title if prop else None,
+        "property_status": prop.status if prop else None, "agent_id": t.agent_id,
+        "transaction_type": t.transaction_type, "stage": t.stage, "status": t.status,
+        "probability": t.probability, "asking_price": num(t.asking_price),
+        "offer_price": num(t.offer_price), "final_price": num(t.final_price),
+        "expected_closing_date": t.expected_closing_date,
+        "stage_entered_at": t.stage_entered_at or t.created_at,
+        "closed_at": t.closed_at, "lost_reason": t.lost_reason,
+    }
 
 
 @app.get("/backoffice/transactions/stats")
@@ -251,6 +314,56 @@ def get_stats(principal: Principal = Depends(get_principal), db: Session = Depen
         "by_stage": [{"stage": r[0], "count": r[1], "value": float(r[2] or 0)} for r in by_stage],
         "by_agent": [{"name": users_client.name_of(principal.agency_id, r[0]),
                       "count": r[1], "commission": float(r[2] or 0)} for r in by_agent],
+    }
+
+
+@app.get("/backoffice/transactions/summary")
+def get_summary(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
+    """Synthèse du registre : en cours (instantané), signées et perdues depuis `since`.
+    Vente et location restent séparées — un loyer mensuel ne s'additionne pas à un prix."""
+    qp = request.query_params
+    base = db.query(Transaction)
+    if principal.agency_id:
+        base = base.filter(Transaction.agency_id == principal.agency_id)
+    agent_rows = base.with_entities(Transaction.agent_id, func.count(Transaction.id)) \
+        .group_by(Transaction.agent_id).all()
+    if qp.get("agent_id"):
+        base = base.filter(Transaction.agent_id == int(qp.get("agent_id")))
+
+    def bucket() -> dict:
+        return {"active": {"count": 0, "amount": 0.0, "commission": 0.0, "weighted_commission": 0.0},
+                "won": {"count": 0, "amount": 0.0, "commission": 0.0},
+                "lost": {"count": 0, "amount": 0.0}}
+
+    out = {"sale": bucket(), "rent": bucket()}
+    reasons: dict[str, int] = {}
+    for t in _since(base, qp.get("since")).all():
+        kind = out.get(t.transaction_type)
+        if kind is None or t.status not in ("active", "won", "lost"):
+            continue
+        b = kind[t.status]
+        b["count"] += 1
+        b["amount"] += _deal_value(t)
+        commission = _expected_commission(t) or 0.0
+        if t.status == "active":
+            b["commission"] += commission
+            b["weighted_commission"] += commission * (t.probability or 0) / 100
+        elif t.status == "won":
+            b["commission"] += commission
+        else:
+            reason = t.lost_reason or ""
+            reasons[reason] = reasons.get(reason, 0) + 1
+    for kind in out.values():
+        for b in kind.values():
+            for k, v in b.items():
+                if isinstance(v, float):
+                    b[k] = round(v, 2)
+    return {
+        **out,
+        "lost_reasons": sorted(({"reason": r or None, "count": n} for r, n in reasons.items()),
+                               key=lambda x: -x["count"]),
+        "agents": sorted(({"id": a, "name": users_client.name_of(principal.agency_id, a), "count": n}
+                          for a, n in agent_rows), key=lambda x: (x["name"] or "", x["id"])),
     }
 
 
@@ -296,8 +409,9 @@ async def update_transaction(tx_id: int, request: Request, principal: Principal 
         return e
     data = await json_body(request)
     old_stage = t.stage
+    _set_stage(t, data.get("stage"))
     for field in ["property_id", "client_id", "seller_id", "agent_id", "transaction_type",
-                  "stage", "stage_order", "asking_price", "offer_price", "final_price",
+                  "stage_order", "asking_price", "offer_price", "final_price",
                   "commission_rate", "commission_amount", "commission_split", "status",
                   "lost_reason", "probability", "priority", "notes"]:
         if field in data:
@@ -328,7 +442,10 @@ async def move_transaction(tx_id: int, request: Request, principal: Principal = 
     if e:
         return e
     data = await json_body(request)
-    t.stage = data.get("stage")
+    _set_stage(t, data.get("stage"))
+    # « Annuler » un déplacement rend au dossier sa date d'entrée d'origine.
+    if data.get("stage_entered_at"):
+        t.stage_entered_at = _parse_dt(data["stage_entered_at"]).replace(tzinfo=None)
     t.stage_order = data.get("order", 0)
     t.updated_at = datetime.utcnow()
     _emit(db, t, events.TRANSACTION_UPDATED)
@@ -375,7 +492,7 @@ async def create_offer(tx_id: int, request: Request, principal: Principal = Depe
     db.add(o)
     t.offer_price = o.amount
     if t.stage == "visit":
-        t.stage = "offer"
+        _set_stage(t, "offer")
         t.offer_date = datetime.utcnow()
     db.commit()
     return _offer_dict(o, t.agency_id)
@@ -398,7 +515,7 @@ async def update_offer(tx_id: int, offer_id: int, request: Request, principal: P
             t.final_price = o.amount
             t.acceptance_date = datetime.utcnow()
             if t.stage in ("contact", "visit", "offer"):
-                t.stage = "negotiation"
+                _set_stage(t, "negotiation")
     db.commit()
     return _offer_dict(o, t.agency_id)
 
