@@ -1,122 +1,33 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { useNavigate, Link } from 'react-router-dom'
-import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
-import { FiTrash2, FiArrowLeft, FiShoppingCart } from 'react-icons/fi'
-import { shopService } from '../../../services/shopService'
-import SearchableSelect from '../../../components/common/SearchableSelect'
-import api from '../../../services/api'
-import { PageHeader, EmptyState } from '../../../components/backoffice/ui'
-import DirIcon from '../../../components/common/DirIcon'
+import BackLink from './BackLink'
+import CartEditor from './CartEditor'
+import { cartStats } from './model'
+import { useCart, useDh, useOrders, useProducts, useProperties } from './useShop'
 
 function Cart() {
-  const { t } = useTranslation(['backoffice', 'common'])
-  const qc = useQueryClient()
-  const navigate = useNavigate()
-  const { data, isLoading } = useQuery('shop-cart', () => shopService.getCart())
-  const { data: propsData } = useQuery('bo-properties-shop', async () => (await api.get('/backoffice/properties?per_page=100')).data)
-  const [propertyId, setPropertyId] = useState('')
-  const [address, setAddress] = useState('')
-
-  const refresh = () => qc.invalidateQueries('shop-cart')
-  const onErr = (e) => toast.error(e.response?.data?.error || t('common:errors.short'))
-  const upd = useMutation(({ id, quantity }) => shopService.updateCartItem(id, quantity), { onSuccess: refresh, onError: onErr })
-  const rm = useMutation((id) => shopService.removeCartItem(id), { onSuccess: refresh, onError: onErr })
-  const order = useMutation(() => shopService.checkout({ property_id: propertyId ? Number(propertyId) : undefined, delivery_address: address || undefined }), {
-    onSuccess: (res) => { toast.success(t('backoffice:shop.cart.toasts.orderCreated')); qc.invalidateQueries('shop-cart'); navigate(`/backoffice/mes-commandes/${res.order.id}`) },
-    onError: onErr,
-  })
-
+  const { t } = useTranslation('backoffice')
+  const dh = useDh()
+  const { data, isLoading } = useCart()
+  const { data: productsData } = useProducts()
+  const { data: propsData } = useProperties()
+  const { data: ordersData } = useOrders()
   const cart = data?.cart || { items: [], total: 0 }
-  const properties = propsData?.properties || []
+  const s = cartStats(cart.items)
+  const live = (ordersData?.orders || []).filter((o) => o.status !== 'cancelled')
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="mx-auto grid w-full max-w-[1100px] gap-4">
+      <BackLink to="/backoffice/boutique" label={t('shop.cart.backToShop')} />
       <div>
-        <Link to="/backoffice/boutique" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-2">
-          <DirIcon icon={FiArrowLeft} className="w-4 h-4" /> {t('backoffice:shop.cart.backToShop')}
-        </Link>
-        <PageHeader title={t('backoffice:shop.cart.pageTitle')} />
+        <h1 className="font-display text-[22px] font-extrabold leading-tight tracking-tight sm:text-[26px]">{t('shop.cart.title')}</h1>
+        <p className="mt-1 text-gray-500">{s.count ? t('shop.cart.sub', { count: s.count, amount: dh(s.total) }) : t('shop.cart.emptyTitle')}</p>
       </div>
-
-      {isLoading ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-pulse space-y-4">
-          {[...Array(3)].map((_, i) => <div key={i} className="h-10 bg-gray-100 rounded" />)}
-        </div>
-      ) : cart.items.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <EmptyState
-            icon={FiShoppingCart}
-            title={t('backoffice:shop.cart.empty.title')}
-            description={t('backoffice:shop.cart.empty.description')}
-            action={<Link to="/backoffice/boutique" className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">{t('backoffice:shop.cart.empty.action')}</Link>}
-          />
-        </div>
-      ) : (
-        <>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y divide-gray-100">
-            {cart.items.map((it) => (
-              <div key={it.id} className="flex items-center gap-4 p-4">
-                <div className="w-12 h-12 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                  {it.product?.image_url
-                    ? <img src={it.product.image_url} alt="" className="w-full h-full object-cover" />
-                    : <span className="text-xl text-gray-300">🛋️</span>}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-gray-900 truncate">{it.product?.name || '—'}</div>
-                  <div className="text-sm text-gray-500">{it.product?.price} Đh</div>
-                </div>
-                <input
-                  type="number" min="1"
-                  value={it.quantity}
-                  onChange={(e) => upd.mutate({ id: it.id, quantity: Math.max(1, Number(e.target.value)) })}
-                  className="w-16 px-2 py-1.5 border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-                <div className="w-24 text-right font-medium text-gray-900">{it.line_total} Đh</div>
-                <button onClick={() => rm.mutate(it.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors" title={t('backoffice:shop.cart.removeTitle')}>
-                  <FiTrash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
-            <div className="flex justify-between items-center font-bold text-lg text-gray-900">
-              <span>{t('backoffice:shop.cart.total')}</span><span>{cart.total} Đh</span>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:shop.cart.deliverToProperty')}</label>
-              <SearchableSelect
-                value={propertyId}
-                onChange={setPropertyId}
-                options={properties.map((p) => ({ value: p.id, label: p.title || p.reference, description: p.city }))}
-                placeholder={t('backoffice:shop.cart.freeAddressPlaceholder')}
-                searchPlaceholder={t('backoffice:shop.cart.propertySearchPlaceholder')}
-                clearable
-              />
-            </div>
-            {!propertyId && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:shop.cart.deliveryAddress')}</label>
-                <input
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder={t('backoffice:shop.cart.deliveryAddress')}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-            )}
-            <button
-              onClick={() => order.mutate()}
-              disabled={order.isLoading}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
-            >
-              {t('backoffice:shop.cart.orderButton')}
-            </button>
-          </div>
-        </>
-      )}
+      <section className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
+        {isLoading
+          ? <div aria-busy="true" className="h-32 animate-pulse rounded-lg bg-gray-50 motion-reduce:animate-none" />
+          : <CartEditor cart={cart} productsById={new Map((productsData?.products || []).map((p) => [p.id, p]))}
+              properties={propsData?.properties || []} ordersCount={live.length} unlinkedCount={live.filter((o) => !o.property_id).length} />}
+      </section>
     </div>
   )
 }
