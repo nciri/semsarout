@@ -27,35 +27,208 @@
     }
   },
   "dashboard": {
-    "title": "لوحة التحكم",
-    "subtitle": "نظرة عامة على نشاطك",
-    "stats": {
-      "activeProperties": "العقارات النشطة",
-      "newLeads": "عملاء محتملون جدد",
-      "plannedVisits": "زيارات مبرمجة",
-      "activePipeline": "مسار نشط"
+    "title": "لوحة القيادة",
+    "actions": {
+      "planVisit": "برمجة زيارة",
+      "newClient": "عميل جديد",
+      "addProperty": "إضافة عقار"
     },
-    "latestLeads": "آخر العملاء المحتملين",
-    "noRecentLead": "لا يوجد عميل محتمل حديث",
-    "upcomingVisits": "الزيارات القادمة",
-    "noPlannedVisit": "لا توجد زيارة مبرمجة",
-    "monthSummary": "ملخص الشهر",
-    "revenue": "رقم المعاملات",
-    "soldProperties": "عقارات مباعة",
-    "newClients": "عملاء جدد",
-    "activeTransactions": "معاملات نشطة",
-    "quickActions": "إجراءات سريعة",
-    "addProperty": "إضافة عقار",
-    "newClient": "عميل جديد",
-    "planVisit": "برمجة زيارة",
-    "viewPipeline": "عرض مسار الصفقات",
-    "viewAll": "عرض الكل",
-    "vsLastMonth": "{{value}}% مقارنة بالشهر الماضي",
-    "visitFallback": "زيارة",
-    "period": {
-      "last7": "آخر 7 أيام",
-      "last30": "آخر 30 يومًا",
-      "last90": "آخر 3 أشهر"
+    "expand": "عرض التفاصيل",
+    "collapse": "إخفاء",
+    "loadError": "تعذّر تحميل لوحة القيادة. حاول مرة أخرى لاحقًا.",
+    "loading": "جارٍ تحميل لوحة القيادة…",
+    "sources": {
+      "phone_reveal": "رقم الهاتف المعروض",
+      "callback_request": "طلب معاودة الاتصال",
+      "contact_form": "استمارة الاتصال",
+      "website": "الموقع",
+      "other": "أخرى"
+    },
+    "units": {
+      "million": "مليون درهم",
+      "thousand": "ألف درهم",
+      "dirham": "درهم",
+      "perMonth": "درهم/شهر",
+      "days": "{{count}} ي"
+    },
+    "stages": {
+      "contact": "تواصل",
+      "visit": "زيارة",
+      "offer": "عرض",
+      "negotiation": "تفاوض",
+      "compromise": "وعد بالبيع",
+      "final_act": "العقد النهائي",
+      "application": "طلب إيجار",
+      "verification": "تحقق",
+      "move_in": "الانتقال"
+    },
+    "leads": {
+      "title": "طلبات تنتظر المعالجة",
+      "headline_one": "طلب جديد لم يُتواصل معه",
+      "headline_other": "طلبات جديدة لم يُتواصل معها",
+      "buckets": {
+        "fresh": "< 3 أيام",
+        "recent": "3 إلى 14 يومًا",
+        "stale": "> 14 يومًا"
+      },
+      "agingLabel": "مدة انتظار الطلبات: {{fresh}} أقل من 3 أيام، {{recent}} بين 3 و14 يومًا، {{stale}} أكثر من 14 يومًا",
+      "oldest": "الطلبات التي تنتظر منذ أطول مدة",
+      "repeat": "{{count}} طلبات على {{count}} عقارات، دون أي معالجة",
+      "empty": "لا توجد طلبات في الانتظار: تمت معالجة كل شيء.",
+      "detailSub_one": "الطلب ذو الحالة « جديد »",
+      "detailSub_other": "{{count}} طلبات بحالة « جديد »، من الأقدم إلى الأحدث",
+      "viewAll": "كل الطلبات",
+      "columns": {
+        "contact": "جهة الاتصال",
+        "property": "العقار المطلوب",
+        "source": "المصدر",
+        "received": "تاريخ الاستلام",
+        "waiting": "مدة الانتظار"
+      },
+      "noProperty": "عقار غير محدد",
+      "noName": "بدون اسم",
+      "staleAlert_one": "<strong>{{count}} طلب ينتظر منذ أكثر من 14 يومًا.</strong> بعد أسبوعين، غالبًا ما يجد المشتري عقارًا في مكان آخر.",
+      "staleAlert_other": "<strong>{{count}} طلبات تنتظر منذ أكثر من 14 يومًا.</strong> بعد أسبوعين، غالبًا ما يجد المشتري عقارًا في مكان آخر.",
+      "repeatAlert": "<strong>{{name}}</strong> راسل {{count}} مرات دون رد. مكالمة واحدة تعالج كل طلباته.",
+      "bySource": "حسب المصدر"
+    },
+    "visits": {
+      "title": "الزيارات القادمة",
+      "thisWeek": "منها {{count}} هذا الأسبوع",
+      "toConfirm": "{{count}} في انتظار التأكيد",
+      "today": "اليوم",
+      "tomorrow": "غدًا",
+      "status": {
+        "scheduled": "في انتظار التأكيد",
+        "confirmed": "مؤكدة",
+        "completed": "تمت",
+        "cancelled": "ملغاة",
+        "no_show": "غياب"
+      },
+      "weekLabel": "زيارات الأسبوع",
+      "empty": "لا توجد زيارات مبرمجة.",
+      "visitor": "زائر",
+      "detailSub": "{{count}} زيارات مبرمجة حتى {{date}}",
+      "viewAll": "الأجندة الكاملة",
+      "recentTitle": "آخر {{days}} يومًا",
+      "honoured": "تمت",
+      "attendance": "نسبة الحضور",
+      "outOf": "من أصل {{count}}",
+      "cancelled": "ملغاة",
+      "absent": "حالات الغياب",
+      "outcomesLabel": "{{honoured}} تمت، {{cancelled}} ملغاة، {{absent}} حالات غياب",
+      "missedAlert": "<strong>{{missed}} زيارات من أصل {{total}} لم تتم.</strong> تأكيد الزيارات المعلّقة في اليوم السابق يجنّب التنقل دون فائدة.",
+      "noRecent": "لا توجد زيارات خلال آخر {{days}} يومًا."
+    },
+    "results": {
+      "title": "نتائج {{month}}",
+      "salesSigned": "بيوع موقّعة",
+      "rentalsSigned": "إيجارات موقّعة",
+      "prevMonth": "{{month}}: {{count}}، أي {{amount}}",
+      "prevMonthNone": "{{month}}: لا شيء",
+      "lostAlert": "<strong>{{amount}} من البيوع الضائعة</strong> هذا الشهر.",
+      "noLoss": "لا توجد بيوع ضائعة هذا الشهر.",
+      "detailTitle": "النتائج",
+      "detailSub": "الصفقات المغلقة خلال آخر 90 يومًا",
+      "columns": {
+        "date": "التاريخ",
+        "type": "النوع",
+        "stage": "المرحلة المبلوغة",
+        "outcome": "النتيجة",
+        "amount": "المبلغ",
+        "reason": "السبب"
+      },
+      "won": "ناجحة",
+      "lost": "ضائعة",
+      "sale": "بيع",
+      "rent": "إيجار",
+      "viewAll": "كل المعاملات",
+      "empty": "لا توجد صفقات مغلقة خلال هذه الفترة.",
+      "monthToDate": "{{month}}، حتى {{day}}",
+      "wonLabel": "ناجحة",
+      "lostLabel": "ضائعة"
+    },
+    "pipeline": {
+      "title": "مسار المبيعات",
+      "weightedOf": "مرجّحة، من أصل {{amount}} من البيوع الجارية",
+      "stagesLabel": "المبلغ المرجّح للبيوع الجارية حسب المرحلة",
+      "finalActs": "<strong>{{count}} عقود نهائية للتوقيع</strong>: {{amount}} مرجّحة، أي {{share}} من المسار.",
+      "leadsLast4": "طلبات آخر 4 أسابيع",
+      "funnel": {
+        "received": "المستلمة",
+        "contacted": "تم التواصل",
+        "qualified": "مؤهلة",
+        "converted": "محوّلة"
+      },
+      "rentLine": "الإيجار: {{count}} ملفات، {{amount}} مرجّحة",
+      "empty": "لا توجد معاملات جارية.",
+      "periodLabel": "الفترة",
+      "period": {
+        "p7": "7 أيام",
+        "p30": "30 يومًا",
+        "p90": "90 يومًا"
+      },
+      "typeLabel": "نوع المعاملة",
+      "type": {
+        "sale": "بيع",
+        "rent": "إيجار"
+      },
+      "range": "الطلبات والصفقات الموقّعة من {{from}} إلى {{to}}",
+      "kpi": {
+        "leads": "الطلبات المستلمة",
+        "conversion": "نسبة التحويل",
+        "weighted": "المسار المرجّح",
+        "signed": "الموقّع خلال الفترة",
+        "asOf": "حتى اليوم"
+      },
+      "vsPrevious": "مقابل {{count}} في الفترة السابقة",
+      "noPrevious": "لا تتوفر بيانات كافية للمقارنة",
+      "convertedLost": "{{converted}} محوّلة · {{lost}} ضائعة",
+      "ofFiles": "من أصل {{amount}} · {{count}} ملفات",
+      "wonLost": "{{won}} ناجحة · {{lost}} ضائعة",
+      "weeklyTitle": "الطلبات أسبوعيًا حسب المصدر",
+      "weeklyLabel": "الطلبات المستلمة أسبوعيًا، مكدّسة حسب المصدر",
+      "weekOf": "أسبوع {{date}}",
+      "total": "المجموع",
+      "funnelTitle": "قمع الطلبات",
+      "funnelNote": "كل مرحلة تشمل المراحل التالية",
+      "fromPrevious": "{{share}} من المرحلة السابقة",
+      "lostOut": "{{count}} ضائعة، خرجت من القمع أيًا كانت المرحلة المبلوغة",
+      "stagesTitle": "المعاملات الجارية حسب المرحلة",
+      "amountTotal": "المبلغ الإجمالي",
+      "amountWeighted": "المرجّح بالاحتمال",
+      "noFile": "لا يوجد ملف",
+      "outOf": "من أصل {{amount}}",
+      "noneInPeriod": "لا شيء خلال الفترة",
+      "wonChip": "{{count}} ناجحة",
+      "lostChip": "{{count}} ضائعة"
+    },
+    "portfolio": {
+      "title": "محفظة العقارات",
+      "online": "إعلانات منشورة · {{sale}} للبيع، {{rent}} للإيجار",
+      "status": {
+        "active": "منشورة",
+        "pending": "قيد الحجز",
+        "draft": "مسودة",
+        "closed": "مؤجرة أو مبيعة"
+      },
+      "statusLabel": "{{total}} عقارًا: {{active}} منشورة، {{pending}} قيد الحجز، {{draft}} مسودات، {{closed}} مؤجرة أو مبيعة",
+      "zeroAlert": "<strong>{{count}} إعلانات دون أي تواصل</strong>، منها « {{title}} ».",
+      "allContacted": "تلقّت كل الإعلانات المنشورة تواصلًا واحدًا على الأقل.",
+      "detailSub": "{{count}} إعلانات منشورة، مرتبة حسب نسبة التواصل",
+      "columns": {
+        "listing": "الإعلان",
+        "price": "السعر",
+        "views": "المشاهدات",
+        "contacts": "التواصلات",
+        "rate": "نسبة التواصل"
+      },
+      "viewAll": "كل العقارات",
+      "breakdown": "عقارات الوكالة الـ{{count}}",
+      "rented": "مؤجرة",
+      "sold": "مبيعة",
+      "zeroDetail": "<strong>{{count}} إعلانات شوهدت دون أي تواصل</strong>: {{views}} مشاهدة إجمالًا. ينبغي مراجعة السعر أو الصور أو الوصف.",
+      "empty": "لا توجد إعلانات منشورة."
     }
   },
   "signature": {
