@@ -17,3 +17,22 @@ export function useMoney() {
   money.parts = parts
   return money
 }
+
+/**
+ * Dernière carte de la rangée où se trouve `openKey`, en rejouant le placement de la grille
+ * (colonnes + largeurs) plutôt qu'en lisant le DOM : une fois le détail inséré, les cartes
+ * qui suivent sont décalées et la mesure confirmerait sa propre mauvaise place.
+ */
+export function rowEnd(keys, openKey, cols, spanOf = () => 1) {
+  let col = 0
+  let row = []
+  for (const k of keys) {
+    const span = Math.min(spanOf(k), cols)
+    if (col + span > cols) { if (row.includes(openKey)) break; row = []; col = 0 }
+    row.push(k)
+    col += span
+  }
+  return row.includes(openKey) ? row.at(-1) : openKey
+}
+
+export const gridCols = (grid) => getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length || 1

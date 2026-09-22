@@ -5,6 +5,7 @@ import { FiCalendar, FiGrid, FiHome, FiMail, FiPlus, FiTrendingUp, FiUserPlus } 
 import api from '../../services/api'
 import { useFormat } from '../../utils/format'
 import { IconAction, Widget } from './components/kit'
+import { gridCols, rowEnd } from './components/kitTokens'
 import { LeadsCompact, LeadsDetail } from './dashboard/LeadsWidget'
 import { VisitsCompact, VisitsDetail } from './dashboard/VisitsWidget'
 import { ResultsCompact, ResultsDetail } from './dashboard/ResultsWidget'
@@ -78,8 +79,7 @@ export default function BackofficeDashboard() {
     const card = cardRefs.current[openKey]
     const grid = gridRef.current
     if (!card || !grid) return
-    const row = WIDGETS.map((x) => cardRefs.current[x.key]).filter((el) => el && el.offsetTop === card.offsetTop)
-    const after = WIDGETS.find((x) => cardRefs.current[x.key] === row.at(-1))?.key || openKey
+    const after = rowEnd(WIDGETS.map((x) => x.key), openKey, gridCols(grid), (k) => (WIDGETS.find((x) => x.key === k).span ? 2 : 1))
     const g = grid.getBoundingClientRect()
     const c = card.getBoundingClientRect()
     const rtl = getComputedStyle(grid).direction === 'rtl'
