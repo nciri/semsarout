@@ -1716,33 +1716,339 @@
         "subtitle": "أدر محفظة عقاراتك",
         "newButton": "إضافة عقار",
         "addFirstButton": "إضافة عقار",
-        "searchPlaceholder": "ابحث بالعنوان، المدينة...",
-        "filtersButton": "الفلاتر",
+        "searchPlaceholder": "العنوان، المرجع، المدينة أو الحي",
         "filterStatusLabel": "الحالة",
-        "filterStatusAll": "جميع الحالات",
         "filterTypeLabel": "نوع العقار",
         "filterTypeAll": "جميع الأنواع",
         "resetFilters": "إعادة التصفير",
-        "confirmDelete": "هل أنت متأكد من حذف هذا العقار؟",
+        "confirmDelete": "حذف « {{title}} »؟ لا يمكن التراجع عن هذا الإجراء.",
         "viewOnline": "عرض على الموقع",
         "edit": "تعديل",
         "newTransaction": "معاملة جديدة",
         "delete": "حذف",
-        "actionsMenu": "الإجراءات",
-        "viewsCount_one": "{{count}} مشاهدة",
-        "viewsCount_other": "{{count}} مشاهدة",
         "previous": "السابق",
         "next": "التالي",
         "pageOf": "صفحة {{page}} من {{pages}}",
         "empty": {
           "title": "لا يوجد أي عقار",
-          "filtered": "لا يوجد عقار يطابق معايير البحث.",
+          "filtered": "لا يوجد عقار يطابق البحث أو الفلاتر.",
           "default": "ابدأ بإضافة عقارك الأول."
+        }
+      },
+      "board": {
+        "subtitle_one": "عقار واحد في المحفظة",
+        "subtitle_other": "{{count}} عقارات في المحفظة",
+        "loadError": "تعذّر تحميل العقارات. حاول لاحقًا.",
+        "loading": "جارٍ تحميل العقارات…",
+        "units": {
+          "dh": "درهم",
+          "perMonth": "درهم/شهر",
+          "perWeek": "درهم/أسبوع",
+          "perDay": "درهم/ليلة",
+          "sqm": "درهم/م²",
+          "sqmMonth": "درهم/م²/شهر"
+        },
+        "signals": {
+          "none": "لا شيء يستدعي الانتباه",
+          "status": "حالة يجب تصحيحها",
+          "draft": "يجب إعادة نشره",
+          "noPhoto": "بدون صور",
+          "priceTimes": "السعر × {{ratio}}",
+          "priceAbove": "السعر +{{pct}} %",
+          "priceBelow": "السعر −{{pct}} %",
+          "newLeads_one": "طلب واحد للمعالجة",
+          "newLeads_other": "{{count}} طلبات للمعالجة",
+          "noSurface": "المساحة غير محددة"
+        },
+        "checks": {
+          "title": "بطاقة الإعلان",
+          "none": "لا توجد",
+          "chars_one": "حرف واحد",
+          "chars_other": "{{count}} حرفًا",
+          "missing": "غير محدد",
+          "noDate": "بدون تاريخ",
+          "photos": "الصور",
+          "description": "الوصف",
+          "surface": "المساحة",
+          "rooms": "الغرف",
+          "energy": "فئة الطاقة",
+          "published": "تاريخ النشر"
+        },
+        "tags": {
+          "featured": "في الواجهة",
+          "urgent": "عاجل"
+        },
+        "overview": {
+          "label": "نظرة عامة على المحفظة",
+          "online": "منشورة",
+          "onlineSub": "{{sale}} للبيع · {{rent}} للكراء",
+          "views": "مشاهدات الإعلانات المنشورة",
+          "viewsSub_one": "اتصال واحد، أي {{rate}} %",
+          "viewsSub_other": "{{count}} اتصالات، أي {{rate}} %",
+          "visits": "الزيارات القادمة",
+          "visitsSub_one": "على عقار واحد، حتى {{date}}",
+          "visitsSub_other": "على {{count}} عقارات، حتى {{date}}",
+          "visitsNone": "لا توجد زيارة مبرمجة",
+          "leads": "طلبات غير معالجة",
+          "leadsSub_one": "على عقار واحد",
+          "leadsSub_other": "على {{count}} عقارات",
+          "leadsNone": "تمت معالجة كل شيء",
+          "barLabel": "{{total}} عقارات: {{active}} منشورة، {{pending}} محجوزة مبدئيًا، {{draft}} مسودات، {{closed}} مكتراة أو مباعة",
+          "buckets": {
+            "active": "منشورة",
+            "pending": "محجوزة مبدئيًا",
+            "draft": "مسودات",
+            "closed": "مكتراة أو مباعة"
+          }
+        },
+        "queue": {
+          "title": "للمعالجة",
+          "sub": "ما يعيق إعلاناتك، مستخرج من بيانات المحفظة"
+        },
+        "list": {
+          "title": "جميع العقارات",
+          "count_one": "عقار واحد",
+          "count_other": "{{count}} عقارات",
+          "countOf_one": "عقار واحد من {{total}}",
+          "countOf_other": "{{count}} عقارات من {{total}}",
+          "noPhoto": "بدون صور",
+          "photos_one": "صورة واحدة",
+          "photos_other": "{{count}} صور",
+          "stats": "{{views}} مشاهدة · {{contacts}} اتصال",
+          "views_one": "مشاهدة",
+          "views_other": "مشاهدة",
+          "contacts_one": "اتصال",
+          "contacts_other": "اتصال",
+          "visits_one": "زيارة",
+          "visits_other": "زيارة"
+        },
+        "filters": {
+          "all": "الكل",
+          "allCount": "جميع الحالات ({{count}})",
+          "search": "البحث عن عقار",
+          "sort": "الترتيب",
+          "view": "العرض",
+          "status": {
+            "active": "منشورة",
+            "pending": "محجوزة مبدئيًا",
+            "draft": "مسودات",
+            "rented": "مكتراة",
+            "sold": "مباعة"
+          },
+          "sorts": {
+            "todo": "ما يجب معالجته أولًا",
+            "views": "الأكثر مشاهدة",
+            "price": "السعر تنازليًا"
+          },
+          "views": {
+            "rows": "قائمة",
+            "cards": "شبكة"
+          }
+        },
+        "columns": {
+          "property": "العقار",
+          "status": "الحالة",
+          "price": "السعر",
+          "views": "المشاهدات",
+          "contacts": "الاتصالات",
+          "visits": "الزيارات",
+          "todo": "للمعالجة"
+        },
+        "pager": {
+          "range": "{{from}} إلى {{to}} من {{total}}"
+        },
+        "toast": {
+          "status": "« {{title}} »: {{status}}",
+          "error": "فشل التحديث. حاول مجددًا."
+        },
+        "photos": {
+          "title": "إعلانات بدون صور",
+          "allGood": "جميع الإعلانات المنشورة تضم صورة واحدة على الأقل.",
+          "figure": "منشورة بدون أي صورة",
+          "figureNoContact": "منشورة، دون أي اتصال",
+          "barsLabel": "الاتصالات المتلقاة حسب وجود الصور",
+          "with": "مع صور",
+          "without": "بدون صور",
+          "viewsNote": "اتصالات مقابل {{with}} مشاهدة من جهة، و{{without}} من الجهة الأخرى.",
+          "detailSub_one": "إعلان منشور واحد بدون أي صورة",
+          "detailSub_other": "{{count}} إعلانات منشورة بدون أي صورة، مرتبة حسب عدد المشاهدات",
+          "columns": {
+            "listing": "الإعلان",
+            "views": "المشاهدات",
+            "contacts": "الاتصالات",
+            "description": "الوصف",
+            "visits": "الزيارات القادمة",
+            "actions": "الإجراءات"
+          },
+          "chars_one": "حرف واحد",
+          "chars_other": "{{count}} حرفًا",
+          "complete": "إكمال البطاقة",
+          "asideTitle": "الصور والاتصالات، الإعلانات المنشورة",
+          "withCount": "مع صور ({{n}})",
+          "withoutCount": "بدون صور ({{n}})",
+          "ratio": "{{contacts}} اتصال / {{views}} مشاهدة",
+          "shortAlert_one": "<strong>لهذه البطاقة أيضًا وصف يقل عن {{min}} حرف</strong>: لا شيء يستبقي المشتري.",
+          "shortAlert_other": "<strong>{{count}} من هذه البطاقات لها أيضًا وصف يقل عن {{min}} حرف</strong>: لا شيء يستبقي المشتري.",
+          "visitsAlert_one": "<strong>{{title}}</strong>: زيارة واحدة مبرمجة رغم أن الإعلان بلا صور. هذا الزائر قادم من مكان آخر.",
+          "visitsAlert_other": "<strong>{{title}}</strong>: {{count}} زيارات مبرمجة رغم أن الإعلان بلا صور. هؤلاء الزوار قادمون من مكان آخر."
+        },
+        "price": {
+          "title": "أسعار خارج السوق",
+          "unavailable": "مرجع أسعار الأحياء غير متاح حاليًا.",
+          "allGood_one": "الإعلان المقارَن داخل نطاق حيّه.",
+          "allGood_other": "الإعلانات الـ{{count}} المقارَنة داخل نطاق أحيائها.",
+          "figure": "خارج نطاق الحي",
+          "barLabel": "{{count}} إعلانات: {{above}} فوق النطاق، {{below}} تحته",
+          "aboveCount": "فوق النطاق · {{n}}",
+          "belowCount": "تحت النطاق · {{n}}",
+          "vsAvg": "{{value}} مقابل متوسط {{avg}}",
+          "detailSub_one": "إعلان منشور واحد مقارَن بمتوسط سعر المتر المربع في حيّه، لنفس نوع المعاملة",
+          "detailSub_other": "{{count}} إعلانات منشورة مقارَنة بمتوسط سعر المتر المربع في أحيائها، لنفس نوع المعاملة",
+          "none": "لا يوجد أي إعلان منشور له مرجع حي.",
+          "chartTitle": "سعر المتر المربع، كنسبة من متوسط الحي",
+          "axisName": "الإعلان",
+          "axisAvg": "المتوسط",
+          "axisGap": "الفارق",
+          "tx": {
+            "sale": "بيع",
+            "rent": "كراء"
+          },
+          "aboveAlert_one": "<strong>إعلان واحد فوق النطاق</strong>، {{contacts}} اتصال. تحقق أولًا من إدخال السعر والمساحة.",
+          "aboveAlert_other": "<strong>{{count}} إعلانات فوق النطاق</strong>، {{contacts}} اتصال في المجموع. تحقق أولًا من إدخال السعر والمساحة.",
+          "typoAlert": "بسعر {{price}}، سيكون « {{title}} » بـ {{sqm}}، داخل نطاق الحي ({{min}} إلى {{max}}). صفر زائد أمر مرجح.",
+          "belowAlert_one": "<strong>إعلان واحد تحت النطاق.</strong> {{title}}: {{price}} مقابل {{surface}} م²، أي {{sqm}} بينما يتراوح الحي بين {{min}} و{{max}}.",
+          "belowAlert_other": "<strong>{{count}} إعلانات تحت النطاق.</strong> الأدنى، {{title}}: {{price}} مقابل {{surface}} م²، أي {{sqm}} بينما يتراوح الحي بين {{min}} و{{max}}.",
+          "noSurface_one": "« {{title}} » بدون مساحة: لا يمكن مقارنته.",
+          "noSurface_other": "{{count}} إعلانات بدون مساحة، منها « {{title}} »: لا يمكن مقارنتها.",
+          "noRef_one": "إعلان واحد بدون مرجع لحيّه.",
+          "noRef_other": "{{count}} إعلانات بدون مرجع لأحيائها.",
+          "legendBand": "نطاق الحي",
+          "legendAvg": "المتوسط",
+          "legendPoint": "سعر المتر المربع للإعلان",
+          "rowLabel": "{{name}}: {{value}}، نطاق الحي من {{min}} إلى {{max}}",
+          "tipThis": "هذا العقار",
+          "tipAvg": "متوسط الحي",
+          "tipRange": "النطاق",
+          "range": "{{min}} إلى {{max}}"
+        },
+        "status": {
+          "title": "حالات يجب تصحيحها",
+          "unavailable": "ملفات المعاملات غير متاحة: لا يمكن التحقق من الحالات.",
+          "allGood": "لا توجد حالة تناقضها ملفات المعاملات.",
+          "figure": "تناقضها ملفاتها",
+          "detailSub": "عقارات تناقض حالتها المعروضة ملفات المعاملات",
+          "allTransactions": "جميع المعاملات",
+          "columns": {
+            "property": "العقار",
+            "shown": "الحالة المعروضة",
+            "what": "ما تقوله الملفات",
+            "fix": "التصحيح المقترح"
+          },
+          "fix": {
+            "sold": "تحويل إلى مُباع",
+            "rented": "تحويل إلى مُكترى",
+            "pending": "تحويل إلى محجوز مبدئيًا",
+            "active": "إعادة النشر"
+          },
+          "apply": "تطبيق: {{fix}}",
+          "why": "حالة خاطئة تُفسد كل الباقي: عقار مُباع معروض كمحجوز يبقى محسوبًا في المخزون، وعقار مُكترى قيد البيع يختفي من نتائج البحث.",
+          "what": {
+            "won": "ملف ناجح في مرحلة {{stage}} بتاريخ {{date}}، بمبلغ {{amount}}.",
+            "wonNoAmount": "ملف ناجح في مرحلة {{stage}} بتاريخ {{date}}.",
+            "openDeal": "{{stage}} جارية بمبلغ {{amount}} (الاحتمال {{probability}} %).",
+            "openDealNoAmount": "ملف مفتوح في مرحلة {{stage}}.",
+            "lost_one": "ملفه الوحيد خُسر في مرحلة {{stage}} بتاريخ {{date}}.",
+            "lost_other": "خُسرت ملفاته الـ{{count}}، آخرها في مرحلة {{stage}} بتاريخ {{date}}.",
+            "noDeal": "لا يوجد أي ملف معاملة مفتوح على هذا العقار.",
+            "openOthers_one": "ملف آخر ما زال مفتوحًا.",
+            "openOthers_other": "{{count}} ملفات أخرى ما زالت مفتوحة."
+          }
+        },
+        "draft": {
+          "title_one": "مسودة يجب إعادة نشرها",
+          "title_other": "مسودات يجب إعادة نشرها",
+          "none": "لا توجد مسودة في الانتظار.",
+          "photos_one": "صورة واحدة",
+          "photos_other": "{{count}} صور",
+          "favorites": "أُضيف إلى المفضلة",
+          "viewsBefore": "المشاهدات قبل السحب",
+          "urgentRunning": "شارة <strong>عاجل</strong> المدفوعة تنتهي في {{date}}: وهي بلا فائدة ما دام الإعلان مسودة.",
+          "urgentExpired": "انتهت شارة <strong>عاجل</strong> المدفوعة في {{date}} دون فائدة.",
+          "others_one": "ومسودة أخرى",
+          "others_other": "و{{count}} مسودات أخرى",
+          "othersTitle_one": "مسودة أخرى",
+          "othersTitle_other": "{{count}} مسودات أخرى",
+          "republish": "إعادة النشر",
+          "kpi": {
+            "price": "السعر",
+            "contacts_one": "اتصال واحد",
+            "contacts_other": "{{count}} اتصالات",
+            "toNotify": "مشترون يجب إخبارهم",
+            "photos": "الصور",
+            "description_one": "وصف من حرف واحد",
+            "description_other": "وصف من {{count}} حرفًا"
+          },
+          "favoritesAlert_one": "شخص واحد أضافه إلى المفضلة: إعادة نشره تُعلمه.",
+          "favoritesAlert_other": "{{count}} أشخاص أضافوه إلى المفضلة: إعادة نشره تُعلمهم.",
+          "noRef": "لا يوجد نطاق أسعار لحي {{neighborhood}} في المرجع."
+        },
+        "detail": {
+          "price": "السعر",
+          "noSurface": "المساحة غير محددة",
+          "views": "المشاهدات",
+          "favorites_one": "إضافة واحدة إلى المفضلة",
+          "favorites_other": "{{count}} إضافات إلى المفضلة",
+          "contacts": "الاتصالات",
+          "rate": "{{rate}} % من المشاهدات",
+          "visits": "الزيارات",
+          "upcomingUnit": "قادمة",
+          "completedOf_one": "{{done}} منجزة من أصل {{count}}",
+          "completedOf_other": "{{done}} منجزة من أصل {{count}}",
+          "noPast": "لا توجد زيارة سابقة",
+          "priceTitle": "سعر المتر المربع في حي {{neighborhood}}",
+          "thisOne": "هذا العقار",
+          "statusAlert": "حالة يجب تصحيحها: {{fix}}.",
+          "noPhotoAlert": "<strong>لا توجد أي صورة.</strong> نادرًا ما يستبقي إعلان بلا صور المشتري.",
+          "aboveAlert": "<strong>فوق نطاق الحي</strong> ({{min}} إلى {{max}}). تحقق من السعر والمساحة المُدخلين.",
+          "belowAlert": "<strong>تحت نطاق الحي</strong> ({{min}} إلى {{max}}). يجب التحقق من السعر أو المساحة.",
+          "unrecordedAlert_one": "اتصال واحد محسوب على الإعلان، لكن لا يوجد أي طلب في إدارة العملاء: لم يُسجَّل هذا الطلب.",
+          "unrecordedAlert_other": "{{count}} اتصالات محسوبة على الإعلان، لكن لا يوجد أي طلب في إدارة العملاء: لم تُسجَّل هذه الطلبات.",
+          "leadsTitle_one": "الطلبات ({{count}})",
+          "leadsTitle_other": "الطلبات ({{count}})",
+          "loadError": "تعذّر التحميل.",
+          "noLeads": "لا يوجد أي طلب مرتبط بهذا العقار.",
+          "visitsTitle_one": "الزيارات القادمة ({{count}})",
+          "visitsTitle_other": "الزيارات القادمة ({{count}})",
+          "noVisits": "لا توجد زيارة مبرمجة.",
+          "dealsTitle_one": "الملفات ({{count}})",
+          "dealsTitle_other": "الملفات ({{count}})",
+          "noDeals": "لا يوجد أي ملف معاملة.",
+          "probability": "الاحتمال {{value}} %",
+          "closedOn": "أُغلق في {{date}}",
+          "leadStatus": {
+            "new": "جديد",
+            "contacted": "تم الاتصال",
+            "qualified": "مؤهَّل",
+            "converted": "تم التحويل",
+            "lost": "خاسر"
+          },
+          "visitStatus": {
+            "scheduled": "بانتظار التأكيد",
+            "confirmed": "مؤكدة",
+            "completed": "منجزة",
+            "cancelled": "ملغاة",
+            "no_show": "غائب"
+          },
+          "dealStatus": {
+            "active": "جارٍ",
+            "won": "ناجح",
+            "lost": "خاسر"
+          }
         }
       },
       "status": {
         "active": "منشور",
-        "pending": "قيد الانتظار",
+        "pending": "محجوز مبدئيًا",
         "sold": "مُباع",
         "rented": "مُكترى",
         "draft": "مسودة"
@@ -1795,7 +2101,7 @@
         "statusOptions": {
           "draft": "مسودة",
           "active": "منشور",
-          "pending": "قيد الانتظار"
+          "pending": "محجوز مبدئيًا"
         },
         "validation": {
           "titleRequired": "العنوان مطلوب",
@@ -1806,6 +2112,8 @@
         },
         "toastImagesRequired": "أضف صورة واحدة على الأقل.",
         "cancelButton": "إلغاء",
+        "backToList": "العودة إلى العقارات",
+        "removePhoto": "إزالة الصورة",
         "createButton": "إنشاء العقار",
         "updateButton": "تحديث",
         "pricePeriods": {
