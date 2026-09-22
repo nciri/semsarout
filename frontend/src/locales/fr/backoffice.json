@@ -483,7 +483,8 @@
         "status": "Statut"
       },
       "actions": {
-        "shortlist": "Présélectionner"
+        "shortlist": "Présélectionner",
+        "unshortlist": "Retirer de la présélection"
       },
       "propertyFallback": "Bien #{{id}}",
       "groupCount_one": "· {{count}} candidature",
@@ -522,7 +523,8 @@
         "created": "Dossier déposé",
         "shortlisted": "Candidature présélectionnée",
         "fileTooLarge": "Fichier trop volumineux (max 10 Mo)",
-        "uploadFailed": "Échec de l'envoi de « {{filename}} »"
+        "uploadFailed": "Échec de l'envoi de « {{filename}} »",
+        "unshortlisted": "Candidature retirée de la présélection"
       },
       "detail": {
         "backToList": "Retour aux candidatures",
@@ -530,7 +532,8 @@
         "actions": {
           "shortlist": "Présélectionner",
           "accept": "Accepter",
-          "reject": "Refuser"
+          "reject": "Refuser",
+          "unshortlist": "Retirer de la présélection"
         },
         "fields": {
           "status": "Statut",
@@ -643,100 +646,211 @@
     }
   },
   "shop": {
-    "shared": {
-      "pageTitle": "Boutique",
-      "loading": "Chargement…",
-      "back": "Retour",
-      "notFound": "Élément introuvable.",
-      "loadError": "Une erreur est survenue lors du chargement. Réessayez plus tard."
+    "title": "Boutique",
+    "subtitle": "Mobilier et électroménager pour équiper vos biens en location",
+    "groups": {
+      "all": "Tout",
+      "furniture": "Meubles",
+      "appliance": "Électroménager"
+    },
+    "categories": {
+      "lit": "Lit",
+      "canape": "Canapé",
+      "table": "Table",
+      "armoire": "Armoire",
+      "chaise": "Chaise",
+      "bureau": "Bureau",
+      "refrigerateur": "Réfrigérateur",
+      "lave_linge": "Lave-linge",
+      "four": "Four",
+      "micro_ondes": "Micro-ondes",
+      "climatiseur": "Climatiseur",
+      "television": "Télévision"
+    },
+    "stock": {
+      "out": "Rupture",
+      "onlyLeft_one": "Plus que {{count}} en stock",
+      "onlyLeft_other": "Plus que {{count}} en stock",
+      "inStock_one": "{{count}} en stock",
+      "inStock_other": "{{count}} en stock"
+    },
+    "status": {
+      "pending": "À régler",
+      "paid": "Réglée",
+      "preparing": "En préparation",
+      "shipped": "Expédiée",
+      "delivered": "Livrée",
+      "cancelled": "Annulée"
+    },
+    "steps": {
+      "pending": "Commandée",
+      "paid": "Réglée",
+      "preparing": "Préparation",
+      "shipped": "Expédiée",
+      "delivered": "Livrée"
+    },
+    "stepState": {
+      "done": "étape franchie",
+      "now": "étape en cours",
+      "todo": "étape à venir"
+    },
+    "toasts": {
+      "added": "Ajouté au panier",
+      "orderCreated": "Commande créée",
+      "paid": "Paiement effectué",
+      "payError": "Le paiement a échoué",
+      "cancelled": "Commande annulée"
+    },
+    "summary": {
+      "orders": {
+        "title": "Commandes en cours",
+        "follow": "Suivre les commandes",
+        "figure_one": "commande en cours",
+        "figure_other": "commandes en cours",
+        "figureNoShip_one": "commande, pas encore expédiée",
+        "figureNoShip_other": "commandes, aucune expédiée",
+        "toPay_one": "{{count}} à régler",
+        "toPay_other": "{{count}} à régler",
+        "barLabel": "Commandes : {{pending}} à régler, {{paid}} réglées, {{preparing}} en préparation, {{shipped}} expédiées, {{delivered}} livrées",
+        "retiredAlert_one": "<strong>La commande à régler porte sur un article retiré du catalogue</strong> (« {{names}} », {{amount}}). Mieux vaut l'annuler que la payer.",
+        "retiredAlert_other": "<strong>Les {{count}} commandes à régler portent sur un article retiré du catalogue</strong> (« {{names}} », {{amount}} au total). Mieux vaut les annuler que les payer."
+      },
+      "carts": {
+        "title": "Paniers non commandés",
+        "empty": "Aucun panier en attente dans l'équipe.",
+        "inCarts_one": "dans {{count}} panier de l'équipe",
+        "inCarts_other": "dans {{count}} paniers de l'équipe",
+        "listLabel": "Paniers de l'équipe",
+        "mine_one": "Vous · {{count}} article",
+        "mine_other": "Vous · {{count}} articles",
+        "andOthers_one": "{{name}} et {{count}} autre",
+        "andOthers_other": "{{name}} et {{count}} autres",
+        "lowStock": "stock faible"
+      }
+    },
+    "spend": {
+      "title": "Dépenses de l'agence",
+      "detailSub": "Commandes par catégorie et par personne, annulations exclues",
+      "empty": "Aucune dépense enregistrée.",
+      "paidIn": "réglés en {{month}}",
+      "paid": "Réglé",
+      "pending": "En attente de paiement",
+      "pendingAmount": "{{amount}} en attente",
+      "nothing": "rien de réglé",
+      "retiredRow": "{{name}} (retiré)",
+      "byCategory": "Par catégorie",
+      "chartLabel": "Dépenses par catégorie, réglées et en attente",
+      "barLabel": "{{label}} : {{paid}} réglés, {{pending}} en attente",
+      "columns": {
+        "buyer": "Commandé par",
+        "items": "Articles",
+        "paid": "Réglé",
+        "pending": "À régler"
+      },
+      "fromTo": "{{name}} de {{from}} à {{to}}",
+      "risesAlert": "<strong>Les prix ont monté depuis vos achats</strong> : {{list}}. Recommander au même prix n'est plus possible.",
+      "rebuyAlert_one": "<strong>Sur {{count}} article acheté, {{rising}} coûte plus cher aujourd'hui</strong> : {{list}}. Racheter la même quantité coûterait {{amount}} de plus.",
+      "rebuyAlert_other": "<strong>Sur les {{count}} articles achetés, {{rising}} coûtent plus cher aujourd'hui</strong> : {{list}}. Racheter les mêmes quantités coûterait {{amount}} de plus.",
+      "noPropertyAlert": "<strong>Aucune commande n'est rattachée à un bien.</strong> Impossible de savoir quel logement a été meublé, ni de refacturer au propriétaire.",
+      "neverOrdered_one": "Jamais commandé par l'agence : {{list}}.",
+      "neverOrdered_other": "Jamais commandés par l'agence : {{list}}."
     },
     "catalog": {
-      "subtitle": "Mobilier et électroménager pour équiper vos biens en location",
-      "myOrders": "Mes commandes",
-      "cart": "Panier",
-      "filters": {
-        "allGroups": "Tous les groupes",
-        "group": {
-          "furniture": "Meubles",
-          "appliance": "Électroménager"
-        },
-        "allCategories": "Toutes les catégories"
-      },
-      "searchPlaceholder": "Rechercher un produit…",
-      "empty": {
-        "title": "Aucun produit",
-        "description": "Aucun article ne correspond à vos filtres pour le moment."
-      },
-      "outOfStock": "Rupture",
-      "addButton": "Ajouter",
-      "toasts": {
-        "added": "Ajouté au panier"
-      }
+      "title": "Catalogue",
+      "sub_one": "{{count}} article en vente · {{low}} en stock faible · {{never}} jamais commandés par l'agence",
+      "sub_other": "{{count}} articles en vente · {{low}} en stock faible · {{never}} jamais commandés par l'agence",
+      "groupLabel": "Groupe de produits",
+      "categoryLabel": "Catégorie",
+      "allCategories": "Toutes les catégories",
+      "categoryEmpty": "{{label}} · aucun produit",
+      "search": "Rechercher un produit…",
+      "empty": "Aucun article ne correspond à ces filtres.",
+      "neverOrdered": "Jamais commandé",
+      "ordered": "Commandé ×{{count}} par l'agence",
+      "since": "{{delta}} depuis",
+      "add": "Ajouter « {{name}} » au panier",
+      "addAnother_one": "Ajouter un autre exemplaire de « {{name}} » ({{count}} dans le panier)",
+      "addAnother_other": "Ajouter un autre exemplaire de « {{name}} » ({{count}} dans le panier)"
     },
     "product": {
+      "back": "Retour à la boutique",
       "notFound": "Produit introuvable.",
-      "notFoundBack": "Retour à la boutique",
-      "outOfStock": "En rupture de stock",
-      "inStock": "{{n}} en stock",
-      "addButton": "Ajouter au panier"
+      "inCart_one": "{{count}} dans votre panier",
+      "inCart_other": "{{count}} dans votre panier",
+      "quantity": "Quantité",
+      "add": "Ajouter au panier · {{amount}}"
     },
     "cart": {
+      "title": "Mon panier",
+      "button_one": "Mon panier, {{count}} article",
+      "button_other": "Mon panier, {{count}} articles",
+      "sub_one": "{{count}} article · {{amount}}",
+      "sub_other": "{{count}} articles · {{amount}}",
+      "emptyTitle": "Votre panier est vide",
+      "empty": "Parcourez le catalogue pour ajouter du mobilier ou de l'électroménager.",
       "backToShop": "Continuer mes achats",
-      "pageTitle": "Mon panier",
-      "empty": {
-        "title": "Votre panier est vide",
-        "description": "Parcourez la boutique pour ajouter du mobilier et de l'électroménager.",
-        "action": "Aller à la boutique"
-      },
-      "removeTitle": "Retirer",
-      "total": "Total",
-      "deliverToProperty": "Livrer vers un bien (optionnel)",
-      "freeAddressPlaceholder": "— Adresse libre —",
-      "propertySearchPlaceholder": "Rechercher un bien…",
+      "less": "Retirer un exemplaire",
+      "more": "Ajouter un exemplaire",
+      "remove": "Retirer « {{name}} » du panier",
+      "deliverToProperty": "Livrer vers un bien",
+      "freeAddress": "Adresse libre",
+      "propertySearch": "Rechercher un bien…",
       "deliveryAddress": "Adresse de livraison",
-      "orderButton": "Commander",
-      "toasts": {
-        "orderCreated": "Commande créée"
-      }
+      "addressPlaceholder": "N°, rue, ville",
+      "linkHint": "Rattacher la commande à un bien permet de retrouver ce qu'elle a coûté pour ce logement.",
+      "linkHintNone_one": "Rattacher la commande à un bien permet de retrouver ce qu'elle a coûté pour ce logement. La commande passée ne l'est pas.",
+      "linkHintNone_other": "Rattacher la commande à un bien permet de retrouver ce qu'elle a coûté pour ce logement. Aucune des {{count}} commandes passées ne l'est.",
+      "lowStock_one": "<strong>{{name}} : plus que {{count}} en stock.</strong> Le stock n'est réservé qu'au paiement ; commander puis régler tout de suite évite de le perdre.",
+      "lowStock_other": "<strong>{{name}} : plus que {{count}} en stock.</strong> Le stock n'est réservé qu'au paiement ; commander puis régler tout de suite évite de le perdre.",
+      "order": "Commander · {{amount}}"
     },
-    "order": {
+    "orders": {
+      "title": "Suivi des commandes",
+      "sub": "Toutes les commandes de l'agence, de la plus récente à la plus ancienne",
       "pageTitle": "Mes commandes",
-      "subtitle": "Suivez vos commandes de mobilier et d'électroménager",
-      "shopButton": "Boutique",
-      "stats": {
-        "total": "Total",
-        "pending": "En attente",
-        "inProgress": "En cours",
-        "delivered": "Livrées"
+      "pageSub": "Mobilier et électroménager commandés par l'agence",
+      "toShop": "Aller à la boutique",
+      "backToList": "Toutes les commandes",
+      "notFound": "Commande introuvable.",
+      "filterLabel": "Filtrer par statut",
+      "filters": {
+        "all": "Toutes",
+        "pending": "À régler",
+        "progress": "En cours",
+        "done": "Livrées"
       },
       "columns": {
         "reference": "Référence",
-        "items": "Articles",
+        "buyer": "Commandée par",
+        "delivery": "Livraison",
         "total": "Total",
-        "status": "Statut",
-        "date": "Date"
+        "status": "Statut"
       },
-      "status": {
-        "pending": "En attente",
-        "paid": "Payée",
-        "preparing": "Préparation",
-        "shipped": "Expédiée",
-        "delivered": "Livrée",
-        "cancelled": "Annulée"
-      },
-      "empty": {
-        "title": "Aucune commande",
-        "description": "Vos commandes passées depuis la boutique apparaîtront ici.",
-        "action": "Aller à la boutique"
-      },
-      "backToList": "Mes commandes",
-      "notFound": "Commande introuvable.",
-      "payButton": "Payer maintenant",
-      "paymentReference": "Réf. paiement : {{reference}}",
-      "toasts": {
-        "paymentSuccess": "Paiement effectué",
-        "paymentError": "Erreur"
-      }
+      "empty": "Aucune commande pour l'instant : elles apparaîtront ici dès le premier panier commandé.",
+      "emptyFilter": "Aucune commande dans cet état.",
+      "toggle": "Détail de la commande {{reference}}",
+      "open": "Ouvrir la commande {{reference}}",
+      "items_one": "{{count}} article",
+      "items_other": "{{count}} articles",
+      "you": "(vous)",
+      "memberUnknown": "Membre n° {{id}}",
+      "orderedBy": "Commandée le {{date}} par {{name}}",
+      "noAddress": "Adresse non renseignée",
+      "noProperty": "Aucun bien rattaché",
+      "unit": "{{amount}} l'unité",
+      "retired": "Retiré du catalogue",
+      "priceNow": "aujourd'hui {{amount}} ({{delta}})",
+      "priceSame": "prix inchangé",
+      "total": "Total",
+      "progress": "Avancement : {{status}}",
+      "paidRef": "Paiement {{reference}}, le {{date}}",
+      "waiting_one": "En attente de paiement depuis {{count}} jour",
+      "waiting_other": "En attente de paiement depuis {{count}} jours",
+      "noPayment": "Aucun paiement",
+      "retiredAlert": "<strong>Article retiré du catalogue.</strong> Aucun stock ne peut être réservé : rien ne serait livré. Annulez la commande.",
+      "pay": "Payer {{amount}}",
+      "cancel": "Annuler la commande",
+      "cancelConfirm": "Annuler la commande {{reference}} ? Elle ne pourra plus être payée."
     }
   },
   "ui": {
@@ -1548,27 +1662,177 @@
       "pipeline": {
         "list": {
           "pageTitle": "Pipeline",
-          "subtitle": "Gérez vos transactions en cours",
+          "whatSale_one": "{{count}} vente",
+          "whatSale_other": "{{count}} ventes",
+          "whatRent_one": "{{count}} location",
+          "whatRent_other": "{{count}} locations",
           "listViewLink": "Vue liste",
           "newButton": "Nouvelle transaction",
-          "typeSale": "Ventes",
-          "typeRent": "Locations",
+          "typeLabel": "Type de transaction",
+          "typeSale": "Vente",
+          "typeRent": "Location",
+          "agentFilter": "Filtrer par agent",
           "agentPlaceholder": "Tous les agents",
-          "agentSearchPlaceholder": "Rechercher un agent…",
-          "totalTransactions": "Total transactions:",
-          "totalValue": "Valeur totale:",
-          "priorityLegend": "Légende des priorités"
+          "showLabel": "Dossiers affichés",
+          "showAll": "Tous les dossiers",
+          "showTodo": "À traiter",
+          "searchLabel": "Filtrer les dossiers du pipeline",
+          "searchPlaceholder": "Filtrer : client, bien, référence…",
+          "amountNote": "Montant d'un dossier : l'offre si elle est saisie, sinon le prix demandé",
+          "loading": "Chargement du pipeline",
+          "loadError": "Le pipeline n'a pas pu être chargé. Réessayez dans un instant.",
+          "subtitle": "{{date}} · {{what}} en cours"
+        },
+        "kpi": {
+          "weighted": "Pipeline pondéré",
+          "asOf": "à date",
+          "weightedSub_one": "sur {{amount}} · {{count}} dossier",
+          "weightedSub_other": "sur {{amount}} · {{count}} dossiers",
+          "commission": " · commission attendue {{amount}}",
+          "todo": "Dossiers à traiter",
+          "critical_one": "{{count}} critique",
+          "critical_other": "{{count}} critiques",
+          "todoShare": "{{share}} des dossiers",
+          "nothingBlocking": "Rien de bloquant",
+          "idle": "Plus longue immobilité",
+          "days_one": "jour",
+          "days_other": "jours",
+          "exits": "Sorties sur 30 jours",
+          "won_one": "gagnée",
+          "won_other": "gagnées",
+          "lost_one": "perdue",
+          "lost_other": "perdues",
+          "lostSub": "{{amount}} perdus, dont {{top}} en {{stage}}",
+          "lostReason": " ({{reason}})",
+          "noLoss": "Aucune perte",
+          "unavailable": "Indisponible"
+        },
+        "todo": {
+          "title": "À traiter en priorité",
+          "more": "Développer ({{count}} de plus)",
+          "less": "Réduire",
+          "empty": "Aucun dossier ne demande d'action",
+          "none": "Rien",
+          "goTo": "Voir le dossier {{ref}}",
+          "severity": {
+            "crit": "Critique",
+            "warn": "À faire",
+            "info": "À vérifier"
+          }
+        },
+        "agents": {
+          "title": "Charge par agent",
+          "gross": "Montant total",
+          "weighted": "Pondéré",
+          "files": "Dossiers",
+          "todo": "À traiter",
+          "todoCount_one": "{{count}} à traiter",
+          "todoCount_other": "{{count}} à traiter",
+          "nothing": "rien à traiter",
+          "hint": "Cliquer sur un agent filtre le tableau ci-dessous.",
+          "rowLabel": "{{name}} : {{count}} dossiers, {{weighted}} pondérés sur {{gross}}, {{todo}} à traiter",
+          "unassigned": "Sans agent"
+        },
+        "board": {
+          "title": "Dossiers en cours par étape",
+          "hint": "Glisser une carte pour changer d'étape, ou la déplier pour la déplacer au clavier",
+          "laneLabel_one": "{{stage}} : {{count}} dossier",
+          "laneLabel_other": "{{stage}} : {{count}} dossiers",
+          "weightedOf": "pondérés, sur {{amount}}",
+          "noFile": "Aucun dossier",
+          "dropHere": "Déposer un dossier ici",
+          "hiddenByFilter": "Masqués par le filtre"
         },
         "card": {
-          "openDetail": "Ouvrir le détail dans un nouvel onglet",
+          "openDetail": "Ouvrir la fiche dans un nouvel onglet",
           "edit": "Modifier",
           "archive": "Archiver",
+          "archiveConfirm": "Archiver le dossier {{ref}} ? Il sort du pipeline.",
           "noPropertyTitle": "Bien sans titre",
           "noClient": "Client non défini",
-          "agent": "Agent : {{name}}"
+          "agent": "Agent : {{name}}",
+          "idleShort": "{{count}} j",
+          "expand": "Déplier le dossier {{ref}}",
+          "collapse": "Replier le dossier {{ref}}",
+          "label": "{{ref}}, {{client}}, {{amount}}, {{probability}} %",
+          "askingPrice": "Prix demandé",
+          "offer": "Offre",
+          "belowAsking": "{{share}} sous le prix",
+          "expectedClose": "Clôture prévue",
+          "inDays_one": "dans {{count}} jour",
+          "inDays_other": "dans {{count}} jours",
+          "daysAgo_one": "il y a {{count}} jour",
+          "daysAgo_other": "il y a {{count}} jours",
+          "inStageSince": "Dans l'étape depuis",
+          "commission": "Commission ({{rate}} %)",
+          "agentLabel": "Agent",
+          "moveLabel": "Déplacer {{ref}} vers une autre étape",
+          "currentStage": "Étape : {{stage}}",
+          "moveTo": "Déplacer vers {{stage}}",
+          "idle_one": "Sans changement d'étape depuis {{count}} jour",
+          "idle_other": "Sans changement d'étape depuis {{count}} jours"
         },
-        "column": {
-          "empty": "Aucune transaction"
+        "move": {
+          "done": "{{ref}} passé en <strong>{{stage}}</strong>. Probabilité inchangée à {{probability}} %.",
+          "undo": "Annuler",
+          "failed": "Le déplacement de {{ref}} a échoué : le dossier reste en {{stage}}."
+        },
+        "flags": {
+          "duplicate": {
+            "title": "Doublon probable",
+            "text_won": "Même client et même bien que {{ref}}, gagnée le {{date}} ({{amount}}). Ce dossier ne peut plus aboutir : archiver ou fusionner.",
+            "text_active": "Même client et même bien que {{ref}}, encore en cours. Garder un seul des deux dossiers."
+          },
+          "stale": {
+            "title_one": "{{count}} jour sans changement d'étape",
+            "title_other": "{{count}} jours sans changement d'étape",
+            "text": "Dossier en {{stage}} sans avancer : relancer le client ou revoir la probabilité."
+          },
+          "overdue": {
+            "title": "Clôture prévue dépassée",
+            "text_one": "Signature attendue le {{date}}, il y a {{count}} jour : mettre la date à jour ou clôturer le dossier.",
+            "text_other": "Signature attendue le {{date}}, il y a {{count}} jours : mettre la date à jour ou clôturer le dossier."
+          },
+          "unrealistic_close": {
+            "title": "Clôture prévue irréaliste",
+            "text_one": "Signature attendue le {{date}}, dans {{count}} jour, alors que le dossier n'en est qu'à l'étape {{stage}}.",
+            "text_other": "Signature attendue le {{date}}, dans {{count}} jours, alors que le dossier n'en est qu'à l'étape {{stage}}."
+          },
+          "certain_not_closed": {
+            "title": "Probabilité à 100 % sans clôture",
+            "text": "En {{stage}}, signature prévue le {{date}}. Soit l'affaire est signée et le dossier doit passer en « gagné », soit la probabilité est fausse."
+          },
+          "rival_applicant": {
+            "title": "Deux candidats pour le même bien",
+            "text": "{{client}} ({{ref}}) est aussi candidat pour ce bien, à l'étape {{stage}}. Un seul bail possible : trancher."
+          },
+          "lost_before": {
+            "title": "Déjà perdu sur ce bien",
+            "text": "Le dossier {{ref}} est tombé en {{stage}} le {{date}} ({{amount}}), motif : {{reason}}."
+          },
+          "property_status": {
+            "title": "Bien marqué « {{status}} »",
+            "text": "Le catalogue indique ce bien comme {{status}} alors que le dossier est en cours : la fiche ou le dossier est faux."
+          },
+          "unknown": "Constat à vérifier",
+          "noDate": "date non renseignée",
+          "noReason": "non précisé",
+          "status": {
+            "sold": "vendu",
+            "rented": "loué"
+          }
+        },
+        "stages": {
+          "contact": "Contact",
+          "visit": "Visite",
+          "offer": "Offre",
+          "negotiation": "Négociation",
+          "compromise": "Compromis",
+          "final_act": "Acte final",
+          "application": "Candidature",
+          "verification": "Vérification",
+          "lease": "Bail",
+          "move_in": "Entrée"
         },
         "priority": {
           "low": "Basse",
@@ -1578,74 +1842,150 @@
         }
       },
       "visits": {
-        "list": {
-          "pageTitle": "Visites & RDV",
-          "subtitle": "Gérez vos visites et rendez-vous",
-          "newButton": "Planifier une visite",
-          "viewToggleCalendar": "Calendrier",
-          "viewToggleList": "Liste",
-          "today": "Aujourd'hui",
-          "filterStatusAll": "Tous les statuts",
-          "daysHeader": {
-            "mon": "Lun",
-            "tue": "Mar",
-            "wed": "Mer",
-            "thu": "Jeu",
-            "fri": "Ven",
-            "sat": "Sam",
-            "sun": "Dim"
-          },
-          "moreCount": "+{{count}} autres",
-          "empty": {
-            "title": "Aucune visite",
-            "description": "Planifiez votre première visite."
-          },
-          "legend": "Légende des statuts"
-        },
+        "title": "Visites & RDV",
+        "subtitle": "Agenda des visites de l'agence",
+        "plan": "Planifier une visite",
+        "loadError": "Impossible de charger les visites.",
+        "visitor": "Visiteur",
+        "noProperty": "Bien non défini",
         "status": {
-          "scheduled": "Planifié",
-          "confirmed": "Confirmé",
-          "completed": "Effectuée",
+          "scheduled": "À confirmer",
+          "confirmed": "Confirmée",
+          "completed": "Honorée",
           "cancelled": "Annulée",
-          "no_show": "No-show"
+          "no_show": "Absent"
         },
-        "modal": {
-          "title": "Détails de la visite",
-          "noProperty": "Bien non défini",
-          "duration": "- {{minutes}} min",
-          "noVisitor": "Visiteur non défini",
-          "reportLabel": "Rapport de visite",
-          "reportPlaceholder": "Commentaires sur la visite...",
-          "feedbackLabel": "Feedback client",
-          "feedbackOptions": {
-            "select": "Sélectionner...",
-            "very_interested": "Très intéressé",
-            "interested": "Intéressé",
-            "neutral": "Neutre",
-            "not_interested": "Pas intéressé"
+        "overdueChip": "À requalifier",
+        "summary": {
+          "upcoming": "À venir",
+          "upcomingNone": "Aucune visite planifiée.",
+          "next": "Prochaine",
+          "toConfirm": "À confirmer",
+          "toConfirmSub_one": "visite à venir pas encore confirmée",
+          "toConfirmSub_other": "visites à venir pas encore confirmées",
+          "overdue_one": "{{count}} visite passée à requalifier",
+          "overdue_other": "{{count}} visites passées à requalifier",
+          "attendance": "Présence · {{days}} jours",
+          "attendanceSub": "{{completed}} honorées sur {{resolved}} visites requalifiées",
+          "attendanceNone": "Aucune visite requalifiée ces {{days}} derniers jours.",
+          "honoured": "Honorées",
+          "cancelled": "Annulées",
+          "absent": "Absences",
+          "unresolved": "Non requalifiées",
+          "outcomesLabel": "{{honoured}} honorées, {{cancelled}} annulées, {{absent}} absences, {{unresolved}} non requalifiées"
+        },
+        "overdue": {
+          "title": "À requalifier",
+          "alert_one": "<strong>{{count}} visite passée n'a pas été requalifiée.</strong> Indiquez si elle a été honorée, annulée ou si le client était absent : le taux de présence en dépend.",
+          "alert_other": "<strong>{{count}} visites passées n'ont pas été requalifiées.</strong> Indiquez si elles ont été honorées, annulées ou si le client était absent : le taux de présence en dépend.",
+          "more_one": "Et {{count}} autre, plus ancienne, dans la liste.",
+          "more_other": "Et {{count}} autres, plus anciennes, dans la liste."
+        },
+        "agenda": {
+          "title": "Agenda",
+          "mode": "Affichage",
+          "day": "Jour",
+          "week": "Semaine",
+          "list": "Liste",
+          "prev": "Période précédente",
+          "next": "Période suivante",
+          "today": "Aujourd'hui",
+          "tomorrow": "Demain",
+          "statusFilter": "Filtrer par statut",
+          "allStatuses": "Tous les statuts",
+          "weekRange": "Semaine du {{from}} au {{to}}",
+          "count_one": "{{count}} visite",
+          "count_other": "{{count}} visites",
+          "emptyDay": "Aucune visite",
+          "emptyList": "Aucune visite.",
+          "allVisits": "Toutes les visites, des plus récentes aux plus anciennes",
+          "page": "Page {{page}} sur {{pages}}",
+          "prevPage": "Page précédente",
+          "nextPage": "Page suivante"
+        },
+        "row": {
+          "expand": "Voir la fiche",
+          "collapse": "Replier la fiche",
+          "duration": "{{minutes}} min"
+        },
+        "fiche": {
+          "property": "Bien",
+          "contact": "Contact",
+          "agent": "Agent",
+          "noAgent": "Non attribuée",
+          "confirmation": "Confirmation",
+          "confirmedAt": "Confirmée le {{date}}",
+          "notConfirmed": "Pas encore confirmée",
+          "completedAt": "Honorée le {{date}}",
+          "cancelledAt": "Annulée le {{date}}",
+          "notes": "Notes",
+          "report": "Compte rendu",
+          "noReport": "Pas de compte rendu.",
+          "feedback": "Retour client",
+          "noFeedback": "Pas de retour client.",
+          "openProperty": "Ouvrir le bien",
+          "openClient": "Ouvrir la fiche client",
+          "call": "Appeler",
+          "email": "Écrire un e-mail"
+        },
+        "actions": {
+          "confirm": "Confirmer la visite",
+          "complete": "Marquer honorée et rédiger le compte rendu",
+          "report": "Modifier le compte rendu",
+          "no_show": "Client absent",
+          "cancel": "Annuler la visite",
+          "edit": "Modifier la visite",
+          "delete": "Supprimer la visite",
+          "deleteConfirm": "Supprimer définitivement cette visite ?"
+        },
+        "feedback": {
+          "very_interested": "Très intéressé",
+          "interested": "Intéressé",
+          "neutral": "Neutre",
+          "not_interested": "Pas intéressé"
+        },
+        "report": {
+          "title": "Compte rendu de visite",
+          "report": "Compte rendu",
+          "reportPlaceholder": "Déroulé, points forts, objections…",
+          "feedback": "Retour client",
+          "feedbackNone": "Non renseigné",
+          "comments": "Commentaires du client",
+          "save": "Enregistrer",
+          "close": "Fermer le compte rendu"
+        },
+        "form": {
+          "createTitle": "Planifier une visite",
+          "editTitle": "Modifier la visite",
+          "property": "Bien",
+          "propertyPlaceholder": "Choisir un bien",
+          "client": "Client",
+          "clientPlaceholder": "Client existant",
+          "visitorName": "Nom du visiteur",
+          "visitorHint": "Requis si aucun client n'est choisi.",
+          "email": "E-mail",
+          "phone": "Téléphone",
+          "dateTime": "Date et heure",
+          "duration": "Durée",
+          "durations": {
+            "15": "15 min",
+            "30": "30 min",
+            "45": "45 min",
+            "60": "1 heure",
+            "90": "1 h 30"
           },
-          "confirmButton": "Confirmer",
-          "cancelButton": "Annuler",
-          "submitReportButton": "Valider le rapport",
-          "markCompletedButton": "Marquer effectuée",
-          "closeButton": "Fermer"
+          "agent": "Agent",
+          "agentPlaceholder": "Agent chargé de la visite",
+          "notes": "Notes",
+          "notesPlaceholder": "Informations utiles au visiteur ou à l'agent…",
+          "save": "Enregistrer",
+          "close": "Fermer le formulaire"
         },
-        "newModal": {
-          "title": "Planifier une visite",
-          "visitorNameLabel": "Nom du visiteur *",
-          "emailLabel": "Email",
-          "phoneLabel": "Téléphone",
-          "dateTimeLabel": "Date et heure *",
-          "durationLabel": "Durée (minutes)",
-          "duration15": "15 min",
-          "duration30": "30 min",
-          "duration45": "45 min",
-          "duration60": "1 heure",
-          "duration90": "1h30",
-          "notesLabel": "Notes",
-          "notesPlaceholder": "Informations supplémentaires...",
-          "cancelButton": "Annuler",
-          "submitButton": "Planifier"
+        "toast": {
+          "created": "Visite planifiée.",
+          "updated": "Visite mise à jour.",
+          "deleted": "Visite supprimée.",
+          "error": "L'opération a échoué."
         }
       }
     },
@@ -1685,37 +2025,105 @@
       },
       "list": {
         "pageTitle": "Transactions",
-        "subtitle": "Vue liste de toutes les transactions",
-        "pipelineViewLink": "Vue Pipeline",
+        "subtitle": "Registre des ventes et des locations de l'agence",
+        "pipelineViewLink": "Vue pipeline",
         "newButton": "Nouvelle transaction",
-        "searchPlaceholder": "Rechercher par référence...",
-        "filtersButton": "Filtres",
-        "filterTypeLabel": "Type",
-        "filterTypeAll": "Tous les types",
-        "filterStatusLabel": "Statut",
-        "filterStatusAll": "Tous les statuts",
-        "filterStageLabel": "Étape",
-        "filterStageAll": "Toutes les étapes",
-        "resetFilters": "Réinitialiser",
+        "loading": "Chargement des transactions",
+        "loadError": "Impossible de charger les transactions.",
+        "period": {
+          "label": "Période",
+          "30": "30 j",
+          "90": "90 j",
+          "365": "12 mois",
+          "all": "Tout"
+        },
+        "summary": {
+          "title": "Synthèse",
+          "since": "Clôtures depuis le {{date}} · en cours : état actuel",
+          "allTime": "Toutes les clôtures · en cours : état actuel",
+          "sale": "Vente",
+          "rent": "Location",
+          "active": "En cours",
+          "won": "Signées",
+          "lost": "Perdues",
+          "commission": "Commissions attendues",
+          "weighted": "{{amount}} pondérés",
+          "topReason": "Premier motif de perte : <strong>{{reason}}</strong> ({{count}})",
+          "noLoss": "Aucune affaire perdue sur la période.",
+          "separate": "Vente et location ne s'additionnent pas : un loyer est mensuel."
+        },
+        "registry": "Registre",
+        "total_one": "{{count}} transaction",
+        "total_other": "{{count}} transactions",
+        "searchPlaceholder": "Rechercher par référence ou note…",
+        "filters": {
+          "label": "Filtres du registre",
+          "type": "Type",
+          "typeAll": "Tous les types",
+          "stage": "Étape",
+          "stageAll": "Toutes les étapes",
+          "status": "Statut",
+          "statusAll": "Tous les statuts",
+          "agent": "Agent",
+          "agentAll": "Tous les agents",
+          "agentFallback": "Agent #{{id}}",
+          "reset": "Réinitialiser les filtres"
+        },
         "columns": {
-          "reference": "Référence",
           "property": "Bien",
           "client": "Client",
           "type": "Type",
           "stage": "Étape",
-          "price": "Prix",
+          "amount": "Montant",
           "status": "Statut",
-          "agent": "Agent"
+          "agent": "Agent",
+          "actions": "Actions"
         },
-        "viewDetails": "Voir",
+        "overdue": "Clôture prévue dépassée",
+        "lostReason": "Motif : {{reason}}",
+        "lostReasonNone": "Motif non renseigné",
+        "expand": "Déplier la fiche",
+        "collapse": "Replier la fiche",
+        "viewDetails": "Ouvrir la fiche complète",
+        "fiche": {
+          "parties": "Bien et parties",
+          "property": "Bien",
+          "client": "Client",
+          "seller": "Vendeur / mandant",
+          "agent": "Agent",
+          "stage": "Étape",
+          "amounts": "Montants",
+          "asking": "Prix demandé",
+          "offer": "Dernière offre",
+          "final": "Prix final",
+          "probability": "Probabilité",
+          "commission": "Commission",
+          "commissionRate": "Taux {{rate}} %",
+          "commissionExpected": "attendue",
+          "commissionSigned": "acquise",
+          "milestones": "Dates d'étape",
+          "notes": "Notes",
+          "none": "—"
+        },
+        "milestone": {
+          "contact": "Premier contact",
+          "visit": "Visite",
+          "offer": "Offre",
+          "acceptance": "Offre acceptée",
+          "compromise": "Compromis",
+          "closing": "Signature",
+          "closedOn": "Signée le",
+          "lostOn": "Perdue le",
+          "expected": "Clôture prévue"
+        },
         "empty": {
           "title": "Aucune transaction",
           "filtered": "Aucune transaction ne correspond à vos critères.",
           "default": "Créez votre première transaction.",
           "pipelineLink": "Voir le pipeline"
         },
-        "prev": "Précédent",
-        "next": "Suivant",
+        "prev": "Page précédente",
+        "next": "Page suivante",
         "pageInfo": "Page {{page}} sur {{total}}"
       },
       "create": {
@@ -1747,29 +2155,9 @@
         "notFound": "Transaction introuvable.",
         "backToList": "Retour à la liste",
         "pipelineLink": "Voir le pipeline",
-        "propertyPartiesTitle": "Bien & parties",
-        "propertyLabel": "Bien",
-        "clientLabel": "Client",
-        "sellerLabel": "Vendeur / Mandant",
-        "agentLabel": "Agent",
-        "trackingTitle": "Suivi commercial",
-        "stageLabel": "Étape",
-        "priorityLabel": "Priorité",
-        "probabilityLabel": "Probabilité",
-        "firstContactLabel": "Premier contact",
-        "expectedClosingLabel": "Clôture prévue",
-        "actualClosingLabel": "Clôture réelle",
-        "lostReason": "Motif de perte : {{reason}}",
-        "financialTitle": "Financier",
-        "askingPriceLabel": "Prix demandé",
-        "offerPriceLabel": "Prix d'offre",
-        "finalPriceLabel": "Prix final",
-        "commissionRateLabel": "Taux de commission",
-        "commissionAmountLabel": "Montant commission",
         "offersTitle": "Offres ({{count}})",
         "offersEmpty": "Aucune offre enregistrée.",
-        "offerCreatedBy": " · {{name}}",
-        "notesTitle": "Notes"
+        "offerCreatedBy": " · {{name}}"
       }
     },
     "properties": {
@@ -1778,33 +2166,339 @@
         "subtitle": "Gérez votre portefeuille de biens",
         "newButton": "Ajouter un bien",
         "addFirstButton": "Ajouter un bien",
-        "searchPlaceholder": "Rechercher par titre, ville...",
-        "filtersButton": "Filtres",
+        "searchPlaceholder": "Titre, référence, ville ou quartier",
         "filterStatusLabel": "Statut",
-        "filterStatusAll": "Tous les statuts",
         "filterTypeLabel": "Type de bien",
         "filterTypeAll": "Tous les types",
         "resetFilters": "Réinitialiser",
-        "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce bien ?",
+        "confirmDelete": "Supprimer « {{title}} » ? Cette action est définitive.",
         "viewOnline": "Voir en ligne",
         "edit": "Modifier",
         "newTransaction": "Nouvelle transaction",
         "delete": "Supprimer",
-        "actionsMenu": "Actions",
-        "viewsCount_one": "{{count}} vue",
-        "viewsCount_other": "{{count}} vues",
         "previous": "Précédent",
         "next": "Suivant",
         "pageOf": "Page {{page}} sur {{pages}}",
         "empty": {
           "title": "Aucun bien trouvé",
-          "filtered": "Aucun bien ne correspond à vos critères.",
+          "filtered": "Aucun bien ne correspond à la recherche ou aux filtres.",
           "default": "Commencez par ajouter votre premier bien."
+        }
+      },
+      "board": {
+        "subtitle_one": "{{count}} bien au portefeuille",
+        "subtitle_other": "{{count}} biens au portefeuille",
+        "loadError": "Impossible de charger les biens. Réessayez plus tard.",
+        "loading": "Chargement des biens…",
+        "units": {
+          "dh": "Dh",
+          "perMonth": "Dh/mois",
+          "perWeek": "Dh/semaine",
+          "perDay": "Dh/nuit",
+          "sqm": "Dh/m²",
+          "sqmMonth": "Dh/m²/mois"
+        },
+        "signals": {
+          "none": "Rien à signaler",
+          "status": "Statut à corriger",
+          "draft": "À republier",
+          "noPhoto": "Sans photo",
+          "priceTimes": "Prix × {{ratio}}",
+          "priceAbove": "Prix +{{pct}} %",
+          "priceBelow": "Prix −{{pct}} %",
+          "newLeads_one": "{{count}} demande à traiter",
+          "newLeads_other": "{{count}} demandes à traiter",
+          "noSurface": "Surface manquante"
+        },
+        "checks": {
+          "title": "Fiche de l'annonce",
+          "none": "Aucune",
+          "chars_one": "{{count}} caractère",
+          "chars_other": "{{count}} caractères",
+          "missing": "Non renseigné",
+          "noDate": "Date absente",
+          "photos": "Photos",
+          "description": "Description",
+          "surface": "Surface",
+          "rooms": "Pièces",
+          "energy": "Classe énergie",
+          "published": "Mise en ligne"
+        },
+        "tags": {
+          "featured": "À la une",
+          "urgent": "Urgent"
+        },
+        "overview": {
+          "label": "Vue d'ensemble du portefeuille",
+          "online": "En ligne",
+          "onlineSub": "{{sale}} ventes · {{rent}} locations",
+          "views": "Vues des annonces en ligne",
+          "viewsSub_one": "{{count}} contact, soit {{rate}} %",
+          "viewsSub_other": "{{count}} contacts, soit {{rate}} %",
+          "visits": "Visites à venir",
+          "visitsSub_one": "sur {{count}} bien, jusqu'au {{date}}",
+          "visitsSub_other": "sur {{count}} biens, jusqu'au {{date}}",
+          "visitsNone": "aucune planifiée",
+          "leads": "Demandes non traitées",
+          "leadsSub_one": "sur {{count}} bien",
+          "leadsSub_other": "sur {{count}} biens",
+          "leadsNone": "tout est traité",
+          "barLabel": "{{total}} biens : {{active}} en ligne, {{pending}} sous option, {{draft}} brouillons, {{closed}} loués ou vendus",
+          "buckets": {
+            "active": "En ligne",
+            "pending": "Sous option",
+            "draft": "Brouillons",
+            "closed": "Loués ou vendus"
+          }
+        },
+        "queue": {
+          "title": "À traiter",
+          "sub": "Ce qui freine vos annonces, repéré dans les données du portefeuille"
+        },
+        "list": {
+          "title": "Tous les biens",
+          "count_one": "{{count}} bien",
+          "count_other": "{{count}} biens",
+          "countOf_one": "{{count}} bien sur {{total}}",
+          "countOf_other": "{{count}} biens sur {{total}}",
+          "noPhoto": "Aucune photo",
+          "photos_one": "{{count}} photo",
+          "photos_other": "{{count}} photos",
+          "stats": "{{views}} vues · {{contacts}} contacts",
+          "views_one": "vue",
+          "views_other": "vues",
+          "contacts_one": "contact",
+          "contacts_other": "contacts",
+          "visits_one": "visite",
+          "visits_other": "visites"
+        },
+        "filters": {
+          "all": "Tous",
+          "allCount": "Tous les statuts ({{count}})",
+          "search": "Rechercher un bien",
+          "sort": "Trier",
+          "view": "Affichage",
+          "status": {
+            "active": "En ligne",
+            "pending": "Sous option",
+            "draft": "Brouillons",
+            "rented": "Loués",
+            "sold": "Vendus"
+          },
+          "sorts": {
+            "todo": "À traiter d'abord",
+            "views": "Plus vus",
+            "price": "Prix décroissant"
+          },
+          "views": {
+            "rows": "Liste",
+            "cards": "Grille"
+          }
+        },
+        "columns": {
+          "property": "Bien",
+          "status": "Statut",
+          "price": "Prix",
+          "views": "Vues",
+          "contacts": "Contacts",
+          "visits": "Visites",
+          "todo": "À traiter"
+        },
+        "pager": {
+          "range": "{{from}} à {{to}} sur {{total}}"
+        },
+        "toast": {
+          "status": "« {{title}} » : {{status}}",
+          "error": "La mise à jour a échoué. Réessayez."
+        },
+        "photos": {
+          "title": "Annonces sans photo",
+          "allGood": "Toutes les annonces en ligne ont au moins une photo.",
+          "figure": "en ligne sans aucune photo",
+          "figureNoContact": "en ligne, aucun contact reçu",
+          "barsLabel": "Contacts reçus selon la présence de photos",
+          "with": "Avec photos",
+          "without": "Sans photo",
+          "viewsNote": "Contacts pour {{with}} vues d'un côté, {{without}} de l'autre.",
+          "detailSub_one": "{{count}} annonce en ligne sans aucune photo, classée par nombre de vues",
+          "detailSub_other": "{{count}} annonces en ligne sans aucune photo, classées par nombre de vues",
+          "columns": {
+            "listing": "Annonce",
+            "views": "Vues",
+            "contacts": "Contacts",
+            "description": "Description",
+            "visits": "Visites à venir",
+            "actions": "Actions"
+          },
+          "chars_one": "{{count}} car.",
+          "chars_other": "{{count}} car.",
+          "complete": "Compléter la fiche",
+          "asideTitle": "Photos et contacts, annonces en ligne",
+          "withCount": "Avec photos ({{n}})",
+          "withoutCount": "Sans photo ({{n}})",
+          "ratio": "{{contacts}} contacts / {{views}} vues",
+          "shortAlert_one": "<strong>Cette fiche a aussi une description de moins de {{min}} caractères</strong> : rien ne retient l'acheteur.",
+          "shortAlert_other": "<strong>{{count}} de ces fiches ont aussi une description de moins de {{min}} caractères</strong> : rien ne retient l'acheteur.",
+          "visitsAlert_one": "<strong>{{title}}</strong> : {{count}} visite prévue alors que l'annonce n'a aucune photo. Ce visiteur vient d'ailleurs.",
+          "visitsAlert_other": "<strong>{{title}}</strong> : {{count}} visites prévues alors que l'annonce n'a aucune photo. Ces visiteurs viennent d'ailleurs."
+        },
+        "price": {
+          "title": "Prix hors marché",
+          "unavailable": "Référentiel des prix de quartier indisponible pour le moment.",
+          "allGood_one": "L'annonce comparée est dans la fourchette de son quartier.",
+          "allGood_other": "Les {{count}} annonces comparées sont dans la fourchette de leur quartier.",
+          "figure": "hors de la fourchette du quartier",
+          "barLabel": "{{count}} annonces : {{above}} au-dessus de la fourchette, {{below}} en dessous",
+          "aboveCount": "Au-dessus · {{n}}",
+          "belowCount": "En dessous · {{n}}",
+          "vsAvg": "{{value}} pour {{avg}} en moyenne",
+          "detailSub_one": "{{count}} annonce en ligne comparée au prix moyen au m² de son quartier, même type de transaction",
+          "detailSub_other": "{{count}} annonces en ligne comparées au prix moyen au m² de leur quartier, même type de transaction",
+          "none": "Aucune annonce en ligne n'a de référence de quartier.",
+          "chartTitle": "Prix au m², en % de la moyenne du quartier",
+          "axisName": "Annonce",
+          "axisAvg": "moyenne",
+          "axisGap": "écart",
+          "tx": {
+            "sale": "vente",
+            "rent": "location"
+          },
+          "aboveAlert_one": "<strong>{{count}} annonce au-dessus de la fourchette</strong>, {{contacts}} contacts reçus. Vérifiez d'abord la saisie du prix et de la surface.",
+          "aboveAlert_other": "<strong>{{count}} annonces au-dessus de la fourchette</strong>, {{contacts}} contacts reçus en tout. Vérifiez d'abord la saisie du prix et de la surface.",
+          "typoAlert": "À {{price}}, « {{title}} » serait à {{sqm}}, dans la fourchette du quartier ({{min}} à {{max}}). Un zéro de trop est plausible.",
+          "belowAlert_one": "<strong>{{count}} annonce sous la fourchette.</strong> {{title}} : {{price}} pour {{surface}} m², soit {{sqm}} quand le quartier se situe entre {{min}} et {{max}}.",
+          "belowAlert_other": "<strong>{{count}} annonces sous la fourchette.</strong> La plus basse, {{title}} : {{price}} pour {{surface}} m², soit {{sqm}} quand le quartier se situe entre {{min}} et {{max}}.",
+          "noSurface_one": "« {{title}} » n'a pas de surface : elle ne peut pas être comparée.",
+          "noSurface_other": "{{count}} annonces n'ont pas de surface, dont « {{title}} » : elles ne peuvent pas être comparées.",
+          "noRef_one": "{{count}} annonce n'a pas de référence pour son quartier.",
+          "noRef_other": "{{count}} annonces n'ont pas de référence pour leur quartier.",
+          "legendBand": "Fourchette du quartier",
+          "legendAvg": "Moyenne",
+          "legendPoint": "Prix au m² de l'annonce",
+          "rowLabel": "{{name}} : {{value}}, fourchette du quartier {{min}} à {{max}}",
+          "tipThis": "Ce bien",
+          "tipAvg": "Moyenne du quartier",
+          "tipRange": "Fourchette",
+          "range": "{{min}} à {{max}}"
+        },
+        "status": {
+          "title": "Statuts à corriger",
+          "unavailable": "Dossiers de transaction indisponibles : les statuts ne peuvent pas être vérifiés.",
+          "allGood": "Aucun statut contredit par les dossiers de transaction.",
+          "figure": "contredits par leurs dossiers",
+          "detailSub": "Biens dont le statut affiché contredit les dossiers de transaction",
+          "allTransactions": "Toutes les transactions",
+          "columns": {
+            "property": "Bien",
+            "shown": "Statut affiché",
+            "what": "Ce que disent les dossiers",
+            "fix": "Correction proposée"
+          },
+          "fix": {
+            "sold": "Passer en vendu",
+            "rented": "Passer en loué",
+            "pending": "Passer sous option",
+            "active": "Remettre en ligne"
+          },
+          "apply": "Appliquer : {{fix}}",
+          "why": "Un statut faux fausse tout le reste : un bien vendu affiché sous option reste compté dans le stock, un bien loué en cours de vente disparaît des recherches.",
+          "what": {
+            "won": "Dossier gagné au stade {{stage}} le {{date}}, à {{amount}}.",
+            "wonNoAmount": "Dossier gagné au stade {{stage}} le {{date}}.",
+            "openDeal": "{{stage}} en cours à {{amount}} (probabilité {{probability}} %).",
+            "openDealNoAmount": "Dossier ouvert au stade {{stage}}.",
+            "lost_one": "Son seul dossier a été perdu au stade {{stage}} le {{date}}.",
+            "lost_other": "Ses {{count}} dossiers ont été perdus, le dernier au stade {{stage}} le {{date}}.",
+            "noDeal": "Aucun dossier de transaction ouvert sur ce bien.",
+            "openOthers_one": "Un autre dossier reste ouvert.",
+            "openOthers_other": "{{count}} autres dossiers restent ouverts."
+          }
+        },
+        "draft": {
+          "title_one": "Brouillon à republier",
+          "title_other": "Brouillons à republier",
+          "none": "Aucun brouillon en attente.",
+          "photos_one": "{{count}} photo",
+          "photos_other": "{{count}} photos",
+          "favorites": "Mis en favori",
+          "viewsBefore": "Vues avant retrait",
+          "urgentRunning": "Le badge <strong>Urgent</strong> payé expire le {{date}} : en brouillon, il ne sert à rien.",
+          "urgentExpired": "Le badge <strong>Urgent</strong> payé a expiré le {{date}} sans servir.",
+          "others_one": "et {{count}} autre brouillon",
+          "others_other": "et {{count}} autres brouillons",
+          "othersTitle_one": "{{count}} autre brouillon",
+          "othersTitle_other": "{{count}} autres brouillons",
+          "republish": "Republier",
+          "kpi": {
+            "price": "Prix",
+            "contacts_one": "{{count}} contact",
+            "contacts_other": "{{count}} contacts",
+            "toNotify": "acheteurs à prévenir",
+            "photos": "Photos",
+            "description_one": "description de {{count}} car.",
+            "description_other": "description de {{count}} car."
+          },
+          "favoritesAlert_one": "{{count}} personne l'a mise en favori : la republier la prévient.",
+          "favoritesAlert_other": "{{count}} personnes l'ont mise en favori : la republier les prévient.",
+          "noRef": "Pas de fourchette de prix pour le quartier {{neighborhood}} dans le référentiel."
+        },
+        "detail": {
+          "price": "Prix",
+          "noSurface": "surface non renseignée",
+          "views": "Vues",
+          "favorites_one": "{{count}} mise en favori",
+          "favorites_other": "{{count}} mises en favori",
+          "contacts": "Contacts",
+          "rate": "{{rate}} % des vues",
+          "visits": "Visites",
+          "upcomingUnit": "à venir",
+          "completedOf_one": "{{done}} honorée sur {{count}}",
+          "completedOf_other": "{{done}} honorées sur {{count}}",
+          "noPast": "aucune passée",
+          "priceTitle": "Prix au m² dans le quartier {{neighborhood}}",
+          "thisOne": "Ce bien",
+          "statusAlert": "Statut à corriger : {{fix}}.",
+          "noPhotoAlert": "<strong>Aucune photo.</strong> Une annonce sans photo retient rarement l'acheteur.",
+          "aboveAlert": "<strong>Au-dessus de la fourchette du quartier</strong> ({{min}} à {{max}}). Vérifiez le prix et la surface saisis.",
+          "belowAlert": "<strong>Sous la fourchette du quartier</strong> ({{min}} à {{max}}). Prix ou surface à vérifier.",
+          "unrecordedAlert_one": "{{count}} contact compté sur l'annonce, mais aucun lead dans le CRM : cette demande n'a pas été enregistrée.",
+          "unrecordedAlert_other": "{{count}} contacts comptés sur l'annonce, mais aucun lead dans le CRM : ces demandes n'ont pas été enregistrées.",
+          "leadsTitle_one": "Demandes ({{count}})",
+          "leadsTitle_other": "Demandes ({{count}})",
+          "loadError": "Chargement impossible.",
+          "noLeads": "Aucun lead rattaché à ce bien.",
+          "visitsTitle_one": "Visites à venir ({{count}})",
+          "visitsTitle_other": "Visites à venir ({{count}})",
+          "noVisits": "Aucune visite planifiée.",
+          "dealsTitle_one": "Dossiers ({{count}})",
+          "dealsTitle_other": "Dossiers ({{count}})",
+          "noDeals": "Aucun dossier de transaction.",
+          "probability": "probabilité {{value}} %",
+          "closedOn": "clos le {{date}}",
+          "leadStatus": {
+            "new": "Nouveau",
+            "contacted": "Contacté",
+            "qualified": "Qualifié",
+            "converted": "Converti",
+            "lost": "Perdu"
+          },
+          "visitStatus": {
+            "scheduled": "À confirmer",
+            "confirmed": "Confirmée",
+            "completed": "Honorée",
+            "cancelled": "Annulée",
+            "no_show": "Absent"
+          },
+          "dealStatus": {
+            "active": "En cours",
+            "won": "Gagné",
+            "lost": "Perdu"
+          }
         }
       },
       "status": {
         "active": "En ligne",
-        "pending": "En attente",
+        "pending": "Sous option",
         "sold": "Vendu",
         "rented": "Loué",
         "draft": "Brouillon"
@@ -1857,7 +2551,7 @@
         "statusOptions": {
           "draft": "Brouillon",
           "active": "Publié",
-          "pending": "En attente"
+          "pending": "Sous option"
         },
         "validation": {
           "titleRequired": "Le titre est requis",
@@ -1868,6 +2562,8 @@
         },
         "toastImagesRequired": "Ajoutez au moins une photo.",
         "cancelButton": "Annuler",
+        "backToList": "Retour aux biens",
+        "removePhoto": "Retirer la photo",
         "createButton": "Créer le bien",
         "updateButton": "Mettre à jour",
         "pricePeriods": {

@@ -65,6 +65,14 @@ function ApplicationsList() {
     }
   )
 
+  const unshortlist = useMutation((id) => rentalService.unshortlistApplication(id), {
+    onSuccess: () => {
+      toast.success(t('backoffice:rental.application.toasts.unshortlisted'))
+      qc.invalidateQueries('rental-applications')
+    },
+    onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
+  })
+
   const shortlist = useMutation((id) => rentalService.shortlistApplication(id), {
     onSuccess: () => {
       toast.success(t('backoffice:rental.application.toasts.shortlisted'))
@@ -130,7 +138,10 @@ function ApplicationsList() {
           <FiStar className="w-4 h-4" /> {t('backoffice:rental.application.actions.shortlist')}
         </button>
       ) : a.status === 'shortlist' ? (
-        <span className="text-sm text-indigo-600">{t('backoffice:rental.application.status.shortlist')}</span>
+        <button onClick={() => unshortlist.mutate(a.id)} disabled={unshortlist.isLoading}
+          className="flex items-center gap-1 text-gray-500 hover:text-gray-700 text-sm font-medium">
+          <FiStar className="w-4 h-4" /> {t('backoffice:rental.application.actions.unshortlist')}
+        </button>
       ) : null
     ) },
   ]

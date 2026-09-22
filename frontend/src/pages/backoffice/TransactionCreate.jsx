@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useQuery, useMutation } from 'react-query'
-import { useNavigate, Link, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { FiArrowLeft } from 'react-icons/fi'
 import SearchableSelect from '../../components/common/SearchableSelect'
 import api from '../../services/api'
+import { IconAction } from './components/kit'
 
 const PRIORITY_KEYS = ['low', 'medium', 'high']
 
@@ -47,16 +48,16 @@ function TransactionCreate() {
   const canSubmit = form.property_id && form.client_id && !create.isLoading
 
   return (
-    <div className="space-y-4 max-w-2xl">
-      <Link to="/backoffice/transactions" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
-        <FiArrowLeft className="w-4 h-4" /> {t('backoffice:crm.transactions.create.backLink')}
-      </Link>
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">{t('backoffice:crm.transactions.create.pageTitle')}</h1>
-        <p className="text-gray-500">{t('backoffice:crm.transactions.create.subtitle')}</p>
+    <div className="mx-auto w-full max-w-2xl space-y-4">
+      <div className="flex items-center gap-3">
+        <IconAction icon={FiArrowLeft} label={t('backoffice:crm.transactions.create.backLink')} to="/backoffice/transactions" className="border border-gray-200 bg-white rtl:[&>svg]:rotate-180" />
+        <div>
+          <h1 className="font-display text-[26px] font-extrabold leading-tight tracking-tight">{t('backoffice:crm.transactions.create.pageTitle')}</h1>
+          <p className="mt-1 text-gray-500">{t('backoffice:crm.transactions.create.subtitle')}</p>
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-5">
+      <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-5">
         <div>
           <h2 className="text-sm font-semibold text-gray-900 mb-3">{t('backoffice:crm.transactions.create.sectionPropertyClient')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
