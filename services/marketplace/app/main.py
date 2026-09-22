@@ -152,6 +152,19 @@ def _require_agency(principal: Principal):
     return None
 
 
+def _item_dicts(db: Session, items: list[OrderItem]) -> list[dict]:
+    """Lignes figées de la commande, plus le prix ACTUEL du produit (None s'il a quitté le catalogue)."""
+    ids = {i.product_id for i in items if i.product_id}
+    live = {p.id: p for p in db.query(ProductRO).filter(ProductRO.id.in_(ids)).all()} if ids else {}
+    out = []
+    for i in items:
+        p = live.get(i.product_id)
+        available = p is not None and bool(p.is_active)
+        out.append({**i.to_dict(), "available": available,
+                    "current_price": float(p.price or 0) if available else None})
+    return out
+
+
 @app.post("/backoffice/shop/orders", status_code=201)
 async def checkout(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
     err = _require_agency(principal)
@@ -203,6 +216,9 @@ def pay_order(oid: int, principal: Principal = Depends(get_principal), db: Sessi
     if order.status != "pending":
         return _err("Commande déjà réglée ou traitée.", 409)
     order_items = db.query(OrderItem).filter(OrderItem.order_id == order.id).all()
+    # Sans produit, rien ne serait réservé ni livré : le paiement serait encaissé pour rien.
+    if not all(d["available"] for d in _item_dicts(db, order_items)):
+        return _err("Un article de la commande n'est plus au catalogue : annulez la commande.", 409)
     # Réservation autoritaire du stock auprès de catalog (tout ou rien).
     reserve_items = [{"product_id": it.product_id, "quantity": it.quantity} for it in order_items if it.product_id]
     try:
