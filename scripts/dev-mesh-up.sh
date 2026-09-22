@@ -94,7 +94,24 @@ for pair in $SVCS; do
 done
 sleep 6
 
-echo "== 4. BFF (:$BFF_PORT, auth locale) =="
+echo "== 4. Migrations additives (les ALTER que create_all ne fait jamais) =="
+# Jouées après le create_all des services, comme en prod. La liste est LUE dans
+# infra/prod/deploy-remote.sh : deux listes finiraient par diverger, et c'est ce qui fait
+# tourner le poste local et la prod sur des schémas différents (widget vide côté local
+# parce qu'une colonne mappée manque). En local on passe par le rôle postgres : certaines
+# migrations lisent le schéma d'un autre service pour pré-remplir la colonne.
+sed -n '/^MIGRATIONS="/,/^"$/p' infra/prod/deploy-remote.sh | sed '1d;$d' | grep -v '^[[:space:]]*$' |
+while read -r m; do
+  f="services/${m%%/*}/db/${m#*/}"
+  [ -f "$f" ] || { echo "   ✗ $m introuvable"; continue; }
+  if psql "$ADMIN" -q -v ON_ERROR_STOP=1 -f "$f" >/dev/null 2>"$LOG/migrate.err"; then
+    echo "   ✓ $m"
+  else
+    echo "   ✗ $m — $(grep -m1 ERROR "$LOG/migrate.err")"
+  fi
+done
+
+echo "== 5. BFF (:$BFF_PORT, auth locale) =="
 kill_port "$BFF_PORT"; sleep 1
 env UPSTREAM_URL="$MONO" JWT_SECRET_KEY="$JWT" INTERNAL_TOKEN="$ITOK" TENANT_DEV_HEADER=true \
   CATALOG_URL=http://localhost:8009 DIRECTORY_URL=http://localhost:8011 LISTING_URL=http://localhost:8012 \
@@ -113,7 +130,7 @@ env UPSTREAM_URL="$MONO" JWT_SECRET_KEY="$JWT" INTERNAL_TOKEN="$ITOK" TENANT_DEV
   > "$LOG/bff.log" 2>&1 &
 sleep 4
 
-echo "== 5. Mesh événementiel (relais + workers + consumers monolithe) =="
+echo "== 6. Mesh événementiel (relais + workers + consumers monolithe) =="
 kill_pat "-m app.relay"; kill_pat "-m app.worker"; kill_pat "-m app.scheduler"; kill_pat "consume_users.py"; kill_pat "relay_outbox.py"; sleep 2
 relay() { env SERVICE_NAME="$1" DATABASE_URL="$(dburl "$1")" RABBITMQ_URL="$RMQ" EVENTS_EXCHANGE="$EX" \
   PYTHONPATH="services/$1" nohup python3 -m app.relay > "$LOG/$1-relay.log" 2>&1 & }
@@ -132,7 +149,7 @@ env SERVICE_NAME=notification DATABASE_URL="$(dburl notification)" RABBITMQ_URL=
 # Monolithe décommissionné : consume_users.py / relay_outbox.py (sync transitoire) ne sont plus lancés.
 sleep 5
 
-echo "== 6. Santé =="
+echo "== 7. Santé =="
 for e in "monolithe:7000:/api/v1/properties?per_page=1" "BFF:$BFF_PORT:/health" \
   identity:8501 catalog:8009 marketplace:8010 directory:8011 listing:8012 crm:8013 search:8103 \
   geo:8509 messaging:8510 trust-safety:8511 agency:8512 audit:8513 notification:8502 analytics:8504 \
