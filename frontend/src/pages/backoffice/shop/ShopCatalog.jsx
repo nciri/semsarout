@@ -49,6 +49,8 @@ export default function ShopCatalog() {
   const [place, setPlace] = useState({ after: null, notch: 0 })
   const [tick, setTick] = useState(0)
   const gridRef = useRef(null)
+  // Le suivi des commandes est long : il ne s'affiche qu'à la demande.
+  const [showOrders, setShowOrders] = useState(false)
   const cardRefs = useRef({})
   const titleRef = useRef(null)
   const focusTitle = useRef(false)
@@ -72,7 +74,10 @@ export default function ShopCatalog() {
     writeOpen(key)
   }
   const openCart = () => { if (openKey === 'carts') titleRef.current?.focus(); else toggle('carts') }
-  const follow = () => document.getElementById('orders')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
+  const follow = () => setShowOrders((v) => !v)
+  useEffect(() => {
+    if (showOrders) document.getElementById('orders')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
+  }, [showOrders])
 
   // Même mécanique que le tableau de bord : le détail suit la DERNIÈRE carte de la rangée du
   // widget ouvert, et son repère pointe sur ce widget.
@@ -136,7 +141,7 @@ export default function ShopCatalog() {
   )
 
   const cards = {
-    orders: <div ref={(el) => { cardRefs.current.orders = el }} className="grid"><OrdersCard orders={orders} onFollow={follow} /></div>,
+    orders: <div ref={(el) => { cardRefs.current.orders = el }} className="grid"><OrdersCard orders={orders} onFollow={follow} following={showOrders} /></div>,
     carts: (
       <Widget id="carts" title={t('shop.summary.carts.title')} icon={FiShoppingCart} open={openKey === 'carts'}
         onToggle={() => toggle('carts')} cardRef={(el) => { cardRefs.current.carts = el }}>
@@ -159,7 +164,7 @@ export default function ShopCatalog() {
           <p className="mt-1 text-gray-500">{t('shop.subtitle')}</p>
         </div>
         <div className="flex items-center gap-1.5">
-          <IconAction icon={FiPackage} label={t('shop.summary.orders.follow')} onClick={follow} className="border border-gray-200 bg-white" />
+          <IconAction icon={FiPackage} label={t('shop.summary.orders.follow')} onClick={follow} aria-expanded={showOrders} aria-controls="orders" className="border border-gray-200 bg-white" />
           <span className="relative inline-flex">
             <IconAction icon={FiShoppingCart} tone="primary" tipAlign="end" onClick={openCart} aria-controls="dashboard-detail"
               label={t('shop.cart.button', { count: myCount })} />
@@ -179,7 +184,7 @@ export default function ShopCatalog() {
 
       <Catalog products={products} categories={catData?.categories || []} history={history} inCart={inCart} isLoading={productsLoading} />
 
-      <OrdersTracking orders={orders} members={members} propertiesById={propertiesById} me={me} isLoading={ordersLoading} now={now} />
+      {showOrders && <OrdersTracking orders={orders} members={members} propertiesById={propertiesById} me={me} isLoading={ordersLoading} now={now} />}
     </div>
   )
 }

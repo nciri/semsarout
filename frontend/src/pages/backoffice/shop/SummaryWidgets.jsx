@@ -28,7 +28,7 @@ export function Card({ id, title, icon: Icon, action, children }) {
   )
 }
 
-export function OrdersCard({ orders, onFollow }) {
+export function OrdersCard({ orders, onFollow, following = false }) {
   const { t } = useTranslation('backoffice')
   const dh = useDh()
   const o = openOrders(orders)
@@ -38,7 +38,9 @@ export function OrdersCard({ orders, onFollow }) {
 
   return (
     <Card id="orders-card" icon={FiPackage} title={t('shop.summary.orders.title')}
-      action={<IconAction icon={FiArrowDown} label={t('shop.summary.orders.follow')} onClick={onFollow} tone="gold" tipAlign="end" className="-m-2" />}>
+      action={<IconAction icon={FiArrowDown} label={t('shop.summary.orders.follow')} onClick={onFollow} tone="gold" tipAlign="end"
+        aria-expanded={following} aria-controls="orders"
+        className={`-m-2 [&>svg]:transition-transform motion-reduce:[&>svg]:transition-none ${following ? '[&>svg]:rotate-180' : ''}`} />}>
       <Figure value={o.count}>
         {t(o.by.shipped || !o.count ? 'shop.summary.orders.figure' : 'shop.summary.orders.figureNoShip', { count: o.count })}
       </Figure>

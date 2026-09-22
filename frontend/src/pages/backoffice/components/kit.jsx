@@ -20,7 +20,7 @@ export function IconAction({ icon: Icon, label, to, onClick, tone = 'default', t
       <Icon className="w-[18px] h-[18px]" aria-hidden="true" />
       {/* `hidden` et non une simple opacité nulle : cachée mais présente, l'infobulle d'une action
           en bord de page élargissait le document et faisait apparaître une barre horizontale. */}
-      <span role="tooltip" className={`pointer-events-none absolute bottom-full z-30 mb-1.5 hidden whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs font-medium text-white shadow-lg group-hover:block group-focus-visible:block ${
+      <span role="tooltip" className={`pointer-events-none absolute bottom-full z-30 mb-1.5 hidden w-max max-w-[16rem] rounded-md bg-gray-900 px-2 py-1 text-xs font-medium text-white shadow-lg group-hover:block group-focus-visible:block ${
         tipAlign === 'end' ? 'end-0' : 'start-1/2 -translate-x-1/2 rtl:translate-x-1/2'
       }`}>
         {label}
