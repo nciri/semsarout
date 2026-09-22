@@ -165,6 +165,10 @@ def _item_dicts(db: Session, items: list[OrderItem]) -> list[dict]:
     return out
 
 
+def _order_payload(db: Session, order: Order, items: list[OrderItem]) -> dict:
+    return {**order.to_dict(items_count=len(items)), "items": _item_dicts(db, items)}
+
+
 @app.post("/backoffice/shop/orders", status_code=201)
 async def checkout(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
     err = _require_agency(principal)
@@ -245,11 +249,18 @@ def _items_count_map(db: Session, order_ids: list[int]) -> dict[int, int]:
 
 
 @app.get("/backoffice/shop/orders")
-def list_orders(status: str | None = None, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
+def list_orders(status: str | None = None, with_items: bool = False,
+                principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
     q = db.query(Order).filter(Order.agency_id == principal.agency_id)
     if status:
         q = q.filter(Order.status == status)
     orders = q.order_by(Order.created_at.desc()).all()
+    if with_items:
+        all_items = db.query(OrderItem).filter(OrderItem.order_id.in_([o.id for o in orders])).all() if orders else []
+        by_order: dict[int, list] = {}
+        for it in all_items:
+            by_order.setdefault(it.order_id, []).append(it)
+        return {"orders": [_order_payload(db, o, by_order.get(o.id, [])) for o in orders]}
     counts = _items_count_map(db, [o.id for o in orders])
     return {"orders": [o.to_dict(items_count=counts.get(o.id, 0)) for o in orders]}
 
@@ -259,8 +270,7 @@ def get_order(oid: int, principal: Principal = Depends(get_principal), db: Sessi
     order = db.query(Order).filter(Order.id == oid, Order.agency_id == principal.agency_id).first()
     if order is None:
         return _err("Commande introuvable", 404)
-    items = db.query(OrderItem).filter(OrderItem.order_id == order.id).all()
-    return {"order": order.to_dict(items=items)}
+    return {"order": _order_payload(db, order, db.query(OrderItem).filter(OrderItem.order_id == order.id).all())}
 
 
 # ---- Admin (super-admin) ----
