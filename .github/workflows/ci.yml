@@ -49,7 +49,7 @@ jobs:
           services/contract services/crm services/design3d services/directory services/identity \
           services/legal services/listing services/marketplace services/matching \
           services/messaging services/notification services/partner services/payment services/programs services/rental \
-          services/search services/selling services/translation services/trust-safety"
+          services/search services/selling services/transactions services/translation services/trust-safety"
 
           if [ "$EVENT" = "pull_request" ]; then
             git fetch --no-tags --prune --depth=200 origin "$BASE_REF"
