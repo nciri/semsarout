@@ -1288,13 +1288,340 @@
       }
     },
     "clients": {
+      "page": {
+        "title": "العملاء",
+        "clientsCount_zero": "لا يوجد عميل متابَع",
+        "clientsCount_one": "عميل واحد متابَع",
+        "clientsCount_two": "عميلان متابَعان",
+        "clientsCount_few": "{{count}} عملاء متابَعين",
+        "clientsCount_many": "{{count}} عميلًا متابَعًا",
+        "clientsCount_other": "{{count}} عميل متابَع",
+        "agentsCount_zero": "بدون وكيل",
+        "agentsCount_one": "من طرف وكيل واحد",
+        "agentsCount_two": "من طرف وكيلين",
+        "agentsCount_few": "من طرف {{count}} وكلاء",
+        "agentsCount_many": "من طرف {{count}} وكيلًا",
+        "agentsCount_other": "من طرف {{count}} وكيل",
+        "never": "أبدًا",
+        "today": "اليوم",
+        "noAgent": "بدون وكيل مسؤول",
+        "noAgentShort": "لا أحد",
+        "followedBy": "يتابعه {{name}}",
+        "cameFrom": "المصدر: {{source}}",
+        "budget": "الميزانية",
+        "budgetRange": "من {{min}} إلى {{max}}",
+        "contact": "معلومات الاتصال",
+        "search": "البحث",
+        "historyTitle": "تاريخ العلاقة",
+        "friseLabel": "خط زمني للطلبات والتواصل والزيارات والمعاملات الخاصة بـ {{name}}",
+        "noHistory": "لا يوجد أي طلب أو تواصل أو زيارة أو معاملة مسجلة لهذا العميل.",
+        "openFiche": "فتح ملف {{name}}",
+        "confirmDelete": "حذف ملف {{name}}؟ لا يمكن التراجع عن هذا الإجراء.",
+        "summaryUnavailable": "ملخص التواصل والزيارات والطلبات غير متاح: آخر تواصل والمراحل والملاحظات تعتمد على الملفات وحدها.",
+        "lanes": {
+          "lead": "الطلبات",
+          "inter": "التواصل",
+          "visit": "الزيارات",
+          "tx": "المعاملات"
+        },
+        "shapes": {
+          "done": "تم",
+          "todo": "قادم",
+          "ko": "ملغى أو غياب أو خسارة"
+        },
+        "stages": {
+          "all": "الكل",
+          "tx": "في معاملة",
+          "visited": "زار",
+          "planned": "زيارة مبرمجة",
+          "contact": "على تواصل",
+          "none": "بدون تواصل"
+        },
+        "cols": {
+          "client": "العميل",
+          "status": "الحالة",
+          "agent": "الوكيل",
+          "current": "قيد الإنجاز",
+          "lastExchange": "آخر تواصل",
+          "date": "التاريخ",
+          "type": "النوع",
+          "detail": "التفاصيل",
+          "outcome": "النتيجة",
+          "silence": "بدون تواصل",
+          "actions": "الإجراءات",
+          "property": "العقار المزار",
+          "visit": "الزيارة",
+          "feedback": "الانطباع",
+          "since": "منذ ذلك",
+          "problem": "المشكلة",
+          "finding": "الملاحظة"
+        },
+        "actions": {
+          "newClient": "عميل جديد",
+          "edit": "تعديل",
+          "delete": "حذف العميل",
+          "fullFiche": "الملف الكامل",
+          "call": "اتصال",
+          "write": "مراسلة",
+          "backToList": "العودة إلى العملاء",
+          "newTx": {
+            "sale": "بيع جديد",
+            "rent": "كراء جديد"
+          }
+        },
+        "current": {
+          "nothing": "لا شيء قيد الإنجاز",
+          "txMany_zero": "لا توجد معاملة جارية",
+          "txMany_one": "معاملة واحدة جارية",
+          "txMany_two": "معاملتان جاريتان",
+          "txMany_few": "{{count}} معاملات جارية",
+          "txMany_many": "{{count}} معاملة جارية",
+          "txMany_other": "{{count}} معاملة جارية",
+          "visitOn": "زيارة يوم {{date}}",
+          "visited": "زار {{property}}"
+        },
+        "flags": {
+          "staleLead": "طلب غير معالج",
+          "txUnfollowed": "معاملة بلا متابعة",
+          "reviewStatus": "الحالة تحتاج مراجعة",
+          "hotNoOffer": "مهتم جدًا، بلا عرض",
+          "duplicate": "تكرار محتمل"
+        },
+        "list": {
+          "title": "كل العملاء",
+          "order": "من أقدم تواصل إلى أحدثه",
+          "stageLabel": "مرحلة العلاقة",
+          "searchPlaceholder": "الاسم، المدينة، الوسم، الهاتف…",
+          "searchLabel": "البحث عن عميل",
+          "expand": "عرض ملف {{name}}",
+          "emptyFiltered": "لا يوجد عميل يطابق هذه المرشحات.",
+          "footer_zero": "لا يوجد عميل معروض",
+          "footer_one": "عميل واحد معروض",
+          "footer_two": "عميلان معروضان",
+          "footer_few": "{{count}} عملاء معروضين",
+          "footer_many": "{{count}} عميلًا معروضًا",
+          "footer_other": "{{count}} عميل معروض",
+          "footerOf": "من أصل {{total}}",
+          "inactiveLast": "غير النشطين في آخر القائمة"
+        },
+        "events": {
+          "lead": "طلب · {{source}}",
+          "visit": "زيارة · {{property}}",
+          "tx": {
+            "sale": "بيع · {{property}}",
+            "rent": "كراء · {{property}}"
+          }
+        },
+        "interactionTypes": {
+          "call": "مكالمة",
+          "email": "بريد إلكتروني",
+          "meeting": "موعد",
+          "whatsapp": "واتساب",
+          "visit": "زيارة",
+          "sms": "رسالة نصية",
+          "note": "ملاحظة"
+        },
+        "direction": {
+          "inbound": "وارد",
+          "outbound": "صادر"
+        },
+        "feedback": {
+          "very_interested": "مهتم جدًا",
+          "interested": "مهتم",
+          "neutral": "محايد",
+          "not_interested": "غير مهتم"
+        },
+        "leadStatus": {
+          "new": "لم يعالج قط",
+          "contacted": "تم التواصل",
+          "qualified": "مؤهل",
+          "converted": "تم التحويل",
+          "lost": "ضائع"
+        },
+        "txStatus": {
+          "active": "جارية",
+          "won": "ناجحة",
+          "lost": "خاسرة"
+        },
+        "alerts": {
+          "txNever_zero": "<strong>لا توجد معاملة جارية</strong> ولا أي تواصل مسجل مع هذا العميل.",
+          "txNever_one": "<strong>معاملة واحدة جارية</strong> دون أي تواصل مسجل مع هذا العميل. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "txNever_two": "<strong>معاملتان جاريتان</strong> دون أي تواصل مسجل مع هذا العميل. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "txNever_few": "<strong>{{count}} معاملات جارية</strong> دون أي تواصل مسجل مع هذا العميل. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "txNever_many": "<strong>{{count}} معاملة جارية</strong> دون أي تواصل مسجل مع هذا العميل. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "txNever_other": "<strong>{{count}} معاملة جارية</strong> دون أي تواصل مسجل مع هذا العميل. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "txLate_zero": "<strong>لا توجد معاملة جارية</strong> ولا تواصل منذ {{days}} يومًا.",
+          "txLate_one": "<strong>معاملة واحدة جارية</strong> دون تواصل منذ {{days}} يومًا. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "txLate_two": "<strong>معاملتان جاريتان</strong> دون تواصل منذ {{days}} يومًا. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "txLate_few": "<strong>{{count}} معاملات جارية</strong> دون تواصل منذ {{days}} يومًا. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "txLate_many": "<strong>{{count}} معاملة جارية</strong> دون تواصل منذ {{days}} يومًا. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "txLate_other": "<strong>{{count}} معاملة جارية</strong> دون تواصل منذ {{days}} يومًا. مكالمة واحدة تجنب ضياع الملف في اللحظة الأخيرة.",
+          "never": "<strong>لا يوجد أي تواصل مسجل</strong> منذ إنشاء الملف.",
+          "late": "<strong>آخر تواصل قبل {{days}} يومًا</strong>، يوم {{date}}.",
+          "staleLead": "<strong>طلب لم يعالج قط</strong> منذ {{date}} ({{days}} ي) بخصوص {{property}}. العميل مسجل بالفعل، لكن الطلب غير مرتبط بملفه.",
+          "hotNoOffer": "<strong>مهتم جدًا بـ {{property}}</strong> يوم {{date}}، دون أي عرض منذ ذلك الحين.",
+          "revisit": "زيارة جديدة مبرمجة يوم {{date}}: إنها فرصة للحديث عن العرض.",
+          "inactiveTx_zero": "<strong>مصنف غير نشط</strong> ولا توجد له معاملة جارية.",
+          "inactiveTx_one": "<strong>مصنف غير نشط</strong> رغم أن لديه معاملة جارية.",
+          "inactiveTx_two": "<strong>مصنف غير نشط</strong> رغم أن لديه معاملتين جاريتين.",
+          "inactiveTx_few": "<strong>مصنف غير نشط</strong> رغم أن لديه {{count}} معاملات جارية.",
+          "inactiveTx_many": "<strong>مصنف غير نشط</strong> رغم أن لديه {{count}} معاملة جارية.",
+          "inactiveTx_other": "<strong>مصنف غير نشط</strong> رغم أن لديه {{count}} معاملة جارية.",
+          "inactiveVisit": "<strong>مصنف غير نشط</strong> رغم أنه زار عقارًا يوم {{date}}.",
+          "duplicate": "<strong>تكرار محتمل</strong> مع ملف {{name}} ({{type}}، {{city}}). يجب التحقق قبل الدمج.",
+          "badBudget": "<strong>ميزانية مسجلة بالملايين</strong> ({{budget}}) لمكترٍ: لا يمكن لأي إيجار أن يطابقها.",
+          "noAgent": "<strong>لا يوجد وكيل مسؤول</strong>: لا أحد مكلف بمتابعة هذا العميل."
+        },
+        "relances": {
+          "title": "متابعات متأخرة",
+          "figure_zero": "لا يوجد عميل بلا تواصل منذ أكثر من 3 أسابيع",
+          "figure_one": "عميل بلا تواصل منذ أكثر من 3 أسابيع",
+          "figure_two": "عميلان بلا تواصل منذ أكثر من 3 أسابيع",
+          "figure_few": "عملاء بلا تواصل منذ أكثر من 3 أسابيع",
+          "figure_many": "عميلًا بلا تواصل منذ أكثر من 3 أسابيع",
+          "figure_other": "عميل بلا تواصل منذ أكثر من 3 أسابيع",
+          "barLabel": "آخر تواصل مع العملاء النشطين أو المحتملين: {{fresh}} أقل من 8 أيام، {{mid}} بين 8 و21 يومًا، {{late}} أكثر من 21 يومًا، {{never}} أبدًا",
+          "buckets": {
+            "fresh": "< 8 ي",
+            "mid": "8 إلى 21 ي",
+            "late": "> 21 ي",
+            "never": "أبدًا"
+          },
+          "topLabel": "المتابعات الأكثر استعجالًا",
+          "staleLead": "طلب {{date}} لم يعالج قط",
+          "detailSub_zero": "لا يوجد عميل نشط أو محتمل بلا تواصل منذ أكثر من {{days}} يومًا",
+          "detailSub_one": "عميل واحد نشط أو محتمل بلا تواصل منذ أكثر من {{days}} يومًا، منهم {{never}} لم يتم التواصل معهم قط",
+          "detailSub_two": "عميلان نشطان أو محتملان بلا تواصل منذ أكثر من {{days}} يومًا، منهم {{never}} لم يتم التواصل معهم قط",
+          "detailSub_few": "{{count}} عملاء نشطين أو محتملين بلا تواصل منذ أكثر من {{days}} يومًا، منهم {{never}} لم يتم التواصل معهم قط",
+          "detailSub_many": "{{count}} عميلًا نشطًا أو محتملًا بلا تواصل منذ أكثر من {{days}} يومًا، منهم {{never}} لم يتم التواصل معهم قط",
+          "detailSub_other": "{{count}} عميل نشط أو محتمل بلا تواصل منذ أكثر من {{days}} يومًا، منهم {{never}} لم يتم التواصل معهم قط",
+          "none": "كل العملاء النشطين أو المحتملين تم التواصل معهم خلال الأسابيع الثلاثة الأخيرة.",
+          "unfollowed_zero": "<strong>لا يوجد عميل في معاملة بلا متابعة.</strong>",
+          "unfollowed_one": "<strong>عميل واحد في معاملة لم يعد متابَعًا</strong>: {{names}}.",
+          "unfollowed_two": "<strong>عميلان في معاملة لم يعودا متابَعين</strong>: {{names}}.",
+          "unfollowed_few": "<strong>{{count}} عملاء في معاملة لم يعودوا متابَعين</strong>: {{names}}.",
+          "unfollowed_many": "<strong>{{count}} عميلًا في معاملة لم يعودوا متابَعين</strong>: {{names}}.",
+          "unfollowed_other": "<strong>{{count}} عميل في معاملة لم يعودوا متابَعين</strong>: {{names}}.",
+          "staleLeads_zero": "<strong>لا يوجد طلب في الانتظار.</strong>",
+          "staleLeads_one": "<strong>عميل واحد لديه طلب لم يعالج قط</strong>: {{names}}. هو مسجل بالفعل، لكن صفحة الطلبات لا تعلم بذلك.",
+          "staleLeads_two": "<strong>عميلان لديهما طلب لم يعالج قط</strong>: {{names}}. هما مسجلان بالفعل، لكن صفحة الطلبات لا تعلم بذلك.",
+          "staleLeads_few": "<strong>{{count}} عملاء لديهم طلب لم يعالج قط</strong>: {{names}}. هم مسجلون بالفعل، لكن صفحة الطلبات لا تعلم بذلك.",
+          "staleLeads_many": "<strong>{{count}} عميلًا لديهم طلب لم يعالج قط</strong>: {{names}}. هم مسجلون بالفعل، لكن صفحة الطلبات لا تعلم بذلك.",
+          "staleLeads_other": "<strong>{{count}} عميل لديهم طلب لم يعالج قط</strong>: {{names}}. هم مسجلون بالفعل، لكن صفحة الطلبات لا تعلم بذلك.",
+          "perAgent": "المتابعات المتأخرة حسب الوكيل",
+          "agentLine": "{{name}} · {{late}} من {{total}}",
+          "perAgentNote": "نسبة العملاء النشطين أو المحتملين لكل وكيل."
+        },
+        "offers": {
+          "title": "زيارات بلا عرض",
+          "figure_zero": "لا توجد زيارة بلا عرض",
+          "figure_one": "عميل زار دون تقديم عرض",
+          "figure_two": "عميلان زارا دون تقديم عرض",
+          "figure_few": "عملاء زاروا دون تقديم عرض",
+          "figure_many": "عميلًا زاروا دون تقديم عرض",
+          "figure_other": "عميل زاروا دون تقديم عرض",
+          "hotChip_zero": "لا أحد مهتم جدًا",
+          "hotChip_one": "واحد مهتم جدًا",
+          "hotChip_two": "اثنان مهتمان جدًا",
+          "hotChip_few": "{{count}} مهتمين جدًا",
+          "hotChip_many": "{{count}} مهتمًا جدًا",
+          "hotChip_other": "{{count}} مهتم جدًا",
+          "topLabel": "عملاء مهتمون جدًا بلا عرض",
+          "revisits": "يعود يوم {{date}}",
+          "markedInactive": "ملف مصنف غير نشط",
+          "otherTx": "معاملة على عقار آخر",
+          "visitedOn": "زيارة يوم {{date}}",
+          "budgetNone_zero": "<strong>لا يوجد مشترٍ أو مستثمر</strong> بميزانية مسجلة.",
+          "budgetNone_one": "<strong>لا يوجد عقار منشور</strong> يطابق مدينة وميزانية مشتريك أو مستثمرك.",
+          "budgetNone_two": "<strong>لا يوجد عقار منشور</strong> يطابق مدينة وميزانية مشتريَيك أو مستثمريك.",
+          "budgetNone_few": "<strong>لا يوجد عقار منشور</strong> يطابق مدينة وميزانية مشترييك ومستثمريك الـ{{count}}.",
+          "budgetNone_many": "<strong>لا يوجد عقار منشور</strong> يطابق مدينة وميزانية مشترييك ومستثمريك الـ{{count}}.",
+          "budgetNone_other": "<strong>لا يوجد عقار منشور</strong> يطابق مدينة وميزانية مشترييك ومستثمريك الـ{{count}}.",
+          "budgetSome_zero": "<strong>لا يوجد مشترٍ أو مستثمر</strong> بميزانية مسجلة.",
+          "budgetSome_one": "<strong>{{matched}} من أصل {{count}}</strong> من المشترين والمستثمرين لديه عقار منشور على الأقل في مدينته وميزانيته.",
+          "budgetSome_two": "<strong>{{matched}} من أصل {{count}}</strong> من المشترين والمستثمرين لديهم عقار منشور على الأقل في مدينتهم وميزانيتهم.",
+          "budgetSome_few": "<strong>{{matched}} من أصل {{count}}</strong> من المشترين والمستثمرين لديهم عقار منشور على الأقل في مدينتهم وميزانيتهم.",
+          "budgetSome_many": "<strong>{{matched}} من أصل {{count}}</strong> من المشترين والمستثمرين لديهم عقار منشور على الأقل في مدينتهم وميزانيتهم.",
+          "budgetSome_other": "<strong>{{matched}} من أصل {{count}}</strong> من المشترين والمستثمرين لديهم عقار منشور على الأقل في مدينتهم وميزانيتهم.",
+          "detailSub_zero": "لا توجد زيارة منجزة بلا معاملة على العقار المزار",
+          "detailSub_one": "زيارة واحدة منجزة بلا معاملة على العقار المزار",
+          "detailSub_two": "زيارتان منجزتان بلا معاملة على العقار المزار",
+          "detailSub_few": "{{count}} زيارات منجزة بلا معاملة على العقار المزار",
+          "detailSub_many": "{{count}} زيارة منجزة بلا معاملة على العقار المزار",
+          "detailSub_other": "{{count}} زيارة منجزة بلا معاملة على العقار المزار",
+          "none": "كل زيارة منجزة أدت إلى معاملة.",
+          "veryInterested": "مهتمون جدًا",
+          "neutral": "انطباع محايد",
+          "outOf": "من {{count}}",
+          "hotProperty_zero": "<strong>{{property}}</strong>: لا يوجد زائر مهتم جدًا.",
+          "hotProperty_one": "<strong>{{property}}</strong>: زائر واحد مهتم جدًا، {{names}}، دون أي عرض.",
+          "hotProperty_two": "<strong>{{property}}</strong>: زائران مهتمان جدًا، {{names}}، دون أي عرض.",
+          "hotProperty_few": "<strong>{{property}}</strong>: {{count}} زوار مهتمين جدًا، {{names}}، دون أي عرض.",
+          "hotProperty_many": "<strong>{{property}}</strong>: {{count}} زائرًا مهتمًا جدًا، {{names}}، دون أي عرض.",
+          "hotProperty_other": "<strong>{{property}}</strong>: {{count}} زائر مهتم جدًا، {{names}}، دون أي عرض.",
+          "note": "يسجل الانطباع بعد كل زيارة منجزة: إنه أفضل مؤشر لاختيار من تتابعه أولًا."
+        },
+        "fixes": {
+          "title": "ملفات تحتاج تصحيحًا",
+          "figure_zero": "لا يوجد ملف للتحقق",
+          "figure_one": "ملف للتحقق",
+          "figure_two": "ملفان للتحقق",
+          "figure_few": "ملفات للتحقق",
+          "figure_many": "ملفًا للتحقق",
+          "figure_other": "ملف للتحقق",
+          "kinds": {
+            "dups": "تكرارات محتملة",
+            "inactive": "غير نشطين رغم نشاطهم",
+            "budget": "ميزانية مكترٍ بالملايين",
+            "noAgent": "بدون وكيل مسؤول"
+          },
+          "noneFound": "لم يرصد أي تكرار",
+          "pairs_zero": "لا زوج",
+          "pairs_one": "زوج واحد",
+          "pairs_two": "زوجان",
+          "pairs_few": "{{count}} أزواج",
+          "pairs_many": "{{count}} زوجًا",
+          "pairs_other": "{{count}} زوج",
+          "inactiveSub": "زيارة حديثة أو معاملة جارية",
+          "budgetSub": "من {{range}} لإيجار",
+          "budgetOk": "ميزانيات متسقة",
+          "noAgentOk": "لكل عميل وكيله المسؤول",
+          "detailSub_zero": "لا يوجد ملف يناقض النشاط الفعلي",
+          "detailSub_one": "ملف واحد يناقض محتواه النشاط الفعلي",
+          "detailSub_two": "ملفان يناقض محتواهما النشاط الفعلي",
+          "detailSub_few": "{{count}} ملفات يناقض محتواها النشاط الفعلي",
+          "detailSub_many": "{{count}} ملفًا يناقض محتواها النشاط الفعلي",
+          "detailSub_other": "{{count}} ملف يناقض محتواها النشاط الفعلي",
+          "none": "لا يوجد ملف يحتاج تصحيحًا.",
+          "why": {
+            "dups": "{{status}} · الزيارات: {{visits}} · المعاملات: {{tx}}",
+            "inactiveTx_zero": "لا توجد معاملة جارية",
+            "inactiveTx_one": "معاملة واحدة جارية",
+            "inactiveTx_two": "معاملتان جاريتان",
+            "inactiveTx_few": "{{count}} معاملات جارية",
+            "inactiveTx_many": "{{count}} معاملة جارية",
+            "inactiveTx_other": "{{count}} معاملة جارية",
+            "inactiveVisit": "زيارة منجزة يوم {{date}}",
+            "budget": "{{budget}} لكراء",
+            "noAgent": "لا يوجد وكيل مسؤول"
+          },
+          "noAgentAlert_zero": "<strong>لكل العملاء وكيل مسؤول.</strong>",
+          "noAgentAlert_one": "<strong>عميل واحد بدون وكيل مسؤول</strong>: {{names}}. لن يتابعه أحد.",
+          "noAgentAlert_two": "<strong>عميلان بدون وكيل مسؤول</strong>: {{names}}. لن يتابعهما أحد.",
+          "noAgentAlert_few": "<strong>{{count}} عملاء بدون وكيل مسؤول</strong>: {{names}}. لن يتابعهم أحد.",
+          "noAgentAlert_many": "<strong>{{count}} عميلًا بدون وكيل مسؤول</strong>: {{names}}. لن يتابعهم أحد.",
+          "noAgentAlert_other": "<strong>{{count}} عميل بدون وكيل مسؤول</strong>: {{names}}. لن يتابعهم أحد.",
+          "allAssigned": "<strong>لكل العملاء وكيل مسؤول.</strong>",
+          "dupAlert_zero": "<strong>لا توجد ملفات متشابهة للحسم.</strong>",
+          "dupAlert_one": "<strong>زوج واحد من الملفات المتشابهة للحسم</strong>: تحقق من الهاتف والبريد، ولا تدمج إلا بعد مكالمة.",
+          "dupAlert_two": "<strong>زوجان من الملفات المتشابهة للحسم</strong>: تحقق من الهاتف والبريد، ولا تدمج إلا بعد مكالمة.",
+          "dupAlert_few": "<strong>{{count}} أزواج من الملفات المتشابهة للحسم</strong>: تحقق من الهاتف والبريد، ولا تدمج إلا بعد مكالمة.",
+          "dupAlert_many": "<strong>{{count}} زوجًا من الملفات المتشابهة للحسم</strong>: تحقق من الهاتف والبريد، ولا تدمج إلا بعد مكالمة.",
+          "dupAlert_other": "<strong>{{count}} زوج من الملفات المتشابهة للحسم</strong>: تحقق من الهاتف والبريد، ولا تدمج إلا بعد مكالمة.",
+          "note": "تُرصد التكرارات عبر تطابق الاسم أو الهاتف أو البريد داخل الوكالة."
+        }
+      },
       "list": {
-        "pageTitle": "العملاء",
-        "subtitle": "أدر قاعدة عملائك والعملاء المحتملين",
-        "newButton": "عميل جديد",
-        "addFirstButton": "إضافة عميل",
-        "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني أو الهاتف...",
-        "filtersButton": "عوامل التصفية",
         "filterTypeLabel": "نوع العميل",
         "filterTypeAll": "جميع الأنواع",
         "filterStatusLabel": "الحالة",
@@ -1302,33 +1629,22 @@
         "resetFilters": "إعادة التعيين",
         "types": {
           "buyer": {
-            "label": "المشترون",
-            "description": "عملاء يبحثون عن عقار للشراء"
+            "label": "المشترون"
           },
           "seller": {
-            "label": "البائعون",
-            "description": "مالكون يرغبون في بيع عقارهم"
+            "label": "البائعون"
           },
           "landlord": {
-            "label": "الملاك",
-            "description": "ملاك يعرضون عقارهم للكراء"
+            "label": "الملاك"
           },
           "tenant": {
-            "label": "المستأجرون",
-            "description": "عملاء يبحثون عن كراء"
+            "label": "المستأجرون"
           },
           "investor": {
-            "label": "المستثمرون",
-            "description": "مستثمرون عقاريون"
+            "label": "المستثمرون"
           }
         },
-        "emptyCategory": "لا يوجد عميل في هذه الفئة",
-        "newTransaction": "معاملة جديدة",
-        "budget": "الميزانية: {{min}} - {{max}}",
-        "confirmDelete": "هل أنت متأكد من رغبتك في حذف هذا العميل؟",
         "empty": {
-          "title": "لم يتم العثور على أي عميل",
-          "filtered": "لا يوجد عميل يطابق معايير بحثك.",
           "default": "ابدأ بإضافة أول عميل لك."
         }
       },
@@ -1384,29 +1700,16 @@
         "updateButton": "تحديث"
       },
       "detail": {
-        "editButton": "تعديل",
-        "sections": {
-          "contact": "معلومات الاتصال",
-          "searchCriteria": "معايير البحث"
-        },
         "fields": {
           "email": "البريد الإلكتروني",
           "phonePrimary": "الهاتف الرئيسي",
           "phoneSecondary": "الهاتف الثانوي",
-          "city": "المدينة",
           "address": "العنوان",
-          "agentAssigned": "الوكيل المسند",
           "tags": "الوسوم",
           "notes": "ملاحظات"
         },
-        "budget": "الميزانية: {{min}} — {{max}}",
         "propertyTypesWanted": "أنواع العقارات المطلوبة",
-        "preferredCities": "المدن المفضلة",
-        "createTransaction": "إنشاء معاملة ({{type}})",
-        "transactionType": {
-          "rent": "كراء",
-          "sale": "بيع"
-        }
+        "preferredCities": "المدن المفضلة"
       }
     },
     "pipeline": {

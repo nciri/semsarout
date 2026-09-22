@@ -1288,13 +1288,340 @@
       }
     },
     "clients": {
+      "page": {
+        "title": "Clients",
+        "clientsCount_zero": "Aucun client suivi",
+        "clientsCount_one": "{{count}} client suivi",
+        "clientsCount_two": "{{count}} clients suivis",
+        "clientsCount_few": "{{count}} clients suivis",
+        "clientsCount_many": "{{count}} clients suivis",
+        "clientsCount_other": "{{count}} clients suivis",
+        "agentsCount_zero": "sans agent",
+        "agentsCount_one": "par {{count}} agent",
+        "agentsCount_two": "par {{count}} agents",
+        "agentsCount_few": "par {{count}} agents",
+        "agentsCount_many": "par {{count}} agents",
+        "agentsCount_other": "par {{count}} agents",
+        "never": "Jamais",
+        "today": "auj.",
+        "noAgent": "sans agent attitré",
+        "noAgentShort": "Aucun",
+        "followedBy": "suivi par {{name}}",
+        "cameFrom": "venu par {{source}}",
+        "budget": "Budget",
+        "budgetRange": "{{min}} à {{max}}",
+        "contact": "Coordonnées",
+        "search": "Recherche",
+        "historyTitle": "Historique de la relation",
+        "friseLabel": "Frise des leads, échanges, visites et transactions de {{name}}",
+        "noHistory": "Aucun lead, échange, visite ni transaction enregistré pour ce client.",
+        "openFiche": "Ouvrir la fiche de {{name}}",
+        "confirmDelete": "Supprimer la fiche de {{name}} ? Cette action est définitive.",
+        "summaryUnavailable": "La synthèse des échanges, visites et leads est indisponible : dernier échange, étapes et constats s'appuient sur les seules fiches.",
+        "lanes": {
+          "lead": "Leads",
+          "inter": "Échanges",
+          "visit": "Visites",
+          "tx": "Transactions"
+        },
+        "shapes": {
+          "done": "fait",
+          "todo": "à venir",
+          "ko": "annulé, absent ou perdu"
+        },
+        "stages": {
+          "all": "Tous",
+          "tx": "En transaction",
+          "visited": "A visité",
+          "planned": "Visite prévue",
+          "contact": "En contact",
+          "none": "Sans échange"
+        },
+        "cols": {
+          "client": "Client",
+          "status": "Statut",
+          "agent": "Agent",
+          "current": "En cours",
+          "lastExchange": "Dernier échange",
+          "date": "Date",
+          "type": "Type",
+          "detail": "Détail",
+          "outcome": "Issue",
+          "silence": "Sans échange",
+          "actions": "Actions",
+          "property": "Bien visité",
+          "visit": "Visite",
+          "feedback": "Ressenti",
+          "since": "Depuis",
+          "problem": "Problème",
+          "finding": "Constat"
+        },
+        "actions": {
+          "newClient": "Nouveau client",
+          "edit": "Modifier",
+          "delete": "Supprimer le client",
+          "fullFiche": "Fiche complète",
+          "call": "Appeler",
+          "write": "Écrire",
+          "backToList": "Retour aux clients",
+          "newTx": {
+            "sale": "Nouvelle vente",
+            "rent": "Nouvelle location"
+          }
+        },
+        "current": {
+          "nothing": "Rien en cours",
+          "txMany_zero": "Aucune transaction en cours",
+          "txMany_one": "{{count}} transaction en cours",
+          "txMany_two": "{{count}} transactions en cours",
+          "txMany_few": "{{count}} transactions en cours",
+          "txMany_many": "{{count}} transactions en cours",
+          "txMany_other": "{{count}} transactions en cours",
+          "visitOn": "visite le {{date}}",
+          "visited": "a visité {{property}}"
+        },
+        "flags": {
+          "staleLead": "Lead non traité",
+          "txUnfollowed": "Transaction sans suivi",
+          "reviewStatus": "Statut à revoir",
+          "hotNoOffer": "Très intéressé, sans offre",
+          "duplicate": "Doublon possible"
+        },
+        "list": {
+          "title": "Tous les clients",
+          "order": "du plus ancien échange au plus récent",
+          "stageLabel": "Étape de la relation",
+          "searchPlaceholder": "Nom, ville, tag, téléphone…",
+          "searchLabel": "Rechercher un client",
+          "expand": "Développer la fiche de {{name}}",
+          "emptyFiltered": "Aucun client ne correspond à ces filtres.",
+          "footer_zero": "Aucun client affiché",
+          "footer_one": "{{count}} client affiché",
+          "footer_two": "{{count}} clients affichés",
+          "footer_few": "{{count}} clients affichés",
+          "footer_many": "{{count}} clients affichés",
+          "footer_other": "{{count}} clients affichés",
+          "footerOf": "sur {{total}}",
+          "inactiveLast": "les inactifs en fin de liste"
+        },
+        "events": {
+          "lead": "Lead · {{source}}",
+          "visit": "Visite · {{property}}",
+          "tx": {
+            "sale": "Vente · {{property}}",
+            "rent": "Location · {{property}}"
+          }
+        },
+        "interactionTypes": {
+          "call": "Appel",
+          "email": "E-mail",
+          "meeting": "Rendez-vous",
+          "whatsapp": "WhatsApp",
+          "visit": "Visite",
+          "sms": "SMS",
+          "note": "Note"
+        },
+        "direction": {
+          "inbound": "reçu",
+          "outbound": "émis"
+        },
+        "feedback": {
+          "very_interested": "Très intéressé",
+          "interested": "Intéressé",
+          "neutral": "Neutre",
+          "not_interested": "Pas intéressé"
+        },
+        "leadStatus": {
+          "new": "Jamais traité",
+          "contacted": "Contacté",
+          "qualified": "Qualifié",
+          "converted": "Converti",
+          "lost": "Perdu"
+        },
+        "txStatus": {
+          "active": "En cours",
+          "won": "Gagnée",
+          "lost": "Perdue"
+        },
+        "alerts": {
+          "txNever_zero": "<strong>Aucune transaction en cours</strong> et aucun échange noté avec ce client.",
+          "txNever_one": "<strong>{{count}} transaction en cours</strong> et aucun échange noté avec ce client. Un appel évite de perdre le dossier au dernier moment.",
+          "txNever_two": "<strong>{{count}} transactions en cours</strong> et aucun échange noté avec ce client. Un appel évite de perdre le dossier au dernier moment.",
+          "txNever_few": "<strong>{{count}} transactions en cours</strong> et aucun échange noté avec ce client. Un appel évite de perdre le dossier au dernier moment.",
+          "txNever_many": "<strong>{{count}} transactions en cours</strong> et aucun échange noté avec ce client. Un appel évite de perdre le dossier au dernier moment.",
+          "txNever_other": "<strong>{{count}} transactions en cours</strong> et aucun échange noté avec ce client. Un appel évite de perdre le dossier au dernier moment.",
+          "txLate_zero": "<strong>Aucune transaction en cours</strong> et aucun échange depuis {{days}} jours.",
+          "txLate_one": "<strong>{{count}} transaction en cours</strong> et aucun échange depuis {{days}} jours. Un appel évite de perdre le dossier au dernier moment.",
+          "txLate_two": "<strong>{{count}} transactions en cours</strong> et aucun échange depuis {{days}} jours. Un appel évite de perdre le dossier au dernier moment.",
+          "txLate_few": "<strong>{{count}} transactions en cours</strong> et aucun échange depuis {{days}} jours. Un appel évite de perdre le dossier au dernier moment.",
+          "txLate_many": "<strong>{{count}} transactions en cours</strong> et aucun échange depuis {{days}} jours. Un appel évite de perdre le dossier au dernier moment.",
+          "txLate_other": "<strong>{{count}} transactions en cours</strong> et aucun échange depuis {{days}} jours. Un appel évite de perdre le dossier au dernier moment.",
+          "never": "<strong>Aucun échange noté</strong> depuis la création de la fiche.",
+          "late": "<strong>Dernier échange il y a {{days}} jours</strong>, le {{date}}.",
+          "staleLead": "<strong>Lead jamais traité</strong> depuis le {{date}} ({{days}} j) sur {{property}}. Le client est déjà en fiche : le lead n'y est pas rattaché.",
+          "hotNoOffer": "<strong>Très intéressé par {{property}}</strong> le {{date}}, sans offre depuis.",
+          "revisit": "Nouvelle visite prévue le {{date}} : c'est le moment d'en parler.",
+          "inactiveTx_zero": "<strong>Marqué inactif</strong> alors qu'il n'a aucune transaction en cours.",
+          "inactiveTx_one": "<strong>Marqué inactif</strong> alors qu'il a {{count}} transaction en cours.",
+          "inactiveTx_two": "<strong>Marqué inactif</strong> alors qu'il a {{count}} transactions en cours.",
+          "inactiveTx_few": "<strong>Marqué inactif</strong> alors qu'il a {{count}} transactions en cours.",
+          "inactiveTx_many": "<strong>Marqué inactif</strong> alors qu'il a {{count}} transactions en cours.",
+          "inactiveTx_other": "<strong>Marqué inactif</strong> alors qu'il a {{count}} transactions en cours.",
+          "inactiveVisit": "<strong>Marqué inactif</strong> alors qu'il a visité un bien le {{date}}.",
+          "duplicate": "<strong>Doublon possible</strong> avec la fiche {{name}} ({{type}}, {{city}}). À vérifier avant de fusionner.",
+          "badBudget": "<strong>Budget saisi en millions</strong> ({{budget}}) pour un locataire : aucun loyer ne peut correspondre.",
+          "noAgent": "<strong>Aucun agent attitré</strong> : personne n'est chargé de relancer ce client."
+        },
+        "relances": {
+          "title": "Relances en retard",
+          "figure_zero": "aucun client sans échange depuis plus de 3 semaines",
+          "figure_one": "client sans échange depuis plus de 3 semaines",
+          "figure_two": "clients sans échange depuis plus de 3 semaines",
+          "figure_few": "clients sans échange depuis plus de 3 semaines",
+          "figure_many": "clients sans échange depuis plus de 3 semaines",
+          "figure_other": "clients sans échange depuis plus de 3 semaines",
+          "barLabel": "Dernier échange des clients actifs ou prospects : {{fresh}} de moins de 8 jours, {{mid}} entre 8 et 21 jours, {{late}} depuis plus de 21 jours, {{never}} jamais",
+          "buckets": {
+            "fresh": "< 8 j",
+            "mid": "8 à 21 j",
+            "late": "> 21 j",
+            "never": "Jamais"
+          },
+          "topLabel": "Les relances les plus urgentes",
+          "staleLead": "Lead du {{date}} jamais traité",
+          "detailSub_zero": "Aucun client actif ou prospect sans échange depuis plus de {{days}} jours",
+          "detailSub_one": "{{count}} client actif ou prospect sans échange depuis plus de {{days}} jours, dont {{never}} jamais contacté",
+          "detailSub_two": "{{count}} clients actifs ou prospects sans échange depuis plus de {{days}} jours, dont {{never}} jamais contactés",
+          "detailSub_few": "{{count}} clients actifs ou prospects sans échange depuis plus de {{days}} jours, dont {{never}} jamais contactés",
+          "detailSub_many": "{{count}} clients actifs ou prospects sans échange depuis plus de {{days}} jours, dont {{never}} jamais contactés",
+          "detailSub_other": "{{count}} clients actifs ou prospects sans échange depuis plus de {{days}} jours, dont {{never}} jamais contactés",
+          "none": "Tous les clients actifs ou prospects ont eu un échange ces 3 dernières semaines.",
+          "unfollowed_zero": "<strong>Aucun client en transaction sans suivi.</strong>",
+          "unfollowed_one": "<strong>{{count}} client en transaction n'est plus suivi</strong> : {{names}}.",
+          "unfollowed_two": "<strong>{{count}} clients en transaction ne sont plus suivis</strong> : {{names}}.",
+          "unfollowed_few": "<strong>{{count}} clients en transaction ne sont plus suivis</strong> : {{names}}.",
+          "unfollowed_many": "<strong>{{count}} clients en transaction ne sont plus suivis</strong> : {{names}}.",
+          "unfollowed_other": "<strong>{{count}} clients en transaction ne sont plus suivis</strong> : {{names}}.",
+          "staleLeads_zero": "<strong>Aucun lead en attente.</strong>",
+          "staleLeads_one": "<strong>{{count}} client a un lead jamais traité</strong> : {{names}}. Il est déjà en fiche, mais la page Leads ne le sait pas.",
+          "staleLeads_two": "<strong>{{count}} clients ont un lead jamais traité</strong> : {{names}}. Ils sont déjà en fiche, mais la page Leads ne le sait pas.",
+          "staleLeads_few": "<strong>{{count}} clients ont un lead jamais traité</strong> : {{names}}. Ils sont déjà en fiche, mais la page Leads ne le sait pas.",
+          "staleLeads_many": "<strong>{{count}} clients ont un lead jamais traité</strong> : {{names}}. Ils sont déjà en fiche, mais la page Leads ne le sait pas.",
+          "staleLeads_other": "<strong>{{count}} clients ont un lead jamais traité</strong> : {{names}}. Ils sont déjà en fiche, mais la page Leads ne le sait pas.",
+          "perAgent": "Relances en retard par agent",
+          "agentLine": "{{name}} · {{late}} sur {{total}}",
+          "perAgentNote": "Part des clients actifs ou prospects de chaque agent."
+        },
+        "offers": {
+          "title": "Visites sans offre",
+          "figure_zero": "aucune visite honorée sans offre",
+          "figure_one": "client a visité sans faire d'offre",
+          "figure_two": "clients ont visité sans faire d'offre",
+          "figure_few": "clients ont visité sans faire d'offre",
+          "figure_many": "clients ont visité sans faire d'offre",
+          "figure_other": "clients ont visité sans faire d'offre",
+          "hotChip_zero": "aucun très intéressé",
+          "hotChip_one": "{{count}} très intéressé",
+          "hotChip_two": "{{count}} très intéressés",
+          "hotChip_few": "{{count}} très intéressés",
+          "hotChip_many": "{{count}} très intéressés",
+          "hotChip_other": "{{count}} très intéressés",
+          "topLabel": "Clients très intéressés sans offre",
+          "revisits": "revient le {{date}}",
+          "markedInactive": "fiche marquée inactive",
+          "otherTx": "transaction sur un autre bien",
+          "visitedOn": "visitée le {{date}}",
+          "budgetNone_zero": "<strong>Aucun acheteur ni investisseur</strong> avec un budget renseigné.",
+          "budgetNone_one": "<strong>Aucun bien en ligne</strong> ne correspond à la ville et au budget de votre acheteur ou investisseur.",
+          "budgetNone_two": "<strong>Aucun bien en ligne</strong> ne correspond à la ville et au budget de vos {{count}} acheteurs et investisseurs.",
+          "budgetNone_few": "<strong>Aucun bien en ligne</strong> ne correspond à la ville et au budget de vos {{count}} acheteurs et investisseurs.",
+          "budgetNone_many": "<strong>Aucun bien en ligne</strong> ne correspond à la ville et au budget de vos {{count}} acheteurs et investisseurs.",
+          "budgetNone_other": "<strong>Aucun bien en ligne</strong> ne correspond à la ville et au budget de vos {{count}} acheteurs et investisseurs.",
+          "budgetSome_zero": "<strong>Aucun acheteur ni investisseur</strong> avec un budget renseigné.",
+          "budgetSome_one": "<strong>{{matched}} sur {{count}} acheteur ou investisseur</strong> a au moins un bien en ligne dans sa ville et son budget.",
+          "budgetSome_two": "<strong>{{matched}} sur {{count}} acheteurs et investisseurs</strong> ont au moins un bien en ligne dans leur ville et leur budget.",
+          "budgetSome_few": "<strong>{{matched}} sur {{count}} acheteurs et investisseurs</strong> ont au moins un bien en ligne dans leur ville et leur budget.",
+          "budgetSome_many": "<strong>{{matched}} sur {{count}} acheteurs et investisseurs</strong> ont au moins un bien en ligne dans leur ville et leur budget.",
+          "budgetSome_other": "<strong>{{matched}} sur {{count}} acheteurs et investisseurs</strong> ont au moins un bien en ligne dans leur ville et leur budget.",
+          "detailSub_zero": "Aucune visite honorée sans transaction sur le bien visité",
+          "detailSub_one": "{{count}} visite honorée sans transaction sur le bien visité",
+          "detailSub_two": "{{count}} visites honorées sans transaction sur le bien visité",
+          "detailSub_few": "{{count}} visites honorées sans transaction sur le bien visité",
+          "detailSub_many": "{{count}} visites honorées sans transaction sur le bien visité",
+          "detailSub_other": "{{count}} visites honorées sans transaction sur le bien visité",
+          "none": "Chaque visite honorée a donné lieu à une transaction.",
+          "veryInterested": "Très intéressés",
+          "neutral": "Ressenti neutre",
+          "outOf": "sur {{count}}",
+          "hotProperty_zero": "<strong>{{property}}</strong> : aucun visiteur très intéressé.",
+          "hotProperty_one": "<strong>{{property}}</strong> : {{count}} visiteur très intéressé, {{names}}, et aucune offre.",
+          "hotProperty_two": "<strong>{{property}}</strong> : {{count}} visiteurs très intéressés, {{names}}, et aucune offre.",
+          "hotProperty_few": "<strong>{{property}}</strong> : {{count}} visiteurs très intéressés, {{names}}, et aucune offre.",
+          "hotProperty_many": "<strong>{{property}}</strong> : {{count}} visiteurs très intéressés, {{names}}, et aucune offre.",
+          "hotProperty_other": "<strong>{{property}}</strong> : {{count}} visiteurs très intéressés, {{names}}, et aucune offre.",
+          "note": "Le ressenti est saisi à chaque visite honorée : c'est le meilleur signal pour choisir qui relancer en premier."
+        },
+        "fixes": {
+          "title": "Fiches à corriger",
+          "figure_zero": "aucune fiche à vérifier",
+          "figure_one": "fiche à vérifier",
+          "figure_two": "fiches à vérifier",
+          "figure_few": "fiches à vérifier",
+          "figure_many": "fiches à vérifier",
+          "figure_other": "fiches à vérifier",
+          "kinds": {
+            "dups": "Doublons possibles",
+            "inactive": "Inactifs pourtant actifs",
+            "budget": "Budget de locataire en millions",
+            "noAgent": "Sans agent attitré"
+          },
+          "noneFound": "aucun repéré",
+          "pairs_zero": "0 paire",
+          "pairs_one": "{{count}} paire",
+          "pairs_two": "{{count}} paires",
+          "pairs_few": "{{count}} paires",
+          "pairs_many": "{{count}} paires",
+          "pairs_other": "{{count}} paires",
+          "inactiveSub": "une visite récente ou une transaction en cours",
+          "budgetSub": "de {{range}} pour un loyer",
+          "budgetOk": "budgets cohérents",
+          "noAgentOk": "chaque client a son référent",
+          "detailSub_zero": "Aucune fiche ne contredit l'activité réelle",
+          "detailSub_one": "{{count}} fiche dont le contenu contredit l'activité réelle",
+          "detailSub_two": "{{count}} fiches dont le contenu contredit l'activité réelle",
+          "detailSub_few": "{{count}} fiches dont le contenu contredit l'activité réelle",
+          "detailSub_many": "{{count}} fiches dont le contenu contredit l'activité réelle",
+          "detailSub_other": "{{count}} fiches dont le contenu contredit l'activité réelle",
+          "none": "Aucune fiche à corriger.",
+          "why": {
+            "dups": "{{status}} · visites : {{visits}} · transactions : {{tx}}",
+            "inactiveTx_zero": "aucune transaction en cours",
+            "inactiveTx_one": "{{count}} transaction en cours",
+            "inactiveTx_two": "{{count}} transactions en cours",
+            "inactiveTx_few": "{{count}} transactions en cours",
+            "inactiveTx_many": "{{count}} transactions en cours",
+            "inactiveTx_other": "{{count}} transactions en cours",
+            "inactiveVisit": "visite honorée le {{date}}",
+            "budget": "{{budget}} pour une location",
+            "noAgent": "aucun agent attitré"
+          },
+          "noAgentAlert_zero": "<strong>Tous les clients ont un agent attitré.</strong>",
+          "noAgentAlert_one": "<strong>{{count}} client sans agent attitré</strong> : {{names}}. Personne ne le relancera.",
+          "noAgentAlert_two": "<strong>{{count}} clients sans agent attitré</strong> : {{names}}. Personne ne les relancera.",
+          "noAgentAlert_few": "<strong>{{count}} clients sans agent attitré</strong> : {{names}}. Personne ne les relancera.",
+          "noAgentAlert_many": "<strong>{{count}} clients sans agent attitré</strong> : {{names}}. Personne ne les relancera.",
+          "noAgentAlert_other": "<strong>{{count}} clients sans agent attitré</strong> : {{names}}. Personne ne les relancera.",
+          "allAssigned": "<strong>Tous les clients ont un agent attitré.</strong>",
+          "dupAlert_zero": "<strong>Aucun homonyme à trancher.</strong>",
+          "dupAlert_one": "<strong>{{count}} paire de fiches semblables à trancher</strong> : vérifiez téléphone et e-mail, et ne fusionnez qu'après un appel.",
+          "dupAlert_two": "<strong>{{count}} paires de fiches semblables à trancher</strong> : vérifiez téléphone et e-mail, et ne fusionnez qu'après un appel.",
+          "dupAlert_few": "<strong>{{count}} paires de fiches semblables à trancher</strong> : vérifiez téléphone et e-mail, et ne fusionnez qu'après un appel.",
+          "dupAlert_many": "<strong>{{count}} paires de fiches semblables à trancher</strong> : vérifiez téléphone et e-mail, et ne fusionnez qu'après un appel.",
+          "dupAlert_other": "<strong>{{count}} paires de fiches semblables à trancher</strong> : vérifiez téléphone et e-mail, et ne fusionnez qu'après un appel.",
+          "note": "Doublons repérés par nom, téléphone ou e-mail identiques au sein de l'agence."
+        }
+      },
       "list": {
-        "pageTitle": "Clients",
-        "subtitle": "Gérez votre base de clients et prospects",
-        "newButton": "Nouveau client",
-        "addFirstButton": "Ajouter un client",
-        "searchPlaceholder": "Rechercher par nom, email, téléphone...",
-        "filtersButton": "Filtres",
         "filterTypeLabel": "Type de client",
         "filterTypeAll": "Tous les types",
         "filterStatusLabel": "Statut",
@@ -1302,33 +1629,22 @@
         "resetFilters": "Réinitialiser",
         "types": {
           "buyer": {
-            "label": "Acheteurs",
-            "description": "Clients à la recherche d'un bien à acheter"
+            "label": "Acheteurs"
           },
           "seller": {
-            "label": "Vendeurs",
-            "description": "Propriétaires souhaitant vendre leur bien"
+            "label": "Vendeurs"
           },
           "landlord": {
-            "label": "Propriétaires",
-            "description": "Propriétaires mettant en location"
+            "label": "Propriétaires"
           },
           "tenant": {
-            "label": "Locataires",
-            "description": "Clients cherchant une location"
+            "label": "Locataires"
           },
           "investor": {
-            "label": "Investisseurs",
-            "description": "Investisseurs immobiliers"
+            "label": "Investisseurs"
           }
         },
-        "emptyCategory": "Aucun client dans cette catégorie",
-        "newTransaction": "Nouvelle transaction",
-        "budget": "Budget: {{min}} - {{max}}",
-        "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce client ?",
         "empty": {
-          "title": "Aucun client trouvé",
-          "filtered": "Aucun client ne correspond à vos critères de recherche.",
           "default": "Commencez par ajouter votre premier client."
         }
       },
@@ -1384,29 +1700,16 @@
         "updateButton": "Mettre à jour"
       },
       "detail": {
-        "editButton": "Modifier",
-        "sections": {
-          "contact": "Coordonnées",
-          "searchCriteria": "Critères de recherche"
-        },
         "fields": {
           "email": "Email",
           "phonePrimary": "Téléphone principal",
           "phoneSecondary": "Téléphone secondaire",
-          "city": "Ville",
           "address": "Adresse",
-          "agentAssigned": "Agent assigné",
           "tags": "Tags",
           "notes": "Notes"
         },
-        "budget": "Budget : {{min}} — {{max}}",
         "propertyTypesWanted": "Types de biens recherchés",
-        "preferredCities": "Villes préférées",
-        "createTransaction": "Créer une transaction ({{type}})",
-        "transactionType": {
-          "rent": "location",
-          "sale": "vente"
-        }
+        "preferredCities": "Villes préférées"
       }
     },
     "pipeline": {
