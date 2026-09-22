@@ -59,6 +59,14 @@ def _event_dict(e: CalendarEvent) -> dict:
     }
 
 
+def _touch_client(db: Session, v: Visit) -> None:
+    """Une visite honorée compte comme un échange avec le client (champ « dernier échange »)."""
+    client = db.get(Client, v.client_id) if v.client_id else None
+    when = min(v.scheduled_at or datetime.utcnow(), datetime.utcnow())
+    if client and (client.last_contact_at is None or client.last_contact_at < when):
+        client.last_contact_at = when
+
+
 def _owned(db: Session, visit_id: int, principal: Principal):
     v = db.get(Visit, visit_id)
     if v is None:
@@ -170,6 +178,8 @@ async def update_visit(visit_id: int, request: Request, principal: Principal = D
             setattr(v, f, data[f])
     if "scheduled_at" in data:
         v.scheduled_at = _dt(data["scheduled_at"])
+    if v.status == "completed":
+        _touch_client(db, v)
     v.updated_at = datetime.utcnow()
     db.commit()
     return _visit_dict(db, v)
@@ -207,6 +217,7 @@ async def complete_visit(visit_id: int, request: Request, principal: Principal =
     for f in ("report", "client_feedback", "client_comments"):
         if f in data:
             setattr(v, f, data[f])
+    _touch_client(db, v)
     db.commit()
     return _visit_dict(db, v)
 
