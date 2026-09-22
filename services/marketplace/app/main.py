@@ -257,6 +257,48 @@ def cancel_order(oid: int, principal: Principal = Depends(get_principal), db: Se
     return {"order": _order_payload(db, order, db.query(OrderItem).filter(OrderItem.order_id == order.id).all())}
 
 
+_PAID = {"paid", "preparing", "shipped", "delivered"}
+
+
+@app.get("/backoffice/shop/orders/summary")
+def orders_summary(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
+    """Dépenses de l'agence (commandes annulées exclues) : par mois, par acheteur, par produit."""
+    orders = {o.id: o for o in db.query(Order).filter(
+        Order.agency_id == principal.agency_id, Order.status != "cancelled").all()}
+    items = db.query(OrderItem).filter(OrderItem.order_id.in_(list(orders))).all() if orders else []
+    by_month: dict[str, dict] = {}
+    by_buyer: dict[int | None, dict] = {}
+    by_product: dict = {}
+    for it, d in zip(items, _item_dicts(db, items)):
+        o = orders[it.order_id]
+        kind = "paid" if o.status in _PAID else "pending"
+        amount = d["line_total"]
+        month = o.created_at.strftime("%Y-%m") if o.created_at else None
+        by_month.setdefault(month, {"month": month, "paid": 0.0, "pending": 0.0})[kind] += amount
+        by_buyer.setdefault(o.buyer_id, {"buyer_id": o.buyer_id, "paid": 0.0, "pending": 0.0, "quantity": 0})
+        by_buyer[o.buyer_id][kind] += amount
+        by_buyer[o.buyer_id]["quantity"] += it.quantity
+        # Un produit retiré n'a plus d'id : ses lignes se regroupent sous leur nom figé.
+        key = it.product_id or f"name:{it.product_name}"
+        row = by_product.setdefault(key, {
+            "product_id": it.product_id, "product_name": it.product_name, "quantity": 0,
+            "paid": 0.0, "pending": 0.0, "last_unit_price": None, "_at": None,
+            "current_price": d["current_price"], "available": d["available"],
+        })
+        row["quantity"] += it.quantity
+        row[kind] += amount
+        if row["_at"] is None or (o.created_at and o.created_at >= row["_at"]):
+            row["_at"], row["last_unit_price"] = o.created_at, d["unit_price"]
+    def rnd(r: dict) -> dict:
+        return {k: round(v, 2) if isinstance(v, float) else v for k, v in r.items() if k != "_at"}
+
+    return {
+        "by_month": sorted((rnd(r) for r in by_month.values()), key=lambda r: r["month"] or ""),
+        "by_buyer": sorted((rnd(r) for r in by_buyer.values()), key=lambda r: -(r["paid"] + r["pending"])),
+        "by_product": sorted((rnd(r) for r in by_product.values()), key=lambda r: -(r["paid"] + r["pending"])),
+    }
+
+
 def _items_count_map(db: Session, order_ids: list[int]) -> dict[int, int]:
     if not order_ids:
         return {}

@@ -94,3 +94,23 @@ def test_cancel_refuses_paid_order_and_other_agency(client, db_session, headers)
     assert client.post(f"/backoffice/shop/orders/{paid.id}/cancel", headers=headers()).status_code == 409
     assert client.post(f"/backoffice/shop/orders/{other.id}/cancel", headers=headers()).status_code == 404
     assert db_session.get(Order, other.id).status == "pending"
+
+
+def test_summary_splits_paid_and_pending_and_skips_cancelled(client, db_session, headers):
+    _product(db_session, 2, 5799)
+    _order(db_session, buyer=17, status="paid", lines=[(2, "Canapé", 4800, 3)])
+    _order(db_session, buyer=18, status="pending", lines=[(None, "Four à supprimer", 500, 1)])
+    _order(db_session, buyer=22, status="pending", lines=[(None, "Four à supprimer", 500, 1)],
+           created=datetime(2026, 7, 25))
+    _order(db_session, buyer=3, status="cancelled", lines=[(2, "Canapé", 4800, 1)])
+    _order(db_session, agency=2, status="paid", lines=[(2, "Canapé", 4800, 9)])
+    s = client.get("/backoffice/shop/orders/summary", headers=headers()).json()
+    assert s["by_month"] == [{"month": "2026-07", "paid": 14400, "pending": 1000}]
+    by_product = {p["product_name"]: p for p in s["by_product"]}
+    assert by_product["Canapé"] == {
+        "product_id": 2, "product_name": "Canapé", "quantity": 3, "paid": 14400, "pending": 0,
+        "last_unit_price": 4800, "current_price": 5799, "available": True,
+    }
+    assert by_product["Four à supprimer"]["pending"] == 1000
+    assert by_product["Four à supprimer"]["available"] is False
+    assert [b["buyer_id"] for b in s["by_buyer"]] == [17, 18, 22]
