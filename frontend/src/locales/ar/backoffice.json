@@ -1516,74 +1516,150 @@
         }
       },
       "visits": {
-        "list": {
-          "pageTitle": "الزيارات والمواعيد",
-          "subtitle": "أدر زياراتك ومواعيدك",
-          "newButton": "جدولة زيارة",
-          "viewToggleCalendar": "التقويم",
-          "viewToggleList": "قائمة",
-          "today": "اليوم",
-          "filterStatusAll": "جميع الحالات",
-          "daysHeader": {
-            "mon": "إثنين",
-            "tue": "ثلاثاء",
-            "wed": "أربعاء",
-            "thu": "خميس",
-            "fri": "جمعة",
-            "sat": "سبت",
-            "sun": "أحد"
-          },
-          "moreCount": "+{{count}} أخرى",
-          "empty": {
-            "title": "لا توجد زيارات",
-            "description": "خطط لزيارتك الأولى."
-          },
-          "legend": "دليل الحالات"
-        },
+        "title": "الزيارات والمواعيد",
+        "subtitle": "أجندة زيارات الوكالة",
+        "plan": "جدولة زيارة",
+        "loadError": "تعذّر تحميل الزيارات.",
+        "visitor": "زائر",
+        "noProperty": "عقار غير محدد",
         "status": {
-          "scheduled": "مجدولة",
+          "scheduled": "في انتظار التأكيد",
           "confirmed": "مؤكدة",
-          "completed": "منجزة",
+          "completed": "تمت",
           "cancelled": "ملغاة",
-          "no_show": "عدم حضور"
+          "no_show": "غياب"
         },
-        "modal": {
-          "title": "تفاصيل الزيارة",
-          "noProperty": "عقار غير محدد",
-          "duration": "- {{minutes}} د",
-          "noVisitor": "زائر غير محدد",
-          "reportLabel": "تقرير الزيارة",
-          "reportPlaceholder": "ملاحظات حول الزيارة...",
-          "feedbackLabel": "ملاحظات العميل",
-          "feedbackOptions": {
-            "select": "اختر...",
-            "very_interested": "مهتم جدًا",
-            "interested": "مهتم",
-            "neutral": "محايد",
-            "not_interested": "غير مهتم"
+        "overdueChip": "بحاجة إلى تحديث",
+        "summary": {
+          "upcoming": "القادمة",
+          "upcomingNone": "لا توجد زيارات مبرمجة.",
+          "next": "التالية",
+          "toConfirm": "في انتظار التأكيد",
+          "toConfirmSub_one": "زيارة قادمة لم تُؤكَّد بعد",
+          "toConfirmSub_other": "زيارات قادمة لم تُؤكَّد بعد",
+          "overdue_one": "{{count}} زيارة سابقة بحاجة إلى تحديث حالتها",
+          "overdue_other": "{{count}} زيارات سابقة بحاجة إلى تحديث حالتها",
+          "attendance": "الحضور · {{days}} يومًا",
+          "attendanceSub": "{{completed}} تمت من أصل {{resolved}} زيارات محدَّثة الحالة",
+          "attendanceNone": "لا توجد زيارات محدَّثة الحالة خلال آخر {{days}} يومًا.",
+          "honoured": "تمت",
+          "cancelled": "ملغاة",
+          "absent": "حالات الغياب",
+          "unresolved": "غير محدَّثة",
+          "outcomesLabel": "{{honoured}} تمت، {{cancelled}} ملغاة، {{absent}} حالات غياب، {{unresolved}} غير محدَّثة"
+        },
+        "overdue": {
+          "title": "بحاجة إلى تحديث",
+          "alert_one": "<strong>{{count}} زيارة سابقة لم تُحدَّث حالتها.</strong> حدّد إن كانت قد تمت أو أُلغيت أو تغيّب العميل: نسبة الحضور تعتمد على ذلك.",
+          "alert_other": "<strong>{{count}} زيارات سابقة لم تُحدَّث حالتها.</strong> حدّد إن كانت قد تمت أو أُلغيت أو تغيّب العميل: نسبة الحضور تعتمد على ذلك.",
+          "more_one": "و{{count}} زيارة أخرى أقدم في القائمة.",
+          "more_other": "و{{count}} زيارات أخرى أقدم في القائمة."
+        },
+        "agenda": {
+          "title": "الأجندة",
+          "mode": "طريقة العرض",
+          "day": "يوم",
+          "week": "أسبوع",
+          "list": "قائمة",
+          "prev": "الفترة السابقة",
+          "next": "الفترة التالية",
+          "today": "اليوم",
+          "tomorrow": "غدًا",
+          "statusFilter": "التصفية حسب الحالة",
+          "allStatuses": "جميع الحالات",
+          "weekRange": "أسبوع {{from}} إلى {{to}}",
+          "count_one": "{{count}} زيارة",
+          "count_other": "{{count}} زيارات",
+          "emptyDay": "لا توجد زيارات",
+          "emptyList": "لا توجد زيارات.",
+          "allVisits": "جميع الزيارات، من الأحدث إلى الأقدم",
+          "page": "الصفحة {{page}} من {{pages}}",
+          "prevPage": "الصفحة السابقة",
+          "nextPage": "الصفحة التالية"
+        },
+        "row": {
+          "expand": "عرض البطاقة",
+          "collapse": "طيّ البطاقة",
+          "duration": "{{minutes}} د"
+        },
+        "fiche": {
+          "property": "العقار",
+          "contact": "جهة الاتصال",
+          "agent": "الوكيل",
+          "noAgent": "غير مُسندة",
+          "confirmation": "التأكيد",
+          "confirmedAt": "أُكِّدت في {{date}}",
+          "notConfirmed": "لم تُؤكَّد بعد",
+          "completedAt": "تمت في {{date}}",
+          "cancelledAt": "أُلغيت في {{date}}",
+          "notes": "ملاحظات",
+          "report": "تقرير الزيارة",
+          "noReport": "لا يوجد تقرير.",
+          "feedback": "رأي العميل",
+          "noFeedback": "لا يوجد رأي للعميل.",
+          "openProperty": "فتح العقار",
+          "openClient": "فتح بطاقة العميل",
+          "call": "اتصال",
+          "email": "إرسال بريد إلكتروني"
+        },
+        "actions": {
+          "confirm": "تأكيد الزيارة",
+          "complete": "تسجيلها كزيارة تمت وكتابة التقرير",
+          "report": "تعديل التقرير",
+          "no_show": "العميل تغيّب",
+          "cancel": "إلغاء الزيارة",
+          "edit": "تعديل الزيارة",
+          "delete": "حذف الزيارة",
+          "deleteConfirm": "حذف هذه الزيارة نهائيًا؟"
+        },
+        "feedback": {
+          "very_interested": "مهتم جدًا",
+          "interested": "مهتم",
+          "neutral": "محايد",
+          "not_interested": "غير مهتم"
+        },
+        "report": {
+          "title": "تقرير الزيارة",
+          "report": "التقرير",
+          "reportPlaceholder": "سير الزيارة، نقاط القوة، الاعتراضات…",
+          "feedback": "رأي العميل",
+          "feedbackNone": "غير محدد",
+          "comments": "تعليقات العميل",
+          "save": "حفظ",
+          "close": "إغلاق التقرير"
+        },
+        "form": {
+          "createTitle": "جدولة زيارة",
+          "editTitle": "تعديل الزيارة",
+          "property": "العقار",
+          "propertyPlaceholder": "اختر عقارًا",
+          "client": "العميل",
+          "clientPlaceholder": "عميل موجود",
+          "visitorName": "اسم الزائر",
+          "visitorHint": "مطلوب إذا لم يُختر أي عميل.",
+          "email": "البريد الإلكتروني",
+          "phone": "الهاتف",
+          "dateTime": "التاريخ والوقت",
+          "duration": "المدة",
+          "durations": {
+            "15": "15 د",
+            "30": "30 د",
+            "45": "45 د",
+            "60": "ساعة واحدة",
+            "90": "ساعة و30 د"
           },
-          "confirmButton": "تأكيد",
-          "cancelButton": "إلغاء",
-          "submitReportButton": "تأكيد التقرير",
-          "markCompletedButton": "التعليم كمنجزة",
-          "closeButton": "إغلاق"
+          "agent": "الوكيل",
+          "agentPlaceholder": "الوكيل المكلف بالزيارة",
+          "notes": "ملاحظات",
+          "notesPlaceholder": "معلومات مفيدة للزائر أو للوكيل…",
+          "save": "حفظ",
+          "close": "إغلاق النموذج"
         },
-        "newModal": {
-          "title": "جدولة زيارة",
-          "visitorNameLabel": "اسم الزائر *",
-          "emailLabel": "البريد الإلكتروني",
-          "phoneLabel": "الهاتف",
-          "dateTimeLabel": "التاريخ والوقت *",
-          "durationLabel": "المدة (دقائق)",
-          "duration15": "15 د",
-          "duration30": "30 د",
-          "duration45": "45 د",
-          "duration60": "ساعة واحدة",
-          "duration90": "ساعة و30 د",
-          "notesLabel": "ملاحظات",
-          "notesPlaceholder": "معلومات إضافية...",
-          "cancelButton": "إلغاء",
-          "submitButton": "جدولة"
+        "toast": {
+          "created": "تمت جدولة الزيارة.",
+          "updated": "تم تحديث الزيارة.",
+          "deleted": "تم حذف الزيارة.",
+          "error": "فشلت العملية."
         }
       }
     },
