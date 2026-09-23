@@ -9,6 +9,7 @@ import {
 import { jsPDF } from 'jspdf'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
+import i18n from '../../i18n'
 import useAuthStore from '../../store/authStore'
 import { formatPrice } from '../../utils/currency'
 import api from '../../services/api'
@@ -17,8 +18,10 @@ import { useFormat } from '../../utils/format'
 import { INDIVIDUAL_PLANS, AGENCY_PLANS } from './subscriptionPlans'
 import BillingStatusBanner from '../../components/billing/BillingStatusBanner'
 
-// Generate invoice PDF (t: fonction de traduction i18n, injectée par l'appelant)
-const generateInvoicePDF = (invoice, user, t) => {
+// jsPDF n'embarque que des polices latines (helvetica) : un libellé arabe n'y a aucun glyphe et
+// sort vide. La facture est donc toujours émise en français, quelle que soit la langue choisie.
+const generateInvoicePDF = (invoice, user) => {
+  const t = i18n.getFixedT('fr')
   const doc = new jsPDF()
   const pageWidth = doc.internal.pageSize.getWidth()
 
@@ -648,9 +651,9 @@ export default function Subscription() {
           status: result.invoice.status,
           date: result.invoice.created_at,
           period: result.invoice.period_label,
-          planName: t(`dashboard:subscription.plans.${selectedPlanGroup}.${selectedPlan.id}.name`)
+          planName: i18n.getFixedT('fr')(`dashboard:subscription.plans.${selectedPlanGroup}.${selectedPlan.id}.name`)
         }
-        const pdf = generateInvoicePDF(invoiceForPdf, user, t)
+        const pdf = generateInvoicePDF(invoiceForPdf, user)
         pdf.save(`${result.invoice.reference}.pdf`)
       }
 
@@ -685,9 +688,9 @@ export default function Subscription() {
         status: invoice.status,
         date: invoice.created_at || invoice.date,
         period: invoice.period_label || invoice.period,
-        planName: invoice.planName || t('dashboard:subscription.genericPlanLabel')
+        planName: invoice.planName || i18n.getFixedT('fr')('dashboard:subscription.genericPlanLabel')
       }
-      const pdf = generateInvoicePDF(invoiceForPdf, user, t)
+      const pdf = generateInvoicePDF(invoiceForPdf, user)
       pdf.save(`${invoice.reference}.pdf`)
     }
   }
