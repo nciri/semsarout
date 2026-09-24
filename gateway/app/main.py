@@ -199,6 +199,9 @@ _LISTING_ENGAGE = re.compile(r"^/api/v1/properties/\d+/(contact|reveal-phone)$")
 _BO_PROPERTY_ID = re.compile(r"^/api/v1/backoffice/properties/\d+$")
 # Téléchargement d'un document de bien (authentifié) → listing.
 _DOCUMENTS_ID = re.compile(r"^/api/v1/documents/\d+$")
+# Prise de rendez-vous depuis une annonce (créneaux publics, réservation authentifiée) → crm,
+# qui porte les disponibilités des agents et l'agenda des visites.
+_CRM_BOOKING = re.compile(r"^/api/v1/properties/\d+/(available-slots|book-visit)$")
 # Leads publics gérés par l'utilisateur : GET /leads/{id} + PUT /leads/{id}/status → crm.
 _CRM_LEADS_PUBLIC = re.compile(r"^/api/v1/leads/\d+(/status)?$")
 # Lecture détail d'un compte (super-admin) : GET → analytics (agrégat). Les ÉCRITURES de
@@ -284,6 +287,9 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
     if settings.commission_url and path.startswith("/api/v1/backoffice/commission"):
         return app.state.commission, path.replace("/api/v1", "", 1)
     # listing (détail/CRUD) AVANT la découverte (search) : /properties/{id} → listing.
+    # Avant listing : ces deux chemins sont sous /properties/{id} mais relèvent de l'agenda.
+    if settings.crm_url and _CRM_BOOKING.match(path):
+        return app.state.crm, path.replace("/api/v1", "", 1)
     if settings.listing_url and _listing_match(path, method):
         return app.state.listing, path.replace("/api/v1", "", 1)
     if settings.search_url and _search_discovery_match(path, method):

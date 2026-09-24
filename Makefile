@@ -1,5 +1,5 @@
 # Fondations plateforme v2 — raccourcis (cf. PLATFORM.md)
-.PHONY: hooks infra-up infra-down libs-install gateway-run gateway-test m3a-l3achrane-install m3a-l3achrane-dev m3a-l3achrane-build m3a-l3achrane-lint
+.PHONY: seed-dev hooks infra-up infra-down libs-install gateway-run gateway-test m3a-l3achrane-install m3a-l3achrane-dev m3a-l3achrane-build m3a-l3achrane-lint
 
 infra-up:            ## Démarre l'infra plateforme (RabbitMQ, MinIO, OTel, Prometheus, Grafana, Loki)
 	docker compose -f infra/docker-compose.yml up -d
@@ -31,3 +31,13 @@ m3a-l3achrane-lint:    ## Lint frontend-m3a-l3achrane
 hooks:               ## Active les hooks git du dépôt (.githooks/pre-push)
 	git config core.hooksPath .githooks
 	@echo "hooks git actifs : .githooks"
+
+DEV_DB ?= postgresql+psycopg
+DEV_HOST ?= localhost:5432/semsar_dev
+
+seed-dev:            ## Jeux de données de DÉV (identity d'abord : les autres seeds s'y réfèrent)
+	PYTHONPATH=services/identity DATABASE_URL="$(DEV_DB)://identity:identity@$(DEV_HOST)" python3 -m app.seed_semsar_demo
+	PYTHONPATH=services/identity DATABASE_URL="$(DEV_DB)://identity:identity@$(DEV_HOST)" python3 -m app.seed_m3a_demo
+	PYTHONPATH=services/crm DATABASE_URL="$(DEV_DB)://crm:crm@$(DEV_HOST)" python3 -m app.seed_demo
+	cd services/coloc-listing && PYTHONPATH=. DATABASE_URL="$(DEV_DB)://coloc_listing:coloc_listing@$(DEV_HOST)" SERVICE_NAME=coloc-listing python3 -m app.seed_demo
+	cd services/partner && PYTHONPATH=. DATABASE_URL="$(DEV_DB)://partner:partner@$(DEV_HOST)" python3 -m app.seed_demo

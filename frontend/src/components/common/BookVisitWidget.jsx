@@ -23,7 +23,7 @@ function BookVisitWidget({ propertyId }) {
   const { t } = useTranslation(['common'])
   const { fmtDate } = useFormat()
   const navigate = useNavigate()
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, user } = useAuthStore()
   const days = nextDays(14)
   const [selectedDate, setSelectedDate] = useState(days[0].toISOString().slice(0, 10))
   const [selectedTime, setSelectedTime] = useState(null)
@@ -36,7 +36,14 @@ function BookVisitWidget({ propertyId }) {
   )
 
   const bookMutation = useMutation(
-    () => availabilityService.bookVisit(propertyId, { date: selectedDate, time: selectedTime }),
+    // L'agence doit savoir QUI vient : on transmet l'identité du compte connecté.
+    () => availabilityService.bookVisit(propertyId, {
+      date: selectedDate,
+      time: selectedTime,
+      visitor_name: [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.email,
+      visitor_email: user?.email,
+      visitor_phone: user?.phone,
+    }),
     {
       onSuccess: () => {
         setBooked(true)

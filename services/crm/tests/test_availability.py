@@ -51,3 +51,55 @@ def test_une_visite_reste_accessible_par_son_identifiant(client, db_session):
     db_session.add(v)
     db_session.commit()
     assert client.get(f"/backoffice/visits/{v.id}").status_code == 200
+
+
+# ---- Prise de rendez-vous depuis une annonce --------------------------------------------
+
+def _bien(db_session, pid=42, agency=1, owner=7):
+    from app.models import PropertyRO
+    db_session.add(PropertyRO(id=pid, title="Appartement Anfa", agency_id=agency, owner_id=owner))
+    db_session.commit()
+
+
+def _lundi_prochain():
+    from datetime import date, timedelta
+    d = date.today() + timedelta(days=1)
+    while d.weekday() != 0:
+        d += timedelta(days=1)
+    return d
+
+
+def test_pas_de_creneau_sans_disponibilite_declaree(client, db_session):
+    """Sans disponibilité, on ne propose rien plutôt que d'inventer des horaires."""
+    _bien(db_session)
+    r = client.get("/properties/42/available-slots", params={"date": _lundi_prochain().isoformat()})
+    assert r.json() == {"slots": []}
+
+
+def test_creneaux_decoupes_puis_reserves(client, db_session):
+    _bien(db_session)
+    client.put("/backoffice/visits/availability", json={"slots": [
+        {"weekday": 0, "start_time": "09:00", "end_time": "10:30", "slot_minutes": 30}]})
+    day = _lundi_prochain().isoformat()
+
+    assert client.get("/properties/42/available-slots", params={"date": day}).json()["slots"] \
+        == ["09:00", "09:30", "10:00"]
+
+    r = client.post("/properties/42/book-visit", json={"date": day, "time": "09:30",
+                                                       "visitor_name": "Salma"})
+    assert r.status_code == 201
+    assert r.json()["visit"]["status"] == "scheduled"
+
+    # Le créneau pris disparaît, et une seconde demande dessus est refusée.
+    assert client.get("/properties/42/available-slots", params={"date": day}).json()["slots"] \
+        == ["09:00", "10:00"]
+    assert client.post("/properties/42/book-visit",
+                       json={"date": day, "time": "09:30"}).status_code == 409
+
+
+def test_refuse_une_date_invalide_ou_un_bien_inconnu(client, db_session):
+    _bien(db_session)
+    assert client.get("/properties/42/available-slots", params={"date": "hier"}).status_code == 400
+    day = _lundi_prochain().isoformat()
+    assert client.post("/properties/999/book-visit",
+                       json={"date": day, "time": "09:00"}).status_code == 404
