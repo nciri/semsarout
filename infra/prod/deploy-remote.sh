@@ -89,6 +89,7 @@ transactions/migrate_stage_entered_at.sql
 transactions/migrate_property_status.sql
 marketplace/add_cart_agency.sql
 crm/migrate_property_ro_owner.sql
+audit/add_tenant.sql
 "
 
 # psql en tant que rôle postgres (patron roles/postgres d'Ansible : become_user postgres).

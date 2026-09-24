@@ -427,6 +427,13 @@
     "starAriaLabel_one": "{{count}} نجمة",
     "starAriaLabel_other": "{{count}} نجوم",
     "pendingNotice_one": "{{count}} تقييم في انتظار النشر — يظهر خلال {{days}} أيام أو حالما يقيّم الطرف الآخر.",
-    "pendingNotice_other": "{{count}} تقييمات في انتظار النشر — تظهر خلال {{days}} أيام أو حالما يقيّم الطرف الآخر."
+    "pendingNotice_other": "{{count}} تقييمات في انتظار النشر — تظهر خلال {{days}} أيام أو حالما يقيّم الطرف الآخر.",
+    "loadError": "تعذّر تحميل إقاماتكم حاليًا.",
+    "submitError": "تعذّر إرسال تقييمكم.",
+    "noStayToReview": "لا توجد إقامة منتهية للتقييم حاليًا.",
+    "counterpart": "المستخدم #{{id}}",
+    "listingFallback": "الإعلان #{{id}}",
+    "receivedEmpty": "لم تتلقوا بعد أي تقييم منشور.",
+    "publishedOn": "نُشر في {{date}}"
   }
 }

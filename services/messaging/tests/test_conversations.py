@@ -65,3 +65,29 @@ def test_unauthenticated_rejected_legacy_conversation(db_session):
 def app_overrides_cleanup():
     from app.main import app
     app.dependency_overrides.clear()
+
+
+def test_conversation_refusee_entre_comptes_bloques(db_session, monkeypatch):
+    """Sans ce contrôle, « bloquer » n'aurait aucun effet observable."""
+    from app import main
+
+    monkeypatch.setattr(main, "_blocked", lambda a, b, tenant: True)
+    client = make_client(db_session, uid="10")
+    resp = client.post("/messaging/conversations",
+                       json={"other_user_id": 5, "listing_id": 1, "context_type": "listing"})
+    assert resp.status_code == 403
+
+
+def test_trust_safety_indisponible_ne_bloque_pas_la_messagerie(db_session, monkeypatch):
+    import httpx
+
+    from app import main
+
+    def _boom(*a, **kw):
+        raise httpx.ConnectError("injoignable")
+
+    monkeypatch.setattr(main.httpx, "get", _boom)
+    client = make_client(db_session, uid="10")
+    resp = client.post("/messaging/conversations",
+                       json={"other_user_id": 5, "listing_id": 1, "context_type": "listing"})
+    assert resp.status_code == 201

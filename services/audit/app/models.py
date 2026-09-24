@@ -13,6 +13,9 @@ class ActivityLog(Base):
     __tablename__ = "activity_log"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
+    # Le journal est partagé par tous les produits : sans cloisonnement, le back-office
+    # m3a-l3achrane lirait l'activité semsarout. Les lignes historiques sont toutes semsarout.
+    tenant = Column(String(30), nullable=False, index=True, default="semsar", server_default="semsar")
     user_id = Column(Integer, index=True)
     action = Column(String(50), nullable=False)
     entity_type = Column(String(50), index=True)

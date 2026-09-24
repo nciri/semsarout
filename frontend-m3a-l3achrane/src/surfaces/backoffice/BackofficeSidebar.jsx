@@ -1,7 +1,13 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Icon } from '../../ds/index.js'
-import { ADMIN_PROFILE, BACKOFFICE_NAV, VERIFICATION_QUEUE_NOTE } from '../../data/backofficeAdmin.js'
+import { BACKOFFICE_NAV } from '../../data/backofficeAdmin.js'
+import { getBackofficeOverview, getMe } from '../../services/index.js'
+
+// Initiales d'un nom complet : « Salma Aït Bella » → « SA ».
+const initialsOf = (name) => (name || '')
+  .split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('')
 
 // Sidebar de navigation partagée par toutes les vues du back-office (BackOffice.jsx
 // et écrans routés séparément comme AttributionChambres.jsx). Les items sans `route`
@@ -9,6 +15,22 @@ import { ADMIN_PROFILE, BACKOFFICE_NAV, VERIFICATION_QUEUE_NOTE } from '../../da
 // écrans routés séparément (lien react-router).
 export function BackofficeSidebar({ active, onSelect }) {
   const { t } = useTranslation(['backoffice'])
+  const [me, setMe] = useState(null)
+  const [todo, setTodo] = useState(null)
+
+  // Les deux badges de la nav (vérifications, annonces) et l'identité affichée viennent du
+  // serveur : une pastille chiffrée qui ne correspond à rien est pire que pas de pastille.
+  useEffect(() => {
+    let cancelled = false
+    getMe().then((u) => { if (!cancelled) setMe(u) }).catch(() => {})
+    getBackofficeOverview().then((d) => { if (!cancelled) setTodo(d?.todo ?? null) }).catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  const counts = { verif: todo?.kyc_pending, listings: todo?.listings_in_moderation }
+  const name = me?.full_name || [me?.first_name, me?.last_name].filter(Boolean).join(' ') || me?.email
+  const role = me?.account_role
+
   return (
     <aside
       style={{
@@ -51,7 +73,7 @@ export function BackofficeSidebar({ active, onSelect }) {
             <>
               <Icon name={item.icon} size={16} strokeWidth={2.2} />
               <span style={{ flex: 1 }}>{t(`backoffice:sidebar.nav.${item.id}.label`, { defaultValue: item.label })}</span>
-              {item.count != null && (
+              {counts[item.id] != null && (
                 <span
                   style={{
                     padding: '2px 8px', borderRadius: 999, fontSize: 11.5, fontWeight: 800,
@@ -59,7 +81,7 @@ export function BackofficeSidebar({ active, onSelect }) {
                     color: on ? 'var(--navy-900)' : '#fff',
                   }}
                 >
-                  {item.count}
+                  {counts[item.id]}
                 </span>
               )}
             </>
@@ -81,21 +103,13 @@ export function BackofficeSidebar({ active, onSelect }) {
       </nav>
 
       <div style={{ marginBlockStart: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ padding: 14, borderRadius: 12, background: 'rgba(255,255,255,.06)', display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div style={{ font: 'var(--fw-extrabold) 12.5px var(--font-body)', color: 'var(--gold-400)' }}>
-            {t('backoffice:sidebar.queueNote.title', { defaultValue: VERIFICATION_QUEUE_NOTE.title })}
-          </div>
-          <div style={{ font: 'var(--fw-regular) 12.5px/1.5 var(--font-body)', color: 'var(--text-on-navy-muted)' }}>
-            {t('backoffice:sidebar.queueNote.body', { defaultValue: VERIFICATION_QUEUE_NOTE.body })}
-          </div>
-        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 8 }}>
           <span style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--navy-500)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12.5, fontWeight: 800, flex: 'none' }}>
-            {ADMIN_PROFILE.initials}
+            {initialsOf(name)}
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
-            <div style={{ font: 'var(--fw-bold) 13px var(--font-display)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ADMIN_PROFILE.name}</div>
-            <div style={{ font: 'var(--fw-regular) 11.5px var(--font-body)', color: 'var(--text-on-navy-muted)' }}>{ADMIN_PROFILE.role}</div>
+            <div style={{ font: 'var(--fw-bold) 13px var(--font-display)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name || '—'}</div>
+            {role && <div style={{ font: 'var(--fw-regular) 11.5px var(--font-body)', color: 'var(--text-on-navy-muted)' }}>{t(`backoffice:sidebar.roles.${role}`, { defaultValue: role })}</div>}
           </div>
         </div>
       </div>

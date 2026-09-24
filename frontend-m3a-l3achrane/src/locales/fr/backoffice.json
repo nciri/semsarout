@@ -66,20 +66,45 @@
     "loadError": "Certains indicateurs sont momentanément indisponibles.",
     "matchesCard": {
       "title": "Mises en relation confirmées",
-      "period": "12 dernières semaines"
+      "period": "12 dernières semaines",
+      "empty": "Aucun match sur la période.",
+      "week": "S{{n}}"
     },
     "todoCard": {
       "title": "À traiter aujourd’hui",
-      "open": "Ouvrir"
+      "open": "Ouvrir",
+      "kycPending_one": "{{count}} dossier KYC en attente",
+      "kycPending_other": "{{count}} dossiers KYC en attente",
+      "listingsInModeration_one": "{{count}} annonce à modérer",
+      "listingsInModeration_other": "{{count}} annonces à modérer",
+      "depositsToRelease_one": "{{count}} dépôt de garantie à libérer",
+      "depositsToRelease_other": "{{count}} dépôts de garantie à libérer",
+      "reportsOpen_one": "{{count}} signalement à traiter",
+      "reportsOpen_other": "{{count}} signalements à traiter",
+      "empty": "Rien à traiter pour le moment.",
+      "unavailable": "Compteur indisponible."
     },
     "activityLog": {
       "title": "Journal d’activité",
-      "timezoneNote": "Horodatage UTC+1 — Casablanca"
+      "timezoneNote": "Horodatage UTC+1 — Casablanca",
+      "empty": "Aucune activité enregistrée pour le moment.",
+      "unknownActor": "Compte inconnu"
     },
     "status": {
       "validated": "Validé",
       "rejected": "Refusé",
       "in_progress": "En cours"
+    },
+    "actions": {
+      "kyc_verified": "Vérification KYC validée",
+      "kyc_rejected": "Vérification KYC rejetée",
+      "listing_approved": "Annonce approuvée",
+      "listing_rejected": "Annonce rejetée",
+      "lease_created": "Bail créé",
+      "payment_released": "Séquestre libéré",
+      "payment_refunded": "Séquestre remboursé",
+      "report_resolved": "Signalement traité",
+      "report_dismissed": "Signalement classé sans suite"
     }
   },
   "verif": {
@@ -285,8 +310,16 @@
   "roomAssignment": {
     "kicker": "Gestion locative",
     "title": "Attribution des chambres",
-    "export": "Exporter le plan",
     "autoFill": "Affectation automatique",
+    "save": "Enregistrer les attributions",
+    "saving": "Enregistrement…",
+    "saveError": "L'enregistrement a échoué. Les placements restent en attente, réessayez.",
+    "loading": "Chargement du plan d'attribution…",
+    "loadError": "Impossible de charger le plan d'attribution.",
+    "empty": "Aucun bien en colocation à attribuer pour le moment.",
+    "noRooms": "Ce bien n'a encore aucune chambre publiée.",
+    "noCandidates": "Aucune candidature en lice sur ce bien.",
+    "candidateFallback": "Candidat #{{id}}",
     "occupied": "{{count}}/{{total}} occupées",
     "kpis": {
       "occupation": "Occupation",
@@ -294,40 +327,36 @@
       "occupationNote_other": "{{count}} chambres libres",
       "avgCompatibility": "Compatibilité moyenne",
       "avgCompatibilityNote": "sur les places attribuées",
-      "avgCommute": "Trajet moyen",
-      "avgCommuteValue": "16 min",
-      "avgCommuteNote": "vers école, campus ou entreprise",
       "waitingCandidates": "Candidats en attente",
-      "waitingCandidatesNote": "dossiers vérifiés"
+      "waitingCandidatesNote": "candidatures encore en lice"
     },
     "planTitle": "Plan du bien",
     "planHintSelected": "{{name}} sélectionné(e) — chaque chambre affiche son score",
     "planHintEmpty": "Sélectionnez un candidat pour voir les scores par chambre",
-    "candidatesTitle": "Candidats recommandés",
-    "candidatesHint": "Classés par compatibilité moyenne avec ce bien et proximité du {{anchor}}.",
+    "candidatesTitle": "Candidats en lice",
+    "candidatesHint": "Classés par compatibilité moyenne avec les chambres de ce bien.",
     "sorts": {
       "compatibility": "Compatibilité",
-      "proximity": "Proximité",
       "name": "Nom"
     },
     "room": {
-      "perMonth": "/ mois",
+      "rentPerMonth": "{{rent}} / mois",
       "freeRoomLine1": "Chambre libre",
       "freeRoomLine2": "Sélectionnez un candidat à droite",
       "bestCandidate": "Meilleur candidat : {{name}} ({{score}}%)",
       "noCandidateAvailable": "Aucun candidat disponible",
+      "noCandidatureHere": "Ce candidat n'a pas postulé à cette chambre.",
       "compatibilityBadge": "{{score}}% de compatibilité",
       "releaseRoom": "Libérer la chambre",
       "bestSuggestion": "Meilleure suggestion",
       "placeHere": "Placer ici",
       "withCandidate": "avec {{name}}",
-      "reasonHigh": "Mode de vie et budget alignés, trajet court vers {{anchor}}.",
-      "reasonMid": "Bon accord général ; écart léger sur le budget ou les horaires.",
-      "reasonLow": "Compatibilité faible : rythme de vie ou trajet peu adaptés."
+      "reasonHigh": "Score de compatibilité élevé sur cette chambre.",
+      "reasonMid": "Bon accord général ; écart léger sur cette chambre.",
+      "reasonLow": "Compatibilité faible sur cette chambre."
     },
     "candidateCard": {
       "placed": "Placé · {{room}}",
-      "commuteBudget": "{{commute}} · Budget {{budget}}",
       "chooseRoom": "Choisissez une chambre sur le plan →"
     }
   }

@@ -12,6 +12,7 @@ import {
   getBackofficeLifestyleReferential,
   getBackofficeListings,
   getBackofficeMatchingWeights,
+  getBackofficeActivity,
   getBackofficeOverview,
   dismissReport,
   getBackofficeReports,
@@ -30,10 +31,7 @@ import {
   verifyBackofficeVerification,
 } from '../../services/index.js'
 import {
-  ACTIVITY_LOG,
   BACKOFFICE_NAV,
-  MATCHES_CHART,
-  TODAY_TODO,
   VERIF_TABS,
 } from '../../data/backofficeAdmin.js'
 
@@ -54,7 +52,37 @@ function buildOverviewKpis(data) {
   ]
 }
 
-const ACTIVITY_TONE = { validated: 'verified', rejected: 'danger', in_progress: 'warning' }
+// Tâches du jour : quatre files déjà comptées par l'agrégat `/backoffice/overview`. Un compteur
+// `null` (sous-service en panne) est dit comme tel, jamais confondu avec « rien à traiter ».
+const TODO_KEYS = [
+  ['kyc_pending', 'kycPending'],
+  ['listings_in_moderation', 'listingsInModeration'],
+  ['deposits_to_release', 'depositsToRelease'],
+  ['reports_open', 'reportsOpen'],
+]
+
+function buildTodo(todo, t) {
+  return TODO_KEYS.map(([field, key]) => {
+    const count = todo?.[field]
+    if (count === null || count === undefined) {
+      return { id: key, title: t(`backoffice:overview.todoCard.${key}`, { count: 0 }), meta: t('backoffice:overview.todoCard.unavailable') }
+    }
+    return count > 0 ? { id: key, title: t(`backoffice:overview.todoCard.${key}`, { count }) } : null
+  }).filter(Boolean)
+}
+
+// Semaines renvoyées par matching (lundi ISO) → barres numérotées S1…Sn.
+function buildMatchesChart(weekly, t) {
+  return (weekly ?? []).map((w, i) => ({ label: t('backoffice:overview.matchesCard.week', { n: i + 1 }), value: w.count ?? 0 }))
+}
+
+// Ton de la pastille déduit de l'action journalisée : le service audit ne porte pas de statut.
+const ACTIVITY_TONE = (action = '') => {
+  if (action.endsWith('_rejected') || action.endsWith('_refunded')) return 'danger'
+  if (action.endsWith('_approved') || action.endsWith('_verified') || action.endsWith('_released')
+      || action.endsWith('_resolved') || action.endsWith('_created')) return 'verified'
+  return 'warning'
+}
 // Statuts réels de la machine à états coloc-listing (cf. state_machine.py) — seuls
 // EN_MODERATION/PUBLIEE/REJETEE sont attendus dans la file de modération.
 const LISTING_TONE = { EN_MODERATION: 'warning', PUBLIEE: 'verified', REJETEE: 'danger' }
@@ -117,9 +145,10 @@ function KpiCard({ label, value, delta, trend }) {
 function OverviewView() {
   const { t } = useTranslation(['backoffice'])
   const [overview, setOverview] = useState(null)
+  const [activity, setActivity] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
-  const maxValue = Math.max(...MATCHES_CHART.map((b) => b.value))
+
 
   useEffect(() => {
     let cancelled = false
@@ -129,10 +158,16 @@ function OverviewView() {
       .then((data) => { if (!cancelled) setOverview(data) })
       .catch(() => { if (!cancelled) setLoadError(true) })
       .finally(() => { if (!cancelled) setLoading(false) })
+    getBackofficeActivity()
+      .then((items) => { if (!cancelled) setActivity(items) })
+      .catch(() => {})
     return () => { cancelled = true }
   }, [])
 
   const kpis = buildOverviewKpis(overview)
+  const todo = buildTodo(overview?.todo, t)
+  const chart = buildMatchesChart(overview?.matches_weekly, t)
+  const maxValue = Math.max(1, ...chart.map((b) => b.value))
 
   return (
     <>
@@ -157,10 +192,14 @@ function OverviewView() {
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
             {sectionTitle(t('backoffice:overview.matchesCard.title'))}
             <span style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>{t('backoffice:overview.matchesCard.period')}</span>
-            <span style={{ marginInlineStart: 'auto', font: 'var(--fw-bold) 12.5px var(--font-body)', color: 'var(--green-600)' }}>+18,4 %</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, height: 190 }}>
-            {MATCHES_CHART.map((b) => (
+            {chart.length === 0 && (
+              <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+                {t('backoffice:overview.matchesCard.empty')}
+              </div>
+            )}
+            {chart.map((b) => (
               <div key={b.label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, justifyContent: 'flex-end', height: '100%' }}>
                 <div
                   style={{
@@ -178,12 +217,17 @@ function OverviewView() {
 
         <Card padding={20} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {sectionTitle(t('backoffice:overview.todoCard.title'))}
-          {TODAY_TODO.map((td) => (
+          {todo.length === 0 && (
+            <div style={{ font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+              {t('backoffice:overview.todoCard.empty')}
+            </div>
+          )}
+          {todo.map((td) => (
             <div key={td.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: 12, borderRadius: 11, background: 'var(--surface-sunken)' }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--gold-500)', marginBlockStart: 6, flex: 'none' }} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
                 <div style={{ font: 'var(--fw-bold) 13.5px var(--font-display)', color: 'var(--text-heading)' }}>{td.title}</div>
-                <div style={{ font: 'var(--fw-regular) 12.5px/1.5 var(--font-body)', color: 'var(--text-muted)' }}>{td.meta}</div>
+                {td.meta && <div style={{ font: 'var(--fw-regular) 12.5px/1.5 var(--font-body)', color: 'var(--text-muted)' }}>{td.meta}</div>}
               </div>
               <Button variant="secondary" size="sm" iconLeft="arrow-right" style={{ marginInlineStart: 'auto', flex: 'none' }}>{t('backoffice:overview.todoCard.open')}</Button>
             </div>
@@ -198,9 +242,15 @@ function OverviewView() {
             {t('backoffice:overview.activityLog.timezoneNote')}
           </span>
         </div>
-        {ACTIVITY_LOG.map((a) => {
-          const tone = ACTIVITY_TONE[a.status]
-          const label = t(`backoffice:overview.status.${a.status}`, { defaultValue: a.status })
+        {activity.length === 0 && (
+          <div style={{ padding: '16px 20px', font: 'var(--fw-regular) 12.5px var(--font-body)', color: 'var(--text-muted)' }}>
+            {t('backoffice:overview.activityLog.empty')}
+          </div>
+        )}
+        {activity.map((a) => {
+          const tone = ACTIVITY_TONE(a.action)
+          const label = t(`backoffice:overview.actions.${a.action}`, { defaultValue: a.action })
+          const when = a.created_at ? new Date(a.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—'
           return (
             <div
               key={a.id}
@@ -209,9 +259,11 @@ function OverviewView() {
                 padding: '13px 20px', borderBottom: '1px solid var(--border-subtle)', fontSize: 13.5,
               }}
             >
-              <div style={{ color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>{a.time}</div>
-              <div style={{ color: 'var(--text-body)' }}>{a.text}</div>
-              <div style={{ color: 'var(--text-muted)' }}>{a.actor}</div>
+              <div style={{ color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>{when}</div>
+              <div style={{ color: 'var(--text-body)' }}>
+                {a.extra_data?.title || a.extra_data?.listing_id || a.extra_data?.lease_id || a.entity_type}
+              </div>
+              <div style={{ color: 'var(--text-muted)' }}>{a.user_name || t('backoffice:overview.activityLog.unknownActor')}</div>
               <div style={{ justifySelf: 'start' }}><Badge tone={tone}>{label}</Badge></div>
             </div>
           )

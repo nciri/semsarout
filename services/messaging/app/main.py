@@ -12,9 +12,11 @@ service→service (cf. `app.worker` pour les événements bail/paiement consomm�
 
 **Erreurs legacy `{'error': msg}`**.
 """
+import os
 from contextlib import asynccontextmanager
 from datetime import datetime
 
+import httpx
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -109,6 +111,22 @@ def list_conversations(request: Request, principal: Principal = Depends(get_prin
     return {"conversations": items}
 
 
+TRUST_SAFETY_URL = os.environ.get("TRUST_SAFETY_URL", "http://localhost:8511")
+
+
+def _blocked(a: int, b: int, tenant: str) -> bool:
+    """Blocage entre deux comptes (trust-safety). Indisponible ⇒ on laisse passer : couper la
+    messagerie parce qu'un service tiers est en panne ferait plus de dégâts que le blocage
+    n'en évite."""
+    try:
+        resp = httpx.get(f"{TRUST_SAFETY_URL}/internal/blocks",
+                         params={"a": a, "b": b, "tenant": tenant},
+                         headers={"x-internal-token": settings.internal_token}, timeout=3.0)
+        return bool(resp.status_code == 200 and resp.json().get("blocked"))
+    except (httpx.HTTPError, ValueError):
+        return False
+
+
 @app.post("/messaging/conversations", status_code=201)
 async def create_conversation(request: Request, principal: Principal = Depends(get_principal),
                               db: Session = Depends(get_db)):
@@ -138,6 +156,8 @@ async def create_conversation(request: Request, principal: Principal = Depends(g
     )
     if existing is not None:
         return {"conversation": existing.to_dict(), "created": False}
+    if _blocked(uid, other, tenant):
+        return _err("Conversation impossible avec ce compte", 403)
     conv = Conversation(tenant=tenant, property_id=listing_id, owner_party=other,
                         requester_party=uid, context_type=context_type,
                         context_ref_id=context_ref_id, status="open")

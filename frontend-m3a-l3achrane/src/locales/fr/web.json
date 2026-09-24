@@ -427,6 +427,13 @@
     "starAriaLabel_one": "{{count}} étoile",
     "starAriaLabel_other": "{{count}} étoiles",
     "pendingNotice_one": "{{count}} évaluation en attente de publication — visible dans {{days}} jours ou dès que l'autre partie aura évalué.",
-    "pendingNotice_other": "{{count}} évaluations en attente de publication — visibles dans {{days}} jours ou dès que l'autre partie aura évalué."
+    "pendingNotice_other": "{{count}} évaluations en attente de publication — visibles dans {{days}} jours ou dès que l'autre partie aura évalué.",
+    "loadError": "Impossible de charger vos séjours pour le moment.",
+    "submitError": "Votre avis n'a pas pu être envoyé.",
+    "noStayToReview": "Aucun séjour terminé à évaluer pour l'instant.",
+    "counterpart": "Utilisateur #{{id}}",
+    "listingFallback": "Annonce #{{id}}",
+    "receivedEmpty": "Vous n'avez pas encore reçu d'avis publié.",
+    "publishedOn": "Publié le {{date}}"
   }
 }

@@ -215,6 +215,16 @@ export async function getBackofficeLeases() {
   return data
 }
 
+// Plan d'attribution des chambres (super-admin) : biens en colocation, leurs chambres et
+// les candidatures encore en lice, via `/api/v1/backoffice/attribution`. Le BFF enrichit
+// chaque candidature du nom du candidat et de son score chambre×candidat quand identity
+// et matching répondent — ces deux champs peuvent donc manquer, l'écran ne doit pas en
+// inventer. Aucun mock : un plan d'attribution inventé ferait prendre des décisions réelles.
+export async function getBackofficeAttribution() {
+  const { data } = await api.get('/backoffice/attribution', { params: { limit: 30 } })
+  return data
+}
+
 // Bail du locataire courant (+ ses paiements) — écran Paiement/séquestre (utilisateur
 // authentifié). `null` si l'utilisateur n'a aucun bail.
 export async function getMyLease() {
@@ -481,6 +491,55 @@ export async function createReport({ target_type, target_id, reason, description
     return delay({ id: Date.now(), target_type, target_id, reason, description, status: 'open' })
   }
   const { data } = await api.post('/reports', { target_type, target_id, reason, description })
+  return data
+}
+
+// Avis après séjour (trust-safety). `received` n'expose que les avis déjà publiables :
+// la règle du double aveugle est tenue côté serveur, pas ici.
+export async function listReceivedReviews() {
+  const { data } = await api.get('/reviews/received')
+  return data.reviews ?? []
+}
+
+export async function listWrittenReviewLeases() {
+  const { data } = await api.get('/reviews/written')
+  return data.lease_ids ?? []
+}
+
+export async function createReview({ leaseId, subjectId, criteria, comment }) {
+  const { data } = await api.post('/reviews', {
+    lease_id: String(leaseId), subject_id: subjectId, criteria, comment,
+  })
+  return data
+}
+
+// Journal d'activité du back-office (service audit, cloisonné par produit).
+export async function getBackofficeActivity(limit = 12) {
+  const { data } = await api.get('/admin/activity', { params: { per_page: limit } })
+  return data.items ?? []
+}
+
+// Compte connecté (identity via le BFF) — l'en-tête du back-office affiche qui est aux
+// commandes plutôt qu'un profil d'exemple.
+export async function getMe() {
+  const { data } = await api.get('/auth/me')
+  return data?.user ?? data
+}
+
+// Blocages entre utilisateurs (trust-safety). La liste ne renvoie que des identifiants :
+// afficher « Utilisateur #id » est plus honnête qu'un nom inventé.
+export async function listBlocks() {
+  const { data } = await api.get('/blocks')
+  return data.blocks ?? []
+}
+
+export async function blockUser(blockedId) {
+  const { data } = await api.post('/blocks', { blocked_id: blockedId })
+  return data
+}
+
+export async function unblockUser(blockedId) {
+  const { data } = await api.delete(`/blocks/${blockedId}`)
   return data
 }
 

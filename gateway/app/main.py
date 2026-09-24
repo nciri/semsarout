@@ -427,6 +427,12 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
     # Score de confiance (trust_level) : lecture publique, proxy direct vers trust-safety.
     if settings.trust_safety_url and path.startswith("/api/v1/trust/"):
         return app.state.trust_safety, path.replace("/api/v1", "", 1)
+    # Avis après séjour : dépôt et lecture par le compte connecté → trust-safety.
+    if settings.trust_safety_url and path.startswith("/api/v1/reviews"):
+        return app.state.trust_safety, path.replace("/api/v1", "", 1)
+    # Blocages entre utilisateurs : lecture/pose/retrait par le compte connecté → trust-safety.
+    if settings.trust_safety_url and path.startswith("/api/v1/blocks"):
+        return app.state.trust_safety, path.replace("/api/v1", "", 1)
     # Signalements (reports) : création authentifiée + actions de traitement super-admin.
     # La liste back-office (GET /backoffice/reports) reste un endpoint composite dédié
     # (parité backoffice_listings/backoffice_verifications, cf. plus bas).
@@ -778,19 +784,35 @@ async def candidatures_roommate_pending_composite(request: Request) -> Response:
 
 
 async def _fetch_internal_stats(
-    client: httpx.AsyncClient | None, path: str, tenant: str, headers: dict
+    client: httpx.AsyncClient | None, path: str, tenant: str, headers: dict,
+    extra_params: dict | None = None,
 ) -> dict | None:
     """Un sous-compteur de l'overview back-office : `None` si le service est absent, en panne,
     ou répond en erreur — jamais d'exception qui ferait échouer l'agrégat complet."""
     if client is None:
         return None
+    params = {"tenant": tenant, **(extra_params or {})}
     try:
-        r = await client.request("GET", path, params={"tenant": tenant}, headers=headers)
+        r = await client.request("GET", path, params=params, headers=headers)
     except Exception:  # noqa: BLE001 — dégradation service par service
         return None
     if r.status_code != 200:
         return None
     return r.json()
+
+
+def _count_items(payload: dict | None) -> int | None:
+    """Taille d'une file interne (`{"items": [...]}`) pour la liste de tâches du jour :
+    `None` si le service n'a pas répondu, pour distinguer « rien à faire » de « inconnu »."""
+    return None if payload is None else len(payload.get("items", []))
+
+
+def _deposits_to_release(leases: dict | None) -> int | None:
+    """Cautions encore en séquestre : ce sont elles que le back-office doit libérer."""
+    if leases is None:
+        return None
+    return sum(1 for lease in leases.get("items", []) for p in lease.get("payments", [])
+               if p.get("type") == "deposit" and p.get("status") == "escrowed")
 
 
 @app.get("/api/v1/backoffice/overview", include_in_schema=False)
@@ -812,11 +834,17 @@ async def backoffice_overview(request: Request) -> Response:
         return Response(content=b'{"error":"Tenant mismatch"}', status_code=403,
                         media_type="application/json")
     headers = {"x-internal-token": settings.internal_token}
-    users_stats, listings_stats, profiles_stats, partners_stats = await asyncio.gather(
+    (users_stats, listings_stats, profiles_stats, partners_stats, weekly,
+     kyc_queue, leases, reports) = await asyncio.gather(
         _fetch_internal_stats(app_.state.identity, "/internal/users/stats", tenant, headers),
         _fetch_internal_stats(app_.state.coloc_listing, "/internal/stats", tenant, headers),
         _fetch_internal_stats(app_.state.coloc_profile, "/internal/stats", tenant, headers),
         _fetch_internal_stats(app_.state.partner, "/internal/stats", tenant, headers),
+        _fetch_internal_stats(app_.state.matching, "/internal/scores/weekly", tenant, headers),
+        _fetch_internal_stats(app_.state.identity, "/internal/kyc/queue", tenant, headers),
+        _fetch_internal_stats(app_.state.coloc_listing, "/internal/leases", tenant, headers),
+        _fetch_internal_stats(app_.state.trust_safety, "/internal/reports", tenant, headers,
+                              {"status": "open"}),
     )
     return JSONResponse({
         "tenant": tenant,
@@ -824,6 +852,13 @@ async def backoffice_overview(request: Request) -> Response:
         "listings": listings_stats,
         "profiles": profiles_stats,
         "partners": partners_stats,
+        "matches_weekly": weekly.get("weeks") if weekly else None,
+        "todo": {
+            "kyc_pending": _count_items(kyc_queue),
+            "listings_in_moderation": (listings_stats or {}).get("in_moderation_listings"),
+            "deposits_to_release": _deposits_to_release(leases),
+            "reports_open": _count_items(reports),
+        },
     })
 
 
@@ -925,6 +960,47 @@ async def backoffice_listings(request: Request) -> Response:
     if r.status_code != 200:
         return JSONResponse({"tenant": tenant, "items": []})
     return JSONResponse({"tenant": tenant, **r.json()})
+
+
+@app.get("/api/v1/backoffice/attribution", include_in_schema=False)
+async def backoffice_attribution(request: Request) -> Response:
+    """Plan d'attribution des chambres du tenant m3a (super-admin uniquement) : proxy vers
+    coloc-listing `/internal/attribution`, enrichi au BFF du nom humain du candidat (identity)
+    et de son score de compatibilité avec la chambre visée (matching) — mêmes helpers que
+    `/api/v1/candidatures/received`. L'enrichissement ne fait jamais échouer la vue."""
+    denied, tenant, _ident = await _require_backoffice_superadmin(request)
+    if denied is not None:
+        return denied
+    app_ = request.app
+    client = app_.state.coloc_listing
+    if client is None:
+        return JSONResponse({"tenant": tenant, "properties": []})
+    headers = {"x-internal-token": settings.internal_token}
+    params = {"tenant": tenant}
+    limit = request.query_params.get("limit")
+    if limit:
+        params["limit"] = limit
+    try:
+        r = await client.request("GET", "/internal/attribution", params=params, headers=headers)
+    except Exception:  # noqa: BLE001 — dégradation propre si coloc-listing est indisponible
+        return JSONResponse({"tenant": tenant, "properties": []})
+    if r.status_code != 200:
+        return JSONResponse({"tenant": tenant, "properties": []})
+    data = r.json()
+    candidatures = [c for p in data.get("properties", []) for c in p.get("candidatures", [])]
+    if candidatures:
+        names, scores = await asyncio.gather(
+            _resolve_candidate_names(app_, {c.get("candidate_user_id") for c in candidatures}),
+            _resolve_candidate_scores(app_, candidatures),
+        )
+        for c in candidatures:
+            name = names.get(c.get("candidate_user_id"))
+            if name:
+                c["candidate_name"] = name
+            pct = scores.get(c.get("id"))
+            if pct is not None:
+                c["match_pct"] = pct
+    return JSONResponse({"tenant": tenant, **data})
 
 
 @app.get("/api/v1/backoffice/leases", include_in_schema=False)

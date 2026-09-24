@@ -5,7 +5,7 @@ calcule depuis les projections et persiste (generate-once / render-many). Un
 hard-fail est aussi mis en cache (hard_pass=False) et rendu comme None. Sans
 profil scorable (gender/budget_max/city manquants) : tout None, aucun calcul.
 """
-from datetime import datetime, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -79,3 +79,28 @@ def get_scores(db: Session, seeker_id: int, listing_ids: list[str]) -> dict[str,
     for lid, cached_row in by_listing.items():
         result[lid] = cached_row.score if cached_row.hard_pass else None
     return result
+
+
+def weekly_score_counts(db: Session, weeks: int) -> list[dict]:
+    """Nombre de scores calculés par semaine ISO (lundi), fenêtre glissante des `weeks`
+    dernières semaines, semaines sans aucun score comprises (à 0) : un graphe de tendance
+    doit montrer les creux, pas les masquer en sautant la semaine.
+
+    ponytail : regroupement en Python plutôt qu'un date_trunc SQL, pour rester portable
+    SQLite (tests) ↔ PostgreSQL (prod) ; à passer en agrégat SQL si match_scores grossit
+    au point que la fenêtre ne tienne plus en mémoire.
+    """
+    today = datetime.now(timezone.utc).date()
+    first_monday = today - timedelta(days=today.weekday() + 7 * (weeks - 1))
+    counts: dict[date, int] = {first_monday + timedelta(days=7 * i): 0 for i in range(weeks)}
+    rows = db.query(MatchScore.computed_at).filter(
+        MatchScore.computed_at >= datetime.combine(first_monday, time.min, tzinfo=timezone.utc)
+    ).all()
+    for (computed_at,) in rows:
+        if computed_at is None:
+            continue
+        day = computed_at.date()
+        monday = day - timedelta(days=day.weekday())
+        if monday in counts:
+            counts[monday] += 1
+    return [{"week": monday.isoformat(), "count": n} for monday, n in sorted(counts.items())]

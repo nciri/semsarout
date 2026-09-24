@@ -41,3 +41,9 @@ seed-dev:            ## Jeux de données de DÉV (identity d'abord : les autres 
 	PYTHONPATH=services/crm DATABASE_URL="$(DEV_DB)://crm:crm@$(DEV_HOST)" python3 -m app.seed_demo
 	cd services/coloc-listing && PYTHONPATH=. DATABASE_URL="$(DEV_DB)://coloc_listing:coloc_listing@$(DEV_HOST)" SERVICE_NAME=coloc-listing python3 -m app.seed_demo
 	cd services/partner && PYTHONPATH=. DATABASE_URL="$(DEV_DB)://partner:partner@$(DEV_HOST)" python3 -m app.seed_demo
+	@# Les seeds m3a suivants ont besoin des identifiants créés par identity : aucun événement
+	@# n'étant émis à la création des comptes, on les relit en base plutôt que de les deviner.
+	CAND=$$(psql "postgresql://postgres:postgres@$(DEV_HOST)" -Atc "select id from identity.user_ro where tenant='m3a-l3achrane' and email='candidat@m3a.ma'"); \
+	BAIL=$$(psql "postgresql://postgres:postgres@$(DEV_HOST)" -Atc "select id from identity.user_ro where tenant='m3a-l3achrane' and email='bailleur@m3a.ma'"); \
+	cd services/coloc-profile && PYTHONPATH=. DATABASE_URL="$(DEV_DB)://coloc_profile:coloc_profile@$(DEV_HOST)" M3A_CANDIDAT_USER_ID=$$CAND M3A_BAILLEUR_USER_ID=$$BAIL python3 -m app.seed_demo && cd ../.. ; \
+	cd services/trust-safety && PYTHONPATH=. DATABASE_URL="$(DEV_DB)://trust_safety:trust_safety@$(DEV_HOST)" M3A_CANDIDAT_USER_ID=$$CAND M3A_BAILLEUR_USER_ID=$$BAIL python3 -m app.seed_demo

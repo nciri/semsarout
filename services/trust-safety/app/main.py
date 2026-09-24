@@ -12,10 +12,10 @@ et renvoie la réponse legacy (`user`/`agency` `to_dict`), relayée telle quelle
 """
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import httpx
-from fastapi import Depends, FastAPI, Header, Request
+from fastapi import Depends, FastAPI, Header, Request, Response
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import Session
@@ -24,9 +24,10 @@ from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 from semsar_events import enqueue
 
-from . import events
+from . import audit, events
 from .db import get_db, init_db
-from .models import LEVEL_ORDER, REPORT_STATUSES, AdminAction, ModerationStatus, Report, TrustLevel
+from .models import (LEVEL_ORDER, REPORT_STATUSES, REVIEW_BLIND_DAYS, REVIEW_CRITERIA,
+                     AdminAction, ModerationStatus, Report, Review, TrustLevel, UserBlock)
 from .schemas import ReportCreateIn
 
 DEFAULT_TENANT = "m3a-l3achrane"
@@ -299,6 +300,8 @@ def resolve_report(report_id: int, principal: Principal = Depends(get_principal)
     if err is not None:
         return err
     enqueue(db, "report", report.id, events.REPORT_RESOLVED, report.to_dict())
+    audit.emit(db, actor_id=_me(principal), action="report_resolved", entity_type="report",
+               entity_id=report.id, extra_data={"reason": report.reason})
     if report.reason == "fraud" and report.target_type in ("agency", "profile", "user") \
             and report.target_id.isdigit():
         entity_type = "agency" if report.target_type == "agency" else "user"
@@ -315,6 +318,8 @@ def dismiss_report(report_id: int, principal: Principal = Depends(get_principal)
     if err is not None:
         return err
     enqueue(db, "report", report.id, events.REPORT_DISMISSED, report.to_dict())
+    audit.emit(db, actor_id=_me(principal), action="report_dismissed", entity_type="report",
+               entity_id=report.id, extra_data={"reason": report.reason})
     db.commit()
     db.refresh(report)
     return report.to_dict()
@@ -338,3 +343,163 @@ def internal_trust_batch(entity_type: str, ids: str, x_internal_token: str = Hea
         TrustLevel.entity_type == entity_type, TrustLevel.entity_id.in_(id_list)).all()
     by_id = {r.entity_id: r.to_dict() for r in rows}
     return {"items": {str(i): by_id.get(i, {"level": "none", "deal_count": 0}) for i in id_list}}
+
+
+# ---- Blocages entre utilisateurs ----
+# Portés ici parce que la modération est déjà le domaine de ce service, et que `messaging`
+# doit pouvoir les consulter avant d'ouvrir une conversation.
+def _me(principal: Principal):
+    return int(principal.sub) if principal.sub and principal.sub.isdigit() else None
+
+
+@app.get("/blocks")
+def list_blocks(request: Request, principal: Principal = Depends(get_principal),
+                db: Session = Depends(get_db)):
+    me = _me(principal)
+    if me is None:
+        return _err("Authentification requise", 401)
+    rows = (db.query(UserBlock)
+            .filter(UserBlock.tenant == _tenant(request), UserBlock.blocker_id == me)
+            .order_by(UserBlock.created_at.desc()).all())
+    return {"blocks": [b.to_dict() for b in rows]}
+
+
+@app.post("/blocks", status_code=201)
+async def create_block(request: Request, response: Response,
+                       principal: Principal = Depends(get_principal),
+                       db: Session = Depends(get_db)):
+    me = _me(principal)
+    if me is None:
+        return _err("Authentification requise", 401)
+    body = await request.json()
+    try:
+        blocked_id = int(body.get("blocked_id"))
+    except (TypeError, ValueError):
+        return _err("blocked_id invalide", 400)
+    if blocked_id == me:
+        return _err("On ne peut pas se bloquer soi-même", 400)
+
+    tenant = _tenant(request)
+    existing = db.query(UserBlock).filter(
+        UserBlock.tenant == tenant, UserBlock.blocker_id == me,
+        UserBlock.blocked_id == blocked_id).first()
+    if existing is not None:      # rejouable : bloquer deux fois n'est pas une erreur
+        response.status_code = 200
+        return existing.to_dict()
+
+    block = UserBlock(tenant=tenant, blocker_id=me, blocked_id=blocked_id)
+    db.add(block)
+    db.commit()
+    db.refresh(block)
+    return block.to_dict()
+
+
+@app.delete("/blocks/{blocked_id}")
+def delete_block(blocked_id: int, request: Request,
+                 principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    me = _me(principal)
+    if me is None:
+        return _err("Authentification requise", 401)
+    db.query(UserBlock).filter(
+        UserBlock.tenant == _tenant(request), UserBlock.blocker_id == me,
+        UserBlock.blocked_id == blocked_id).delete()
+    db.commit()
+    return {"blocked_id": blocked_id, "blocked": False}
+
+
+@app.get("/internal/blocks", include_in_schema=False)
+def internal_blocks(a: int, b: int, x_internal_token: str = Header(default=""),
+                    tenant: str | None = None, db: Session = Depends(get_db)) -> dict:
+    """Y a-t-il un blocage entre ces deux comptes, dans un sens ou dans l'autre ? Consommé par
+    `messaging` avant d'ouvrir une conversation — sans quoi « bloquer » n'aurait aucun effet."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    q = db.query(UserBlock).filter(
+        ((UserBlock.blocker_id == a) & (UserBlock.blocked_id == b))
+        | ((UserBlock.blocker_id == b) & (UserBlock.blocked_id == a)))
+    if tenant:
+        q = q.filter(UserBlock.tenant == tenant)
+    return {"blocked": q.first() is not None}
+
+
+# ---- Avis après séjour ----
+def _clean_criteria(raw):
+    """Chaque critère attendu, noté de 1 à 5. Renvoie (critères, message d'erreur)."""
+    if not isinstance(raw, dict):
+        return None, "Notes attendues"
+    out = {}
+    for key in REVIEW_CRITERIA:
+        value = raw.get(key)
+        if not isinstance(value, int) or isinstance(value, bool) or not 1 <= value <= 5:
+            return None, f"Note invalide pour « {key} » (1 à 5)"
+        out[key] = value
+    return out, None
+
+
+def _visible(review: Review, counterpart: Review | None, now: datetime) -> bool:
+    """Double aveugle : visible quand l'autre partie a rendu son avis, ou passé le délai."""
+    if counterpart is not None:
+        return True
+    return review.created_at is not None and \
+        review.created_at + timedelta(days=REVIEW_BLIND_DAYS) <= now
+
+
+@app.post("/reviews", status_code=201)
+async def create_review(request: Request, principal: Principal = Depends(get_principal),
+                        db: Session = Depends(get_db)):
+    me = _me(principal)
+    if me is None:
+        return _err("Authentification requise", 401)
+    body = await request.json()
+    lease_id = str(body.get("lease_id") or "").strip()
+    try:
+        subject_id = int(body.get("subject_id"))
+    except (TypeError, ValueError):
+        return _err("subject_id invalide", 400)
+    if not lease_id:
+        return _err("lease_id requis", 400)
+    if subject_id == me:
+        return _err("On ne s'évalue pas soi-même", 400)
+    criteria, msg = _clean_criteria(body.get("criteria"))
+    if msg:
+        return _err(msg, 400)
+
+    tenant = _tenant(request)
+    if db.query(Review).filter(Review.tenant == tenant, Review.lease_id == lease_id,
+                               Review.author_id == me).first() is not None:
+        return _err("Avis déjà déposé pour ce séjour", 409)
+
+    review = Review(tenant=tenant, lease_id=lease_id, author_id=me, subject_id=subject_id,
+                    criteria=criteria, comment=(body.get("comment") or None))
+    db.add(review)
+    db.commit()
+    db.refresh(review)
+    return review.to_dict()
+
+
+@app.get("/reviews/received")
+def list_received_reviews(request: Request, principal: Principal = Depends(get_principal),
+                          db: Session = Depends(get_db)):
+    me = _me(principal)
+    if me is None:
+        return _err("Authentification requise", 401)
+    tenant = _tenant(request)
+    now = datetime.utcnow()
+    mine = db.query(Review).filter(Review.tenant == tenant, Review.subject_id == me).all()
+    written = {r.lease_id for r in db.query(Review).filter(
+        Review.tenant == tenant, Review.author_id == me).all()}
+    visible = [r for r in mine if _visible(r, r if r.lease_id in written else None, now)]
+    visible.sort(key=lambda r: r.created_at or now, reverse=True)
+    return {"reviews": [r.to_dict() for r in visible]}
+
+
+@app.get("/reviews/written")
+def list_written_reviews(request: Request, principal: Principal = Depends(get_principal),
+                         db: Session = Depends(get_db)):
+    """Séjours que l'utilisateur a déjà évalués — le front en déduit ceux qu'il lui reste."""
+    me = _me(principal)
+    if me is None:
+        return _err("Authentification requise", 401)
+    rows = db.query(Review).filter(Review.tenant == _tenant(request),
+                                   Review.author_id == me).all()
+    return {"lease_ids": [r.lease_id for r in rows]}

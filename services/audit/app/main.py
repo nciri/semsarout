@@ -37,6 +37,12 @@ def _err(msg, code):
     return JSONResponse({"error": msg}, status_code=code)
 
 
+def _tenant(request: Request) -> str:
+    """Produit de la requête. Repli `semsar` : les appelants historiques (BFF semsarout) ne
+    posent pas l'en-tête et doivent continuer à voir exactement le même journal."""
+    return request.headers.get("x-semsar-tenant") or "semsar"
+
+
 @app.get("/health", include_in_schema=False)
 async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
@@ -52,7 +58,7 @@ def internal_activity(request: Request, x_internal_token: str = Header(default="
     qp = request.query_params
     page = int(qp.get("page") or 1)
     per_page = int(qp.get("per_page") or 20)
-    q = db.query(ActivityLog)
+    q = db.query(ActivityLog).filter(ActivityLog.tenant == _tenant(request))
     if qp.get("agency_id"):
         q = q.filter(ActivityLog.agency_id == int(qp.get("agency_id")))
     # Filtre par entité (détail compte super-admin `/admin/accounts/{users|agencies}/{id}`).
@@ -81,7 +87,7 @@ def list_activity(request: Request, principal: Principal = Depends(get_principal
     qp = request.query_params
     page = int(qp.get("page") or 1)
     per_page = int(qp.get("per_page") or 30)
-    q = db.query(ActivityLog)
+    q = db.query(ActivityLog).filter(ActivityLog.tenant == _tenant(request))
     if qp.get("entity_type"):
         q = q.filter(ActivityLog.entity_type == qp.get("entity_type"))
     if qp.get("actor_id"):

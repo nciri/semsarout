@@ -8,7 +8,7 @@ le BFF route déjà par host/tenant).
 from contextlib import asynccontextmanager
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, FastAPI, Header, Request
+from fastapi import APIRouter, Depends, FastAPI, Header, Query, Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import Session
@@ -17,7 +17,7 @@ from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 from semsar_events import enqueue
 
-from . import events
+from . import audit, events
 from .config import get_coloc_settings
 from .db import get_db, init_db
 from .models import (
@@ -128,6 +128,70 @@ def internal_listings_queue(status: str | None = None, tenant: str | None = None
         {**listing.to_dict(), "owner_id": listing.owner_id, "created_at": listing.created_at.isoformat()}
         for listing in rows
     ]}
+
+
+def _room_meta(listing: Listing) -> str:
+    """Ligne descriptive d'une chambre pour le plan d'attribution (surface · couchage ·
+    équipements) : composée ici plutôt que côté front, qui n'a pas le bien sous la main."""
+    parts: list[str] = []
+    p = listing.property
+    if p is not None and p.area_m2:
+        parts.append(f"{p.area_m2} m²")
+    parts.append(listing.bed_type)
+    amenities = [k for k, v in ((p.amenities if p else None) or {}).items() if v]
+    if amenities:
+        parts.append(", ".join(amenities))
+    return " · ".join(parts)
+
+
+@app.get("/internal/attribution", include_in_schema=False)
+def internal_attribution(limit: int = Query(default=30, ge=1, le=100), tenant: str | None = None,
+                         x_internal_token: str = Header(default=""),
+                         db: Session = Depends(get_db)) -> dict:
+    """Plan d'attribution des chambres (back-office super-admin, via BFF) : biens en
+    colocation, leurs chambres et les candidatures encore en lice. Mono-tenant
+    m3a-l3achrane (pas de colonne tenant sur les biens) : `tenant` n'est accepté que pour
+    uniformité de contrat avec les autres `/internal/*` et ignoré s'il diffère (liste vide
+    plutôt qu'un mélange trompeur)."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    if tenant and tenant != TENANT:
+        return {"properties": []}
+    properties = (db.query(ColocProperty)
+                  .order_by(ColocProperty.created_at.desc()).limit(limit).all())
+    if not properties:
+        return {"properties": []}
+    property_ids = [p.id for p in properties]
+    listings = (db.query(Listing).filter(Listing.property_id.in_(property_ids))
+                .order_by(Listing.created_at.asc()).all())
+    rooms_by_property: dict[str, list[Listing]] = {}
+    for listing in listings:
+        rooms_by_property.setdefault(listing.property_id, []).append(listing)
+    candidatures = (db.query(Candidature)
+                    .filter(Candidature.listing_id.in_([x.id for x in listings]),
+                            Candidature.status.in_(CANDIDATURE_ACTIVE_STATUSES))
+                    .order_by(Candidature.created_at.asc()).all()) if listings else []
+    listing_property = {listing.id: listing.property_id for listing in listings}
+    candidatures_by_property: dict[str, list[dict]] = {}
+    for c in candidatures:
+        candidatures_by_property.setdefault(listing_property[c.listing_id], []).append({
+            "id": c.id, "listing_id": c.listing_id, "candidate_user_id": c.candidate_user_id,
+            "status": c.status, "message": c.message, "created_at": c.created_at.isoformat(),
+        })
+    out = []
+    for p in properties:
+        rooms = rooms_by_property.get(p.id, [])
+        out.append({
+            "id": p.id,
+            # ColocProperty n'a pas de libellé : le titre de la 1re chambre est le seul
+            # nom humain disponible, sinon on retombe sur le type de bien.
+            "name": rooms[0].title if rooms else p.property_type,
+            "place": ", ".join(x for x in (p.neighborhood, p.city) if x),
+            "rooms": [{"id": r.id, "name": r.title, "meta": _room_meta(r),
+                       "rent": float(r.rent), "currency": r.currency} for r in rooms],
+            "candidatures": candidatures_by_property.get(p.id, []),
+        })
+    return {"properties": out}
 
 
 @app.get("/internal/leases", include_in_schema=False)
@@ -345,6 +409,8 @@ def approve(listing_id: str, principal: Principal = Depends(get_principal),
     # Deux événements dans la même transaction (comme le dépôt initial) :
     # status_changed (ci-dessus) + published avec le document d'index complet.
     enqueue(db, "coloc_listing", listing.id, events.LISTING_PUBLISHED, _search_doc(listing))
+    audit.emit(db, actor_id=_uid(principal), action="listing_approved", entity_type="listing",
+               extra_data={"listing_id": listing.id, "title": listing.title})
     db.commit()
     db.refresh(listing)
     return listing.to_dict()
@@ -361,6 +427,8 @@ def reject(listing_id: str, principal: Principal = Depends(get_principal),
     err = _change_status(db, listing, "REJETEE")
     if err is not None:
         return err
+    audit.emit(db, actor_id=_uid(principal), action="listing_rejected", entity_type="listing",
+               extra_data={"listing_id": listing.id, "title": listing.title})
     db.commit()
     db.refresh(listing)
     return listing.to_dict()
@@ -613,6 +681,10 @@ def create_lease(body: LeaseCreateIn, principal: Principal = Depends(get_princip
     enqueue(db, "coloc_listing", lease.id, events.LEASE_CREATED,
             {"lease_id": lease.id, "listing_id": listing.id, "owner_id": listing.owner_id,
              "tenant_user_id": body.tenant_user_id})
+    audit.emit(db, actor_id=uid, action="lease_created", entity_type="lease",
+               extra_data={"lease_id": lease.id, "listing_id": listing.id,
+                           "rent_amount": float(body.rent_amount),
+                           "deposit_amount": float(body.deposit_amount)})
     db.commit()
     db.refresh(lease)
     return lease.to_dict()
@@ -716,6 +788,8 @@ def release_payment(lease_id: str, payment_id: str, principal: Principal = Depen
     lease, err = _payment_transition(db, lease_id, payment_id, principal, "released")
     if err is not None:
         return err
+    audit.emit(db, actor_id=_uid(principal), action="payment_released", entity_type="lease",
+               extra_data={"lease_id": lease_id, "payment_id": payment_id})
     db.commit()
     db.refresh(lease)
     return lease.to_dict()
@@ -728,6 +802,8 @@ def refund_payment(lease_id: str, payment_id: str, principal: Principal = Depend
     lease, err = _payment_transition(db, lease_id, payment_id, principal, "refunded")
     if err is not None:
         return err
+    audit.emit(db, actor_id=_uid(principal), action="payment_refunded", entity_type="lease",
+               extra_data={"lease_id": lease_id, "payment_id": payment_id})
     db.commit()
     db.refresh(lease)
     return lease.to_dict()
