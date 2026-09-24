@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# Vérifications locales avant push — l'équivalent gratuit de la CI, qui ne tourne QUE sur les
+# PR vers main (cf. en-tête de .github/workflows/ci.yml). Sans ce filet, un défaut introduit sur
+# une branche de travail n'est vu qu'à la release, mélangé à tous les autres commits.
+#
+# Installation : make hooks   (pose core.hooksPath sur .githooks)
+# Ne lance que ce qui est concerné par les fichiers modifiés, comme le filtrage par chemin de la CI.
+set -u
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+BASE="$(git merge-base origin/develop HEAD 2>/dev/null || git rev-parse HEAD~1 2>/dev/null)"
+[ -n "$BASE" ] || exit 0
+CHANGED="$(git diff --name-only "$BASE" HEAD)"
+[ -n "$CHANGED" ] || exit 0
+
+FAIL=0
+step() { # step <libellé> <commande…>
+  local label="$1"; shift
+  printf '  %s… ' "$label"
+  if out="$("$@" 2>&1)"; then
+    echo "ok"
+  else
+    echo "ÉCHEC"
+    printf '%s\n' "$out" | tail -25 | sed 's/^/      /'
+    FAIL=1
+  fi
+}
+
+echo "pre-push : vérifications locales"
+
+if grep -q '^frontend/' <<<"$CHANGED"; then
+  step "frontend lint" npm --prefix frontend run lint
+  step "frontend tests" npm --prefix frontend test -- --run
+  step "frontend build" npm --prefix frontend run build
+fi
+
+if grep -q '^frontend-m3a-l3achrane/' <<<"$CHANGED"; then
+  step "m3a-l3achrane lint" npm --prefix frontend-m3a-l3achrane run lint
+  step "m3a-l3achrane build" npm --prefix frontend-m3a-l3achrane run build
+fi
+
+# Une lib partagée touche tous les services : on ne devine pas lesquels, on le dit.
+if grep -q '^libs/' <<<"$CHANGED"; then
+  echo "  ⚠ libs/ modifié : tous les services en dépendent, lance leurs tests avant la release."
+fi
+
+for d in $(awk -F/ '/^services\//{print $1"/"$2} /^gateway\//{print "gateway"}' <<<"$CHANGED" | sort -u); do
+  [ -d "$d/tests" ] || continue
+  # Depuis le dossier du service : ses tests importent le paquet `app` local.
+  step "pytest $d" bash -c "cd '$d' && python3 -m pytest tests -q -p no:cacheprovider"
+done
+
+if grep -qE '^infra/prod/' <<<"$CHANGED"; then
+  step "deploy-remote" bash infra/prod/tests/deploy-remote.test.sh
+fi
+
+[ "$FAIL" -eq 0 ] || {
+  echo "pre-push : push interrompu. Corrige, ou relance avec --no-verify si tu sais pourquoi." >&2
+  exit 1
+}
+echo "pre-push : tout est vert."

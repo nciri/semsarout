@@ -1,13 +1,15 @@
 import api from './api'
 
 export const availabilityService = {
+  // Créneaux de l'agent connecté, servis par le service crm (l'ancien /availability/me du
+  // monolithe n'existe plus).
   getMyAvailability: async () => {
-    const response = await api.get('/availability/me')
+    const response = await api.get('/backoffice/visits/availability')
     return response.data
   },
 
   updateMyAvailability: async (slots) => {
-    const response = await api.put('/availability/me', { slots })
+    const response = await api.put('/backoffice/visits/availability', { slots })
     return response.data
   },
 

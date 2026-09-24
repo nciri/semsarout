@@ -2405,6 +2405,7 @@
         "title": "Visites & RDV",
         "subtitle": "Agenda des visites de l'agence",
         "plan": "Planifier une visite",
+        "availabilityAction": "Définir mes disponibilités",
         "loadError": "Impossible de charger les visites.",
         "visitor": "Visiteur",
         "noProperty": "Bien non défini",
