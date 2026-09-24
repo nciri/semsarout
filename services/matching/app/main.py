@@ -5,7 +5,7 @@ x-internal-token (patron geo). Projections alimentées par app/worker.py.
 """
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, Header
+from fastapi import Depends, FastAPI, Header, Query
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel, Field
@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
 from .db import get_db, init_db
-from .service import active_weights, get_scores, set_active_weights
+from .service import active_weights, get_scores, set_active_weights, weekly_score_counts
 
 settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
@@ -58,6 +58,16 @@ def internal_scores(body: ScoresIn, x_internal_token: str = Header(default=""),
     if x_internal_token != settings.internal_token:
         return _err("Forbidden", 403)
     return {"scores": get_scores(db, body.user_id, body.listing_ids)}
+
+
+@app.get("/internal/scores/weekly", include_in_schema=False)
+def internal_scores_weekly(weeks: int = Query(default=12, ge=1, le=52),
+                           x_internal_token: str = Header(default=""),
+                           db: Session = Depends(get_db)):
+    """Série hebdomadaire des scores calculés (courbe « matchs » du back-office m3a)."""
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    return {"weeks": weekly_score_counts(db, weeks)}
 
 
 class WeightsIn(BaseModel):

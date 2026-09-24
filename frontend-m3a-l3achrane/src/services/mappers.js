@@ -136,3 +136,25 @@ export function mapProfile(p) {
     },
   }
 }
+
+// Signalements : le formulaire parle le vocabulaire m3a, le service trust-safety (partagé avec
+// semsarout) n'accepte que ses propres énumérations. On traduit ici ; le motif exact, plus fin
+// que l'énumération serveur, est conservé en tête de la description pour le modérateur.
+const REPORT_TARGETS = { profil: 'profile', annonce: 'listing', message: 'message' }
+const REPORT_REASONS = {
+  avance: 'fraud',
+  photo: 'inappropriate',
+  comportement: 'harassment',
+  'sortie-plateforme': 'fraud',
+  discrimination: 'harassment',
+  autre: 'other',
+}
+
+export function mapReport({ target, reason, reasonLabel, targetId, details }) {
+  return {
+    target_type: REPORT_TARGETS[target] ?? 'profile',
+    target_id: String(targetId || '').trim(),
+    reason: REPORT_REASONS[reason] ?? 'other',
+    description: [reasonLabel, details].filter(Boolean).join(' — '),
+  }
+}

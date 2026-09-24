@@ -18,7 +18,8 @@ def _handle(routing_key: str, payload: dict, message_id: str) -> None:
         if routing_key == "audit.logged" and payload.get("id") is not None:
             if db.get(ActivityLog, payload["id"]) is None:
                 db.add(ActivityLog(
-                    id=payload["id"], user_id=payload.get("user_id"), action=payload.get("action"),
+                    id=payload["id"], tenant=payload.get("tenant") or "semsar",
+                    user_id=payload.get("user_id"), action=payload.get("action"),
                     entity_type=payload.get("entity_type"), entity_id=payload.get("entity_id"),
                     extra_data=payload.get("extra_data"), ip_address=payload.get("ip_address"),
                     agency_id=payload.get("agency_id"), created_at=_parse(payload.get("created_at"))))

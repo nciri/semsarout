@@ -66,20 +66,45 @@
     "loadError": "بعض المؤشرات غير متوفرة مؤقتًا.",
     "matchesCard": {
       "title": "المطابقات المؤكَّدة",
-      "period": "آخر 12 أسبوعًا"
+      "period": "آخر 12 أسبوعًا",
+      "empty": "لا توجد مطابقات خلال الفترة.",
+      "week": "أ{{n}}"
     },
     "todoCard": {
       "title": "للمعالجة اليوم",
-      "open": "فتح"
+      "open": "فتح",
+      "kycPending_one": "ملف تحقق واحد قيد الانتظار",
+      "kycPending_other": "{{count}} ملفات تحقق قيد الانتظار",
+      "listingsInModeration_one": "إعلان واحد بانتظار المراجعة",
+      "listingsInModeration_other": "{{count}} إعلانات بانتظار المراجعة",
+      "depositsToRelease_one": "ضمان واحد بانتظار التحرير",
+      "depositsToRelease_other": "{{count}} ضمانات بانتظار التحرير",
+      "reportsOpen_one": "بلاغ واحد بانتظار المعالجة",
+      "reportsOpen_other": "{{count}} بلاغات بانتظار المعالجة",
+      "empty": "لا شيء للمعالجة حاليًا.",
+      "unavailable": "العدّاد غير متاح."
     },
     "activityLog": {
       "title": "سجلّ النشاط",
-      "timezoneNote": "التوقيت UTC+1 — الدار البيضاء"
+      "timezoneNote": "التوقيت UTC+1 — الدار البيضاء",
+      "empty": "لا يوجد نشاط مسجّل حاليًا.",
+      "unknownActor": "حساب غير معروف"
     },
     "status": {
       "validated": "مصادَق عليه",
       "rejected": "مرفوض",
       "in_progress": "قيد المعالجة"
+    },
+    "actions": {
+      "kyc_verified": "تم قبول التحقق من الهوية",
+      "kyc_rejected": "تم رفض التحقق من الهوية",
+      "listing_approved": "تمت الموافقة على الإعلان",
+      "listing_rejected": "تم رفض الإعلان",
+      "lease_created": "تم إنشاء عقد",
+      "payment_released": "تم تحرير الضمان",
+      "payment_refunded": "تم إرجاع الضمان",
+      "report_resolved": "تمت معالجة البلاغ",
+      "report_dismissed": "تم حفظ البلاغ"
     }
   },
   "verif": {
@@ -285,8 +310,16 @@
   "roomAssignment": {
     "kicker": "التسيير الإيجاري",
     "title": "توزيع الغرف",
-    "export": "تصدير المخطط",
     "autoFill": "توزيع تلقائي",
+    "save": "حفظ عمليات التوزيع",
+    "saving": "جارٍ الحفظ…",
+    "saveError": "فشل الحفظ. تبقى عمليات التنصيب في الانتظار، أعد المحاولة.",
+    "loading": "جارٍ تحميل مخطط التوزيع…",
+    "loadError": "تعذّر تحميل مخطط التوزيع.",
+    "empty": "لا يوجد حاليًا أي عقار سكن مشترك للتوزيع.",
+    "noRooms": "لا توجد بعدُ أي غرفة منشورة لهذا العقار.",
+    "noCandidates": "لا توجد ترشيحات قائمة على هذا العقار.",
+    "candidateFallback": "مترشّح رقم {{id}}",
     "occupied": "{{count}}/{{total}} مشغولة",
     "kpis": {
       "occupation": "الإشغال",
@@ -294,40 +327,36 @@
       "occupationNote_other": "{{count}} غرف شاغرة",
       "avgCompatibility": "متوسط التوافق",
       "avgCompatibilityNote": "على الأماكن الموزَّعة",
-      "avgCommute": "متوسط مدة التنقّل",
-      "avgCommuteValue": "16 د",
-      "avgCommuteNote": "نحو المدرسة أو الجامعة أو الشركة",
       "waitingCandidates": "المترشّحون في الانتظار",
-      "waitingCandidatesNote": "ملفات موثّقة"
+      "waitingCandidatesNote": "ترشيحات ما زالت قائمة"
     },
     "planTitle": "مخطط العقار",
     "planHintSelected": "تم اختيار {{name}} — كل غرفة تعرض درجة توافقها",
     "planHintEmpty": "اختر مترشّحًا لعرض درجات التوافق حسب الغرفة",
-    "candidatesTitle": "المترشّحون المقترَحون",
-    "candidatesHint": "مرتّبون حسب متوسط التوافق مع هذا العقار والقرب من {{anchor}}.",
+    "candidatesTitle": "المترشّحون القائمون",
+    "candidatesHint": "مرتّبون حسب متوسط التوافق مع غرف هذا العقار.",
     "sorts": {
       "compatibility": "التوافق",
-      "proximity": "القرب",
       "name": "الاسم"
     },
     "room": {
-      "perMonth": "/ شهريًا",
+      "rentPerMonth": "{{rent}} / شهريًا",
       "freeRoomLine1": "غرفة شاغرة",
       "freeRoomLine2": "اختر مترشّحًا على اليمين",
       "bestCandidate": "أفضل مترشّح: {{name}} ({{score}}%)",
       "noCandidateAvailable": "لا يوجد مترشّح متاح",
+      "noCandidatureHere": "لم يترشّح هذا الشخص لهذه الغرفة.",
       "compatibilityBadge": "توافق بنسبة {{score}}%",
       "releaseRoom": "تحرير الغرفة",
       "bestSuggestion": "أفضل اقتراح",
       "placeHere": "التنصيب هنا",
       "withCandidate": "مع {{name}}",
-      "reasonHigh": "نمط حياة وميزانية متوافقان، ومسافة قصيرة نحو {{anchor}}.",
-      "reasonMid": "توافق عام جيد؛ فارق طفيف في الميزانية أو التوقيت.",
-      "reasonLow": "توافق ضعيف: نمط الحياة أو مدة التنقّل غير مناسبين."
+      "reasonHigh": "درجة توافق مرتفعة مع هذه الغرفة.",
+      "reasonMid": "توافق عام جيد؛ فارق طفيف بخصوص هذه الغرفة.",
+      "reasonLow": "توافق ضعيف مع هذه الغرفة."
     },
     "candidateCard": {
       "placed": "تم التنصيب · {{room}}",
-      "commuteBudget": "{{commute}} · الميزانية {{budget}}",
       "chooseRoom": "اختر غرفة من المخطط ←"
     }
   }

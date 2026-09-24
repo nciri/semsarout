@@ -75,4 +75,13 @@ describe('Visites & RDV', () => {
     expect(await screen.findByText('الزيارات والمواعيد')).toBeInTheDocument()
     expect(await screen.findByText('زيارة سابقة لم تُحدَّث حالتها.', { exact: false })).toBeInTheDocument()
   })
+
+  // Le bouton d'ajout porte son libellé (et non une simple icône), et le réglage des créneaux
+  // de l'agent est à portée de main depuis l'agenda.
+  it('affiche « Planifier une visite » en toutes lettres et un accès aux disponibilités', async () => {
+    renderAt()
+    expect(await screen.findByRole('button', { name: 'Planifier une visite' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Définir mes disponibilités' }))
+      .toHaveAttribute('href', '/backoffice/visites/disponibilites')
+  })
 })

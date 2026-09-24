@@ -3,11 +3,10 @@ import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useTranslation } from 'react-i18next'
 import {
   FiSave, FiGlobe, FiMail, FiPhone, FiMapPin,
-  FiBell, FiShield, FiDatabase, FiKey, FiCreditCard
+  FiBell, FiShield, FiDatabase, FiKey
 } from 'react-icons/fi'
 import api from '../../services/api'
 import useAuthStore from '../../store/authStore'
-import StripeConfig from './StripeConfig'
 
 const backofficeService = {
   getSettings: async () => {
@@ -71,7 +70,6 @@ export default function BackofficeSettings() {
   const tabs = [
     { id: 'general', label: t('backoffice:settings.general.tabs.general'), icon: FiGlobe },
     { id: 'notifications', label: t('backoffice:settings.general.tabs.notifications'), icon: FiBell },
-    { id: 'stripe', label: t('backoffice:settings.general.tabs.stripe'), icon: FiCreditCard, adminOnly: true },
     { id: 'integrations', label: t('backoffice:settings.general.tabs.integrations'), icon: FiDatabase },
     { id: 'security', label: t('backoffice:settings.general.tabs.security'), icon: FiShield }
   ].filter((tab) => !tab.adminOnly || user?.role === 'admin')
@@ -118,11 +116,6 @@ export default function BackofficeSettings() {
           ))}
         </div>
 
-        {activeTab === 'stripe' ? (
-          <div className="p-6">
-            <StripeConfig />
-          </div>
-        ) : (
         <form onSubmit={handleSubmit} className="p-6">
           {/* General settings */}
           {activeTab === 'general' && (
@@ -569,7 +562,6 @@ export default function BackofficeSettings() {
             </button>
           </div>
         </form>
-        )}
       </div>
     </div>
   )

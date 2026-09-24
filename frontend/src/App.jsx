@@ -86,7 +86,6 @@ const BackofficeTransactionDetail = lazy(() => import('./pages/backoffice/Transa
 const BackofficeTeam = lazy(() => import('./pages/backoffice/Team'))
 const OverviewAnalytics = lazy(() => import('./pages/backoffice/analytics/OverviewAnalytics'))
 const SettingsHub = lazy(() => import('./pages/backoffice/SettingsHub'))
-const BackofficeStripeConfig = lazy(() => import('./pages/backoffice/StripeConfig'))
 const ContractsList = lazy(() => import('./pages/backoffice/contracts/ContractsList'))
 const ContractCreate = lazy(() => import('./pages/backoffice/contracts/ContractCreate'))
 const ContractEditor = lazy(() => import('./pages/backoffice/contracts/ContractEditor'))
@@ -244,6 +243,8 @@ function App() {
           <Route path="leads" element={<BackofficeLeads />} />
           <Route path="visites" element={<BackofficeVisits />} />
           <Route path="visites/nouvelle" element={<BackofficeVisits />} />
+          {/* Mêmes créneaux que /dashboard/disponibilites : l'agent les règle sans quitter le back-office. */}
+          <Route path="visites/disponibilites" element={<Availability />} />
           <Route path="pipeline" element={<BackofficePipeline />} />
           <Route path="transactions" element={<BackofficeTransactions />} />
           <Route path="transactions/nouveau" element={<TransactionCreate />} />
@@ -251,7 +252,6 @@ function App() {
           <Route path="equipe" element={<BackofficeTeam />} />
           <Route path="statistiques" element={<Navigate to="/backoffice/analyses" replace />} />
           <Route path="parametres" element={<SettingsHub />} />
-          <Route path="stripe" element={<BackofficeStripeConfig />} />
           <Route path="contrats" element={<ContractsList />} />
           <Route path="contrats/nouveau" element={<ContractCreate />} />
           <Route path="contrats/modeles" element={<TemplatesManager />} />

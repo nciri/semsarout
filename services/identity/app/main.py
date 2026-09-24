@@ -26,7 +26,7 @@ from semsar_common import (
 )
 from semsar_events import enqueue
 
-from . import accounts, auth, didit_client, events, rbac, team
+from . import accounts, audit, auth, didit_client, events, rbac, team
 from .db import get_db, init_db
 from .models import KycVerification
 
@@ -306,6 +306,13 @@ def _apply_kyc_decision(db: Session, record: KycVerification, decision: str) -> 
     if decision == "verified":
         enqueue(db, aggregate_type="kyc_verification", aggregate_id=record.id,
                event_type=events.KYC_VERIFIED, payload={"user_id": record.user_id})
+    # Journal d'activité du back-office. Réservé aux produits non-semsarout : le journal
+    # semsarout ne doit rien afficher de nouveau (aucune trace KYC n'y existait).
+    tenant = user.tenant if user is not None else None
+    if tenant and tenant != "semsar":
+        audit.emit(db, actor_id=None, action="kyc_verified" if decision == "verified" else "kyc_rejected",
+                   entity_type="user", entity_id=record.user_id, tenant=tenant,
+                   extra_data={"kyc_id": record.id})
 
 
 @app.post("/internal/kyc/{kyc_id}/verify", include_in_schema=False)

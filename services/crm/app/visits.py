@@ -1,5 +1,6 @@
 """Router crm — sous-domaine visites + calendrier."""
-from datetime import datetime, timedelta
+import re
+from datetime import date, datetime, time, timedelta
 
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy import or_
@@ -10,7 +11,7 @@ from semsar_events import enqueue
 
 from . import users_client
 from .db import get_db
-from .models import CalendarEvent, Client, PropertyRO, Visit
+from .models import AgentAvailability, CalendarEvent, Client, PropertyRO, Visit
 from .util import err, iso, json_body
 
 router = APIRouter()
@@ -180,6 +181,166 @@ def visits_summary(principal: Principal = Depends(get_principal), db: Session = 
     out["overdue"] = [_visit_dict(db, v) for v in out["overdue"][:OVERDUE_LIMIT]]
     out["next"] = _visit_dict(db, out["next"]) if out["next"] else None
     return out
+
+
+# Disponibilités de l'agent connecté. Déclarées AVANT /{visit_id}, sinon « availability »
+# serait lu comme un identifiant de visite (422).
+_HHMM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
+SLOT_MIN, SLOT_MAX = 15, 240
+MAX_SLOTS = 50
+
+
+def _slot_dict(a: AgentAvailability) -> dict:
+    return {"weekday": a.weekday, "start_time": a.start_time, "end_time": a.end_time,
+            "slot_minutes": a.slot_minutes}
+
+
+def _clean_slots(raw):
+    """Valide la liste envoyée par le client. Renvoie (créneaux, message d'erreur)."""
+    if not isinstance(raw, list):
+        return None, "Liste de créneaux attendue."
+    if len(raw) > MAX_SLOTS:
+        return None, f"Pas plus de {MAX_SLOTS} créneaux."
+    out = []
+    for s in raw:
+        if not isinstance(s, dict):
+            return None, "Créneau invalide."
+        try:
+            weekday = int(s.get("weekday"))
+            slot_minutes = int(s.get("slot_minutes") or 30)
+        except (TypeError, ValueError):
+            return None, "Jour ou durée invalide."
+        start, end = s.get("start_time"), s.get("end_time")
+        if not 0 <= weekday <= 6:
+            return None, "Jour hors semaine."
+        if not (isinstance(start, str) and isinstance(end, str)
+                and _HHMM.match(start) and _HHMM.match(end)):
+            return None, "Heure attendue au format HH:MM."
+        if start >= end:
+            return None, "L'heure de fin doit suivre l'heure de début."
+        if not SLOT_MIN <= slot_minutes <= SLOT_MAX:
+            return None, f"Durée de créneau entre {SLOT_MIN} et {SLOT_MAX} minutes."
+        out.append({"weekday": weekday, "start_time": start, "end_time": end,
+                    "slot_minutes": slot_minutes})
+    return out, None
+
+
+def _agent_id(principal: Principal):
+    return int(principal.sub) if principal.sub and principal.sub.isdigit() else None
+
+
+@router.get("/backoffice/visits/availability")
+def get_availability(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    uid = _agent_id(principal)
+    if uid is None:
+        return err("Agent inconnu.", 400)
+    rows = (db.query(AgentAvailability).filter(AgentAvailability.agent_id == uid)
+            .order_by(AgentAvailability.weekday, AgentAvailability.start_time).all())
+    return {"slots": [_slot_dict(a) for a in rows]}
+
+
+@router.put("/backoffice/visits/availability")
+async def put_availability(request: Request, principal: Principal = Depends(get_principal),
+                           db: Session = Depends(get_db)):
+    uid = _agent_id(principal)
+    if uid is None:
+        return err("Agent inconnu.", 400)
+    data = await json_body(request)
+    slots, msg = _clean_slots(data.get("slots"))
+    if msg:
+        return err(msg, 400)
+    db.query(AgentAvailability).filter(AgentAvailability.agent_id == uid).delete()
+    for s in slots:
+        db.add(AgentAvailability(agent_id=uid, agency_id=principal.agency_id, **s))
+    db.commit()
+    return {"slots": slots}
+
+
+# ---- Prise de rendez-vous publique (widget d'une annonce) -------------------------------
+# Les créneaux proposés viennent des disponibilités des agents de l'agence qui publie le bien,
+# moins ceux déjà pris. Sans disponibilité déclarée, aucune proposition : on n'invente rien.
+
+def _times(start: str, end: str, step: int):
+    """Heures « HH:MM » de start à end, par pas de `step` minutes, fin exclue."""
+    cur = int(start[:2]) * 60 + int(start[3:])
+    last = int(end[:2]) * 60 + int(end[3:])
+    while cur + step <= last:
+        yield f"{cur // 60:02d}:{cur % 60:02d}"
+        cur += step
+
+
+def _free_agents_by_time(db: Session, prop: PropertyRO, day: date) -> dict:
+    """{ "09:00": [id d'agent, …] } pour ce bien et ce jour, créneaux déjà pris retirés."""
+    rows = db.query(AgentAvailability).filter(
+        AgentAvailability.weekday == day.weekday(),
+        AgentAvailability.agency_id == prop.agency_id).all()
+    # Le propriétaire de l'annonce prime : s'il a déclaré des créneaux, lui seul est proposé.
+    own = [a for a in rows if a.agent_id == prop.owner_id]
+    rows = own or rows
+
+    start, end = datetime.combine(day, time.min), datetime.combine(day, time.max)
+    taken = db.query(Visit).filter(Visit.scheduled_at >= start, Visit.scheduled_at <= end,
+                                   Visit.status.in_(_OPEN)).all()
+    busy = {(v.agent_id, v.scheduled_at.strftime("%H:%M")) for v in taken}
+
+    out: dict[str, list] = {}
+    for a in rows:
+        for hhmm in _times(a.start_time, a.end_time, a.slot_minutes or 30):
+            if (a.agent_id, hhmm) not in busy:
+                out.setdefault(hhmm, []).append(a.agent_id)
+    return out
+
+
+def _day_of(value):
+    try:
+        return date.fromisoformat(value)
+    except (TypeError, ValueError):
+        return None
+
+
+@router.get("/properties/{property_id}/available-slots")
+def available_slots(property_id: int, request: Request, db: Session = Depends(get_db)):
+    day = _day_of(request.query_params.get("date"))
+    if day is None:
+        return err("Date attendue au format AAAA-MM-JJ.", 400)
+    if day < datetime.utcnow().date():
+        return {"slots": []}
+    prop = db.get(PropertyRO, property_id)
+    if prop is None or prop.agency_id is None:
+        return {"slots": []}
+    return {"slots": sorted(_free_agents_by_time(db, prop, day))}
+
+
+@router.post("/properties/{property_id}/book-visit", status_code=201)
+async def book_visit(property_id: int, request: Request, db: Session = Depends(get_db),
+                     principal: Principal = Depends(get_principal)):
+    data = await json_body(request)
+    day = _day_of(data.get("date"))
+    slot = data.get("time")
+    if day is None or not isinstance(slot, str) or not _HHMM.match(slot):
+        return err("Date ou heure invalide.", 400)
+    prop = db.get(PropertyRO, property_id)
+    if prop is None or prop.agency_id is None:
+        return err("Bien introuvable.", 404)
+
+    agents_free = _free_agents_by_time(db, prop, day).get(slot)
+    if not agents_free:
+        return err("Ce créneau vient d'être pris.", 409)
+
+    scheduled = datetime.combine(day, time(int(slot[:2]), int(slot[3:])))
+    if scheduled < datetime.utcnow():
+        return err("Ce créneau est passé.", 400)
+
+    v = Visit(property_id=property_id, agency_id=prop.agency_id, agent_id=agents_free[0],
+              scheduled_at=scheduled, status="scheduled", visit_type="in_person",
+              visitor_name=data.get("visitor_name"), visitor_email=data.get("visitor_email"),
+              visitor_phone=data.get("visitor_phone"))
+    db.add(v)
+    db.commit()
+    db.refresh(v)
+    enqueue(db, "visit", v.id, "visit.created", _visit_dict(db, v))
+    db.commit()
+    return {"visit": _visit_dict(db, v)}
 
 
 @router.get("/backoffice/visits/{visit_id}")

@@ -75,3 +75,6 @@ frontend/playwright-report/
 frontend/blob-report/
 .superpowers/
 smoke-*.png
+
+# Worktrees créés par les agents Claude Code (jamais versionnés)
+.claude/worktrees/
