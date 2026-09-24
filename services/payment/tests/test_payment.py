@@ -54,3 +54,25 @@ def test_webhook_echec_sans_motif_donne_unknown(client, db_session):
     payload = db_session.query(OutboxEvent).filter_by(event_type="payment.failed").one().payload
     assert payload["reason_code"] == "unknown"
     assert payload["reason_label"] is None
+
+
+def _intent(client, **extra):
+    body = {"purpose": "commission", "amount": 1500, "payment_method": "transfer"}
+    return client.post("/payments/create-intent", json={**body, **extra},
+                       headers={"x-semsar-user-id": "7", "x-semsar-agency-id": "1"})
+
+
+def test_virement_refuse_tant_que_le_rib_nest_pas_configure(client, monkeypatch):
+    """Mieux vaut refuser que d'afficher un RIB factice : le client y enverrait son argent."""
+    monkeypatch.delenv("BANK_TRANSFER_RIB", raising=False)
+    assert _intent(client).status_code == 503
+
+
+def test_virement_renvoie_les_coordonnees_configurees(client, monkeypatch):
+    monkeypatch.setenv("BANK_TRANSFER_RIB", "007 780 0001234567890123 45")
+    monkeypatch.setenv("BANK_TRANSFER_BANK_NAME", "Banque Populaire")
+    monkeypatch.setenv("BANK_TRANSFER_ACCOUNT_NAME", "SemsarOut SARL")
+    body = _intent(client).json()
+    assert body["bank_info"]["rib"] == "007 780 0001234567890123 45"
+    assert body["bank_info"]["bank_name"] == "Banque Populaire"
+    assert body["status"] == "pending_transfer"
