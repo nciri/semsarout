@@ -167,6 +167,10 @@ class PropertyRO(Base):
     title = Column(String(200))
     address = Column(String(255))
     city = Column(String(100))
+    # Projetés depuis listing.* : la prise de rendez-vous publique doit savoir à quelle agence
+    # (et à quel agent) rattacher la visite demandée sur une annonce.
+    agency_id = Column(Integer, index=True)
+    owner_id = Column(Integer)
 
 
 class ProcessedMessage(Base):

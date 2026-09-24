@@ -41,6 +41,8 @@ def _handle(routing_key: str, payload: dict, message_id: str) -> None:
             ro.title = payload.get("title")
             ro.address = payload.get("address")
             ro.city = payload.get("city")
+            ro.agency_id = payload.get("agency_id")
+            ro.owner_id = payload.get("owner_id")
         elif routing_key == "transaction.deleted":
             ro = db.get(TransactionRO, payload.get("id"))
             if ro is not None:
