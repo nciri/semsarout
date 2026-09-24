@@ -244,6 +244,8 @@ function App() {
           <Route path="leads" element={<BackofficeLeads />} />
           <Route path="visites" element={<BackofficeVisits />} />
           <Route path="visites/nouvelle" element={<BackofficeVisits />} />
+          {/* Mêmes créneaux que /dashboard/disponibilites : l'agent les règle sans quitter le back-office. */}
+          <Route path="visites/disponibilites" element={<Availability />} />
           <Route path="pipeline" element={<BackofficePipeline />} />
           <Route path="transactions" element={<BackofficeTransactions />} />
           <Route path="transactions/nouveau" element={<TransactionCreate />} />

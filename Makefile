@@ -1,5 +1,5 @@
 # Fondations plateforme v2 — raccourcis (cf. PLATFORM.md)
-.PHONY: infra-up infra-down libs-install gateway-run gateway-test m3a-l3achrane-install m3a-l3achrane-dev m3a-l3achrane-build m3a-l3achrane-lint
+.PHONY: hooks infra-up infra-down libs-install gateway-run gateway-test m3a-l3achrane-install m3a-l3achrane-dev m3a-l3achrane-build m3a-l3achrane-lint
 
 infra-up:            ## Démarre l'infra plateforme (RabbitMQ, MinIO, OTel, Prometheus, Grafana, Loki)
 	docker compose -f infra/docker-compose.yml up -d
@@ -27,3 +27,7 @@ m3a-l3achrane-build:   ## Build frontend-m3a-l3achrane
 
 m3a-l3achrane-lint:    ## Lint frontend-m3a-l3achrane
 	cd frontend-m3a-l3achrane && npm run lint
+
+hooks:               ## Active les hooks git du dépôt (.githooks/pre-push)
+	git config core.hooksPath .githooks
+	@echo "hooks git actifs : .githooks"

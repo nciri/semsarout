@@ -14,8 +14,8 @@ function Availability() {
   const [slots, setSlots] = useState([])
 
   useEffect(() => {
-    if (data?.availability) {
-      setSlots(data.availability.map(s => ({
+    if (data?.slots) {
+      setSlots(data.slots.map(s => ({
         weekday: s.weekday,
         start_time: s.start_time,
         end_time: s.end_time,

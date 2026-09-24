@@ -120,6 +120,23 @@ class Visit(Base):
     cancellation_reason = Column(String(255))
 
 
+class AgentAvailability(Base):
+    """Créneaux hebdomadaires où un agent accepte des visites (remplacés en bloc à chaque
+    enregistrement : la liste envoyée par l'agent fait foi)."""
+
+    __tablename__ = "agent_availability"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    agency_id = Column(Integer, index=True)
+    agent_id = Column(Integer, index=True, nullable=False)
+    weekday = Column(Integer, nullable=False)          # 0 = lundi … 6 = dimanche
+    start_time = Column(String(5), nullable=False)     # "09:00"
+    end_time = Column(String(5), nullable=False)
+    slot_minutes = Column(Integer, default=30)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class CalendarEvent(Base):
     __tablename__ = "calendar_event"
 

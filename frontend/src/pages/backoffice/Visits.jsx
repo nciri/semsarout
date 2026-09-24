@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from 'react-query'
 import { useMatch, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'react-toastify'
-import { FiAlertTriangle, FiCalendar, FiCheckSquare, FiChevronLeft, FiChevronRight, FiClock, FiList, FiPlus, FiUsers } from 'react-icons/fi'
+import { FiAlertTriangle, FiCalendar, FiCheckSquare, FiChevronLeft, FiChevronRight, FiClock, FiList, FiPlus, FiSettings, FiUsers } from 'react-icons/fi'
 import api from '../../services/api'
 import { useFormat } from '../../utils/format'
 import { Alert, Chip, Figure, IconAction, Legend, Rich, SegBar, Segmented } from './components/kit'
@@ -174,7 +174,14 @@ export default function BackofficeVisits() {
           <h1 className="font-display text-[26px] font-extrabold leading-tight tracking-tight">{t('title')}</h1>
           <p className="mt-1 text-gray-500">{t('subtitle')}</p>
         </div>
-        <IconAction icon={FiPlus} label={t('plan')} onClick={() => navigate('/backoffice/visites/nouvelle')} tone="primary" tipAlign="end" />
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={() => navigate('/backoffice/visites/nouvelle')}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary-400 px-4 py-2 text-sm font-semibold text-[#241906] transition-colors hover:bg-primary-600">
+            <FiPlus className="h-[18px] w-[18px]" aria-hidden="true" />{t('plan')}
+          </button>
+          <IconAction icon={FiSettings} label={t('availabilityAction')} to="/backoffice/visites/disponibilites"
+            tipAlign="end" className="border border-gray-200 bg-white" />
+        </div>
       </div>
 
       {(summary.isError || range.isError || list.isError) && <p className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-800">{t('loadError')}</p>}
