@@ -329,7 +329,9 @@
       "awaitingOwner": "Signé de votre côté — en attente du bailleur.",
       "signButton": "Signer l'état des lieux",
       "signing": "Signature…"
-    }
+    },
+    "empty": "Aucun bail en cours : le récapitulatif de paiement s'affichera dès qu'un bail sera signé.",
+    "loadError": "Impossible de charger votre bail pour le moment."
   },
   "securite": {
     "title": "Centre de sécurité",
@@ -352,10 +354,15 @@
     },
     "detailsLabel": "Détails",
     "detailsPlaceholder": "Décrivez ce qui s’est passé…",
+    "targetIdLabel": "Référence de l'élément signalé",
+    "targetIdPlaceholder": "Identifiant de l'annonce, du profil ou du message",
+    "targetIdRequired": "Indiquez la référence de l'élément signalé.",
+    "reportError": "Le signalement n'a pas pu être envoyé.",
     "submitReport": "Envoyer le signalement",
     "reportSent": "Signalement envoyé",
     "blockedUsersTitle": "Utilisateurs bloqués",
     "noBlockedUsers": "Aucun utilisateur bloqué.",
+    "blockedUser": "Utilisateur #{{id}}",
     "unblock": "Débloquer",
     "safetyTipsTitle": "Conseils de sécurité",
     "tips": {

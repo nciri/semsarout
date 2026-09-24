@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Badge, Button, Card, Icon, Input, PriceTag } from '../../ds/index.js'
-import { paiementSequestre } from '../../data/paiementSequestre.js'
 import {
   confirmPaymentIntentDemo, createPaymentIntent, getListing, getMyLeases, listEtatDesLieux,
   signEtatDesLieux,
@@ -184,19 +183,30 @@ export default function Paiement() {
     )
   }
 
-  // Pas de bail réel (utilisateur de démo sans bail, ou service indisponible) : repli mock
-  // pour garder l'écran illustratif plutôt que vide.
-  const usingMock = loadError || !lease
-  const { annonce, etapes, lignes, total } = usingMock
-    ? paiementSequestre
-    : {
-        annonce: { titre: listingTitre || t('app:paiement.leaseFallbackTitle', { id: lease.listing_id }),
-                  entree: fmtEntree(lease.start_date, i18n.language) },
-        etapes: deriveEtapes(lease, entreeEdl),
-        lignes: buildLignes(lease),
-        total: Math.round(lease.rent_amount) + Math.round(lease.deposit_amount),
-      }
-  const pendingPayment = !usingMock ? (lease.payments ?? []).find((p) => p.status === 'pending') : null
+  // Sans bail réel, l'écran le dit : montrer un bail inventé donnerait de faux montants.
+  if (!lease) {
+    return (
+      <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)', padding: '34px 24px' }}>
+        <div style={{ maxWidth: 920, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <h1 style={{ margin: 0, font: 'var(--fw-extrabold) 26px var(--font-display)', color: 'var(--text-heading)', letterSpacing: '-0.02em' }}>
+            {t('app:paiement.title')}
+          </h1>
+          <p style={{ margin: 0, font: 'var(--fw-regular) var(--fs-body) var(--font-body)', color: 'var(--text-muted)' }}>
+            {loadError ? t('app:paiement.loadError') : t('app:paiement.empty')}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  const annonce = {
+    titre: listingTitre || t('app:paiement.leaseFallbackTitle', { id: lease.listing_id }),
+    entree: fmtEntree(lease.start_date, i18n.language),
+  }
+  const etapes = deriveEtapes(lease, entreeEdl)
+  const lignes = buildLignes(lease)
+  const total = Math.round(lease.rent_amount) + Math.round(lease.deposit_amount)
+  const pendingPayment = (lease.payments ?? []).find((p) => p.status === 'pending')
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-page)' }}>
@@ -269,7 +279,7 @@ export default function Paiement() {
           </div>
         </Card>
 
-        {!usingMock && entreeEdl && (
+        {entreeEdl && (
           <Card style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ font: 'var(--fw-extrabold) var(--fs-body-lg) var(--font-display)', color: 'var(--text-heading)' }}>
@@ -378,7 +388,7 @@ export default function Paiement() {
                 <Button
                   variant="accent"
                   fullWidth
-                  disabled={usingMock || !pendingPayment || payState === 'processing'}
+                  disabled={!pendingPayment || payState === 'processing'}
                   onClick={handlePay}
                 >
                   {payState === 'processing'

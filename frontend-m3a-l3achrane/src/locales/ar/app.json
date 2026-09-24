@@ -329,7 +329,9 @@
       "awaitingOwner": "تم التوقيع من جانبك — بانتظار المالك·ة.",
       "signButton": "توقيع معاينة الحالة",
       "signing": "جارٍ التوقيع…"
-    }
+    },
+    "empty": "لا يوجد عقد جارٍ: سيظهر ملخص الأداء بمجرد توقيع عقد.",
+    "loadError": "تعذّر تحميل عقدكم حاليًا."
   },
   "securite": {
     "title": "مركز الأمان",
@@ -352,10 +354,15 @@
     },
     "detailsLabel": "التفاصيل",
     "detailsPlaceholder": "صف·ي ما حدث…",
+    "targetIdLabel": "مرجع العنصر المُبلَّغ عنه",
+    "targetIdPlaceholder": "معرّف الإعلان أو الملف أو الرسالة",
+    "targetIdRequired": "حدِّد مرجع العنصر المُبلَّغ عنه.",
+    "reportError": "تعذّر إرسال البلاغ.",
     "submitReport": "إرسال البلاغ",
     "reportSent": "تم إرسال البلاغ",
     "blockedUsersTitle": "المستخدمون المحظورون",
     "noBlockedUsers": "لا يوجد مستخدمون محظورون.",
+    "blockedUser": "المستخدم #{{id}}",
     "unblock": "إلغاء الحظر",
     "safetyTipsTitle": "نصائح الأمان",
     "tips": {

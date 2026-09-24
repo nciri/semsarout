@@ -20,7 +20,7 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash
 
 from .db import SessionLocal, init_db
-from .models import RoleRO, UserRO
+from .models import KycVerification, RoleRO, UserRO
 
 TENANT = "m3a-l3achrane"
 PASSWORD = "Test1234!"  # DEV uniquement
@@ -101,6 +101,16 @@ def seed():
                 role = _ensure_superadmin_role(db)
                 if role not in user.roles:
                     user.roles.append(role)
+
+        # File KYC : sans dossier en attente, l'écran de vérification du back-office reste vide
+        # et on ne peut pas y tester la validation/le rejet.
+        db.flush()
+        for email in ("candidat@m3a.ma", "bailleur@m3a.ma"):
+            user = db.query(UserRO).filter(UserRO.tenant == TENANT, UserRO.email == email).first()
+            if user is None:
+                continue
+            if db.query(KycVerification).filter(KycVerification.user_id == user.id).first() is None:
+                db.add(KycVerification(user_id=user.id, status="pending", cin="AB123456"))
 
         db.commit()
     finally:

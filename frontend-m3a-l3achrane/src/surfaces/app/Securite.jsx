@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { Avatar, Badge, Button, Card, Icon, Select, VerifiedBadge } from '../../ds/index.js'
-import { blockedUsers as initialBlockedUsers, reportReasons, reportTargets, safetyTips } from '../../data/securityCenter.js'
-import { getCurrentProfile, getTrust } from '../../services/index.js'
+import { Avatar, Badge, Button, Card, Icon, Input, Select, VerifiedBadge } from '../../ds/index.js'
+import { reportReasons, reportTargets, safetyTips } from '../../data/securityCenter.js'
+import { createReport, getCurrentProfile, getTrust, listBlocks, unblockUser } from '../../services/index.js'
+import { mapReport } from '../../services/mappers.js'
 
 const TRUST_TO_LEVEL = { verified_experience: 'full', verified: 'partial', none: 'none' }
 
@@ -13,8 +14,11 @@ export default function Securite() {
   const [target, setTarget] = useState(reportTargets[0].value)
   const [reason, setReason] = useState(reportReasons[0].value)
   const [details, setDetails] = useState('')
-  const [blockedUsers, setBlockedUsers] = useState(initialBlockedUsers)
+  const [targetId, setTargetId] = useState('')
   const [sent, setSent] = useState(false)
+  const [error, setError] = useState(null)
+  const [sending, setSending] = useState(false)
+  const [blockedUsers, setBlockedUsers] = useState([])
   const [trust, setTrust] = useState({ level: 'none', deal_count: 0 })
 
   useEffect(() => {
@@ -26,11 +30,36 @@ export default function Securite() {
     return () => { cancelled = true }
   }, [])
 
-  const unblock = (id) => setBlockedUsers((list) => list.filter((u) => u.id !== id))
+  useEffect(() => {
+    let cancelled = false
+    listBlocks()
+      .then((list) => { if (!cancelled) setBlockedUsers(list) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
 
-  const submit = () => {
-    setSent(true)
-    setDetails('')
+  const unblock = async (blockedId) => {
+    await unblockUser(blockedId)
+    setBlockedUsers((list) => list.filter((b) => b.blocked_id !== blockedId))
+  }
+
+  const submit = async () => {
+    if (!targetId.trim()) { setError(t('app:securite.targetIdRequired')); return }
+    setSending(true)
+    setError(null)
+    try {
+      await createReport(mapReport({
+        target, reason, targetId, details,
+        reasonLabel: t(`app:securite.reasons.${reason}`),
+      }))
+      setSent(true)
+      setDetails('')
+      setTargetId('')
+    } catch {
+      setError(t('app:securite.reportError'))
+    } finally {
+      setSending(false)
+    }
   }
 
   const reasonOptions = reportReasons.map((r) => ({ value: r.value, label: t(`app:securite.reasons.${r.value}`) }))
@@ -84,6 +113,13 @@ export default function Securite() {
 
               <Select label={t('app:securite.reasonLabel')} options={reasonOptions} value={reason} onChange={(e) => setReason(e.target.value)} />
 
+              <Input
+                label={t('app:securite.targetIdLabel')}
+                placeholder={t('app:securite.targetIdPlaceholder')}
+                value={targetId}
+                onChange={(e) => setTargetId(e.target.value)}
+              />
+
               <label style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                 <span style={{ font: 'var(--fw-bold) 13px var(--font-body)', color: 'var(--text-heading)' }}>
                   {t('app:securite.detailsLabel')}
@@ -106,8 +142,9 @@ export default function Securite() {
               </label>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <Button variant="danger" onClick={submit}>{t('app:securite.submitReport')}</Button>
-                {sent && <Badge tone="verified" icon="check">{t('app:securite.reportSent')}</Badge>}
+                <Button variant="danger" onClick={submit} disabled={sending}>{t('app:securite.submitReport')}</Button>
+                {sent && !error && <Badge tone="verified" icon="check">{t('app:securite.reportSent')}</Badge>}
+                {error && <Badge tone="danger">{error}</Badge>}
               </div>
             </Card>
 
@@ -122,7 +159,7 @@ export default function Securite() {
               )}
               {blockedUsers.map((b) => (
                 <div
-                  key={b.id}
+                  key={b.blocked_id}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -132,11 +169,11 @@ export default function Securite() {
                     borderRadius: 10,
                   }}
                 >
-                  <Avatar name={b.initials.split('').join(' ')} size={32} />
+                  <Avatar name={`# ${b.blocked_id}`} size={32} />
                   <div style={{ flex: 1, font: 'var(--fw-bold) 13.5px var(--font-body)', color: 'var(--text-heading)' }}>
-                    {b.name}
+                    {t('app:securite.blockedUser', { id: b.blocked_id })}
                   </div>
-                  <Button variant="secondary" size="sm" onClick={() => unblock(b.id)}>{t('app:securite.unblock')}</Button>
+                  <Button variant="secondary" size="sm" onClick={() => unblock(b.blocked_id)}>{t('app:securite.unblock')}</Button>
                 </div>
               ))}
             </Card>

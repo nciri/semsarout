@@ -15,11 +15,6 @@ export const reportReasons = [
   { value: 'autre' },
 ]
 
-export const blockedUsers = [
-  { id: 'usr-48213', initials: 'XZ', name: 'Utilisateur #48213' },
-  { id: 'usr-51022', initials: 'KM', name: 'Utilisateur #51022' },
-]
-
 export const safetyTips = [
   { id: 'tip-avance' },
   { id: 'tip-messagerie' },

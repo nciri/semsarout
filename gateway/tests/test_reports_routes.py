@@ -56,3 +56,23 @@ def test_reports_unmapped_when_disabled(monkeypatch):
     assert client is None
     client, _ = _resolve_upstream(fake, "/api/v1/admin/reports/1/resolve", "POST")
     assert client is None
+
+
+def test_blocages_vont_a_trust_safety(monkeypatch):
+    """Sans routage, « bloquer » n'atteindrait jamais le service qui porte la donnée."""
+    import app.main as m
+    from types import SimpleNamespace
+    monkeypatch.setattr(m.settings, "trust_safety_url", "http://ts")
+    app = SimpleNamespace(state=SimpleNamespace(trust_safety="TS"))
+    assert m._resolve_upstream(app, "/api/v1/blocks", "GET") == ("TS", "/blocks")
+    assert m._resolve_upstream(app, "/api/v1/blocks", "POST") == ("TS", "/blocks")
+    assert m._resolve_upstream(app, "/api/v1/blocks/42", "DELETE") == ("TS", "/blocks/42")
+
+
+def test_avis_vont_a_trust_safety(monkeypatch):
+    import app.main as m
+    from types import SimpleNamespace
+    monkeypatch.setattr(m.settings, "trust_safety_url", "http://ts")
+    app = SimpleNamespace(state=SimpleNamespace(trust_safety="TS"))
+    assert m._resolve_upstream(app, "/api/v1/reviews", "POST") == ("TS", "/reviews")
+    assert m._resolve_upstream(app, "/api/v1/reviews/received", "GET") == ("TS", "/reviews/received")

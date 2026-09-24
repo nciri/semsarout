@@ -7,7 +7,8 @@
 """
 from datetime import datetime
 
-from sqlalchemy import JSON, BigInteger, Boolean, Column, DateTime, Integer, String, Text
+from sqlalchemy import (JSON, BigInteger, Boolean, Column, DateTime, Integer, String, Text,
+                        UniqueConstraint)
 
 from .db import Base
 
@@ -93,4 +94,65 @@ class Report(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
             "resolver_id": self.resolver_id,
+        }
+
+
+class UserBlock(Base):
+    """Un utilisateur qui en bloque un autre. Multi-tenant comme `Report` : le blocage vaut pour
+    le tenant où il a été posé, jamais au-delà."""
+
+    __tablename__ = "user_block"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    tenant = Column(String(30), nullable=False, default="m3a-l3achrane",
+                    server_default="m3a-l3achrane", index=True)
+    blocker_id = Column(BigInteger, nullable=False, index=True)
+    blocked_id = Column(BigInteger, nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (UniqueConstraint("tenant", "blocker_id", "blocked_id",
+                                       name="uq_user_block"),)
+
+    def to_dict(self) -> dict:
+        return {"id": self.id, "blocked_id": self.blocked_id,
+                "created_at": self.created_at.isoformat() if self.created_at else None}
+
+
+# Critères notés après un séjour. Figés côté code : ce sont des clés, les libellés vivent en i18n.
+REVIEW_CRITERIA = ("respect", "proprete", "communication", "conformite")
+# Publication en double aveugle : un avis n'est visible que lorsque l'autre partie a rendu le
+# sien, ou passé ce délai — sinon le premier à écrire influencerait le second.
+REVIEW_BLIND_DAYS = 14
+
+
+class Review(Base):
+    """Évaluation mutuelle après un séjour (une par auteur et par bail)."""
+
+    __tablename__ = "review"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    tenant = Column(String(30), nullable=False, default="m3a-l3achrane",
+                    server_default="m3a-l3achrane", index=True)
+    lease_id = Column(String(64), nullable=False, index=True)
+    author_id = Column(BigInteger, nullable=False, index=True)
+    subject_id = Column(BigInteger, nullable=False, index=True)
+    criteria = Column(JSON, nullable=False)
+    comment = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (UniqueConstraint("tenant", "lease_id", "author_id", name="uq_review_author"),)
+
+    @property
+    def stars(self) -> int:
+        values = [v for v in (self.criteria or {}).values() if isinstance(v, int)]
+        # Arrondi au plus proche, 0,5 vers le haut : `round` de Python arrondit 4,5 à 4, ce qui
+        # ferait perdre une étoile sur des notes pourtant bonnes.
+        return int(sum(values) / len(values) + 0.5) if values else 0
+
+    def to_dict(self, author_name: str | None = None) -> dict:
+        return {
+            "id": self.id, "lease_id": self.lease_id, "author_id": self.author_id,
+            "author_name": author_name, "subject_id": self.subject_id,
+            "criteria": self.criteria, "stars": self.stars, "comment": self.comment,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }
