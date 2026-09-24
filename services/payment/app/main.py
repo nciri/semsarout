@@ -157,10 +157,15 @@ async def create_payment_intent(request: Request, db: Session = Depends(get_db),
         return {"payment_id": p.id, "reference": p.reference,
                 "payment_url": f"/payment-gateway?ref={p.reference}&amount={amount}", "amount": amount}
     if payment_method == "transfer":
+        # Coordonnées bancaires réelles, par l'environnement. Sans elles, on refuse le virement
+        # plutôt que d'afficher un RIB factice sur lequel le client enverrait son argent.
+        rib = os.getenv("BANK_TRANSFER_RIB", "").strip()
+        if not rib:
+            return err("Le paiement par virement n'est pas configuré.", 503)
         return {"payment_id": p.id, "reference": p.reference, "status": "pending_transfer",
-                "bank_info": {"bank_name": "Banque Populaire", "account_name": "SemsarOut SARL",
-                              "rib": "XXXX XXXX XXXX XXXX XXXX XX", "reference": p.reference,
-                              "amount": amount},
+                "bank_info": {"bank_name": os.getenv("BANK_TRANSFER_BANK_NAME", "").strip(),
+                              "account_name": os.getenv("BANK_TRANSFER_ACCOUNT_NAME", "").strip(),
+                              "rib": rib, "reference": p.reference, "amount": amount},
                 "message": "Veuillez effectuer le virement avec la référence indiquée"}
     return err("Invalid payment method", 400)
 

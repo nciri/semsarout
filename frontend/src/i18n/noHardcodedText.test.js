@@ -138,7 +138,6 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/Team.jsx',
   'src/pages/backoffice/Settings.jsx',
   'src/pages/backoffice/SettingsHub.jsx',
-  'src/pages/backoffice/StripeConfig.jsx',
   'src/pages/backoffice/Dashboard.jsx',
   'src/pages/backoffice/components/BackofficeLayout.jsx',
   'src/pages/dashboard/MonEspace.jsx',
