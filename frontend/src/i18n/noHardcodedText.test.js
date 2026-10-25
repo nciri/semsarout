@@ -120,6 +120,7 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/clients/ui.jsx',
   'src/pages/backoffice/Properties.jsx',
   'src/pages/backoffice/PropertyForm.jsx',
+  'src/pages/backoffice/biens/Estimation.jsx',
   'src/pages/backoffice/biens/PriceRange.jsx',
   'src/pages/backoffice/biens/PropertyDetail.jsx',
   'src/pages/backoffice/biens/QueueCards.jsx',

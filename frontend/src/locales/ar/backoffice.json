@@ -3313,5 +3313,78 @@
     "shared": {
       "adminOnly": "للمشرفين فقط"
     }
+  },
+  "estimation": {
+    "action": "تقدير عقار",
+    "title": "تقدير عقار",
+    "subtitle": "سعر إرشادي انطلاقًا من سوق الحي ومن خصائص العقار",
+    "backToProperties": "العودة إلى العقارات",
+    "estimate": "قدّر",
+    "estimating": "جارٍ التقدير…",
+    "error": "تعذّر احتساب التقدير.",
+    "unavailable": "لا توجد عقارات مماثلة كافية في هذا القطاع للتقدير. حدِّدوا حيًّا، أو أضيفوا مرجع سعر للمتر المربع.",
+    "currency": "درهم",
+    "perSqm": "درهم/م²",
+    "perMonth": "/شهريًا",
+    "sqm": "م²",
+    "fields": {
+      "city": "المدينة",
+      "neighborhood": "الحي",
+      "neighborhoodPlaceholder": "أنفا، المعاريف، غوتييه…",
+      "propertyType": "نوع العقار",
+      "transactionType": "نوع المعاملة",
+      "surface": "المساحة (م²)",
+      "condition": "الحالة",
+      "floor": "الطابق",
+      "totalFloors": "عدد طوابق العمارة",
+      "constructionYear": "سنة البناء",
+      "extras": "التجهيزات"
+    },
+    "transaction": {
+      "sale": "بيع",
+      "rent": "كراء"
+    },
+    "conditions": {
+      "new": "جديد",
+      "good": "حالة جيدة",
+      "refresh": "يحتاج تجديدًا خفيفًا",
+      "renovate": "يحتاج ترميمًا"
+    },
+    "features": {
+      "elevator": "مصعد",
+      "parking": "موقف سيارات",
+      "terrace": "شرفة واسعة",
+      "pool": "مسبح"
+    },
+    "confidence": {
+      "high": "تقدير موثوق",
+      "medium": "موثوقية متوسطة",
+      "low": "تقدير إرشادي"
+    },
+    "result": {
+      "title": "السعر المُقدَّر",
+      "range": "المجال: من {{low}} إلى {{high}}",
+      "priceSqm": "سعر المتر المربع المعتمد",
+      "referenceSqm": "مرجع القطاع",
+      "totalAdjustment": "مجموع التعديلات",
+      "basedOnListings_one": "محتسب على أساس عقار مماثل واحد.",
+      "basedOnListings_other": "محتسب على أساس {{count}} عقارات مماثلة.",
+      "basedOnReference": "محتسب على أساس مرجع أسعار الحي."
+    },
+    "adjustments": {
+      "condition_new": "عقار جديد",
+      "condition_refresh": "يحتاج تجديدًا خفيفًا",
+      "condition_renovate": "يحتاج ترميمًا",
+      "no_elevator_high_floor": "طابق مرتفع بدون مصعد",
+      "top_floor": "الطابق الأخير مع مصعد",
+      "age": "قِدَم البناء",
+      "elevator": "مصعد",
+      "parking": "موقف سيارات",
+      "terrace": "شرفة واسعة",
+      "pool": "مسبح"
+    },
+    "comparables": {
+      "title": "عقارات مماثلة"
+    }
   }
 }

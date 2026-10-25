@@ -3313,5 +3313,78 @@
     "shared": {
       "adminOnly": "Admin uniquement"
     }
+  },
+  "estimation": {
+    "action": "Estimer un bien",
+    "title": "Estimation d'un bien",
+    "subtitle": "Prix indicatif à partir du marché du secteur et des caractéristiques du bien",
+    "backToProperties": "Retour aux biens",
+    "estimate": "Estimer",
+    "estimating": "Estimation en cours…",
+    "error": "L'estimation n'a pas pu être calculée.",
+    "unavailable": "Pas assez de biens comparables dans ce secteur pour estimer. Renseignez un quartier, ou ajoutez une référence de prix au m².",
+    "currency": "Dh",
+    "perSqm": "Dh/m²",
+    "perMonth": "/mois",
+    "sqm": "m²",
+    "fields": {
+      "city": "Ville",
+      "neighborhood": "Quartier",
+      "neighborhoodPlaceholder": "Anfa, Maârif, Gauthier…",
+      "propertyType": "Type de bien",
+      "transactionType": "Transaction",
+      "surface": "Surface (m²)",
+      "condition": "État",
+      "floor": "Étage",
+      "totalFloors": "Étages de l'immeuble",
+      "constructionYear": "Année de construction",
+      "extras": "Équipements"
+    },
+    "transaction": {
+      "sale": "Vente",
+      "rent": "Location"
+    },
+    "conditions": {
+      "new": "Neuf",
+      "good": "Bon état",
+      "refresh": "À rafraîchir",
+      "renovate": "À rénover"
+    },
+    "features": {
+      "elevator": "Ascenseur",
+      "parking": "Parking",
+      "terrace": "Terrasse",
+      "pool": "Piscine"
+    },
+    "confidence": {
+      "high": "Estimation fiable",
+      "medium": "Fiabilité moyenne",
+      "low": "Estimation indicative"
+    },
+    "result": {
+      "title": "Prix estimé",
+      "range": "Fourchette : de {{low}} à {{high}}",
+      "priceSqm": "Prix au m² retenu",
+      "referenceSqm": "Référence du secteur",
+      "totalAdjustment": "Total des ajustements",
+      "basedOnListings_one": "Calculé sur {{count}} bien comparable.",
+      "basedOnListings_other": "Calculé sur {{count}} biens comparables.",
+      "basedOnReference": "Calculé sur la référence de prix du quartier."
+    },
+    "adjustments": {
+      "condition_new": "Bien neuf",
+      "condition_refresh": "À rafraîchir",
+      "condition_renovate": "À rénover",
+      "no_elevator_high_floor": "Étage élevé sans ascenseur",
+      "top_floor": "Dernier étage avec ascenseur",
+      "age": "Ancienneté du bâti",
+      "elevator": "Ascenseur",
+      "parking": "Parking",
+      "terrace": "Terrasse",
+      "pool": "Piscine"
+    },
+    "comparables": {
+      "title": "Biens comparables"
+    }
   }
 }
