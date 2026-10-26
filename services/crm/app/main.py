@@ -356,6 +356,53 @@ def get_leads(request: Request, principal: Principal = Depends(get_principal), d
     return {"leads": [_lead_dict(db, l) for l in items], "total": total, "pages": pages, "current_page": page}
 
 
+@app.post("/backoffice/leads", status_code=201)
+async def create_backoffice_lead(request: Request, principal: Principal = Depends(get_principal),
+                                 db: Session = Depends(get_db)):
+    """Lead saisi par un agent : appel entrant, visite en agence, recommandation, salon.
+
+    Source forcée à `manual` : la provenance déclarée par le site public ne doit jamais
+    être imitée, sinon les statistiques d'acquisition ne veulent plus rien dire.
+    """
+    if not principal.agency_id:
+        return _err("Compte d'agence requis", 403)
+    data = await _json(request)
+
+    name = (data.get("name") or "").strip()
+    email = (data.get("email") or "").strip() or None
+    phone = (data.get("phone") or "").strip() or None
+    if not name:
+        return _err("Le nom est requis", 400)
+    if not email and not phone:
+        return _err("Un e-mail ou un téléphone est requis", 400)
+
+    property_id = data.get("property_id")
+    if property_id not in (None, ""):
+        try:
+            property_id = int(property_id)
+        except (TypeError, ValueError):
+            return _err("Bien invalide", 400)
+        # Rattacher un lead à un bien d'une autre agence fuiterait son portefeuille.
+        prop = db.get(PropertyRO, property_id)
+        if prop is None or prop.agency_id != principal.agency_id:
+            return _err("Bien introuvable dans votre portefeuille", 400)
+    else:
+        property_id = None
+
+    uid = int(principal.sub) if principal.sub and principal.sub.isdigit() else None
+    lead = Lead(
+        name=name, email=email, phone=phone, message=(data.get("message") or "").strip() or None,
+        source="manual", status="new", agency_id=principal.agency_id, property_id=property_id,
+        assigned_to_id=data.get("assigned_to_id") or uid,
+        # Saisi par un agent qui l'a déjà en main : il n'a pas à revenir en « non lu ».
+        is_read=True, read_at=datetime.utcnow(),
+    )
+    db.add(lead)
+    db.commit()
+    db.refresh(lead)
+    return {"lead": _lead_dict(db, lead)}
+
+
 @app.get("/backoffice/leads/stats")
 def lead_stats(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
     base = db.query(Lead)

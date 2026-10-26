@@ -42,7 +42,8 @@
       "callback_request": "Rappel demandé",
       "contact_form": "Formulaire",
       "website": "Site web",
-      "other": "Autre"
+      "other": "Autre",
+      "manual": "Saisie agence"
     },
     "units": {
       "million": "M Dh",
@@ -2125,6 +2126,22 @@
             "filtered": "Aucun lead ne correspond à vos critères.",
             "default": "Les leads apparaîtront ici lorsque des prospects vous contacteront."
           }
+        },
+        "create": {
+          "action": "Nouveau lead",
+          "title": "Saisir un lead",
+          "close": "Fermer le formulaire",
+          "name": "Nom du contact",
+          "phone": "Téléphone",
+          "email": "E-mail",
+          "property": "Bien concerné",
+          "noProperty": "Aucun bien précis",
+          "message": "Demande",
+          "messagePlaceholder": "Ce que recherche le contact, budget, délai…",
+          "submit": "Enregistrer le lead",
+          "saving": "Enregistrement…",
+          "contactRequired": "Renseignez au moins un téléphone ou un e-mail.",
+          "error": "Le lead n'a pas pu être enregistré."
         },
         "summary": {
           "pending": {
