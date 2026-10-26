@@ -356,6 +356,24 @@ def get_leads(request: Request, principal: Principal = Depends(get_principal), d
     return {"leads": [_lead_dict(db, l) for l in items], "total": total, "pages": pages, "current_page": page}
 
 
+def _agency_agent_id(principal: Principal, value):
+    """Valide un identifiant d'agent fourni par le client : il doit appartenir à l'agence.
+
+    Sans ce contrôle, un agent pouvait affecter un lead à n'importe quel identifiant, y compris
+    celui d'une autre agence. Renvoie `(id, None)` ou `(None, erreur)` ; `value` vide renvoie
+    `(None, None)`, au seul appelant de décider de son défaut.
+    """
+    if value in (None, ""):
+        return None, None
+    try:
+        agent_id = int(value)
+    except (TypeError, ValueError):
+        return None, _err("Agent invalide", 400)
+    if agent_id not in {a.get("id") for a in users_client.agents(principal.agency_id)}:
+        return None, _err("Agent introuvable dans votre agence", 400)
+    return agent_id, None
+
+
 @app.post("/backoffice/leads", status_code=201)
 async def create_backoffice_lead(request: Request, principal: Principal = Depends(get_principal),
                                  db: Session = Depends(get_db)):
@@ -389,11 +407,14 @@ async def create_backoffice_lead(request: Request, principal: Principal = Depend
     else:
         property_id = None
 
+    assigned_to_id, err = _agency_agent_id(principal, data.get("assigned_to_id"))
+    if err is not None:
+        return err
     uid = int(principal.sub) if principal.sub and principal.sub.isdigit() else None
     lead = Lead(
         name=name, email=email, phone=phone, message=(data.get("message") or "").strip() or None,
         source="manual", status="new", agency_id=principal.agency_id, property_id=property_id,
-        assigned_to_id=data.get("assigned_to_id") or uid,
+        assigned_to_id=assigned_to_id or uid,
         # Saisi par un agent qui l'a déjà en main : il n'a pas à revenir en « non lu ».
         is_read=True, read_at=datetime.utcnow(),
     )
@@ -539,7 +560,10 @@ async def assign_lead(lead_id: int, request: Request, principal: Principal = Dep
     if err:
         return err
     data = await _json(request)
-    l.assigned_to_id = data.get("user_id")
+    agent_id, agent_err = _agency_agent_id(principal, data.get("user_id"))
+    if agent_err is not None:
+        return agent_err
+    l.assigned_to_id = agent_id      # vide = lead remis au pot commun
     db.commit()
     return _lead_dict(db, l)
 
