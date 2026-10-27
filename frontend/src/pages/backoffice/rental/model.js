@@ -28,6 +28,8 @@ export const ageTone = (days, lo = 15, hi = 45) => (days > hi ? 'crit' : days >=
 export const dueTone = (days) => (days <= 7 ? 'crit' : days <= 30 ? 'warn' : 'neutral')
 
 export const APP_TONE = { received: 'neutral', reviewing: 'warn', shortlist: 'good', accepted: 'good', rejected: 'crit', withdrawn: 'neutral' }
+/** Verdict de solvabilité d'une candidature (calculé par le service rental). */
+export const QUALIFICATION_TONE = { solid: 'good', acceptable: 'warn', weak: 'crit', unknown: 'neutral' }
 export const MANDATE_TONE = { active: 'good', draft: 'neutral', expired: 'warn', terminated: 'crit' }
 export const LEASE_TONE = { active: 'good', draft: 'neutral', ended: 'warn', terminated: 'crit' }
 export const INVENTORY_TONE = { signed: 'good', finalized: 'warn', draft: 'warn', missing: 'crit', to_plan: 'warn' }

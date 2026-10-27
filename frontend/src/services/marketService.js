@@ -13,6 +13,12 @@ export const marketService = {
     const { data } = await api.put(`/market/neighborhood-prices/${id}`, payload)
     return data.reference
   },
+  // Estimation d'un bien non publié (back-office) : même barème que le positionnement prix
+  // d'une annonce en ligne, servi par le service geo.
+  estimate: async (payload) => {
+    const { data } = await api.post('/market/estimate', payload)
+    return data
+  },
   deleteReference: async (id) => {
     const { data } = await api.delete(`/market/neighborhood-prices/${id}`)
     return data

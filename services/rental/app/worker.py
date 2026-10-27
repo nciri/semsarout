@@ -24,6 +24,8 @@ def _handle(routing_key: str, payload: dict, message_id: str) -> None:
             ro = db.get(PropertyRO, pid) or PropertyRO(id=pid)
             ro.title = payload.get("title")
             ro.city = payload.get("city")
+            ro.price = payload.get("price")
+            ro.price_period = payload.get("price_period")
             db.add(ro)
         elif routing_key in ("crm.client.created", "crm.client.updated"):
             cid = payload.get("id")

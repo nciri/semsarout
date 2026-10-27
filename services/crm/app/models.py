@@ -59,6 +59,10 @@ class Client(Base):
     search_criteria = Column(JSON, default=dict)
     budget_min = Column(Numeric(12, 2))
     budget_max = Column(Numeric(12, 2))
+    # Capacité réelle d'achat, en regard du budget annoncé ci-dessus (cf. qualification.py).
+    down_payment = Column(Numeric(12, 2))
+    max_monthly_payment = Column(Numeric(12, 2))
+    has_bank_preapproval = Column(Boolean, default=False)
     notes = Column(Text)
     next_follow_up = Column(DateTime)
     rating = Column(Integer, default=3)
@@ -72,6 +76,21 @@ class Client(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_contact_at = Column(DateTime)
+
+
+class BuyerDocument(Base):
+    """Pièce du dossier d'achat, déposée par l'acquéreur lui-même ou par l'agence."""
+    __tablename__ = "buyer_document"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    client_id = Column(BigInteger, index=True, nullable=False)
+    doc_type = Column(String(40))                 # cin|justificatif_revenu|releve_bancaire|accord_bancaire|autre
+    status = Column(String(20), default="received")   # received|validated|rejected
+    file_key = Column(String(255))
+    filename = Column(String(255))
+    content_type = Column(String(100))
+    uploaded_by_user_id = Column(Integer)         # None quand l'agence dépose pour le client
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class ClientInteraction(Base):

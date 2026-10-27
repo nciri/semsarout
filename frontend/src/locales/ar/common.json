@@ -103,7 +103,8 @@
     "availability": "التوفر",
     "referencePrices": "الأسعار المرجعية",
     "platform": "المنصة",
-    "myAccount": "حسابي"
+    "myAccount": "حسابي",
+    "myPurchaseFile": "ملف الشراء"
   },
   "advancedSearch": {
     "buy": "شراء",

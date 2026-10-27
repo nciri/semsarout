@@ -32,8 +32,12 @@ html[lang='ar'] {
     @apply font-display text-midnight tracking-tight;
   }
 
-  /* Évite que les <select> héritent d'un texte clair sur fond sombre
-     (ex. barre de recherche sur le hero). Les champs .input gardent text-midnight. */
+  /* Un champ de saisie ne doit JAMAIS hériter de la couleur de texte de son conteneur :
+     posé sur le hero sombre (text-ivory), le texte tapé devenait blanc sur fond blanc, donc
+     invisible. La règle porte sur l'élément, donc une classe utilitaire explicite
+     (text-white sur un champ volontairement sombre) la surcharge toujours. */
+  input,
+  textarea,
   select {
     color: #334155;
   }

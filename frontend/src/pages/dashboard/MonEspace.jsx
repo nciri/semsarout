@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { FiSearch, FiClipboard, FiFileText, FiInbox, FiUser, FiArrowRight } from 'react-icons/fi'
+import { FiSearch, FiClipboard, FiFileText, FiFolder, FiInbox, FiUser, FiArrowRight } from 'react-icons/fi'
 import DirIcon from '../../components/common/DirIcon'
 
 const SHELL = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'
@@ -8,6 +8,7 @@ const SHELL = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'
 const CARDS = [
   { to: '/annonces', icon: FiSearch, key: 'search' },
   { to: '/dashboard/candidatures', icon: FiClipboard, key: 'applications' },
+  { to: '/dashboard/mon-dossier-achat', icon: FiFolder, key: 'purchaseFile' },
   { to: '/dashboard/annonces', icon: FiFileText, key: 'myListings' },
   { to: '/dashboard/leads', icon: FiInbox, key: 'leads' },
   { to: '/dashboard/compte', icon: FiUser, key: 'account' },

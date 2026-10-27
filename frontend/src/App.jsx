@@ -40,6 +40,7 @@ const CreateProperty = lazy(() => import('./pages/dashboard/CreateProperty'))
 const MyLeads = lazy(() => import('./pages/dashboard/MyLeads'))
 const MyApplications = lazy(() => import('./pages/dashboard/MyApplications'))
 const MyApplicationDetail = lazy(() => import('./pages/dashboard/MyApplicationDetail'))
+const MyPurchaseFile = lazy(() => import('./pages/dashboard/MyPurchaseFile'))
 const MyAgency = lazy(() => import('./pages/dashboard/MyAgency'))
 const Checkout = lazy(() => import('./pages/Checkout'))
 const NotFound = lazy(() => import('./pages/NotFound'))
@@ -73,6 +74,7 @@ const CompareProperties = lazy(() => import('./pages/CompareProperties'))
 const BackofficeLayout = lazy(() => import('./pages/backoffice/components/BackofficeLayout'))
 const BackofficeDashboard = lazy(() => import('./pages/backoffice/Dashboard'))
 const BackofficeProperties = lazy(() => import('./pages/backoffice/Properties'))
+const BackofficeEstimation = lazy(() => import('./pages/backoffice/biens/Estimation'))
 const BackofficePropertyForm = lazy(() => import('./pages/backoffice/PropertyForm'))
 const BackofficeClients = lazy(() => import('./pages/backoffice/Clients'))
 const BackofficeClientForm = lazy(() => import('./pages/backoffice/ClientForm'))
@@ -180,6 +182,7 @@ function App() {
           <Route path="leads" element={<MyLeads />} />
           <Route path="candidatures" element={<MyApplications />} />
           <Route path="candidatures/:id" element={<MyApplicationDetail />} />
+          <Route path="mon-dossier-achat" element={<MyPurchaseFile />} />
 
           {/* Mon compte : agence / abonnement / paramètres regroupés en onglets */}
           <Route path="compte" element={<AccountTabs />}>
@@ -234,6 +237,7 @@ function App() {
         <Route element={<BackofficeLayout />}>
           <Route index element={<BackofficeDashboard />} />
           <Route path="biens" element={<BackofficeProperties />} />
+          <Route path="biens/estimation" element={<BackofficeEstimation />} />
           <Route path="biens/nouveau" element={<BackofficePropertyForm />} />
           <Route path="biens/:id" element={<BackofficePropertyForm />} />
           <Route path="clients" element={<BackofficeClients />} />

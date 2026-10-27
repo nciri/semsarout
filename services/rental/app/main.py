@@ -21,7 +21,7 @@ from semsar_events import enqueue
 
 import semsar_signing as signing
 
-from . import commission_client, events, identity_client, overview
+from . import commission_client, events, identity_client, overview, qualification
 from .db import get_db, init_db
 from .models import (ApplicationDocument, ChargeRegularization, ClientRO, CrgReport,
                      DeductionLine, DepositSettlement, Inventory, InventoryItem, InventoryPhoto,
@@ -47,6 +47,11 @@ try:
 except Exception:  # noqa: BLE001
     pass
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
+
+
+# Une pièce est relue dans le navigateur, sur l'origine du site : un type déposé librement
+# (text/html) y exécuterait du script. On n'accepte que des formats inertes.
+ALLOWED_DOC_CONTENT_TYPES = ("application/pdf", "image/jpeg", "image/png", "image/webp")
 
 
 def _gate(principal: Principal) -> JSONResponse | None:
@@ -977,6 +982,12 @@ def _application_event_payload(app_id, applicant_user_id, owner_id, property_id,
 
 def _application_dict(db, a: TenantApplication, docs=None) -> dict:
     ro = db.get(PropertyRO, a.property_id)
+    if docs is None:
+        docs = db.query(ApplicationDocument).filter(
+            ApplicationDocument.application_id == a.id).all()
+        attach_docs = False
+    else:
+        attach_docs = True
     out = {
         "id": a.id, "property_id": a.property_id, "agency_id": a.agency_id,
         "applicant_user_id": a.applicant_user_id,
@@ -989,8 +1000,14 @@ def _application_dict(db, a: TenantApplication, docs=None) -> dict:
         "submitted_at": iso(a.submitted_at), "decided_at": iso(a.decided_at),
         "decision_reason": a.decision_reason, "created_at": iso(a.created_at),
         "property_title": (ro.title if ro else None),
+        "qualification": qualification.assess(
+            rent=qualification.monthly_rent(ro.price if ro else None,
+                                            ro.price_period if ro else None),
+            monthly_income=a.monthly_income, guarantor_income=a.guarantor_income,
+            guarantor_name=a.guarantor_name,
+            documents=[(d.doc_type, d.status) for d in docs]),
     }
-    if docs is not None:
+    if attach_docs:
         out["documents"] = [{"id": d.id, "doc_type": d.doc_type, "status": d.status,
                              "filename": d.filename, "created_at": iso(d.created_at)} for d in docs]
     return out
@@ -1191,7 +1208,9 @@ async def upload_document(application_id: int, request: Request,
         return err("Fichier trop volumineux (max 10 Mo).", 400)
     doc_type = request.query_params.get("doc_type", "autre")
     filename = request.query_params.get("filename", "piece")
-    content_type = request.headers.get("content-type", "application/octet-stream")
+    content_type = (request.headers.get("content-type") or "").split(";")[0].strip().lower()
+    if content_type not in ALLOWED_DOC_CONTENT_TYPES:
+        return err("Format accepté : PDF, JPEG, PNG ou WebP.", 400)
     from . import storage
     key = f"applications/{a.id}/{uuid.uuid4().hex}"
     storage.docs_storage().put(key, body, content_type)
@@ -1222,7 +1241,9 @@ async def upload_document_agency(application_id: int, request: Request,
         return err("Fichier trop volumineux (max 10 Mo).", 400)
     doc_type = request.query_params.get("doc_type", "autre")
     filename = request.query_params.get("filename", "piece")
-    content_type = request.headers.get("content-type", "application/octet-stream")
+    content_type = (request.headers.get("content-type") or "").split(";")[0].strip().lower()
+    if content_type not in ALLOWED_DOC_CONTENT_TYPES:
+        return err("Format accepté : PDF, JPEG, PNG ou WebP.", 400)
     from . import storage
     key = f"applications/{a.id}/{uuid.uuid4().hex}"
     storage.docs_storage().put(key, body, content_type)

@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
-from . import clients, users_client, visits
+from . import buyer, clients, users_client, visits
 from .visits import _visit_dict
 from .db import get_db, init_db
 from .models import Client, Lead, PropertyRO, Visit
@@ -46,6 +46,7 @@ except Exception:  # noqa: BLE001
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 app.include_router(clients.router)  # sous-domaine clients (Stage B)
 app.include_router(visits.router)   # sous-domaine visites + calendrier (Stage C)
+app.include_router(buyer.router)    # dossier d'achat : pièces + qualification
 
 
 def _err(msg: str, code: int) -> JSONResponse:
@@ -356,6 +357,74 @@ def get_leads(request: Request, principal: Principal = Depends(get_principal), d
     return {"leads": [_lead_dict(db, l) for l in items], "total": total, "pages": pages, "current_page": page}
 
 
+def _agency_agent_id(principal: Principal, value):
+    """Valide un identifiant d'agent fourni par le client : il doit appartenir à l'agence.
+
+    Sans ce contrôle, un agent pouvait affecter un lead à n'importe quel identifiant, y compris
+    celui d'une autre agence. Renvoie `(id, None)` ou `(None, erreur)` ; `value` vide renvoie
+    `(None, None)`, au seul appelant de décider de son défaut.
+    """
+    if value in (None, ""):
+        return None, None
+    try:
+        agent_id = int(value)
+    except (TypeError, ValueError):
+        return None, _err("Agent invalide", 400)
+    if agent_id not in {a.get("id") for a in users_client.agents(principal.agency_id)}:
+        return None, _err("Agent introuvable dans votre agence", 400)
+    return agent_id, None
+
+
+@app.post("/backoffice/leads", status_code=201)
+async def create_backoffice_lead(request: Request, principal: Principal = Depends(get_principal),
+                                 db: Session = Depends(get_db)):
+    """Lead saisi par un agent : appel entrant, visite en agence, recommandation, salon.
+
+    Source forcée à `manual` : la provenance déclarée par le site public ne doit jamais
+    être imitée, sinon les statistiques d'acquisition ne veulent plus rien dire.
+    """
+    if not principal.agency_id:
+        return _err("Compte d'agence requis", 403)
+    data = await _json(request)
+
+    name = (data.get("name") or "").strip()
+    email = (data.get("email") or "").strip() or None
+    phone = (data.get("phone") or "").strip() or None
+    if not name:
+        return _err("Le nom est requis", 400)
+    if not email and not phone:
+        return _err("Un e-mail ou un téléphone est requis", 400)
+
+    property_id = data.get("property_id")
+    if property_id not in (None, ""):
+        try:
+            property_id = int(property_id)
+        except (TypeError, ValueError):
+            return _err("Bien invalide", 400)
+        # Rattacher un lead à un bien d'une autre agence fuiterait son portefeuille.
+        prop = db.get(PropertyRO, property_id)
+        if prop is None or prop.agency_id != principal.agency_id:
+            return _err("Bien introuvable dans votre portefeuille", 400)
+    else:
+        property_id = None
+
+    assigned_to_id, err = _agency_agent_id(principal, data.get("assigned_to_id"))
+    if err is not None:
+        return err
+    uid = int(principal.sub) if principal.sub and principal.sub.isdigit() else None
+    lead = Lead(
+        name=name, email=email, phone=phone, message=(data.get("message") or "").strip() or None,
+        source="manual", status="new", agency_id=principal.agency_id, property_id=property_id,
+        assigned_to_id=assigned_to_id or uid,
+        # Saisi par un agent qui l'a déjà en main : il n'a pas à revenir en « non lu ».
+        is_read=True, read_at=datetime.utcnow(),
+    )
+    db.add(lead)
+    db.commit()
+    db.refresh(lead)
+    return {"lead": _lead_dict(db, lead)}
+
+
 @app.get("/backoffice/leads/stats")
 def lead_stats(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
     base = db.query(Lead)
@@ -492,7 +561,10 @@ async def assign_lead(lead_id: int, request: Request, principal: Principal = Dep
     if err:
         return err
     data = await _json(request)
-    l.assigned_to_id = data.get("user_id")
+    agent_id, agent_err = _agency_agent_id(principal, data.get("user_id"))
+    if agent_err is not None:
+        return agent_err
+    l.assigned_to_id = agent_id      # vide = lead remis au pot commun
     db.commit()
     return _lead_dict(db, l)
 

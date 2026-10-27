@@ -57,20 +57,24 @@ def _band(percent):
     return "very_high", "Bien au-dessus du marché"
 
 
-def price_position(db: Session, prop: ListingRO) -> dict:
-    sqm = _sqm(prop)
-    if not sqm:
-        return {"available": False, "reason": "no_surface"}
+def market_reference(db: Session, *, city, neighborhood, property_type, transaction_type,
+                     exclude_id=None) -> dict | None:
+    """Prix/m² de référence d'un secteur : référence manuelle sinon distribution des biens
+    actifs, du plus précis au plus large. Partagé par le positionnement d'un bien existant
+    et par l'estimation d'un bien qui n'existe pas encore — un seul barème pour les deux,
+    sinon l'agence et le vendeur liraient deux chiffres différents.
 
-    tx = prop.transaction_type
-    ptype = prop.property_type
-    city = prop.city
-    neighborhood = prop.neighborhood
+    Renvoie `None` si aucun secteur n'atteint `MIN_SAMPLE` comparables : on préfère ne rien
+    annoncer plutôt qu'un prix tiré d'un échantillon d'un ou deux biens.
+    """
+    tx = transaction_type
+    ptype = property_type
 
     reference = low = high = None
     source = "listings"
     scope = None
     sample_size = None
+    comparables = []
 
     # 1) Référence manuelle (priorité)
     if city and neighborhood:
@@ -99,12 +103,14 @@ def price_position(db: Session, prop: ListingRO) -> dict:
             attempts.append(("city", [ListingRO.city == city]))
 
         for label, filters in attempts:
-            rows = db.query(ListingRO).filter(
+            query = db.query(ListingRO).filter(
                 ListingRO.status == "active",
                 ListingRO.transaction_type == tx,
-                ListingRO.id != prop.id,
                 *filters
-            ).all()
+            )
+            if exclude_id is not None:
+                query = query.filter(ListingRO.id != exclude_id)
+            rows = query.all()
             vals = sorted(v for v in (_sqm(r) for r in rows) if v and v > 0)
             if len(vals) >= MIN_SAMPLE:
                 reference = _percentile(vals, 50)  # médiane
@@ -112,14 +118,35 @@ def price_position(db: Session, prop: ListingRO) -> dict:
                 high = _percentile(vals, 90)
                 scope = label
                 sample_size = len(vals)
+                comparables = [r for r in rows if _sqm(r)]
                 break
 
     if reference is None:
-        return {"available": False, "reason": "insufficient_data"}
+        return None
 
-    # Garde-fou contre des bornes dégénérées
+    # Garde-fou contre des bornes dégénérées (référence manuelle sans min/max cohérents).
     if high is None or low is None or high <= low:
         low, high = reference * 0.8, reference * 1.2
+
+    return {"reference": reference, "low": low, "high": high, "scope": scope,
+            "scope_label": SCOPE_LABELS.get(scope, scope), "sample_size": sample_size,
+            "source": source, "comparables": comparables}
+
+
+def price_position(db: Session, prop: ListingRO) -> dict:
+    sqm = _sqm(prop)
+    if not sqm:
+        return {"available": False, "reason": "no_surface"}
+
+    tx, ptype = prop.transaction_type, prop.property_type
+    city, neighborhood = prop.city, prop.neighborhood
+
+    ref = market_reference(db, city=city, neighborhood=neighborhood, property_type=ptype,
+                           transaction_type=tx, exclude_id=prop.id)
+    if ref is None:
+        return {"available": False, "reason": "insufficient_data"}
+    reference, low, high = ref["reference"], ref["low"], ref["high"]
+    scope, sample_size, source = ref["scope"], ref["sample_size"], ref["source"]
 
     percent = round((sqm - reference) / reference * 100, 1)
     position = max(0.0, min(1.0, (sqm - low) / (high - low)))
@@ -140,7 +167,7 @@ def price_position(db: Session, prop: ListingRO) -> dict:
         "band": band,
         "label": label,
         "scope": scope,
-        "scope_label": SCOPE_LABELS.get(scope, scope),
+        "scope_label": ref["scope_label"],
         "sample_size": sample_size,
         "source": source,
         "currency": "Dh",

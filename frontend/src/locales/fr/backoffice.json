@@ -42,7 +42,8 @@
       "callback_request": "Rappel demandé",
       "contact_form": "Formulaire",
       "website": "Site web",
-      "other": "Autre"
+      "other": "Autre",
+      "manual": "Saisie agence"
     },
     "units": {
       "million": "M Dh",
@@ -572,6 +573,24 @@
         },
         "toasts": {
           "decided": "Décision enregistrée"
+        }
+      },
+      "qualification": {
+        "panelTitle": "Qualification du dossier",
+        "rent": "Loyer mensuel",
+        "effortRate": "Taux d'effort",
+        "guarantor": "Garant",
+        "guarantorNone": "Aucun garant déclaré",
+        "guarantorCovers": "Couvre 3 loyers",
+        "guarantorShort": "En deçà de 3 loyers",
+        "missingDocs": "Pièces manquantes",
+        "complete": "Dossier complet",
+        "missingCount": "{{count}} manquante(s)",
+        "verdict": {
+          "solid": "Solide",
+          "acceptable": "Acceptable",
+          "weak": "Tendu",
+          "unknown": "Revenu non renseigné"
         }
       }
     },
@@ -2081,6 +2100,62 @@
         },
         "propertyTypesWanted": "Types de biens recherchés",
         "preferredCities": "Villes préférées"
+      },
+      "buyerDossier": {
+        "title": "Dossier d'achat",
+        "currency": "Dh",
+        "edit": "Modifier",
+        "cancel": "Annuler",
+        "save": "Enregistrer",
+        "loanTerms": "sur {{years}} ans à {{rate}} %",
+        "gapShort": "{{amount}} en deçà du budget annoncé",
+        "gapOver": "{{amount}} au-delà du budget annoncé",
+        "fields": {
+          "downPayment": "Apport",
+          "maxMonthlyPayment": "Mensualité maximale",
+          "preapproval": "Accord de principe bancaire obtenu",
+          "borrowingCapacity": "Capacité d'emprunt",
+          "realisticBudget": "Budget réaliste",
+          "declaredBudget": "Budget annoncé"
+        },
+        "verdict": {
+          "financed": "Financement couvert",
+          "tight": "Financement tendu",
+          "gap": "Écart de financement",
+          "no_target": "Budget non annoncé",
+          "unknown": "Capacité non renseignée"
+        },
+        "docTypes": {
+          "cin": "CIN",
+          "justificatif_revenu": "Justificatif de revenu",
+          "releve_bancaire": "Relevé bancaire",
+          "accord_bancaire": "Accord de principe bancaire",
+          "autre": "Autre pièce"
+        },
+        "docs": {
+          "title": "Pièces justificatives",
+          "typeLabel": "Type de pièce",
+          "add": "Ajouter",
+          "added": "Pièce ajoutée",
+          "missing": "Manque : {{list}}",
+          "empty": "Aucune pièce déposée pour l'instant.",
+          "tooLarge": "Fichier trop volumineux (max 10 Mo).",
+          "unavailable": "Pièce indisponible.",
+          "download": "Télécharger",
+          "validate": "Valider",
+          "reject": "Refuser",
+          "status": {
+            "received": "Reçue",
+            "validated": "Validée",
+            "rejected": "Refusée"
+          },
+          "columns": {
+            "type": "Pièce",
+            "file": "Fichier",
+            "status": "Statut",
+            "actions": "Actions"
+          }
+        }
       }
     },
     "pipeline": {
@@ -2125,6 +2200,22 @@
             "filtered": "Aucun lead ne correspond à vos critères.",
             "default": "Les leads apparaîtront ici lorsque des prospects vous contacteront."
           }
+        },
+        "create": {
+          "action": "Nouveau lead",
+          "title": "Saisir un lead",
+          "close": "Fermer le formulaire",
+          "name": "Nom du contact",
+          "phone": "Téléphone",
+          "email": "E-mail",
+          "property": "Bien concerné",
+          "noProperty": "Aucun bien précis",
+          "message": "Demande",
+          "messagePlaceholder": "Ce que recherche le contact, budget, délai…",
+          "submit": "Enregistrer le lead",
+          "saving": "Enregistrement…",
+          "contactRequired": "Renseignez au moins un téléphone ou un e-mail.",
+          "error": "Le lead n'a pas pu être enregistré."
         },
         "summary": {
           "pending": {
@@ -2710,7 +2801,40 @@
         "submitButton": "Créer la transaction",
         "submitting": "Création…",
         "toastSuccess": "Transaction créée",
-        "toastError": "Erreur"
+        "toastError": "Erreur",
+        "chosenProperty": "Bien choisi",
+        "changeProperty": "Changer de bien",
+        "search": {
+          "subtitle": "Commencez par trouver le bien dans le portefeuille de l'agence.",
+          "filtersTitle": "Rechercher le bien",
+          "any": "Tous",
+          "keyword": "Mot-clé",
+          "keywordPlaceholder": "Titre, référence, ville…",
+          "city": "Ville",
+          "neighborhood": "Quartier",
+          "neighborhoodPlaceholder": "Ex. Anfa",
+          "propertyType": "Type de bien",
+          "transaction": "Transaction",
+          "status": "Statut",
+          "minPrice": "Prix min.",
+          "maxPrice": "Prix max.",
+          "minSurface": "Surface min. (m²)",
+          "minBedrooms": "Chambres min.",
+          "reset": "Réinitialiser",
+          "resultsCount": "{{count}} bien(s) trouvé(s)",
+          "empty": "Aucun bien ne correspond à cette recherche.",
+          "choose": "Choisir",
+          "previous": "Précédent",
+          "next": "Suivant",
+          "columns": {
+            "property": "Bien",
+            "location": "Localisation",
+            "type": "Type",
+            "surface": "Surface",
+            "price": "Prix",
+            "status": "Statut"
+          }
+        }
       },
       "detail": {
         "notFound": "Transaction introuvable.",
@@ -3312,6 +3436,79 @@
     },
     "shared": {
       "adminOnly": "Admin uniquement"
+    }
+  },
+  "estimation": {
+    "action": "Estimer un bien",
+    "title": "Estimation d'un bien",
+    "subtitle": "Prix indicatif à partir du marché du secteur et des caractéristiques du bien",
+    "backToProperties": "Retour aux biens",
+    "estimate": "Estimer",
+    "estimating": "Estimation en cours…",
+    "error": "L'estimation n'a pas pu être calculée.",
+    "unavailable": "Pas assez de biens comparables dans ce secteur pour estimer. Renseignez un quartier, ou ajoutez une référence de prix au m².",
+    "currency": "Dh",
+    "perSqm": "Dh/m²",
+    "perMonth": "/mois",
+    "sqm": "m²",
+    "fields": {
+      "city": "Ville",
+      "neighborhood": "Quartier",
+      "neighborhoodPlaceholder": "Anfa, Maârif, Gauthier…",
+      "propertyType": "Type de bien",
+      "transactionType": "Transaction",
+      "surface": "Surface (m²)",
+      "condition": "État",
+      "floor": "Étage",
+      "totalFloors": "Étages de l'immeuble",
+      "constructionYear": "Année de construction",
+      "extras": "Équipements"
+    },
+    "transaction": {
+      "sale": "Vente",
+      "rent": "Location"
+    },
+    "conditions": {
+      "new": "Neuf",
+      "good": "Bon état",
+      "refresh": "À rafraîchir",
+      "renovate": "À rénover"
+    },
+    "features": {
+      "elevator": "Ascenseur",
+      "parking": "Parking",
+      "terrace": "Terrasse",
+      "pool": "Piscine"
+    },
+    "confidence": {
+      "high": "Estimation fiable",
+      "medium": "Fiabilité moyenne",
+      "low": "Estimation indicative"
+    },
+    "result": {
+      "title": "Prix estimé",
+      "range": "Fourchette : de {{low}} à {{high}}",
+      "priceSqm": "Prix au m² retenu",
+      "referenceSqm": "Référence du secteur",
+      "totalAdjustment": "Total des ajustements",
+      "basedOnListings_one": "Calculé sur {{count}} bien comparable.",
+      "basedOnListings_other": "Calculé sur {{count}} biens comparables.",
+      "basedOnReference": "Calculé sur la référence de prix du quartier."
+    },
+    "adjustments": {
+      "condition_new": "Bien neuf",
+      "condition_refresh": "À rafraîchir",
+      "condition_renovate": "À rénover",
+      "no_elevator_high_floor": "Étage élevé sans ascenseur",
+      "top_floor": "Dernier étage avec ascenseur",
+      "age": "Ancienneté du bâti",
+      "elevator": "Ascenseur",
+      "parking": "Parking",
+      "terrace": "Terrasse",
+      "pool": "Piscine"
+    },
+    "comparables": {
+      "title": "Biens comparables"
     }
   }
 }

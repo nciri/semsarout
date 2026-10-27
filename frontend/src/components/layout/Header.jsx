@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from 'react-query'
 import { useTranslation } from 'react-i18next'
-import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiLink, FiTrendingUp, FiInbox, FiShield, FiBriefcase, FiClipboard, FiSearch, FiMail, FiCalendar } from 'react-icons/fi'
+import { FiMenu, FiX, FiUser, FiLogOut, FiPlus, FiGrid, FiFileText, FiLink, FiTrendingUp, FiInbox, FiShield, FiBriefcase, FiClipboard, FiSearch, FiMail, FiCalendar, FiFolder } from 'react-icons/fi'
 import useAuthStore from '../../store/authStore'
 import { leadService } from '../../services/leadService'
 import Wordmark from '../common/Wordmark'
@@ -43,6 +43,7 @@ function Header() {
         { to: '/dashboard', label: user?.agency_id ? t('common:nav.controlTower') : t('common:nav.mySpace'), icon: FiGrid },
         { to: '/dashboard/annonces', label: t('common:nav.myListings'), icon: FiFileText },
         { to: '/dashboard/candidatures', label: t('common:nav.myApplications'), icon: FiClipboard },
+        { to: '/dashboard/mon-dossier-achat', label: t('common:nav.myPurchaseFile'), icon: FiFolder },
         { to: '/dashboard/leads', label: t('common:nav.leads'), icon: FiInbox }
       ]
     },
