@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from 'react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'react-toastify'
 import {
-  FiChevronDown, FiChevronLeft, FiChevronRight, FiFileText, FiGrid, FiHome, FiImage, FiList, FiPlus,
+  FiChevronDown, FiChevronLeft, FiChevronRight, FiFileText, FiGrid, FiHome, FiImage, FiList, FiPlus, FiTrendingUp,
   FiRefreshCw, FiSearch, FiStar, FiTag, FiZap,
 } from 'react-icons/fi'
 import api from '../../services/api'
@@ -253,7 +253,11 @@ export default function BackofficeProperties() {
           <h1 className="font-display text-[22px] font-extrabold leading-tight tracking-tight sm:text-[26px]">{t('crm.properties.list.pageTitle')}</h1>
           <p className="mt-1 text-gray-500">{insights.data ? tb('subtitle', { count: rows.length }) : t('crm.properties.list.subtitle')}</p>
         </div>
-        <IconAction icon={FiPlus} label={t('crm.properties.list.newButton')} to="/backoffice/biens/nouveau" tone="primary" tipAlign="end" />
+        <div className="flex items-center gap-2">
+          <IconAction icon={FiTrendingUp} label={t('estimation.action')} to="/backoffice/biens/estimation"
+            className="border border-gray-200 bg-white" />
+          <IconAction icon={FiPlus} label={t('crm.properties.list.newButton')} to="/backoffice/biens/nouveau" tone="primary" tipAlign="end" />
+        </div>
       </div>
 
       {insights.isError && <Alert tone="crit">{tb('loadError')}</Alert>}

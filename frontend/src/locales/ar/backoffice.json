@@ -42,7 +42,8 @@
       "callback_request": "طلب معاودة الاتصال",
       "contact_form": "استمارة الاتصال",
       "website": "الموقع",
-      "other": "أخرى"
+      "other": "أخرى",
+      "manual": "تسجيل من الوكالة"
     },
     "units": {
       "million": "مليون درهم",
@@ -572,6 +573,24 @@
         },
         "toasts": {
           "decided": "تم تسجيل القرار"
+        }
+      },
+      "qualification": {
+        "panelTitle": "تقييم الملف",
+        "rent": "الكراء الشهري",
+        "effortRate": "نسبة الجهد",
+        "guarantor": "الضامن",
+        "guarantorNone": "لا يوجد ضامن مصرح به",
+        "guarantorCovers": "يغطي 3 أشهر كراء",
+        "guarantorShort": "أقل من 3 أشهر كراء",
+        "missingDocs": "الوثائق الناقصة",
+        "complete": "الملف مكتمل",
+        "missingCount": "{{count}} ناقصة",
+        "verdict": {
+          "solid": "متين",
+          "acceptable": "مقبول",
+          "weak": "متوتر",
+          "unknown": "الدخل غير مصرح به"
         }
       }
     },
@@ -2081,6 +2100,62 @@
         },
         "propertyTypesWanted": "أنواع العقارات المطلوبة",
         "preferredCities": "المدن المفضلة"
+      },
+      "buyerDossier": {
+        "title": "ملف الشراء",
+        "currency": "درهم",
+        "edit": "تعديل",
+        "cancel": "إلغاء",
+        "save": "حفظ",
+        "loanTerms": "على {{years}} سنة بنسبة {{rate}} %",
+        "gapShort": "{{amount}} أقل من الميزانية المعلنة",
+        "gapOver": "{{amount}} فوق الميزانية المعلنة",
+        "fields": {
+          "downPayment": "المساهمة الشخصية",
+          "maxMonthlyPayment": "أقصى قسط شهري",
+          "preapproval": "موافقة بنكية مبدئية",
+          "borrowingCapacity": "القدرة على الاقتراض",
+          "realisticBudget": "الميزانية الواقعية",
+          "declaredBudget": "الميزانية المعلنة"
+        },
+        "verdict": {
+          "financed": "التمويل مغطى",
+          "tight": "تمويل متوتر",
+          "gap": "فجوة في التمويل",
+          "no_target": "لا توجد ميزانية معلنة",
+          "unknown": "القدرة غير مصرح بها"
+        },
+        "docTypes": {
+          "cin": "البطاقة الوطنية",
+          "justificatif_revenu": "إثبات الدخل",
+          "releve_bancaire": "كشف حساب بنكي",
+          "accord_bancaire": "موافقة بنكية مبدئية",
+          "autre": "وثيقة أخرى"
+        },
+        "docs": {
+          "title": "الوثائق المطلوبة",
+          "typeLabel": "نوع الوثيقة",
+          "add": "إضافة",
+          "added": "تمت إضافة الوثيقة",
+          "missing": "ناقص: {{list}}",
+          "empty": "لم يتم إيداع أي وثيقة بعد.",
+          "tooLarge": "الملف كبير جدا (10 ميغابايت كحد أقصى).",
+          "unavailable": "الوثيقة غير متاحة.",
+          "download": "تحميل",
+          "validate": "مصادقة",
+          "reject": "رفض",
+          "status": {
+            "received": "مستلمة",
+            "validated": "مصادق عليها",
+            "rejected": "مرفوضة"
+          },
+          "columns": {
+            "type": "الوثيقة",
+            "file": "الملف",
+            "status": "الحالة",
+            "actions": "إجراءات"
+          }
+        }
       }
     },
     "pipeline": {
@@ -2125,6 +2200,22 @@
             "filtered": "لا يوجد عميل محتمل يطابق معايير البحث.",
             "default": "ستظهر العملاء المحتملون هنا عندما يتواصل معك المهتمون."
           }
+        },
+        "create": {
+          "action": "عميل محتمل جديد",
+          "title": "تسجيل عميل محتمل",
+          "close": "إغلاق النموذج",
+          "name": "اسم جهة الاتصال",
+          "phone": "الهاتف",
+          "email": "البريد الإلكتروني",
+          "property": "العقار المعني",
+          "noProperty": "دون عقار محدَّد",
+          "message": "الطلب",
+          "messagePlaceholder": "ما يبحث عنه العميل، الميزانية، الأجل…",
+          "submit": "تسجيل العميل المحتمل",
+          "saving": "جارٍ التسجيل…",
+          "contactRequired": "أدخلوا على الأقل رقم هاتف أو بريدًا إلكترونيًا.",
+          "error": "تعذّر تسجيل العميل المحتمل."
         },
         "summary": {
           "pending": {
@@ -2710,7 +2801,40 @@
         "submitButton": "إنشاء المعاملة",
         "submitting": "جارٍ الإنشاء…",
         "toastSuccess": "تم إنشاء المعاملة",
-        "toastError": "خطأ"
+        "toastError": "خطأ",
+        "chosenProperty": "العقار المختار",
+        "changeProperty": "تغيير العقار",
+        "search": {
+          "subtitle": "ابدأ بالعثور على العقار داخل محفظة الوكالة.",
+          "filtersTitle": "البحث عن العقار",
+          "any": "الكل",
+          "keyword": "كلمة مفتاحية",
+          "keywordPlaceholder": "العنوان، المرجع، المدينة…",
+          "city": "المدينة",
+          "neighborhood": "الحي",
+          "neighborhoodPlaceholder": "مثال: أنفا",
+          "propertyType": "نوع العقار",
+          "transaction": "المعاملة",
+          "status": "الحالة",
+          "minPrice": "السعر الأدنى",
+          "maxPrice": "السعر الأقصى",
+          "minSurface": "المساحة الدنيا (م²)",
+          "minBedrooms": "الحد الأدنى للغرف",
+          "reset": "إعادة التعيين",
+          "resultsCount": "{{count}} عقار موجود",
+          "empty": "لا يوجد عقار يطابق هذا البحث.",
+          "choose": "اختيار",
+          "previous": "السابق",
+          "next": "التالي",
+          "columns": {
+            "property": "العقار",
+            "location": "الموقع",
+            "type": "النوع",
+            "surface": "المساحة",
+            "price": "السعر",
+            "status": "الحالة"
+          }
+        }
       },
       "detail": {
         "notFound": "المعاملة غير موجودة.",
@@ -3312,6 +3436,79 @@
     },
     "shared": {
       "adminOnly": "للمشرفين فقط"
+    }
+  },
+  "estimation": {
+    "action": "تقدير عقار",
+    "title": "تقدير عقار",
+    "subtitle": "سعر إرشادي انطلاقًا من سوق الحي ومن خصائص العقار",
+    "backToProperties": "العودة إلى العقارات",
+    "estimate": "قدّر",
+    "estimating": "جارٍ التقدير…",
+    "error": "تعذّر احتساب التقدير.",
+    "unavailable": "لا توجد عقارات مماثلة كافية في هذا القطاع للتقدير. حدِّدوا حيًّا، أو أضيفوا مرجع سعر للمتر المربع.",
+    "currency": "درهم",
+    "perSqm": "درهم/م²",
+    "perMonth": "/شهريًا",
+    "sqm": "م²",
+    "fields": {
+      "city": "المدينة",
+      "neighborhood": "الحي",
+      "neighborhoodPlaceholder": "أنفا، المعاريف، غوتييه…",
+      "propertyType": "نوع العقار",
+      "transactionType": "نوع المعاملة",
+      "surface": "المساحة (م²)",
+      "condition": "الحالة",
+      "floor": "الطابق",
+      "totalFloors": "عدد طوابق العمارة",
+      "constructionYear": "سنة البناء",
+      "extras": "التجهيزات"
+    },
+    "transaction": {
+      "sale": "بيع",
+      "rent": "كراء"
+    },
+    "conditions": {
+      "new": "جديد",
+      "good": "حالة جيدة",
+      "refresh": "يحتاج تجديدًا خفيفًا",
+      "renovate": "يحتاج ترميمًا"
+    },
+    "features": {
+      "elevator": "مصعد",
+      "parking": "موقف سيارات",
+      "terrace": "شرفة واسعة",
+      "pool": "مسبح"
+    },
+    "confidence": {
+      "high": "تقدير موثوق",
+      "medium": "موثوقية متوسطة",
+      "low": "تقدير إرشادي"
+    },
+    "result": {
+      "title": "السعر المُقدَّر",
+      "range": "المجال: من {{low}} إلى {{high}}",
+      "priceSqm": "سعر المتر المربع المعتمد",
+      "referenceSqm": "مرجع القطاع",
+      "totalAdjustment": "مجموع التعديلات",
+      "basedOnListings_one": "محتسب على أساس عقار مماثل واحد.",
+      "basedOnListings_other": "محتسب على أساس {{count}} عقارات مماثلة.",
+      "basedOnReference": "محتسب على أساس مرجع أسعار الحي."
+    },
+    "adjustments": {
+      "condition_new": "عقار جديد",
+      "condition_refresh": "يحتاج تجديدًا خفيفًا",
+      "condition_renovate": "يحتاج ترميمًا",
+      "no_elevator_high_floor": "طابق مرتفع بدون مصعد",
+      "top_floor": "الطابق الأخير مع مصعد",
+      "age": "قِدَم البناء",
+      "elevator": "مصعد",
+      "parking": "موقف سيارات",
+      "terrace": "شرفة واسعة",
+      "pool": "مسبح"
+    },
+    "comparables": {
+      "title": "عقارات مماثلة"
     }
   }
 }

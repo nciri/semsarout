@@ -103,7 +103,8 @@
     "availability": "Disponibilités",
     "referencePrices": "Prix de référence",
     "platform": "Plateforme",
-    "myAccount": "Mon compte"
+    "myAccount": "Mon compte",
+    "myPurchaseFile": "Mon dossier d'achat"
   },
   "advancedSearch": {
     "buy": "Acheter",

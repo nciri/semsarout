@@ -100,7 +100,9 @@ _STAGES = {
     "sale": ("contact", "visit", "offer", "negotiation", "compromise", "final_act"),
     "rent": ("contact", "visit", "application", "verification", "move_in"),
 }
-_SOURCES = ("phone_reveal", "callback_request", "contact_form", "website")
+# `manual` = lead saisi par un agent (appel, visite en agence) : il compte dans la
+# répartition par source, sans quoi la moitié des leads d'une agence serait invisible.
+_SOURCES = ("phone_reveal", "callback_request", "contact_form", "website", "manual")
 _LEAD_STATUSES = ("new", "contacted", "qualified", "converted", "lost")
 
 

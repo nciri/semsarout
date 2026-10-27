@@ -7,6 +7,7 @@ Le positionnement s'appuie sur une projection locale des biens (`listing_ro`), m
 par les événements `listing.*` (worker) — aucun appel synchrone inter-service.
 """
 from contextlib import asynccontextmanager
+from datetime import datetime
 
 from fastapi import Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
@@ -16,6 +17,7 @@ from sqlalchemy.orm import Session
 from semsar_auth import Principal, get_principal
 from semsar_common import forbidden, get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
+from . import estimate as estimation
 from . import pricing
 from .db import get_db, init_db
 from .models import ListingRO, NeighborhoodPriceRef
@@ -87,6 +89,62 @@ def get_price_position(property_id: int, db: Session = Depends(get_db)):
     if prop is None:
         return _err("Not found", 404)
     return pricing.price_position(db, prop)
+
+
+# ---- Estimation d'un bien (back-office agence) ----
+# Mêmes valeurs que le référentiel du front (`constants/property.js`) et que les biens déjà
+# en base : un type refusé ici serait un type que l'agence ne peut pas estimer.
+PROPERTY_TYPES = {"apartment", "house", "villa", "riad", "land", "commercial", "office",
+                  "garage"}
+TRANSACTION_TYPES = {"sale", "rent"}
+SURFACE_MIN, SURFACE_MAX = 5, 100_000   # au-delà, c'est une faute de frappe, pas un bien
+
+
+def _int_or_none(value):
+    return value if isinstance(value, int) and not isinstance(value, bool) else None
+
+
+@app.post("/market/estimate")
+async def estimate_property(request: Request, _principal: Principal = Depends(get_principal),
+                            db: Session = Depends(get_db)):
+    """Estime un bien à partir de ses caractéristiques, sans qu'il soit publié.
+
+    Réservé aux comptes connectés : c'est un outil de l'agence face à son vendeur, et la
+    valeur du parc d'un quartier n'a pas à être interrogeable anonymement en masse.
+    """
+    data = await request.json()
+    city = (data.get("city") or "").strip()
+    property_type = (data.get("property_type") or "").strip()
+    transaction_type = (data.get("transaction_type") or "sale").strip()
+    if not city:
+        return _err("La ville est requise.", 400)
+    if property_type not in PROPERTY_TYPES:
+        return _err("Type de bien inconnu.", 400)
+    if transaction_type not in TRANSACTION_TYPES:
+        return _err("Type de transaction inconnu.", 400)
+    try:
+        surface = float(data.get("surface"))
+    except (TypeError, ValueError):
+        return _err("La surface est requise.", 400)
+    if not SURFACE_MIN <= surface <= SURFACE_MAX:
+        return _err(f"Surface attendue entre {SURFACE_MIN} et {SURFACE_MAX} m².", 400)
+
+    features = data.get("features")
+    return estimation.estimate(
+        db,
+        city=city,
+        neighborhood=(data.get("neighborhood") or "").strip() or None,
+        property_type=property_type,
+        transaction_type=transaction_type,
+        surface=surface,
+        condition=data.get("condition"),
+        floor=_int_or_none(data.get("floor")),
+        total_floors=_int_or_none(data.get("total_floors")),
+        has_elevator=bool(data.get("has_elevator")),
+        construction_year=_int_or_none(data.get("construction_year")),
+        features=features if isinstance(features, list) else [],
+        current_year=datetime.utcnow().year,
+    )
 
 
 # ---- Référentiel prix quartier (admin) ----

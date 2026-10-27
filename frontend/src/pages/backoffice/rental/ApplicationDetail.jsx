@@ -8,7 +8,8 @@ import { rentalService } from '../../../services/rentalService'
 import { Panel, DataTable, EmptyState, Modal, Field, PRIMARY_BTN, SECONDARY_BTN, GatedNotice } from '../../../components/backoffice/ui'
 import DirIcon from '../../../components/common/DirIcon'
 import { Chip, IconAction } from '../components/kit'
-import { APP_TONE, maskEmail, maskPhone } from './model'
+import { DOC_TYPES } from '../../dashboard/applicationStatus'
+import { APP_TONE, QUALIFICATION_TONE, maskEmail, maskPhone } from './model'
 import { useRentalFormat } from './hooks'
 
 const DOC_TONE = { received: 'neutral', validated: 'good', rejected: 'crit' }
@@ -47,6 +48,12 @@ function ApplicationDetail() {
     </div>
   )
   const docs = a.documents || []
+  const q = a.qualification || {}
+  const missing = q.missing_documents || []
+  const docLabel = (code) => {
+    const key = DOC_TYPES.find(([value]) => value === code)?.[1]
+    return key ? t(`common:${key}`) : code
+  }
   const pending = ['received', 'reviewing', 'shortlist'].includes(a.status)
   const docColumns = [
     { header: t('backoffice:rental.application.detail.docs.columns.type'), cell: (d) => <span className="text-gray-700">{d.doc_type}</span> },
@@ -81,6 +88,41 @@ function ApplicationDetail() {
           <div><dt className="text-gray-500">{t('backoffice:rental.application.detail.fields.monthlyIncome')}</dt><dd className="mt-1 text-gray-900">{a.monthly_income != null ? f.dh(a.monthly_income) : '—'}</dd></div>
           <div><dt className="text-gray-500">{t('backoffice:rental.application.detail.fields.guarantor')}</dt><dd className="mt-1 text-gray-900">{a.guarantor_name || '—'}</dd></div>
           <div><dt className="text-gray-500">{t('backoffice:rental.application.detail.fields.property')}</dt><dd className="mt-1 text-gray-900">{a.property_title || t('backoffice:rental.application.propertyFallback', { id: a.property_id })}</dd></div>
+        </dl>
+      </Panel>
+      <Panel title={t('backoffice:rental.application.qualification.panelTitle')}>
+        {/* Les deux constats que l'agent faisait de tête : ce que le loyer pèse sur le revenu,
+            et ce qui manque encore pour instruire le dossier. */}
+        <dl className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+          <div>
+            <dt className="text-gray-500">{t('backoffice:rental.application.qualification.rent')}</dt>
+            <dd className="mt-1 text-gray-900 tabular-nums">{q.rent != null ? f.dh(q.rent) : '—'}</dd>
+          </div>
+          <div>
+            <dt className="text-gray-500">{t('backoffice:rental.application.qualification.effortRate')}</dt>
+            <dd className="mt-1 flex items-center gap-2">
+              <span className="text-gray-900 tabular-nums">{q.effort_rate != null ? `${q.effort_rate} %` : '—'}</span>
+              <Chip tone={QUALIFICATION_TONE[q.verdict] || 'neutral'}>
+                {t(`backoffice:rental.application.qualification.verdict.${q.verdict || 'unknown'}`)}
+              </Chip>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-gray-500">{t('backoffice:rental.application.qualification.guarantor')}</dt>
+            <dd className="mt-1 text-gray-900">
+              {q.guarantor_income == null
+                ? t('backoffice:rental.application.qualification.guarantorNone')
+                : t(`backoffice:rental.application.qualification.${q.guarantor_covers_rent ? 'guarantorCovers' : 'guarantorShort'}`)}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-gray-500">{t('backoffice:rental.application.qualification.missingDocs')}</dt>
+            <dd className="mt-1 text-gray-900">
+              {missing.length === 0
+                ? t('backoffice:rental.application.qualification.complete')
+                : missing.map((code) => docLabel(code)).join(', ')}
+            </dd>
+          </div>
         </dl>
       </Panel>
       <Panel title={t('backoffice:rental.application.detail.docs.panelTitle')}>

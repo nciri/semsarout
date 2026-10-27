@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useTranslation } from 'react-i18next'
 import {
   FiArrowDown, FiArrowUp, FiCheck, FiChevronDown, FiChevronLeft, FiChevronRight, FiMail,
-  FiRotateCcw, FiSearch, FiUserPlus, FiX,
+  FiPlus, FiRotateCcw, FiSearch, FiUserPlus, FiX,
 } from 'react-icons/fi'
 import api from '../../services/api'
 import { useFormat } from '../../utils/format'
@@ -21,11 +21,73 @@ const backofficeService = {
   getLeads: async (params) => (await api.get(`/backoffice/leads?${new URLSearchParams(params)}`)).data,
   getStats: async () => (await api.get('/backoffice/leads/stats')).data,
   getAgents: async () => (await api.get('/backoffice/leads/agents')).data,
+  getProperties: async () => (await api.get('/backoffice/properties?per_page=200')).data,
   // Même clé et même requête que la sidebar et le tableau de bord : la liste des leads « nouveaux ».
   getDashboard: async () => (await api.get('/backoffice/dashboard')).data,
+  createLead: async (data) => (await api.post('/backoffice/leads', data)).data,
   updateLead: async ({ id, data }) => (await api.put(`/backoffice/leads/${id}`, data)).data,
   assignLead: async ({ id, userId }) => (await api.post(`/backoffice/leads/${id}/assign`, { user_id: userId })).data,
   convertToClient: async (id) => (await api.post(`/backoffice/clients/convert-lead/${id}`)).data,
+}
+
+/** Saisie d'un lead reçu hors du site : appel, visite en agence, recommandation, salon. */
+function NewLeadForm({ properties, onClose, onCreated }) {
+  const { t } = useTranslation('backoffice')
+  const [values, setValues] = useState({ name: '', phone: '', email: '', property_id: '', message: '' })
+  const set = (key) => (e) => setValues((v) => ({ ...v, [key]: e.target.value }))
+  const create = useMutation(backofficeService.createLead, { onSuccess: onCreated })
+  const missingContact = !values.phone.trim() && !values.email.trim()
+
+  return (
+    <form
+      onSubmit={(e) => { e.preventDefault(); create.mutate({ ...values, property_id: values.property_id || null }) }}
+      className="grid gap-3 rounded-xl border border-gray-200 bg-white p-4 sm:p-5"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-display text-base font-bold">{t(`${K}.create.title`)}</h2>
+        <IconAction icon={FiX} label={t(`${K}.create.close`)} onClick={onClose} tipAlign="end" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="grid gap-1.5">
+          <span className="text-[12.5px] font-semibold text-gray-700">{t(`${K}.create.name`)}</span>
+          <input className={inputCls} value={values.name} onChange={set('name')} required />
+        </label>
+        <label className="grid gap-1.5">
+          <span className="text-[12.5px] font-semibold text-gray-700">{t(`${K}.create.phone`)}</span>
+          <input className={inputCls} value={values.phone} onChange={set('phone')} inputMode="tel" />
+        </label>
+        <label className="grid gap-1.5">
+          <span className="text-[12.5px] font-semibold text-gray-700">{t(`${K}.create.email`)}</span>
+          <input className={inputCls} type="email" value={values.email} onChange={set('email')} />
+        </label>
+        <label className="grid gap-1.5">
+          <span className="text-[12.5px] font-semibold text-gray-700">{t(`${K}.create.property`)}</span>
+          <select className={inputCls} value={values.property_id} onChange={set('property_id')}>
+            <option value="">{t(`${K}.create.noProperty`)}</option>
+            {properties.map((p) => <option key={p.id} value={p.id}>{p.title || `#${p.id}`}</option>)}
+          </select>
+        </label>
+      </div>
+      <label className="grid gap-1.5">
+        <span className="text-[12.5px] font-semibold text-gray-700">{t(`${K}.create.message`)}</span>
+        <textarea className={inputCls} rows={3} value={values.message} onChange={set('message')}
+          placeholder={t(`${K}.create.messagePlaceholder`)} />
+      </label>
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="submit" disabled={create.isLoading || missingContact}
+          className="rounded-lg bg-primary-400 px-4 py-2 text-sm font-semibold text-[#241906] transition-colors hover:bg-primary-600 disabled:opacity-60">
+          {create.isLoading ? t(`${K}.create.saving`) : t(`${K}.create.submit`)}
+        </button>
+        {/* Un lead sans moyen de rappel ne sert à rien : on le dit avant l'envoi. */}
+        {missingContact && <span className="text-[12.5px] text-gray-500">{t(`${K}.create.contactRequired`)}</span>}
+        {create.isError && (
+          <span className="text-[12.5px] font-semibold text-red-700">
+            {create.error?.response?.data?.error || t(`${K}.create.error`)}
+          </span>
+        )}
+      </div>
+    </form>
+  )
 }
 
 const EMPTY_FILTERS = { status: '', source: '', assigned_to: '', page: 1 }
@@ -45,6 +107,7 @@ function SortTH({ label, field, sort, onSort, className = '' }) {
   )
 }
 
+const inputCls = 'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none'
 const selectCls = 'rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary-400'
 
 export default function BackofficeLeads() {
@@ -55,6 +118,7 @@ export default function BackofficeLeads() {
   const [filters, setFilters] = useState(EMPTY_FILTERS)
   const [sort, setSort] = useState({ field: 'created_at', order: 'desc' })
   const [openId, setOpenId] = useState(null)
+  const [creating, setCreating] = useState(false)
   const listRef = useRef(null)
   const now = new Date()
 
@@ -69,6 +133,9 @@ export default function BackofficeLeads() {
   const { data: stats } = useQuery('backoffice-leads-stats', backofficeService.getStats)
   const { data: dash } = useQuery('backoffice-dashboard', backofficeService.getDashboard)
   const { data: agentsData } = useQuery('backoffice-leads-agents', backofficeService.getAgents, { staleTime: 300000 })
+  // Biens de l'agence, pour rattacher le lead saisi — chargés seulement quand le formulaire s'ouvre.
+  const properties = useQuery('backoffice-leads-properties', backofficeService.getProperties,
+    { enabled: creating, staleTime: 300000 })
   const agents = agentsData?.agents || []
 
   const refresh = () => {
@@ -131,10 +198,24 @@ export default function BackofficeLeads() {
 
   return (
     <div className="mx-auto grid w-full max-w-[1360px] grid-cols-[minmax(0,1fr)] gap-5">
-      <div>
-        <h1 className="font-display text-[26px] font-extrabold leading-tight tracking-tight">{t(`${K}.list.pageTitle`)}</h1>
-        <p className="mt-1 text-gray-500">{t(`${K}.list.subtitle`)}</p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display text-[26px] font-extrabold leading-tight tracking-tight">{t(`${K}.list.pageTitle`)}</h1>
+          <p className="mt-1 text-gray-500">{t(`${K}.list.subtitle`)}</p>
+        </div>
+        <button type="button" onClick={() => setCreating((v) => !v)} aria-expanded={creating}
+          className="inline-flex items-center gap-2 rounded-lg bg-primary-400 px-4 py-2 text-sm font-semibold text-[#241906] transition-colors hover:bg-primary-600">
+          <FiPlus className="h-[18px] w-[18px]" aria-hidden="true" />{t(`${K}.create.action`)}
+        </button>
       </div>
+
+      {creating && (
+        <NewLeadForm
+          properties={properties.data?.properties || []}
+          onClose={() => setCreating(false)}
+          onCreated={() => { setCreating(false); refresh() }}
+        />
+      )}
 
       <Summary
         pending={dash?.widgets?.new_leads || []}

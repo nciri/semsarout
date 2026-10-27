@@ -22,6 +22,7 @@ const ROUTES = {
     by_source: [{ source: 'phone_reveal', count: 8 }, { source: 'website', count: 24 }],
   },
   '/backoffice/leads/agents': { agents: [{ id: 7, name: 'Salma Agent' }] },
+  '/backoffice/properties?per_page=200': { properties: [{ id: 4, title: 'F4 Rabat' }] },
   '/backoffice/dashboard': { widgets: { new_leads: [{ id: 1, name: 'Hind Senhaji', created_at: iso(-33) }, { id: 3, name: 'X', created_at: iso(-1) }] } },
   '/backoffice/leads/1/duplicates': {
     leads: [{ id: 9, name: 'Hind Senhaji', status: 'new', created_at: iso(-9), property_title: 'Villa Rabat' }],
@@ -97,5 +98,23 @@ describe('Page Leads du back-office', () => {
     listPayload = { leads: [], total: 0, pages: 0, current_page: 1 }
     renderLeads()
     expect(await screen.findByText('Aucun lead trouvé')).toBeInTheDocument()
+  })
+
+  // Les leads reçus par téléphone ou en agence n'existaient nulle part : l'agent peut les saisir.
+  it('saisit un lead reçu hors du site et le rattache à un bien', async () => {
+    renderLeads()
+    await userEvent.click(await screen.findByRole('button', { name: 'Nouveau lead' }))
+
+    await userEvent.type(screen.getByLabelText('Nom du contact'), 'Karim Idrissi')
+    const submit = screen.getByRole('button', { name: 'Enregistrer le lead' })
+    expect(submit).toBeDisabled()          // ni téléphone ni e-mail : rappel impossible
+
+    await userEvent.type(screen.getByLabelText('Téléphone'), '0612345678')
+    await userEvent.selectOptions(screen.getByLabelText('Bien concerné'), '4')
+    await userEvent.click(submit)
+
+    expect(api.post).toHaveBeenCalledWith('/backoffice/leads', expect.objectContaining({
+      name: 'Karim Idrissi', phone: '0612345678', property_id: '4',
+    }))
   })
 })
