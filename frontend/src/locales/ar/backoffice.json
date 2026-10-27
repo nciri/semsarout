@@ -2750,12 +2750,13 @@
           "final": "السعر النهائي",
           "probability": "الاحتمال",
           "commission": "العمولة",
-          "commissionRate": "النسبة {{rate}} %",
           "commissionExpected": "منتظرة",
           "commissionSigned": "مكتسبة",
           "milestones": "تواريخ المراحل",
           "notes": "ملاحظات",
-          "none": "—"
+          "none": "—",
+          "commissionRateSale": "{{rate}} % من ثمن البيع",
+          "commissionRateRent": "{{rate}} % من الكراء الشهري"
         },
         "milestone": {
           "contact": "أول اتصال",
@@ -2834,7 +2835,15 @@
             "price": "السعر",
             "status": "الحالة"
           }
-        }
+        },
+        "rentLabel": "الكراء الشهري (درهم)",
+        "commissionLabel": "العمولة (%)",
+        "commissionBase": {
+          "sale": "من ثمن البيع",
+          "rent": "من الكراء الشهري"
+        },
+        "commissionPreview": "أي {{amount}}",
+        "currency": "درهم"
       },
       "detail": {
         "notFound": "المعاملة غير موجودة.",
@@ -3326,7 +3335,11 @@
         "city": "المدينة",
         "timezone": "المنطقة الزمنية",
         "description": "وصف الوكالة",
-        "descriptionPlaceholder": "صف وكالتك..."
+        "descriptionPlaceholder": "صف وكالتك...",
+        "saleCommissionRate": "العمولة على البيع (%)",
+        "saleCommissionHint": "تطبق على ثمن البيع.",
+        "rentalCommissionRate": "العمولة على الكراء (%)",
+        "rentalCommissionHint": "تطبق على الكراء الشهري."
       },
       "timezoneOptions": {
         "casablanca": "أفريقيا/الدار البيضاء (GMT+1)",

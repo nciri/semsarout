@@ -255,7 +255,10 @@ def internal_agencies_stats(request: Request, db: Session = Depends(get_db)):
 # Blob de config par agence (commission, notifications, SMTP…). Les champs `agency_*` sont
 # pré-remplis depuis le profil de l'agence. `smtp_password` est **write-only** (jamais renvoyé).
 _SETTINGS_DEFAULTS = {
-    "default_commission_rate": 3, "currency": "MAD", "timezone": "Africa/Casablanca",
+    # Deux taux, deux bases : la vente se calcule sur le prix, la location sur le loyer
+    # MENSUEL. Un taux unique donnerait 3 % d'un loyer, soit quelques centaines de dirhams.
+    "default_commission_rate": 3, "default_rental_commission_rate": 50,
+    "currency": "MAD", "timezone": "Africa/Casablanca",
     "email_notifications": True, "sms_notifications": False, "lead_auto_assign": False,
     "visit_reminder_hours": 24, "smtp_host": "", "smtp_port": "", "smtp_user": "",
 }

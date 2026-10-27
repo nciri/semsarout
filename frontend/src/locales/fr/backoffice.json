@@ -2750,12 +2750,13 @@
           "final": "Prix final",
           "probability": "Probabilité",
           "commission": "Commission",
-          "commissionRate": "Taux {{rate}} %",
           "commissionExpected": "attendue",
           "commissionSigned": "acquise",
           "milestones": "Dates d'étape",
           "notes": "Notes",
-          "none": "—"
+          "none": "—",
+          "commissionRateSale": "{{rate}} % du prix de vente",
+          "commissionRateRent": "{{rate}} % du loyer mensuel"
         },
         "milestone": {
           "contact": "Premier contact",
@@ -2834,7 +2835,15 @@
             "price": "Prix",
             "status": "Statut"
           }
-        }
+        },
+        "rentLabel": "Loyer mensuel (Dh)",
+        "commissionLabel": "Commission (%)",
+        "commissionBase": {
+          "sale": "du prix de vente",
+          "rent": "du loyer mensuel"
+        },
+        "commissionPreview": "soit {{amount}}",
+        "currency": "Dh"
       },
       "detail": {
         "notFound": "Transaction introuvable.",
@@ -3326,7 +3335,11 @@
         "city": "Ville",
         "timezone": "Fuseau horaire",
         "description": "Description de l'agence",
-        "descriptionPlaceholder": "Décrivez votre agence..."
+        "descriptionPlaceholder": "Décrivez votre agence...",
+        "saleCommissionRate": "Commission sur une vente (%)",
+        "saleCommissionHint": "Appliquée au prix de vente.",
+        "rentalCommissionRate": "Commission sur une location (%)",
+        "rentalCommissionHint": "Appliquée au loyer mensuel."
       },
       "timezoneOptions": {
         "casablanca": "Africa/Casablanca (GMT+1)",

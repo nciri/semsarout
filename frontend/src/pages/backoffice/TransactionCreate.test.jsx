@@ -28,6 +28,7 @@ const calls = () => api.get.mock.calls.map(([url]) => url)
 
 function renderPage(search = '') {
   api.get.mockImplementation(async (url) => {
+    if (url === '/backoffice/settings') return { data: { default_commission_rate: 3, default_rental_commission_rate: 50 } }
     if (url.startsWith('/backoffice/clients/')) return { data: { client: PINNED } }
     if (url.startsWith('/backoffice/clients')) return { data: { clients: CLIENTS, total: 1, pages: 1 } }
     if (url.startsWith('/backoffice/properties/')) return { data: { property: PROPERTIES[0] } }
@@ -93,8 +94,23 @@ describe('Création d’une transaction', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Créer la transaction' }))
 
     expect(api.post).toHaveBeenCalledWith('/backoffice/transactions', expect.objectContaining({
-      property_id: 4, client_id: 42,
+      property_id: 4, client_id: 42, commission_rate: 3,
     }))
+  })
+
+  it('applique le taux de commission de l’activité, sur la bonne base', async () => {
+    renderPage()
+    await screen.findByText('Villa Souissi')
+    await userEvent.click(screen.getAllByRole('button', { name: 'Choisir' })[0])   // vente
+
+    expect(await screen.findByDisplayValue('3')).toBeInTheDocument()
+    expect(screen.getByText(/du prix de vente/)).toBeInTheDocument()
+
+    await userEvent.selectOptions(screen.getByLabelText('Type'), 'rent')
+    expect(await screen.findByDisplayValue('50')).toBeInTheDocument()
+    expect(screen.getByText(/du loyer mensuel/)).toBeInTheDocument()
+    // 50 % du loyer saisi : l'agent voit le montant avant d'enregistrer.
+    expect(screen.getByText(/soit 3\s?400\s?000 Dh/)).toBeInTheDocument()
   })
 
   it('rend l’étape de recherche en arabe', async () => {

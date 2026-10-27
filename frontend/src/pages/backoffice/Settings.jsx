@@ -33,6 +33,7 @@ export default function BackofficeSettings() {
     agency_website: '',
     agency_description: '',
     default_commission_rate: 3,
+    default_rental_commission_rate: 50,
     currency: 'MAD',
     timezone: 'Africa/Casablanca',
     email_notifications: true,
@@ -211,6 +212,37 @@ export default function BackofficeSettings() {
                     <option value="Africa/Casablanca">{t('backoffice:settings.general.timezoneOptions.casablanca')}</option>
                     <option value="Europe/Paris">{t('backoffice:settings.general.timezoneOptions.paris')}</option>
                   </select>
+                </div>
+              </div>
+
+              {/* Deux taux, deux bases : sans cette distinction, un taux de vente appliqué à
+                  un loyer mensuel donnerait quelques centaines de dirhams d'honoraires. */}
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="default_commission_rate">
+                    {t('backoffice:settings.general.fields.saleCommissionRate')}
+                  </label>
+                  <input
+                    id="default_commission_rate"
+                    type="number" min="0" max="100" step="0.1"
+                    value={formData.default_commission_rate}
+                    onChange={(e) => setFormData({ ...formData, default_commission_rate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">{t('backoffice:settings.general.fields.saleCommissionHint')}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="default_rental_commission_rate">
+                    {t('backoffice:settings.general.fields.rentalCommissionRate')}
+                  </label>
+                  <input
+                    id="default_rental_commission_rate"
+                    type="number" min="0" max="100" step="0.1"
+                    value={formData.default_rental_commission_rate}
+                    onChange={(e) => setFormData({ ...formData, default_rental_commission_rate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">{t('backoffice:settings.general.fields.rentalCommissionHint')}</p>
                 </div>
               </div>
 

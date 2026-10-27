@@ -107,7 +107,9 @@ def _deal_value(t: Transaction) -> float:
 
 def _expected_commission(t: Transaction) -> float | None:
     # Le montant saisi prime ; sinon le taux appliqué au meilleur prix connu (règle des
-    # commissions déjà calculées : final_price × taux).
+    # commissions déjà calculées : final_price × taux). La base dépend du type : prix de
+    # vente pour une vente, loyer MENSUEL pour une location — d'où deux taux par défaut
+    # distincts côté agence (`default_commission_rate`, `default_rental_commission_rate`).
     if t.commission_amount is not None:
         return num(t.commission_amount)
     if t.commission_rate is None:

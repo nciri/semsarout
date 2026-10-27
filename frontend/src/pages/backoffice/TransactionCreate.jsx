@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery, useMutation } from 'react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -45,8 +45,15 @@ function TransactionCreate() {
   const [form, setForm] = useState({
     client_id: preselectedClient,
     transaction_type: searchParams.get('type') === 'rent' ? 'rent' : 'sale',
-    asking_price: '', expected_closing_date: '', priority: 'medium', notes: '',
+    asking_price: '', commission_rate: '', expected_closing_date: '', priority: 'medium', notes: '',
   })
+  // Taux de l'agence, par activité : la vente porte sur le prix, la location sur le loyer
+  // mensuel. L'agent le voit et peut le corriger, il ne le retape pas à chaque dossier.
+  const [rateTouched, setRateTouched] = useState(false)
+  const { data: settings } = useQuery('backoffice-settings', async () => (await api.get('/backoffice/settings')).data)
+  const defaultRate = (type) => (type === 'rent'
+    ? settings?.default_rental_commission_rate
+    : settings?.default_commission_rate)
 
   const searchQuery = new URLSearchParams(
     Object.entries({ ...filters, page, per_page: PER_PAGE }).filter(([, v]) => v !== '' && v != null),
@@ -75,6 +82,7 @@ function TransactionCreate() {
     client_id: form.client_id ? Number(form.client_id) : undefined,
     transaction_type: form.transaction_type,
     asking_price: form.asking_price ? Number(form.asking_price) : undefined,
+    commission_rate: form.commission_rate === '' ? undefined : Number(form.commission_rate),
     expected_closing_date: form.expected_closing_date || undefined,
     priority: form.priority,
     notes: form.notes || undefined,
@@ -84,14 +92,29 @@ function TransactionCreate() {
   })
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
+  const setType = (e) => {
+    const transaction_type = e.target.value
+    setForm((f) => ({ ...f, transaction_type,
+      commission_rate: rateTouched ? f.commission_rate : (defaultRate(transaction_type) ?? '') }))
+  }
+  const setRate = (e) => { setRateTouched(true); set('commission_rate')(e) }
+  // Les réglages arrivent après le premier rendu : on pose le taux dès qu'ils sont là.
+  useEffect(() => {
+    if (!settings || rateTouched) return
+    setForm((f) => (f.commission_rate === '' ? { ...f, commission_rate: defaultRate(f.transaction_type) ?? '' } : f))
+  }, [settings])  // eslint-disable-line react-hooks/exhaustive-deps
   const setFilter = (k) => (e) => { setPage(1); setFilters((f) => ({ ...f, [k]: e.target.value })) }
   const chooseProperty = (p) => {
     setProperty(p)
-    setForm((f) => ({
-      ...f,
-      transaction_type: p.transaction_type || f.transaction_type,
-      asking_price: f.asking_price || (p.price != null ? String(p.price) : ''),
-    }))
+    setForm((f) => {
+      const transaction_type = p.transaction_type || f.transaction_type
+      return {
+        ...f,
+        transaction_type,
+        asking_price: f.asking_price || (p.price != null ? String(p.price) : ''),
+        commission_rate: rateTouched ? f.commission_rate : (defaultRate(transaction_type) ?? ''),
+      }
+    })
     setStep('form')
   }
 
@@ -102,6 +125,10 @@ function TransactionCreate() {
   const pages = results?.pages || 1
   const canSubmit = Boolean(property?.id) && Boolean(form.client_id) && !create.isLoading
   const place = (p) => [p?.city, p?.neighborhood].filter(Boolean).join(', ')
+  // Honoraires attendus : le même calcul que le service, montré avant d'enregistrer.
+  const commissionPreview = form.asking_price && form.commission_rate
+    ? `${fmtNumber(Math.round(Number(form.asking_price) * Number(form.commission_rate) / 100))} ${t('backoffice:crm.transactions.create.currency')}`
+    : null
 
   return (
     <div className="w-full space-y-4">
@@ -285,14 +312,21 @@ function TransactionCreate() {
             <h2 className="mb-3 text-sm font-semibold text-gray-900">{t('backoffice:crm.transactions.create.sectionDetails')}</h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Field label={t('backoffice:crm.transactions.create.typeLabel')}>
-                <select value={form.transaction_type} onChange={set('transaction_type')} className={ctrlCls}>
+                <select value={form.transaction_type} onChange={setType} className={ctrlCls}>
                   <option value="sale">{t('backoffice:crm.transactions.type.sale')}</option>
                   <option value="rent">{t('backoffice:crm.transactions.type.rent')}</option>
                 </select>
               </Field>
-              <Field label={t('backoffice:crm.transactions.create.priceLabel')}>
+              <Field label={t(`backoffice:crm.transactions.create.${form.transaction_type === 'rent' ? 'rentLabel' : 'priceLabel'}`)}>
                 <input type="number" min="0" value={form.asking_price} onChange={set('asking_price')} className={ctrlCls}
                   placeholder={t('backoffice:crm.transactions.create.pricePlaceholder')} />
+              </Field>
+              <Field label={t('backoffice:crm.transactions.create.commissionLabel')}>
+                <input type="number" min="0" max="100" step="0.1" value={form.commission_rate} onChange={setRate} className={ctrlCls} />
+                <span className="mt-1 block text-xs text-gray-500">
+                  {t(`backoffice:crm.transactions.create.commissionBase.${form.transaction_type}`)}
+                  {commissionPreview && ` · ${t('backoffice:crm.transactions.create.commissionPreview', { amount: commissionPreview })}`}
+                </span>
               </Field>
               <Field label={t('backoffice:crm.transactions.create.closingDateLabel')}>
                 <input type="date" value={form.expected_closing_date} onChange={set('expected_closing_date')} className={ctrlCls} />
