@@ -49,6 +49,11 @@ except Exception:  # noqa: BLE001
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
 
+# Une pièce est relue dans le navigateur, sur l'origine du site : un type déposé librement
+# (text/html) y exécuterait du script. On n'accepte que des formats inertes.
+ALLOWED_DOC_CONTENT_TYPES = ("application/pdf", "image/jpeg", "image/png", "image/webp")
+
+
 def _gate(principal: Principal) -> JSONResponse | None:
     if principal.agency_id is None or "rental" not in principal.features:
         return err("Fonction réservée aux plans Pro et Entreprise.", 403)
@@ -1203,7 +1208,9 @@ async def upload_document(application_id: int, request: Request,
         return err("Fichier trop volumineux (max 10 Mo).", 400)
     doc_type = request.query_params.get("doc_type", "autre")
     filename = request.query_params.get("filename", "piece")
-    content_type = request.headers.get("content-type", "application/octet-stream")
+    content_type = (request.headers.get("content-type") or "").split(";")[0].strip().lower()
+    if content_type not in ALLOWED_DOC_CONTENT_TYPES:
+        return err("Format accepté : PDF, JPEG, PNG ou WebP.", 400)
     from . import storage
     key = f"applications/{a.id}/{uuid.uuid4().hex}"
     storage.docs_storage().put(key, body, content_type)
@@ -1234,7 +1241,9 @@ async def upload_document_agency(application_id: int, request: Request,
         return err("Fichier trop volumineux (max 10 Mo).", 400)
     doc_type = request.query_params.get("doc_type", "autre")
     filename = request.query_params.get("filename", "piece")
-    content_type = request.headers.get("content-type", "application/octet-stream")
+    content_type = (request.headers.get("content-type") or "").split(";")[0].strip().lower()
+    if content_type not in ALLOWED_DOC_CONTENT_TYPES:
+        return err("Format accepté : PDF, JPEG, PNG ou WebP.", 400)
     from . import storage
     key = f"applications/{a.id}/{uuid.uuid4().hex}"
     storage.docs_storage().put(key, body, content_type)

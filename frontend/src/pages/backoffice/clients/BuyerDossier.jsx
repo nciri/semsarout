@@ -11,10 +11,15 @@ import { Chip, IconAction, Kv, TD, TH } from '../components/kit'
 const P = 'crm.clients.buyerDossier'
 const MAX_SIZE = 10 * 1024 * 1024
 
+// Le type d'une pièce vient de son dépôt : ouvert tel quel, un blob same-origin typé
+// text/html exécuterait du script. On ne rend inline que des formats inertes.
+const INLINE_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp']
+const safeBlob = (data) => (INLINE_TYPES.includes(data.type) ? data : new Blob([data], { type: 'application/octet-stream' }))
+
 async function openDoc(url, onError) {
   try {
     const res = await api.get(url, { responseType: 'blob' })
-    const objectUrl = URL.createObjectURL(res.data)
+    const objectUrl = URL.createObjectURL(safeBlob(res.data))
     window.open(objectUrl, '_blank')
     setTimeout(() => URL.revokeObjectURL(objectUrl), 60000)
   } catch { onError() }

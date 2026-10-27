@@ -10,10 +10,15 @@ import DirIcon from '../../components/common/DirIcon'
 import { APP_STATUS, DOC_STATUS, DOC_TYPES } from './applicationStatus'
 import { useFormat } from '../../utils/format'
 
+// Le type d'une pièce vient de son dépôt : ouvert tel quel, un blob same-origin typé
+// text/html exécuterait du script. On ne rend inline que des formats inertes.
+const INLINE_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp']
+const safeBlob = (data) => (INLINE_TYPES.includes(data.type) ? data : new Blob([data], { type: 'application/octet-stream' }))
+
 async function openDoc(url, t) {
   try {
     const res = await api.get(url, { responseType: 'blob' })
-    const u = URL.createObjectURL(res.data)
+    const u = URL.createObjectURL(safeBlob(res.data))
     window.open(u, '_blank')
     setTimeout(() => URL.revokeObjectURL(u), 60000)
   } catch { toast.error(t('dashboard:applicationDetail.toasts.fileUnavailable')) }

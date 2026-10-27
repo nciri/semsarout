@@ -169,3 +169,29 @@ def test_une_piece_rejetee_redevient_manquante(db_session):
     c = _client_row(db_session)
     docs = [BuyerDocument(client_id=c.id, doc_type="cin", status="rejected")]
     assert "cin" in buyer.assess_client(c, docs)["missing_documents"]
+
+
+def test_un_underscore_dans_ladresse_nouvre_pas_le_dossier_du_voisin(db_session, monkeypatch):
+    """`_` est un joker en ILIKE : sans égalité stricte, deux comptes voisins se confondraient."""
+    monkeypatch.setattr(users_client, "email_of", lambda uid: "rachid_k@example.ma")
+    _client_row(db_session, email="rachidXk@example.ma")
+    mien = _client_row(db_session, email="rachid_k@example.ma")
+
+    dossiers = _buyer_client(db_session).get("/buyer-dossier").json()["dossiers"]
+    assert [d["client_id"] for d in dossiers] == [mien.id]
+    app.dependency_overrides.clear()
+
+
+def test_une_piece_au_format_executable_est_refusee(db_session):
+    """Relue dans le navigateur, une pièce text/html exécuterait du script sur notre origine."""
+    c = _client_row(db_session)
+    me = _buyer_client(db_session)
+    refus = me.post(f"/buyer-dossier/{c.id}/documents?doc_type=cin&filename=x.html",
+                    content=b"<script>alert(1)</script>", headers={"content-type": "text/html"})
+    assert refus.status_code == 400
+    assert db_session.query(BuyerDocument).count() == 0
+
+    ok = me.post(f"/buyer-dossier/{c.id}/documents?doc_type=cin&filename=cin.pdf",
+                 content=b"%PDF-1.4", headers={"content-type": "application/pdf; charset=binary"})
+    assert ok.status_code == 201
+    app.dependency_overrides.clear()

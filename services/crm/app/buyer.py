@@ -12,6 +12,7 @@ seul transfert, pas de multipart à assembler côté front.
 import uuid
 
 from fastapi import APIRouter, Depends, Request, Response
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
@@ -25,6 +26,9 @@ router = APIRouter()
 
 MAX_DOC_SIZE = 10 * 1024 * 1024
 DOC_STATUSES = ("received", "validated", "rejected")
+# Une pièce est relue dans le navigateur de l'agent, sur l'origine du site : un type déposé
+# librement (text/html) y exécuterait du script. On n'accepte que des formats inertes.
+ALLOWED_CONTENT_TYPES = ("application/pdf", "image/jpeg", "image/png", "image/webp")
 
 
 def doc_dict(d: BuyerDocument) -> dict:
@@ -84,7 +88,9 @@ async def _stored_document(request: Request, client_id: int, uploaded_by: int | 
     doc_type = request.query_params.get("doc_type", "autre")
     if doc_type not in qualification.DOC_TYPES:
         return None, err("Type de pièce inconnu.", 400)
-    content_type = request.headers.get("content-type", "application/octet-stream")
+    content_type = (request.headers.get("content-type") or "").split(";")[0].strip().lower()
+    if content_type not in ALLOWED_CONTENT_TYPES:
+        return None, err("Format accepté : PDF, JPEG, PNG ou WebP.", 400)
     from . import storage
     key = f"buyer-documents/{client_id}/{uuid.uuid4().hex}"
     storage.docs_storage().put(key, body, content_type)
@@ -167,7 +173,9 @@ def my_dossiers(principal: Principal = Depends(get_principal), db: Session = Dep
     email = users_client.email_of(_uid(principal))
     if not email:
         return {"dossiers": []}
-    rows = db.query(Client).filter(Client.email.ilike(email)).all()
+    # Égalité stricte, insensible à la casse : un `_` dans une adresse est un joker en ILIKE,
+    # et ouvrirait le dossier du voisin dont l'adresse ne diffère que d'un caractère.
+    rows = db.query(Client).filter(func.lower(Client.email) == email.lower()).all()
     out = []
     for c in rows:
         docs = documents_of(db, c.id)

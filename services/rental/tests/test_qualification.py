@@ -89,3 +89,15 @@ def test_la_candidature_expose_sa_qualification(agency_client, db_session):
     assert q["rent"] == 6000 and q["effort_rate"] == 25.0
     assert q["verdict"] == "solid"
     assert q["missing_documents"] == ["bulletin_salaire", "contrat_travail"]
+
+
+def test_une_piece_au_format_executable_est_refusee(agency_client, db_session):
+    """Relue dans le navigateur, une pièce text/html exécuterait du script sur notre origine."""
+    db_session.add(TenantApplication(id=2, property_id=7, agency_id=AGENCY,
+                                     applicant_name="Salma Bennani", status="received"))
+    db_session.commit()
+    refus = agency_client.post(
+        "/backoffice/gestion-locative/applications/2/documents?doc_type=cin&filename=x.html",
+        content=b"<script>alert(1)</script>", headers={"content-type": "text/html"})
+    assert refus.status_code == 400
+    assert db_session.query(ApplicationDocument).count() == 0
