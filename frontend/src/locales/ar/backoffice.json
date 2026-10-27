@@ -574,6 +574,24 @@
         "toasts": {
           "decided": "تم تسجيل القرار"
         }
+      },
+      "qualification": {
+        "panelTitle": "تقييم الملف",
+        "rent": "الكراء الشهري",
+        "effortRate": "نسبة الجهد",
+        "guarantor": "الضامن",
+        "guarantorNone": "لا يوجد ضامن مصرح به",
+        "guarantorCovers": "يغطي 3 أشهر كراء",
+        "guarantorShort": "أقل من 3 أشهر كراء",
+        "missingDocs": "الوثائق الناقصة",
+        "complete": "الملف مكتمل",
+        "missingCount": "{{count}} ناقصة",
+        "verdict": {
+          "solid": "متين",
+          "acceptable": "مقبول",
+          "weak": "متوتر",
+          "unknown": "الدخل غير مصرح به"
+        }
       }
     },
     "inventory": {
@@ -2082,6 +2100,62 @@
         },
         "propertyTypesWanted": "أنواع العقارات المطلوبة",
         "preferredCities": "المدن المفضلة"
+      },
+      "buyerDossier": {
+        "title": "ملف الشراء",
+        "currency": "درهم",
+        "edit": "تعديل",
+        "cancel": "إلغاء",
+        "save": "حفظ",
+        "loanTerms": "على {{years}} سنة بنسبة {{rate}} %",
+        "gapShort": "{{amount}} أقل من الميزانية المعلنة",
+        "gapOver": "{{amount}} فوق الميزانية المعلنة",
+        "fields": {
+          "downPayment": "المساهمة الشخصية",
+          "maxMonthlyPayment": "أقصى قسط شهري",
+          "preapproval": "موافقة بنكية مبدئية",
+          "borrowingCapacity": "القدرة على الاقتراض",
+          "realisticBudget": "الميزانية الواقعية",
+          "declaredBudget": "الميزانية المعلنة"
+        },
+        "verdict": {
+          "financed": "التمويل مغطى",
+          "tight": "تمويل متوتر",
+          "gap": "فجوة في التمويل",
+          "no_target": "لا توجد ميزانية معلنة",
+          "unknown": "القدرة غير مصرح بها"
+        },
+        "docTypes": {
+          "cin": "البطاقة الوطنية",
+          "justificatif_revenu": "إثبات الدخل",
+          "releve_bancaire": "كشف حساب بنكي",
+          "accord_bancaire": "موافقة بنكية مبدئية",
+          "autre": "وثيقة أخرى"
+        },
+        "docs": {
+          "title": "الوثائق المطلوبة",
+          "typeLabel": "نوع الوثيقة",
+          "add": "إضافة",
+          "added": "تمت إضافة الوثيقة",
+          "missing": "ناقص: {{list}}",
+          "empty": "لم يتم إيداع أي وثيقة بعد.",
+          "tooLarge": "الملف كبير جدا (10 ميغابايت كحد أقصى).",
+          "unavailable": "الوثيقة غير متاحة.",
+          "download": "تحميل",
+          "validate": "مصادقة",
+          "reject": "رفض",
+          "status": {
+            "received": "مستلمة",
+            "validated": "مصادق عليها",
+            "rejected": "مرفوضة"
+          },
+          "columns": {
+            "type": "الوثيقة",
+            "file": "الملف",
+            "status": "الحالة",
+            "actions": "إجراءات"
+          }
+        }
       }
     },
     "pipeline": {
@@ -2727,7 +2801,40 @@
         "submitButton": "إنشاء المعاملة",
         "submitting": "جارٍ الإنشاء…",
         "toastSuccess": "تم إنشاء المعاملة",
-        "toastError": "خطأ"
+        "toastError": "خطأ",
+        "chosenProperty": "العقار المختار",
+        "changeProperty": "تغيير العقار",
+        "search": {
+          "subtitle": "ابدأ بالعثور على العقار داخل محفظة الوكالة.",
+          "filtersTitle": "البحث عن العقار",
+          "any": "الكل",
+          "keyword": "كلمة مفتاحية",
+          "keywordPlaceholder": "العنوان، المرجع، المدينة…",
+          "city": "المدينة",
+          "neighborhood": "الحي",
+          "neighborhoodPlaceholder": "مثال: أنفا",
+          "propertyType": "نوع العقار",
+          "transaction": "المعاملة",
+          "status": "الحالة",
+          "minPrice": "السعر الأدنى",
+          "maxPrice": "السعر الأقصى",
+          "minSurface": "المساحة الدنيا (م²)",
+          "minBedrooms": "الحد الأدنى للغرف",
+          "reset": "إعادة التعيين",
+          "resultsCount": "{{count}} عقار موجود",
+          "empty": "لا يوجد عقار يطابق هذا البحث.",
+          "choose": "اختيار",
+          "previous": "السابق",
+          "next": "التالي",
+          "columns": {
+            "property": "العقار",
+            "location": "الموقع",
+            "type": "النوع",
+            "surface": "المساحة",
+            "price": "السعر",
+            "status": "الحالة"
+          }
+        }
       },
       "detail": {
         "notFound": "المعاملة غير موجودة.",

@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
-from . import clients, users_client, visits
+from . import buyer, clients, users_client, visits
 from .visits import _visit_dict
 from .db import get_db, init_db
 from .models import Client, Lead, PropertyRO, Visit
@@ -46,6 +46,7 @@ except Exception:  # noqa: BLE001
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 app.include_router(clients.router)  # sous-domaine clients (Stage B)
 app.include_router(visits.router)   # sous-domaine visites + calendrier (Stage C)
+app.include_router(buyer.router)    # dossier d'achat : pièces + qualification
 
 
 def _err(msg: str, code: int) -> JSONResponse:

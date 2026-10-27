@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
 
-from . import users_client
+from . import buyer, users_client
 from .db import get_db
 from .models import Client, ClientInteraction, Lead, PropertyRO, TransactionRO, Visit
 from .util import err, iso, json_body
@@ -30,6 +30,7 @@ _FIELDS = [
     "city", "postal_code", "client_type", "status", "source", "source_detail",
     "search_criteria", "budget_min", "budget_max", "notes", "rating", "tags",
     "assigned_to_id", "gdpr_consent", "marketing_consent",
+    "down_payment", "max_monthly_payment", "has_bank_preapproval",
 ]
 
 
@@ -43,6 +44,8 @@ def _client_dict(c: Client, include_interactions: bool = False, db: Session = No
         "search_criteria": c.search_criteria,
         "budget_min": float(c.budget_min) if c.budget_min is not None else None,
         "budget_max": float(c.budget_max) if c.budget_max is not None else None,
+        # Capacité d'achat : calculée à chaque lecture, jamais stockée (le barème peut bouger).
+        "financing": buyer.assess_client(c),
         "notes": c.notes, "next_follow_up": iso(c.next_follow_up), "rating": c.rating,
         "tags": c.tags or [], "assigned_to_id": c.assigned_to_id,
         "assigned_to_name": users_client.name_of(c.agency_id, c.assigned_to_id),
@@ -275,8 +278,12 @@ def get_client(client_id: int, principal: Principal = Depends(get_principal), db
     if e:
         return e
     vmap, tmap = _counts(db, [c.id])
-    return _client_dict(c, include_interactions=True, db=db,
+    data = _client_dict(c, include_interactions=True, db=db,
                         visits_count=vmap.get(c.id, 0), transactions_count=tmap.get(c.id, 0))
+    docs = buyer.documents_of(db, c.id)
+    data["documents"] = [buyer.doc_dict(d) for d in docs]
+    data["financing"] = buyer.assess_client(c, docs)   # pièces chargées : on sait ce qui manque
+    return data
 
 
 @router.get("/backoffice/clients/{client_id}/history")

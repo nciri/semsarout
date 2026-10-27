@@ -574,6 +574,24 @@
         "toasts": {
           "decided": "Décision enregistrée"
         }
+      },
+      "qualification": {
+        "panelTitle": "Qualification du dossier",
+        "rent": "Loyer mensuel",
+        "effortRate": "Taux d'effort",
+        "guarantor": "Garant",
+        "guarantorNone": "Aucun garant déclaré",
+        "guarantorCovers": "Couvre 3 loyers",
+        "guarantorShort": "En deçà de 3 loyers",
+        "missingDocs": "Pièces manquantes",
+        "complete": "Dossier complet",
+        "missingCount": "{{count}} manquante(s)",
+        "verdict": {
+          "solid": "Solide",
+          "acceptable": "Acceptable",
+          "weak": "Tendu",
+          "unknown": "Revenu non renseigné"
+        }
       }
     },
     "inventory": {
@@ -2082,6 +2100,62 @@
         },
         "propertyTypesWanted": "Types de biens recherchés",
         "preferredCities": "Villes préférées"
+      },
+      "buyerDossier": {
+        "title": "Dossier d'achat",
+        "currency": "Dh",
+        "edit": "Modifier",
+        "cancel": "Annuler",
+        "save": "Enregistrer",
+        "loanTerms": "sur {{years}} ans à {{rate}} %",
+        "gapShort": "{{amount}} en deçà du budget annoncé",
+        "gapOver": "{{amount}} au-delà du budget annoncé",
+        "fields": {
+          "downPayment": "Apport",
+          "maxMonthlyPayment": "Mensualité maximale",
+          "preapproval": "Accord de principe bancaire obtenu",
+          "borrowingCapacity": "Capacité d'emprunt",
+          "realisticBudget": "Budget réaliste",
+          "declaredBudget": "Budget annoncé"
+        },
+        "verdict": {
+          "financed": "Financement couvert",
+          "tight": "Financement tendu",
+          "gap": "Écart de financement",
+          "no_target": "Budget non annoncé",
+          "unknown": "Capacité non renseignée"
+        },
+        "docTypes": {
+          "cin": "CIN",
+          "justificatif_revenu": "Justificatif de revenu",
+          "releve_bancaire": "Relevé bancaire",
+          "accord_bancaire": "Accord de principe bancaire",
+          "autre": "Autre pièce"
+        },
+        "docs": {
+          "title": "Pièces justificatives",
+          "typeLabel": "Type de pièce",
+          "add": "Ajouter",
+          "added": "Pièce ajoutée",
+          "missing": "Manque : {{list}}",
+          "empty": "Aucune pièce déposée pour l'instant.",
+          "tooLarge": "Fichier trop volumineux (max 10 Mo).",
+          "unavailable": "Pièce indisponible.",
+          "download": "Télécharger",
+          "validate": "Valider",
+          "reject": "Refuser",
+          "status": {
+            "received": "Reçue",
+            "validated": "Validée",
+            "rejected": "Refusée"
+          },
+          "columns": {
+            "type": "Pièce",
+            "file": "Fichier",
+            "status": "Statut",
+            "actions": "Actions"
+          }
+        }
       }
     },
     "pipeline": {
@@ -2727,7 +2801,40 @@
         "submitButton": "Créer la transaction",
         "submitting": "Création…",
         "toastSuccess": "Transaction créée",
-        "toastError": "Erreur"
+        "toastError": "Erreur",
+        "chosenProperty": "Bien choisi",
+        "changeProperty": "Changer de bien",
+        "search": {
+          "subtitle": "Commencez par trouver le bien dans le portefeuille de l'agence.",
+          "filtersTitle": "Rechercher le bien",
+          "any": "Tous",
+          "keyword": "Mot-clé",
+          "keywordPlaceholder": "Titre, référence, ville…",
+          "city": "Ville",
+          "neighborhood": "Quartier",
+          "neighborhoodPlaceholder": "Ex. Anfa",
+          "propertyType": "Type de bien",
+          "transaction": "Transaction",
+          "status": "Statut",
+          "minPrice": "Prix min.",
+          "maxPrice": "Prix max.",
+          "minSurface": "Surface min. (m²)",
+          "minBedrooms": "Chambres min.",
+          "reset": "Réinitialiser",
+          "resultsCount": "{{count}} bien(s) trouvé(s)",
+          "empty": "Aucun bien ne correspond à cette recherche.",
+          "choose": "Choisir",
+          "previous": "Précédent",
+          "next": "Suivant",
+          "columns": {
+            "property": "Bien",
+            "location": "Localisation",
+            "type": "Type",
+            "surface": "Surface",
+            "price": "Prix",
+            "status": "Statut"
+          }
+        }
       },
       "detail": {
         "notFound": "Transaction introuvable.",

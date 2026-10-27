@@ -40,6 +40,7 @@ const CreateProperty = lazy(() => import('./pages/dashboard/CreateProperty'))
 const MyLeads = lazy(() => import('./pages/dashboard/MyLeads'))
 const MyApplications = lazy(() => import('./pages/dashboard/MyApplications'))
 const MyApplicationDetail = lazy(() => import('./pages/dashboard/MyApplicationDetail'))
+const MyPurchaseFile = lazy(() => import('./pages/dashboard/MyPurchaseFile'))
 const MyAgency = lazy(() => import('./pages/dashboard/MyAgency'))
 const Checkout = lazy(() => import('./pages/Checkout'))
 const NotFound = lazy(() => import('./pages/NotFound'))
@@ -181,6 +182,7 @@ function App() {
           <Route path="leads" element={<MyLeads />} />
           <Route path="candidatures" element={<MyApplications />} />
           <Route path="candidatures/:id" element={<MyApplicationDetail />} />
+          <Route path="mon-dossier-achat" element={<MyPurchaseFile />} />
 
           {/* Mon compte : agence / abonnement / paramètres regroupés en onglets */}
           <Route path="compte" element={<AccountTabs />}>

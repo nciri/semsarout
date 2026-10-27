@@ -447,6 +447,9 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         or path.startswith("/api/v1/backoffice/calendar")
     ):
         return app.state.crm, path.replace("/api/v1", "", 1)
+    # Dossier d'achat de l'acquéreur (ses pièces justificatives, son propre espace) → crm.
+    if settings.crm_url and path.startswith("/api/v1/buyer-dossier"):
+        return app.state.crm, path.replace("/api/v1", "", 1)
     # Leads publics / « mes leads » (page contact publique + gestion par l'utilisateur) → crm.
     # (contact/reveal-phone sur une annonce restent chez listing, cf. _LISTING_ENGAGE.)
     if settings.crm_url and (

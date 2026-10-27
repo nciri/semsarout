@@ -7,6 +7,7 @@ import api from '../../services/api'
 import DirIcon from '../../components/common/DirIcon'
 import { IconAction } from './components/kit'
 import ClientFiche, { FicheActions } from './clients/ClientFiche'
+import BuyerDossier from './clients/BuyerDossier'
 import { StatusChip } from './clients/ui'
 import { P, useFicheSub } from './clients/labels'
 import { buildDossiers } from './clients/model'
@@ -73,6 +74,8 @@ export default function BackofficeClientDetail() {
       <section className="rounded-xl border border-gray-200 bg-white px-4 pb-6 pt-5 sm:px-6">
         <ClientFiche d={d} history={history} transactions={transactions} now={now} />
       </section>
+      {/* Dossier d'achat : réservé à qui achète — un vendeur n'a ni apport ni pièces à fournir. */}
+      {['buyer', 'investor'].includes(client.client_type) && <BuyerDossier client={client} />}
     </div>
   )
 }

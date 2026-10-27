@@ -50,6 +50,10 @@
       "account": {
         "title": "Mon compte",
         "desc": "Coordonnées, sécurité et préférences."
+      },
+      "purchaseFile": {
+        "title": "Mon dossier d'achat",
+        "desc": "Déposez vos pièces justificatives pour votre projet d'achat."
       }
     }
   },
@@ -1434,5 +1438,45 @@
     "lastFailure": "Motif indiqué par votre banque : {{reason}}.",
     "lastFailureGeneric": "Votre dernier paiement n'a pas abouti. Vérifiez votre carte ou contactez votre banque, puis réessayez.",
     "payNow": "Payer maintenant"
+  },
+  "purchaseFile": {
+    "title": "Mon dossier d'achat",
+    "subtitle": "Déposez une seule fois les pièces que votre agence demande pour instruire votre achat.",
+    "empty": "Aucune agence ne suit encore votre projet d'achat. Contactez une agence depuis une annonce pour ouvrir un dossier.",
+    "dossierTitle": "Dossier suivi par votre agence",
+    "dossierSubtitle": "Les montants sont ceux saisis par l'agence lors de vos échanges.",
+    "currency": "Dh",
+    "yes": "Oui",
+    "no": "Non",
+    "fields": {
+      "declaredBudget": "Budget annoncé",
+      "realisticBudget": "Budget réaliste",
+      "preapproval": "Accord bancaire"
+    },
+    "docTypes": {
+      "cin": "CIN",
+      "justificatif_revenu": "Justificatif de revenu",
+      "releve_bancaire": "Relevé bancaire",
+      "accord_bancaire": "Accord de principe bancaire",
+      "autre": "Autre pièce"
+    },
+    "docs": {
+      "title": "Mes pièces",
+      "typeLabel": "Type de pièce",
+      "add": "Déposer",
+      "added": "Pièce déposée",
+      "missing": "Il manque encore : {{list}}",
+      "complete": "Toutes les pièces demandées sont déposées.",
+      "empty": "Aucune pièce déposée pour l'instant.",
+      "tooLarge": "Fichier trop volumineux (max 10 Mo).",
+      "unavailable": "Pièce indisponible.",
+      "download": "Télécharger",
+      "remove": "Retirer",
+      "status": {
+        "received": "Reçue",
+        "validated": "Validée",
+        "rejected": "Refusée"
+      }
+    }
   }
 }
