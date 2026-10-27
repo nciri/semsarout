@@ -220,7 +220,7 @@ export default function BackofficePropertyForm() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto w-full max-w-[1360px]">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <IconAction icon={FiArrowLeft} label={t('backoffice:crm.properties.form.backToList')} onClick={() => navigate('/backoffice/biens')}

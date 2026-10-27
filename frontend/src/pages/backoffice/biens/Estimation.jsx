@@ -65,7 +65,7 @@ export default function Estimation() {
   const money = (v) => `${fmtNumber(Math.round(v))} ${t('currency')}`
 
   return (
-    <div className="mx-auto grid w-full max-w-[1100px] gap-5">
+    <div className="mx-auto grid w-full max-w-[1360px] gap-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-[26px] font-extrabold leading-tight tracking-tight">{t('title')}</h1>
