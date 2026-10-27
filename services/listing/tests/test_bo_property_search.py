@@ -46,3 +46,18 @@ def test_la_recherche_reste_cloisonnee_a_lagence(client, db_session):
 
     assert _refs(client, "min_surface=10&min_bedrooms=1") == ["P-1"]
     m.app.dependency_overrides.pop(get_principal, None)
+
+
+def test_tri_par_colonne(client, db_session):
+    _as_agent()
+    _bien(db_session, "P-1", price=2_000_000, surface=60)
+    _bien(db_session, "P-2", price=500_000, surface=200)
+
+    def refs(query):
+        return [p["reference"] for p in client.get(f"/backoffice/properties?{query}").json()["properties"]]
+
+    assert refs("sort_by=price&sort_order=asc") == ["P-2", "P-1"]
+    assert refs("sort_by=surface&sort_order=desc") == ["P-2", "P-1"]
+    # Un nom de colonne inconnu ne doit pas casser la page : on retombe sur l'ordre par défaut.
+    assert sorted(refs("sort_by=metadata")) == ["P-1", "P-2"]
+    m.app.dependency_overrides.pop(get_principal, None)

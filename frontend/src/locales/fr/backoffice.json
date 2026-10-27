@@ -2755,8 +2755,8 @@
           "milestones": "Dates d'étape",
           "notes": "Notes",
           "none": "—",
-          "commissionRateSale": "{{rate}} % du prix de vente",
-          "commissionRateRent": "{{rate}} % du loyer mensuel"
+          "commissionRateRent": "{{rate}} % du loyer mensuel",
+          "commissionFlatFee": "tarif fixe"
         },
         "milestone": {
           "contact": "Premier contact",
@@ -2837,13 +2837,14 @@
           }
         },
         "rentLabel": "Loyer mensuel (Dh)",
-        "commissionLabel": "Commission (%)",
-        "commissionBase": {
-          "sale": "du prix de vente",
-          "rent": "du loyer mensuel"
-        },
         "commissionPreview": "soit {{amount}}",
-        "currency": "Dh"
+        "currency": "Dh",
+        "commission": {
+          "saleLabel": "Commission (Dh)",
+          "saleHint": "Tarif fixe de l'agence",
+          "rentLabel": "Commission (%)",
+          "rentHint": "du loyer mensuel"
+        }
       },
       "detail": {
         "notFound": "Transaction introuvable.",
@@ -3336,10 +3337,10 @@
         "timezone": "Fuseau horaire",
         "description": "Description de l'agence",
         "descriptionPlaceholder": "Décrivez votre agence...",
-        "saleCommissionRate": "Commission sur une vente (%)",
-        "saleCommissionHint": "Appliquée au prix de vente.",
         "rentalCommissionRate": "Commission sur une location (%)",
-        "rentalCommissionHint": "Appliquée au loyer mensuel."
+        "rentalCommissionHint": "Appliquée au loyer mensuel.",
+        "saleCommissionFee": "Commission sur une vente (Dh)",
+        "saleCommissionFeeHint": "Tarif fixe, quel que soit le prix du bien."
       },
       "timezoneOptions": {
         "casablanca": "Africa/Casablanca (GMT+1)",

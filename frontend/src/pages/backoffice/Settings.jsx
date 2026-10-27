@@ -32,7 +32,7 @@ export default function BackofficeSettings() {
     agency_city: '',
     agency_website: '',
     agency_description: '',
-    default_commission_rate: 3,
+    default_sale_commission_fee: 0,
     default_rental_commission_rate: 50,
     currency: 'MAD',
     timezone: 'Africa/Casablanca',
@@ -84,7 +84,7 @@ export default function BackofficeSettings() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-[1360px] space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -219,17 +219,17 @@ export default function BackofficeSettings() {
                   un loyer mensuel donnerait quelques centaines de dirhams d'honoraires. */}
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="default_commission_rate">
-                    {t('backoffice:settings.general.fields.saleCommissionRate')}
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="default_sale_commission_fee">
+                    {t('backoffice:settings.general.fields.saleCommissionFee')}
                   </label>
                   <input
-                    id="default_commission_rate"
-                    type="number" min="0" max="100" step="0.1"
-                    value={formData.default_commission_rate}
-                    onChange={(e) => setFormData({ ...formData, default_commission_rate: e.target.value })}
+                    id="default_sale_commission_fee"
+                    type="number" min="0" step="100"
+                    value={formData.default_sale_commission_fee}
+                    onChange={(e) => setFormData({ ...formData, default_sale_commission_fee: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
-                  <p className="mt-1 text-xs text-gray-500">{t('backoffice:settings.general.fields.saleCommissionHint')}</p>
+                  <p className="mt-1 text-xs text-gray-500">{t('backoffice:settings.general.fields.saleCommissionFeeHint')}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="default_rental_commission_rate">

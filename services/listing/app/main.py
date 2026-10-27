@@ -394,6 +394,12 @@ _BO_WRITABLE = ["title", "description", "property_type", "transaction_type", "pr
                 "postal_code", "latitude", "longitude", "status", "is_premium", "is_urgent", "is_featured"]
 
 
+_BO_SORTABLE = {name: getattr(Property, name) for name in (
+    "created_at", "updated_at", "title", "reference", "price", "surface", "rooms", "bedrooms",
+    "city", "neighborhood", "property_type", "transaction_type", "status", "views_count",
+    "contacts_count")}
+
+
 def _bo_reference(db: Session) -> str:
     count = db.query(Property).count() + 1
     return f"PROP-{datetime.utcnow().strftime('%Y%m')}-{count:04d}"
@@ -449,8 +455,9 @@ def bo_list_properties(request: Request, principal: Principal = Depends(get_prin
         t = f"%{qp.get('q')}%"
         q = q.filter(or_(Property.title.ilike(t), Property.reference.ilike(t),
                          Property.city.ilike(t), Property.neighborhood.ilike(t)))
-    sort_by = qp.get("sort_by") or "created_at"
-    col = getattr(Property, sort_by, None)
+    # Colonnes triables, nommées une à une : `getattr` sur un nom libre renverrait aussi
+    # bien `metadata` ou une relation, et la requête partirait en 500.
+    col = _BO_SORTABLE.get(qp.get("sort_by") or "created_at")
     if col is not None:
         q = q.order_by(col.desc() if (qp.get("sort_order") or "desc") == "desc" else col.asc())
     total = q.count()

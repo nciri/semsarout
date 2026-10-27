@@ -2755,8 +2755,8 @@
           "milestones": "تواريخ المراحل",
           "notes": "ملاحظات",
           "none": "—",
-          "commissionRateSale": "{{rate}} % من ثمن البيع",
-          "commissionRateRent": "{{rate}} % من الكراء الشهري"
+          "commissionRateRent": "{{rate}} % من الكراء الشهري",
+          "commissionFlatFee": "تعريفة ثابتة"
         },
         "milestone": {
           "contact": "أول اتصال",
@@ -2837,13 +2837,14 @@
           }
         },
         "rentLabel": "الكراء الشهري (درهم)",
-        "commissionLabel": "العمولة (%)",
-        "commissionBase": {
-          "sale": "من ثمن البيع",
-          "rent": "من الكراء الشهري"
-        },
         "commissionPreview": "أي {{amount}}",
-        "currency": "درهم"
+        "currency": "درهم",
+        "commission": {
+          "saleLabel": "العمولة (درهم)",
+          "saleHint": "التعريفة الثابتة للوكالة",
+          "rentLabel": "العمولة (%)",
+          "rentHint": "من الكراء الشهري"
+        }
       },
       "detail": {
         "notFound": "المعاملة غير موجودة.",
@@ -3336,10 +3337,10 @@
         "timezone": "المنطقة الزمنية",
         "description": "وصف الوكالة",
         "descriptionPlaceholder": "صف وكالتك...",
-        "saleCommissionRate": "العمولة على البيع (%)",
-        "saleCommissionHint": "تطبق على ثمن البيع.",
         "rentalCommissionRate": "العمولة على الكراء (%)",
-        "rentalCommissionHint": "تطبق على الكراء الشهري."
+        "rentalCommissionHint": "تطبق على الكراء الشهري.",
+        "saleCommissionFee": "العمولة على البيع (درهم)",
+        "saleCommissionFeeHint": "تعريفة ثابتة مهما كان ثمن العقار."
       },
       "timezoneOptions": {
         "casablanca": "أفريقيا/الدار البيضاء (GMT+1)",

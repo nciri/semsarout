@@ -84,12 +84,12 @@ export default function Fiche({ tx, overdue }) {
                 <span className="ms-1.5 font-normal text-gray-500">{f(tx.status === 'won' ? 'commissionSigned' : 'commissionExpected')}</span>
               )}
             </span>
-            {/* Le taux seul se lit mal : 50 % n'a de sens qu'adossé au loyer mensuel. */}
-            {tx.commission_rate != null && (
-              <span className="text-gray-500">
-                {f(tx.transaction_type === 'rent' ? 'commissionRateRent' : 'commissionRateSale', { rate: tx.commission_rate })}
-              </span>
-            )}
+            {/* Vente : un forfait annoncé. Location : un taux, qui ne se lit qu'adossé au loyer. */}
+            <span className="text-gray-500">
+              {tx.transaction_type === 'rent'
+                ? (tx.commission_rate != null ? f('commissionRateRent', { rate: tx.commission_rate }) : null)
+                : f('commissionFlatFee')}
+            </span>
           </div>
         </Block>
 
