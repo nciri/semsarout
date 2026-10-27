@@ -200,12 +200,14 @@ class DeductionLine(Base):
 
 
 class PropertyRO(Base):
-    """Projection locale du bien (via listing.*) : property_title / property_city."""
+    """Projection locale du bien (via listing.*) : titre, ville et loyer affiché."""
     __tablename__ = "property_ro"
 
     id = Column(Integer, primary_key=True)
     title = Column(String(200))
     city = Column(String(100))
+    price = Column(Numeric(12, 2))                           # loyer affiché (qualification)
+    price_period = Column(String(10))                        # day|week|month
 
 
 class ClientRO(Base):

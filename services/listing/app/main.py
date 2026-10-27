@@ -436,6 +436,15 @@ def bo_list_properties(request: Request, principal: Principal = Depends(get_prin
         q = q.filter(Property.price >= float(qp.get("min_price")))
     if qp.get("max_price"):
         q = q.filter(Property.price <= float(qp.get("max_price")))
+    # Recherche détaillée (étape « choisir le bien » d'une création de transaction).
+    if qp.get("neighborhood"):
+        q = q.filter(Property.neighborhood.ilike(f"%{qp.get('neighborhood')}%"))
+    if qp.get("min_surface"):
+        q = q.filter(Property.surface >= float(qp.get("min_surface")))
+    if qp.get("max_surface"):
+        q = q.filter(Property.surface <= float(qp.get("max_surface")))
+    if qp.get("min_bedrooms"):
+        q = q.filter(Property.bedrooms >= int(qp.get("min_bedrooms")))
     if qp.get("q"):
         t = f"%{qp.get('q')}%"
         q = q.filter(or_(Property.title.ilike(t), Property.reference.ilike(t),

@@ -21,7 +21,7 @@ from semsar_events import enqueue
 
 import semsar_signing as signing
 
-from . import commission_client, events, identity_client, overview
+from . import commission_client, events, identity_client, overview, qualification
 from .db import get_db, init_db
 from .models import (ApplicationDocument, ChargeRegularization, ClientRO, CrgReport,
                      DeductionLine, DepositSettlement, Inventory, InventoryItem, InventoryPhoto,
@@ -977,6 +977,12 @@ def _application_event_payload(app_id, applicant_user_id, owner_id, property_id,
 
 def _application_dict(db, a: TenantApplication, docs=None) -> dict:
     ro = db.get(PropertyRO, a.property_id)
+    if docs is None:
+        docs = db.query(ApplicationDocument).filter(
+            ApplicationDocument.application_id == a.id).all()
+        attach_docs = False
+    else:
+        attach_docs = True
     out = {
         "id": a.id, "property_id": a.property_id, "agency_id": a.agency_id,
         "applicant_user_id": a.applicant_user_id,
@@ -989,8 +995,14 @@ def _application_dict(db, a: TenantApplication, docs=None) -> dict:
         "submitted_at": iso(a.submitted_at), "decided_at": iso(a.decided_at),
         "decision_reason": a.decision_reason, "created_at": iso(a.created_at),
         "property_title": (ro.title if ro else None),
+        "qualification": qualification.assess(
+            rent=qualification.monthly_rent(ro.price if ro else None,
+                                            ro.price_period if ro else None),
+            monthly_income=a.monthly_income, guarantor_income=a.guarantor_income,
+            guarantor_name=a.guarantor_name,
+            documents=[(d.doc_type, d.status) for d in docs]),
     }
-    if docs is not None:
+    if attach_docs:
         out["documents"] = [{"id": d.id, "doc_type": d.doc_type, "status": d.status,
                              "filename": d.filename, "created_at": iso(d.created_at)} for d in docs]
     return out

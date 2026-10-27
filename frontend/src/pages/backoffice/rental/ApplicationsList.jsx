@@ -9,7 +9,7 @@ import SearchableSelect from '../../../components/common/SearchableSelect'
 import { DOC_TYPES } from '../../dashboard/applicationStatus'
 import { EmptyState, GatedNotice, Modal, Field, Select, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
 import { Chip, IconAction, TD, TH } from '../components/kit'
-import { APP_TONE, groupByProperty, maskEmail, matches } from './model'
+import { APP_TONE, QUALIFICATION_TONE, groupByProperty, maskEmail, matches } from './model'
 import { useRentalFormat } from './hooks'
 const MAX_DOC_SIZE = 10 * 1024 * 1024
 const EMPTY_FORM = { property_id: '', client_id: '', monthly_income: '', guarantor_name: '', guarantor_income: '' }
@@ -151,6 +151,7 @@ function ApplicationsList() {
                     <th className={TH}>{t('backoffice:rental.application.columns.candidate')}</th>
                     <th className={TH}>{t('backoffice:rental.application.columns.submittedAt')}</th>
                     <th className={`${TH} text-end`}>{t('backoffice:rental.application.columns.monthlyIncome')}</th>
+                    <th className={`${TH} text-end`}>{t('backoffice:rental.application.qualification.effortRate')}</th>
                     <th className={`${TH} text-end`}>{t('backoffice:rental.overview.apps.docs')}</th>
                     <th className={TH}>{t('backoffice:rental.application.columns.status')}</th>
                     <th className={`${TH} text-end`}><span className="sr-only">{t('backoffice:rental.overview.actions')}</span></th>
@@ -158,7 +159,7 @@ function ApplicationsList() {
                   <tbody>
                     {groups.flatMap((g) => [
                       <tr key={`g-${g.property_id}`}>
-                        <td colSpan={6} className={`${TD} bg-gray-50 text-[12.5px] font-bold`}>
+                        <td colSpan={7} className={`${TD} bg-gray-50 text-[12.5px] font-bold`}>
                           <FiHome className="me-1.5 inline h-3.5 w-3.5 align-[-2px] text-gray-400" aria-hidden="true" />
                           {g.title || t('backoffice:rental.application.propertyFallback', { id: g.property_id })}
                           <span className="ms-1 font-medium text-gray-500">{t('backoffice:rental.application.groupCount', { count: g.apps.length })}</span>
@@ -173,7 +174,24 @@ function ApplicationsList() {
                           </td>
                           <td className={`${TD} whitespace-nowrap`}>{a.submitted_at ? f.date(a.submitted_at) : '—'}</td>
                           <td className={`${TD} text-end tabular-nums`}>{a.monthly_income != null ? f.dh(a.monthly_income) : '—'}</td>
-                          <td className={`${TD} text-end tabular-nums`}>{a.documents_count ?? '—'}</td>
+                          <td className={`${TD} text-end`}>
+                            {a.qualification?.effort_rate != null ? (
+                              <span className="inline-flex items-center gap-1.5">
+                                <span className="tabular-nums">{a.qualification.effort_rate} %</span>
+                                <Chip tone={QUALIFICATION_TONE[a.qualification.verdict] || 'neutral'}>
+                                  {t(`backoffice:rental.application.qualification.verdict.${a.qualification.verdict}`)}
+                                </Chip>
+                              </span>
+                            ) : '—'}
+                          </td>
+                          <td className={`${TD} text-end tabular-nums`}>
+                            {a.documents_count ?? '—'}
+                            {a.qualification?.missing_documents?.length > 0 && (
+                              <span className="ms-1.5 whitespace-nowrap text-[11px] font-semibold text-amber-700">
+                                {t('backoffice:rental.application.qualification.missingCount', { count: a.qualification.missing_documents.length })}
+                              </span>
+                            )}
+                          </td>
                           <td className={TD}><Chip tone={APP_TONE[a.status] || 'neutral'}>{t(`backoffice:rental.application.status.${a.status}`, { defaultValue: a.status })}</Chip></td>
                           <td className={`${TD} text-end`}>{actions(a)}</td>
                         </tr>
