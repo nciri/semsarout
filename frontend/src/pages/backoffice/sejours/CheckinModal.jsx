@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
-import { FiCheck, FiCopy, FiLink, FiX } from 'react-icons/fi'
+import { FiCheck, FiCopy, FiKey, FiLink, FiSlash, FiX } from 'react-icons/fi'
 import { stayService, GUEST_STATUS_TONE } from '../../../services/stayService'
 import { useFormat } from '../../../utils/format'
 import { Modal, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
@@ -17,7 +17,13 @@ function CheckinModal({ stayId, onClose }) {
 
   const { data } = useQuery(['stays-checkin', stayId], () => stayService.getCheckin(stayId),
     { enabled: Boolean(stayId) })
-  const refresh = () => qc.invalidateQueries(['stays-checkin', stayId])
+  const { data: access } = useQuery(['stays-code', stayId], () => stayService.getCode(stayId),
+    { enabled: Boolean(stayId) })
+  const [manualCode, setManualCode] = useState('')
+  const refresh = () => {
+    qc.invalidateQueries(['stays-checkin', stayId])
+    qc.invalidateQueries(['stays-code', stayId])
+  }
   const fail = (e) => toast.error(e.response?.data?.error || t('common:errors.short'))
 
   const createLink = useMutation(() => stayService.createCheckinLink(stayId), {
@@ -26,6 +32,25 @@ function CheckinModal({ stayId, onClose }) {
   })
   const review = useMutation(({ id, status }) => stayService.reviewGuest(id, { status }), {
     onSuccess: refresh, onError: fail,
+  })
+
+  const issueCode = useMutation(() => stayService.issueCode(stayId,
+    access?.mode === 'manual' ? { code: manualCode } : {}), {
+    onSuccess: (r) => {
+      toast.success(t('backoffice:stays.code.toasts.issued'))
+      if (r.warning) toast.warn(r.warning)
+      setManualCode('')
+      refresh()
+    },
+    onError: fail,
+  })
+  const revokeCode = useMutation(() => stayService.revokeCode(stayId), {
+    onSuccess: (r) => {
+      toast.success(t('backoffice:stays.code.toasts.revoked'))
+      if (r.warning) toast.warn(r.warning)
+      refresh()
+    },
+    onError: fail,
   })
 
   const link = data?.link
@@ -72,6 +97,44 @@ function CheckinModal({ stayId, onClose }) {
               </span>
             </Alert>
           )}
+        </div>
+
+        <div className="grid gap-2 rounded-lg bg-gray-50 p-3">
+          <h4 className="flex items-center gap-2 text-[12.5px] font-semibold uppercase tracking-wide text-gray-500">
+            <FiKey className="h-[14px] w-[14px]" aria-hidden="true" />{t('backoffice:stays.code.title')}
+          </h4>
+          {access?.mode === 'traditional' ? (
+            <p className="text-sm text-gray-500">{t('backoffice:stays.code.traditional')}</p>
+          ) : access?.code ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <code className="rounded bg-white px-2 py-1 font-display text-lg font-bold tracking-widest">
+                {access.code.code}
+              </code>
+              <span className="text-[12.5px] text-gray-500">
+                {t('backoffice:stays.code.validUntil', {
+                  date: fmtDate(access.code.valid_until, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+                })}
+              </span>
+              <IconAction icon={FiSlash} label={t('backoffice:stays.code.revoke')} tone="danger"
+                onClick={() => revokeCode.mutate()} disabled={revokeCode.isLoading} />
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-end gap-2">
+              {access?.mode === 'manual' && (
+                <label className="grid gap-1 text-sm font-medium text-gray-700">
+                  {t('backoffice:stays.code.manualLabel')}
+                  <input value={manualCode} onChange={(e) => setManualCode(e.target.value)} inputMode="numeric"
+                    className="w-40 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                </label>
+              )}
+              <button type="button" onClick={() => issueCode.mutate()}
+                disabled={issueCode.isLoading || (access?.mode === 'manual' && manualCode.trim().length < 4)}
+                className={PRIMARY_BTN}>
+                {access?.mode === 'ttlock' ? t('backoffice:stays.code.askLock') : t('backoffice:stays.code.issue')}
+              </button>
+            </div>
+          )}
+          {access?.instructions && <p className="text-[12.5px] text-gray-500">{access.instructions}</p>}
         </div>
 
         <div className="grid gap-2">

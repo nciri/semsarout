@@ -96,6 +96,7 @@ staymanager/migrate_sejours_natifs.sql
 staymanager/migrate_messagerie_sejour.sql
 staymanager/migrate_menage_sejour.sql
 staymanager/migrate_enregistrement_voyageur.sql
+staymanager/migrate_acces_sejour.sql
 audit/add_tenant.sql
 "
 

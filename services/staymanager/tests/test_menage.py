@@ -205,3 +205,15 @@ def test_prochaine_arrivee_ignore_les_sejours_d_une_autre_agence(client, seeded)
                 if t["scheduled_date"].startswith(
                     (datetime.utcnow() + timedelta(days=4)).date().isoformat()))
     assert task["next_check_in"].startswith(mine.check_in.date().isoformat())
+
+
+def test_nombre_de_photos_borne_par_signalement(client, seeded):
+    from app import cleaning
+    _stay(seeded, days=1)
+    task_id = client.get("/backoffice/sejours/menage").json()["tasks"][0]["id"]
+    report_id = client.post(f"/backoffice/sejours/menage/{task_id}/rapports",
+                            json={"kind": "issue", "text_note": "Carreau fêlé"}).json()["report"]["id"]
+    path = f"/backoffice/sejours/menage/rapports/{report_id}/photos"
+    for _ in range(cleaning.MAX_PHOTOS_PER_REPORT):
+        assert client.post(path, content=JPEG, headers={"content-type": "image/jpeg"}).status_code == 201
+    assert client.post(path, content=JPEG, headers={"content-type": "image/jpeg"}).status_code == 400

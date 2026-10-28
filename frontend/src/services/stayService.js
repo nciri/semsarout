@@ -30,6 +30,11 @@ export const stayService = {
   getCheckin: async (stayId) => (await api.get(`${B}/${stayId}/enregistrement`)).data,
   reviewGuest: async (guestId, data) => (await api.patch(`${B}/voyageurs/${guestId}`, data)).data,
   guestDocUrl: (docId) => `${B}/voyageurs/pieces/${docId}`,
+  listAccess: async () => (await api.get(`${B}/acces`)).data,
+  setAccess: async (propertyId, data) => (await api.put(`${B}/acces/${propertyId}`, data)).data,
+  getCode: async (stayId) => (await api.get(`${B}/${stayId}/code`)).data,
+  issueCode: async (stayId, data = {}) => (await api.post(`${B}/${stayId}/code`, data)).data,
+  revokeCode: async (stayId) => (await api.delete(`${B}/${stayId}/code`)).data,
 }
 
 /** Côté voyageur : le lien privé tient lieu d'identification, aucun compte requis. */
@@ -43,6 +48,9 @@ export const stayCheckinService = {
     { params: { filename: file.name }, headers: { 'Content-Type': file.type || 'application/octet-stream' } })).data,
   submit: async (token) => (await api.post(`${G}/${token}/valider`)).data,
 }
+
+export const ACCESS_MODES = ['traditional', 'manual', 'ttlock']
+export const TTLOCK_FIELDS = ['client_id', 'client_secret', 'access_token', 'lock_id']
 
 export const GUEST_DOCUMENT_TYPES = ['cin', 'passeport', 'titre_sejour']
 export const GUEST_STATUS_TONE = { declared: 'neutral', validated: 'good', rejected: 'crit' }

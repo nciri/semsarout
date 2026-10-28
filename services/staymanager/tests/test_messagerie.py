@@ -188,3 +188,22 @@ def test_objet_trop_long_est_tronque(client, seeded):
     _template(client, subject="A" * 190 + " {{property_title}}")
     due = client.get("/internal/sejours/messages/due", headers=TOKEN).json()["messages"]
     assert len(due[0]["subject"]) == messages.SUBJECT_MAX
+
+
+def test_un_message_qui_annonce_le_code_attend_que_le_code_existe(client, seeded):
+    from app.models import PropertyAccess, StayAccessCode
+
+    stay = _stay(seeded, days_to_check_in=1)
+    _template(client, name="Code d'entrée",
+              subject="Votre code pour {{property_title}}",
+              body="Code : {{access_code}}\n\n{{access_instructions}}")
+    assert client.get("/internal/sejours/messages/due", headers=TOKEN).json()["messages"] == []
+
+    seeded.add(PropertyAccess(agency_id=AGENCY, property_id=PROPERTY, mode="manual",
+                              instructions="Boîte à clés à droite"))
+    seeded.add(StayAccessCode(agency_id=AGENCY, reservation_id=stay.id, mode="manual",
+                              code="4821", status="active"))
+    seeded.commit()
+    due = client.get("/internal/sejours/messages/due", headers=TOKEN).json()["messages"]
+    assert "Code : 4821" in due[0]["body"]
+    assert "Boîte à clés à droite" in due[0]["body"]

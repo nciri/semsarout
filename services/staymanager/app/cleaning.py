@@ -23,7 +23,7 @@ from semsar_auth import Principal, get_principal
 from .db import get_db
 from .gate import gate
 from .models import CleaningPhoto, CleaningReport, CleaningTask, PropertyRO, StayManagerReservation
-from .util import err, iso, json_body
+from .util import attachment_headers, err, iso, json_body, safe_filename
 
 router = APIRouter()
 
@@ -33,6 +33,7 @@ REPORT_KINDS = ("issue", "stock", "note")
 # Un rapport est relu dans le navigateur de l'agent : seuls des formats inertes.
 ALLOWED_PHOTO_TYPES = ("image/jpeg", "image/png", "image/webp")
 MAX_PHOTO_SIZE = 8 * 1024 * 1024
+MAX_PHOTOS_PER_REPORT = 5
 # Les départs d'hier comptent encore : le ménage se fait parfois le lendemain matin.
 BACKFILL_DAYS = 1
 
@@ -264,6 +265,9 @@ async def add_photo(report_id: int, request: Request,
     task = db.get(CleaningTask, report.task_id) if report else None
     if task is None or task.agency_id != principal.agency_id:
         return err("Rapport introuvable", 404)
+    if (db.query(CleaningPhoto).filter(CleaningPhoto.report_id == report.id).count()
+            >= MAX_PHOTOS_PER_REPORT):
+        return err("Trop de photos sur ce signalement.", 400)
     length = request.headers.get("content-length")
     if length and length.isdigit() and int(length) > MAX_PHOTO_SIZE:
         return err("Photo trop volumineuse (max 8 Mo).", 400)
@@ -279,7 +283,7 @@ async def add_photo(report_id: int, request: Request,
     key = f"menage/{task.id}/{uuid.uuid4().hex}"
     storage.photos_storage().put(key, body, content_type)
     photo = CleaningPhoto(report_id=report.id, file_key=key, content_type=content_type,
-                          filename=(request.query_params.get("filename") or "photo")[:255])
+                          filename=safe_filename(request.query_params.get("filename"), "photo"))
     db.add(photo)
     db.commit()
     return {"photo": {"id": photo.id, "filename": photo.filename}}
@@ -298,8 +302,7 @@ def get_photo(photo_id: int, principal: Principal = Depends(get_principal),
     from . import storage
     data = storage.photos_storage().get(photo.file_key)
     return Response(data, media_type=photo.content_type or "application/octet-stream",
-                    headers={"Content-Disposition": f"attachment; filename={photo.filename}",
-                             "X-Content-Type-Options": "nosniff"})
+                    headers=attachment_headers(photo.filename or "photo"))
 
 
 @router.post("/backoffice/sejours/menage/rapports/{report_id}/vu")

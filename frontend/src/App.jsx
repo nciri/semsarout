@@ -107,6 +107,7 @@ const StaysList = lazy(() => import('./pages/backoffice/sejours/StaysList'))
 const CalendarsList = lazy(() => import('./pages/backoffice/sejours/CalendarsList'))
 const StayMessagesPanel = lazy(() => import('./pages/backoffice/sejours/MessagesPanel'))
 const StayCleaningPanel = lazy(() => import('./pages/backoffice/sejours/CleaningPanel'))
+const StayAccessPanel = lazy(() => import('./pages/backoffice/sejours/AccessPanel'))
 const StayCheckin = lazy(() => import('./pages/StayCheckin'))
 const LeaseDetail = lazy(() => import('./pages/backoffice/rental/LeaseDetail'))
 const ApplicationsList = lazy(() => import('./pages/backoffice/rental/ApplicationsList'))
@@ -290,6 +291,7 @@ function App() {
             <Route index element={<StaysList />} />
             <Route path="menage" element={<StayCleaningPanel />} />
             <Route path="messages" element={<StayMessagesPanel />} />
+            <Route path="acces" element={<StayAccessPanel />} />
             <Route path="calendriers" element={<CalendarsList />} />
           </Route>
           {/* Notaires & juridique : notaires + dossiers en onglets */}

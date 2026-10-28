@@ -3559,6 +3559,7 @@
         "planning": "Planning",
         "cleaning": "Ménage",
         "messages": "Messages",
+        "access": "Accès",
         "calendars": "Calendriers"
       },
       "arrivals": "Arrivées du jour",
@@ -3819,6 +3820,64 @@
         "created": "Lien d'enregistrement créé.",
         "copied": "Lien copié.",
         "copyFailed": "Copie impossible. Sélectionnez le lien à la main."
+      }
+    },
+    "access": {
+      "add": "Configurer un bien",
+      "edit": "Modifier le mode d'entrée",
+      "help": "Le mode d'entrée décide de ce que la messagerie de séjour peut annoncer au voyageur.",
+      "alreadySet": "déjà configuré",
+      "credentialsSet": "Identifiants posés",
+      "columns": {
+        "property": "Bien",
+        "mode": "Mode d'entrée",
+        "instructions": "Consignes"
+      },
+      "mode": {
+        "traditional": "Clés remises en main propre",
+        "manual": "Code posé par l'agence",
+        "ttlock": "Serrure connectée TTLock"
+      },
+      "modeHelp": {
+        "traditional": "Aucun code : vous remettez les clés au voyageur.",
+        "manual": "Vous saisissez le code de la boîte à clés ou du digicode pour chaque séjour.",
+        "ttlock": "Le code est demandé à la serrure pour la durée du séjour, puis révoqué."
+      },
+      "credentials": {
+        "client_id": "Identifiant client TTLock",
+        "client_secret": "Clé secrète TTLock",
+        "access_token": "Jeton d'accès TTLock",
+        "lock_id": "Identifiant de la serrure"
+      },
+      "empty": {
+        "title": "Aucun bien configuré",
+        "description": "Dites comment le voyageur entre dans chaque bien : clés, code, ou serrure connectée."
+      },
+      "toasts": {
+        "saved": "Mode d'entrée enregistré."
+      },
+      "modal": {
+        "title": "Mode d'entrée du bien",
+        "propertyLabel": "Bien",
+        "propertyPlaceholder": "Choisir un bien",
+        "modeLabel": "Mode d'entrée",
+        "instructionsLabel": "Consignes pour le voyageur",
+        "credentialsHelp": "Ces identifiants restent dans le service et ne sont jamais réaffichés.",
+        "cancel": "Annuler",
+        "submit": "Enregistrer"
+      }
+    },
+    "code": {
+      "title": "Code d'entrée",
+      "traditional": "Ce bien se remet en main propre : configurez un mode d'entrée par code dans l'onglet Accès.",
+      "manualLabel": "Code à communiquer",
+      "issue": "Poser le code",
+      "askLock": "Demander un code à la serrure",
+      "revoke": "Révoquer le code",
+      "validUntil": "Valable jusqu'au {{date}}",
+      "toasts": {
+        "issued": "Code posé.",
+        "revoked": "Code révoqué."
       }
     }
   }

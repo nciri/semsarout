@@ -29,7 +29,7 @@ from .gate import gate
 from .models import (
     PropertyRO, StayCheckinLink, StayGuest, StayGuestDocument, StayManagerReservation,
 )
-from .util import err, iso, json_body
+from .util import attachment_headers, err, iso, json_body, safe_filename
 
 router = APIRouter()
 
@@ -40,6 +40,8 @@ LINK_GRACE_DAYS = 1
 MAX_GUESTS = 12
 ALLOWED_DOC_TYPES = ("image/jpeg", "image/png", "image/webp", "application/pdf")
 MAX_DOC_SIZE = 8 * 1024 * 1024
+# Recto, verso, et une reprise si la photo est ratée : au-delà, c'est du remplissage.
+MAX_DOCS_PER_GUEST = 3
 
 
 def _hash(token: str) -> str:
@@ -162,8 +164,7 @@ def download_guest_document(doc_id: int, principal: Principal = Depends(get_prin
     from . import storage
     data = storage.photos_storage().get(doc.file_key)
     return Response(data, media_type=doc.content_type or "application/octet-stream",
-                    headers={"Content-Disposition": f"attachment; filename={doc.filename}",
-                             "X-Content-Type-Options": "nosniff"})
+                    headers=attachment_headers(doc.filename or "piece"))
 
 
 # ---- Côté voyageur : le lien tient lieu d'identification -------------------------------
@@ -239,6 +240,9 @@ async def upload_guest_document(token: str, guest_id: int, request: Request,
     guest = db.get(StayGuest, guest_id)
     if guest is None or guest.reservation_id != stay.id:
         return err("Occupant introuvable.", 404)
+    if (db.query(StayGuestDocument).filter(StayGuestDocument.guest_id == guest.id).count()
+            >= MAX_DOCS_PER_GUEST):
+        return err("Trop de pièces déposées pour cet occupant.", 400)
     content_type = (request.headers.get("content-type") or "").split(";")[0].strip().lower()
     if content_type not in ALLOWED_DOC_TYPES:
         return err("Format accepté : JPEG, PNG, WebP ou PDF.", 400)
@@ -251,7 +255,7 @@ async def upload_guest_document(token: str, guest_id: int, request: Request,
     key = f"enregistrement/{stay.id}/{uuid.uuid4().hex}"
     storage.photos_storage().put(key, body, content_type)
     doc = StayGuestDocument(guest_id=guest.id, file_key=key, content_type=content_type,
-                            filename=(request.query_params.get("filename") or "piece")[:255])
+                            filename=safe_filename(request.query_params.get("filename"), "piece"))
     # Une pièce redéposée relance l'examen : le verdict précédent portait sur l'ancienne.
     guest.status = "declared"
     guest.review_note = None

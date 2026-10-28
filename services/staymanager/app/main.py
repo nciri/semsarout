@@ -27,6 +27,8 @@ from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
 from . import agency_client, billing_client, ical, messages, stays
+from . import access
+from .access import router as access_router
 from .checkin import router as checkin_router
 from .cleaning import router as cleaning_router
 from .gate import gate
@@ -66,6 +68,8 @@ Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_sch
 app.include_router(cleaning_router)
 # Enregistrement du voyageur (voir app/checkin.py) : côté agence et côté voyageur par lien.
 app.include_router(checkin_router)
+# Codes d'entrée des séjours (voir app/access.py) : mode manuel ou serrure TTLock.
+app.include_router(access_router)
 
 
 def _uid(principal: Principal):
@@ -776,8 +780,16 @@ def _prepare_due(db: Session, now: datetime) -> list[StayMessage]:
             if (tpl.id, res.id) in done or not messages.is_due(tpl, res, now):
                 continue
             ro = db.get(PropertyRO, res.property_id) if res.property_id else None
+            code = access.active_code(db, res.id)
+            entry = access.access_of(db, res.agency_id, res.property_id) if res.property_id else None
             values = messages.variables(res, ro.title if ro else None,
-                                        agency_client.name_of(res.agency_id))
+                                        agency_client.name_of(res.agency_id),
+                                        access_code=code.code if code else None,
+                                        access_instructions=entry.instructions if entry else None)
+            # Un message qui annonce le code d'entrée attend que le code existe : mieux vaut
+            # l'envoyer en retard que d'envoyer une phrase à trou.
+            if messages.needs_access(f"{tpl.subject} {tpl.body}") and code is None:
+                continue
             ready = messages.valid_address(res.guest_email or "")
             msg = StayMessage(
                 agency_id=res.agency_id, template_id=tpl.id, reservation_id=res.id,

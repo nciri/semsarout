@@ -200,3 +200,23 @@ def test_occupant_d_une_autre_agence_non_examinable(client, db_session):
     guest_id = db_session.query(StayGuest).one().id
     assert client.patch(f"/backoffice/sejours/voyageurs/{guest_id}",
                         json={"status": "validated"}).status_code == 404
+
+
+def test_nom_de_fichier_assaini_et_nombre_de_pieces_borne(client, stay):
+    token = _link(client, stay.id)
+    guest_id = client.post(f"/sejours/enregistrement/{token}/voyageurs",
+                           json={"full_name": "Salma"}).json()["guest"]["id"]
+    path = f"/sejours/enregistrement/{token}/voyageurs/{guest_id}/piece"
+    hostile = client.post(f'{path}?filename=cin";%0d%0aSet-Cookie:%20a=b',
+                          content=JPEG, headers={"content-type": "image/jpeg"})
+    assert hostile.status_code == 201
+    doc_id = hostile.json()["document"]["id"]
+    got = client.get(f"/backoffice/sejours/voyageurs/pieces/{doc_id}")
+    disposition = got.headers["content-disposition"]
+    # Les caractères qui injecteraient un en-tête ont disparu ; le nom reste cité.
+    assert "\n" not in disposition and "\r" not in disposition and ";" not in disposition[12:]
+    assert disposition.startswith('attachment; filename="') and disposition.endswith('"')
+
+    for _ in range(checkin.MAX_DOCS_PER_GUEST - 1):
+        assert client.post(path, content=JPEG, headers={"content-type": "image/jpeg"}).status_code == 201
+    assert client.post(path, content=JPEG, headers={"content-type": "image/jpeg"}).status_code == 400

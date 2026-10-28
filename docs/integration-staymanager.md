@@ -29,7 +29,7 @@ Trois états : **déjà couvert** (ne rien reprendre), **partiel** (compléter l
 | Auth (Google, e-mail, SMS), rôles, profil | `identity` : JWT RS256, rôles, équipes, sièges, KYC Didit | **couvert** — ne pas reprendre Firebase |
 | Propriétés, photos, adresse | `listing` : CRUD, modération, médias, prix jour/semaine/mois | **couvert** |
 | Réservations + sync iCal multi-OTA | `staymanager` : miroir des réservations d'un compte StayManager externe | **partiel** — rien de natif sans ce compte |
-| Serrures connectées TTLock, codes d'accès | — | **absent** |
+| Serrures connectées TTLock, codes d'accès | `staymanager` : mode d'entrée par bien, codes par séjour | **couvert** (livré le 2026-10-28) |
 | Vérification voyageur, OCR pièce d'identité | `staymanager` : lien d'enregistrement, occupants, pièces | **couvert sans OCR** (livré le 2026-10-28) |
 | Contrats : gabarits, variables, PDF, signature | `contract` + `semsar_signing` (3a9dSign) | **couvert** — réutiliser, ne pas dupliquer |
 | Messagerie automatisée (gabarits, règles, journal) | `notification` + `staymanager` : gabarits de l'agence, déclencheurs, journal | **couvert** pour les séjours (livré le 2026-10-28) |
@@ -70,8 +70,12 @@ construire des écrans qui n'ont encore rien à montrer.
    moteur raccordé — le voyageur saisit, l'agence compare), et la signature du contrat de
    séjour reste du ressort de `contract` + `semsar_signing`, à brancher quand l'agence en
    voudra un.
-5. **Serrures connectées** — TTLock : identifiants chiffrés par agence, génération et
-   révocation des codes par séjour.
+5. **Serrures connectées** — mode d'entrée par bien (clés remises, code posé par l'agence,
+   serrure TTLock), un seul code actif par séjour, révocation chez la serrure, et code
+   reprise par la messagerie (`{{access_code}}`). *Livré sur cette branche.* Écarts assumés :
+   les identifiants TTLock sont stockés en clair dans le service, comme les connecteurs
+   ERP/CRM (chiffrement au repos à trancher pour les deux à la fois), et le mode manuel sert
+   dès aujourd'hui puisque aucun compte TTLock n'est raccordé.
 6. **Abonnements** — relances d'échec de paiement, prorata, portail libre-service,
    au-dessus de `billing` et `payment`.
 7. **Admin SaaS** — MRR/ARR, incidents de paiement, exécution manuelle des tâches planifiées.

@@ -9,6 +9,7 @@ import StaysList from './StaysList'
 import CalendarsList from './CalendarsList'
 import MessagesPanel from './MessagesPanel'
 import CleaningPanel from './CleaningPanel'
+import AccessPanel from './AccessPanel'
 
 const { svc } = vi.hoisted(() => ({
   svc: {
@@ -21,6 +22,7 @@ const { svc } = vi.hoisted(() => ({
     addReportPhoto: vi.fn(), photoUrl: (id) => `/photo/${id}`,
     createCheckinLink: vi.fn(), getCheckin: vi.fn(), reviewGuest: vi.fn(),
     guestDocUrl: (id) => `/piece/${id}`,
+    listAccess: vi.fn(), setAccess: vi.fn(), getCode: vi.fn(), issueCode: vi.fn(), revokeCode: vi.fn(),
   },
 }))
 vi.mock('../../../services/stayService', async (orig) => ({ ...(await orig()), stayService: svc }))
@@ -72,6 +74,7 @@ function renderAt(path) {
           <Route path="/backoffice/sejours" element={<StaysLayout />}>
             <Route index element={<StaysList />} />
             <Route path="menage" element={<CleaningPanel />} />
+          <Route path="acces" element={<AccessPanel />} />
           <Route path="messages" element={<MessagesPanel />} />
           <Route path="calendriers" element={<CalendarsList />} />
           </Route>
@@ -292,6 +295,9 @@ describe("Dossier d'enregistrement (agence)", () => {
     svc.overview.mockResolvedValue(OVERVIEW)
     svc.listStays.mockResolvedValue(STAYS)
     svc.getCheckin.mockResolvedValue(CHECKIN)
+    svc.getCode.mockResolvedValue({ code: null, mode: 'manual', instructions: 'Boîte à clés' })
+    svc.issueCode.mockResolvedValue({ code: { code: '4821' } })
+    svc.revokeCode.mockResolvedValue({ code: { status: 'revoked' } })
     svc.createCheckinLink.mockResolvedValue({ link: { ...CHECKIN.link, token: 'jeton-prive' } })
     svc.reviewGuest.mockResolvedValue({ guest: {} })
   })
@@ -320,5 +326,65 @@ describe("Dossier d'enregistrement (agence)", () => {
     await userEvent.click((await screen.findAllByRole('button', { name: "Dossier d'enregistrement" }))[0])
     await userEvent.click((await screen.findAllByRole('button', { name: "Valider l'occupant" }))[0])
     await vi.waitFor(() => expect(svc.reviewGuest).toHaveBeenCalledWith(91, { status: 'validated' }))
+  })
+})
+
+const ACCESS = {
+  modes: ['traditional', 'manual', 'ttlock'],
+  access: [
+    { property_id: 5, property_title: 'Riad Médina', mode: 'manual', instructions: 'Boîte à clés à droite', configured: false, updated_at: '2026-10-28T08:00:00' },
+    { property_id: 6, property_title: 'Appartement Gauthier', mode: 'ttlock', instructions: null, configured: true, updated_at: '2026-10-28T08:00:00' },
+  ],
+}
+
+describe("Modes d'entrée et codes", () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fr')
+    Object.values(svc).forEach((m) => m.mockReset?.())
+    svc.overview.mockResolvedValue(OVERVIEW)
+    svc.listStays.mockResolvedValue(STAYS)
+    svc.listAccess.mockResolvedValue(ACCESS)
+    svc.setAccess.mockResolvedValue({ access: ACCESS.access[0] })
+    svc.getCheckin.mockResolvedValue(CHECKIN)
+    svc.getCode.mockResolvedValue({ code: null, mode: 'manual', instructions: 'Boîte à clés' })
+    svc.issueCode.mockResolvedValue({ code: { code: '4821' } })
+    svc.revokeCode.mockResolvedValue({ code: { status: 'revoked' } })
+  })
+
+  it("liste les modes d'entrée configurés", async () => {
+    renderAt('/backoffice/sejours/acces')
+    expect(await screen.findByText("Code posé par l'agence")).toBeInTheDocument()
+    expect(screen.getByText('Serrure connectée TTLock')).toBeInTheDocument()
+    expect(screen.getByText('Identifiants posés')).toBeInTheDocument()
+  })
+
+  it("ne demande les identifiants TTLock qu'en mode serrure", async () => {
+    renderAt('/backoffice/sejours/acces')
+    await userEvent.click(await screen.findByRole('button', { name: 'Configurer un bien' }))
+    expect(screen.queryByLabelText('Clé secrète TTLock')).not.toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByLabelText("Mode d'entrée"), 'ttlock')
+    expect(screen.getByLabelText('Clé secrète TTLock')).toBeInTheDocument()
+  })
+
+  it("pose un code manuel depuis le dossier du séjour", async () => {
+    renderAt('/backoffice/sejours')
+    await screen.findByText('Salma Bennani')
+    await userEvent.click((await screen.findAllByRole('button', { name: "Dossier d'enregistrement" }))[0])
+    await userEvent.type(await screen.findByLabelText('Code à communiquer'), '4821')
+    await userEvent.click(screen.getByRole('button', { name: 'Poser le code' }))
+    await vi.waitFor(() => expect(svc.issueCode).toHaveBeenCalledWith(1, { code: '4821' }))
+  })
+
+  it("révoque le code actif", async () => {
+    svc.getCode.mockResolvedValue({
+      code: { id: 1, code: '4821', mode: 'manual', valid_until: '2026-11-08T14:00:00', status: 'active' },
+      mode: 'manual', instructions: null,
+    })
+    renderAt('/backoffice/sejours')
+    await screen.findByText('Salma Bennani')
+    await userEvent.click((await screen.findAllByRole('button', { name: "Dossier d'enregistrement" }))[0])
+    expect(await screen.findByText('4821')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Révoquer le code' }))
+    await vi.waitFor(() => expect(svc.revokeCode).toHaveBeenCalledWith(1))
   })
 })

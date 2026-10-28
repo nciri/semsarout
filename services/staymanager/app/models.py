@@ -298,3 +298,39 @@ class StayGuestDocument(Base):
     content_type = Column(String(100))
     filename = Column(String(255))
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class PropertyAccess(Base):
+    """Mode d'entrée d'un bien : clé remise, code posé à la main, ou serrure connectée.
+
+    Les identifiants TTLock restent dans cette table, jamais renvoyés par une API : une
+    agence les saisit une fois, le service s'en sert, personne ne les relit.
+    """
+    __tablename__ = "property_access"
+    __table_args__ = (UniqueConstraint("property_id", name="uq_property_access_property"),)
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    agency_id = Column(Integer, nullable=False, index=True)
+    property_id = Column(Integer, nullable=False, index=True)
+    mode = Column(String(20), default="traditional")   # traditional|manual|ttlock
+    instructions = Column(Text)
+    credentials = Column(JSON)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class StayAccessCode(Base):
+    """Code d'entrée d'un séjour : un seul actif à la fois, révocable."""
+    __tablename__ = "stay_access_code"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    agency_id = Column(Integer, nullable=False, index=True)
+    reservation_id = Column(BigInteger, ForeignKey("staymanager_reservation.id"), nullable=False, index=True)
+    mode = Column(String(20), nullable=False)          # manual|ttlock
+    code = Column(String(20), nullable=False)
+    external_id = Column(String(60))                   # identifiant du code chez TTLock
+    valid_from = Column(DateTime)
+    valid_until = Column(DateTime)
+    status = Column(String(20), default="active", index=True)   # active|revoked
+    created_at = Column(DateTime, default=datetime.utcnow)
+    revoked_at = Column(DateTime)

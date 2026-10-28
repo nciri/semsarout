@@ -22,7 +22,7 @@ MAX_OFFSET_HOURS = 24 * 30
 LATE_GRACE_HOURS = 48
 
 PLACEHOLDERS = ("guest_name", "property_title", "check_in", "check_out", "nights",
-                "platform", "agency_name")
+                "platform", "agency_name", "access_code", "access_instructions")
 _VAR = re.compile(r"\{\{\s*(\w+)\s*\}\}")
 
 
@@ -51,8 +51,13 @@ def _fr_date(value: datetime | None) -> str:
     return value.strftime("%d/%m/%Y") if value else ""
 
 
-def variables(stay, property_title: str | None, agency_name: str | None) -> dict:
+def variables(stay, property_title: str | None, agency_name: str | None,
+              access_code: str | None = None, access_instructions: str | None = None) -> dict:
     return {
+        # Le code d'entrée vient de `app/access.py` : un gabarit qui le réclame avant
+        # qu'il existe partirait avec un trou, donc `is_ready` refuse d'envoyer.
+        "access_code": access_code or "",
+        "access_instructions": access_instructions or "",
         "guest_name": stay.guest_name or "",
         "property_title": property_title or "",
         "check_in": _fr_date(stay.check_in),
@@ -70,6 +75,14 @@ def render(text: str, values: dict) -> str:
 
 def unknown_placeholders(text: str) -> list[str]:
     return sorted({v for v in _VAR.findall(text or "") if v not in PLACEHOLDERS})
+
+
+ACCESS_PLACEHOLDERS = ("access_code", "access_instructions")
+
+
+def needs_access(text: str) -> bool:
+    """Le gabarit parle-t-il du code d'entrée ?"""
+    return any(v in ACCESS_PLACEHOLDERS for v in _VAR.findall(text or ""))
 
 
 def due_at(template, stay) -> datetime | None:
