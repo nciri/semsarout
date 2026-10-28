@@ -29,10 +29,14 @@ export function RentalCompact({ summary }) {
       <Figure value={a.total}>{t('dashboard.rental.headline', { count: a.total })}</Figure>
       <div className="grid grid-cols-2 gap-3">
         <Kv label={t('dashboard.rental.arrears')} value={a.arrears}
-          sub={a.arrearsAmount ? money(a.arrearsAmount, 'sale') : null} />
-        <Kv label={t('dashboard.rental.applications')} value={a.applications} />
-        <Kv label={t('dashboard.rental.expiring')} value={a.expiring} />
-        <Kv label={t('dashboard.rental.inventories')} value={a.inventories} />
+          sub={a.arrearsAmount ? money(a.arrearsAmount, 'sale') : null}
+          to="/backoffice/gestion-locative/baux?filtre=impayes" />
+        <Kv label={t('dashboard.rental.applications')} value={a.applications}
+          to="/backoffice/gestion-locative/candidatures?statut=pending" />
+        <Kv label={t('dashboard.rental.expiring')} value={a.expiring}
+          to="/backoffice/gestion-locative/baux?filtre=echeances" />
+        <Kv label={t('dashboard.rental.inventories')} value={a.inventories}
+          to="/backoffice/gestion-locative/baux?filtre=edl_manquant" />
       </div>
       {a.total === 0 && <Alert tone="plain" icon={FiCheckCircle}>{t('dashboard.rental.allClear')}</Alert>}
     </>

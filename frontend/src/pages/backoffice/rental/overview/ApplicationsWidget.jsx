@@ -63,7 +63,7 @@ export function ApplicationsDetail({ s, onClose, titleRef }) {
   return (
     <DetailFrame title={t('backoffice:rental.overview.apps.detailTitle')}
       sub={t('backoffice:rental.overview.apps.detailSub', { count: pending.length, total })}
-      link={{ to: '/backoffice/gestion-locative/candidatures', label: t('backoffice:rental.overview.apps.viewAll') }}
+      link={{ to: '/backoffice/gestion-locative/candidatures?statut=pending', label: t('backoffice:rental.overview.apps.viewAll') }}
       onClose={onClose} titleRef={titleRef}>
       <DetailColumns
         main={!pending.length ? <p className="text-sm text-gray-500">{t('backoffice:rental.overview.apps.none')}</p> : (

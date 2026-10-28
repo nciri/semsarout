@@ -814,7 +814,8 @@
         "urgentLease_one": "<strong>ينتهي عقد كراء {{title}} بعد يوم واحد</strong> دون محضر معاينة الخروج: برمجه مع تصفية الضمانة.",
         "urgentLease_other": "<strong>ينتهي عقد كراء {{title}} بعد {{count}} يومًا</strong> دون محضر معاينة الخروج: برمجه مع تصفية الضمانة.",
         "noNoticeAlert": "<strong>وكالة {{title}}: تنتهي في {{date}}.</strong> لم يُرسل بعد إشعار الانتهاء إلى {{name}}.",
-        "note": "يُرسل إشعار انتهاء الوكالات آليًا قبل 60 يومًا من نهايتها."
+        "note": "يُرسل إشعار انتهاء الوكالات آليًا قبل 60 يومًا من نهايتها.",
+        "viewLeases": "عرض العقود المعنية"
       },
       "apps": {
         "none": "لا طلب في انتظار القرار.",
@@ -876,7 +877,8 @@
         "ofLeases_one": "من أصل عقد واحد",
         "ofLeases_other": "من أصل {{count}} عقود",
         "exposed": "ضمانات معرّضة",
-        "note": "يُملأ محضر المعاينة غرفة بغرفة، مع الصور، ثم يوقّعه الطرفان إلكترونيًا."
+        "note": "يُملأ محضر المعاينة غرفة بغرفة، مع الصور، ثم يوقّعه الطرفان إلكترونيًا.",
+        "viewLeases": "عرض العقود المعنية"
       },
       "leases": {
         "columns": {
@@ -888,7 +890,13 @@
         },
         "owed": "{{amount}} مستحقة",
         "upToDate": "لا متأخرات",
-        "noPeriod": "لا استحقاق"
+        "noPeriod": "لا استحقاق",
+        "filters": {
+          "impayes": "عقود بمتأخرات",
+          "echeances": "استحقاقات قريبة",
+          "edl_manquant": "حالة مكان الدخول ناقصة",
+          "clear": "إزالة التصفية"
+        }
       },
       "lease": {
         "scheduleTitle": "جدول استحقاق الإيجارات",
@@ -3550,7 +3558,8 @@
         "cleaning": "التنظيف",
         "messages": "الرسائل",
         "access": "الدخول",
-        "calendars": "التقويمات"
+        "calendars": "التقويمات",
+        "calendar": "الروزنامة"
       },
       "arrivals": "وصول اليوم",
       "departures": "مغادرة اليوم",
@@ -3564,7 +3573,9 @@
       "sourcesInError": "{{count}} تقويم لا يستجيب.",
       "sourcesInError_other": "{{count}} تقويمات لا تستجيب.",
       "syncAll": "مزامنة جميع التقويمات",
-      "syncDone": "تمت مزامنة {{ok}} تقويم، {{failed}} فشلت."
+      "syncDone": "تمت مزامنة {{ok}} تقويم، {{failed}} فشلت.",
+      "seeConflicts": "عرض الإقامات المعنية",
+      "seeChannels": "عرض الروزنامات"
     },
     "status": {
       "confirmed": "مؤكدة",
@@ -3589,7 +3600,8 @@
         "dates": "الإقامة",
         "nights": "ليالٍ",
         "channel": "القناة",
-        "status": "الحالة"
+        "status": "الحالة",
+        "amount": "المبلغ"
       },
       "empty": {
         "title": "لا توجد إقامات",
@@ -3605,6 +3617,38 @@
         "cancel": "إلغاء",
         "submit": "حفظ",
         "saved": "تم حفظ البيانات."
+      },
+      "viewLabel": "العرض",
+      "views": {
+        "all": "كل الإقامات",
+        "arrivals": "وصول",
+        "departures": "مغادرة",
+        "in_house": "في المكان",
+        "upcoming": "قادمة",
+        "conflicts": "حجوزات مزدوجة"
+      },
+      "guestCount": "{{count}} مسافر",
+      "guestCount_other": "{{count}} مسافرين",
+      "openStay": "فتح بطاقة الإقامة",
+      "form": {
+        "newButton": "تسجيل إقامة مباشرة",
+        "title": "إقامة مباشرة جديدة",
+        "editTitle": "تعديل الإقامة",
+        "help": "لكراء تم خارج المنصات. الإقامات القادمة من روزنامة لا تُسجَّل هنا.",
+        "propertyLabel": "العقار",
+        "propertyPlaceholder": "اختر عقارا",
+        "checkIn": "الوصول",
+        "checkOut": "المغادرة",
+        "statusLabel": "الحالة",
+        "guestCount": "المسافرون",
+        "totalPrice": "مبلغ الإقامة",
+        "cleaningFee": "مصاريف التنظيف",
+        "notes": "ملاحظات",
+        "requests": "طلبات خاصة",
+        "cancel": "إلغاء",
+        "submit": "حفظ",
+        "created": "تم تسجيل الإقامة.",
+        "updated": "تم تعديل الإقامة."
       }
     },
     "calendars": {
@@ -3869,6 +3913,51 @@
         "issued": "تم تثبيت الرمز.",
         "revoked": "تم إلغاء الرمز."
       }
+    },
+    "calendar": {
+      "previous": "الشهر السابق",
+      "next": "الشهر المقبل",
+      "nights": "{{count}} ليلة",
+      "nights_other": "{{count}} ليال",
+      "empty": {
+        "title": "لا إقامة في هذا الشهر",
+        "description": "غيّر الشهر، أو أضف روزنامة منصة."
+      }
+    },
+    "detail": {
+      "back": "رجوع إلى المخطط",
+      "edit": "تعديل الإقامة",
+      "cancel": "إلغاء الإقامة",
+      "cancelTitle": "إلغاء هذه الإقامة؟",
+      "cancelHelp": "يُلغى رمز الدخول وتُلغى مهمة التنظيف. تبقى الإقامة ظاهرة في السجل.",
+      "cancelConfirm": "تأكيد الإلغاء",
+      "cancelled": "تم إلغاء الإقامة.",
+      "guests": "المسافرون",
+      "cleaningFee": "مصاريف التنظيف",
+      "source": "المصدر",
+      "sources": {
+        "manual": "تسجيل مباشر",
+        "ical": "روزنامة منصة",
+        "staymanager": "حساب StayManager"
+      },
+      "contactTitle": "معطيات المسافر",
+      "accessTitle": "الدخول والتنظيف",
+      "openAccess": "ضبط دخول العقار",
+      "codeWindow": "صالح من {{from}} إلى {{to}}",
+      "noCode": "لا رمز دخول نشط لهذه الإقامة.",
+      "cleaningTitle": "تنظيف ما بين الإقامتين",
+      "noCleaning": "لا تنظيف مبرمج.",
+      "guestsTitle": "النزلاء المصرح بهم",
+      "noGuests": "لا نزيل مصرح به. أرسل رابط التسجيل إلى المسافر.",
+      "guestName": "الاسم",
+      "guestDocument": "الوثيقة",
+      "lead": "(الرئيسي)",
+      "messagesTitle": "رسائل الإقامة",
+      "openMessages": "فتح المراسلة",
+      "noMessages": "لا رسالة محضّرة لهذه الإقامة.",
+      "conflictsTitle": "إقامات متعارضة",
+      "conflictAlert": "تتداخل هذه الإقامة مع {{count}} أخرى في نفس العقار.",
+      "conflictAlert_other": "تتداخل هذه الإقامة مع {{count}} إقامات أخرى في نفس العقار."
     }
   },
   "onboarding": {

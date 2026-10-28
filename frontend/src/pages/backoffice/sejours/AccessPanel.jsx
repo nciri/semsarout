@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
@@ -13,6 +14,9 @@ const EMPTY = { property_id: '', mode: 'manual', instructions: '', credentials: 
 function AccessPanel() {
   const { t } = useTranslation(['backoffice', 'common'])
   const qc = useQueryClient()
+  const [params] = useSearchParams()
+  // `bien` vient de la fiche d'un séjour : on n'affiche que la ligne de ce bien.
+  const propertyFilter = Number(params.get('bien')) || null
   const [form, setForm] = useState(null)   // null = formulaire fermé
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
   const setCred = (k) => (e) => setForm((f) => ({ ...f, credentials: { ...f.credentials, [k]: e.target.value } }))
@@ -35,7 +39,8 @@ function AccessPanel() {
 
   if (error) return <p className="px-2.5 py-6 text-sm text-gray-500">{t('backoffice:stays.shared.loadError')}</p>
 
-  const rows = data?.access || []
+  const rows = (data?.access || [])
+    .filter((a) => !propertyFilter || a.property_id === propertyFilter)
   const properties = props?.properties || []
   const configured = new Set(rows.map((r) => r.property_id))
 

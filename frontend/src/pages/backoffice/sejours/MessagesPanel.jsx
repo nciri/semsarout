@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
@@ -15,6 +16,9 @@ function MessagesPanel() {
   const { t } = useTranslation(['backoffice', 'common'])
   const { fmtDate } = useFormat()
   const qc = useQueryClient()
+  const [params] = useSearchParams()
+  // `sejour` vient de la fiche d'un séjour : on ne montre alors que ses messages.
+  const stayFilter = Number(params.get('sejour')) || null
   const [editing, setEditing] = useState(null)   // null = formulaire fermé
   const [form, setForm] = useState(EMPTY)
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
@@ -56,7 +60,8 @@ function MessagesPanel() {
 
   const templates = (data?.templates || []).filter((x) => x.active)
   const placeholders = data?.placeholders || []
-  const messages = journal?.messages || []
+  const messages = (journal?.messages || [])
+    .filter((m) => !stayFilter || m.reservation_id === stayFilter)
   const properties = props?.properties || []
 
   return (

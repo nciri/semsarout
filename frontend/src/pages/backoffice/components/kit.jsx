@@ -93,16 +93,25 @@ export function Rich({ i18nKey, values }) {
   return <Trans ns="backoffice" i18nKey={i18nKey} values={values} components={{ strong: <strong className="font-semibold" /> }} />
 }
 
-export function Kv({ label, value, unit, sub }) {
-  return (
-    <div className="grid gap-0.5">
+// `to` fait du chiffre un lien vers la liste qui le justifie : un indicateur qu'on ne peut
+// pas ouvrir oblige à retrouver à la main les lignes qu'il compte.
+export function Kv({ label, value, unit, sub, to }) {
+  const body = (
+    <>
       <span className="text-xs text-gray-500">{label}</span>
       <span className="font-display text-xl font-extrabold tabular-nums">
         {value}{unit && <small className="ms-1 text-[12.5px] font-bold text-gray-600">{unit}</small>}
       </span>
       {sub && <span className="text-xs text-gray-500">{sub}</span>}
-    </div>
+    </>
   )
+  return to
+    ? (
+      <Link to={to} className="grid gap-0.5 rounded-lg transition-colors hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
+        {body}
+      </Link>
+    )
+    : <div className="grid gap-0.5">{body}</div>
 }
 
 /** Chiffre principal d'un widget, suivi de sa phrase de contexte. */

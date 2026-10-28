@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
@@ -17,8 +18,10 @@ function CleaningPanel() {
   const { t } = useTranslation(['backoffice', 'common'])
   const { fmtDate } = useFormat()
   const qc = useQueryClient()
-  const [status, setStatus] = useState('')
-  const [openId, setOpenId] = useState(null)
+  const [params] = useSearchParams()
+  const [status, setStatus] = useState(() => params.get('statut') || '')
+  // Ouvre d'emblée la tâche désignée par le lien (fiche du séjour, alerte de retard).
+  const [openId, setOpenId] = useState(() => (params.get('tache') ? Number(params.get('tache')) : null))
   const [creating, setCreating] = useState(false)
   const [task, setTask] = useState(NEW_TASK)
   const [report, setReport] = useState(NEW_REPORT)

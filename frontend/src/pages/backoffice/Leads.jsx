@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useTranslation } from 'react-i18next'
 import {
@@ -115,7 +116,9 @@ export default function BackofficeLeads() {
   const { fmtDate } = useFormat()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
-  const [filters, setFilters] = useState(EMPTY_FILTERS)
+  // Le statut peut venir d'un lien (tableau de bord) : le filtre s'ouvre déjà posé.
+  const [params] = useSearchParams()
+  const [filters, setFilters] = useState(() => ({ ...EMPTY_FILTERS, status: params.get('statut') || '' }))
   const [sort, setSort] = useState({ field: 'created_at', order: 'desc' })
   const [openId, setOpenId] = useState(null)
   const [creating, setCreating] = useState(false)

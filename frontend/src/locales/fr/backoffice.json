@@ -814,7 +814,8 @@
         "urgentLease_one": "<strong>Le bail de {{title}} se termine dans {{count}} jour</strong>, sans état des lieux de sortie : planifiez-le avec le décompte du dépôt.",
         "urgentLease_other": "<strong>Le bail de {{title}} se termine dans {{count}} jours</strong>, sans état des lieux de sortie : planifiez-le avec le décompte du dépôt.",
         "noNoticeAlert": "<strong>Mandat {{title}} : fin le {{date}}.</strong> L'avis d'échéance n'a pas encore été envoyé à {{name}}.",
-        "note": "L'avis d'échéance des mandats part automatiquement 60 jours avant la fin."
+        "note": "L'avis d'échéance des mandats part automatiquement 60 jours avant la fin.",
+        "viewLeases": "Voir les baux concernés"
       },
       "apps": {
         "none": "Aucune candidature en attente de décision.",
@@ -876,7 +877,8 @@
         "ofLeases_one": "sur {{count}} bail",
         "ofLeases_other": "sur {{count}} baux",
         "exposed": "Dépôts exposés",
-        "note": "Un état des lieux se remplit pièce par pièce, avec photos, puis se signe électroniquement par les deux parties."
+        "note": "Un état des lieux se remplit pièce par pièce, avec photos, puis se signe électroniquement par les deux parties.",
+        "viewLeases": "Voir les baux concernés"
       },
       "leases": {
         "columns": {
@@ -888,7 +890,13 @@
         },
         "owed": "{{amount}} dus",
         "upToDate": "À jour",
-        "noPeriod": "Aucune échéance"
+        "noPeriod": "Aucune échéance",
+        "filters": {
+          "impayes": "Baux en impayé",
+          "echeances": "Échéances proches",
+          "edl_manquant": "État des lieux d'entrée manquant",
+          "clear": "Retirer le filtre"
+        }
       },
       "lease": {
         "scheduleTitle": "Échéancier des loyers",
@@ -3550,7 +3558,8 @@
         "cleaning": "Ménage",
         "messages": "Messages",
         "access": "Accès",
-        "calendars": "Calendriers"
+        "calendars": "Calendriers",
+        "calendar": "Calendrier"
       },
       "arrivals": "Arrivées du jour",
       "departures": "Départs du jour",
@@ -3564,7 +3573,9 @@
       "sourcesInError": "{{count}} calendrier ne répond plus.",
       "sourcesInError_other": "{{count}} calendriers ne répondent plus.",
       "syncAll": "Synchroniser tous les calendriers",
-      "syncDone": "{{ok}} calendrier(s) synchronisé(s), {{failed}} en échec."
+      "syncDone": "{{ok}} calendrier(s) synchronisé(s), {{failed}} en échec.",
+      "seeConflicts": "Voir les séjours concernés",
+      "seeChannels": "Voir les calendriers"
     },
     "status": {
       "confirmed": "Confirmé",
@@ -3589,7 +3600,8 @@
         "dates": "Séjour",
         "nights": "Nuits",
         "channel": "Canal",
-        "status": "Statut"
+        "status": "Statut",
+        "amount": "Montant"
       },
       "empty": {
         "title": "Aucun séjour",
@@ -3605,6 +3617,38 @@
         "cancel": "Annuler",
         "submit": "Enregistrer",
         "saved": "Contact enregistré."
+      },
+      "viewLabel": "Vue",
+      "views": {
+        "all": "Tous les séjours",
+        "arrivals": "Arrivées",
+        "departures": "Départs",
+        "in_house": "Sur place",
+        "upcoming": "À venir",
+        "conflicts": "Doubles réservations"
+      },
+      "guestCount": "{{count}} voyageur",
+      "guestCount_other": "{{count}} voyageurs",
+      "openStay": "Ouvrir la fiche du séjour",
+      "form": {
+        "newButton": "Saisir un séjour direct",
+        "title": "Nouveau séjour direct",
+        "editTitle": "Modifier le séjour",
+        "help": "Pour une location conclue hors plateforme. Les séjours venus d'un calendrier ne se saisissent pas ici.",
+        "propertyLabel": "Bien",
+        "propertyPlaceholder": "Choisir un bien",
+        "checkIn": "Arrivée",
+        "checkOut": "Départ",
+        "statusLabel": "Statut",
+        "guestCount": "Voyageurs",
+        "totalPrice": "Montant du séjour",
+        "cleaningFee": "Frais de ménage",
+        "notes": "Notes",
+        "requests": "Demandes particulières",
+        "cancel": "Annuler",
+        "submit": "Enregistrer",
+        "created": "Séjour enregistré.",
+        "updated": "Séjour modifié."
       }
     },
     "calendars": {
@@ -3869,6 +3913,51 @@
         "issued": "Code posé.",
         "revoked": "Code révoqué."
       }
+    },
+    "calendar": {
+      "previous": "Mois précédent",
+      "next": "Mois suivant",
+      "nights": "{{count}} nuit",
+      "nights_other": "{{count}} nuits",
+      "empty": {
+        "title": "Aucun séjour ce mois-ci",
+        "description": "Changez de mois, ou ajoutez un calendrier de plateforme."
+      }
+    },
+    "detail": {
+      "back": "Retour au planning",
+      "edit": "Modifier le séjour",
+      "cancel": "Annuler le séjour",
+      "cancelTitle": "Annuler ce séjour ?",
+      "cancelHelp": "Le code d'entrée est révoqué et le ménage de rotation est annulé. Le séjour reste visible dans l'historique.",
+      "cancelConfirm": "Confirmer l'annulation",
+      "cancelled": "Séjour annulé.",
+      "guests": "Voyageurs",
+      "cleaningFee": "Frais de ménage",
+      "source": "Provenance",
+      "sources": {
+        "manual": "Saisie directe",
+        "ical": "Calendrier de plateforme",
+        "staymanager": "Compte StayManager"
+      },
+      "contactTitle": "Contact du voyageur",
+      "accessTitle": "Entrée et ménage",
+      "openAccess": "Régler l'accès du bien",
+      "codeWindow": "Valable du {{from}} au {{to}}",
+      "noCode": "Aucun code d'entrée actif pour ce séjour.",
+      "cleaningTitle": "Ménage de rotation",
+      "noCleaning": "Aucun ménage planifié.",
+      "guestsTitle": "Occupants déclarés",
+      "noGuests": "Aucun occupant déclaré. Envoyez le lien d'enregistrement au voyageur.",
+      "guestName": "Nom",
+      "guestDocument": "Pièce",
+      "lead": "(principal)",
+      "messagesTitle": "Messages du séjour",
+      "openMessages": "Ouvrir la messagerie",
+      "noMessages": "Aucun message préparé pour ce séjour.",
+      "conflictsTitle": "Séjours en conflit",
+      "conflictAlert": "Ce séjour en chevauche {{count}} autre sur le même bien.",
+      "conflictAlert_other": "Ce séjour en chevauche {{count}} autres sur le même bien."
     }
   },
   "onboarding": {

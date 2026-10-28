@@ -76,7 +76,7 @@ export function LeadsDetail({ leads, now, onClose, titleRef }) {
     <DetailFrame
       title={t('dashboard.leads.title')}
       sub={t('dashboard.leads.detailSub', { count: leads.length })}
-      link={{ to: '/backoffice/leads', label: t('dashboard.leads.viewAll') }}
+      link={{ to: '/backoffice/leads?statut=new', label: t('dashboard.leads.viewAll') }}
       onClose={onClose}
       titleRef={titleRef}
     >

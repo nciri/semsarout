@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { Link, useLocation, useOutletContext } from 'react-router-dom'
+import { Link, useLocation, useOutletContext, useSearchParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { FiExternalLink, FiHome, FiInbox, FiLock, FiPlus, FiStar, FiX } from 'react-icons/fi'
@@ -25,7 +25,8 @@ function ApplicationsList() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [docs, setDocs] = useState([])
   const [pendingDocType, setPendingDocType] = useState(DOC_TYPES[0][0])
-  const [statusFilter, setStatusFilter] = useState('')
+  const [params] = useSearchParams()
+  const [statusFilter, setStatusFilter] = useState(() => params.get('statut') || '')
   const [propertyFilter, setPropertyFilter] = useState('')
   const set = (k) => (e) => setForm((v) => ({ ...v, [k]: e.target.value }))
 

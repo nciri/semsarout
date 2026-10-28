@@ -105,6 +105,8 @@ const LeasesList = lazy(() => import('./pages/backoffice/rental/LeasesList'))
 const StaysLayout = lazy(() => import('./pages/backoffice/sejours/StaysLayout'))
 const StaysList = lazy(() => import('./pages/backoffice/sejours/StaysList'))
 const CalendarsList = lazy(() => import('./pages/backoffice/sejours/CalendarsList'))
+const StayCalendar = lazy(() => import('./pages/backoffice/sejours/StayCalendar'))
+const StayDetail = lazy(() => import('./pages/backoffice/sejours/StayDetail'))
 const StayMessagesPanel = lazy(() => import('./pages/backoffice/sejours/MessagesPanel'))
 const StayCleaningPanel = lazy(() => import('./pages/backoffice/sejours/CleaningPanel'))
 const StayAccessPanel = lazy(() => import('./pages/backoffice/sejours/AccessPanel'))
@@ -287,8 +289,10 @@ function App() {
           <Route path="gestion-locative/etats-des-lieux/:invId" element={<InventoryEditor />} />
           <Route path="gestion-locative/decompte/:leaseId" element={<SettlementEditor />} />
           {/* Séjours courte durée : planning + calendriers des plateformes en onglets */}
+          <Route path="sejours/:stayId" element={<StayDetail />} />
           <Route path="sejours" element={<StaysLayout />}>
             <Route index element={<StaysList />} />
+            <Route path="calendrier" element={<StayCalendar />} />
             <Route path="menage" element={<StayCleaningPanel />} />
             <Route path="messages" element={<StayMessagesPanel />} />
             <Route path="acces" element={<StayAccessPanel />} />

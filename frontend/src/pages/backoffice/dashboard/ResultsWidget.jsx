@@ -48,7 +48,7 @@ export function ResultsDetail({ closed, now, onClose, titleRef }) {
     <DetailFrame
       title={t('dashboard.results.detailTitle')}
       sub={t('dashboard.results.detailSub')}
-      link={{ to: '/backoffice/transactions', label: t('dashboard.results.viewAll') }}
+      link={{ to: '/backoffice/transactions?statut=won', label: t('dashboard.results.viewAll') }}
       onClose={onClose}
       titleRef={titleRef}
     >

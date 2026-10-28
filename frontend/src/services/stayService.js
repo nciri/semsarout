@@ -5,6 +5,11 @@ const B = '/backoffice/sejours'
 export const stayService = {
   overview: async () => (await api.get(`${B}/apercu`)).data,
   listStays: async (params = {}) => (await api.get(B, { params })).data,
+  getStay: async (id) => (await api.get(`${B}/${id}`)).data,
+  createStay: async (data) => (await api.post(B, data)).data,
+  updateStay: async (id, data) => (await api.put(`${B}/${id}`, data)).data,
+  cancelStay: async (id) => (await api.post(`${B}/${id}/annuler`)).data,
+  calendar: async (params = {}) => (await api.get(`${B}/calendrier`, { params })).data,
   listSources: async () => (await api.get(`${B}/calendriers`)).data,
   addSource: async (data) => (await api.post(`${B}/calendriers`, data)).data,
   syncSource: async (id) => (await api.post(`${B}/calendriers/${id}/sync`)).data,

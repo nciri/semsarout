@@ -26,7 +26,7 @@ from sqlalchemy.orm import Session
 from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
-from . import agency_client, billing_client, ical, messages, stays
+from . import agency_client, billing_client, booking, ical, messages, stays
 from . import access
 from .access import router as access_router
 from .checkin import router as checkin_router
@@ -439,15 +439,9 @@ def _source_dict(db: Session, src: IcalSource) -> dict:
             "reservations_count": src.reservations_count or 0}
 
 
-def _stay_dict(db: Session, r: StayManagerReservation) -> dict:
-    ro = db.get(PropertyRO, r.property_id) if r.property_id else None
-    return {"id": r.id, "property_id": r.property_id,
-            "property_title": ro.title if ro else None,
-            "platform": r.platform, "source": r.source, "external_id": r.external_id,
-            "guest_name": r.guest_name, "guest_phone": r.guest_phone,
-            "guest_count": r.guest_count, "check_in": iso(r.check_in),
-            "check_out": iso(r.check_out), "nights": r.nights, "status": r.status,
-            "has_conflict": bool(r.has_conflict), "synced_at": iso(r.synced_at)}
+# La ligne de planning est décrite dans `app/booking.py`, qui porte aussi la fiche : un
+# séjour listé et un séjour ouvert doivent dire la même chose.
+_stay_dict = booking.stay_dict
 
 
 def _own_source(db: Session, source_id: int, principal: Principal):
@@ -838,3 +832,8 @@ async def internal_mark_message(message_id: int, request: Request,
         msg.sent_at = datetime.utcnow()
         db.commit()
     return {"ok": True}
+
+
+# Enregistré en dernier, volontairement : `/backoffice/sejours/{stay_id}` masquerait
+# `/apercu`, `/calendriers` et `/messages` s'il était déclaré avant elles.
+app.include_router(booking.router)

@@ -81,7 +81,7 @@ export function VisitsDetail({ visits, outcomes, now, onClose, titleRef }) {
     <DetailFrame
       title={t('dashboard.visits.title')}
       sub={visits.length ? t('dashboard.visits.detailSub', { count: visits.length, date: fmtDate(visits.at(-1).scheduled_at, { day: 'numeric', month: 'long' }) }) : null}
-      link={{ to: '/backoffice/visites', label: t('dashboard.visits.viewAll') }}
+      link={{ to: '/backoffice/visites?vue=week', label: t('dashboard.visits.viewAll') }}
       onClose={onClose}
       titleRef={titleRef}
     >

@@ -4,12 +4,15 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import i18n from '../../../i18n'
+import api from '../../../services/api'
 import StaysLayout from './StaysLayout'
 import StaysList from './StaysList'
 import CalendarsList from './CalendarsList'
 import MessagesPanel from './MessagesPanel'
 import CleaningPanel from './CleaningPanel'
 import AccessPanel from './AccessPanel'
+import StayCalendar from './StayCalendar'
+import StayDetail from './StayDetail'
 
 const { svc } = vi.hoisted(() => ({
   svc: {
@@ -23,6 +26,7 @@ const { svc } = vi.hoisted(() => ({
     createCheckinLink: vi.fn(), getCheckin: vi.fn(), reviewGuest: vi.fn(),
     guestDocUrl: (id) => `/piece/${id}`,
     listAccess: vi.fn(), setAccess: vi.fn(), getCode: vi.fn(), issueCode: vi.fn(), revokeCode: vi.fn(),
+    getStay: vi.fn(), createStay: vi.fn(), updateStay: vi.fn(), cancelStay: vi.fn(), calendar: vi.fn(),
   },
 }))
 vi.mock('../../../services/stayService', async (orig) => ({ ...(await orig()), stayService: svc }))
@@ -65,6 +69,30 @@ const JOURNAL = {
   ],
 }
 
+const DETAIL = {
+  stay: {
+    id: 2, property_id: 5, property_title: 'Riad Médina', platform: 'booking', source: 'manual',
+    external_id: null, guest_name: 'Salma Bennani', guest_email: 'salma@example.com',
+    guest_phone: '0600000000', guest_count: 3, check_in: '2026-11-03T00:00:00',
+    check_out: '2026-11-06T00:00:00', nights: 3, status: 'confirmed', has_conflict: false,
+    total_price: 3200, cleaning_fee: 300, currency: 'Dh', editable: true,
+    guest_notes: 'Arrivée tardive', special_requests: null, contract_status: null,
+  },
+  guests: [{ id: 8, full_name: 'Salma Bennani', is_lead: true, status: 'validated', document_type: 'cin', nationality: 'Maroc' }],
+  checkin: { status: 'submitted', expires_at: '2026-11-07T00:00:00', submitted_at: '2026-11-01T10:00:00' },
+  cleaning: { id: 44, status: 'pending', scheduled_date: '2026-11-06', assigned_to_id: 7 },
+  access_code: { id: 3, mode: 'manual', code: '4821', valid_from: '2026-11-03T11:00:00', valid_until: '2026-11-06T14:00:00' },
+  messages: [{ id: 32, subject: 'Votre arrivée', status: 'sent', due_at: '2026-11-02T09:00:00', sent_at: '2026-11-02T09:01:00' }],
+  conflicts: [],
+}
+const CALENDAR = {
+  month: '2026-11', days: 30,
+  properties: [{ property_id: 5, property_title: 'Riad Médina', stays: [
+    { id: 2, guest_name: 'Salma Bennani', platform: 'booking', nights: 3, status: 'confirmed',
+      has_conflict: false, check_in: '2026-11-03T00:00:00', check_out: '2026-11-06T00:00:00' },
+  ] }],
+}
+
 function renderAt(path) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
@@ -77,7 +105,9 @@ function renderAt(path) {
           <Route path="acces" element={<AccessPanel />} />
           <Route path="messages" element={<MessagesPanel />} />
           <Route path="calendriers" element={<CalendarsList />} />
+          <Route path="calendrier" element={<StayCalendar />} />
           </Route>
+          <Route path="/backoffice/sejours/:stayId" element={<StayDetail />} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -97,6 +127,11 @@ describe('Séjours courte durée', () => {
     svc.listTemplates.mockResolvedValue(TEMPLATES)
     svc.listMessages.mockResolvedValue(JOURNAL)
     svc.createTemplate.mockResolvedValue({ template: { id: 9 } })
+    svc.getStay.mockResolvedValue(DETAIL)
+    svc.calendar.mockResolvedValue(CALENDAR)
+    svc.createStay.mockResolvedValue({ stay: { id: 3 } })
+    svc.cancelStay.mockResolvedValue({ stay: { id: 2, status: 'cancelled' }, code_warnings: [] })
+    api.get.mockResolvedValue({ data: { properties: [{ id: 5, title: 'Riad Médina' }] } })
   })
 
   it("résume la journée et alerte sur les doubles réservations", async () => {
@@ -151,6 +186,11 @@ describe('Messagerie de séjour', () => {
     svc.listTemplates.mockResolvedValue(TEMPLATES)
     svc.listMessages.mockResolvedValue(JOURNAL)
     svc.createTemplate.mockResolvedValue({ template: { id: 9 } })
+    svc.getStay.mockResolvedValue(DETAIL)
+    svc.calendar.mockResolvedValue(CALENDAR)
+    svc.createStay.mockResolvedValue({ stay: { id: 3 } })
+    svc.cancelStay.mockResolvedValue({ stay: { id: 2, status: 'cancelled' }, code_warnings: [] })
+    api.get.mockResolvedValue({ data: { properties: [{ id: 5, title: 'Riad Médina' }] } })
     svc.updateContact.mockResolvedValue({ stay: {} })
     svc.listStays.mockResolvedValue(STAYS)
   })
@@ -386,5 +426,77 @@ describe("Modes d'entrée et codes", () => {
     expect(await screen.findByText('4821')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Révoquer le code' }))
     await vi.waitFor(() => expect(svc.revokeCode).toHaveBeenCalledWith(1))
+  })
+})
+
+describe('Fiche de séjour, saisie directe et calendrier', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fr')
+    Object.values(svc).forEach((m) => m.mockReset?.())
+    svc.overview.mockResolvedValue(OVERVIEW)
+    svc.listStays.mockResolvedValue(STAYS)
+    svc.listSources.mockResolvedValue(SOURCES)
+    svc.getStay.mockResolvedValue(DETAIL)
+    svc.calendar.mockResolvedValue(CALENDAR)
+    svc.createStay.mockResolvedValue({ stay: { id: 3 } })
+    svc.cancelStay.mockResolvedValue({ stay: { id: 2, status: 'cancelled' }, code_warnings: [] })
+    api.get.mockResolvedValue({ data: { properties: [{ id: 5, title: 'Riad Médina' }] } })
+  })
+
+  it("filtre le planning sur les arrivées du jour depuis l'aperçu", async () => {
+    const today = new Date().toISOString().slice(0, 10)
+    svc.listStays.mockResolvedValue({ conflicts: 0, stays: [
+      { ...STAYS.stays[1], has_conflict: false, check_in: `${today}T00:00:00`, check_out: '2027-01-02T00:00:00' },
+      { ...STAYS.stays[0], id: 9, has_conflict: false, guest_name: 'Karim Tazi', check_in: '2027-02-01T00:00:00', check_out: '2027-02-03T00:00:00' },
+    ] })
+    renderAt('/backoffice/sejours?vue=arrivals')
+    expect(await screen.findByText('Salma Bennani')).toBeInTheDocument()
+    expect(screen.queryByText('Karim Tazi')).not.toBeInTheDocument()
+  })
+
+  it('saisit une réservation directe', async () => {
+    renderAt('/backoffice/sejours')
+    await screen.findByText('Salma Bennani')
+    await userEvent.click(screen.getByRole('button', { name: 'Saisir un séjour direct' }))
+    await userEvent.selectOptions(await screen.findByLabelText('Bien'), '5')
+    await userEvent.type(screen.getByLabelText('Arrivée'), '2026-12-10')
+    await userEvent.type(screen.getByLabelText('Départ'), '2026-12-14')
+    await userEvent.type(screen.getByLabelText('Nom'), 'Yasmine Alaoui')
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+    await vi.waitFor(() => expect(svc.createStay).toHaveBeenCalled())
+    expect(svc.createStay.mock.calls[0][0]).toMatchObject({
+      check_in: '2026-12-10', check_out: '2026-12-14', guest_name: 'Yasmine Alaoui', status: 'confirmed',
+    })
+  })
+
+  it('ouvre la fiche du séjour avec tout ce qui lui est accroché', async () => {
+    renderAt('/backoffice/sejours/2')
+    expect(await screen.findByRole('heading', { name: 'Riad Médina' })).toBeInTheDocument()
+    expect(screen.getByText('4821')).toBeInTheDocument()
+    expect(screen.getByText('salma@example.com')).toBeInTheDocument()
+    expect(screen.getByText('Votre arrivée')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ouvrir la messagerie' }))
+      .toHaveAttribute('href', '/backoffice/sejours/messages?sejour=2')
+  })
+
+  it('annule un séjour après confirmation', async () => {
+    renderAt('/backoffice/sejours/2')
+    await screen.findByRole('heading', { name: 'Riad Médina' })
+    await userEvent.click(screen.getByRole('button', { name: 'Annuler le séjour' }))
+    await userEvent.click(screen.getByRole('button', { name: "Confirmer l'annulation" }))
+    await vi.waitFor(() => expect(svc.cancelStay).toHaveBeenCalledWith('2'))
+  })
+
+  it("n'offre pas la modification d'un séjour venu d'un calendrier", async () => {
+    svc.getStay.mockResolvedValue({ ...DETAIL, stay: { ...DETAIL.stay, source: 'ical', editable: false } })
+    renderAt('/backoffice/sejours/2')
+    await screen.findByRole('heading', { name: 'Riad Médina' })
+    expect(screen.queryByRole('button', { name: 'Modifier le séjour' })).not.toBeInTheDocument()
+  })
+
+  it('place les séjours du mois dans la grille du calendrier', async () => {
+    renderAt('/backoffice/sejours/calendrier')
+    expect(await screen.findByRole('link', { name: 'Salma Bennani' }))
+      .toHaveAttribute('href', '/backoffice/sejours/2')
   })
 })

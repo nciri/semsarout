@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from 'react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'react-toastify'
@@ -193,7 +194,8 @@ export default function BackofficeProperties() {
   const rows = useMemo(() => enrich(insights.data?.properties || [], ctx), [insights.data, ctx])
   const sources = insights.data?.sources || {}
 
-  const [filters, setFilters] = useState({ q: '', status: '', type: '', sort: 'todo' })
+  const [params] = useSearchParams()
+  const [filters, setFilters] = useState(() => ({ q: '', status: params.get('statut') || '', type: '', sort: 'todo' }))
   const [page, setPage] = useState(1)
   const [view, setView] = useState(readView)
   const setFilter = (k, v) => { setFilters((f) => ({ ...f, [k]: v })); if (k !== 'sort') setPage(1) }

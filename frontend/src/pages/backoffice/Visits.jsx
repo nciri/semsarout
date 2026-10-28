@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from 'react-query'
-import { useMatch, useNavigate } from 'react-router-dom'
+import { useMatch, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'react-toastify'
 import { FiAlertTriangle, FiCalendar, FiCheckSquare, FiChevronLeft, FiChevronRight, FiClock, FiList, FiPlus, FiSettings, FiUsers } from 'react-icons/fi'
@@ -98,9 +98,10 @@ export default function BackofficeVisits() {
   const now = useMemo(() => new Date(), [])
   const dayLabel = useDayLabel(now)
 
-  const [mode, setMode] = useState('week')
+  const [params] = useSearchParams()
+  const [mode, setMode] = useState(() => params.get('vue') || 'week')
   const [anchor, setAnchor] = useState(now)
-  const [status, setStatus] = useState('')
+  const [status, setStatus] = useState(() => params.get('statut') || '')
   const [page, setPage] = useState(1)
   const [openKey, setOpenKey] = useState(null)
   const [editing, setEditing] = useState(null)

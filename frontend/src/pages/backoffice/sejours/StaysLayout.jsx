@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
@@ -10,6 +10,7 @@ import { Alert, IconAction, Kv } from '../components/kit'
 
 const TABS = [
   { to: '', end: true, key: 'planning' },
+  { to: 'calendrier', key: 'calendar' },
   { to: 'menage', key: 'cleaning' },
   { to: 'messages', key: 'messages' },
   { to: 'acces', key: 'access' },
@@ -51,21 +52,37 @@ function StaysLayout() {
 
       {o && (
         <div className="grid grid-cols-2 gap-4 rounded-xl border border-gray-200 bg-white p-5 sm:grid-cols-3 xl:grid-cols-6">
-          <Kv label={t('backoffice:stays.overview.arrivals')} value={n(o.arrivals_today)} />
-          <Kv label={t('backoffice:stays.overview.departures')} value={n(o.departures_today)} />
-          <Kv label={t('backoffice:stays.overview.inHouse')} value={n(o.in_house)} />
-          <Kv label={t('backoffice:stays.overview.upcoming')} value={n(o.upcoming)} />
-          <Kv label={t('backoffice:stays.overview.nights')} value={n(o.nights_booked)} />
+          <Kv label={t('backoffice:stays.overview.arrivals')} value={n(o.arrivals_today)}
+            to="/backoffice/sejours?vue=arrivals" />
+          <Kv label={t('backoffice:stays.overview.departures')} value={n(o.departures_today)}
+            to="/backoffice/sejours?vue=departures" />
+          <Kv label={t('backoffice:stays.overview.inHouse')} value={n(o.in_house)}
+            to="/backoffice/sejours?vue=in_house" />
+          <Kv label={t('backoffice:stays.overview.upcoming')} value={n(o.upcoming)}
+            to="/backoffice/sejours?vue=upcoming" />
+          <Kv label={t('backoffice:stays.overview.nights')} value={n(o.nights_booked)}
+            to="/backoffice/sejours/calendrier" />
           <Kv label={t('backoffice:stays.overview.channels')} value={n(o.sources?.total)}
-            sub={t('backoffice:stays.overview.channelsInError', { count: o.sources?.in_error || 0 })} />
+            sub={t('backoffice:stays.overview.channelsInError', { count: o.sources?.in_error || 0 })}
+            to="/backoffice/sejours/calendriers" />
         </div>
       )}
 
       {o?.conflicts > 0 && (
-        <Alert tone="crit" icon={FiAlertTriangle}>{t('backoffice:stays.overview.conflicts', { count: o.conflicts })}</Alert>
+        <Alert tone="crit" icon={FiAlertTriangle}>
+          {t('backoffice:stays.overview.conflicts', { count: o.conflicts })}{' '}
+          <Link to="/backoffice/sejours?vue=conflicts" className="font-semibold underline">
+            {t('backoffice:stays.overview.seeConflicts')}
+          </Link>
+        </Alert>
       )}
       {o?.sources?.in_error > 0 && (
-        <Alert tone="warn" icon={FiRefreshCw}>{t('backoffice:stays.overview.sourcesInError', { count: o.sources.in_error })}</Alert>
+        <Alert tone="warn" icon={FiRefreshCw}>
+          {t('backoffice:stays.overview.sourcesInError', { count: o.sources.in_error })}{' '}
+          <Link to="/backoffice/sejours/calendriers" className="font-semibold underline">
+            {t('backoffice:stays.overview.seeChannels')}
+          </Link>
+        </Alert>
       )}
 
       <section aria-labelledby="stays-register" className="grid min-w-0 gap-3.5 rounded-xl border border-gray-200 bg-white px-3.5 pb-3 pt-[18px] sm:px-5">
