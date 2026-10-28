@@ -3344,21 +3344,13 @@
       "subtitle": "قم بتكوين إعدادات وكالتك",
       "savedNotice": "تم حفظ الإعدادات بنجاح",
       "tabs": {
-        "general": "عام",
-        "notifications": "الإشعارات",
-        "integrations": "التكاملات",
-        "security": "الأمان"
+        "profile": "الملف",
+        "commissions": "العمولات",
+        "rules": "القواعد",
+        "integrations": "التكاملات"
       },
       "fields": {
-        "agencyName": "اسم الوكالة",
-        "website": "الموقع الإلكتروني",
-        "email": "البريد الإلكتروني",
-        "phone": "الهاتف",
-        "address": "العنوان",
-        "city": "المدينة",
         "timezone": "المنطقة الزمنية",
-        "description": "وصف الوكالة",
-        "descriptionPlaceholder": "صف وكالتك...",
         "rentalCommissionRate": "العمولة على الكراء (%)",
         "rentalCommissionHint": "تطبق على الكراء الشهري.",
         "saleCommissionFee": "العمولة على البيع (درهم)",
@@ -3367,25 +3359,6 @@
       "timezoneOptions": {
         "casablanca": "أفريقيا/الدار البيضاء (GMT+1)",
         "paris": "أوروبا/باريس (GMT+1)"
-      },
-      "notifications": {
-        "email": {
-          "title": "إشعارات البريد الإلكتروني",
-          "description": "تلقي الإشعارات عبر البريد الإلكتروني"
-        },
-        "sms": {
-          "title": "إشعارات الرسائل القصيرة",
-          "description": "تلقي الإشعارات عبر الرسائل القصيرة"
-        },
-        "leadAutoAssign": {
-          "title": "الإسناد التلقائي للعملاء المحتملين",
-          "description": "إسناد العملاء المحتملين الجدد تلقائيًا إلى الوكلاء"
-        },
-        "visitReminder": {
-          "label": "تذكير الزيارة (عدد الساعات قبل)",
-          "hours_one": "ساعة واحدة",
-          "hours_other": "{{count}} ساعات"
-        }
       },
       "integrations": {
         "smtp": {
@@ -3396,79 +3369,41 @@
           "port": "المنفذ",
           "portPlaceholder": "587",
           "user": "المستخدم",
-          "password": "كلمة المرور"
+          "password": "كلمة المرور",
+          "passwordHint": "اتركه فارغا للحفاظ على كلمة السر الحالية."
         },
-        "api": {
-          "title": "واجهة برمجة التطبيقات والـ Webhooks",
-          "description": "مفاتيح API وwebhooks للتكاملات الخارجية",
-          "keyLabel": "مفتاح API",
-          "regenerate": "إعادة التوليد"
-        },
-        "erp": {
-          "title": "تكاملات ERP",
-          "description": "اربط نظام إدارة المؤسسة الخاص بك",
-          "odoo": {
-            "name": "Odoo",
-            "description": "مزامنة جهات الاتصال والفواتير"
-          },
-          "sap": {
-            "name": "SAP Business One",
-            "description": "تكامل المحاسبة والإدارة"
-          }
-        },
-        "crm": {
-          "title": "تكاملات CRM",
-          "description": "اربط نظام CRM الخارجي الخاص بك لمزامنة البيانات",
-          "salesforce": {
-            "name": "Salesforce",
-            "description": "مزامنة ثنائية الاتجاه للعملاء المحتملين وجهات الاتصال"
-          },
-          "hubspot": {
-            "name": "HubSpot",
-            "description": "إدارة جهات الاتصال وأتمتة التسويق"
-          },
-          "zoho": {
-            "name": "Zoho CRM",
-            "description": "استيراد وتصدير بيانات العملاء"
-          }
-        },
-        "status": {
-          "notConnected": "غير متصل"
-        },
-        "actions": {
-          "configure": "تكوين",
-          "connect": "ربط"
-        }
-      },
-      "security": {
-        "twoFactor": {
-          "title": "المصادقة الثنائية",
-          "description": "أضف طبقة أمان إضافية إلى حسابك",
-          "button": "تفعيل المصادقة الثنائية"
-        },
-        "sessions": {
-          "title": "الجلسات النشطة",
-          "description": "إدارة الأجهزة المتصلة بحسابك",
-          "chromeMacos": "Chrome على MacOS",
-          "currentSession": "الجلسة الحالية",
-          "active": "نشط"
-        },
-        "dangerZone": {
-          "title": "منطقة الخطر",
-          "description": "هذه الإجراءات لا رجعة فيها",
-          "deleteAccount": "حذف الحساب"
-        }
+        "apiKeyNote": "مفتاح API الخاص بالوكالة موجود في علامة « الملف »."
       },
       "save": {
         "saving": "جارٍ الحفظ...",
         "button": "حفظ"
+      },
+      "commissions": {
+        "intro": "تُطبَّق هذه التعريفات تلقائيا عند إنشاء معاملة، ويمكن للوكيل تعديلها حالة بحالة."
+      },
+      "rules": {
+        "leadAutoAssign": {
+          "title": "الإحالة التلقائية للعملاء المحتملين",
+          "description": "كل عميل محتمل جديد يُحال إلى وكيل بمجرد وصوله."
+        },
+        "sms": {
+          "title": "تنبيهات SMS للوكالة",
+          "description": "إرسال رسالة قصيرة إلى الوكيل المعني، إضافة إلى البريد."
+        },
+        "visitReminder": {
+          "label": "تذكير قبل الزيارة",
+          "hint": "موعد إرسال التذكير إلى العميل.",
+          "hours": "{{count}} ساعة قبل"
+        },
+        "accountNote": "التنبيهات التي تصلك شخصيا تُضبط في علامة « حسابي »."
       }
     },
     "hub": {
       "tabs": {
         "agency": "الوكالة",
         "account": "حسابي"
-      }
+      },
+      "subtitle": "إعدادات الوكالة من جهة، وحسابك من جهة أخرى."
     },
     "shared": {
       "adminOnly": "للمشرفين فقط"

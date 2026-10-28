@@ -3344,21 +3344,13 @@
       "subtitle": "Configurez les paramètres de votre agence",
       "savedNotice": "Paramètres sauvegardés avec succès",
       "tabs": {
-        "general": "Général",
-        "notifications": "Notifications",
-        "integrations": "Intégrations",
-        "security": "Sécurité"
+        "profile": "Profil",
+        "commissions": "Commissions",
+        "rules": "Règles",
+        "integrations": "Intégrations"
       },
       "fields": {
-        "agencyName": "Nom de l'agence",
-        "website": "Site web",
-        "email": "Email",
-        "phone": "Téléphone",
-        "address": "Adresse",
-        "city": "Ville",
         "timezone": "Fuseau horaire",
-        "description": "Description de l'agence",
-        "descriptionPlaceholder": "Décrivez votre agence...",
         "rentalCommissionRate": "Commission sur une location (%)",
         "rentalCommissionHint": "Appliquée au loyer mensuel.",
         "saleCommissionFee": "Commission sur une vente (Dh)",
@@ -3367,25 +3359,6 @@
       "timezoneOptions": {
         "casablanca": "Africa/Casablanca (GMT+1)",
         "paris": "Europe/Paris (GMT+1)"
-      },
-      "notifications": {
-        "email": {
-          "title": "Notifications par email",
-          "description": "Recevoir les notifications par email"
-        },
-        "sms": {
-          "title": "Notifications SMS",
-          "description": "Recevoir les notifications par SMS"
-        },
-        "leadAutoAssign": {
-          "title": "Assignation auto des leads",
-          "description": "Assigner automatiquement les nouveaux leads aux agents"
-        },
-        "visitReminder": {
-          "label": "Rappel de visite (heures avant)",
-          "hours_one": "{{count}} heure",
-          "hours_other": "{{count}} heures"
-        }
       },
       "integrations": {
         "smtp": {
@@ -3396,79 +3369,41 @@
           "port": "Port",
           "portPlaceholder": "587",
           "user": "Utilisateur",
-          "password": "Mot de passe"
+          "password": "Mot de passe",
+          "passwordHint": "Laissez vide pour conserver le mot de passe existant."
         },
-        "api": {
-          "title": "API & Webhooks",
-          "description": "Clés API et webhooks pour les intégrations externes",
-          "keyLabel": "Clé API",
-          "regenerate": "Régénérer"
-        },
-        "erp": {
-          "title": "Intégrations ERP",
-          "description": "Connectez votre système de gestion d'entreprise",
-          "odoo": {
-            "name": "Odoo",
-            "description": "Synchronisation des contacts et factures"
-          },
-          "sap": {
-            "name": "SAP Business One",
-            "description": "Intégration comptable et gestion"
-          }
-        },
-        "crm": {
-          "title": "Intégrations CRM",
-          "description": "Connectez votre CRM externe pour synchroniser les données",
-          "salesforce": {
-            "name": "Salesforce",
-            "description": "Synchronisation bidirectionnelle des leads et contacts"
-          },
-          "hubspot": {
-            "name": "HubSpot",
-            "description": "Gestion des contacts et automatisation marketing"
-          },
-          "zoho": {
-            "name": "Zoho CRM",
-            "description": "Import et export des données clients"
-          }
-        },
-        "status": {
-          "notConnected": "Non connecté"
-        },
-        "actions": {
-          "configure": "Configurer",
-          "connect": "Connecter"
-        }
-      },
-      "security": {
-        "twoFactor": {
-          "title": "Authentification à deux facteurs",
-          "description": "Ajoutez une couche de sécurité supplémentaire à votre compte",
-          "button": "Configurer 2FA"
-        },
-        "sessions": {
-          "title": "Sessions actives",
-          "description": "Gérez les appareils connectés à votre compte",
-          "chromeMacos": "Chrome sur MacOS",
-          "currentSession": "Session actuelle",
-          "active": "Actif"
-        },
-        "dangerZone": {
-          "title": "Zone de danger",
-          "description": "Ces actions sont irréversibles",
-          "deleteAccount": "Supprimer le compte"
-        }
+        "apiKeyNote": "La clé API de l'agence se trouve dans l'onglet « Profil »."
       },
       "save": {
         "saving": "Sauvegarde...",
         "button": "Sauvegarder"
+      },
+      "commissions": {
+        "intro": "Ces barèmes sont posés d'office à la création d'une transaction ; l'agent peut les corriger au cas par cas."
+      },
+      "rules": {
+        "leadAutoAssign": {
+          "title": "Affectation automatique des leads",
+          "description": "Chaque nouveau lead est attribué à un agent dès son arrivée."
+        },
+        "sms": {
+          "title": "Alertes SMS de l'agence",
+          "description": "Envoi d'un SMS à l'agent concerné, en plus de l'e-mail."
+        },
+        "visitReminder": {
+          "label": "Rappel avant une visite",
+          "hint": "Délai d'envoi du rappel au client.",
+          "hours": "{{count}} h avant"
+        },
+        "accountNote": "Les alertes que vous recevez personnellement se règlent dans l'onglet « Mon compte »."
       }
     },
     "hub": {
       "tabs": {
         "agency": "Agence",
         "account": "Mon compte"
-      }
+      },
+      "subtitle": "Les réglages de l'agence d'un côté, votre compte de l'autre."
     },
     "shared": {
       "adminOnly": "Admin uniquement"

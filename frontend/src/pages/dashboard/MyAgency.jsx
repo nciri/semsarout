@@ -7,7 +7,11 @@ import { FiSave, FiRefreshCw, FiCopy, FiEye, FiEyeOff } from 'react-icons/fi'
 import { agencyService } from '../../services/agencyService'
 import useAuthStore from '../../store/authStore'
 
-function MyAgency() {
+function MyAgency({ embedded = false }) {
+  // Dans l'onglet « Agence » des paramètres, l'écran est déjà encadré : pas de marges de
+  // page ni de second titre.
+  const shell = embedded ? 'w-full' : 'max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8'
+
   const { t } = useTranslation(['dashboard', 'common'])
   const { user, updateUser } = useAuthStore()
   const queryClient = useQueryClient()
@@ -79,7 +83,7 @@ function MyAgency() {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className={shell}>
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-200 rounded w-1/3"></div>
           <div className="card p-6 space-y-4">
@@ -95,7 +99,7 @@ function MyAgency() {
   // No agency yet - show creation form
   if (!user?.agency_id) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className={shell}>
         <div className="mb-8">
           <h1 className="font-display text-2xl font-bold text-gray-900">
             {t('dashboard:myAgency.create.title')}
@@ -194,15 +198,17 @@ function MyAgency() {
 
   // Agency exists - show edit form
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="font-display text-2xl font-bold text-gray-900">
-          {t('dashboard:myAgency.edit.title')}
-        </h1>
-        <p className="text-gray-600">
-          {t('dashboard:myAgency.edit.subtitle')}
-        </p>
-      </div>
+    <div className={shell}>
+      {!embedded && (
+        <div className="mb-8">
+          <h1 className="font-display text-2xl font-bold text-gray-900">
+            {t('dashboard:myAgency.edit.title')}
+          </h1>
+          <p className="text-gray-600">
+            {t('dashboard:myAgency.edit.subtitle')}
+          </p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-6">

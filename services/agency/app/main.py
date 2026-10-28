@@ -265,17 +265,24 @@ _SETTINGS_DEFAULTS = {
 }
 
 
+# Le profil de l'agence appartient aux colonnes de la table, pas au blob de réglages :
+# il s'édite sur « Mon agence » et s'affiche publiquement. Un double stockage faisait
+# diverger les deux écrans — le blob masquait le nom réel de l'agence.
+_PROFILE_KEYS = ("agency_name", "agency_email", "agency_phone", "agency_address",
+                 "agency_city", "agency_website", "agency_description")
+
+
 def _settings_view(a: Agency) -> dict:
-    """Vue fusionnée : défauts + profil agence (agency_*) + blob stocké, sans le secret SMTP."""
+    """Vue fusionnée : défauts + blob stocké, puis le profil agence, qui a toujours raison."""
     view = dict(_SETTINGS_DEFAULTS)
+    stored = dict(a.settings or {})
+    stored.pop("smtp_password", None)  # ne jamais renvoyer le secret
+    view.update(stored)
     view.update({
         "agency_name": a.name, "agency_email": a.email, "agency_phone": a.phone,
         "agency_address": a.address, "agency_city": a.city, "agency_website": a.website,
         "agency_description": a.description,
     })
-    stored = dict(a.settings or {})
-    stored.pop("smtp_password", None)  # ne jamais renvoyer le secret
-    view.update(stored)
     return view
 
 
@@ -299,6 +306,9 @@ async def put_settings(request: Request, principal: Principal = Depends(get_prin
     stored = dict(a.settings or {})
     # smtp_password write-only : ne remplacer que si une nouvelle valeur non vide est fournie.
     new_pw = data.pop("smtp_password", None)
+    for key in _PROFILE_KEYS:          # le profil se modifie par PUT /agencies/{slug}
+        data.pop(key, None)
+        stored.pop(key, None)          # purge des valeurs écrites par l'ancien écran
     stored.update(data)
     if new_pw:
         stored["smtp_password"] = new_pw
