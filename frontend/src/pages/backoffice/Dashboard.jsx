@@ -20,9 +20,15 @@ const fetchDashboard = async () => (await api.get('/backoffice/dashboard')).data
 // Filtre d'activité : un seul contrôle pour toute la page. Vente et location n'ont ni les
 // mêmes étapes ni les mêmes unités — on les montre côte à côte, jamais additionnées.
 const ACTIVITIES = ['all', 'sale', 'rent']
-/** Garde les lignes de l'activité choisie ; `all` ne filtre rien. */
+/**
+ * Garde les lignes de l'activité choisie ; `all` ne filtre rien.
+ *
+ * Une ligne sans activité connue (lead sans bien rattaché, visite sur un bien supprimé)
+ * reste visible dans les deux vues : filtrer, c'est trier son travail, jamais le faire
+ * disparaître. Sinon un lead saisi au téléphone, sans bien, n'existerait qu'en « Tout ».
+ */
 const only = (rows, activity, key = 'transaction_type') => (
-  activity === 'all' ? rows : rows.filter((r) => r[key] === activity))
+  activity === 'all' ? rows : rows.filter((r) => !r[key] || r[key] === activity))
 
 const WIDGETS = [
   { key: 'leads', icon: FiMail, Compact: LeadsCompact, Detail: LeadsDetail,

@@ -15,6 +15,7 @@ const PAYLOAD = {
       { id: 1, name: 'Mehdi Belhaj', source: 'contact_form', created_at: iso(-61), property_title: 'Appartement Fès', transaction_type: 'sale' },
       { id: 2, name: 'Hind Senhaji', source: 'phone_reveal', created_at: iso(-33), property_title: 'F4 Rabat', transaction_type: 'rent' },
       { id: 3, name: 'Hind Senhaji', source: 'website', created_at: iso(-9), property_title: 'Villa Rabat', transaction_type: 'rent' },
+      { id: 4, name: 'Karim Tazi', source: 'manual', created_at: iso(-4), property_title: null, transaction_type: null },
     ],
     leads_weekly: [{ week: '2026-07-20', by_source: { website: 2 }, by_status: { new: 1, converted: 1 } }],
     upcoming_visits: [{ id: 9, scheduled_at: iso(1), status: 'scheduled', contact_name: 'Khadija Fassi', property_title: 'Villa Agadir', transaction_type: 'sale' }],
@@ -116,6 +117,17 @@ describe('Tableau de bord : une activité à la fois', () => {
     expect(within(leads()).getByText('Hind Senhaji')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Gestion locative' })).toBeInTheDocument()
     expect(localStorage.getItem('dash-activity')).toBe('rent')
+  })
+
+  it('garde les leads sans bien rattaché dans les deux vues', async () => {
+    // Un lead saisi au téléphone n'a pas d'activité : le filtre trie le travail, il ne
+    // doit pas l'escamoter.
+    renderDashboard()
+    await screen.findByText('Karim Tazi')
+    for (const vue of ['Vente', 'Location']) {
+      await userEvent.click(screen.getByRole('button', { name: vue }))
+      expect(screen.getByText('Karim Tazi')).toBeInTheDocument()
+    }
   })
 
   it('cache la gestion locative quand on ne regarde que la vente', async () => {
