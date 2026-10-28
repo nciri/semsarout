@@ -6,6 +6,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
+from semsar_events import enqueue
 
 from . import buyer, users_client
 from .db import get_db
@@ -268,6 +269,8 @@ async def convert_lead(lead_id: int, request: Request, principal: Principal = De
     db.add(c)
     lead.status = "converted"
     lead.converted_at = datetime.utcnow()
+    db.flush()
+    _emit_created(db, c)
     db.commit()
     return _client_dict(c)
 
@@ -324,6 +327,16 @@ def client_history(client_id: int, principal: Principal = Depends(get_principal)
             "last_exchange_at": iso(_last_exchange(db, [c], now).get(c.id))}
 
 
+def _emit_created(db: Session, c: Client) -> None:
+    """`crm.client.created` : consommé par rental (projection) et par agency, qui pousse le
+    contact vers les CRM connectés de l'agence. Outbox : émis avec la transaction."""
+    enqueue(db, "client", c.id, "crm.client.created", {
+        "id": c.id, "agency_id": c.agency_id, "first_name": c.first_name,
+        "last_name": c.last_name, "email": c.email, "phone": c.phone, "city": c.city,
+        "client_type": c.client_type,
+    })
+
+
 @router.post("/backoffice/clients", status_code=201)
 async def create_client(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
     data = await json_body(request)
@@ -339,6 +352,8 @@ async def create_client(request: Request, principal: Principal = Depends(get_pri
     if not c.last_name:
         c.last_name = data.get("last_name", "")
     db.add(c)
+    db.flush()
+    _emit_created(db, c)
     db.commit()
     return _client_dict(c)
 

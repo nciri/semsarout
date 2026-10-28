@@ -58,6 +58,7 @@ def _job_visit_reminders(db) -> int:
         if _valid_email(to):
             date, tm = _fmt_fr(v.get("scheduled_at"))
             _try_send(db, to, "visit_reminder.html", "visit_reminder", from_email=_contact(),
+                      agency_id=v.get("agency_id"),
                       name=v.get("contact_name"), property_title=v.get("property_title"),
                       date=date, time=tm, address=v.get("property_address"),
                       agent_name=v.get("agent_name"))

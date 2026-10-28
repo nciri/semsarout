@@ -3372,7 +3372,69 @@
           "password": "كلمة المرور",
           "passwordHint": "اتركه فارغا للحفاظ على كلمة السر الحالية."
         },
-        "apiKeyNote": "مفتاح API الخاص بالوكالة موجود في علامة « الملف »."
+        "apiKeyNote": "مفتاح API الخاص بالوكالة موجود في علامة « الملف ».",
+        "intro": "لا يُسجَّل أي ربط إلا بعد نجاح اتصال فعلي بالمزود: الحالة المعروضة هي الحالة الحقيقية.",
+        "erpTitle": "أنظمة ERP",
+        "crmTitle": "أنظمة CRM",
+        "lastSync": "آخر إرسال في {{date}} · {{count}} جهة اتصال",
+        "noContactSync": "هذا المزود لا يتلقى جهات الاتصال تلقائيا.",
+        "status": {
+          "connected": "مربوط",
+          "error": "خطأ",
+          "not_connected": "غير مربوط"
+        },
+        "actions": {
+          "connect": "ربط",
+          "connecting": "جاري الربط…",
+          "test": "اختبار",
+          "disconnect": "فصل",
+          "cancel": "إلغاء",
+          "save": "تسجيل الربط"
+        },
+        "toasts": {
+          "connected": "تم ربط {{provider}}",
+          "tested": "تم التحقق من الربط",
+          "testFailed": "فشل التحقق",
+          "disconnected": "تم حذف الربط"
+        },
+        "fieldLabels": {
+          "url": "عنوان المنصة",
+          "db": "قاعدة البيانات",
+          "login": "المعرف",
+          "password": "كلمة السر",
+          "base_url": "عنوان الواجهة البرمجية",
+          "token": "رمز الوصول",
+          "instance_url": "عنوان المنصة",
+          "access_token": "رمز OAuth",
+          "api_domain": "نطاق الواجهة البرمجية"
+        },
+        "providers": {
+          "odoo": {
+            "name": "Odoo",
+            "description": "جهات الاتصال والفوترة في نظام Odoo.",
+            "help": "معرفات مستعمل Odoo له حق إنشاء جهات الاتصال (res.partner)."
+          },
+          "sap": {
+            "name": "SAP",
+            "description": "الشركاء التجاريون عبر واجهة OData.",
+            "help": "عنوان بوابة SAP ورمز تقني له حق الوصول إلى API_BUSINESS_PARTNER."
+          },
+          "salesforce": {
+            "name": "Salesforce",
+            "description": "عملاؤك كجهات اتصال في Salesforce.",
+            "help": "عنوان المنصة (https://…my.salesforce.com) ورمز OAuth صالح."
+          },
+          "hubspot": {
+            "name": "HubSpot",
+            "description": "عملاؤك كجهات اتصال في HubSpot.",
+            "help": "رمز تطبيق خاص في HubSpot، بنطاق crm.objects.contacts.write."
+          },
+          "zoho": {
+            "name": "Zoho CRM",
+            "description": "عملاؤك كجهات اتصال في Zoho.",
+            "help": "نطاق الواجهة (https://www.zohoapis.com أو .eu) ورمز OAuth صالح."
+          }
+        }
       },
       "save": {
         "saving": "جارٍ الحفظ...",
