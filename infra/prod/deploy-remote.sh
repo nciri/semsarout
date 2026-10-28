@@ -94,6 +94,7 @@ crm/migrate_buyer_dossier.sql
 agency/migrate_integrations.sql
 staymanager/migrate_sejours_natifs.sql
 staymanager/migrate_messagerie_sejour.sql
+staymanager/migrate_menage_sejour.sql
 audit/add_tenant.sql
 "
 

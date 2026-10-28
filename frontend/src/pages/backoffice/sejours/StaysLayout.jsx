@@ -10,6 +10,7 @@ import { Alert, IconAction, Kv } from '../components/kit'
 
 const TABS = [
   { to: '', end: true, key: 'planning' },
+  { to: 'menage', key: 'cleaning' },
   { to: 'messages', key: 'messages' },
   { to: 'calendriers', key: 'calendars' },
 ]

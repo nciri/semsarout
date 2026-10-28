@@ -32,14 +32,14 @@ Trois états : **déjà couvert** (ne rien reprendre), **partiel** (compléter l
 | Serrures connectées TTLock, codes d'accès | — | **absent** |
 | Vérification voyageur, OCR pièce d'identité | `identity` (KYC Didit, pour les comptes) | **partiel** — rien côté voyageur d'un séjour |
 | Contrats : gabarits, variables, PDF, signature | `contract` + `semsar_signing` (3a9dSign) | **couvert** — réutiliser, ne pas dupliquer |
-| Messagerie automatisée (gabarits, règles, journal) | `notification` : gabarits Jinja2, ordonnanceur, journal | **partiel** — pas d'éditeur par agence ni de règles |
+| Messagerie automatisée (gabarits, règles, journal) | `notification` + `staymanager` : gabarits de l'agence, déclencheurs, journal | **couvert** pour les séjours (livré le 2026-10-28) |
 | Équipes multi-rôles, invitations | `identity/team` : équipes, sièges, invitations | **partiel** — pas de matrice de droits par bien |
 | Analytics, tableau de bord | `analytics` + tableau de bord back-office par activité | **couvert** |
 | Abonnements : plans, essai, statuts | `billing` : plans, entitlements, factures de commission | **partiel** — ni relances (dunning), ni prorata, ni portail libre-service |
 | Paiements Stripe / PayPal | `payment` : passerelle, webhooks | **partiel** — fournisseurs à brancher |
 | Back-office admin SaaS (MRR, impersonation, cron) | `audit`, écrans admin partiels | **partiel** |
 | Onboarding gamifié (mascotte, badges) | — | **absent** |
-| Ménage : tâches, zones, rapports, stock | — | **absent** |
+| Ménage : tâches, zones, rapports, stock | `staymanager` : tâches au départ, zones, rapports photo | **couvert** (livré le 2026-10-28) |
 | Agents IA | — | **absent** |
 | API partenaires, clés d'API, webhooks sortants | `partner` : auth partenaire, livraison, webhooks | **couvert** |
 | Connecteurs ERP/CRM | `agency` : Odoo, SAP, Salesforce, HubSpot, Zoho | **couvert** (livré le 2026-10-28) |
@@ -60,7 +60,10 @@ construire des écrans qui n'ont encore rien à montrer.
    d'envoi. *Livré sur cette branche.* Limites assumées : email seulement (aucun
    fournisseur SMS raccordé), et l'adresse du voyageur est saisie par l'agence — les
    plateformes ne la publient pas.
-3. **Ménage** — tâches générées aux départs, zones, rapport avec photos, demandes de stock.
+3. **Ménage** — tâches générées aux départs, zones, rapport avec photos, demandes de réassort.
+   *Livré sur cette branche.* Deux écarts assumés : pas de catalogue de produits par agence
+   (une demande de réassort dit en texte ce qui manque), et l'intervention technique reste
+   un ordre de travail artisan dans `directory` — seule la rotation vit ici.
 4. **Vérification du voyageur** — lien d'enregistrement, pièce d'identité, OCR, et
    signature du contrat via `contract` + `semsar_signing` (rien à réécrire).
 5. **Serrures connectées** — TTLock : identifiants chiffrés par agence, génération et

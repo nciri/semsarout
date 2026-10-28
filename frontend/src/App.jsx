@@ -106,6 +106,7 @@ const StaysLayout = lazy(() => import('./pages/backoffice/sejours/StaysLayout'))
 const StaysList = lazy(() => import('./pages/backoffice/sejours/StaysList'))
 const CalendarsList = lazy(() => import('./pages/backoffice/sejours/CalendarsList'))
 const StayMessagesPanel = lazy(() => import('./pages/backoffice/sejours/MessagesPanel'))
+const StayCleaningPanel = lazy(() => import('./pages/backoffice/sejours/CleaningPanel'))
 const LeaseDetail = lazy(() => import('./pages/backoffice/rental/LeaseDetail'))
 const ApplicationsList = lazy(() => import('./pages/backoffice/rental/ApplicationsList'))
 const ApplicationDetail = lazy(() => import('./pages/backoffice/rental/ApplicationDetail'))
@@ -284,6 +285,7 @@ function App() {
           {/* Séjours courte durée : planning + calendriers des plateformes en onglets */}
           <Route path="sejours" element={<StaysLayout />}>
             <Route index element={<StaysList />} />
+            <Route path="menage" element={<StayCleaningPanel />} />
             <Route path="messages" element={<StayMessagesPanel />} />
             <Route path="calendriers" element={<CalendarsList />} />
           </Route>

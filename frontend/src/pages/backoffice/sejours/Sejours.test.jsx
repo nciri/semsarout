@@ -8,6 +8,7 @@ import StaysLayout from './StaysLayout'
 import StaysList from './StaysList'
 import CalendarsList from './CalendarsList'
 import MessagesPanel from './MessagesPanel'
+import CleaningPanel from './CleaningPanel'
 
 const { svc } = vi.hoisted(() => ({
   svc: {
@@ -15,10 +16,16 @@ const { svc } = vi.hoisted(() => ({
     addSource: vi.fn(), syncSource: vi.fn(), deleteSource: vi.fn(), syncAll: vi.fn(),
     updateContact: vi.fn(), listTemplates: vi.fn(), createTemplate: vi.fn(),
     updateTemplate: vi.fn(), deleteTemplate: vi.fn(), listMessages: vi.fn(),
+    listCleanings: vi.fn(), getCleaning: vi.fn(), createCleaning: vi.fn(),
+    updateCleaning: vi.fn(), addReport: vi.fn(), markReportSeen: vi.fn(),
+    addReportPhoto: vi.fn(), photoUrl: (id) => `/photo/${id}`,
   },
 }))
 vi.mock('../../../services/stayService', async (orig) => ({ ...(await orig()), stayService: svc }))
 vi.mock('../../../services/api', () => ({ default: { get: vi.fn().mockResolvedValue({ data: { properties: [] } }) } }))
+vi.mock('../../../services/teamService', () => ({
+  teamService: { getTeam: vi.fn().mockResolvedValue({ members: [{ id: 7, full_name: 'Rachid Alami' }] }) },
+}))
 
 const OVERVIEW = {
   arrivals_today: 2, departures_today: 1, in_house: 4, upcoming: 7,
@@ -62,7 +69,8 @@ function renderAt(path) {
         <Routes>
           <Route path="/backoffice/sejours" element={<StaysLayout />}>
             <Route index element={<StaysList />} />
-            <Route path="messages" element={<MessagesPanel />} />
+            <Route path="menage" element={<CleaningPanel />} />
+          <Route path="messages" element={<MessagesPanel />} />
           <Route path="calendriers" element={<CalendarsList />} />
           </Route>
         </Routes>
@@ -74,7 +82,7 @@ function renderAt(path) {
 describe('Séjours courte durée', () => {
   beforeEach(async () => {
     await i18n.changeLanguage('fr')
-    Object.values(svc).forEach((m) => m.mockReset())
+    Object.values(svc).forEach((m) => m.mockReset?.())
     svc.overview.mockResolvedValue(OVERVIEW)
     svc.listStays.mockResolvedValue(STAYS)
     svc.listSources.mockResolvedValue(SOURCES)
@@ -133,7 +141,7 @@ describe('Séjours courte durée', () => {
 describe('Messagerie de séjour', () => {
   beforeEach(async () => {
     await i18n.changeLanguage('fr')
-    Object.values(svc).forEach((m) => m.mockReset())
+    Object.values(svc).forEach((m) => m.mockReset?.())
     svc.overview.mockResolvedValue(OVERVIEW)
     svc.listTemplates.mockResolvedValue(TEMPLATES)
     svc.listMessages.mockResolvedValue(JOURNAL)
@@ -180,6 +188,88 @@ describe('Messagerie de séjour', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
     await vi.waitFor(() => expect(svc.updateContact).toHaveBeenCalledWith(1, {
       guest_name: '', guest_email: 'voyageur@example.com', guest_phone: '****1234',
+    }))
+  })
+})
+
+const CLEANINGS = {
+  late: 1, urgent_reports: 1, zones: ['chambres', 'cuisine'],
+  tasks: [
+    { id: 51, property_id: 5, property_title: 'Riad Médina', reservation_id: 1, guest_name: 'Salma Bennani', next_check_in: '2026-11-07T15:00:00', assigned_to_id: null, scheduled_date: '2026-11-05', status: 'pending', zones_done: [], notes: null, started_at: null, completed_at: null, reports_count: 1, urgent_count: 1 },
+    { id: 52, property_id: 5, property_title: 'Riad Médina', reservation_id: 2, guest_name: null, next_check_in: null, assigned_to_id: 7, scheduled_date: '2026-11-08', status: 'in_progress', zones_done: ['cuisine'], notes: null, started_at: '2026-11-08T09:00:00', completed_at: null, reports_count: 0, urgent_count: 0 },
+  ],
+}
+const CLEANING_DETAIL = {
+  task: {
+    ...CLEANINGS.tasks[0],
+    reports: [
+      { id: 61, task_id: 51, kind: 'issue', category: 'plomberie', text_note: "Fuite sous l'évier", is_urgent: true, seen_at: null, author_user_id: 7, created_at: '2026-11-05T11:00:00', photos: [{ id: 71, filename: 'fuite.jpg' }] },
+    ],
+  },
+}
+
+describe('Ménage de rotation', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fr')
+    Object.values(svc).forEach((m) => m.mockReset?.())
+    svc.overview.mockResolvedValue(OVERVIEW)
+    svc.listCleanings.mockResolvedValue(CLEANINGS)
+    svc.getCleaning.mockResolvedValue(CLEANING_DETAIL)
+    svc.updateCleaning.mockResolvedValue({ task: CLEANING_DETAIL.task })
+    svc.addReport.mockResolvedValue({ report: { id: 62 } })
+    svc.addReportPhoto.mockResolvedValue({ photo: { id: 72 } })
+    svc.markReportSeen.mockResolvedValue({ report: {} })
+    svc.createCleaning.mockResolvedValue({ task: { id: 53 } })
+  })
+
+  it('liste le planning du ménage, les retards et les urgences', async () => {
+    renderAt('/backoffice/sejours/menage')
+    expect(await screen.findByText('1 ménage en retard.')).toBeInTheDocument()
+    expect(screen.getByText('1 signalement urgent non lu.')).toBeInTheDocument()
+    expect(screen.getByText('1 urgent')).toBeInTheDocument()
+    expect(screen.getAllByText('En cours').length).toBeGreaterThan(0)   // filtre + pastille
+  })
+
+  it('démarre puis termine un ménage', async () => {
+    renderAt('/backoffice/sejours/menage')
+    await userEvent.click(await screen.findByRole('button', { name: 'Démarrer le ménage' }))
+    await vi.waitFor(() => expect(svc.updateCleaning).toHaveBeenCalledWith(51, { status: 'in_progress' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Terminer le ménage' }))
+    await vi.waitFor(() => expect(svc.updateCleaning).toHaveBeenCalledWith(52, { status: 'done' }))
+  })
+
+  it('attribue le ménage à un membre de l\'équipe', async () => {
+    renderAt('/backoffice/sejours/menage')
+    const selects = await screen.findAllByLabelText('Intervenant')
+    await userEvent.selectOptions(selects[0], '7')
+    await vi.waitFor(() => expect(svc.updateCleaning).toHaveBeenCalledWith(51, { assigned_to_id: '7' }))
+  })
+
+  it('coche une zone depuis le détail', async () => {
+    renderAt('/backoffice/sejours/menage')
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Ouvrir le détail' }))[0])
+    await userEvent.click(await screen.findByLabelText('Cuisine'))
+    await vi.waitFor(() => expect(svc.updateCleaning).toHaveBeenCalledWith(51, { zones_done: ['cuisine'] }))
+  })
+
+  it('montre le signalement urgent, sa photo, et le marque lu', async () => {
+    renderAt('/backoffice/sejours/menage')
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Ouvrir le détail' }))[0])
+    expect(await screen.findByText("Fuite sous l'évier")).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'fuite.jpg' })).toHaveAttribute('href', '/photo/71')
+    await userEvent.click(screen.getByRole('button', { name: 'Marquer comme lu' }))
+    await vi.waitFor(() => expect(svc.markReportSeen).toHaveBeenCalledWith(61))
+  })
+
+  it('exige une description avant d\'envoyer un signalement', async () => {
+    renderAt('/backoffice/sejours/menage')
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Ouvrir le détail' }))[0])
+    const submit = await screen.findByRole('button', { name: 'Envoyer le signalement' })
+    expect(submit).toBeDisabled()
+    await userEvent.type(screen.getByLabelText('Description'), 'Serviettes manquantes')
+    await userEvent.click(submit)
+    await vi.waitFor(() => expect(svc.addReport).toHaveBeenCalledWith(51, {
+      kind: 'issue', category: '', text_note: 'Serviettes manquantes', is_urgent: false,
     }))
   })
 })

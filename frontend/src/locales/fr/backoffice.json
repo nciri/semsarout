@@ -3557,6 +3557,7 @@
       "registerTabs": "Vues des séjours",
       "tabs": {
         "planning": "Planning",
+        "cleaning": "Ménage",
         "messages": "Messages",
         "calendars": "Calendriers"
       },
@@ -3706,6 +3707,81 @@
         "placeholders": "Variables disponibles :",
         "cancel": "Annuler",
         "submit": "Enregistrer"
+      }
+    },
+    "cleaning": {
+      "statusLabel": "Statut",
+      "allStatuses": "Tous",
+      "add": "Ajouter un ménage",
+      "unassigned": "Non attribué",
+      "start": "Démarrer le ménage",
+      "finish": "Terminer le ménage",
+      "openDetail": "Ouvrir le détail",
+      "urgentChip": "{{count}} urgent",
+      "urgentChip_other": "{{count}} urgents",
+      "lateAlert": "{{count}} ménage en retard.",
+      "lateAlert_other": "{{count}} ménages en retard.",
+      "urgentAlert": "{{count}} signalement urgent non lu.",
+      "urgentAlert_other": "{{count}} signalements urgents non lus.",
+      "status": {
+        "pending": "À faire",
+        "in_progress": "En cours",
+        "done": "Fait",
+        "cancelled": "Annulé"
+      },
+      "zones": {
+        "chambres": "Chambres",
+        "salle_de_bain": "Salle de bain",
+        "cuisine": "Cuisine",
+        "sejour": "Séjour",
+        "exterieur": "Extérieur",
+        "linge": "Linge"
+      },
+      "reportKind": {
+        "issue": "Problème",
+        "stock": "Réassort",
+        "note": "Note"
+      },
+      "columns": {
+        "date": "Date",
+        "property": "Bien",
+        "nextArrival": "Prochaine arrivée",
+        "assignee": "Intervenant",
+        "status": "Statut"
+      },
+      "empty": {
+        "title": "Aucun ménage",
+        "description": "Les ménages se créent tout seuls au départ de chaque voyageur."
+      },
+      "toasts": {
+        "created": "Ménage ajouté.",
+        "reported": "Signalement enregistré."
+      },
+      "detail": {
+        "title": "Détail du ménage",
+        "zones": "Zones faites",
+        "reports": "Signalements",
+        "noReport": "Aucun signalement.",
+        "addReport": "Nouveau signalement",
+        "kindLabel": "Type",
+        "categoryLabel": "Catégorie",
+        "noteLabel": "Description",
+        "urgentLabel": "Urgent",
+        "urgent": "Urgent",
+        "photoLabel": "Photo (JPEG, PNG ou WebP)",
+        "submitReport": "Envoyer le signalement",
+        "markSeen": "Marquer comme lu",
+        "close": "Fermer"
+      },
+      "modal": {
+        "title": "Ajouter un ménage",
+        "help": "Pour un ménage hors séjour : après travaux, avant une visite.",
+        "propertyLabel": "Bien",
+        "propertyPlaceholder": "Choisir un bien",
+        "dateLabel": "Date prévue",
+        "notesLabel": "Note",
+        "cancel": "Annuler",
+        "submit": "Ajouter"
       }
     }
   }

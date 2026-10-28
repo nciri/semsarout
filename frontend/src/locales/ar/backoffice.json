@@ -3557,6 +3557,7 @@
       "registerTabs": "عروض الإقامات",
       "tabs": {
         "planning": "المخطط",
+        "cleaning": "التنظيف",
         "messages": "الرسائل",
         "calendars": "التقويمات"
       },
@@ -3706,6 +3707,81 @@
         "placeholders": "المتغيرات المتاحة:",
         "cancel": "إلغاء",
         "submit": "حفظ"
+      }
+    },
+    "cleaning": {
+      "statusLabel": "الحالة",
+      "allStatuses": "الكل",
+      "add": "إضافة تنظيف",
+      "unassigned": "غير مُسنَد",
+      "start": "بدء التنظيف",
+      "finish": "إنهاء التنظيف",
+      "openDetail": "فتح التفاصيل",
+      "urgentChip": "{{count}} عاجل",
+      "urgentChip_other": "{{count}} عاجلة",
+      "lateAlert": "{{count}} تنظيف متأخر.",
+      "lateAlert_other": "{{count}} عمليات تنظيف متأخرة.",
+      "urgentAlert": "{{count}} إبلاغ عاجل غير مقروء.",
+      "urgentAlert_other": "{{count}} إبلاغات عاجلة غير مقروءة.",
+      "status": {
+        "pending": "للتنفيذ",
+        "in_progress": "جارٍ",
+        "done": "منجز",
+        "cancelled": "ملغى"
+      },
+      "zones": {
+        "chambres": "الغرف",
+        "salle_de_bain": "الحمام",
+        "cuisine": "المطبخ",
+        "sejour": "الصالون",
+        "exterieur": "الخارج",
+        "linge": "الأغطية"
+      },
+      "reportKind": {
+        "issue": "مشكل",
+        "stock": "تزويد",
+        "note": "ملاحظة"
+      },
+      "columns": {
+        "date": "التاريخ",
+        "property": "العقار",
+        "nextArrival": "الوصول القادم",
+        "assignee": "المكلَّف",
+        "status": "الحالة"
+      },
+      "empty": {
+        "title": "لا يوجد تنظيف",
+        "description": "تُنشأ عمليات التنظيف تلقائيًا عند مغادرة كل ضيف."
+      },
+      "toasts": {
+        "created": "تمت إضافة التنظيف.",
+        "reported": "تم تسجيل الإبلاغ."
+      },
+      "detail": {
+        "title": "تفاصيل التنظيف",
+        "zones": "المناطق المنجزة",
+        "reports": "الإبلاغات",
+        "noReport": "لا توجد إبلاغات.",
+        "addReport": "إبلاغ جديد",
+        "kindLabel": "النوع",
+        "categoryLabel": "الفئة",
+        "noteLabel": "الوصف",
+        "urgentLabel": "عاجل",
+        "urgent": "عاجل",
+        "photoLabel": "صورة (JPEG أو PNG أو WebP)",
+        "submitReport": "إرسال الإبلاغ",
+        "markSeen": "تعليم كمقروء",
+        "close": "إغلاق"
+      },
+      "modal": {
+        "title": "إضافة تنظيف",
+        "help": "لتنظيف خارج الإقامة: بعد أشغال أو قبل زيارة.",
+        "propertyLabel": "العقار",
+        "propertyPlaceholder": "اختر عقارًا",
+        "dateLabel": "التاريخ المقرر",
+        "notesLabel": "ملاحظة",
+        "cancel": "إلغاء",
+        "submit": "إضافة"
       }
     }
   }

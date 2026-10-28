@@ -11,7 +11,8 @@ pourrait avoir aucun séjour.
 from datetime import datetime
 
 from sqlalchemy import (
-    JSON, BigInteger, Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, Text,
+    JSON, BigInteger, Boolean, Column, Date, DateTime, ForeignKey, Integer, Numeric, String,
+    Text,
     UniqueConstraint,
 )
 
@@ -188,4 +189,60 @@ class StayMessage(Base):
     error = Column(String(255))
     due_at = Column(DateTime, index=True)
     sent_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class CleaningTask(Base):
+    """Ménage de rotation d'un séjour : créé au départ du voyageur, pas à la main.
+
+    Distinct d'un ordre de travail artisan (`directory.work_order`, intervention technique
+    ponctuelle) : ici c'est la rotation elle-même, générée par le calendrier, confiée à un
+    membre de l'équipe et close par un rapport.
+    """
+    __tablename__ = "cleaning_task"
+    __table_args__ = (UniqueConstraint("reservation_id", name="uq_cleaning_task_reservation"),)
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    agency_id = Column(Integer, nullable=False, index=True)
+    property_id = Column(Integer, nullable=False, index=True)
+    # Nul pour un ménage ajouté à la main (après travaux, avant une visite).
+    reservation_id = Column(BigInteger, ForeignKey("staymanager_reservation.id"), index=True)
+    assigned_to_id = Column(Integer, index=True)
+    scheduled_date = Column(Date, nullable=False, index=True)
+    status = Column(String(20), default="pending", index=True)  # pending|in_progress|done|cancelled
+    zones_done = Column(JSON, default=list)
+    notes = Column(Text)
+    started_at = Column(DateTime)
+    completed_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class CleaningReport(Base):
+    """Ce que l'agent de ménage remonte : un souci, une demande de produit, une note.
+
+    Les photos vivent dans `CleaningPhoto` (objet-store), pas dans la ligne : un rapport
+    sans photo reste lisible, et une photo n'est jamais servie avec son type d'origine.
+    """
+    __tablename__ = "cleaning_report"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    task_id = Column(BigInteger, ForeignKey("cleaning_task.id"), nullable=False, index=True)
+    author_user_id = Column(Integer)
+    kind = Column(String(20), nullable=False)   # issue|stock|note
+    category = Column(String(40))
+    text_note = Column(Text)
+    is_urgent = Column(Boolean, default=False)
+    seen_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class CleaningPhoto(Base):
+    __tablename__ = "cleaning_photo"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    report_id = Column(BigInteger, ForeignKey("cleaning_report.id"), nullable=False, index=True)
+    file_key = Column(String(255), nullable=False)
+    content_type = Column(String(100))
+    filename = Column(String(255))
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -27,6 +27,8 @@ from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
 from . import agency_client, billing_client, ical, messages, stays
+from .cleaning import router as cleaning_router
+from .gate import gate
 from .client import StayManagerClient, StayManagerError
 from .db import get_db, init_db
 from .models import (
@@ -59,19 +61,15 @@ except Exception:  # noqa: BLE001
 
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
+# Ménage de rotation (voir app/cleaning.py) — mêmes routes /backoffice/sejours, gate incluse.
+app.include_router(cleaning_router)
+
 
 def _uid(principal: Principal):
     return int(principal.sub) if principal.sub and principal.sub.isdigit() else None
 
 
-def _gate(principal: Principal):
-    """Parité require_staymanager_feature : agence + plan has_staymanager_sync."""
-    if principal.agency_id is None:
-        return err("Agence requise", 403)
-    sub = billing_client.subscription(principal.agency_id)
-    if not sub or sub.get("status") != "active" or not sub.get("has_staymanager_sync"):
-        return err("Cette fonctionnalite necessite le plan Pro ou superieur", 403, upgrade_required=True)
-    return None
+_gate = gate
 
 
 def _integration(db: Session, agency_id: int):
