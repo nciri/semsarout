@@ -95,3 +95,77 @@ def test_gabarits_pointent_vers_la_page_d_abonnement_reelle():
         _, html, _ = render.render_email(template, **ctx)
         assert "/dashboard/compte/abonnement" in html
         assert "/backoffice/abonnement" not in html
+
+
+def _fake_stay_messages(monkeypatch, messages):
+    """Fait répondre `staymanager` et capture les verdicts rendus à l'ordonnanceur."""
+    import httpx
+
+    from app import scheduler
+
+    verdicts = []
+
+    class _Resp:
+        status_code = 200
+
+        def __init__(self, payload):
+            self._payload = payload
+
+        def json(self):
+            return self._payload
+
+    def fake_get(url, **kw):
+        assert url.endswith("/internal/sejours/messages/due")
+        return _Resp({"messages": messages})
+
+    def fake_post(url, **kw):
+        verdicts.append((url, kw.get("json")))
+        return _Resp({"ok": True})
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+    monkeypatch.setattr(httpx, "post", fake_post)
+    return scheduler, verdicts
+
+
+def _capture_scheduler_sends(monkeypatch):
+    """L'ordonnanceur importe `_try_send` par son nom : c'est sa référence qu'il faut remplacer."""
+    from app import scheduler
+    sent = []
+    monkeypatch.setattr(scheduler, "_try_send",
+                        lambda db, to, template, log_name, **ctx: sent.append((to, template, ctx)))
+    return sent
+
+
+def test_job_messagerie_sejour_envoie_et_rend_son_verdict(monkeypatch):
+    sent = _capture_scheduler_sends(monkeypatch)
+    scheduler, verdicts = _fake_stay_messages(monkeypatch, [
+        {"id": 7, "agency_id": 4, "recipient": "voyageur@example.com",
+         "subject": "Votre arrivée", "body": "Bonjour Salma"},
+    ])
+    from app.db import SessionLocal
+
+    db = SessionLocal()
+    try:
+        assert scheduler._job_stay_messages(db) == 1
+    finally:
+        db.close()
+    assert sent and sent[0][0] == "voyageur@example.com"
+    assert verdicts[0][0].endswith("/internal/sejours/messages/7/sent")
+    assert verdicts[0][1] == {"error": ""}
+
+
+def test_job_messagerie_sejour_signale_un_destinataire_invalide(monkeypatch):
+    sent = _capture_scheduler_sends(monkeypatch)
+    scheduler, verdicts = _fake_stay_messages(monkeypatch, [
+        {"id": 8, "agency_id": 4, "recipient": "pas-une-adresse",
+         "subject": "Votre arrivée", "body": "Bonjour"},
+    ])
+    from app.db import SessionLocal
+
+    db = SessionLocal()
+    try:
+        assert scheduler._job_stay_messages(db) == 0
+    finally:
+        db.close()
+    assert sent == []
+    assert verdicts[0][1]["error"]

@@ -6,7 +6,8 @@ Boucle de polling (DB-backed, idempotente) plutôt qu'une pile Celery/Redis : ch
 interroge la source (endpoint interne du service propriétaire) pour les éléments dus, envoie
 l'email et marque l'élément traité côté source. Intervalle réglable (SCHEDULER_INTERVAL_SECONDS).
 
-Jobs actuels : rappel de visite J-1, avis post-visite J+1, relance impayé d'abonnement (dunning).
+Jobs actuels : rappel de visite J-1, avis post-visite J+1, relance impayé d'abonnement (dunning),
+messagerie de séjour (modèles de l'agence, courte durée).
 Les futurs (comptes-rendus périodiques, anniversaires — en attente des domaines gestion locative /
 mandat) s'ajoutent comme des fonctions `_job_*` appelées dans `run_once`.
 """
@@ -294,6 +295,41 @@ def _job_signature_poll(db) -> int:
     return updated
 
 
+def _staymanager() -> str:
+    return os.environ.get("STAYMANAGER_URL", "http://localhost:8517")
+
+
+def _job_stay_messages(db) -> int:
+    """Messagerie de séjour : messages dus préparés par `staymanager` (modèles de l'agence).
+
+    Le texte est écrit par l'agence ; ici on ne fait que l'habiller et l'envoyer, puis on
+    rend le verdict au service propriétaire pour qu'il ne le repropose pas.
+    """
+    try:
+        r = httpx.get(f"{_staymanager()}/internal/sejours/messages/due",
+                      headers=_headers(), timeout=10.0)
+        msgs = r.json().get("messages", []) if r.status_code == 200 else []
+    except (httpx.HTTPError, ValueError):
+        return 0
+    sent = 0
+    for m in msgs:
+        to = (m.get("recipient") or "").strip()
+        error = ""
+        if _valid_email(to):
+            _try_send(db, to, "stay_message.html", "stay_message", from_email=_contact(),
+                      agency_id=m.get("agency_id"), subject=m.get("subject"), body=m.get("body"))
+            db.commit()
+            sent += 1
+        else:
+            error = "Adresse du voyageur invalide"
+        try:
+            httpx.post(f"{_staymanager()}/internal/sejours/messages/{m['id']}/sent",
+                       json={"error": error}, headers=_headers(), timeout=10.0)
+        except httpx.HTTPError:
+            pass
+    return sent
+
+
 def run_once() -> None:
     db = SessionLocal()
     try:
@@ -327,6 +363,9 @@ def run_once() -> None:
         md = _job_application_missing_docs(db)
         if md:
             logger.info("relances pièces manquantes envoyées", extra={"count": md})
+        sm = _job_stay_messages(db)
+        if sm:
+            logger.info("messages de séjour envoyés", extra={"count": sm})
         sp = _job_signature_poll(db)
         if sp:
             logger.info("signatures mises à jour (poll 3a9dSign)", extra={"count": sp})

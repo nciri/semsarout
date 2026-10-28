@@ -3557,6 +3557,7 @@
       "registerTabs": "Vues des séjours",
       "tabs": {
         "planning": "Planning",
+        "messages": "Messages",
         "calendars": "Calendriers"
       },
       "arrivals": "Arrivées du jour",
@@ -3601,6 +3602,17 @@
       "empty": {
         "title": "Aucun séjour",
         "description": "Ajoutez le calendrier d'une plateforme pour voir vos réservations ici."
+      },
+      "contact": {
+        "edit": "Compléter le contact du voyageur",
+        "title": "Contact du voyageur",
+        "help": "Les plateformes ne publient pas l'email du voyageur. Sans email, aucun message de séjour ne peut partir.",
+        "nameLabel": "Nom",
+        "emailLabel": "Email",
+        "phoneLabel": "Téléphone",
+        "cancel": "Annuler",
+        "submit": "Enregistrer",
+        "saved": "Contact enregistré."
       }
     },
     "calendars": {
@@ -3638,6 +3650,62 @@
         "urlLabel": "URL du calendrier iCal",
         "cancel": "Annuler",
         "submit": "Ajouter"
+      }
+    },
+    "messages": {
+      "templatesTitle": "Modèles de messages",
+      "journalTitle": "Messages préparés",
+      "journalEmpty": "Aucun message préparé pour le moment.",
+      "add": "Ajouter un modèle",
+      "edit": "Modifier le modèle",
+      "disable": "Désactiver le modèle",
+      "allProperties": "Tous les biens",
+      "noRecipient": "Email manquant",
+      "trigger": {
+        "on_booking": "À la réservation",
+        "before_check_in": "Avant l'arrivée",
+        "after_check_out": "Après le départ"
+      },
+      "whenWithOffset": {
+        "before_check_in": "{{count}} h avant l'arrivée",
+        "after_check_out": "{{count}} h après le départ"
+      },
+      "status": {
+        "pending": "À envoyer",
+        "sent": "Envoyé",
+        "failed": "Échec",
+        "no_recipient": "Email manquant"
+      },
+      "columns": {
+        "name": "Modèle",
+        "when": "Envoi",
+        "scope": "Portée",
+        "subject": "Objet",
+        "stay": "Séjour",
+        "recipient": "Destinataire",
+        "due": "Échéance",
+        "status": "Statut"
+      },
+      "empty": {
+        "title": "Aucun modèle",
+        "description": "Écrivez un message type : il partira tout seul avant chaque arrivée ou après chaque départ."
+      },
+      "toasts": {
+        "saved": "Modèle enregistré.",
+        "disabled": "Modèle désactivé."
+      },
+      "modal": {
+        "title": "Nouveau modèle de message",
+        "editTitle": "Modifier le modèle",
+        "nameLabel": "Nom interne",
+        "triggerLabel": "Déclencheur",
+        "offsetLabel": "Délai en heures",
+        "propertyLabel": "Bien concerné",
+        "subjectLabel": "Objet de l'email",
+        "bodyLabel": "Message",
+        "placeholders": "Variables disponibles :",
+        "cancel": "Annuler",
+        "submit": "Enregistrer"
       }
     }
   }

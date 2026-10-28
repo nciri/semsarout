@@ -55,8 +55,11 @@ construire des écrans qui n'ont encore rien à montrer.
 
 1. **Séjours et calendriers iCal** — sources par bien, synchronisation, réservations
    natives, détection des chevauchements. *Livré sur cette branche.*
-2. **Messagerie de séjour** — gabarits par agence et règles déclenchées (J-1 arrivée,
-   J+1 départ), au-dessus de `notification`, sans second moteur d'envoi.
+2. **Messagerie de séjour** — gabarits par agence et règles déclenchées (à la réservation,
+   avant l'arrivée, après le départ), au-dessus de `notification`, sans second moteur
+   d'envoi. *Livré sur cette branche.* Limites assumées : email seulement (aucun
+   fournisseur SMS raccordé), et l'adresse du voyageur est saisie par l'agence — les
+   plateformes ne la publient pas.
 3. **Ménage** — tâches générées aux départs, zones, rapport avec photos, demandes de stock.
 4. **Vérification du voyageur** — lien d'enregistrement, pièce d'identité, OCR, et
    signature du contrat via `contract` + `semsar_signing` (rien à réécrire).

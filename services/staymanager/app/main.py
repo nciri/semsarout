@@ -16,7 +16,7 @@ import secrets
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import Session
@@ -24,12 +24,12 @@ from sqlalchemy.orm import Session
 from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
-from . import billing_client, ical, stays
+from . import agency_client, billing_client, ical, messages, stays
 from .client import StayManagerClient, StayManagerError
 from .db import get_db, init_db
 from .models import (
     IcalSource, PropertyRO, StayManagerIntegration, StayManagerPropertyLink,
-    StayManagerReservation, StayManagerSyncLog,
+    StayManagerReservation, StayManagerSyncLog, StayMessage, StayMessageTemplate,
 )
 from .util import err, iso, json_body
 
@@ -606,3 +606,210 @@ def stays_overview(principal: Principal = Depends(get_principal), db: Session = 
         "sources": {"total": len(sources),
                     "in_error": sum(1 for s in sources if s.status == "error")},
     }
+
+
+# --- Messagerie de séjour ---------------------------------------------------------------
+# Les gabarits appartiennent à l'agence ; l'envoi reste au service notification, qui vient
+# chercher ce qui est dû (`/internal/sejours/messages/due`). Voir app/messages.py.
+
+def _template_dict(tpl: StayMessageTemplate) -> dict:
+    return {"id": tpl.id, "property_id": tpl.property_id, "name": tpl.name,
+            "trigger": tpl.trigger_event, "offset_hours": tpl.offset_hours or 0,
+            "subject": tpl.subject, "body": tpl.body, "active": bool(tpl.active)}
+
+
+def _message_dict(db: Session, m: StayMessage) -> dict:
+    res = db.get(StayManagerReservation, m.reservation_id)
+    ro = db.get(PropertyRO, res.property_id) if res and res.property_id else None
+    return {"id": m.id, "reservation_id": m.reservation_id, "template_id": m.template_id,
+            "property_title": ro.title if ro else None,
+            "guest_name": res.guest_name if res else None,
+            "recipient": m.recipient, "subject": m.subject, "status": m.status,
+            "error": m.error, "due_at": iso(m.due_at), "sent_at": iso(m.sent_at)}
+
+
+def _template_payload(data: dict) -> tuple[dict | None, JSONResponse | None]:
+    name = (data.get("name") or "").strip()
+    subject = (data.get("subject") or "").strip()
+    body = (data.get("body") or "").strip()
+    trigger = (data.get("trigger") or "").strip()
+    if not name or not subject or not body:
+        return None, err("Nom, objet et message sont obligatoires", 400)
+    if trigger not in messages.TRIGGERS:
+        return None, err("Déclencheur inconnu", 400)
+    try:
+        offset = int(data.get("offset_hours") or 0)
+    except (TypeError, ValueError):
+        return None, err("Délai invalide", 400)
+    if not 0 <= offset <= messages.MAX_OFFSET_HOURS:
+        return None, err("Délai hors limites", 400)
+    unknown = messages.unknown_placeholders(f"{subject} {body}")
+    if unknown:
+        return None, err(f"Variables inconnues : {', '.join(unknown)}", 400)
+    property_id = data.get("property_id")
+    try:
+        property_id = int(property_id) if property_id not in (None, "", 0) else None
+    except (TypeError, ValueError):
+        return None, err("Bien invalide", 400)
+    return {"name": name, "subject": subject, "body": body, "trigger_event": trigger,
+            "offset_hours": offset, "property_id": property_id,
+            "active": bool(data.get("active", True))}, None
+
+
+@app.get("/backoffice/sejours/messages/modeles")
+def list_message_templates(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    rows = (db.query(StayMessageTemplate)
+            .filter(StayMessageTemplate.agency_id == principal.agency_id)
+            .order_by(StayMessageTemplate.trigger_event, StayMessageTemplate.name).all())
+    return {"templates": [_template_dict(t) for t in rows],
+            "placeholders": list(messages.PLACEHOLDERS), "triggers": list(messages.TRIGGERS)}
+
+
+@app.post("/backoffice/sejours/messages/modeles", status_code=201)
+async def create_message_template(request: Request, principal: Principal = Depends(get_principal),
+                                  db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    payload, e = _template_payload(await json_body(request))
+    if e:
+        return e
+    tpl = StayMessageTemplate(agency_id=principal.agency_id, **payload)
+    db.add(tpl)
+    db.commit()
+    return {"template": _template_dict(tpl)}
+
+
+@app.put("/backoffice/sejours/messages/modeles/{template_id}")
+async def update_message_template(template_id: int, request: Request,
+                                  principal: Principal = Depends(get_principal),
+                                  db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    tpl = db.get(StayMessageTemplate, template_id)
+    if tpl is None or tpl.agency_id != principal.agency_id:
+        return err("Modèle introuvable", 404)
+    payload, e = _template_payload(await json_body(request))
+    if e:
+        return e
+    for key, value in payload.items():
+        setattr(tpl, key, value)
+    db.commit()
+    return {"template": _template_dict(tpl)}
+
+
+@app.delete("/backoffice/sejours/messages/modeles/{template_id}")
+def delete_message_template(template_id: int, principal: Principal = Depends(get_principal),
+                            db: Session = Depends(get_db)):
+    """Le modèle part, son journal reste : savoir ce qui a été écrit au voyageur a de la valeur."""
+    if (g := _gate(principal)) is not None:
+        return g
+    tpl = db.get(StayMessageTemplate, template_id)
+    if tpl is None or tpl.agency_id != principal.agency_id:
+        return err("Modèle introuvable", 404)
+    tpl.active = False
+    db.commit()
+    return {"message": "Modèle désactivé"}
+
+
+@app.get("/backoffice/sejours/messages")
+def list_messages(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    rows = (db.query(StayMessage).filter(StayMessage.agency_id == principal.agency_id)
+            .order_by(StayMessage.due_at.desc()).limit(200).all())
+    return {"messages": [_message_dict(db, m) for m in rows],
+            "pending": sum(1 for m in rows if m.status == "pending"),
+            "no_recipient": sum(1 for m in rows if m.status == "no_recipient")}
+
+
+@app.patch("/backoffice/sejours/{stay_id}/contact")
+async def update_stay_contact(stay_id: int, request: Request,
+                              principal: Principal = Depends(get_principal),
+                              db: Session = Depends(get_db)):
+    """Complète la fiche du voyageur : Airbnb ne publie pas son email, l'agence le saisit."""
+    if (g := _gate(principal)) is not None:
+        return g
+    res = db.get(StayManagerReservation, stay_id)
+    if res is None or res.agency_id != principal.agency_id:
+        return err("Séjour introuvable", 404)
+    data = await json_body(request)
+    if "guest_email" in data:
+        email = (data.get("guest_email") or "").strip()
+        if email and ("@" not in email or len(email) > 255):
+            return err("Email invalide", 400)
+        res.guest_email = email or None
+    if "guest_name" in data:
+        res.guest_name = (data.get("guest_name") or "").strip() or None
+    if "guest_phone" in data:
+        res.guest_phone = (data.get("guest_phone") or "").strip() or None
+    db.commit()
+    return {"stay": _stay_dict(db, res)}
+
+
+def _prepare_due(db: Session, now: datetime) -> list[StayMessage]:
+    """Crée les lignes des messages devenus dus. Idempotent par (modèle, séjour)."""
+    templates = db.query(StayMessageTemplate).filter(StayMessageTemplate.active.is_(True)).all()
+    if not templates:
+        return []
+    stays_rows = (db.query(StayManagerReservation)
+                  .filter(StayManagerReservation.status == "confirmed",
+                          StayManagerReservation.agency_id.isnot(None)).all())
+    done = {(m.template_id, m.reservation_id) for m in db.query(StayMessage).all()}
+    created: list[StayMessage] = []
+    for res in stays_rows:
+        for tpl in templates:
+            if tpl.agency_id != res.agency_id:
+                continue
+            if tpl.property_id and tpl.property_id != res.property_id:
+                continue
+            # Un gabarit propre au bien remplace le gabarit général du même déclencheur.
+            if not tpl.property_id and any(
+                    o.agency_id == res.agency_id and o.property_id == res.property_id
+                    and o.trigger_event == tpl.trigger_event for o in templates):
+                continue
+            if (tpl.id, res.id) in done or not messages.is_due(tpl, res, now):
+                continue
+            ro = db.get(PropertyRO, res.property_id) if res.property_id else None
+            values = messages.variables(res, ro.title if ro else None,
+                                        agency_client.name_of(res.agency_id))
+            msg = StayMessage(
+                agency_id=res.agency_id, template_id=tpl.id, reservation_id=res.id,
+                recipient=res.guest_email, subject=messages.render(tpl.subject, values),
+                body=messages.render(tpl.body, values), due_at=messages.due_at(tpl, res),
+                status="pending" if res.guest_email else "no_recipient")
+            db.add(msg)
+            done.add((tpl.id, res.id))
+            created.append(msg)
+    db.commit()
+    return created
+
+
+@app.get("/internal/sejours/messages/due", include_in_schema=False)
+def internal_due_messages(x_internal_token: str = Header(default=""),
+                          db: Session = Depends(get_db)):
+    """Messages à envoyer maintenant — pour l'ordonnanceur de notification."""
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    _prepare_due(db, datetime.utcnow())
+    rows = db.query(StayMessage).filter(StayMessage.status == "pending").limit(200).all()
+    return {"messages": [{"id": m.id, "agency_id": m.agency_id, "recipient": m.recipient,
+                          "subject": m.subject, "body": m.body} for m in rows]}
+
+
+@app.post("/internal/sejours/messages/{message_id}/sent", include_in_schema=False)
+async def internal_mark_message(message_id: int, request: Request,
+                                x_internal_token: str = Header(default=""),
+                                db: Session = Depends(get_db)):
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    msg = db.get(StayMessage, message_id)
+    if msg is not None:
+        data = await json_body(request)
+        failure = (data.get("error") or "").strip() if isinstance(data, dict) else ""
+        msg.status = "failed" if failure else "sent"
+        msg.error = failure[:255] or None
+        msg.sent_at = datetime.utcnow()
+        db.commit()
+    return {"ok": True}

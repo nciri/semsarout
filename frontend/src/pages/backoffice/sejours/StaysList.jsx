@@ -1,18 +1,35 @@
 import { useState } from 'react'
-import { useQuery } from 'react-query'
+import { useMutation, useQuery, useQueryClient } from 'react-query'
+import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
-import { FiAlertTriangle, FiCalendar } from 'react-icons/fi'
+import { FiAlertTriangle, FiCalendar, FiUser } from 'react-icons/fi'
 import { stayService, STAY_STATUS_TONE } from '../../../services/stayService'
 import { useFormat } from '../../../utils/format'
-import { EmptyState, Select } from '../../../components/backoffice/ui'
-import { Chip, TD, TH } from '../components/kit'
+import { EmptyState, Field, Modal, PRIMARY_BTN, SECONDARY_BTN, Select } from '../../../components/backoffice/ui'
+import { Chip, IconAction, TD, TH } from '../components/kit'
 
 const STATUSES = ['confirmed', 'blocked', 'cancelled']
 
 function StaysList() {
   const { t } = useTranslation(['backoffice', 'common'])
   const { fmtDate } = useFormat()
+  const qc = useQueryClient()
   const [status, setStatus] = useState('confirmed')
+  // La plateforme ne publie pas l'email du voyageur : l'agence le complète ici, sinon la
+  // messagerie de séjour n'a personne à qui écrire.
+  const [contact, setContact] = useState(null)
+  const saveContact = useMutation(() => stayService.updateContact(contact.id, {
+    guest_name: contact.guest_name || '', guest_email: contact.guest_email || '',
+    guest_phone: contact.guest_phone || '',
+  }), {
+    onSuccess: () => {
+      toast.success(t('backoffice:stays.planning.contact.saved'))
+      setContact(null)
+      qc.invalidateQueries('stays-list')
+      qc.invalidateQueries('stays-messages')
+    },
+    onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
+  })
   const { data, isLoading, error } = useQuery(['stays-list', status],
     () => stayService.listStays(status ? { status } : {}))
 
@@ -48,6 +65,7 @@ function StaysList() {
                   <th className={TH}>{t('backoffice:stays.planning.columns.nights')}</th>
                   <th className={TH}>{t('backoffice:stays.planning.columns.channel')}</th>
                   <th className={TH}>{t('backoffice:stays.planning.columns.status')}</th>
+                  <th className={TH} />
                 </tr>
               </thead>
               <tbody>
@@ -77,12 +95,32 @@ function StaysList() {
                         )}
                       </div>
                     </td>
+                    <td className={`${TD} text-end`}>
+                      <IconAction icon={FiUser} label={t('backoffice:stays.planning.contact.edit')} tipAlign="end"
+                        onClick={() => setContact({ ...s })} />
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
+
+      <Modal open={contact !== null} onClose={() => setContact(null)} title={t('backoffice:stays.planning.contact.title')}
+        footer={<>
+          <button onClick={() => setContact(null)} className={SECONDARY_BTN}>{t('backoffice:stays.planning.contact.cancel')}</button>
+          <button disabled={saveContact.isLoading} onClick={() => saveContact.mutate()} className={PRIMARY_BTN}>
+            {t('backoffice:stays.planning.contact.submit')}
+          </button>
+        </>}>
+        <p className="mb-3 text-[13px] text-gray-500">{t('backoffice:stays.planning.contact.help')}</p>
+        <Field label={t('backoffice:stays.planning.contact.nameLabel')} value={contact?.guest_name || ''}
+          onChange={(e) => setContact((c) => ({ ...c, guest_name: e.target.value }))} />
+        <Field label={t('backoffice:stays.planning.contact.emailLabel')} type="email" value={contact?.guest_email || ''}
+          onChange={(e) => setContact((c) => ({ ...c, guest_email: e.target.value }))} />
+        <Field label={t('backoffice:stays.planning.contact.phoneLabel')} value={contact?.guest_phone || ''}
+          onChange={(e) => setContact((c) => ({ ...c, guest_phone: e.target.value }))} />
+      </Modal>
     </div>
   )
 }

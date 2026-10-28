@@ -3557,6 +3557,7 @@
       "registerTabs": "عروض الإقامات",
       "tabs": {
         "planning": "المخطط",
+        "messages": "الرسائل",
         "calendars": "التقويمات"
       },
       "arrivals": "وصول اليوم",
@@ -3601,6 +3602,17 @@
       "empty": {
         "title": "لا توجد إقامات",
         "description": "أضف تقويم منصة لعرض حجوزاتك هنا."
+      },
+      "contact": {
+        "edit": "إكمال بيانات الضيف",
+        "title": "بيانات الضيف",
+        "help": "المنصات لا تنشر بريد الضيف. بدون بريد لا تُرسل أي رسالة إقامة.",
+        "nameLabel": "الاسم",
+        "emailLabel": "البريد الإلكتروني",
+        "phoneLabel": "الهاتف",
+        "cancel": "إلغاء",
+        "submit": "حفظ",
+        "saved": "تم حفظ البيانات."
       }
     },
     "calendars": {
@@ -3638,6 +3650,62 @@
         "urlLabel": "رابط تقويم iCal",
         "cancel": "إلغاء",
         "submit": "إضافة"
+      }
+    },
+    "messages": {
+      "templatesTitle": "قوالب الرسائل",
+      "journalTitle": "الرسائل المُعدّة",
+      "journalEmpty": "لا توجد رسائل معدّة حاليًا.",
+      "add": "إضافة قالب",
+      "edit": "تعديل القالب",
+      "disable": "تعطيل القالب",
+      "allProperties": "جميع العقارات",
+      "noRecipient": "البريد ناقص",
+      "trigger": {
+        "on_booking": "عند الحجز",
+        "before_check_in": "قبل الوصول",
+        "after_check_out": "بعد المغادرة"
+      },
+      "whenWithOffset": {
+        "before_check_in": "{{count}} ساعة قبل الوصول",
+        "after_check_out": "{{count}} ساعة بعد المغادرة"
+      },
+      "status": {
+        "pending": "للإرسال",
+        "sent": "أُرسلت",
+        "failed": "فشل",
+        "no_recipient": "البريد ناقص"
+      },
+      "columns": {
+        "name": "القالب",
+        "when": "الإرسال",
+        "scope": "النطاق",
+        "subject": "الموضوع",
+        "stay": "الإقامة",
+        "recipient": "المرسل إليه",
+        "due": "الاستحقاق",
+        "status": "الحالة"
+      },
+      "empty": {
+        "title": "لا توجد قوالب",
+        "description": "اكتب رسالة نموذجية: تُرسل وحدها قبل كل وصول أو بعد كل مغادرة."
+      },
+      "toasts": {
+        "saved": "تم حفظ القالب.",
+        "disabled": "تم تعطيل القالب."
+      },
+      "modal": {
+        "title": "قالب رسالة جديد",
+        "editTitle": "تعديل القالب",
+        "nameLabel": "الاسم الداخلي",
+        "triggerLabel": "المُحفِّز",
+        "offsetLabel": "المدة بالساعات",
+        "propertyLabel": "العقار المعني",
+        "subjectLabel": "موضوع البريد",
+        "bodyLabel": "الرسالة",
+        "placeholders": "المتغيرات المتاحة:",
+        "cancel": "إلغاء",
+        "submit": "حفظ"
       }
     }
   }

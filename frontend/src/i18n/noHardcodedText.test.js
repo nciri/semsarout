@@ -66,6 +66,7 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/sejours/StaysLayout.jsx',
   'src/pages/backoffice/sejours/StaysList.jsx',
   'src/pages/backoffice/sejours/CalendarsList.jsx',
+  'src/pages/backoffice/sejours/MessagesPanel.jsx',
   'src/pages/backoffice/rental/MandatesList.jsx',
   'src/pages/backoffice/rental/MandateDetail.jsx',
   'src/pages/backoffice/rental/LeasesList.jsx',

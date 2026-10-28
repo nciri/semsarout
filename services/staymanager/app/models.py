@@ -12,6 +12,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     JSON, BigInteger, Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, Text,
+    UniqueConstraint,
 )
 
 from .db import Base
@@ -144,3 +145,47 @@ class PropertyRO(Base):
     agency_id = Column(Integer, index=True)
     title = Column(String(200))
     reference = Column(String(50))
+
+class StayMessageTemplate(Base):
+    """Message type d'une agence : ce qu'elle écrit au voyageur, et quand.
+
+    Le texte est brut (pas de HTML) : `notification` l'habille de la charte SemsarOut, et
+    l'agence n'a aucune balise à écrire.
+    """
+    __tablename__ = "stay_message_template"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    agency_id = Column(Integer, nullable=False, index=True)
+    # Un gabarit sans bien s'applique à tout le portefeuille ; avec un bien, il le remplace.
+    property_id = Column(Integer, index=True)
+    name = Column(String(120), nullable=False)
+    trigger_event = Column(String(30), nullable=False)   # on_booking|before_check_in|after_check_out
+    offset_hours = Column(Integer, default=0)
+    subject = Column(String(200), nullable=False)
+    body = Column(Text, nullable=False)
+    active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class StayMessage(Base):
+    """Message préparé pour un séjour : un seul par gabarit et par séjour, d'où l'unicité.
+
+    C'est aussi le registre d'idempotence de l'ordonnanceur : la ligne est créée au moment
+    où le message devient dû, puis marquée envoyée ou en échec.
+    """
+    __tablename__ = "stay_message"
+    __table_args__ = (UniqueConstraint("template_id", "reservation_id", name="uq_stay_message"),)
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    agency_id = Column(Integer, nullable=False, index=True)
+    template_id = Column(BigInteger, ForeignKey("stay_message_template.id"), nullable=False, index=True)
+    reservation_id = Column(BigInteger, ForeignKey("staymanager_reservation.id"), nullable=False, index=True)
+    recipient = Column(String(255))
+    subject = Column(String(200))
+    body = Column(Text)
+    status = Column(String(20), default="pending", index=True)  # pending|sent|failed|no_recipient
+    error = Column(String(255))
+    due_at = Column(DateTime, index=True)
+    sent_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
