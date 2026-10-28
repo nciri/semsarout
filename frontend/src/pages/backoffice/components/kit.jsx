@@ -117,7 +117,9 @@ export function Figure({ value, unit, children }) {
   )
 }
 
-export function Widget({ id, title, icon: Icon, open, onToggle, className = '', children, cardRef }) {
+// `to` remplace le dépliage par un lien : un widget dont le détail vit sur une page dédiée
+// ne doit pas en rejouer une copie ici, sinon les mêmes chiffres se lisent à deux endroits.
+export function Widget({ id, title, icon: Icon, open, onToggle, to, className = '', children, cardRef }) {
   const { t } = useTranslation('backoffice')
   return (
     <section
@@ -131,16 +133,20 @@ export function Widget({ id, title, icon: Icon, open, onToggle, className = '', 
         <h2 id={`w-${id}`} className="flex items-center gap-2 font-display text-[14.5px] font-bold">
           <Icon className="w-[17px] h-[17px] text-gray-400" aria-hidden="true" />{title}
         </h2>
-        <IconAction
-          icon={FiChevronDown}
-          label={open ? t('dashboard.collapse') : t('dashboard.expand')}
-          onClick={onToggle}
-          tone="gold"
-          tipAlign="end"
-          aria-expanded={open}
-          aria-controls="dashboard-detail"
-          className={`-m-2 [&>svg]:transition-transform [&>svg]:duration-200 motion-reduce:[&>svg]:transition-none ${open ? '[&>svg]:rotate-180' : ''}`}
-        />
+        {to ? (
+          <IconAction icon={FiArrowUpRight} label={t('dashboard.openPage')} to={to} tone="gold" tipAlign="end" className="-m-2" />
+        ) : (
+          <IconAction
+            icon={FiChevronDown}
+            label={open ? t('dashboard.collapse') : t('dashboard.expand')}
+            onClick={onToggle}
+            tone="gold"
+            tipAlign="end"
+            aria-expanded={open}
+            aria-controls="dashboard-detail"
+            className={`-m-2 [&>svg]:transition-transform [&>svg]:duration-200 motion-reduce:[&>svg]:transition-none ${open ? '[&>svg]:rotate-180' : ''}`}
+          />
+        )}
       </div>
       {children}
     </section>

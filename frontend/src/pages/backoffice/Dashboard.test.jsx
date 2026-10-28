@@ -111,7 +111,7 @@ describe('Tableau de bord : une activité à la fois', () => {
     const leads = () => screen.getByRole('heading', { name: 'Leads à traiter' }).closest('section')
     expect(await screen.findByText('Mehdi Belhaj')).toBeInTheDocument()   // lead de vente
 
-    await userEvent.click(screen.getByRole('button', { name: 'Location' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Mise en location' }))
 
     expect(within(leads()).queryByText('Mehdi Belhaj')).not.toBeInTheDocument()
     expect(within(leads()).getByText('Hind Senhaji')).toBeInTheDocument()
@@ -124,10 +124,20 @@ describe('Tableau de bord : une activité à la fois', () => {
     // doit pas l'escamoter.
     renderDashboard()
     await screen.findByText('Karim Tazi')
-    for (const vue of ['Vente', 'Location']) {
+    for (const vue of ['Vente', 'Mise en location']) {
       await userEvent.click(screen.getByRole('button', { name: vue }))
       expect(screen.getByText('Karim Tazi')).toBeInTheDocument()
     }
+  })
+
+  it('renvoie la gestion locative vers sa page au lieu d’en rejouer le détail', async () => {
+    renderDashboard()
+    await screen.findByText('Mehdi Belhaj')
+    await userEvent.click(screen.getByRole('button', { name: 'Mise en location' }))
+    const card = screen.getByRole('heading', { name: 'Gestion locative' }).closest('section')
+    expect(within(card).queryByRole('button', { name: 'Développer' })).not.toBeInTheDocument()
+    expect(within(card).getByRole('link', { name: 'Ouvrir la page' }))
+      .toHaveAttribute('href', '/backoffice/gestion-locative')
   })
 
   it('cache la gestion locative quand on ne regarde que la vente', async () => {
@@ -141,7 +151,7 @@ describe('Tableau de bord : une activité à la fois', () => {
     renderDashboard({ pipeline: { sale: [{ stage: 'offer', count: 1, amount: 10, weighted: 5 }],
                                   rent: [{ stage: 'application', count: 9, amount: 90, weighted: 45 }] } })
     await screen.findByText('Hind Senhaji')
-    expect(await screen.findByRole('button', { name: 'Location' })).toHaveAttribute('aria-pressed', 'true')
+    expect(await screen.findByRole('button', { name: 'Mise en location' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('n’affiche pas le widget locatif à une agence sans la gestion locative', async () => {

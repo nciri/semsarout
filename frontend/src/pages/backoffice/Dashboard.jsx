@@ -11,7 +11,7 @@ import { VisitsCompact, VisitsDetail } from './dashboard/VisitsWidget'
 import { ResultsCompact, ResultsDetail } from './dashboard/ResultsWidget'
 import { PipelineCompact, PipelineDetail } from './dashboard/PipelineWidget'
 import { PortfolioCompact, PortfolioDetail } from './dashboard/PortfolioWidget'
-import { RentalCompact, RentalDetail } from './dashboard/RentalWidget'
+import { RentalCompact } from './dashboard/RentalWidget'
 import OnboardingCard from './dashboard/OnboardingCard'
 import { rentalService } from '../../services/rentalService'
 
@@ -48,7 +48,8 @@ const WIDGETS = [
       active: only(w.listings?.active || [], a),
     } }) },
   // Gestion locative : sa propre source (service rental), et rien à montrer côté vente.
-  { key: 'rental', icon: FiKey, Compact: RentalCompact, Detail: RentalDetail,
+  // Pas de détail ici — il vit sur la page gérance, qui porte les mêmes chiffres en entier.
+  { key: 'rental', icon: FiKey, Compact: RentalCompact, to: '/backoffice/gestion-locative',
     hidden: (a) => a === 'sale', props: (w) => ({ summary: w.rental }) },
 ]
 const TITLE_KEYS = { leads: 'leads.title', visits: 'visits.title', results: 'results.title',
@@ -58,7 +59,13 @@ const STORE = 'dash-open'
 function readOpen() {
   // Le pipeline est ouvert au premier passage, pour montrer le mécanisme ; ensuite on retrouve
   // l'état laissé par l'agent (y compris « tout replié », stocké comme chaîne vide).
-  try { const s = localStorage.getItem(STORE); return s === null ? 'pipe' : s || null } catch { return 'pipe' }
+  // Un widget sans détail ne peut pas être « ouvert » : une clé laissée par une version
+  // précédente ouvrirait un panneau vide.
+  try {
+    const s = localStorage.getItem(STORE)
+    if (s === null) return 'pipe'
+    return WIDGETS.some((x) => x.key === s && x.Detail) ? s : null
+  } catch { return 'pipe' }
 }
 function writeOpen(key) { try { localStorage.setItem(STORE, key || '') } catch { /* stockage indisponible */ } }
 
@@ -229,6 +236,7 @@ export default function BackofficeDashboard() {
                 icon={x.icon}
                 open={openKey === x.key}
                 onToggle={() => toggle(x.key)}
+                to={x.to}
                 className={x.span || ''}
                 cardRef={(el) => { cardRefs.current[x.key] = el }}
               >

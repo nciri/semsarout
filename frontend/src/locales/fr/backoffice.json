@@ -2,9 +2,10 @@
   "nav": {
     "sections": {
       "main": "Principal",
-      "crm": "CRM",
-      "finance": "Finance",
-      "admin": "Administration"
+      "deals": "Vendre & louer",
+      "operations": "Exploitation",
+      "partners": "Tiers & documents",
+      "agency": "Agence"
     },
     "dashboard": "Tableau de bord",
     "properties": "Biens immobiliers",
@@ -231,29 +232,18 @@
       "label": "Activité",
       "all": "Tout",
       "sale": "Vente",
-      "rent": "Location"
+      "rent": "Mise en location"
     },
     "rental": {
       "title": "Gestion locative",
       "headline": "{{count}} point(s) à traiter",
-      "detailSub": "Impayés, candidatures, échéances et états des lieux de votre parc géré.",
-      "viewAll": "Gestion locative",
       "arrears": "Baux en impayé",
       "applications": "Candidatures en attente",
       "expiring": "Échéances proches",
       "inventories": "États des lieux manquants",
-      "allClear": "Rien à traiter sur le parc géré.",
-      "arrearsAlert": "{{amount}} d'impayés sur {{count}} bail/baux.",
-      "noArrears": "Aucun impayé en cours.",
-      "noApplications": "Aucune candidature en attente.",
-      "noExpiring": "Aucune échéance dans les 60 jours.",
-      "columns": {
-        "tenant": "Locataire",
-        "property": "Bien",
-        "due": "Reste dû",
-        "age": "Retard"
-      }
-    }
+      "allClear": "Rien à traiter sur le parc géré."
+    },
+    "openPage": "Ouvrir la page"
   },
   "signature": {
     "title": "Signature électronique",
