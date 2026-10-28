@@ -16,6 +16,9 @@ def _strip(d: dict, extra: set) -> dict:
 
 
 def main(props, leads, clients, visits, txns) -> dict:
+    # Type d'activité du bien rattaché : c'est lui qui permet au tableau de bord de se
+    # ranger par activité (vente / location) au lieu de tout mélanger.
+    ptype = {p["id"]: p.get("transaction_type") for p in props}
     now = datetime.utcnow()
     today = now.date()
     som = datetime(today.year, today.month, 1)
@@ -25,8 +28,11 @@ def main(props, leads, clients, visits, txns) -> dict:
     total_properties = len(props)
     active_properties = sum(1 for p in props if p["status"] == "active")
     draft_properties = sum(1 for p in props if p["status"] == "draft")
-    sold_this_month = sum(1 for p in props if p["status"] == "sold"
+    # Une agence de gestion ne « vend » rien : sans `rented`, son compteur resterait à zéro.
+    sold_this_month = sum(1 for p in props if p["status"] in ("sold", "rented")
                           and p["updated_at"] and _pd(p["updated_at"]) >= som)
+    rented_this_month = sum(1 for p in props if p["status"] == "rented"
+                            and p["updated_at"] and _pd(p["updated_at"]) >= som)
 
     total_leads = len(leads)
     new_leads = sum(1 for l in leads if l["status"] == "new")
@@ -68,7 +74,8 @@ def main(props, leads, clients, visits, txns) -> dict:
 
     return {
         "properties": {"total": total_properties, "active": active_properties,
-                       "draft": draft_properties, "sold_this_month": sold_this_month},
+                       "draft": draft_properties, "sold_this_month": sold_this_month,
+                       "rented_this_month": rented_this_month},
         "leads": {"total": total_leads, "new": new_leads, "this_month": leads_this_month,
                   "this_week": leads_this_week, "conversion_rate": round(conversion_rate, 1)},
         "clients": {"total": total_clients, "active": active_clients,
@@ -83,10 +90,10 @@ def main(props, leads, clients, visits, txns) -> dict:
         # Blocs du tableau de bord « à traiter » : chaque widget a une version compacte et une
         # vue détaillée, toutes deux servies par ce seul appel.
         "widgets": {
-            "new_leads": _new_leads(leads),
+            "new_leads": _new_leads(leads, ptype),
             "leads_weekly": _leads_weekly(leads, sow),
-            "upcoming_visits": _upcoming_visits(visits, now),
-            "recent_visit_outcomes": _recent_visit_outcomes(visits, now),
+            "upcoming_visits": _upcoming_visits(visits, now, ptype),
+            "recent_visit_outcomes": _recent_visit_outcomes(visits, now, ptype),
             "pipeline": _pipeline(txns),
             "closed": _closed(txns, now),
             "listings": _listings(props),
@@ -113,13 +120,14 @@ def _amount(t: dict) -> float:
     return 0.0
 
 
-def _new_leads(leads) -> list[dict]:
+def _new_leads(leads, ptype: dict) -> list[dict]:
     """Leads jamais traités, du plus ancien au plus récent : l'ancienneté est l'urgence."""
     rows = [l for l in leads if l["status"] == "new" and l["created_at"]]
     rows.sort(key=lambda l: l["created_at"])
     return [{"id": l.get("id"), "name": l.get("name"), "source": l.get("source"),
              "created_at": l["created_at"], "property_id": l.get("property_id"),
-             "property_title": l.get("property_title")} for l in rows]
+             "property_title": l.get("property_title"),
+             "transaction_type": ptype.get(l.get("property_id"))} for l in rows]
 
 
 def _leads_weekly(leads, sow: datetime, weeks: int = 13) -> list[dict]:
@@ -140,24 +148,36 @@ def _leads_weekly(leads, sow: datetime, weeks: int = 13) -> list[dict]:
     return out
 
 
-def _upcoming_visits(visits, now: datetime, limit: int = 60) -> list[dict]:
+def _upcoming_visits(visits, now: datetime, ptype: dict, limit: int = 60) -> list[dict]:
     rows = [v for v in visits if v["scheduled_at"] and _pd(v["scheduled_at"]) >= now
             and v["status"] in ("scheduled", "confirmed")]
     rows.sort(key=lambda v: v["scheduled_at"])
     return [{"id": v.get("id"), "scheduled_at": v["scheduled_at"], "status": v["status"],
              "contact_name": v.get("contact_name"), "property_id": v.get("property_id"),
-             "property_title": v.get("property_title")} for v in rows[:limit]]
+             "property_title": v.get("property_title"),
+             "transaction_type": ptype.get(v.get("property_id"))} for v in rows[:limit]]
 
 
-def _recent_visit_outcomes(visits, now: datetime, days: int = 15) -> dict:
-    """Issue des visites des `days` derniers jours : le taux de présence se lit là."""
+def _recent_visit_outcomes(visits, now: datetime, ptype: dict, days: int = 15) -> dict:
+    """Issue des visites des `days` derniers jours : le taux de présence se lit là.
+
+    Le même décompte est redonné par activité (`sale`, `rent`), pour que le filtre du
+    tableau de bord n'ait rien à recalculer côté navigateur.
+    """
+    def bucket():
+        return {"days": days, "completed": 0, "cancelled": 0, "no_show": 0, "total": 0}
+
     start = now - timedelta(days=days)
-    out = {"days": days, "completed": 0, "cancelled": 0, "no_show": 0, "total": 0}
+    out = bucket()
+    out["sale"], out["rent"] = bucket(), bucket()
     for v in visits:
-        if v["scheduled_at"] and start <= _pd(v["scheduled_at"]) < now:
-            out["total"] += 1
-            if v["status"] in out:
-                out[v["status"]] += 1
+        if not v["scheduled_at"] or not start <= _pd(v["scheduled_at"]) < now:
+            continue
+        kind = ptype.get(v.get("property_id"))
+        for r in [out] + ([out[kind]] if kind in ("sale", "rent") else []):
+            r["total"] += 1
+            if v["status"] in r:
+                r[v["status"]] += 1
     return out
 
 
@@ -193,14 +213,18 @@ def _closed(txns, now: datetime, days: int = 90) -> list[dict]:
 
 def _listings(props) -> dict:
     by_status: dict = {}
+    by_type: dict = {"sale": {}, "rent": {}}
     for p in props:
         by_status[p["status"]] = by_status.get(p["status"], 0) + 1
+        kind = p.get("transaction_type")
+        if kind in by_type:
+            by_type[kind][p["status"]] = by_type[kind].get(p["status"], 0) + 1
     active = [{"id": p["id"], "title": p.get("title"), "city": p.get("city"),
                "transaction_type": p.get("transaction_type"),
                "price": float(p["price"]) if p.get("price") is not None else None,
                "views": p.get("views_count") or 0, "contacts": p.get("contacts_count") or 0}
               for p in props if p["status"] == "active"]
-    return {"by_status": by_status, "active": active}
+    return {"by_status": by_status, "by_status_by_type": by_type, "active": active}
 
 
 def leads_by_source(leads, days: int) -> dict:

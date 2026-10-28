@@ -169,11 +169,6 @@
         "p30": "30 jours",
         "p90": "90 jours"
       },
-      "typeLabel": "Type de transaction",
-      "type": {
-        "sale": "Vente",
-        "rent": "Location"
-      },
       "range": "Leads et affaires signées du {{from}} au {{to}}",
       "kpi": {
         "leads": "Leads reçus",
@@ -230,6 +225,33 @@
       "sold": "Vendus",
       "zeroDetail": "<strong>{{count}} annonces vues sans aucun contact</strong> : {{views}} vues cumulées. Prix, photos ou description sont à revoir.",
       "empty": "Aucune annonce en ligne."
+    },
+    "activity": {
+      "label": "Activité",
+      "all": "Tout",
+      "sale": "Vente",
+      "rent": "Location"
+    },
+    "rental": {
+      "title": "Gestion locative",
+      "headline": "{{count}} point(s) à traiter",
+      "detailSub": "Impayés, candidatures, échéances et états des lieux de votre parc géré.",
+      "viewAll": "Gestion locative",
+      "arrears": "Baux en impayé",
+      "applications": "Candidatures en attente",
+      "expiring": "Échéances proches",
+      "inventories": "États des lieux manquants",
+      "allClear": "Rien à traiter sur le parc géré.",
+      "arrearsAlert": "{{amount}} d'impayés sur {{count}} bail/baux.",
+      "noArrears": "Aucun impayé en cours.",
+      "noApplications": "Aucune candidature en attente.",
+      "noExpiring": "Aucune échéance dans les 60 jours.",
+      "columns": {
+        "tenant": "Locataire",
+        "property": "Bien",
+        "due": "Reste dû",
+        "age": "Retard"
+      }
     }
   },
   "signature": {
