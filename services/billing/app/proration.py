@@ -10,16 +10,28 @@ changement au terme) avec une distinction que SemsarOut doit faire :
   restent jusqu'à son terme, et le plan change à l'échéance. Rembourser au prorata ouvrirait
   un va-et-vient Pro/Starter payé une fois.
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
 # Un reste de période plus court ne vaut pas une facture : la différence est offerte.
 MIN_PRORATED_AMOUNT = Decimal("1.00")
 
 
-def remaining_ratio(period_start: datetime, period_end: datetime, now: datetime) -> Decimal:
-    """Part de la période encore à courir, entre 0 et 1."""
-    total = (period_end - period_start).total_seconds()
+CYCLE_DAYS = {"monthly": 30, "yearly": 365}
+
+
+def cycle_days(billing_cycle: str | None) -> int:
+    return CYCLE_DAYS.get(billing_cycle or "monthly", 30)
+
+
+def remaining_ratio(period_end: datetime, now: datetime, billing_cycle: str | None) -> Decimal:
+    """Part de la période EN COURS encore à courir, entre 0 et 1.
+
+    La période se déduit du terme moins la durée du cycle : `start_date` est le début de
+    l'abonnement, pas celui du mois en cours — après un an, le ratio calculé depuis elle
+    serait presque nul et la montée de gamme quasi gratuite.
+    """
+    total = timedelta(days=cycle_days(billing_cycle)).total_seconds()
     if total <= 0:
         return Decimal("0")
     left = (period_end - now).total_seconds()
@@ -30,13 +42,13 @@ def remaining_ratio(period_start: datetime, period_end: datetime, now: datetime)
     return (Decimal(str(left)) / Decimal(str(total))).quantize(Decimal("0.0001"))
 
 
-def upgrade_amount(current_amount, new_amount, period_start: datetime,
-                   period_end: datetime, now: datetime) -> Decimal:
+def upgrade_amount(current_amount, new_amount, period_end: datetime, now: datetime,
+                   billing_cycle: str | None = "monthly") -> Decimal:
     """Différence à payer pour la fin de la période en cours. Jamais négative."""
     delta = Decimal(str(new_amount)) - Decimal(str(current_amount))
     if delta <= 0:
         return Decimal("0.00")
-    amount = (delta * remaining_ratio(period_start, period_end, now)).quantize(
+    amount = (delta * remaining_ratio(period_end, now, billing_cycle)).quantize(
         Decimal("0.01"), rounding=ROUND_HALF_UP)
     return amount if amount >= MIN_PRORATED_AMOUNT else Decimal("0.00")
 

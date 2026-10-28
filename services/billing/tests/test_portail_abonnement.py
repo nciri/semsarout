@@ -56,6 +56,21 @@ def client(db):
     app.dependency_overrides.clear()
 
 
+def _run_worker(worker, db, message_id, routing_key="payment.released", payload=None):
+    """Rejoue un paiement encaissé sur la session du test (le worker ferme la sienne)."""
+    close = db.close
+    db.close = lambda: None
+    original = worker.SessionLocal
+    worker.SessionLocal = lambda: db
+    try:
+        worker._handle(routing_key,
+                       {"purpose": "subscription", "agency_id": AGENCY, **(payload or {})},
+                       message_id)
+    finally:
+        worker.SessionLocal = original
+        db.close = close
+
+
 def _subscribed(db, *, price=200, days_left=15, status="active"):
     starter = _plan("starter", price)
     pro = _plan("pro", price * 2, has_rental=True)
@@ -71,22 +86,28 @@ def _subscribed(db, *, price=200, days_left=15, status="active"):
 
 
 def test_le_prorata_ne_facture_que_le_temps_restant():
-    start = datetime(2026, 11, 1)
     end = datetime(2026, 12, 1)
-    half = datetime(2026, 11, 16)
-    amount = proration.upgrade_amount(200, 400, start, end, half)
+    half = end - timedelta(days=15)
+    amount = proration.upgrade_amount(200, 400, end, half, "monthly")
     assert Decimal("96") <= amount <= Decimal("104")   # ~la moitié de 200
 
 
+def test_le_prorata_se_calcule_sur_la_periode_en_cours_pas_depuis_la_souscription():
+    # Abonnement d'un an : la montée au milieu du mois coûte toujours la moitié du mois.
+    end = datetime(2027, 6, 1)
+    half = end - timedelta(days=15)
+    assert proration.upgrade_amount(200, 400, end, half, "monthly") >= Decimal("96")
+
+
 def test_le_prorata_est_nul_pour_une_retrogradation():
-    start, end = datetime(2026, 11, 1), datetime(2026, 12, 1)
-    assert proration.upgrade_amount(400, 200, start, end, datetime(2026, 11, 10)) == Decimal("0.00")
+    end = datetime(2026, 12, 1)
+    assert proration.upgrade_amount(400, 200, end, datetime(2026, 11, 10), "monthly") == Decimal("0.00")
 
 
 def test_le_prorata_derisoire_est_offert():
-    start, end = datetime(2026, 11, 1), datetime(2026, 12, 1)
+    end = datetime(2026, 12, 1)
     # Il reste une heure : la différence ne vaut pas une facture.
-    assert proration.upgrade_amount(200, 400, start, end, datetime(2026, 11, 30, 23, 0)) == Decimal("0.00")
+    assert proration.upgrade_amount(200, 400, end, datetime(2026, 11, 30, 23, 0), "monthly") == Decimal("0.00")
 
 
 def test_monter_de_gamme_facture_la_difference_sans_decaler_l_echeance(client, db):
@@ -184,3 +205,82 @@ def test_le_journal_des_mouvements_est_lisible_par_l_agence(client, db):
     events = client.get("/subscription/events").json()["events"]
     assert events[0]["kind"] == "plan_changed"
     assert events[0]["detail"]["plan"] == "pro"
+
+
+def test_la_facture_de_prorata_est_marquee_et_ne_prolonge_pas_la_periode(client, db):
+    from app import worker
+
+    sub, _, pro = _subscribed(db, price=200, days_left=15)
+    end_before = sub.end_date
+    client.post("/subscription/change-plan", json={"plan_id": "pro"})
+    invoice = db.query(Invoice).one()
+    assert invoice.prorated is True
+
+    # Paiement encaissé : la période ne doit pas repartir de zéro.
+    _run_worker(worker, db, "msg-1")
+    sub = db.query(Subscription).filter(Subscription.agency_id == AGENCY).one()
+    assert sub.status == "active"
+    assert sub.end_date == end_before
+
+
+def test_une_facture_de_renouvellement_prolonge_bien_la_periode(client, db):
+    from app import worker
+
+    sub, starter, _ = _subscribed(db, price=200, days_left=-1, status="active")
+    sub.end_date = datetime.utcnow() - timedelta(minutes=1)
+    db.commit()
+    client.post("/internal/subscriptions/issue-renewals", headers={"x-internal-token": "tok"})
+    db.refresh(sub)
+    assert db.query(Invoice).one().prorated in (False, None)
+
+    # Renouvellement réglé par la passerelle (`payment.completed`) : la période repart.
+    _run_worker(worker, db, "msg-2", "payment.completed", {"billing_cycle": "monthly"})
+    sub = db.query(Subscription).filter(Subscription.agency_id == AGENCY).one()
+    assert sub.end_date > datetime.utcnow()
+
+
+def test_reprendre_exige_un_statut_resilie_et_aucune_facture_en_attente(client, db):
+    sub, _, pro = _subscribed(db, price=200, days_left=15)
+    # Montée de gamme impayée : l'abonnement est `incomplete`, pas résilié.
+    client.post("/subscription/change-plan", json={"plan_id": "pro"})
+    assert client.post("/subscription/reactivate").status_code == 400
+
+    sub.status = "cancelled"
+    sub.cancelled_at = datetime.utcnow()
+    db.commit()
+    # Facture d'abonnement encore impayée : la reprise attend son règlement.
+    assert client.post("/subscription/reactivate").status_code == 409
+
+
+def test_changer_de_plan_annule_une_resiliation_en_attente(client, db):
+    sub, _, pro = _subscribed(db, price=200, days_left=15)
+    client.post("/cancel-subscription")
+    db.refresh(sub)
+    assert sub.cancelled_at is not None
+    sub.status = "active"   # la période payée court encore
+    db.commit()
+    client.post("/subscription/change-plan", json={"plan_id": "pro"})
+    db.refresh(sub)
+    assert sub.cancelled_at is None
+
+
+def test_les_incidents_de_paiement_sont_listes_avec_leur_motif(client, db):
+    sub, _, _ = _subscribed(db, price=200, days_left=5)
+    sub.status = "past_due"
+    sub.grace_until = datetime.utcnow() + timedelta(days=3)
+    sub.last_payment_failure_reason = "Carte refusée"
+    db.add(Invoice(reference="INV-X", subscription_id=sub.id, agency_id=AGENCY, amount=200,
+                   status="unpaid", invoice_type="subscription"))
+    db.commit()
+    resp = client.get("/internal/subscriptions/incidents", headers={"x-internal-token": "tok"})
+    assert resp.status_code == 200
+    incident = resp.json()["incidents"][0]
+    assert incident["agency_id"] == AGENCY
+    assert incident["last_failure_reason"] == "Carte refusée"
+    assert incident["unpaid_invoices"] == 1
+
+
+def test_l_arr_est_le_mrr_annualise(client, db):
+    sub, _, _ = _subscribed(db, price=200, days_left=10)
+    stats = client.get("/internal/subscriptions/stats", headers={"x-internal-token": "tok"}).json()
+    assert stats["arr_estimate"] == round(stats["mrr_estimate"] * 12, 2)

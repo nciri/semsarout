@@ -23,3 +23,12 @@ def test_le_lien_d_enregistrement_est_public_et_va_au_staymanager(monkeypatch):
         "STAY", "/sejours/enregistrement/jeton")
     assert _resolve_upstream(_app(), "/api/v1/sejours/enregistrement/jeton/voyageurs", "POST") == (
         "STAY", "/sejours/enregistrement/jeton/voyageurs")
+
+
+def test_le_suivi_des_envois_va_au_service_notification(monkeypatch):
+    monkeypatch.setattr(m.settings, "notification_url", "http://notification")
+    app = SimpleNamespace(state=SimpleNamespace(notification="NOTIF", staymanager="STAY"))
+    assert _resolve_upstream(app, "/api/v1/admin/notifications", "GET") == (
+        "NOTIF", "/admin/notifications")
+    assert _resolve_upstream(app, "/api/v1/admin/scheduler/run", "POST") == (
+        "NOTIF", "/admin/scheduler/run")

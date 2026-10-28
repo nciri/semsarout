@@ -91,6 +91,8 @@ class Invoice(Base):
     agency_id = Column(Integer, index=True)
     amount = Column(Numeric(10, 2), nullable=False)
     status = Column(String(20), default="unpaid")  # unpaid|paid
+    # Facture de prorata : paie la fin de la période en cours, sans la prolonger.
+    prorated = Column(Boolean, default=False)
     period_label = Column(String(40))
     issued_at = Column(DateTime, default=datetime.utcnow)
     paid_at = Column(DateTime)

@@ -124,7 +124,7 @@ env UPSTREAM_URL="$MONO" JWT_SECRET_KEY="$JWT" INTERNAL_TOKEN="$ITOK" TENANT_DEV
   RENTAL_URL=http://localhost:8518 COMMISSION_URL=http://localhost:8519 SELLING_URL=http://localhost:8520 \
   COLOC_LISTING_URL=http://localhost:8521 COLOC_PROFILE_URL=http://localhost:8522 \
   MATCHING_URL=http://localhost:8523 TRANSLATION_URL=http://localhost:8524 \
-  PARTNER_URL=http://localhost:8525 \
+  PARTNER_URL=http://localhost:8525 NOTIFICATION_URL=http://localhost:8502 \
   DESIGN3D_URL=http://localhost:8526 \
   nohup python3 -m uvicorn app.main:app --app-dir gateway --host 127.0.0.1 --port "$BFF_PORT" \
   > "$LOG/bff.log" 2>&1 &

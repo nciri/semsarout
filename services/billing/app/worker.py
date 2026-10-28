@@ -79,10 +79,13 @@ def _activate_pending(db, agency_id) -> None:
            .order_by(Subscription.id.desc()).first())
     if sub is None:
         return
-    sub.status = "active"
-    sub.end_date = datetime.now(timezone.utc) + timedelta(days=30)
     invoice = (db.query(Invoice)
                .filter(Invoice.subscription_id == sub.id, Invoice.status == "unpaid").first())
+    sub.status = "active"
+    # Une facture de prorata paie la FIN de la période en cours : la prolonger de 30 jours
+    # offrirait un mois à chaque montée de gamme.
+    if invoice is None or not invoice.prorated:
+        sub.end_date = datetime.now(timezone.utc) + timedelta(days=30)
     if invoice is not None:
         invoice.status = "paid"
     plan = db.get(SubscriptionPlan, sub.plan_id)

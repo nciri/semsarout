@@ -105,6 +105,9 @@ def admin_overview(principal: Principal = Depends(get_principal)):
         "total_agencies": ag.get("total_agencies", 0),
         "active_subscriptions": sub.get("active_subscriptions", {}),
         "mrr_estimate": sub.get("mrr_estimate", 0.0),
+        "arr_estimate": sub.get("arr_estimate", 0.0),
+        # Les incidents, pas seulement leur nombre : un compteur ne se rappelle pas.
+        "payment_incidents": sources.payment_incidents(),
         "unpaid_subscriptions": sub.get("unpaid_subscriptions", {"past_due": 0, "restricted": 0}),
         "signups_last_30d": us.get("signups_last_30d", 0),
         "suspended_count": us.get("suspended_users", 0) + ag.get("suspended_agencies", 0),

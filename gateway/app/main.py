@@ -421,6 +421,11 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
     if settings.programs_url and path.startswith("/api/v1/programs"):
         return app.state.programs, path.replace("/api/v1", "", 1)
     # Séjours courte durée (calendriers iCal, planning) → staymanager.
+    # Suivi plateforme des envois (super-admin) : journal et exécution manuelle des tâches
+    # planifiées, servis par notification — qui n'avait jusqu'ici aucune route publique.
+    if settings.notification_url and (path.startswith("/api/v1/admin/scheduler")
+                                      or path == "/api/v1/admin/notifications"):
+        return app.state.notification, path.replace("/api/v1", "", 1)
     if settings.staymanager_url and path.startswith("/api/v1/backoffice/sejours"):
         return app.state.staymanager, path.replace("/api/v1", "", 1)
     # Enregistrement du voyageur : le lien privé tient lieu d'identification, pas de compte.
@@ -576,6 +581,7 @@ async def lifespan(app: FastAPI):
     app.state.partner = _client_or_none(settings.partner_url)
     app.state.matching = _client_or_none(settings.matching_url)
     app.state.translation = _client_or_none(settings.translation_url)
+    app.state.notification = _client_or_none(settings.notification_url)
     app.state.design3d = _client_or_none(settings.design3d_url)
     yield
     for client in (
@@ -588,6 +594,7 @@ async def lifespan(app: FastAPI):
         app.state.messaging, app.state.trust_safety, app.state.agency, app.state.audit,
         app.state.commission, app.state.selling, app.state.coloc_listing,
         app.state.coloc_profile, app.state.partner, app.state.matching, app.state.translation,
+        app.state.notification,
         app.state.design3d,
     ):
         if client is not None:

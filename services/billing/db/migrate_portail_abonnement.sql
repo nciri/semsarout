@@ -5,6 +5,9 @@ ALTER TABLE billing.subscription ADD COLUMN IF NOT EXISTS pending_billing_cycle 
 ALTER TABLE billing.subscription ADD COLUMN IF NOT EXISTS pending_amount NUMERIC(10,2);
 ALTER TABLE billing.subscription ADD COLUMN IF NOT EXISTS pending_effective_at TIMESTAMP;
 
+-- Facture de prorata : son règlement ne prolonge pas la période (cf. worker billing).
+ALTER TABLE billing.invoice ADD COLUMN IF NOT EXISTS prorated BOOLEAN DEFAULT FALSE;
+
 CREATE TABLE IF NOT EXISTS billing.subscription_event (
   id               SERIAL PRIMARY KEY,
   subscription_id  INTEGER NOT NULL REFERENCES billing.subscription (id),

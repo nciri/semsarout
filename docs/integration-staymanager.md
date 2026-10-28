@@ -37,7 +37,7 @@ Trois états : **déjà couvert** (ne rien reprendre), **partiel** (compléter l
 | Analytics, tableau de bord | `analytics` + tableau de bord back-office par activité | **couvert** |
 | Abonnements : plans, essai, statuts | `billing` : plans, entitlements, prorata, changement programmé, reprise ; relances chez `notification` | **couvert** (livré le 2026-10-28) |
 | Paiements Stripe / PayPal | `payment` : passerelle, webhooks | **partiel** — fournisseurs à brancher |
-| Back-office admin SaaS (MRR, impersonation, cron) | `audit`, écrans admin partiels | **partiel** |
+| Back-office admin SaaS (MRR, impersonation, cron) | `analytics` + `billing` + `notification` : MRR/ARR, incidents, tâches à la demande, journal | **couvert** (livré le 2026-10-28) |
 | Onboarding gamifié (mascotte, badges) | — | **absent** |
 | Ménage : tâches, zones, rapports, stock | `staymanager` : tâches au départ, zones, rapports photo | **couvert** (livré le 2026-10-28) |
 | Agents IA | — | **absent** |
@@ -82,7 +82,10 @@ construire des écrans qui n'ont encore rien à montrer.
    branche.* Les relances d'impayé existaient déjà (`notification`,
    `_job_unpaid_invoice_reminders`) : rien à reprendre. Écart assumé : pas de remboursement
    au prorata d'une rétrogradation — le mois est payé, le plan change au terme.
-7. **Admin SaaS** — MRR/ARR, incidents de paiement, exécution manuelle des tâches planifiées.
+7. **Admin SaaS** — ARR à côté du MRR, liste des incidents de paiement avec leur motif,
+   exécution manuelle des tâches planifiées et journal des envois. *Livré sur cette branche.*
+   `notification` reçoit sa première route publique (super-admin) et entre dans la table de
+   routage du BFF.
 8. **Onboarding** — étapes calculées sur l'état réel du compte ; la gamification (mascotte,
    badges) est une décision produit, pas une reprise technique.
 9. ~~Mobile~~ — **hors périmètre** : seul le backend de l'application web est repris

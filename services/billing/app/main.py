@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 
 from fastapi import Depends, FastAPI, Header, Query, Request, Response
 from prometheus_fastapi_instrumentator import Instrumentator
-from sqlalchemy import extract
+from sqlalchemy import extract, func
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal, require_superadmin
@@ -275,8 +275,38 @@ def internal_subscriptions_stats(x_internal_token: str = Header(default=""),
         mrr += amt / 12.0 if s.billing_cycle == "yearly" else amt
     unpaid = {st: db.query(Subscription).filter(Subscription.status == st).count()
               for st in ("past_due", "restricted")}
+    # L'ARR est le MRR annualisé : c'est la même mesure, pas une somme des encaissements.
     return {"active_subscriptions": by_plan, "mrr_estimate": round(mrr, 2),
-            "unpaid_subscriptions": unpaid}
+            "arr_estimate": round(mrr * 12, 2), "unpaid_subscriptions": unpaid}
+
+
+@app.get("/internal/subscriptions/incidents", include_in_schema=False)
+def internal_payment_incidents(x_internal_token: str = Header(default=""),
+                               db: Session = Depends(get_db)):
+    """Abonnements en incident de paiement, avec le motif renvoyé par la passerelle.
+
+    Un compteur dit qu'il y a des impayés ; cette liste dit lesquels et pourquoi, seule
+    façon de rappeler l'agence avant que ses droits tombent.
+    """
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    plans = {p.id: p.slug for p in db.query(SubscriptionPlan).all()}
+    rows = (db.query(Subscription)
+            .filter(Subscription.status.in_(("past_due", "restricted", "incomplete")))
+            .order_by(Subscription.grace_until.is_(None), Subscription.grace_until).all())
+    unpaid_counts = {}
+    for sid, count in db.query(Invoice.subscription_id, func.count(Invoice.id)).filter(
+            Invoice.status == "unpaid", Invoice.invoice_type == "subscription").group_by(
+            Invoice.subscription_id).all():
+        unpaid_counts[sid] = count
+    return {"incidents": [{
+        "subscription_id": s.id, "agency_id": s.agency_id, "plan": plans.get(s.plan_id),
+        "status": s.status, "amount": float(s.amount or 0),
+        "grace_until": iso(s.grace_until), "end_date": iso(s.end_date),
+        "unpaid_invoices": unpaid_counts.get(s.id, 0),
+        "last_failure_at": iso(s.last_payment_failure_at),
+        "last_failure_reason": s.last_payment_failure_reason,
+    } for s in rows]}
 
 
 # Cadence de relance impayé (dunning) : 1re relance J+3 après émission, puis toutes les 7 j,
@@ -738,7 +768,8 @@ async def change_plan(request: Request, principal: Principal = Depends(get_princ
     if sub is not None and sub.status == "active" and sub.end_date and sub.end_date > now:
         # Montée de gamme en cours de période : on ne facture que la différence restante et
         # on NE décale PAS l'échéance, sinon l'agence paierait deux fois le même temps.
-        prorated = proration.upgrade_amount(sub.amount, amount, sub.start_date, sub.end_date, now)
+        prorated = proration.upgrade_amount(sub.amount, amount, sub.end_date, now,
+                                            sub.billing_cycle)
         end_date = sub.end_date
     else:
         end_date = now + period
@@ -755,6 +786,8 @@ async def change_plan(request: Request, principal: Principal = Depends(get_princ
         sub.pending_billing_cycle = None
         sub.pending_amount = None
         sub.pending_effective_at = None
+        # Changer de plan vaut reprise : une résiliation en attente n'a plus de sens.
+        sub.cancelled_at = None
         sub.updated_at = now
     else:
         sub = Subscription(agency_id=principal.agency_id, plan_id=plan.id, billing_cycle=billing_cycle,
@@ -776,7 +809,10 @@ async def change_plan(request: Request, principal: Principal = Depends(get_princ
 
     invoice = Invoice(reference=_next_invoice_reference(db, now),
                       subscription_id=sub.id, agency_id=principal.agency_id, amount=charged,
-                      status="unpaid", period_label=f"{_MONTHS[now.month - 1]} {now.year}")
+                      status="unpaid", period_label=f"{_MONTHS[now.month - 1]} {now.year}",
+                      # Une facture de prorata paie la FIN de la période en cours : son
+                      # règlement ne doit pas rallonger l'abonnement de 30 jours.
+                      prorated=prorated is not None)
     db.add(invoice)
     db.flush()
     enqueue(db, "invoice", invoice.id, events.INVOICE_CREATED, {
@@ -819,8 +855,18 @@ def reactivate_subscription(principal: Principal = Depends(get_principal),
     sub = _agency_sub(db, principal.agency_id) if principal.agency_id else None
     if sub is None:
         return err("Aucun abonnement", 404)
-    if sub.cancelled_at is None:
+    # Passé le terme, la lecture a déjà requalifié l'abonnement en `expired` (cf.
+    # `_reconcile_expired`) : il n'y a plus de période payée à reprendre.
+    if sub.status == "expired" or (sub.cancelled_at and sub.end_date
+                                   and sub.end_date <= datetime.utcnow()):
+        return err("La période payée est écoulée : souscrivez un plan.", 409)
+    if sub.status != "cancelled" or sub.cancelled_at is None:
         return err("Cet abonnement n'est pas résilié", 400)
+    unpaid = (db.query(Invoice)
+              .filter(Invoice.subscription_id == sub.id, Invoice.status == "unpaid",
+                      Invoice.invoice_type == "subscription").first())
+    if unpaid is not None:
+        return err("Réglez la facture en attente avant de reprendre l'abonnement.", 409)
     now = datetime.utcnow()
     if not sub.end_date or sub.end_date <= now:
         return err("La période payée est écoulée : souscrivez un plan.", 409)
