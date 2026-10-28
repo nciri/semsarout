@@ -37,6 +37,21 @@ MAX_PHOTO_SIZE = 8 * 1024 * 1024
 BACKFILL_DAYS = 1
 
 
+async def _bounded_body(request: Request) -> bytes | None:
+    """Corps lu par morceaux, coupé dès le dépassement : un en-tête mensonger ne suffit pas.
+
+    `await request.body()` chargerait d'abord tout en mémoire, quelle que soit la taille
+    annoncée — un envoi sans `content-length` passerait donc le garde-fou.
+    """
+    size, chunks = 0, []
+    async for chunk in request.stream():
+        size += len(chunk)
+        if size > MAX_PHOTO_SIZE:
+            return None
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
 def _uid(principal: Principal) -> int | None:
     try:
         return int(principal.sub)
@@ -101,7 +116,8 @@ def _next_arrival(db: Session, task: CleaningTask):
     """Prochaine arrivée sur le bien : ce qui dit si le ménage est urgent ou non."""
     start = datetime.combine(task.scheduled_date, datetime.min.time())
     row = (db.query(StayManagerReservation)
-           .filter(StayManagerReservation.property_id == task.property_id,
+           .filter(StayManagerReservation.agency_id == task.agency_id,
+                   StayManagerReservation.property_id == task.property_id,
                    StayManagerReservation.status == "confirmed",
                    StayManagerReservation.check_in >= start)
            .order_by(StayManagerReservation.check_in).first())
@@ -254,11 +270,11 @@ async def add_photo(report_id: int, request: Request,
     content_type = (request.headers.get("content-type") or "").split(";")[0].strip().lower()
     if content_type not in ALLOWED_PHOTO_TYPES:
         return err("Format accepté : JPEG, PNG ou WebP.", 400)
-    body = await request.body()
+    body = await _bounded_body(request)
+    if body is None:
+        return err("Photo trop volumineuse (max 8 Mo).", 400)
     if not body:
         return err("Photo vide.", 400)
-    if len(body) > MAX_PHOTO_SIZE:
-        return err("Photo trop volumineuse (max 8 Mo).", 400)
     from . import storage
     key = f"menage/{task.id}/{uuid.uuid4().hex}"
     storage.photos_storage().put(key, body, content_type)

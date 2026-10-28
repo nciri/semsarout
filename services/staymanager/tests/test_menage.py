@@ -182,3 +182,26 @@ def test_menage_en_retard_est_signale(client, seeded):
                             scheduled_date=datetime.utcnow().date() - timedelta(days=2)))
     seeded.commit()
     assert client.get("/backoffice/sejours/menage").json()["late"] == 1
+
+
+def test_photo_trop_lourde_refusee_meme_sans_content_length(client, seeded):
+    from app import cleaning
+    _stay(seeded, days=1)
+    task_id = client.get("/backoffice/sejours/menage").json()["tasks"][0]["id"]
+    report_id = client.post(f"/backoffice/sejours/menage/{task_id}/rapports",
+                            json={"kind": "note", "text_note": "ok"}).json()["report"]["id"]
+    too_big = b"0" * (cleaning.MAX_PHOTO_SIZE + 1)
+    # En-tête omis volontairement : le corps lui-même doit être borné.
+    refused = client.post(f"/backoffice/sejours/menage/rapports/{report_id}/photos",
+                          content=iter([too_big]), headers={"content-type": "image/jpeg"})
+    assert refused.status_code == 400
+
+
+def test_prochaine_arrivee_ignore_les_sejours_d_une_autre_agence(client, seeded):
+    _stay(seeded, days=1)                            # départ à J+4 : le ménage y est posé
+    _stay(seeded, days=5, agency_id=AGENCY + 1)      # même bien, autre agence : invisible
+    mine = _stay(seeded, days=8)                     # ma prochaine arrivée
+    task = next(t for t in client.get("/backoffice/sejours/menage").json()["tasks"]
+                if t["scheduled_date"].startswith(
+                    (datetime.utcnow() + timedelta(days=4)).date().isoformat()))
+    assert task["next_check_in"].startswith(mine.check_in.date().isoformat())
