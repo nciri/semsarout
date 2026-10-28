@@ -91,6 +91,7 @@ marketplace/add_cart_agency.sql
 crm/migrate_property_ro_owner.sql
 rental/migrate_property_ro_price.sql
 crm/migrate_buyer_dossier.sql
+agency/migrate_integrations.sql
 audit/add_tenant.sql
 "
 

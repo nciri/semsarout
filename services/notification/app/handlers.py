@@ -9,7 +9,7 @@ import os
 
 import httpx
 
-from . import email as email_adapter
+from . import agency_client, email as email_adapter
 from . import recipients, render
 from .db import SessionLocal
 from .models import NotificationLog, ProcessedMessage
@@ -68,11 +68,13 @@ def _contact() -> str:
 
 
 def _try_send(db, to: str, template: str, log_name: str, from_email: str | None = None,
-              attachments=None, **ctx) -> None:
+              attachments=None, agency_id: int | None = None, **ctx) -> None:
+    """`agency_id` : l'e-mail part du SMTP de l'agence si elle en a configuré un."""
     try:
         subject, html, text = render.render_email(template, **ctx)
         email_adapter.send_email(to, subject, text, html=html, from_email=from_email,
-                                  attachments=attachments)
+                                  attachments=attachments,
+                                  smtp=agency_client.smtp_of(agency_id))
         _log(db, "email", to, log_name, "sent")
         logger.info("email envoyé", extra={"template": log_name, "recipient": to})
     except Exception as exc:  # noqa: BLE001 — échec SMTP journalisé, pas de boucle DLQ

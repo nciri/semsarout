@@ -12,6 +12,13 @@ function StatusChip({ status }) {
   return <Chip tone={STATUS_TONE[status] || 'neutral'}>{t(`dashboard.visits.status.${status}`, { defaultValue: status })}</Chip>
 }
 
+/** Activité du bien rattaché : un mot, pour ne pas confondre un lead de vente et un locatif. */
+function ActivityChip({ type }) {
+  const { t } = useTranslation('backoffice')
+  if (type !== 'sale' && type !== 'rent') return null
+  return <Chip tone="neutral">{t(`dashboard.activity.${type}`)}</Chip>
+}
+
 /** « Aujourd'hui », « Demain », sinon le jour de la semaine. */
 function useDayLabel(now) {
   const { t } = useTranslation('backoffice')
@@ -91,7 +98,10 @@ export function VisitsDetail({ visits, outcomes, now, onClose, titleRef }) {
                   <span className="font-semibold tabular-nums text-gray-600">{fmtTime(v.scheduled_at)}</span>
                   <span className="truncate"><b className="font-semibold">{v.contact_name || t('dashboard.visits.visitor')}</b>
                     {v.property_title && <span className="text-[12.5px] text-gray-500"> · {v.property_title}</span>}</span>
-                  <StatusChip status={v.status} />
+                  <span className="flex items-center gap-1.5">
+                    <ActivityChip type={v.transaction_type} />
+                    <StatusChip status={v.status} />
+                  </span>
                 </div>
               ))}
             </div>

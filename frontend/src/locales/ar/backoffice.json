@@ -169,11 +169,6 @@
         "p30": "30 يومًا",
         "p90": "90 يومًا"
       },
-      "typeLabel": "نوع المعاملة",
-      "type": {
-        "sale": "بيع",
-        "rent": "إيجار"
-      },
       "range": "الطلبات والصفقات الموقّعة من {{from}} إلى {{to}}",
       "kpi": {
         "leads": "الطلبات المستلمة",
@@ -230,6 +225,33 @@
       "sold": "مبيعة",
       "zeroDetail": "<strong>{{count}} إعلانات شوهدت دون أي تواصل</strong>: {{views}} مشاهدة إجمالًا. ينبغي مراجعة السعر أو الصور أو الوصف.",
       "empty": "لا توجد إعلانات منشورة."
+    },
+    "activity": {
+      "label": "النشاط",
+      "all": "الكل",
+      "sale": "البيع",
+      "rent": "الكراء"
+    },
+    "rental": {
+      "title": "التدبير الكرائي",
+      "headline": "{{count}} نقطة للمعالجة",
+      "detailSub": "المتأخرات والترشيحات والاستحقاقات وحالات المكان في الرصيد المدبر.",
+      "viewAll": "التدبير الكرائي",
+      "arrears": "عقود بمتأخرات",
+      "applications": "ترشيحات في الانتظار",
+      "expiring": "استحقاقات قريبة",
+      "inventories": "حالات مكان ناقصة",
+      "allClear": "لا شيء للمعالجة في الرصيد المدبر.",
+      "arrearsAlert": "{{amount}} من المتأخرات على {{count}} عقد.",
+      "noArrears": "لا توجد متأخرات حالية.",
+      "noApplications": "لا توجد ترشيحات في الانتظار.",
+      "noExpiring": "لا استحقاق خلال 60 يوما.",
+      "columns": {
+        "tenant": "المكتري",
+        "property": "العقار",
+        "due": "المتبقي",
+        "age": "التأخر"
+      }
     }
   },
   "signature": {
@@ -2750,12 +2772,13 @@
           "final": "السعر النهائي",
           "probability": "الاحتمال",
           "commission": "العمولة",
-          "commissionRate": "النسبة {{rate}} %",
           "commissionExpected": "منتظرة",
           "commissionSigned": "مكتسبة",
           "milestones": "تواريخ المراحل",
           "notes": "ملاحظات",
-          "none": "—"
+          "none": "—",
+          "commissionRateRent": "{{rate}} % من الكراء الشهري",
+          "commissionFlatFee": "تعريفة ثابتة"
         },
         "milestone": {
           "contact": "أول اتصال",
@@ -2834,6 +2857,15 @@
             "price": "السعر",
             "status": "الحالة"
           }
+        },
+        "rentLabel": "الكراء الشهري (درهم)",
+        "commissionPreview": "أي {{amount}}",
+        "currency": "درهم",
+        "commission": {
+          "saleLabel": "العمولة (درهم)",
+          "saleHint": "التعريفة الثابتة للوكالة",
+          "rentLabel": "العمولة (%)",
+          "rentHint": "من الكراء الشهري"
         }
       },
       "detail": {
@@ -3312,44 +3344,21 @@
       "subtitle": "قم بتكوين إعدادات وكالتك",
       "savedNotice": "تم حفظ الإعدادات بنجاح",
       "tabs": {
-        "general": "عام",
-        "notifications": "الإشعارات",
-        "integrations": "التكاملات",
-        "security": "الأمان"
+        "profile": "الملف",
+        "commissions": "العمولات",
+        "rules": "القواعد",
+        "integrations": "التكاملات"
       },
       "fields": {
-        "agencyName": "اسم الوكالة",
-        "website": "الموقع الإلكتروني",
-        "email": "البريد الإلكتروني",
-        "phone": "الهاتف",
-        "address": "العنوان",
-        "city": "المدينة",
         "timezone": "المنطقة الزمنية",
-        "description": "وصف الوكالة",
-        "descriptionPlaceholder": "صف وكالتك..."
+        "rentalCommissionRate": "العمولة على الكراء (%)",
+        "rentalCommissionHint": "تطبق على الكراء الشهري.",
+        "saleCommissionFee": "العمولة على البيع (درهم)",
+        "saleCommissionFeeHint": "تعريفة ثابتة مهما كان ثمن العقار."
       },
       "timezoneOptions": {
         "casablanca": "أفريقيا/الدار البيضاء (GMT+1)",
         "paris": "أوروبا/باريس (GMT+1)"
-      },
-      "notifications": {
-        "email": {
-          "title": "إشعارات البريد الإلكتروني",
-          "description": "تلقي الإشعارات عبر البريد الإلكتروني"
-        },
-        "sms": {
-          "title": "إشعارات الرسائل القصيرة",
-          "description": "تلقي الإشعارات عبر الرسائل القصيرة"
-        },
-        "leadAutoAssign": {
-          "title": "الإسناد التلقائي للعملاء المحتملين",
-          "description": "إسناد العملاء المحتملين الجدد تلقائيًا إلى الوكلاء"
-        },
-        "visitReminder": {
-          "label": "تذكير الزيارة (عدد الساعات قبل)",
-          "hours_one": "ساعة واحدة",
-          "hours_other": "{{count}} ساعات"
-        }
       },
       "integrations": {
         "smtp": {
@@ -3360,79 +3369,104 @@
           "port": "المنفذ",
           "portPlaceholder": "587",
           "user": "المستخدم",
-          "password": "كلمة المرور"
+          "password": "كلمة المرور",
+          "passwordHint": "اتركه فارغا للحفاظ على كلمة السر الحالية."
         },
-        "api": {
-          "title": "واجهة برمجة التطبيقات والـ Webhooks",
-          "description": "مفاتيح API وwebhooks للتكاملات الخارجية",
-          "keyLabel": "مفتاح API",
-          "regenerate": "إعادة التوليد"
+        "apiKeyNote": "مفتاح API الخاص بالوكالة موجود في علامة « الملف ».",
+        "intro": "لا يُسجَّل أي ربط إلا بعد نجاح اتصال فعلي بالمزود: الحالة المعروضة هي الحالة الحقيقية.",
+        "erpTitle": "أنظمة ERP",
+        "crmTitle": "أنظمة CRM",
+        "lastSync": "آخر إرسال في {{date}} · {{count}} جهة اتصال",
+        "noContactSync": "هذا المزود لا يتلقى جهات الاتصال تلقائيا.",
+        "status": {
+          "connected": "مربوط",
+          "error": "خطأ",
+          "not_connected": "غير مربوط"
         },
-        "erp": {
-          "title": "تكاملات ERP",
-          "description": "اربط نظام إدارة المؤسسة الخاص بك",
+        "actions": {
+          "connect": "ربط",
+          "connecting": "جاري الربط…",
+          "test": "اختبار",
+          "disconnect": "فصل",
+          "cancel": "إلغاء",
+          "save": "تسجيل الربط"
+        },
+        "toasts": {
+          "connected": "تم ربط {{provider}}",
+          "tested": "تم التحقق من الربط",
+          "testFailed": "فشل التحقق",
+          "disconnected": "تم حذف الربط"
+        },
+        "fieldLabels": {
+          "url": "عنوان المنصة",
+          "db": "قاعدة البيانات",
+          "login": "المعرف",
+          "password": "كلمة السر",
+          "base_url": "عنوان الواجهة البرمجية",
+          "token": "رمز الوصول",
+          "instance_url": "عنوان المنصة",
+          "access_token": "رمز OAuth",
+          "api_domain": "نطاق الواجهة البرمجية"
+        },
+        "providers": {
           "odoo": {
             "name": "Odoo",
-            "description": "مزامنة جهات الاتصال والفواتير"
+            "description": "جهات الاتصال والفوترة في نظام Odoo.",
+            "help": "معرفات مستعمل Odoo له حق إنشاء جهات الاتصال (res.partner)."
           },
           "sap": {
-            "name": "SAP Business One",
-            "description": "تكامل المحاسبة والإدارة"
-          }
-        },
-        "crm": {
-          "title": "تكاملات CRM",
-          "description": "اربط نظام CRM الخارجي الخاص بك لمزامنة البيانات",
+            "name": "SAP",
+            "description": "الشركاء التجاريون عبر واجهة OData.",
+            "help": "عنوان بوابة SAP ورمز تقني له حق الوصول إلى API_BUSINESS_PARTNER."
+          },
           "salesforce": {
             "name": "Salesforce",
-            "description": "مزامنة ثنائية الاتجاه للعملاء المحتملين وجهات الاتصال"
+            "description": "عملاؤك كجهات اتصال في Salesforce.",
+            "help": "عنوان المنصة (https://…my.salesforce.com) ورمز OAuth صالح."
           },
           "hubspot": {
             "name": "HubSpot",
-            "description": "إدارة جهات الاتصال وأتمتة التسويق"
+            "description": "عملاؤك كجهات اتصال في HubSpot.",
+            "help": "رمز تطبيق خاص في HubSpot، بنطاق crm.objects.contacts.write."
           },
           "zoho": {
             "name": "Zoho CRM",
-            "description": "استيراد وتصدير بيانات العملاء"
+            "description": "عملاؤك كجهات اتصال في Zoho.",
+            "help": "نطاق الواجهة (https://www.zohoapis.com أو .eu) ورمز OAuth صالح."
           }
         },
-        "status": {
-          "notConnected": "غير متصل"
-        },
-        "actions": {
-          "configure": "تكوين",
-          "connect": "ربط"
-        }
-      },
-      "security": {
-        "twoFactor": {
-          "title": "المصادقة الثنائية",
-          "description": "أضف طبقة أمان إضافية إلى حسابك",
-          "button": "تفعيل المصادقة الثنائية"
-        },
-        "sessions": {
-          "title": "الجلسات النشطة",
-          "description": "إدارة الأجهزة المتصلة بحسابك",
-          "chromeMacos": "Chrome على MacOS",
-          "currentSession": "الجلسة الحالية",
-          "active": "نشط"
-        },
-        "dangerZone": {
-          "title": "منطقة الخطر",
-          "description": "هذه الإجراءات لا رجعة فيها",
-          "deleteAccount": "حذف الحساب"
-        }
+        "urlNote": "يجب أن يكون العنوان بـ https وأن يشير إلى خدمة متاحة للعموم."
       },
       "save": {
         "saving": "جارٍ الحفظ...",
         "button": "حفظ"
+      },
+      "commissions": {
+        "intro": "تُطبَّق هذه التعريفات تلقائيا عند إنشاء معاملة، ويمكن للوكيل تعديلها حالة بحالة."
+      },
+      "rules": {
+        "leadAutoAssign": {
+          "title": "الإحالة التلقائية للعملاء المحتملين",
+          "description": "كل عميل محتمل جديد يُحال إلى وكيل بمجرد وصوله."
+        },
+        "sms": {
+          "title": "تنبيهات SMS للوكالة",
+          "description": "إرسال رسالة قصيرة إلى الوكيل المعني، إضافة إلى البريد."
+        },
+        "visitReminder": {
+          "label": "تذكير قبل الزيارة",
+          "hint": "موعد إرسال التذكير إلى العميل.",
+          "hours": "{{count}} ساعة قبل"
+        },
+        "accountNote": "التنبيهات التي تصلك شخصيا تُضبط في علامة « حسابي »."
       }
     },
     "hub": {
       "tabs": {
         "agency": "الوكالة",
         "account": "حسابي"
-      }
+      },
+      "subtitle": "إعدادات الوكالة من جهة، وحسابك من جهة أخرى."
     },
     "shared": {
       "adminOnly": "للمشرفين فقط"

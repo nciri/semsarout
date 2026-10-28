@@ -16,7 +16,13 @@ export default function SettingsHub() {
   const [tab, setTab] = useState('agence')
   const tabs = TAB_IDS.map(({ id, labelKey, icon }) => ({ id, label: t(labelKey), icon }))
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-[1360px] space-y-6">
+      <div>
+        <h1 className="font-display text-[26px] font-extrabold leading-tight tracking-tight">
+          {t('backoffice:settings.general.pageTitle')}
+        </h1>
+        <p className="mt-1 text-gray-500">{t('backoffice:settings.hub.subtitle')}</p>
+      </div>
       <nav className="flex gap-1 border-b border-gray-200">
         {tabs.map(({ id, label, icon: Icon }) => (
           <button
@@ -28,7 +34,7 @@ export default function SettingsHub() {
           </button>
         ))}
       </nav>
-      {tab === 'agence' ? <BackofficeSettings /> : <DashboardSettings />}
+      {tab === 'agence' ? <BackofficeSettings embedded /> : <DashboardSettings embedded />}
     </div>
   )
 }

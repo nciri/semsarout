@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
-from . import buyer, clients, users_client, visits
+from . import agency_client, buyer, clients, users_client, visits
 from .visits import _visit_dict
 from .db import get_db, init_db
 from .models import Client, Lead, PropertyRO, Visit
@@ -26,6 +26,8 @@ settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
 
 _UPDATABLE = ["name", "email", "phone", "status", "source", "message", "property_id", "assigned_to_id", "notes"]
+# Fenêtre maximale chargée pour les rappels : le plus grand délai proposé à l'agence (48 h).
+MAX_REMINDER_HOURS = 48
 
 
 @asynccontextmanager
@@ -273,17 +275,26 @@ def internal_visits(request: Request, x_internal_token: str = Header(default="")
 
 @app.get("/internal/visits/due-reminders", include_in_schema=False)
 def internal_due_reminders(x_internal_token: str = Header(default=""), db: Session = Depends(get_db)):
-    """Visites à venir dans les 24 h, non annulées, dont le rappel n'a pas encore été envoyé —
-    pour l'ordonnanceur (rappel J-1). Idempotent via `reminder_sent_at`."""
+    """Visites à venir dont le rappel n'a pas encore été envoyé — pour l'ordonnanceur.
+    Idempotent via `reminder_sent_at`.
+
+    Le délai est celui réglé par chaque agence (Paramètres → Agence → Règles) : on charge
+    la fenêtre la plus large, puis on retient par agence ce qui entre dans la sienne.
+    """
     if x_internal_token != settings.internal_token:
         return _err("Forbidden", 403)
     from datetime import timedelta
     now = datetime.utcnow()
     rows = (db.query(Visit)
             .filter(Visit.reminder_sent_at.is_(None), Visit.cancelled_at.is_(None),
-                    Visit.scheduled_at > now, Visit.scheduled_at <= now + timedelta(hours=24))
+                    Visit.scheduled_at > now,
+                    Visit.scheduled_at <= now + timedelta(hours=MAX_REMINDER_HOURS))
             .all())
-    return {"visits": [_visit_dict(db, v) for v in rows]}
+    due = [v for v in rows
+           if v.scheduled_at <= now + timedelta(
+               hours=agency_client.settings_of(v.agency_id)["visit_reminder_hours"])]
+    # `agency_id` : l'ordonnanceur en a besoin pour choisir le SMTP de l'agence.
+    return {"visits": [{**_visit_dict(db, v), "agency_id": v.agency_id} for v in due]}
 
 
 @app.post("/internal/visits/{visit_id}/reminder-sent", include_in_schema=False)

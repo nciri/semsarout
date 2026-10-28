@@ -1,57 +1,92 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useTranslation } from 'react-i18next'
-import {
-  FiSave, FiGlobe, FiMail, FiPhone, FiMapPin,
-  FiBell, FiShield, FiDatabase, FiKey
-} from 'react-icons/fi'
+import { FiBriefcase, FiDatabase, FiPercent, FiSave, FiSliders } from 'react-icons/fi'
 import api from '../../services/api'
-import useAuthStore from '../../store/authStore'
+import MyAgency from '../dashboard/MyAgency'
+import Integrations from './settings/Integrations'
 
-const backofficeService = {
-  getSettings: async () => {
-    const { data } = await api.get('/backoffice/settings')
-    return data
-  },
-  updateSettings: async (data) => {
-    const { data: responseData } = await api.put('/backoffice/settings', data)
-    return responseData
-  }
+/**
+ * Onglet « Agence » des paramètres : ce qu'une agence règle une fois pour toute l'équipe.
+ *
+ * Répartition assumée avec l'onglet « Mon compte » : ici l'agence (profil public,
+ * commissions, règles de travail, intégrations) ; là-bas la personne (son profil, son mot
+ * de passe, ses alertes). Le profil de l'agence n'est plus saisi deux fois : l'écran
+ * « Mon agence » est réemployé tel quel dans le premier sous-onglet, et c'est lui qui écrit
+ * dans la table des agences — le blob de réglages ne porte plus que l'exploitation.
+ */
+const SETTINGS_FIELDS = {
+  default_sale_commission_fee: 0,
+  default_rental_commission_rate: 50,
+  currency: 'MAD',
+  timezone: 'Africa/Casablanca',
+  sms_notifications: false,
+  lead_auto_assign: false,
+  visit_reminder_hours: 24,
+  smtp_host: '',
+  smtp_port: '',
+  smtp_user: '',
+  smtp_password: '',
 }
 
-export default function BackofficeSettings() {
+const TABS = [
+  { id: 'profile', icon: FiBriefcase },
+  { id: 'commissions', icon: FiPercent },
+  { id: 'rules', icon: FiSliders },
+  { id: 'integrations', icon: FiDatabase },
+]
+
+const INPUT = 'w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500'
+const LABEL = 'block text-sm font-medium text-gray-700 mb-1'
+
+const backofficeService = {
+  getSettings: async () => (await api.get('/backoffice/settings')).data,
+  updateSettings: async (data) => (await api.put('/backoffice/settings', data)).data,
+}
+
+function Field({ id, label, hint, children }) {
+  return (
+    <div>
+      <label className={LABEL} htmlFor={id}>{label}</label>
+      {children}
+      {hint && <p className="mt-1 text-xs text-gray-500">{hint}</p>}
+    </div>
+  )
+}
+
+/** Interrupteur de réglage : le même rendu partout, au lieu d'un bloc recopié par option. */
+function Toggle({ id, title, description, checked, onChange }) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-lg bg-gray-50 p-4">
+      <div>
+        <p className="font-medium text-gray-900">{title}</p>
+        <p className="text-sm text-gray-500">{description}</p>
+      </div>
+      <label className="relative inline-flex cursor-pointer items-center">
+        <input id={id} type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="peer sr-only" />
+        <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:top-[2px] after:start-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rtl:peer-checked:after:-translate-x-full" />
+      </label>
+    </div>
+  )
+}
+
+export default function BackofficeSettings({ embedded = false }) {
   const { t } = useTranslation(['backoffice'])
   const queryClient = useQueryClient()
-  const { user } = useAuthStore()
-  const [activeTab, setActiveTab] = useState('general')
-  const [formData, setFormData] = useState({
-    agency_name: '',
-    agency_email: '',
-    agency_phone: '',
-    agency_address: '',
-    agency_city: '',
-    agency_website: '',
-    agency_description: '',
-    default_commission_rate: 3,
-    currency: 'MAD',
-    timezone: 'Africa/Casablanca',
-    email_notifications: true,
-    sms_notifications: false,
-    lead_auto_assign: false,
-    visit_reminder_hours: 24,
-    smtp_host: '',
-    smtp_port: '',
-    smtp_user: '',
-    smtp_password: ''
-  })
+  const [activeTab, setActiveTab] = useState('profile')
+  const [formData, setFormData] = useState(SETTINGS_FIELDS)
   const [saved, setSaved] = useState(false)
 
   const { isLoading } = useQuery('backoffice-settings', backofficeService.getSettings, {
     onSuccess: (data) => {
-      if (data) {
-        setFormData(prev => ({ ...prev, ...data }))
+      if (!data) return
+      // On ne garde que les réglages de cet écran : le profil de l'agence vit ailleurs.
+      const next = {}
+      for (const key of Object.keys(SETTINGS_FIELDS)) {
+        if (data[key] !== undefined && data[key] !== null) next[key] = data[key]
       }
-    }
+      setFormData((prev) => ({ ...prev, ...next }))
+    },
   })
 
   const mutation = useMutation(backofficeService.updateSettings, {
@@ -59,509 +94,138 @@ export default function BackofficeSettings() {
       queryClient.invalidateQueries('backoffice-settings')
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
-    }
+    },
   })
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    mutation.mutate(formData)
-  }
-
-  const tabs = [
-    { id: 'general', label: t('backoffice:settings.general.tabs.general'), icon: FiGlobe },
-    { id: 'notifications', label: t('backoffice:settings.general.tabs.notifications'), icon: FiBell },
-    { id: 'integrations', label: t('backoffice:settings.general.tabs.integrations'), icon: FiDatabase },
-    { id: 'security', label: t('backoffice:settings.general.tabs.security'), icon: FiShield }
-  ].filter((tab) => !tab.adminOnly || user?.role === 'admin')
+  const set = (key) => (value) => setFormData({ ...formData, [key]: value })
+  const field = (key) => (e) => set(key)(e.target.value)
+  const g = (key, opts) => t(`backoffice:settings.general.${key}`, opts)
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600 motion-reduce:animate-none" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('backoffice:settings.general.pageTitle')}</h1>
-          <p className="text-gray-500">{t('backoffice:settings.general.subtitle')}</p>
-        </div>
-        {saved && (
-          <div className="px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm">
-            {t('backoffice:settings.general.savedNotice')}
+    <div className="mx-auto w-full max-w-[1360px] space-y-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        {!embedded && (
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{g('pageTitle')}</h1>
+            <p className="text-gray-500">{g('subtitle')}</p>
           </div>
         )}
+        {saved && <div className="rounded-lg bg-green-100 px-4 py-2 text-sm text-green-700">{g('savedNotice')}</div>}
       </div>
 
-      {/* Tabs */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+      <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
         <div className="flex overflow-x-auto border-b border-gray-100">
-          {tabs.map(tab => (
+          {TABS.map(({ id, icon: Icon }) => (
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                activeTab === tab.id
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              key={id}
+              type="button"
+              onClick={() => setActiveTab(id)}
+              aria-pressed={activeTab === id}
+              className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-6 py-4 text-sm font-medium transition-colors ${
+                activeTab === id ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
+              <Icon className="h-4 w-4" aria-hidden="true" />
+              {g(`tabs.${id}`)}
             </button>
           ))}
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
-          {/* General settings */}
-          {activeTab === 'general' && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t('backoffice:settings.general.fields.agencyName')}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.agency_name}
-                    onChange={(e) => setFormData({ ...formData, agency_name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t('backoffice:settings.general.fields.website')}
-                  </label>
-                  <div className="relative">
-                    <FiGlobe className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      type="url"
-                      value={formData.agency_website}
-                      onChange={(e) => setFormData({ ...formData, agency_website: e.target.value })}
-                      className="w-full ps-10 pe-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t('backoffice:settings.general.fields.email')}
-                  </label>
-                  <div className="relative">
-                    <FiMail className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      type="email"
-                      value={formData.agency_email}
-                      onChange={(e) => setFormData({ ...formData, agency_email: e.target.value })}
-                      className="w-full ps-10 pe-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t('backoffice:settings.general.fields.phone')}
-                  </label>
-                  <div className="relative">
-                    <FiPhone className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      type="tel"
-                      value={formData.agency_phone}
-                      onChange={(e) => setFormData({ ...formData, agency_phone: e.target.value })}
-                      className="w-full ps-10 pe-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                  </div>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t('backoffice:settings.general.fields.address')}
-                  </label>
-                  <div className="relative">
-                    <FiMapPin className="absolute start-3 top-3 w-4 h-4 text-gray-400" />
-                    <textarea
-                      value={formData.agency_address}
-                      onChange={(e) => setFormData({ ...formData, agency_address: e.target.value })}
-                      rows={2}
-                      className="w-full ps-10 pe-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t('backoffice:settings.general.fields.city')}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.agency_city}
-                    onChange={(e) => setFormData({ ...formData, agency_city: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t('backoffice:settings.general.fields.timezone')}
-                  </label>
-                  <select
-                    value={formData.timezone}
-                    onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    <option value="Africa/Casablanca">{t('backoffice:settings.general.timezoneOptions.casablanca')}</option>
-                    <option value="Europe/Paris">{t('backoffice:settings.general.timezoneOptions.paris')}</option>
-                  </select>
+        {/* Profil : l'écran « Mon agence », réemployé — un seul formulaire pour une seule donnée. */}
+        {activeTab === 'profile' ? (
+          <div className="p-4 sm:p-6"><MyAgency embedded /></div>
+        ) : (
+          <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(formData) }} className="p-6">
+            {activeTab === 'commissions' && (
+              <div className="space-y-6">
+                <p className="text-sm text-gray-500">{g('commissions.intro')}</p>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <Field id="default_sale_commission_fee" label={g('fields.saleCommissionFee')} hint={g('fields.saleCommissionFeeHint')}>
+                    <input id="default_sale_commission_fee" type="number" min="0" step="100" className={INPUT}
+                      value={formData.default_sale_commission_fee} onChange={field('default_sale_commission_fee')} />
+                  </Field>
+                  <Field id="default_rental_commission_rate" label={g('fields.rentalCommissionRate')} hint={g('fields.rentalCommissionHint')}>
+                    <input id="default_rental_commission_rate" type="number" min="0" max="100" step="0.1" className={INPUT}
+                      value={formData.default_rental_commission_rate} onChange={field('default_rental_commission_rate')} />
+                  </Field>
                 </div>
               </div>
+            )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('backoffice:settings.general.fields.description')}
-                </label>
-                <textarea
-                  value={formData.agency_description}
-                  onChange={(e) => setFormData({ ...formData, agency_description: e.target.value })}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder={t('backoffice:settings.general.fields.descriptionPlaceholder')}
-                />
+            {activeTab === 'rules' && (
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <Toggle id="lead_auto_assign" title={g('rules.leadAutoAssign.title')} description={g('rules.leadAutoAssign.description')}
+                    checked={formData.lead_auto_assign} onChange={set('lead_auto_assign')} />
+                  <Toggle id="sms_notifications" title={g('rules.sms.title')} description={g('rules.sms.description')}
+                    checked={formData.sms_notifications} onChange={set('sms_notifications')} />
+                </div>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <Field id="visit_reminder_hours" label={g('rules.visitReminder.label')} hint={g('rules.visitReminder.hint')}>
+                    <select id="visit_reminder_hours" className={INPUT} value={formData.visit_reminder_hours}
+                      onChange={(e) => set('visit_reminder_hours')(parseInt(e.target.value, 10))}>
+                      {[1, 2, 12, 24, 48].map((hours) => (
+                        <option key={hours} value={hours}>{g('rules.visitReminder.hours', { count: hours })}</option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field id="timezone" label={g('fields.timezone')}>
+                    <select id="timezone" className={INPUT} value={formData.timezone} onChange={field('timezone')}>
+                      <option value="Africa/Casablanca">{g('timezoneOptions.casablanca')}</option>
+                      <option value="Europe/Paris">{g('timezoneOptions.paris')}</option>
+                    </select>
+                  </Field>
+                </div>
+                <p className="text-xs text-gray-500">{g('rules.accountNote')}</p>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Notifications */}
-          {activeTab === 'notifications' && (
-            <div className="space-y-6">
+            {activeTab === 'integrations' && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-gray-900">{t('backoffice:settings.general.notifications.email.title')}</p>
-                    <p className="text-sm text-gray-500">{t('backoffice:settings.general.notifications.email.description')}</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.email_notifications}
-                      onChange={(e) => setFormData({ ...formData, email_notifications: e.target.checked })}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                  </label>
+                <div>
+                  <h2 className="font-medium text-gray-900">{g('integrations.smtp.title')}</h2>
+                  <p className="text-sm text-gray-500">{g('integrations.smtp.description')}</p>
                 </div>
-
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-gray-900">{t('backoffice:settings.general.notifications.sms.title')}</p>
-                    <p className="text-sm text-gray-500">{t('backoffice:settings.general.notifications.sms.description')}</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.sms_notifications}
-                      onChange={(e) => setFormData({ ...formData, sms_notifications: e.target.checked })}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                  </label>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <Field id="smtp_host" label={g('integrations.smtp.host')}>
+                    <input id="smtp_host" type="text" className={INPUT} value={formData.smtp_host}
+                      onChange={field('smtp_host')} placeholder={g('integrations.smtp.hostPlaceholder')} />
+                  </Field>
+                  <Field id="smtp_port" label={g('integrations.smtp.port')}>
+                    <input id="smtp_port" type="text" className={INPUT} value={formData.smtp_port}
+                      onChange={field('smtp_port')} placeholder={g('integrations.smtp.portPlaceholder')} />
+                  </Field>
+                  <Field id="smtp_user" label={g('integrations.smtp.user')}>
+                    <input id="smtp_user" type="text" className={INPUT} value={formData.smtp_user} onChange={field('smtp_user')} />
+                  </Field>
+                  <Field id="smtp_password" label={g('integrations.smtp.password')} hint={g('integrations.smtp.passwordHint')}>
+                    <input id="smtp_password" type="password" className={INPUT} value={formData.smtp_password}
+                      onChange={field('smtp_password')} autoComplete="new-password" />
+                  </Field>
                 </div>
-
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-gray-900">{t('backoffice:settings.general.notifications.leadAutoAssign.title')}</p>
-                    <p className="text-sm text-gray-500">{t('backoffice:settings.general.notifications.leadAutoAssign.description')}</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.lead_auto_assign}
-                      onChange={(e) => setFormData({ ...formData, lead_auto_assign: e.target.checked })}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                  </label>
-                </div>
+                <p className="text-xs text-gray-500">{g('integrations.apiKeyNote')}</p>
+                {/* Connecteurs ERP/CRM : état réel, vérifié chez le fournisseur. */}
+                <div className="border-t border-gray-100 pt-6"><Integrations /></div>
               </div>
+            )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('backoffice:settings.general.notifications.visitReminder.label')}
-                </label>
-                <select
-                  value={formData.visit_reminder_hours}
-                  onChange={(e) => setFormData({ ...formData, visit_reminder_hours: parseInt(e.target.value) })}
-                  className="w-full max-w-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  {[1, 2, 12, 24, 48].map((hours) => (
-                    <option key={hours} value={hours}>
-                      {t('backoffice:settings.general.notifications.visitReminder.hours', { count: hours })}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="mt-6 flex justify-end border-t border-gray-100 pt-6">
+              <button type="submit" disabled={mutation.isLoading}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-6 py-2 text-white transition-colors hover:bg-primary-700 disabled:opacity-50">
+                <FiSave className="h-5 w-5" aria-hidden="true" />
+                {mutation.isLoading ? g('save.saving') : g('save.button')}
+              </button>
             </div>
-          )}
-
-          {/* Integrations */}
-          {activeTab === 'integrations' && (
-            <div className="space-y-6">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium text-gray-900 mb-2">{t('backoffice:settings.general.integrations.smtp.title')}</h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  {t('backoffice:settings.general.integrations.smtp.description')}
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:settings.general.integrations.smtp.host')}</label>
-                    <input
-                      type="text"
-                      value={formData.smtp_host}
-                      onChange={(e) => setFormData({ ...formData, smtp_host: e.target.value })}
-                      placeholder={t('backoffice:settings.general.integrations.smtp.hostPlaceholder')}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:settings.general.integrations.smtp.port')}</label>
-                    <input
-                      type="text"
-                      value={formData.smtp_port}
-                      onChange={(e) => setFormData({ ...formData, smtp_port: e.target.value })}
-                      placeholder={t('backoffice:settings.general.integrations.smtp.portPlaceholder')}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:settings.general.integrations.smtp.user')}</label>
-                    <input
-                      type="text"
-                      value={formData.smtp_user}
-                      onChange={(e) => setFormData({ ...formData, smtp_user: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:settings.general.integrations.smtp.password')}</label>
-                    <input
-                      type="password"
-                      value={formData.smtp_password}
-                      onChange={(e) => setFormData({ ...formData, smtp_password: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium text-gray-900 mb-2">{t('backoffice:settings.general.integrations.api.title')}</h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  {t('backoffice:settings.general.integrations.api.description')}
-                </p>
-                <div className="flex items-center gap-4 p-3 bg-white rounded-lg border border-gray-200">
-                  <FiKey className="w-5 h-5 text-gray-400" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{t('backoffice:settings.general.integrations.api.keyLabel')}</p>
-                    <p className="text-xs text-gray-500 font-mono">••••••••••••••••</p>
-                  </div>
-                  <button
-                    type="button"
-                    className="px-3 py-1.5 text-sm text-primary-600 hover:bg-primary-50 rounded-lg"
-                  >
-                    {t('backoffice:settings.general.integrations.api.regenerate')}
-                  </button>
-                </div>
-              </div>
-
-              {/* ERP Integrations */}
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium text-gray-900 mb-2">{t('backoffice:settings.general.integrations.erp.title')}</h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  {t('backoffice:settings.general.integrations.erp.description')}
-                </p>
-                <div className="space-y-3">
-                  {/* Odoo */}
-                  <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center">
-                        <span className="text-lg font-bold text-purple-600">O</span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{t('backoffice:settings.general.integrations.erp.odoo.name')}</p>
-                        <p className="text-sm text-gray-500">{t('backoffice:settings.general.integrations.erp.odoo.description')}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">{t('backoffice:settings.general.integrations.status.notConnected')}</span>
-                      <button
-                        type="button"
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
-                      >
-                        {t('backoffice:settings.general.integrations.actions.configure')}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* SAP */}
-                  <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                        <span className="text-lg font-bold text-blue-600">SAP</span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{t('backoffice:settings.general.integrations.erp.sap.name')}</p>
-                        <p className="text-sm text-gray-500">{t('backoffice:settings.general.integrations.erp.sap.description')}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">{t('backoffice:settings.general.integrations.status.notConnected')}</span>
-                      <button
-                        type="button"
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                      >
-                        {t('backoffice:settings.general.integrations.actions.configure')}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* CRM Integrations */}
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium text-gray-900 mb-2">{t('backoffice:settings.general.integrations.crm.title')}</h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  {t('backoffice:settings.general.integrations.crm.description')}
-                </p>
-                <div className="space-y-3">
-                  {/* Salesforce */}
-                  <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-sky-100 flex items-center justify-center">
-                        <svg className="w-8 h-8" viewBox="0 0 24 24" fill="#00A1E0">
-                          <path d="M10.5 3.5C9.12 3.5 7.91 4.26 7.28 5.37C6.78 5.13 6.21 5 5.62 5C3.61 5 2 6.61 2 8.62C2 9.61 2.43 10.5 3.11 11.12C2.43 11.74 2 12.64 2 13.62C2 15.63 3.61 17.25 5.62 17.25C5.93 17.25 6.22 17.21 6.5 17.13C6.94 18.76 8.41 20 10.15 20C11.58 20 12.83 19.19 13.45 18C13.97 18.31 14.58 18.5 15.23 18.5C17.26 18.5 18.88 16.88 18.88 14.85C18.88 14.35 18.79 13.87 18.62 13.43C20.5 12.78 21.88 11.03 21.88 9C21.88 6.38 19.75 4.25 17.13 4.25C16.58 4.25 16.05 4.34 15.55 4.5C14.86 3.86 13.93 3.5 12.94 3.5C12.08 3.5 11.28 3.78 10.63 4.25C10.63 3.82 10.6 3.5 10.5 3.5Z"/>
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{t('backoffice:settings.general.integrations.crm.salesforce.name')}</p>
-                        <p className="text-sm text-gray-500">{t('backoffice:settings.general.integrations.crm.salesforce.description')}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">{t('backoffice:settings.general.integrations.status.notConnected')}</span>
-                      <button
-                        type="button"
-                        className="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors text-sm"
-                      >
-                        {t('backoffice:settings.general.integrations.actions.connect')}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* HubSpot */}
-                  <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center">
-                        <span className="text-lg font-bold text-orange-600">HS</span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{t('backoffice:settings.general.integrations.crm.hubspot.name')}</p>
-                        <p className="text-sm text-gray-500">{t('backoffice:settings.general.integrations.crm.hubspot.description')}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">{t('backoffice:settings.general.integrations.status.notConnected')}</span>
-                      <button
-                        type="button"
-                        className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm"
-                      >
-                        {t('backoffice:settings.general.integrations.actions.connect')}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Zoho CRM */}
-                  <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center">
-                        <span className="text-lg font-bold text-red-600">Z</span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{t('backoffice:settings.general.integrations.crm.zoho.name')}</p>
-                        <p className="text-sm text-gray-500">{t('backoffice:settings.general.integrations.crm.zoho.description')}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">{t('backoffice:settings.general.integrations.status.notConnected')}</span>
-                      <button
-                        type="button"
-                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
-                      >
-                        {t('backoffice:settings.general.integrations.actions.connect')}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Security */}
-          {activeTab === 'security' && (
-            <div className="space-y-6">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium text-gray-900 mb-2">{t('backoffice:settings.general.security.twoFactor.title')}</h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  {t('backoffice:settings.general.security.twoFactor.description')}
-                </p>
-                <button
-                  type="button"
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                >
-                  {t('backoffice:settings.general.security.twoFactor.button')}
-                </button>
-              </div>
-
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium text-gray-900 mb-2">{t('backoffice:settings.general.security.sessions.title')}</h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  {t('backoffice:settings.general.security.sessions.description')}
-                </p>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{t('backoffice:settings.general.security.sessions.chromeMacos')}</p>
-                      <p className="text-xs text-gray-500">{t('backoffice:settings.general.security.sessions.currentSession')}</p>
-                    </div>
-                    <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">{t('backoffice:settings.general.security.sessions.active')}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <h3 className="font-medium text-red-900 mb-2">{t('backoffice:settings.general.security.dangerZone.title')}</h3>
-                <p className="text-sm text-red-700 mb-4">
-                  {t('backoffice:settings.general.security.dangerZone.description')}
-                </p>
-                <button
-                  type="button"
-                  className="px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-100 transition-colors"
-                >
-                  {t('backoffice:settings.general.security.dangerZone.deleteAccount')}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Save button */}
-          <div className="flex justify-end pt-6 mt-6 border-t border-gray-100">
-            <button
-              type="submit"
-              disabled={mutation.isLoading}
-              className="inline-flex items-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
-            >
-              <FiSave className="w-5 h-5" />
-              {mutation.isLoading ? t('backoffice:settings.general.save.saving') : t('backoffice:settings.general.save.button')}
-            </button>
-          </div>
-        </form>
+          </form>
+        )}
       </div>
     </div>
   )
