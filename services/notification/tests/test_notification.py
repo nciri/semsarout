@@ -169,3 +169,28 @@ def test_job_messagerie_sejour_signale_un_destinataire_invalide(monkeypatch):
         db.close()
     assert sent == []
     assert verdicts[0][1]["error"]
+
+
+def test_les_routes_de_suivi_exigent_le_super_admin():
+    """Journal des envois et exécution des tâches : hors super-admin, rien ne doit filtrer."""
+    with TestClient(app) as client:
+        assert client.get("/admin/notifications").status_code in (401, 403)
+        assert client.post("/admin/scheduler/run").status_code in (401, 403)
+
+
+def test_le_super_admin_rejoue_les_taches_planifiees(monkeypatch):
+    from semsar_auth import Principal, require_superadmin
+
+    from app import scheduler
+
+    ran = []
+    monkeypatch.setattr(scheduler, "run_once", lambda: ran.append(True))
+    monkeypatch.setattr(scheduler, "load_dotenv", lambda: None)
+    app.dependency_overrides[require_superadmin] = lambda: Principal(
+        sub="1", roles=["superadmin"], agency_id=None, is_superadmin=True, features=[], claims={})
+    try:
+        with TestClient(app) as client:
+            assert client.post("/admin/scheduler/run").json() == {"ok": True}
+    finally:
+        app.dependency_overrides.clear()
+    assert ran == [True]
