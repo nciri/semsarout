@@ -8,7 +8,7 @@ aujourd'hui, le ménage et les codes d'accès en dépendent.
 """
 from datetime import datetime
 
-from . import ical
+from . import access, ical
 from .models import IcalSource, StayManagerReservation
 
 
@@ -66,12 +66,14 @@ def sync_source(db, source: IcalSource) -> dict:
         row.raw_data = stay["raw_data"]
         row.synced_at = datetime.utcnow()
 
-    # Disparu du calendrier = annulé chez la plateforme.
-    cancelled = 0
+    # Disparu du calendrier = annulé chez la plateforme. Le code d'entrée tombe avec le
+    # séjour : un voyageur dont la réservation a disparu ne doit plus pouvoir ouvrir.
+    cancelled, code_warnings = 0, []
     for key, row in by_key.items():
         if key not in seen and row.status != "cancelled":
             row.status = "cancelled"
             row.synced_at = datetime.utcnow()
+            code_warnings += access.revoke_codes_of_stay(db, row)
             cancelled += 1
 
     db.flush()
@@ -81,8 +83,11 @@ def sync_source(db, source: IcalSource) -> dict:
     source.last_error = None
     source.last_synced_at = datetime.utcnow()
     source.reservations_count = len([s for s in stays if s["status"] != "cancelled"])
-    return {"created": created, "updated": updated, "cancelled": cancelled,
-            "conflicts": conflicts, "total": len(stays)}
+    out = {"created": created, "updated": updated, "cancelled": cancelled,
+           "conflicts": conflicts, "total": len(stays)}
+    if code_warnings:
+        out["code_warnings"] = code_warnings
+    return out
 
 
 def mark_failure(source: IcalSource, message: str) -> None:

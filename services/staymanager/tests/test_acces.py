@@ -167,3 +167,60 @@ def test_le_code_actif_est_lisible_par_la_messagerie(client, stay, db_session):
     client.put(f"/backoffice/sejours/acces/{PROPERTY}", json={"mode": "manual"})
     client.post(f"/backoffice/sejours/{stay.id}/code", json={"code": "5566"})
     assert access.active_code(db_session, stay.id).code == "5566"
+
+
+def test_aucun_code_sur_un_sejour_non_confirme(client, stay, db_session):
+    client.put(f"/backoffice/sejours/acces/{PROPERTY}", json={"mode": "manual"})
+    stay.status = "cancelled"
+    db_session.commit()
+    assert client.post(f"/backoffice/sejours/{stay.id}/code", json={"code": "1234"}).status_code == 400
+
+
+def test_un_sejour_disparu_du_calendrier_perd_son_code(client, stay, db_session, monkeypatch):
+    from app import ical, stays as stays_mod
+    from app.models import IcalSource
+
+    client.put(f"/backoffice/sejours/acces/{PROPERTY}", json={"mode": "manual"})
+    client.post(f"/backoffice/sejours/{stay.id}/code", json={"code": "7788"})
+    source = IcalSource(agency_id=AGENCY, property_id=PROPERTY, platform="airbnb",
+                        ical_url="https://calendrier.example.com/a.ics")
+    db_session.add(source)
+    db_session.commit()
+    stay.ical_source_id = source.id
+    db_session.commit()
+
+    # Calendrier vide : la plateforme a retiré la réservation.
+    monkeypatch.setattr(ical, "fetch", lambda url: "BEGIN:VCALENDAR\nEND:VCALENDAR\n")
+    stays_mod.sync_source(db_session, source)
+    db_session.commit()
+    assert db_session.query(StayAccessCode).one().status == "revoked"
+
+
+def test_changer_les_identifiants_retire_les_codes_de_la_serrure(client, stay, monkeypatch, db_session):
+    revoked = []
+    monkeypatch.setattr(ttlock, "create_code", lambda *a, **k: {"code": "111222", "external_id": "kp-1"})
+    monkeypatch.setattr(ttlock, "revoke_code", lambda creds, ext: revoked.append((creds["access_token"], ext)))
+    client.put(f"/backoffice/sejours/acces/{PROPERTY}", json={"mode": "ttlock", "credentials": CREDS})
+    client.post(f"/backoffice/sejours/{stay.id}/code", json={})
+    client.put(f"/backoffice/sejours/acces/{PROPERTY}", json={"mode": "manual"})
+    # Révoqué avec les ANCIENS identifiants, avant leur effacement.
+    assert revoked == [("tok", "kp-1")]
+    assert db_session.query(StayAccessCode).one().status == "revoked"
+
+
+def test_revocation_sans_identifiants_le_dit_au_lieu_de_mentir(client, stay, db_session):
+    db_session.add(PropertyAccess(agency_id=AGENCY, property_id=PROPERTY, mode="manual"))
+    db_session.add(StayAccessCode(agency_id=AGENCY, reservation_id=stay.id, mode="ttlock",
+                                  code="999888", external_id="kp-9", status="active"))
+    db_session.commit()
+    out = client.delete(f"/backoffice/sejours/{stay.id}/code").json()
+    assert out["code"]["status"] == "revoked"
+    assert "TTLock" in out["warning"]
+
+
+def test_bien_deja_configure_par_une_autre_agence_est_refuse(client, db_session):
+    db_session.add(PropertyRO(id=PROPERTY, agency_id=AGENCY, title="Riad Médina"))
+    db_session.add(PropertyAccess(agency_id=AGENCY + 1, property_id=PROPERTY, mode="manual"))
+    db_session.commit()
+    assert client.put(f"/backoffice/sejours/acces/{PROPERTY}",
+                      json={"mode": "manual"}).status_code == 400
