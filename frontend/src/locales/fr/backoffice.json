@@ -17,6 +17,7 @@
     "notaries": "Notaires",
     "artisans": "Artisans",
     "rental": "Gestion locative",
+    "stays": "Séjours",
     "shop": "Boutique",
     "team": "Équipe",
     "analytics": "Analyses",
@@ -3543,6 +3544,101 @@
     },
     "comparables": {
       "title": "Biens comparables"
+    }
+  },
+  "stays": {
+    "shared": {
+      "pageTitle": "Séjours courte durée",
+      "gated": "Les séjours courte durée ne sont pas inclus dans votre offre.",
+      "loadError": "Une erreur est survenue lors du chargement. Réessayez plus tard."
+    },
+    "overview": {
+      "register": "Séjours et calendriers",
+      "registerTabs": "Vues des séjours",
+      "tabs": {
+        "planning": "Planning",
+        "calendars": "Calendriers"
+      },
+      "arrivals": "Arrivées du jour",
+      "departures": "Départs du jour",
+      "inHouse": "Sur place",
+      "upcoming": "À venir",
+      "nights": "Nuits réservées",
+      "channels": "Canaux",
+      "channelsInError": "{{count}} en erreur",
+      "conflicts": "{{count}} séjour en double réservation. Vérifiez les calendriers concernés.",
+      "conflicts_other": "{{count}} séjours en double réservation. Vérifiez les calendriers concernés.",
+      "sourcesInError": "{{count}} calendrier ne répond plus.",
+      "sourcesInError_other": "{{count}} calendriers ne répondent plus.",
+      "syncAll": "Synchroniser tous les calendriers",
+      "syncDone": "{{ok}} calendrier(s) synchronisé(s), {{failed}} en échec."
+    },
+    "status": {
+      "confirmed": "Confirmé",
+      "blocked": "Bloqué",
+      "cancelled": "Annulé"
+    },
+    "platform": {
+      "airbnb": "Airbnb",
+      "booking": "Booking.com",
+      "vrbo": "VRBO",
+      "autre": "Autre"
+    },
+    "planning": {
+      "statusLabel": "Statut",
+      "allStatuses": "Tous",
+      "conflict": "Double réservation",
+      "unknownProperty": "Bien non rattaché",
+      "noGuestName": "Nom non publié",
+      "columns": {
+        "property": "Bien",
+        "guest": "Voyageur",
+        "dates": "Séjour",
+        "nights": "Nuits",
+        "channel": "Canal",
+        "status": "Statut"
+      },
+      "empty": {
+        "title": "Aucun séjour",
+        "description": "Ajoutez le calendrier d'une plateforme pour voir vos réservations ici."
+      }
+    },
+    "calendars": {
+      "add": "Ajouter un calendrier",
+      "sync": "Synchroniser",
+      "remove": "Retirer le calendrier",
+      "state": {
+        "pending": "En attente",
+        "ok": "À jour",
+        "error": "En erreur"
+      },
+      "columns": {
+        "property": "Bien",
+        "channel": "Canal",
+        "state": "État",
+        "lastSync": "Dernière synchro",
+        "stays": "Séjours"
+      },
+      "empty": {
+        "title": "Aucun calendrier",
+        "description": "Copiez l'URL iCal depuis Airbnb, Booking.com ou VRBO, puis ajoutez-la ici."
+      },
+      "toasts": {
+        "added": "Calendrier ajouté, {{count}} séjour importé.",
+        "added_other": "Calendrier ajouté, {{count}} séjours importés.",
+        "synced": "{{created}} séjour(s) ajouté(s), {{cancelled}} annulé(s).",
+        "removed": "Calendrier retiré."
+      },
+      "modal": {
+        "title": "Ajouter un calendrier de plateforme",
+        "help": "L'URL doit être publique et en https. Le calendrier est lu aussitôt pour vérifier qu'il répond.",
+        "propertyLabel": "Bien",
+        "propertyPlaceholder": "Choisir un bien",
+        "platformLabel": "Plateforme",
+        "urlLabel": "URL du calendrier iCal",
+        "cancel": "Annuler",
+        "submit": "Ajouter"
+      }
     }
   }
 }

@@ -67,7 +67,8 @@ construire des écrans qui n'ont encore rien à montrer.
 7. **Admin SaaS** — MRR/ARR, incidents de paiement, exécution manuelle des tâches planifiées.
 8. **Onboarding** — étapes calculées sur l'état réel du compte ; la gamification (mascotte,
    badges) est une décision produit, pas une reprise technique.
-9. **Mobile** — à trancher : application dédiée ou PWA du back-office.
+9. ~~Mobile~~ — **hors périmètre** : seul le backend de l'application web est repris
+   (décision du 2026-10-28). L'application Expo n'est pas portée.
 
 ## Décisions prises pour éviter les doublons
 
@@ -80,5 +81,9 @@ construire des écrans qui n'ont encore rien à montrer.
   `semsar_signing` et `notification` existent et sont utilisés tels quels.
 - **Pas de reprise de Firebase, Keycloak ni Twilio** : `identity` fait l'authentification,
   et aucun fournisseur SMS n'est raccordé côté SemsarOut (décision à part).
+- **Aucune interface n'est reprise** : les écrans StayManager (React, thème propre) ne sont
+  pas portés. Chaque lot reçoit des écrans neufs au thème du back-office SemsarOut, bâtis
+  sur `components/kit.jsx` et `components/backoffice/ui.jsx`, dans le même patron que la
+  gestion locative (layout à onglets + service JS dédié + clés i18n FR/AR).
 - **Les URL iCal sont fournies par l'agence** : elles passent par le même garde-fou que les
   connecteurs ERP/CRM (https, hôte public, pas de redirection suivie).

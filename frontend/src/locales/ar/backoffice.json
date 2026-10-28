@@ -17,6 +17,7 @@
     "notaries": "الموثقون",
     "artisans": "الحرفيون",
     "rental": "التسيير الكرائي",
+    "stays": "الإقامات",
     "shop": "المتجر",
     "team": "الفريق",
     "analytics": "التحليلات",
@@ -3543,6 +3544,101 @@
     },
     "comparables": {
       "title": "عقارات مماثلة"
+    }
+  },
+  "stays": {
+    "shared": {
+      "pageTitle": "الإقامات القصيرة",
+      "gated": "الإقامات القصيرة غير متوفرة في عرضك الحالي.",
+      "loadError": "حدث خطأ أثناء التحميل. حاول مرة أخرى لاحقًا."
+    },
+    "overview": {
+      "register": "الإقامات والتقويمات",
+      "registerTabs": "عروض الإقامات",
+      "tabs": {
+        "planning": "المخطط",
+        "calendars": "التقويمات"
+      },
+      "arrivals": "وصول اليوم",
+      "departures": "مغادرة اليوم",
+      "inHouse": "مقيمون حاليًا",
+      "upcoming": "قادمة",
+      "nights": "ليالٍ محجوزة",
+      "channels": "القنوات",
+      "channelsInError": "{{count}} بها خطأ",
+      "conflicts": "{{count}} إقامة بحجز مزدوج. تحقق من التقويمات المعنية.",
+      "conflicts_other": "{{count}} إقامات بحجز مزدوج. تحقق من التقويمات المعنية.",
+      "sourcesInError": "{{count}} تقويم لا يستجيب.",
+      "sourcesInError_other": "{{count}} تقويمات لا تستجيب.",
+      "syncAll": "مزامنة جميع التقويمات",
+      "syncDone": "تمت مزامنة {{ok}} تقويم، {{failed}} فشلت."
+    },
+    "status": {
+      "confirmed": "مؤكدة",
+      "blocked": "محجوبة",
+      "cancelled": "ملغاة"
+    },
+    "platform": {
+      "airbnb": "Airbnb",
+      "booking": "Booking.com",
+      "vrbo": "VRBO",
+      "autre": "أخرى"
+    },
+    "planning": {
+      "statusLabel": "الحالة",
+      "allStatuses": "الكل",
+      "conflict": "حجز مزدوج",
+      "unknownProperty": "عقار غير مرتبط",
+      "noGuestName": "الاسم غير منشور",
+      "columns": {
+        "property": "العقار",
+        "guest": "الضيف",
+        "dates": "الإقامة",
+        "nights": "ليالٍ",
+        "channel": "القناة",
+        "status": "الحالة"
+      },
+      "empty": {
+        "title": "لا توجد إقامات",
+        "description": "أضف تقويم منصة لعرض حجوزاتك هنا."
+      }
+    },
+    "calendars": {
+      "add": "إضافة تقويم",
+      "sync": "مزامنة",
+      "remove": "إزالة التقويم",
+      "state": {
+        "pending": "في الانتظار",
+        "ok": "محدَّث",
+        "error": "به خطأ"
+      },
+      "columns": {
+        "property": "العقار",
+        "channel": "القناة",
+        "state": "الحالة",
+        "lastSync": "آخر مزامنة",
+        "stays": "الإقامات"
+      },
+      "empty": {
+        "title": "لا توجد تقويمات",
+        "description": "انسخ رابط iCal من Airbnb أو Booking.com أو VRBO ثم أضفه هنا."
+      },
+      "toasts": {
+        "added": "تمت إضافة التقويم، واستيراد {{count}} إقامة.",
+        "added_other": "تمت إضافة التقويم، واستيراد {{count}} إقامات.",
+        "synced": "تمت إضافة {{created}} إقامة وإلغاء {{cancelled}}.",
+        "removed": "تم إزالة التقويم."
+      },
+      "modal": {
+        "title": "إضافة تقويم منصة",
+        "help": "يجب أن يكون الرابط عامًا وبـ https. يُقرأ التقويم فورًا للتحقق من استجابته.",
+        "propertyLabel": "العقار",
+        "propertyPlaceholder": "اختر عقارًا",
+        "platformLabel": "المنصة",
+        "urlLabel": "رابط تقويم iCal",
+        "cancel": "إلغاء",
+        "submit": "إضافة"
+      }
     }
   }
 }

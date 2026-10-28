@@ -7,7 +7,7 @@ import {
   FiHome, FiUsers, FiFileText, FiCalendar,
   FiSettings, FiMenu, FiX, FiBriefcase,
   FiUserCheck, FiGrid, FiMail, FiLogOut, FiBell, FiSearch,
-  FiChevronDown, FiTrendingUp, FiTool, FiShoppingBag, FiKey
+  FiChevronDown, FiTrendingUp, FiTool, FiShoppingBag, FiKey, FiSunrise
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
 import Wordmark from '../../../components/common/Wordmark'
@@ -40,6 +40,7 @@ const MENU_ITEMS = [
       { path: '/backoffice/notaires', icon: FiBriefcase, labelKey: 'nav.notaries' },
       { path: '/backoffice/artisans', icon: FiTool, labelKey: 'nav.artisans' },
       { path: '/backoffice/gestion-locative', icon: FiKey, labelKey: 'nav.rental' },
+      { path: '/backoffice/sejours', icon: FiSunrise, labelKey: 'nav.stays' },
       { path: '/backoffice/boutique', icon: FiShoppingBag, labelKey: 'nav.shop' },
     ]
   },
