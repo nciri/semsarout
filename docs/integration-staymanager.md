@@ -2,6 +2,12 @@
 
 > Analyse du dépôt `hostify-0.1` (StayManager) et plan de reprise dans SemsarOut.
 > Branche : `feat/staymanager-natif`. Dernière mise à jour : 2026-10-28.
+>
+> **État : les 8 lots du périmètre web sont livrés.** Le mobile est hors périmètre (décision
+> du 2026-10-28) et aucune interface n'a été reprise : tous les écrans sont neufs, au thème
+> du back-office SemsarOut. Reste ouvert, hors reprise : chiffrement au repos des
+> identifiants de connecteurs (TTLock, ERP/CRM), fournisseur SMS à désigner, OCR des pièces
+> d'identité, et signature du contrat de séjour via `contract` + `semsar_signing`.
 
 ## Ce que StayManager est, en chiffres
 
