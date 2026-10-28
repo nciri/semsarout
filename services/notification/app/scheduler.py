@@ -13,6 +13,7 @@ mandat) s'ajoutent comme des fonctions `_job_*` appelées dans `run_once`.
 """
 import logging
 import os
+import threading
 import time
 
 import httpx
@@ -330,6 +331,22 @@ def _job_stay_messages(db) -> int:
     return sent
 
 
+# Verrou partagé entre la boucle et l'exécution à la demande (route super-admin) : deux
+# passages simultanés liraient la même échéance avant son marquage, donc enverraient deux fois.
+_RUN_LOCK = threading.Lock()
+
+
+def run_once_if_free() -> bool:
+    """Rejoue les jobs si aucun passage n'est en cours. Faux si un autre tourne déjà."""
+    if not _RUN_LOCK.acquire(blocking=False):
+        return False
+    try:
+        run_once()
+    finally:
+        _RUN_LOCK.release()
+    return True
+
+
 def run_once() -> None:
     db = SessionLocal()
     try:
@@ -381,7 +398,7 @@ def main() -> None:
     interval = int(os.environ.get("SCHEDULER_INTERVAL_SECONDS", "900"))  # 15 min par défaut
     logger.info("ordonnanceur démarré", extra={"interval_s": interval})
     while True:
-        run_once()
+        run_once_if_free()
         time.sleep(interval)
 
 

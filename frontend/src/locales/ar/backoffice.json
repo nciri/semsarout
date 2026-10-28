@@ -3880,5 +3880,20 @@
         "revoked": "تم إلغاء الرمز."
       }
     }
+  },
+  "onboarding": {
+    "title": "الانطلاق",
+    "progress": "{{completed}} خطوات من {{total}}",
+    "dismiss": "إخفاء الانطلاق",
+    "steps": {
+      "agency_profile": "إكمال ملف الوكالة",
+      "first_property": "إنشاء أول عقار",
+      "publish_property": "نشر عقار",
+      "commission_settings": "ضبط أسس العمولة",
+      "invite_team": "دعوة زميل",
+      "first_client": "إضافة عميل",
+      "first_visit": "برمجة زيارة",
+      "subscription_active": "تنشيط الاشتراك"
+    }
   }
 }

@@ -12,6 +12,7 @@ import { ResultsCompact, ResultsDetail } from './dashboard/ResultsWidget'
 import { PipelineCompact, PipelineDetail } from './dashboard/PipelineWidget'
 import { PortfolioCompact, PortfolioDetail } from './dashboard/PortfolioWidget'
 import { RentalCompact, RentalDetail } from './dashboard/RentalWidget'
+import OnboardingCard from './dashboard/OnboardingCard'
 import { rentalService } from '../../services/rentalService'
 
 // Même clé et même requête que la sidebar (badges) : react-query partage la réponse.
@@ -206,6 +207,8 @@ export default function BackofficeDashboard() {
           </div>
         </div>
       </div>
+
+      <OnboardingCard />
 
       {isError && <p className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-800">{t('dashboard.loadError')}</p>}
       {isLoading && (

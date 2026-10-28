@@ -178,6 +178,30 @@ def test_les_routes_de_suivi_exigent_le_super_admin():
         assert client.post("/admin/scheduler/run").status_code in (401, 403)
 
 
+def test_le_journal_masque_les_adresses(monkeypatch):
+    from app.main import _masked
+
+    assert _masked("salma.bennani@example.com") == "s***i@example.com"
+    assert _masked("ab@example.com") == "a***@example.com"
+    assert _masked("") == ""
+
+
+def test_un_passage_deja_en_cours_est_refuse(monkeypatch):
+    from semsar_auth import Principal, require_superadmin
+
+    from app import scheduler
+
+    scheduler._RUN_LOCK.acquire()
+    app.dependency_overrides[require_superadmin] = lambda: Principal(
+        sub="1", roles=["superadmin"], agency_id=None, is_superadmin=True, features=[], claims={})
+    try:
+        with TestClient(app) as client:
+            assert client.post("/admin/scheduler/run").status_code == 409
+    finally:
+        app.dependency_overrides.clear()
+        scheduler._RUN_LOCK.release()
+
+
 def test_le_super_admin_rejoue_les_taches_planifiees(monkeypatch):
     from semsar_auth import Principal, require_superadmin
 

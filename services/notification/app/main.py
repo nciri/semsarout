@@ -10,6 +10,7 @@ Le travail réel (consommation d'événements) est effectué par le worker
   rien reçu ».
 """
 from fastapi import Depends, FastAPI, Query
+from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import Session
 
@@ -48,13 +49,33 @@ async def health() -> dict:
 
 @app.post("/admin/scheduler/run")
 def run_scheduler(principal: Principal = Depends(require_superadmin)) -> dict:
-    """Rejoue les jobs de l'ordonnanceur à la demande. Chaque job est idempotent : relancer
-    n'envoie pas deux fois le même courriel (marquage côté service propriétaire)."""
+    """Rejoue les jobs de l'ordonnanceur à la demande, si aucun passage n'est en cours.
+
+    Le verrou est partagé avec la boucle de l'ordonnanceur : les jobs sont idempotents par
+    marquage côté service propriétaire, mais deux passages simultanés peuvent lire la même
+    échéance avant que l'un des deux l'ait marquée — donc envoyer deux fois.
+    """
     from . import scheduler
 
     scheduler.load_dotenv()
-    scheduler.run_once()
+    if not scheduler.run_once_if_free():
+        return JSONResponse({"error": "Un passage est déjà en cours."}, status_code=409)
     return {"ok": True}
+
+
+def _masked(recipient: str | None) -> str:
+    """Destinataire reconnaissable sans être réutilisable : « a***e@example.com ».
+
+    Le journal sert à répondre « l'agence dit n'avoir rien reçu » : le domaine et les
+    initiales suffisent, l'adresse entière est une donnée personnelle de plus à exposer.
+    """
+    value = (recipient or "").strip()
+    if "@" not in value:
+        return value[:2] + "***" if value else ""
+    local, _, domain = value.partition("@")
+    head = local[:1] or "?"
+    tail = local[-1:] if len(local) > 2 else ""
+    return f"{head}***{tail}@{domain}"
 
 
 @app.get("/admin/notifications")

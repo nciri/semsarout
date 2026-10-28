@@ -25,7 +25,7 @@ def cycle_days(billing_cycle: str | None) -> int:
 
 
 def remaining_ratio(period_end: datetime, now: datetime, billing_cycle: str | None) -> Decimal:
-    """Part de la période EN COURS encore à courir, entre 0 et 1.
+    """Temps restant jusqu'au terme, exprimé en cycles (0 si le terme est passé).
 
     La période se déduit du terme moins la durée du cycle : `start_date` est le début de
     l'abonnement, pas celui du mois en cours — après un an, le ratio calculé depuis elle
@@ -37,8 +37,9 @@ def remaining_ratio(period_end: datetime, now: datetime, billing_cycle: str | No
     left = (period_end - now).total_seconds()
     if left <= 0:
         return Decimal("0")
-    if left >= total:
-        return Decimal("1")
+    # Pas de plafond à 1 : si le terme est à plus d'un cycle (période prolongée, cycle
+    # changé à la main), la différence est due pour TOUT le temps restant. Plafonner
+    # offrirait les mois au-delà du premier.
     return (Decimal(str(left)) / Decimal(str(total))).quantize(Decimal("0.0001"))
 
 

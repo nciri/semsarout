@@ -16,7 +16,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
-from . import compute, dashboard, sources, stats
+from . import compute, dashboard, onboarding, sources, stats
 from .util import err
 
 settings = get_settings()
@@ -89,6 +89,19 @@ def _filter_props(props: list[dict], aid: int | None, ttype: str | None, city: s
 @app.get("/health", include_in_schema=False)
 async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
+
+
+@app.get("/backoffice/onboarding")
+def backoffice_onboarding(principal: Principal = Depends(get_principal)):
+    """Mise en route de l'agence : étapes déduites de l'état réel (voir app/onboarding.py)."""
+    if not principal.agency_id:
+        return err("Agence requise", 403)
+    aid = principal.agency_id
+    return onboarding.build(
+        properties=sources.properties(aid), members=sources.members(aid),
+        clients=sources.clients(aid), visits=sources.visits(aid),
+        agency=(sources.agency_detail(aid) or {}).get("agency") or {},
+        settings=sources.agency_settings(aid), subscription=sources.subscription(aid))
 
 
 @app.get("/admin/overview")

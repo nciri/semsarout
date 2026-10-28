@@ -38,7 +38,7 @@ Trois états : **déjà couvert** (ne rien reprendre), **partiel** (compléter l
 | Abonnements : plans, essai, statuts | `billing` : plans, entitlements, prorata, changement programmé, reprise ; relances chez `notification` | **couvert** (livré le 2026-10-28) |
 | Paiements Stripe / PayPal | `payment` : passerelle, webhooks | **partiel** — fournisseurs à brancher |
 | Back-office admin SaaS (MRR, impersonation, cron) | `analytics` + `billing` + `notification` : MRR/ARR, incidents, tâches à la demande, journal | **couvert** (livré le 2026-10-28) |
-| Onboarding gamifié (mascotte, badges) | — | **absent** |
+| Onboarding gamifié (mascotte, badges) | `analytics` : étapes déduites de l'état réel, carte du tableau de bord | **couvert sans gamification** (livré le 2026-10-28) |
 | Ménage : tâches, zones, rapports, stock | `staymanager` : tâches au départ, zones, rapports photo | **couvert** (livré le 2026-10-28) |
 | Agents IA | — | **absent** |
 | API partenaires, clés d'API, webhooks sortants | `partner` : auth partenaire, livraison, webhooks | **couvert** |
@@ -86,8 +86,11 @@ construire des écrans qui n'ont encore rien à montrer.
    exécution manuelle des tâches planifiées et journal des envois. *Livré sur cette branche.*
    `notification` reçoit sa première route publique (super-admin) et entre dans la table de
    routage du BFF.
-8. **Onboarding** — étapes calculées sur l'état réel du compte ; la gamification (mascotte,
-   badges) est une décision produit, pas une reprise technique.
+8. **Onboarding** — huit étapes déduites de l'état réel du compte (profil, premier bien,
+   publication, barèmes, équipe, client, visite, abonnement), servies par `analytics` et
+   affichées en carte sur le tableau de bord, masquable et disparaissant d'elle-même.
+   *Livré sur cette branche.* La gamification (mascotte, badges) reste écartée : décision
+   produit, pas reprise technique.
 9. ~~Mobile~~ — **hors périmètre** : seul le backend de l'application web est repris
    (décision du 2026-10-28). L'application Expo n'est pas portée.
 

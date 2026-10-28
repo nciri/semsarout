@@ -32,3 +32,10 @@ def test_le_suivi_des_envois_va_au_service_notification(monkeypatch):
         "NOTIF", "/admin/notifications")
     assert _resolve_upstream(app, "/api/v1/admin/scheduler/run", "POST") == (
         "NOTIF", "/admin/scheduler/run")
+
+
+def test_la_mise_en_route_va_a_analytics(monkeypatch):
+    monkeypatch.setattr(m.settings, "analytics_url", "http://analytics")
+    app = SimpleNamespace(state=SimpleNamespace(analytics="ANALYTICS"))
+    assert _resolve_upstream(app, "/api/v1/backoffice/onboarding", "GET") == (
+        "ANALYTICS", "/onboarding")

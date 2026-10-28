@@ -97,6 +97,11 @@ def agency_detail(agency_id: int) -> dict:
     return _get(f"{AGENCY_URL}/internal/agency/{agency_id}", {})
 
 
+def agency_settings(agency_id: int) -> dict:
+    """Réglages d'exploitation de l'agence (barèmes de commission, règles) — chez agency."""
+    return _get(f"{AGENCY_URL}/internal/agency/{agency_id}/settings", {}).get("settings", {})
+
+
 def subscriptions_map() -> dict:
     return _get(f"{BILLING_URL}/internal/subscriptions", {}).get("subscriptions", {})
 

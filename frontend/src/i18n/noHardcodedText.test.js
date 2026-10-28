@@ -71,6 +71,7 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/sejours/CheckinModal.jsx',
   'src/pages/backoffice/sejours/AccessPanel.jsx',
   'src/pages/admin/AdminOverview.jsx',
+  'src/pages/backoffice/dashboard/OnboardingCard.jsx',
   'src/pages/StayCheckin.jsx',
   'src/pages/backoffice/rental/MandatesList.jsx',
   'src/pages/backoffice/rental/MandateDetail.jsx',

@@ -3880,5 +3880,20 @@
         "revoked": "Code révoqué."
       }
     }
+  },
+  "onboarding": {
+    "title": "Mise en route",
+    "progress": "{{completed}} étapes sur {{total}}",
+    "dismiss": "Masquer la mise en route",
+    "steps": {
+      "agency_profile": "Compléter le profil de l'agence",
+      "first_property": "Créer votre premier bien",
+      "publish_property": "Publier un bien",
+      "commission_settings": "Régler vos barèmes de commission",
+      "invite_team": "Inviter un collaborateur",
+      "first_client": "Ajouter un client",
+      "first_visit": "Planifier une visite",
+      "subscription_active": "Activer votre abonnement"
+    }
   }
 }

@@ -284,3 +284,30 @@ def test_l_arr_est_le_mrr_annualise(client, db):
     sub, _, _ = _subscribed(db, price=200, days_left=10)
     stats = client.get("/internal/subscriptions/stats", headers={"x-internal-token": "tok"}).json()
     assert stats["arr_estimate"] == round(stats["mrr_estimate"] * 12, 2)
+
+
+def test_le_prorata_couvre_tout_le_temps_restant_meme_au_dela_d_un_cycle():
+    # Terme à trois mois sur un cycle mensuel : la différence est due pour les trois mois.
+    end = datetime(2027, 2, 1)
+    now = datetime(2026, 11, 2)
+    amount = proration.upgrade_amount(200, 400, end, now, "monthly")
+    assert amount > Decimal("400")   # plus d'un mois de différence
+
+
+def test_le_paiement_designe_la_facture_qu_il_regle(client, db):
+    from app import worker
+
+    sub, _, pro = _subscribed(db, price=200, days_left=15)
+    end_before = sub.end_date
+    client.post("/subscription/change-plan", json={"plan_id": "pro"})
+    prorated_invoice = db.query(Invoice).one()
+    # Une seconde facture impayée (hors prorata) ne doit pas détourner la décision.
+    db.add(Invoice(reference="INV-OLD", subscription_id=sub.id, agency_id=AGENCY, amount=200,
+                   status="unpaid", invoice_type="subscription", prorated=False))
+    db.commit()
+
+    _run_worker(worker, db, "msg-3", "payment.released",
+                {"invoice_id": prorated_invoice.id})
+    sub = db.query(Subscription).filter(Subscription.agency_id == AGENCY).one()
+    assert sub.end_date == end_before
+    assert db.query(Invoice).filter(Invoice.id == prorated_invoice.id).one().status == "paid"
