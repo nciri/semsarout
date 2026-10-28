@@ -92,6 +92,7 @@ crm/migrate_property_ro_owner.sql
 rental/migrate_property_ro_price.sql
 crm/migrate_buyer_dossier.sql
 agency/migrate_integrations.sql
+staymanager/migrate_sejours_natifs.sql
 audit/add_tenant.sql
 "
 

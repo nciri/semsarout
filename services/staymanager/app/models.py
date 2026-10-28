@@ -1,6 +1,12 @@
-"""Modèles du service staymanager (schéma `staymanager`) — parité `backend/app/models/staymanager.py`.
+"""Modèles du service staymanager (schéma `staymanager`) — séjours courte durée.
 
-`PropertyRO` (id/titre/référence) = projection pour le bien imbriqué d'un lien, amorcée à la migration.
+Deux provenances, **une seule table de réservations** : le miroir d'un compte StayManager
+externe (`property_link_id`, `staymanager_reservation_id`) et les séjours natifs importés
+des calendriers des plateformes (`ical_source_id`). `source` dit laquelle, et les colonnes
+propres au miroir sont facultatives — sans quoi une agence sans compte StayManager ne
+pourrait avoir aucun séjour.
+
+`PropertyRO` (id/titre/référence) = projection pour le bien imbriqué d'un lien.
 """
 from datetime import datetime
 
@@ -51,12 +57,41 @@ class StayManagerPropertyLink(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class IcalSource(Base):
+    """Calendrier d'une plateforme pour un bien : l'URL que l'hôte copie chez Airbnb & co.
+
+    Une plateforme par ligne : un même bien est souvent loué sur deux ou trois canaux, et
+    c'est le croisement de leurs calendriers qui révèle les doubles réservations.
+    """
+    __tablename__ = "ical_source"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    agency_id = Column(Integer, nullable=False, index=True)
+    property_id = Column(Integer, nullable=False, index=True)
+    platform = Column(String(30), nullable=False)      # airbnb|booking|vrbo|autre
+    ical_url = Column(String(1000), nullable=False)
+    status = Column(String(20), default="pending")     # pending|ok|error
+    last_error = Column(String(255))
+    last_synced_at = Column(DateTime)
+    reservations_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class StayManagerReservation(Base):
     __tablename__ = "staymanager_reservation"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    property_link_id = Column(BigInteger, ForeignKey("staymanager_property_link.id"), nullable=False, index=True)
-    staymanager_reservation_id = Column(String(100), nullable=False, unique=True, index=True)
+    # Miroir d'un compte StayManager externe : facultatif pour un séjour natif.
+    property_link_id = Column(BigInteger, ForeignKey("staymanager_property_link.id"), index=True)
+    staymanager_reservation_id = Column(String(100), unique=True, index=True)
+    # Séjour natif : rattaché au bien et à la source qui l'a apporté.
+    agency_id = Column(Integer, index=True)
+    property_id = Column(Integer, index=True)
+    ical_source_id = Column(BigInteger, ForeignKey("ical_source.id"), index=True)
+    source = Column(String(20), default="staymanager")  # staymanager|ical|manual
+    has_conflict = Column(Boolean, default=False)
+    cleaning_fee = Column(Numeric(12, 2))
     external_id = Column(String(100))
     platform = Column(String(50))
     check_in = Column(DateTime, nullable=False, index=True)

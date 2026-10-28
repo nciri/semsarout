@@ -1,4 +1,11 @@
-"""Service staymanager — intégration StayManager.ma (liens biens, réservations, sync).
+"""Service staymanager — séjours courte durée et intégration StayManager.ma.
+
+Deux périmètres, une seule table de réservations :
+
+- `/integrations/staymanager/*` : miroir d'un compte StayManager externe (historique).
+- `/backoffice/sejours/*` : séjours **natifs**, importés des calendriers iCal des
+  plateformes (Airbnb, Booking, VRBO) sans compte tiers. Voir
+  `docs/integration-staymanager.md`.
 
 Reproduit à l'identique `/integrations/staymanager/*` (cf.
 `backend/app/api/v1/integrations/staymanager.py`). Toutes les routes gatées `has_staymanager_sync`
@@ -17,12 +24,12 @@ from sqlalchemy.orm import Session
 from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
-from . import billing_client
+from . import billing_client, ical, stays
 from .client import StayManagerClient, StayManagerError
 from .db import get_db, init_db
 from .models import (
-    PropertyRO, StayManagerIntegration, StayManagerPropertyLink, StayManagerReservation,
-    StayManagerSyncLog,
+    IcalSource, PropertyRO, StayManagerIntegration, StayManagerPropertyLink,
+    StayManagerReservation, StayManagerSyncLog,
 )
 from .util import err, iso, json_body
 
@@ -411,3 +418,191 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
     # Réception passerelle (signature vérifiée en cible) — no-op tolérant en l'absence d'intégration.
     await json_body(request)
     return {"received": True}
+
+
+# ---- Séjours courte durée : calendriers iCal et planning --------------------------------
+
+def _source_dict(db: Session, src: IcalSource) -> dict:
+    ro = db.get(PropertyRO, src.property_id)
+    return {"id": src.id, "property_id": src.property_id,
+            "property_title": ro.title if ro else None,
+            "platform": src.platform, "ical_url": src.ical_url, "status": src.status,
+            "last_error": src.last_error, "last_synced_at": iso(src.last_synced_at),
+            "reservations_count": src.reservations_count or 0}
+
+
+def _stay_dict(db: Session, r: StayManagerReservation) -> dict:
+    ro = db.get(PropertyRO, r.property_id) if r.property_id else None
+    return {"id": r.id, "property_id": r.property_id,
+            "property_title": ro.title if ro else None,
+            "platform": r.platform, "source": r.source, "external_id": r.external_id,
+            "guest_name": r.guest_name, "guest_phone": r.guest_phone,
+            "guest_count": r.guest_count, "check_in": iso(r.check_in),
+            "check_out": iso(r.check_out), "nights": r.nights, "status": r.status,
+            "has_conflict": bool(r.has_conflict), "synced_at": iso(r.synced_at)}
+
+
+def _own_source(db: Session, source_id: int, principal: Principal):
+    src = db.get(IcalSource, source_id)
+    if src is None or src.agency_id != principal.agency_id:
+        return None, err("Calendrier introuvable", 404)
+    return src, None
+
+
+@app.get("/backoffice/sejours/calendriers")
+def list_ical_sources(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    rows = (db.query(IcalSource).filter(IcalSource.agency_id == principal.agency_id)
+            .order_by(IcalSource.property_id, IcalSource.platform).all())
+    return {"sources": [_source_dict(db, s) for s in rows]}
+
+
+@app.post("/backoffice/sejours/calendriers", status_code=201)
+async def add_ical_source(request: Request, principal: Principal = Depends(get_principal),
+                          db: Session = Depends(get_db)):
+    """Ajoute un calendrier et le synchronise aussitôt : l'agence doit voir s'il répond."""
+    if (g := _gate(principal)) is not None:
+        return g
+    data = await json_body(request)
+    try:
+        property_id = int(data.get("property_id") or 0)
+    except (TypeError, ValueError):
+        return err("Bien invalide", 400)
+    if property_id <= 0:
+        return err("Bien obligatoire", 400)
+    platform = (data.get("platform") or "autre").strip().lower()
+    if platform not in ical.PLATFORMS:
+        return err("Plateforme inconnue", 400)
+    ro = db.get(PropertyRO, property_id)
+    if ro is None or (ro.agency_id and ro.agency_id != principal.agency_id):
+        return err("Bien introuvable dans votre portefeuille", 400)
+    try:
+        url = ical.safe_ical_url(data.get("ical_url") or "")
+    except ical.IcalError as exc:
+        return err(str(exc), 400)
+    if db.query(IcalSource).filter(IcalSource.property_id == property_id,
+                                   IcalSource.platform == platform).first():
+        return err("Ce bien a déjà un calendrier pour cette plateforme", 400)
+
+    src = IcalSource(agency_id=principal.agency_id, property_id=property_id,
+                     platform=platform, ical_url=url)
+    db.add(src)
+    db.flush()
+    try:
+        result = stays.sync_source(db, src)
+    except ical.IcalError as exc:
+        stays.mark_failure(src, str(exc))
+        db.commit()
+        return err(str(exc), 400)
+    db.commit()
+    return {"source": _source_dict(db, src), "sync": result}
+
+
+@app.post("/backoffice/sejours/calendriers/{source_id}/sync")
+def sync_ical_source(source_id: int, principal: Principal = Depends(get_principal),
+                     db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    src, e = _own_source(db, source_id, principal)
+    if e:
+        return e
+    try:
+        result = stays.sync_source(db, src)
+    except ical.IcalError as exc:
+        stays.mark_failure(src, str(exc))
+        db.commit()
+        return err(str(exc), 400)
+    db.commit()
+    return {"source": _source_dict(db, src), "sync": result}
+
+
+@app.delete("/backoffice/sejours/calendriers/{source_id}")
+def delete_ical_source(source_id: int, principal: Principal = Depends(get_principal),
+                       db: Session = Depends(get_db)):
+    """Retire le calendrier ; les séjours déjà importés restent, l'historique a servi."""
+    if (g := _gate(principal)) is not None:
+        return g
+    src, e = _own_source(db, source_id, principal)
+    if e:
+        return e
+    db.query(StayManagerReservation).filter(
+        StayManagerReservation.ical_source_id == src.id).update({"ical_source_id": None})
+    db.delete(src)
+    db.commit()
+    return {"message": "Calendrier retiré"}
+
+
+@app.post("/backoffice/sejours/sync")
+def sync_all_sources(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    """Rejoue tous les calendriers de l'agence ; l'échec d'un canal n'arrête pas les autres."""
+    if (g := _gate(principal)) is not None:
+        return g
+    rows = db.query(IcalSource).filter(IcalSource.agency_id == principal.agency_id).all()
+    totals = {"sources": len(rows), "ok": 0, "failed": 0, "created": 0, "cancelled": 0,
+              "conflicts": 0}
+    for src in rows:
+        try:
+            result = stays.sync_source(db, src)
+        except ical.IcalError as exc:
+            stays.mark_failure(src, str(exc))
+            totals["failed"] += 1
+            continue
+        totals["ok"] += 1
+        totals["created"] += result["created"]
+        totals["cancelled"] += result["cancelled"]
+        totals["conflicts"] += result["conflicts"]
+    db.commit()
+    return totals
+
+
+@app.get("/backoffice/sejours")
+def list_stays(request: Request, principal: Principal = Depends(get_principal),
+               db: Session = Depends(get_db)):
+    """Planning des séjours de l'agence. `from`/`to` en ISO, `property_id`, `status`."""
+    if (g := _gate(principal)) is not None:
+        return g
+    qp = request.query_params
+    q = db.query(StayManagerReservation).filter(
+        StayManagerReservation.agency_id == principal.agency_id)
+    if qp.get("property_id", "").isdigit():
+        q = q.filter(StayManagerReservation.property_id == int(qp["property_id"]))
+    if qp.get("status"):
+        q = q.filter(StayManagerReservation.status == qp["status"])
+    if qp.get("from"):
+        try:
+            q = q.filter(StayManagerReservation.check_out >= datetime.fromisoformat(qp["from"]))
+        except ValueError:
+            return err("Date de début invalide", 400)
+    if qp.get("to"):
+        try:
+            q = q.filter(StayManagerReservation.check_in <= datetime.fromisoformat(qp["to"]))
+        except ValueError:
+            return err("Date de fin invalide", 400)
+    rows = q.order_by(StayManagerReservation.check_in).all()
+    return {"stays": [_stay_dict(db, r) for r in rows],
+            "conflicts": sum(1 for r in rows if r.has_conflict)}
+
+
+@app.get("/backoffice/sejours/apercu")
+def stays_overview(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    """Ce qui demande une action aujourd'hui : arrivées, départs, conflits, canaux en panne."""
+    if (g := _gate(principal)) is not None:
+        return g
+    now = datetime.utcnow()
+    today = datetime(now.year, now.month, now.day)
+    rows = (db.query(StayManagerReservation)
+            .filter(StayManagerReservation.agency_id == principal.agency_id,
+                    StayManagerReservation.status == "confirmed").all())
+    sources = db.query(IcalSource).filter(IcalSource.agency_id == principal.agency_id).all()
+    nights = sum(r.nights or 0 for r in rows if r.check_in >= today)
+    return {
+        "arrivals_today": sum(1 for r in rows if r.check_in.date() == today.date()),
+        "departures_today": sum(1 for r in rows if r.check_out.date() == today.date()),
+        "in_house": sum(1 for r in rows if r.check_in <= now < r.check_out),
+        "upcoming": sum(1 for r in rows if r.check_in > now),
+        "conflicts": sum(1 for r in rows if r.has_conflict),
+        "nights_booked": nights,
+        "sources": {"total": len(sources),
+                    "in_error": sum(1 for s in sources if s.status == "error")},
+    }

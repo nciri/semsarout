@@ -420,6 +420,9 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         return app.state.buyer, path.replace("/api/v1", "", 1)
     if settings.programs_url and path.startswith("/api/v1/programs"):
         return app.state.programs, path.replace("/api/v1", "", 1)
+    # Séjours courte durée (calendriers iCal, planning) → staymanager.
+    if settings.staymanager_url and path.startswith("/api/v1/backoffice/sejours"):
+        return app.state.staymanager, path.replace("/api/v1", "", 1)
     if settings.staymanager_url and path.startswith("/api/v1/integrations/staymanager"):
         return app.state.staymanager, path.replace("/api/v1", "", 1)
     if settings.trust_safety_url and (
