@@ -169,3 +169,22 @@ def test_message_tardif_est_abandonne(client, seeded):
 
 def test_jeton_interne_exige(client, seeded):
     assert client.get("/internal/sejours/messages/due").status_code == 403
+
+
+def test_adresse_multiple_ou_bizarre_est_refusee(client, seeded):
+    stay = _stay(seeded, days_to_check_in=1, email=None)
+    for bad in ("a@example.com, b@example.com", "a@example.com;b@example.com",
+                "Salma <a@example.com>", "a@example.com\nbcc: c@example.com",
+                "sans-arobase", "a@localdomain"):
+        assert client.patch(f"/backoffice/sejours/{stay.id}/contact",
+                            json={"guest_email": bad}).status_code == 400, bad
+    assert client.patch(f"/backoffice/sejours/{stay.id}/contact",
+                        json={"guest_email": "salma@example.com"}).status_code == 200
+
+
+def test_objet_trop_long_est_tronque(client, seeded):
+    _stay(seeded, days_to_check_in=1)
+    # Le rendu dépasse la colonne (200) : il doit être coupé, pas faire échouer la fournée.
+    _template(client, subject="A" * 190 + " {{property_title}}")
+    due = client.get("/internal/sejours/messages/due", headers=TOKEN).json()["messages"]
+    assert len(due[0]["subject"]) == messages.SUBJECT_MAX

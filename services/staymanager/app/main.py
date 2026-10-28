@@ -12,6 +12,7 @@ Reproduit à l'identique `/integrations/staymanager/*` (cf.
 (billing). Les appels à l'API externe StayManager passent par `app/client.py` (échec propre en dev).
 Cloisonné par agence.
 """
+import logging
 import secrets
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -19,6 +20,7 @@ from datetime import datetime
 from fastapi import Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
@@ -35,6 +37,7 @@ from .util import err, iso, json_body
 
 settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
+logger = logging.getLogger("staymanager")
 WEBHOOK_EVENTS = ["reservation.created", "reservation.updated", "reservation.cancelled",
                   "guest.verified", "property.updated"]
 
@@ -737,13 +740,13 @@ async def update_stay_contact(stay_id: int, request: Request,
     data = await json_body(request)
     if "guest_email" in data:
         email = (data.get("guest_email") or "").strip()
-        if email and ("@" not in email or len(email) > 255):
+        if email and not messages.valid_address(email):
             return err("Email invalide", 400)
         res.guest_email = email or None
     if "guest_name" in data:
-        res.guest_name = (data.get("guest_name") or "").strip() or None
+        res.guest_name = (data.get("guest_name") or "").strip()[:255] or None
     if "guest_phone" in data:
-        res.guest_phone = (data.get("guest_phone") or "").strip() or None
+        res.guest_phone = (data.get("guest_phone") or "").strip()[:50] or None
     db.commit()
     return {"stay": _stay_dict(db, res)}
 
@@ -774,14 +777,23 @@ def _prepare_due(db: Session, now: datetime) -> list[StayMessage]:
             ro = db.get(PropertyRO, res.property_id) if res.property_id else None
             values = messages.variables(res, ro.title if ro else None,
                                         agency_client.name_of(res.agency_id))
+            ready = messages.valid_address(res.guest_email or "")
             msg = StayMessage(
                 agency_id=res.agency_id, template_id=tpl.id, reservation_id=res.id,
-                recipient=res.guest_email, subject=messages.render(tpl.subject, values),
+                recipient=res.guest_email,
+                subject=messages.render(tpl.subject, values)[:messages.SUBJECT_MAX],
                 body=messages.render(tpl.body, values), due_at=messages.due_at(tpl, res),
-                status="pending" if res.guest_email else "no_recipient")
-            db.add(msg)
+                status="pending" if ready else "no_recipient")
             done.add((tpl.id, res.id))
-            created.append(msg)
+            # Une ligne par transaction : un séjour bancal ne doit pas emporter la fournée
+            # entière, qui porte les messages de toutes les agences.
+            try:
+                with db.begin_nested():
+                    db.add(msg)
+                created.append(msg)
+            except SQLAlchemyError:
+                logger.warning("message de séjour non préparé", extra={"reservation_id": res.id,
+                                                                      "template_id": tpl.id})
     db.commit()
     return created
 

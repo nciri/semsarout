@@ -14,6 +14,7 @@ ramenée à ce que SemsarOut sait vraiment faire :
 """
 import re
 from datetime import datetime, timedelta
+from email.utils import parseaddr
 
 TRIGGERS = ("on_booking", "before_check_in", "after_check_out")
 MAX_OFFSET_HOURS = 24 * 30
@@ -23,6 +24,27 @@ LATE_GRACE_HOURS = 48
 PLACEHOLDERS = ("guest_name", "property_title", "check_in", "check_out", "nights",
                 "platform", "agency_name")
 _VAR = re.compile(r"\{\{\s*(\w+)\s*\}\}")
+
+
+SUBJECT_MAX = 200
+NAME_MAX = 255
+_BAD_IN_ADDRESS = re.compile(r"[\s,;<>\"\\\x00-\x1f]")
+
+
+def valid_address(raw: str) -> bool:
+    """Une seule adresse, sans séparateur ni blanc : un message d'agence ne part pas en liste.
+
+    Un `{{guest_name}}` ou une adresse « a@x, b@y » saisis à la main suffiraient sinon à
+    transformer la messagerie de séjour en envoi de masse sous notre marque.
+    """
+    addr = (raw or "").strip()
+    if not addr or len(addr) > NAME_MAX or _BAD_IN_ADDRESS.search(addr):
+        return False
+    name, parsed = parseaddr(addr)
+    if name or parsed != addr:
+        return False
+    local, _, domain = parsed.partition("@")
+    return bool(local) and "." in domain and not domain.startswith(".") and not domain.endswith(".")
 
 
 def _fr_date(value: datetime | None) -> str:
