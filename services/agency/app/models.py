@@ -5,7 +5,8 @@
 """
 from datetime import datetime
 
-from sqlalchemy import JSON, BigInteger, Boolean, Column, DateTime, Integer, String, Text
+from sqlalchemy import (JSON, BigInteger, Boolean, Column, DateTime, Integer, String, Text,
+                        UniqueConstraint)
 
 from .db import Base
 
@@ -66,6 +67,30 @@ class ListingRO(Base):
 
     id = Column(BigInteger, primary_key=True)
     agency_id = Column(Integer, index=True)
+
+
+class IntegrationConnection(Base):
+    """Connexion d'une agence à un ERP/CRM tiers (Odoo, SAP, Salesforce, HubSpot, Zoho).
+
+    `credentials` ne sort jamais de ce service : l'API back-office ne renvoie que l'état de
+    la connexion et le compte reconnu en face. Une connexion n'est enregistrée qu'après un
+    appel réussi chez le fournisseur — sinon l'écran afficherait « connecté » sans l'être.
+    """
+    __tablename__ = "integration_connection"
+    __table_args__ = (UniqueConstraint("agency_id", "provider", name="uq_integration_agency_provider"),)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    agency_id = Column(Integer, index=True, nullable=False)
+    provider = Column(String(20), nullable=False)
+    status = Column(String(20), default="connected")   # connected | error
+    account_label = Column(String(150))                # compte/instance reconnu chez le tiers
+    credentials = Column(JSON, default=dict)
+    last_test_at = Column(DateTime)
+    last_error = Column(String(255))
+    last_sync_at = Column(DateTime)
+    synced_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class ProcessedMessage(Base):

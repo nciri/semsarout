@@ -18,12 +18,16 @@ from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 from semsar_events import enqueue
 
-from . import events, listing_client, members_client, trust_client
+from . import events, integrations, listing_client, members_client, trust_client
 from .db import get_db, init_db
-from .models import Agency, ListingRO
+from .models import Agency, IntegrationConnection, ListingRO
 
 settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
+
+
+def _iso(value) -> str | None:
+    return value.isoformat() if value else None
 
 
 @asynccontextmanager
@@ -317,6 +321,117 @@ async def put_settings(request: Request, principal: Principal = Depends(get_prin
     flag_modified(a, "settings")  # JSON muté en place → forcer le UPDATE
     db.commit()
     return _settings_view(a)
+
+
+# ---- Connecteurs ERP/CRM de l'agence ---------------------------------------------------
+
+def _connection_view(provider: str, conn: IntegrationConnection | None) -> dict:
+    spec = integrations.PROVIDERS[provider]
+    view = {"provider": provider, "kind": spec["kind"], "fields": list(spec["fields"]),
+            "secret_fields": list(spec["secret_fields"]),
+            "supports_contact_sync": spec["push"] is not None,
+            "status": "not_connected", "account_label": None, "last_error": None,
+            "last_test_at": None, "last_sync_at": None, "synced_count": 0}
+    if conn is not None:
+        view.update({"status": conn.status, "account_label": conn.account_label,
+                     "last_error": conn.last_error, "last_test_at": _iso(conn.last_test_at),
+                     "last_sync_at": _iso(conn.last_sync_at),
+                     "synced_count": conn.synced_count or 0})
+    return view
+
+
+def _agency_connections(db: Session, agency_id: int) -> dict:
+    rows = db.query(IntegrationConnection).filter(
+        IntegrationConnection.agency_id == agency_id).all()
+    return {c.provider: c for c in rows}
+
+
+@app.get("/backoffice/integrations")
+def list_integrations(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    """État des connecteurs de l'agence. Les identifiants ne sortent jamais de ce service."""
+    if principal.agency_id is None:
+        return _err("You do not belong to an agency", 404)
+    found = _agency_connections(db, principal.agency_id)
+    return {"integrations": [_connection_view(p, found.get(p)) for p in integrations.PROVIDERS]}
+
+
+@app.put("/backoffice/integrations/{provider}")
+async def connect_integration(provider: str, request: Request,
+                              principal: Principal = Depends(get_principal),
+                              db: Session = Depends(get_db)):
+    """Enregistre une connexion — après un appel réussi chez le fournisseur, jamais avant."""
+    if principal.agency_id is None:
+        return _err("You do not belong to an agency", 404)
+    if provider not in integrations.PROVIDERS:
+        return _err("Unknown provider", 404)
+    data = await _json(request)
+    try:
+        credentials = integrations.credentials_from(provider, data)
+        account = integrations.check(provider, credentials)
+    except integrations.IntegrationError as exc:
+        return _err(str(exc), 400)
+
+    conn = _agency_connections(db, principal.agency_id).get(provider)
+    if conn is None:
+        conn = IntegrationConnection(agency_id=principal.agency_id, provider=provider)
+        db.add(conn)
+    conn.credentials = credentials
+    conn.account_label = account
+    conn.status = "connected"
+    conn.last_error = None
+    conn.last_test_at = datetime.utcnow()
+    db.commit()
+    return _connection_view(provider, conn)
+
+
+@app.post("/backoffice/integrations/{provider}/test")
+def test_integration(provider: str, principal: Principal = Depends(get_principal),
+                     db: Session = Depends(get_db)):
+    """Rejoue l'appel de vérification : un jeton expiré se voit ici, pas au prochain envoi."""
+    if principal.agency_id is None:
+        return _err("You do not belong to an agency", 404)
+    conn = _agency_connections(db, principal.agency_id).get(provider)
+    if conn is None or provider not in integrations.PROVIDERS:
+        return _err("Connection not found", 404)
+    try:
+        conn.account_label = integrations.check(provider, dict(conn.credentials or {}))
+        conn.status, conn.last_error = "connected", None
+    except integrations.IntegrationError as exc:
+        conn.status, conn.last_error = "error", str(exc)
+    conn.last_test_at = datetime.utcnow()
+    db.commit()
+    return _connection_view(provider, conn)
+
+
+@app.delete("/backoffice/integrations/{provider}")
+def disconnect_integration(provider: str, principal: Principal = Depends(get_principal),
+                           db: Session = Depends(get_db)):
+    if principal.agency_id is None:
+        return _err("You do not belong to an agency", 404)
+    conn = _agency_connections(db, principal.agency_id).get(provider)
+    if conn is not None:
+        db.delete(conn)      # les identifiants partent avec la connexion
+        db.commit()
+    return {"message": "Integration disconnected"}
+
+
+@app.get("/internal/agency/{agency_id}/settings", include_in_schema=False)
+def internal_agency_settings(agency_id: int, x_internal_token: str = Header(default=""),
+                             db: Session = Depends(get_db)):
+    """Réglages d'exploitation d'une agence, pour les services qui les appliquent :
+    rappel de visite (crm), affectation automatique des leads (crm), SMTP (notification).
+
+    Contrairement à la vue du back-office, celle-ci inclut `smtp_password` : elle n'est
+    joignable qu'avec le jeton interne, jamais depuis un navigateur.
+    """
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    a = db.get(Agency, agency_id)
+    if a is None:
+        return {"settings": None}
+    view = _settings_view(a)
+    view["smtp_password"] = (a.settings or {}).get("smtp_password")
+    return {"settings": view}
 
 
 @app.get("/agencies")

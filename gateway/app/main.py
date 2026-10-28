@@ -277,6 +277,9 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         return app.state.geo, path.replace("/api/v1", "", 1)
     if settings.agency_url and _agency_match(path, method):
         return app.state.agency, path.replace("/api/v1", "", 1)
+    # Connecteurs ERP/CRM de l'agence (état, connexion, test, déconnexion) → agency.
+    if settings.agency_url and path.startswith("/api/v1/backoffice/integrations"):
+        return app.state.agency, path.replace("/api/v1", "", 1)
     # Paramètres backoffice de l'agence (config commission/notifications/SMTP) → agency.
     if settings.agency_url and path == "/api/v1/backoffice/settings" and method in ("GET", "PUT"):
         return app.state.agency, path.replace("/api/v1", "", 1)

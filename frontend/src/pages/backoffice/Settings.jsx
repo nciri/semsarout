@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { FiBriefcase, FiDatabase, FiPercent, FiSave, FiSliders } from 'react-icons/fi'
 import api from '../../services/api'
 import MyAgency from '../dashboard/MyAgency'
+import Integrations from './settings/Integrations'
 
 /**
  * Onglet « Agence » des paramètres : ce qu'une agence règle une fois pour toute l'équipe.
@@ -211,6 +212,8 @@ export default function BackofficeSettings({ embedded = false }) {
                   </Field>
                 </div>
                 <p className="text-xs text-gray-500">{g('integrations.apiKeyNote')}</p>
+                {/* Connecteurs ERP/CRM : état réel, vérifié chez le fournisseur. */}
+                <div className="border-t border-gray-100 pt-6"><Integrations /></div>
               </div>
             )}
 
