@@ -13,10 +13,26 @@ chaque éditeur, et un écran de redirection intestable sans ces comptes.
 Les erreurs renvoyées au back-office sont tronquées et ne contiennent jamais d'identifiant :
 le message du tiers suffit à comprendre (401, instance inconnue, droit manquant).
 """
+import ipaddress
+import socket
+from urllib.parse import urlsplit
+
 import httpx
 
 TIMEOUT = 10.0
 ERROR_MAX = 200
+
+# Ces URL viennent d'un compte d'agence : sans contrôle, notre serveur irait interroger
+# n'importe quoi à sa place — service interne du maillage, métadonnées de l'hébergeur — et
+# l'agence lirait la réponse dans le message d'erreur. D'où : HTTPS exigé, hôte résolu et
+# refusé s'il pointe vers une adresse privée, et aucun corps de réponse renvoyé à l'appelant.
+HOSTED_HOSTS = {
+    "salesforce": (".my.salesforce.com", ".salesforce.com"),
+    "zoho": ("www.zohoapis.com", "www.zohoapis.eu", "www.zohoapis.in", "www.zohoapis.jp",
+             "www.zohoapis.com.au", "www.zohoapis.ca", "www.zohoapis.sa"),
+}
+URL_FIELDS = {"odoo": "url", "sap": "base_url", "salesforce": "instance_url",
+              "zoho": "api_domain"}
 
 
 class IntegrationError(Exception):
@@ -27,15 +43,53 @@ def _short(text: str) -> str:
     return (text or "").strip().replace("\n", " ")[:ERROR_MAX]
 
 
+def _public_host(host: str) -> None:
+    """Refuse un hôte qui résout vers une adresse non routable publiquement."""
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except socket.gaierror as exc:
+        raise IntegrationError("Hôte introuvable.") from exc
+    for info in infos:
+        addr = ipaddress.ip_address(info[4][0])
+        if (addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved
+                or addr.is_multicast or addr.is_unspecified):
+            raise IntegrationError("Adresse interdite : l'URL doit désigner un service public.")
+
+
+def safe_base_url(raw: str, provider: str) -> str:
+    """URL de fournisseur acceptable, normalisée. Lève `IntegrationError` sinon.
+
+    Pour les services hébergés (Salesforce, Zoho), l'hôte doit appartenir au domaine de
+    l'éditeur ; pour un ERP auto-hébergé (Odoo, SAP), on exige au moins HTTPS et une adresse
+    publique. Un re-résolution malveillante entre ce contrôle et l'appel reste théoriquement
+    possible : le filtrage d'hôte ci-dessus en est la limite connue.
+    """
+    parts = urlsplit((raw or "").strip())
+    if parts.scheme != "https":
+        raise IntegrationError("L'URL doit commencer par https://.")
+    if parts.username or parts.password or parts.query or parts.fragment:
+        raise IntegrationError("L'URL ne doit contenir ni identifiant ni paramètre.")
+    host = (parts.hostname or "").lower()
+    if not host:
+        raise IntegrationError("URL invalide.")
+    allowed = HOSTED_HOSTS.get(provider)
+    if allowed and not any(host == a or host.endswith(a) for a in allowed):
+        raise IntegrationError(f"Hôte inattendu pour ce fournisseur : {host}.")
+    _public_host(host)
+    port = f":{parts.port}" if parts.port else ""
+    return f"https://{host}{port}{parts.path.rstrip('/')}"
+
+
 def _request(method: str, url: str, **kw) -> httpx.Response:
     try:
-        resp = httpx.request(method, url, timeout=TIMEOUT, **kw)
+        resp = httpx.request(method, url, timeout=TIMEOUT, follow_redirects=False, **kw)
     except httpx.HTTPError as exc:
         raise IntegrationError(_short(f"Service injoignable : {exc.__class__.__name__}")) from exc
     if resp.status_code in (401, 403):
         raise IntegrationError("Identifiants refusés par le fournisseur.")
     if resp.status_code >= 400:
-        raise IntegrationError(_short(f"Réponse {resp.status_code} du fournisseur : {resp.text}"))
+        # Jamais le corps de la réponse : il sortirait tel quel vers l'agence.
+        raise IntegrationError(f"Réponse {resp.status_code} du fournisseur.")
     return resp
 
 
@@ -161,7 +215,11 @@ PROVIDERS = {
 
 
 def credentials_from(provider: str, data: dict) -> dict:
-    """Identifiants attendus par ce fournisseur, et rien d'autre. Lève si l'un manque."""
+    """Identifiants attendus par ce fournisseur, et rien d'autre. Lève si l'un manque.
+
+    L'URL est contrôlée ici, avant tout appel : c'est le seul champ que l'agence fournit et
+    qui décide de la destination d'une requête partant de nos serveurs.
+    """
     spec = PROVIDERS[provider]
     out = {}
     for field in spec["fields"]:
@@ -169,13 +227,21 @@ def credentials_from(provider: str, data: dict) -> dict:
         value = raw.strip() if isinstance(raw, str) else raw
         if not value:
             raise IntegrationError(f"Champ obligatoire manquant : {field}.")
-        out[field] = value
+        out[field] = safe_base_url(value, provider) if field == URL_FIELDS.get(provider) else value
     return out
+
+
+def _vetted(provider: str, credentials: dict) -> dict:
+    """Revalide l'URL stockée : une connexion enregistrée hier ne doit pas rouvrir la porte."""
+    field = URL_FIELDS.get(provider)
+    if not field:
+        return credentials
+    return {**credentials, field: safe_base_url(credentials.get(field, ""), provider)}
 
 
 def check(provider: str, credentials: dict) -> str:
     """Appel réel chez le fournisseur. Renvoie le compte reconnu, lève `IntegrationError`."""
-    return PROVIDERS[provider]["test"](credentials)
+    return PROVIDERS[provider]["test"](_vetted(provider, credentials))
 
 
 def push_contact(provider: str, credentials: dict, contact: dict) -> bool:
@@ -183,5 +249,5 @@ def push_contact(provider: str, credentials: dict, contact: dict) -> bool:
     sender = PROVIDERS[provider]["push"]
     if sender is None:
         return False
-    sender(credentials, contact)
+    sender(_vetted(provider, credentials), contact)
     return True

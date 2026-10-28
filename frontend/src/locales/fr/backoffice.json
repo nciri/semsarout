@@ -3434,7 +3434,8 @@
             "description": "Vos clients en contacts Zoho.",
             "help": "Domaine d'API (https://www.zohoapis.com ou .eu) et jeton OAuth valide."
           }
-        }
+        },
+        "urlNote": "L'URL doit être en https et désigner un service accessible publiquement."
       },
       "save": {
         "saving": "Sauvegarde...",

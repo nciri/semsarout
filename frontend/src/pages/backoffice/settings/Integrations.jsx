@@ -55,6 +55,9 @@ function ConnectForm({ integration, onDone, onCancel }) {
       className="mt-4 grid gap-3 rounded-lg border border-gray-200 bg-white p-4"
     >
       <p className="text-xs text-gray-500">{t(`${P}.providers.${integration.provider}.help`)}</p>
+      {integration.fields.some((f) => f.includes('url') || f === 'api_domain') && (
+        <p className="text-xs text-gray-500">{t(`${P}.urlNote`)}</p>
+      )}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {integration.fields.map((field) => (
           <label key={field} className="block">

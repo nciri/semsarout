@@ -25,6 +25,13 @@ class _Resp:
         return self._payload
 
 
+@pytest.fixture(autouse=True)
+def _dns_public(monkeypatch):
+    """Résolution DNS simulée : les hôtes de test pointent vers une adresse publique."""
+    monkeypatch.setattr(integrations.socket, "getaddrinfo",
+                        lambda host, *a, **k: [(2, 1, 6, "", ("93.184.216.34", 443))])
+
+
 @pytest.fixture
 def agence(db_session):
     db_session.add(Agency(id=AGENCY_ID, name="Immobilière Anfa", slug="anfa",
@@ -154,3 +161,62 @@ def test_un_crm_en_panne_ne_bloque_ni_le_message_ni_les_autres(db_session, monke
     conn = db_session.query(IntegrationConnection).one()
     assert conn.status == "error" and "500" in conn.last_error
     assert (conn.synced_count or 0) == 0
+
+
+# ---- Contrôle des URL fournies par l'agence (SSRF) --------------------------------------
+
+def test_une_url_interne_est_refusee(client, agence, db_session, monkeypatch):
+    """Sans ce contrôle, l'agence ferait appeler nos services internes par notre serveur."""
+    monkeypatch.setattr(integrations.socket, "getaddrinfo",
+                        lambda host, *a, **k: [(2, 1, 6, "", ("127.0.0.1", 8512))])
+    calls = _fake_http(monkeypatch, lambda *a, **k: _Resp(200))
+
+    resp = client.put("/backoffice/integrations/odoo", json={
+        "url": "https://interne.anfa.ma", "db": "anfa", "login": "admin", "password": "x"})
+
+    assert resp.status_code == 400 and "interdite" in resp.json()["error"]
+    assert calls == [] and db_session.query(IntegrationConnection).count() == 0
+
+
+def test_les_metadonnees_de_lhebergeur_sont_refusees(monkeypatch):
+    monkeypatch.setattr(integrations.socket, "getaddrinfo",
+                        lambda host, *a, **k: [(2, 1, 6, "", ("169.254.169.254", 80))])
+    with pytest.raises(integrations.IntegrationError):
+        integrations.safe_base_url("https://metadata.local", "sap")
+
+
+def test_http_et_identifiants_dans_lurl_sont_refuses(monkeypatch):
+    with pytest.raises(integrations.IntegrationError):
+        integrations.safe_base_url("http://erp.anfa.ma", "odoo")
+    with pytest.raises(integrations.IntegrationError):
+        integrations.safe_base_url("https://admin:x@erp.anfa.ma", "odoo")
+
+
+def test_un_fournisseur_heberge_est_borne_a_son_domaine(monkeypatch):
+    assert integrations.safe_base_url("https://anfa.my.salesforce.com/", "salesforce") \
+        == "https://anfa.my.salesforce.com"
+    with pytest.raises(integrations.IntegrationError):
+        integrations.safe_base_url("https://attaquant.example.com", "salesforce")
+    with pytest.raises(integrations.IntegrationError):
+        integrations.safe_base_url("https://www.zohoapis.attaquant.com", "zoho")
+
+
+def test_lerreur_du_fournisseur_ne_recopie_pas_sa_reponse(client, agence, monkeypatch):
+    """Un corps de réponse renvoyé tel quel exfiltrerait le contenu de la cible."""
+    _fake_http(monkeypatch, lambda *a, **k: _Resp(500, text="secret interne"))
+    resp = client.put("/backoffice/integrations/hubspot", json=HUBSPOT)
+    assert resp.status_code == 400
+    assert "secret interne" not in resp.json()["error"]
+    assert resp.json()["error"] == "Réponse 500 du fournisseur."
+
+
+def test_une_url_stockee_est_revalidee_avant_chaque_appel(db_session, monkeypatch):
+    """Une connexion enregistrée avant le contrôle ne doit pas rouvrir la porte."""
+    db_session.add(IntegrationConnection(
+        agency_id=AGENCY_ID, provider="sap", status="connected",
+        credentials={"base_url": "http://127.0.0.1:8512", "token": "t"}))
+    db_session.commit()
+    _fake_http(monkeypatch, lambda *a, **k: _Resp(200))
+
+    with pytest.raises(integrations.IntegrationError):
+        integrations.check("sap", {"base_url": "http://127.0.0.1:8512", "token": "t"})
