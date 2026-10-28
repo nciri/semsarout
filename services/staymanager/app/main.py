@@ -27,6 +27,7 @@ from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
 from . import agency_client, billing_client, ical, messages, stays
+from .checkin import router as checkin_router
 from .cleaning import router as cleaning_router
 from .gate import gate
 from .client import StayManagerClient, StayManagerError
@@ -63,6 +64,8 @@ Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_sch
 
 # Ménage de rotation (voir app/cleaning.py) — mêmes routes /backoffice/sejours, gate incluse.
 app.include_router(cleaning_router)
+# Enregistrement du voyageur (voir app/checkin.py) : côté agence et côté voyageur par lien.
+app.include_router(checkin_router)
 
 
 def _uid(principal: Principal):

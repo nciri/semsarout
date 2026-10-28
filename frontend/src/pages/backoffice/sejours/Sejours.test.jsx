@@ -19,6 +19,8 @@ const { svc } = vi.hoisted(() => ({
     listCleanings: vi.fn(), getCleaning: vi.fn(), createCleaning: vi.fn(),
     updateCleaning: vi.fn(), addReport: vi.fn(), markReportSeen: vi.fn(),
     addReportPhoto: vi.fn(), photoUrl: (id) => `/photo/${id}`,
+    createCheckinLink: vi.fn(), getCheckin: vi.fn(), reviewGuest: vi.fn(),
+    guestDocUrl: (id) => `/piece/${id}`,
   },
 }))
 vi.mock('../../../services/stayService', async (orig) => ({ ...(await orig()), stayService: svc }))
@@ -271,5 +273,52 @@ describe('Ménage de rotation', () => {
     await vi.waitFor(() => expect(svc.addReport).toHaveBeenCalledWith(51, {
       kind: 'issue', category: '', text_note: 'Serviettes manquantes', is_urgent: false,
     }))
+  })
+})
+
+const CHECKIN = {
+  declared: 2, expected: 3, document_types: ['cin', 'passeport'],
+  link: { id: 81, reservation_id: 1, status: 'sent', expires_at: '2026-11-09T00:00:00', submitted_at: null },
+  guests: [
+    { id: 91, full_name: 'Salma Bennani', is_lead: true, birth_date: '1992-04-18', nationality: 'Maroc', document_type: 'cin', document_number: 'AB12345', status: 'declared', review_note: null, documents: [{ id: 95, filename: 'cin.jpg' }] },
+    { id: 92, full_name: 'Youssef Bennani', is_lead: false, birth_date: null, nationality: null, document_type: null, document_number: null, status: 'declared', review_note: null, documents: [] },
+  ],
+}
+
+describe("Dossier d'enregistrement (agence)", () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fr')
+    Object.values(svc).forEach((m) => m.mockReset?.())
+    svc.overview.mockResolvedValue(OVERVIEW)
+    svc.listStays.mockResolvedValue(STAYS)
+    svc.getCheckin.mockResolvedValue(CHECKIN)
+    svc.createCheckinLink.mockResolvedValue({ link: { ...CHECKIN.link, token: 'jeton-prive' } })
+    svc.reviewGuest.mockResolvedValue({ guest: {} })
+  })
+
+  it('montre les occupants déclarés et la pièce manquante', async () => {
+    renderAt('/backoffice/sejours')
+    await screen.findByText('Salma Bennani')
+    await userEvent.click((await screen.findAllByRole('button', { name: "Dossier d'enregistrement" }))[0])
+    expect(await screen.findByText('Occupants déclarés : 2 sur 3')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'cin.jpg' })).toHaveAttribute('href', '/piece/95')
+    expect(screen.getByText("Pièce d'identité manquante.")).toBeInTheDocument()
+  })
+
+  it("affiche le lien une seule fois, à sa création", async () => {
+    renderAt('/backoffice/sejours')
+    await screen.findByText('Salma Bennani')
+    await userEvent.click((await screen.findAllByRole('button', { name: "Dossier d'enregistrement" }))[0])
+    expect(screen.queryByText(/jeton-prive/)).not.toBeInTheDocument()
+    await userEvent.click(await screen.findByRole('button', { name: 'Renouveler le lien' }))
+    expect(await screen.findByText(/sejour\/enregistrement\/jeton-prive/)).toBeInTheDocument()
+  })
+
+  it('rend un verdict sur un occupant', async () => {
+    renderAt('/backoffice/sejours')
+    await screen.findByText('Salma Bennani')
+    await userEvent.click((await screen.findAllByRole('button', { name: "Dossier d'enregistrement" }))[0])
+    await userEvent.click((await screen.findAllByRole('button', { name: "Valider l'occupant" }))[0])
+    await vi.waitFor(() => expect(svc.reviewGuest).toHaveBeenCalledWith(91, { status: 'validated' }))
   })
 })

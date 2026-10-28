@@ -26,7 +26,26 @@ export const stayService = {
     `${B}/menage/rapports/${reportId}/photos`, file,
     { params: { filename: file.name }, headers: { 'Content-Type': file.type || 'application/octet-stream' } })).data,
   photoUrl: (photoId) => `${B}/menage/photos/${photoId}`,
+  createCheckinLink: async (stayId) => (await api.post(`${B}/${stayId}/enregistrement`)).data,
+  getCheckin: async (stayId) => (await api.get(`${B}/${stayId}/enregistrement`)).data,
+  reviewGuest: async (guestId, data) => (await api.patch(`${B}/voyageurs/${guestId}`, data)).data,
+  guestDocUrl: (docId) => `${B}/voyageurs/pieces/${docId}`,
 }
+
+/** Côté voyageur : le lien privé tient lieu d'identification, aucun compte requis. */
+const G = '/sejours/enregistrement'
+
+export const stayCheckinService = {
+  view: async (token) => (await api.get(`${G}/${token}`)).data,
+  declare: async (token, data) => (await api.post(`${G}/${token}/voyageurs`, data)).data,
+  uploadDoc: async (token, guestId, file) => (await api.post(
+    `${G}/${token}/voyageurs/${guestId}/piece`, file,
+    { params: { filename: file.name }, headers: { 'Content-Type': file.type || 'application/octet-stream' } })).data,
+  submit: async (token) => (await api.post(`${G}/${token}/valider`)).data,
+}
+
+export const GUEST_DOCUMENT_TYPES = ['cin', 'passeport', 'titre_sejour']
+export const GUEST_STATUS_TONE = { declared: 'neutral', validated: 'good', rejected: 'crit' }
 
 /** Plateformes acceptées par le service (`ical.PLATFORMS`). */
 export const STAY_PLATFORMS = ['airbnb', 'booking', 'vrbo', 'autre']

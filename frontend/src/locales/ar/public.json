@@ -1022,5 +1022,42 @@
       "validation": "تحقق من قِبل خبير خلال 24 ساعة",
       "free": "لا شيء للدفع قبل التحقق"
     }
+  },
+  "stayCheckin": {
+    "title": "تسجيل إقامتك",
+    "why": "على مُضيفك أن يعلن الضيوف ويحفظ وثيقة هوية الضيف الرئيسي.",
+    "declared": "{{count}} ضيف معلَن من {{expected}}",
+    "declared_other": "{{count}} ضيوف معلَنون من {{expected}}",
+    "noGuest": "ابدأ بتسجيل نفسك، ثم أضف مرافقيك.",
+    "lead": "الضيف الرئيسي",
+    "documentLabel": "وثيقة الهوية (JPEG أو PNG أو WebP أو PDF)",
+    "documentReceived": "تم استلام {{count}} وثيقة",
+    "documentReceived_other": "تم استلام {{count}} وثائق",
+    "upload": "إرسال الوثيقة",
+    "rejected": "لم يستطع مُضيفك قراءة هذه الوثيقة. أرسل أخرى.",
+    "addTitle": "إضافة ضيف",
+    "nameLabel": "الاسم الكامل",
+    "docTypeLabel": "نوع الوثيقة",
+    "docNumberLabel": "رقم الوثيقة",
+    "nationalityLabel": "الجنسية",
+    "birthLabel": "تاريخ الميلاد",
+    "documentType": {
+      "cin": "البطاقة الوطنية",
+      "passeport": "جواز السفر",
+      "titre_sejour": "بطاقة الإقامة"
+    },
+    "add": "إضافة",
+    "submit": "لقد انتهيت",
+    "submitHelp": "سيُبلَّغ مُضيفك ويتحقق من الوثائق المُرسلة.",
+    "submitted": "تم إرسال ملفك إلى مُضيفك.",
+    "toasts": {
+      "added": "تمت إضافة الضيف.",
+      "uploaded": "تم إرسال الوثيقة.",
+      "submitted": "تم إرسال الملف."
+    },
+    "invalid": {
+      "title": "الرابط غير متوفر",
+      "description": "رابط التسجيل هذا لم يعد صالحًا. اطلب رابطًا جديدًا من مُضيفك."
+    }
   }
 }

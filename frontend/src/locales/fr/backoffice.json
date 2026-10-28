@@ -3783,6 +3783,43 @@
         "cancel": "Annuler",
         "submit": "Ajouter"
       }
+    },
+    "checkin": {
+      "open": "Dossier d'enregistrement",
+      "title": "Enregistrement du voyageur",
+      "close": "Fermer",
+      "noLink": "Aucun lien d'enregistrement envoyé pour ce séjour.",
+      "create": "Créer le lien",
+      "renew": "Renouveler le lien",
+      "shareOnce": "Transmettez ce lien au voyageur : il ne sera plus affiché ensuite.",
+      "copy": "Copier le lien",
+      "expires": "Valable jusqu'au {{date}}",
+      "linkStatus": {
+        "sent": "Lien envoyé",
+        "submitted": "Dossier transmis",
+        "expired": "Lien expiré"
+      },
+      "guests": "Occupants déclarés : {{declared}} sur {{expected}}",
+      "noGuest": "Le voyageur n'a encore rien déclaré.",
+      "noDocument": "Pièce d'identité manquante.",
+      "lead": "Voyageur principal",
+      "validate": "Valider l'occupant",
+      "reject": "Refuser l'occupant",
+      "guestStatus": {
+        "declared": "À vérifier",
+        "validated": "Vérifié",
+        "rejected": "Refusé"
+      },
+      "documentType": {
+        "cin": "CIN",
+        "passeport": "Passeport",
+        "titre_sejour": "Titre de séjour"
+      },
+      "toasts": {
+        "created": "Lien d'enregistrement créé.",
+        "copied": "Lien copié.",
+        "copyFailed": "Copie impossible. Sélectionnez le lien à la main."
+      }
     }
   }
 }

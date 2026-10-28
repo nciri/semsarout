@@ -423,6 +423,9 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
     # Séjours courte durée (calendriers iCal, planning) → staymanager.
     if settings.staymanager_url and path.startswith("/api/v1/backoffice/sejours"):
         return app.state.staymanager, path.replace("/api/v1", "", 1)
+    # Enregistrement du voyageur : le lien privé tient lieu d'identification, pas de compte.
+    if settings.staymanager_url and path.startswith("/api/v1/sejours/enregistrement/"):
+        return app.state.staymanager, path.replace("/api/v1", "", 1)
     if settings.staymanager_url and path.startswith("/api/v1/integrations/staymanager"):
         return app.state.staymanager, path.replace("/api/v1", "", 1)
     if settings.trust_safety_url and (

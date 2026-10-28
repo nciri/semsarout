@@ -107,6 +107,7 @@ const StaysList = lazy(() => import('./pages/backoffice/sejours/StaysList'))
 const CalendarsList = lazy(() => import('./pages/backoffice/sejours/CalendarsList'))
 const StayMessagesPanel = lazy(() => import('./pages/backoffice/sejours/MessagesPanel'))
 const StayCleaningPanel = lazy(() => import('./pages/backoffice/sejours/CleaningPanel'))
+const StayCheckin = lazy(() => import('./pages/StayCheckin'))
 const LeaseDetail = lazy(() => import('./pages/backoffice/rental/LeaseDetail'))
 const ApplicationsList = lazy(() => import('./pages/backoffice/rental/ApplicationsList'))
 const ApplicationDetail = lazy(() => import('./pages/backoffice/rental/ApplicationDetail'))
@@ -166,6 +167,8 @@ function App() {
         <Route path="mot-de-passe-oublie" element={<ForgotPassword />} />
         <Route path="reinitialiser-mot-de-passe" element={<ResetPassword />} />
         <Route path="invitation/:token" element={<AcceptInvitation />} />
+        {/* Enregistrement d'un séjour : le lien privé reçu par le voyageur, sans compte. */}
+        <Route path="sejour/enregistrement/:token" element={<StayCheckin />} />
         <Route path="a-propos" element={<About />} />
         <Route path="mentions-legales" element={<LegalPage type="mentions" />} />
         <Route path="cgu" element={<LegalPage type="cgu" />} />

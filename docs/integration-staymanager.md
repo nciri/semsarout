@@ -30,7 +30,7 @@ Trois états : **déjà couvert** (ne rien reprendre), **partiel** (compléter l
 | Propriétés, photos, adresse | `listing` : CRUD, modération, médias, prix jour/semaine/mois | **couvert** |
 | Réservations + sync iCal multi-OTA | `staymanager` : miroir des réservations d'un compte StayManager externe | **partiel** — rien de natif sans ce compte |
 | Serrures connectées TTLock, codes d'accès | — | **absent** |
-| Vérification voyageur, OCR pièce d'identité | `identity` (KYC Didit, pour les comptes) | **partiel** — rien côté voyageur d'un séjour |
+| Vérification voyageur, OCR pièce d'identité | `staymanager` : lien d'enregistrement, occupants, pièces | **couvert sans OCR** (livré le 2026-10-28) |
 | Contrats : gabarits, variables, PDF, signature | `contract` + `semsar_signing` (3a9dSign) | **couvert** — réutiliser, ne pas dupliquer |
 | Messagerie automatisée (gabarits, règles, journal) | `notification` + `staymanager` : gabarits de l'agence, déclencheurs, journal | **couvert** pour les séjours (livré le 2026-10-28) |
 | Équipes multi-rôles, invitations | `identity/team` : équipes, sièges, invitations | **partiel** — pas de matrice de droits par bien |
@@ -64,8 +64,12 @@ construire des écrans qui n'ont encore rien à montrer.
    *Livré sur cette branche.* Deux écarts assumés : pas de catalogue de produits par agence
    (une demande de réassort dit en texte ce qui manque), et l'intervention technique reste
    un ordre de travail artisan dans `directory` — seule la rotation vit ici.
-4. **Vérification du voyageur** — lien d'enregistrement, pièce d'identité, OCR, et
-   signature du contrat via `contract` + `semsar_signing` (rien à réécrire).
+4. **Vérification du voyageur** — lien d'enregistrement privé (jeton haché, valable jusqu'au
+   lendemain du départ), occupants déclarés, pièce d'identité déposée par le voyageur,
+   verdict de l'agence. *Livré sur cette branche.* Deux écarts assumés : **pas d'OCR** (aucun
+   moteur raccordé — le voyageur saisit, l'agence compare), et la signature du contrat de
+   séjour reste du ressort de `contract` + `semsar_signing`, à brancher quand l'agence en
+   voudra un.
 5. **Serrures connectées** — TTLock : identifiants chiffrés par agence, génération et
    révocation des codes par séjour.
 6. **Abonnements** — relances d'échec de paiement, prorata, portail libre-service,

@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
-import { FiAlertTriangle, FiCalendar, FiUser } from 'react-icons/fi'
+import { FiAlertTriangle, FiCalendar, FiUser, FiUserCheck } from 'react-icons/fi'
 import { stayService, STAY_STATUS_TONE } from '../../../services/stayService'
 import { useFormat } from '../../../utils/format'
 import { EmptyState, Field, Modal, PRIMARY_BTN, SECONDARY_BTN, Select } from '../../../components/backoffice/ui'
 import { Chip, IconAction, TD, TH } from '../components/kit'
+import CheckinModal from './CheckinModal'
 
 const STATUSES = ['confirmed', 'blocked', 'cancelled']
 
@@ -18,6 +19,7 @@ function StaysList() {
   // La plateforme ne publie pas l'email du voyageur : l'agence le complète ici, sinon la
   // messagerie de séjour n'a personne à qui écrire.
   const [contact, setContact] = useState(null)
+  const [checkinStayId, setCheckinStayId] = useState(null)
   const saveContact = useMutation(() => stayService.updateContact(contact.id, {
     guest_name: contact.guest_name || '', guest_email: contact.guest_email || '',
     guest_phone: contact.guest_phone || '',
@@ -96,8 +98,12 @@ function StaysList() {
                       </div>
                     </td>
                     <td className={`${TD} text-end`}>
-                      <IconAction icon={FiUser} label={t('backoffice:stays.planning.contact.edit')} tipAlign="end"
-                        onClick={() => setContact({ ...s })} />
+                      <div className="flex justify-end gap-1">
+                        <IconAction icon={FiUser} label={t('backoffice:stays.planning.contact.edit')}
+                          onClick={() => setContact({ ...s })} />
+                        <IconAction icon={FiUserCheck} label={t('backoffice:stays.checkin.open')} tone="gold" tipAlign="end"
+                          onClick={() => setCheckinStayId(s.id)} />
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -121,6 +127,8 @@ function StaysList() {
         <Field label={t('backoffice:stays.planning.contact.phoneLabel')} value={contact?.guest_phone || ''}
           onChange={(e) => setContact((c) => ({ ...c, guest_phone: e.target.value }))} />
       </Modal>
+
+      {checkinStayId && <CheckinModal stayId={checkinStayId} onClose={() => setCheckinStayId(null)} />}
     </div>
   )
 }

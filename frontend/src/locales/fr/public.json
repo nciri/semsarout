@@ -1022,5 +1022,42 @@
       "validation": "Validation par un expert sous 24h",
       "free": "Rien à payer avant validation"
     }
+  },
+  "stayCheckin": {
+    "title": "Enregistrement de votre séjour",
+    "why": "Votre hôte doit déclarer les occupants et conserver une pièce d'identité du voyageur principal.",
+    "declared": "{{count}} occupant déclaré sur {{expected}}",
+    "declared_other": "{{count}} occupants déclarés sur {{expected}}",
+    "noGuest": "Commencez par vous déclarer, puis ajoutez vos accompagnants.",
+    "lead": "Voyageur principal",
+    "documentLabel": "Pièce d'identité (JPEG, PNG, WebP ou PDF)",
+    "documentReceived": "{{count}} pièce reçue",
+    "documentReceived_other": "{{count}} pièces reçues",
+    "upload": "Envoyer la pièce",
+    "rejected": "Votre hôte n'a pas pu lire cette pièce. Déposez-en une autre.",
+    "addTitle": "Ajouter un occupant",
+    "nameLabel": "Nom complet",
+    "docTypeLabel": "Type de pièce",
+    "docNumberLabel": "Numéro de la pièce",
+    "nationalityLabel": "Nationalité",
+    "birthLabel": "Date de naissance",
+    "documentType": {
+      "cin": "CIN",
+      "passeport": "Passeport",
+      "titre_sejour": "Titre de séjour"
+    },
+    "add": "Ajouter",
+    "submit": "J'ai terminé",
+    "submitHelp": "Votre hôte sera averti et vérifiera les pièces déposées.",
+    "submitted": "Votre dossier a été transmis à votre hôte.",
+    "toasts": {
+      "added": "Occupant ajouté.",
+      "uploaded": "Pièce envoyée.",
+      "submitted": "Dossier transmis."
+    },
+    "invalid": {
+      "title": "Lien indisponible",
+      "description": "Ce lien d'enregistrement n'est plus valable. Demandez-en un nouveau à votre hôte."
+    }
   }
 }

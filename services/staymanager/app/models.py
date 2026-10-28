@@ -246,3 +246,55 @@ class CleaningPhoto(Base):
     content_type = Column(String(100))
     filename = Column(String(255))
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class StayCheckinLink(Base):
+    """Lien d'enregistrement envoyé au voyageur : il déclare son groupe et dépose sa pièce.
+
+    Le jeton n'est stocké que **haché** : une fuite de la base ne doit pas ouvrir les
+    dossiers d'identité des voyageurs. L'URL complète n'existe qu'une fois, au moment où
+    l'agence la crée.
+    """
+    __tablename__ = "stay_checkin_link"
+    __table_args__ = (UniqueConstraint("reservation_id", name="uq_checkin_link_reservation"),)
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    agency_id = Column(Integer, nullable=False, index=True)
+    reservation_id = Column(BigInteger, ForeignKey("staymanager_reservation.id"), nullable=False, index=True)
+    token_hash = Column(String(64), nullable=False, unique=True, index=True)
+    status = Column(String(20), default="sent")        # sent|submitted|expired
+    expires_at = Column(DateTime, nullable=False)
+    submitted_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class StayGuest(Base):
+    """Un occupant déclaré : le voyageur principal et ses accompagnants.
+
+    L'occupation réelle est une obligation d'hébergeur (fiche de police au Maroc) : un
+    séjour à quatre dont un seul nom est connu n'est pas déclarable.
+    """
+    __tablename__ = "stay_guest"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    reservation_id = Column(BigInteger, ForeignKey("staymanager_reservation.id"), nullable=False, index=True)
+    full_name = Column(String(200), nullable=False)
+    is_lead = Column(Boolean, default=False)
+    birth_date = Column(Date)
+    nationality = Column(String(60))
+    document_type = Column(String(20))                  # cin|passeport|titre_sejour
+    document_number = Column(String(60))
+    status = Column(String(20), default="declared")     # declared|validated|rejected
+    review_note = Column(String(255))
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class StayGuestDocument(Base):
+    __tablename__ = "stay_guest_document"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    guest_id = Column(BigInteger, ForeignKey("stay_guest.id"), nullable=False, index=True)
+    file_key = Column(String(255), nullable=False)
+    content_type = Column(String(100))
+    filename = Column(String(255))
+    created_at = Column(DateTime, default=datetime.utcnow)
