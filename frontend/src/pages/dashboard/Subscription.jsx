@@ -553,6 +553,29 @@ export default function Subscription() {
     }
   )
 
+  const cancelPlanChangeMutation = useMutation(
+    async () => (await api.post('/subscription/plan-change/cancel', null)).data,
+    {
+      onSuccess: () => {
+        toast.success(t('dashboard:subscription.pending.cancelledToast'))
+        refetchSubscription()
+      },
+      onError: (error) => toast.error(error.response?.data?.error || t('common:errors.short')),
+    }
+  )
+
+  const reactivateMutation = useMutation(
+    async () => (await api.post('/subscription/reactivate', null)).data,
+    {
+      onSuccess: () => {
+        toast.success(t('dashboard:subscription.reactivatedToast'))
+        refetchSubscription()
+        setShowManageMenu(false)
+      },
+      onError: (error) => toast.error(error.response?.data?.error || t('common:errors.short')),
+    }
+  )
+
   const handleCancelSubscription = () => {
     if (window.confirm(t('dashboard:subscription.cancelConfirm'))) {
       cancelMutation.mutate()
@@ -778,6 +801,43 @@ export default function Subscription() {
 
       {activeTab === 'plans' && (
         <>
+          {/* Résiliation programmée : la période payée court encore, la reprise est possible. */}
+          {activeSubscription?.cancelled_at && activeSubscription?.end_date && (
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              <span>
+                {t('dashboard:subscription.cancelledBanner', {
+                  date: fmtDate(activeSubscription.end_date, { day: 'numeric', month: 'long', year: 'numeric' }),
+                })}
+              </span>
+              <button
+                onClick={() => reactivateMutation.mutate()}
+                disabled={reactivateMutation.isLoading}
+                className="rounded-lg bg-amber-900 px-4 py-2 font-semibold text-white disabled:opacity-50"
+              >
+                {t('dashboard:subscription.reactivate')}
+              </button>
+            </div>
+          )}
+
+          {/* Rétrogradation programmée : elle s'applique au terme, pas tout de suite. */}
+          {activeSubscription?.pending_change && (
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-gray-100 px-4 py-3 text-sm text-gray-800">
+              <span>
+                {t('dashboard:subscription.pending.banner', {
+                  plan: activeSubscription.pending_change.plan_name || activeSubscription.pending_change.plan_slug,
+                  date: fmtDate(activeSubscription.pending_change.effective_at, { day: 'numeric', month: 'long', year: 'numeric' }),
+                })}
+              </span>
+              <button
+                onClick={() => cancelPlanChangeMutation.mutate()}
+                disabled={cancelPlanChangeMutation.isLoading}
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-semibold disabled:opacity-50"
+              >
+                {t('dashboard:subscription.pending.cancel')}
+              </button>
+            </div>
+          )}
+
           {/* Current plan summary */}
           {currentPlanData && currentPlan !== 'free' && (
             <div className="bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl p-6 text-white mb-8">

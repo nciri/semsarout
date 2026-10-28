@@ -35,7 +35,7 @@ Trois états : **déjà couvert** (ne rien reprendre), **partiel** (compléter l
 | Messagerie automatisée (gabarits, règles, journal) | `notification` + `staymanager` : gabarits de l'agence, déclencheurs, journal | **couvert** pour les séjours (livré le 2026-10-28) |
 | Équipes multi-rôles, invitations | `identity/team` : équipes, sièges, invitations | **partiel** — pas de matrice de droits par bien |
 | Analytics, tableau de bord | `analytics` + tableau de bord back-office par activité | **couvert** |
-| Abonnements : plans, essai, statuts | `billing` : plans, entitlements, factures de commission | **partiel** — ni relances (dunning), ni prorata, ni portail libre-service |
+| Abonnements : plans, essai, statuts | `billing` : plans, entitlements, prorata, changement programmé, reprise ; relances chez `notification` | **couvert** (livré le 2026-10-28) |
 | Paiements Stripe / PayPal | `payment` : passerelle, webhooks | **partiel** — fournisseurs à brancher |
 | Back-office admin SaaS (MRR, impersonation, cron) | `audit`, écrans admin partiels | **partiel** |
 | Onboarding gamifié (mascotte, badges) | — | **absent** |
@@ -76,8 +76,12 @@ construire des écrans qui n'ont encore rien à montrer.
    les identifiants TTLock sont stockés en clair dans le service, comme les connecteurs
    ERP/CRM (chiffrement au repos à trancher pour les deux à la fois), et le mode manuel sert
    dès aujourd'hui puisque aucun compte TTLock n'est raccordé.
-6. **Abonnements** — relances d'échec de paiement, prorata, portail libre-service,
-   au-dessus de `billing` et `payment`.
+6. **Abonnements** — prorata à la montée de gamme (seule la différence du temps restant est
+   facturée, l'échéance ne bouge pas), rétrogradation programmée au terme et annulable,
+   reprise d'un abonnement résilié avant son terme, journal des mouvements. *Livré sur cette
+   branche.* Les relances d'impayé existaient déjà (`notification`,
+   `_job_unpaid_invoice_reminders`) : rien à reprendre. Écart assumé : pas de remboursement
+   au prorata d'une rétrogradation — le mois est payé, le plan change au terme.
 7. **Admin SaaS** — MRR/ARR, incidents de paiement, exécution manuelle des tâches planifiées.
 8. **Onboarding** — étapes calculées sur l'état réel du compte ; la gamification (mascotte,
    badges) est une décision produit, pas une reprise technique.

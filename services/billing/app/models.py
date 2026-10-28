@@ -6,7 +6,7 @@ créé par `change-plan` (chorégraphie paiement v2 : facture *unpaid* + `billin
 from datetime import datetime
 
 from sqlalchemy import (
-    Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, Text,
+    JSON, Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, Text,
 )
 
 from .db import Base
@@ -67,6 +67,12 @@ class Subscription(Base):
     last_payment_failure_at = Column(DateTime)
     # Libellé renvoyé par la passerelle, montré tel quel à l'agence : jamais un code technique.
     last_payment_failure_reason = Column(String(255))
+    # Changement programmé au terme (rétrogradation) : appliqué par issue-renewals. Garder
+    # le montant évite de refaire le calcul avec un tarif qui aurait bougé entre-temps.
+    pending_plan_id = Column(Integer, ForeignKey("subscription_plan.id"))
+    pending_billing_cycle = Column(String(10))
+    pending_amount = Column(Numeric(10, 2))
+    pending_effective_at = Column(DateTime)
     listings_used = Column(Integer, default=0)
     featured_used = Column(Integer, default=0)
     urgent_used = Column(Integer, default=0)
@@ -152,3 +158,19 @@ class ProcessedMessage(Base):
 
     message_id = Column(String(64), primary_key=True)
     processed_at = Column(DateTime, default=datetime.utcnow)
+
+
+class SubscriptionEvent(Base):
+    """Journal des mouvements d'un abonnement : qui a changé de plan, quand, et comment.
+
+    Une agence qui conteste une facture et un support qui enquête ont la même question : que
+    s'est-il passé sur cet abonnement ? Sans journal, la réponse se devine dans les factures.
+    """
+    __tablename__ = "subscription_event"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    subscription_id = Column(Integer, ForeignKey("subscription.id"), nullable=False, index=True)
+    agency_id = Column(Integer, nullable=False, index=True)
+    kind = Column(String(40), nullable=False)   # upgraded|downgrade_scheduled|cancelled|...
+    detail = Column(JSON)
+    created_at = Column(DateTime, default=datetime.utcnow)

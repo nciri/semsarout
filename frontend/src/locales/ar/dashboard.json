@@ -905,6 +905,14 @@
       "footerLegal": "SemsarOut SARL - RC: 123456 - IF: 12345678 - ICE: 001234567000012",
       "footerContact": "لأي استفسار بخصوص هذه الفاتورة، تواصل معنا عبر {{email}}",
       "defaultPlanName": "Premium"
+    },
+    "cancelledBanner": "تم إلغاء اشتراكك: الوصول متاح حتى {{date}}.",
+    "reactivate": "استئناف الاشتراك",
+    "reactivatedToast": "تم استئناف الاشتراك.",
+    "pending": {
+      "banner": "الانتقال إلى خطة {{plan}} مُبرمَج في {{date}}.",
+      "cancel": "إلغاء التغيير",
+      "cancelledToast": "تم إلغاء تغيير الخطة."
     }
   },
   "myApplications": {
