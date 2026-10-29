@@ -281,8 +281,10 @@ describe('Messagerie de séjour', () => {
 
   it("liste les modèles avec leur moment d'envoi et le journal", async () => {
     renderAt('/backoffice/sejours/messages')
-    expect(await screen.findByText("24 h avant l'arrivée")).toBeInTheDocument()
-    expect(screen.getByText('12 h après le départ')).toBeInTheDocument()
+    // Le même moment d'envoi figure aussi dans les modèles prêts à l'emploi : on lit le tableau.
+    const table = (await screen.findAllByRole('table'))[0]
+    expect(within(table).getByText("24 h avant l'arrivée")).toBeInTheDocument()
+    expect(within(table).getByText('12 h après le départ')).toBeInTheDocument()
     expect(screen.getByText('Tous les biens')).toBeInTheDocument()
     expect(screen.getAllByText('Email manquant')).toHaveLength(2)   // destinataire + statut
     expect(screen.getByText('Envoyé')).toBeInTheDocument()
@@ -307,6 +309,36 @@ describe('Messagerie de séjour', () => {
       name: 'Bienvenue', trigger: 'before_check_in', subject: 'Votre séjour',
       body: 'Bonjour', offset_hours: 24, property_id: null,
     }))
+  })
+
+  it("installe un modèle prêt à l'emploi repris de StayManager", async () => {
+    svc.createTemplate.mockResolvedValue({ template: { id: 9, name: 'Rappel de départ' } })
+    renderAt('/backoffice/sejours/messages')
+    const item = (await screen.findByText('Rappel de départ')).closest('li')
+    expect(within(item).getByText('24 h avant le départ')).toBeInTheDocument()
+    await userEvent.click(within(item).getByRole('button', { name: 'Ajouter ce modèle' }))
+    await vi.waitFor(() => expect(svc.createTemplate).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'Rappel de départ', trigger: 'before_check_out', offset_hours: 24, property_id: null,
+    })))
+    // Le corps vient du modèle repris : il ne doit porter que des variables connues du service.
+    const { body } = svc.createTemplate.mock.calls[0][0]
+    expect(body).toContain('{{guest_name}}')
+    expect(body).toContain('{{check_out}}')
+    expect(body).not.toMatch(/\{\{(check_out_time|host_name|property_name)\}\}/)
+  })
+
+  it('ne repropose pas un modèle déjà installé', async () => {
+    svc.listTemplates.mockResolvedValue({
+      ...TEMPLATES,
+      templates: [...TEMPLATES.templates, {
+        id: 23, property_id: null, name: "Demande d'avis", trigger: 'after_check_out',
+        offset_hours: 24, subject: 'Merci', body: 'Bonjour', active: true,
+      }],
+    })
+    renderAt('/backoffice/sejours/messages')
+    const item = (await screen.findAllByText("Demande d'avis"))[0].closest('li')
+    expect(within(item).getByText('Déjà ajouté')).toBeInTheDocument()
+    expect(within(item).queryByRole('button')).not.toBeInTheDocument()
   })
 
   it('complète le contact du voyageur depuis le planning', async () => {

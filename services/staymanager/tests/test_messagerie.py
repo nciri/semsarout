@@ -58,6 +58,19 @@ def test_variable_inconnue_reste_visible_et_est_refusee(client, seeded):
     assert "total_price" in r.json()["error"]
 
 
+def test_les_cinq_moments_du_sejour(client, seeded, db_session):
+    """Pendant le séjour et la veille du départ : deux moments que StayManager savait viser."""
+    stay = _stay(db_session)
+    pendant = StayMessageTemplate(agency_id=AGENCY, name="Pendant", trigger_event="after_check_in",
+                                  offset_hours=24, subject="s", body="b")
+    veille = StayMessageTemplate(agency_id=AGENCY, name="Veille", trigger_event="before_check_out",
+                                 offset_hours=24, subject="s", body="b")
+    assert messages.due_at(pendant, stay) == stay.check_in + timedelta(hours=24)
+    assert messages.due_at(veille, stay) == stay.check_out - timedelta(hours=24)
+    assert _template(client, trigger="after_check_in").status_code == 201
+    assert _template(client, name="Veille", trigger="before_check_out").status_code == 201
+
+
 def test_declencheur_et_delai_bornes(client, seeded):
     assert _template(client, trigger="un_jour_peut_etre").status_code == 400
     assert _template(client, offset_hours=10_000).status_code == 400

@@ -15,8 +15,6 @@
     "visits": "الزيارات والمواعيد",
     "transactions": "المعاملات",
     "contracts": "العقود",
-    "notaries": "الموثقون",
-    "artisans": "الحرفيون",
     "rental": "التسيير الكرائي",
     "stays": "الإقامات",
     "shop": "المتجر",
@@ -26,7 +24,8 @@
     "userMenu": {
       "agencySettings": "إعدادات الوكالة",
       "backToSite": "العودة إلى الموقع"
-    }
+    },
+    "thirdParties": "الأطراف الخارجية"
   },
   "dashboard": {
     "title": "لوحة القيادة",
@@ -1162,7 +1161,6 @@
       "loadError": "حدث خطأ أثناء التحميل. حاول مرة أخرى لاحقًا."
     },
     "layout": {
-      "subtitle": "سجلّ الحرفيين الخاص بكم ومتابعة التدخلات على عقاراتكم",
       "tabs": {
         "directory": "الدليل",
         "interventions": "التدخلات"
@@ -1420,8 +1418,6 @@
       "caseCreatedToast": "تم إنشاء الملف"
     },
     "layout": {
-      "title": "الموثّقون والشؤون القانونية",
-      "subtitle": "موثّقوك الشركاء ومتابعة ملفاتك القانونية",
       "tabs": {
         "notaries": "الموثّقون",
         "cases": "الملفات"
@@ -3750,11 +3746,15 @@
       "trigger": {
         "on_booking": "عند الحجز",
         "before_check_in": "قبل الوصول",
-        "after_check_out": "بعد المغادرة"
+        "after_check_out": "بعد المغادرة",
+        "after_check_in": "أثناء الإقامة",
+        "before_check_out": "قبل المغادرة"
       },
       "whenWithOffset": {
         "before_check_in": "{{count}} ساعة قبل الوصول",
-        "after_check_out": "{{count}} ساعة بعد المغادرة"
+        "after_check_out": "{{count}} ساعة بعد المغادرة",
+        "after_check_in": "{{count}} ساعة بعد الوصول",
+        "before_check_out": "{{count}} ساعة قبل المغادرة"
       },
       "status": {
         "pending": "للإرسال",
@@ -3792,6 +3792,48 @@
         "placeholders": "المتغيرات المتاحة:",
         "cancel": "إلغاء",
         "submit": "حفظ"
+      },
+      "presetsTitle": "قوالب جاهزة للاستعمال",
+      "presetsHelp": "مأخوذة من StayManager ومُواءَمة مع متغيّرات الإقامة. أضفها ثم أعد صياغتها بأسلوبك.",
+      "presetAdd": "إضافة هذا القالب",
+      "presetAdded": "مُضاف مسبقًا",
+      "presetToast": "تمت إضافة القالب « {{name}} ».",
+      "presets": {
+        "booking_confirmation": {
+          "name": "تأكيد الحجز",
+          "subject": "تم تأكيد حجزك في {{property_title}}",
+          "body": "مرحبًا {{guest_name}},\n\nشكرًا على حجزك وعلى ثقتك: {{nights}} ليلة في {{property_title}}، من {{check_in}} إلى {{check_out}}.\n\nنحن رهن إشارتك لأي سؤال قبل الوصول. ستتلقى قريبًا رابط تسجيل للتصريح بالمقيمين، وفق القانون الجاري به العمل.\n\nنتطلع إلى استقبالك!\n{{agency_name}}"
+        },
+        "welcome": {
+          "name": "رسالة الترحيب",
+          "subject": "أهلًا بك في {{property_title}}",
+          "body": "أهلًا {{guest_name}}!\n\nيسعدنا استقبالك في {{property_title}} من {{check_in}} إلى {{check_out}}.\n\n{{agency_name}}"
+        },
+        "checkin_code": {
+          "name": "تعليمات الوصول (رمز الدخول)",
+          "subject": "وصولك إلى {{property_title}}",
+          "body": "مرحبًا {{guest_name}}، يقترب موعد وصولك إلى {{property_title}}.\n\nرمز الدخول: {{access_code}}\n{{access_instructions}}\n\nاكتب إلينا لأي سؤال. إقامة ممتعة!\n{{agency_name}}"
+        },
+        "checkin_manual": {
+          "name": "تعليمات الوصول (تسليم المفاتيح)",
+          "subject": "وصولك إلى {{property_title}}",
+          "body": "مرحبًا {{guest_name}}، يقترب موعد وصولك إلى {{property_title}}.\n\nطريقة الدخول: {{access_instructions}}\n\nاكتب إلينا لأي سؤال. إقامة ممتعة!\n{{agency_name}}"
+        },
+        "during_stay": {
+          "name": "رسالة أثناء الإقامة",
+          "subject": "هل كل شيء على ما يرام في {{property_title}}؟",
+          "body": "مرحبًا {{guest_name}},\n\nنأمل أن يكون استقرارك قد مرّ بسلاسة وأن تستمتع بإقامتك في {{property_title}}.\nلا تتردد في الكتابة إلينا إن احتجت أي شيء.\n\n{{agency_name}}"
+        },
+        "checkout": {
+          "name": "تذكير المغادرة",
+          "subject": "مغادرتك من {{property_title}}",
+          "body": "مرحبًا {{guest_name}},\n\nنأمل أن تكون قد استمتعت بإقامتك. تذكير بسيط: موعد مغادرتك هو {{check_out}}.\n\nقبل الخروج، يرجى:\n– جمع أمتعتك الشخصية\n– إطفاء المكيّف أو التدفئة\n– إغلاق النوافذ والباب\n– ترك المفاتيح في المكان المتفق عليه\n\nإن أعجبتك الإقامة، فتقييمك يساعدنا كثيرًا؛ وإن كان هناك ما يمكن تحسينه، فأخبرنا به.\n\nرحلة عودة سعيدة،\n{{agency_name}}"
+        },
+        "review": {
+          "name": "طلب تقييم",
+          "subject": "شكرًا على إقامتك في {{property_title}}",
+          "body": "مرحبًا {{guest_name}},\n\nنأمل أن تكون قد استمتعت بإقامتك في {{property_title}}.\n\nإن كانت لديك ملاحظات فشاركنا بها: فهي تساعدنا على التحسّن. وتقييمك على {{platform}} يخدمنا كثيرًا، ويساعد مسافرين آخرين على إيجاد المسكن المناسب لهم.\n\nشكرًا مجددًا وإلى اللقاء!\n{{agency_name}}"
+        }
       }
     },
     "cleaning": {
@@ -4060,6 +4102,15 @@
       "first_client": "إضافة عميل",
       "first_visit": "برمجة زيارة",
       "subscription_active": "تنشيط الاشتراك"
+    }
+  },
+  "tiers": {
+    "title": "الأطراف الخارجية",
+    "subtitle": "موثّقو الوكالة وحرفيّوها، وما يُوكَل إليهم.",
+    "navLabel": "مهن الأطراف الخارجية",
+    "tabs": {
+      "legal": "الموثّقون والملفّات",
+      "artisans": "الحرفيّون والتدخّلات"
     }
   }
 }

@@ -75,9 +75,33 @@ export const STAY_STATUS_TONE = { confirmed: 'good', blocked: 'neutral', cancell
 export const SOURCE_STATUS_TONE = { ok: 'good', pending: 'neutral', error: 'crit' }
 
 /** Déclencheurs acceptés par le service (`messages.TRIGGERS`). */
-export const STAY_TRIGGERS = ['on_booking', 'before_check_in', 'after_check_out']
+export const STAY_TRIGGERS = ['on_booking', 'before_check_in', 'after_check_in',
+  'before_check_out', 'after_check_out']
 /** Les déclencheurs immédiats ignorent le délai : inutile de l'afficher. */
-export const TRIGGER_HAS_OFFSET = { on_booking: false, before_check_in: true, after_check_out: true }
+export const TRIGGER_HAS_OFFSET = {
+  on_booking: false, before_check_in: true, after_check_in: true,
+  before_check_out: true, after_check_out: true,
+}
+
+/**
+ * Modèles de messages repris de StayManager, ramenés aux variables qu'un séjour porte
+ * vraiment : le texte vit dans les locales (`stays.messages.presets.<clé>`), le moment
+ * d'envoi ici. L'agence les installe d'un clic puis les récrit à sa main.
+ *
+ * Laissés de côté faute de support : les notifications ménage et maintenance (elles vont à
+ * l'équipe, pas au voyageur — ce sont des tâches d'exploitation) et les messages de
+ * vérification d'identité et de contrat (leur lien est un jeton à usage unique que le
+ * moteur de gabarits ne sait pas fabriquer).
+ */
+export const STAY_TEMPLATE_PRESETS = [
+  { key: 'booking_confirmation', trigger: 'on_booking', offset_hours: 0 },
+  { key: 'welcome', trigger: 'on_booking', offset_hours: 0 },
+  { key: 'checkin_code', trigger: 'before_check_in', offset_hours: 24 },
+  { key: 'checkin_manual', trigger: 'before_check_in', offset_hours: 24 },
+  { key: 'during_stay', trigger: 'after_check_in', offset_hours: 24 },
+  { key: 'checkout', trigger: 'before_check_out', offset_hours: 24 },
+  { key: 'review', trigger: 'after_check_out', offset_hours: 24 },
+]
 export const CLEANING_STATUS_TONE = { pending: 'neutral', in_progress: 'warn', done: 'good', cancelled: 'neutral' }
 export const CLEANING_ZONES = ['chambres', 'salle_de_bain', 'cuisine', 'sejour', 'exterieur', 'linge']
 export const CLEANING_REPORT_KINDS = ['issue', 'stock', 'note']

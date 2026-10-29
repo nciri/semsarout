@@ -147,6 +147,28 @@ pas à ce qui a été fait dans StayManager ».
     Les plateformes déjà branchées sur le bien choisi s'affichent fermées, pour ne pas faire
     buter l'agence sur le 400 de doublon.
 
+16. **Modèles de messages repris de StayManager** — les textes de StayManager
+    (`app/i18n/{fr,ar}.json`, clés `<type>_name` / `<type>_content`) reviennent en modèles
+    prêts à l'emploi que l'agence installe d'un clic, en FR et en AR : confirmation,
+    bienvenue, instructions d'arrivée (code d'entrée ou remise des clés), message pendant le
+    séjour, rappel de départ, demande d'avis. Les variables sont ramenées à ce qu'un séjour
+    porte vraiment (`property_name` devient `property_title`, `host_name` devient
+    `agency_name`, les heures deviennent les dates du séjour). Deux déclencheurs manquaient
+    pour les placer : `after_check_in` et `before_check_out` rejoignent `messages.TRIGGERS`.
+    `needs_access` ne retient plus que `{{access_code}}` : un modèle de remise des clés
+    attendait sinon un code qui ne viendrait jamais.
+    Non reprises : les notifications ménage et maintenance (destinées à l'équipe, pas au
+    voyageur — ce sont les tâches d'exploitation) et les messages de vérification d'identité
+    et de contrat, dont le lien est un jeton à usage unique que le moteur de gabarits ne sait
+    pas fabriquer.
+
+17. **Une page « Tiers » au lieu de deux pages et quatre onglets** — notaires et dossiers
+    tenaient deux onglets, l'annuaire des artisans et les interventions deux autres. Un
+    annuaire se lit avec ce qu'on y confie : chaque métier n'a plus qu'un écran, et les deux
+    métiers deviennent les deux onglets de `/backoffice/tiers`. Les anciennes URL
+    (`/backoffice/notaires*`, `/backoffice/artisans*`, `travaux`, `juridique`) redirigent,
+    identifiant conservé pour les liens profonds.
+
 ## Décisions prises pour éviter les doublons
 
 - **Une seule table de réservations** : `staymanager.staymanager_reservation` sert le miroir

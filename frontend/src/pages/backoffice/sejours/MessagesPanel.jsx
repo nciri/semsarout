@@ -3,9 +3,11 @@ import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
-import { FiEdit2, FiMail, FiPlus, FiTrash2 } from 'react-icons/fi'
+import { FiCheck, FiEdit2, FiMail, FiPlus, FiTrash2 } from 'react-icons/fi'
 import api from '../../../services/api'
-import { stayService, MESSAGE_STATUS_TONE, STAY_TRIGGERS, TRIGGER_HAS_OFFSET } from '../../../services/stayService'
+import {
+  stayService, MESSAGE_STATUS_TONE, STAY_TEMPLATE_PRESETS, STAY_TRIGGERS, TRIGGER_HAS_OFFSET,
+} from '../../../services/stayService'
 import { useFormat } from '../../../utils/format'
 import { EmptyState, Field, Modal, PRIMARY_BTN, SECONDARY_BTN, Select } from '../../../components/backoffice/ui'
 import { Chip, IconAction, TD, TH } from '../components/kit'
@@ -42,6 +44,20 @@ function MessagesPanel() {
     onSuccess: () => { toast.success(t('backoffice:stays.messages.toasts.saved')); setEditing(null); refresh() },
     onError: fail,
   })
+  // Un modèle prêt à l'emploi n'est qu'un gabarit préécrit : on le crée comme les autres,
+  // à charge pour l'agence de le récrire ensuite.
+  const install = useMutation((preset) => stayService.createTemplate({
+    name: t(`backoffice:stays.messages.presets.${preset.key}.name`),
+    trigger: preset.trigger, offset_hours: preset.offset_hours, property_id: null,
+    subject: t(`backoffice:stays.messages.presets.${preset.key}.subject`),
+    body: t(`backoffice:stays.messages.presets.${preset.key}.body`),
+  }), {
+    onSuccess: (r) => {
+      toast.success(t('backoffice:stays.messages.presetToast', { name: r.template?.name }))
+      refresh()
+    },
+    onError: fail,
+  })
   const remove = useMutation((id) => stayService.deleteTemplate(id), {
     onSuccess: () => { toast.success(t('backoffice:stays.messages.toasts.disabled')); refresh() },
     onError: fail,
@@ -59,6 +75,8 @@ function MessagesPanel() {
   if (error) return <p className="px-2.5 py-6 text-sm text-gray-500">{t('backoffice:stays.shared.loadError')}</p>
 
   const templates = (data?.templates || []).filter((x) => x.active)
+  // Un modèle déjà installé garde son nom : c'est ce qui dit à l'écran de ne pas le reproposer.
+  const installed = new Set(templates.map((x) => x.name))
   const placeholders = data?.placeholders || []
   const messages = (journal?.messages || [])
     .filter((m) => !stayFilter || m.reservation_id === stayFilter)
@@ -116,6 +134,42 @@ function MessagesPanel() {
               </table>
             </div>
           )}
+      </div>
+
+      <div className="grid gap-2.5 rounded-xl border border-gray-200 bg-gray-50/60 p-3.5">
+        <div>
+          <h3 className="font-display text-[14px] font-bold">{t('backoffice:stays.messages.presetsTitle')}</h3>
+          <p className="text-[12.5px] text-gray-500">{t('backoffice:stays.messages.presetsHelp')}</p>
+        </div>
+        <ul className="grid gap-1.5 sm:grid-cols-2">
+          {STAY_TEMPLATE_PRESETS.map((preset) => {
+            const name = t(`backoffice:stays.messages.presets.${preset.key}.name`)
+            const done = installed.has(name)
+            return (
+              <li key={preset.key}
+                className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-2.5 py-2">
+                <div className="min-w-0">
+                  <b className="block truncate text-[13px] font-semibold">{name}</b>
+                  <span className="block text-[11.5px] text-gray-500">
+                    {TRIGGER_HAS_OFFSET[preset.trigger]
+                      ? t(`backoffice:stays.messages.whenWithOffset.${preset.trigger}`, { count: preset.offset_hours })
+                      : t(`backoffice:stays.messages.trigger.${preset.trigger}`)}
+                  </span>
+                </div>
+                {done ? (
+                  <span className="inline-flex shrink-0 items-center gap-1 text-[12px] font-medium text-gray-500">
+                    <FiCheck aria-hidden="true" /> {t('backoffice:stays.messages.presetAdded')}
+                  </span>
+                ) : (
+                  <button onClick={() => install.mutate(preset)} disabled={install.isLoading}
+                    className={`${SECONDARY_BTN} shrink-0`}>
+                    {t('backoffice:stays.messages.presetAdd')}
+                  </button>
+                )}
+              </li>
+            )
+          })}
+        </ul>
       </div>
 
       <div className="grid gap-3">

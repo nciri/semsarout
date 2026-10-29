@@ -15,8 +15,6 @@
     "visits": "Visites & RDV",
     "transactions": "Transactions",
     "contracts": "Contrats",
-    "notaries": "Notaires",
-    "artisans": "Artisans",
     "rental": "Gestion locative",
     "stays": "Séjours",
     "shop": "Boutique",
@@ -26,7 +24,8 @@
     "userMenu": {
       "agencySettings": "Paramètres agence",
       "backToSite": "Retour au site"
-    }
+    },
+    "thirdParties": "Tiers"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -1162,7 +1161,6 @@
       "loadError": "Une erreur est survenue lors du chargement. Réessayez plus tard."
     },
     "layout": {
-      "subtitle": "Votre référentiel d'artisans et le suivi des interventions sur vos biens",
       "tabs": {
         "directory": "Annuaire",
         "interventions": "Interventions"
@@ -1420,8 +1418,6 @@
       "caseCreatedToast": "Dossier créé"
     },
     "layout": {
-      "title": "Notaires & juridique",
-      "subtitle": "Vos notaires partenaires et le suivi de vos dossiers juridiques",
       "tabs": {
         "notaries": "Notaires",
         "cases": "Dossiers"
@@ -3750,11 +3746,15 @@
       "trigger": {
         "on_booking": "À la réservation",
         "before_check_in": "Avant l'arrivée",
-        "after_check_out": "Après le départ"
+        "after_check_out": "Après le départ",
+        "after_check_in": "Pendant le séjour",
+        "before_check_out": "Avant le départ"
       },
       "whenWithOffset": {
         "before_check_in": "{{count}} h avant l'arrivée",
-        "after_check_out": "{{count}} h après le départ"
+        "after_check_out": "{{count}} h après le départ",
+        "after_check_in": "{{count}} h après l'arrivée",
+        "before_check_out": "{{count}} h avant le départ"
       },
       "status": {
         "pending": "À envoyer",
@@ -3792,6 +3792,48 @@
         "placeholders": "Variables disponibles :",
         "cancel": "Annuler",
         "submit": "Enregistrer"
+      },
+      "presetsTitle": "Modèles prêts à l'emploi",
+      "presetsHelp": "Repris de StayManager et adaptés aux variables d'un séjour. Ajoutez-les puis récrivez-les à votre main.",
+      "presetAdd": "Ajouter ce modèle",
+      "presetAdded": "Déjà ajouté",
+      "presetToast": "Modèle « {{name}} » ajouté.",
+      "presets": {
+        "booking_confirmation": {
+          "name": "Confirmation de réservation",
+          "subject": "Votre réservation à {{property_title}} est confirmée",
+          "body": "Bonjour {{guest_name}},\n\nMerci pour votre réservation et votre confiance : {{nights}} nuit(s) à {{property_title}}, du {{check_in}} au {{check_out}}.\n\nNous restons à votre disposition pour toute question avant votre arrivée. Vous recevrez prochainement un lien d'enregistrement pour déclarer les voyageurs, conformément à la réglementation en vigueur.\n\nAu plaisir de vous accueillir !\n{{agency_name}}"
+        },
+        "welcome": {
+          "name": "Message de bienvenue",
+          "subject": "Bienvenue à {{property_title}}",
+          "body": "Bienvenue {{guest_name}} !\n\nNous sommes ravis de vous accueillir à {{property_title}} du {{check_in}} au {{check_out}}.\n\n{{agency_name}}"
+        },
+        "checkin_code": {
+          "name": "Instructions d'arrivée (code d'entrée)",
+          "subject": "Votre arrivée à {{property_title}}",
+          "body": "Bonjour {{guest_name}}, votre arrivée à {{property_title}} approche.\n\nCode d'entrée : {{access_code}}\n{{access_instructions}}\n\nÉcrivez-nous pour toute question. Excellent séjour !\n{{agency_name}}"
+        },
+        "checkin_manual": {
+          "name": "Instructions d'arrivée (remise des clés)",
+          "subject": "Votre arrivée à {{property_title}}",
+          "body": "Bonjour {{guest_name}}, votre arrivée à {{property_title}} approche.\n\nAccès : {{access_instructions}}\n\nÉcrivez-nous pour toute question. Excellent séjour !\n{{agency_name}}"
+        },
+        "during_stay": {
+          "name": "Message pendant le séjour",
+          "subject": "Tout va bien à {{property_title}} ?",
+          "body": "Bonjour {{guest_name}},\n\nNous espérons que votre installation s'est bien passée et que vous appréciez votre séjour à {{property_title}}.\nN'hésitez pas à nous écrire si vous avez besoin de quoi que ce soit.\n\n{{agency_name}}"
+        },
+        "checkout": {
+          "name": "Rappel de départ",
+          "subject": "Votre départ de {{property_title}}",
+          "body": "Bonjour {{guest_name}},\n\nNous espérons que vous avez passé un agréable séjour. Petit rappel : votre départ est prévu le {{check_out}}.\n\nAvant de partir, merci de :\n– rassembler vos affaires personnelles\n– éteindre la climatisation ou le chauffage\n– fermer les fenêtres et la porte\n– laisser les clés à l'endroit convenu\n\nSi vous avez apprécié votre séjour, un commentaire nous aiderait beaucoup ; et si quelque chose peut être amélioré, dites-le nous.\n\nBon retour,\n{{agency_name}}"
+        },
+        "review": {
+          "name": "Demande d'avis",
+          "subject": "Merci pour votre séjour à {{property_title}}",
+          "body": "Bonjour {{guest_name}},\n\nNous espérons que vous avez passé un bon séjour à {{property_title}}.\n\nSi vous avez des remarques, faites-nous-en part : cela nous aide à nous améliorer. Et un commentaire sur {{platform}} nous rendrait grand service, il aidera aussi d'autres voyageurs à trouver le logement qui leur convient.\n\nMerci encore et à bientôt !\n{{agency_name}}"
+        }
       }
     },
     "cleaning": {
@@ -4060,6 +4102,15 @@
       "first_client": "Ajouter un client",
       "first_visit": "Planifier une visite",
       "subscription_active": "Activer votre abonnement"
+    }
+  },
+  "tiers": {
+    "title": "Tiers",
+    "subtitle": "Les notaires et les artisans de l'agence, et ce qu'on leur confie.",
+    "navLabel": "Métiers des tiers",
+    "tabs": {
+      "legal": "Notaires & dossiers",
+      "artisans": "Artisans & interventions"
     }
   }
 }

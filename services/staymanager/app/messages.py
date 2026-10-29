@@ -16,7 +16,10 @@ import re
 from datetime import datetime, timedelta
 from email.utils import parseaddr
 
-TRIGGERS = ("on_booking", "before_check_in", "after_check_out")
+# Les cinq moments d'un séjour : StayManager écrivait aussi pendant le séjour et la veille
+# du départ, que trois déclencheurs ne savaient pas placer.
+TRIGGERS = ("on_booking", "before_check_in", "after_check_in", "before_check_out",
+            "after_check_out")
 MAX_OFFSET_HOURS = 24 * 30
 # Au-delà, le message n'a plus de sens : on l'abandonne plutôt que de l'envoyer en retard.
 LATE_GRACE_HOURS = 48
@@ -77,11 +80,16 @@ def unknown_placeholders(text: str) -> list[str]:
     return sorted({v for v in _VAR.findall(text or "") if v not in PLACEHOLDERS})
 
 
-ACCESS_PLACEHOLDERS = ("access_code", "access_instructions")
+ACCESS_PLACEHOLDERS = ("access_code",)
 
 
 def needs_access(text: str) -> bool:
-    """Le gabarit parle-t-il du code d'entrée ?"""
+    """Le gabarit annonce-t-il le code d'entrée ?
+
+    Seul le code fait attendre : il n'existe qu'une fois émis. Les consignes d'accès sont un
+    réglage du bien, et un gabarit de remise de clés ne doit pas rester bloqué derrière un
+    code qui ne viendra jamais.
+    """
     return any(v in ACCESS_PLACEHOLDERS for v in _VAR.findall(text or ""))
 
 
@@ -92,6 +100,10 @@ def due_at(template, stay) -> datetime | None:
         return stay.synced_at or stay.created_at
     if template.trigger_event == "before_check_in":
         return stay.check_in - offset
+    if template.trigger_event == "after_check_in":
+        return stay.check_in + offset
+    if template.trigger_event == "before_check_out":
+        return stay.check_out - offset
     if template.trigger_event == "after_check_out":
         return stay.check_out + offset
     return None
