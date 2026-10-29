@@ -3700,7 +3700,7 @@
       }
     },
     "calendars": {
-      "add": "إضافة تقويم",
+      "add": "ربط تقويمات",
       "sync": "مزامنة",
       "remove": "إزالة التقويم",
       "state": {
@@ -3720,20 +3720,21 @@
         "description": "انسخ رابط iCal من Airbnb أو Booking.com أو VRBO ثم أضفه هنا."
       },
       "toasts": {
-        "added": "تمت إضافة التقويم، واستيراد {{count}} إقامة.",
-        "added_other": "تمت إضافة التقويم، واستيراد {{count}} إقامات.",
         "synced": "تمت إضافة {{created}} إقامة وإلغاء {{cancelled}}.",
-        "removed": "تم إزالة التقويم."
+        "removed": "تم إزالة التقويم.",
+        "connected": "تم ربط {{count}} تقويم، واستيراد {{stays}} إقامة.",
+        "connected_other": "تم ربط {{count}} تقويمات، واستيراد {{stays}} إقامة."
       },
       "modal": {
-        "title": "إضافة تقويم منصة",
-        "help": "يجب أن يكون الرابط عامًا وبـ https. يُقرأ التقويم فورًا للتحقق من استجابته.",
+        "title": "ربط تقويمات عقار",
+        "help": "حقل لكل منصة: الصق رابط iCal العام (https) للمنصات التي نُشر فيها العقار، واترك الباقي فارغًا. يُقرأ كل تقويم فورًا للتحقق من استجابته.",
         "propertyLabel": "العقار",
         "propertyPlaceholder": "اختر عقارًا",
-        "platformLabel": "المنصة",
-        "urlLabel": "رابط تقويم iCal",
         "cancel": "إلغاء",
-        "submit": "إضافة"
+        "submit": "ربط",
+        "urlFor": "رابط تقويم iCal — {{platform}}",
+        "alreadyConnected": "مرتبط مسبقًا",
+        "urlPlaceholder": "{{platform}} — https://…"
       },
       "backToPlanning": "العودة إلى مخطط الإقامات"
     },

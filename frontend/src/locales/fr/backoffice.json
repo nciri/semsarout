@@ -3700,7 +3700,7 @@
       }
     },
     "calendars": {
-      "add": "Ajouter un calendrier",
+      "add": "Connecter des calendriers",
       "sync": "Synchroniser",
       "remove": "Retirer le calendrier",
       "state": {
@@ -3720,20 +3720,21 @@
         "description": "Copiez l'URL iCal depuis Airbnb, Booking.com ou VRBO, puis ajoutez-la ici."
       },
       "toasts": {
-        "added": "Calendrier ajouté, {{count}} séjour importé.",
-        "added_other": "Calendrier ajouté, {{count}} séjours importés.",
         "synced": "{{created}} séjour(s) ajouté(s), {{cancelled}} annulé(s).",
-        "removed": "Calendrier retiré."
+        "removed": "Calendrier retiré.",
+        "connected": "{{count}} calendrier connecté, {{stays}} séjour(s) importé(s).",
+        "connected_other": "{{count}} calendriers connectés, {{stays}} séjour(s) importé(s)."
       },
       "modal": {
-        "title": "Ajouter un calendrier de plateforme",
-        "help": "L'URL doit être publique et en https. Le calendrier est lu aussitôt pour vérifier qu'il répond.",
+        "title": "Connecter les calendriers d'un bien",
+        "help": "Un champ par plateforme : collez l'URL iCal publique (https) de celles où le bien est publié, laissez vide les autres. Chaque calendrier est lu aussitôt pour vérifier qu'il répond.",
         "propertyLabel": "Bien",
         "propertyPlaceholder": "Choisir un bien",
-        "platformLabel": "Plateforme",
-        "urlLabel": "URL du calendrier iCal",
         "cancel": "Annuler",
-        "submit": "Ajouter"
+        "submit": "Connecter",
+        "urlFor": "URL du calendrier iCal — {{platform}}",
+        "alreadyConnected": "Déjà connecté",
+        "urlPlaceholder": "{{platform}} — https://…"
       },
       "backToPlanning": "Revenir au planning des séjours"
     },

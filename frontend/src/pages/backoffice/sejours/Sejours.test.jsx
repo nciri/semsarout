@@ -184,10 +184,47 @@ describe('Séjours courte durée', () => {
     await vi.waitFor(() => expect(svc.syncSource).toHaveBeenCalledWith(11))
   })
 
-  it("exige un bien et une URL avant d'ajouter un calendrier", async () => {
+  it("exige un bien et une URL avant de connecter des calendriers", async () => {
     renderAt('/backoffice/sejours/calendriers')
-    await userEvent.click(await screen.findByRole('button', { name: 'Ajouter un calendrier' }))
-    expect(screen.getByRole('button', { name: 'Ajouter' })).toBeDisabled()
+    await userEvent.click(await screen.findByRole('button', { name: 'Connecter des calendriers' }))
+    expect(screen.getByRole('button', { name: 'Connecter' })).toBeDisabled()
+  })
+
+  it('branche plusieurs plateformes en un seul envoi', async () => {
+    svc.addSource.mockResolvedValue({ source: { id: 13 }, sync: { created: 2 } })
+    renderAt('/backoffice/sejours/calendriers')
+    await userEvent.click(await screen.findByRole('button', { name: 'Connecter des calendriers' }))
+    await userEvent.selectOptions(screen.getByLabelText('Bien'), '5')
+    await userEvent.type(screen.getByLabelText('URL du calendrier iCal — VRBO'), 'https://vrbo/x.ics')
+    await userEvent.type(screen.getByLabelText('URL du calendrier iCal — Autre'), 'https://autre/y.ics')
+    await userEvent.click(screen.getByRole('button', { name: 'Connecter' }))
+    await vi.waitFor(() => expect(svc.addSource).toHaveBeenCalledTimes(2))
+    expect(svc.addSource).toHaveBeenCalledWith({ property_id: 5, platform: 'vrbo', ical_url: 'https://vrbo/x.ics' })
+    expect(svc.addSource).toHaveBeenCalledWith({ property_id: 5, platform: 'autre', ical_url: 'https://autre/y.ics' })
+  })
+
+  it('ferme les plateformes déjà branchées sur le bien choisi', async () => {
+    renderAt('/backoffice/sejours/calendriers')
+    await userEvent.click(await screen.findByRole('button', { name: 'Connecter des calendriers' }))
+    await userEvent.selectOptions(screen.getByLabelText('Bien'), '5')
+    // Le service refuse un second calendrier pour le même couple : le champ le dit avant l'envoi.
+    expect(screen.getByLabelText('URL du calendrier iCal — Airbnb')).toBeDisabled()
+    expect(screen.getByLabelText('URL du calendrier iCal — VRBO')).toBeEnabled()
+  })
+
+  it("garde l'URL fautive quand une seule plateforme échoue", async () => {
+    svc.addSource
+      .mockResolvedValueOnce({ source: { id: 13 }, sync: { created: 1 } })
+      .mockRejectedValueOnce({ response: { data: { error: 'Calendrier illisible.' } } })
+    renderAt('/backoffice/sejours/calendriers')
+    await userEvent.click(await screen.findByRole('button', { name: 'Connecter des calendriers' }))
+    await userEvent.selectOptions(screen.getByLabelText('Bien'), '5')
+    await userEvent.type(screen.getByLabelText('URL du calendrier iCal — VRBO'), 'https://vrbo/x.ics')
+    await userEvent.type(screen.getByLabelText('URL du calendrier iCal — Autre'), 'https://autre/y.ics')
+    await userEvent.click(screen.getByRole('button', { name: 'Connecter' }))
+    expect(await screen.findByText('Calendrier illisible.')).toBeInTheDocument()
+    expect(screen.getByLabelText('URL du calendrier iCal — VRBO')).toHaveValue('')
+    expect(screen.getByLabelText('URL du calendrier iCal — Autre')).toHaveValue('https://autre/y.ics')
   })
 
   it('range les rubriques par rôle au lieu de les aligner', async () => {

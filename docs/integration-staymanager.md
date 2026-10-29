@@ -139,6 +139,14 @@ pas à ce qui a été fait dans StayManager ».
     côté de la synchronisation qui s'en sert : ils alimentent les séjours, ils n'en sont pas
     une vue.
 
+15. **Branchement multi-plateformes en un écran** — un bien est publié sur plusieurs canaux à
+    la fois ; l'écran des calendriers présente donc toutes les plateformes ensemble, un champ
+    d'URL iCal par plateforme avec sa marque à gauche, et n'envoie que les champs remplis. Le
+    service reste unitaire (un calendrier par couple bien/plateforme) : la boucle est côté
+    front, qui garde les URL refusées avec leur raison et efface celles qui sont passées.
+    Les plateformes déjà branchées sur le bien choisi s'affichent fermées, pour ne pas faire
+    buter l'agence sur le 400 de doublon.
+
 ## Décisions prises pour éviter les doublons
 
 - **Une seule table de réservations** : `staymanager.staymanager_reservation` sert le miroir
