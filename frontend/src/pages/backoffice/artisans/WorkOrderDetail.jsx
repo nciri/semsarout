@@ -27,7 +27,7 @@ function WorkOrderDetail() {
   if (isError || !data?.work_order) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center text-gray-500">
-        {t('backoffice:artisans.workOrder.notFound')} <Link to="/backoffice/artisans/interventions" className="text-primary-600 hover:underline">{t('backoffice:artisans.shared.back')}</Link>
+        {t('backoffice:artisans.workOrder.notFound')} <Link to="/backoffice/tiers/artisans" className="text-primary-600 hover:underline">{t('backoffice:artisans.shared.back')}</Link>
       </div>
     )
   }
@@ -39,7 +39,7 @@ function WorkOrderDetail() {
 
   return (
     <div className="space-y-4 max-w-2xl">
-      <Link to="/backoffice/artisans/interventions" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
+      <Link to="/backoffice/tiers/artisans" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
         <DirIcon icon={FiArrowLeft} className="w-4 h-4" /> {t('backoffice:artisans.workOrder.backToList')}
       </Link>
 

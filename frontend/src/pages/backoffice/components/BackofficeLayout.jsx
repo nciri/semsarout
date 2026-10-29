@@ -7,7 +7,7 @@ import {
   FiHome, FiUsers, FiFileText, FiCalendar,
   FiSettings, FiMenu, FiX, FiBriefcase,
   FiUserCheck, FiGrid, FiMail, FiLogOut, FiBell, FiSearch,
-  FiChevronDown, FiTrendingUp, FiTool, FiShoppingBag, FiKey, FiSunrise
+  FiChevronDown, FiTrendingUp, FiShoppingBag, FiKey, FiSunrise
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
 import Wordmark from '../../../components/common/Wordmark'
@@ -50,8 +50,8 @@ const MENU_ITEMS = [
     sectionKey: 'nav.sections.partners',
     items: [
       { path: '/backoffice/contrats', icon: FiFileText, labelKey: 'nav.contracts' },
-      { path: '/backoffice/notaires', icon: FiBriefcase, labelKey: 'nav.notaries' },
-      { path: '/backoffice/artisans', icon: FiTool, labelKey: 'nav.artisans' },
+      // Notaires, dossiers, artisans et interventions tiennent une seule page à onglets.
+      { path: '/backoffice/tiers', icon: FiBriefcase, labelKey: 'nav.thirdParties' },
     ]
   },
   {

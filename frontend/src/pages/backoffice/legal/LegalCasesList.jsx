@@ -45,7 +45,7 @@ function LegalCasesList() {
 
   const columns = [
     { header: t('backoffice:legal.cases.columns.title'), cell: (c) => (
-      <Link className="text-primary-600 hover:text-primary-700 font-medium" to={`/backoffice/notaires/dossiers/${c.id}`}>{c.title}</Link>
+      <Link className="text-primary-600 hover:text-primary-700 font-medium" to={`/backoffice/tiers/dossiers/${c.id}`}>{c.title}</Link>
     ) },
     { header: t('backoffice:legal.cases.columns.type'), cell: (c) => <span className="text-gray-600">{t(`backoffice:legal.shared.caseType.${c.case_type}`, { defaultValue: c.case_type })}</span> },
     { header: t('backoffice:legal.cases.columns.notary'), cell: (c) => <span className="text-gray-600">{c.notary?.name || '—'}</span> },
@@ -78,7 +78,7 @@ function LegalCasesList() {
           <span>
             <Trans
               i18nKey="backoffice:legal.cases.noNotary"
-              components={{ notariesLink: <Link to="/backoffice/notaires" className="underline font-medium" /> }}
+              components={{ notariesLink: <Link to="/backoffice/tiers" className="underline font-medium" /> }}
             />
           </span>
         </div>

@@ -35,7 +35,7 @@ function NotariesDirectory() {
     onError: onErr,
   })
   const createCase = useMutation((notaryId) => legalService.createCase({ case_type: 'sale', notary_id: notaryId }), {
-    onSuccess: (res) => { toast.success(t('backoffice:legal.shared.caseCreatedToast')); qc.invalidateQueries('legal-cases'); navigate(`/backoffice/notaires/dossiers/${res.case.id}`) },
+    onSuccess: (res) => { toast.success(t('backoffice:legal.shared.caseCreatedToast')); qc.invalidateQueries('legal-cases'); navigate(`/backoffice/tiers/dossiers/${res.case.id}`) },
     onError: onErr,
   })
 

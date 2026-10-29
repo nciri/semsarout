@@ -47,7 +47,7 @@ function WorkOrdersList() {
 
   const columns = [
     { header: t('backoffice:artisans.workOrder.columns.title'), cell: (w) => (
-      <Link className="text-primary-600 hover:text-primary-700 font-medium" to={`/backoffice/artisans/interventions/${w.id}`}>{w.title}</Link>
+      <Link className="text-primary-600 hover:text-primary-700 font-medium" to={`/backoffice/tiers/interventions/${w.id}`}>{w.title}</Link>
     ) },
     { header: t('backoffice:artisans.workOrder.columns.trade'), cell: (w) => <span className="text-gray-600">{tradeLabel(w.trade)}</span> },
     { header: t('backoffice:artisans.workOrder.columns.artisan'), cell: (w) => <span className="text-gray-600">{w.artisan?.name || '—'}</span> },
