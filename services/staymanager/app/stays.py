@@ -21,14 +21,18 @@ def _existing_key(row: StayManagerReservation) -> str:
     return row.external_id or f"{row.check_in.date()}~{row.check_out.date()}"
 
 
-def refresh_conflicts(db, property_id: int) -> int:
+def refresh_conflicts(db, property_id: int, agency_id: int | None = None) -> int:
     """Marque les séjours du bien qui se chevauchent. Renvoie leur nombre.
 
     Le calcul porte sur tout le bien, pas sur une source : la double réservation arrive
-    justement entre deux plateformes qui ne se parlent pas.
+    justement entre deux plateformes qui ne se parlent pas. `agency_id` borne le calcul au
+    portefeuille de l'appelant : un identifiant de bien ressaisi à la main ne doit pas
+    pouvoir faire relire — ni réécrire — les séjours d'une autre agence.
     """
-    rows = (db.query(StayManagerReservation)
-            .filter(StayManagerReservation.property_id == property_id).all())
+    q = db.query(StayManagerReservation).filter(StayManagerReservation.property_id == property_id)
+    if agency_id is not None:
+        q = q.filter(StayManagerReservation.agency_id == agency_id)
+    rows = q.all()
     clashing = ical.overlapping_ids(rows)
     for row in rows:
         row.has_conflict = row.id in clashing
@@ -77,7 +81,7 @@ def sync_source(db, source: IcalSource) -> dict:
             cancelled += 1
 
     db.flush()
-    conflicts = refresh_conflicts(db, source.property_id)
+    conflicts = refresh_conflicts(db, source.property_id, source.agency_id)
 
     source.status = "ok"
     source.last_error = None

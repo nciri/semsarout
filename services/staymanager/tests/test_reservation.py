@@ -59,6 +59,13 @@ def test_un_bien_d_une_autre_agence_est_refuse(client, db_session):
     assert r.status_code == 400
 
 
+def test_un_bien_sans_proprietaire_connu_est_refuse(client, db_session):
+    # Une projection incomplète ne vaut pas autorisation : sans agence sur le bien, on refuse.
+    db_session.add(PropertyRO(id=PROPERTY, agency_id=None, title="Bien orphelin"))
+    db_session.commit()
+    assert client.post("/backoffice/sejours", json=_payload()).status_code == 400
+
+
 def test_une_reservation_directe_qui_chevauche_est_acceptee_mais_signalee(client, bien, db_session):
     client.post("/backoffice/sejours", json=_payload())
     r = client.post("/backoffice/sejours", json=_payload(check_in="2026-12-12",
@@ -123,6 +130,32 @@ def test_modifier_une_reservation_directe_recalcule_les_nuits(client, bien):
     assert r.status_code == 200
     assert r.json()["stay"]["nights"] == 10
     assert r.json()["stay"]["guest_count"] == 3
+
+
+def test_decaler_les_dates_revoque_le_code_d_entree(client, bien, db_session):
+    stay_id = client.post("/backoffice/sejours", json=_payload()).json()["stay"]["id"]
+    db_session.add(StayAccessCode(agency_id=AGENCY, reservation_id=stay_id, mode="manual",
+                                  code="4821", status="active"))
+    db_session.commit()
+
+    r = client.put(f"/backoffice/sejours/{stay_id}", json=_payload(check_in="2026-12-18",
+                                                                   check_out="2026-12-22"))
+    assert r.status_code == 200
+    db_session.expire_all()
+    # Un code calé sur les anciennes dates ouvrirait des jours où plus personne n'est attendu.
+    assert db_session.query(StayAccessCode).first().status == "revoked"
+
+
+def test_la_fiche_ignore_un_sejour_conflictuel_d_une_autre_agence(client, bien, db_session):
+    stay_id = client.post("/backoffice/sejours", json=_payload()).json()["stay"]["id"]
+    db_session.add(StayManagerReservation(
+        agency_id=OTHER_AGENCY, property_id=PROPERTY, source="ical", platform="airbnb",
+        check_in=datetime(2026, 12, 11), check_out=datetime(2026, 12, 13), nights=2))
+    row = db_session.get(StayManagerReservation, stay_id)
+    row.has_conflict = True
+    db_session.commit()
+
+    assert client.get(f"/backoffice/sejours/{stay_id}").json()["conflicts"] == []
 
 
 def test_annuler_un_sejour_revoque_son_code_et_sa_tache_de_menage(client, bien, db_session):

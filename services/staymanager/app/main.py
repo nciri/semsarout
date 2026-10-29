@@ -31,6 +31,7 @@ from . import access
 from .access import router as access_router
 from .checkin import router as checkin_router
 from .cleaning import router as cleaning_router
+from .teams import router as teams_router
 from .gate import gate
 from .client import StayManagerClient, StayManagerError
 from .db import get_db, init_db
@@ -66,6 +67,7 @@ Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_sch
 
 # Ménage de rotation (voir app/cleaning.py) — mêmes routes /backoffice/sejours, gate incluse.
 app.include_router(cleaning_router)
+app.include_router(teams_router)
 # Enregistrement du voyageur (voir app/checkin.py) : côté agence et côté voyageur par lien.
 app.include_router(checkin_router)
 # Codes d'entrée des séjours (voir app/access.py) : mode manuel ou serrure TTLock.

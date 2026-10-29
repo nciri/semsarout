@@ -3315,7 +3315,30 @@
         "newPlaceholder": "Nouvelle équipe",
         "create": "Créer",
         "limitReached": "Limite d'équipes atteinte — passez à un plan supérieur.",
-        "empty": "Aucune équipe."
+        "empty": "Aucune équipe.",
+        "newTitle": "Nouvelle équipe",
+        "editTitle": "Modifier l'équipe",
+        "edit": "Modifier l'équipe",
+        "delete": "Supprimer l'équipe",
+        "updated": "Équipe modifiée.",
+        "nameLabel": "Nom",
+        "kindLabel": "Métier",
+        "kindHelp": "Rôles disponibles : {{jobs}}.",
+        "colorLabel": "Couleur",
+        "descriptionLabel": "Description",
+        "cancel": "Annuler",
+        "submit": "Enregistrer",
+        "membersCount": "{{count}} membre",
+        "membersCount_other": "{{count}} membres",
+        "addMember": "Ajouter un renfort",
+        "addMemberTitle": "Renfort pour {{team}}",
+        "addMemberHelp": "Le renfort garde son équipe de rattachement. Choisissez le rôle qu'il tient ici.",
+        "memberLabel": "Membre",
+        "memberPlaceholder": "Choisir un membre",
+        "jobLabel": "Rôle dans l'équipe",
+        "memberAdded": "Renfort ajouté.",
+        "removeMember": "Retirer",
+        "memberRemoved": "Renfort retiré."
       },
       "members": {
         "title": "Membres",
@@ -3336,6 +3359,23 @@
         "teamCreated": "Équipe créée",
         "teamDeleted": "Équipe supprimée",
         "memberRemoved": "Membre retiré"
+      },
+      "kinds": {
+        "generale": "Générale",
+        "commerciale": "Commerciale",
+        "menage": "Ménage",
+        "maintenance": "Maintenance",
+        "conciergerie": "Conciergerie"
+      },
+      "jobs": {
+        "responsable": "Responsable",
+        "membre": "Membre",
+        "negociateur": "Négociateur",
+        "assistant": "Assistant",
+        "agent": "Agent",
+        "blanchisserie": "Blanchisserie",
+        "technicien": "Technicien",
+        "agent_accueil": "Agent d'accueil"
       }
     },
     "general": {
@@ -3559,7 +3599,8 @@
         "messages": "Messages",
         "access": "Accès",
         "calendars": "Calendriers",
-        "calendar": "Calendrier"
+        "calendar": "Calendrier",
+        "teams": "Équipes"
       },
       "arrivals": "Arrivées du jour",
       "departures": "Départs du jour",
@@ -3958,6 +3999,29 @@
       "conflictsTitle": "Séjours en conflit",
       "conflictAlert": "Ce séjour en chevauche {{count}} autre sur le même bien.",
       "conflictAlert_other": "Ce séjour en chevauche {{count}} autres sur le même bien."
+    },
+    "teams": {
+      "performanceTitle": "Activité des équipes",
+      "performanceSub": "Sur les {{count}} derniers jours",
+      "done": "Ménages faits",
+      "planned": "Ménages prévus",
+      "late": "En retard",
+      "avgMinutes": "Durée moyenne",
+      "minutes": "min",
+      "urgentReports": "{{count}} signalement urgent non lu",
+      "urgentReports_other": "{{count}} signalements urgents non lus",
+      "assignTitle": "Biens et équipes",
+      "assignHelp": "Le ménage d'un départ est confié à l'équipe du bien, sans désignation manuelle.",
+      "team": "Équipe",
+      "teamFor": "Équipe du bien {{property}}",
+      "noTeam": "Aucune équipe",
+      "noProperty": "Aucun bien dans votre portefeuille.",
+      "assigned": "Affectation enregistrée.",
+      "empty": {
+        "title": "Aucune équipe",
+        "description": "Créez une équipe de ménage ou de maintenance pour lui confier vos biens.",
+        "link": "Gérer les équipes"
+      }
     }
   },
   "onboarding": {

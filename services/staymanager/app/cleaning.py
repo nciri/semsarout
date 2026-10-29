@@ -22,7 +22,10 @@ from semsar_auth import Principal, get_principal
 
 from .db import get_db
 from .gate import gate
-from .models import CleaningPhoto, CleaningReport, CleaningTask, PropertyRO, StayManagerReservation
+from . import teams as teams_module
+from .models import (
+    CleaningPhoto, CleaningReport, CleaningTask, PropertyRO, StayManagerReservation,
+)
 from .util import attachment_headers, err, iso, json_body, safe_filename
 
 router = APIRouter()
@@ -78,7 +81,8 @@ def ensure_tasks(db: Session, agency_id: int, today: date | None = None) -> int:
         if stay.id in known or not stay.property_id:
             continue
         db.add(CleaningTask(agency_id=agency_id, property_id=stay.property_id,
-                            reservation_id=stay.id, scheduled_date=stay.check_out.date()))
+                            reservation_id=stay.id, scheduled_date=stay.check_out.date(),
+                            team_id=teams_module.team_of_property(db, agency_id, stay.property_id)))
         known.add(stay.id)
         created += 1
     if created:
@@ -103,7 +107,8 @@ def _task_dict(db: Session, t: CleaningTask, with_reports: bool = False) -> dict
            "reservation_id": t.reservation_id,
            "guest_name": stay.guest_name if stay else None,
            "next_check_in": iso(_next_arrival(db, t)) if stay else None,
-           "assigned_to_id": t.assigned_to_id, "scheduled_date": iso(t.scheduled_date),
+           "assigned_to_id": t.assigned_to_id, "team_id": t.team_id,
+           "scheduled_date": iso(t.scheduled_date),
            "status": t.status, "zones_done": list(t.zones_done or []), "notes": t.notes,
            "started_at": iso(t.started_at), "completed_at": iso(t.completed_at),
            "reports_count": len(reports),
@@ -147,6 +152,8 @@ def list_tasks(request: Request, principal: Principal = Depends(get_principal),
         q = q.filter(CleaningTask.status == qp["status"])
     if qp.get("property_id", "").isdigit():
         q = q.filter(CleaningTask.property_id == int(qp["property_id"]))
+    if qp.get("team_id", "").isdigit():
+        q = q.filter(CleaningTask.team_id == int(qp["team_id"]))
     for key, op in (("from", "ge"), ("to", "le")):
         if qp.get(key):
             try:

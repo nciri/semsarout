@@ -194,7 +194,7 @@ async def create_stay(request: Request, principal: Principal = Depends(get_princ
     if e:
         return e
     ro = db.get(PropertyRO, payload["property_id"])
-    if ro is None or (ro.agency_id and ro.agency_id != principal.agency_id):
+    if ro is None or ro.agency_id != principal.agency_id:
         return err("Bien introuvable dans votre portefeuille", 400)
 
     row = StayManagerReservation(agency_id=principal.agency_id, source="manual",
@@ -203,7 +203,7 @@ async def create_stay(request: Request, principal: Principal = Depends(get_princ
     db.flush()
     # Le chevauchement n'est pas refusé : deux lignes qui se croisent, c'est précisément
     # ce que l'écran doit montrer pour qu'on tranche.
-    stays.refresh_conflicts(db, row.property_id)
+    stays.refresh_conflicts(db, row.property_id, principal.agency_id)
     db.commit()
     return {"stay": stay_dict(db, row)}
 
@@ -228,7 +228,8 @@ def get_stay(stay_id: int, principal: Principal = Depends(get_principal),
     messages = (db.query(StayMessage).filter(StayMessage.reservation_id == row.id)
                 .order_by(StayMessage.due_at).all())
     other = (db.query(StayManagerReservation)
-             .filter(StayManagerReservation.property_id == row.property_id,
+             .filter(StayManagerReservation.agency_id == principal.agency_id,
+                     StayManagerReservation.property_id == row.property_id,
                      StayManagerReservation.id != row.id,
                      StayManagerReservation.status != "cancelled",
                      StayManagerReservation.check_in < row.check_out,
@@ -271,13 +272,20 @@ async def update_stay(stay_id: int, request: Request,
     payload, e = _payload(data, require_property=False)
     if e:
         return e
+    from . import access  # import tardif : access importe ce module pour la fiche
+
+    # Un code d'entrée est calé sur les dates du séjour : décaler les dates sans le révoquer
+    # laisserait une porte ouverte pendant des jours où plus personne n'est attendu.
+    moved = (payload["check_in"] != row.check_in or payload["check_out"] != row.check_out
+             or payload["status"] != row.status)
     for field, value in payload.items():
         setattr(row, field, value)
     row.updated_at = datetime.utcnow()
+    warnings = access.revoke_codes_of_stay(db, row) if moved else []
     db.flush()
-    stays.refresh_conflicts(db, row.property_id)
+    stays.refresh_conflicts(db, row.property_id, principal.agency_id)
     db.commit()
-    return {"stay": stay_dict(db, row)}
+    return {"stay": stay_dict(db, row), "code_warnings": warnings}
 
 
 @router.post("/backoffice/sejours/{stay_id}/annuler")
@@ -302,6 +310,6 @@ def cancel_stay(stay_id: int, principal: Principal = Depends(get_principal),
     if task is not None:
         task.status = "cancelled"
     db.flush()
-    stays.refresh_conflicts(db, row.property_id)
+    stays.refresh_conflicts(db, row.property_id, principal.agency_id)
     db.commit()
     return {"stay": stay_dict(db, row), "code_warnings": warnings}

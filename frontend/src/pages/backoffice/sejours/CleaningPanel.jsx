@@ -20,6 +20,8 @@ function CleaningPanel() {
   const qc = useQueryClient()
   const [params] = useSearchParams()
   const [status, setStatus] = useState(() => params.get('statut') || '')
+  // `equipe` vient de la fiche d'une équipe : on ne montre que ses tâches.
+  const teamFilter = Number(params.get('equipe')) || null
   // Ouvre d'emblée la tâche désignée par le lien (fiche du séjour, alerte de retard).
   const [openId, setOpenId] = useState(() => (params.get('tache') ? Number(params.get('tache')) : null))
   const [creating, setCreating] = useState(false)
@@ -27,8 +29,9 @@ function CleaningPanel() {
   const [report, setReport] = useState(NEW_REPORT)
   const [photo, setPhoto] = useState(null)
 
-  const { data, isLoading, error } = useQuery(['stays-cleanings', status],
-    () => stayService.listCleanings(status ? { status } : {}))
+  const { data, isLoading, error } = useQuery(['stays-cleanings', status, teamFilter],
+    () => stayService.listCleanings({ ...(status ? { status } : {}),
+                                      ...(teamFilter ? { team_id: teamFilter } : {}) }))
   const detail = useQuery(['stays-cleaning', openId], () => stayService.getCleaning(openId), { enabled: Boolean(openId) })
   const { data: team } = useQuery('team', teamService.getTeam)
   const { data: props } = useQuery('bo-properties-min',

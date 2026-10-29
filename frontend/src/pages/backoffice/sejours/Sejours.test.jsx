@@ -13,6 +13,7 @@ import CleaningPanel from './CleaningPanel'
 import AccessPanel from './AccessPanel'
 import StayCalendar from './StayCalendar'
 import StayDetail from './StayDetail'
+import OpsTeamsPanel from './OpsTeamsPanel'
 
 const { svc } = vi.hoisted(() => ({
   svc: {
@@ -27,6 +28,7 @@ const { svc } = vi.hoisted(() => ({
     guestDocUrl: (id) => `/piece/${id}`,
     listAccess: vi.fn(), setAccess: vi.fn(), getCode: vi.fn(), issueCode: vi.fn(), revokeCode: vi.fn(),
     getStay: vi.fn(), createStay: vi.fn(), updateStay: vi.fn(), cancelStay: vi.fn(), calendar: vi.fn(),
+    listOpsTeams: vi.fn(), assignTeam: vi.fn(),
   },
 }))
 vi.mock('../../../services/stayService', async (orig) => ({ ...(await orig()), stayService: svc }))
@@ -85,6 +87,12 @@ const DETAIL = {
   messages: [{ id: 32, subject: 'Votre arrivée', status: 'sent', due_at: '2026-11-02T09:00:00', sent_at: '2026-11-02T09:01:00' }],
   conflicts: [],
 }
+const OPS_TEAMS = {
+  performance_days: 30,
+  teams: [{ id: 3, name: 'Ménage Gueliz', kind: 'menage', color: '#1E7F4E', members_count: 2,
+    performance: { planned: 5, done: 4, late: 1, urgent_reports: 2, avg_minutes: 75 } }],
+  properties: [{ property_id: 5, property_title: 'Riad Médina', team_id: null }],
+}
 const CALENDAR = {
   month: '2026-11', days: 30,
   properties: [{ property_id: 5, property_title: 'Riad Médina', stays: [
@@ -106,6 +114,7 @@ function renderAt(path) {
           <Route path="messages" element={<MessagesPanel />} />
           <Route path="calendriers" element={<CalendarsList />} />
           <Route path="calendrier" element={<StayCalendar />} />
+          <Route path="equipes" element={<OpsTeamsPanel />} />
           </Route>
           <Route path="/backoffice/sejours/:stayId" element={<StayDetail />} />
         </Routes>
@@ -131,6 +140,8 @@ describe('Séjours courte durée', () => {
     svc.calendar.mockResolvedValue(CALENDAR)
     svc.createStay.mockResolvedValue({ stay: { id: 3 } })
     svc.cancelStay.mockResolvedValue({ stay: { id: 2, status: 'cancelled' }, code_warnings: [] })
+    svc.listOpsTeams.mockResolvedValue(OPS_TEAMS)
+    svc.assignTeam.mockResolvedValue({ property_id: 5, team_id: 3 })
     api.get.mockResolvedValue({ data: { properties: [{ id: 5, title: 'Riad Médina' }] } })
   })
 
@@ -190,6 +201,8 @@ describe('Messagerie de séjour', () => {
     svc.calendar.mockResolvedValue(CALENDAR)
     svc.createStay.mockResolvedValue({ stay: { id: 3 } })
     svc.cancelStay.mockResolvedValue({ stay: { id: 2, status: 'cancelled' }, code_warnings: [] })
+    svc.listOpsTeams.mockResolvedValue(OPS_TEAMS)
+    svc.assignTeam.mockResolvedValue({ property_id: 5, team_id: 3 })
     api.get.mockResolvedValue({ data: { properties: [{ id: 5, title: 'Riad Médina' }] } })
     svc.updateContact.mockResolvedValue({ stay: {} })
     svc.listStays.mockResolvedValue(STAYS)
@@ -440,6 +453,8 @@ describe('Fiche de séjour, saisie directe et calendrier', () => {
     svc.calendar.mockResolvedValue(CALENDAR)
     svc.createStay.mockResolvedValue({ stay: { id: 3 } })
     svc.cancelStay.mockResolvedValue({ stay: { id: 2, status: 'cancelled' }, code_warnings: [] })
+    svc.listOpsTeams.mockResolvedValue(OPS_TEAMS)
+    svc.assignTeam.mockResolvedValue({ property_id: 5, team_id: 3 })
     api.get.mockResolvedValue({ data: { properties: [{ id: 5, title: 'Riad Médina' }] } })
   })
 
@@ -498,5 +513,21 @@ describe('Fiche de séjour, saisie directe et calendrier', () => {
     renderAt('/backoffice/sejours/calendrier')
     expect(await screen.findByRole('link', { name: 'Salma Bennani' }))
       .toHaveAttribute('href', '/backoffice/sejours/2')
+  })
+
+  it("montre l'activité des équipes et confie un bien", async () => {
+    renderAt('/backoffice/sejours/equipes')
+    // Le nom apparaît deux fois : sur la carte de l'équipe et dans la liste d'affectation.
+    expect(await screen.findByRole('heading', { name: 'Ménage Gueliz' })).toBeInTheDocument()
+    expect(screen.getByText('2 signalements urgents non lus')).toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByLabelText('Équipe du bien Riad Médina'), '3')
+    await vi.waitFor(() => expect(svc.assignTeam).toHaveBeenCalledWith(5, 3))
+  })
+
+  it("renvoie vers l'écran Équipe quand l'agence n'en a aucune", async () => {
+    svc.listOpsTeams.mockResolvedValue({ ...OPS_TEAMS, teams: [] })
+    renderAt('/backoffice/sejours/equipes')
+    expect(await screen.findByRole('link', { name: 'Gérer les équipes' }))
+      .toHaveAttribute('href', '/backoffice/equipe')
   })
 })

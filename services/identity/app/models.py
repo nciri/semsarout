@@ -183,16 +183,47 @@ class AgencyRO(Base):
 
 
 class Team(Base):
+    """Équipe d'une agence. `kind` dit son métier (ménage, maintenance, commerciale…) :
+    sans lui, une tâche d'exploitation ne peut être confiée qu'à une personne nommée, et
+    l'agence doit refaire l'affectation à chaque absence."""
+
     __tablename__ = "team"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     agency_id = Column(Integer, nullable=False, index=True)
     name = Column(String(80), nullable=False)
+    kind = Column(String(30), nullable=False, default="generale", server_default="generale")
+    color = Column(String(16))
+    description = Column(String(255))
     created_at = Column(DateTime, default=datetime.utcnow)
 
     def to_dict(self, members_count: int = 0) -> dict:
         return {"id": self.id, "agency_id": self.agency_id, "name": self.name,
-                "members_count": members_count}
+                "kind": self.kind or "generale", "color": self.color,
+                "description": self.description, "members_count": members_count}
+
+
+class TeamMembership(Base):
+    """Appartenance d'un membre à une équipe, avec son rôle **dans cette équipe**.
+
+    Distincte de `UserRO.team_id`, qui reste l'équipe de rattachement principale : un agent
+    de ménage renforce la maintenance le samedi, et une plateforme qui ne connaît qu'une
+    équipe par personne oblige à le sortir de la sienne pour l'y mettre.
+    """
+
+    __tablename__ = "team_membership"
+    __table_args__ = (UniqueConstraint("team_id", "user_id", name="uq_team_membership"),)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    agency_id = Column(Integer, nullable=False, index=True)
+    team_id = Column(Integer, ForeignKey("team.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(BigInteger, nullable=False, index=True)
+    job = Column(String(40), nullable=False, default="membre")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self, member: dict | None = None) -> dict:
+        return {"id": self.id, "team_id": self.team_id, "user_id": self.user_id,
+                "job": self.job, "member": member}
 
 
 class Invitation(Base):

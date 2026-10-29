@@ -98,6 +98,8 @@ staymanager/migrate_menage_sejour.sql
 staymanager/migrate_enregistrement_voyageur.sql
 staymanager/migrate_acces_sejour.sql
 billing/migrate_portail_abonnement.sql
+identity/migrate_equipes_metier.sql
+staymanager/migrate_equipes_exploitation.sql
 audit/add_tenant.sql
 "
 

@@ -14,6 +14,7 @@ const TABS = [
   { to: 'menage', key: 'cleaning' },
   { to: 'messages', key: 'messages' },
   { to: 'acces', key: 'access' },
+  { to: 'equipes', key: 'teams' },
   { to: 'calendriers', key: 'calendars' },
 ]
 

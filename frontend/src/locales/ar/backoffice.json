@@ -3315,7 +3315,30 @@
         "newPlaceholder": "فريق جديد",
         "create": "إنشاء",
         "limitReached": "تم بلوغ الحد الأقصى للفرق — قم بالترقية إلى خطة أعلى.",
-        "empty": "لا يوجد أي فريق."
+        "empty": "لا يوجد أي فريق.",
+        "newTitle": "فريق جديد",
+        "editTitle": "تعديل الفريق",
+        "edit": "تعديل الفريق",
+        "delete": "حذف الفريق",
+        "updated": "تم تعديل الفريق.",
+        "nameLabel": "الاسم",
+        "kindLabel": "المهنة",
+        "kindHelp": "الأدوار المتاحة: {{jobs}}.",
+        "colorLabel": "اللون",
+        "descriptionLabel": "الوصف",
+        "cancel": "إلغاء",
+        "submit": "حفظ",
+        "membersCount": "{{count}} عضو",
+        "membersCount_other": "{{count}} أعضاء",
+        "addMember": "إضافة تعزيز",
+        "addMemberTitle": "تعزيز لفريق {{team}}",
+        "addMemberHelp": "يبقى العضو في فريقه الأصلي. اختر الدور الذي يشغله هنا.",
+        "memberLabel": "العضو",
+        "memberPlaceholder": "اختر عضوا",
+        "jobLabel": "الدور داخل الفريق",
+        "memberAdded": "تمت إضافة التعزيز.",
+        "removeMember": "إزالة",
+        "memberRemoved": "تمت إزالة التعزيز."
       },
       "members": {
         "title": "الأعضاء",
@@ -3336,6 +3359,23 @@
         "teamCreated": "تم إنشاء الفريق",
         "teamDeleted": "تم حذف الفريق",
         "memberRemoved": "تمت إزالة العضو"
+      },
+      "kinds": {
+        "generale": "عامة",
+        "commerciale": "تجارية",
+        "menage": "التنظيف",
+        "maintenance": "الصيانة",
+        "conciergerie": "الاستقبال"
+      },
+      "jobs": {
+        "responsable": "مسؤول",
+        "membre": "عضو",
+        "negociateur": "وسيط",
+        "assistant": "مساعد",
+        "agent": "عون",
+        "blanchisserie": "مغسلة",
+        "technicien": "تقني",
+        "agent_accueil": "عون استقبال"
       }
     },
     "general": {
@@ -3559,7 +3599,8 @@
         "messages": "الرسائل",
         "access": "الدخول",
         "calendars": "التقويمات",
-        "calendar": "الروزنامة"
+        "calendar": "الروزنامة",
+        "teams": "الفرق"
       },
       "arrivals": "وصول اليوم",
       "departures": "مغادرة اليوم",
@@ -3958,6 +3999,29 @@
       "conflictsTitle": "إقامات متعارضة",
       "conflictAlert": "تتداخل هذه الإقامة مع {{count}} أخرى في نفس العقار.",
       "conflictAlert_other": "تتداخل هذه الإقامة مع {{count}} إقامات أخرى في نفس العقار."
+    },
+    "teams": {
+      "performanceTitle": "نشاط الفرق",
+      "performanceSub": "خلال {{count}} يوما الأخيرة",
+      "done": "تنظيفات منجزة",
+      "planned": "تنظيفات مبرمجة",
+      "late": "متأخرة",
+      "avgMinutes": "المدة المتوسطة",
+      "minutes": "د",
+      "urgentReports": "{{count}} إشعار عاجل غير مقروء",
+      "urgentReports_other": "{{count}} إشعارات عاجلة غير مقروءة",
+      "assignTitle": "العقارات والفرق",
+      "assignHelp": "تُسند مهمة التنظيف بعد المغادرة إلى فريق العقار، دون تعيين يدوي.",
+      "team": "الفريق",
+      "teamFor": "فريق عقار {{property}}",
+      "noTeam": "لا فريق",
+      "noProperty": "لا عقار في محفظتك.",
+      "assigned": "تم حفظ الإسناد.",
+      "empty": {
+        "title": "لا فريق",
+        "description": "أنشئ فريق تنظيف أو صيانة لإسناد عقاراتك إليه.",
+        "link": "إدارة الفرق"
+      }
     }
   },
   "onboarding": {

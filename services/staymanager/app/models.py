@@ -208,12 +208,34 @@ class CleaningTask(Base):
     # Nul pour un ménage ajouté à la main (après travaux, avant une visite).
     reservation_id = Column(BigInteger, ForeignKey("staymanager_reservation.id"), index=True)
     assigned_to_id = Column(Integer, index=True)
+    # Équipe chargée du bien au moment où la tâche est née : gardée sur la ligne pour que
+    # l'historique reste lisible après un changement d'affectation.
+    team_id = Column(Integer, index=True)
     scheduled_date = Column(Date, nullable=False, index=True)
     status = Column(String(20), default="pending", index=True)  # pending|in_progress|done|cancelled
     zones_done = Column(JSON, default=list)
     notes = Column(Text)
     started_at = Column(DateTime)
     completed_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class PropertyTeam(Base):
+    """Équipe chargée de l'exploitation d'un bien en courte durée.
+
+    Sans elle, chaque ménage doit être confié à une personne nommée : une absence et la
+    tâche reste orpheline. L'équipe vit dans `identity` ; on n'en garde ici que la
+    référence, sinon l'agence tiendrait deux annuaires.
+    """
+
+    __tablename__ = "property_team"
+    __table_args__ = (UniqueConstraint("property_id", name="uq_property_team_property"),)
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    agency_id = Column(Integer, nullable=False, index=True)
+    property_id = Column(Integer, nullable=False, index=True)
+    team_id = Column(Integer, nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
