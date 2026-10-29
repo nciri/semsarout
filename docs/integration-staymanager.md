@@ -130,6 +130,15 @@ pas à ce qui a été fait dans StayManager ».
     d'enregistrement**. La signature est une acceptation horodatée (nom saisi, date, IP
     consignés) ; le parafeur `semsar_signing` reste disponible pour un circuit avancé.
 
+14. **Rubriques rangées par rôle** — le rang de sept onglets mettait sur le même plan des
+    choses de niveaux différents. Une colonne les sépare : *Réservations* (planning,
+    calendrier : deux vues des mêmes séjours), *Exploitation* (ménage, messages : n'existe
+    que s'il y a des séjours, d'où `stays_total` dans l'aperçu et les rubriques éteintes
+    quand il vaut zéro), *Réglages par bien* (accès, équipes : les prérequis, toujours
+    ouverts). Les calendriers connectés quittent la colonne pour une icône de l'en-tête, à
+    côté de la synchronisation qui s'en sert : ils alimentent les séjours, ils n'en sont pas
+    une vue.
+
 ## Décisions prises pour éviter les doublons
 
 - **Une seule table de réservations** : `staymanager.staymanager_reservation` sert le miroir

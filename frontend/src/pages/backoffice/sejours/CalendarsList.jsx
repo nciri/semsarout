@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
@@ -58,7 +59,15 @@ function CalendarsList() {
 
   return (
     <div className="grid gap-3">
-      <div className="flex justify-end">
+      {/* Les calendriers ne figurent plus dans la colonne des rubriques : on arrive ici par
+          l'icône de l'en-tête, l'écran doit donc se nommer et savoir d'où l'on vient. */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="font-display text-[15px] font-bold">{t('backoffice:stays.overview.tabs.calendars')}</h2>
+          <Link to="/backoffice/sejours" className="text-[12.5px] font-medium text-gray-500 hover:text-gray-900">
+            {t('backoffice:stays.calendars.backToPlanning')}
+          </Link>
+        </div>
         <IconAction icon={FiPlus} label={t('backoffice:stays.calendars.add')} onClick={() => setOpen(true)} tone="primary" tipAlign="end" />
       </div>
 

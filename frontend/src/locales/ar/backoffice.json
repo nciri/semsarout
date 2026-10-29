@@ -3592,8 +3592,6 @@
       "loadError": "حدث خطأ أثناء التحميل. حاول مرة أخرى لاحقًا."
     },
     "overview": {
-      "register": "الإقامات والتقويمات",
-      "registerTabs": "عروض الإقامات",
       "tabs": {
         "planning": "المخطط",
         "cleaning": "التنظيف",
@@ -3617,7 +3615,15 @@
       "syncAll": "مزامنة جميع التقويمات",
       "syncDone": "تمت مزامنة {{ok}} تقويم، {{failed}} فشلت.",
       "seeConflicts": "عرض الإقامات المعنية",
-      "seeChannels": "عرض الروزنامات"
+      "seeChannels": "عرض الروزنامات",
+      "navLabel": "أقسام الإقامات",
+      "groups": {
+        "bookings": "الحجوزات",
+        "operations": "التشغيل",
+        "setup": "إعدادات كل عقار"
+      },
+      "needStays": "لا شيء للمعالجة ما لم تُسجَّل إقامة.",
+      "openCalendars": "التقويمات المرتبطة"
     },
     "status": {
       "confirmed": "مؤكدة",
@@ -3728,7 +3734,8 @@
         "urlLabel": "رابط تقويم iCal",
         "cancel": "إلغاء",
         "submit": "إضافة"
-      }
+      },
+      "backToPlanning": "العودة إلى مخطط الإقامات"
     },
     "messages": {
       "templatesTitle": "قوالب الرسائل",

@@ -601,6 +601,9 @@ def stays_overview(principal: Principal = Depends(get_principal), db: Session = 
     sources = db.query(IcalSource).filter(IcalSource.agency_id == principal.agency_id).all()
     nights = sum(r.nights or 0 for r in rows if r.check_in >= today)
     return {
+        # Le front s'en sert pour dire ce qui dépend de quoi : sans séjour, le ménage et les
+        # messages n'ont rien à traiter, et l'écran le montre au lieu de proposer du vide.
+        "stays_total": len(rows),
         "arrivals_today": sum(1 for r in rows if r.check_in.date() == today.date()),
         "departures_today": sum(1 for r in rows if r.check_out.date() == today.date()),
         "in_house": sum(1 for r in rows if r.check_in <= now < r.check_out),

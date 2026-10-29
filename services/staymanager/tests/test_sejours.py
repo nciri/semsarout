@@ -237,6 +237,8 @@ def test_lapercu_dit_ce_quil_y_a_a_faire(client, bien, db_session):
     assert body["arrivals_today"] == 1 and body["departures_today"] == 1
     assert body["upcoming"] == 0                 # l'annulé ne compte pas
     assert body["sources"] == {"total": 1, "in_error": 1}
+    # Le front éteint ménage et messages quand ce compte est nul ; l'annulé n'y figure pas.
+    assert body["stays_total"] == 2
 
 
 def test_retirer_un_calendrier_garde_les_sejours_importes(client, bien, db_session, monkeypatch):

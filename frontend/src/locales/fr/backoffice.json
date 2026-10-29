@@ -3592,8 +3592,6 @@
       "loadError": "Une erreur est survenue lors du chargement. Réessayez plus tard."
     },
     "overview": {
-      "register": "Séjours et calendriers",
-      "registerTabs": "Vues des séjours",
       "tabs": {
         "planning": "Planning",
         "cleaning": "Ménage",
@@ -3617,7 +3615,15 @@
       "syncAll": "Synchroniser tous les calendriers",
       "syncDone": "{{ok}} calendrier(s) synchronisé(s), {{failed}} en échec.",
       "seeConflicts": "Voir les séjours concernés",
-      "seeChannels": "Voir les calendriers"
+      "seeChannels": "Voir les calendriers",
+      "navLabel": "Rubriques des séjours",
+      "groups": {
+        "bookings": "Réservations",
+        "operations": "Exploitation",
+        "setup": "Réglages par bien"
+      },
+      "needStays": "Rien à traiter tant qu'aucun séjour n'est enregistré.",
+      "openCalendars": "Calendriers connectés"
     },
     "status": {
       "confirmed": "Confirmé",
@@ -3728,7 +3734,8 @@
         "urlLabel": "URL du calendrier iCal",
         "cancel": "Annuler",
         "submit": "Ajouter"
-      }
+      },
+      "backToPlanning": "Revenir au planning des séjours"
     },
     "messages": {
       "templatesTitle": "Modèles de messages",

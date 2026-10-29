@@ -2,21 +2,29 @@ import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
-import { FiAlertTriangle, FiCalendar, FiLock, FiRefreshCw } from 'react-icons/fi'
+import { FiAlertTriangle, FiLock, FiRefreshCw, FiRss } from 'react-icons/fi'
 import { stayService } from '../../../services/stayService'
 import { useFormat } from '../../../utils/format'
 import { GatedNotice } from '../../../components/backoffice/ui'
 import { Alert, IconAction, Kv } from '../components/kit'
 
-const TABS = [
-  { to: '', end: true, key: 'planning' },
-  { to: 'calendrier', key: 'calendar' },
-  { to: 'menage', key: 'cleaning' },
-  { to: 'messages', key: 'messages' },
-  { to: 'acces', key: 'access' },
-  { to: 'equipes', key: 'teams' },
-  { to: 'calendriers', key: 'calendars' },
+/**
+ * Les rubriques ne sont pas au même niveau : « Planning » et « Calendrier » montrent les
+ * mêmes séjours autrement, « Ménage » et « Messages » n'existent que parce qu'il y a des
+ * séjours, et « Accès » / « Équipes » se règlent par bien, une fois, avant tout séjour.
+ * Un rang d'onglets les posait côte à côte comme sept choix équivalents ; la colonne les
+ * range par rôle et éteint ce qui n'a encore rien à traiter.
+ *
+ * `needsStays` porte cette dépendance : sans séjour enregistré, la rubrique s'affiche en
+ * attente plutôt que de mener à une page vide.
+ */
+const NAV = [
+  { key: 'bookings', items: [{ to: '', end: true, key: 'planning' }, { to: 'calendrier', key: 'calendar' }] },
+  { key: 'operations', needsStays: true, items: [{ to: 'menage', key: 'cleaning' }, { to: 'messages', key: 'messages' }] },
+  { key: 'setup', items: [{ to: 'acces', key: 'access' }, { to: 'equipes', key: 'teams' }] },
 ]
+
+const ITEM = 'rounded-lg px-2.5 py-1.5 text-start text-[13px] leading-snug'
 
 function StaysLayout() {
   const { t } = useTranslation(['backoffice', 'common'])
@@ -39,6 +47,10 @@ function StaysLayout() {
   }
 
   const n = (v) => fmtNumber(v || 0)
+  // Tant que l'aperçu n'est pas arrivé, on ne présume pas l'absence de séjours : éteindre
+  // les rubriques au chargement les ferait clignoter.
+  const hasStays = !o || (o.stays_total || 0) > 0
+  const inError = o?.sources?.in_error || 0
 
   return (
     <div className="mx-auto grid w-full max-w-[1360px] gap-5">
@@ -47,8 +59,14 @@ function StaysLayout() {
           <h1 className="font-display text-[22px] font-extrabold leading-tight tracking-tight sm:text-[26px]">{t('backoffice:stays.shared.pageTitle')}</h1>
           <p className="mt-1 text-gray-500">{fmtDate(new Date(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
         </div>
-        <IconAction icon={FiRefreshCw} label={t('backoffice:stays.overview.syncAll')} onClick={() => syncAll.mutate()}
-          tone="primary" tipAlign="end" disabled={syncAll.isLoading} />
+        {/* Les calendriers connectés alimentent les séjours : le réglage se tient à côté de
+            la synchronisation qui s'en sert, pas dans les rubriques qu'il remplit. */}
+        <div className="flex items-center gap-1">
+          <IconAction icon={FiRss} label={t('backoffice:stays.overview.openCalendars')} to="calendriers"
+            tone={inError > 0 ? 'danger' : 'default'} />
+          <IconAction icon={FiRefreshCw} label={t('backoffice:stays.overview.syncAll')} onClick={() => syncAll.mutate()}
+            tone="primary" tipAlign="end" disabled={syncAll.isLoading} />
+        </div>
       </div>
 
       {o && (
@@ -64,7 +82,7 @@ function StaysLayout() {
           <Kv label={t('backoffice:stays.overview.nights')} value={n(o.nights_booked)}
             to="/backoffice/sejours/calendrier" />
           <Kv label={t('backoffice:stays.overview.channels')} value={n(o.sources?.total)}
-            sub={t('backoffice:stays.overview.channelsInError', { count: o.sources?.in_error || 0 })}
+            sub={t('backoffice:stays.overview.channelsInError', { count: inError })}
             to="/backoffice/sejours/calendriers" />
         </div>
       )}
@@ -77,29 +95,43 @@ function StaysLayout() {
           </Link>
         </Alert>
       )}
-      {o?.sources?.in_error > 0 && (
+      {inError > 0 && (
         <Alert tone="warn" icon={FiRefreshCw}>
-          {t('backoffice:stays.overview.sourcesInError', { count: o.sources.in_error })}{' '}
+          {t('backoffice:stays.overview.sourcesInError', { count: inError })}{' '}
           <Link to="/backoffice/sejours/calendriers" className="font-semibold underline">
             {t('backoffice:stays.overview.seeChannels')}
           </Link>
         </Alert>
       )}
 
-      <section aria-labelledby="stays-register" className="grid min-w-0 gap-3.5 rounded-xl border border-gray-200 bg-white px-3.5 pb-3 pt-[18px] sm:px-5">
-        <div className="flex flex-wrap items-center justify-between gap-x-3.5 gap-y-2.5">
-          <h2 id="stays-register" className="flex items-center gap-2 font-display text-[15px] font-bold">
-            <FiCalendar className="h-[17px] w-[17px] text-gray-400" aria-hidden="true" />{t('backoffice:stays.overview.register')}
-          </h2>
-          <nav aria-label={t('backoffice:stays.overview.registerTabs')} className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-[3px]">
-            {TABS.map((tab) => (
-              <NavLink key={tab.key} to={tab.to} end={tab.end}
-                className={({ isActive }) => `rounded-md px-2.5 py-1 text-[12.5px] ${isActive ? 'bg-white font-semibold text-gray-900 shadow-sm' : 'font-medium text-gray-600'}`}>
-                {t(`backoffice:stays.overview.tabs.${tab.key}`)}
-              </NavLink>
-            ))}
-          </nav>
-        </div>
+      <section className="grid min-w-0 gap-4 rounded-xl border border-gray-200 bg-white p-3.5 sm:grid-cols-[13rem_minmax(0,1fr)] sm:gap-5 sm:p-5">
+        <nav aria-label={t('backoffice:stays.overview.navLabel')} className="grid gap-4 self-start sm:border-e sm:border-gray-200 sm:pe-5">
+          {NAV.map((group) => {
+            const dormant = group.needsStays && !hasStays
+            return (
+              <div key={group.key} className="grid gap-0.5">
+                <h2 className="px-2.5 pb-0.5 text-[11px] font-bold uppercase tracking-wide text-gray-400">
+                  {t(`backoffice:stays.overview.groups.${group.key}`)}
+                </h2>
+                {group.items.map((item) => (dormant ? (
+                  <span key={item.key} aria-disabled="true" className={`${ITEM} font-medium text-gray-400`}>
+                    {t(`backoffice:stays.overview.tabs.${item.key}`)}
+                  </span>
+                ) : (
+                  <NavLink key={item.key} to={item.to} end={item.end}
+                    className={({ isActive }) => `${ITEM} ${isActive ? 'bg-primary-50 font-semibold text-primary-800' : 'font-medium text-gray-600 hover:bg-gray-50'}`}>
+                    {t(`backoffice:stays.overview.tabs.${item.key}`)}
+                  </NavLink>
+                )))}
+                {dormant && (
+                  <p className="px-2.5 pt-1 text-[11.5px] leading-snug text-gray-500">
+                    {t('backoffice:stays.overview.needStays')}
+                  </p>
+                )}
+              </div>
+            )
+          })}
+        </nav>
         <div className="min-w-0"><Outlet /></div>
       </section>
     </div>

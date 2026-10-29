@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from 'react-query'
@@ -38,7 +38,7 @@ vi.mock('../../../services/teamService', () => ({
 }))
 
 const OVERVIEW = {
-  arrivals_today: 2, departures_today: 1, in_house: 4, upcoming: 7,
+  stays_total: 11, arrivals_today: 2, departures_today: 1, in_house: 4, upcoming: 7,
   conflicts: 1, nights_booked: 23, sources: { total: 3, in_error: 1 },
 }
 const STAYS = {
@@ -188,6 +188,36 @@ describe('Séjours courte durée', () => {
     renderAt('/backoffice/sejours/calendriers')
     await userEvent.click(await screen.findByRole('button', { name: 'Ajouter un calendrier' }))
     expect(screen.getByRole('button', { name: 'Ajouter' })).toBeDisabled()
+  })
+
+  it('range les rubriques par rôle au lieu de les aligner', async () => {
+    renderAt('/backoffice/sejours')
+    const nav = await screen.findByRole('navigation', { name: 'Rubriques des séjours' })
+    expect(within(nav).getByRole('heading', { name: 'Réservations' })).toBeInTheDocument()
+    expect(within(nav).getByRole('heading', { name: 'Exploitation' })).toBeInTheDocument()
+    expect(within(nav).getByRole('heading', { name: 'Réglages par bien' })).toBeInTheDocument()
+    expect(within(nav).getByRole('link', { name: 'Ménage' })).toBeInTheDocument()
+    // Les calendriers quittent la colonne : ils alimentent les séjours, ils n'en sont pas une vue.
+    expect(within(nav).queryByText('Calendriers')).not.toBeInTheDocument()
+  })
+
+  it("ouvre les calendriers depuis l'en-tête, à côté de la synchronisation", async () => {
+    renderAt('/backoffice/sejours')
+    const lien = await screen.findByRole('link', { name: 'Calendriers connectés' })
+    expect(lien).toHaveAttribute('href', '/backoffice/sejours/calendriers')
+    await userEvent.click(lien)
+    expect(await screen.findByText('Revenir au planning des séjours')).toBeInTheDocument()
+  })
+
+  it("éteint l'exploitation tant qu'aucun séjour n'est enregistré", async () => {
+    svc.overview.mockResolvedValue({ ...OVERVIEW, stays_total: 0, conflicts: 0 })
+    renderAt('/backoffice/sejours')
+    const nav = await screen.findByRole('navigation', { name: 'Rubriques des séjours' })
+    await vi.waitFor(() => expect(within(nav).queryByRole('link', { name: 'Ménage' })).not.toBeInTheDocument())
+    expect(within(nav).getByText('Ménage')).toHaveAttribute('aria-disabled', 'true')
+    expect(within(nav).getByText(/Rien à traiter tant qu'aucun séjour/)).toBeInTheDocument()
+    // Les réglages par bien restent ouverts : ce sont eux qui font venir les séjours.
+    expect(within(nav).getByRole('link', { name: 'Accès' })).toBeInTheDocument()
   })
 })
 
