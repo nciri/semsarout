@@ -177,6 +177,19 @@ def _csrf_required(request: Request) -> bool:
     return bool(request.cookies.get(settings.cookie_access_name))
 
 
+def _client_ip(request: Request) -> str:
+    """Adresse du client, telle que le BFF la voit.
+
+    `X-Real-Ip` est posé par le reverse proxy (Traefik) à partir de la connexion elle-même :
+    il n'est pas falsifiable par l'appelant, contrairement à `X-Forwarded-For`, qu'un client
+    peut préremplir. Sans proxy devant (dev), on retombe sur l'adresse de la connexion.
+    """
+    real = (request.headers.get("x-real-ip") or "").strip()
+    if real:
+        return real[:45]
+    return (request.client.host if request.client else "")[:45]
+
+
 def _inject_identity(headers: dict, ident: dict) -> None:
     if ident.get("user_id") is not None:
         headers["x-semsar-user-id"] = str(ident["user_id"])
@@ -685,6 +698,7 @@ def _forward_headers(request: Request, ident: dict | None, tenant: str) -> dict:
     if ident:
         _inject_identity(headers, ident)
     headers["x-semsar-tenant"] = tenant
+    headers["x-semsar-client-ip"] = _client_ip(request)
     return headers
 
 
@@ -1286,6 +1300,9 @@ async def proxy(path: str, request: Request) -> Response:
         and not k.lower().startswith("x-semsar-")
         and k.lower() != "x-tenant"
     }
+    # L'adresse du client, que les services ne peuvent pas lire eux-mêmes (ils ne voient
+    # que le BFF). Posée ici, donc dans la famille x-semsar-* filtrée à l'entrée.
+    headers["x-semsar-client-ip"] = _client_ip(request)
     # /auth/refresh : pas d'en-tête Authorization → repli sur le refresh token du cookie
     # httpOnly (rétro-compat : l'en-tête reste prioritaire s'il est fourni).
     if request.url.path == "/api/v1/auth/refresh" and not request.headers.get("authorization"):

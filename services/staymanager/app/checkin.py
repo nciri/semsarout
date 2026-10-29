@@ -301,9 +301,11 @@ async def sign_stay_contract(token: str, request: Request, db: Session = Depends
     name = ((await json_body(request)).get("signer_name") or "").strip()[:200]
     if len(name) < 2:
         return err("Indiquez le nom qui signe le contrat.", 400)
+    # L'adresse du client vient du BFF (`x-semsar-client-ip`), qui la tient du reverse
+    # proxy : vue d'ici, `request.client.host` serait l'adresse du BFF, pas du voyageur.
+    signer_ip = (request.headers.get("x-semsar-client-ip") or "").strip()[:45]
     try:
-        contract = contract_client.sign(stay.agency_id, stay.contract_id, name,
-                                        (request.client.host if request.client else ""))
+        contract = contract_client.sign(stay.agency_id, stay.contract_id, name, signer_ip)
     except contract_client.ContractError as exc:
         return err(str(exc), 502)
     stay.contract_status = contract["status"]

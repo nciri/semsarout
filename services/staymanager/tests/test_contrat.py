@@ -106,6 +106,18 @@ def test_le_voyageur_signe_depuis_son_lien(client, bien, faux_contrat, db_sessio
     assert db_session.get(StayManagerReservation, stay_id).contract_status == "signed"
 
 
+def test_l_adresse_du_voyageur_vient_du_bff(client, bien, faux_contrat):
+    stay_id = _stay(client)
+    client.post(f"/backoffice/sejours/{stay_id}/contrat", json={})
+    token = client.post(f"/backoffice/sejours/{stay_id}/enregistrement").json()["link"]["token"]
+    client.post(f"/sejours/enregistrement/{token}/contrat",
+                json={"signer_name": "Salma Idrissi"},
+                headers={"x-semsar-client-ip": "41.248.0.1"})
+    # Vu d'ici, `request.client.host` serait l'adresse du BFF : seule celle posée par le
+    # BFF, hors d'atteinte de l'appelant, vaut comme trace.
+    assert ("sign", "Salma Idrissi", "41.248.0.1") in faux_contrat["calls"]
+
+
 def test_signer_sans_nom_est_refuse(client, bien, faux_contrat):
     stay_id = _stay(client)
     client.post(f"/backoffice/sejours/{stay_id}/contrat", json={})
