@@ -35,6 +35,8 @@ export const stayService = {
   getCheckin: async (stayId) => (await api.get(`${B}/${stayId}/enregistrement`)).data,
   reviewGuest: async (guestId, data) => (await api.patch(`${B}/voyageurs/${guestId}`, data)).data,
   guestDocUrl: (docId) => `${B}/voyageurs/pieces/${docId}`,
+  getContract: async (stayId) => (await api.get(`${B}/${stayId}/contrat`)).data,
+  createContract: async (stayId, data = {}) => (await api.post(`${B}/${stayId}/contrat`, data)).data,
   listOpsTeams: async () => (await api.get(`${B}/equipes`)).data,
   assignTeam: async (propertyId, teamId) => (await api.put(`${B}/equipes/${propertyId}`, { team_id: teamId })).data,
   listAccess: async () => (await api.get(`${B}/acces`)).data,
@@ -54,6 +56,8 @@ export const stayCheckinService = {
     `${G}/${token}/voyageurs/${guestId}/piece`, file,
     { params: { filename: file.name }, headers: { 'Content-Type': file.type || 'application/octet-stream' } })).data,
   submit: async (token) => (await api.post(`${G}/${token}/valider`)).data,
+  signContract: async (token, signerName) => (
+    await api.post(`${G}/${token}/contrat`, { signer_name: signerName })).data,
 }
 
 export const ACCESS_MODES = ['traditional', 'manual', 'ttlock']
@@ -61,6 +65,8 @@ export const TTLOCK_FIELDS = ['client_id', 'client_secret', 'access_token', 'loc
 
 export const GUEST_DOCUMENT_TYPES = ['cin', 'passeport', 'titre_sejour']
 export const GUEST_STATUS_TONE = { declared: 'neutral', validated: 'good', rejected: 'crit' }
+
+export const CONTRACT_STATUS_TONE = { draft: 'neutral', finalized: 'warn', signed: 'good' }
 
 /** Plateformes acceptées par le service (`ical.PLATFORMS`). */
 export const STAY_PLATFORMS = ['airbnb', 'booking', 'vrbo', 'autre']

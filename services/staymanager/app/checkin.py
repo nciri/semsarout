@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
 
+from . import contract_client
 from .db import get_db
 from .gate import gate
 from .models import (
@@ -195,6 +196,9 @@ def guest_view(token: str, db: Session = Depends(get_db)):
                      "expected_guests": stay.guest_count},
             "status": link.status, "expires_at": iso(link.expires_at),
             "guests": [_guest_dict(db, g) for g in guests],
+            # Le contrat n'est annoncé que s'il existe : rien ne sert de demander une
+            # signature à un voyageur dont l'agence n'a pas établi de contrat.
+            "contract": ({"status": stay.contract_status} if stay.contract_id else None),
             "document_types": list(DOCUMENT_TYPES)}
 
 
@@ -280,3 +284,28 @@ def submit_checkin(token: str, db: Session = Depends(get_db)):
     link.submitted_at = datetime.utcnow()
     db.commit()
     return {"link": _link_dict(link)}
+
+
+@router.post("/sejours/enregistrement/{token}/contrat")
+async def sign_stay_contract(token: str, request: Request, db: Session = Depends(get_db)):
+    """Acceptation du contrat par le voyageur, depuis son lien privé.
+
+    Le nom saisi est consigné avec la date et l'adresse IP par le service `contract` : la
+    signature vaut par sa trace, pas par une case cochée.
+    """
+    link, stay, e = _by_token(db, token)
+    if e:
+        return e
+    if not stay.contract_id:
+        return err("Aucun contrat à signer pour ce séjour.", 404)
+    name = ((await json_body(request)).get("signer_name") or "").strip()[:200]
+    if len(name) < 2:
+        return err("Indiquez le nom qui signe le contrat.", 400)
+    try:
+        contract = contract_client.sign(stay.agency_id, stay.contract_id, name,
+                                        (request.client.host if request.client else ""))
+    except contract_client.ContractError as exc:
+        return err(str(exc), 502)
+    stay.contract_status = contract["status"]
+    db.commit()
+    return {"contract": {"status": contract["status"], "signed_at": contract.get("signed_at")}}

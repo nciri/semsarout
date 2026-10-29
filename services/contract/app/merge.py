@@ -14,7 +14,8 @@ def _money(v):
         return ""
 
 
-def build_context(agency, *, transaction=None, property=None, client=None, agent_name=""):
+def build_context(agency, *, transaction=None, property=None, client=None, agent_name="",
+                  stay=None):
     prop = property
     cli = client
     tx_ref = asking = comm_rate = comm_amount = ""
@@ -45,7 +46,42 @@ def build_context(agency, *, transaction=None, property=None, client=None, agent
         "commission_rate": comm_rate,
         "commission_amount": comm_amount,
     }
+    if stay:
+        ctx.update(stay_context(stay))
     return ctx
+
+
+# Variables propres au contrat de séjour. Elles décrivent la location elle-même (dates,
+# occupants, montant) : un bail de longue durée n'en a pas l'usage, et les mélanger aux
+# variables de transaction rendrait un modèle illisible.
+STAY_PLACEHOLDERS = (
+    "stay_property", "stay_check_in", "stay_check_out", "stay_nights", "stay_guests",
+    "stay_total", "stay_cleaning_fee", "guest_name", "guest_email", "guest_phone",
+)
+
+
+def _day(value) -> str:
+    raw = str(value or "")[:10]
+    if len(raw) != 10:
+        return ""
+    year, month, day = raw.split("-")
+    return f"{day}/{month}/{year}"
+
+
+def stay_context(stay: dict) -> dict:
+    """Contexte d'un séjour, tel que staymanager le transmet (dates ISO, montants nombres)."""
+    return {
+        "stay_property": stay.get("property_title") or "",
+        "stay_check_in": _day(stay.get("check_in")),
+        "stay_check_out": _day(stay.get("check_out")),
+        "stay_nights": str(stay.get("nights") or ""),
+        "stay_guests": str(stay.get("guest_count") or ""),
+        "stay_total": _money(stay.get("total_price")) if stay.get("total_price") else "",
+        "stay_cleaning_fee": _money(stay.get("cleaning_fee")) if stay.get("cleaning_fee") else "",
+        "guest_name": stay.get("guest_name") or "",
+        "guest_email": stay.get("guest_email") or "",
+        "guest_phone": stay.get("guest_phone") or "",
+    }
 
 
 _PLACEHOLDER = re.compile(r"\{\{\s*([a-zA-Z0-9_]+)\s*\}\}")

@@ -28,7 +28,7 @@ const { svc } = vi.hoisted(() => ({
     guestDocUrl: (id) => `/piece/${id}`,
     listAccess: vi.fn(), setAccess: vi.fn(), getCode: vi.fn(), issueCode: vi.fn(), revokeCode: vi.fn(),
     getStay: vi.fn(), createStay: vi.fn(), updateStay: vi.fn(), cancelStay: vi.fn(), calendar: vi.fn(),
-    listOpsTeams: vi.fn(), assignTeam: vi.fn(),
+    listOpsTeams: vi.fn(), assignTeam: vi.fn(), getContract: vi.fn(), createContract: vi.fn(),
   },
 }))
 vi.mock('../../../services/stayService', async (orig) => ({ ...(await orig()), stayService: svc }))
@@ -141,6 +141,8 @@ describe('Séjours courte durée', () => {
     svc.createStay.mockResolvedValue({ stay: { id: 3 } })
     svc.cancelStay.mockResolvedValue({ stay: { id: 2, status: 'cancelled' }, code_warnings: [] })
     svc.listOpsTeams.mockResolvedValue(OPS_TEAMS)
+    svc.getContract.mockResolvedValue({ contract: null })
+    svc.createContract.mockResolvedValue({ contract: { id: 55, status: 'finalized' } })
     svc.assignTeam.mockResolvedValue({ property_id: 5, team_id: 3 })
     api.get.mockResolvedValue({ data: { properties: [{ id: 5, title: 'Riad Médina' }] } })
   })
@@ -202,6 +204,8 @@ describe('Messagerie de séjour', () => {
     svc.createStay.mockResolvedValue({ stay: { id: 3 } })
     svc.cancelStay.mockResolvedValue({ stay: { id: 2, status: 'cancelled' }, code_warnings: [] })
     svc.listOpsTeams.mockResolvedValue(OPS_TEAMS)
+    svc.getContract.mockResolvedValue({ contract: null })
+    svc.createContract.mockResolvedValue({ contract: { id: 55, status: 'finalized' } })
     svc.assignTeam.mockResolvedValue({ property_id: 5, team_id: 3 })
     api.get.mockResolvedValue({ data: { properties: [{ id: 5, title: 'Riad Médina' }] } })
     svc.updateContact.mockResolvedValue({ stay: {} })
@@ -454,6 +458,8 @@ describe('Fiche de séjour, saisie directe et calendrier', () => {
     svc.createStay.mockResolvedValue({ stay: { id: 3 } })
     svc.cancelStay.mockResolvedValue({ stay: { id: 2, status: 'cancelled' }, code_warnings: [] })
     svc.listOpsTeams.mockResolvedValue(OPS_TEAMS)
+    svc.getContract.mockResolvedValue({ contract: null })
+    svc.createContract.mockResolvedValue({ contract: { id: 55, status: 'finalized' } })
     svc.assignTeam.mockResolvedValue({ property_id: 5, team_id: 3 })
     api.get.mockResolvedValue({ data: { properties: [{ id: 5, title: 'Riad Médina' }] } })
   })
@@ -529,5 +535,22 @@ describe('Fiche de séjour, saisie directe et calendrier', () => {
     renderAt('/backoffice/sejours/equipes')
     expect(await screen.findByRole('link', { name: 'Gérer les équipes' }))
       .toHaveAttribute('href', '/backoffice/equipe')
+  })
+
+  it('établit le contrat de séjour depuis la fiche', async () => {
+    renderAt('/backoffice/sejours/2')
+    await screen.findByRole('heading', { name: 'Riad Médina' })
+    expect(await screen.findByText('Aucun contrat établi pour ce séjour.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Établir le contrat' }))
+    await vi.waitFor(() => expect(svc.createContract).toHaveBeenCalledWith('2'))
+  })
+
+  it("montre l'attente de signature quand le contrat existe", async () => {
+    svc.getContract.mockResolvedValue({ contract: { id: 55, status: 'finalized', signed_at: null } })
+    renderAt('/backoffice/sejours/2')
+    expect(await screen.findByText('À signer')).toBeInTheDocument()
+    expect(screen.getByText('En attente de la signature du voyageur.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ouvrir le contrat' }))
+      .toHaveAttribute('href', '/backoffice/contrats/55')
   })
 })

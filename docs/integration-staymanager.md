@@ -1,13 +1,16 @@
 # Reprise des fonctionnalités StayManager dans SemsarOut
 
 > Analyse du dépôt `hostify-0.1` (StayManager) et plan de reprise dans SemsarOut.
-> Branche : `feat/staymanager-natif`. Dernière mise à jour : 2026-10-28.
+> Branche : `feat/staymanager-natif`. Dernière mise à jour : 2026-10-29.
 >
-> **État : les 8 lots du périmètre web sont livrés.** Le mobile est hors périmètre (décision
-> du 2026-10-28) et aucune interface n'a été reprise : tous les écrans sont neufs, au thème
+> **État : les 8 lots du périmètre web sont livrés, puis 4 lots d'approfondissement**
+> (fiche de séjour et saisie directe, liens filtrés entre écrans, équipes métier,
+> contrat de séjour signé par le voyageur). Le mobile est hors périmètre (décision du
+> 2026-10-28) et aucune interface n'a été reprise : tous les écrans sont neufs, au thème
 > du back-office SemsarOut. Reste ouvert, hors reprise : chiffrement au repos des
 > identifiants de connecteurs (TTLock, ERP/CRM), fournisseur SMS à désigner, OCR des pièces
-> d'identité, et signature du contrat de séjour via `contract` + `semsar_signing`.
+> d'identité, et signature avancée via `semsar_signing` (l'acceptation en ligne horodatée
+> est livrée).
 
 ## Ce que StayManager est, en chiffres
 
@@ -34,12 +37,12 @@ Trois états : **déjà couvert** (ne rien reprendre), **partiel** (compléter l
 |---|---|---|
 | Auth (Google, e-mail, SMS), rôles, profil | `identity` : JWT RS256, rôles, équipes, sièges, KYC Didit | **couvert** — ne pas reprendre Firebase |
 | Propriétés, photos, adresse | `listing` : CRUD, modération, médias, prix jour/semaine/mois | **couvert** |
-| Réservations + sync iCal multi-OTA | `staymanager` : miroir des réservations d'un compte StayManager externe | **partiel** — rien de natif sans ce compte |
+| Réservations + sync iCal multi-OTA | `staymanager` : séjours natifs iCal, saisie directe, fiche, calendrier mensuel | **couvert** (livré le 2026-10-29) |
 | Serrures connectées TTLock, codes d'accès | `staymanager` : mode d'entrée par bien, codes par séjour | **couvert** (livré le 2026-10-28) |
 | Vérification voyageur, OCR pièce d'identité | `staymanager` : lien d'enregistrement, occupants, pièces | **couvert sans OCR** (livré le 2026-10-28) |
-| Contrats : gabarits, variables, PDF, signature | `contract` + `semsar_signing` (3a9dSign) | **couvert** — réutiliser, ne pas dupliquer |
+| Contrats : gabarits, variables, PDF, signature | `contract` : modèle `stay`, variables du séjour, PDF, signature du voyageur depuis son lien | **couvert** (livré le 2026-10-29) |
 | Messagerie automatisée (gabarits, règles, journal) | `notification` + `staymanager` : gabarits de l'agence, déclencheurs, journal | **couvert** pour les séjours (livré le 2026-10-28) |
-| Équipes multi-rôles, invitations | `identity/team` : équipes, sièges, invitations | **partiel** — pas de matrice de droits par bien |
+| Équipes multi-rôles, invitations | `identity/team` : équipes typées, rôles du métier, renforts, + bien rattaché à une équipe et performance dans `staymanager` | **couvert** (livré le 2026-10-29) |
 | Analytics, tableau de bord | `analytics` + tableau de bord back-office par activité | **couvert** |
 | Abonnements : plans, essai, statuts | `billing` : plans, entitlements, prorata, changement programmé, reprise ; relances chez `notification` | **couvert** (livré le 2026-10-28) |
 | Paiements Stripe / PayPal | `payment` : passerelle, webhooks | **partiel** — fournisseurs à brancher |
@@ -100,6 +103,33 @@ construire des écrans qui n'ont encore rien à montrer.
 9. ~~Mobile~~ — **hors périmètre** : seul le backend de l'application web est repris
    (décision du 2026-10-28). L'application Expo n'est pas portée.
 
+### Approfondissement (2026-10-29)
+
+Quatre lots répondant à une relecture de l'écran des séjours : « trop simple, ne correspond
+pas à ce qui a été fait dans StayManager ».
+
+10. **Fiche de séjour, saisie directe et calendrier** — une page par séjour (occupants,
+    ménage, code d'entrée, messages, conflits), la réservation conclue hors plateforme
+    (`source = manual`, modifiable, annulable), et une grille d'occupation mensuelle par
+    bien. Un séjour venu d'un calendrier reste non modifiable : la plateforme le réécrit à
+    chaque synchronisation.
+11. **Liens filtrés entre écrans** — chaque chiffre mène aux lignes qu'il compte. L'aperçu
+    des séjours, le bandeau de la gérance et les widgets du tableau de bord pointent vers
+    des listes déjà filtrées, que les écrans cibles lisent dans l'URL (`vue`, `statut`,
+    `filtre`, `bien`, `equipe`, `tache`, `sejour`).
+12. **Équipes métier** — `identity` : métier d'équipe issu d'un catalogue fixe (ménage,
+    maintenance, conciergerie, commerciale, générale), couleur, description, et renforts
+    avec le rôle tenu dans l'équipe d'accueil. `staymanager` : un bien est confié à une
+    équipe, la tâche de ménage en hérite, et un onglet montre ce que chaque équipe a
+    réellement abattu sur trente jours. Écart assumé : le catalogue n'est pas éditable par
+    l'agence (StayManager laissait cloner des types) — les libellés sont traduits FR/AR, et
+    une taxonomie libre obligerait chaque agence à inventer son vocabulaire.
+13. **Contrat de séjour** — `contract` reçoit un type de document `stay` et les variables du
+    séjour (`{{stay_check_in}}`, `{{stay_nights}}`, `{{guest_name}}`…) ; le contrat est
+    généré depuis la fiche, finalisé en PDF, puis **signé par le voyageur depuis son lien
+    d'enregistrement**. La signature est une acceptation horodatée (nom saisi, date, IP
+    consignés) ; le parafeur `semsar_signing` reste disponible pour un circuit avancé.
+
 ## Décisions prises pour éviter les doublons
 
 - **Une seule table de réservations** : `staymanager.staymanager_reservation` sert le miroir
@@ -108,7 +138,12 @@ construire des écrans qui n'ont encore rien à montrer.
 - **Pas de second service** : les séjours vivent dans `services/staymanager`, qui portait
   déjà les réservations ; le nom reste, son périmètre s'élargit.
 - **Pas de second moteur de PDF, de signature, d'e-mail ni de gabarits** : `contract`,
-  `semsar_signing` et `notification` existent et sont utilisés tels quels.
+  `semsar_signing` et `notification` existent et sont utilisés tels quels. Le contrat de
+  séjour est un type de document de plus dans `contract`, appelé par `staymanager` en
+  interne — pas un second moteur.
+- **Pas de second annuaire d'équipes** : les équipes, leurs membres et leurs rôles restent
+  dans `identity` ; `staymanager` les lit par `/internal/teams` et ne stocke que le
+  rattachement d'un bien à une équipe.
 - **Pas de reprise de Firebase, Keycloak ni Twilio** : `identity` fait l'authentification,
   et aucun fournisseur SMS n'est raccordé côté SemsarOut (décision à part).
 - **Aucune interface n'est reprise** : les écrans StayManager (React, thème propre) ne sont

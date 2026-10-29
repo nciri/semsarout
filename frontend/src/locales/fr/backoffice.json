@@ -1289,7 +1289,8 @@
       "mandate_rental": "Mandat location/gestion",
       "compromise": "Compromis",
       "lease": "Bail",
-      "other": "Autre"
+      "other": "Autre",
+      "stay": "Contrat de séjour"
     },
     "list": {
       "pageTitle": "Contrats",
@@ -4021,6 +4022,20 @@
         "title": "Aucune équipe",
         "description": "Créez une équipe de ménage ou de maintenance pour lui confier vos biens.",
         "link": "Gérer les équipes"
+      }
+    },
+    "contract": {
+      "title": "Contrat de séjour",
+      "none": "Aucun contrat établi pour ce séjour.",
+      "generate": "Établir le contrat",
+      "generated": "Contrat établi. Le voyageur peut le signer depuis son lien d'enregistrement.",
+      "open": "Ouvrir le contrat",
+      "awaitingGuest": "En attente de la signature du voyageur.",
+      "signedOn": "Signé le {{date}}",
+      "status": {
+        "draft": "Brouillon",
+        "finalized": "À signer",
+        "signed": "Signé"
       }
     }
   },

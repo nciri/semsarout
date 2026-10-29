@@ -22,6 +22,7 @@ from semsar_common import get_settings, install_legacy_error_handlers, setup_log
 from semsar_events import enqueue
 
 from . import events, users_client
+from .stay import router as stay_router
 from .db import get_db, init_db
 from .merge import build_context, render
 from .models import (
@@ -52,6 +53,9 @@ except Exception:  # noqa: BLE001
     pass
 
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
+
+# Contrat de séjour (routes internes appelées par staymanager) — cf. app/stay.py.
+app.include_router(stay_router)
 
 
 def _gate(principal: Principal) -> JSONResponse | None:

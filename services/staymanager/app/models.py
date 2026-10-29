@@ -110,6 +110,8 @@ class StayManagerReservation(Base):
     has_access_code = Column(Boolean, default=False)
     access_code_masked = Column(String(20))
     contract_status = Column(String(20))
+    # Contrat de séjour tenu par le service `contract` : on n'en garde que la référence.
+    contract_id = Column(Integer, index=True)
     total_price = Column(Numeric(12, 2))
     currency = Column(String(10), default="Dh")
     guest_notes = Column(Text)

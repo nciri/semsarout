@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
 
-from . import stays
+from . import contract_client, stays
 from .db import get_db
 from .gate import gate
 from .models import (
@@ -53,6 +53,7 @@ def stay_dict(db: Session, r: StayManagerReservation) -> dict:
             "total_price": float(r.total_price) if r.total_price is not None else None,
             "cleaning_fee": float(r.cleaning_fee) if r.cleaning_fee is not None else None,
             "currency": r.currency, "contract_status": r.contract_status,
+            "contract_id": r.contract_id,
             "editable": r.source == "manual", "synced_at": iso(r.synced_at)}
 
 
@@ -313,3 +314,70 @@ def cancel_stay(stay_id: int, principal: Principal = Depends(get_principal),
     stays.refresh_conflicts(db, row.property_id, principal.agency_id)
     db.commit()
     return {"stay": stay_dict(db, row), "code_warnings": warnings}
+
+
+# --- Contrat de séjour ------------------------------------------------------------------
+# Le contrat lui-même vit dans le service `contract` (modèles, fusion, PDF). Ici on garde
+# la référence et l'état, pour que la fiche du séjour sache quoi montrer.
+
+def contract_payload(db: Session, row: StayManagerReservation) -> dict:
+    """Ce que le modèle de contrat peut citer : le séjour, pas le dossier d'agence."""
+    ro = db.get(PropertyRO, row.property_id) if row.property_id else None
+    return {"property_id": row.property_id, "property_title": ro.title if ro else None,
+            "check_in": iso(row.check_in), "check_out": iso(row.check_out),
+            "nights": row.nights, "guest_count": row.guest_count,
+            "total_price": float(row.total_price) if row.total_price is not None else None,
+            "cleaning_fee": float(row.cleaning_fee) if row.cleaning_fee is not None else None,
+            "guest_name": row.guest_name, "guest_email": row.guest_email,
+            "guest_phone": row.guest_phone}
+
+
+@router.post("/backoffice/sejours/{stay_id}/contrat", status_code=201)
+async def create_stay_contract(stay_id: int, request: Request,
+                               principal: Principal = Depends(get_principal),
+                               db: Session = Depends(get_db)):
+    """Génère le contrat du séjour à partir d'un modèle de l'agence."""
+    if (g := gate(principal)) is not None:
+        return g
+    row, e = _own_stay(db, stay_id, principal)
+    if e:
+        return e
+    if row.status == "cancelled":
+        return err("Un séjour annulé n'a pas de contrat à établir.", 400)
+    if row.contract_id and row.contract_status == "signed":
+        return err("Le contrat de ce séjour est déjà signé.", 409)
+    data = await json_body(request)
+    template_id = data.get("template_id")
+    try:
+        contract = contract_client.create(
+            principal.agency_id, contract_payload(db, row),
+            title=(data.get("title") or None),
+            template_id=int(template_id) if template_id else None)
+    except contract_client.ContractError as exc:
+        return err(str(exc), 502)
+    except (TypeError, ValueError):
+        return err("Modèle invalide", 400)
+    row.contract_id = contract["id"]
+    row.contract_status = contract["status"]
+    db.commit()
+    return {"contract": contract}
+
+
+@router.get("/backoffice/sejours/{stay_id}/contrat")
+def get_stay_contract(stay_id: int, principal: Principal = Depends(get_principal),
+                      db: Session = Depends(get_db)):
+    if (g := gate(principal)) is not None:
+        return g
+    row, e = _own_stay(db, stay_id, principal)
+    if e:
+        return e
+    if not row.contract_id:
+        return {"contract": None}
+    try:
+        contract = contract_client.read(principal.agency_id, row.contract_id)
+    except contract_client.ContractError as exc:
+        return err(str(exc), 502)
+    if contract["status"] != row.contract_status:
+        row.contract_status = contract["status"]
+        db.commit()
+    return {"contract": contract}

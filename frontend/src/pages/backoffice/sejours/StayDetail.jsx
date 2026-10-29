@@ -4,9 +4,10 @@ import { useMutation, useQuery, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import {
-  FiAlertTriangle, FiArrowLeft, FiArrowUpRight, FiEdit2, FiKey, FiMail, FiUserCheck, FiXCircle,
+  FiAlertTriangle, FiArrowLeft, FiArrowUpRight, FiEdit2, FiFileText, FiKey, FiMail,
+  FiUserCheck, FiXCircle,
 } from 'react-icons/fi'
-import { stayService, STAY_STATUS_TONE } from '../../../services/stayService'
+import { stayService, CONTRACT_STATUS_TONE, STAY_STATUS_TONE } from '../../../services/stayService'
 import { useFormat } from '../../../utils/format'
 import { Alert, Chip, IconAction, Kv, TD, TH } from '../components/kit'
 import { Modal, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
@@ -39,6 +40,15 @@ function StayDetail() {
   const [confirmCancel, setConfirmCancel] = useState(false)
 
   const { data, isLoading, error } = useQuery(['stay-detail', stayId], () => stayService.getStay(stayId))
+  const contract = useQuery(['stay-contract', stayId], () => stayService.getContract(stayId))
+  const generate = useMutation(() => stayService.createContract(stayId), {
+    onSuccess: () => {
+      toast.success(t('backoffice:stays.contract.generated'))
+      qc.invalidateQueries(['stay-contract', stayId])
+      qc.invalidateQueries(['stay-detail', stayId])
+    },
+    onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
+  })
   const cancel = useMutation(() => stayService.cancelStay(stayId), {
     onSuccess: (r) => {
       toast.success(t('backoffice:stays.detail.cancelled'))
@@ -189,6 +199,37 @@ function StayDetail() {
               ))}
             </tbody>
           </table>
+        )}
+      </Section>
+
+      <Section title={t('backoffice:stays.contract.title')}
+        action={contract.data?.contract && (
+          <IconAction icon={FiArrowUpRight} label={t('backoffice:stays.contract.open')} tone="gold"
+            tipAlign="end" to={`/backoffice/contrats/${contract.data.contract.id}`} />
+        )}>
+        {contract.data?.contract ? (
+          <div className="flex flex-wrap items-center gap-2 text-[13.5px]">
+            <Chip tone={CONTRACT_STATUS_TONE[contract.data.contract.status] || 'neutral'}>
+              {t(`backoffice:stays.contract.status.${contract.data.contract.status}`,
+                { defaultValue: contract.data.contract.status })}
+            </Chip>
+            <span className="text-gray-500">
+              {contract.data.contract.signed_at
+                ? t('backoffice:stays.contract.signedOn', { date: date(contract.data.contract.signed_at) })
+                : t('backoffice:stays.contract.awaitingGuest')}
+            </span>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-[13px] text-gray-500">{t('backoffice:stays.contract.none')}</p>
+            {s.status !== 'cancelled' && (
+              <button type="button" disabled={generate.isLoading} onClick={() => generate.mutate()}
+                className={PRIMARY_BTN}>
+                <FiFileText className="h-4 w-4" aria-hidden="true" />
+                {t('backoffice:stays.contract.generate')}
+              </button>
+            )}
+          </div>
         )}
       </Section>
 

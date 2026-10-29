@@ -1058,6 +1058,14 @@
     "invalid": {
       "title": "Lien indisponible",
       "description": "Ce lien d'enregistrement n'est plus valable. Demandez-en un nouveau à votre hôte."
+    },
+    "contract": {
+      "title": "Contrat de séjour",
+      "help": "Lisez le contrat remis par l'agence, puis indiquez le nom qui l'accepte. La date et votre adresse IP sont enregistrées avec votre accord.",
+      "nameLabel": "Nom du signataire",
+      "sign": "J'accepte le contrat",
+      "signed": "Contrat signé. Merci.",
+      "done": "Vous avez signé le contrat de séjour."
     }
   }
 }

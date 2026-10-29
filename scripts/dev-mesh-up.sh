@@ -65,7 +65,8 @@ for pair in $SVCS; do
     agency)  extra="IDENTITY_URL=http://localhost:8501 LISTING_URL=http://localhost:8012";;
     buyer)   extra="LISTING_URL=http://localhost:8012";;
     programs) extra="BILLING_URL=http://localhost:8508";;
-    staymanager) extra="BILLING_URL=http://localhost:8508";;
+    # staymanager parle à billing (plan), identity (équipes) et contract (contrat de séjour).
+    staymanager) extra="BILLING_URL=http://localhost:8508 IDENTITY_URL=http://localhost:8501 CONTRACT_URL=http://localhost:8505";;
     crm|transactions) extra="IDENTITY_URL=http://localhost:8501";;
     analytics) extra="TRANSACTIONS_URL=http://localhost:8514 CRM_URL=http://localhost:8013 IDENTITY_URL=http://localhost:8501 LISTING_URL=http://localhost:8012 GEO_URL=http://localhost:8509 BILLING_URL=http://localhost:8508 AUDIT_URL=http://localhost:8513 AGENCY_URL=http://localhost:8512";;
     trust-safety) extra="IDENTITY_URL=http://localhost:8501 AGENCY_URL=http://localhost:8512";;

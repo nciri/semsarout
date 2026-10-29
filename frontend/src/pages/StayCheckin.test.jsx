@@ -7,7 +7,7 @@ import i18n from '../i18n'
 import StayCheckin from './StayCheckin'
 
 const { svc } = vi.hoisted(() => ({
-  svc: { view: vi.fn(), declare: vi.fn(), uploadDoc: vi.fn(), submit: vi.fn() },
+  svc: { view: vi.fn(), declare: vi.fn(), uploadDoc: vi.fn(), submit: vi.fn(), signContract: vi.fn() },
 }))
 vi.mock('../services/stayService', async (orig) => ({ ...(await orig()), stayCheckinService: svc }))
 
@@ -43,6 +43,7 @@ describe('Enregistrement du séjour (voyageur)', () => {
     svc.declare.mockResolvedValue({ guest: { id: 2 } })
     svc.uploadDoc.mockResolvedValue({ document: { id: 9 } })
     svc.submit.mockResolvedValue({ link: { status: 'submitted' } })
+    svc.signContract.mockResolvedValue({ contract: { status: 'signed' } })
   })
 
   it('montre le séjour et ce qui reste à faire', async () => {
@@ -82,5 +83,26 @@ describe('Enregistrement du séjour (voyageur)', () => {
     renderPage()
     expect(await screen.findByText('Lien indisponible')).toBeInTheDocument()
     expect(screen.getByText('Ce lien a expiré.')).toBeInTheDocument()
+  })
+
+  it("ne propose rien à signer quand l'agence n'a pas établi de contrat", async () => {
+    renderPage()
+    await screen.findByText(/Riad Médina/)
+    expect(screen.queryByText('Contrat de séjour')).not.toBeInTheDocument()
+  })
+
+  it('signe le contrat de séjour', async () => {
+    svc.view.mockResolvedValue({ ...VIEW, contract: { status: 'finalized' } })
+    renderPage()
+    expect(await screen.findByText('Contrat de séjour')).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText('Nom du signataire'), 'Salma Bennani')
+    await userEvent.click(screen.getByRole('button', { name: "J'accepte le contrat" }))
+    await vi.waitFor(() => expect(svc.signContract).toHaveBeenCalledWith('jeton-prive', 'Salma Bennani'))
+  })
+
+  it('montre le contrat déjà signé', async () => {
+    svc.view.mockResolvedValue({ ...VIEW, contract: { status: 'signed' } })
+    renderPage()
+    expect(await screen.findByText('Vous avez signé le contrat de séjour.')).toBeInTheDocument()
   })
 })

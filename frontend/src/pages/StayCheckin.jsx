@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
-import { FiCheckCircle, FiUpload } from 'react-icons/fi'
+import { FiCheckCircle, FiFileText, FiUpload } from 'react-icons/fi'
 import { stayCheckinService, GUEST_DOCUMENT_TYPES } from '../services/stayService'
 import { useFormat } from '../utils/format'
 
@@ -19,6 +19,7 @@ function StayCheckin() {
   const qc = useQueryClient()
   const [form, setForm] = useState(EMPTY)
   const [files, setFiles] = useState({})
+  const [signer, setSigner] = useState('')
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
   const { data, isLoading, error } = useQuery(['stay-checkin', token], () => stayCheckinService.view(token),
@@ -32,6 +33,10 @@ function StayCheckin() {
   })
   const upload = useMutation(({ guestId, file }) => stayCheckinService.uploadDoc(token, guestId, file), {
     onSuccess: () => { toast.success(t('public:stayCheckin.toasts.uploaded')); refresh() },
+    onError: fail,
+  })
+  const sign = useMutation(() => stayCheckinService.signContract(token, signer.trim()), {
+    onSuccess: () => { toast.success(t('public:stayCheckin.contract.signed')); setSigner(''); refresh() },
     onError: fail,
   })
   const submit = useMutation(() => stayCheckinService.submit(token), {
@@ -54,6 +59,7 @@ function StayCheckin() {
   const stay = data.stay
   const guests = data.guests || []
   const done = data.status === 'submitted'
+  const contract = data.contract
   const day = (iso) => (iso ? fmtDate(iso, { day: 'numeric', month: 'long', year: 'numeric' }) : '—')
 
   return (
@@ -110,6 +116,36 @@ function StayCheckin() {
           </div>
         ))}
       </section>
+
+      {contract && (
+        <section className="grid gap-3 rounded-xl border border-gray-200 bg-white p-5">
+          <h2 className="flex items-center gap-2 font-display text-[15px] font-bold">
+            <FiFileText className="h-4 w-4 text-gray-400" aria-hidden="true" />
+            {t('public:stayCheckin.contract.title')}
+          </h2>
+          {contract.status === 'signed' ? (
+            <p className="text-sm text-green-800">{t('public:stayCheckin.contract.done')}</p>
+          ) : (
+            <>
+              <p className="text-[13px] text-gray-600">{t('public:stayCheckin.contract.help')}</p>
+              <div>
+                <label className={LABEL} htmlFor="contract-signer">
+                  {t('public:stayCheckin.contract.nameLabel')}
+                </label>
+                <input id="contract-signer" value={signer} onChange={(e) => setSigner(e.target.value)}
+                  className={FIELD} />
+              </div>
+              <div>
+                <button type="button" disabled={signer.trim().length < 2 || sign.isLoading}
+                  onClick={() => sign.mutate()}
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-white disabled:opacity-50">
+                  {t('public:stayCheckin.contract.sign')}
+                </button>
+              </div>
+            </>
+          )}
+        </section>
+      )}
 
       <section className="grid gap-3 rounded-xl border border-gray-200 bg-white p-5">
         <h2 className="font-display text-[15px] font-bold">{t('public:stayCheckin.addTitle')}</h2>
