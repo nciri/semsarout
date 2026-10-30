@@ -19,6 +19,7 @@ from semsar_common import get_settings, install_legacy_error_handlers, setup_log
 
 from .db import get_db, init_db
 from .models import Artisan, WorkOrder
+from .payeur import refus_de_creation
 from .trades import ARTISAN_TRADES, is_valid_trade
 
 settings = get_settings()
@@ -261,8 +262,16 @@ async def create_work_order(request: Request, principal: Principal = Depends(_ar
     err = _validate_links(db, data, principal.agency_id)
     if err:
         return err
+    refus = refus_de_creation(data)
+    if refus:
+        return _err(refus, 400)
     wo = WorkOrder(
         agency_id=principal.agency_id, title=data["title"], trade=data["trade"], status="requested",
+        client_id=data.get("client_id"), lease_id=data.get("lease_id"), nature=data.get("nature"),
+        payer=data.get("payer"), charge_mode=data.get("charge_mode"),
+        third_party_label=data.get("third_party_label"),
+        payer_set_by=int(principal.sub) if data.get("payer") and principal.sub.isdigit() else None,
+        payer_set_at=datetime.utcnow() if data.get("payer") else None,
         artisan_id=data.get("artisan_id"), property_id=data.get("property_id"),
         cost_estimate=data.get("cost_estimate"), notes=data.get("notes"),
         scheduled_date=_parse_dt(data.get("scheduled_date")),
