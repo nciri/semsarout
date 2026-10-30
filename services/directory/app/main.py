@@ -347,17 +347,18 @@ async def internal_release_charged(
     if (not isinstance(ids, list) or not all(isinstance(i, int) for i in ids)
             or not isinstance(ref, str) or not ref or not isinstance(agency_id, int)):
         return _err("ids, ref et agency_id sont requis", 400)
-    (db.query(WorkOrder)
-       .filter(WorkOrder.id.in_(ids), WorkOrder.agency_id == agency_id,
-               WorkOrder.charged_ref == ref)
-       .update({"charged_at": None, "charged_ref": None}, synchronize_session=False))
+    # Lignes verrouillées puis décomptées dans la même transaction : le nombre rendu décrit
+    # l'état que ce commit produit. Une dépense déjà libre compte (rejouer une libération dont
+    # l'appelant a perdu le commit doit réussir) ; celle d'un autre `ref` n'est ni touchée ni comptée.
+    released = 0
+    for wo in (db.query(WorkOrder)
+               .filter(WorkOrder.id.in_(ids), WorkOrder.agency_id == agency_id)
+               .with_for_update().all()):
+        if wo.charged_ref == ref:
+            wo.charged_at = wo.charged_ref = None
+        if wo.charged_at is None:
+            released += 1
     db.commit()
-    # Idempotent sur son issue (comme `charged`) : une dépense déjà libre compte, sinon rejouer
-    # une libération dont l'appelant a perdu le commit renverrait 0 à chaque reprise.
-    released = (db.query(WorkOrder)
-                .filter(WorkOrder.id.in_(ids), WorkOrder.agency_id == agency_id,
-                        WorkOrder.charged_at.is_(None))
-                .count())
     return {"released": released}
 
 
