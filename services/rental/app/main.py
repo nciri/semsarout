@@ -1005,6 +1005,18 @@ def list_crg_drafts(principal: Principal = Depends(get_principal),
     return {"drafts": out}
 
 
+@app.get("/backoffice/gestion-locative/crg/{crg_id}")
+def get_crg(crg_id: int, principal: Principal = Depends(get_principal),
+            db: Session = Depends(get_db)):
+    """Un CRG avec son mandat : `charged_ref` (`crg:<id>`) ne dit pas à quel mandat il appartient."""
+    if (g := _gate(principal)) is not None:
+        return g
+    crg = db.get(CrgReport, crg_id)
+    if crg is None or crg.agency_id != principal.agency_id:
+        return err("CRG introuvable.", 404)
+    return {**_crg_dict(crg), "mandate_id": crg.mandate_id}
+
+
 @app.get("/backoffice/gestion-locative/mandates/{mandate_id}/crg")
 def list_crg(mandate_id: int, principal: Principal = Depends(get_principal),
              db: Session = Depends(get_db)):

@@ -357,3 +357,20 @@ def test_les_brouillons_en_attente_se_listent_du_plus_vieux_au_plus_recent(clien
     assert [r["crg_id"] for r in rows] == [vieux.id, recent.id]
     assert rows[0]["waiting_days"] == 9 and isinstance(rows[1]["waiting_days"], int)
     assert rows[0]["mandate_reference"] == "MND-7" and rows[0]["created_at"] is not None
+
+
+def test_un_crg_se_resout_avec_son_mandat_et_reste_cloisonne_par_agence(client, db_session,
+                                                                        monkeypatch):
+    crg_id = _brouillon(client, db_session, monkeypatch, loyer=6000, depenses_=[(4, 1200)])
+    mandat_id = db_session.get(CrgReport, crg_id).mandate_id
+    rep = client.get(f"/backoffice/gestion-locative/crg/{crg_id}")
+    assert rep.status_code == 200
+    assert rep.json()["mandate_id"] == mandat_id and rep.json()["status"] == "draft"
+    autre = _mandat(db_session, property_id=99, fee_pct=8, agency_id=AGENCY + 1)
+    etranger = CrgReport(mandate_id=autre.id, agency_id=AGENCY + 1, period_label="Mai 2026",
+                         year=2026, month=5, rent_collected=0, fees=0, net=0, status="sent")
+    db_session.add(etranger)
+    db_session.commit()
+    assert client.get(f"/backoffice/gestion-locative/crg/{etranger.id}").status_code == 404
+    assert client.get("/backoffice/gestion-locative/crg/999999").status_code == 404
+    assert client.get("/backoffice/gestion-locative/crg/drafts").status_code == 200
