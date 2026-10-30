@@ -8,6 +8,7 @@ from app import db
 from app.api.v1 import api_v1_bp
 from app.models import User, SavedSearch, Favorite, BuyerMessage, MessageReply, PropertyEstimate, Property
 from app.services.mailer import send_email, render_email
+from app.services.html_sanitize import sanitize_rich_field
 
 
 def require_buyer_role(f):
@@ -333,7 +334,10 @@ def reply_to_message(message_id):
         return jsonify({'error': 'Message non trouvé'}), 404
 
     data = request.get_json() or {}
-    body = data.get('body', '').strip()
+    # The reply is written in a WYSIWYG field: what arrives is HTML, so an unsanitized value
+    # is a stored XSS fired by the agent's own thread view. `sanitize_rich_field` also folds
+    # an emptied editor (`<p><br></p>`) to None, which `strip()` could not see.
+    body = sanitize_rich_field(data.get('body'))
     if not body:
         return jsonify({'error': 'Le message ne peut pas être vide'}), 400
 

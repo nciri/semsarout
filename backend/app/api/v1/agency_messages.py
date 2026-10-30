@@ -7,6 +7,7 @@ from app import db
 from app.api.v1 import api_v1_bp
 from app.models import User, BuyerMessage, MessageReply, Property
 from app.services.mailer import send_email, render_email
+from app.services.html_sanitize import sanitize_rich_field
 
 
 def _owned_message_query(user):
@@ -78,7 +79,9 @@ def reply_to_agency_message(message_id):
         return jsonify({'error': 'Message non trouvé'}), 404
 
     data = request.get_json() or {}
-    body = data.get('body', '').strip()
+    # The reply is written in a WYSIWYG field: what arrives is HTML. `sanitize_rich_field`
+    # also folds an emptied editor (`<p><br></p>`) to None, which `strip()` could not see.
+    body = sanitize_rich_field(data.get('body'))
     if not body:
         return jsonify({'error': 'Le message ne peut pas être vide'}), 400
 
@@ -97,7 +100,10 @@ def reply_to_agency_message(message_id):
         content = (
             f'<p>Bonjour {escape(buyer.first_name)},</p>'
             f'<p>Vous avez reçu une réponse concernant votre message « {escape(message.subject)} » :</p>'
-            f'<p style="background:#f8fafc;padding:12px;border-radius:8px">{escape(body)}</p>'
+            # `body` is already sanitized against the product whitelist, and its author is
+            # agency staff — so the buyer's e-mail renders its formatting instead of showing
+            # `<p>` as text. Not escaped here: escaping sanitized HTML would print the tags.
+            f'<div style="background:#f8fafc;padding:12px;border-radius:8px">{body}</div>'
             f'<p><a href="https://semsarout.ma/dashboard/mes-messages">Voir la conversation</a></p>'
         )
         send_email(
