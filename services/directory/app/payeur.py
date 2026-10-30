@@ -65,6 +65,7 @@ def refus_de_modification(principal, wo, data: dict) -> str | None:
         return inconnue
     if (wo.charged_at is not None or wo.settled_at is not None) and any(k in data for k in _CHAMPS_DEPENSE):
         return "Cette dépense figure sur un relevé déjà émis : elle ne se modifie plus"
-    if wo.status == "done" and ("payer" in data or "charge_mode" in data) and not _is_wo_admin(principal):
+    # Statut d'arrivée, sinon `{"status": "done", "payer": ...}` contournerait la garde.
+    if data.get("status", wo.status) == "done" and ("payer" in data or "charge_mode" in data) and not _is_wo_admin(principal):
         return "Le payeur d'une intervention achevée ne se modifie qu'en administration"
     return None

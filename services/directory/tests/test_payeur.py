@@ -1,10 +1,13 @@
 from datetime import datetime
 from decimal import Decimal
 
-from semsar_auth import Principal
+from semsar_auth import Principal, get_principal
 
+from app.main import app, settings
 from app.models import WorkOrder
 from app.payeur import mode_propose, payeur_propose, refus_de_creation, refus_de_modification
+
+TOKEN = settings.internal_token
 
 
 def _wo_en_base(db_session, **champs) -> WorkOrder:
@@ -136,3 +139,94 @@ def test_le_libelle_du_tiers_est_nettoye_et_propre_au_tiers(client):
     locataire = client.post("/backoffice/work-orders", json={
         **base, "payer": "tenant", "third_party_label": "Assurance Wafa"})
     assert locataire.json()["work_order"]["third_party_label"] is None
+
+
+def test_les_depenses_imputables_s_arretent_aux_non_estampillees(client, db_session):
+    a = _wo_en_base(db_session, property_id=7, status="done", cost_final=Decimal("450"),
+                    charge_mode="crg_expense", completed_at=datetime(2026, 10, 2))
+    _wo_en_base(db_session, property_id=7, status="done", cost_final=Decimal("300"),
+                charge_mode="crg_expense", charged_at=datetime(2026, 10, 5))
+    _wo_en_base(db_session, property_id=7, status="scheduled", charge_mode="crg_expense")
+    r = client.get("/internal/work-orders/chargeable?property_ids=7&mode=crg_expense",
+                   headers={"x-internal-token": TOKEN})
+    assert [w["id"] for w in r.json()["work_orders"]] == [a.id]
+
+
+def test_les_depenses_imputables_se_restreignent_a_un_bail(client, db_session):
+    ancien = _wo_en_base(db_session, property_id=7, lease_id=1, status="done",
+                         cost_final=Decimal("200"), charge_mode="deposit_deduction")
+    actuel = _wo_en_base(db_session, property_id=7, lease_id=2, status="done",
+                         cost_final=Decimal("350"), charge_mode="deposit_deduction")
+    url = "/internal/work-orders/chargeable?property_ids=7&mode=deposit_deduction"
+    h = {"x-internal-token": TOKEN}
+    assert {w["id"] for w in client.get(url, headers=h).json()["work_orders"]} == {ancien.id, actuel.id}
+    ids = [w["id"] for w in client.get(f"{url}&lease_id=2", headers=h).json()["work_orders"]]
+    assert ids == [actuel.id]
+
+
+def test_l_estampille_est_idempotente(client, db_session):
+    wo = _wo_en_base(db_session, status="done", cost_final=Decimal("450"),
+                     charge_mode="crg_expense")
+    h = {"x-internal-token": TOKEN}
+    assert client.post("/internal/work-orders/charged",
+                       json={"ids": [wo.id], "ref": "crg:12"}, headers=h).json()["stamped"] == 1
+    assert client.post("/internal/work-orders/charged",
+                       json={"ids": [wo.id], "ref": "crg:13"}, headers=h).json()["stamped"] == 0
+    db_session.refresh(wo)
+    assert wo.charged_ref == "crg:12"
+
+
+def test_une_depense_sans_mandat_reste_visible(client, db_session):
+    # Bien sans mandat de gérance : aucun CRG ne la prendra, elle ne doit pas disparaître.
+    _wo_en_base(db_session, property_id=99, status="done", cost_final=Decimal("8000"),
+                charge_mode="crg_expense", completed_at=datetime(2026, 8, 1))
+    # Et une intervention achevée dont personne n'a choisi le mode y figure aussi.
+    _wo_en_base(db_session, property_id=99, status="done", cost_final=Decimal("120"),
+                charge_mode=None, completed_at=datetime(2026, 10, 1))
+    rows = client.get("/backoffice/work-orders?pending=1").json()["work_orders"]
+    assert len(rows) == 2
+    assert all(isinstance(w["waiting_days"], int) for w in rows)
+
+
+def test_les_interventions_d_un_bail_se_listent(client, db_session):
+    voulu = _wo_en_base(db_session, lease_id=12)
+    _wo_en_base(db_session, lease_id=13)
+    rows = client.get("/backoffice/work-orders?lease_id=12").json()["work_orders"]
+    assert [w["id"] for w in rows] == [voulu.id]
+
+
+def test_l_internal_exige_son_jeton(client):
+    assert client.get(
+        "/internal/work-orders/chargeable?property_ids=7&mode=crg_expense").status_code == 403
+    assert client.post("/internal/work-orders/charged", json={"ids": [1], "ref": "x"}).status_code == 403
+
+
+def test_l_api_reserve_le_payeur_d_un_bon_acheve_a_l_administration(client, db_session):
+    wo = _wo_en_base(db_session, status="done", payer="owner", charge_mode="crg_expense")
+    app.dependency_overrides[get_principal] = lambda: _principal("agent")
+    assert client.put(f"/backoffice/work-orders/{wo.id}", json={"payer": "tenant"}).status_code == 403
+    db_session.refresh(wo)
+    assert wo.payer == "owner"
+    app.dependency_overrides[get_principal] = lambda: _principal("admin")
+    r = client.put(f"/backoffice/work-orders/{wo.id}", json={"payer": "tenant"})
+    assert r.status_code == 200
+    db_session.refresh(wo)
+    assert wo.payer == "tenant" and wo.payer_set_by == 10 and wo.payer_set_at is not None
+
+
+def test_le_statut_termine_n_ouvre_pas_la_porte_au_payeur(client, db_session):
+    wo = _wo_en_base(db_session, status="in_progress", payer="owner")
+    app.dependency_overrides[get_principal] = lambda: _principal("agent")
+    r = client.put(f"/backoffice/work-orders/{wo.id}", json={"status": "done", "payer": "tenant"})
+    assert r.status_code == 403
+    db_session.refresh(wo)
+    assert wo.payer == "owner" and wo.status == "in_progress"
+
+
+def test_la_modification_du_payeur_nettoie_le_libelle_du_tiers(client, db_session):
+    wo = _wo_en_base(db_session, status="scheduled", payer="owner")
+    r = client.put(f"/backoffice/work-orders/{wo.id}", json={
+        "payer": "third_party", "third_party_label": "  Assurance Wafa "})
+    assert r.json()["work_order"]["third_party_label"] == "Assurance Wafa"
+    r = client.put(f"/backoffice/work-orders/{wo.id}", json={"payer": "tenant"})
+    assert r.json()["work_order"]["third_party_label"] is None
