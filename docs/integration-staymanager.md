@@ -174,6 +174,15 @@ pas à ce qui a été fait dans StayManager ».
     une barre d'avancement empilée par statut, légende chiffrée à côté — la barre est
     décorative, les nombres restent lisibles sans la couleur.
 
+18. **Création en fenêtre, retrait sous condition** — les formulaires de création d'une
+    intervention et d'un dossier quittent la page pour une fenêtre : la liste reste en vue,
+    la saisie ne la pousse plus vers le bas. Le retrait d'une intervention suit une règle
+    portée par le service (`_can_delete_wo`, exposée en `can_delete` sur chaque ligne) :
+    *demandé* ou *annulé* n'engage personne, donc libre ; *planifié* ou *en cours* mobilise un
+    artisan, donc réservé à `admin` / `agency_admin` (et au super-admin) ; *terminé* porte le
+    coût final et reste à l'historique, qu'aucun rôle ne contourne. Le front cache l'action
+    plutôt que de laisser cliquer vers un 403, et le `DELETE` refait le test côté service.
+
 ## Décisions prises pour éviter les doublons
 
 - **Une seule table de réservations** : `staymanager.staymanager_reservation` sert le miroir

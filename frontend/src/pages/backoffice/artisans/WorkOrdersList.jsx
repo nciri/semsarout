@@ -3,9 +3,9 @@ import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
-import { FiLock, FiPlus, FiClipboard } from 'react-icons/fi'
+import { FiLock, FiPlus, FiClipboard, FiTrash2 } from 'react-icons/fi'
 import { artisanService } from '../../../services/artisanService'
-import { Toolbar, Select, DataTable, StatusBadge, EmptyState, GatedNotice } from '../../../components/backoffice/ui'
+import { Modal, Select, DataTable, StatusBadge, EmptyState, GatedNotice, SECONDARY_BTN } from '../../../components/backoffice/ui'
 
 const STATUS_TONE = {
   requested: 'bg-gray-100 text-gray-700',
@@ -66,14 +66,27 @@ function WorkOrdersList({ filter = NO_FILTER }) {
   const qc = useQueryClient()
   const { data, isLoading, error } = useQuery('work-orders', () => artisanService.listWorkOrders())
   const { data: tradesData } = useQuery('artisan-trades', () => artisanService.listTrades(), { staleTime: 3600000 })
+  const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [trade, setTrade] = useState('plombier')
   const trades = tradesData?.trades || []
   const tradeLabel = (id) => trades.find((tr) => tr.id === id)?.label || id
 
+  const fail = (e) => toast.error(e.response?.data?.error || t('common:errors.short'))
   const create = useMutation(() => artisanService.createWorkOrder({ title, trade }), {
-    onSuccess: () => { toast.success(t('backoffice:artisans.workOrder.toasts.created')); setTitle(''); qc.invalidateQueries('work-orders') },
-    onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
+    onSuccess: () => {
+      toast.success(t('backoffice:artisans.workOrder.toasts.created'))
+      setTitle('')
+      setOpen(false)
+      qc.invalidateQueries('work-orders')
+    },
+    onError: fail,
+  })
+  // Le service décide qui retire quoi (rôle + statut) et renvoie `can_delete` : l'écran
+  // n'affiche l'action que là où elle aboutira.
+  const remove = useMutation((id) => artisanService.deleteWorkOrder(id), {
+    onSuccess: () => { toast.success(t('backoffice:artisans.workOrder.toasts.deleted')); qc.invalidateQueries('work-orders') },
+    onError: fail,
   })
 
   // Le filtre de l'onglet vaut aussi ici : chercher « Benali » doit sortir ses interventions,
@@ -102,6 +115,14 @@ function WorkOrdersList({ filter = NO_FILTER }) {
     { header: t('backoffice:artisans.workOrder.columns.artisan'), cell: (w) => <span className="text-gray-600">{w.artisan?.name || '—'}</span> },
     { header: t('backoffice:artisans.workOrder.columns.costFinal'), align: 'right', cell: (w) => <span className="font-medium text-gray-900">{w.cost_final != null ? `${w.cost_final} Đh` : '—'}</span> },
     { header: t('backoffice:artisans.workOrder.columns.status'), cell: (w) => <StatusBadge label={t(`backoffice:artisans.workOrder.status.${w.status}`, { defaultValue: w.status })} className={STATUS_TONE[w.status]} /> },
+    // impeccable-disable-next-line gray-on-color -- icône grise sur fond blanc ; le rouge n'est qu'un état :hover
+    { header: '', align: 'right', cell: (w) => (w.can_delete ? (
+      <button onClick={() => remove.mutate(w.id)} disabled={remove.isLoading}
+        title={t('backoffice:artisans.workOrder.delete')}
+        className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors">
+        <FiTrash2 className="w-4 h-4" />
+      </button>
+    ) : null) },
   ]
 
   return (
@@ -111,20 +132,11 @@ function WorkOrdersList({ filter = NO_FILTER }) {
           label={t('backoffice:artisans.workOrder.flow.label', { count: orders.length })} />
       )}
 
-      <Toolbar>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder={t('backoffice:artisans.workOrder.form.titlePlaceholder')}
-          className="flex-1 min-w-[200px] px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
-        />
-        <Select value={trade} onChange={(e) => setTrade(e.target.value)}>
-          {trades.map((tr) => <option key={tr.id} value={tr.id}>{tr.label}</option>)}
-        </Select>
-        <button disabled={!title || create.isLoading} onClick={() => create.mutate()} className={PRIMARY_BTN}>
+      <div className="flex justify-end">
+        <button onClick={() => setOpen(true)} className={PRIMARY_BTN}>
           <FiPlus className="w-5 h-5" /> {t('backoffice:artisans.workOrder.form.newButton')}
         </button>
-      </Toolbar>
+      </div>
 
       <DataTable
         columns={columns}
@@ -132,6 +144,43 @@ function WorkOrdersList({ filter = NO_FILTER }) {
         isLoading={isLoading}
         empty={<EmptyState icon={FiClipboard} title={t('backoffice:artisans.workOrder.empty.title')} description={t('backoffice:artisans.workOrder.empty.description')} />}
       />
+
+      {/* La saisie quitte la page : une intervention se crée dans sa fenêtre, sans pousser
+          la liste vers le bas. */}
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={t('backoffice:artisans.workOrder.form.modalTitle')}
+        footer={(
+          <>
+            <button onClick={() => setOpen(false)} className={SECONDARY_BTN}>{t('backoffice:artisans.workOrder.form.cancel')}</button>
+            <button disabled={!title || create.isLoading} onClick={() => create.mutate()} className={PRIMARY_BTN}>
+              {t('backoffice:artisans.workOrder.form.submit')}
+            </button>
+          </>
+        )}
+      >
+        <div className="mb-3">
+          <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="wo-title">
+            {t('backoffice:artisans.workOrder.form.titleLabel')}
+          </label>
+          <input
+            id="wo-title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={t('backoffice:artisans.workOrder.form.titlePlaceholder')}
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="wo-trade">
+            {t('backoffice:artisans.workOrder.form.tradeLabel')}
+          </label>
+          <Select id="wo-trade" value={trade} onChange={(e) => setTrade(e.target.value)} className="w-full">
+            {trades.map((tr) => <option key={tr.id} value={tr.id}>{tr.label}</option>)}
+          </Select>
+        </div>
+      </Modal>
     </div>
   )
 }

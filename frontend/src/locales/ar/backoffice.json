@@ -1223,7 +1223,12 @@
       },
       "form": {
         "titlePlaceholder": "عنوان التدخل",
-        "newButton": "جديد"
+        "newButton": "جديد",
+        "modalTitle": "تدخّل جديد",
+        "titleLabel": "العنوان",
+        "tradeLabel": "المهنة",
+        "cancel": "إلغاء",
+        "submit": "إنشاء التدخّل"
       },
       "columns": {
         "title": "العنوان",
@@ -1245,7 +1250,8 @@
       },
       "toasts": {
         "created": "تم إنشاء أمر العمل",
-        "saved": "تم الحفظ"
+        "saved": "تم الحفظ",
+        "deleted": "تمت إزالة التدخّل."
       },
       "backToList": "التدخلات",
       "notFound": "أمر العمل غير موجود.",
@@ -1262,7 +1268,8 @@
       "flow": {
         "label": "تدخّل في المجموع",
         "label_other": "تدخّلات في المجموع"
-      }
+      },
+      "delete": "إزالة التدخّل"
     }
   },
   "contracts": {
@@ -1480,7 +1487,12 @@
       "toolbar": {
         "titlePlaceholder": "عنوان الملف (اختياري)",
         "newButton": "ملف جديد",
-        "noNotaryTooltip": "أعدّ موثّقًا أولًا (تبويب الموثّقون)"
+        "noNotaryTooltip": "أعدّ موثّقًا أولًا (تبويب الموثّقون)",
+        "modalTitle": "ملفّ جديد",
+        "titleLabel": "العنوان",
+        "typeLabel": "نوع الملفّ",
+        "cancel": "إلغاء",
+        "submit": "إنشاء الملفّ"
       },
       "empty": {
         "title": "لا يوجد أي ملف",

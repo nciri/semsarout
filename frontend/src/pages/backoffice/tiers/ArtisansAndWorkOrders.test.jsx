@@ -10,6 +10,7 @@ const { svc } = vi.hoisted(() => ({
   svc: {
     listTrades: vi.fn(), listArtisans: vi.fn(), createArtisan: vi.fn(), updateArtisan: vi.fn(),
     deleteArtisan: vi.fn(), listWorkOrders: vi.fn(), createWorkOrder: vi.fn(),
+    deleteWorkOrder: vi.fn(),
   },
 }))
 vi.mock('../../../services/artisanService', () => ({ artisanService: svc }))
@@ -18,11 +19,12 @@ const TRADES = { trades: [{ id: 'plombier', label: 'Plombier' }, { id: 'electric
 const ARTISANS = {
   artisans: [{ id: 1, name: 'Hassan Benali', company: 'Benali Plomberie', city: 'Casablanca', phone: '0600000000', trade: 'plombier', is_shared: false }],
 }
+// `can_delete` vient du service : il tient compte du rôle du porteur et du statut du bon.
 const ORDERS = {
   work_orders: [
-    { id: 11, title: 'Fuite salle de bain', trade: 'plombier', artisan: { name: 'Hassan Benali' }, cost_final: 450, status: 'done' },
-    { id: 12, title: 'Tableau électrique', trade: 'electricien', artisan: null, cost_final: null, status: 'scheduled' },
-    { id: 13, title: 'Chauffe-eau', trade: 'plombier', artisan: null, cost_final: null, status: 'in_progress' },
+    { id: 11, title: 'Fuite salle de bain', trade: 'plombier', artisan: { name: 'Hassan Benali' }, cost_final: 450, status: 'done', can_delete: false },
+    { id: 12, title: 'Tableau électrique', trade: 'electricien', artisan: null, cost_final: null, status: 'scheduled', can_delete: true },
+    { id: 13, title: 'Chauffe-eau', trade: 'plombier', artisan: null, cost_final: null, status: 'in_progress', can_delete: false },
   ],
 }
 
@@ -70,6 +72,31 @@ describe('Artisans & interventions', () => {
     await vi.waitFor(() => expect(svc.listArtisans).toHaveBeenCalledWith({ trade: '', city: '', q: 'chauffe' }))
     expect(screen.getByText('Chauffe-eau')).toBeInTheDocument()
     expect(screen.queryByText('Tableau électrique')).not.toBeInTheDocument()
+  })
+
+  it("crée une intervention dans une popup, pas dans la page", async () => {
+    svc.createWorkOrder.mockResolvedValue({ work_order: { id: 14 } })
+    renderPage()
+    await screen.findByText('Fuite salle de bain')
+    // Rien à saisir avant d'avoir demandé la création : la page reste une liste.
+    expect(screen.queryByLabelText('Intitulé')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Nouveau' }))
+    await userEvent.type(screen.getByLabelText('Intitulé'), 'Volet bloqué')
+    await userEvent.selectOptions(screen.getByLabelText('Métier'), 'electricien')
+    await userEvent.click(screen.getByRole('button', { name: "Créer l'intervention" }))
+    await vi.waitFor(() => expect(svc.createWorkOrder).toHaveBeenCalledWith({
+      title: 'Volet bloqué', trade: 'electricien',
+    }))
+  })
+
+  it("n'offre le retrait que là où le service l'autorise", async () => {
+    svc.deleteWorkOrder.mockResolvedValue({ message: 'Bon de travaux supprimé' })
+    renderPage()
+    const engage = (await screen.findByText('Tableau électrique')).closest('tr')
+    const termine = screen.getByText('Fuite salle de bain').closest('tr')
+    expect(within(termine).queryByRole('button', { name: "Retirer l'intervention" })).not.toBeInTheDocument()
+    await userEvent.click(within(engage).getByRole('button', { name: "Retirer l'intervention" }))
+    await vi.waitFor(() => expect(svc.deleteWorkOrder).toHaveBeenCalledWith(12))
   })
 
   it('filtre les interventions par métier', async () => {

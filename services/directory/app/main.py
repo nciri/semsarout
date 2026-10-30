@@ -76,9 +76,28 @@ def _artisan_dict(a: Artisan) -> dict:
     }
 
 
-def _wo_dict(db: Session, w: WorkOrder) -> dict:
+# Qui peut retirer un bon, et quand. Un bon encore à l'état de demande ou déjà annulé
+# n'engage personne : qui peut le créer peut l'effacer. Dès qu'un artisan est mobilisé
+# (planifié, en cours), seule l'administration de l'agence tranche. Un bon terminé porte le
+# coût final : il reste à l'historique, et c'est la seule règle qu'aucun rôle ne contourne.
+_WO_ADMIN_ROLES = {"admin", "agency_admin"}
+_WO_FREELY_DELETABLE = {"requested", "cancelled"}
+_WO_KEPT_FOREVER = {"done"}
+
+
+def _can_delete_wo(principal: Principal, w: WorkOrder) -> bool:
+    if w.status in _WO_KEPT_FOREVER:
+        return False
+    if w.status in _WO_FREELY_DELETABLE:
+        return True
+    return principal.is_superadmin or bool(_WO_ADMIN_ROLES & set(principal.roles))
+
+
+def _wo_dict(db: Session, w: WorkOrder, principal: Principal | None = None) -> dict:
     artisan = db.get(Artisan, w.artisan_id) if w.artisan_id else None
     return {
+        # Le front cache l'action plutôt que de laisser cliquer vers un 403.
+        "can_delete": _can_delete_wo(principal, w) if principal is not None else None,
         "id": w.id, "agency_id": w.agency_id, "artisan_id": w.artisan_id,
         "artisan": ({"id": artisan.id, "name": artisan.name, "trade": artisan.trade} if artisan else None),
         "property_id": w.property_id, "title": w.title, "trade": w.trade, "status": w.status,
@@ -189,7 +208,8 @@ def list_work_orders(
         query = query.filter(WorkOrder.status == status)
     if property_id:
         query = query.filter(WorkOrder.property_id == property_id)
-    return {"work_orders": [_wo_dict(db, w) for w in query.order_by(WorkOrder.created_at.desc()).all()]}
+    return {"work_orders": [_wo_dict(db, w, principal)
+                            for w in query.order_by(WorkOrder.created_at.desc()).all()]}
 
 
 @app.post("/backoffice/work-orders", status_code=201)
@@ -221,7 +241,7 @@ async def create_work_order(request: Request, principal: Principal = Depends(_ar
         "cost_estimate": float(wo.cost_estimate) if wo.cost_estimate is not None else None,
     })
     db.commit()
-    return {"work_order": _wo_dict(db, wo)}
+    return {"work_order": _wo_dict(db, wo, principal)}
 
 
 @app.get("/backoffice/work-orders/{wid}")
@@ -229,7 +249,7 @@ def get_work_order(wid: int, principal: Principal = Depends(_artisans), db: Sess
     wo = db.query(WorkOrder).filter(WorkOrder.id == wid, WorkOrder.agency_id == principal.agency_id).first()
     if wo is None:
         return _err("Bon de travaux introuvable", 404)
-    return {"work_order": _wo_dict(db, wo)}
+    return {"work_order": _wo_dict(db, wo, principal)}
 
 
 @app.put("/backoffice/work-orders/{wid}")
@@ -258,7 +278,7 @@ async def update_work_order(wid: int, request: Request, principal: Principal = D
         wo.status = data["status"]
         wo.completed_at = datetime.utcnow() if data["status"] == "done" else None
     db.commit()
-    return {"work_order": _wo_dict(db, wo)}
+    return {"work_order": _wo_dict(db, wo, principal)}
 
 
 @app.delete("/backoffice/work-orders/{wid}")
@@ -266,6 +286,10 @@ def delete_work_order(wid: int, principal: Principal = Depends(_artisans), db: S
     wo = db.query(WorkOrder).filter(WorkOrder.id == wid, WorkOrder.agency_id == principal.agency_id).first()
     if wo is None:
         return _err("Bon de travaux introuvable", 404)
+    if not _can_delete_wo(principal, wo):
+        if wo.status in _WO_KEPT_FOREVER:
+            return _err("Un bon terminé reste à l'historique de l'agence", 403)
+        return _err("Seule l'administration de l'agence retire un bon engagé", 403)
     db.delete(wo)
     db.commit()
     return {"message": "Bon de travaux supprimé"}

@@ -1223,7 +1223,12 @@
       },
       "form": {
         "titlePlaceholder": "Intitulé de l'intervention",
-        "newButton": "Nouveau"
+        "newButton": "Nouveau",
+        "modalTitle": "Nouvelle intervention",
+        "titleLabel": "Intitulé",
+        "tradeLabel": "Métier",
+        "cancel": "Annuler",
+        "submit": "Créer l'intervention"
       },
       "columns": {
         "title": "Intitulé",
@@ -1245,7 +1250,8 @@
       },
       "toasts": {
         "created": "Bon de travaux créé",
-        "saved": "Enregistré"
+        "saved": "Enregistré",
+        "deleted": "Intervention retirée."
       },
       "backToList": "Interventions",
       "notFound": "Bon de travaux introuvable.",
@@ -1262,7 +1268,8 @@
       "flow": {
         "label": "intervention au total",
         "label_other": "interventions au total"
-      }
+      },
+      "delete": "Retirer l'intervention"
     }
   },
   "contracts": {
@@ -1480,7 +1487,12 @@
       "toolbar": {
         "titlePlaceholder": "Titre du dossier (optionnel)",
         "newButton": "Nouveau dossier",
-        "noNotaryTooltip": "Configurez d'abord un notaire (onglet Notaires)"
+        "noNotaryTooltip": "Configurez d'abord un notaire (onglet Notaires)",
+        "modalTitle": "Nouveau dossier",
+        "titleLabel": "Intitulé",
+        "typeLabel": "Type de dossier",
+        "cancel": "Annuler",
+        "submit": "Créer le dossier"
       },
       "empty": {
         "title": "Aucun dossier",
