@@ -1376,6 +1376,7 @@
         "transaction": "Rechercher une transaction…"
       },
       "select": {
+        "allClientsHint": "Aucune transaction pour ce bien : tous vos clients sont proposés.",
         "none": "—",
         "noneTransaction": "— Aucune"
       },

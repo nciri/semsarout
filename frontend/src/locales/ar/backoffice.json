@@ -1376,6 +1376,7 @@
         "transaction": "ابحث عن معاملة…"
       },
       "select": {
+        "allClientsHint": "لا توجد معاملة لهذا العقار: يتم عرض جميع عملائك.",
         "none": "—",
         "noneTransaction": "— لا شيء"
       },
