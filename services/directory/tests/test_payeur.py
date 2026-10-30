@@ -147,7 +147,7 @@ def test_les_depenses_imputables_s_arretent_aux_non_estampillees(client, db_sess
     _wo_en_base(db_session, property_id=7, status="done", cost_final=Decimal("300"),
                 charge_mode="crg_expense", charged_at=datetime(2026, 10, 5))
     _wo_en_base(db_session, property_id=7, status="scheduled", charge_mode="crg_expense")
-    r = client.get("/internal/work-orders/chargeable?property_ids=7&mode=crg_expense",
+    r = client.get("/internal/work-orders/chargeable?property_ids=7&mode=crg_expense&agency_id=4",
                    headers={"x-internal-token": TOKEN})
     assert [w["id"] for w in r.json()["work_orders"]] == [a.id]
 
@@ -157,7 +157,7 @@ def test_les_depenses_imputables_se_restreignent_a_un_bail(client, db_session):
                          cost_final=Decimal("200"), charge_mode="deposit_deduction")
     actuel = _wo_en_base(db_session, property_id=7, lease_id=2, status="done",
                          cost_final=Decimal("350"), charge_mode="deposit_deduction")
-    url = "/internal/work-orders/chargeable?property_ids=7&mode=deposit_deduction"
+    url = "/internal/work-orders/chargeable?property_ids=7&mode=deposit_deduction&agency_id=4"
     h = {"x-internal-token": TOKEN}
     assert {w["id"] for w in client.get(url, headers=h).json()["work_orders"]} == {ancien.id, actuel.id}
     ids = [w["id"] for w in client.get(f"{url}&lease_id=2", headers=h).json()["work_orders"]]
@@ -169,9 +169,9 @@ def test_l_estampille_est_idempotente(client, db_session):
                      charge_mode="crg_expense")
     h = {"x-internal-token": TOKEN}
     assert client.post("/internal/work-orders/charged",
-                       json={"ids": [wo.id], "ref": "crg:12"}, headers=h).json()["stamped"] == 1
+                       json={"ids": [wo.id], "ref": "crg:12", "agency_id": 4}, headers=h).json()["stamped"] == 1
     assert client.post("/internal/work-orders/charged",
-                       json={"ids": [wo.id], "ref": "crg:13"}, headers=h).json()["stamped"] == 0
+                       json={"ids": [wo.id], "ref": "crg:13", "agency_id": 4}, headers=h).json()["stamped"] == 0
     db_session.refresh(wo)
     assert wo.charged_ref == "crg:12"
 
@@ -197,7 +197,7 @@ def test_les_interventions_d_un_bail_se_listent(client, db_session):
 
 def test_l_internal_exige_son_jeton(client):
     assert client.get(
-        "/internal/work-orders/chargeable?property_ids=7&mode=crg_expense").status_code == 403
+        "/internal/work-orders/chargeable?property_ids=7&mode=crg_expense&agency_id=4").status_code == 403
     assert client.post("/internal/work-orders/charged", json={"ids": [1], "ref": "x"}).status_code == 403
 
 
@@ -230,3 +230,55 @@ def test_la_modification_du_payeur_nettoie_le_libelle_du_tiers(client, db_sessio
     assert r.json()["work_order"]["third_party_label"] == "Assurance Wafa"
     r = client.put(f"/backoffice/work-orders/{wo.id}", json={"payer": "tenant"})
     assert r.json()["work_order"]["third_party_label"] is None
+
+
+def test_les_routes_internes_s_arretent_a_l_agence(client, db_session):
+    autre = WorkOrder(agency_id=9, title="Ailleurs", trade="plombier", property_id=7, status="done",
+                      cost_final=Decimal("100"), charge_mode="crg_expense")
+    db_session.add(autre)
+    db_session.commit()
+    h = {"x-internal-token": TOKEN}
+    r = client.get("/internal/work-orders/chargeable?property_ids=7&mode=crg_expense&agency_id=4", headers=h)
+    assert r.json()["work_orders"] == []
+    r = client.post("/internal/work-orders/charged",
+                    json={"ids": [autre.id], "ref": "crg:1", "agency_id": 4}, headers=h)
+    assert r.json()["stamped"] == 0
+    db_session.refresh(autre)
+    assert autre.charged_at is None
+
+
+def test_les_routes_internes_exigent_l_agence_et_un_mode_connu(client):
+    h = {"x-internal-token": TOKEN}
+    assert client.get("/internal/work-orders/chargeable?property_ids=7&mode=crg_expense",
+                      headers=h).status_code == 400
+    assert client.get("/internal/work-orders/chargeable?property_ids=7&mode=inconnu&agency_id=4",
+                      headers=h).status_code == 400
+    assert client.post("/internal/work-orders/charged", json={"ids": [1], "ref": "x"},
+                       headers=h).status_code == 400
+
+
+def test_un_autre_mode_est_exclu_des_depenses_imputables(client, db_session):
+    _wo_en_base(db_session, property_id=7, status="done", cost_final=Decimal("90"),
+                charge_mode="to_rebill")
+    r = client.get("/internal/work-orders/chargeable?property_ids=7&mode=crg_expense&agency_id=4",
+                   headers={"x-internal-token": TOKEN})
+    assert r.json()["work_orders"] == []
+
+
+def test_la_garde_de_l_administration_couvre_tout_ce_qui_designe_le_payeur():
+    agent, acheve = _principal("agent"), _wo("done", payer="third_party", third_party_label="Wafa")
+    for cle in ("third_party_label", "nature", "client_id", "lease_id", "charge_mode"):
+        assert refus_de_modification(agent, acheve, {cle: "x"}) is not None
+    # Un statut nul ne change pas le statut courant.
+    assert refus_de_modification(agent, acheve, {"status": None, "payer": "tenant"}) is not None
+    # Le statut d'arrivée compte aussi.
+    assert refus_de_modification(agent, _wo("in_progress"), {"status": "done", "lease_id": 3}) is not None
+
+
+def test_l_api_refuse_un_tiers_payeur_sans_nom(client, db_session):
+    wo = _wo_en_base(db_session, status="scheduled", payer="owner")
+    for corps in ({"payer": "third_party"}, {"payer": "third_party", "third_party_label": 123},
+                  {"payer": "third_party", "third_party_label": "  "}):
+        assert client.put(f"/backoffice/work-orders/{wo.id}", json=corps).status_code == 400
+    db_session.refresh(wo)
+    assert wo.payer == "owner"

@@ -19,7 +19,7 @@ from semsar_common import get_settings, install_legacy_error_handlers, setup_log
 
 from .db import get_db, init_db
 from .models import Artisan, WorkOrder
-from .payeur import refus_de_creation, refus_de_modification, valeur_inconnue
+from .payeur import CHARGE_MODES, refus_de_creation, refus_de_modification, tiers_sans_nom, valeur_inconnue
 from .trades import ARTISAN_TRADES, is_valid_trade
 
 settings = get_settings()
@@ -267,12 +267,16 @@ def list_work_orders(
 
 @app.get("/internal/work-orders/chargeable", include_in_schema=False)
 def internal_chargeable_work_orders(
-    property_ids: str, mode: str, lease_id: int | None = None,
+    property_ids: str, mode: str, agency_id: int | None = None, lease_id: int | None = None,
     x_internal_token: str = Header(default=""), db: Session = Depends(get_db),
 ):
     """Dépenses achevées, chiffrées et pas encore portées sur un relevé, pour des biens donnés."""
     if x_internal_token != settings.internal_token:
         return _err("Forbidden", 403)
+    if agency_id is None:
+        return _err("agency_id est requis", 400)
+    if mode not in CHARGE_MODES:
+        return _err("Mode d'imputation invalide", 400)
     try:
         ids = [int(i) for i in property_ids.split(",") if i.strip()]
     except ValueError:
@@ -280,7 +284,7 @@ def internal_chargeable_work_orders(
     if not ids:
         return {"work_orders": []}
     query = db.query(WorkOrder).filter(
-        WorkOrder.property_id.in_(ids), WorkOrder.status == "done",
+        WorkOrder.agency_id == agency_id, WorkOrder.property_id.in_(ids), WorkOrder.status == "done",
         WorkOrder.cost_final.isnot(None), WorkOrder.charged_at.is_(None),
         WorkOrder.charge_mode == mode)
     if lease_id:
@@ -305,11 +309,13 @@ async def internal_stamp_charged(
     if x_internal_token != settings.internal_token:
         return _err("Forbidden", 403)
     data = await _json(request)
-    ids, ref = data.get("ids"), data.get("ref")
-    if not isinstance(ids, list) or not all(isinstance(i, int) for i in ids) or not isinstance(ref, str) or not ref:
-        return _err("ids et ref sont requis", 400)
+    ids, ref, agency_id = data.get("ids"), data.get("ref"), data.get("agency_id")
+    if (not isinstance(ids, list) or not all(isinstance(i, int) for i in ids)
+            or not isinstance(ref, str) or not ref or not isinstance(agency_id, int)):
+        return _err("ids, ref et agency_id sont requis", 400)
     stamped = (db.query(WorkOrder)
-               .filter(WorkOrder.id.in_(ids), WorkOrder.charged_at.is_(None))
+               .filter(WorkOrder.id.in_(ids), WorkOrder.agency_id == agency_id,
+                       WorkOrder.charged_at.is_(None))
                .update({"charged_at": datetime.utcnow(), "charged_ref": ref}, synchronize_session=False))
     db.commit()
     return {"stamped": stamped}
@@ -382,6 +388,8 @@ async def update_work_order(wid: int, request: Request, principal: Principal = D
             return refusal
     if (inconnue := valeur_inconnue(data)) is not None:
         return _err(inconnue, 400)
+    if (sans_nom := tiers_sans_nom(wo, data)) is not None:
+        return _err(sans_nom, 400)
     if (refus := refus_de_modification(principal, wo, data)) is not None:
         return _err(refus, 403)
     # Ces traces protègent le bon du retrait : les laisser réécrire rendrait la protection
@@ -408,7 +416,7 @@ async def update_work_order(wid: int, request: Request, principal: Principal = D
         wo.payer_set_at = datetime.utcnow()
     if "payer" in data or "third_party_label" in data:
         label = data.get("third_party_label", wo.third_party_label)
-        wo.third_party_label = label.strip() if wo.payer == "third_party" and isinstance(label, str) else None
+        wo.third_party_label = label.strip() if wo.payer == "third_party" else None
     # `completed_at` ne se pose qu'au passage à « terminé », état dont on ne sort plus : rien
     # ne doit l'effacer, surtout pas un PUT qui renvoie le statut courant à l'identique.
     if data.get("status") not in (None, wo.status):
