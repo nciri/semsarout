@@ -13,6 +13,8 @@ import { Alert, Chip, IconAction, Kv, TD, TH } from '../components/kit'
 import { Modal, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
 import CheckinModal from './CheckinModal'
 import StayForm from './StayForm'
+import { RichText } from '../../../components/common/RichTextarea'
+import { richTextToPlain } from '../../../utils/richText'
 
 const GUEST_TONE = { validated: 'good', rejected: 'crit', declared: 'neutral' }
 const MESSAGE_TONE = { sent: 'good', failed: 'crit', pending: 'warn', no_recipient: 'warn' }
@@ -131,10 +133,14 @@ function StayDetail() {
               <dd className="font-medium">{s.guest_phone || '—'}</dd>
             </div>
           </dl>
-          {s.guest_notes && <p className="mt-1 text-[13px] text-gray-600">{s.guest_notes}</p>}
+          <RichText html={s.guest_notes} className="mt-1 text-[13px] text-gray-600" />
           {s.special_requests && (
             <p className="text-[13px] text-gray-600">
-              <b className="font-semibold">{t('backoffice:stays.planning.form.requests')} : </b>{s.special_requests}
+              {/* 🔴 Rendu **en ligne**, derrière un libellé dans la même phrase : un
+                  paragraphe HTML y insérerait une rupture au milieu. On y projette donc
+                  le texte, dont les sauts de ligne sont rendus par `whitespace-pre-line`. */}
+              <b className="font-semibold">{t('backoffice:stays.planning.form.requests')} : </b>
+              <span className="whitespace-pre-line">{richTextToPlain(s.special_requests)}</span>
             </p>
           )}
         </Section>

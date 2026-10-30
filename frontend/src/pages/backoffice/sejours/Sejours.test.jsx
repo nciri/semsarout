@@ -691,6 +691,44 @@ describe('Fiche de séjour, saisie directe et calendrier', () => {
       .toHaveAttribute('href', '/backoffice/sejours/messages?sejour=2')
   })
 
+  // Les deux champs sont saisis en WYSIWYG, mais leurs surfaces diffèrent : les notes sont
+  // un bloc à part, les demandes sont rendues **en ligne** derrière un libellé dans la même
+  // phrase — un paragraphe HTML y insérerait une rupture au milieu.
+  it('rend la mise en forme des notes et projette les demandes en texte', async () => {
+    svc.getStay.mockResolvedValue({ ...DETAIL, stay: { ...DETAIL.stay,
+      guest_notes: '<p>Arrivée <strong>tardive</strong></p>',
+      special_requests: '<p>Lit bébé</p><p>Étage bas</p>' } })
+    const { container } = renderAt('/backoffice/sejours/2')
+    await screen.findByRole('heading', { name: 'Riad Médina' })
+
+    expect(container.querySelector('.rich-text strong').textContent).toBe('tardive')
+    // 🔴 Les demandes : le texte, jamais les balises, et aucun paragraphe dans la phrase.
+    const ligne = screen.getByText(/Lit bébé/)
+    expect(ligne.textContent).toBe('Lit bébé\nÉtage bas')
+    expect(ligne.querySelector('p')).toBeNull()
+    expect(container.innerHTML).not.toContain('&lt;p&gt;')
+  })
+
+  it('envoie les notes du séjour direct en HTML nettoye', async () => {
+    renderAt('/backoffice/sejours')
+    await screen.findByText('Salma Bennani')
+    await userEvent.click(screen.getByRole('button', { name: 'Saisir un séjour direct' }))
+    await userEvent.selectOptions(await screen.findByLabelText('Bien'), '5')
+    await userEvent.type(screen.getByLabelText('Arrivée'), '2026-12-10')
+    await userEvent.type(screen.getByLabelText('Départ'), '2026-12-14')
+
+    const editor = document.getElementById('stay-notes')
+    editor.innerHTML = '<p>Arrivée <b>tardive</b></p><script>alert(1)</script>'
+    await userEvent.click(editor)
+    await userEvent.tab()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+    await vi.waitFor(() => expect(svc.createStay).toHaveBeenCalled())
+    expect(svc.createStay.mock.calls[0][0]).toMatchObject({
+      guest_notes: '<p>Arrivée <b>tardive</b></p>',
+    })
+  })
+
   it('annule un séjour après confirmation', async () => {
     renderAt('/backoffice/sejours/2')
     await screen.findByRole('heading', { name: 'Riad Médina' })

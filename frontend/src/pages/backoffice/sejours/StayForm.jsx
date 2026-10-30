@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import api from '../../../services/api'
 import { stayService } from '../../../services/stayService'
 import { Field, Modal, PRIMARY_BTN, SECONDARY_BTN, Select } from '../../../components/backoffice/ui'
+import RichTextarea from '../../../components/common/RichTextarea'
 
 const EMPTY = {
   property_id: '', check_in: '', check_out: '', status: 'confirmed', guest_name: '',
@@ -129,12 +130,12 @@ function StayForm({ stay, onClose, onSaved }) {
       </div>
 
       <Labelled id="stay-notes" label={t('backoffice:stays.planning.form.notes')}>
-        <textarea id="stay-notes" rows={2} value={form.guest_notes} onChange={set('guest_notes')}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500" />
+        <RichTextarea id="stay-notes" rows={2} value={form.guest_notes}
+          onChange={(html) => setForm((f) => ({ ...f, guest_notes: html }))} />
       </Labelled>
       <Labelled id="stay-requests" label={t('backoffice:stays.planning.form.requests')}>
-        <textarea id="stay-requests" rows={2} value={form.special_requests} onChange={set('special_requests')}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500" />
+        <RichTextarea id="stay-requests" rows={2} value={form.special_requests}
+          onChange={(html) => setForm((f) => ({ ...f, special_requests: html }))} />
       </Labelled>
     </Modal>
   )

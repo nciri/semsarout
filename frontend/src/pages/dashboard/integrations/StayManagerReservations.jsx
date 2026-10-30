@@ -18,6 +18,7 @@ import {
 import useAuthStore from '../../../store/authStore'
 import DirIcon from '../../../components/common/DirIcon'
 import { useFormat } from '../../../utils/format'
+import { RichText } from '../../../components/common/RichTextarea'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
 
@@ -430,12 +431,8 @@ export default function StayManagerReservations() {
               {(selectedReservation.guest_notes || selectedReservation.special_requests) && (
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-3">{t('dashboard:stayManager.reservations.detail.notes')}</h4>
-                  {selectedReservation.guest_notes && (
-                    <p className="text-sm text-gray-600 mb-2">{selectedReservation.guest_notes}</p>
-                  )}
-                  {selectedReservation.special_requests && (
-                    <p className="text-sm text-gray-600 italic">{selectedReservation.special_requests}</p>
-                  )}
+                  <RichText html={selectedReservation.guest_notes} className="text-sm text-gray-600 mb-2" />
+                  <RichText html={selectedReservation.special_requests} className="text-sm text-gray-600 italic" />
                 </div>
               )}
 

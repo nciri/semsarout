@@ -210,3 +210,49 @@ def test_l_apercu_reste_accessible_malgre_la_route_de_fiche(client, bien):
     assert client.get("/backoffice/sejours/calendriers").status_code == 200
     mois = (datetime.utcnow() + timedelta(days=1)).strftime("%Y-%m")
     assert client.get(f"/backoffice/sejours/calendrier?mois={mois}").status_code == 200
+
+
+# ---- Notes et demandes du voyageur en texte riche ---------------------------------------
+
+_SALE = '<p class="MsoNormal">Arrivée <strong>tardive</strong></p><script>alert(1)</script>'
+_PROPRE = "<p>Arrivée <strong>tardive</strong></p>"
+
+
+def test_les_notes_et_demandes_sont_assainies_a_la_saisie(client, bien):
+    """Les deux champs sont saisis en WYSIWYG : ce qui est stocké est du HTML, donc un XSS
+    stocké déclenché par la fiche du séjour s'il n'est pas assaini ici."""
+    r = client.post("/backoffice/sejours", json=_payload(
+        guest_notes=_SALE,
+        special_requests='<ul><li>Lit bébé</li></ul><img src=x onerror="alert(2)">',
+        guest_name="Salma <Idrissi> & co"))
+
+    assert r.status_code == 201
+    # `stay_dict` ne porte pas les notes : la fiche complète est la vue qui les renvoie.
+    sejour = client.get(f"/backoffice/sejours/{r.json()['stay']['id']}").json()["stay"]
+    assert sejour["guest_notes"] == _PROPRE
+    assert sejour["special_requests"] == "<ul><li>Lit bébé</li></ul>"
+    # Le nom reste du texte brut : l'assainir ferait apparaître des entités à l'écran.
+    assert sejour["guest_name"] == "Salma <Idrissi> & co"
+
+
+def test_un_champ_vide_par_l_editeur_redevient_nul(client, bien):
+    r = client.post("/backoffice/sejours", json=_payload(guest_notes="<p><br></p>",
+                                                         special_requests=""))
+    sejour = client.get(f"/backoffice/sejours/{r.json()['stay']['id']}").json()["stay"]
+    assert sejour["guest_notes"] is None
+    assert sejour["special_requests"] is None
+
+
+def test_une_note_trop_longue_est_tronquee_sans_laisser_de_balise_ouverte(client, bien):
+    """Le plafond s'applique au HTML : la troncature peut couper au milieu d'une balise.
+    L'assainisseur repasse derrière et referme l'arbre, plutôt que de stocker du balisage
+    ouvert que seul l'affichage rattraperait."""
+    from app.booking import NOTE_MAX
+
+    r = client.post("/backoffice/sejours",
+                    json=_payload(guest_notes=f"<p>{'a' * (NOTE_MAX + 50)}</p>"))
+
+    note = client.get(f"/backoffice/sejours/{r.json()['stay']['id']}").json()["stay"]["guest_notes"]
+    assert len(note) <= NOTE_MAX + len("</p>")
+    assert note.startswith("<p>aaa") and note.endswith("</p>")
+    assert note.count("<p>") == note.count("</p>") == 1

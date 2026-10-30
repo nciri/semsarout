@@ -17,6 +17,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
+from semsar_common import sanitize_rich_field
 
 from . import contract_client, stays
 from .db import get_db
@@ -139,8 +140,16 @@ def _payload(data: dict, *, require_property: bool):
     out["guest_name"] = (data.get("guest_name") or "").strip()[:NAME_MAX] or None
     out["guest_email"] = (data.get("guest_email") or "").strip()[:255] or None
     out["guest_phone"] = (data.get("guest_phone") or "").strip()[:50] or None
-    out["guest_notes"] = (data.get("guest_notes") or "").strip()[:NOTE_MAX] or None
-    out["special_requests"] = (data.get("special_requests") or "").strip()[:NOTE_MAX] or None
+    # Champs saisis en WYSIWYG : ce qui arrive est du HTML. Les autres champs de la fonction
+    # (nom, e-mail, téléphone) restent du texte brut — les assainir y échapperait « < » et
+    # « & » et ferait apparaître des entités à l'écran.
+    #
+    # Le plafond `NOTE_MAX` s'applique au HTML, qui peut donc être coupé au milieu d'une
+    # balise : on repasse l'assainisseur après la troncature, et il referme l'arbre. Stocker
+    # du balisage ouvert serait rattrapé à l'affichage, mais la donnée serait fausse.
+    for champ in ("guest_notes", "special_requests"):
+        clean = sanitize_rich_field(data.get(champ))
+        out[champ] = sanitize_rich_field(clean[:NOTE_MAX]) if clean else None
     return out, None
 
 
