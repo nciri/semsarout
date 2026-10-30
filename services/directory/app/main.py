@@ -137,6 +137,14 @@ def _wo_dict(db: Session, w: WorkOrder, principal: Principal | None = None) -> d
         "scheduled_date": w.scheduled_date.isoformat() if w.scheduled_date else None,
         "completed_at": w.completed_at.isoformat() if w.completed_at else None,
         "notes": w.notes, "created_at": w.created_at.isoformat() if w.created_at else None,
+        "client_id": w.client_id, "lease_id": w.lease_id, "nature": w.nature, "payer": w.payer,
+        "charge_mode": w.charge_mode, "third_party_label": w.third_party_label,
+        "payer_set_by": w.payer_set_by,
+        "payer_set_at": w.payer_set_at.isoformat() if w.payer_set_at else None,
+        "charged_at": w.charged_at.isoformat() if w.charged_at else None,
+        "charged_ref": w.charged_ref,
+        "settled_at": w.settled_at.isoformat() if w.settled_at else None,
+        "settled_by": w.settled_by, "settled_method": w.settled_method,
     }
 
 

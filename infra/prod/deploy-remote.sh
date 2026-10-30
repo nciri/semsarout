@@ -102,6 +102,7 @@ identity/migrate_equipes_metier.sql
 staymanager/migrate_equipes_exploitation.sql
 staymanager/migrate_contrat_sejour.sql
 audit/add_tenant.sql
+directory/migrate_payeur_intervention.sql
 "
 
 # psql en tant que rôle postgres (patron roles/postgres d'Ansible : become_user postgres).
