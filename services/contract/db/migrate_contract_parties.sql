@@ -7,8 +7,11 @@
 -- `contract.client_id` reste la première partie, dérivée par le service.
 --
 -- Pas d'amorçage des contrats existants : leur rôle juridique ne se déduit pas de leur
--- `document_type` sans l'inventer. Sans partie, la fusion fait tenir tous les rôles au
--- `client_id` unique du contrat — exact pour un contrat à une partie.
+-- `document_type` sans l'inventer. Un contrat déjà en base garde donc ses parties vides, et
+-- ses blocs d'identification restent à compléter dans l'éditeur : la fusion ne prête PLUS le
+-- `client_id` unique à tous les rôles — nommer la même personne bailleur et locataire dans un
+-- acte signé est pire qu'un blanc, qui se lit comme un champ à remplir. Côté création, un
+-- modèle à `{{parties_*}}` refuse désormais de générer sans au moins une partie.
 CREATE TABLE IF NOT EXISTS contract.contract_party (
     id BIGSERIAL PRIMARY KEY,
     contract_id BIGINT NOT NULL,
