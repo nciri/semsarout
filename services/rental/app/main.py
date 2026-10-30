@@ -5,6 +5,7 @@ CRUD mandats de gestion + baux (back-office, gating `rental`). Émet rental.mand
 """
 from contextlib import asynccontextmanager
 from datetime import datetime
+from decimal import Decimal
 import json
 import os
 import uuid
@@ -21,7 +22,7 @@ from semsar_events import enqueue
 
 import semsar_signing as signing
 
-from . import commission_client, events, identity_client, overview, qualification
+from . import commission_client, depenses, events, identity_client, overview, qualification
 from .db import get_db, init_db
 from .models import (ApplicationDocument, ChargeRegularization, ClientRO, CrgReport,
                      DeductionLine, DepositSettlement, Inventory, InventoryItem, InventoryPhoto,
@@ -808,7 +809,9 @@ def _prev_period(now: datetime) -> tuple[int, int]:
 
 
 def _crg_aggregate(db, mandate, y: int, m: int) -> dict:
-    """Agrège les loyers encaissés des baux d'un mandat pour un mois donné."""
+    """Agrège loyers encaissés et dépenses imputables d'un mandat pour un mois donné.
+
+    Lève DepensesIndisponibles si directory ne répond pas (jamais de dépenses à 0 par défaut)."""
     lease_ids = [l.id for l in db.query(Lease).filter(Lease.mandate_id == mandate.id).all()]
     collected = 0.0
     if lease_ids:
@@ -818,8 +821,11 @@ def _crg_aggregate(db, mandate, y: int, m: int) -> dict:
         collected = sum(float(rp.paid_amount or rp.total_amount or 0) for rp in rows)
     fee_pct = float(mandate.fee_percent or 0)
     fees = round(collected * fee_pct / 100.0, 2)
-    return {"rent_collected": round(collected, 2), "fees": fees,
-            "net": round(collected - fees, 2)}
+    lignes = depenses.imputables([mandate.property_id], "crg_expense", mandate.agency_id)
+    # Decimal : la somme de montants en dirhams ne doit pas dériver au centime.
+    expenses = sum((Decimal(str(l["cost_final"])) for l in lignes), Decimal(0))
+    return {"rent_collected": round(collected, 2), "fees": fees, "expenses": float(expenses),
+            "expense_lines": lignes, "net": round(collected - fees - float(expenses), 2)}
 
 
 @app.post("/internal/mandates/{mandate_id}/crg-sent", include_in_schema=False)
@@ -838,7 +844,8 @@ async def internal_mandate_crg_sent(mandate_id: int, request: Request,
         db.add(CrgReport(mandate_id=mnd.id, agency_id=mnd.agency_id,
                          period_label=f"{_MONTHS_FR[m]} {y}", year=y, month=m,
                          rent_collected=data.get("rent_collected", 0), fees=data.get("fees", 0),
-                         net=data.get("net", 0), sent_at=datetime.utcnow()))
+                         net=data.get("net", 0), expenses=data.get("expenses", 0),
+                         status="sent", sent_at=datetime.utcnow()))
         db.commit()
     return {"ok": True}
 

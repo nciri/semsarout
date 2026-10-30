@@ -100,7 +100,10 @@ class CrgReport(Base):
     month = Column(Integer, nullable=False)
     rent_collected = Column(Numeric(12, 2), default=0)
     fees = Column(Numeric(12, 2), default=0)
+    expenses = Column(Numeric(12, 2), default=0)
     net = Column(Numeric(12, 2), default=0)
+    status = Column(String(10), default="draft")             # draft|validated|sent
+    expense_lines = Column(Text)                              # JSON : [{id,title,cost_final,completed_at}]
     sent_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow)
 
