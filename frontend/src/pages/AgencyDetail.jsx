@@ -7,6 +7,7 @@ import PropertyCard from '../components/common/PropertyCard'
 import DirIcon from '../components/common/DirIcon'
 import TrustBadge from '../components/common/TrustBadge'
 import { agencyService } from '../services/agencyService'
+import RichTextarea, { RichText } from '../components/common/RichTextarea'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
 
@@ -139,7 +140,7 @@ function AgencyDetail() {
             {agency.description && (
               <div className="mb-8">
                 <h2 className="font-semibold text-lg mb-4">{t('public:agencyDetail.aboutTitle')}</h2>
-                <p className="text-gray-600">{agency.description}</p>
+                <RichText html={agency.description} className="text-gray-600" />
               </div>
             )}
 
@@ -333,14 +334,11 @@ function AgencyDetail() {
                       <label htmlFor="contact-message" className="block text-sm font-medium text-gray-700 mb-1">
                         {t('public:agencyDetail.messageLabel')}
                       </label>
-                      <textarea
+                      <RichTextarea
                         id="contact-message"
-                        name="message"
                         value={contactForm.message}
-                        onChange={handleContactChange}
-                        required
+                        onChange={(html) => setContactForm(prev => ({ ...prev, message: html }))}
                         rows={4}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
                         placeholder={t('public:agencyDetail.messagePlaceholder')}
                       />
                     </div>
