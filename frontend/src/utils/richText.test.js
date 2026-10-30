@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { ensureRichText, isRichTextEmpty, plainToRichText, richTextToPlain, safeHref, sanitizeRichText } from './richText'
+import DOMPurify from 'dompurify'
 import fixture from './serverSanitize.fixture.json'
+import pkg from '../../package.json'
 
 /**
  * Convergence des deux couches de sanitisation.
@@ -148,5 +150,31 @@ describe('conversions', () => {
     expect(isRichTextEmpty('<p><br></p>')).toBe(true)
     expect(isRichTextEmpty('<p>  </p>')).toBe(true)
     expect(isRichTextEmpty('<p>x</p>')).toBe(false)
+  })
+})
+
+/**
+ * Plancher de version de DOMPurify.
+ *
+ * Le fixture de convergence a été rejoué à la montée et ne bouge pas — il ne distingue donc
+ * pas, à lui seul, une 3.2.4 d'une 3.4.x. Rien ne gardait alors la seule bibliothèque sur
+ * laquelle repose la défense XSS publique : c'est ainsi qu'une épingle manuelle `3.2.4` a pu
+ * poser un retour en arrière alors que le verrou résolvait déjà une version supérieure.
+ */
+describe('dompurify — plancher de version', () => {
+  const PLANCHER = [3, 3, 1]
+  const auMoins = (v) => {
+    const [a, b, c] = String(v).split('.').map(Number)
+    return a * 1e6 + b * 1e3 + c >= PLANCHER[0] * 1e6 + PLANCHER[1] * 1e3 + PLANCHER[2]
+  }
+
+  it('est déclaré en plage, jamais épinglé, et au-dessus du plancher', () => {
+    const plage = pkg.dependencies.dompurify
+    expect(plage, 'une version exacte fige les correctifs amont').toMatch(/^\^/)
+    expect(auMoins(plage.slice(1)), `plage déclarée : ${plage}`).toBe(true)
+  })
+
+  it('la version réellement installée respecte ce plancher', () => {
+    expect(auMoins(DOMPurify.version), `installée : ${DOMPurify.version}`).toBe(true)
   })
 })

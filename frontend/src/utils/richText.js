@@ -11,6 +11,15 @@
  * d'une page publique (`PropertyDetail`), donc un contournement de cette couche sur une charge
  * que bleach a déjà acceptée est un XSS stocké public **sans rien derrière**. Une liste de
  * vecteurs mXSS figée à une date ne tient pas ce rôle ; un projet maintenu, oui.
+ *
+ * **Politique de version** (le `^3.3.1` de `package.json` ; JSON n'accepte pas de commentaire,
+ * la règle vit donc ici, à l'import) : on suit les correctifs amont, on n'épingle jamais une
+ * version exacte à la main. Une épingle fige la seule bibliothèque sur laquelle repose la
+ * défense XSS publique — et c'est ainsi que la 3.2.4 s'est retrouvée posée en dur alors que le
+ * verrou résolvait déjà la 3.3.1, c'est-à-dire un retour en arrière. Toute montée impose de
+ * rejouer le fixture de convergence (`UPDATE_SANITIZE_FIXTURE=1` côté `contract`, puis
+ * `richText.test.js`) : la divergence d'ordre des attributs dépend de la version, et c'est
+ * précisément ce que ce test surveille.
  */
 import DOMPurify from 'dompurify'
 
