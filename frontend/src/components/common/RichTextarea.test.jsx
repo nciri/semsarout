@@ -17,9 +17,26 @@ function Harness({ initial = '', ...props }) {
   )
 }
 
+/**
+ * `document.execCommand` n'existe pas sous jsdom : `vi.spyOn` ne peut pas l'espionner, et une
+ * affectation directe **fuit vers les fichiers suivants du même worker** (`restoreAllMocks`
+ * ne défait pas une affectation de propriété). On pose donc la propriété et on la retire
+ * nous-mêmes après chaque test.
+ */
+function stubExecCommand() {
+  const exec = vi.fn().mockReturnValue(true)
+  Object.defineProperty(document, 'execCommand', {
+    value: exec, configurable: true, writable: true,
+  })
+  return exec
+}
+
 describe('RichTextarea', () => {
   beforeEach(async () => { await i18n.changeLanguage('fr') })
-  afterEach(() => { vi.restoreAllMocks() })
+  afterEach(() => {
+    vi.restoreAllMocks()
+    delete document.execCommand
+  })
 
   it('reste relié à son <label htmlFor> et expose une zone de texte multiligne', () => {
     render(<Harness />)
@@ -64,8 +81,7 @@ describe('RichTextarea', () => {
   })
 
   it('le collage passe par le nettoyage et non par le presse-papier brut', async () => {
-    const exec = vi.fn().mockReturnValue(true)
-    document.execCommand = exec
+    const exec = stubExecCommand()
     render(<Harness />)
     const box = screen.getByLabelText('Notes')
     await userEvent.click(box)
@@ -80,8 +96,7 @@ describe('RichTextarea', () => {
   })
 
   it('les actions de la barre d’outils appliquent la commande d’édition correspondante', async () => {
-    const exec = vi.fn().mockReturnValue(true)
-    document.execCommand = exec
+    const exec = stubExecCommand()
     render(<Harness />)
     expect(screen.getByRole('toolbar')).toHaveAccessibleName('Mise en forme')
     for (const [label, command] of [
@@ -114,6 +129,29 @@ describe('RichTextarea', () => {
     expect(screen.getByRole('button', { name: 'Gras' })).toBeDisabled()
   })
 
+  // Tout ce qui a été enregistré avant cette bascule est du texte brut, **déjà un point fixe**
+  // du nettoyage : rien ne signale que ses `\n` vont se réduire à des espaces en HTML. La
+  // surface remplacée (`whitespace-pre-line`) les préservait.
+  it('remonte en paragraphes une valeur d’avant la bascule, sans perdre ses sauts de ligne', () => {
+    render(<Harness initial={'Visite rapide.\nCuisine à refaire.\n\nPortail bloqué.'} />)
+    const box = screen.getByLabelText('Notes')
+    expect(box.innerHTML).toBe('<p>Visite rapide.<br>Cuisine à refaire.</p><p>Portail bloqué.</p>')
+    expect(box.querySelectorAll('p')).toHaveLength(2)
+  })
+
+  it('refuse une adresse de lien à protocole dangereux', async () => {
+    const exec = stubExecCommand()
+    render(<Harness />)
+    await userEvent.click(screen.getByRole('button', { name: 'Lien' }))
+    await userEvent.type(screen.getByLabelText('Adresse du lien'), 'javascript:alert(1)')
+    await userEvent.click(screen.getByRole('button', { name: 'Appliquer' }))
+    // `createLink` poserait l'URL telle quelle : une ancre vivante dans l'éditeur de son
+    // auteur. Le champ reste ouvert pour qu'il voie que rien n'a été appliqué.
+    expect(exec).not.toHaveBeenCalledWith('createLink', false, 'javascript:alert(1)')
+    expect(exec).not.toHaveBeenCalled()
+    expect(screen.getByLabelText('Adresse du lien')).toHaveValue('javascript:alert(1)')
+  })
+
   it('porte le placeholder sans l’injecter dans la valeur', () => {
     render(<Harness placeholder="Décrivez le bien" />)
     expect(screen.getByLabelText('Notes')).toHaveAttribute('data-placeholder', 'Décrivez le bien')
@@ -134,6 +172,12 @@ describe('RichText (affichage)', () => {
     expect(container.querySelector('script')).toBeNull()
     expect(container.querySelector('img')).toBeNull()
     expect(container.textContent).toBe('ok')
+  })
+
+  it('remonte les sauts de ligne d’une valeur d’avant la bascule', () => {
+    const { container } = render(<RichText html={'Mur repeint.\nSol poncé.'} />)
+    expect(container.querySelectorAll('br')).toHaveLength(1)
+    expect(container.querySelector('p').textContent).toBe('Mur repeint.Sol poncé.')
   })
 
   it('retombe sur le libellé vide quand le champ ne contient que des balises vides', () => {

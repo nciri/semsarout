@@ -2,7 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiBold, FiItalic, FiLink, FiList, FiUnderline } from 'react-icons/fi'
 import { isRtl } from '../../i18n/rtl'
-import { isRichTextEmpty, sanitizeRichText } from '../../utils/richText'
+import { ensureRichText, isRichTextEmpty, safeHref, sanitizeRichText } from '../../utils/richText'
 
 /**
  * Champ de texte riche, en remplacement d’un `textarea`.
@@ -28,9 +28,19 @@ export function RichText({ html, className = '', emptyLabel }) {
   return (
     <div
       className={`rich-text break-words [&_a]:text-primary-700 [&_a]:underline [&_blockquote]:border-s-2 [&_blockquote]:border-gray-200 [&_blockquote]:ps-3 [&_li]:ms-1 [&_ol]:list-decimal [&_ol]:ps-5 [&_p]:mb-1 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ps-5 ${className}`}
-      // Assaini à l'écriture par le service ET ici à l'affichage : la liste blanche est la
-      // même des deux côtés, et une donnée d'avant la bascule WYSIWYG reste du texte brut.
-      dangerouslySetInnerHTML={{ __html: sanitizeRichText(html) }}
+      // Assaini à l'écriture par le service ET ici à l'affichage. `ensureRichText` remonte
+      // d'abord une valeur d'avant la bascule : c'est du texte brut, dont les sauts de ligne
+      // se réduiraient sinon à des espaces — la surface remplacée était `whitespace-pre-line`.
+      //
+      // La valeur posée ici est la sortie de **DOMPurify**, configuré depuis la liste blanche
+      // partagée du produit (`utils/richText.js`), et la passe bleach de
+      // `semsar_common.sanitize_html` est la frontière côté stockage. Deux couches
+      // indépendantes, dont la convergence est vérifiée par `utils/richText.test.js` contre
+      // un fixture produit par le test serveur. L'analyseur signale cette ligne quel que soit
+      // l'assainissement — son propre remède recommandé est précisément DOMPurify — et une
+      // alerte permanente sur une ligne correcte apprend à survoler sa sortie.
+      // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml
+      dangerouslySetInnerHTML={{ __html: sanitizeRichText(ensureRichText(html)) }}
     />
   )
 }
@@ -78,7 +88,9 @@ function RichTextarea({
   useEffect(() => {
     const el = editor.current
     if (!el || value === emitted.current) return
-    el.innerHTML = sanitizeRichText(value)
+    // Même remontée qu'à l'affichage : sans elle, ouvrir un compte rendu écrit avant la
+    // bascule aplatissait ses paragraphes en une seule ligne dans l'éditeur.
+    el.innerHTML = sanitizeRichText(ensureRichText(value))
     emitted.current = value
   }, [value])
 
@@ -119,6 +131,9 @@ function RichTextarea({
 
   const applyLink = () => {
     const url = linkUrl.trim()
+    // `createLink` pose l'URL telle quelle : un `javascript:` ferait une ancre vivante dans
+    // l'éditeur de son auteur jusqu'au prochain montage. Même filtre qu'à l'affichage.
+    if (url && !safeHref(url)) return
     setLinkOpen(false)
     setLinkUrl('')
     if (url) exec('createLink', url)
