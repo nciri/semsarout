@@ -84,7 +84,10 @@ def render(text: str, values: dict, *, html: bool = False) -> str:
         name = match.group(1)
         if name not in values:
             return match.group(0)
-        return _html.escape(str(values[name]), quote=False) if html else values[name]
+        # `quote=True` (le défaut) : sans lui, un `guest_name` substitué dans
+        # `<a href="{{guest_name}}">` sortirait de l'attribut par un simple guillemet. C'est
+        # le seul endroit de la chaîne dont le métier est d'échapper.
+        return _html.escape(str(values[name])) if html else values[name]
     return _VAR.sub(sub, text or "")
 
 

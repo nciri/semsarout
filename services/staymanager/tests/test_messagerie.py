@@ -238,8 +238,12 @@ def test_rich_body_is_sanitised_and_substituted_values_escaped(client, seeded):
 
     due = client.get("/internal/sejours/messages/due", headers=TOKEN).json()["messages"]
     assert len(due) == 1
-    assert due[0]["body"] == '<p>Bonjour <b>&lt;img src=x onerror="alert(1)"&gt;</b></p>'
+    assert due[0]["body"] == \
+        "<p>Bonjour <b>&lt;img src=x onerror=&quot;alert(1)&quot;&gt;</b></p>"
     assert "<img" not in due[0]["body"]
+    # Le guillemet est échappé lui aussi : un gabarit qui place une variable dans un attribut
+    # (`<a href="{{guest_name}}">`) sortirait sinon de l'attribut par un simple guillemet.
+    assert '"' not in due[0]["body"]
 
 
 def test_empty_rich_body_is_refused_like_an_empty_text(client, seeded):
