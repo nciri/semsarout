@@ -11,22 +11,10 @@ from pathlib import Path
 
 import pytest
 
-from app.merge import STAY_PLACEHOLDERS, build_context, render
+from app.merge import ROLE_PLACEHOLDERS, STAY_PLACEHOLDERS, build_context, render
 from app.sanitize import sanitize_html
 
 MIGRATION = Path(__file__).resolve().parents[1] / "db" / "migrate_modeles_builtin.sql"
-
-# Placeholders de parties multiples (plusieurs vendeurs, plusieurs locataires). Ils ne sont pas
-# encore résolus par `build_context` : le support des parties plurielles est en cours côté
-# contexte de fusion. Cette liste est le contrat entre les modèles et ce chantier — quand les
-# clés arrivent dans `build_context`, le test ci-dessous le signale et la liste se vide.
-PARTIES_EN_ATTENTE = {
-    "parties_bailleurs",
-    "parties_locataires",
-    "parties_mandants",
-    "parties_vendeurs",
-    "parties_acquereurs",
-}
 
 PLACEHOLDER = re.compile(r"\{\{\s*([a-zA-Z0-9_]+)\s*\}\}")
 # Les littéraux dollar-quotés du script : $nom$…$nom$ pour le libellé, $html$…$html$ pour le corps.
@@ -77,10 +65,10 @@ def test_document_type_connu_du_service():
 
 
 @pytest.mark.parametrize("nom, corps", _modeles(), ids=lambda v: v[:40])
-def test_placeholders_resolus_ou_explicitement_en_attente(nom, corps):
+def test_tous_les_placeholders_resolvent(nom, corps):
     resolus = set(build_context(None)) | set(STAY_PLACEHOLDERS)
     utilises = set(PLACEHOLDER.findall(corps))
-    inconnus = utilises - resolus - PARTIES_EN_ATTENTE
+    inconnus = utilises - resolus
     assert not inconnus, (
         f"{nom} : placeholders qui ne résolvent pas, donc des blancs invisibles "
         f"dans un contrat signé : {sorted(inconnus)}")
@@ -102,16 +90,15 @@ def test_html_survit_a_la_sanitisation(nom, corps):
 
 @pytest.mark.parametrize("nom, corps", _modeles(), ids=lambda v: v[:40])
 def test_rendu_ne_laisse_aucune_accolade(nom, corps):
-    rendu = render(corps, build_context(None) | {k: "X" for k in PARTIES_EN_ATTENTE})
+    rendu = render(corps, build_context(None))
     assert "{{" not in rendu and "}}" not in rendu
 
 
-def test_parties_en_attente_reellement_utilisees():
-    """Si le contexte de fusion gagne ces clés, la liste d'attente doit se vider, pas pourrir."""
+def test_chaque_role_a_son_bloc_de_parties():
+    """Un rôle sans placeholder correspondant dans les modèles n'a pas lieu d'exister, et un
+    placeholder de parties absent de `build_context` sortirait vide du rendu."""
     corpus = "".join(c for _, c in _modeles())
     utilisees = set(PLACEHOLDER.findall(corpus))
-    assert PARTIES_EN_ATTENTE <= utilisees, "entrée obsolète dans PARTIES_EN_ATTENTE"
-    deja_resolues = PARTIES_EN_ATTENTE & set(build_context(None))
-    assert not deja_resolues, (
-        f"{sorted(deja_resolues)} résolvent désormais dans build_context : "
-        "les retirer de PARTIES_EN_ATTENTE")
+    attendues = set(ROLE_PLACEHOLDERS.values())
+    assert attendues <= utilisees, f"rôle sans emploi dans les modèles : {sorted(attendues - utilisees)}"
+    assert attendues <= set(build_context(None)), "rôle que build_context ne résout pas"

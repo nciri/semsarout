@@ -14,6 +14,19 @@ def _money(v):
         return ""
 
 
+# Placeholders d'identification des parties, un par rôle : les quatre modèles intégrés les
+# emploient dans leur article « Entre les soussignés ». `render()` remplace un placeholder
+# inconnu par une chaîne vide — une clé manquante ici, c'est un article d'identification des
+# parties vide dans un contrat signé.
+ROLE_PLACEHOLDERS = {
+    "vendeur": "parties_vendeurs",
+    "acquereur": "parties_acquereurs",
+    "bailleur": "parties_bailleurs",
+    "locataire": "parties_locataires",
+    "mandant": "parties_mandants",
+}
+
+
 def build_context(agency, *, transaction=None, property=None, client=None, agent_name="",
                   stay=None):
     prop = property
@@ -46,6 +59,9 @@ def build_context(agency, *, transaction=None, property=None, client=None, agent
         "commission_rate": comm_rate,
         "commission_amount": comm_amount,
     }
+    # Repli provisoire : le client unique du contrat tient tous les rôles, le temps que la
+    # saisie de parties plurielles arrive. Mieux vaut le même nom dans deux rôles qu'un blanc.
+    ctx.update(dict.fromkeys(ROLE_PLACEHOLDERS.values(), ctx["client_name"]))
     if stay:
         ctx.update(stay_context(stay))
     return ctx
