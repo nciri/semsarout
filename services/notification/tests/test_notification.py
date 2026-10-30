@@ -365,3 +365,32 @@ def test_gabarit_crg_draft_se_rend_avec_son_lien():
 
     _, html, _ = render.render_email("crg_draft.html", agency_name="Atlas", period_label="Septembre 2026")
     assert "Septembre 2026" in html and "/backoffice/gestion-locative" in html
+
+
+def test_gabarit_lead_rend_le_message_wysiwyg_et_pas_ses_balises():
+    """`lead.message` est saisi en texte riche : sans le filtre `richtext`, l'autoescape du
+    gabarit ferait lire « <p>Villa</p> » à l'agence. Et la couche doit rester une liste
+    blanche : un `<script>` déjà stocké ne doit pas traverser l'email."""
+    from app import render
+
+    _, html, text = render.render_email(
+        "lead_notification.html", lead_name="Hind", lead_email="h@example.ma",
+        lead_message="<p>Villa <strong>vue mer</strong></p><script>alert(1)</script>")
+
+    assert "<p>Villa <strong>vue mer</strong></p>" in html
+    assert "&lt;p&gt;" not in html
+    assert "<script>" not in html and "alert(1)" not in html
+    # La partie text/plain est dérivée du HTML : elle porte le texte, jamais les balises.
+    assert "Villa vue mer" in text and "<strong>" not in text
+
+
+def test_gabarit_ordre_de_service_rend_les_notes_wysiwyg():
+    from app import render
+
+    _, html, _ = render.render_email(
+        "work_order.html", title="Fuite cuisine", artisan_name="Omar",
+        notes="<ul><li>Robinet <em>HS</em></li></ul><iframe src=\"x\"></iframe>")
+
+    assert "<ul><li>Robinet <em>HS</em></li></ul>" in html
+    assert "&lt;ul&gt;" not in html
+    assert "<iframe" not in html

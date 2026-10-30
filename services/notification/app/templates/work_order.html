@@ -14,7 +14,7 @@
   ([("Estimation", (cost_estimate|string) ~ " " ~ currency)] if cost_estimate else [])) }}
 {% if notes %}
 <p style="font-size:13px; color:{{ brand.muted }};">Détails :</p>
-<table role="presentation" width="100%" style="margin:4px 0 22px;"><tr><td style="padding:14px 18px; background:#f4f5f7; border-radius:10px; font-size:14px; line-height:1.6; color:{{ brand.ink }};">{{ notes }}</td></tr></table>
+<table role="presentation" width="100%" style="margin:4px 0 22px;"><tr><td style="padding:14px 18px; background:#f4f5f7; border-radius:10px; font-size:14px; line-height:1.6; color:{{ brand.ink }};">{{ notes | richtext }}</td></tr></table>
 {% endif %}
 <table role="presentation" width="100%"><tr><td align="center">{{ button(app.base_url ~ "/backoffice/work-orders", "Voir l'ordre de service") }}</td></tr></table>
 <p style="margin-top:22px; font-size:13px; color:{{ brand.muted }}; text-align:left;">Merci de confirmer votre disponibilité auprès de l'agence.</p>
