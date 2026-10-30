@@ -543,3 +543,11 @@ def test_le_taux_d_honoraires_du_mandat_est_borne(client, db_session):
     db_session.expire_all()
     assert db_session.get(Mandate, mid).fee_percent == Decimal("6")
 
+    # Un null explicite effaçait la colonne, et tout calcul lit `float(fee_percent or 0)` :
+    # les honoraires tombaient à 0 % sur tous les CRG suivants, sans un mot.
+    assert client.patch(f"/backoffice/gestion-locative/mandates/{mid}",
+                        json={"fee_percent": None}).status_code == 400
+    db_session.expire_all()
+    assert db_session.get(Mandate, mid).fee_percent == Decimal("6")
+    # Omettre la clé reste le moyen de laisser le taux vide à la création.
+    assert client.post("/backoffice/gestion-locative/mandates", json=base).status_code == 201

@@ -203,8 +203,13 @@ def _refus_fee_percent(data: dict) -> JSONResponse | None:
     plafond de dépenses du CRG devient négatif et le net l'est aussi, honoraires seuls.
     « Un CRG faux est plus coûteux qu'un CRG absent » est l'anti-objectif nommé de la spec.
     """
-    if data.get("fee_percent") is None:
+    if "fee_percent" not in data:
         return None
+    if data["fee_percent"] is None:
+        # Un null explicite effaçait la colonne, et tout calcul lit `float(fee_percent or 0)` :
+        # les honoraires tombaient à 0 % sur tous les CRG suivants, sans un mot. Omettre la clé
+        # reste le moyen de laisser le taux vide à la création.
+        return err("Le taux d'honoraires ne peut pas être vidé.", 400)
     try:
         pct = float(data["fee_percent"])
     except (TypeError, ValueError):
