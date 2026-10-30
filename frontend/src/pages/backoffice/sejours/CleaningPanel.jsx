@@ -11,7 +11,7 @@ import { useFormat } from '../../../utils/format'
 import { Alert, Chip, IconAction, TD, TH } from '../components/kit'
 import { EmptyState, Field, Modal, PRIMARY_BTN, SECONDARY_BTN, Select } from '../../../components/backoffice/ui'
 
-const NEW_TASK = { property_id: '', scheduled_date: '', notes: '' }
+const NEW_TASK = { kind: 'menage', property_id: '', scheduled_date: '', notes: '' }
 const NEW_REPORT = { kind: 'issue', category: '', text_note: '', is_urgent: false }
 
 function CleaningPanel() {
@@ -47,7 +47,7 @@ function CleaningPanel() {
 
   const update = useMutation(({ id, body }) => stayService.updateCleaning(id, body), { onSuccess: refresh, onError: fail })
   const create = useMutation(() => stayService.createCleaning({
-    property_id: Number(task.property_id), scheduled_date: task.scheduled_date, notes: task.notes,
+    kind: task.kind, property_id: Number(task.property_id), scheduled_date: task.scheduled_date, notes: task.notes,
   }), {
     onSuccess: () => { toast.success(t('backoffice:stays.cleaning.toasts.created')); setCreating(false); setTask(NEW_TASK); refresh() },
     onError: fail,
@@ -296,6 +296,16 @@ function CleaningPanel() {
             onClick={() => create.mutate()} className={PRIMARY_BTN}>{t('backoffice:stays.cleaning.modal.submit')}</button>
         </>}>
         <p className="mb-3 text-[13px] text-gray-500">{t('backoffice:stays.cleaning.modal.help')}</p>
+        <div className="mb-3">
+          <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="cleaning-new-kind">
+            {t('backoffice:stays.cleaning.modal.kindLabel')}
+          </label>
+          <Select id="cleaning-new-kind" value={task.kind} onChange={(e) => setTask((x) => ({ ...x, kind: e.target.value }))}>
+            {CLEANING_KINDS.map((k) => (
+              <option key={k} value={k}>{t(`backoffice:stays.cleaning.kind.${k}`)}</option>
+            ))}
+          </Select>
+        </div>
         <div className="mb-3">
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="cleaning-property">
             {t('backoffice:stays.cleaning.modal.propertyLabel')}

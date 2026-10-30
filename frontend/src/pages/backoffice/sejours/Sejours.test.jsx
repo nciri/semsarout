@@ -418,7 +418,7 @@ describe('Ménage de rotation', () => {
 
   it('liste le planning du ménage, les retards et les urgences', async () => {
     renderAt('/backoffice/sejours/menage')
-    expect(await screen.findByText('1 ménage en retard.')).toBeInTheDocument()
+    expect(await screen.findByText('1 tâche en retard.')).toBeInTheDocument()
     expect(screen.getByText('1 signalement urgent non lu.')).toBeInTheDocument()
     expect(screen.getByText('1 urgent')).toBeInTheDocument()
     expect(screen.getAllByText('En cours').length).toBeGreaterThan(0)   // filtre + pastille
@@ -448,11 +448,35 @@ describe('Ménage de rotation', () => {
       .toHaveAttribute('href', '/backoffice/tiers/artisans')
   })
 
-  it('démarre puis termine un ménage', async () => {
+  async function fillNewTask() {
+    api.get.mockResolvedValue({ data: { properties: [{ id: 5, title: 'Riad Médina' }] } })
     renderAt('/backoffice/sejours/menage')
-    await userEvent.click(await screen.findByRole('button', { name: 'Démarrer le ménage' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Ajouter une tâche' }))
+    await userEvent.selectOptions(await screen.findByLabelText('Bien'), '5')
+    fireEvent.change(screen.getByLabelText('Date prévue'), { target: { value: '2026-11-10' } })
+  }
+
+  it('crée une tâche de ménage par défaut', async () => {
+    await fillNewTask()
+    expect(screen.getByLabelText('Type')).toHaveValue('menage')
+    await userEvent.click(screen.getByRole('button', { name: 'Ajouter' }))
+    await vi.waitFor(() => expect(svc.createCleaning)
+      .toHaveBeenCalledWith(expect.objectContaining({ kind: 'menage', property_id: 5 })))
+  })
+
+  it('envoie le type choisi à la création', async () => {
+    await fillNewTask()
+    await userEvent.selectOptions(screen.getByLabelText('Type'), 'accueil')
+    await userEvent.click(screen.getByRole('button', { name: 'Ajouter' }))
+    await vi.waitFor(() => expect(svc.createCleaning)
+      .toHaveBeenCalledWith(expect.objectContaining({ kind: 'accueil', property_id: 5 })))
+  })
+
+  it('démarre puis termine une tâche', async () => {
+    renderAt('/backoffice/sejours/menage')
+    await userEvent.click(await screen.findByRole('button', { name: 'Démarrer la tâche' }))
     await vi.waitFor(() => expect(svc.updateCleaning).toHaveBeenCalledWith(51, { status: 'in_progress' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Terminer le ménage' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Terminer la tâche' }))
     await vi.waitFor(() => expect(svc.updateCleaning).toHaveBeenCalledWith(52, { status: 'done' }))
   })
 
