@@ -1804,13 +1804,16 @@ def accept_deduction_suggestion(sid: int, work_order_id: int,
         return err("Interventions indisponibles : retenue non posée, réessayez.", 503)
     lines = db.query(DeductionLine).filter(DeductionLine.settlement_id == s.id).all()
     _, s.total_deductions, s.refunded_amount, s.balance_due = _totaux_decompte(lines, s.deposit_amount)
+    agency_id, ref = s.agency_id, f"settlement:{sid}"   # lus avant le commit : après rollback `s` est expiré
     try:
         db.commit()
-    except Exception:
+    except Exception:   # noqa: BLE001
+        # Choix assumé : on ne distingue pas un commit échoué d'un commit dont l'accusé est perdu ;
+        # dans ce second cas la ligne existe et on libère son estampille (rare, accepté).
         db.rollback()
-        logger.exception("Commit de la retenue du décompte %s échoué après estampillage", s.id)
+        logger.exception("Commit de la retenue du décompte %s échoué après estampillage", sid)
         try:   # sans cette libération l'intervention sortirait de `chargeable` sans ligne
-            depenses.liberer([work_order_id], f"settlement:{sid}", s.agency_id)
+            depenses.liberer([work_order_id], ref, agency_id)
         except depenses.DepensesIndisponibles:
             logger.error("Estampille de l'intervention %s non libérée (décompte %s)", work_order_id, sid)
         return err("Retenue non enregistrée : réessayez.", 503)

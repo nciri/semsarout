@@ -3,6 +3,7 @@ from decimal import Decimal
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
 
@@ -183,15 +184,26 @@ def test_un_commit_en_echec_libere_l_estampille_posee(client, db_session, monkey
     monkeypatch.setattr(depenses, "estampiller", lambda ids, ref, agency_id: len(ids))
     liberations = []
     monkeypatch.setattr(depenses, "liberer",
-                        lambda ids, ref, agency_id: liberations.append((ids, ref)) or len(ids))
+                        lambda ids, ref, agency_id: liberations.append((ids, ref, agency_id)) or len(ids))
 
     def _commit_casse():
         raise RuntimeError("connexion perdue")
 
+    def _rollback_puis_base_muette():
+        Session.rollback(db_session)
+        # La base est tombée : relire l'instance `dec` expirée lèverait, la libération doit
+        # donc se contenter de valeurs lues avant le commit.
+        def _base_muette(*args, **kwargs):
+            raise RuntimeError("base muette")
+
+        monkeypatch.setattr(db_session, "execute", _base_muette)
+
     monkeypatch.setattr(db_session, "commit", _commit_casse)
-    r = client.post(f"/backoffice/gestion-locative/settlements/{dec.id}/suggestions/4/accept")
+    monkeypatch.setattr(db_session, "rollback", _rollback_puis_base_muette)
+    sid = dec.id
+    r = client.post(f"/backoffice/gestion-locative/settlements/{sid}/suggestions/4/accept")
     assert r.status_code == 503
-    assert liberations == [([4], f"settlement:{dec.id}")]
+    assert liberations == [([4], f"settlement:{sid}", AGENCY)]
 
 
 def test_un_bail_disparu_n_affiche_pas_une_liste_vide(client, db_session, monkeypatch):
