@@ -9,6 +9,8 @@ import { artisanService } from '../../../services/artisanService'
 import { rentalService } from '../../../services/rentalService'
 import { useRentalFormat } from '../rental/hooks'
 import { ConfirmDialog, Modal, Select, DataTable, StatusBadge, EmptyState, GatedNotice, SECONDARY_BTN } from '../../../components/backoffice/ui'
+import RichTextarea from '../../../components/common/RichTextarea'
+import { isRichTextEmpty } from '../../../utils/richText'
 
 const STATUS_TONE = {
   requested: 'bg-gray-100 text-gray-700',
@@ -136,7 +138,9 @@ function WorkOrdersList({ filter = NO_FILTER }) {
     artisan_id: form.artisan_id ? Number(form.artisan_id) : null,
     scheduled_date: form.scheduled_date || null,
     cost_estimate: form.cost_estimate ? Number(form.cost_estimate) : null,
-    notes: form.notes.trim() || null,
+    // Le champ est en texte riche : un éditeur vidé rend `<p><br></p>`, du HTML valide mais
+    // sans contenu. `trim()` ne le verrait pas vide.
+    notes: isRichTextEmpty(form.notes) ? null : form.notes,
   }), {
     onSuccess: () => {
       toast.success(t('backoffice:artisans.workOrder.toasts.created'))
@@ -367,8 +371,8 @@ function WorkOrdersList({ filter = NO_FILTER }) {
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="wo-notes">
             {t('backoffice:artisans.workOrder.form.notesLabel')}
           </label>
-          <textarea id="wo-notes" rows={3} value={form.notes} onChange={set('notes')}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500" />
+          <RichTextarea id="wo-notes" rows={3} value={form.notes}
+            onChange={(html) => setForm((f) => ({ ...f, notes: html }))} />
         </div>
       </Modal>
     </div>

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import i18n from '../../../i18n'
@@ -88,5 +89,42 @@ describe('Fiche d\'intervention : règlement', () => {
   it('nomme le tiers payeur', async () => {
     renderDetail({ ...WO, payer: 'third_party', charge_mode: 'to_rebill', third_party_label: 'Assurance Wafa', charged_ref: null })
     expect(await screen.findByText('Assurance Wafa')).toBeInTheDocument()
+  })
+})
+
+// Les notes sont saisies en WYSIWYG. Le `textarea` remplacé était non contrôlé et
+// enregistrait sur `onBlur` : le champ riche doit garder cette sémantique, sans enregistrer
+// à chaque clic sur la barre d'outils (qui prend le focus).
+describe('Fiche d\'intervention : notes en texte riche', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fr')
+    svc.listArtisans.mockResolvedValue({ artisans: [] })
+    svc.listTrades.mockResolvedValue({ trades: [] })
+    svc.updateWorkOrder.mockResolvedValue({ work_order: WO })
+  })
+
+  it('reouvre les notes existantes avec leur mise en forme', async () => {
+    const { container } = renderDetail({ ...WO, notes: '<ul><li>Robinet <em>HS</em></li></ul>' })
+    await screen.findByText('Chauffe-eau')
+
+    const editor = container.querySelector('#wo-notes-detail')
+    expect(editor.querySelector('li em').textContent).toBe('HS')
+  })
+
+  it('enregistre le HTML nettoye a la sortie du champ, pas sur la barre d\'outils', async () => {
+    const user = userEvent.setup()
+    const { container } = renderDetail({ ...WO, notes: '' })
+    await screen.findByText('Chauffe-eau')
+
+    const editor = container.querySelector('#wo-notes-detail')
+    editor.innerHTML = '<p>Revenir <b>lundi</b></p><script>alert(1)</script>'
+    await user.click(editor)
+    // Un passage par la barre d'outils reste à l'intérieur du champ : aucun enregistrement.
+    await user.click(screen.getByRole('button', { name: 'Gras' }))
+    expect(svc.updateWorkOrder).not.toHaveBeenCalled()
+
+    // Sortir du champ enregistre.
+    await user.click(screen.getByText('Chauffe-eau'))
+    expect(svc.updateWorkOrder).toHaveBeenCalledWith('4', { notes: '<p>Revenir <b>lundi</b></p>' })
   })
 })

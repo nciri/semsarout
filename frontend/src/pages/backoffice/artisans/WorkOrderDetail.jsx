@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
@@ -9,8 +10,30 @@ import { rentalService } from '../../../services/rentalService'
 import { useRentalFormat } from '../rental/hooks'
 import { Kv } from '../components/kit'
 import DirIcon from '../../../components/common/DirIcon'
+import RichTextarea from '../../../components/common/RichTextarea'
 
 const STATUS_ENUMS = ['requested', 'scheduled', 'in_progress', 'done', 'cancelled']
+
+/**
+ * Notes de l'ordre de service, en texte riche et toujours enregistrées à la sortie du champ.
+ *
+ * Le `textarea` remplacé était non contrôlé (`defaultValue` + `onBlur`) ; un éditeur riche est
+ * contrôlé, donc la valeur vit ici. Le `onBlur` est posé sur l'enveloppe et non sur l'éditeur,
+ * parce que la barre d'outils du champ prend le focus à chaque clic : sans le test sur
+ * `relatedTarget`, chaque gras déclencherait un enregistrement.
+ */
+function NotesField({ id, value, onSave }) {
+  const [html, setHtml] = useState(value || '')
+  useEffect(() => { setHtml(value || '') }, [value])
+  return (
+    <div onBlur={(e) => {
+      if (e.currentTarget.contains(e.relatedTarget)) return
+      if (html !== (value || '')) onSave(html)
+    }}>
+      <RichTextarea id={id} rows={3} value={html} onChange={setHtml} />
+    </div>
+  )
+}
 
 function WorkOrderDetail() {
   const { t } = useTranslation(['backoffice', 'common'])
@@ -114,8 +137,8 @@ function WorkOrderDetail() {
           </div>
         </div>
         <div>
-          <label className={labelCls}>{t('backoffice:artisans.workOrder.fields.notes')}</label>
-          <textarea defaultValue={w.notes || ''} onBlur={(e) => save.mutate({ notes: e.target.value })} rows="3" className={ctrlCls} />
+          <label htmlFor="wo-notes-detail" className={labelCls}>{t('backoffice:artisans.workOrder.fields.notes')}</label>
+          <NotesField id="wo-notes-detail" value={w.notes} onSave={(notes) => save.mutate({ notes })} />
         </div>
         <p className="text-xs text-gray-400">{t('backoffice:artisans.workOrder.autoSaveNote')}</p>
       </div>

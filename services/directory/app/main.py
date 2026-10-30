@@ -15,7 +15,13 @@ from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, require_feature, require_superadmin
 from semsar_events import enqueue
-from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
+from semsar_common import (
+    get_settings,
+    install_legacy_error_handlers,
+    sanitize_rich_field,
+    setup_logging,
+    setup_tracing,
+)
 
 from .db import get_db, init_db
 from .models import Artisan, WorkOrder
@@ -385,7 +391,11 @@ async def create_work_order(request: Request, principal: Principal = Depends(_ar
         payer_set_by=int(principal.sub) if data.get("payer") and principal.sub.isdigit() else None,
         payer_set_at=datetime.utcnow() if data.get("payer") else None,
         artisan_id=data.get("artisan_id"), property_id=data.get("property_id"),
-        cost_estimate=data.get("cost_estimate"), notes=data.get("notes"),
+        cost_estimate=data.get("cost_estimate"),
+        # Champ saisi en WYSIWYG : il part dans l'**ordre de service par email** à l'artisan
+        # et s'affiche sur la fiche du bon. Assaini ici, il l'est aussi dans la charge de
+        # l'événement, construite plus bas depuis `wo.notes`.
+        notes=sanitize_rich_field(data.get("notes")),
         scheduled_date=_parse_dt(data.get("scheduled_date")),
         created_by=int(principal.sub) if principal.sub.isdigit() else None,
     )
@@ -441,7 +451,9 @@ async def update_work_order(wid: int, request: Request, principal: Principal = D
         return _err("Le coût final d'un bon clos ne se modifie qu'en administration", 403)
     for k in ("title", "notes", "cost_estimate", "cost_final"):
         if k in data:
-            setattr(wo, k, data[k])
+            # `notes` est le seul champ riche de la boucle : assainir `title` échapperait
+            # ses « < » et « & » et ferait apparaître des entités à l'écran.
+            setattr(wo, k, sanitize_rich_field(data[k]) if k == "notes" else data[k])
     if "trade" in data:
         wo.trade = data["trade"]
     if "artisan_id" in data:
