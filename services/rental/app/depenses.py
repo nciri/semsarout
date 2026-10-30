@@ -42,6 +42,11 @@ def imputables(property_ids: list[int], mode: str, agency_id: int,
     lignes = _appeler("get", "/internal/work-orders/chargeable", params=params).get("work_orders")
     if not isinstance(lignes, list):
         raise DepensesIndisponibles("réponse de directory illisible")
+    for ligne in lignes:
+        try:
+            float(ligne["cost_final"])
+        except (KeyError, TypeError, ValueError) as e:
+            raise DepensesIndisponibles("montant de dépense illisible dans la réponse de directory") from e
     return lignes
 
 

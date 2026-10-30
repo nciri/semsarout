@@ -87,10 +87,10 @@ def test_imputables_transmet_agence_et_perimetre(monkeypatch):
 
     def _get(url, params, headers, timeout):
         vu.update(url=url, params=params, headers=headers, timeout=timeout)
-        return _Rep(200, {"work_orders": [{"id": 4}]})
+        return _Rep(200, {"work_orders": [{"id": 4, "cost_final": 10}]})
 
     monkeypatch.setattr(depenses.httpx, "get", _get)
-    assert depenses.imputables([7, 8], "crg_expense", 4, lease_id=3) == [{"id": 4}]
+    assert depenses.imputables([7, 8], "crg_expense", 4, lease_id=3) == [{"id": 4, "cost_final": 10}]
     assert vu["url"].endswith("/internal/work-orders/chargeable")
     assert vu["params"] == {"property_ids": "7,8", "mode": "crg_expense", "agency_id": 4,
                             "lease_id": 3}
@@ -113,3 +113,45 @@ def test_estampiller_echec_leve(monkeypatch):
     monkeypatch.setattr(depenses.httpx, "post", lambda *a, **k: _Rep(500, {}))
     with pytest.raises(depenses.DepensesIndisponibles):
         depenses.estampiller([1], "crg:12", 4)
+
+
+@pytest.mark.parametrize("corps", [["pas", "un", "dict"], "texte"])
+def test_imputables_corps_qui_n_est_pas_un_objet(monkeypatch, corps):
+    monkeypatch.setattr(depenses.httpx, "get", lambda *a, **k: _Rep(200, corps))
+    with pytest.raises(depenses.DepensesIndisponibles):
+        depenses.imputables([7], "crg_expense", 4)
+
+
+@pytest.mark.parametrize("ligne", [{"id": 1, "cost_final": None}, {"id": 1}, {"id": 1, "cost_final": "abc"}, "x"])
+def test_imputables_montant_illisible(monkeypatch, ligne):
+    monkeypatch.setattr(depenses.httpx, "get",
+                        lambda *a, **k: _Rep(200, {"work_orders": [ligne]}))
+    with pytest.raises(depenses.DepensesIndisponibles):
+        depenses.imputables([7], "crg_expense", 4)
+
+
+def test_due_crg_un_mandat_muet_n_arrete_pas_les_autres(db_session, monkeypatch):
+    from datetime import datetime
+
+    from app import main
+
+    y, m = main._prev_period(datetime.utcnow())
+    muet = _mandat(db_session, property_id=7, fee_pct=8)
+    ok = _mandat(db_session, property_id=8, fee_pct=8)
+    sans_loyer = _mandat(db_session, property_id=9, fee_pct=8)
+    _loyer_encaisse(db_session, muet, y, m, montant=6000)
+    _loyer_encaisse(db_session, ok, y, m, montant=6000)
+    vus = []
+
+    def _imputables(ids, mode, agency_id, lease_id=None):
+        vus.append(ids)
+        if ids == [7]:
+            raise depenses.DepensesIndisponibles("directory muet")
+        return []
+
+    monkeypatch.setattr(depenses, "imputables", _imputables)
+    rep = main.internal_mandates_due_crg(x_internal_token=main.settings.internal_token,
+                                         db=db_session)
+    assert [r["mandate_id"] for r in rep["reports"]] == [ok.id]
+    assert [7] in vus and [9] not in vus  # le mandat sans loyer n'interroge pas directory
+    assert sans_loyer.id not in [r["mandate_id"] for r in rep["reports"]]

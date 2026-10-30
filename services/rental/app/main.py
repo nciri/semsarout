@@ -5,8 +5,8 @@ CRUD mandats de gestion + baux (back-office, gating `rental`). Émet rental.mand
 """
 from contextlib import asynccontextmanager
 from datetime import datetime
-from decimal import Decimal
 import json
+import logging
 import os
 import uuid
 
@@ -32,6 +32,7 @@ from .util import err, iso, json_body, num
 
 settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -259,7 +260,12 @@ def internal_mandates_due_crg(x_internal_token: str = Header(default=""),
         if db.query(CrgReport).filter(CrgReport.mandate_id == mnd.id, CrgReport.year == y,
                                       CrgReport.month == m).first():
             continue
-        agg = _crg_aggregate(db, mnd, y, m)
+        try:
+            agg = _crg_aggregate(db, mnd, y, m)
+        except depenses.DepensesIndisponibles:
+            # Écarté, pas brouillonné avec 0 dépense : repris au prochain passage.
+            logger.warning("CRG du mandat %s différé : dépenses illisibles", mnd.id)
+            continue
         if agg["rent_collected"] <= 0:
             continue
         out.append({"mandate_id": mnd.id, "landlord_client_id": mnd.landlord_client_id,
@@ -821,11 +827,14 @@ def _crg_aggregate(db, mandate, y: int, m: int) -> dict:
         collected = sum(float(rp.paid_amount or rp.total_amount or 0) for rp in rows)
     fee_pct = float(mandate.fee_percent or 0)
     fees = round(collected * fee_pct / 100.0, 2)
+    if collected <= 0:
+        # Sans loyer, pas de CRG (les dépenses attendent le prochain mois avec loyer) : inutile
+        # d'interroger directory pour un mandat qui sera écarté.
+        return {"rent_collected": 0.0, "fees": 0.0, "expenses": 0.0, "expense_lines": [], "net": 0.0}
     lignes = depenses.imputables([mandate.property_id], "crg_expense", mandate.agency_id)
-    # Decimal : la somme de montants en dirhams ne doit pas dériver au centime.
-    expenses = sum((Decimal(str(l["cost_final"])) for l in lignes), Decimal(0))
-    return {"rent_collected": round(collected, 2), "fees": fees, "expenses": float(expenses),
-            "expense_lines": lignes, "net": round(collected - fees - float(expenses), 2)}
+    expenses = round(sum(float(l["cost_final"]) for l in lignes), 2)
+    return {"rent_collected": round(collected, 2), "fees": fees, "expenses": expenses,
+            "expense_lines": lignes, "net": round(collected - fees - expenses, 2)}
 
 
 @app.post("/internal/mandates/{mandate_id}/crg-sent", include_in_schema=False)
