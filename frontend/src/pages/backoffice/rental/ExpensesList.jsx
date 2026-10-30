@@ -13,9 +13,10 @@ import { AgeChip } from './parts'
 import { useRentalFormat } from './hooks'
 
 const SLEEPING_DAYS = 60
-const METHODS = ['encaisse', 'impute_commission', 'regularisation', 'abandonne']
-// Ces deux modes renoncent à l'argent de l'agence : le serveur les réserve à l'administration.
-const GIVES_UP = ['abandonne', 'impute_commission']
+const OPEN_METHODS = ['encaisse', 'regularisation']
+// Ces deux modes renoncent à l'argent de l'agence : le serveur les réserve à l'administration
+// et le dit par ligne (`can_settle_writeoff`).
+const GIVES_UP = ['impute_commission', 'abandonne']
 
 function ExpensesList() {
   const { t } = useTranslation(['backoffice', 'common'])
@@ -28,7 +29,7 @@ function ExpensesList() {
 
   const settle = useMutation(({ id, method }) => artisanService.settleWorkOrder(id, { method }), {
     onSuccess: () => { toast.success(t('backoffice:rental.expenses.toasts.settled')); qc.invalidateQueries('rental-expenses') },
-    // Le rôle n'est pas lisible côté front : le refus du serveur est la seule vérité, dite en clair.
+    // Filet si le drapeau et la route divergeaient : un refus se dit en clair.
     onError: (e) => toast.error(e.response?.status === 403
       ? t('backoffice:rental.expenses.toasts.forbidden')
       : e.response?.data?.error || t('common:errors.short')),
@@ -92,7 +93,7 @@ function ExpensesList() {
           {t('backoffice:rental.expenses.modal.how')}
           <Select value="" onChange={(e) => pick(e.target.value)} className="w-full">
             <option value="">{t('backoffice:rental.expenses.modal.placeholder')}</option>
-            {METHODS.map((m) => <option key={m} value={m}>{t(`backoffice:rental.expenses.methods.${m}`)}</option>)}
+            {(settling?.can_settle_writeoff ? [...OPEN_METHODS, ...GIVES_UP] : OPEN_METHODS).map((m) => <option key={m} value={m}>{t(`backoffice:rental.expenses.methods.${m}`)}</option>)}
           </Select>
         </label>
       </Modal>

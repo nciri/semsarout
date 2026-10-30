@@ -49,7 +49,7 @@ describe('ExpensesList', () => {
 
   it('solde une refacturation après confirmation, montant et mode dans la question', async () => {
     svc.listPendingWorkOrders.mockResolvedValue({ work_orders: [
-      { id: 5, title: 'Vitre', cost_final: 600, waiting_days: 3, charge_mode: 'to_rebill' }] })
+      { id: 5, title: 'Vitre', cost_final: 600, waiting_days: 3, charge_mode: 'to_rebill', can_settle_writeoff: true }] })
     renderPage()
     await userEvent.click(await screen.findByRole('button', { name: 'Solder Vitre' }))
     expect(svc.settleWorkOrder).not.toHaveBeenCalled()
@@ -58,6 +58,21 @@ describe('ExpensesList', () => {
     expect(screen.getByText(/600 Dh.*Encaissé/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Confirmer' }))
     await vi.waitFor(() => expect(svc.settleWorkOrder).toHaveBeenCalledWith(5, { method: 'encaisse' }))
+  })
+
+  it("n'offre l'abandon et l'imputation qu'à qui le serveur l'autorise", async () => {
+    svc.listPendingWorkOrders.mockResolvedValue({ work_orders: [
+      { id: 5, title: 'Vitre', cost_final: 600, waiting_days: 3, charge_mode: 'to_rebill', can_settle_writeoff: false },
+      { id: 7, title: 'Porte', cost_final: 900, waiting_days: 3, charge_mode: 'to_rebill', can_settle_writeoff: true }] })
+    renderPage()
+    await userEvent.click(await screen.findByRole('button', { name: 'Solder Vitre' }))
+    expect(screen.getByLabelText('Comment')).toHaveTextContent('Régularisé')
+    expect(screen.getByLabelText('Comment')).not.toHaveTextContent('Abandonné')
+    expect(screen.getByLabelText('Comment')).not.toHaveTextContent('Imputé sur la commission')
+    await userEvent.click(screen.getByRole('button', { name: 'Annuler' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Solder Porte' }))
+    expect(screen.getByLabelText('Comment')).toHaveTextContent('Abandonné')
+    expect(screen.getByLabelText('Comment')).toHaveTextContent('Imputé sur la commission')
   })
 
   it("signale une intervention achevée dont personne n'a choisi le règlement", async () => {

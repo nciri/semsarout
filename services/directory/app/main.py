@@ -130,6 +130,8 @@ def _wo_dict(db: Session, w: WorkOrder, principal: Principal | None = None) -> d
     return {
         # Le front cache l'action plutôt que de laisser cliquer vers un 403.
         "can_delete": _can_delete_wo(principal, w) if principal is not None else None,
+        # Même test que la route de solde : abandonner ou imputer sur la commission est réservé.
+        "can_settle_writeoff": _is_wo_admin(principal) if principal is not None else None,
         "id": w.id, "agency_id": w.agency_id, "artisan_id": w.artisan_id,
         "artisan": ({"id": artisan.id, "name": artisan.name, "trade": artisan.trade} if artisan else None),
         "property_id": w.property_id, "title": w.title, "trade": w.trade, "status": w.status,

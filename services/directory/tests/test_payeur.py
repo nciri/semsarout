@@ -417,6 +417,17 @@ def test_l_administration_solde_par_toute_methode(client, db_session):
                            json={"method": methode}).status_code == 200
 
 
+def test_la_liste_dit_si_l_on_peut_abandonner_ou_imputer(client, db_session):
+    _wo_en_base(db_session, status="done", cost_final=Decimal("600"), charge_mode="to_rebill")
+
+    def drapeau():
+        return client.get("/backoffice/work-orders?pending=1").json()["work_orders"][0]["can_settle_writeoff"]
+
+    assert drapeau() is True
+    app.dependency_overrides[get_principal] = lambda: _principal("agent")
+    assert drapeau() is False
+
+
 def test_solder_ignore_une_intervention_d_une_autre_agence(client, db_session):
     wo = _wo_en_base(db_session, status="done", cost_final=Decimal("600"), charge_mode="to_rebill")
     wo.agency_id = 99
