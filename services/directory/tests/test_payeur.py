@@ -318,3 +318,28 @@ def test_la_liberation_ne_defait_que_l_estampille_de_son_ref(client, db_session)
 def test_la_liberation_exige_le_jeton(client):
     assert client.post("/internal/work-orders/release",
                        json={"ids": [1], "ref": "x", "agency_id": 4}).status_code == 403
+
+
+def test_la_liberation_rejouee_ou_sur_une_depense_libre_reussit(client, db_session):
+    a = _wo_en_base(db_session, status="done", cost_final=Decimal("450"), charge_mode="deposit_deduction")
+    b = _wo_en_base(db_session, status="done", cost_final=Decimal("120"), charge_mode="deposit_deduction")
+    h = {"x-internal-token": TOKEN}
+    client.post("/internal/work-orders/charged",
+                json={"ids": [a.id], "ref": "settlement:7", "agency_id": 4}, headers=h)
+    corps = {"ids": [a.id, b.id], "ref": "settlement:7", "agency_id": 4}
+    for _ in range(2):
+        assert client.post("/internal/work-orders/release", json=corps, headers=h).json()["released"] == 2
+
+
+def test_la_liberation_ne_touche_pas_une_depense_d_un_autre_ref(client, db_session):
+    wo = _wo_en_base(db_session, status="done", cost_final=Decimal("450"), charge_mode="crg_expense")
+    h = {"x-internal-token": TOKEN}
+    client.post("/internal/work-orders/charged",
+                json={"ids": [wo.id], "ref": "crg:12", "agency_id": 4}, headers=h)
+    db_session.refresh(wo)
+    pose_le = wo.charged_at
+    assert client.post("/internal/work-orders/release",
+                       json={"ids": [wo.id], "ref": "settlement:7", "agency_id": 4},
+                       headers=h).json()["released"] == 0
+    db_session.refresh(wo)
+    assert wo.charged_ref == "crg:12" and wo.charged_at == pose_le

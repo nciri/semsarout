@@ -335,7 +335,7 @@ async def internal_stamp_charged(
 async def internal_release_charged(
     request: Request, x_internal_token: str = Header(default=""), db: Session = Depends(get_db),
 ):
-    """Libère l'estampille posée sous ce `ref` — et seulement celle-là.
+    """Libère l'estampille posée sous ce `ref` — et seulement celle-là ; `released` compte les libres.
 
     Le filtre sur `charged_ref` interdit de défaire l'imputation d'un autre relevé : un CRG
     envoyé (`crg:*`) ne peut jamais être annulé par le chemin du décompte de caution.
@@ -347,11 +347,17 @@ async def internal_release_charged(
     if (not isinstance(ids, list) or not all(isinstance(i, int) for i in ids)
             or not isinstance(ref, str) or not ref or not isinstance(agency_id, int)):
         return _err("ids, ref et agency_id sont requis", 400)
+    (db.query(WorkOrder)
+       .filter(WorkOrder.id.in_(ids), WorkOrder.agency_id == agency_id,
+               WorkOrder.charged_ref == ref)
+       .update({"charged_at": None, "charged_ref": None}, synchronize_session=False))
+    db.commit()
+    # Idempotent sur son issue (comme `charged`) : une dépense déjà libre compte, sinon rejouer
+    # une libération dont l'appelant a perdu le commit renverrait 0 à chaque reprise.
     released = (db.query(WorkOrder)
                 .filter(WorkOrder.id.in_(ids), WorkOrder.agency_id == agency_id,
-                        WorkOrder.charged_ref == ref)
-                .update({"charged_at": None, "charged_ref": None}, synchronize_session=False))
-    db.commit()
+                        WorkOrder.charged_at.is_(None))
+                .count())
     return {"released": released}
 
 
