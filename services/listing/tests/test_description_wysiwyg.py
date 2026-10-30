@@ -6,6 +6,7 @@ tableau de bord, back-office). Un seul chemin d'écriture non assaini suffit à 
 stocké public.
 """
 import app.main as m
+from app.models import Property
 from semsar_auth import Principal, get_principal
 
 AGENCY = 3
@@ -51,6 +52,29 @@ def test_every_write_path_sanitises_the_description(client):
         # Un éditeur vidé rend `<p><br></p>` : du HTML valide, mais une description absente.
         assert client.put(f"/properties/{created['id']}",
                           json={"description": "<p><br></p>"}).json()["property"]["description"] is None
+    finally:
+        m.app.dependency_overrides.pop(get_principal, None)
+
+
+def test_the_public_sale_request_path_sanitises_too(client, db_session):
+    """Cinquième chemin d'écriture, et le plus exposé : l'auteur de la description sur
+    `/vendre` est un **client en libre-service**, pas un agent. Le bien créé est `pending`,
+    il est ouvert par un agent dans l'éditeur du back-office, puis publié sur la fiche
+    publique — où il est rendu en HTML pour n'importe quel visiteur. C'est aussi le
+    constructeur `Property(...)` le plus long du service, donc l'endroit où un refactor
+    laisserait tomber l'appel au nettoyage sans que rien ne le signale."""
+    _as_agent()
+    try:
+        r = client.post("/sale-requests", json={
+            "property": {"property_type": "villa", "city": "Marrakech", "surface": 180,
+                         "description": SALE},
+            "desired_price": 2500000,
+            "photos": ["https://cdn.semsarout.com/a.jpg"],
+        })
+        assert r.status_code == 201, r.text
+        prop = db_session.query(Property).order_by(Property.id.desc()).first()
+        assert prop.description == PROPRE
+        assert prop.status == "pending"
     finally:
         m.app.dependency_overrides.pop(get_principal, None)
 
