@@ -107,8 +107,12 @@ describe('Fiche d\'intervention : notes en texte riche', () => {
     const { container } = renderDetail({ ...WO, notes: '<ul><li>Robinet <em>HS</em></li></ul>' })
     await screen.findByText('Chauffe-eau')
 
-    const editor = container.querySelector('#wo-notes-detail')
-    expect(editor.querySelector('li em').textContent).toBe('HS')
+    // Le champ pose son contenu dans un effet : l'attendre plutôt que le lire tout de suite,
+    // sinon le cas passe seul et échoue dans la suite complète, selon l'ordonnancement.
+    await vi.waitFor(() => {
+      const em = container.querySelector('#wo-notes-detail li em')
+      expect(em?.textContent).toBe('HS')
+    })
   })
 
   it('enregistre le HTML nettoye a la sortie du champ, pas sur la barre d\'outils', async () => {

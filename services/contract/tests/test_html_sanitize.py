@@ -37,6 +37,11 @@ HOSTILE = {
     "mathMutation": "<math><mtext><table><mglyph><style><!--</style>"
                     "<img src=x onerror=alert(1)>",
     "eventHandler": '<p id="x" onclick="alert(1)">ok</p>',
+    # `<iframe>` **nu**, pas imbriqué dans un `svg`/`math` : c'est la forme qu'un collage
+    # depuis une page web apporte réellement, et le balayage de l'étape 2 l'a rencontrée sur
+    # quatre champs. Les deux couches doivent en retirer le sous-arbre entier, y compris le
+    # contenu de repli qu'un `<iframe>` peut porter.
+    "bareIframe": '<p>avant</p><iframe src="https://evil.test">repli</iframe><p>après</p>',
     # — Protocoles —
     "javascriptHref": '<a href="javascript:alert(1)">x</a>',
     "relativeHref": '<a href="/biens/3" title="t">x</a>',
