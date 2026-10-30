@@ -50,6 +50,23 @@ class Contract(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class ContractParty(Base):
+    """Parties d'un contrat : plusieurs vendeurs, plusieurs locataires, des héritiers d'une
+    indivision. `client_id` est un entier nu — pas de clé étrangère entre services. Pas de
+    colonne `agency_id` : l'isolation passe par le contrat parent, déjà filtré sur l'agence du
+    `Principal` avant toute lecture ou écriture de ses parties, et une colonne dupliquée ne
+    ferait qu'ouvrir la possibilité qu'elle contredise celle du contrat.
+    """
+
+    __tablename__ = "contract_party"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    contract_id = Column(BigInteger, nullable=False, index=True)
+    client_id = Column(Integer, nullable=False)
+    role = Column(String(20), nullable=False)  # cf. merge.ROLE_PLACEHOLDERS
+    position = Column(Integer, nullable=False, default=0)  # ordre d'apparition au contrat
+
+
 class AgencyRO(Base):
     __tablename__ = "agency_ro"
 

@@ -24,9 +24,9 @@ from semsar_events import enqueue
 from . import events, users_client
 from .stay import router as stay_router
 from .db import get_db, init_db
-from .merge import build_context, render
+from .merge import ROLE_PLACEHOLDERS, build_context, party_blocks, render
 from .models import (
-    AgencyRO, ClientRO, Contract, ContractTemplate, PropertyRO, TransactionRO,
+    AgencyRO, ClientRO, Contract, ContractParty, ContractTemplate, PropertyRO, TransactionRO,
 )
 from .pdf import render_pdf_bytes
 from .sanitize import sanitize_html
@@ -79,7 +79,48 @@ def _template_dict(t: ContractTemplate, include_body: bool = True) -> dict:
     return d
 
 
-def _contract_dict(c: Contract, include_body: bool = True) -> dict:
+def _parties_dict(db: Session, cid: int) -> list[dict]:
+    rows = (db.query(ContractParty).filter(ContractParty.contract_id == cid)
+            .order_by(ContractParty.position, ContractParty.id).all())
+    return [{"client_id": r.client_id, "role": r.role, "position": r.position} for r in rows]
+
+
+def _read_parties(data: dict, db: Session, aid: int):
+    """`(parties, erreur)` — les parties reçues en `[(role, ClientRO)]`, dans l'ordre du
+    payload. `None` signifie « clé absente, ne touche pas aux parties existantes »."""
+    raw = data.get("parties")
+    if raw is None:
+        return None, None
+    if not isinstance(raw, list):
+        return None, err("parties doit être une liste", 400)
+    parties, vus = [], set()
+    for item in raw:
+        role = (item or {}).get("role")
+        if role not in ROLE_PLACEHOLDERS:
+            return None, err(f"Rôle de partie inconnu : {role}", 400)
+        cli = db.query(ClientRO).filter(
+            ClientRO.id == (item or {}).get("client_id"), ClientRO.agency_id == aid).first()
+        if cli is None:
+            return None, err("Client de partie introuvable", 400)
+        if (role, cli.id) in vus:
+            return None, err("Un même client ne peut tenir deux fois le même rôle.", 400)
+        vus.add((role, cli.id))
+        parties.append((role, cli))
+    return parties, None
+
+
+def _save_parties(db: Session, contract: Contract, parties: list) -> None:
+    """Remplace les parties du contrat et réaligne son `client_id` sur la première d'entre
+    elles : le `client_id` unique reste la source lue ailleurs (listing, flux séjour,
+    événements), mais il est DÉRIVÉ de la liste, jamais saisi en parallèle."""
+    db.query(ContractParty).filter(ContractParty.contract_id == contract.id).delete()
+    for i, (role, cli) in enumerate(parties):
+        db.add(ContractParty(contract_id=contract.id, client_id=cli.id, role=role, position=i))
+    if parties:
+        contract.client_id = parties[0][1].id
+
+
+def _contract_dict(c: Contract, include_body: bool = True, parties: list | None = None) -> dict:
     d = {"id": c.id, "agency_id": c.agency_id, "title": c.title,
          "document_type": c.document_type, "template_id": c.template_id,
          "transaction_id": c.transaction_id, "property_id": c.property_id,
@@ -88,6 +129,8 @@ def _contract_dict(c: Contract, include_body: bool = True) -> dict:
          "created_at": iso(c.created_at)}
     if include_body:
         d["body_html"] = c.body_html
+    if parties is not None:
+        d["parties"] = parties
     return d
 
 
@@ -207,8 +250,16 @@ async def create_contract(request: Request, principal: Principal = Depends(get_p
         cli = db.get(ClientRO, txn.client_id)
     agent_name = users_client.name_of(aid, txn.agent_id) if txn is not None else ""
 
+    parties, bad = _read_parties(data, db, aid)
+    if bad is not None:
+        return bad
+    if parties:
+        # Le client unique du contrat est la première partie : les deux ne peuvent pas diverger.
+        cli = parties[0][1]
+
     agency = db.get(AgencyRO, aid)
-    context = build_context(agency, transaction=txn, property=prop, client=cli, agent_name=agent_name)
+    context = build_context(agency, transaction=txn, property=prop, client=cli,
+                            agent_name=agent_name, parties=parties)
     body = sanitize_html(render(tpl.body_html, context))
     contract = Contract(
         agency_id=aid, title=data.get("title") or tpl.name, document_type=tpl.document_type,
@@ -217,8 +268,12 @@ async def create_contract(request: Request, principal: Principal = Depends(get_p
         body_html=body, merge_context=context, status="draft",
         created_by=int(principal.sub) if principal.sub.isdigit() else None)
     db.add(contract)
+    db.flush()  # il faut l'identifiant du contrat pour rattacher ses parties
+    _save_parties(db, contract, parties or [])
     db.commit()
-    return JSONResponse({"contract": _contract_dict(contract)}, status_code=201)
+    return JSONResponse(
+        {"contract": _contract_dict(contract, parties=_parties_dict(db, contract.id))},
+        status_code=201)
 
 
 @app.get("/backoffice/contracts/{cid}")
@@ -228,7 +283,7 @@ def get_contract(cid: int, principal: Principal = Depends(get_principal), db: Se
     c = _get_contract(db, cid, principal.agency_id)
     if not c:
         return err("Contrat introuvable", 404)
-    return {"contract": _contract_dict(c)}
+    return {"contract": _contract_dict(c, parties=_parties_dict(db, c.id))}
 
 
 @app.put("/backoffice/contracts/{cid}")
@@ -245,8 +300,40 @@ async def update_contract(cid: int, request: Request, principal: Principal = Dep
         c.title = data["title"]
     if "body_html" in data:
         c.body_html = sanitize_html(data["body_html"])
+    parties, bad = _read_parties(data, db, c.agency_id)
+    if bad is not None:
+        return bad
+    if parties is not None:
+        _rewrite_parties_in_body(db, c, parties)
     db.commit()
-    return {"contract": _contract_dict(c)}
+    return {"contract": _contract_dict(c, parties=_parties_dict(db, c.id))}
+
+
+def _rewrite_parties_in_body(db: Session, c: Contract, parties: list) -> None:
+    """Rejoue les blocs d'identification dans le corps déjà fusionné.
+
+    Le corps d'un contrat est rendu une seule fois, à la création, puis librement retouché
+    dans l'éditeur : le régénérer depuis le modèle effacerait ce travail. Les blocs précédents
+    sont conservés dans `merge_context`, donc on remplace chaîne par chaîne — chirurgical, et
+    sans effet si l'agent a supprimé l'article.
+    """
+    avant = dict(c.merge_context or {})
+    premier = parties[0][1] if parties else (
+        db.query(ClientRO).filter(ClientRO.id == c.client_id,
+                                  ClientRO.agency_id == c.agency_id).first())
+    blocs = party_blocks(parties, fallback_client=premier)
+    corps = c.body_html
+    for cle, html in blocs.items():
+        ancien = avant.get(cle)
+        if ancien and ancien != html and ancien in corps:
+            corps = corps.replace(ancien, html)
+    c.body_html = sanitize_html(corps)
+    # `merge_context` reste le reflet fidèle de ce qui est dans le corps : seules les clés
+    # effectivement réécrites y sont mises à jour, pour que le prochain remplacement retrouve
+    # ses marques. `{{client_name}}` fusionné en texte libre n'est pas réécrit — son occurrence
+    # dans le corps est indiscernable d'un nom saisi par l'agent.
+    c.merge_context = {**avant, **blocs}
+    _save_parties(db, c, parties)
 
 
 @app.delete("/backoffice/contracts/{cid}")

@@ -107,6 +107,7 @@ directory/migrate_payeur_intervention.sql
 rental/migrate_crg_depenses.sql
 rental/migrate_retenue_intervention.sql
 contract/migrate_modeles_builtin.sql
+contract/migrate_contract_parties.sql
 "
 
 # psql en tant que rôle postgres (patron roles/postgres d'Ansible : become_user postgres).
