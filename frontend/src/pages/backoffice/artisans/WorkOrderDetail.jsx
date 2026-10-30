@@ -3,7 +3,11 @@ import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { FiArrowLeft } from 'react-icons/fi'
+import api from '../../../services/api'
 import { artisanService } from '../../../services/artisanService'
+import { rentalService } from '../../../services/rentalService'
+import { useRentalFormat } from '../rental/hooks'
+import { Kv } from '../components/kit'
 import DirIcon from '../../../components/common/DirIcon'
 
 const STATUS_ENUMS = ['requested', 'scheduled', 'in_progress', 'done', 'cancelled']
@@ -14,7 +18,12 @@ function WorkOrderDetail() {
   const qc = useQueryClient()
   const { data, isLoading, isError } = useQuery(['work-order', id], () => artisanService.getWorkOrder(id))
   const { data: artisansData } = useQuery(['artisans', {}], () => artisanService.listArtisans())
+  const f = useRentalFormat()
   const { data: tradesData } = useQuery('artisan-trades', () => artisanService.listTrades(), { staleTime: 3600000 })
+
+  const { data: clientsData } = useQuery('bo-clients-min',
+    async () => (await api.get('/backoffice/clients?per_page=100')).data)
+  const { data: mandatesData } = useQuery('rental-mandates', () => rentalService.listMandates(), { retry: false })
 
   const refresh = () => qc.invalidateQueries(['work-order', id])
   const onErr = (e) => toast.error(e.response?.data?.error || t('common:errors.short'))
@@ -34,6 +43,16 @@ function WorkOrderDetail() {
   const w = data.work_order
   const artisans = artisansData?.artisans || []
   const trades = tradesData?.trades || []
+  // crg:<id> se lit depuis le mandat du bien, que le bon ne porte pas ; settlement:<id> identifie
+  // le décompte, qui se rouvre par le bail.
+  const client = (clientsData?.clients || []).find((c) => c.id === w.client_id)
+  const mandates = (mandatesData?.mandates || []).filter((m) => m.property_id === w.property_id)
+  const mandate = mandates.find((m) => m.status === 'active') || mandates[0]
+  const [refKind, refId] = (w.charged_ref || '').split(':')
+  const landing = {
+    crg: mandate && { to: `/backoffice/gestion-locative/mandats/${mandate.id}`, label: t('backoffice:artisans.workOrder.payment.landedCrg', { id: refId }) },
+    settlement: w.lease_id && { to: `/backoffice/gestion-locative/decompte/${w.lease_id}`, label: t('backoffice:artisans.workOrder.payment.landedSettlement') },
+  }[refKind]
   const labelCls = 'block text-sm font-medium text-gray-700 mb-1'
   const ctrlCls = 'w-full px-3 py-2 border border-gray-200 rounded-lg text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500'
 
@@ -47,6 +66,24 @@ function WorkOrderDetail() {
         <h1 className="text-2xl font-bold text-gray-900">{w.title}</h1>
         <p className="text-sm text-gray-500 mt-1">{trades.find((tr) => tr.id === w.trade)?.label || w.trade}</p>
       </div>
+
+      {w.payer && (
+        <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <h2 className="mb-3 text-sm font-semibold text-gray-900">{t('backoffice:artisans.workOrder.payment.title')}</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <Kv label={t('backoffice:artisans.workOrder.payment.client')} value={client ? `${client.first_name} ${client.last_name}` : '—'} />
+            <Kv label={t('backoffice:artisans.workOrder.payment.payer')} value={t(`backoffice:artisans.workOrder.payer.${w.payer}`)}
+              sub={w.payer === 'third_party' ? w.third_party_label : undefined} />
+            <Kv label={t('backoffice:artisans.workOrder.payment.mode')} value={t(`backoffice:artisans.workOrder.chargeMode.${w.charge_mode}`)} />
+            {w.cost_final != null && <Kv label={t('backoffice:artisans.workOrder.payment.amount')} value={f.dh(w.cost_final)} />}
+          </div>
+          <p className="mt-4 text-sm text-gray-600">
+            {landing
+              ? <Link to={landing.to} className="font-medium text-primary-600 hover:underline">{landing.label}</Link>
+              : t(w.charged_ref ? 'backoffice:artisans.workOrder.payment.landedElsewhere' : 'backoffice:artisans.workOrder.payment.notCharged')}
+          </p>
+        </section>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
         <div>

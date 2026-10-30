@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next'
 import { FiLock, FiPlus, FiClipboard, FiTrash2 } from 'react-icons/fi'
 import api from '../../../services/api'
 import { artisanService } from '../../../services/artisanService'
+import { rentalService } from '../../../services/rentalService'
+import { useRentalFormat } from '../rental/hooks'
 import { ConfirmDialog, Modal, Select, DataTable, StatusBadge, EmptyState, GatedNotice, SECONDARY_BTN } from '../../../components/backoffice/ui'
 
 const STATUS_TONE = {
@@ -29,9 +31,23 @@ const FLOW = [
 ]
 
 const NO_FILTER = { trade: '', q: '' }
+// `payer` et `charge_mode` vides = « suivre la proposition » ; une valeur = choix de l'agent.
 const EMPTY_FORM = {
   title: '', trade: 'plombier', property_id: '', artisan_id: '',
   scheduled_date: '', cost_estimate: '', notes: '',
+  client_id: '', nature: '', payer: '', charge_mode: '', third_party_label: '',
+}
+const NATURES = ['structurel', 'entretien', 'degat_occupant']
+const PAYERS = ['owner', 'tenant', 'agency', 'third_party']
+const CHARGE_MODES = ['crg_expense', 'deposit_deduction', 'to_rebill', 'direct', 'absorbed']
+
+// Miroir de `payeur_propose` / `mode_propose` (services/directory/app/payeur.py) : la saisie
+// propose ce que le service proposerait, l'agent garde la main.
+const proposedPayer = (nature, hasLease) => (
+  nature === 'degat_occupant' || (nature === 'entretien' && hasLease) ? 'tenant' : 'owner')
+const proposedMode = (payer, hasMandate) => {
+  if (payer === 'owner' && hasMandate) return 'crg_expense'
+  return payer === 'agency' ? 'absorbed' : 'to_rebill'
 }
 
 /**
@@ -77,6 +93,7 @@ function WorkOrdersList({ filter = NO_FILTER }) {
   // Un bon de travaux porte sur un bien : sans lui, personne ne sait où aller travailler.
   const [form, setForm] = useState(EMPTY_FORM)
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
+  const f = useRentalFormat()
   const trades = tradesData?.trades || []
   const tradeLabel = (id) => trades.find((tr) => tr.id === id)?.label || id
   // Même clé que les autres écrans du back-office : le cache est partagé.
@@ -85,7 +102,21 @@ function WorkOrdersList({ filter = NO_FILTER }) {
   // Les artisans du métier choisi : proposer un carreleur pour une fuite n'aide personne.
   const { data: artisansData } = useQuery(['artisans', { trade: form.trade, city: '', q: '' }],
     () => artisanService.listArtisans({ trade: form.trade, city: '', q: '' }), { enabled: open })
+  const { data: clientsData } = useQuery('bo-clients-min',
+    async () => (await api.get('/backoffice/clients?per_page=100')).data, { enabled: open })
+  // Le bail et le mandat du bien décident de ce qu'on propose ; sans réponse (offre sans
+  // gestion locative), on n'affirme rien sur le bien.
+  const { data: leasesData } = useQuery('rental-leases', () => rentalService.listLeases(), { enabled: open, retry: false })
+  const { data: mandatesData } = useQuery('rental-mandates', () => rentalService.listMandates(), { enabled: open, retry: false })
   const properties = props?.properties || []
+  const clients = clientsData?.clients || []
+  const propertyId = Number(form.property_id)
+  // La liste ne filtre pas côté service : on retient ici le bail en cours du bien choisi.
+  const lease = leasesData?.leases?.find((l) => l.property_id === propertyId && l.status === 'active')
+  const hasMandate = !!mandatesData?.mandates?.some((m) => m.property_id === propertyId && m.status === 'active')
+  const payer = form.payer || proposedPayer(form.nature, !!lease)
+  const chargeMode = form.charge_mode || proposedMode(payer, hasMandate)
+  const needsThirdParty = payer === 'third_party'
   const artisans = artisansData?.artisans || []
   const propertyTitle = (id) => properties.find((x) => x.id === id)?.title || (id ? `#${id}` : '—')
 
@@ -93,7 +124,15 @@ function WorkOrdersList({ filter = NO_FILTER }) {
   const create = useMutation(() => artisanService.createWorkOrder({
     title: form.title.trim(),
     trade: form.trade,
-    property_id: Number(form.property_id),
+    property_id: propertyId,
+    client_id: Number(form.client_id),
+    // Sans lui, la liste des interventions d'un bail (retenues sur sa caution) ne les retrouve pas.
+    lease_id: lease?.id ?? null,
+    // Le service valide nature, payeur et mode ensemble : sans nature, aucun ne part.
+    ...(form.nature && {
+      nature: form.nature, payer, charge_mode: chargeMode,
+      third_party_label: needsThirdParty ? form.third_party_label.trim() : null,
+    }),
     artisan_id: form.artisan_id ? Number(form.artisan_id) : null,
     scheduled_date: form.scheduled_date || null,
     cost_estimate: form.cost_estimate ? Number(form.cost_estimate) : null,
@@ -199,7 +238,8 @@ function WorkOrdersList({ filter = NO_FILTER }) {
         footer={(
           <>
             <button onClick={() => setOpen(false)} className={SECONDARY_BTN}>{t('backoffice:artisans.workOrder.form.cancel')}</button>
-            <button disabled={!form.title.trim() || !form.property_id || create.isLoading}
+            <button disabled={!form.title.trim() || !form.property_id || !form.client_id
+              || (form.nature && needsThirdParty && !form.third_party_label.trim()) || create.isLoading}
               onClick={() => create.mutate()} className={PRIMARY_BTN}>
               {t('backoffice:artisans.workOrder.form.submit')}
             </button>
@@ -214,6 +254,23 @@ function WorkOrdersList({ filter = NO_FILTER }) {
             <option value="">{t('backoffice:artisans.workOrder.form.propertyPlaceholder')}</option>
             {properties.map((pr) => <option key={pr.id} value={pr.id}>{pr.title}</option>)}
           </Select>
+        </div>
+        <div className="mb-3">
+          <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="wo-client">
+            {t('backoffice:artisans.workOrder.form.clientLabel')}
+          </label>
+          <Select id="wo-client" value={form.client_id} onChange={set('client_id')} className="w-full">
+            <option value="">{t('backoffice:artisans.workOrder.form.clientPlaceholder')}</option>
+            {clients.map((c) => <option key={c.id} value={c.id}>{`${c.first_name} ${c.last_name}`}</option>)}
+          </Select>
+          {form.property_id && leasesData && (
+            <p className="mt-1 text-xs text-gray-500">
+              {lease
+                ? t('backoffice:artisans.workOrder.form.leased', {
+                  tenant: lease.tenant_name, date: f.date(lease.end_date), context: lease.end_date ? 'until' : 'open' })
+                : t('backoffice:artisans.workOrder.form.noLease')}
+            </p>
+          )}
         </div>
         <div className="mb-3">
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="wo-title">
@@ -263,6 +320,49 @@ function WorkOrdersList({ filter = NO_FILTER }) {
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500" />
           </div>
         </div>
+        <div className="mb-3 grid gap-3 sm:grid-cols-3">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="wo-nature">
+              {t('backoffice:artisans.workOrder.form.natureLabel')}
+            </label>
+            <Select id="wo-nature" value={form.nature} onChange={set('nature')} className="w-full">
+              <option value="">{t('backoffice:artisans.workOrder.form.naturePlaceholder')}</option>
+              {NATURES.map((v) => <option key={v} value={v}>{t(`backoffice:artisans.workOrder.nature.${v}`)}</option>)}
+            </Select>
+          </div>
+          {/* Sans nature, rien à proposer. Changer de payeur rend la main au mode proposé : un
+              mode choisi pour un autre payeur ne vaut plus. */}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="wo-payer">
+              {t('backoffice:artisans.workOrder.form.payerLabel')}
+            </label>
+            <Select id="wo-payer" value={form.nature ? payer : ''} disabled={!form.nature}
+              onChange={(e) => setForm((f) => ({ ...f, payer: e.target.value, charge_mode: '' }))} className="w-full">
+              {!form.nature && <option value="" />}
+              {PAYERS.map((v) => <option key={v} value={v}>{t(`backoffice:artisans.workOrder.payer.${v}`)}</option>)}
+            </Select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="wo-mode">
+              {t('backoffice:artisans.workOrder.form.modeLabel')}
+            </label>
+            <Select id="wo-mode" value={form.nature ? chargeMode : ''} disabled={!form.nature}
+              onChange={set('charge_mode')} className="w-full">
+              {!form.nature && <option value="" />}
+              {CHARGE_MODES.map((v) => <option key={v} value={v}>{t(`backoffice:artisans.workOrder.chargeMode.${v}`)}</option>)}
+            </Select>
+          </div>
+        </div>
+        {form.nature && needsThirdParty && (
+          <div className="mb-3">
+            <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="wo-third-party">
+              {t('backoffice:artisans.workOrder.form.thirdPartyLabel')}
+            </label>
+            <input id="wo-third-party" value={form.third_party_label} onChange={set('third_party_label')}
+              placeholder={t('backoffice:artisans.workOrder.form.thirdPartyPlaceholder')}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500" />
+          </div>
+        )}
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="wo-notes">
             {t('backoffice:artisans.workOrder.form.notesLabel')}

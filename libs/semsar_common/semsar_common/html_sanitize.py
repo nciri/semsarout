@@ -33,11 +33,17 @@ except Exception:  # noqa: BLE001 — vieux bleach
     _CSS = None
 
 # `strip=True` supprime la balise mais garde son texte : le contenu d'un `<script>` collé
-# remonterait donc en texte visible (« alert(1) »). Ces deux éléments n'ont pas de contenu
-# affichable, on les retire entiers. Bleach passe ensuite : un contournement de cette
-# expression perd quand même ses balises.
-_SCRIPTISH = re.compile(r"<\s*(script|style)\b[^>]*>.*?<\s*/\s*\1\s*>",
-                        re.IGNORECASE | re.DOTALL)
+# remonterait donc en texte visible (« alert(1) »). Ces éléments-ci n'ont pas de contenu
+# affichable, ou changent l'espace de noms / le mode d'analyse (`svg`, `math`, `template`,
+# `noscript` — le vecteur mXSS classique) : on retire le sous-arbre entier, comme le fait le
+# nettoyage côté client. Bleach passe ensuite : un contournement de cette expression perd
+# quand même toutes ses balises.
+DROPPED_SUBTREES = ("script", "style", "svg", "math", "template", "noscript", "iframe",
+                    "object", "embed", "base", "link", "meta", "frame", "frameset",
+                    "applet", "form")
+_SUBTREE = re.compile(
+    r"<\s*(" + "|".join(DROPPED_SUBTREES) + r")\b[^>]*>.*?<\s*/\s*\1\s*>",
+    re.IGNORECASE | re.DOTALL)
 
 # Les balises qui marquent une fin de bloc : leur disparition ne doit pas coller deux mots.
 _BLOCK_END = re.compile(r"</(?:p|div|li|tr|h[1-4]|blockquote|table|ul|ol)\s*>|<br\s*/?>",
@@ -50,7 +56,13 @@ def sanitize_html(html):
     """HTML assaini selon la liste blanche produit. `None`/vide → `""`."""
     if not html:
         return ""
-    html = _SCRIPTISH.sub("", str(html))
+    html = str(html)
+    # Imbrications et balises réécrites par la passe précédente : on répète jusqu'au point fixe.
+    for _ in range(4):
+        stripped = _SUBTREE.sub("", html)
+        if stripped == html:
+            break
+        html = stripped
     attributes = dict(ALLOWED_ATTRIBUTES)
     kwargs = dict(tags=ALLOWED_TAGS, protocols=ALLOWED_PROTOCOLS, strip=True)
     if _CSS is not None:
@@ -66,7 +78,7 @@ def html_to_text(html):
     """Texte brut d'un champ WYSIWYG, pour les surfaces qui n'affichent pas de HTML."""
     if not html:
         return ""
-    text = _BLOCK_END.sub("\n", _SCRIPTISH.sub("", str(html)))
+    text = _BLOCK_END.sub("\n", _SUBTREE.sub("", str(html)))
     text = _TAG.sub("", text)
     text = bleach.clean(text, tags=[], attributes={}, strip=True)
     # `clean` réintroduit les entités : on rend le texte lisible, pas du HTML.
