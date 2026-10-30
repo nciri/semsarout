@@ -47,20 +47,32 @@ function RichTextarea({
   const editorId = id || `rich-${generatedId}`
   const [linkOpen, setLinkOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
-  const [labelId, setLabelId] = useState(null)
+  const [label, setLabel] = useState({})
   const dir = isRtl(i18n.language) ? 'rtl' : 'ltr'
 
   // `<label for>` et le `<label>` englobant ne nomment que les contrôles de formulaire : un
   // `div[role=textbox]` les ignore, et le champ deviendrait anonyme pour un lecteur d'écran.
-  // On retrouve donc le libellé en place et on le rattache par `aria-labelledby`.
+  // On retrouve donc le libellé en place et on le rattache nous-mêmes.
   useEffect(() => {
     const el = editor.current
     if (!el || ariaLabel || ariaLabelledBy) return
-    const label = el.ownerDocument.querySelector(`label[for="${CSS.escape(editorId)}"]`)
+    const found = el.ownerDocument.querySelector(`label[for="${CSS.escape(editorId)}"]`)
       || el.closest('label')
-    if (!label) return
-    if (!label.id) label.id = `${editorId}-label`
-    setLabelId(label.id)
+    if (!found) return
+    if (found.contains(el)) {
+      // `aria-labelledby` vers un ancêtre nommerait le champ avec son propre contenu :
+      // on ne garde que le texte du libellé, hors sous-arbre de l'éditeur.
+      const text = Array.from(found.childNodes)
+        .filter((n) => !n.contains?.(el))
+        .map((n) => n.textContent || '')
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+      if (text) setLabel({ text })
+      return
+    }
+    if (!found.id) found.id = `${editorId}-label`
+    setLabel({ id: found.id })
   }, [editorId, ariaLabel, ariaLabelledBy])
 
   useEffect(() => {
@@ -154,8 +166,8 @@ function RichTextarea({
         dir={dir}
         role="textbox"
         aria-multiline="true"
-        aria-label={ariaLabel}
-        aria-labelledby={ariaLabelledBy || labelId || undefined}
+        aria-label={ariaLabel || label.text || undefined}
+        aria-labelledby={ariaLabelledBy || label.id || undefined}
         aria-disabled={disabled || undefined}
         contentEditable={!disabled}
         suppressContentEditableWarning

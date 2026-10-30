@@ -67,3 +67,26 @@ def test_requalifying_through_put_stamps_the_outcome(client, db_session):
     assert r1.json()["status"] == "completed" and r1.json()["completed_at"]
     assert r1.json()["report"] == "RAS"
     assert r2.json()["cancelled_at"] and not r2.json()["completed_at"]
+
+
+def test_rich_visit_report_is_sanitised_on_both_write_paths(client, db_session):
+    """Le compte rendu est saisi en WYSIWYG : ce qui est stocké est du HTML, donc un XSS
+    stocké déclenché par la fiche de la visite s'il n'est pas assaini ici."""
+    sale = '<p class="MsoNormal">Portail <em>bloqué</em></p><script>alert(1)</script>'
+    propre = "<p>Portail <em>bloqué</em></p>"
+
+    par_put = client.put(f"/backoffice/visits/{_add(db_session, -1).id}",
+                         json={"status": "completed", "report": sale,
+                               "client_comments": '<b>ok</b><img src=x onerror="alert(2)">'})
+    par_complete = client.post(f"/backoffice/visits/{_add(db_session, -1).id}/complete",
+                               json={"report": sale})
+
+    for r in (par_put, par_complete):
+        assert r.json()["report"] == propre
+    assert par_put.json()["client_comments"] == "<b>ok</b>"
+    # Les notes restent du texte brut : les assainir ferait apparaître des entités à l'écran.
+    assert client.put(f"/backoffice/visits/{_add(db_session, -1).id}",
+                      json={"notes": "Loyer < 5000 & charges"}).json()["notes"] == "Loyer < 5000 & charges"
+    # Un champ vidé redevient NULL plutôt qu'une chaîne vide.
+    assert client.post(f"/backoffice/visits/{_add(db_session, -1).id}/complete",
+                       json={"report": "<p><br></p>"}).json()["report"] is None

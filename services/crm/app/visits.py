@@ -7,6 +7,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
+from semsar_common import sanitize_rich_field
 from semsar_events import enqueue
 
 from . import users_client
@@ -21,6 +22,10 @@ _COLORS = {"scheduled": "#6B7280", "confirmed": "#3B82F6", "completed": "#10B981
 _V_UPDATABLE = ["property_id", "client_id", "visitor_name", "visitor_email", "visitor_phone",
                 "agent_id", "duration_minutes", "visit_type", "notes", "internal_notes",
                 "report", "client_feedback", "client_comments", "status"]
+# Champs saisis en WYSIWYG : ce qui arrive est du HTML, donc un XSS stocké tant qu'il n'est
+# pas assaini. Les autres champs restent du texte brut : les assainir échapperait leurs
+# `<` et `&` et ferait apparaître des entités dans l'affichage.
+_V_RICH = ("report", "client_comments")
 
 
 def _dt(v):
@@ -379,7 +384,7 @@ async def update_visit(visit_id: int, request: Request, principal: Principal = D
     data = await json_body(request)
     for f in _V_UPDATABLE:
         if f in data:
-            setattr(v, f, data[f])
+            setattr(v, f, sanitize_rich_field(data[f]) if f in _V_RICH else data[f])
     if "scheduled_at" in data:
         v.scheduled_at = _dt(data["scheduled_at"])
     now = datetime.utcnow()
@@ -427,7 +432,7 @@ async def complete_visit(visit_id: int, request: Request, principal: Principal =
     v.completed_at = datetime.utcnow()
     for f in ("report", "client_feedback", "client_comments"):
         if f in data:
-            setattr(v, f, data[f])
+            setattr(v, f, sanitize_rich_field(data[f]) if f in _V_RICH else data[f])
     _touch_client(db, v)
     db.commit()
     return _visit_dict(db, v)

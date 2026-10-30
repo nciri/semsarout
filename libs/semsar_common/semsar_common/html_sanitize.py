@@ -32,6 +32,13 @@ try:
 except Exception:  # noqa: BLE001 — vieux bleach
     _CSS = None
 
+# `strip=True` supprime la balise mais garde son texte : le contenu d'un `<script>` collé
+# remonterait donc en texte visible (« alert(1) »). Ces deux éléments n'ont pas de contenu
+# affichable, on les retire entiers. Bleach passe ensuite : un contournement de cette
+# expression perd quand même ses balises.
+_SCRIPTISH = re.compile(r"<\s*(script|style)\b[^>]*>.*?<\s*/\s*\1\s*>",
+                        re.IGNORECASE | re.DOTALL)
+
 # Les balises qui marquent une fin de bloc : leur disparition ne doit pas coller deux mots.
 _BLOCK_END = re.compile(r"</(?:p|div|li|tr|h[1-4]|blockquote|table|ul|ol)\s*>|<br\s*/?>",
                         re.IGNORECASE)
@@ -43,6 +50,7 @@ def sanitize_html(html):
     """HTML assaini selon la liste blanche produit. `None`/vide → `""`."""
     if not html:
         return ""
+    html = _SCRIPTISH.sub("", str(html))
     attributes = dict(ALLOWED_ATTRIBUTES)
     kwargs = dict(tags=ALLOWED_TAGS, protocols=ALLOWED_PROTOCOLS, strip=True)
     if _CSS is not None:
@@ -58,7 +66,7 @@ def html_to_text(html):
     """Texte brut d'un champ WYSIWYG, pour les surfaces qui n'affichent pas de HTML."""
     if not html:
         return ""
-    text = _BLOCK_END.sub("\n", str(html))
+    text = _BLOCK_END.sub("\n", _SCRIPTISH.sub("", str(html)))
     text = _TAG.sub("", text)
     text = bleach.clean(text, tags=[], attributes={}, strip=True)
     # `clean` réintroduit les entités : on rend le texte lisible, pas du HTML.
@@ -67,3 +75,14 @@ def html_to_text(html):
         text = text.replace(entity, char)
     text = _WS.sub("\n", text)
     return re.sub(r"\n{3,}", "\n\n", text).strip()
+
+
+def sanitize_rich_field(html):
+    """Valeur d'un champ WYSIWYG prête à stocker : HTML assaini, ou `None` si vide.
+
+    Un éditeur `contentEditable` vidé rend `<p><br></p>`, du HTML valide mais sans contenu :
+    stocké tel quel, il rendrait vrai tous les `if champ:` des gabarits et des écrans.
+    Distinct de `sanitize_html`, que le corps d'un contrat utilise pour sa mise en page.
+    """
+    clean = sanitize_html(html)
+    return clean or None if html_to_text(clean) else None
