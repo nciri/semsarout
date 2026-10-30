@@ -367,21 +367,37 @@ def test_gabarit_crg_draft_se_rend_avec_son_lien():
     assert "Septembre 2026" in html and "/backoffice/gestion-locative" in html
 
 
-def test_gabarit_lead_rend_le_message_wysiwyg_et_pas_ses_balises():
-    """`lead.message` est saisi en texte riche : sans le filtre `richtext`, l'autoescape du
-    gabarit ferait lire « <p>Villa</p> » à l'agence. Et la couche doit rester une liste
-    blanche : un `<script>` déjà stocké ne doit pas traverser l'email."""
+def test_gabarit_lead_projette_le_message_anonyme_en_texte():
+    """`lead.message` est le seul champ riche du produit dont l'auteur est **anonyme** : les
+    formulaires de contact publics n'ont aucune authentification.
+
+    Le rendre en HTML mettrait un lien d'hameçonnage cliquable dans la boîte de l'agence,
+    dans un email de sa propre plateforme. La liste blanche conserve `<a href>` : assainir ne
+    ferme pas ce trou, seule la projection en texte le ferme. Le texte visible, lui, doit
+    arriver intact — l'agence doit lire ce que le prospect a écrit."""
     from app import render
 
     _, html, text = render.render_email(
         "lead_notification.html", lead_name="Hind", lead_email="h@example.ma",
-        lead_message="<p>Villa <strong>vue mer</strong></p><script>alert(1)</script>")
+        lead_message='<p>Votre <strong>facture</strong></p>'
+                     '<p><a href="https://evil.example">cliquez</a></p>')
 
-    assert "<p>Villa <strong>vue mer</strong></p>" in html
-    assert "&lt;p&gt;" not in html
-    assert "<script>" not in html and "alert(1)" not in html
-    # La partie text/plain est dérivée du HTML : elle porte le texte, jamais les balises.
-    assert "Villa vue mer" in text and "<strong>" not in text
+    # La cellule du message, isolée du reste du gabarit (qui a son propre bouton d'action).
+    cellule = html[html.index("white-space:pre-line"):]
+    cellule = cellule[:cellule.index("</td>")]
+
+    # Aucune balise, et surtout aucun lien : ni la balise, ni l'attribut, ni l'URL.
+    assert "<a" not in cellule and "href" not in cellule
+    assert "evil.example" not in html
+    assert "<strong>" not in cellule
+    # Les mots visibles traversent, sauts de ligne compris.
+    assert "Votre facture" in cellule and "cliquez" in cellule
+    # Et rien n'est lu comme du balisage : les chevrons d'un message hostile sont échappés.
+    _, html2, _ = render.render_email(
+        "lead_notification.html", lead_name="Hind",
+        lead_message="Budget &lt; 900000 &amp; cash")
+    assert "Budget &lt; 900000 &amp; cash" in html2
+    assert "Villa" not in text
 
 
 def test_gabarit_ordre_de_service_rend_les_notes_wysiwyg():
