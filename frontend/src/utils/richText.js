@@ -3,38 +3,45 @@
  *
  * Tous les champs texte du projet étant saisis en WYSIWYG, ce qui circule est du HTML. La
  * liste blanche recopie celle du serveur (`libs/semsar_common/semsar_common/html_sanitize.py`),
- * sans quoi un collage accepté ici serait silencieusement amputé à l'enregistrement. Le
- * serveur reste la frontière de confiance : ce nettoyage-ci sert au collage (Word colle des
- * `<o:p>`, des `<font>` et des styles entiers) et à l'affichage.
+ * et la table de charges partagée de `richText.test.js` vérifie que les deux couches ne
+ * divergent pas.
+ *
+ * Le nettoyage repose sur **DOMPurify** et non sur un marcheur maison. Ce n'est pas une
+ * précaution de confort : `RichText` est la dernière chose entre les octets stockés et le DOM
+ * d'une page publique (`PropertyDetail`), donc un contournement de cette couche sur une charge
+ * que bleach a déjà acceptée est un XSS stocké public **sans rien derrière**. Une liste de
+ * vecteurs mXSS figée à une date ne tient pas ce rôle ; un projet maintenu, oui.
  */
-const ALLOWED = {
-  p: ['style'], br: [], strong: [], b: [], em: [], i: [], u: [], s: [],
-  ul: [], ol: [], li: [], h1: ['style'], h2: ['style'], h3: ['style'], h4: ['style'],
-  blockquote: [], table: [], thead: [], tbody: [], tr: [],
-  td: ['colspan', 'rowspan', 'style'], th: ['colspan', 'rowspan', 'style'],
-  span: ['style'], a: ['href', 'title'],
-}
-const ALLOWED_PROTOCOLS = ['http:', 'https:', 'mailto:']
-// Seule déclaration admise, comme côté serveur. Un `style` libre reste un trou, plus petit
-// qu'un `<script>` mais réel (`position:fixed` recouvre une page, `url()` appelle un tiers).
-const ALLOWED_CSS = ['text-align']
+import DOMPurify from 'dompurify'
+
+/** Mêmes balises que `ALLOWED_TAGS` côté serveur. */
+export const ALLOWED_TAGS = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'ul', 'ol', 'li',
+  'h1', 'h2', 'h3', 'h4', 'blockquote', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'span', 'a']
 /**
- * Sous-arbres retirés entiers, et non dépliés sur leurs enfants. `svg`, `math`, `template`
- * et `noscript` changent l'espace de noms ou le mode d'analyse : rendre leurs enfants au
- * HTML est le vecteur mXSS classique (`<math><mtext><table><mglyph><style>…`). Les autres
- * chargent une ressource ou réécrivent la résolution des URL relatives.
+ * Mêmes attributs que `ALLOWED_ATTRIBUTES` côté serveur, **par balise**. `ALLOWED_ATTR` de
+ * DOMPurify est global : sans ce filtre, `<p href=…>` passerait ici et serait refusé là-bas.
  */
-const DROP = new Set(['script', 'style', 'svg', 'math', 'template', 'noscript', 'iframe',
-  'object', 'embed', 'base', 'link', 'meta', 'frame', 'frameset', 'applet', 'form'])
+const ATTR_BY_TAG = { a: ['href', 'title'], td: ['colspan', 'rowspan'], th: ['colspan', 'rowspan'] }
+/** `style` sur n'importe quelle balise, comme le `"*"` du dictionnaire serveur. */
+const ATTR_ANY_TAG = ['style']
+const ALLOWED_ATTR = [...ATTR_ANY_TAG, ...new Set(Object.values(ATTR_BY_TAG).flat())]
+/** `http`, `https`, `mailto` et les URL relatives — mêmes protocoles que le serveur. */
+const ALLOWED_URI_REGEXP = /^(?:(?:https?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.:-]|$))/i
+/**
+ * Seule déclaration CSS admise, comme côté serveur (bleach + tinycss2). DOMPurify ne filtre
+ * pas le contenu d'un `style` par propriété : c'est au crochet ci-dessous de le faire.
+ */
+const ALLOWED_CSS = ['text-align']
 // Fins de bloc : leur disparition ne doit pas coller deux mots.
 const BLOCK_END = /<\/(?:p|div|li|tr|h[1-4]|blockquote|table|ul|ol)\s*>|<br\s*\/?>/gi
 // Au-delà, un contenu qui ne se stabilise pas est hostile : on ne rend plus que son texte.
 const MAX_PASSES = 4
 
-function safeHref(value) {
+/** Une URL que l'on accepte de poser dans un `href`. Utilisé aussi par la barre d'outils. */
+export function safeHref(value) {
   try {
     // Base absolue : une URL relative reste relative et donc sans protocole dangereux.
-    return ALLOWED_PROTOCOLS.includes(new URL(value, 'https://semsarout.com').protocol)
+    return ['http:', 'https:', 'mailto:'].includes(new URL(value, 'https://semsarout.com').protocol)
   } catch {
     return false
   }
@@ -54,43 +61,39 @@ function safeStyle(value) {
     .join('')
 }
 
+/**
+ * Parité attribut par balise, restriction du CSS, et **ordre canonique**.
+ *
+ * L'ordre n'est pas de la cosmétique : DOMPurify retire puis réinsère les attributs d'un
+ * nœud, ce qui **inverse leur ordre à chaque passe**. Un `<a href title>` ne se stabilisait
+ * donc jamais, et la boucle de point fixe le dégradait en texte brut au bout de 4 passes —
+ * un lien parfaitement légitime réduit à son libellé. Trier les attributs rend la sortie
+ * déterministe et, accessoirement, identique à celle de bleach/html5lib.
+ *
+ * Posé une fois : c'est le seul usage de DOMPurify de l'application.
+ */
+DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+  if (!node.attributes || !node.tagName) return
+  const permitted = ATTR_BY_TAG[node.tagName.toLowerCase()] || []
+  const kept = []
+  for (const attr of Array.from(node.attributes)) {
+    const name = attr.name.toLowerCase()
+    node.removeAttribute(attr.name)
+    if (name === 'style') {
+      const style = safeStyle(attr.value)
+      if (style) kept.push([name, style])
+    } else if (permitted.includes(name)) {
+      kept.push([name, attr.value])
+    }
+  }
+  for (const [name, value] of kept.sort(([a], [b]) => (a < b ? -1 : 1))) {
+    node.setAttribute(name, value)
+  }
+})
+
 function escapeText(text) {
   return String(text).replace(/[&<>"]/g, (c) => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
-}
-
-function sanitizePass(html) {
-  const doc = new DOMParser().parseFromString(`<div id="r">${html}</div>`, 'text/html')
-  const root = doc.getElementById('r')
-  if (!root) return ''
-  // Parcours en profondeur d'abord : un nœud remplacé par ses enfants doit être revisité.
-  const walk = (node) => {
-    for (const child of Array.from(node.childNodes)) {
-      if (child.nodeType === 3) continue
-      if (child.nodeType !== 1) { child.remove(); continue }
-      const tag = child.tagName.toLowerCase()
-      if (DROP.has(tag)) { child.remove(); continue }
-      const allowed = ALLOWED[tag]
-      if (!allowed) {
-        walk(child)
-        child.replaceWith(...Array.from(child.childNodes))
-        continue
-      }
-      for (const attr of Array.from(child.attributes)) {
-        const name = attr.name.toLowerCase()
-        if (!allowed.includes(name)) { child.removeAttribute(attr.name); continue }
-        if (name === 'href' && !safeHref(attr.value)) child.removeAttribute(attr.name)
-        if (name === 'style') {
-          const style = safeStyle(attr.value)
-          if (style) child.setAttribute('style', style)
-          else child.removeAttribute(attr.name)
-        }
-      }
-      walk(child)
-    }
-  }
-  walk(root)
-  return root.innerHTML
 }
 
 /** Texte brut d'un champ riche : aperçu d'une cellule, index de recherche, email texte. */
@@ -102,19 +105,19 @@ export function richTextToPlain(html) {
 }
 
 /**
- * HTML réduit à la liste blanche produit. Les balises interdites disparaissent, leur texte
- * reste ; les sous-arbres de `DROP` partent entiers.
+ * HTML réduit à la liste blanche produit.
  *
- * Le nettoyage est répété jusqu'au point fixe : on inspecte un arbre analysé puis on en
- * ré-sérialise le HTML, et cette ré-sérialisation peut se ré-analyser autrement que ce qui
- * a été inspecté (mutation XSS). Un contenu qui refuse de se stabiliser n'est pas un
- * contenu d'agence : on n'en rend plus que le texte.
+ * Le nettoyage est répété jusqu'au point fixe : on assainit un arbre analysé puis on en
+ * ré-sérialise le HTML, et cette ré-sérialisation peut se ré-analyser autrement que ce qui a
+ * été assaini (mutation XSS). DOMPurify ferme déjà cette classe, mais la boucle ne coûte
+ * qu'une comparaison. Un contenu qui refuse de se stabiliser n'est pas un contenu d'agence :
+ * on n'en rend plus que le texte.
  */
 export function sanitizeRichText(html) {
   if (!html) return ''
   let current = String(html)
   for (let pass = 0; pass < MAX_PASSES; pass += 1) {
-    const next = sanitizePass(current)
+    const next = DOMPurify.sanitize(current, { ALLOWED_TAGS, ALLOWED_ATTR, ALLOWED_URI_REGEXP })
     if (next === current) return next
     current = next
   }
@@ -124,7 +127,7 @@ export function sanitizeRichText(html) {
 /** Un champ riche ne contenant que des balises vides (`<p><br></p>`) est vide. */
 export function isRichTextEmpty(html) {
   if (!html) return true
-  return richTextToPlain(html) === '' && !/<(?:img|table|hr)\b/i.test(html)
+  return richTextToPlain(html) === ''
 }
 
 /**
@@ -133,7 +136,7 @@ export function isRichTextEmpty(html) {
  */
 export function plainToRichText(text) {
   if (!text) return ''
-  const escaped = String(text).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
+  const escaped = escapeText(text).replace(/&quot;/g, '"')
   return escaped
     .split(/\n{2,}/)
     .map((block) => `<p>${block.trim().replace(/\n/g, '<br>')}</p>`)
@@ -142,8 +145,13 @@ export function plainToRichText(text) {
 }
 
 /**
- * Valeur prête pour un `RichTextarea` : les champs enregistrés avant la bascule WYSIWYG
- * contiennent du texte brut, dont les sauts de ligne seraient perdus à l'affichage.
+ * Valeur prête pour un champ ou un affichage riche.
+ *
+ * Tout ce qui a été enregistré **avant** cette bascule est du texte brut, déjà un point fixe
+ * du nettoyage : ses `\n` se réduiraient donc à des espaces en HTML, et le paragraphe d'un
+ * agent deviendrait une seule ligne continue — silencieusement, sur la description publique
+ * de chaque bien existant. `RichText` et `RichTextarea` passent par ici, pour que ni les
+ * écrans convertis ni les suivants n'aient à y penser.
  */
 export function ensureRichText(value) {
   if (!value) return ''

@@ -1,0 +1,53 @@
+{
+  "_comment": "Produit par services/contract/tests/test_html_sanitize.py. Ne pas éditer à la main : UPDATE_SANITIZE_FIXTURE=1 python -m pytest tests/test_html_sanitize.py",
+  "payloads": {
+    "imgOnerror": "<img src=x onerror=alert(1)>",
+    "svgScript": "<svg><script>alert(1)</script></svg>",
+    "noscriptMutation": "<noscript><p title=\"</noscript><img src=x onerror=alert(1)>\">",
+    "mathMutation": "<math><mtext><table><mglyph><style><!--</style><img src=x onerror=alert(1)>",
+    "eventHandler": "<p id=\"x\" onclick=\"alert(1)\">ok</p>",
+    "javascriptHref": "<a href=\"javascript:alert(1)\">x</a>",
+    "relativeHref": "<a href=\"/biens/3\" title=\"t\">x</a>",
+    "freeStyle": "<p style=\"position:fixed;top:0\">x</p>",
+    "cssUrl": "<p style=\"text-align:center;background:url(http://evil)\">x</p>",
+    "allowedStyle": "<p style=\"text-align:center\">x</p>",
+    "styleOnListItem": "<ul><li style=\"text-align:center\">x</li></ul>",
+    "styleOnBlockquote": "<blockquote style=\"text-align:right\">x</blockquote>",
+    "hrefOnParagraph": "<p href=\"https://evil.test\">x</p>",
+    "colspanOnParagraph": "<p colspan=\"2\">x</p>",
+    "attrOrder": "<table><tr><td rowspan=\"2\" style=\"text-align:center\" colspan=\"3\">x</td></tr></table>",
+    "unknownTags": "<div class=\"x\"><font face=\"y\">texte</font></div>",
+    "plainTextLineBreaks": "Visite rapide.\nCuisine à refaire."
+  },
+  "serverOutput": {
+    "imgOnerror": "",
+    "svgScript": "",
+    "noscriptMutation": "\"&gt;",
+    "mathMutation": "<table></table>",
+    "eventHandler": "<p>ok</p>",
+    "javascriptHref": "<a>x</a>",
+    "relativeHref": "<a href=\"/biens/3\" title=\"t\">x</a>",
+    "freeStyle": "<p style=\"\">x</p>",
+    "cssUrl": "<p style=\"text-align:center;\">x</p>",
+    "allowedStyle": "<p style=\"text-align:center;\">x</p>",
+    "styleOnListItem": "<ul><li style=\"text-align:center;\">x</li></ul>",
+    "styleOnBlockquote": "<blockquote style=\"text-align:right;\">x</blockquote>",
+    "hrefOnParagraph": "<p>x</p>",
+    "colspanOnParagraph": "<p>x</p>",
+    "attrOrder": "<table><tbody><tr><td rowspan=\"2\" style=\"text-align:center;\" colspan=\"3\">x</td></tr></tbody></table>",
+    "unknownTags": "texte",
+    "plainTextLineBreaks": "Visite rapide.\nCuisine à refaire."
+  },
+  "unsafePatterns": [
+    "<\\s*script",
+    "<\\s*img",
+    "<\\s*svg",
+    "<\\s*math",
+    "<\\s*iframe",
+    "<\\s*noscript",
+    "\\son\\w+\\s*=",
+    "javascript:",
+    "position\\s*:",
+    "url\\s*\\("
+  ]
+}
