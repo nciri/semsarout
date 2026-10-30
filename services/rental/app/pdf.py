@@ -17,6 +17,7 @@ D'où les deux outils : `_x` échappe toute valeur, et `general_notes` — qui e
 depuis la bascule — est d'abord projeté par `html_to_text`, `_lines` rendant ses sauts de
 ligne avec le `<br/>` que ReportLab, lui, comprend.
 """
+from datetime import datetime
 from io import BytesIO
 from xml.sax.saxutils import escape as _escape
 
@@ -235,8 +236,24 @@ def render_settlement_pdf(s, lines, tenant_name: str, landlord_name: str, proper
     return buf.getvalue()
 
 
-def render_crg_pdf(crg, landlord_name: str, mandate_reference: str) -> bytes:
-    """Compte-rendu de gestion PDF. `crg` = CrgReport."""
+def _crg_date_fr(iso_value) -> str:
+    """« 2026-09-14T00:00:00 » → « 14/09/2026 ». La spec veut la date RÉELLE, en clair : une
+    intervention en retard tombe sur le CRG suivant et son mois doit se lire."""
+    if not iso_value:
+        return "-"
+    try:
+        return datetime.fromisoformat(str(iso_value)).strftime("%d/%m/%Y")
+    except ValueError:
+        return str(iso_value)
+
+
+def render_crg_pdf(crg, landlord_name: str, mandate_reference: str,
+                   expense_lines: list[dict] | None = None) -> bytes:
+    """Compte-rendu de gestion PDF. `crg` = CrgReport.
+
+    `expense_lines` détaille les dépenses retenues — date, intitulé, artisan, montant — comme
+    l'exige la spec : un net amputé sans explication est la plainte d'origine du propriétaire.
+    """
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -263,7 +280,15 @@ def render_crg_pdf(crg, landlord_name: str, mandate_reference: str) -> bytes:
         Paragraph(f"Loyers encaissés : {collected:,.2f} Đh".replace(",", " "), info),
         Paragraph(f"Honoraires de gestion : {fees:,.2f} Đh".replace(",", " "), info),
         Paragraph(f"Dépenses d'intervention : {expenses:,.2f} Đh".replace(",", " "), info),
-        Paragraph(f"<b>Net reversé : {net:,.2f} Đh</b>".replace(",", " "), info),
     ]
+    for ligne in (expense_lines or []):
+        try:
+            montant = f"{float(ligne.get('cost_final') or 0):,.2f} Đh".replace(",", " ")
+        except (TypeError, ValueError):
+            montant = "-"
+        story.append(Paragraph(
+            f"&nbsp;&nbsp;• {_x(_crg_date_fr(ligne.get('completed_at')))} — "
+            f"{_x(ligne.get('title'))} — {_x(ligne.get('artisan_name'))} — {montant}", info))
+    story.append(Paragraph(f"<b>Net reversé : {net:,.2f} Đh</b>".replace(",", " "), info))
     doc.build(story)
     return buf.getvalue()

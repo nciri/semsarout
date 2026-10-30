@@ -354,6 +354,7 @@
         },
         "draftWarning": "Brouillon de {{period}} jamais validé : il ne part pas tant qu'un humain ne l'a pas relu et validé. En attente depuis",
         "linesLabel": "Dépenses imputées au brouillon de {{period}}",
+        "linesSummary": "Dépenses retenues sur {{period}} ({{count}})",
         "exclude": "Écarter {{title}}",
         "restore": "Réintégrer {{title}}",
         "noLines": "Aucune dépense imputée à ce brouillon.",

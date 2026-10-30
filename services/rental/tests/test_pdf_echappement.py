@@ -116,3 +116,63 @@ def test_la_projection_garde_les_sauts_de_ligne_que_reportlab_sait_rendre():
 
     rendu = pdf._lines(html_to_text(RICHE))
     assert rendu == ("Portail bloqué<br/>Volet cassé<br/>Peinture à refaire")
+
+
+def _paragraphes(fn, *args, **kwargs) -> list[str]:
+    """Textes des `Paragraph` passés à ReportLab.
+
+    Le PDF sorti n'est pas relisible sans extracteur, et en ajouter un comme dépendance de test
+    pour vérifier quatre lignes serait payer cher. On intercepte donc la `story`.
+    """
+    import reportlab.platypus as platypus
+
+    captures: list[list] = []
+    origine = platypus.SimpleDocTemplate
+
+    class _Capture(origine):
+        def build(self, story, *a, **kw):
+            captures.append(list(story))
+            return super().build(story, *a, **kw)
+
+    platypus.SimpleDocTemplate = _Capture
+    try:
+        _pdf_valide(fn(*args, **kwargs))
+    finally:
+        platypus.SimpleDocTemplate = origine
+    return [getattr(f, "text", "") for f in captures[0]]
+
+
+def test_le_crg_detaille_chaque_depense_date_intitule_artisan_montant():
+    """Exigence de la spec. Un net amputé de 1 200 Dh sans ligne explicative est sa plainte
+    d'origine, et la date affichée doit être la date RÉELLE de l'intervention — une
+    intervention en retard tombe sur le CRG suivant."""
+    crg = SimpleNamespace(rent_collected=6000, fees=480, expenses=1500, net=4020,
+                          period_label="Septembre 2026")
+    lignes = [{"id": 4, "title": "Chauffe-eau", "artisan_name": "Plomberie <Atlas> & Fils",
+               "completed_at": "2026-08-28T00:00:00", "cost_final": 1200},
+              {"id": 5, "title": "Débouchage", "artisan_name": None,
+               "completed_at": None, "cost_final": 300}]
+    textes = _paragraphes(pdf.render_crg_pdf, crg, HOSTILE, "MND-7", expense_lines=lignes)
+
+    detail = [x for x in textes if "Chauffe-eau" in x]
+    assert len(detail) == 1
+    # La date du 28/08 figure en clair sur le CRG de septembre : c'est tout l'intérêt.
+    assert "28/08/2026" in detail[0] and "1 200.00" in detail[0]
+    assert "Plomberie &lt;Atlas&gt; &amp; Fils" in detail[0]
+    assert "<Atlas>" not in detail[0]
+
+    sans_artisan = [x for x in textes if "Débouchage" in x]
+    assert len(sans_artisan) == 1 and " - " in sans_artisan[0]
+
+    # Le détail s'insère ENTRE le total des dépenses et le net reversé, pas après.
+    positions = [next(i for i, x in enumerate(textes) if marqueur in x)
+                 for marqueur in ("Dépenses d'intervention", "Chauffe-eau", "Net reversé")]
+    assert positions == sorted(positions)
+
+
+def test_un_crg_sans_depense_garde_sa_forme():
+    crg = SimpleNamespace(rent_collected=6000, fees=480, expenses=0, net=5520,
+                          period_label="Septembre 2026")
+    textes = _paragraphes(pdf.render_crg_pdf, crg, "Ali Benani", "MND-7")
+    assert any("Net reversé" in x for x in textes)
+    assert not any("•" in x for x in textes)

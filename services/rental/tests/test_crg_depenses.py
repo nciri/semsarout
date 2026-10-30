@@ -186,6 +186,7 @@ def _brouillon(client, db, monkeypatch, loyer, depenses_):
     mnd = _mandat(db, property_id=7, fee_pct=8)
     _loyer_encaisse(db, mnd, y, m, montant=loyer)
     lignes = [{"id": i, "title": f"Intervention {i}", "cost_final": cout,
+               "artisan_name": "Plomberie Atlas",
                "completed_at": f"2026-09-{10 + n:02d}T00:00:00", "property_id": 7}
               for n, (i, cout) in enumerate(depenses_)]
     monkeypatch.setattr(depenses, "imputables",
@@ -364,7 +365,7 @@ def test_le_net_ne_devient_jamais_negatif_et_la_plus_vieille_depense_passe_d_abo
     # La dépense la plus ancienne absorbe exactement le solde ; la seconde attend le mois suivant.
     assert agg["expenses"] == 460 and agg["net"] == 0
     assert agg["expense_lines"] == [{"id": 4, "title": "Chauffe-eau", "cost_final": 460,
-                                     "completed_at": "2026-09-02T00:00:00"}]
+                                     "completed_at": "2026-09-02T00:00:00", "artisan_name": None}]
 
 
 def test_la_liste_du_crg_montre_le_statut_et_les_depenses(client, db_session, monkeypatch):
@@ -373,11 +374,17 @@ def test_la_liste_du_crg_montre_le_statut_et_les_depenses(client, db_session, mo
     ligne = client.get(f"/backoffice/gestion-locative/mandates/{mandate_id}/crg").json()["reports"][0]
     assert ligne["status"] == "draft" and ligne["expenses"] == 1200.0
     assert [l["id"] for l in ligne["expense_lines"]] == [4]
+    assert ligne["expense_lines_editable"] is True
+    # La spec exige « date, intitulé, artisan, montant » : l'artisan est porté jusqu'ici.
+    assert ligne["expense_lines"][0]["artisan_name"] == "Plomberie Atlas"
 
     client.post(f"/backoffice/gestion-locative/crg/{crg_id}/validate", json={})
     valide = client.get(f"/backoffice/gestion-locative/mandates/{mandate_id}/crg").json()["reports"][0]
-    # Validé, les lignes ne sont plus modifiables : seul le brouillon les expose.
-    assert valide["status"] == "validated" and "expense_lines" not in valide
+    # Validé, les lignes ne se modifient plus, mais elles restent LISIBLES : un net amputé sans
+    # ligne explicative est la plainte d'origine de la spec, et l'agence doit pouvoir répondre.
+    assert valide["status"] == "validated"
+    assert [l["id"] for l in valide["expense_lines"]] == [4]
+    assert valide["expense_lines_editable"] is False
 
 
 def test_un_brouillon_se_recalcule_mais_un_crg_valide_est_fige(client, db_session, monkeypatch):

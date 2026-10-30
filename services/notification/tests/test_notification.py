@@ -226,7 +226,8 @@ class _FakeDb:
         pass
 
 
-def _fake_crg(monkeypatch, drafts, reports, ack_status=200, mail_ok=True, ack_error=None):
+def _fake_crg(monkeypatch, drafts, reports, ack_status=200, mail_ok=True, ack_error=None,
+              ack_payload=None):
     """Fait répondre `rental` (due-crg, due-crg-send, crg-sent) et journalise l'ordre des appels."""
     import httpx
 
@@ -251,7 +252,7 @@ def _fake_crg(monkeypatch, drafts, reports, ack_status=200, mail_ok=True, ack_er
         events.append(("crg-sent", url, kw.get("json")))
         if ack_error:
             raise ack_error
-        return _Resp({"ok": True}, ack_status)
+        return _Resp(ack_payload if ack_payload is not None else {"ok": True}, ack_status)
 
     monkeypatch.setattr(httpx, "get", fake_get)
     monkeypatch.setattr(httpx, "post", fake_post)
@@ -263,8 +264,11 @@ def _fake_crg(monkeypatch, drafts, reports, ack_status=200, mail_ok=True, ack_er
     return scheduler, events
 
 
+_LIGNE = {"id": 4, "title": "Chauffe-eau", "artisan_name": "Plomberie Atlas",
+          "completed_at": "2026-08-28T00:00:00", "cost_final": 1200}
 _REPORT = {"mandate_id": 3, "crg_id": 9, "landlord_client_id": 5, "period_label": "Septembre 2026",
-           "rent_collected": 6000, "fees": 480, "expenses": 1200, "net": 4320}
+           "rent_collected": 6000, "fees": 480, "expenses": 1200, "net": 4320,
+           "expense_lines": [_LIGNE]}
 
 
 def test_crg_n_avertit_l_agence_que_des_brouillons_nouveaux_et_n_ecrit_pas_au_proprio(monkeypatch):
@@ -308,6 +312,36 @@ def test_gabarit_crg_affiche_les_depenses_et_reste_lisible_a_zero(expenses):
                                      rent_collected=6000, fees=480, expenses=expenses, net=4320)
     assert "Dépenses d'intervention" in html.replace("&#39;", "'")
     assert html.index("Honoraires") < html.index("Dépenses") < html.index("Net reversé")
+
+
+def test_le_gabarit_crg_detaille_chaque_depense_et_le_dit_quand_il_n_y_en_a_aucune():
+    """Exigence de la spec. Un total sans ligne, et un renvoi vers un espace que le
+    propriétaire n'a pas, c'est la plainte d'origine reproduite."""
+    from app import render, scheduler
+
+    _, html, _ = render.render_email(
+        "crg_report.html", name="Salma", period_label="Septembre 2026", rent_collected=6000,
+        fees=480, expenses=1200, net=4320,
+        expense_lines=scheduler._crg_expense_rows([_LIGNE]))
+    # Date réelle de l'intervention, intitulé, artisan, montant.
+    assert "28/08/2026 · Chauffe-eau · Plomberie Atlas" in html
+    assert "1 200" in html
+
+    _, vide, _ = render.render_email(
+        "crg_report.html", name="Salma", period_label="Septembre 2026", rent_collected=6000,
+        fees=480, expenses=0, net=5520, expense_lines=[])
+    assert "Aucune dépense d'intervention ce mois-ci." in vide.replace("&#39;", "'")
+
+
+def test_l_email_du_crg_suit_les_montants_corriges_par_crg_sent(monkeypatch):
+    """`due-crg-send` a listé l'état d'AVANT : si `crg-sent` retire une dépense déjà portée par
+    un autre relevé, l'e-mail doit annoncer le net réellement versé, pas celui du listage."""
+    scheduler, events = _fake_crg(
+        monkeypatch, drafts=[], reports=[_REPORT],
+        ack_payload={"ok": True, "expenses": 0, "net": 5520, "expense_lines": []})
+    assert scheduler._job_crg_reports(_FakeDb()) == 1
+    ctx = events[1][3]
+    assert ctx["expenses"] == 0 and ctx["net"] == 5520 and ctx["expense_lines"] == []
 
 
 def test_crg_dont_le_marquage_est_injoignable_ne_part_pas_et_se_voit_dans_les_logs(monkeypatch, caplog):

@@ -217,6 +217,27 @@ def _crg_list(path: str, key: str) -> list[dict] | None:
     return payload[key]
 
 
+def _crg_expense_rows(lignes) -> list[dict]:
+    """Lignes de dépense prêtes pour l'e-mail : « date réelle · intitulé · artisan » + montant.
+
+    La spec exige le détail, pas un total : un net amputé de 1 200 Dh sans ligne explicative, et
+    un e-mail qui renvoie à un espace que le propriétaire n'a pas, c'est la plainte d'origine.
+    """
+    rows = []
+    for ligne in lignes or []:
+        iso_d = str(ligne.get("completed_at") or "")
+        parts = [f"{iso_d[8:10]}/{iso_d[5:7]}/{iso_d[0:4]}" if len(iso_d) >= 10 else "—",
+                 str(ligne.get("title") or "—")]
+        if ligne.get("artisan_name"):
+            parts.append(str(ligne["artisan_name"]))
+        try:
+            montant = float(ligne.get("cost_final") or 0)
+        except (TypeError, ValueError):
+            montant = 0.0
+        rows.append({"label": " · ".join(parts), "amount": montant})
+    return rows
+
+
 def _job_crg_reports(db) -> int:
     """CRG mensuel en deux temps. 1) prépare les brouillons et prévient l'agence de chaque
     nouveau ; rien ne part au propriétaire. 2) envoie ceux que l'agence a validés. Renvoie le
@@ -256,10 +277,20 @@ def _job_crg_reports(db) -> int:
             logger.error("CRG %s : crg-sent refusé (HTTP %s), reprise au prochain passage",
                          crg_id, ack.status_code)
             continue
+        # L'accusé de `crg-sent` fait foi sur les montants : il a pu retirer une dépense déjà
+        # portée par un autre relevé, et `due-crg-send` a listé l'état d'avant.
+        try:
+            envoye = ack.json()
+        except ValueError:
+            envoye = {}
+        envoye = envoye if isinstance(envoye, dict) else {}
         ok = _try_send(db, to, "crg_report.html", "crg_report", from_email=_contact(),
                        name=landlord.get("name"), period_label=rep.get("period_label"),
                        rent_collected=rep.get("rent_collected"), fees=rep.get("fees"),
-                       expenses=rep.get("expenses"), net=rep.get("net"))
+                       expenses=envoye.get("expenses", rep.get("expenses")),
+                       net=envoye.get("net", rep.get("net")),
+                       expense_lines=_crg_expense_rows(
+                           envoye.get("expense_lines", rep.get("expense_lines"))))
         db.commit()
         if ok:
             sent += 1

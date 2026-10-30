@@ -305,7 +305,8 @@ def internal_mandates_due_crg_send(x_internal_token: str = Header(default=""),
         out.append({"mandate_id": crg.mandate_id, "crg_id": crg.id,
                     "landlord_client_id": mnd.landlord_client_id if mnd else None,
                     "period_label": crg.period_label, "rent_collected": num(crg.rent_collected),
-                    "fees": num(crg.fees), "expenses": num(crg.expenses), "net": num(crg.net)})
+                    "fees": num(crg.fees), "expenses": num(crg.expenses), "net": num(crg.net),
+                    "expense_lines": _lignes_depenses(crg)})
     return {"reports": out}
 
 
@@ -890,8 +891,10 @@ def _retenir_depenses(lignes: list[dict], plafond: float) -> tuple[list[dict], f
             # dépense écartée garde son rang d'ancienneté au prochain CRG.
             continue
         total = round(total + cout, 2)
+        # `artisan_name` est porté jusqu'ici : la spec veut « date, intitulé, artisan, montant »
+        # au PDF, et le propriétaire qui téléphone demande d'abord qui est passé chez lui.
         retenues.append({cle: ligne.get(cle)
-                         for cle in ("id", "title", "cost_final", "completed_at")})
+                         for cle in ("id", "title", "cost_final", "completed_at", "artisan_name")})
     return retenues, total
 
 
@@ -961,7 +964,10 @@ async def internal_mandate_crg_sent(mandate_id: int, request: Request,
     db.commit()
     if envoye != 1:
         logger.info("CRG %s déjà envoyé par un autre appel", crg.id)
-    return {"ok": True}
+    # Les montants de l'accusé font foi pour l'e-mail : `due-crg-send` a listé l'état d'AVANT,
+    # et cet appel a pu retirer une dépense déjà portée par un autre relevé.
+    return {"ok": True, "expenses": num(crg.expenses), "net": num(crg.net),
+            "expense_lines": _lignes_depenses(crg)}
 
 
 @app.post("/backoffice/gestion-locative/crg/{crg_id}/validate")
@@ -995,10 +1001,13 @@ def _crg_dict(c: CrgReport) -> dict:
     out = {"id": c.id, "period_label": c.period_label, "year": c.year, "month": c.month,
            "rent_collected": num(c.rent_collected), "fees": num(c.fees),
            "expenses": num(c.expenses), "net": num(c.net), "status": c.status,
-           "sent_at": iso(c.sent_at), "created_at": iso(c.created_at)}
-    if c.status == "draft":
-        # Seul un brouillon se modifie : ailleurs les lignes n'ont plus à être montrées.
-        out["expense_lines"] = _lignes_depenses(c)
+           "sent_at": iso(c.sent_at), "created_at": iso(c.created_at),
+           # Les lignes sont rendues à tous les états. Seul un brouillon se MODIFIE, mais un net
+           # amputé de 1 200 Dh sans ligne explicative est la plainte d'origine de la spec : après
+           # validation l'agence doit pouvoir répondre au propriétaire qui téléphone.
+           "expense_lines": _lignes_depenses(c),
+           # Le front cache l'action d'exclusion plutôt que de laisser cliquer vers un 409.
+           "expense_lines_editable": c.status == "draft"}
     return out
 
 
@@ -1071,7 +1080,8 @@ def crg_pdf(mandate_id: int, crg_id: int, principal: Principal = Depends(get_pri
     from . import pdf as pdf_mod
     data = pdf_mod.render_crg_pdf(
         crg, landlord_name=(f"{landlord.first_name} {landlord.last_name}" if landlord else None),
-        mandate_reference=mnd.reference if mnd else None)
+        mandate_reference=mnd.reference if mnd else None,
+        expense_lines=_lignes_depenses(crg))
     return Response(data, media_type="application/pdf",
                     headers={"Content-Disposition": f"attachment; filename=CRG-{crg.year}-{crg.month:02d}.pdf"})
 

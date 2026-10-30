@@ -22,6 +22,40 @@ const CRG_BADGE = {
   sent: 'bg-green-100 text-green-800',
 }
 
+/** Une ligne de dépense telle que la spec l'exige : date réelle, intitulé, artisan, montant. */
+function CrgLineLabel({ line }) {
+  const f = useRentalFormat()
+  const meta = [line.completed_at ? f.date(line.completed_at) : null, line.artisan_name].filter(Boolean).join(' · ')
+  return (
+    <span className="min-w-0">
+      <span className="block truncate">{line.title}</span>
+      {meta && <span className="block text-xs text-gray-500">{meta}</span>}
+    </span>
+  )
+}
+
+/** Dépenses d'un CRG validé ou envoyé, en lecture seule : l'agence doit pouvoir répondre au
+ * propriétaire qui téléphone pour comprendre son net, et après validation plus rien ne les montrait. */
+function CrgLines({ crg }) {
+  const { t } = useTranslation('backoffice')
+  const f = useRentalFormat()
+  const lines = crg.expense_lines || []
+  if (!lines.length) return null
+  return (
+    <details className="mt-3 rounded-lg border border-gray-100 p-3 text-sm">
+      <summary className="cursor-pointer text-gray-700">{t('rental.mandate.crg.linesSummary', { period: crg.period_label, count: lines.length })}</summary>
+      <ul aria-label={t('rental.mandate.crg.linesLabel', { period: crg.period_label })} className="mt-2 divide-y divide-gray-100">
+        {lines.map((l) => (
+          <li key={l.id} className="flex items-start justify-between gap-3 py-2">
+            <CrgLineLabel line={l} />
+            <span className="tabular-nums text-gray-700">{f.dh(l.cost_final)}</span>
+          </li>
+        ))}
+      </ul>
+    </details>
+  )
+}
+
 /** Relecture d'un brouillon : les écarts restent locaux jusqu'à la validation, seul acte qui les enregistre. */
 function CrgDraft({ crg, onValidate, busy }) {
   const { t } = useTranslation('backoffice')
@@ -42,8 +76,8 @@ function CrgDraft({ crg, onValidate, busy }) {
         {lines.map((l) => {
           const out = excluded.includes(l.id)
           return (
-            <li key={l.id} className="flex items-center justify-between gap-3 py-2">
-              <span className={out ? 'text-gray-400 line-through' : 'text-gray-900'}>{l.title}</span>
+            <li key={l.id} className="flex items-start justify-between gap-3 py-2">
+              <span className={out ? 'text-gray-400 line-through' : 'text-gray-900'}><CrgLineLabel line={l} /></span>
               <span className="flex items-center gap-2">
                 <span className={`tabular-nums ${out ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{f.dh(l.cost_final)}</span>
                 <IconAction icon={out ? FiRotateCcw : FiX} label={t(out ? 'rental.mandate.crg.restore' : 'rental.mandate.crg.exclude', { title: l.title })} onClick={() => toggle(l.id)} tipAlign="end" />
@@ -135,6 +169,9 @@ function MandateDetail() {
       <Panel title={t('backoffice:rental.mandate.crg.panelTitle')}>
         <DataTable columns={crgColumns} rows={crg}
           empty={<EmptyState title={t('backoffice:rental.mandate.crg.empty.title')} description={t('backoffice:rental.mandate.crg.empty.description')} />} />
+        {crg.filter((c) => c.status !== 'draft').map((c) => (
+          <CrgLines key={`lines-${c.id}`} crg={c} />
+        ))}
         {crg.filter((c) => c.status === 'draft').map((c) => (
           <div key={c.id} className="mt-4"><CrgDraft crg={c} busy={validate.isLoading} onValidate={(crgId, excluded) => validate.mutate({ crgId, excluded })} /></div>
         ))}

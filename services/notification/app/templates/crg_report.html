@@ -11,5 +11,15 @@
   + [("Honoraires de gestion", "{:,.0f}".format(fees|float).replace(",", " ") ~ " " ~ currency)]
   + [("Dépenses d'intervention", "{:,.0f}".format((expenses or 0)|float).replace(",", " ") ~ " " ~ currency)]
   + [("Net reversé", "{:,.0f}".format(net|float).replace(",", " ") ~ " " ~ currency)]) }}
-<p style="margin-top:18px; font-size:13px; color:{{ brand.muted }}; text-align:left;">Le détail complet est disponible dans votre espace SemsarOut. Une question&nbsp;? <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
+{# Détail des dépenses retenues : la spec veut date, intitulé, artisan, montant. Lisible aussi
+   quand il n'y en a aucune — l'absence de ligne doit se dire, pas se deviner. #}
+<p style="text-align:left; font-size:13px; color:{{ brand.muted }};">Dépenses d'intervention retenues sur cette période&nbsp;:</p>
+{% if expense_lines %}
+{% set lignes = [] %}
+{% for l in expense_lines %}{% set _ = lignes.append((l.label, "{:,.0f}".format(l.amount|float).replace(",", " ") ~ " " ~ currency)) %}{% endfor %}
+{{ card(lignes) }}
+{% else %}
+<p style="text-align:left; font-size:13px; color:{{ brand.ink }};">Aucune dépense d'intervention ce mois-ci.</p>
+{% endif %}
+<p style="margin-top:18px; font-size:13px; color:{{ brand.muted }}; text-align:left;">Le compte-rendu signé est joint à votre espace SemsarOut. Une question&nbsp;? <a href="mailto:contact@semsarout.com" style="color:{{ brand.gold_dark }};">contact@semsarout.com</a>.</p>
 {% endblock %}

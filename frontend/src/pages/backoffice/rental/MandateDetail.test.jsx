@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from 'react-query'
@@ -50,6 +50,23 @@ describe('MandateDetail — compte rendu de gérance', () => {
     expect(ask).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringMatching(/Septembre 2026.*4\s320 Dh/) }))
     await vi.waitFor(() => expect(svc.validateCrg).toHaveBeenCalledWith(12,
       { excluded_work_order_ids: [5] }))
+  })
+
+  it('montre en lecture seule, avec date et artisan, les dépenses d’un compte rendu envoyé', async () => {
+    // Après validation, plus rien ne les montrait : un net amputé sans ligne explicative est la
+    // plainte d'origine de la spec, et l'agence doit pouvoir répondre au propriétaire.
+    svc.listCrg.mockResolvedValue({ reports: [{ id: 11, period_label: 'Août 2026',
+      status: 'sent', rent_collected: 6000, fees: 480, expenses: 1200, net: 4320,
+      expense_lines_editable: false,
+      expense_lines: [{ id: 4, title: 'Chauffe-eau', cost_final: 1200, artisan_name: 'Plomberie Atlas', completed_at: '2026-07-28T00:00:00' }] }] })
+    renderPage()
+    const lignes = await screen.findByRole('list', { name: 'Dépenses imputées au brouillon de Août 2026' })
+    expect(within(lignes).getByText('Chauffe-eau')).toBeInTheDocument()
+    expect(within(lignes).getByText(/28 juil\. 2026 · Plomberie Atlas/)).toBeInTheDocument()
+    expect(within(lignes).getByText(/1\s200 Dh/)).toBeInTheDocument()
+    // Lecture seule : aucune action d'exclusion sur un relevé parti.
+    expect(screen.queryByRole('button', { name: 'Écarter Chauffe-eau' })).not.toBeInTheDocument()
+    expect(screen.getByText('Dépenses retenues sur Août 2026 (1)')).toBeInTheDocument()
   })
 
   it('un compte rendu envoyé ne se valide plus', async () => {
