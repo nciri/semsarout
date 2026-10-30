@@ -274,7 +274,8 @@
       "tabs": {
         "mandates": "Mandats",
         "leases": "Baux",
-        "applications": "Candidatures"
+        "applications": "Candidatures",
+        "expenses": "Dépenses"
       }
     },
     "mandate": {
@@ -961,6 +962,42 @@
         "leased": "Bien loué",
         "yes": "Oui",
         "vacant": "Vacant"
+      }
+    },
+    "expenses": {
+      "alert": "Dépenses en attente depuis plus de 60 jours : {{count}}",
+      "alertHint": "Terminées et chiffrées, elles ne sont encore imputées à personne.",
+      "columns": {
+        "title": "Intervention",
+        "cost": "Coût final",
+        "mode": "Règlement",
+        "age": "En attente"
+      },
+      "toChoose": "Règlement à choisir",
+      "choose": "Choisir le règlement de {{title}}",
+      "open": "Ouvrir {{title}}",
+      "settle": "Solder {{title}}",
+      "empty": {
+        "title": "Aucune dépense en attente",
+        "description": "Toutes les interventions terminées et chiffrées sont imputées ou soldées."
+      },
+      "modal": {
+        "title": "Solder {{title}}",
+        "how": "Comment",
+        "placeholder": "Choisir…",
+        "cancel": "Annuler"
+      },
+      "methods": {
+        "encaisse": "Encaissé",
+        "impute_commission": "Imputé sur la commission",
+        "regularisation": "Régularisé",
+        "abandonne": "Abandonné"
+      },
+      "confirm": "Solder « {{title}} » ({{amount}}) : {{method}}. Cette dépense sera verrouillée.",
+      "confirmLabel": "Confirmer",
+      "toasts": {
+        "settled": "Dépense soldée",
+        "forbidden": "Seule l'administration de l'agence peut abandonner ou imputer sur la commission."
       }
     }
   },
@@ -3689,12 +3726,13 @@
     "overview": {
       "tabs": {
         "planning": "Planning",
-        "cleaning": "Ménage",
+        "tasks": "Tâches d'exploitation",
         "messages": "Messages",
         "access": "Accès",
         "calendars": "Calendriers",
         "calendar": "Calendrier",
-        "teams": "Équipes"
+        "teams": "Équipes",
+        "maintenance": "Maintenance"
       },
       "arrivals": "Arrivées du jour",
       "departures": "Départs du jour",
@@ -3938,6 +3976,15 @@
     "cleaning": {
       "statusLabel": "Statut",
       "allStatuses": "Tous",
+      "kindFilterLabel": "Type de tâche",
+      "allKinds": "Tous les types",
+      "kind": {
+        "menage": "Ménage",
+        "linge": "Linge",
+        "accueil": "Accueil",
+        "conciergerie": "Conciergerie",
+        "controle": "Contrôle"
+      },
       "add": "Ajouter un ménage",
       "unassigned": "Non attribué",
       "start": "Démarrer le ménage",

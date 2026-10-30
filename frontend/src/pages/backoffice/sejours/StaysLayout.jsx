@@ -10,17 +10,21 @@ import { Alert, IconAction, Kv } from '../components/kit'
 
 /**
  * Les rubriques ne sont pas au même niveau : « Planning » et « Calendrier » montrent les
- * mêmes séjours autrement, « Ménage » et « Messages » n'existent que parce qu'il y a des
+ * mêmes séjours autrement, « Tâches d'exploitation » et « Messages » n'existent que parce qu'il y a des
  * séjours, et « Accès » / « Équipes » se règlent par bien, une fois, avant tout séjour.
  * Un rang d'onglets les posait côte à côte comme sept choix équivalents ; la colonne les
  * range par rôle et éteint ce qui n'a encore rien à traiter.
  *
  * `needsStays` porte cette dépendance : sans séjour enregistré, la rubrique s'affiche en
  * attente plutôt que de mener à une page vide.
+ *
+ * « Maintenance » mène à l'écran des interventions de Tiers au lieu de le dupliquer : une
+ * réparation a un devis, un payeur et un artisan extérieur, ce qui n'est pas une tâche de
+ * `cleaning_task`.
  */
 const NAV = [
   { key: 'bookings', items: [{ to: '', end: true, key: 'planning' }, { to: 'calendrier', key: 'calendar' }] },
-  { key: 'operations', needsStays: true, items: [{ to: 'menage', key: 'cleaning' }, { to: 'messages', key: 'messages' }] },
+  { key: 'operations', needsStays: true, items: [{ to: 'menage', key: 'tasks' }, { to: 'messages', key: 'messages' }, { to: '/backoffice/tiers/artisans', key: 'maintenance' }] },
   { key: 'setup', items: [{ to: 'acces', key: 'access' }, { to: 'equipes', key: 'teams' }] },
 ]
 

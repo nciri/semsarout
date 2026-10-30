@@ -274,7 +274,8 @@
       "tabs": {
         "mandates": "عقود التسيير",
         "leases": "عقود الكراء",
-        "applications": "الطلبات"
+        "applications": "الطلبات",
+        "expenses": "المصاريف"
       }
     },
     "mandate": {
@@ -961,6 +962,42 @@
         "leased": "العقار مكترى",
         "yes": "نعم",
         "vacant": "شاغر"
+      }
+    },
+    "expenses": {
+      "alert": "مصاريف في الانتظار منذ أكثر من 60 يومًا: {{count}}",
+      "alertHint": "أُنجزت وحُدّدت كلفتها، لكنها لم تُحمَّل بعد على أي طرف.",
+      "columns": {
+        "title": "التدخل",
+        "cost": "الكلفة النهائية",
+        "mode": "التسوية",
+        "age": "مدة الانتظار"
+      },
+      "toChoose": "تسوية يجب اختيارها",
+      "choose": "اختيار تسوية {{title}}",
+      "open": "فتح {{title}}",
+      "settle": "تسوية {{title}}",
+      "empty": {
+        "title": "لا مصاريف في الانتظار",
+        "description": "كل التدخلات المنجزة والمحددة الكلفة إما محمّلة أو مسوّاة."
+      },
+      "modal": {
+        "title": "تسوية {{title}}",
+        "how": "كيف",
+        "placeholder": "اختر…",
+        "cancel": "إلغاء"
+      },
+      "methods": {
+        "encaisse": "تم تحصيله",
+        "impute_commission": "يُحتسب على العمولة",
+        "regularisation": "تمت تسويته",
+        "abandonne": "تم التخلي عنه"
+      },
+      "confirm": "تسوية «{{title}}» ({{amount}}): {{method}}. سيتم قفل هذا المصروف.",
+      "confirmLabel": "تأكيد",
+      "toasts": {
+        "settled": "تمت تسوية المصروف",
+        "forbidden": "إدارة الوكالة وحدها يمكنها التخلي عن المصروف أو احتسابه على العمولة."
       }
     }
   },
@@ -3689,12 +3726,13 @@
     "overview": {
       "tabs": {
         "planning": "المخطط",
-        "cleaning": "التنظيف",
+        "tasks": "مهام التشغيل",
         "messages": "الرسائل",
         "access": "الدخول",
         "calendars": "التقويمات",
         "calendar": "الروزنامة",
-        "teams": "الفرق"
+        "teams": "الفرق",
+        "maintenance": "الصيانة"
       },
       "arrivals": "وصول اليوم",
       "departures": "مغادرة اليوم",
@@ -3938,6 +3976,15 @@
     "cleaning": {
       "statusLabel": "الحالة",
       "allStatuses": "الكل",
+      "kindFilterLabel": "نوع المهمة",
+      "allKinds": "كل الأنواع",
+      "kind": {
+        "menage": "التنظيف",
+        "linge": "الأغطية والمناشف",
+        "accueil": "الاستقبال",
+        "conciergerie": "خدمات الكونسيرج",
+        "controle": "المراقبة"
+      },
       "add": "إضافة تنظيف",
       "unassigned": "غير مُسنَد",
       "start": "بدء التنظيف",

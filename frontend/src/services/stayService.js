@@ -104,6 +104,7 @@ export const STAY_TEMPLATE_PRESETS = [
 ]
 export const CLEANING_STATUS_TONE = { pending: 'neutral', in_progress: 'warn', done: 'good', cancelled: 'neutral' }
 export const CLEANING_ZONES = ['chambres', 'salle_de_bain', 'cuisine', 'sejour', 'exterieur', 'linge']
+export const CLEANING_KINDS = ['menage', 'linge', 'accueil', 'conciergerie', 'controle']
 export const CLEANING_REPORT_KINDS = ['issue', 'stock', 'note']
 
 export const MESSAGE_STATUS_TONE = { sent: 'good', pending: 'neutral', no_recipient: 'warn', failed: 'crit' }

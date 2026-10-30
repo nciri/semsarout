@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { FiAlertTriangle, FiCheck, FiClock, FiPlay, FiPlus } from 'react-icons/fi'
-import { stayService, CLEANING_REPORT_KINDS, CLEANING_STATUS_TONE, CLEANING_ZONES } from '../../../services/stayService'
+import { stayService, CLEANING_KINDS, CLEANING_REPORT_KINDS, CLEANING_STATUS_TONE, CLEANING_ZONES } from '../../../services/stayService'
 import { teamService } from '../../../services/teamService'
 import api from '../../../services/api'
 import { useFormat } from '../../../utils/format'
@@ -20,6 +20,7 @@ function CleaningPanel() {
   const qc = useQueryClient()
   const [params] = useSearchParams()
   const [status, setStatus] = useState(() => params.get('statut') || '')
+  const [kind, setKind] = useState('')
   // `equipe` vient de la fiche d'une équipe : on ne montre que ses tâches.
   const teamFilter = Number(params.get('equipe')) || null
   // Ouvre d'emblée la tâche désignée par le lien (fiche du séjour, alerte de retard).
@@ -29,8 +30,9 @@ function CleaningPanel() {
   const [report, setReport] = useState(NEW_REPORT)
   const [photo, setPhoto] = useState(null)
 
-  const { data, isLoading, error } = useQuery(['stays-cleanings', status, teamFilter],
+  const { data, isLoading, error } = useQuery(['stays-cleanings', status, kind, teamFilter],
     () => stayService.listCleanings({ ...(status ? { status } : {}),
+                                      ...(kind ? { kind } : {}),
                                       ...(teamFilter ? { team_id: teamFilter } : {}) }))
   const detail = useQuery(['stays-cleaning', openId], () => stayService.getCleaning(openId), { enabled: Boolean(openId) })
   const { data: team } = useQuery('team', teamService.getTeam)
@@ -89,6 +91,15 @@ function CleaningPanel() {
               <option key={s} value={s}>{t(`backoffice:stays.cleaning.status.${s}`)}</option>
             ))}
           </Select>
+          <label className="text-[12.5px] font-medium text-gray-600" htmlFor="cleaning-kind">
+            {t('backoffice:stays.cleaning.kindFilterLabel')}
+          </label>
+          <Select id="cleaning-kind" value={kind} onChange={(e) => setKind(e.target.value)} className="w-auto">
+            <option value="">{t('backoffice:stays.cleaning.allKinds')}</option>
+            {CLEANING_KINDS.map((k) => (
+              <option key={k} value={k}>{t(`backoffice:stays.cleaning.kind.${k}`)}</option>
+            ))}
+          </Select>
         </div>
         <IconAction icon={FiPlus} label={t('backoffice:stays.cleaning.add')} onClick={() => setCreating(true)} tone="primary" tipAlign="end" />
       </div>
@@ -122,6 +133,7 @@ function CleaningPanel() {
                     <td className={TD}>
                       <b className="block truncate font-semibold">{x.property_title || `#${x.property_id}`}</b>
                       {x.guest_name && <span className="block truncate text-xs text-gray-500">{x.guest_name}</span>}
+                      <Chip tone="neutral">{t(`backoffice:stays.cleaning.kind.${x.kind || 'menage'}`, { defaultValue: x.kind })}</Chip>
                     </td>
                     <td className={`${TD} whitespace-nowrap`}>{x.next_check_in ? day(x.next_check_in) : '—'}</td>
                     <td className={TD}>

@@ -233,7 +233,7 @@ describe('Séjours courte durée', () => {
     expect(within(nav).getByRole('heading', { name: 'Réservations' })).toBeInTheDocument()
     expect(within(nav).getByRole('heading', { name: 'Exploitation' })).toBeInTheDocument()
     expect(within(nav).getByRole('heading', { name: 'Réglages par bien' })).toBeInTheDocument()
-    expect(within(nav).getByRole('link', { name: 'Ménage' })).toBeInTheDocument()
+    expect(within(nav).getByRole('link', { name: "Tâches d'exploitation" })).toBeInTheDocument()
     // Les calendriers quittent la colonne : ils alimentent les séjours, ils n'en sont pas une vue.
     expect(within(nav).queryByText('Calendriers')).not.toBeInTheDocument()
   })
@@ -250,8 +250,8 @@ describe('Séjours courte durée', () => {
     svc.overview.mockResolvedValue({ ...OVERVIEW, stays_total: 0, conflicts: 0 })
     renderAt('/backoffice/sejours')
     const nav = await screen.findByRole('navigation', { name: 'Rubriques des séjours' })
-    await vi.waitFor(() => expect(within(nav).queryByRole('link', { name: 'Ménage' })).not.toBeInTheDocument())
-    expect(within(nav).getByText('Ménage')).toHaveAttribute('aria-disabled', 'true')
+    await vi.waitFor(() => expect(within(nav).queryByRole('link', { name: "Tâches d'exploitation" })).not.toBeInTheDocument())
+    expect(within(nav).getByText("Tâches d'exploitation")).toHaveAttribute('aria-disabled', 'true')
     expect(within(nav).getByText(/Rien à traiter tant qu'aucun séjour/)).toBeInTheDocument()
     // Les réglages par bien restent ouverts : ce sont eux qui font venir les séjours.
     expect(within(nav).getByRole('link', { name: 'Accès' })).toBeInTheDocument()
@@ -422,6 +422,30 @@ describe('Ménage de rotation', () => {
     expect(screen.getByText('1 signalement urgent non lu.')).toBeInTheDocument()
     expect(screen.getByText('1 urgent')).toBeInTheDocument()
     expect(screen.getAllByText('En cours').length).toBeGreaterThan(0)   // filtre + pastille
+  })
+
+  it('filtre les tâches par type, toutes visibles par défaut', async () => {
+    renderAt('/backoffice/sejours/menage')
+    const type = await screen.findByLabelText('Type de tâche')
+    expect(type).toHaveValue('')
+    expect(svc.listCleanings).toHaveBeenLastCalledWith({})
+    await userEvent.selectOptions(type, 'linge')
+    await vi.waitFor(() => expect(svc.listCleanings)
+      .toHaveBeenLastCalledWith(expect.objectContaining({ kind: 'linge' })))
+  })
+
+  it('affiche le type de chaque tâche', async () => {
+    svc.listCleanings.mockResolvedValue({ ...CLEANINGS,
+      tasks: CLEANINGS.tasks.map((x, i) => ({ ...x, kind: i ? 'menage' : 'accueil' })) })
+    renderAt('/backoffice/sejours/menage')
+    expect(await screen.findAllByText('Accueil')).not.toHaveLength(0)
+  })
+
+  it('mène à la maintenance, qui vit dans les interventions de Tiers', async () => {
+    renderAt('/backoffice/sejours')
+    const nav = await screen.findByRole('navigation', { name: 'Rubriques des séjours' })
+    expect(within(nav).getByRole('link', { name: 'Maintenance' }))
+      .toHaveAttribute('href', '/backoffice/tiers/artisans')
   })
 
   it('démarre puis termine un ménage', async () => {
