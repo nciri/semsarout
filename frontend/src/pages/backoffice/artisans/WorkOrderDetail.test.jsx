@@ -15,8 +15,10 @@ const API = {
     { id: 9, property_id: 5, status: 'active' }, { id: 3, property_id: 99, status: 'active' },
   ] },
 }
+// Une réponse qui n'arrive jamais : la fiche reste en chargement des mandats.
+const NEVER = Symbol('never')
 vi.mock('../../../services/api', () => ({
-  default: { get: vi.fn((url) => Promise.resolve({ data: API[url] })) },
+  default: { get: vi.fn((url) => (API[url] === NEVER ? new Promise(() => {}) : Promise.resolve({ data: API[url] }))) },
 }))
 
 const WO = { id: 4, title: 'Chauffe-eau', trade: 'plombier', status: 'done', property_id: 5, client_id: 3,
@@ -51,6 +53,14 @@ describe('Fiche d\'intervention : règlement', () => {
     expect(screen.getByRole('link', { name: /compte rendu/i })).toHaveAttribute('href', '/backoffice/gestion-locative/mandats/9')
   })
 
+  it("n'affiche rien sur l'imputation tant que les mandats chargent", async () => {
+    API['/backoffice/gestion-locative/mandates'] = NEVER
+    renderDetail({ ...WO, charged_ref: 'crg:12' })
+    await screen.findByText('Propriétaire')
+    expect(screen.queryByText(/compte rendu n° 12/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /compte rendu/i })).not.toBeInTheDocument()
+  })
+
   it.each([
     ['deux mandats actifs', [{ id: 8, property_id: 5, status: 'active' }, { id: 9, property_id: 5, status: 'active' }]],
     ['un mandat expiré à côté du nouveau', [{ id: 8, property_id: 5, status: 'expired' }, { id: 9, property_id: 5, status: 'active' }]],
@@ -58,6 +68,8 @@ describe('Fiche d\'intervention : règlement', () => {
   ])('ne devine pas le mandat : %s', async (_, mandates) => {
     API['/backoffice/gestion-locative/mandates'] = { mandates }
     renderDetail({ ...WO, charged_ref: 'crg:12' })
+    // Ce texte n'est rendu qu'une fois les mandats chargés : l'attendre épingle l'absence de lien
+    // sur la réponse reçue, pas sur un chargement en cours.
     expect(await screen.findByText(/compte rendu n° 12/)).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /compte rendu/i })).not.toBeInTheDocument()
   })

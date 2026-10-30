@@ -23,7 +23,7 @@ function WorkOrderDetail() {
 
   const { data: clientsData } = useQuery('bo-clients-min',
     async () => (await api.get('/backoffice/clients?per_page=100')).data)
-  const { data: mandatesData } = useQuery('rental-mandates', () => rentalService.listMandates(), { retry: false })
+  const { data: mandatesData, isLoading: mandatesLoading } = useQuery('rental-mandates', () => rentalService.listMandates(), { retry: false })
 
   const refresh = () => qc.invalidateQueries(['work-order', id])
   const onErr = (e) => toast.error(e.response?.data?.error || t('common:errors.short'))
@@ -82,7 +82,8 @@ function WorkOrderDetail() {
             {landing
               ? <Link to={landing.to} className="font-medium text-primary-600 hover:underline">{landing.label}</Link>
               : (refKind === 'crg'
-                ? t('backoffice:artisans.workOrder.payment.landedCrgUnlinked', { id: refId })
+                // Tant que les mandats chargent, on ne sait pas encore s'il y a un lien : rien plutôt qu'un faux « introuvable ».
+                ? !mandatesLoading && t('backoffice:artisans.workOrder.payment.landedCrgUnlinked', { id: refId })
                 : t(w.charged_ref ? 'backoffice:artisans.workOrder.payment.landedElsewhere' : 'backoffice:artisans.workOrder.payment.notCharged'))}
           </p>
         </section>
