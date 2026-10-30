@@ -28,11 +28,13 @@ function ContractCreate() {
     seller_name: '', buyer_name: '', amount: '', sign_date: '', effect_date: '', notes: '',
   })
   const { data: txData } = useQuery(
-    ['bo-transactions-min', form.property_id],
-    async () => (await api.get('/backoffice/transactions', { params: { per_page: 100, property_id: form.property_id || undefined } })).data,
+    ['bo-transactions-min', form.property_id, form.property_id ? '' : form.client_id],
+    // Sans bien, le client filtre côté serveur : sa transaction ne peut pas tomber hors de la première page.
+    async () => (await api.get('/backoffice/transactions', {
+      params: { per_page: 100, property_id: form.property_id || undefined, client_id: form.property_id ? undefined : (form.client_id || undefined) },
+    })).data,
   )
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
-  const setVal = (k) => (v) => setForm((f) => ({ ...f, [k]: v }))
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const templates = tplData?.templates || []
@@ -41,8 +43,12 @@ function ContractCreate() {
   // Un bien sans transaction ne doit pas vider les deux listes : on retombe sur tous les clients.
   const noTransaction = Boolean(form.property_id && txData && propertyTx.length === 0)
   const cascaded = Boolean(form.property_id && propertyTx.length > 0)
+  const clientName = (id) => {
+    const c = (clientsData?.clients || []).find((x) => String(x.id) === String(id))
+    return c ? `${c.first_name} ${c.last_name}` : `#${id}`
+  }
   const clientOptions = cascaded
-    ? [...new Map(propertyTx.filter((tx) => tx.client_id).map((tx) => [tx.client_id, { value: tx.client_id, label: tx.client_name }])).values()]
+    ? [...new Map(propertyTx.filter((tx) => tx.client_id).map((tx) => [tx.client_id, { value: tx.client_id, label: tx.client_name || clientName(tx.client_id) }])).values()]
     : (clientsData?.clients || []).map((c) => ({ value: c.id, label: `${c.first_name} ${c.last_name}`, description: c.email || c.phone }))
   const transactions = form.client_id ? propertyTx.filter((tx) => String(tx.client_id) === String(form.client_id)) : propertyTx
 
@@ -59,11 +65,12 @@ function ContractCreate() {
 
   const pickClient = (id) => setForm((f) => {
     const tx = propertyTx.find((x) => String(x.id) === String(f.transaction_id))
-    return { ...f, client_id: id, transaction_id: tx && String(tx.client_id) !== String(id) ? '' : f.transaction_id }
+    return { ...f, client_id: id, transaction_id: id && tx && String(tx.client_id) !== String(id) ? '' : f.transaction_id }
   })
+  const pickProperty = (id) => setForm((f) => ({ ...f, property_id: id, transaction_id: id ? f.transaction_id : '' }))
   const pickTransaction = (id) => setForm((f) => {
     const tx = propertyTx.find((x) => String(x.id) === String(id))
-    return { ...f, transaction_id: id, property_id: tx?.property_id ?? f.property_id, client_id: tx?.client_id ?? f.client_id }
+    return { ...f, transaction_id: id, property_id: tx?.property_id ?? f.property_id, client_id: tx ? (tx.client_id ?? '') : f.client_id }
   })
   const selectedTpl = useMemo(
     () => templates.find((t) => String(t.id) === String(form.template_id)),
@@ -126,7 +133,7 @@ function ContractCreate() {
                 <label className={labelCls}>{t('backoffice:contracts.create.fields.property')}</label>
                 <SearchableSelect
                   value={form.property_id}
-                  onChange={setVal('property_id')}
+                  onChange={pickProperty}
                   options={properties.map((p) => ({ value: p.id, label: p.title || p.reference, description: p.city }))}
                   placeholder={t('backoffice:contracts.create.select.none')}
                   searchPlaceholder={t('backoffice:contracts.create.search.property')}

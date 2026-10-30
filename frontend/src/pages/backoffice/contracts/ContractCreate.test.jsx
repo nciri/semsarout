@@ -41,8 +41,9 @@ function mockApi() {
   api.get.mockImplementation(async (url, config) => {
     if (url.includes('/properties')) return { data: PROPERTIES }
     if (url.includes('/clients')) return { data: CLIENTS }
-    const pid = config?.params?.property_id
-    return { data: { transactions: TRANSACTIONS.filter((tx) => !pid || tx.property_id === pid) } }
+    const { property_id: pid, client_id: cid, per_page: perPage } = config?.params ?? {}
+    const rows = TRANSACTIONS.filter((tx) => (!pid || tx.property_id === pid) && (!cid || tx.client_id === Number(cid)))
+    return { data: { transactions: perPage === 1 ? rows.slice(0, 1) : rows } }
   })
 }
 
@@ -55,7 +56,7 @@ const choose = async (label, option) => {
 }
 const offered = async (label) => {
   await open(label)
-  const names = screen.queryAllByRole('listitem').map((li) => li.querySelector('span.block')?.textContent ?? li.textContent)
+  const names = screen.queryAllByRole('listitem').map((li) => within(li).queryByRole('button')?.textContent ?? li.textContent)
   await userEvent.keyboard('{Escape}')
   return names
 }
@@ -91,7 +92,7 @@ describe('Nouveau contrat', () => {
       renderPage()
       await choose('Bien', /Villa Anfa/)
       await vi.waitFor(async () => {
-        expect(await offered('Transaction liée')).toEqual(['TX-100 · Villa Anfa', 'TX-101 · Villa Anfa'])
+        expect(await offered('Transaction liée')).toEqual(['TX-100 · Villa AnfaSara Bennani', 'TX-101 · Villa AnfaOmar Tazi'])
       })
       expect(await offered('Client')).toEqual(['Sara Bennani', 'Omar Tazi'])
     })
@@ -117,7 +118,7 @@ describe('Nouveau contrat', () => {
       renderPage()
       await choose('Client', /Nadia Idrissi/)
       await choose('Bien', /Riad Médina/)
-      await vi.waitFor(async () => expect(await offered('Transaction liée')).toEqual(['TX-102 · Riad Médina']))
+      await vi.waitFor(async () => expect(await offered('Transaction liée')).toEqual(['TX-102 · Riad MédinaNadia Idrissi']))
       expect(field('Client')).toHaveTextContent('Nadia Idrissi')
     })
 
@@ -125,8 +126,58 @@ describe('Nouveau contrat', () => {
       renderPage()
       await choose('Bien', /Studio Agdal/)
       expect(await screen.findByText(/Aucune transaction pour ce bien/)).toBeInTheDocument()
+      await choose('Bien', /Villa Anfa/)
+      await vi.waitFor(() => expect(screen.queryByText(/Aucune transaction pour ce bien/)).not.toBeInTheDocument())
+      await choose('Bien', /Studio Agdal/)
+      await screen.findByText(/Aucune transaction pour ce bien/)
       expect(await offered('Client')).toEqual(['Sara Bennani', 'Omar Tazi', 'Nadia Idrissi'])
       expect(await offered('Transaction liée')).toEqual(['Aucun résultat'])
+    })
+
+    it("changer de bien vide la transaction qui n'en est plus", async () => {
+      renderPage()
+      await choose('Bien', /Villa Anfa/)
+      await choose('Transaction liée', /TX-100/)
+      await choose('Bien', /Riad Médina/)
+      await vi.waitFor(() => expect(field('Transaction liée')).toHaveTextContent('Aucune'))
+    })
+
+    it('vider le bien vide aussi la transaction', async () => {
+      renderPage()
+      await choose('Transaction liée', /TX-100/)
+      expect(field('Bien')).toHaveTextContent('Villa Anfa')
+      await userEvent.click(within(screen.getByText('Bien').parentElement).getByRole('button').querySelector('svg'))
+      expect(field('Bien')).toHaveTextContent('—')
+      expect(field('Transaction liée')).toHaveTextContent('Aucune')
+    })
+
+    it('vider le client garde la transaction choisie', async () => {
+      renderPage()
+      await choose('Transaction liée', /TX-100/)
+      await userEvent.click(field('Client').querySelector('svg'))
+      expect(field('Client')).toHaveTextContent('—')
+      expect(field('Transaction liée')).toHaveTextContent('TX-100')
+    })
+
+    it('sans bien, le client filtre les transactions côté serveur', async () => {
+      renderPage()
+      await choose('Client', /Omar Tazi/)
+      await vi.waitFor(() => expect(api.get).toHaveBeenCalledWith(
+        '/backoffice/transactions',
+        { params: expect.objectContaining({ client_id: 11 }) },
+      ))
+      await vi.waitFor(async () => expect(await offered('Transaction liée')).toEqual(['TX-101 · Villa AnfaOmar Tazi']))
+    })
+
+    it("nomme le client d'une transaction sans client_name depuis la liste des clients", async () => {
+      TRANSACTIONS.push({ id: 104, reference: 'TX-104', property_id: 3, property_title: 'Studio Agdal', client_id: 11, client_name: null })
+      try {
+        renderPage()
+        await choose('Bien', /Studio Agdal/)
+        await vi.waitFor(async () => expect(await offered('Client')).toEqual(['Omar Tazi']))
+      } finally {
+        TRANSACTIONS.pop()
+      }
     })
   })
 })
