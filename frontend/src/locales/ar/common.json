@@ -407,5 +407,16 @@
     "title": "تأكيد الإجراء",
     "confirm": "تأكيد",
     "cancel": "إلغاء"
+  },
+  "richText": {
+    "toolbar": "التنسيق",
+    "bold": "عريض",
+    "italic": "مائل",
+    "underline": "تحته خط",
+    "bulletList": "قائمة نقطية",
+    "numberedList": "قائمة مرقّمة",
+    "link": "رابط",
+    "linkUrl": "عنوان الرابط",
+    "linkApply": "تطبيق"
   }
 }
