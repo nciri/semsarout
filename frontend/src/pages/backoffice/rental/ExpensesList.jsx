@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { FiAlertTriangle, FiCheckCircle, FiExternalLink, FiTool } from 'react-icons/fi'
 import { artisanService } from '../../../services/artisanService'
 import { useConfirm } from '../../../components/common/confirm'
-import { DataTable, EmptyState, Modal, Select, SECONDARY_BTN } from '../../../components/backoffice/ui'
+import { DataTable, EmptyState, Modal, PRIMARY_BTN, Select, SECONDARY_BTN } from '../../../components/backoffice/ui'
 import { Alert, Chip, IconAction } from '../components/kit'
 import { matches } from './model'
 import { AgeChip } from './parts'
@@ -25,20 +25,26 @@ function ExpensesList() {
   const qc = useQueryClient()
   const ctx = useOutletContext()
   const [settling, setSettling] = useState(null)
+  const [method, setMethod] = useState('')
   const { data, isLoading, error } = useQuery('rental-expenses', () => artisanService.listPendingWorkOrders())
 
   const settle = useMutation(({ id, method }) => artisanService.settleWorkOrder(id, { method }), {
     onSuccess: () => { toast.success(t('backoffice:rental.expenses.toasts.settled')); qc.invalidateQueries('rental-expenses') },
     // Filet si le drapeau et la route divergeaient : un refus se dit en clair.
-    onError: (e) => toast.error(e.response?.status === 403
-      ? t('backoffice:rental.expenses.toasts.forbidden')
-      : e.response?.data?.error || t('common:errors.short')),
+    onError: (e) => {
+      // Un refus « déjà soldé » laisse une ligne périmée : on relit la liste.
+      if (e.response?.status === 409) qc.invalidateQueries('rental-expenses')
+      toast.error(e.response?.status === 403
+        ? t('backoffice:rental.expenses.toasts.forbidden')
+        : e.response?.data?.error || t('common:errors.short'))
+    },
   })
 
-  const pick = (method) => {
+  const closeModal = () => { setSettling(null); setMethod('') }
+
+  const proceed = () => {
     const wo = settling
-    setSettling(null)
-    if (!method) return
+    closeModal()
     ask({
       message: t('backoffice:rental.expenses.confirm', { title: wo.title, amount: f.dh(wo.cost_final), method: t(`backoffice:rental.expenses.methods.${method}`) }),
       confirmLabel: t('backoffice:rental.expenses.confirmLabel'),
@@ -51,6 +57,7 @@ function ExpensesList() {
 
   const all = data?.work_orders || []
   const rows = all.filter((w) => matches(ctx?.query || '', w.title))
+  // Garde-fou : compte toutes les dépenses en attente, pas seulement celles que la recherche laisse voir.
   const sleeping = all.filter((w) => w.waiting_days > SLEEPING_DAYS).length
   const detail = (w) => `/backoffice/tiers/interventions/${w.id}`
 
@@ -87,11 +94,14 @@ function ExpensesList() {
       <DataTable columns={columns} rows={rows} isLoading={isLoading}
         empty={<EmptyState icon={FiTool} title={t('backoffice:rental.expenses.empty.title')} description={t('backoffice:rental.expenses.empty.description')} />} />
 
-      <Modal open={settling !== null} onClose={() => setSettling(null)} title={t('backoffice:rental.expenses.modal.title', { title: settling?.title })}
-        footer={<button onClick={() => setSettling(null)} className={SECONDARY_BTN}>{t('backoffice:rental.expenses.modal.cancel')}</button>}>
+      <Modal open={settling !== null} onClose={closeModal} title={t('backoffice:rental.expenses.modal.title', { title: settling?.title })}
+        footer={<>
+          <button onClick={closeModal} className={SECONDARY_BTN}>{t('backoffice:rental.expenses.modal.cancel')}</button>
+          <button onClick={proceed} disabled={!method} className={PRIMARY_BTN}>{t('backoffice:rental.expenses.modal.continue')}</button>
+        </>}>
         <label className="grid gap-1 text-sm font-medium text-gray-700">
           {t('backoffice:rental.expenses.modal.how')}
-          <Select value="" onChange={(e) => pick(e.target.value)} className="w-full">
+          <Select value={method} onChange={(e) => setMethod(e.target.value)} className="w-full">
             <option value="">{t('backoffice:rental.expenses.modal.placeholder')}</option>
             {(settling?.can_settle_writeoff ? [...OPEN_METHODS, ...GIVES_UP] : OPEN_METHODS).map((m) => <option key={m} value={m}>{t(`backoffice:rental.expenses.methods.${m}`)}</option>)}
           </Select>

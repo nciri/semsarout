@@ -477,6 +477,13 @@
         "newRentLabel": "Nouveau loyer (Đh)",
         "cancel": "Annuler",
         "apply": "Appliquer"
+      },
+      "interventions": {
+        "title": "Interventions",
+        "empty": "Aucune intervention sur ce bail.",
+        "payer": "Payeur : {{payer}}",
+        "withheld": "Déjà retenu sur la caution : {{amount}}",
+        "unavailable": "Interventions indisponibles : la liste n’a pas pu être chargée."
       }
     },
     "application": {
@@ -691,6 +698,18 @@
         "created": "Décompte créé",
         "lineAdded": "Retenue ajoutée",
         "finalized": "Décompte finalisé — email envoyé au locataire"
+      },
+      "suggestions": {
+        "title": "Interventions à retenir sur la caution",
+        "hint": "Rien n’est retenu tant que vous ne cliquez pas sur « Retenir » : ces interventions du bail ne figurent pas encore dans les retenues ci-dessous.",
+        "empty": "Aucune intervention à retenir.",
+        "completedOn": "terminée le {{date}}",
+        "accept": "Retenir {{label}}",
+        "acceptShort": "Retenir",
+        "error": "Les interventions à retenir n’ont pas pu être chargées. Ne finalisez pas le décompte avant de les avoir consultées : une caution pourrait être restituée en entier à tort.",
+        "retry": "Réessayer",
+        "finalizedTitle": "Décompte finalisé",
+        "finalizedBody": "Plus aucune intervention ne peut être retenue sur ce décompte."
       }
     },
     "overview": {
@@ -985,7 +1004,8 @@
         "title": "Solder {{title}}",
         "how": "Comment",
         "placeholder": "Choisir…",
-        "cancel": "Annuler"
+        "cancel": "Annuler",
+        "continue": "Continuer"
       },
       "methods": {
         "encaisse": "Encaissé",

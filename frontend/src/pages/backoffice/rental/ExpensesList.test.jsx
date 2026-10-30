@@ -36,7 +36,7 @@ describe('ExpensesList', () => {
     renderPage()
     expect(await screen.findByText('Peinture')).toBeInTheDocument()
     expect(screen.getByText('91 j')).toBeInTheDocument()
-    expect(screen.getByRole('alert')).toHaveTextContent('1')
+    expect(screen.getByRole('alert')).toHaveTextContent(/60 jours : 1(?!\d)/)
   })
 
   it("n'alerte pas quand aucune dépense ne dort", async () => {
@@ -55,6 +55,8 @@ describe('ExpensesList', () => {
     expect(svc.settleWorkOrder).not.toHaveBeenCalled()
     await userEvent.selectOptions(screen.getByLabelText('Comment'), 'encaisse')
     expect(svc.settleWorkOrder).not.toHaveBeenCalled()
+    expect(screen.queryByText(/600 Dh.*Encaissé/)).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Continuer' }))
     expect(screen.getByText(/600 Dh.*Encaissé/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Confirmer' }))
     await vi.waitFor(() => expect(svc.settleWorkOrder).toHaveBeenCalledWith(5, { method: 'encaisse' }))
@@ -73,6 +75,18 @@ describe('ExpensesList', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Solder Porte' }))
     expect(screen.getByLabelText('Comment')).toHaveTextContent('Abandonné')
     expect(screen.getByLabelText('Comment')).toHaveTextContent('Imputé sur la commission')
+  })
+
+  it('relit la liste quand le serveur dit la dépense déjà soldée', async () => {
+    svc.listPendingWorkOrders.mockResolvedValue({ work_orders: [
+      { id: 5, title: 'Vitre', cost_final: 600, waiting_days: 3, charge_mode: 'to_rebill' }] })
+    svc.settleWorkOrder.mockRejectedValue({ response: { status: 409, data: { error: 'Cette refacturation est déjà soldée' } } })
+    renderPage()
+    await userEvent.click(await screen.findByRole('button', { name: 'Solder Vitre' }))
+    await userEvent.selectOptions(screen.getByLabelText('Comment'), 'encaisse')
+    await userEvent.click(screen.getByRole('button', { name: 'Continuer' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmer' }))
+    await vi.waitFor(() => expect(svc.listPendingWorkOrders).toHaveBeenCalledTimes(2))
   })
 
   it("signale une intervention achevée dont personne n'a choisi le règlement", async () => {
