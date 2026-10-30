@@ -18,7 +18,7 @@
     "kpi": {
       "users": "Utilisateurs",
       "agencies": "Agences",
-      "mrrEstimate": "MRR estimé (Đh)",
+      "mrrEstimate": "MRR estimé (Dh)",
       "signups30d": "Inscriptions 30j",
       "suspended": "Comptes suspendus",
       "pendingPurge": "En attente de purge",
@@ -163,7 +163,7 @@
     "addTitle": "Ajouter un produit",
     "fields": {
       "name": "Nom *",
-      "price": "Prix (Đh)",
+      "price": "Prix (Dh)",
       "stock": "Stock",
       "imageUrl": "URL image",
       "description": "Description"

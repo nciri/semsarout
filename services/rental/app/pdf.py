@@ -59,9 +59,9 @@ def render_receipt_pdf(rp, tenant_name: str, landlord_name: str, property_title:
         Paragraph(f"Bailleur : {_x(landlord_name)}", info),
         Paragraph(f"Locataire : {_x(tenant_name)}", info),
         Spacer(1, 12),
-        Paragraph(f"Loyer : {rent:,.2f} Đh".replace(",", " "), info),
-        Paragraph(f"Charges : {charges:,.2f} Đh".replace(",", " "), info),
-        Paragraph(f"<b>Total : {total:,.2f} Đh</b>".replace(",", " "), info),
+        Paragraph(f"Loyer : {rent:,.2f} Dh".replace(",", " "), info),
+        Paragraph(f"Charges : {charges:,.2f} Dh".replace(",", " "), info),
+        Paragraph(f"<b>Total : {total:,.2f} Dh</b>".replace(",", " "), info),
         Spacer(1, 12),
         Paragraph(f"Payé le : {rp.paid_at.strftime('%d/%m/%Y') if rp.paid_at else '-'}", info),
         Paragraph("Reçu pour solde de tout compte de la période indiquée.", info),
@@ -86,7 +86,7 @@ def render_lease_pdf(lease, mandate, tenant_name: str, landlord_name: str, prope
     info = ParagraphStyle("I", parent=styles["Normal"], fontSize=10, leading=16)
 
     def money(v):
-        return f"{float(v or 0):,.2f} Đh".replace(",", " ")
+        return f"{float(v or 0):,.2f} Dh".replace(",", " ")
 
     def d(dt):
         return dt.strftime("%d/%m/%Y") if dt else "-"
@@ -202,7 +202,7 @@ def render_settlement_pdf(s, lines, tenant_name: str, landlord_name: str, proper
     info = ParagraphStyle("Info", parent=styles["Normal"], fontSize=10, leading=16)
 
     def money(v):
-        return f"{float(v or 0):,.2f} Đh".replace(",", " ")
+        return f"{float(v or 0):,.2f} Dh".replace(",", " ")
 
     deposit = float(s.deposit_amount or 0)
     total = sum(float(l.amount or 0) for l in lines)
@@ -277,18 +277,18 @@ def render_crg_pdf(crg, landlord_name: str, mandate_reference: str,
         Paragraph(f"Période : {_x(crg.period_label)}", info),
         Paragraph(f"Propriétaire : {_x(landlord_name)}", info),
         Spacer(1, 12),
-        Paragraph(f"Loyers encaissés : {collected:,.2f} Đh".replace(",", " "), info),
-        Paragraph(f"Honoraires de gestion : {fees:,.2f} Đh".replace(",", " "), info),
-        Paragraph(f"Dépenses d'intervention : {expenses:,.2f} Đh".replace(",", " "), info),
+        Paragraph(f"Loyers encaissés : {collected:,.2f} Dh".replace(",", " "), info),
+        Paragraph(f"Honoraires de gestion : {fees:,.2f} Dh".replace(",", " "), info),
+        Paragraph(f"Dépenses d'intervention : {expenses:,.2f} Dh".replace(",", " "), info),
     ]
     for ligne in (expense_lines or []):
         try:
-            montant = f"{float(ligne.get('cost_final') or 0):,.2f} Đh".replace(",", " ")
+            montant = f"{float(ligne.get('cost_final') or 0):,.2f} Dh".replace(",", " ")
         except (TypeError, ValueError):
             montant = "-"
         story.append(Paragraph(
             f"&nbsp;&nbsp;• {_x(_crg_date_fr(ligne.get('completed_at')))} — "
             f"{_x(ligne.get('title'))} — {_x(ligne.get('artisan_name'))} — {montant}", info))
-    story.append(Paragraph(f"<b>Net reversé : {net:,.2f} Đh</b>".replace(",", " "), info))
+    story.append(Paragraph(f"<b>Net reversé : {net:,.2f} Dh</b>".replace(",", " "), info))
     doc.build(story)
     return buf.getvalue()

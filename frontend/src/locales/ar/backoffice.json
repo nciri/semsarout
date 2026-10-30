@@ -405,9 +405,9 @@
         "tenantLabel": "العميل المستأجر",
         "tenantPlaceholder": "اختر عميلاً…",
         "tenantSearchPlaceholder": "البحث عن عميل…",
-        "rentLabel": "الإيجار (Đh)",
-        "chargesLabel": "التكاليف (Đh)",
-        "depositLabel": "وديعة الضمان (Đh)",
+        "rentLabel": "الإيجار (درهم)",
+        "chargesLabel": "التكاليف (درهم)",
+        "depositLabel": "وديعة الضمان (درهم)",
         "paymentDayLabel": "يوم الاستحقاق (1-28)",
         "cancel": "إلغاء",
         "create": "إنشاء"
@@ -465,7 +465,7 @@
       },
       "payModal": {
         "title": "تسجيل دفعة — {{period}}",
-        "amountLabel": "المبلغ (Đh)",
+        "amountLabel": "المبلغ (درهم)",
         "methodLabel": "طريقة الدفع",
         "methods": {
           "virement": "تحويل بنكي",
@@ -478,7 +478,7 @@
       },
       "reviseModal": {
         "title": "مراجعة الإيجار",
-        "newRentLabel": "الإيجار الجديد (Đh)",
+        "newRentLabel": "الإيجار الجديد (درهم)",
         "cancel": "إلغاء",
         "apply": "تطبيق"
       },
@@ -545,9 +545,9 @@
         "title": "إيداع ملف لعميل",
         "propertyIdLabel": "معرّف العقار",
         "clientIdLabel": "معرّف العميل",
-        "monthlyIncomeLabel": "الدخل الشهري (Đh)",
+        "monthlyIncomeLabel": "الدخل الشهري (درهم)",
         "guarantorNameLabel": "اسم الضامن",
-        "guarantorIncomeLabel": "دخل الضامن (Đh)",
+        "guarantorIncomeLabel": "دخل الضامن (درهم)",
         "docsLabel": "الوثائق المثبتة",
         "docType": {
           "cin": "بطاقة التعريف الوطنية (CIN)",
@@ -687,7 +687,7 @@
       "form": {
         "labelLabel": "بيان الاقتطاع",
         "labelPlaceholder": "مثال: طاولة عمل محروقة",
-        "amountLabel": "المبلغ (Đh)",
+        "amountLabel": "المبلغ (درهم)",
         "itemPlaceholder": "عنصر (اختياري)",
         "addButton": "إضافة"
       },
@@ -1364,8 +1364,8 @@
         "artisan": "الحرفي",
         "noneOption": "بدون",
         "sharedSuffix": " (مشترك)",
-        "costEstimate": "التكلفة التقديرية (Đh)",
-        "costFinal": "التكلفة النهائية (Đh)",
+        "costEstimate": "التكلفة التقديرية (درهم)",
+        "costFinal": "التكلفة النهائية (درهم)",
         "notes": "ملاحظات"
       },
       "autoSaveNote": "يتم حفظ التعديلات تلقائياً.",
@@ -1485,7 +1485,7 @@
         "property": "العقار",
         "client": "العميل",
         "transaction": "المعاملة المرتبطة",
-        "amount": "المبلغ (Đh)",
+        "amount": "المبلغ (درهم)",
         "amountPlaceholder": "مثال: 1500000",
         "signDate": "تاريخ التوقيع",
         "effectDate": "تاريخ السريان",
@@ -2972,7 +2972,7 @@
         "clientSearchPlaceholder": "البحث عن عميل…",
         "sectionDetails": "التفاصيل",
         "typeLabel": "النوع",
-        "priceLabel": "السعر المطلوب (Đh)",
+        "priceLabel": "السعر المطلوب (درهم)",
         "pricePlaceholder": "مثال: 1500000",
         "closingDateLabel": "تاريخ الإغلاق المتوقع",
         "priorityLabel": "الأولوية",

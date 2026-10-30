@@ -10,7 +10,7 @@ from html import escape
 
 def _money(v):
     try:
-        return f"{float(v):,.2f} Đh".replace(",", " ")
+        return f"{float(v):,.2f} Dh".replace(",", " ")
     except (TypeError, ValueError):
         return ""
 

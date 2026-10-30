@@ -308,7 +308,7 @@
             "buildingsCount": "Nombre de bâtiments",
             "floorsCount": "Nombre d'étages",
             "hasElevator": "Ascenseur",
-            "monthlyCharges": "Charges/syndic estimées (Đh/mois)"
+            "monthlyCharges": "Charges/syndic estimées (Dh/mois)"
           }
         },
         "villas": {
@@ -362,7 +362,7 @@
         },
         "landUnit": {
           "lotSurface": "Superficie lot (m²)",
-          "pricePerSqm": "Prix/m² (Đh)",
+          "pricePerSqm": "Prix/m² (Dh)",
           "frontage": "Façade (ml)",
           "buildable": "Constructible",
           "shape": "Forme"

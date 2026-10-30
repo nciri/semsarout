@@ -405,9 +405,9 @@
         "tenantLabel": "Client locataire",
         "tenantPlaceholder": "Choisir un client…",
         "tenantSearchPlaceholder": "Rechercher un client…",
-        "rentLabel": "Loyer (Đh)",
-        "chargesLabel": "Charges (Đh)",
-        "depositLabel": "Dépôt de garantie (Đh)",
+        "rentLabel": "Loyer (Dh)",
+        "chargesLabel": "Charges (Dh)",
+        "depositLabel": "Dépôt de garantie (Dh)",
         "paymentDayLabel": "Jour d'échéance (1-28)",
         "cancel": "Annuler",
         "create": "Créer"
@@ -465,7 +465,7 @@
       },
       "payModal": {
         "title": "Enregistrer un paiement — {{period}}",
-        "amountLabel": "Montant (Đh)",
+        "amountLabel": "Montant (Dh)",
         "methodLabel": "Méthode",
         "methods": {
           "virement": "Virement",
@@ -478,7 +478,7 @@
       },
       "reviseModal": {
         "title": "Réviser le loyer",
-        "newRentLabel": "Nouveau loyer (Đh)",
+        "newRentLabel": "Nouveau loyer (Dh)",
         "cancel": "Annuler",
         "apply": "Appliquer"
       },
@@ -545,9 +545,9 @@
         "title": "Déposer un dossier pour un client",
         "propertyIdLabel": "ID du bien",
         "clientIdLabel": "ID du client",
-        "monthlyIncomeLabel": "Revenu mensuel (Đh)",
+        "monthlyIncomeLabel": "Revenu mensuel (Dh)",
         "guarantorNameLabel": "Nom du garant",
-        "guarantorIncomeLabel": "Revenu du garant (Đh)",
+        "guarantorIncomeLabel": "Revenu du garant (Dh)",
         "docsLabel": "Pièces justificatives",
         "docType": {
           "cin": "Pièce d'identité (CIN)",
@@ -687,7 +687,7 @@
       "form": {
         "labelLabel": "Libellé de la retenue",
         "labelPlaceholder": "ex. Plan de travail brûlé",
-        "amountLabel": "Montant (Đh)",
+        "amountLabel": "Montant (Dh)",
         "itemPlaceholder": "Élément (facultatif)",
         "addButton": "Ajouter"
       },
@@ -1319,7 +1319,7 @@
         "artisanLabel": "Artisan (optionnel)",
         "artisanPlaceholder": "À attribuer plus tard",
         "scheduledLabel": "Date prévue",
-        "costLabel": "Coût estimé (Đh)",
+        "costLabel": "Coût estimé (Dh)",
         "notesLabel": "Précisions pour l'artisan",
         "clientLabel": "Client concerné",
         "clientPlaceholder": "Choisir un client",
@@ -1364,8 +1364,8 @@
         "artisan": "Artisan",
         "noneOption": "Aucun",
         "sharedSuffix": " (partagé)",
-        "costEstimate": "Coût estimé (Đh)",
-        "costFinal": "Coût final (Đh)",
+        "costEstimate": "Coût estimé (Dh)",
+        "costFinal": "Coût final (Dh)",
         "notes": "Notes"
       },
       "autoSaveNote": "Les modifications sont enregistrées automatiquement.",
@@ -1485,7 +1485,7 @@
         "property": "Bien",
         "client": "Client",
         "transaction": "Transaction liée",
-        "amount": "Montant (Đh)",
+        "amount": "Montant (Dh)",
         "amountPlaceholder": "Ex. 1500000",
         "signDate": "Date de signature",
         "effectDate": "Prise d'effet",
@@ -2972,7 +2972,7 @@
         "clientSearchPlaceholder": "Rechercher un client…",
         "sectionDetails": "Détails",
         "typeLabel": "Type",
-        "priceLabel": "Prix demandé (Đh)",
+        "priceLabel": "Prix demandé (Dh)",
         "pricePlaceholder": "Ex. 1500000",
         "closingDateLabel": "Clôture prévue",
         "priorityLabel": "Priorité",

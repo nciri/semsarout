@@ -16,12 +16,12 @@ import { DIRHAM_SYMBOL, priceWithSymbol } from './currency'
 const SRC = path.resolve(process.cwd(), 'src')
 const INTERDIT = 'Đh'
 
-/** Tous les `.js`/`.jsx` sous `src/`, sans dépendance de parcours en plus. */
+/** Tous les `.js`/`.jsx`/`.json` sous `src/`, sans dépendance de parcours en plus. */
 function sources(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
     const full = path.join(dir, e.name)
     if (e.isDirectory()) return sources(full)
-    return /\.jsx?$/.test(e.name) ? [full] : []
+    return /\.(jsx?|json)$/.test(e.name) ? [full] : []
   })
 }
 

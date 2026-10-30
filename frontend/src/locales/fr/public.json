@@ -584,7 +584,7 @@
       "title": "Gestion Locative Complète",
       "subtitle": "Location longue durée - Sérénité totale",
       "pricePrefix": "À partir de",
-      "priceNote": "du loyer mensuel (tarif minimum 500 Đh/mois)",
+      "priceNote": "du loyer mensuel (tarif minimum 500 Dh/mois)",
       "description": "Déléguez entièrement la gestion de votre bien locatif. De la recherche du locataire idéal jusqu'à son départ, nous gérons tout pour vous. Plusieurs formules adaptées à vos besoins.",
       "features": [
         "Recherche et sélection rigoureuse des locataires",
@@ -604,15 +604,15 @@
       "options": [
         {
           "name": "Gestion Essentielle",
-          "price": "3% du loyer / min. 300 Đh"
+          "price": "3% du loyer / min. 300 Dh"
         },
         {
           "name": "Gestion Complète",
-          "price": "5% du loyer / min. 500 Đh"
+          "price": "5% du loyer / min. 500 Dh"
         },
         {
           "name": "Gestion Premium",
-          "price": "7% du loyer / min. 700 Đh"
+          "price": "7% du loyer / min. 700 Dh"
         }
       ],
       "phases": [
@@ -810,10 +810,10 @@
     "inFavoritesLabel": "En favori",
     "addToFavoritesButton": "Ajouter aux favoris",
     "shareButton": "Partager",
-    "monthlyIncomeLabel": "Revenu mensuel (Đh)",
+    "monthlyIncomeLabel": "Revenu mensuel (Dh)",
     "guarantorNameLabel": "Nom du garant",
     "guarantorNamePlaceholder": "Nom du garant (facultatif)",
-    "guarantorIncomeLabel": "Revenu du garant (Đh)",
+    "guarantorIncomeLabel": "Revenu du garant (Dh)",
     "optionalPlaceholder": "Facultatif",
     "attachmentsLabel": "Pièces jointes",
     "addFileButton": "Ajouter un fichier",
