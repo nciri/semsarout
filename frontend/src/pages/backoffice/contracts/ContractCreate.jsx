@@ -8,6 +8,15 @@ import { contractService } from '../../../services/contractService'
 import SearchableSelect from '../../../components/common/SearchableSelect'
 import api from '../../../services/api'
 
+// Les modèles sont du HTML : on n'en montre qu'une projection texte, jamais injectée en innerHTML.
+const ENTITIES = { '&nbsp;': ' ', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'", '&amp;': '&' }
+const htmlToText = (html) => (html || '')
+  .replace(/<\s*br\s*\/?>|<\/(p|div|h[1-6]|li|tr)>/gi, '\n')
+  .replace(/<[^>]*>/g, '')
+  .replace(/&(nbsp|lt|gt|quot|#39|amp);/g, (m) => ENTITIES[m])
+  .replace(/\n\s*\n+/g, '\n\n')
+  .trim()
+
 function ContractCreate() {
   const { t } = useTranslation(['backoffice', 'common'])
   const navigate = useNavigate()
@@ -175,7 +184,7 @@ function ContractCreate() {
             </div>
             {selectedTpl ? (
               <div className="max-h-[60vh] overflow-y-auto text-xs text-gray-600 whitespace-pre-wrap leading-relaxed border border-gray-100 rounded-lg p-3 bg-gray-50">
-                {selectedTpl.body || t('backoffice:contracts.create.preview.noContent')}
+                {htmlToText(selectedTpl.body_html) || t('backoffice:contracts.create.preview.noContent')}
               </div>
             ) : (
               <p className="text-sm text-gray-400">{t('backoffice:contracts.create.preview.empty')}</p>
