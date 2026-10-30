@@ -210,6 +210,25 @@ def test_les_modes_terminaux_quittent_la_liste_des_depenses_en_attente(client, d
     assert len(toutes) == 4
 
 
+def test_un_null_explicite_n_efface_pas_le_payeur(client, db_session):
+    """`PUT {"payer": null}` traversait la validation (`data.get(...) is not None` l'ignorait)
+    et le `setattr` vidait le champ même que tout ce lot existe pour établir : l'intervention
+    retombait dans « dépenses non affectées » sans trace de ce qu'elle portait."""
+    wo = _wo_en_base(db_session, status="scheduled", nature="structurel", payer="owner",
+                     charge_mode="crg_expense")
+    for champ, message in (("payer", "Payeur"), ("nature", "Nature"),
+                           ("charge_mode", "Mode d'imputation")):
+        r = client.put(f"/backoffice/work-orders/{wo.id}", json={champ: None})
+        assert r.status_code == 400, champ
+        assert message in r.json()["error"]
+    db_session.refresh(wo)
+    assert (wo.payer, wo.nature, wo.charge_mode) == ("owner", "structurel", "crg_expense")
+    # Ne pas envoyer la clé reste permis : c'est ainsi qu'on modifie un autre champ.
+    assert client.put(f"/backoffice/work-orders/{wo.id}", json={"title": "Autre"}).status_code == 200
+    db_session.refresh(wo)
+    assert wo.payer == "owner"
+
+
 def test_les_interventions_d_un_bail_se_listent(client, db_session):
     voulu = _wo_en_base(db_session, lease_id=12)
     _wo_en_base(db_session, lease_id=13)

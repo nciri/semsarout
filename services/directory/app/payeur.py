@@ -63,10 +63,17 @@ def tiers_sans_nom(wo, data: dict) -> str | None:
 
 
 def valeur_inconnue(data: dict) -> str | None:
+    """`cle in data`, et non `data.get(cle) is not None` : un `null` EXPLICITE doit être refusé.
+
+    Sinon `PUT {"payer": null}` traversait la validation et le `setattr` vidait le champ même
+    que tout ce lot existe pour établir — l'intervention retombait dans « dépenses non
+    affectées » sans trace de ce qu'elle portait. Ne pas choisir est un état de départ permis ;
+    effacer un choix déjà fait n'en est pas un, et rien ne l'exprime.
+    """
     for cle, permis, message in (("nature", NATURES, "Nature des travaux invalide"),
                                  ("payer", PAYERS, "Payeur invalide"),
                                  ("charge_mode", CHARGE_MODES, "Mode d'imputation invalide")):
-        if data.get(cle) is not None and data[cle] not in permis:
+        if cle in data and data[cle] not in permis:
             return message
     return None
 
