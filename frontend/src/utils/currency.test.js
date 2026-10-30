@@ -3,7 +3,7 @@ import path from 'node:path'
 import { describe, it, expect } from 'vitest'
 import fr from '../locales/fr/backoffice.json'
 import ar from '../locales/ar/backoffice.json'
-import { DIRHAM_SYMBOL, priceWithSymbol } from './currency'
+import { DIRHAM_SYMBOL, formatNumber, formatPrice, priceWithSymbol } from './currency'
 
 /**
  * Une seule orthographe du dirham sur tout le produit.
@@ -33,6 +33,19 @@ describe('dirham — une seule orthographe', () => {
     expect(priceWithSymbol(9900)).toBe(`9\u202f900 ${DIRHAM_SYMBOL}`)
     // …et la locale arabe a bien son propre mot : c'est ce que le littéral contournait.
     expect(ar.dashboard.units.dirham).not.toBe(DIRHAM_SYMBOL)
+  })
+
+  it('groupe les milliers à l’espace fine, jamais au point', () => {
+    // `fr-MA` rend « 1.500.000 » : le simulateur de crédit affichait des points là où le reste
+    // du produit (`priceLabel`, en `fr-FR`) affichait des espaces.
+    // U+202F (espace fine insécable) via `fromCharCode` : le caractère littéral est
+    // invisible à la relecture et refusé par `no-irregular-whitespace` dans un gabarit.
+    const fine = String.fromCharCode(0x202f)
+    expect(formatNumber(1500000)).toBe(`1${fine}500${fine}000`)
+    expect(formatPrice(1500000)).toBe(`1${fine}500${fine}000 ${DIRHAM_SYMBOL}`)
+    expect(formatNumber(1500000)).not.toContain('.')
+    // La décimale reste la virgule française, elle : seul le groupeur change.
+    expect(formatNumber(1234.5, true)).toBe(`1${fine}234,50`)
   })
 
   it('aucun fichier source ne recopie l’autre symbole en dur', () => {

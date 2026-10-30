@@ -26,7 +26,11 @@ export function formatNumber(amount, showDecimals = false) {
 
   if (isNaN(num)) return '-'
 
-  return num.toLocaleString('fr-MA', {
+  // `fr-MA` groupe les milliers avec un POINT (1.500.000), `fr-FR` avec l'espace fine
+  // insécable (1 500 000). Les deux cohabitaient : ce formateur et ses 70 appels rendaient des
+  // points, `priceLabel` juste en dessous rendait des espaces. Une seule convention, celle que
+  // le reste du produit affiche déjà.
+  return num.toLocaleString('fr-FR', {
     minimumFractionDigits: showDecimals ? 2 : 0,
     maximumFractionDigits: showDecimals ? 2 : 0
   })

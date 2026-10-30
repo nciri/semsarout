@@ -609,7 +609,7 @@ function PropertyDetail() {
                 ) : interestedLeads.length === 0 ? (
                   <p className="text-sm text-gray-400">{t('public:propertyDetail.noInterestedContacts')}</p>
                 ) : (
-                  <ul className="space-y-3 max-h-[26rem] overflow-y-auto -me-2 pe-2">
+                  <ul className="space-y-3">
                     {interestedLeads.map((l) => (
                       <li key={l.id} className="border border-gray-100 rounded-lg p-3">
                         <div className="flex items-center justify-between gap-2">

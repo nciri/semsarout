@@ -315,12 +315,6 @@ function AgencyPricing() {
                   <td className="p-4 text-center bg-primary-50"><FiX className="w-5 h-5 text-gray-300 mx-auto" /></td>
                   <td className="p-4 text-center"><FiCheck className="w-5 h-5 text-green-500 mx-auto" /></td>
                 </tr>
-                <tr>
-                  <td className="p-4 text-gray-900">{t('public:agencyPricing.comparison.dedicatedManager')}</td>
-                  <td className="p-4 text-center"><FiX className="w-5 h-5 text-gray-300 mx-auto" /></td>
-                  <td className="p-4 text-center bg-primary-50"><FiX className="w-5 h-5 text-gray-300 mx-auto" /></td>
-                  <td className="p-4 text-center"><FiCheck className="w-5 h-5 text-green-500 mx-auto" /></td>
-                </tr>
               </tbody>
             </table>
           </div>
