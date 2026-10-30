@@ -23,7 +23,14 @@ from werkzeug.utils import secure_filename
 from . import storage
 
 from semsar_auth import Principal, get_principal
-from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
+from semsar_common import (
+    get_settings,
+    html_to_text,
+    install_legacy_error_handlers,
+    sanitize_rich_field,
+    setup_logging,
+    setup_tracing,
+)
 from semsar_events import enqueue
 
 from . import events, insights, moderation
@@ -40,6 +47,15 @@ _UPDATABLE = [
     "address", "city", "neighborhood", "postal_code", "latitude", "longitude",
 ]
 _CREATE_REQUIRED = ["title", "property_type", "transaction_type", "price", "city"]
+# Champs saisis en WYSIWYG : ce qui arrive est du HTML, donc un XSS stocké que la fiche
+# publique du bien déclencherait pour n'importe quel visiteur. Les autres champs restent du
+# texte brut : les assainir échapperait leurs « < » et « & » et ferait apparaître des
+# entités à l'écran.
+_RICH = ("description",)
+
+
+def _rich(field: str, value):
+    return sanitize_rich_field(value) if field in _RICH else value
 _PRICE_PERIODS = {"day", "week", "month"}
 
 
@@ -210,7 +226,7 @@ async def create_property(request: Request, principal: Principal = Depends(get_p
         reference=_reference(), status="draft",
         owner_id=int(principal.sub) if principal.sub.isdigit() else None,
         agency_id=principal.agency_id,
-        **{k: data.get(k) for k in _UPDATABLE},
+        **{k: _rich(k, data.get(k)) for k in _UPDATABLE},
     )
     if p.features is None:
         p.features = []
@@ -239,7 +255,7 @@ async def update_property(property_id: int, request: Request, principal: Princip
     data = await _json(request)
     for field in _UPDATABLE:
         if field in data:
-            setattr(p, field, data[field])
+            setattr(p, field, _rich(field, data[field]))
     _apply_price_period(p)
     _emit(db, p, events.LISTING_UPDATED)
     db.commit()
@@ -523,7 +539,7 @@ def bo_properties_insights(principal: Principal = Depends(get_principal), db: Se
         d.update({
             "images_count": len(images.get(p.id, [])),
             "cover_url": (images.get(p.id) or [None])[0],
-            "description_length": len((p.description or "").strip()),
+            "description_length": len(html_to_text(p.description).strip()),
             "price_ref": insights.match_price_ref(refs or [], p.city, p.neighborhood,
                                                   p.transaction_type, p.property_type),
             "status_check": insights.status_check(p.status, mine) if txns is not None else None,
@@ -550,7 +566,7 @@ async def bo_create_property(request: Request, principal: Principal = Depends(ge
     uid = int(principal.sub) if principal.sub and str(principal.sub).isdigit() else None
     p = Property(reference=_bo_reference(db), status=data.get("status", "draft"),
                  owner_id=uid, agency_id=principal.agency_id,
-                 **{k: data.get(k) for k in _BO_WRITABLE if k in data and k != "status"})
+                 **{k: _rich(k, data.get(k)) for k in _BO_WRITABLE if k in data and k != "status"})
     if p.features is None:
         p.features = data.get("features", [])
     _apply_price_period(p)
@@ -572,7 +588,7 @@ async def bo_update_property(property_id: int, request: Request, principal: Prin
     data = await _json(request)
     for field in _BO_WRITABLE:
         if field in data:
-            setattr(p, field, data[field])
+            setattr(p, field, _rich(field, data[field]))
     _apply_price_period(p)
     p.updated_at = datetime.utcnow()
     _emit(db, p, events.LISTING_UPDATED)
@@ -710,7 +726,8 @@ async def create_sale_request(request: Request, principal: Principal = Depends(g
         title = f"{label}{f' {rooms} pièces' if rooms else ''} - {pd['city']}"
     surface = float(pd["surface"]); price = float(data["desired_price"])
     p = Property(
-        reference=_bo_reference(db), title=title, description=pd.get("description"),
+        reference=_bo_reference(db), title=title,
+        description=sanitize_rich_field(pd.get("description")),
         property_type=pd["property_type"], transaction_type="sale", price=price,
         price_per_sqm=round(price / surface, 2) if surface else None, surface=surface,
         land_surface=pd.get("land_surface"), rooms=pd.get("rooms"), bedrooms=pd.get("bedrooms"),

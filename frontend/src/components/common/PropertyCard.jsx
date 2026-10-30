@@ -8,6 +8,7 @@ import { formatPrice, DIRHAM_SYMBOL, pricePeriodKey } from '../../utils/currency
 import useAuthStore from '../../store/authStore'
 import { buyerService } from '../../services/buyerService'
 import useCompareStore, { MAX_COMPARE_PROPERTIES } from '../../store/compareStore'
+import { richTextToPlain } from '../../utils/richText'
 
 function PropertyCard({ property, variant = 'vertical' }) {
   const { t } = useTranslation(['common'])
@@ -161,9 +162,11 @@ function PropertyCard({ property, variant = 'vertical' }) {
           </h3>
           {location}
           {metaRow}
+          {/* Extrait borné à deux lignes : la mise en forme n'y tiendrait pas, et un titre
+              de niveau 2 au milieu d'une carte la déformerait. On n'en garde que le texte. */}
           {property.description && (
             <p className="text-[13px] leading-snug text-slate-500 line-clamp-2">
-              {property.description}
+              {richTextToPlain(property.description)}
             </p>
           )}
           <div className="mt-auto pt-1.5">{priceBlock}</div>

@@ -8,6 +8,7 @@ import { useFormat } from '../../../utils/format'
 import { IconAction, Widget } from '../components/kit'
 import { DetailRegion } from './parts'
 import SummaryBand from './overview/SummaryBand'
+import CrgDraftsAlert from './overview/CrgDraftsAlert'
 import { LateCompact, LateDetail } from './overview/LateWidget'
 import { DueCompact, DueDetail } from './overview/DueWidget'
 import { ApplicationsCompact, ApplicationsDetail } from './overview/ApplicationsWidget'
@@ -135,6 +136,7 @@ function RentalLayout() {
       </div>
 
       {s && <SummaryBand s={s} />}
+      {s && <CrgDraftsAlert />}
       {!s && !error && (
         <div aria-busy="true" aria-label={t('backoffice:rental.shared.loading')} className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {WIDGETS.map((x) => <div key={x.key} className={`h-48 animate-pulse rounded-xl border border-gray-200 bg-white motion-reduce:animate-none ${x.span || ''}`} />)}

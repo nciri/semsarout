@@ -25,6 +25,7 @@ import { DOC_TYPES } from './dashboard/applicationStatus'
 import { useFormat } from '../utils/format'
 import { getPublishedByTarget } from '../services/design3dPublic'
 import DesignViewer from '../components/design/DesignViewer'
+import { RichText } from '../components/common/RichTextarea'
 
 const MAX_DOC_SIZE = 10 * 1024 * 1024
 
@@ -517,9 +518,11 @@ function PropertyDetail() {
           {/* Description */}
           <div className="mb-8">
             <h2 className="font-semibold text-lg mb-4">{t('public:propertyDetail.descriptionTitle')}</h2>
-            <p className="text-gray-600 whitespace-pre-line">
-              {property.description || t('public:propertyDetail.noDescription')}
-            </p>
+            <RichText
+              html={property.description}
+              className="text-gray-600"
+              emptyLabel={t('public:propertyDetail.noDescription')}
+            />
           </div>
 
           {/* Features */}

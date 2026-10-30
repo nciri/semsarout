@@ -344,6 +344,21 @@
         "collected": "Encaissé",
         "net": "Net reversé",
         "pdf": "PDF",
+        "expenses": "Dépenses",
+        "status": "Statut",
+        "statusLabel": {
+          "draft": "Brouillon",
+          "validated": "Validé",
+          "sent": "Envoyé"
+        },
+        "draftWarning": "Brouillon de {{period}} jamais validé : il ne part pas tant qu'un humain ne l'a pas relu et validé. En attente depuis",
+        "linesLabel": "Dépenses imputées au brouillon de {{period}}",
+        "exclude": "Écarter {{title}}",
+        "restore": "Réintégrer {{title}}",
+        "noLines": "Aucune dépense imputée à ce brouillon.",
+        "netAfter": "Net après écarts : {{amount}}",
+        "validate": "Valider le compte rendu",
+        "validatedToast": "Compte rendu validé : il partira à la prochaine émission.",
         "empty": {
           "title": "Aucun CRG",
           "description": "Les comptes-rendus mensuels apparaissent ici une fois les loyers encaissés."
@@ -703,6 +718,12 @@
       "kind": {
         "lease": "Bail",
         "mandate": "Mandat"
+      },
+      "crgDrafts": {
+        "title": "Comptes rendus de gérance à valider : {{count}}",
+        "hint": "Aucun n'est envoyé tant qu'il n'est pas validé. Les plus anciens sont en premier.",
+        "item": "{{reference}} · {{period}}",
+        "net": "net {{amount}}"
       },
       "widgets": {
         "late": "Loyers en retard",

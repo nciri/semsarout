@@ -13,6 +13,12 @@ export function AgeChip({ days, lo, hi }) {
   return <Chip tone={ageTone(days, lo, hi)}>{t('dashboard.units.days', { count: days })}</Chip>
 }
 
+/** Âge d'un brouillon de CRG non validé : une semaine d'attente doit se voir au premier coup d'œil. */
+export function DraftAge({ days }) {
+  const { t } = useTranslation('backoffice')
+  return <Chip tone={days >= 7 ? 'crit' : 'warn'}>{days === 0 ? t('rental.overview.today') : t('dashboard.units.days', { count: days })}</Chip>
+}
+
 export function DueChip({ days }) {
   const { t } = useTranslation('backoffice')
   return <Chip tone={dueTone(days)}>{days === 0 ? t('rental.overview.today') : t('rental.overview.inDays', { count: days })}</Chip>

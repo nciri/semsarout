@@ -12,6 +12,9 @@ export const rentalService = {
   createMandate: async (data) => (await api.post(`${B}/mandates`, data)).data,
   signMandate: async (id) => (await api.post(`${B}/mandates/${id}/sign`)).data,
   listCrg: async (mandateId) => (await api.get(`${B}/mandates/${mandateId}/crg`)).data,
+  getCrg: async (crgId) => (await api.get(`${B}/crg/${crgId}`)).data,
+  listCrgDrafts: async () => (await api.get(`${B}/crg/drafts`)).data,
+  validateCrg: async (crgId, data) => (await api.post(`${B}/crg/${crgId}/validate`, data)).data,
   crgPdfUrl: (mandateId, crgId) => `${B}/mandates/${mandateId}/crg/${crgId}.pdf`,
   // Baux
   listLeases: async () => (await api.get(`${B}/leases`)).data,

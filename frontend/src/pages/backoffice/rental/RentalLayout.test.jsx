@@ -6,8 +6,8 @@ import { QueryClient, QueryClientProvider } from 'react-query'
 import i18n from '../../../i18n'
 import RentalLayout from './RentalLayout'
 
-const { summary } = vi.hoisted(() => ({ summary: vi.fn() }))
-vi.mock('../../../services/rentalService', () => ({ rentalService: { summary } }))
+const { summary, listCrgDrafts } = vi.hoisted(() => ({ summary: vi.fn(), listCrgDrafts: vi.fn() }))
+vi.mock('../../../services/rentalService', () => ({ rentalService: { summary, listCrgDrafts } }))
 
 const SUMMARY = {
   year: 2026, month_number: 7,
@@ -50,6 +50,24 @@ describe('RentalLayout', () => {
     try { localStorage.clear() } catch { /* stockage indisponible */ }
     summary.mockReset()
     summary.mockResolvedValue(SUMMARY)
+    listCrgDrafts.mockReset()
+    listCrgDrafts.mockResolvedValue({ drafts: [] })
+  })
+
+  it('signale en rouge les comptes rendus jamais validés, avec leur âge', async () => {
+    listCrgDrafts.mockResolvedValue({ drafts: [
+      { crg_id: 12, mandate_id: 3, mandate_reference: 'MND-3', period_label: 'Septembre 2026', net: 4020, waiting_days: 40 },
+    ] })
+    renderLayout()
+    expect(await screen.findByText('Comptes rendus de gérance à valider : 1')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'MND-3 · Septembre 2026' })).toHaveAttribute('href', '/backoffice/gestion-locative/mandats/3')
+    expect(screen.getByText('40 j')).toBeInTheDocument()
+  })
+
+  it('n’affiche aucun bandeau quand rien n’attend de validation', async () => {
+    renderLayout()
+    expect(await screen.findByText('Gestion locative')).toBeInTheDocument()
+    expect(screen.queryByText(/Comptes rendus de gérance à valider/)).not.toBeInTheDocument()
   })
 
   it('affiche le titre FR', async () => {

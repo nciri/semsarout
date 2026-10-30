@@ -5,13 +5,13 @@ import { isRtl } from '../../i18n/rtl'
 import { isRichTextEmpty, sanitizeRichText } from '../../utils/richText'
 
 /**
- * Champ de texte riche, en remplacement d'un `<textarea>`.
+ * Champ de texte riche, en remplacement d’un `textarea`.
  *
  * `contentEditable` plutôt qu'une bibliothèque : les champs du projet n'ont besoin que de
  * gras, italique, souligné, listes et liens, et une dépendance d'éditeur apporte sa propre
  * mise en forme à discipliner alors qu'elle doit suivre le thème SemsarOut.
  *
- * L'API reprend celle du `<textarea>` remplacé (`id`, `value`, `onChange`, `rows`,
+ * L’API reprend celle du `textarea` remplacé (`id`, `value`, `onChange`, `rows`,
  * `placeholder`, `disabled`) pour que la conversion d'un écran reste mécanique ; seul
  * `onChange` change de forme : il reçoit le HTML, pas un événement.
  */
