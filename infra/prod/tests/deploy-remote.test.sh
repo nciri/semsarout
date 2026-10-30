@@ -39,28 +39,16 @@ absent() { if [ -e "$3" ] && grep -qF -- "$2" "$3" 2>/dev/null; then ko "$1"; el
 file_absent() { if [ -e "$2" ]; then ko "$1"; else ok "$1"; fi; }
 
 # --- garde-fou : MIGRATIONS porte une entrée par migration additive sur disque ---
-# L'en-tête de MIGRATIONS dans deploy-remote.sh énonce l'invariant « une entrée par
-# `services/*/db/*.sql` hors schema.sql et migrate_from_monolith.sql », mais rien ne le
-# vérifiait jusqu'ici — c'est précisément ce qui a laissé passer identity/
-# add_features_synced_at.sql (corrigé en f6fc320) puis cinq autres. Une migration
-# additive absente de MIGRATIONS n'est JAMAIS jouée en production : create_all crée les
-# tables manquantes mais n'ALTERe jamais une table existante.
-# Exclusion motivée, pas une liste d'exceptions à rallonge :
-#  - schema.sql n'est jamais rejoué tel quel (son CREATE ROLE nu n'est pas idempotent,
-#    cf. le commentaire au-dessus de `ensure_db_and_env` dans deploy-remote.sh) ;
-#  - migrate_from_monolith.sql vise la bascule depuis le monolithe legacy, hors
-#    périmètre du mesh (jouée une fois, hors de ce script).
+# La règle et ses exclusions vivent dans tools/check_migrations.py, qui tourne AUSSI au
+# pre-push et dans la CI sans condition de chemin : la version inline qui vivait ici ne
+# se déclenchait que sur un changement de `infra/prod/`, donc une migration ajoutée seule
+# (transactions/migrate_notes_text.sql) passait sous le radar jusqu'au déploiement.
 echo "== garde-fou : une entrée MIGRATIONS par migration additive sur disque =="
-declared_migrations="$(sed -n '/^MIGRATIONS="$/,/^"$/p' "$SCRIPT" | sed '1d;$d' | sort)"
-disk_migrations="$(find "$ROOT/services" -path '*/db/*.sql' \
-  ! -name 'schema.sql' ! -name 'migrate_from_monolith.sql' \
-  | sed -E 's#.*/services/([^/]+)/db/#\1/#' | sort)"
-missing_migrations="$(comm -23 <(printf '%s\n' "$disk_migrations") <(printf '%s\n' "$declared_migrations"))"
-if [ -z "$missing_migrations" ]; then
+if out="$(python3 "$ROOT/tools/check_migrations.py" 2>&1)"; then
   ok "toute migration additive sur disque figure dans MIGRATIONS"
 else
   ko "toute migration additive sur disque figure dans MIGRATIONS"
-  echo "$missing_migrations" | sed 's/^/      manquante: /'
+  printf '%s\n' "$out" | sed 's/^/      /'
 fi
 
 TMP="$(mktemp -d)"

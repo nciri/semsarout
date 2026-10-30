@@ -171,11 +171,15 @@ jobs:
           retention-days: 7
 
   env-examples:
-    name: Cohérence des .env.example
+    name: Cohérence du dépôt
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: python3 tools/check_env_examples.py
+      # Sans filtrage par chemin, volontairement : une migration additive absente de
+      # MIGRATIONS n'est jamais jouée en prod, et l'oubli se fait en touchant uniquement
+      # services/<svc>/db/, c'est-à-dire sans rien qui déclenche un autre job.
+      - run: python3 tools/check_migrations.py
 
   # Porte unique à exiger dans la protection de branche : réussit si aucun job
   # requis n'a échoué/annulé. Les jobs "skipped" (non pertinents) sont OK.

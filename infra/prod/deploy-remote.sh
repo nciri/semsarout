@@ -108,6 +108,7 @@ rental/migrate_crg_depenses.sql
 rental/migrate_retenue_intervention.sql
 contract/migrate_modeles_builtin.sql
 contract/migrate_contract_parties.sql
+transactions/migrate_notes_text.sql
 "
 
 # psql en tant que rôle postgres (patron roles/postgres d'Ansible : become_user postgres).
