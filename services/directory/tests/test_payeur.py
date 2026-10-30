@@ -296,3 +296,25 @@ def test_l_estampille_rejouee_avec_le_meme_releve_rend_le_meme_compte(client, db
     assert client.post("/internal/work-orders/charged", json=corps, headers=h).json()["stamped"] == 2
     db_session.refresh(a)
     assert a.charged_at == pose_le and a.charged_ref == "crg:12"
+
+
+def test_la_liberation_ne_defait_que_l_estampille_de_son_ref(client, db_session):
+    wo = _wo_en_base(db_session, property_id=7, status="done", cost_final=Decimal("450"),
+                     charge_mode="deposit_deduction")
+    h = {"x-internal-token": TOKEN}
+    url = "/internal/work-orders/chargeable?property_ids=7&mode=deposit_deduction&agency_id=4"
+    corps = {"ids": [wo.id], "ref": "settlement:7", "agency_id": 4}
+    client.post("/internal/work-orders/charged", json=corps, headers=h)
+    assert client.get(url, headers=h).json()["work_orders"] == []
+    assert client.post("/internal/work-orders/release", json={**corps, "ref": "crg:12"},
+                       headers=h).json()["released"] == 0
+    assert client.get(url, headers=h).json()["work_orders"] == []
+    assert client.post("/internal/work-orders/release", json={**corps, "agency_id": 5},
+                       headers=h).json()["released"] == 0
+    assert client.post("/internal/work-orders/release", json=corps, headers=h).json()["released"] == 1
+    assert [w["id"] for w in client.get(url, headers=h).json()["work_orders"]] == [wo.id]
+
+
+def test_la_liberation_exige_le_jeton(client):
+    assert client.post("/internal/work-orders/release",
+                       json={"ids": [1], "ref": "x", "agency_id": 4}).status_code == 403

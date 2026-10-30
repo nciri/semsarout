@@ -331,6 +331,30 @@ async def internal_stamp_charged(
     return {"stamped": stamped}
 
 
+@app.post("/internal/work-orders/release", include_in_schema=False)
+async def internal_release_charged(
+    request: Request, x_internal_token: str = Header(default=""), db: Session = Depends(get_db),
+):
+    """Libère l'estampille posée sous ce `ref` — et seulement celle-là.
+
+    Le filtre sur `charged_ref` interdit de défaire l'imputation d'un autre relevé : un CRG
+    envoyé (`crg:*`) ne peut jamais être annulé par le chemin du décompte de caution.
+    """
+    if x_internal_token != settings.internal_token:
+        return _err("Forbidden", 403)
+    data = await _json(request)
+    ids, ref, agency_id = data.get("ids"), data.get("ref"), data.get("agency_id")
+    if (not isinstance(ids, list) or not all(isinstance(i, int) for i in ids)
+            or not isinstance(ref, str) or not ref or not isinstance(agency_id, int)):
+        return _err("ids, ref et agency_id sont requis", 400)
+    released = (db.query(WorkOrder)
+                .filter(WorkOrder.id.in_(ids), WorkOrder.agency_id == agency_id,
+                        WorkOrder.charged_ref == ref)
+                .update({"charged_at": None, "charged_ref": None}, synchronize_session=False))
+    db.commit()
+    return {"released": released}
+
+
 @app.post("/backoffice/work-orders", status_code=201)
 async def create_work_order(request: Request, principal: Principal = Depends(_artisans), db: Session = Depends(get_db)):
     data = await _json(request)
