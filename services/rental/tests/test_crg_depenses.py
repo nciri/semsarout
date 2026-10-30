@@ -207,6 +207,10 @@ def test_le_crg_nait_brouillon_et_ne_part_pas_seul(client, db_session, monkeypat
     r = client.get("/internal/mandates/due-crg", headers={"x-internal-token": TOKEN})
     crg_id = r.json()["drafts"][0]["crg_id"]
     assert db_session.get(CrgReport, crg_id).status == "draft"
+    assert r.json()["drafts"][0]["created"] is True
+    # Au passage suivant le brouillon est toujours listé, mais plus comme nouveau.
+    r2 = client.get("/internal/mandates/due-crg", headers={"x-internal-token": TOKEN})
+    assert [(d["crg_id"], d["created"]) for d in r2.json()["drafts"]] == [(crg_id, False)]
     # Tant qu'il n'est pas validé, rien n'est à envoyer.
     assert client.get("/internal/mandates/due-crg-send",
                       headers={"x-internal-token": TOKEN}).json()["reports"] == []

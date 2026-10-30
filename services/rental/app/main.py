@@ -272,6 +272,7 @@ def internal_mandates_due_crg(x_internal_token: str = Header(default=""),
             continue
         if agg["rent_collected"] <= 0:
             continue
+        created = existant is None
         crg = existant or CrgReport(mandate_id=mnd.id, agency_id=mnd.agency_id,
                                     period_label=f"{_MONTHS_FR[m]} {y}", year=y, month=m,
                                     status="draft")
@@ -281,7 +282,7 @@ def internal_mandates_due_crg(x_internal_token: str = Header(default=""),
         db.add(crg)
         db.commit()
         out.append({"mandate_id": mnd.id, "crg_id": crg.id, "agency_id": mnd.agency_id,
-                    "period_label": crg.period_label})
+                    "period_label": crg.period_label, "created": created})
     return {"drafts": out}
 
 

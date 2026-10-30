@@ -200,9 +200,24 @@ def _job_generate_rent_periods(db) -> int:
 
 
 def _job_crg_reports(db) -> int:
-    """CRG mensuel : récapitulatif des loyers encaissés le mois dernier, au propriétaire."""
+    """CRG mensuel en deux temps. 1) prépare les brouillons et prévient l'agence de chaque
+    nouveau ; rien ne part au propriétaire. 2) envoie ceux que l'agence a validés. Renvoie le
+    nombre de CRG réellement envoyés."""
     try:
-        r = httpx.get(f"{_rental()}/internal/mandates/due-crg", headers=_headers(), timeout=10.0)
+        r = httpx.get(f"{_rental()}/internal/mandates/due-crg", headers=_headers(), timeout=30.0)
+        drafts = r.json().get("drafts", []) if r.status_code == 200 else []
+    except (httpx.HTTPError, ValueError):
+        drafts = []
+    # `due-crg` relistant tous les brouillons ouverts, seuls les nouveaux déclenchent un avis.
+    for d in (d for d in drafts if d.get("created")):
+        agency = recipients.agency(d.get("agency_id"))
+        to = (agency.get("email") or "").strip()
+        if _valid_email(to):
+            _try_send(db, to, "crg_draft.html", "crg_draft", from_email=_contact(),
+                      agency_name=agency.get("name"), period_label=d.get("period_label"))
+            db.commit()
+    try:
+        r = httpx.get(f"{_rental()}/internal/mandates/due-crg-send", headers=_headers(), timeout=10.0)
         reports = r.json().get("reports", []) if r.status_code == 200 else []
     except (httpx.HTTPError, ValueError):
         return 0
@@ -210,19 +225,29 @@ def _job_crg_reports(db) -> int:
     for rep in reports:
         landlord = recipients.client(rep.get("landlord_client_id"))
         to = (landlord.get("email") or "").strip()
-        if _valid_email(to):
-            _try_send(db, to, "crg_report.html", "crg_report", from_email=_contact(),
-                      name=landlord.get("name"), period_label=rep.get("period_label"),
-                      rent_collected=rep.get("rent_collected"), fees=rep.get("fees"),
-                      net=rep.get("net"))
-            db.commit()
-            sent += 1
+        if not _valid_email(to):
+            # Non marqué envoyé : on ne déclare pas « envoyé » un CRG que personne n'a reçu.
+            logger.warning("CRG %s non envoyé : propriétaire sans e-mail valide", rep.get("crg_id"))
+            continue
+        # `crg-sent` d'abord : s'il échoue, le CRG reste à renvoyer sans qu'aucun e-mail soit
+        # parti ; l'inverse enverrait un second relevé au propriétaire au passage suivant.
         try:
-            httpx.post(f"{_rental()}/internal/mandates/{rep['mandate_id']}/crg-sent",
-                       headers=_headers(), json={k: rep[k] for k in ("rent_collected", "fees", "net")},
-                       timeout=10.0)
-        except httpx.HTTPError:
-            pass
+            ack = httpx.post(f"{_rental()}/internal/mandates/{rep['mandate_id']}/crg-sent",
+                             headers=_headers(), json={"crg_id": rep["crg_id"]}, timeout=15.0)
+        except httpx.HTTPError as exc:
+            logger.error("CRG %s : crg-sent injoignable (%s), reprise au prochain passage",
+                         rep.get("crg_id"), exc)
+            continue
+        if ack.status_code != 200:
+            logger.error("CRG %s : crg-sent refusé (HTTP %s), reprise au prochain passage",
+                         rep.get("crg_id"), ack.status_code)
+            continue
+        _try_send(db, to, "crg_report.html", "crg_report", from_email=_contact(),
+                  name=landlord.get("name"), period_label=rep.get("period_label"),
+                  rent_collected=rep.get("rent_collected"), fees=rep.get("fees"),
+                  expenses=rep.get("expenses"), net=rep.get("net"))
+        db.commit()
+        sent += 1
     return sent
 
 

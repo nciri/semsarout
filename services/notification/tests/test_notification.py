@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -218,3 +219,89 @@ def test_le_super_admin_rejoue_les_taches_planifiees(monkeypatch):
     finally:
         app.dependency_overrides.clear()
     assert ran == [True]
+
+
+class _FakeDb:
+    def commit(self):
+        pass
+
+
+def _fake_crg(monkeypatch, drafts, reports, ack_status=200):
+    """Fait répondre `rental` (due-crg, due-crg-send, crg-sent) et journalise l'ordre des appels."""
+    import httpx
+
+    from app import recipients, scheduler
+
+    events = []
+
+    class _Resp:
+        def __init__(self, payload, status=200):
+            self._payload, self.status_code = payload, status
+
+        def json(self):
+            return self._payload
+
+    def fake_get(url, **kw):
+        if url.endswith("/due-crg"):
+            return _Resp({"drafts": drafts})
+        assert url.endswith("/due-crg-send")
+        return _Resp({"reports": reports})
+
+    def fake_post(url, **kw):
+        events.append(("crg-sent", url, kw.get("json")))
+        return _Resp({"ok": True}, ack_status)
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+    monkeypatch.setattr(httpx, "post", fake_post)
+    monkeypatch.setattr(recipients, "agency", lambda i: {"email": "agence@example.com", "name": "Atlas"})
+    monkeypatch.setattr(recipients, "client", lambda i: {"email": "proprio@example.com", "name": "Salma"})
+    monkeypatch.setattr(scheduler, "_try_send",
+                        lambda db, to, template, log_name, **ctx: events.append(("mail", to, template, ctx)))
+    return scheduler, events
+
+
+_REPORT = {"mandate_id": 3, "crg_id": 9, "landlord_client_id": 5, "period_label": "Septembre 2026",
+           "rent_collected": 6000, "fees": 480, "expenses": 1200, "net": 4320}
+
+
+def test_crg_n_avertit_l_agence_que_des_brouillons_nouveaux_et_n_ecrit_pas_au_proprio(monkeypatch):
+    scheduler, events = _fake_crg(monkeypatch, drafts=[
+        {"mandate_id": 3, "crg_id": 9, "agency_id": 4, "period_label": "Septembre 2026", "created": True},
+        {"mandate_id": 4, "crg_id": 10, "agency_id": 4, "period_label": "Septembre 2026", "created": False},
+    ], reports=[])
+    assert scheduler._job_crg_reports(_FakeDb()) == 0
+    assert [(e[0], e[1], e[2]) for e in events] == [("mail", "agence@example.com", "crg_draft.html")]
+
+
+def test_crg_marque_envoye_avant_d_ecrire_au_proprio(monkeypatch):
+    scheduler, events = _fake_crg(monkeypatch, drafts=[], reports=[_REPORT])
+    assert scheduler._job_crg_reports(_FakeDb()) == 1
+    assert [e[0] for e in events] == ["crg-sent", "mail"]
+    assert events[0][1].endswith("/internal/mandates/3/crg-sent") and events[0][2] == {"crg_id": 9}
+    assert events[1][1] == "proprio@example.com" and events[1][3]["expenses"] == 1200
+
+
+def test_crg_dont_le_marquage_echoue_ne_part_pas_et_se_voit_dans_les_logs(monkeypatch, caplog):
+    scheduler, events = _fake_crg(monkeypatch, drafts=[], reports=[_REPORT], ack_status=503)
+    assert scheduler._job_crg_reports(_FakeDb()) == 0
+    assert [e[0] for e in events] == ["crg-sent"]
+    assert "503" in caplog.text
+
+
+def test_crg_sans_email_proprietaire_n_est_ni_envoye_ni_marque(monkeypatch):
+    from app import recipients
+
+    scheduler, events = _fake_crg(monkeypatch, drafts=[], reports=[_REPORT])
+    monkeypatch.setattr(recipients, "client", lambda i: {"email": "", "name": "Salma"})
+    assert scheduler._job_crg_reports(_FakeDb()) == 0
+    assert events == []
+
+
+@pytest.mark.parametrize("expenses", [0, 1200])
+def test_gabarit_crg_affiche_les_depenses_et_reste_lisible_a_zero(expenses):
+    from app import render
+
+    _, html, _ = render.render_email("crg_report.html", name="Salma", period_label="Septembre 2026",
+                                     rent_collected=6000, fees=480, expenses=expenses, net=4320)
+    assert "Dépenses d" in html
+    assert html.index("Honoraires") < html.index("Dépenses") < html.index("Net reversé")
