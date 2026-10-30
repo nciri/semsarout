@@ -5,7 +5,7 @@ import api from '../../../services/api'
 import { useFormat } from '../../../utils/format'
 import { Alert, Chip, DetailColumns, IconAction } from '../components/kit'
 import { STATUS_TONES, statusHistory } from './model'
-import { RichText } from '../../../components/common/RichTextarea'
+import { richTextToPlain } from '../../../utils/richText'
 
 const K = 'crm.pipeline.leads'
 const fetchDuplicates = async (id) => (await api.get(`/backoffice/leads/${id}/duplicates`)).data
@@ -33,7 +33,18 @@ export default function LeadFiche({ lead, agents, onAssign }) {
       main={
         <div className="grid gap-5 sm:grid-cols-2">
           <Block title={t(`${K}.detail.message`)}>
-            <RichText html={lead.message} className="text-[13px] text-gray-700" emptyLabel={t(`${K}.detail.noMessage`)} />
+            {/* 🔴 Projeté en texte, et c'est une décision de sécurité, pas de mise en page.
+                `Lead.message` est le seul champ riche du produit dont l'auteur peut être
+                **anonyme** : les quatre formulaires de contact publics n'ont aucune
+                authentification. Assainir ne suffit pas — la liste blanche conserve
+                `<a href>`, et un lien d'hameçonnage est du HTML parfaitement valide. Rendu
+                ici, il serait cliquable dans le back-office, où un agent lui fait encore
+                plus confiance que dans sa boîte mail. La règle porte sur l'auteur, pas sur
+                le canal : le même email a été projeté en texte pour la même raison.
+                L'éditeur, lui, reste riche là où un agent rédige lui-même (`Leads.jsx`). */}
+            <p className="whitespace-pre-wrap text-[13px] text-gray-700">
+              {richTextToPlain(lead.message) || t(`${K}.detail.noMessage`)}
+            </p>
             {lead.notes && (
               <>
                 <h5 className="mt-2 text-xs text-gray-500">{t(`${K}.detail.internalNotes`)}</h5>

@@ -152,13 +152,29 @@ describe('Page Leads du back-office', () => {
     expect(container.innerHTML).not.toContain('&lt;strong&gt;')
   })
 
-  // La fiche dépliée, elle, est la surface qui rend la mise en forme.
-  it('rend la mise en forme du message dans la fiche depliee', async () => {
+  // 🔴 La fiche dépliée projette aussi le texte, et c'est une décision de sécurité.
+  // `Lead.message` peut être écrit par un **visiteur anonyme** : les quatre formulaires de
+  // contact publics n'ont aucune authentification. Assainir ne suffit pas — la liste blanche
+  // conserve `<a href>` — donc un lien d'hameçonnage rendu ici serait cliquable dans le
+  // back-office, où un agent lui fait encore plus confiance que dans sa boîte mail.
+  it('ne rend jamais un lien du message d\'un lead dans la fiche depliee', async () => {
+    listPayload = { ...listPayload, leads: [{ ...LEADS[0],
+      message: '<p>Votre <strong>facture</strong></p>'
+               + '<p><a href="https://evil.example">cliquez</a></p>' }] }
     const { container } = renderLeads()
     await screen.findByText('Hind Senhaji')
     await userEvent.click(screen.getAllByRole('button', { name: 'Déplier la fiche' })[0])
 
-    expect(container.querySelector('.rich-text strong')).not.toBeNull()
-    expect(container.querySelector('.rich-text strong').textContent).toBe('disponible')
+    const fiche = within(document.getElementById('lead-fiche-1'))
+    // Ni la balise, ni l'attribut, ni l'URL.
+    expect(container.querySelector('#lead-fiche-1 a[href*="evil"]')).toBeNull()
+    expect(container.innerHTML).not.toContain('evil.example')
+    expect(container.querySelector('#lead-fiche-1 strong')).toBeNull()
+    // Les mots visibles traversent : l'agent lit ce que le prospect a écrit.
+    expect(fiche.getByText(/Votre facture/)).toBeInTheDocument()
+    expect(fiche.getByText(/cliquez/)).toBeInTheDocument()
+    // Et aucune balise en clair non plus.
+    expect(container.innerHTML).not.toContain('&lt;a ')
+    expect(container.innerHTML).not.toContain('&lt;strong&gt;')
   })
 })
