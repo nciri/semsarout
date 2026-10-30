@@ -1,12 +1,34 @@
+from datetime import datetime
+from decimal import Decimal
+
 import httpx
 import pytest
+from fastapi.testclient import TestClient
 
-from app import depenses
-from app.main import _crg_aggregate
-from app.models import Lease, Mandate, RentPeriod
+from semsar_auth import Principal, get_principal
+
+from app import depenses, main
+from app.db import get_db
+from app.main import _crg_aggregate, app
+from app.models import CrgReport, Lease, Mandate, RentPeriod
+
+AGENCY = 4
+TOKEN = main.settings.internal_token
 
 
-def _mandat(db, property_id, fee_pct, agency_id=4):
+@pytest.fixture
+def client(db_session):
+    """Le back-office du CRG est réservé à l'agence du mandat (gating `rental`)."""
+    agent = Principal(sub="3", roles=["agent"], agency_id=AGENCY, is_superadmin=False,
+                      features=["rental"], claims={})
+    app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[get_principal] = lambda: agent
+    with TestClient(app) as c:
+        yield c
+    app.dependency_overrides.clear()
+
+
+def _mandat(db, property_id, fee_pct, agency_id=AGENCY):
     mnd = Mandate(reference=f"MND-{property_id}", agency_id=agency_id, property_id=property_id,
                   landlord_client_id=1, fee_percent=fee_pct, status="active")
     db.add(mnd)
@@ -131,10 +153,6 @@ def test_imputables_montant_illisible(monkeypatch, ligne):
 
 
 def test_due_crg_un_mandat_muet_n_arrete_pas_les_autres(db_session, monkeypatch):
-    from datetime import datetime
-
-    from app import main
-
     y, m = main._prev_period(datetime.utcnow())
     muet = _mandat(db_session, property_id=7, fee_pct=8)
     ok = _mandat(db_session, property_id=8, fee_pct=8)
@@ -152,6 +170,124 @@ def test_due_crg_un_mandat_muet_n_arrete_pas_les_autres(db_session, monkeypatch)
     monkeypatch.setattr(depenses, "imputables", _imputables)
     rep = main.internal_mandates_due_crg(x_internal_token=main.settings.internal_token,
                                          db=db_session)
-    assert [r["mandate_id"] for r in rep["reports"]] == [ok.id]
+    assert [r["mandate_id"] for r in rep["drafts"]] == [ok.id]
     assert [7] in vus and [9] not in vus  # le mandat sans loyer n'interroge pas directory
-    assert sans_loyer.id not in [r["mandate_id"] for r in rep["reports"]]
+    assert sans_loyer.id not in [r["mandate_id"] for r in rep["drafts"]]
+
+
+# --- Cycle brouillon → validé → envoyé ------------------------------------------------
+
+
+def _brouillon(client, db, monkeypatch, loyer, depenses_):
+    """Crée un mandat avec `loyer` encaissé sur la période due, puis le brouillon de CRG."""
+    y, m = main._prev_period(datetime.utcnow())
+    mnd = _mandat(db, property_id=7, fee_pct=8)
+    _loyer_encaisse(db, mnd, y, m, montant=loyer)
+    lignes = [{"id": i, "title": f"Intervention {i}", "cost_final": cout,
+               "completed_at": f"2026-09-{10 + n:02d}T00:00:00", "property_id": 7}
+              for n, (i, cout) in enumerate(depenses_)]
+    monkeypatch.setattr(depenses, "imputables",
+                        lambda ids, mode, agency_id, lease_id=None: lignes)
+    r = client.get("/internal/mandates/due-crg", headers={"x-internal-token": TOKEN})
+    return r.json()["drafts"][0]["crg_id"]
+
+
+def _mandat_id(db, crg_id):
+    return db.get(CrgReport, crg_id).mandate_id
+
+
+def test_le_crg_nait_brouillon_et_ne_part_pas_seul(client, db_session, monkeypatch):
+    mnd = _mandat(db_session, property_id=7, fee_pct=8)
+    y, m = main._prev_period(datetime.utcnow())
+    _loyer_encaisse(db_session, mnd, y, m, montant=6000)
+    monkeypatch.setattr(depenses, "imputables",
+                        lambda ids, mode, agency_id, lease_id=None: [])
+    r = client.get("/internal/mandates/due-crg", headers={"x-internal-token": TOKEN})
+    crg_id = r.json()["drafts"][0]["crg_id"]
+    assert db_session.get(CrgReport, crg_id).status == "draft"
+    # Tant qu'il n'est pas validé, rien n'est à envoyer.
+    assert client.get("/internal/mandates/due-crg-send",
+                      headers={"x-internal-token": TOKEN}).json()["reports"] == []
+
+
+def test_la_validation_ecarte_une_ligne_et_recalcule(client, db_session, monkeypatch):
+    # 6000 de loyer, 8 % d'honoraires, deux dépenses de 1200 et 300.
+    crg_id = _brouillon(client, db_session, monkeypatch, loyer=6000,
+                        depenses_=[(4, 1200), (5, 300)])
+    r = client.post(f"/backoffice/gestion-locative/crg/{crg_id}/validate",
+                    json={"excluded_work_order_ids": [5]})
+    assert r.status_code == 200
+    crg = db_session.get(CrgReport, crg_id)
+    assert crg.status == "validated" and crg.expenses == Decimal("1200")
+    assert crg.net == Decimal("4320")
+    envoyables = client.get("/internal/mandates/due-crg-send",
+                            headers={"x-internal-token": TOKEN}).json()["reports"]
+    assert [(e["crg_id"], e["expenses"], e["net"]) for e in envoyables] == [(crg_id, 1200.0, 4320.0)]
+
+
+def test_deux_envois_concurrents_n_estampillent_qu_une_fois(client, db_session, monkeypatch):
+    crg_id = _brouillon(client, db_session, monkeypatch, loyer=6000, depenses_=[(4, 1200)])
+    client.post(f"/backoffice/gestion-locative/crg/{crg_id}/validate", json={})
+    appels = []
+    monkeypatch.setattr(depenses, "estampiller",
+                        lambda ids, ref, agency_id: appels.append((tuple(ids), ref)) or len(ids))
+    h = {"x-internal-token": TOKEN}
+    mandate_id = _mandat_id(db_session, crg_id)
+    for _ in range(2):
+        client.post(f"/internal/mandates/{mandate_id}/crg-sent",
+                    json={"crg_id": crg_id}, headers=h)
+    assert appels == [((4,), f"crg:{crg_id}")]
+    assert db_session.get(CrgReport, crg_id).status == "sent"
+
+
+def test_un_estampillage_qui_echoue_laisse_le_crg_a_renvoyer(client, db_session, monkeypatch):
+    crg_id = _brouillon(client, db_session, monkeypatch, loyer=6000, depenses_=[(4, 1200)])
+    client.post(f"/backoffice/gestion-locative/crg/{crg_id}/validate", json={})
+
+    def _tombe(ids, ref, agency_id):
+        raise depenses.DepensesIndisponibles("directory muet")
+
+    monkeypatch.setattr(depenses, "estampiller", _tombe)
+    mandate_id = _mandat_id(db_session, crg_id)
+    r = client.post(f"/internal/mandates/{mandate_id}/crg-sent", json={"crg_id": crg_id},
+                    headers={"x-internal-token": TOKEN})
+    assert r.status_code == 503
+    crg = db_session.get(CrgReport, crg_id)
+    assert crg.status == "validated" and crg.sent_at is None
+
+    # Un estampillage partiel non plus : pas de CRG envoyé avec une dépense non marquée.
+    monkeypatch.setattr(depenses, "estampiller", lambda ids, ref, agency_id: 0)
+    assert client.post(f"/internal/mandates/{mandate_id}/crg-sent", json={"crg_id": crg_id},
+                       headers={"x-internal-token": TOKEN}).status_code == 503
+    assert db_session.get(CrgReport, crg_id).status == "validated"
+
+
+def test_le_net_ne_devient_jamais_negatif_et_la_plus_vieille_depense_passe_d_abord(
+        db_session, monkeypatch):
+    mnd = _mandat(db_session, property_id=7, fee_pct=8)
+    # 500 de loyer, 40 d'honoraires : 460 disponibles pour les dépenses.
+    _loyer_encaisse(db_session, mnd, 2026, 9, montant=500)
+    lignes = [{"id": 5, "title": "Peinture", "cost_final": 300, "trade": "peintre",
+               "completed_at": "2026-09-20T00:00:00", "property_id": 7},
+              {"id": 4, "title": "Chauffe-eau", "cost_final": 460, "trade": "plombier",
+               "completed_at": "2026-09-02T00:00:00", "property_id": 7}]
+    monkeypatch.setattr(depenses, "imputables",
+                        lambda ids, mode, agency_id, lease_id=None: lignes)
+    agg = _crg_aggregate(db_session, mnd, 2026, 9)
+    # La dépense la plus ancienne absorbe exactement le solde ; la seconde attend le mois suivant.
+    assert agg["expenses"] == 460 and agg["net"] == 0
+    assert agg["expense_lines"] == [{"id": 4, "title": "Chauffe-eau", "cost_final": 460,
+                                     "completed_at": "2026-09-02T00:00:00"}]
+
+
+def test_la_liste_du_crg_montre_le_statut_et_les_depenses(client, db_session, monkeypatch):
+    crg_id = _brouillon(client, db_session, monkeypatch, loyer=6000, depenses_=[(4, 1200)])
+    mandate_id = _mandat_id(db_session, crg_id)
+    ligne = client.get(f"/backoffice/gestion-locative/mandates/{mandate_id}/crg").json()["reports"][0]
+    assert ligne["status"] == "draft" and ligne["expenses"] == 1200.0
+    assert [l["id"] for l in ligne["expense_lines"]] == [4]
+
+    client.post(f"/backoffice/gestion-locative/crg/{crg_id}/validate", json={})
+    valide = client.get(f"/backoffice/gestion-locative/mandates/{mandate_id}/crg").json()["reports"][0]
+    # Validé, les lignes ne sont plus modifiables : seul le brouillon les expose.
+    assert valide["status"] == "validated" and "expense_lines" not in valide

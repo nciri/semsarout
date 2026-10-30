@@ -218,6 +218,7 @@ def render_crg_pdf(crg, landlord_name: str, mandate_reference: str) -> bytes:
     info = ParagraphStyle("Info", parent=styles["Normal"], fontSize=10, leading=16)
     collected = float(crg.rent_collected or 0)
     fees = float(crg.fees or 0)
+    expenses = float(crg.expenses or 0)
     net = float(crg.net or 0)
     story = [
         Paragraph("SemsarOut", head), Paragraph("www.semsarout.com", styles["Normal"]), Spacer(1, 20),
@@ -228,6 +229,7 @@ def render_crg_pdf(crg, landlord_name: str, mandate_reference: str) -> bytes:
         Spacer(1, 12),
         Paragraph(f"Loyers encaissés : {collected:,.2f} Đh".replace(",", " "), info),
         Paragraph(f"Honoraires de gestion : {fees:,.2f} Đh".replace(",", " "), info),
+        Paragraph(f"Dépenses d'intervention : {expenses:,.2f} Đh".replace(",", " "), info),
         Paragraph(f"<b>Net reversé : {net:,.2f} Đh</b>".replace(",", " "), info),
     ]
     doc.build(story)

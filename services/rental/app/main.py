@@ -268,8 +268,31 @@ def internal_mandates_due_crg(x_internal_token: str = Header(default=""),
             continue
         if agg["rent_collected"] <= 0:
             continue
-        out.append({"mandate_id": mnd.id, "landlord_client_id": mnd.landlord_client_id,
-                    "period_label": f"{_MONTHS_FR[m]} {y}", "year": y, "month": m, **agg})
+        crg = CrgReport(mandate_id=mnd.id, agency_id=mnd.agency_id,
+                        period_label=f"{_MONTHS_FR[m]} {y}", year=y, month=m,
+                        rent_collected=agg["rent_collected"], fees=agg["fees"],
+                        expenses=agg["expenses"], net=agg["net"],
+                        expense_lines=json.dumps(agg["expense_lines"]), status="draft")
+        db.add(crg)
+        db.commit()
+        out.append({"mandate_id": mnd.id, "crg_id": crg.id, "agency_id": mnd.agency_id,
+                    "period_label": crg.period_label})
+    return {"drafts": out}
+
+
+@app.get("/internal/mandates/due-crg-send", include_in_schema=False)
+def internal_mandates_due_crg_send(x_internal_token: str = Header(default=""),
+                                   db: Session = Depends(get_db)):
+    """Brouillons validés par un humain, pas encore envoyés au propriétaire."""
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    out = []
+    for crg in db.query(CrgReport).filter(CrgReport.status == "validated").all():
+        mnd = db.get(Mandate, crg.mandate_id)
+        out.append({"mandate_id": crg.mandate_id, "crg_id": crg.id,
+                    "landlord_client_id": mnd.landlord_client_id if mnd else None,
+                    "period_label": crg.period_label, "rent_collected": num(crg.rent_collected),
+                    "fees": num(crg.fees), "expenses": num(crg.expenses), "net": num(crg.net)})
     return {"reports": out}
 
 
@@ -831,32 +854,116 @@ def _crg_aggregate(db, mandate, y: int, m: int) -> dict:
         # Sans loyer, pas de CRG (les dépenses attendent le prochain mois avec loyer) : inutile
         # d'interroger directory pour un mandat qui sera écarté.
         return {"rent_collected": 0.0, "fees": 0.0, "expenses": 0.0, "expense_lines": [], "net": 0.0}
-    lignes = depenses.imputables([mandate.property_id], "crg_expense", mandate.agency_id)
-    expenses = round(sum(float(l["cost_final"]) for l in lignes), 2)
+    lignes, expenses = _retenir_depenses(
+        depenses.imputables([mandate.property_id], "crg_expense", mandate.agency_id),
+        round(collected - fees, 2))
     return {"rent_collected": round(collected, 2), "fees": fees, "expenses": expenses,
             "expense_lines": lignes, "net": round(collected - fees - expenses, 2)}
+
+
+def _retenir_depenses(lignes: list[dict], plafond: float) -> tuple[list[dict], float]:
+    """Retient, de la plus ancienne à la plus récente, les dépenses qui tiennent dans `plafond`.
+
+    Décision B de la spec : pas de net négatif. Une dépense qui ne tient pas est simplement
+    absente de ce CRG — non estampillée, elle reparaît au prochain CRG où un loyer rentre.
+    """
+    retenues: list[dict] = []
+    total = 0.0
+    for ligne in sorted(lignes, key=lambda l: l.get("completed_at") or ""):
+        cout = round(float(ligne["cost_final"]), 2)
+        if round(total + cout, 2) > plafond:
+            continue
+        total = round(total + cout, 2)
+        retenues.append({cle: ligne.get(cle)
+                         for cle in ("id", "title", "cost_final", "completed_at")})
+    return retenues, total
+
+
+def _lignes_depenses(crg: CrgReport) -> list[dict]:
+    return json.loads(crg.expense_lines or "[]")
 
 
 @app.post("/internal/mandates/{mandate_id}/crg-sent", include_in_schema=False)
 async def internal_mandate_crg_sent(mandate_id: int, request: Request,
                                     x_internal_token: str = Header(default=""),
                                     db: Session = Depends(get_db)):
+    """Marque `sent` un CRG validé — après avoir estampillé ses dépenses chez directory.
+
+    L'ordre est la garantie d'argent : une dépense non estampillée resterait imputable et
+    serait portée une seconde fois le mois suivant. Si l'estampille échoue, le CRG reste
+    `validated` et repasse au prochain tour.
+    """
     if x_internal_token != settings.internal_token:
         return err("Forbidden", 403)
-    mnd = db.get(Mandate, mandate_id)
-    if mnd is None:
-        return {"ok": True}
     data = await json_body(request)
-    y, m = _prev_period(datetime.utcnow())
-    if not db.query(CrgReport).filter(CrgReport.mandate_id == mnd.id, CrgReport.year == y,
-                                      CrgReport.month == m).first():
-        db.add(CrgReport(mandate_id=mnd.id, agency_id=mnd.agency_id,
-                         period_label=f"{_MONTHS_FR[m]} {y}", year=y, month=m,
-                         rent_collected=data.get("rent_collected", 0), fees=data.get("fees", 0),
-                         net=data.get("net", 0), expenses=data.get("expenses", 0),
-                         status="sent", sent_at=datetime.utcnow()))
-        db.commit()
+    crg_id = data.get("crg_id")
+    # `True` est un int en Python : sans ce garde, {"crg_id": true} désignerait le CRG n° 1.
+    crg = db.get(CrgReport, crg_id) if type(crg_id) is int else None
+    if crg is None or crg.mandate_id != mandate_id:
+        return err("CRG introuvable.", 404)
+    if crg.status == "sent":
+        return {"ok": True}
+    if crg.status != "validated":
+        return err("Ce CRG n'est pas validé.", 409)
+    ids = [l["id"] for l in _lignes_depenses(crg) if l.get("id") is not None]
+    if ids:
+        try:
+            estampillees = depenses.estampiller(ids, f"crg:{crg.id}", crg.agency_id)
+        except depenses.DepensesIndisponibles:
+            logger.warning("CRG %s non envoyé : estampillage des dépenses impossible", crg.id)
+            return err("Dépenses non estampillées, CRG non envoyé.", 503)
+        if estampillees != len(ids):
+            logger.warning("CRG %s non envoyé : %s dépenses estampillées sur %s",
+                           crg.id, estampillees, len(ids))
+            return err("Dépenses non estampillées, CRG non envoyé.", 503)
+    # Transition atomique : deux appels simultanés ont tous deux estampillé (directory est
+    # idempotent, un seul a marqué des lignes), un seul pose `sent_at`.
+    envoye = (db.query(CrgReport)
+              .filter(CrgReport.id == crg.id, CrgReport.status == "validated")
+              .update({"status": "sent", "sent_at": datetime.utcnow()},
+                      synchronize_session="fetch"))
+    db.commit()
+    if envoye != 1:
+        logger.info("CRG %s déjà envoyé par un autre appel", crg.id)
     return {"ok": True}
+
+
+@app.post("/backoffice/gestion-locative/crg/{crg_id}/validate")
+async def validate_crg(crg_id: int, request: Request,
+                       principal: Principal = Depends(get_principal),
+                       db: Session = Depends(get_db)):
+    """Validation humaine du brouillon : le CRG ne part jamais sans ce passage."""
+    if (g := _gate(principal)) is not None:
+        return g
+    crg = db.get(CrgReport, crg_id)
+    if crg is None or crg.agency_id != principal.agency_id:
+        return err("CRG introuvable.", 404)
+    if crg.status != "draft":
+        return err("Ce CRG n'est plus un brouillon.", 409)
+    data = await json_body(request)
+    try:
+        exclus = {int(i) for i in (data.get("excluded_work_order_ids") or [])}
+    except (TypeError, ValueError):
+        return err("Dépenses à écarter invalides.", 400)
+    lignes = [l for l in _lignes_depenses(crg) if l.get("id") not in exclus]
+    expenses = round(sum(float(l["cost_final"]) for l in lignes), 2)
+    crg.expense_lines = json.dumps(lignes)
+    crg.expenses = expenses
+    crg.net = round(float(crg.rent_collected or 0) - float(crg.fees or 0) - expenses, 2)
+    crg.status = "validated"
+    db.commit()
+    return _crg_dict(crg)
+
+
+def _crg_dict(c: CrgReport) -> dict:
+    out = {"id": c.id, "period_label": c.period_label, "year": c.year, "month": c.month,
+           "rent_collected": num(c.rent_collected), "fees": num(c.fees),
+           "expenses": num(c.expenses), "net": num(c.net), "status": c.status,
+           "sent_at": iso(c.sent_at)}
+    if c.status == "draft":
+        # Seul un brouillon se modifie : ailleurs les lignes n'ont plus à être montrées.
+        out["expense_lines"] = _lignes_depenses(c)
+    return out
 
 
 @app.get("/backoffice/gestion-locative/mandates/{mandate_id}/crg")
@@ -869,10 +976,7 @@ def list_crg(mandate_id: int, principal: Principal = Depends(get_principal),
         return err("Mandat introuvable.", 404)
     q = (db.query(CrgReport).filter(CrgReport.mandate_id == mandate_id)
          .order_by(CrgReport.year.desc(), CrgReport.month.desc()))
-    return {"reports": [{"id": c.id, "period_label": c.period_label, "year": c.year,
-                         "month": c.month, "rent_collected": num(c.rent_collected),
-                         "fees": num(c.fees), "net": num(c.net), "sent_at": iso(c.sent_at)}
-                        for c in q.all()]}
+    return {"reports": [_crg_dict(c) for c in q.all()]}
 
 
 @app.get("/backoffice/gestion-locative/mandates/{mandate_id}/crg/{crg_id}.pdf")
