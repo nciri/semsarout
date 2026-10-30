@@ -402,5 +402,10 @@
     "subscription": {
       "description": "Abonnement agence"
     }
+  },
+  "confirm": {
+    "title": "Confirmer l'action",
+    "confirm": "Confirmer",
+    "cancel": "Annuler"
   }
 }

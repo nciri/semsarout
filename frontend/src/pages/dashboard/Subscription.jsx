@@ -17,6 +17,7 @@ import { CONTACT } from '../../constants/contact'
 import { useFormat } from '../../utils/format'
 import { INDIVIDUAL_PLANS, AGENCY_PLANS } from './subscriptionPlans'
 import BillingStatusBanner from '../../components/billing/BillingStatusBanner'
+import { useConfirm } from '../../components/common/confirm'
 
 // jsPDF n'embarque que des polices latines (helvetica) : un libellé arabe n'y a aucun glyphe et
 // sort vide. La facture est donc toujours émise en français, quelle que soit la langue choisie.
@@ -476,6 +477,7 @@ function AddPaymentModal({ isOpen, onClose, onAdd, type }) {
 
 export default function Subscription() {
   const { t } = useTranslation(['dashboard', 'common'])
+  const ask = useConfirm()
   const { fmtDate } = useFormat()
   const { user } = useAuthStore()
   const queryClient = useQueryClient()
@@ -576,11 +578,10 @@ export default function Subscription() {
     }
   )
 
-  const handleCancelSubscription = () => {
-    if (window.confirm(t('dashboard:subscription.cancelConfirm'))) {
-      cancelMutation.mutate()
-    }
-  }
+  const handleCancelSubscription = () => ask({
+    message: t('dashboard:subscription.cancelConfirm'),
+    onConfirm: () => cancelMutation.mutate(),
+  })
 
   // Add payment method mutation
   const addPaymentMutation = useMutation(
@@ -731,15 +732,16 @@ export default function Subscription() {
     }
   }
 
-  const handleDeletePayment = async (id) => {
-    if (window.confirm(t('dashboard:subscription.paymentMethods.deleteConfirm'))) {
+  const handleDeletePayment = (id) => ask({
+    message: t('dashboard:subscription.paymentMethods.deleteConfirm'),
+    onConfirm: async () => {
       try {
         await deletePaymentMutation.mutateAsync(id)
       } catch (error) {
         console.error('Error deleting payment method:', error)
       }
-    }
-  }
+    },
+  })
 
   const openPaymentModal = (type) => {
     setPaymentModalType(type)

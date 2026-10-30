@@ -12,6 +12,7 @@ import VisitRow, { StatusChip } from './visits/VisitRow'
 import useDayLabel from './visits/useDayLabel'
 import VisitForm from './visits/VisitForm'
 import { attendance, byDay, daysOf, localIso, rangeOf, shift, sameDay } from './visits/model'
+import { useConfirm } from '../../components/common/confirm'
 
 const P = 'crm.pipeline.visits'
 const STATUSES = ['scheduled', 'confirmed', 'completed', 'cancelled', 'no_show']
@@ -91,6 +92,7 @@ function Summary({ s, now }) {
 
 export default function BackofficeVisits() {
   const { t } = useTranslation('backoffice', { keyPrefix: P })
+  const ask = useConfirm()
   const { fmtDate } = useFormat()
   const navigate = useNavigate()
   const creating = Boolean(useMatch('/backoffice/visites/nouvelle'))
@@ -123,13 +125,19 @@ export default function BackofficeVisits() {
     onError: fail,
   })
 
+  const run = (kind, visit, data) => act.mutateAsync({ kind, visit, data }).then(() => {
+    if (kind === 'delete') { toast.success(t('toast.deleted')); setOpenKey(null) }
+    return true
+  }, (e) => { fail(e); return false })
+
   const onAction = (kind, visit, data) => {
     if (kind === 'edit') { setEditing(visit); return Promise.resolve(false) }
-    if (kind === 'delete' && !window.confirm(t('actions.deleteConfirm'))) return Promise.resolve(false)
-    return act.mutateAsync({ kind, visit, data }).then(() => {
-      if (kind === 'delete') { toast.success(t('toast.deleted')); setOpenKey(null) }
-      return true
-    }, (e) => { fail(e); return false })
+    // La suppression repart de la fenêtre de confirmation : l'appelant n'attend donc rien.
+    if (kind === 'delete') {
+      ask({ message: t('actions.deleteConfirm'), onConfirm: () => run(kind, visit, data) })
+      return Promise.resolve(false)
+    }
+    return run(kind, visit, data)
   }
 
   const formOpen = creating || Boolean(editing)

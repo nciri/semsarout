@@ -19,6 +19,7 @@ import useAuthStore from '../../../store/authStore'
 import StayManagerWordmark from '../../../components/common/StayManagerWordmark'
 import DirIcon from '../../../components/common/DirIcon'
 import { useFormat } from '../../../utils/format'
+import { useConfirm } from '../../../components/common/confirm'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
 
@@ -34,6 +35,7 @@ const SM_COLORS = {
 
 export default function StayManager() {
   const { t } = useTranslation(['dashboard', 'common'])
+  const ask = useConfirm()
   const { accessToken: token } = useAuthStore()
   const { fmtDateTime } = useFormat()
   const [loading, setLoading] = useState(true)
@@ -144,11 +146,9 @@ export default function StayManager() {
     }
   }
 
-  const handleDisconnect = async () => {
-    if (!confirm(t('dashboard:stayManager.overview.confirmDisconnect'))) {
-      return
-    }
-
+  const handleDisconnect = () => ask({
+    message: t('dashboard:stayManager.overview.confirmDisconnect'),
+    onConfirm: async () => {
     try {
       const response = await fetch(`${API_URL}/integrations/staymanager/disconnect`, {
         method: 'POST',
@@ -166,7 +166,8 @@ export default function StayManager() {
     } catch (err) {
       setError(t('dashboard:stayManager.overview.errors.disconnectFailed'))
     }
-  }
+    },
+  })
 
   const handleUpdateSettings = async () => {
     try {

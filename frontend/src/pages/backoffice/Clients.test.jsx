@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from 'react-query'
 import i18n from '../../i18n'
 import api from '../../services/api'
 import Clients from './Clients'
+import ConfirmProvider from '../../components/common/ConfirmProvider'
 
 const iso = (days) => new Date(Date.now() + days * 864e5).toISOString()
 
@@ -34,7 +35,11 @@ vi.mock('../../services/api', () => ({ default: { get: vi.fn(), delete: vi.fn(as
 
 function renderClients() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<QueryClientProvider client={qc}><MemoryRouter><Clients /></MemoryRouter></QueryClientProvider>)
+  return render(
+    <QueryClientProvider client={qc}>
+      <MemoryRouter><ConfirmProvider><Clients /></ConfirmProvider></MemoryRouter>
+    </QueryClientProvider>,
+  )
 }
 
 const rowOf = (name) => screen.getByRole('button', { name: `Développer la fiche de ${name}` }).closest('.grid')
@@ -100,11 +105,12 @@ describe('Page Clients du back-office', () => {
 
   it('supprime un client après confirmation', async () => {
     const user = userEvent.setup()
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     renderClients()
     const detail = await screen.findByRole('region', { name: 'Aicha Tazi' })
     await user.click(within(detail).getByRole('button', { name: 'Supprimer le client' }))
-    expect(window.confirm).toHaveBeenCalled()
+    // La confirmation est une fenêtre du produit, pas la boîte du navigateur.
+    expect(api.delete).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Confirmer' }))
     expect(api.delete).toHaveBeenCalledWith('/backoffice/clients/1')
   })
 })

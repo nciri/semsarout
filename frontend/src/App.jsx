@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom'
+import ConfirmProvider from './components/common/ConfirmProvider'
 import { applyDirection } from './i18n/rtl'
 import Layout from './components/layout/Layout'
 import PrivateRoute from './components/auth/PrivateRoute'
@@ -145,7 +146,8 @@ function App() {
   }, [i18n])
 
   return (
-    <>
+    // Un seul porteur de la fenêtre de confirmation : les écrans n'appellent que `ask(...)`.
+    <ConfirmProvider>
       <ImpersonationBanner />
       {/* La barriere d'erreur enveloppe le Suspense, jamais l'inverse : le
           Suspense rattrape la SUSPENSION d'un fragment, pas le REJET de son
@@ -346,7 +348,7 @@ function App() {
       </Routes>
       </Suspense>
       </RouteErrorBoundary>
-    </>
+    </ConfirmProvider>
   )
 }
 

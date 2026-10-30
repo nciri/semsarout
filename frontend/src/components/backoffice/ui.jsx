@@ -215,19 +215,24 @@ export const DANGER_BTN = 'inline-flex items-center justify-center gap-2 px-4 py
  */
 export function ConfirmDialog({
   open, title, message, confirmLabel, cancelLabel, onConfirm, onCancel, busy = false,
+  tone = 'danger',
 }) {
+  const { t } = useTranslation(['common'])
   return (
-    <Modal open={open} onClose={onCancel} title={title} maxWidth="max-w-md"
+    <Modal open={open} onClose={onCancel} title={title || t('common:confirm.title')} maxWidth="max-w-md"
       footer={(
         <>
-          <button onClick={onCancel} className={SECONDARY_BTN}>{cancelLabel}</button>
-          <button onClick={onConfirm} disabled={busy} className={DANGER_BTN}>{confirmLabel}</button>
+          <button onClick={onCancel} className={SECONDARY_BTN}>{cancelLabel || t('common:confirm.cancel')}</button>
+          <button onClick={onConfirm} disabled={busy} className={tone === 'danger' ? DANGER_BTN : PRIMARY_BTN}>
+            {confirmLabel || t('common:confirm.confirm')}
+          </button>
         </>
       )}>
       <p className="text-sm text-gray-600">{message}</p>
     </Modal>
   )
 }
+
 
 export function GatedNotice({ icon: Icon, title, message }) {
   const { t } = useTranslation(['backoffice', 'common'])

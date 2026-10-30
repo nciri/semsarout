@@ -20,6 +20,7 @@ import {
 import PropertyDetail from './biens/PropertyDetail'
 import { B, useDisclosure, useFullMoney, usePlacement } from './biens/hooks'
 import { DetailPanel, ItemActions, SignalChips, StatusChip } from './biens/shared'
+import { useConfirm } from '../../components/common/confirm'
 
 const fetchInsights = async () => (await api.get('/backoffice/properties/insights')).data
 // Même clé et même requête que la sidebar et le tableau de bord : react-query partage la réponse.
@@ -183,6 +184,7 @@ function Overview({ ov }) {
 
 export default function BackofficeProperties() {
   const { t } = useTranslation('backoffice')
+  const ask = useConfirm()
   const tb = (k, o) => t(`${B}.${k}`, o)
   const queryClient = useQueryClient()
   const now = useMemo(() => new Date(), [])
@@ -226,9 +228,10 @@ export default function BackofficeProperties() {
     },
     onError: () => toast.error(tb('toast.error')),
   })
-  const handleDelete = (p) => {
-    if (window.confirm(t('crm.properties.list.confirmDelete', { title: p.title }))) deleteMutation.mutate(p.id)
-  }
+  const handleDelete = (p) => ask({
+    message: t('crm.properties.list.confirmDelete', { title: p.title }),
+    onConfirm: () => deleteMutation.mutate(p.id),
+  })
   const setStatus = (p, status) => statusMutation.mutate({ id: p.id, status, title: p.title })
 
   const ov = overview(rows, ctx)

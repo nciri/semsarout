@@ -21,6 +21,7 @@ import ReuseLevelDialog from '../../components/design/ReuseLevelDialog'
 import EditorActionsMenu from '../../components/design/EditorActionsMenu'
 import Design3dGate from '../../components/design/Design3dGate'
 import RedCartouche from '../../components/common/RedCartouche'
+import { useConfirm } from '../../components/common/confirm'
 
 /**
  * Éditeur de plan 2D, hors-ligne d'abord.
@@ -47,6 +48,7 @@ const snapshotOf = (levelId, form, geometry) =>
 
 export default function DesignEditor() {
   const { t } = useTranslation(['dashboard'])
+  const ask = useConfirm()
   const { projectId } = useParams()
   const navigate = useNavigate()
   const hasFeature = useAuthStore((s) => s.hasFeature)
@@ -614,15 +616,20 @@ export default function DesignEditor() {
     // `REPLACE_GEOMETRY` efface aussi le brouillon (`draft: null`) — sans ce test,
     // ce tracé non finalisé disparaîtrait sans un mot, exactement la perte de
     // travail que ce chantier interdit.
-    if ((!local.isLevelEmpty(live) || state.draft) && !window.confirm(t('dashboard:designEditor.reuse.confirm'))) {
-      return
-    }
     // Pas de `wallHeightM` ici : le réducteur ne tient que la géométrie, et la
     // hauteur sous plafond vit dans `form` — la passer serait une charge utile
     // morte, qui laisserait croire que le réducteur s'en occupe.
-    dispatch({ type: 'REPLACE_GEOMETRY', geometry: copyGeometry(level.geometry || EMPTY_GEOMETRY) })
-    setForm((f) => ({ ...f, wall_height_m: Number(level.wall_height_m) || f.wall_height_m }))
-    setReuseOpen(false)
+    const replace = () => {
+      dispatch({ type: 'REPLACE_GEOMETRY', geometry: copyGeometry(level.geometry || EMPTY_GEOMETRY) })
+      setForm((f) => ({ ...f, wall_height_m: Number(level.wall_height_m) || f.wall_height_m }))
+      setReuseOpen(false)
+    }
+    if (!local.isLevelEmpty(live) || state.draft) {
+      // Remplacer n'est pas détruire : la fenêtre demande, sans la teinte d'alerte.
+      ask({ message: t('dashboard:designEditor.reuse.confirm'), tone: 'primary', onConfirm: replace })
+      return
+    }
+    replace()
   }
 
   // --- clavier (en plus des boutons, toujours visibles) -------------------
@@ -655,11 +662,11 @@ export default function DesignEditor() {
     [state.geometry, form.wall_height_m],
   )
   const onProblemSelect = useCallback((selection) => dispatch({ type: 'SELECT', selection }), [dispatch])
-  const onProblemRepair = useCallback(() => {
-    if (window.confirm(t('dashboard:designEditor.problems.repairConfirm'))) {
-      dispatch({ type: 'REPAIR_GEOMETRY' })
-    }
-  }, [dispatch, t])
+  const onProblemRepair = useCallback(() => ask({
+    message: t('dashboard:designEditor.problems.repairConfirm'),
+    tone: 'primary',
+    onConfirm: () => dispatch({ type: 'REPAIR_GEOMETRY' }),
+  }), [ask, dispatch, t])
   const currentLevel = levels.find((l) => l.id === levelId)
 
   const toolbar = (

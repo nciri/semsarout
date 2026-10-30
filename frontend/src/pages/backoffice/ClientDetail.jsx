@@ -11,6 +11,7 @@ import BuyerDossier from './clients/BuyerDossier'
 import { StatusChip } from './clients/ui'
 import { P, useFicheSub } from './clients/labels'
 import { buildDossiers } from './clients/model'
+import { useConfirm } from '../../components/common/confirm'
 
 const BackIcon = ({ className }) => <DirIcon icon={FiArrowLeft} className={className} />
 
@@ -18,6 +19,7 @@ const get = async (url) => (await api.get(url)).data
 
 export default function BackofficeClientDetail() {
   const { t } = useTranslation('backoffice')
+  const ask = useConfirm()
   const { id } = useParams()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -51,9 +53,10 @@ export default function BackofficeClientDetail() {
 
   const transactions = txData?.transactions || []
   const [d] = buildDossiers({ clients: [client], summary, transactions, now })
-  const handleDelete = (c) => {
-    if (window.confirm(t(`${P}.confirmDelete`, { name: `${c.first_name || ''} ${c.last_name || ''}`.trim() }))) deleteMutation.mutate()
-  }
+  const handleDelete = (c) => ask({
+    message: t(`${P}.confirmDelete`, { name: `${c.first_name || ''} ${c.last_name || ''}`.trim() }),
+    onConfirm: () => deleteMutation.mutate(),
+  })
 
   return (
     <div className="mx-auto grid w-full max-w-[1360px] gap-5">

@@ -13,6 +13,7 @@ import SpecFields from '../../components/common/SpecFields'
 import AddressAutocomplete from '../../components/common/AddressAutocomplete'
 import { TYPOLOGY_OPTIONS, unitTypesForTypology, DETAIL_SECTIONS, UNIT_SPEC_FIELDS, UNIT_HIDE_ROOMS } from './programSpecsConfig'
 import i18n from '../../i18n'
+import { useConfirm } from '../../components/common/confirm'
 
 // Route through the shared axios instance: it reads accessToken from
 // auth-storage and auto-refreshes on 401, avoiding the stale-token desync that
@@ -240,6 +241,7 @@ function UnitForm({ unit, onSave, onCancel, isNew = false, allowedTypes }) {
 
 export default function DashboardProgramForm() {
   const { t } = useTranslation(['dashboard', 'common'])
+  const ask = useConfirm()
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -421,15 +423,16 @@ export default function DashboardProgramForm() {
     }
   }
 
-  const handleDeleteUnit = async (unitId) => {
-    if (window.confirm(t('dashboard:programForm.confirms.deleteUnit'))) {
+  const handleDeleteUnit = (unitId) => ask({
+    message: t('dashboard:programForm.confirms.deleteUnit'),
+    onConfirm: async () => {
       try {
         await deleteUnitMutation.mutateAsync({ programId, unitId })
       } catch (err) {
         setError(err.message)
       }
-    }
-  }
+    },
+  })
 
   const handleAddImage = async () => {
     if (!newImageUrl.trim()) return
@@ -448,15 +451,16 @@ export default function DashboardProgramForm() {
     }
   }
 
-  const handleDeleteImage = async (imageId) => {
-    if (window.confirm(t('dashboard:programForm.confirms.deleteImage'))) {
+  const handleDeleteImage = (imageId) => ask({
+    message: t('dashboard:programForm.confirms.deleteImage'),
+    onConfirm: async () => {
       try {
         await deleteImageMutation.mutateAsync({ programId, imageId })
       } catch (err) {
         setError(err.message)
       }
-    }
-  }
+    },
+  })
 
   const handlePublish = async () => {
     if (!programId) {

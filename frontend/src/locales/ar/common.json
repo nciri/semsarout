@@ -402,5 +402,10 @@
     "subscription": {
       "description": "اشتراك وكالة"
     }
+  },
+  "confirm": {
+    "title": "تأكيد الإجراء",
+    "confirm": "تأكيد",
+    "cancel": "إلغاء"
   }
 }

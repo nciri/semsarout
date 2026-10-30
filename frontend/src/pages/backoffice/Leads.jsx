@@ -13,6 +13,7 @@ import { SOURCE_COLORS, agingTone, daysSince } from './dashboard/model'
 import { NEXT_STATUS, STATUSES, STATUS_TONES, isOpen } from './leads/model'
 import Summary from './leads/Summary'
 import LeadFiche from './leads/LeadFiche'
+import { useConfirm } from '../../components/common/confirm'
 
 const K = 'crm.pipeline.leads'
 const PER_PAGE = 20
@@ -113,6 +114,7 @@ const selectCls = 'rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-[
 
 export default function BackofficeLeads() {
   const { t } = useTranslation(['backoffice', 'common'])
+  const ask = useConfirm()
   const { fmtDate } = useFormat()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
@@ -172,16 +174,18 @@ export default function BackofficeLeads() {
     const message = lead.status === 'qualified'
       ? t(`${K}.confirm.convert`, { name: displayName(lead) })
       : t(`${K}.confirm.markStatus`, { name: displayName(lead), status: statusLabel(nextStatus).toLowerCase() })
-    if (!window.confirm(message)) return
-    if (lead.status === 'qualified') convertMutation.mutate(lead.id)
-    else updateMutation.mutate({ id: lead.id, data: { status: nextStatus } })
+    ask({
+      message,
+      onConfirm: () => (lead.status === 'qualified'
+        ? convertMutation.mutate(lead.id)
+        : updateMutation.mutate({ id: lead.id, data: { status: nextStatus } })),
+    })
   }
 
-  const handleMarkLost = (lead) => {
-    if (window.confirm(t(`${K}.confirm.lost`, { name: displayName(lead) }))) {
-      updateMutation.mutate({ id: lead.id, data: { status: 'lost' } })
-    }
-  }
+  const handleMarkLost = (lead) => ask({
+    message: t(`${K}.confirm.lost`, { name: displayName(lead) }),
+    onConfirm: () => updateMutation.mutate({ id: lead.id, data: { status: 'lost' } }),
+  })
 
   const handleSort = (field) => setSort((prev) => ({
     field, order: prev.field === field && prev.order === 'asc' ? 'desc' : 'asc',

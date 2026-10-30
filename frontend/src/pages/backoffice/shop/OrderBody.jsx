@@ -4,6 +4,7 @@ import { useFormat } from '../../../utils/format'
 import { Alert, Chip, IconAction, Rich } from '../components/kit'
 import { FLOW, daysSince, hasRetired, isRetired, priceDelta, stepStates } from './model'
 import { useDh, useShopActions } from './useShop'
+import { useConfirm } from '../../../components/common/confirm'
 
 const STATUS_TONE = { pending: 'warn', paid: 'neutral', preparing: 'neutral', shipped: 'neutral', delivered: 'good', cancelled: 'crit' }
 
@@ -37,12 +38,16 @@ function Steps({ status }) {
 /** Détail d'une commande : lignes (avec l'écart au prix actuel), avancement, livraison, paiement. */
 export default function OrderBody({ order: o, property, now = new Date() }) {
   const { t } = useTranslation('backoffice')
+  const ask = useConfirm()
   const { fmtDate, fmtNumber } = useFormat()
   const dh = useDh()
   const { pay, cancel } = useShopActions()
   const retired = hasRetired(o)
   const pct = (d) => fmtNumber(d, { style: 'percent', maximumFractionDigits: 0, signDisplay: 'always' })
-  const confirmCancel = () => { if (window.confirm(t('shop.orders.cancelConfirm', { reference: o.reference }))) cancel.mutate(o.id) }
+  const confirmCancel = () => ask({
+    message: t('shop.orders.cancelConfirm', { reference: o.reference }),
+    onConfirm: () => cancel.mutate(o.id),
+  })
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">

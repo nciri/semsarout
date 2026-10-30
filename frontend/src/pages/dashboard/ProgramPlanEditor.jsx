@@ -9,6 +9,7 @@ import {
 import DirIcon from '../../components/common/DirIcon'
 import { lotPlanService, LOT_STATUS } from '../../services/lotPlanService'
 import Design3dEntry from '../../components/design/Design3dEntry'
+import { useConfirm } from '../../components/common/confirm'
 
 const LOT_TYPE_VALUES = ['apartment', 'villa', 'duplex', 'studio', 'terrain', 'commercial', 'office']
 const LOT_STATUS_KEYS = Object.keys(LOT_STATUS)
@@ -51,6 +52,7 @@ function eventToNorm(e, el) {
 
 export default function ProgramPlanEditor() {
   const { t } = useTranslation(['dashboard', 'common'])
+  const ask = useConfirm()
   const { id: programId } = useParams()
   const [plans, setPlans] = useState([])
   const [activePlanId, setActivePlanId] = useState(null)
@@ -163,14 +165,18 @@ export default function ProgramPlanEditor() {
     } finally { setUploading(false); e.target.value = '' }
   }
 
-  const handleDeletePlan = async () => {
+  const handleDeletePlan = () => {
     if (!activePlan) return
-    if (!window.confirm(t('dashboard:programPlanEditor.confirms.deletePlan', { name: activePlan.name }))) return
-    try {
-      await lotPlanService.deletePlan(programId, activePlan.id)
-      const rest = plans.filter(p => p.id !== activePlan.id)
-      setPlans(rest); setActivePlanId(rest[0]?.id ?? null); resetSelection()
-    } catch (err) { toast.error(err.response?.data?.error || t('common:errors.short')) }
+    ask({
+      message: t('dashboard:programPlanEditor.confirms.deletePlan', { name: activePlan.name }),
+      onConfirm: async () => {
+        try {
+          await lotPlanService.deletePlan(programId, activePlan.id)
+          const rest = plans.filter(p => p.id !== activePlan.id)
+          setPlans(rest); setActivePlanId(rest[0]?.id ?? null); resetSelection()
+        } catch (err) { toast.error(err.response?.data?.error || t('common:errors.short')) }
+      },
+    })
   }
 
   // ---- Canvas: draw ----
@@ -303,9 +309,11 @@ export default function ProgramPlanEditor() {
     } finally { setSaving(false) }
   }
 
-  const handleDeleteLot = async (lot) => {
+  const handleDeleteLot = (lot) => {
     if (!lot) return
-    if (!window.confirm(t('dashboard:programPlanEditor.confirms.deleteLot'))) return
+    ask({
+      message: t('dashboard:programPlanEditor.confirms.deleteLot'),
+      onConfirm: async () => {
     const before = { ...lot, zone: cloneZone(lot.zone) }
     try {
       await lotPlanService.deleteLot(programId, lot.id)
@@ -323,6 +331,8 @@ export default function ProgramPlanEditor() {
     } catch (err) {
       toast.error(err.response?.data?.error || t('dashboard:programPlanEditor.toasts.deleteError'))
     }
+      },
+    })
   }
 
   const handleDuplicateLot = async (lot) => {

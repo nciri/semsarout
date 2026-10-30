@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from 'react-query'
 import i18n from '../../i18n'
 import api from '../../services/api'
 import Leads from './Leads'
+import ConfirmProvider from '../../components/common/ConfirmProvider'
 
 const iso = (days) => new Date(Date.now() + days * 864e5).toISOString()
 
@@ -35,7 +36,11 @@ vi.mock('../../services/api', () => ({ default: { get: vi.fn(), put: vi.fn(async
 
 function renderLeads() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<QueryClientProvider client={qc}><MemoryRouter><Leads /></MemoryRouter></QueryClientProvider>)
+  return render(
+    <QueryClientProvider client={qc}>
+      <MemoryRouter><ConfirmProvider><Leads /></ConfirmProvider></MemoryRouter>
+    </QueryClientProvider>,
+  )
 }
 
 describe('Page Leads du back-office', () => {
@@ -78,11 +83,11 @@ describe('Page Leads du back-office', () => {
 
   it('fait avancer le statut après confirmation et n\'offre aucune action sur un lead converti', async () => {
     const user = userEvent.setup()
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     renderLeads()
     await screen.findByText('Hind Senhaji')
     expect(screen.getAllByRole('button', { name: 'Marquer comme contacté' })).toHaveLength(1)
     await user.click(screen.getByRole('button', { name: 'Marquer comme contacté' }))
+    await user.click(screen.getByRole('button', { name: 'Confirmer' }))
     expect(api.put).toHaveBeenCalledWith('/backoffice/leads/1', { status: 'contacted' })
   })
 
