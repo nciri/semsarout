@@ -153,6 +153,19 @@ def stay_context(stay: dict) -> dict:
 
 
 _PLACEHOLDER = re.compile(r"\{\{\s*([a-zA-Z0-9_]+)\s*\}\}")
+# Les seules valeurs de contexte qui SONT du HTML : `party_blocks` les assemble ici, en
+# échappant chaque donnée. Tout le reste est une donnée brute, à échapper (cf. `render`).
+_CLES_HTML = frozenset(ROLE_PLACEHOLDERS.values())
+
+
+def utilise_blocs_de_parties(body_html) -> bool:
+    """Le modèle identifie-t-il ses parties par un `{{parties_*}}` ?
+
+    Sert à refuser la génération d'un contrat de 7 à 11 pages qui ne nommerait personne :
+    aucun des quatre modèles intégrés n'emploie `{{client_name}}`, donc sans partie le
+    document part avec des blancs partout et n'est rattaché à aucun client.
+    """
+    return any(cle in _CLES_HTML for cle in _PLACEHOLDER.findall(body_html or ""))
 
 
 def render(body_html, context):
