@@ -82,7 +82,16 @@ def test_html_survit_a_la_sanitisation(nom, corps):
         apres = len(re.findall(rf"<{balise}\b", propre))
         assert avant == apres, f"{nom} : <{balise}> passe de {avant} à {apres} après sanitisation"
     # `style` n'est toléré que pour text-align ; tout autre usage serait supprimé.
-    assert set(re.findall(r'style="([^"]+)"', corps)) <= {"text-align: center"}
+    centres = set(re.findall(r'style="([^"]+)"', corps))
+    assert centres <= {"text-align: center"}
+    # Et il doit **survivre** : la liste blanche déclare `text-align`, mais sans `tinycss2`
+    # le repli de `sanitize_html` retirait `style` entièrement et tous ces éléments perdaient
+    # leur centrage en silence. Le cas a tenu toute la vie de ces services sans être vu
+    # parce que l'assertion ci-dessus ne regardait que la **source** du gabarit.
+    if centres:
+        assert 'style="text-align: center;"' in propre, (
+            f"{nom} : le centrage ne survit pas à la sanitisation — `bleach[css]` "
+            f"(tinycss2) est-il bien installé ?")
     # Les commentaires HTML portent les références légales : bleach les retire, c'est attendu,
     # et c'est pourquoi les références sont aussi listées dans la documentation du chantier.
     assert "<!--" in corps and "<!--" not in propre
