@@ -1228,14 +1228,22 @@
         "titleLabel": "Intitulé",
         "tradeLabel": "Métier",
         "cancel": "Annuler",
-        "submit": "Créer l'intervention"
+        "submit": "Créer l'intervention",
+        "propertyLabel": "Bien concerné",
+        "propertyPlaceholder": "Choisir un bien",
+        "artisanLabel": "Artisan (optionnel)",
+        "artisanPlaceholder": "À attribuer plus tard",
+        "scheduledLabel": "Date prévue",
+        "costLabel": "Coût estimé (Đh)",
+        "notesLabel": "Précisions pour l'artisan"
       },
       "columns": {
         "title": "Intitulé",
         "trade": "Métier",
         "artisan": "Artisan",
         "costFinal": "Coût final",
-        "status": "Statut"
+        "status": "Statut",
+        "property": "Bien"
       },
       "status": {
         "requested": "Demandé",
@@ -1487,7 +1495,8 @@
         "type": "Type",
         "notary": "Notaire",
         "progress": "Progression",
-        "status": "Statut"
+        "status": "Statut",
+        "property": "Bien"
       },
       "toolbar": {
         "titlePlaceholder": "Titre du dossier (optionnel)",
@@ -1497,7 +1506,11 @@
         "titleLabel": "Intitulé",
         "typeLabel": "Type de dossier",
         "cancel": "Annuler",
-        "submit": "Créer le dossier"
+        "submit": "Créer le dossier",
+        "propertyLabel": "Bien concerné",
+        "propertyPlaceholder": "Choisir un bien",
+        "notaryLabel": "Notaire",
+        "notaryPlaceholder": "Choisir un notaire"
       },
       "empty": {
         "title": "Aucun dossier",

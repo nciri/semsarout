@@ -192,6 +192,15 @@ pas à ce qui a été fait dans StayManager ».
     Le retrait se confirme dans une fenêtre du produit (`ConfirmDialog`, ajouté au kit
     back-office) et non dans la boîte du navigateur : le texte reste traduit et la page garde
     la main, là où un `window.confirm` gèle son fil d'exécution.
+    Les deux créations se rattachent, au lieu de flotter : une intervention exige le **bien**
+    et accepte l'artisan (filtré sur le métier choisi), la date prévue, le coût estimé et des
+    précisions ; un dossier exige le **bien** et le **notaire**. Les colonnes « Bien » des
+    deux tableaux le montrent. Tous ces champs existaient déjà côté services
+    (`work_order.property_id/artisan_id/scheduled_date/cost_estimate/notes`,
+    `legal_case.property_id/notary_id/transaction_id`) : seul le formulaire les ignorait.
+    Le **client** reste hors de ces deux formulaires : aucune des deux tables ne le porte, il
+    se lit par le bien (son propriétaire) ou, pour un dossier, par la transaction
+    (`legal_case.transaction_id`, déjà accepté par le service mais pas encore proposé).
 
 ## Décisions prises pour éviter les doublons
 

@@ -14,6 +14,10 @@ const { svc } = vi.hoisted(() => ({
   },
 }))
 vi.mock('../../../services/artisanService', () => ({ artisanService: svc }))
+// Le formulaire rattache le bon à un bien : la liste des biens vient du back-office.
+vi.mock('../../../services/api', () => ({
+  default: { get: vi.fn().mockResolvedValue({ data: { properties: [{ id: 5, title: 'Riad Médina' }] } }) },
+}))
 
 const TRADES = { trades: [{ id: 'plombier', label: 'Plombier' }, { id: 'electricien', label: 'Électricien' }] }
 const ARTISANS = {
@@ -81,11 +85,15 @@ describe('Artisans & interventions', () => {
     // Rien à saisir avant d'avoir demandé la création : la page reste une liste.
     expect(screen.queryByLabelText('Intitulé')).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Nouveau' }))
+    // Sans bien, rien ne part : une intervention se fait quelque part.
     await userEvent.type(screen.getByLabelText('Intitulé'), 'Volet bloqué')
+    expect(screen.getByRole('button', { name: "Créer l'intervention" })).toBeDisabled()
+    await userEvent.selectOptions(await screen.findByLabelText('Bien concerné'), '5')
     await userEvent.selectOptions(screen.getByLabelText('Métier'), 'electricien')
     await userEvent.click(screen.getByRole('button', { name: "Créer l'intervention" }))
     await vi.waitFor(() => expect(svc.createWorkOrder).toHaveBeenCalledWith({
-      title: 'Volet bloqué', trade: 'electricien',
+      title: 'Volet bloqué', trade: 'electricien', property_id: 5, artisan_id: null,
+      scheduled_date: null, cost_estimate: null, notes: null,
     }))
   })
 

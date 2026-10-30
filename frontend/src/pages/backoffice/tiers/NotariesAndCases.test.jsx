@@ -13,6 +13,10 @@ const { svc } = vi.hoisted(() => ({
   },
 }))
 vi.mock('../../../services/legalService', () => ({ legalService: svc }))
+// Le formulaire rattache le dossier à un bien : la liste vient du back-office.
+vi.mock('../../../services/api', () => ({
+  default: { get: vi.fn().mockResolvedValue({ data: { properties: [{ id: 5, title: 'Riad Médina' }] } }) },
+}))
 
 const NOTARIES = {
   notaries: [
@@ -63,10 +67,14 @@ describe('Notaires & dossiers', () => {
     expect(screen.queryByLabelText('Type de dossier')).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Nouveau dossier' }))
     await userEvent.type(screen.getByLabelText('Intitulé'), 'Vente Maarif')
+    // Un dossier sans bien ni notaire ne dit rien : la création reste fermée.
+    expect(screen.getByRole('button', { name: 'Créer le dossier' })).toBeDisabled()
+    await userEvent.selectOptions(await screen.findByLabelText('Bien concerné'), '5')
+    await userEvent.selectOptions(screen.getByLabelText('Notaire'), '4')
     await userEvent.selectOptions(screen.getByLabelText('Type de dossier'), 'rental')
     await userEvent.click(screen.getByRole('button', { name: 'Créer le dossier' }))
     await vi.waitFor(() => expect(svc.createCase).toHaveBeenCalledWith({
-      title: 'Vente Maarif', case_type: 'rental',
+      title: 'Vente Maarif', case_type: 'rental', property_id: 5, notary_id: 4,
     }))
   })
 })

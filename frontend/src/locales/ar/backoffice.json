@@ -1228,14 +1228,22 @@
         "titleLabel": "العنوان",
         "tradeLabel": "المهنة",
         "cancel": "إلغاء",
-        "submit": "إنشاء التدخّل"
+        "submit": "إنشاء التدخّل",
+        "propertyLabel": "العقار المعني",
+        "propertyPlaceholder": "اختر عقارًا",
+        "artisanLabel": "الحرفي (اختياري)",
+        "artisanPlaceholder": "يُحدَّد لاحقًا",
+        "scheduledLabel": "التاريخ المقرّر",
+        "costLabel": "التكلفة المقدّرة (د.م.)",
+        "notesLabel": "توضيحات للحرفي"
       },
       "columns": {
         "title": "العنوان",
         "trade": "المهنة",
         "artisan": "الحرفي",
         "costFinal": "التكلفة النهائية",
-        "status": "الحالة"
+        "status": "الحالة",
+        "property": "العقار"
       },
       "status": {
         "requested": "مطلوب",
@@ -1487,7 +1495,8 @@
         "type": "النوع",
         "notary": "الموثّق",
         "progress": "التقدّم",
-        "status": "الحالة"
+        "status": "الحالة",
+        "property": "العقار"
       },
       "toolbar": {
         "titlePlaceholder": "عنوان الملف (اختياري)",
@@ -1497,7 +1506,11 @@
         "titleLabel": "العنوان",
         "typeLabel": "نوع الملفّ",
         "cancel": "إلغاء",
-        "submit": "إنشاء الملفّ"
+        "submit": "إنشاء الملفّ",
+        "propertyLabel": "العقار المعني",
+        "propertyPlaceholder": "اختر عقارًا",
+        "notaryLabel": "الموثّق",
+        "notaryPlaceholder": "اختر موثّقًا"
       },
       "empty": {
         "title": "لا يوجد أي ملف",
