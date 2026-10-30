@@ -220,3 +220,28 @@ def test_un_message_qui_annonce_le_code_attend_que_le_code_existe(client, seeded
     due = client.get("/internal/sejours/messages/due", headers=TOKEN).json()["messages"]
     assert "Code : 4821" in due[0]["body"]
     assert "Boîte à clés à droite" in due[0]["body"]
+
+
+def test_rich_body_is_sanitised_and_substituted_values_escaped(client, seeded):
+    """Le corps du gabarit est saisi en WYSIWYG et part en HTML dans l'email : la liste
+    blanche s'applique à l'écriture, et les variables du séjour — qui viennent d'un
+    calendrier Airbnb — doivent être échappées à la substitution."""
+    # Un nom de voyageur piégé ne doit pas devenir du balisage dans l'email.
+    stay = _stay(seeded, days_to_check_in=1)
+    stay.guest_name = '<img src=x onerror="alert(1)">'
+    seeded.commit()
+
+    r = _template(client, body='<p class="MsoNormal">Bonjour <b>{{guest_name}}</b></p>'
+                               '<script>alert(1)</script>')
+    assert r.status_code == 201
+    assert r.json()["template"]["body"] == "<p>Bonjour <b>{{guest_name}}</b></p>"
+
+    due = client.get("/internal/sejours/messages/due", headers=TOKEN).json()["messages"]
+    assert len(due) == 1
+    assert due[0]["body"] == '<p>Bonjour <b>&lt;img src=x onerror="alert(1)"&gt;</b></p>'
+    assert "<img" not in due[0]["body"]
+
+
+def test_empty_rich_body_is_refused_like_an_empty_text(client, seeded):
+    """`<p><br></p>` est du HTML valide mais un message vide : il ne doit pas passer."""
+    assert _template(client, body="<p><br></p>").status_code == 400

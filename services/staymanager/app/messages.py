@@ -12,6 +12,7 @@ ramenée à ce que SemsarOut sait vraiment faire :
 - **Pas d'envoi sans destinataire.** Airbnb ne publie pas l'email du voyageur ; le message
   attend que l'agence complète la fiche du séjour.
 """
+import html as _html
 import re
 from datetime import datetime, timedelta
 from email.utils import parseaddr
@@ -71,9 +72,20 @@ def variables(stay, property_title: str | None, agency_name: str | None,
     }
 
 
-def render(text: str, values: dict) -> str:
-    """Remplace `{{variable}}`. Une variable hors liste reste visible : c'est une faute de saisie."""
-    return _VAR.sub(lambda m: values[m.group(1)] if m.group(1) in values else m.group(0), text or "")
+def render(text: str, values: dict, *, html: bool = False) -> str:
+    """Remplace `{{variable}}`. Une variable hors liste reste visible : c'est une faute de saisie.
+
+    `html=True` pour le corps du message, saisi en WYSIWYG : les valeurs viennent du séjour,
+    donc d'un calendrier Airbnb que l'agence ne contrôle pas. Un `guest_name` valant
+    `<img onerror=…>` inséré sans échappement dans du HTML rendu tel quel serait un XSS
+    dans l'email du voyageur.
+    """
+    def sub(match):
+        name = match.group(1)
+        if name not in values:
+            return match.group(0)
+        return _html.escape(str(values[name]), quote=False) if html else values[name]
+    return _VAR.sub(sub, text or "")
 
 
 def unknown_placeholders(text: str) -> list[str]:

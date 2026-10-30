@@ -10,6 +10,8 @@ import {
 } from '../../../services/stayService'
 import { useFormat } from '../../../utils/format'
 import { EmptyState, Field, Modal, PRIMARY_BTN, SECONDARY_BTN, Select } from '../../../components/backoffice/ui'
+import RichTextarea from '../../../components/common/RichTextarea'
+import { ensureRichText, plainToRichText } from '../../../utils/richText'
 import { Chip, IconAction, TD, TH } from '../components/kit'
 
 const EMPTY = { name: '', trigger: 'before_check_in', offset_hours: '24', property_id: '', subject: '', body: '' }
@@ -50,7 +52,9 @@ function MessagesPanel() {
     name: t(`backoffice:stays.messages.presets.${preset.key}.name`),
     trigger: preset.trigger, offset_hours: preset.offset_hours, property_id: null,
     subject: t(`backoffice:stays.messages.presets.${preset.key}.subject`),
-    body: t(`backoffice:stays.messages.presets.${preset.key}.body`),
+    // Les modèles préécrits sont rédigés en texte dans les locales : sans cette conversion,
+    // leurs sauts de ligne disparaîtraient à l'affichage HTML de l'email.
+    body: plainToRichText(t(`backoffice:stays.messages.presets.${preset.key}.body`)),
   }), {
     onSuccess: (r) => {
       toast.success(t('backoffice:stays.messages.presetToast', { name: r.template?.name }))
@@ -67,7 +71,10 @@ function MessagesPanel() {
   const openEdit = (tpl) => {
     setForm({
       name: tpl.name, trigger: tpl.trigger, offset_hours: String(tpl.offset_hours ?? 0),
-      property_id: tpl.property_id ? String(tpl.property_id) : '', subject: tpl.subject, body: tpl.body,
+      property_id: tpl.property_id ? String(tpl.property_id) : '', subject: tpl.subject,
+      // Un modèle écrit avant la bascule WYSIWYG est du texte brut : ses sauts de ligne
+      // doivent devenir des paragraphes, sinon ils disparaissent à l'affichage.
+      body: ensureRichText(tpl.body),
     })
     setEditing(tpl)
   }
@@ -246,8 +253,8 @@ function MessagesPanel() {
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="tpl-body">
             {t('backoffice:stays.messages.modal.bodyLabel')}
           </label>
-          <textarea id="tpl-body" rows={7} value={form.body} onChange={set('body')}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500" />
+          <RichTextarea id="tpl-body" rows={7} value={form.body}
+            onChange={(html) => setForm((f) => ({ ...f, body: html }))} />
         </div>
         <p className="text-[12.5px] text-gray-500">
           {t('backoffice:stays.messages.modal.placeholders')} {placeholders.map((v) => `{{${v}}}`).join(' · ')}

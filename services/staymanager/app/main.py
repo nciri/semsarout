@@ -24,7 +24,13 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
-from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
+from semsar_common import (
+    get_settings,
+    install_legacy_error_handlers,
+    sanitize_rich_field,
+    setup_logging,
+    setup_tracing,
+)
 
 from . import agency_client, billing_client, booking, ical, messages, stays
 from . import access
@@ -638,7 +644,9 @@ def _message_dict(db: Session, m: StayMessage) -> dict:
 def _template_payload(data: dict) -> tuple[dict | None, JSONResponse | None]:
     name = (data.get("name") or "").strip()
     subject = (data.get("subject") or "").strip()
-    body = (data.get("body") or "").strip()
+    # Corps saisi en WYSIWYG : du HTML, donc un XSS stocké dans l'email du voyageur tant
+    # qu'il n'est pas réduit à la liste blanche produit.
+    body = sanitize_rich_field(data.get("body")) or ""
     trigger = (data.get("trigger") or "").strip()
     if not name or not subject or not body:
         return None, err("Nom, objet et message sont obligatoires", 400)
@@ -794,7 +802,8 @@ def _prepare_due(db: Session, now: datetime) -> list[StayMessage]:
                 agency_id=res.agency_id, template_id=tpl.id, reservation_id=res.id,
                 recipient=res.guest_email,
                 subject=messages.render(tpl.subject, values)[:messages.SUBJECT_MAX],
-                body=messages.render(tpl.body, values), due_at=messages.due_at(tpl, res),
+                body=messages.render(tpl.body, values, html=True),
+                due_at=messages.due_at(tpl, res),
                 status="pending" if ready else "no_recipient")
             done.add((tpl.id, res.id))
             # Une ligne par transaction : un séjour bancal ne doit pas emporter la fournée
