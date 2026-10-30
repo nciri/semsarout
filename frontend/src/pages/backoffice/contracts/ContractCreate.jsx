@@ -52,10 +52,10 @@ function ContractCreate() {
     onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
   })
 
-  const labelCls = 'block text-sm font-medium text-gray-700 mb-1'
-  const ctrlCls = 'w-full px-3 py-2 border border-gray-200 rounded-lg text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500'
-  const cardCls = 'bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4'
-  const sectionTitle = 'text-sm font-semibold text-gray-900'
+  const labelCls = 'block text-[12.5px] font-medium text-gray-700 mb-0.5'
+  const ctrlCls = 'w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500'
+  const cardCls = 'bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-3'
+  const sectionTitle = 'text-[13px] font-semibold text-gray-900'
 
   return (
     <div className="space-y-4">
@@ -84,7 +84,7 @@ function ContractCreate() {
 
           <div className={cardCls}>
             <h2 className={sectionTitle}>{t('backoffice:contracts.create.sections.attach')}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}>{t('backoffice:contracts.create.fields.property')}</label>
                 <SearchableSelect
@@ -93,6 +93,7 @@ function ContractCreate() {
                   options={properties.map((p) => ({ value: p.id, label: p.title || p.reference, description: p.city }))}
                   placeholder={t('backoffice:contracts.create.select.none')}
                   searchPlaceholder={t('backoffice:contracts.create.search.property')}
+                  className="text-sm"
                   clearable
                 />
               </div>
@@ -104,6 +105,7 @@ function ContractCreate() {
                   options={clients.map((c) => ({ value: c.id, label: `${c.first_name} ${c.last_name}`, description: c.email || c.phone }))}
                   placeholder={t('backoffice:contracts.create.select.none')}
                   searchPlaceholder={t('backoffice:contracts.create.search.client')}
+                  className="text-sm"
                   clearable
                 />
               </div>
@@ -115,6 +117,7 @@ function ContractCreate() {
                   options={transactions.map((tx) => ({ value: tx.id, label: `${tx.reference} · ${tx.property_title || t('backoffice:contracts.create.fallback.property')}`, description: tx.client_name }))}
                   placeholder={t('backoffice:contracts.create.select.noneTransaction')}
                   searchPlaceholder={t('backoffice:contracts.create.search.transaction')}
+                  className="text-sm"
                   clearable
                 />
               </div>
@@ -123,7 +126,7 @@ function ContractCreate() {
 
           <div className={cardCls}>
             <h2 className={sectionTitle}>{t('backoffice:contracts.create.sections.details')}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}>{t('backoffice:contracts.create.fields.seller')}</label>
                 <input value={form.seller_name} onChange={set('seller_name')} className={ctrlCls} placeholder={t('backoffice:contracts.create.fields.sellerPlaceholder')} />
@@ -147,7 +150,7 @@ function ContractCreate() {
             </div>
             <div>
               <label className={labelCls}>{t('backoffice:contracts.create.fields.notes')}</label>
-              <textarea value={form.notes} onChange={set('notes')} rows={3} className={ctrlCls} placeholder={t('backoffice:contracts.create.fields.notesPlaceholder')} />
+              <textarea value={form.notes} onChange={set('notes')} rows={2} className={ctrlCls} placeholder={t('backoffice:contracts.create.fields.notesPlaceholder')} />
             </div>
           </div>
 
