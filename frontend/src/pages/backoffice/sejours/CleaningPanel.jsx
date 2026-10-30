@@ -8,7 +8,7 @@ import { stayService, CLEANING_KINDS, CLEANING_REPORT_KINDS, CLEANING_STATUS_TON
 import { teamService } from '../../../services/teamService'
 import api from '../../../services/api'
 import { useFormat } from '../../../utils/format'
-import { Alert, Chip, IconAction, TD, TH } from '../components/kit'
+import { Alert, Chip, IconAction, Kv, TD, TH } from '../components/kit'
 import { EmptyState, Field, Modal, PRIMARY_BTN, SECONDARY_BTN, Select } from '../../../components/backoffice/ui'
 
 const NEW_TASK = { kind: 'menage', property_id: '', scheduled_date: '', notes: '' }
@@ -189,6 +189,8 @@ function CleaningPanel() {
                 {day(open.scheduled_date)}
                 {open.assigned_to_id && ` · ${memberName(open.assigned_to_id) || ''}`}
               </p>
+              <Kv label={t('backoffice:stays.cleaning.modal.kindLabel')}
+                value={t(`backoffice:stays.cleaning.kind.${open.kind || 'menage'}`, { defaultValue: open.kind })} />
             </div>
 
             <fieldset className="grid gap-1.5">

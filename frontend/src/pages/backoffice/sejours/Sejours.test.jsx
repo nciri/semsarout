@@ -253,6 +253,8 @@ describe('Séjours courte durée', () => {
     await vi.waitFor(() => expect(within(nav).queryByRole('link', { name: "Tâches d'exploitation" })).not.toBeInTheDocument())
     expect(within(nav).getByText("Tâches d'exploitation")).toHaveAttribute('aria-disabled', 'true')
     expect(within(nav).getByText(/Rien à traiter tant qu'aucun séjour/)).toBeInTheDocument()
+    // Les interventions de Tiers ne dépendent pas des séjours : la maintenance reste ouverte.
+    expect(within(nav).getByRole('link', { name: 'Maintenance' })).toBeInTheDocument()
     // Les réglages par bien restent ouverts : ce sont eux qui font venir les séjours.
     expect(within(nav).getByRole('link', { name: 'Accès' })).toBeInTheDocument()
   })
@@ -438,7 +440,8 @@ describe('Ménage de rotation', () => {
     svc.listCleanings.mockResolvedValue({ ...CLEANINGS,
       tasks: CLEANINGS.tasks.map((x, i) => ({ ...x, kind: i ? 'menage' : 'accueil' })) })
     renderAt('/backoffice/sejours/menage')
-    expect(await screen.findAllByText('Accueil')).not.toHaveLength(0)
+    expect(within(await screen.findByRole('table')).getByText('Accueil')).toBeInTheDocument()
+    expect(within(screen.getByRole('table')).getAllByText('Ménage')).toHaveLength(1)
   })
 
   it('mène à la maintenance, qui vit dans les interventions de Tiers', async () => {
@@ -470,6 +473,14 @@ describe('Ménage de rotation', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Ajouter' }))
     await vi.waitFor(() => expect(svc.createCleaning)
       .toHaveBeenCalledWith(expect.objectContaining({ kind: 'accueil', property_id: 5 })))
+  })
+
+  it("rappelle le type de la tâche dans son détail", async () => {
+    svc.getCleaning.mockResolvedValue({ task: { ...CLEANING_DETAIL.task, kind: 'linge' } })
+    renderAt('/backoffice/sejours/menage')
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Ouvrir le détail' }))[0])
+    expect(await screen.findByText('Détail de la tâche')).toBeInTheDocument()
+    expect((await screen.findByText('Type', { selector: 'span' })).nextElementSibling).toHaveTextContent('Linge')
   })
 
   it('démarre puis termine une tâche', async () => {

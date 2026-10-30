@@ -16,7 +16,8 @@ import { Alert, IconAction, Kv } from '../components/kit'
  * range par rôle et éteint ce qui n'a encore rien à traiter.
  *
  * `needsStays` porte cette dépendance : sans séjour enregistré, la rubrique s'affiche en
- * attente plutôt que de mener à une page vide.
+ * attente plutôt que de mener à une page vide. `standalone` en exempte une entrée qui ne
+ * dépend pas des séjours (Maintenance).
  *
  * « Maintenance » mène à l'écran des interventions de Tiers au lieu de le dupliquer : une
  * réparation a un devis, un payeur et un artisan extérieur, ce qui n'est pas une tâche de
@@ -24,7 +25,7 @@ import { Alert, IconAction, Kv } from '../components/kit'
  */
 const NAV = [
   { key: 'bookings', items: [{ to: '', end: true, key: 'planning' }, { to: 'calendrier', key: 'calendar' }] },
-  { key: 'operations', needsStays: true, items: [{ to: 'menage', key: 'tasks' }, { to: 'messages', key: 'messages' }, { to: '/backoffice/tiers/artisans', key: 'maintenance' }] },
+  { key: 'operations', needsStays: true, items: [{ to: 'menage', key: 'tasks' }, { to: 'messages', key: 'messages' }, { to: '/backoffice/tiers/artisans', key: 'maintenance', standalone: true }] },
   { key: 'setup', items: [{ to: 'acces', key: 'access' }, { to: 'equipes', key: 'teams' }] },
 ]
 
@@ -111,13 +112,14 @@ function StaysLayout() {
       <section className="grid min-w-0 gap-4 rounded-xl border border-gray-200 bg-white p-3.5 sm:grid-cols-[13rem_minmax(0,1fr)] sm:gap-5 sm:p-5">
         <nav aria-label={t('backoffice:stays.overview.navLabel')} className="grid gap-4 self-start sm:border-e sm:border-gray-200 sm:pe-5">
           {NAV.map((group) => {
-            const dormant = group.needsStays && !hasStays
+            const asleep = (item) => group.needsStays && !hasStays && !item.standalone
+            const dormant = group.items.some(asleep)
             return (
               <div key={group.key} className="grid gap-0.5">
                 <h2 className="px-2.5 pb-0.5 text-[11px] font-bold uppercase tracking-wide text-gray-400">
                   {t(`backoffice:stays.overview.groups.${group.key}`)}
                 </h2>
-                {group.items.map((item) => (dormant ? (
+                {group.items.map((item) => (asleep(item) ? (
                   <span key={item.key} aria-disabled="true" className={`${ITEM} font-medium text-gray-400`}>
                     {t(`backoffice:stays.overview.tabs.${item.key}`)}
                   </span>
