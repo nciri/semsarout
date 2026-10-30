@@ -57,6 +57,19 @@ describe('RentalLayout', () => {
     expect(await screen.findByText('Gestion locative')).toBeInTheDocument()
   })
 
+  it('mène à la fiche d’une candidature sans réponse', async () => {
+    summary.mockResolvedValue({
+      ...SUMMARY,
+      applications: {
+        pending: [{ id: 7, applicant_name: 'Salma Bennis', property_title: 'Appartement Gauthier', property_id: 3, status: 'pending', age_days: 5 }],
+        recent_decisions: [], total: 1,
+      },
+    })
+    renderLayout()
+    expect(await screen.findByRole('link', { name: 'Salma Bennis' }))
+      .toHaveAttribute('href', '/backoffice/gestion-locative/candidatures/7')
+  })
+
   it('affiche le titre AR après bascule', async () => {
     await i18n.changeLanguage('ar')
     renderLayout()
