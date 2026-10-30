@@ -202,6 +202,50 @@ pas à ce qui a été fait dans StayManager ».
     se lit par le bien (son propriétaire) ou, pour un dossier, par la transaction
     (`legal_case.transaction_id`, déjà accepté par le service mais pas encore proposé).
 
+19. **Une intervention nomme qui paie, et son coût atteint un relevé** — le point 18 laissait
+    le **client** hors du formulaire d'intervention, faute de colonne pour le porter. Il la
+    porte désormais, avec ce qui en découle : `client_id`, `lease_id`, `nature`, `payer`,
+    `charge_mode`, `third_party_label` sur `directory.work_order`. La nature **propose** le
+    payeur sans l'imposer (`app/payeur.py` : un dégât d'occupant va au locataire, un
+    structurel au propriétaire, un entretien au locataire s'il y a un bail et au propriétaire
+    sinon), et le mode d'imputation suit le payeur et le contexte.
+    Trois rails portent ensuite ce coût. Le **CRG** du propriétaire déduit les dépenses du
+    net reversé ; il naît **brouillon** et ne part qu'une fois validé par l'agence, parce
+    qu'un relevé d'argent envoyé ne se reprend pas. Le **décompte de caution** propose les
+    interventions du bail en retenues, et n'en pose une qu'à l'acceptation d'un humain. La
+    **refacturation** se solde à la main, et seules les méthodes qui renoncent à de l'argent
+    — `abandonne`, `impute_commission` — passent par l'administration : enregistrer un
+    encaissement au comptoir reste un geste d'agent, comme clore un bon l'est déjà.
+    Ce qui empêche une dépense d'être facturée deux fois est une **estampille** :
+    `charged_at` / `charged_ref` posés par `POST /internal/work-orders/charged`, dont
+    l'`UPDATE` conditionnel ignore une ligne déjà estampillée par un **autre** relevé. La
+    sélection des dépenses d'un CRG se fait sur `charged_at IS NULL`, **jamais** sur le mois
+    d'achèvement : une intervention achevée le 28 mais chiffrée le 3 du mois suivant, après
+    l'envoi, ne serait reprise par aucun mois. L'estampille est idempotente *par relevé*,
+    sinon un incident d'infrastructure entre l'estampillage et le commit privait un
+    propriétaire de son relevé pour toujours. Et elle se **libère** sous son propre ref
+    (`POST /internal/work-orders/release`) : retirer une retenue acceptée par erreur rendait
+    sinon la dépense invisible à tous les rails, facturée à personne.
+    Un brouillon jamais validé ne bloque rien — il se recalcule tant qu'il est brouillon,
+    `validated` et `sent` restent gelés — et se signale en rouge dans les écrans concernés.
+    Le planificateur prépare les brouillons, notifie l'agence des neufs seulement, puis
+    n'envoie que le validé : il appelle `crg-sent` **avant** l'e-mail, pour qu'un
+    estampillage en échec n'expédie pas un second relevé au même propriétaire.
+    Un verrou ferme la boucle : une fois sa dépense portée sur un relevé ou soldée, le coût,
+    le payeur et le mode d'une intervention ne se réécrivent plus, sans quoi un document
+    signé devenait faux après coup.
+
+20. **Les tâches d'un séjour ne sont plus que du ménage** — `cleaning_task` gagne un `kind`
+    (`menage`, `linge`, `accueil`, `conciergerie`, `controle`) plutôt que trois tables
+    jumelles. L'unicité passe de `reservation_id` à `(reservation_id, kind)`, en index
+    partiel sur `reservation_id IS NOT NULL` pour que les tâches autonomes d'un bien restent
+    libres. Le dédoublonnage de `ensure_tasks` ne regarde plus que les tâches de type
+    `menage` : auparavant, une simple tâche d'accueil lui faisait croire que la rotation de
+    ménage existait déjà, et le logement n'était jamais nettoyé sans que rien ne le signale.
+    La **maintenance ne rejoint pas** cette table : une réparation a un devis, un coût, un
+    payeur et un artisan tiers, c'est-à-dire un `work_order` dans `directory`. La rubrique
+    gagne une entrée qui y mène, au lieu d'un quatrième jumeau.
+
 ## Décisions prises pour éviter les doublons
 
 - **Une seule table de réservations** : `staymanager.staymanager_reservation` sert le miroir
