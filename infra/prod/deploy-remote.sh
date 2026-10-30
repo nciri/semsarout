@@ -104,6 +104,7 @@ staymanager/migrate_contrat_sejour.sql
 audit/add_tenant.sql
 directory/migrate_payeur_intervention.sql
 rental/migrate_crg_depenses.sql
+rental/migrate_retenue_intervention.sql
 "
 
 # psql en tant que rôle postgres (patron roles/postgres d'Ansible : become_user postgres).

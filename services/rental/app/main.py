@@ -14,6 +14,7 @@ import httpx
 from fastapi import Depends, FastAPI, Header, Request, Response
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
@@ -1644,13 +1645,18 @@ def _owned_settlement(db, sid: int, principal: Principal):
     return s
 
 
+def _totaux_decompte(lines: list[DeductionLine], deposit_amount) -> tuple[float, float, float, float]:
+    """(caution, total retenu, à restituer, solde à réclamer) — seule source de la formule."""
+    total = sum(float(l.amount or 0) for l in lines)
+    deposit = float(deposit_amount or 0)
+    return (deposit, total, deposit - total if deposit > total else 0,
+            total - deposit if total > deposit else 0)
+
+
 def _settlement_dict(db: Session, s: DepositSettlement) -> dict:
     lines = (db.query(DeductionLine).filter(DeductionLine.settlement_id == s.id)
              .order_by(DeductionLine.id).all())
-    total = sum(float(l.amount or 0) for l in lines)
-    deposit = float(s.deposit_amount or 0)
-    refunded = deposit - total if deposit > total else 0
-    balance = total - deposit if total > deposit else 0
+    deposit, total, refunded, balance = _totaux_decompte(lines, s.deposit_amount)
     return {"id": s.id, "lease_id": s.lease_id, "status": s.status,
             "deposit_amount": num(deposit), "total_deductions": num(total),
             "refunded_amount": num(refunded), "balance_due": num(balance),
@@ -1722,6 +1728,79 @@ async def add_deduction_line(sid: int, request: Request,
     return _settlement_dict(db, s)
 
 
+def _suggestions_decompte(db: Session, s: DepositSettlement) -> list[dict]:
+    """Interventions imputables au locataire de CE bail (pas aux précédents), à poser en retenue.
+
+    Lève DepensesIndisponibles : une liste vide à tort ferait restituer toute la caution."""
+    lease = db.get(Lease, s.lease_id)
+    if lease is None:
+        return []
+    posees = {wid for (wid,) in db.query(DeductionLine.work_order_id).filter(
+        DeductionLine.settlement_id == s.id, DeductionLine.work_order_id.isnot(None))}
+    return [w for w in depenses.imputables([lease.property_id], "deposit_deduction",
+                                           s.agency_id, lease.id)
+            if int(w["id"]) not in posees]
+
+
+@app.get("/backoffice/gestion-locative/settlements/{sid}/suggestions")
+def list_deduction_suggestions(sid: int, principal: Principal = Depends(get_principal),
+                               db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    s = _owned_settlement(db, sid, principal)
+    if s is None:
+        return err("Décompte introuvable.", 404)
+    try:
+        suggestions = _suggestions_decompte(db, s)
+    except depenses.DepensesIndisponibles:
+        logger.warning("Suggestions du décompte %s indisponibles : interventions illisibles", s.id)
+        return err("Interventions indisponibles : réessayez dans un instant.", 503)
+    return {"suggestions": [{"work_order_id": int(w["id"]), "label": w["title"],
+                             "amount": num(w["cost_final"]), "completed_at": w.get("completed_at")}
+                            for w in suggestions]}
+
+
+@app.post("/backoffice/gestion-locative/settlements/{sid}/suggestions/{work_order_id}/accept",
+          status_code=201)
+def accept_deduction_suggestion(sid: int, work_order_id: int,
+                                principal: Principal = Depends(get_principal),
+                                db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    s = _owned_settlement(db, sid, principal)
+    if s is None:
+        return err("Décompte introuvable.", 404)
+    if s.status != "draft":
+        return err("Décompte verrouillé (finalisé).", 403)
+    if db.query(DeductionLine).filter(DeductionLine.settlement_id == s.id,
+                                      DeductionLine.work_order_id == work_order_id).first():
+        return err("Cette intervention est déjà posée en retenue.", 409)
+    try:
+        wo = next((w for w in _suggestions_decompte(db, s) if int(w["id"]) == work_order_id), None)
+        if wo is None:
+            return err("Intervention non imputable à ce bail ou déjà imputée.", 404)
+        # Ligne flushée avant l'estampillage : l'index unique tranche la course (409) sans rien
+        # estampiller, et un échec de directory annule la ligne — jamais de ligne non estampillée.
+        db.add(DeductionLine(settlement_id=s.id, label=wo["title"], amount=wo["cost_final"],
+                             work_order_id=work_order_id))
+        try:
+            db.flush()
+        except IntegrityError:
+            db.rollback()
+            return err("Cette intervention est déjà posée en retenue.", 409)
+        if depenses.estampiller([work_order_id], f"settlement:{s.id}", s.agency_id) != 1:
+            db.rollback()
+            return err("Intervention déjà imputée ailleurs.", 409)
+    except depenses.DepensesIndisponibles:
+        db.rollback()
+        logger.warning("Retenue du décompte %s non posée : interventions injoignables", s.id)
+        return err("Interventions indisponibles : retenue non posée, réessayez.", 503)
+    lines = db.query(DeductionLine).filter(DeductionLine.settlement_id == s.id).all()
+    _, s.total_deductions, s.refunded_amount, s.balance_due = _totaux_decompte(lines, s.deposit_amount)
+    db.commit()
+    return _settlement_dict(db, s)
+
+
 @app.delete("/backoffice/gestion-locative/deduction-lines/{line_id}")
 def delete_deduction_line(line_id: int, principal: Principal = Depends(get_principal),
                           db: Session = Depends(get_db)):
@@ -1754,10 +1833,7 @@ def finalize_settlement(sid: int, principal: Principal = Depends(get_principal),
     if lease.deposit_returned_at is not None:
         return err("Dépôt déjà restitué pour ce bail.", 400)
     lines = db.query(DeductionLine).filter(DeductionLine.settlement_id == s.id).all()
-    total = sum(float(l.amount or 0) for l in lines)
-    deposit = float(s.deposit_amount or 0)
-    refunded = deposit - total if deposit > total else 0
-    balance = total - deposit if total > deposit else 0
+    deposit, total, refunded, balance = _totaux_decompte(lines, s.deposit_amount)
     s.total_deductions = total
     s.refunded_amount = refunded
     s.balance_due = balance
