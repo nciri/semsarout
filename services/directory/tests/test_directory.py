@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
 
-from app.main import _can_delete_wo, _status_change_refusal, app
+from app.main import _can_delete_wo, _status_change_refusal, _wo_is_sealed, app
 from semsar_auth import Principal
 
 
@@ -30,6 +30,13 @@ def test_qui_peut_retirer_un_bon_de_travaux():
     # Et le statut courant ne suffit pas : un travail déjà clos ou chiffré reste protégé.
     assert not _can_delete_wo(patron, _wo("requested", completed_at=datetime(2026, 10, 1)))
     assert not _can_delete_wo(patron, _wo("requested", cost_final=Decimal("450")))
+
+
+def test_les_traces_du_travail_acheve_sont_scellees():
+    """Sans cela, effacer le coût final rendrait la protection du retrait décorative."""
+    assert not _wo_is_sealed(_wo("requested"))
+    assert _wo_is_sealed(_wo("requested", cost_final=Decimal("450")))
+    assert _wo_is_sealed(_wo("cancelled", completed_at=datetime(2026, 10, 1)))
 
 
 def test_le_changement_de_statut_ne_contourne_pas_le_retrait():

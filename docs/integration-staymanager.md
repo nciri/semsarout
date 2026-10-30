@@ -185,7 +185,10 @@ pas à ce qui a été fait dans StayManager ».
     Le changement de statut obéit à la même règle (`_status_change_refusal`), sinon il la
     contournait : replacer un bon terminé en « demandé » rendait n'importe quel rôle maître
     de sa suppression. Et le retrait regarde aussi des faits que le statut courant ne porte
-    pas — `completed_at`, `cost_final` — pour qu'un travail déjà clos reste protégé.
+    pas — `completed_at`, `cost_final` — pour qu'un travail déjà clos reste protégé. Ces deux
+    traces sont scellées à leur tour : `completed_at` ne se pose qu'au passage à « terminé »
+    et rien ne l'efface, et le `cost_final` d'un bon clos ne se modifie qu'en administration,
+    sans quoi il suffisait d'effacer le coût pour rouvrir le droit de supprimer.
 
 ## Décisions prises pour éviter les doublons
 

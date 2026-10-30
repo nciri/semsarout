@@ -91,11 +91,16 @@ def _is_wo_admin(principal: Principal) -> bool:
     return principal.is_superadmin or bool(_WO_ADMIN_ROLES & set(principal.roles))
 
 
+def _wo_is_sealed(w: WorkOrder) -> bool:
+    """Le bon porte-t-il la trace d'un travail achevé ou chiffré ?"""
+    return w.completed_at is not None or w.cost_final is not None
+
+
 def _can_delete_wo(principal: Principal, w: WorkOrder) -> bool:
     # Un travail achevé laisse des traces que le statut courant ne porte pas : une date de
     # clôture ou un coût final suffisent à interdire le retrait, même si quelqu'un a replacé
     # le bon en « demandé » entre-temps.
-    if w.status in _WO_KEPT_FOREVER or w.completed_at is not None or w.cost_final is not None:
+    if w.status in _WO_KEPT_FOREVER or _wo_is_sealed(w):
         return False
     if w.status in _WO_FREELY_DELETABLE:
         return True
@@ -295,6 +300,10 @@ async def update_work_order(wid: int, request: Request, principal: Principal = D
         refusal = _status_change_refusal(principal, wo, data["status"])
         if refusal is not None:
             return refusal
+    # Ces traces protègent le bon du retrait : les laisser réécrire rendrait la protection
+    # décorative, puisqu'il suffirait d'effacer le coût pour pouvoir supprimer.
+    if "cost_final" in data and _wo_is_sealed(wo) and not _is_wo_admin(principal):
+        return _err("Le coût final d'un bon clos ne se modifie qu'en administration", 403)
     for k in ("title", "notes", "cost_estimate", "cost_final"):
         if k in data:
             setattr(wo, k, data[k])
@@ -306,9 +315,12 @@ async def update_work_order(wid: int, request: Request, principal: Principal = D
         wo.property_id = data["property_id"]
     if "scheduled_date" in data:
         wo.scheduled_date = _parse_dt(data["scheduled_date"])
-    if "status" in data:
+    # `completed_at` ne se pose qu'au passage à « terminé », état dont on ne sort plus : rien
+    # ne doit l'effacer, surtout pas un PUT qui renvoie le statut courant à l'identique.
+    if data.get("status") not in (None, wo.status):
         wo.status = data["status"]
-        wo.completed_at = datetime.utcnow() if data["status"] == "done" else None
+        if wo.status == "done":
+            wo.completed_at = datetime.utcnow()
     db.commit()
     return {"work_order": _wo_dict(db, wo, principal)}
 
