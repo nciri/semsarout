@@ -10,6 +10,7 @@ import { MOROCCAN_CITIES } from '../../constants/property'
 import { useFormat } from '../../utils/format'
 import { PROPERTY_TYPES, STATUSES } from './biens/model'
 import { Chip, IconAction, TD, TH } from './components/kit'
+import RichTextarea from '../../components/common/RichTextarea'
 
 const PRIORITY_KEYS = ['low', 'medium', 'high']
 const PER_PAGE = 10
@@ -369,8 +370,9 @@ function TransactionCreate() {
               </Field>
             </div>
             <div className="mt-4">
-              <label className={labelCls}>{t('backoffice:crm.transactions.create.notesLabel')}</label>
-              <textarea value={form.notes} onChange={set('notes')} rows={3} className={ctrlCls}
+              <label htmlFor="tx-notes" className={labelCls}>{t('backoffice:crm.transactions.create.notesLabel')}</label>
+              <RichTextarea id="tx-notes" value={form.notes} rows={3}
+                onChange={(html) => setForm((f) => ({ ...f, notes: html }))}
                 placeholder={t('backoffice:crm.transactions.create.notesPlaceholder')} />
             </div>
           </div>
