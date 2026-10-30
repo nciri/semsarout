@@ -3,9 +3,15 @@
  */
 
 /**
- * The Dirham symbol - single source of truth for the whole site
+ * Le symbole du dirham — source unique pour tout le site.
+ *
+ * Orthographe `Dh`, celle que rend le formateur i18n (`dashboard.units.dirham`) sur ses
+ * 26 appels. Le `Đh` qui vivait ici donnait deux orthographes du dirham sur le même produit,
+ * et chaque littéral qui le recopiait contournait en plus la locale arabe. Les surfaces
+ * traduites passent par `t('dashboard.units.dirham')` ; cette constante sert les surfaces
+ * qui n'ont pas de contexte i18n (annuaire public, écrans d'administration).
  */
-export const DIRHAM_SYMBOL = 'Đh'
+export const DIRHAM_SYMBOL = 'Dh'
 
 /**
  * Format a number as currency (without symbol)

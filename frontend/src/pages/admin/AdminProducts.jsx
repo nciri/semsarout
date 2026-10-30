@@ -4,6 +4,7 @@ import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { FiTrash2 } from 'react-icons/fi'
 import { shopService } from '../../services/shopService'
+import { DIRHAM_SYMBOL } from '../../utils/currency'
 import RichTextarea from '../../components/common/RichTextarea'
 
 const CATS = ['lit', 'canape', 'table', 'armoire', 'chaise', 'bureau', 'refrigerateur', 'lave_linge', 'four', 'micro_ondes', 'climatiseur', 'television']
@@ -37,7 +38,7 @@ function AdminProducts() {
             <tbody>
               {products.map((p) => (
                 <tr key={p.id} className="border-t border-slate-100">
-                  <td className="px-4 py-3 font-medium">{p.name}</td><td>{p.price} Đh</td><td>{p.stock}</td>
+                  <td className="px-4 py-3 font-medium">{p.name}</td><td>{p.price} {DIRHAM_SYMBOL}</td><td>{p.stock}</td>
                   <td><input type="checkbox" checked={p.is_active} onChange={(e) => toggle.mutate({ id: p.id, is_active: e.target.checked })} /></td>
                   <td className="text-end"><button onClick={() => del.mutate(p.id)} className="text-red-600"><FiTrash2 /></button></td>
                 </tr>

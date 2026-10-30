@@ -186,7 +186,7 @@ function WorkOrdersList({ filter = NO_FILTER }) {
     { header: t('backoffice:artisans.workOrder.columns.property'), cell: (w) => <span className="text-gray-600">{propertyTitle(w.property_id)}</span> },
     { header: t('backoffice:artisans.workOrder.columns.trade'), cell: (w) => <span className="text-gray-600">{tradeLabel(w.trade)}</span> },
     { header: t('backoffice:artisans.workOrder.columns.artisan'), cell: (w) => <span className="text-gray-600">{w.artisan?.name || '—'}</span> },
-    { header: t('backoffice:artisans.workOrder.columns.costFinal'), align: 'right', cell: (w) => <span className="font-medium text-gray-900">{w.cost_final != null ? `${w.cost_final} Đh` : '—'}</span> },
+    { header: t('backoffice:artisans.workOrder.columns.costFinal'), align: 'right', cell: (w) => <span className="font-medium text-gray-900">{w.cost_final != null ? `${w.cost_final} ${t('backoffice:dashboard.units.dirham')}` : '—'}</span> },
     { header: t('backoffice:artisans.workOrder.columns.status'), cell: (w) => <StatusBadge label={t(`backoffice:artisans.workOrder.status.${w.status}`, { defaultValue: w.status })} className={STATUS_TONE[w.status]} /> },
     // impeccable-disable-next-line gray-on-color -- icône grise sur fond blanc ; le rouge n'est qu'un état :hover
     { header: '', align: 'right', cell: (w) => (w.can_delete ? (

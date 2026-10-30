@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { DIRHAM_SYMBOL } from '../../../utils/currency'
 import {
   FiArrowLeft,
   FiCalendar,
@@ -270,7 +271,7 @@ export default function StayManagerReservations() {
                     <div className="text-end">
                       {reservation.total_price && (
                         <p className="font-semibold text-gray-900">
-                          {fmtNumber(parseFloat(reservation.total_price))} {reservation.currency || 'Đh'}
+                          {fmtNumber(parseFloat(reservation.total_price))} {reservation.currency || DIRHAM_SYMBOL}
                         </p>
                       )}
                       {reservation.guest?.count && (
@@ -390,7 +391,7 @@ export default function StayManagerReservations() {
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-3">{t('dashboard:stayManager.reservations.detail.price')}</h4>
                   <p className="text-2xl font-bold text-gray-900">
-                    {fmtNumber(parseFloat(selectedReservation.total_price))} {selectedReservation.currency || 'Đh'}
+                    {fmtNumber(parseFloat(selectedReservation.total_price))} {selectedReservation.currency || DIRHAM_SYMBOL}
                   </p>
                 </div>
               )}

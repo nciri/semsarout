@@ -18,7 +18,9 @@ const COND_TONE = { bon: 'bg-emerald-50 text-emerald-700', moyen: 'bg-amber-100 
 function SettlementEditor() {
   const { t } = useTranslation(['backoffice', 'common'])
   const { fmtNumber, fmtDate } = useFormat()
-  const money = (v) => `${fmtNumber(Number(v || 0))} Đh`
+  // Le symbole vient de l'i18n (« درهم » en arabe), les centimes restent intacts : une
+  // retenue sur caution est un montant d'acte, pas un arrondi de tableau de bord.
+  const money = (v) => `${fmtNumber(Number(v || 0))} ${t('backoffice:dashboard.units.dirham')}`
   const { leaseId } = useParams()
   const qc = useQueryClient()
   const { user } = useAuthStore()

@@ -2,6 +2,8 @@
 // (scripts/validate_palette.js) — order + hex values are the CVD-safety
 // mechanism, do not reorder or cycle. Two steps per hue: light and dark
 // surface. Swap for brand tokens later; re-run the validator if you do.
+import { DIRHAM_SYMBOL } from '../../utils/currency'
+
 const PALETTE = {
   light: {
     surface: '#fcfcfb',
@@ -25,6 +27,6 @@ export function useChartTheme() {
 
 export const AXIS = 'currentColor'
 
-export const fmtMAD = (n) => `${Number(n || 0).toLocaleString('fr-FR')} Đh`
+export const fmtMAD = (n) => `${Number(n || 0).toLocaleString('fr-FR')} ${DIRHAM_SYMBOL}`
 export const fmtNum = (n) => Number(n || 0).toLocaleString('fr-FR')
 export const fmtPct = (n) => `${Number(n || 0).toLocaleString('fr-FR')} %`
