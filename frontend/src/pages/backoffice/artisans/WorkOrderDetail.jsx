@@ -47,7 +47,8 @@ function WorkOrderDetail() {
   // le décompte, qui se rouvre par le bail.
   const client = (clientsData?.clients || []).find((c) => c.id === w.client_id)
   const mandates = (mandatesData?.mandates || []).filter((m) => m.property_id === w.property_id)
-  const mandate = mandates.find((m) => m.status === 'active') || mandates[0]
+  // Un seul mandat pour le bien, sinon on ne sait pas lequel porte ce compte rendu : pas de lien.
+  const mandate = mandates.length === 1 ? mandates[0] : null
   const [refKind, refId] = (w.charged_ref || '').split(':')
   const landing = {
     crg: mandate && { to: `/backoffice/gestion-locative/mandats/${mandate.id}`, label: t('backoffice:artisans.workOrder.payment.landedCrg', { id: refId }) },
@@ -80,7 +81,9 @@ function WorkOrderDetail() {
           <p className="mt-4 text-sm text-gray-600">
             {landing
               ? <Link to={landing.to} className="font-medium text-primary-600 hover:underline">{landing.label}</Link>
-              : t(w.charged_ref ? 'backoffice:artisans.workOrder.payment.landedElsewhere' : 'backoffice:artisans.workOrder.payment.notCharged')}
+              : (refKind === 'crg'
+                ? t('backoffice:artisans.workOrder.payment.landedCrgUnlinked', { id: refId })
+                : t(w.charged_ref ? 'backoffice:artisans.workOrder.payment.landedElsewhere' : 'backoffice:artisans.workOrder.payment.notCharged'))}
           </p>
         </section>
       )}

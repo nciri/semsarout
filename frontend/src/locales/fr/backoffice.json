@@ -1321,7 +1321,8 @@
         "landedCrg": "Voir le mandat et son compte rendu n° {{id}}",
         "landedSettlement": "Voir le décompte de caution du bail",
         "landedElsewhere": "Dépense imputée, relevé introuvable depuis cette fiche.",
-        "notCharged": "Pas encore imputée sur un relevé."
+        "notCharged": "Pas encore imputée sur un relevé.",
+        "landedCrgUnlinked": "Dépense imputée sur le compte rendu n° {{id}} ; son mandat n'est pas identifiable depuis cette fiche."
       }
     }
   },

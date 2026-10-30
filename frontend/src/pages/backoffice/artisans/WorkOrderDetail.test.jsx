@@ -12,7 +12,7 @@ vi.mock('../../../services/artisanService', () => ({ artisanService: svc }))
 const API = {
   '/backoffice/clients?per_page=100': { clients: [{ id: 3, first_name: 'Samira', last_name: 'Alaoui' }] },
   '/backoffice/gestion-locative/mandates': { mandates: [
-    { id: 8, property_id: 5, status: 'expired' }, { id: 9, property_id: 5, status: 'active' },
+    { id: 9, property_id: 5, status: 'active' }, { id: 3, property_id: 99, status: 'active' },
   ] },
 }
 vi.mock('../../../services/api', () => ({
@@ -36,16 +36,30 @@ function renderDetail(workOrder) {
 
 describe('Fiche d\'intervention : règlement', () => {
   beforeEach(async () => {
+    API['/backoffice/gestion-locative/mandates'] = { mandates: [
+      { id: 9, property_id: 5, status: 'active' }, { id: 3, property_id: 99, status: 'active' },
+    ] }
     await i18n.changeLanguage('fr')
     svc.listArtisans.mockResolvedValue({ artisans: [] })
     svc.listTrades.mockResolvedValue({ trades: [{ id: 'plombier', label: 'Plombier' }] })
   })
 
-  it('dit où la dépense a atterri : le compte rendu du mandat actif', async () => {
+  it('dit où la dépense a atterri : le compte rendu du mandat unique du bien', async () => {
     renderDetail({ ...WO, charged_ref: 'crg:12' })
     expect(await screen.findByText('Propriétaire')).toBeInTheDocument()
     expect(await screen.findByText('Samira Alaoui')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /compte rendu/i })).toHaveAttribute('href', '/backoffice/gestion-locative/mandats/9')
+  })
+
+  it.each([
+    ['deux mandats actifs', [{ id: 8, property_id: 5, status: 'active' }, { id: 9, property_id: 5, status: 'active' }]],
+    ['un mandat expiré à côté du nouveau', [{ id: 8, property_id: 5, status: 'expired' }, { id: 9, property_id: 5, status: 'active' }]],
+    ['aucun mandat', [{ id: 3, property_id: 99, status: 'active' }]],
+  ])('ne devine pas le mandat : %s', async (_, mandates) => {
+    API['/backoffice/gestion-locative/mandates'] = { mandates }
+    renderDetail({ ...WO, charged_ref: 'crg:12' })
+    expect(await screen.findByText(/compte rendu n° 12/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /compte rendu/i })).not.toBeInTheDocument()
   })
 
   it('mène au décompte du bail quand la dépense a été retenue sur la caution', async () => {
