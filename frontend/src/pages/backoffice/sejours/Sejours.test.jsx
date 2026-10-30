@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from 'react-query'
@@ -325,6 +325,39 @@ describe('Messagerie de séjour', () => {
     expect(body).toContain('{{guest_name}}')
     expect(body).toContain('{{check_out}}')
     expect(body).not.toMatch(/\{\{(check_out_time|host_name|property_name)\}\}/)
+  })
+
+  // Le corps du message est saisi en WYSIWYG et part en HTML dans l'email du voyageur.
+  it('envoie le corps du message en HTML et reprend les modèles préécrits en paragraphes', async () => {
+    svc.createTemplate.mockResolvedValue({ template: { id: 9, name: 'Rappel de départ' } })
+    renderAt('/backoffice/sejours/messages')
+    await userEvent.click(await screen.findByRole('button', { name: 'Ajouter un modèle' }))
+    await userEvent.type(screen.getByLabelText('Nom interne'), 'Bienvenue')
+    await userEvent.type(screen.getByLabelText("Objet de l'email"), 'Votre séjour')
+    const corps = screen.getByLabelText('Message')
+    corps.innerHTML = '<p class="MsoNormal">Bonjour <strong>{{guest_name}}</strong></p><script>alert(1)</script>'
+    fireEvent.input(corps)
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+    await vi.waitFor(() => expect(svc.createTemplate).toHaveBeenCalledWith(expect.objectContaining({
+      body: '<p>Bonjour <strong>{{guest_name}}</strong></p>',
+    })))
+
+    // Un modèle préécrit est rédigé en texte dans les locales : ses sauts de ligne doivent
+    // devenir des paragraphes, sinon l'email les perdrait à l'affichage HTML.
+    const item = (await screen.findByText('Rappel de départ')).closest('li')
+    await userEvent.click(within(item).getByRole('button', { name: 'Ajouter ce modèle' }))
+    const { body } = svc.createTemplate.mock.calls.at(-1)[0]
+    expect(body.startsWith('<p>')).toBe(true)
+    expect(body).toContain('</p><p>')
+    expect(body).not.toContain('\n')
+  })
+
+  it("reprend en paragraphes un modèle enregistré avant la bascule WYSIWYG", async () => {
+    renderAt('/backoffice/sejours/messages')
+    const table = (await screen.findAllByRole('table'))[0]
+    await userEvent.click(within(table).getAllByRole('button', { name: 'Modifier le modèle' })[0])
+    // Le modèle 21 est stocké en texte brut : l'éditeur doit l'afficher comme un paragraphe.
+    expect(screen.getByLabelText('Message').innerHTML).toBe('<p>Bonjour {{guest_name}}</p>')
   })
 
   it('ne repropose pas un modèle déjà installé', async () => {
