@@ -83,7 +83,10 @@ export function Alert({ tone = 'warn', icon: Icon, children }) {
   return (
     <div className={`flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-[13px] ${ALERT_TONES[tone]}`}>
       {Icon && <Icon className="w-4 h-4 mt-0.5 flex-none" aria-hidden="true" />}
-      <span>{children}</span>
+      {/* `div` et non `span` : plusieurs appelants y posent une `<ul>` ou un `<p>`, et un
+          élément de bloc dans un `<span>` est une imbrication invalide — le navigateur
+          referme le `span`, dans le seul élément qu'on a demandé de toujours voir. */}
+      <div className="min-w-0">{children}</div>
     </div>
   )
 }
