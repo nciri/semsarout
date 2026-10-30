@@ -14,6 +14,8 @@ import { NEXT_STATUS, STATUSES, STATUS_TONES, isOpen } from './leads/model'
 import Summary from './leads/Summary'
 import LeadFiche from './leads/LeadFiche'
 import { useConfirm } from '../../components/common/confirm'
+import RichTextarea from '../../components/common/RichTextarea'
+import { richTextToPlain } from '../../utils/richText'
 
 const K = 'crm.pipeline.leads'
 const PER_PAGE = 20
@@ -72,7 +74,7 @@ function NewLeadForm({ properties, onClose, onCreated }) {
       </div>
       <label className="grid gap-1.5">
         <span className="text-[12.5px] font-semibold text-gray-700">{t(`${K}.create.message`)}</span>
-        <textarea className={inputCls} rows={3} value={values.message} onChange={set('message')}
+        <RichTextarea rows={3} value={values.message} onChange={(html) => setValues((v) => ({ ...v, message: html }))}
           placeholder={t(`${K}.create.messagePlaceholder`)} />
       </label>
       <div className="flex flex-wrap items-center gap-3">
@@ -301,7 +303,7 @@ export default function BackofficeLeads() {
                         <tr className={open ? 'bg-primary-50/40' : 'hover:bg-gray-50'}>
                           <td className={`${TD} max-w-[14rem]`}>
                             <b className="block truncate font-semibold">{displayName(lead)}</b>
-                            {lead.message && <span className="hidden truncate text-xs text-gray-500 md:block">{lead.message}</span>}
+                            {lead.message && <span className="hidden truncate text-xs text-gray-500 md:block">{richTextToPlain(lead.message)}</span>}
                             <span className="mt-0.5 block sm:hidden"><Chip tone={STATUS_TONES[lead.status]}>{statusLabel(lead.status)}</Chip></span>
                           </td>
                           <td className={`${TD} hidden 2xl:table-cell`}>

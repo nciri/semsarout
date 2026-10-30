@@ -90,3 +90,27 @@ def test_description_length_measures_the_text_not_the_markup(client):
         assert rows[0]["description_length"] == len("Six.")
     finally:
         m.app.dependency_overrides.pop(get_principal, None)
+
+
+def test_the_public_contact_message_is_sanitised_before_entering_the_outbox(client, db_session):
+    """Le message du formulaire de contact d'un bien est saisi en WYSIWYG par un visiteur
+    **anonyme**. Il est assaini avant l'outbox : crm, l'email d'alerte de l'agence et la
+    fiche du lead reçoivent tous la même valeur, et aucun ne reçoit de HTML brut."""
+    from semsar_events.outbox import OutboxEvent
+    import json
+
+    p = Property(reference="REF-1", title="Riad", property_type="villa",
+                 transaction_type="sale", price=1, city="Fès", agency_id=AGENCY,
+                 status="active")
+    db_session.add(p)
+    db_session.commit()
+
+    r = client.post(f"/properties/{p.id}/contact",
+                    json={"name": "Hind", "email": "h@example.ma", "message": SALE})
+    assert r.status_code == 201
+
+    msg = db_session.query(OutboxEvent).order_by(OutboxEvent.id.desc()).first()
+    payload = msg.payload if isinstance(msg.payload, dict) else json.loads(msg.payload)
+    assert payload["message"] == PROPRE
+    # Le nom reste du texte brut : il n'a pas d'éditeur riche.
+    assert payload["name"] == "Hind"

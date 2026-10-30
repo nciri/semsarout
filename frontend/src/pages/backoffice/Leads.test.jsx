@@ -12,7 +12,7 @@ const iso = (days) => new Date(Date.now() + days * 864e5).toISOString()
 
 const LEADS = [
   { id: 1, name: 'Hind Senhaji', phone: '0612345678', email: 'hind@example.ma', status: 'new', source: 'phone_reveal',
-    message: 'Toujours disponible ?', property_id: 4, property_title: 'F4 Rabat', created_at: iso(-33) },
+    message: '<p>Toujours <strong>disponible</strong> ?</p>', property_id: 4, property_title: 'F4 Rabat', created_at: iso(-33) },
   { id: 2, name: 'Omar Alaoui', status: 'converted', source: 'website', created_at: iso(-50),
     contacted_at: iso(-48), converted_at: iso(-40) },
 ]
@@ -74,7 +74,7 @@ describe('Page Leads du back-office', () => {
     await screen.findByText('Hind Senhaji')
     await user.click(screen.getAllByRole('button', { name: 'Déplier la fiche' })[0])
     const fiche = within(document.getElementById('lead-fiche-1'))
-    expect(fiche.getByText('Toujours disponible ?')).toBeInTheDocument()
+    expect(fiche.getByText((_, el) => el?.tagName === 'P' && el.textContent === 'Toujours disponible ?')).toBeInTheDocument()
     expect(screen.getByText('Historique du statut')).toBeInTheDocument()
     expect(await screen.findByText('1 autre demande de ce contact : traitez-les ensemble.')).toBeInTheDocument()
     await user.keyboard('{Escape}')
@@ -121,5 +121,44 @@ describe('Page Leads du back-office', () => {
     expect(api.post).toHaveBeenCalledWith('/backoffice/leads', expect.objectContaining({
       name: 'Karim Idrissi', phone: '0612345678', property_id: '4',
     }))
+  })
+
+  // Le message est saisi en WYSIWYG : ce qui part est du HTML, assaini par le champ.
+  it('envoie le message du nouveau lead en HTML nettoye', async () => {
+    renderLeads()
+    await userEvent.click(await screen.findByRole('button', { name: 'Nouveau lead' }))
+    await userEvent.type(screen.getByLabelText('Nom du contact'), 'Karim Idrissi')
+    await userEvent.type(screen.getByLabelText('Téléphone'), '0612345678')
+
+    const editor = screen.getByRole('textbox', { name: 'Demande' })
+    editor.innerHTML = '<p>Rappeler <b>demain</b></p><script>alert(1)</script>'
+    await userEvent.click(editor)
+    await userEvent.tab()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer le lead' }))
+    expect(api.post).toHaveBeenCalledWith('/backoffice/leads', expect.objectContaining({
+      message: '<p>Rappeler <b>demain</b></p>',
+    }))
+  })
+
+  // 🔴 La cellule du tableau est tronquée sur une ligne : `truncate` ne sait pas couper du
+  // balisage, et un `<p>` y déformerait la ligne. On y projette donc le texte.
+  it('montre le message en texte dans la cellule tronquee, jamais ses balises', async () => {
+    const { container } = renderLeads()
+    await screen.findByText('Hind Senhaji')
+
+    expect(screen.getByText('Toujours disponible ?')).toBeInTheDocument()
+    expect(container.querySelector('td strong')).toBeNull()
+    expect(container.innerHTML).not.toContain('&lt;strong&gt;')
+  })
+
+  // La fiche dépliée, elle, est la surface qui rend la mise en forme.
+  it('rend la mise en forme du message dans la fiche depliee', async () => {
+    const { container } = renderLeads()
+    await screen.findByText('Hind Senhaji')
+    await userEvent.click(screen.getAllByRole('button', { name: 'Déplier la fiche' })[0])
+
+    expect(container.querySelector('.rich-text strong')).not.toBeNull()
+    expect(container.querySelector('.rich-text strong').textContent).toBe('disponible')
   })
 })

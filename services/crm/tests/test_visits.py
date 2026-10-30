@@ -84,9 +84,10 @@ def test_rich_visit_report_is_sanitised_on_both_write_paths(client, db_session):
     for r in (par_put, par_complete):
         assert r.json()["report"] == propre
     assert par_put.json()["client_comments"] == "<b>ok</b>"
-    # Les notes restent du texte brut : les assainir ferait apparaître des entités à l'écran.
+    # `notes` est passé en WYSIWYG (cf. test_wysiwyg.py) ; `internal_notes`, qu'aucun écran
+    # n'expose, reste du texte brut : l'assainir ferait apparaître des entités à l'écran.
     assert client.put(f"/backoffice/visits/{_add(db_session, -1).id}",
-                      json={"notes": "Loyer < 5000 & charges"}).json()["notes"] == "Loyer < 5000 & charges"
+                      json={"internal_notes": "Loyer < 5000 & charges"}).json()["notes"] is None
     # Un champ vidé redevient NULL plutôt qu'une chaîne vide.
     assert client.post(f"/backoffice/visits/{_add(db_session, -1).id}/complete",
                        json={"report": "<p><br></p>"}).json()["report"] is None

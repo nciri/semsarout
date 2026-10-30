@@ -15,7 +15,13 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
-from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
+from semsar_common import (
+    get_settings,
+    install_legacy_error_handlers,
+    sanitize_rich_field,
+    setup_logging,
+    setup_tracing,
+)
 
 from . import agency_client, buyer, clients, users_client, visits
 from .visits import _visit_dict
@@ -26,6 +32,11 @@ settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
 
 _UPDATABLE = ["name", "email", "phone", "status", "source", "message", "property_id", "assigned_to_id", "notes"]
+# Champs saisis en WYSIWYG : ce qui arrive est du HTML, donc un XSS stocké que la fiche du
+# lead et l'email d'alerte de l'agence déclencheraient. Les autres champs de la boucle
+# restent du texte brut : les assainir échapperait leurs « < » et « & » à l'écran.
+# `notes` (note interne de l'agent) n'a pas d'éditeur riche et reste donc du texte.
+_RICH = ("message",)
 # Fenêtre maximale chargée pour les rappels : le plus grand délai proposé à l'agence (48 h).
 MAX_REMINDER_HOURS = 48
 
@@ -137,7 +148,8 @@ async def create_service_request(request: Request, db: Session = Depends(get_db)
     if service and service not in _VALID_SERVICES:
         return _err("Invalid service", 400)
     lead = Lead(name=data["name"], email=data["email"], phone=data.get("phone"),
-                message=data.get("message"), source="service_request", service=service)
+                message=sanitize_rich_field(data.get("message")),
+                source="service_request", service=service)
     db.add(lead)
     db.commit()
     return JSONResponse({"message": "Service request sent successfully", "lead_id": lead.id}, status_code=201)
@@ -424,7 +436,7 @@ async def create_backoffice_lead(request: Request, principal: Principal = Depend
         return err
     uid = int(principal.sub) if principal.sub and principal.sub.isdigit() else None
     lead = Lead(
-        name=name, email=email, phone=phone, message=(data.get("message") or "").strip() or None,
+        name=name, email=email, phone=phone, message=sanitize_rich_field(data.get("message")),
         source="manual", status="new", agency_id=principal.agency_id, property_id=property_id,
         assigned_to_id=assigned_to_id or uid,
         # Saisi par un agent qui l'a déjà en main : il n'a pas à revenir en « non lu ».
@@ -522,7 +534,8 @@ async def create_lead(request: Request, principal: Principal = Depends(get_princ
     uid = int(principal.sub) if principal.sub.isdigit() else None
     l = Lead(
         name=data.get("name"), email=data.get("email"), phone=data.get("phone"),
-        source=data.get("source", "manual"), status="new", message=data.get("message"),
+        source=data.get("source", "manual"), status="new",
+        message=sanitize_rich_field(data.get("message")),
         property_id=data.get("property_id"), assigned_to_id=data.get("assigned_to_id") or uid,
         agency_id=principal.agency_id,
     )
@@ -539,7 +552,7 @@ async def update_lead(lead_id: int, request: Request, principal: Principal = Dep
     data = await _json(request)
     for field in _UPDATABLE:
         if field in data:
-            setattr(l, field, data[field])
+            setattr(l, field, sanitize_rich_field(data[field]) if field in _RICH else data[field])
     if "status" in data:
         s = data["status"]
         if s == "contacted" and not l.contacted_at:

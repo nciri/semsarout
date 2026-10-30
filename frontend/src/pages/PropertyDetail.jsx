@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient, useMutation } from 'react-query'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import {
@@ -25,7 +25,7 @@ import { DOC_TYPES } from './dashboard/applicationStatus'
 import { useFormat } from '../utils/format'
 import { getPublishedByTarget } from '../services/design3dPublic'
 import DesignViewer from '../components/design/DesignViewer'
-import { RichText } from '../components/common/RichTextarea'
+import RichTextarea, { RichText } from '../components/common/RichTextarea'
 
 const MAX_DOC_SIZE = 10 * 1024 * 1024
 
@@ -186,7 +186,7 @@ function PropertyDetail() {
     return () => clearInterval(interval)
   }, [property?.is_urgent, property?.urgent_until, t])
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm()
+  const { control, register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm()
 
   // Prefill the contact form with the logged-in user's info when it opens
   useEffect(() => {
@@ -678,12 +678,20 @@ function PropertyDetail() {
                     />
                   </div>
                   <div>
-                    <label className="label">{t('public:propertyDetail.messageLabel')}</label>
-                    <textarea
-                      {...register('message')}
-                      className="input"
-                      rows="4"
-                      placeholder={t('public:propertyDetail.messagePlaceholder')}
+                    <label htmlFor="contact-message" className="label">{t('public:propertyDetail.messageLabel')}</label>
+                    <Controller
+                      name="message"
+                      control={control}
+                      defaultValue=""
+                      render={({ field }) => (
+                        <RichTextarea
+                          id="contact-message"
+                          rows={4}
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder={t('public:propertyDetail.messagePlaceholder')}
+                        />
+                      )}
                     />
                   </div>
                   <button

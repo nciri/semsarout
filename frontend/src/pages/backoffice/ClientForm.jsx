@@ -10,6 +10,7 @@ import { DIRHAM_SYMBOL } from '../../utils/currency'
 import SearchableSelect from '../../components/common/SearchableSelect'
 import DirIcon from '../../components/common/DirIcon'
 import api from '../../services/api'
+import RichTextarea from '../../components/common/RichTextarea'
 
 const backofficeService = {
   getClient: async (id) => {
@@ -539,14 +540,14 @@ export default function BackofficeClientForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="client-notes" className="block text-sm font-medium text-gray-700 mb-1">
                 {t('backoffice:crm.clients.form.fields.notes')}
               </label>
-              <textarea
+              <RichTextarea
+                id="client-notes"
                 value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                onChange={(html) => setFormData({ ...formData, notes: html })}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 placeholder={t('backoffice:crm.clients.form.fields.notesPlaceholder')}
               />
             </div>

@@ -5,6 +5,7 @@ import api from '../../../services/api'
 import { useFormat } from '../../../utils/format'
 import { Alert, Chip, DetailColumns, IconAction } from '../components/kit'
 import { STATUS_TONES, statusHistory } from './model'
+import { RichText } from '../../../components/common/RichTextarea'
 
 const K = 'crm.pipeline.leads'
 const fetchDuplicates = async (id) => (await api.get(`/backoffice/leads/${id}/duplicates`)).data
@@ -32,7 +33,7 @@ export default function LeadFiche({ lead, agents, onAssign }) {
       main={
         <div className="grid gap-5 sm:grid-cols-2">
           <Block title={t(`${K}.detail.message`)}>
-            <p className="whitespace-pre-wrap text-[13px] text-gray-700">{lead.message || t(`${K}.detail.noMessage`)}</p>
+            <RichText html={lead.message} className="text-[13px] text-gray-700" emptyLabel={t(`${K}.detail.noMessage`)} />
             {lead.notes && (
               <>
                 <h5 className="mt-2 text-xs text-gray-500">{t(`${K}.detail.internalNotes`)}</h5>

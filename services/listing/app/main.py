@@ -293,7 +293,10 @@ def _contact_payload(p: Property, data: dict, source: str) -> dict:
         "property_id": p.id, "property_title": p.title,
         "agency_id": p.agency_id, "owner_id": p.owner_id,
         "name": data.get("name"), "email": data.get("email"), "phone": data.get("phone"),
-        "message": data.get("message"), "source": source, "service": data.get("service"),
+        # Saisi en WYSIWYG par un visiteur anonyme : assaini avant d'entrer dans l'outbox,
+        # pour qu'aucun consommateur de l'événement ne reçoive de HTML brut.
+        "message": sanitize_rich_field(data.get("message")),
+        "source": source, "service": data.get("service"),
     }
 
 

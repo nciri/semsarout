@@ -24,8 +24,9 @@ _V_UPDATABLE = ["property_id", "client_id", "visitor_name", "visitor_email", "vi
                 "report", "client_feedback", "client_comments", "status"]
 # Champs saisis en WYSIWYG : ce qui arrive est du HTML, donc un XSS stocké tant qu'il n'est
 # pas assaini. Les autres champs restent du texte brut : les assainir échapperait leurs
-# `<` et `&` et ferait apparaître des entités dans l'affichage.
-_V_RICH = ("report", "client_comments")
+# `<` et `&` et ferait apparaître des entités dans l'affichage. `internal_notes` n'a pas
+# d'éditeur riche (aucun écran ne l'expose) et reste donc du texte.
+_V_RICH = ("notes", "report", "client_comments")
 
 
 def _dt(v):
@@ -365,7 +366,8 @@ async def create_visit(request: Request, principal: Principal = Depends(get_prin
         visitor_name=data.get("visitor_name"), visitor_email=data.get("visitor_email"),
         visitor_phone=data.get("visitor_phone"), agent_id=data.get("agent_id") or uid,
         scheduled_at=_dt(data.get("scheduled_at")), duration_minutes=data.get("duration_minutes", 30),
-        visit_type=data.get("visit_type", "in_person"), notes=data.get("notes"),
+        visit_type=data.get("visit_type", "in_person"),
+        notes=sanitize_rich_field(data.get("notes")),
         status="scheduled", agency_id=principal.agency_id,
     )
     db.add(v)

@@ -112,7 +112,7 @@ function Fiche({ visit, now, reporting, setReporting, onAction, saving, id }) {
         </Section>
       </div>
 
-      {visit.notes && <Section title={t('fiche.notes')}><p className="whitespace-pre-line">{visit.notes}</p></Section>}
+      {visit.notes && <Section title={t('fiche.notes')}><RichText html={visit.notes} /></Section>}
 
       {reporting ? (
         <ReportForm visit={visit} saving={saving} onClose={() => setReporting(false)} onSave={(data) => onAction('complete', visit, data).then((ok) => ok && setReporting(false))} />
