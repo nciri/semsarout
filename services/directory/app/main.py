@@ -19,7 +19,7 @@ from semsar_common import get_settings, install_legacy_error_handlers, setup_log
 
 from .db import get_db, init_db
 from .models import Artisan, WorkOrder
-from .payeur import refus_de_creation
+from .payeur import refus_de_creation, refus_de_modification, valeur_inconnue
 from .trades import ARTISAN_TRADES, is_valid_trade
 
 settings = get_settings()
@@ -269,7 +269,7 @@ async def create_work_order(request: Request, principal: Principal = Depends(_ar
         agency_id=principal.agency_id, title=data["title"], trade=data["trade"], status="requested",
         client_id=data.get("client_id"), lease_id=data.get("lease_id"), nature=data.get("nature"),
         payer=data.get("payer"), charge_mode=data.get("charge_mode"),
-        third_party_label=data.get("third_party_label"),
+        third_party_label=data["third_party_label"].strip() if data.get("payer") == "third_party" else None,
         payer_set_by=int(principal.sub) if data.get("payer") and principal.sub.isdigit() else None,
         payer_set_at=datetime.utcnow() if data.get("payer") else None,
         artisan_id=data.get("artisan_id"), property_id=data.get("property_id"),
@@ -317,6 +317,10 @@ async def update_work_order(wid: int, request: Request, principal: Principal = D
         refusal = _status_change_refusal(principal, wo, data["status"])
         if refusal is not None:
             return refusal
+    if (inconnue := valeur_inconnue(data)) is not None:
+        return _err(inconnue, 400)
+    if (refus := refus_de_modification(principal, wo, data)) is not None:
+        return _err(refus, 403)
     # Ces traces protègent le bon du retrait : les laisser réécrire rendrait la protection
     # décorative, puisqu'il suffirait d'effacer le coût pour pouvoir supprimer.
     if "cost_final" in data and _wo_is_sealed(wo) and not _is_wo_admin(principal):

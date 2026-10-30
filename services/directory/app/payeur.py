@@ -32,6 +32,39 @@ def refus_de_creation(data: dict) -> str | None:
             return "Payeur invalide"
         if data.get("charge_mode") not in CHARGE_MODES:
             return "Mode d'imputation invalide"
-        if data["payer"] == "third_party" and not (data.get("third_party_label") or "").strip():
+        if data["payer"] == "third_party" and not _libelle(data.get("third_party_label")):
             return "Le nom du tiers payeur est requis"
+    return None
+
+
+def _libelle(valeur: object) -> str:
+    return valeur.strip() if isinstance(valeur, str) else ""
+
+
+# Dès qu'une dépense figure sur un relevé parti ou réglé, ces champs la définissent : les
+# réécrire rendrait faux un document déjà signé.
+_CHAMPS_DEPENSE = ("cost_final", "cost_estimate", "payer", "charge_mode", "nature",
+                   "client_id", "lease_id", "third_party_label")
+
+
+def valeur_inconnue(data: dict) -> str | None:
+    for cle, permis, message in (("nature", NATURES, "Nature des travaux invalide"),
+                                 ("payer", PAYERS, "Payeur invalide"),
+                                 ("charge_mode", CHARGE_MODES, "Mode d'imputation invalide")):
+        if data.get(cle) is not None and data[cle] not in permis:
+            return message
+    return None
+
+
+def refus_de_modification(principal, wo, data: dict) -> str | None:
+    # Import tardif : `main` importe ce module, et le rôle d'administration y est défini.
+    from .main import _is_wo_admin
+
+    inconnue = valeur_inconnue(data)
+    if inconnue:
+        return inconnue
+    if (wo.charged_at is not None or wo.settled_at is not None) and any(k in data for k in _CHAMPS_DEPENSE):
+        return "Cette dépense figure sur un relevé déjà émis : elle ne se modifie plus"
+    if wo.status == "done" and ("payer" in data or "charge_mode" in data) and not _is_wo_admin(principal):
+        return "Le payeur d'une intervention achevée ne se modifie qu'en administration"
     return None
