@@ -196,6 +196,24 @@ def get_mandate(mandate_id: int, principal: Principal = Depends(get_principal),
                                     _lookup_client)[0]
 
 
+def _refus_fee_percent(data: dict) -> JSONResponse | None:
+    """Borne `0 <= fee_percent <= 100`, aux DEUX routes qui écrivent un mandat.
+
+    Rien ne la bornait : au-delà de 100, les honoraires dépassent le loyer encaissé, le
+    plafond de dépenses du CRG devient négatif et le net l'est aussi, honoraires seuls.
+    « Un CRG faux est plus coûteux qu'un CRG absent » est l'anti-objectif nommé de la spec.
+    """
+    if data.get("fee_percent") is None:
+        return None
+    try:
+        pct = float(data["fee_percent"])
+    except (TypeError, ValueError):
+        return err("Taux d'honoraires invalide.", 400)
+    if not 0 <= pct <= 100:
+        return err("Le taux d'honoraires doit être compris entre 0 et 100 %.", 400)
+    return None
+
+
 @app.post("/backoffice/gestion-locative/mandates", status_code=201)
 async def create_mandate(request: Request, principal: Principal = Depends(get_principal),
                          db: Session = Depends(get_db)):
@@ -204,6 +222,8 @@ async def create_mandate(request: Request, principal: Principal = Depends(get_pr
     data = await json_body(request)
     if not data.get("property_id") or not data.get("landlord_client_id"):
         return err("property_id et landlord_client_id sont requis.", 400)
+    if (refus := _refus_fee_percent(data)) is not None:
+        return refus
     m = Mandate(
         reference=_reference("MND"), agency_id=principal.agency_id,
         property_id=data["property_id"], landlord_client_id=data["landlord_client_id"],
@@ -229,6 +249,8 @@ async def update_mandate(mandate_id: int, request: Request,
     if m is None or m.agency_id != principal.agency_id:
         return err("Mandat introuvable.", 404)
     data = await json_body(request)
+    if (refus := _refus_fee_percent(data)) is not None:
+        return refus
     for field in ("mandate_type", "fee_percent", "landlord_iban", "notes"):
         if field in data:
             setattr(m, field, data[field])

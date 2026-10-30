@@ -488,3 +488,29 @@ def test_un_crg_se_resout_avec_son_mandat_et_reste_cloisonne_par_agence(client, 
     assert client.get(f"/backoffice/gestion-locative/crg/{etranger.id}").status_code == 404
     assert client.get("/backoffice/gestion-locative/crg/999999").status_code == 404
     assert client.get("/backoffice/gestion-locative/crg/drafts").status_code == 200
+
+
+def test_le_taux_d_honoraires_du_mandat_est_borne(client, db_session):
+    """Rien ne le bornait : au-delà de 100 %, les honoraires dépassent le loyer encaissé, le
+    plafond de dépenses du CRG devient négatif et le net l'est aussi, honoraires seuls.
+    « Un CRG faux est plus coûteux qu'un CRG absent. »"""
+    base = {"property_id": 7, "landlord_client_id": 1}
+    for mauvais in (101, -1, "huit"):
+        r = client.post("/backoffice/gestion-locative/mandates",
+                        json={**base, "fee_percent": mauvais})
+        assert r.status_code == 400, mauvais
+        assert db_session.query(Mandate).count() == 0
+
+    # Les bornes elles-mêmes passent.
+    for bon in (0, 100, 8.5):
+        assert client.post("/backoffice/gestion-locative/mandates",
+                           json={**base, "fee_percent": bon}).status_code == 201
+
+    # Et la même borne vaut à la mise à jour, sans quoi elle se contournerait en deux appels.
+    mid = db_session.query(Mandate).first().id
+    assert client.patch(f"/backoffice/gestion-locative/mandates/{mid}",
+                        json={"fee_percent": 150}).status_code == 400
+    assert client.patch(f"/backoffice/gestion-locative/mandates/{mid}",
+                        json={"fee_percent": 6}).status_code == 200
+    db_session.expire_all()
+    assert db_session.get(Mandate, mid).fee_percent == Decimal("6")
