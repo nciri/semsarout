@@ -10,6 +10,7 @@ import DirIcon from '../../components/common/DirIcon'
 import { lotPlanService, LOT_STATUS } from '../../services/lotPlanService'
 import Design3dEntry from '../../components/design/Design3dEntry'
 import { useConfirm } from '../../components/common/confirm'
+import RichTextarea from '../../components/common/RichTextarea'
 
 const LOT_TYPE_VALUES = ['apartment', 'villa', 'duplex', 'studio', 'terrain', 'commercial', 'office']
 const LOT_STATUS_KEYS = Object.keys(LOT_STATUS)
@@ -547,7 +548,9 @@ export default function ProgramPlanEditor() {
                     ))}
                   </div>
                 </div>
-                <textarea className="input" rows={2} placeholder={t('dashboard:programPlanEditor.form.descriptionOptional')} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+                <RichTextarea rows={2} placeholder={t('dashboard:programPlanEditor.form.descriptionOptional')}
+                  aria-label={t('dashboard:programPlanEditor.form.descriptionOptional')}
+                  value={form.description} onChange={html => setForm({ ...form, description: html })} />
                 <div className="flex gap-2 pt-1">
                   <button onClick={handleSaveLot} disabled={saving} className="btn-primary flex-1 justify-center">
                     <FiSave className="w-4 h-4 me-2" /> {saving ? '...' : t('dashboard:shared.actions.save')}

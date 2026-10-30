@@ -14,6 +14,7 @@ import LotPlanViewer from '../components/common/LotPlanViewer'
 import DirIcon from '../components/common/DirIcon'
 import useAuthStore from '../store/authStore'
 import { useFormat } from '../utils/format'
+import RichTextarea, { RichText } from '../components/common/RichTextarea'
 
 const programsService = {
   getProgram: async (slug) => {
@@ -382,12 +383,12 @@ function ContactForm({ program }) {
         />
       </div>
       <div>
-        <textarea
+        <RichTextarea
           value={formData.message}
-          onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+          onChange={(html) => setFormData({ ...formData, message: html })}
+          aria-label={t('public:programDetail.messagePlaceholder')}
           placeholder={t('public:programDetail.messagePlaceholder')}
           rows={4}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
         />
       </div>
       <button
@@ -532,7 +533,7 @@ export default function ProgramDetail() {
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('public:programDetail.descriptionTitle')}</h2>
                 <div className="prose prose-gray max-w-none">
-                  <p className="text-gray-600 whitespace-pre-line">{program.description}</p>
+                  <RichText html={program.description} className="text-gray-600" />
                 </div>
               </div>
             )}

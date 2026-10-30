@@ -14,6 +14,7 @@ import AddressAutocomplete from '../../components/common/AddressAutocomplete'
 import { TYPOLOGY_OPTIONS, unitTypesForTypology, DETAIL_SECTIONS, UNIT_SPEC_FIELDS, UNIT_HIDE_ROOMS } from './programSpecsConfig'
 import i18n from '../../i18n'
 import { useConfirm } from '../../components/common/confirm'
+import RichTextarea from '../../components/common/RichTextarea'
 
 // Route through the shared axios instance: it reads accessToken from
 // auth-storage and auto-refreshes on 401, avoiding the stale-token desync that
@@ -620,15 +621,15 @@ export default function DashboardProgramForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="program-description" className="block text-sm font-medium text-gray-700 mb-1">
                 {t('dashboard:programForm.fields.description')}
               </label>
-              <textarea
+              <RichTextarea
+                id="program-description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(html) => setFormData({ ...formData, description: html })}
                 placeholder={t('dashboard:programForm.fields.descriptionPlaceholder')}
                 rows={5}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
           </div>
