@@ -60,7 +60,7 @@ describe('RentalLayout', () => {
       { crg_id: 14, mandate_id: 5, mandate_reference: 'MND-5', period_label: 'Octobre 2026', net: 900, waiting_days: 2 },
     ] })
     renderLayout()
-    expect(await screen.findByText('Comptes rendus de gérance à valider : 2')).toBeInTheDocument()
+    expect(await screen.findByText('Comptes rendus de gérance en attente : 2')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'MND-3 · Septembre 2026' })).toHaveAttribute('href', '/backoffice/gestion-locative/mandats/3')
     expect(screen.getByText('40 j')).toBeInTheDocument()
     expect(screen.getByText('2 j')).toBeInTheDocument()
@@ -68,17 +68,30 @@ describe('RentalLayout', () => {
     expect(links).toEqual(['MND-3 · Septembre 2026', 'MND-5 · Octobre 2026'])
   })
 
+  it('signale aussi un compte rendu validé jamais parti, marqué comme bloqué à l’envoi', async () => {
+    listCrgDrafts.mockResolvedValue({ drafts: [
+      { crg_id: 12, mandate_id: 3, mandate_reference: 'MND-3', period_label: 'Septembre 2026', net: 4020, waiting_days: 40, status: 'validated' },
+      { crg_id: 14, mandate_id: 5, mandate_reference: 'MND-5', period_label: 'Octobre 2026', net: 900, waiting_days: 2, status: 'draft' },
+    ] })
+    renderLayout()
+    const bloque = await screen.findByRole('link', { name: 'MND-3 · Septembre 2026' })
+    // La puce n'est portée que par le relevé validé : un brouillon ne doit pas s'annoncer bloqué.
+    expect(within(bloque.closest('li')).getByText('validé, envoi en attente')).toBeInTheDocument()
+    const brouillon = screen.getByRole('link', { name: 'MND-5 · Octobre 2026' })
+    expect(within(brouillon.closest('li')).queryByText('validé, envoi en attente')).not.toBeInTheDocument()
+  })
+
   it('garde le bandeau visible quand la synthèse est en erreur', async () => {
     summary.mockRejectedValue(new Error('boom'))
     listCrgDrafts.mockResolvedValue({ drafts: [{ crg_id: 12, mandate_id: 3, mandate_reference: 'MND-3', period_label: 'Septembre 2026', net: 4020, waiting_days: 40 }] })
     renderLayout()
-    expect(await screen.findByText('Comptes rendus de gérance à valider : 1')).toBeInTheDocument()
+    expect(await screen.findByText('Comptes rendus de gérance en attente : 1')).toBeInTheDocument()
   })
 
   it('n’affiche aucun bandeau quand rien n’attend de validation', async () => {
     renderLayout()
     expect(await screen.findByText('Gestion locative')).toBeInTheDocument()
-    expect(screen.queryByText(/Comptes rendus de gérance à valider/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Comptes rendus de gérance en attente/)).not.toBeInTheDocument()
   })
 
   it('affiche le titre FR', async () => {

@@ -298,6 +298,28 @@ def test_l_estampille_rejouee_avec_le_meme_releve_rend_le_meme_compte(client, db
     assert a.charged_at == pose_le and a.charged_ref == "crg:12"
 
 
+def test_l_estampille_nomme_les_depenses_portees_par_un_autre_releve(client, db_session):
+    """Sans `foreign`, un compte court ne disait pas si le relevé pouvait se corriger.
+
+    L'appelant (rental) distingue grâce à elle la dépense partie sur un AUTRE relevé — qu'il
+    retire de son propre relevé, lequel part alors corrigé — de l'identifiant simplement
+    inconnu, qui reste un refus.
+    """
+    a = _wo_en_base(db_session, status="done", cost_final=Decimal("450"), charge_mode="crg_expense")
+    b = _wo_en_base(db_session, status="done", cost_final=Decimal("120"), charge_mode="crg_expense")
+    h = {"x-internal-token": TOKEN}
+    client.post("/internal/work-orders/charged",
+                json={"ids": [a.id], "ref": "crg:99", "agency_id": 4}, headers=h)
+    r = client.post("/internal/work-orders/charged",
+                    json={"ids": [a.id, b.id], "ref": "crg:12", "agency_id": 4}, headers=h).json()
+    assert r["stamped"] == 1
+    assert r["foreign"] == [{"id": a.id, "charged_ref": "crg:99"}]
+    # Rien d'étranger quand tout est à soi, et un id inconnu n'est PAS déclaré étranger.
+    r = client.post("/internal/work-orders/charged",
+                    json={"ids": [b.id, 99999], "ref": "crg:12", "agency_id": 4}, headers=h).json()
+    assert r == {"stamped": 1, "foreign": []}
+
+
 def test_la_liberation_ne_defait_que_l_estampille_de_son_ref(client, db_session):
     wo = _wo_en_base(db_session, property_id=7, status="done", cost_final=Decimal("450"),
                      charge_mode="deposit_deduction")

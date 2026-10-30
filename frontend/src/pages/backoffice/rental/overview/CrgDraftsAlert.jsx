@@ -3,11 +3,14 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { FiAlertTriangle } from 'react-icons/fi'
 import { rentalService } from '../../../../services/rentalService'
-import { Alert } from '../../components/kit'
+import { Alert, Chip } from '../../components/kit'
 import { DraftAge } from '../parts'
 import { useRentalFormat } from '../hooks'
 
-/** Un CRG jamais validé ne bloque rien mais ne doit dormir dans l'ombre : bandeau rouge, du plus ancien au plus récent. */
+/** Un CRG en attente ne bloque rien mais ne doit dormir dans l'ombre : bandeau rouge, du plus ancien au plus récent.
+ *
+ * Les validés-jamais-partis y figurent aussi : sans eux, un relevé bloqué à l'envoi (propriétaire
+ * sans e-mail valide, dépense reprise par le mois suivant) n'apparaissait sur aucun écran. */
 function CrgDraftsAlert() {
   const { t } = useTranslation('backoffice')
   const f = useRentalFormat()
@@ -25,6 +28,7 @@ function CrgDraftsAlert() {
               {t('rental.overview.crgDrafts.item', { reference: d.mandate_reference || `#${d.mandate_id}`, period: d.period_label })}
             </Link>
             <span className="tabular-nums">{t('rental.overview.crgDrafts.net', { amount: f.dh(d.net) })}</span>
+            {d.status === 'validated' && <Chip tone="crit">{t('rental.overview.crgDrafts.stuck')}</Chip>}
             <DraftAge days={d.waiting_days} />
           </li>
         ))}

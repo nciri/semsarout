@@ -333,10 +333,15 @@ async def internal_stamp_charged(
                WorkOrder.charged_at.is_(None))
        .update({"charged_at": datetime.utcnow(), "charged_ref": ref}, synchronize_session=False))
     db.commit()
-    stamped = (db.query(WorkOrder)
-               .filter(WorkOrder.id.in_(ids), WorkOrder.agency_id == agency_id,
-                       WorkOrder.charged_ref == ref).count())
-    return {"stamped": stamped}
+    etat = (db.query(WorkOrder.id, WorkOrder.charged_ref)
+            .filter(WorkOrder.id.in_(ids), WorkOrder.agency_id == agency_id).all())
+    stamped = sum(1 for _, cref in etat if cref == ref)
+    # `foreign` nomme les dépenses déjà portées par un AUTRE relevé. Sans elle, l'appelant voit
+    # un compte court sans savoir si c'est réparable (dépense partie ailleurs : il lui suffit de
+    # retirer la ligne) ou non (identifiant inconnu, autre agence). Un CRG validé dont une
+    # dépense a été reprise par le mois suivant restait sinon bloqué pour toujours.
+    return {"stamped": stamped,
+            "foreign": [{"id": i, "charged_ref": cref} for i, cref in etat if cref != ref]}
 
 
 @app.post("/internal/work-orders/release", include_in_schema=False)

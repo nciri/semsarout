@@ -924,17 +924,34 @@ async def internal_mandate_crg_sent(mandate_id: int, request: Request,
     ids = [l["id"] for l in _lignes_depenses(crg) if l.get("id") is not None]
     if ids:
         try:
-            estampillees = depenses.estampiller(ids, f"crg:{crg.id}", crg.agency_id)
+            estampillees, etrangeres = depenses.estampiller_detail(ids, f"crg:{crg.id}", crg.agency_id)
         except depenses.DepensesIndisponibles:
             logger.warning("CRG %s non envoyé : estampillage des dépenses impossible", crg.id)
             return err("Dépenses non estampillées, CRG non envoyé.", 503)
         if estampillees != len(ids):
-            # `directory` est idempotent par ref : un compte court ne peut plus venir d'une
-            # reprise après un estampillage déjà réussi, c'est un vrai refus (dépense portée par
-            # un autre relevé, ou agence qui ne correspond pas). Loggé fort : le CRG est bloqué.
-            logger.error("CRG %s non envoyé : %s dépenses estampillées sur %s (ref crg:%s, ids %s)",
-                         crg.id, estampillees, len(ids), crg.id, ids)
-            return err("Dépenses non estampillées, CRG non envoyé.", 503)
+            # `directory` est idempotent par ref : un compte court ne vient pas d'une reprise
+            # après un estampillage réussi. Deux causes, deux issues.
+            #
+            # Cause réparable, et elle arrive sans concurrence : le CRG de M−1 a été validé mais
+            # pas envoyé (propriétaire sans e-mail valide), le brouillon de M a revu la même
+            # dépense — toujours `charged_at IS NULL` — et l'a emportée. M−1 restait alors
+            # refusé à chaque tour du planificateur, invisible et jamais reçu par le
+            # propriétaire. On retire les lignes parties ailleurs, on recalcule, et le relevé
+            # part pour ce qui est réellement dû.
+            restants = [i for i in ids if i not in etrangeres]
+            if len(restants) != estampillees:
+                # Cause non réparable : identifiant inconnu de directory, ou autre agence.
+                logger.error("CRG %s non envoyé : %s dépenses estampillées sur %s (ref crg:%s, ids %s)",
+                             crg.id, estampillees, len(ids), crg.id, ids)
+                return err("Dépenses non estampillées, CRG non envoyé.", 503)
+            lignes = [l for l in _lignes_depenses(crg) if l.get("id") not in etrangeres]
+            expenses = round(sum(float(l["cost_final"]) for l in lignes), 2)
+            logger.warning("CRG %s corrigé avant envoi : %s dépense(s) déjà portée(s) par un autre "
+                           "relevé (%s), dépenses %s → %s", crg.id, len(etrangeres), etrangeres,
+                           num(crg.expenses), expenses)
+            crg.expense_lines = json.dumps(lignes)
+            crg.expenses = expenses
+            crg.net = round(float(crg.rent_collected or 0) - float(crg.fees or 0) - expenses, 2)
     # Transition atomique : deux appels simultanés ont tous deux estampillé (directory est
     # idempotent, un seul a marqué des lignes), un seul pose `sent_at`.
     envoye = (db.query(CrgReport)
@@ -988,16 +1005,21 @@ def _crg_dict(c: CrgReport) -> dict:
 @app.get("/backoffice/gestion-locative/crg/drafts")
 def list_crg_drafts(principal: Principal = Depends(get_principal),
                     db: Session = Depends(get_db)):
-    """Brouillons de CRG en attente de validation, du plus vieux au plus récent.
+    """CRG en attente — brouillons à valider ET validés pas encore partis, du plus vieux au plus récent.
 
     Ne lit que des lignes persistées : une panne de directory ne doit pas aveugler l'agence sur
     les relevés qu'elle n'a pas encore validés.
+
+    Les `validated` y figurent parce qu'ils peuvent rester bloqués (propriétaire sans e-mail
+    valide, estampillage refusé) et qu'ils n'apparaissaient alors sur AUCUN écran : ni ici, qui
+    ne listait que `draft`, ni dans ce que le planificateur envoie.
     """
     if (g := _gate(principal)) is not None:
         return g
     maintenant = datetime.utcnow()
     rows = (db.query(CrgReport)
-            .filter(CrgReport.agency_id == principal.agency_id, CrgReport.status == "draft")
+            .filter(CrgReport.agency_id == principal.agency_id,
+                    CrgReport.status.in_(("draft", "validated")))
             .order_by(CrgReport.created_at.asc()).all())
     out = []
     for c in rows:
@@ -1005,7 +1027,7 @@ def list_crg_drafts(principal: Principal = Depends(get_principal),
         out.append({"crg_id": c.id, "mandate_id": c.mandate_id,
                     "mandate_reference": mnd.reference if mnd else None,
                     "period_label": c.period_label, "rent_collected": num(c.rent_collected),
-                    "expenses": num(c.expenses), "net": num(c.net),
+                    "expenses": num(c.expenses), "net": num(c.net), "status": c.status,
                     "created_at": iso(c.created_at),
                     "waiting_days": (maintenant - (c.created_at or maintenant)).days})
     return {"drafts": out}

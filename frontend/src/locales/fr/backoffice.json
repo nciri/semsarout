@@ -742,10 +742,11 @@
         "mandate": "Mandat"
       },
       "crgDrafts": {
-        "title": "Comptes rendus de gérance à valider : {{count}}",
-        "hint": "Aucun n'est envoyé tant qu'il n'est pas validé. Les plus anciens sont en premier.",
+        "title": "Comptes rendus de gérance en attente : {{count}}",
+        "hint": "À valider, ou validés mais pas encore partis. Les plus anciens sont en premier.",
         "item": "{{reference}} · {{period}}",
-        "net": "net {{amount}}"
+        "net": "net {{amount}}",
+        "stuck": "validé, envoi en attente"
       },
       "widgets": {
         "late": "Loyers en retard",

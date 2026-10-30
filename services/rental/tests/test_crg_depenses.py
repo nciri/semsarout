@@ -238,9 +238,9 @@ def test_un_second_envoi_n_estampille_pas_une_deuxieme_fois(client, db_session, 
     crg_id = _brouillon(client, db_session, monkeypatch, loyer=6000, depenses_=[(4, 1200)])
     client.post(f"/backoffice/gestion-locative/crg/{crg_id}/validate", json={})
     appels = []
-    monkeypatch.setattr(depenses, "estampiller",
-                        lambda ids, ref, agency_id: appels.append((tuple(ids), ref, agency_id))
-                        or len(ids))
+    monkeypatch.setattr(depenses, "estampiller_detail",
+                        lambda ids, ref, agency_id: (appels.append((tuple(ids), ref, agency_id))
+                                                     or (len(ids), {})))
     h = {"x-internal-token": TOKEN}
     mandate_id = _mandat_id(db_session, crg_id)
     for _ in range(2):
@@ -258,7 +258,7 @@ def test_un_estampillage_qui_echoue_laisse_le_crg_a_renvoyer(client, db_session,
     def _tombe(ids, ref, agency_id):
         raise depenses.DepensesIndisponibles("directory muet")
 
-    monkeypatch.setattr(depenses, "estampiller", _tombe)
+    monkeypatch.setattr(depenses, "estampiller_detail", _tombe)
     mandate_id = _mandat_id(db_session, crg_id)
     r = client.post(f"/internal/mandates/{mandate_id}/crg-sent", json={"crg_id": crg_id},
                     headers={"x-internal-token": TOKEN})
@@ -266,11 +266,87 @@ def test_un_estampillage_qui_echoue_laisse_le_crg_a_renvoyer(client, db_session,
     crg = db_session.get(CrgReport, crg_id)
     assert crg.status == "validated" and crg.sent_at is None
 
-    # Un estampillage partiel non plus : pas de CRG envoyé avec une dépense non marquée.
-    monkeypatch.setattr(depenses, "estampiller", lambda ids, ref, agency_id: 0)
+    # Un estampillage partiel non plus : pas de CRG envoyé avec une dépense non marquée. Aucune
+    # ligne n'est portée par un autre relevé ici — le compte court est un vrai refus.
+    monkeypatch.setattr(depenses, "estampiller_detail", lambda ids, ref, agency_id: (0, {}))
     assert client.post(f"/internal/mandates/{mandate_id}/crg-sent", json={"crg_id": crg_id},
                        headers={"x-internal-token": TOKEN}).status_code == 503
     assert db_session.get(CrgReport, crg_id).status == "validated"
+
+
+def test_un_crg_valide_dont_la_depense_est_partie_au_mois_suivant_part_corrige(
+        client, db_session, monkeypatch):
+    """Scénario sans concurrence qui bloquait un CRG pour toujours, en cinq pas.
+
+    M−1 validé mais pas envoyé (propriétaire sans e-mail valide : le planificateur fait
+    `continue`), M le mois suivant reprend la même dépense — toujours `charged_at IS NULL` —
+    la porte et l'estampille. `crg-sent` sur M−1 comptait alors 0 estampille sur 1 et rendait
+    503 à chaque tour, pour toujours, sans écran où le voir ni chemin de retour.
+    """
+    # `directory` simulé : un registre d'estampilles idempotent par ref, comme la vraie route.
+    estampilles: dict[int, str] = {}
+    toutes = [{"id": 5, "title": "Chauffe-eau", "cost_final": 1200, "artisan_name": "Plomberie Atlas",
+               "completed_at": "2026-09-14T00:00:00", "property_id": 7}]
+
+    monkeypatch.setattr(depenses, "imputables",
+                        lambda ids, mode, agency_id, lease_id=None:
+                        [l for l in toutes if l["id"] not in estampilles])
+
+    def _estampiller_detail(ids, ref, agency_id):
+        for i in ids:
+            estampilles.setdefault(i, ref)
+        return (sum(1 for i in ids if estampilles[i] == ref),
+                {i: estampilles[i] for i in ids if estampilles[i] != ref})
+
+    monkeypatch.setattr(depenses, "estampiller_detail", _estampiller_detail)
+
+    mnd = _mandat(db_session, property_id=7, fee_pct=8)
+    _loyer_encaisse(db_session, mnd, 2026, 9, montant=6000)
+    _loyer_encaisse(db_session, mnd, 2026, 10, montant=6000)
+    h = {"x-internal-token": TOKEN}
+
+    # 1. Le CRG de septembre naît avec la dépense n° 5, et l'agence le valide.
+    monkeypatch.setattr(main, "_prev_period", lambda now: (2026, 9))
+    crg_sept = client.get("/internal/mandates/due-crg", headers=h).json()["drafts"][0]["crg_id"]
+    client.post(f"/backoffice/gestion-locative/crg/{crg_sept}/validate", json={})
+    assert [l["id"] for l in main._lignes_depenses(db_session.get(CrgReport, crg_sept))] == [5]
+
+    # 2. L'envoi n'a pas lieu (propriétaire sans e-mail valide) : il reste `validated`, donc
+    #    la dépense n'est pas estampillée — c'est la spec : l'estampille se pose à l'ENVOI.
+    assert db_session.get(CrgReport, crg_sept).status == "validated" and not estampilles
+
+    # 3. Un mois plus tard, octobre revoit la même dépense : `charged_at` est toujours nul.
+    monkeypatch.setattr(main, "_prev_period", lambda now: (2026, 10))
+    crg_oct = client.get("/internal/mandates/due-crg", headers=h).json()["drafts"][0]["crg_id"]
+    assert crg_oct != crg_sept
+    assert [l["id"] for l in main._lignes_depenses(db_session.get(CrgReport, crg_oct))] == [5]
+
+    # 4. Octobre est validé puis envoyé : il estampille la dépense sous SA référence.
+    client.post(f"/backoffice/gestion-locative/crg/{crg_oct}/validate", json={})
+    mandate_id = _mandat_id(db_session, crg_oct)
+    assert client.post(f"/internal/mandates/{mandate_id}/crg-sent", json={"crg_id": crg_oct},
+                       headers=h).status_code == 200
+    assert estampilles == {5: f"crg:{crg_oct}"}
+
+    # 5. Septembre part enfin — corrigé : sans sa ligne, et avec le net réellement dû.
+    r = client.post(f"/internal/mandates/{mandate_id}/crg-sent", json={"crg_id": crg_sept}, headers=h)
+    assert r.status_code == 200
+    sept = db_session.get(CrgReport, crg_sept)
+    db_session.refresh(sept)
+    assert sept.status == "sent" and sept.sent_at is not None
+    assert main._lignes_depenses(sept) == []
+    # 6000 de loyer, 8 % d'honoraires, plus aucune dépense : 6000 − 480 − 0.
+    assert sept.expenses == Decimal("0") and sept.net == Decimal("5520")
+    # La dépense reste portée UNE seule fois, par octobre.
+    assert estampilles == {5: f"crg:{crg_oct}"}
+
+
+def test_un_crg_valide_bloque_reste_visible_a_cote_des_brouillons(client, db_session, monkeypatch):
+    """Sans ça, un `validated` jamais parti n'apparaissait sur AUCUN écran."""
+    crg_id = _brouillon(client, db_session, monkeypatch, loyer=6000, depenses_=[(4, 1200)])
+    client.post(f"/backoffice/gestion-locative/crg/{crg_id}/validate", json={})
+    attente = client.get("/backoffice/gestion-locative/crg/drafts").json()["drafts"]
+    assert [(d["crg_id"], d["status"]) for d in attente] == [(crg_id, "validated")]
 
 
 def test_le_net_ne_devient_jamais_negatif_et_la_plus_vieille_depense_passe_d_abord(

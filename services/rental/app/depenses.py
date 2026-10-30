@@ -50,13 +50,23 @@ def imputables(property_ids: list[int], mode: str, agency_id: int,
     return lignes
 
 
-def estampiller(ids: list[int], ref: str, agency_id: int) -> int:
+def estampiller_detail(ids: list[int], ref: str, agency_id: int) -> tuple[int, dict[int, str]]:
+    """Estampille, et rend aussi les dépenses portées par un AUTRE relevé (id → son `charged_ref`).
+
+    L'appelant a besoin de la distinction : une dépense partie sur un autre relevé se retire du
+    sien et le relevé corrigé part ; un identifiant simplement inconnu reste un refus."""
     corps = _appeler("post", "/internal/work-orders/charged",
                      json={"ids": ids, "ref": ref, "agency_id": agency_id})
     stamped = corps.get("stamped")
     if not isinstance(stamped, int):
         raise DepensesIndisponibles("réponse de directory illisible")
-    return stamped
+    etrangeres = {l["id"]: l["charged_ref"] for l in (corps.get("foreign") or [])
+                  if isinstance(l, dict) and isinstance(l.get("id"), int) and l.get("charged_ref")}
+    return stamped, etrangeres
+
+
+def estampiller(ids: list[int], ref: str, agency_id: int) -> int:
+    return estampiller_detail(ids, ref, agency_id)[0]
 
 
 def liberer(ids: list[int], ref: str, agency_id: int) -> int:
