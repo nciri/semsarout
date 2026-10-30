@@ -81,16 +81,42 @@ def _artisan_dict(a: Artisan) -> dict:
 # (planifié, en cours), seule l'administration de l'agence tranche. Un bon terminé porte le
 # coût final : il reste à l'historique, et c'est la seule règle qu'aucun rôle ne contourne.
 _WO_ADMIN_ROLES = {"admin", "agency_admin"}
+_WO_STATUSES = ("requested", "scheduled", "in_progress", "done", "cancelled")
 _WO_FREELY_DELETABLE = {"requested", "cancelled"}
+_WO_ENGAGED = {"scheduled", "in_progress"}
 _WO_KEPT_FOREVER = {"done"}
 
 
+def _is_wo_admin(principal: Principal) -> bool:
+    return principal.is_superadmin or bool(_WO_ADMIN_ROLES & set(principal.roles))
+
+
 def _can_delete_wo(principal: Principal, w: WorkOrder) -> bool:
-    if w.status in _WO_KEPT_FOREVER:
+    # Un travail achevé laisse des traces que le statut courant ne porte pas : une date de
+    # clôture ou un coût final suffisent à interdire le retrait, même si quelqu'un a replacé
+    # le bon en « demandé » entre-temps.
+    if w.status in _WO_KEPT_FOREVER or w.completed_at is not None or w.cost_final is not None:
         return False
     if w.status in _WO_FREELY_DELETABLE:
         return True
-    return principal.is_superadmin or bool(_WO_ADMIN_ROLES & set(principal.roles))
+    return _is_wo_admin(principal)
+
+
+def _status_change_refusal(principal: Principal, w: WorkOrder, new: str):
+    """Le changement d'état obéit à la même règle que le retrait, sinon il la contourne.
+
+    Sans ce garde-fou, replacer un bon terminé en « demandé » rendait n'importe quel rôle
+    maître de sa suppression.
+    """
+    if new not in _WO_STATUSES:
+        return _err("Statut inconnu", 400)
+    if new == w.status:
+        return None
+    if w.status in _WO_KEPT_FOREVER:
+        return _err("Un bon terminé ne change plus d'état", 403)
+    if w.status in _WO_ENGAGED and new in _WO_FREELY_DELETABLE and not _is_wo_admin(principal):
+        return _err("Seule l'administration de l'agence rouvre ou annule un bon engagé", 403)
+    return None
 
 
 def _wo_dict(db: Session, w: WorkOrder, principal: Principal | None = None) -> dict:
@@ -263,6 +289,12 @@ async def update_work_order(wid: int, request: Request, principal: Principal = D
     err = _validate_links(db, data, principal.agency_id)
     if err:
         return err
+    # Refuser avant d'écrire : un refus laissé après coup abandonnerait des champs déjà posés
+    # sur l'objet de session.
+    if "status" in data:
+        refusal = _status_change_refusal(principal, wo, data["status"])
+        if refusal is not None:
+            return refusal
     for k in ("title", "notes", "cost_estimate", "cost_final"):
         if k in data:
             setattr(wo, k, data[k])

@@ -182,6 +182,10 @@ pas à ce qui a été fait dans StayManager ».
     artisan, donc réservé à `admin` / `agency_admin` (et au super-admin) ; *terminé* porte le
     coût final et reste à l'historique, qu'aucun rôle ne contourne. Le front cache l'action
     plutôt que de laisser cliquer vers un 403, et le `DELETE` refait le test côté service.
+    Le changement de statut obéit à la même règle (`_status_change_refusal`), sinon il la
+    contournait : replacer un bon terminé en « demandé » rendait n'importe quel rôle maître
+    de sa suppression. Et le retrait regarde aussi des faits que le statut courant ne porte
+    pas — `completed_at`, `cost_final` — pour qu'un travail déjà clos reste protégé.
 
 ## Décisions prises pour éviter les doublons
 
