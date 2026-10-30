@@ -19,7 +19,7 @@ from semsar_common import get_settings, install_legacy_error_handlers, setup_log
 
 from .db import get_db, init_db
 from .models import Artisan, WorkOrder
-from .payeur import CHARGE_MODES, refus_de_creation, refus_de_modification, tiers_sans_nom, valeur_inconnue
+from .payeur import CHARGE_MODES, SETTLE_METHODS, refus_de_creation, refus_de_modification, tiers_sans_nom, valeur_inconnue
 from .trades import ARTISAN_TRADES, is_valid_trade
 
 settings = get_settings()
@@ -464,6 +464,31 @@ async def update_work_order(wid: int, request: Request, principal: Principal = D
         wo.status = data["status"]
         if wo.status == "done":
             wo.completed_at = datetime.utcnow()
+    db.commit()
+    return {"work_order": _wo_dict(db, wo, principal)}
+
+
+@app.post("/backoffice/work-orders/{wid}/settle")
+async def settle_work_order(wid: int, request: Request, principal: Principal = Depends(_artisans), db: Session = Depends(get_db)):
+    """Dit comment une refacturation a été réglée ; pose `settled_at`, qui verrouille la dépense."""
+    wo = db.query(WorkOrder).filter(WorkOrder.id == wid, WorkOrder.agency_id == principal.agency_id).with_for_update().first()
+    if wo is None:
+        return _err("Bon de travaux introuvable", 404)
+    # Irréversible, et « abandonné » renonce à une créance : même niveau que les autres gestes d'argent.
+    if not _is_wo_admin(principal):
+        return _err("Seule l'administration de l'agence solde une refacturation", 403)
+    method = (await _json(request)).get("method")
+    if method not in SETTLE_METHODS:
+        return _err("Mode de règlement invalide", 400)
+    if wo.charge_mode != "to_rebill":
+        return _err("Seule une intervention à refacturer se solde à la main", 400)
+    if wo.status != "done":
+        return _err("Seule une intervention achevée se solde", 400)
+    if wo.settled_at is not None:
+        return _err("Cette refacturation est déjà soldée", 409)
+    wo.settled_at = datetime.utcnow()
+    wo.settled_by = int(principal.sub) if principal.sub.isdigit() else None
+    wo.settled_method = method
     db.commit()
     return {"work_order": _wo_dict(db, wo, principal)}
 

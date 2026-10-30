@@ -343,3 +343,58 @@ def test_la_liberation_ne_touche_pas_une_depense_d_un_autre_ref(client, db_sessi
                        headers=h).json()["released"] == 0
     db_session.refresh(wo)
     assert wo.charged_ref == "crg:12" and wo.charged_at == pose_le
+
+
+def test_solder_une_refacturation(client, db_session):
+    wo = _wo_en_base(db_session, status="done", cost_final=Decimal("600"),
+                     charge_mode="to_rebill")
+    r = client.post(f"/backoffice/work-orders/{wo.id}/settle", json={"method": "encaisse"})
+    assert r.status_code == 200
+    db_session.refresh(wo)
+    assert wo.settled_method == "encaisse" and wo.settled_by == 10 and wo.settled_at is not None
+    # Une seule fois.
+    assert client.post(f"/backoffice/work-orders/{wo.id}/settle",
+                       json={"method": "abandonne"}).status_code == 409
+
+
+def test_on_ne_solde_que_ce_qui_est_a_refacturer(client, db_session):
+    wo = _wo_en_base(db_session, status="done", cost_final=Decimal("600"),
+                     charge_mode="crg_expense")
+    assert client.post(f"/backoffice/work-orders/{wo.id}/settle",
+                       json={"method": "encaisse"}).status_code == 400
+    sans_methode = _wo_en_base(db_session, status="done", cost_final=Decimal("600"),
+                               charge_mode="to_rebill")
+    assert client.post(f"/backoffice/work-orders/{sans_methode.id}/settle",
+                       json={"method": "troc"}).status_code == 400
+
+
+def test_on_ne_solde_pas_une_intervention_inachevee(client, db_session):
+    wo = _wo_en_base(db_session, status="in_progress", charge_mode="to_rebill")
+    assert client.post(f"/backoffice/work-orders/{wo.id}/settle",
+                       json={"method": "encaisse"}).status_code == 400
+    db_session.refresh(wo)
+    assert wo.settled_at is None
+
+
+def test_solder_est_reserve_a_l_administration(client, db_session):
+    wo = _wo_en_base(db_session, status="done", cost_final=Decimal("600"), charge_mode="to_rebill")
+    app.dependency_overrides[get_principal] = lambda: _principal("agent")
+    assert client.post(f"/backoffice/work-orders/{wo.id}/settle",
+                       json={"method": "abandonne"}).status_code == 403
+    db_session.refresh(wo)
+    assert wo.settled_at is None
+
+
+def test_solder_ignore_une_intervention_d_une_autre_agence(client, db_session):
+    wo = _wo_en_base(db_session, status="done", cost_final=Decimal("600"), charge_mode="to_rebill")
+    wo.agency_id = 99
+    db_session.commit()
+    assert client.post(f"/backoffice/work-orders/{wo.id}/settle",
+                       json={"method": "encaisse"}).status_code == 404
+
+
+def test_une_intervention_soldee_ne_se_reecrit_plus(client, db_session):
+    wo = _wo_en_base(db_session, status="done", cost_final=Decimal("600"), charge_mode="to_rebill")
+    client.post(f"/backoffice/work-orders/{wo.id}/settle", json={"method": "encaisse"})
+    assert client.put(f"/backoffice/work-orders/{wo.id}",
+                      json={"cost_final": 1}).status_code == 403
