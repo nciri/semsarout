@@ -305,7 +305,14 @@ def internal_chargeable_work_orders(
 async def internal_stamp_charged(
     request: Request, x_internal_token: str = Header(default=""), db: Session = Depends(get_db),
 ):
-    """Estampille les dépenses portées sur un relevé ; une dépense déjà estampillée est ignorée."""
+    """Estampille les dépenses portées sur un relevé ; une dépense déjà estampillée est ignorée.
+
+    Idempotent par `ref` : rejouer le même appel rend le même compte sans déplacer la date du
+    premier estampillage. Sans cela, l'appelant qui perd son commit juste après un estampillage
+    réussi relirait `stamped: 0` à chaque reprise et ne pourrait plus jamais envoyer son relevé.
+    Un `ref` *différent* sur une dépense déjà estampillée reste ignoré : c'est ce qui interdit de
+    la porter deux fois.
+    """
     if x_internal_token != settings.internal_token:
         return _err("Forbidden", 403)
     data = await _json(request)
@@ -313,11 +320,14 @@ async def internal_stamp_charged(
     if (not isinstance(ids, list) or not all(isinstance(i, int) for i in ids)
             or not isinstance(ref, str) or not ref or not isinstance(agency_id, int)):
         return _err("ids, ref et agency_id sont requis", 400)
+    (db.query(WorkOrder)
+       .filter(WorkOrder.id.in_(ids), WorkOrder.agency_id == agency_id,
+               WorkOrder.charged_at.is_(None))
+       .update({"charged_at": datetime.utcnow(), "charged_ref": ref}, synchronize_session=False))
+    db.commit()
     stamped = (db.query(WorkOrder)
                .filter(WorkOrder.id.in_(ids), WorkOrder.agency_id == agency_id,
-                       WorkOrder.charged_at.is_(None))
-               .update({"charged_at": datetime.utcnow(), "charged_ref": ref}, synchronize_session=False))
-    db.commit()
+                       WorkOrder.charged_ref == ref).count())
     return {"stamped": stamped}
 
 

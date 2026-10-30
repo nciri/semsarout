@@ -282,3 +282,17 @@ def test_l_api_refuse_un_tiers_payeur_sans_nom(client, db_session):
         assert client.put(f"/backoffice/work-orders/{wo.id}", json=corps).status_code == 400
     db_session.refresh(wo)
     assert wo.payer == "owner"
+
+
+def test_l_estampille_rejouee_avec_le_meme_releve_rend_le_meme_compte(client, db_session):
+    """Un relevé qui perd son commit après un estampillage réussi doit pouvoir reprendre."""
+    a = _wo_en_base(db_session, status="done", cost_final=Decimal("450"), charge_mode="crg_expense")
+    b = _wo_en_base(db_session, status="done", cost_final=Decimal("120"), charge_mode="crg_expense")
+    h = {"x-internal-token": TOKEN}
+    corps = {"ids": [a.id, b.id], "ref": "crg:12", "agency_id": 4}
+    assert client.post("/internal/work-orders/charged", json=corps, headers=h).json()["stamped"] == 2
+    db_session.refresh(a)
+    pose_le = a.charged_at
+    assert client.post("/internal/work-orders/charged", json=corps, headers=h).json()["stamped"] == 2
+    db_session.refresh(a)
+    assert a.charged_at == pose_le and a.charged_ref == "crg:12"
