@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+import uuid
 
 import httpx
 import pytest
@@ -37,7 +38,8 @@ def _mandat(db, property_id, fee_pct, agency_id=AGENCY):
 
 
 def _loyer_encaisse(db, mnd, y, m, montant):
-    lease = Lease(reference=f"BAIL-{mnd.id}", mandate_id=mnd.id, property_id=mnd.property_id,
+    lease = Lease(reference=f"BAIL-{mnd.id}-{uuid.uuid4().hex[:6]}", mandate_id=mnd.id,
+                  property_id=mnd.property_id,
                   agency_id=mnd.agency_id, rent_amount=montant)
     db.add(lease)
     db.commit()
@@ -225,18 +227,23 @@ def test_la_validation_ecarte_une_ligne_et_recalcule(client, db_session, monkeyp
     assert [(e["crg_id"], e["expenses"], e["net"]) for e in envoyables] == [(crg_id, 1200.0, 4320.0)]
 
 
-def test_deux_envois_concurrents_n_estampillent_qu_une_fois(client, db_session, monkeypatch):
+def test_un_second_envoi_n_estampille_pas_une_deuxieme_fois(client, db_session, monkeypatch):
+    # Deux appels séquentiels : la fixture sqlite est mono-connexion, la vraie concurrence n'y est
+    # pas reproductible. Ce qu'on prouve ici est la garde `status == "sent"` qui la couvre côté
+    # base ; l'`UPDATE … WHERE status = 'validated'` fait le reste en production.
     crg_id = _brouillon(client, db_session, monkeypatch, loyer=6000, depenses_=[(4, 1200)])
     client.post(f"/backoffice/gestion-locative/crg/{crg_id}/validate", json={})
     appels = []
     monkeypatch.setattr(depenses, "estampiller",
-                        lambda ids, ref, agency_id: appels.append((tuple(ids), ref)) or len(ids))
+                        lambda ids, ref, agency_id: appels.append((tuple(ids), ref, agency_id))
+                        or len(ids))
     h = {"x-internal-token": TOKEN}
     mandate_id = _mandat_id(db_session, crg_id)
     for _ in range(2):
         client.post(f"/internal/mandates/{mandate_id}/crg-sent",
                     json={"crg_id": crg_id}, headers=h)
-    assert appels == [((4,), f"crg:{crg_id}")]
+    # L'agence du mandat est transmise à directory : c'est le seul cloisonnement de cette route.
+    assert appels == [((4,), f"crg:{crg_id}", AGENCY)]
     assert db_session.get(CrgReport, crg_id).status == "sent"
 
 
@@ -291,3 +298,58 @@ def test_la_liste_du_crg_montre_le_statut_et_les_depenses(client, db_session, mo
     valide = client.get(f"/backoffice/gestion-locative/mandates/{mandate_id}/crg").json()["reports"][0]
     # Validé, les lignes ne sont plus modifiables : seul le brouillon les expose.
     assert valide["status"] == "validated" and "expense_lines" not in valide
+
+
+def test_un_brouillon_se_recalcule_mais_un_crg_valide_est_fige(client, db_session, monkeypatch):
+    crg_id = _brouillon(client, db_session, monkeypatch, loyer=6000, depenses_=[(4, 1200)])
+    crg = db_session.get(CrgReport, crg_id)
+    assert (crg.rent_collected, crg.fees, crg.expenses, crg.net) == (6000, 480, 1200, 4320)
+
+    # Un second loyer rentre après la construction du brouillon : les chiffres doivent suivre.
+    y, m = main._prev_period(datetime.utcnow())
+    mnd = db_session.get(Mandate, crg.mandate_id)
+    _loyer_encaisse(db_session, mnd, y, m, montant=2000)
+    client.get("/internal/mandates/due-crg", headers={"x-internal-token": TOKEN})
+    db_session.refresh(crg)
+    assert (crg.rent_collected, crg.fees, crg.expenses, crg.net) == (8000, 640, 1200, 6160)
+
+    # Validé, il ne bouge plus : l'agence a signé ces chiffres.
+    client.post(f"/backoffice/gestion-locative/crg/{crg_id}/validate", json={})
+    _loyer_encaisse(db_session, mnd, y, m, montant=500)
+    client.get("/internal/mandates/due-crg", headers={"x-internal-token": TOKEN})
+    db_session.refresh(crg)
+    assert (crg.rent_collected, crg.fees, crg.net) == (8000, 640, 6160)
+    assert crg.status == "validated"
+
+
+def test_la_validation_s_arrete_a_l_agence_du_mandat(client, db_session, monkeypatch):
+    crg_id = _brouillon(client, db_session, monkeypatch, loyer=6000, depenses_=[(4, 1200)])
+    autre = db_session.get(CrgReport, crg_id)
+    autre.agency_id = AGENCY + 1
+    db_session.commit()
+    r = client.post(f"/backoffice/gestion-locative/crg/{crg_id}/validate", json={})
+    assert r.status_code == 404
+    db_session.refresh(autre)
+    assert autre.status == "draft"
+
+
+def test_les_brouillons_en_attente_se_listent_du_plus_vieux_au_plus_recent(client, db_session,
+                                                                          monkeypatch):
+    from datetime import timedelta
+
+    vieux = db_session.get(CrgReport,
+                           _brouillon(client, db_session, monkeypatch, loyer=6000,
+                                      depenses_=[(4, 1200)]))
+    vieux.created_at = datetime.utcnow() - timedelta(days=9)
+    recent = CrgReport(mandate_id=vieux.mandate_id, agency_id=AGENCY, period_label="Mai 2026",
+                       year=2026, month=5, rent_collected=3000, fees=240, net=2760,
+                       status="draft")
+    envoye = CrgReport(mandate_id=vieux.mandate_id, agency_id=AGENCY, period_label="Avril 2026",
+                       year=2026, month=4, rent_collected=3000, fees=240, net=2760,
+                       status="sent", sent_at=datetime.utcnow())
+    db_session.add_all([recent, envoye])
+    db_session.commit()
+    rows = client.get("/backoffice/gestion-locative/crg/drafts").json()["drafts"]
+    assert [r["crg_id"] for r in rows] == [vieux.id, recent.id]
+    assert rows[0]["waiting_days"] == 9 and isinstance(rows[1]["waiting_days"], int)
+    assert rows[0]["mandate_reference"] == "MND-7" and rows[0]["created_at"] is not None

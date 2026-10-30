@@ -257,8 +257,12 @@ def internal_mandates_due_crg(x_internal_token: str = Header(default=""),
     y, m = _prev_period(datetime.utcnow())
     out = []
     for mnd in db.query(Mandate).filter(Mandate.status == "active").all():
-        if db.query(CrgReport).filter(CrgReport.mandate_id == mnd.id, CrgReport.year == y,
-                                      CrgReport.month == m).first():
+        existant = db.query(CrgReport).filter(CrgReport.mandate_id == mnd.id, CrgReport.year == y,
+                                              CrgReport.month == m).first()
+        # Un brouillon se recalcule : un loyer qui rentre après sa construction changerait sinon
+        # le net annoncé au propriétaire sans que rien ne le rafraîchisse. Validé ou envoyé, il est
+        # figé — un document que l'agence a validé ne bouge pas sous ses pieds.
+        if existant is not None and existant.status != "draft":
             continue
         try:
             agg = _crg_aggregate(db, mnd, y, m)
@@ -268,11 +272,12 @@ def internal_mandates_due_crg(x_internal_token: str = Header(default=""),
             continue
         if agg["rent_collected"] <= 0:
             continue
-        crg = CrgReport(mandate_id=mnd.id, agency_id=mnd.agency_id,
-                        period_label=f"{_MONTHS_FR[m]} {y}", year=y, month=m,
-                        rent_collected=agg["rent_collected"], fees=agg["fees"],
-                        expenses=agg["expenses"], net=agg["net"],
-                        expense_lines=json.dumps(agg["expense_lines"]), status="draft")
+        crg = existant or CrgReport(mandate_id=mnd.id, agency_id=mnd.agency_id,
+                                    period_label=f"{_MONTHS_FR[m]} {y}", year=y, month=m,
+                                    status="draft")
+        crg.rent_collected, crg.fees = agg["rent_collected"], agg["fees"]
+        crg.expenses, crg.net = agg["expenses"], agg["net"]
+        crg.expense_lines = json.dumps(agg["expense_lines"])
         db.add(crg)
         db.commit()
         out.append({"mandate_id": mnd.id, "crg_id": crg.id, "agency_id": mnd.agency_id,
@@ -872,6 +877,9 @@ def _retenir_depenses(lignes: list[dict], plafond: float) -> tuple[list[dict], f
     for ligne in sorted(lignes, key=lambda l: l.get("completed_at") or ""):
         cout = round(float(ligne["cost_final"]), 2)
         if round(total + cout, 2) > plafond:
+            # `continue`, pas `break` : une dépense plus récente mais moins chère tient encore
+            # dans le solde et doit passer. On récupère ainsi le maximum ce mois-ci, et la grosse
+            # dépense écartée garde son rang d'ancienneté au prochain CRG.
             continue
         total = round(total + cout, 2)
         retenues.append({cle: ligne.get(cle)
@@ -913,8 +921,11 @@ async def internal_mandate_crg_sent(mandate_id: int, request: Request,
             logger.warning("CRG %s non envoyé : estampillage des dépenses impossible", crg.id)
             return err("Dépenses non estampillées, CRG non envoyé.", 503)
         if estampillees != len(ids):
-            logger.warning("CRG %s non envoyé : %s dépenses estampillées sur %s",
-                           crg.id, estampillees, len(ids))
+            # `directory` est idempotent par ref : un compte court ne peut plus venir d'une
+            # reprise après un estampillage déjà réussi, c'est un vrai refus (dépense portée par
+            # un autre relevé, ou agence qui ne correspond pas). Loggé fort : le CRG est bloqué.
+            logger.error("CRG %s non envoyé : %s dépenses estampillées sur %s (ref crg:%s, ids %s)",
+                         crg.id, estampillees, len(ids), crg.id, ids)
             return err("Dépenses non estampillées, CRG non envoyé.", 503)
     # Transition atomique : deux appels simultanés ont tous deux estampillé (directory est
     # idempotent, un seul a marqué des lignes), un seul pose `sent_at`.
@@ -959,11 +970,37 @@ def _crg_dict(c: CrgReport) -> dict:
     out = {"id": c.id, "period_label": c.period_label, "year": c.year, "month": c.month,
            "rent_collected": num(c.rent_collected), "fees": num(c.fees),
            "expenses": num(c.expenses), "net": num(c.net), "status": c.status,
-           "sent_at": iso(c.sent_at)}
+           "sent_at": iso(c.sent_at), "created_at": iso(c.created_at)}
     if c.status == "draft":
         # Seul un brouillon se modifie : ailleurs les lignes n'ont plus à être montrées.
         out["expense_lines"] = _lignes_depenses(c)
     return out
+
+
+@app.get("/backoffice/gestion-locative/crg/drafts")
+def list_crg_drafts(principal: Principal = Depends(get_principal),
+                    db: Session = Depends(get_db)):
+    """Brouillons de CRG en attente de validation, du plus vieux au plus récent.
+
+    Ne lit que des lignes persistées : une panne de directory ne doit pas aveugler l'agence sur
+    les relevés qu'elle n'a pas encore validés.
+    """
+    if (g := _gate(principal)) is not None:
+        return g
+    maintenant = datetime.utcnow()
+    rows = (db.query(CrgReport)
+            .filter(CrgReport.agency_id == principal.agency_id, CrgReport.status == "draft")
+            .order_by(CrgReport.created_at.asc()).all())
+    out = []
+    for c in rows:
+        mnd = db.get(Mandate, c.mandate_id)
+        out.append({"crg_id": c.id, "mandate_id": c.mandate_id,
+                    "mandate_reference": mnd.reference if mnd else None,
+                    "period_label": c.period_label, "rent_collected": num(c.rent_collected),
+                    "expenses": num(c.expenses), "net": num(c.net),
+                    "created_at": iso(c.created_at),
+                    "waiting_days": (maintenant - (c.created_at or maintenant)).days})
+    return {"drafts": out}
 
 
 @app.get("/backoffice/gestion-locative/mandates/{mandate_id}/crg")
