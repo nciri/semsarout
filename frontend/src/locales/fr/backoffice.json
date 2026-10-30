@@ -1235,7 +1235,18 @@
         "artisanPlaceholder": "À attribuer plus tard",
         "scheduledLabel": "Date prévue",
         "costLabel": "Coût estimé (Đh)",
-        "notesLabel": "Précisions pour l'artisan"
+        "notesLabel": "Précisions pour l'artisan",
+        "clientLabel": "Client concerné",
+        "clientPlaceholder": "Choisir un client",
+        "leased_until": "Loué à {{tenant}} jusqu'au {{date}}",
+        "leased_open": "Loué à {{tenant}}",
+        "noLease": "Pas de bail en cours",
+        "natureLabel": "Nature des travaux",
+        "naturePlaceholder": "À préciser",
+        "payerLabel": "Qui paie",
+        "modeLabel": "Règlement",
+        "thirdPartyLabel": "Nom du tiers payeur",
+        "thirdPartyPlaceholder": "Assurance, syndic, voisin…"
       },
       "columns": {
         "title": "Intitulé",
@@ -1282,6 +1293,35 @@
         "title": "Retirer cette intervention ?",
         "message": "« {{title}} » ({{status}}) sera retirée du registre de l'agence. Cette action est définitive.",
         "confirm": "Retirer"
+      },
+      "nature": {
+        "structurel": "Structurel",
+        "entretien": "Entretien",
+        "degat_occupant": "Dégât causé par l'occupant"
+      },
+      "payer": {
+        "owner": "Propriétaire",
+        "tenant": "Locataire",
+        "agency": "Agence",
+        "third_party": "Tiers"
+      },
+      "chargeMode": {
+        "crg_expense": "Déduit du compte rendu de gérance",
+        "deposit_deduction": "Retenu sur la caution",
+        "to_rebill": "À refacturer",
+        "direct": "Payé directement",
+        "absorbed": "Pris en charge par l'agence"
+      },
+      "payment": {
+        "title": "Règlement",
+        "client": "Client concerné",
+        "payer": "Qui paie",
+        "mode": "Mode de règlement",
+        "amount": "Montant",
+        "landedCrg": "Voir le mandat et son compte rendu n° {{id}}",
+        "landedSettlement": "Voir le décompte de caution du bail",
+        "landedElsewhere": "Dépense imputée, relevé introuvable depuis cette fiche.",
+        "notCharged": "Pas encore imputée sur un relevé."
       }
     }
   },
@@ -1359,10 +1399,6 @@
         "property": "Bien",
         "client": "Client",
         "transaction": "Transaction liée",
-        "seller": "Vendeur / Mandant",
-        "sellerPlaceholder": "Nom du vendeur",
-        "buyer": "Acheteur / Locataire",
-        "buyerPlaceholder": "Nom de l'acheteur",
         "amount": "Montant (Đh)",
         "amountPlaceholder": "Ex. 1500000",
         "signDate": "Date de signature",
@@ -1387,6 +1423,23 @@
         "title": "Aperçu du modèle",
         "empty": "Sélectionnez un modèle pour afficher son aperçu.",
         "noContent": "Ce modèle n'a pas de contenu de prévisualisation."
+      }
+    },
+    "parties": {
+      "section": "Parties au contrat",
+      "role": "Rôle",
+      "rolePlaceholder": "Choisir un rôle…",
+      "client": "Client",
+      "add": "Ajouter une partie",
+      "remove": "Retirer cette partie",
+      "hint": "Plusieurs vendeurs ou plusieurs locataires : une ligne par personne, dans l'ordre où elles figureront au contrat.",
+      "identityHint": "La nationalité, le numéro de CIN et le domicile de chaque partie restent à compléter dans l'éditeur.",
+      "roles": {
+        "vendeur": "Vendeur",
+        "acquereur": "Acquéreur",
+        "bailleur": "Bailleur",
+        "locataire": "Locataire",
+        "mandant": "Mandant"
       }
     },
     "templates": {

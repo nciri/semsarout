@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next'
 import { FiArrowLeft, FiFileText } from 'react-icons/fi'
 import { contractService } from '../../../services/contractService'
 import SearchableSelect from '../../../components/common/SearchableSelect'
+import PartiesField from './PartiesField'
+import { emptyParty, toPayload } from './parties'
 import api from '../../../services/api'
 
 // Les modèles sont du HTML : on n'en montre qu'une projection texte, jamais injectée en innerHTML.
@@ -23,15 +25,19 @@ function ContractCreate() {
   const { data: tplData } = useQuery('contract-templates', () => contractService.listTemplates())
   const { data: propsData } = useQuery('bo-properties-min', async () => (await api.get('/backoffice/properties?per_page=100')).data)
   const { data: clientsData } = useQuery('bo-clients-min', async () => (await api.get('/backoffice/clients?per_page=100')).data)
+  // Un contrat peut nommer plusieurs vendeurs ou plusieurs locataires : la liste des parties
+  // remplace le client unique, dont le rôle est désormais tenu par la première d'entre elles.
   const [form, setForm] = useState({
-    template_id: '', title: '', property_id: '', client_id: '', transaction_id: '',
-    seller_name: '', buyer_name: '', amount: '', sign_date: '', effect_date: '', notes: '',
+    template_id: '', title: '', property_id: '', parties: [emptyParty()], transaction_id: '',
+    amount: '', sign_date: '', effect_date: '', notes: '',
   })
+  const parties = form.parties
+  const primaryClient = parties.find((p) => p.client_id)?.client_id || ''
   const { data: txData } = useQuery(
-    ['bo-transactions-min', form.property_id, form.property_id ? '' : form.client_id],
+    ['bo-transactions-min', form.property_id, form.property_id ? '' : primaryClient],
     // Sans bien, le client filtre côté serveur : sa transaction ne peut pas tomber hors de la première page.
     async () => (await api.get('/backoffice/transactions', {
-      params: { per_page: 100, property_id: form.property_id || undefined, client_id: form.property_id ? undefined : (form.client_id || undefined) },
+      params: { per_page: 100, property_id: form.property_id || undefined, client_id: form.property_id ? undefined : (primaryClient || undefined) },
     })).data,
   )
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
@@ -50,27 +56,39 @@ function ContractCreate() {
   const clientOptions = cascaded
     ? [...new Map(propertyTx.filter((tx) => tx.client_id).map((tx) => [tx.client_id, { value: tx.client_id, label: tx.client_name || clientName(tx.client_id) }])).values()]
     : (clientsData?.clients || []).map((c) => ({ value: c.id, label: `${c.first_name} ${c.last_name}`, description: c.email || c.phone }))
-  const transactions = form.client_id ? propertyTx.filter((tx) => String(tx.client_id) === String(form.client_id)) : propertyTx
+  const transactions = primaryClient ? propertyTx.filter((tx) => String(tx.client_id) === String(primaryClient)) : propertyTx
+  const setParties = (next) => setForm((f) => ({ ...f, parties: next }))
 
-  // Une fois les transactions du bien connues, on écarte client et transaction qui n'en font plus partie.
+  // Une fois les transactions du bien connues, on écarte transaction et parties qui n'en font plus partie.
   useEffect(() => {
     if (!form.property_id || !txData) return
     const txs = txData.transactions || []
     const txOk = !form.transaction_id || txs.some((tx) => String(tx.id) === String(form.transaction_id))
-    const clientOk = !form.client_id || txs.length === 0 || txs.some((tx) => String(tx.client_id) === String(form.client_id))
-    if (!txOk || !clientOk) {
-      setForm((f) => ({ ...f, transaction_id: txOk ? f.transaction_id : '', client_id: clientOk ? f.client_id : '' }))
+    const clientOk = (id) => !id || txs.length === 0 || txs.some((tx) => String(tx.client_id) === String(id))
+    if (!txOk || !form.parties.every((p) => clientOk(p.client_id))) {
+      setForm((f) => ({
+        ...f,
+        transaction_id: txOk ? f.transaction_id : '',
+        // Le rôle choisi reste : seul le client qui ne relève plus du bien est vidé.
+        parties: f.parties.map((p) => (clientOk(p.client_id) ? p : { ...p, client_id: '' })),
+      }))
     }
-  }, [txData, form.property_id, form.transaction_id, form.client_id])
+  }, [txData, form.property_id, form.transaction_id, form.parties])
 
-  const pickClient = (id) => setForm((f) => {
-    const tx = propertyTx.find((x) => String(x.id) === String(f.transaction_id))
-    return { ...f, client_id: id, transaction_id: id && tx && String(tx.client_id) !== String(id) ? '' : f.transaction_id }
-  })
+  // La première partie tient le rôle de l'ancien client unique : c'est elle que la cascade
+  // renseigne depuis une transaction, et elle que le backend recopie dans `client_id`.
+  const setPrimaryClient = (f, id) => {
+    const parts = f.parties.length ? f.parties : [emptyParty()]
+    const i = Math.max(0, parts.findIndex((p) => p.client_id))
+    return parts.map((p, j) => (j === i ? { ...p, client_id: id } : p))
+  }
   const pickProperty = (id) => setForm((f) => ({ ...f, property_id: id, transaction_id: id ? f.transaction_id : '' }))
   const pickTransaction = (id) => setForm((f) => {
     const tx = propertyTx.find((x) => String(x.id) === String(id))
-    return { ...f, transaction_id: id, property_id: tx?.property_id ?? f.property_id, client_id: tx ? (tx.client_id ?? '') : f.client_id }
+    return {
+      ...f, transaction_id: id, property_id: tx?.property_id ?? f.property_id,
+      parties: tx ? setPrimaryClient(f, tx.client_id ?? '') : f.parties,
+    }
   })
   const selectedTpl = useMemo(
     () => templates.find((t) => String(t.id) === String(form.template_id)),
@@ -83,10 +101,8 @@ function ContractCreate() {
     template_id: Number(form.template_id),
     title: form.title || undefined,
     property_id: form.property_id ? Number(form.property_id) : undefined,
-    client_id: form.client_id ? Number(form.client_id) : undefined,
+    parties: toPayload(parties),
     transaction_id: form.transaction_id ? Number(form.transaction_id) : undefined,
-    seller_name: form.seller_name || undefined,
-    buyer_name: form.buyer_name || undefined,
     amount: form.amount ? Number(form.amount) : undefined,
     sign_date: form.sign_date || undefined,
     effect_date: form.effect_date || undefined,
@@ -141,19 +157,6 @@ function ContractCreate() {
                   clearable
                 />
               </div>
-              <div>
-                <label className={labelCls}>{t('backoffice:contracts.create.fields.client')}</label>
-                <SearchableSelect
-                  value={form.client_id}
-                  onChange={pickClient}
-                  options={clientOptions}
-                  placeholder={t('backoffice:contracts.create.select.none')}
-                  searchPlaceholder={t('backoffice:contracts.create.search.client')}
-                  className="text-sm"
-                  clearable
-                />
-                {noTransaction && <p className="mt-1 text-xs text-gray-400">{t('backoffice:contracts.create.select.allClientsHint')}</p>}
-              </div>
               <div className="md:col-span-2">
                 <label className={labelCls}>{t('backoffice:contracts.create.fields.transaction')}</label>
                 <SearchableSelect
@@ -170,16 +173,21 @@ function ContractCreate() {
           </div>
 
           <div className={cardCls}>
+            <h2 className={sectionTitle}>{t('backoffice:contracts.parties.section')}</h2>
+            <PartiesField
+              parties={parties}
+              onChange={setParties}
+              clientOptions={clientOptions}
+              hint={noTransaction
+                ? t('backoffice:contracts.create.select.allClientsHint')
+                : t('backoffice:contracts.parties.hint')}
+            />
+            <p className="text-xs text-gray-400">{t('backoffice:contracts.parties.identityHint')}</p>
+          </div>
+
+          <div className={cardCls}>
             <h2 className={sectionTitle}>{t('backoffice:contracts.create.sections.details')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className={labelCls}>{t('backoffice:contracts.create.fields.seller')}</label>
-                <input value={form.seller_name} onChange={set('seller_name')} className={ctrlCls} placeholder={t('backoffice:contracts.create.fields.sellerPlaceholder')} />
-              </div>
-              <div>
-                <label className={labelCls}>{t('backoffice:contracts.create.fields.buyer')}</label>
-                <input value={form.buyer_name} onChange={set('buyer_name')} className={ctrlCls} placeholder={t('backoffice:contracts.create.fields.buyerPlaceholder')} />
-              </div>
               <div>
                 <label className={labelCls}>{t('backoffice:contracts.create.fields.amount')}</label>
                 <input type="number" min="0" value={form.amount} onChange={set('amount')} className={ctrlCls} placeholder={t('backoffice:contracts.create.fields.amountPlaceholder')} />

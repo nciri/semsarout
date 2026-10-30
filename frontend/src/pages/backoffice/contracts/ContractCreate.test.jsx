@@ -74,13 +74,14 @@ describe('Nouveau contrat', () => {
   beforeEach(async () => {
     await i18n.changeLanguage('fr')
     svc.listTemplates.mockReset().mockResolvedValue(TEMPLATES)
+    svc.create.mockReset().mockResolvedValue({ contract: { id: 5 } })
     api.get.mockReset()
     mockApi()
   })
 
   it("montre le texte du modèle, sans balises HTML", async () => {
     renderPage()
-    await userEvent.selectOptions(await screen.findByRole('combobox'), '1')
+    await userEvent.selectOptions((await screen.findAllByRole('combobox'))[0], '1')
     const preview = await screen.findByText(/Fait à Rabat/)
     expect(preview.textContent).toBe('Mandat\nVendeur & acheteur : 5 < 6\n\nFait à Rabat')
     expect(preview.textContent).not.toMatch(/<\/?[a-z]/i)
@@ -94,32 +95,32 @@ describe('Nouveau contrat', () => {
       await vi.waitFor(async () => {
         expect(await offered('Transaction liée')).toEqual(['TX-100 · Villa AnfaSara Bennani', 'TX-101 · Villa AnfaOmar Tazi'])
       })
-      expect(await offered('Client')).toEqual(['Sara Bennani', 'Omar Tazi'])
+      expect(await offered('Client 1')).toEqual(['Sara Bennani', 'Omar Tazi'])
     })
 
     it('une transaction renseigne son bien et son client', async () => {
       renderPage()
       await choose('Transaction liée', /TX-102/)
       expect(field('Bien')).toHaveTextContent('Riad Médina')
-      expect(field('Client')).toHaveTextContent('Nadia Idrissi')
+      expect(field('Client 1')).toHaveTextContent('Nadia Idrissi')
     })
 
     it('changer de bien vide le client qui ne lui appartient plus', async () => {
       renderPage()
       await choose('Bien', /Villa Anfa/)
-      await choose('Client', /Sara Bennani/)
-      expect(field('Client')).toHaveTextContent('Sara Bennani')
+      await choose('Client 1', /Sara Bennani/)
+      expect(field('Client 1')).toHaveTextContent('Sara Bennani')
       await choose('Bien', /Riad Médina/)
-      await vi.waitFor(() => expect(field('Client')).toHaveTextContent('—'))
+      await vi.waitFor(() => expect(field('Client 1')).toHaveTextContent('—'))
       expect(field('Transaction liée')).toHaveTextContent('Aucune')
     })
 
     it('un client déjà choisi survit au changement de bien quand il y a une transaction', async () => {
       renderPage()
-      await choose('Client', /Nadia Idrissi/)
+      await choose('Client 1', /Nadia Idrissi/)
       await choose('Bien', /Riad Médina/)
       await vi.waitFor(async () => expect(await offered('Transaction liée')).toEqual(['TX-102 · Riad MédinaNadia Idrissi']))
-      expect(field('Client')).toHaveTextContent('Nadia Idrissi')
+      expect(field('Client 1')).toHaveTextContent('Nadia Idrissi')
     })
 
     it('un bien sans transaction propose tous les clients et le dit', async () => {
@@ -130,7 +131,7 @@ describe('Nouveau contrat', () => {
       await vi.waitFor(() => expect(screen.queryByText(/Aucune transaction pour ce bien/)).not.toBeInTheDocument())
       await choose('Bien', /Studio Agdal/)
       await screen.findByText(/Aucune transaction pour ce bien/)
-      expect(await offered('Client')).toEqual(['Sara Bennani', 'Omar Tazi', 'Nadia Idrissi'])
+      expect(await offered('Client 1')).toEqual(['Sara Bennani', 'Omar Tazi', 'Nadia Idrissi'])
       expect(await offered('Transaction liée')).toEqual(['Aucun résultat'])
     })
 
@@ -154,14 +155,14 @@ describe('Nouveau contrat', () => {
     it('vider le client garde la transaction choisie', async () => {
       renderPage()
       await choose('Transaction liée', /TX-100/)
-      await userEvent.click(field('Client').querySelector('svg'))
-      expect(field('Client')).toHaveTextContent('—')
+      await userEvent.click(field('Client 1').querySelector('svg'))
+      expect(field('Client 1')).toHaveTextContent('—')
       expect(field('Transaction liée')).toHaveTextContent('TX-100')
     })
 
     it('sans bien, le client filtre les transactions côté serveur', async () => {
       renderPage()
-      await choose('Client', /Omar Tazi/)
+      await choose('Client 1', /Omar Tazi/)
       await vi.waitFor(() => expect(api.get).toHaveBeenCalledWith(
         '/backoffice/transactions',
         { params: expect.objectContaining({ client_id: 11 }) },
@@ -174,10 +175,78 @@ describe('Nouveau contrat', () => {
       try {
         renderPage()
         await choose('Bien', /Studio Agdal/)
-        await vi.waitFor(async () => expect(await offered('Client')).toEqual(['Omar Tazi']))
+        await vi.waitFor(async () => expect(await offered('Client 1')).toEqual(['Omar Tazi']))
       } finally {
         TRANSACTIONS.pop()
       }
+    })
+  })
+
+  describe('parties multiples', () => {
+    const submit = () => userEvent.click(screen.getByRole('button', { name: /Créer le contrat/ }))
+    const pickRole = async (n, role) => userEvent.selectOptions(
+      within(screen.getByText(`Rôle ${n}`).parentElement).getByRole('combobox'), role,
+    )
+
+    it('porte plusieurs vendeurs et plusieurs locataires dans le payload', async () => {
+      renderPage()
+      await userEvent.selectOptions((await screen.findAllByRole('combobox'))[0], '1')
+      await pickRole(1, 'vendeur')
+      await choose('Client 1', /Sara Bennani/)
+      await userEvent.click(screen.getByRole('button', { name: /Ajouter une partie/ }))
+      await choose('Client 2', /Omar Tazi/)
+      await userEvent.click(screen.getByRole('button', { name: /Ajouter une partie/ }))
+      await pickRole(3, 'locataire')
+      await choose('Client 3', /Nadia Idrissi/)
+      await submit()
+      expect(svc.create).toHaveBeenCalledWith(expect.objectContaining({
+        parties: [
+          { client_id: 10, role: 'vendeur' },
+          { client_id: 11, role: 'vendeur' },
+          { client_id: 12, role: 'locataire' },
+        ],
+      }))
+    })
+
+    it('une partie de plus reprend le rôle de la précédente', async () => {
+      renderPage()
+      await pickRole(1, 'bailleur')
+      await userEvent.click(screen.getByRole('button', { name: /Ajouter une partie/ }))
+      expect(within(screen.getByText('Rôle 2').parentElement).getByRole('combobox')).toHaveValue('bailleur')
+    })
+
+    it('retirer une partie la sort du formulaire et du payload', async () => {
+      renderPage()
+      await userEvent.selectOptions((await screen.findAllByRole('combobox'))[0], '1')
+      await pickRole(1, 'vendeur')
+      await choose('Client 1', /Sara Bennani/)
+      await userEvent.click(screen.getByRole('button', { name: /Ajouter une partie/ }))
+      await choose('Client 2', /Omar Tazi/)
+      await userEvent.click(screen.getAllByTitle('Retirer cette partie')[1])
+      expect(screen.queryByText('Client 2')).not.toBeInTheDocument()
+      await submit()
+      expect(svc.create).toHaveBeenCalledWith(expect.objectContaining({
+        parties: [{ client_id: 10, role: 'vendeur' }],
+      }))
+    })
+
+    it('la dernière partie ne peut pas être retirée', async () => {
+      renderPage()
+      expect(screen.getByTitle('Retirer cette partie')).toBeDisabled()
+    })
+
+    it('une ligne sans rôle ou sans client ne part pas au serveur', async () => {
+      renderPage()
+      await userEvent.selectOptions((await screen.findAllByRole('combobox'))[0], '1')
+      await choose('Client 1', /Sara Bennani/)
+      await submit()
+      expect(svc.create).toHaveBeenCalledWith(expect.objectContaining({ parties: [] }))
+    })
+
+    it("une transaction renseigne le client de la première partie", async () => {
+      renderPage()
+      await choose('Transaction liée', /TX-102/)
+      expect(field('Client 1')).toHaveTextContent('Nadia Idrissi')
     })
   })
 })

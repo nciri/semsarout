@@ -8,6 +8,9 @@ import { useTranslation } from 'react-i18next'
 import { FiArrowLeft, FiSave, FiCheck, FiDownload, FiEdit3 } from 'react-icons/fi'
 import { contractService } from '../../../services/contractService'
 import { StatusBadge } from '../../../components/backoffice/ui'
+import PartiesField from './PartiesField'
+import { emptyParty, toPayload } from './parties'
+import api from '../../../services/api'
 
 const STATUS_TONE = {
   draft: 'bg-gray-100 text-gray-700',
@@ -24,9 +27,19 @@ function ContractEditor() {
   const { data, isLoading } = useQuery(['contract', id], () => contractService.get(id))
   const [html, setHtml] = useState('')
   const [title, setTitle] = useState('')
+  const [parties, setParties] = useState([emptyParty()])
+  const { data: clientsData } = useQuery('bo-clients-min', async () => (await api.get('/backoffice/clients?per_page=100')).data)
 
   useEffect(() => {
-    if (data?.contract) { setHtml(data.contract.body_html || ''); setTitle(data.contract.title || '') }
+    if (!data?.contract) return
+    const c = data.contract
+    setHtml(c.body_html || '')
+    setTitle(c.title || '')
+    // Un contrat d'avant les parties plurielles n'a qu'un `client_id` : il est présenté comme
+    // une première partie dont le rôle reste à choisir, plutôt que d'en deviner un.
+    setParties(c.parties?.length
+      ? c.parties.map((p) => ({ client_id: p.client_id, role: p.role }))
+      : [{ client_id: c.client_id || '', role: '' }])
   }, [data])
 
   const contract = data?.contract
@@ -34,7 +47,12 @@ function ContractEditor() {
   const refresh = () => qc.invalidateQueries(['contract', id])
   const onErr = (e) => toast.error(e.response?.data?.error || t('common:errors.short'))
 
-  const save = useMutation(() => contractService.update(id, { title, body_html: html }),
+  const clientOptions = (clientsData?.clients || []).map(
+    (c) => ({ value: c.id, label: `${c.first_name} ${c.last_name}`, description: c.email || c.phone }),
+  )
+  // Les parties partent avec l'enregistrement : le service rejoue leurs blocs d'identification
+  // dans le corps déjà fusionné, sans écraser les retouches de l'agent.
+  const save = useMutation(() => contractService.update(id, { title, body_html: html, parties: toPayload(parties) }),
     { onSuccess: () => { toast.success(t('backoffice:contracts.editor.toasts.saved')); refresh() }, onError: onErr })
   const finalize = useMutation(() => contractService.finalize(id),
     { onSuccess: () => { toast.success(t('backoffice:contracts.editor.toasts.finalized')); refresh() }, onError: onErr })
@@ -75,6 +93,18 @@ function ContractEditor() {
           {contract.status !== 'draft' && <button onClick={downloadPdf} className={SECONDARY_BTN}><FiDownload className="w-4 h-4" /> {t('backoffice:contracts.editor.downloadPdf')}</button>}
           {contract.status === 'finalized' && <button onClick={() => sign.mutate()} className={PRIMARY_BTN}><FiEdit3 className="w-4 h-4" /> {t('backoffice:contracts.editor.markSigned')}</button>}
         </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-3">
+        <h2 className="text-[13px] font-semibold text-gray-900">{t('backoffice:contracts.parties.section')}</h2>
+        <PartiesField
+          parties={parties}
+          onChange={setParties}
+          clientOptions={clientOptions}
+          disabled={readOnly}
+          hint={t('backoffice:contracts.parties.hint')}
+        />
+        <p className="text-xs text-gray-400">{t('backoffice:contracts.parties.identityHint')}</p>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

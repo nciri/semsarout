@@ -1235,7 +1235,18 @@
         "artisanPlaceholder": "يُحدَّد لاحقًا",
         "scheduledLabel": "التاريخ المقرّر",
         "costLabel": "التكلفة المقدّرة (د.م.)",
-        "notesLabel": "توضيحات للحرفي"
+        "notesLabel": "توضيحات للحرفي",
+        "clientLabel": "العميل المعني",
+        "clientPlaceholder": "اختر عميلاً",
+        "leased_until": "مؤجر لـ {{tenant}} حتى {{date}}",
+        "leased_open": "مؤجر لـ {{tenant}}",
+        "noLease": "لا يوجد عقد إيجار ساري",
+        "natureLabel": "طبيعة الأشغال",
+        "naturePlaceholder": "يحدد لاحقاً",
+        "payerLabel": "من يدفع",
+        "modeLabel": "التسوية",
+        "thirdPartyLabel": "اسم الطرف الثالث الدافع",
+        "thirdPartyPlaceholder": "تأمين، نقابة الملاك، جار…"
       },
       "columns": {
         "title": "العنوان",
@@ -1282,6 +1293,35 @@
         "title": "إزالة هذا التدخّل؟",
         "message": "سيُزال « {{title}} » ({{status}}) من سجلّ الوكالة. هذا الإجراء نهائي.",
         "confirm": "إزالة"
+      },
+      "nature": {
+        "structurel": "هيكلية",
+        "entretien": "صيانة",
+        "degat_occupant": "ضرر سببه الشاغل"
+      },
+      "payer": {
+        "owner": "المالك",
+        "tenant": "المستأجر",
+        "agency": "الوكالة",
+        "third_party": "طرف ثالث"
+      },
+      "chargeMode": {
+        "crg_expense": "يخصم من تقرير التسيير",
+        "deposit_deduction": "يقتطع من الضمان",
+        "to_rebill": "يعاد فوترته",
+        "direct": "يدفع مباشرة",
+        "absorbed": "تتحمله الوكالة"
+      },
+      "payment": {
+        "title": "التسوية",
+        "client": "العميل المعني",
+        "payer": "من يدفع",
+        "mode": "طريقة التسوية",
+        "amount": "المبلغ",
+        "landedCrg": "عرض التفويض وتقرير التسيير رقم {{id}}",
+        "landedSettlement": "عرض تصفية الضمان الخاصة بعقد الإيجار",
+        "landedElsewhere": "تم تحميل المصروف، والكشف غير متاح من هذه الصفحة.",
+        "notCharged": "لم يحمّل بعد على أي كشف."
       }
     }
   },
@@ -1359,10 +1399,6 @@
         "property": "العقار",
         "client": "العميل",
         "transaction": "المعاملة المرتبطة",
-        "seller": "البائع / الموكِّل",
-        "sellerPlaceholder": "اسم البائع",
-        "buyer": "المشتري / المكتري",
-        "buyerPlaceholder": "اسم المشتري",
         "amount": "المبلغ (Đh)",
         "amountPlaceholder": "مثال: 1500000",
         "signDate": "تاريخ التوقيع",
@@ -1387,6 +1423,23 @@
         "title": "معاينة النموذج",
         "empty": "اختر نموذجًا لعرض معاينته.",
         "noContent": "لا يحتوي هذا النموذج على محتوى للمعاينة."
+      }
+    },
+    "parties": {
+      "section": "أطراف العقد",
+      "role": "الصفة",
+      "rolePlaceholder": "اختر الصفة…",
+      "client": "العميل",
+      "add": "إضافة طرف",
+      "remove": "حذف هذا الطرف",
+      "hint": "عدة بائعين أو عدة مكترين: سطر لكل شخص، بالترتيب الذي سيظهر به في العقد.",
+      "identityHint": "تبقى الجنسية ورقم البطاقة الوطنية والعنوان لكل طرف لتُستكمل في المحرّر.",
+      "roles": {
+        "vendeur": "بائع",
+        "acquereur": "مشترٍ",
+        "bailleur": "مُكري",
+        "locataire": "مُكتري",
+        "mandant": "موكِّل"
       }
     },
     "templates": {
