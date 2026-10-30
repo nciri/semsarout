@@ -2,6 +2,7 @@
 from datetime import date, datetime, timedelta
 
 import pytest
+from sqlalchemy.exc import IntegrityError
 
 from app.cleaning import ensure_tasks
 from app.models import CleaningTask, PropertyRO, StayManagerReservation
@@ -263,3 +264,24 @@ def test_un_type_connu_est_enregistre_a_la_creation(client, seeded):
     r = client.post("/backoffice/sejours/menage", json={
         "property_id": PROPERTY, "scheduled_date": "2026-10-30", "kind": "linge"})
     assert r.status_code == 201 and r.json()["task"]["kind"] == "linge"
+
+
+@pytest.mark.parametrize("kind", [5, ["linge"], {"a": 1}])
+def test_un_type_non_textuel_est_refuse(client, seeded, kind):
+    assert client.post("/backoffice/sejours/menage", json={
+        "property_id": PROPERTY, "scheduled_date": "2026-10-30",
+        "kind": kind}).status_code == 400
+
+
+def test_deux_taches_du_meme_type_sans_sejour_coexistent(seeded):
+    _tache(seeded, kind="linge", scheduled_date=date(2026, 10, 30))
+    _tache(seeded, kind="linge", scheduled_date=date(2026, 10, 31))
+    assert seeded.query(CleaningTask).filter(CleaningTask.kind == "linge").count() == 2
+
+
+def test_deux_taches_du_meme_type_sur_un_sejour_sont_refusees(seeded):
+    sejour = _stay(seeded, days=1)
+    _tache(seeded, reservation_id=sejour.id, kind="accueil", scheduled_date=date(2026, 10, 30))
+    with pytest.raises(IntegrityError):
+        _tache(seeded, reservation_id=sejour.id, kind="accueil", scheduled_date=date(2026, 10, 31))
+    seeded.rollback()

@@ -75,6 +75,8 @@ def ensure_tasks(db: Session, agency_id: int, today: date | None = None) -> int:
     if not stays:
         return 0
     # Le ménage seul : une tâche d'accueil ou de linge ne dispense pas de la rotation.
+    # Une tâche annulée garde sa ligne (donc pas de recréation) ; seule une suppression
+    # en base ferait recréer la rotation au passage suivant.
     known = {t.reservation_id for t in db.query(CleaningTask)
              .filter(CleaningTask.agency_id == agency_id,
                      CleaningTask.kind == "menage",
@@ -193,10 +195,10 @@ async def create_task(request: Request, principal: Principal = Depends(get_princ
         day = date.fromisoformat((data.get("scheduled_date") or "").strip())
     except ValueError:
         return err("Date invalide", 400)
-    kind = (data.get("kind") or "menage").strip()
-    if kind not in KINDS:
+    kind = data.get("kind") or "menage"
+    if not isinstance(kind, str) or kind.strip() not in KINDS:
         return err("Type de tâche inconnu", 400)
-    task = CleaningTask(agency_id=principal.agency_id, property_id=property_id, kind=kind,
+    task = CleaningTask(agency_id=principal.agency_id, property_id=property_id, kind=kind.strip(),
                         scheduled_date=day, notes=(data.get("notes") or "").strip()[:2000] or None)
     db.add(task)
     db.commit()
