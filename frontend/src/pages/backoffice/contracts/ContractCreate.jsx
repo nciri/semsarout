@@ -116,6 +116,12 @@ function ContractCreate() {
     onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
   })
 
+  // Une partie complète est exigée avant génération : un acte de 7 à 11 pages dont chaque
+  // article d'identification est un blanc, rattaché à aucun client, ne doit pas pouvoir naître.
+  // Aucun des quatre modèles intégrés n'emploie `{{client_name}}`, donc le client connu ne
+  // compense rien. Le service refuse aussi, en 400 — ici on évite le voyage inutile.
+  const partiesOk = toPayload(parties).length > 0
+
   const labelCls = 'block text-[12.5px] font-medium text-gray-700 mb-0.5'
   const ctrlCls = 'w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500'
   const cardCls = 'bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-3'
@@ -187,6 +193,7 @@ function ContractCreate() {
                 : t('backoffice:contracts.parties.hint')}
             />
             <p className="text-xs text-gray-400">{t('backoffice:contracts.parties.identityHint')}</p>
+            {!partiesOk && <p className="text-xs text-redcard-500">{t('backoffice:contracts.parties.requiredHint')}</p>}
           </div>
 
           <div className={cardCls}>
@@ -216,7 +223,7 @@ function ContractCreate() {
           <div className="flex items-center justify-between">
             <p className="text-xs text-gray-400">{t('backoffice:contracts.create.hint')}</p>
             <button
-              disabled={!form.template_id || create.isLoading}
+              disabled={!form.template_id || !partiesOk || create.isLoading}
               onClick={() => create.mutate()}
               className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
             >

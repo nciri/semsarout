@@ -235,12 +235,24 @@ describe('Nouveau contrat', () => {
       expect(screen.getByTitle('Retirer cette partie')).toBeDisabled()
     })
 
-    it('une ligne sans rôle ou sans client ne part pas au serveur', async () => {
+    // Une ligne à moitié remplie est une saisie en cours, pas une partie : elle ne part pas au
+    // serveur, et sans AUCUNE partie complète la génération est fermée — un acte de 7 à 11 pages
+    // dont chaque article d'identification est blanc, rattaché à aucun client, ne doit pas naître.
+    it('ferme la génération tant qu’aucune partie n’est complète', async () => {
       renderPage()
       await userEvent.selectOptions((await screen.findAllByRole('combobox'))[0], '1')
       await choose('Client 1', /Sara Bennani/)
+      expect(screen.getByText('Au moins une partie complète (client et rôle) est nécessaire pour générer le contrat.')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Créer le contrat/ })).toBeDisabled()
       await submit()
-      expect(svc.create).toHaveBeenCalledWith(expect.objectContaining({ parties: [] }))
+      expect(svc.create).not.toHaveBeenCalled()
+
+      await pickRole(1, 'vendeur')
+      expect(screen.queryByText(/Au moins une partie complète/)).not.toBeInTheDocument()
+      await submit()
+      expect(svc.create).toHaveBeenCalledWith(expect.objectContaining({
+        parties: [{ client_id: 10, role: 'vendeur' }],
+      }))
     })
 
     it("une transaction renseigne le client de la première partie", async () => {
@@ -252,8 +264,10 @@ describe('Nouveau contrat', () => {
     // Les notes sont saisies en WYSIWYG : ce qui part est du HTML, assaini par le champ.
     it('envoie les notes du contrat en HTML nettoye', async () => {
       renderPage()
-      // Le bouton reste désactivé sans modèle : on en choisit un comme les cas voisins.
+      // Le bouton reste désactivé sans modèle ni partie : on fournit les deux, comme les cas voisins.
       await userEvent.selectOptions((await screen.findAllByRole('combobox'))[0], '1')
+      await pickRole(1, 'vendeur')
+      await choose('Client 1', /Sara Bennani/)
       const editor = screen.getByRole('textbox', { name: 'Notes / clauses particulières' })
       editor.innerHTML = '<p>Signature <b>differee</b></p><script>alert(1)</script>'
       await userEvent.click(editor)
@@ -270,6 +284,8 @@ describe('Nouveau contrat', () => {
     it('n\'envoie pas de notes quand l\'editeur est vide', async () => {
       renderPage()
       await userEvent.selectOptions((await screen.findAllByRole('combobox'))[0], '1')
+      await pickRole(1, 'vendeur')
+      await choose('Client 1', /Sara Bennani/)
       const editor = screen.getByRole('textbox', { name: 'Notes / clauses particulières' })
       editor.innerHTML = '<p><br></p>'
       await userEvent.click(editor)

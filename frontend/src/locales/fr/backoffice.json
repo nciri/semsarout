@@ -1520,6 +1520,7 @@
       "remove": "Retirer cette partie",
       "hint": "Plusieurs vendeurs ou plusieurs locataires : une ligne par personne, dans l'ordre où elles figureront au contrat.",
       "identityHint": "La nationalité, le numéro de CIN et le domicile de chaque partie restent à compléter dans l'éditeur.",
+      "requiredHint": "Au moins une partie complète (client et rôle) est nécessaire pour générer le contrat.",
       "roles": {
         "vendeur": "Vendeur",
         "acquereur": "Acquéreur",

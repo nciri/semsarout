@@ -213,17 +213,38 @@ def test_la_creation_enregistre_les_parties_dans_l_ordre(client, jeu, db_session
     assert "Nadia Idrissi" in corps.split("Article 2")[1]
 
 
-def test_un_contrat_sans_partie_garde_son_client_sans_lui_preter_de_role(client, jeu):
-    contrat = _create(client, client_id=10).json()["contract"]
-    assert contrat["parties"] == []
-    assert contrat["client_id"] == 10
-    vendeurs, acquereurs, nom = re.findall(r"<p>(.*?)</p>", contrat["body_html"])
-    # `{{client_name}}` reste résolu — le client connu n'est pas perdu…
-    assert nom == "Sara Bennani"
-    # …mais il n'est nommé dans aucun des deux blocs de rôle, et chacun reste à compléter.
-    for bloc in (vendeurs, acquereurs):
-        assert "Sara Bennani" not in bloc and "<strong>" not in bloc
-        assert "……" in bloc
+def test_un_modele_a_blocs_de_parties_refuse_de_generer_sans_partie(client, jeu, db_session):
+    """Un acte de 7 à 11 pages qui ne nomme personne ne doit pas pouvoir naître.
+
+    Le correctif antérieur avait raison de ne plus prêter le client unique à tous les rôles
+    (nommer la même personne bailleur ET locataire dans un acte signé est pire qu'un blanc),
+    mais sa justification — « `{{client_name}}` porte encore le client connu » — ne tient pas :
+    AUCUN des quatre modèles intégrés n'emploie `{{client_name}}`.
+    """
+    r = _create(client, client_id=10)
+    assert r.status_code == 400
+    assert "au moins une partie" in r.json()["error"]
+    assert db_session.query(Contract).count() == 0
+
+
+def test_un_modele_sans_bloc_de_parties_se_genere_toujours_sans_partie(client, jeu, db_session):
+    """Le refus est ciblé : un modèle qui n'identifie pas ses parties n'a rien à exiger."""
+    db_session.add(ContractTemplate(id=2, agency_id=AGENCY, document_type="mandat",
+                                    name="Attestation", body_html="<p>{{client_name}}</p>"))
+    db_session.commit()
+    r = _create(client, template_id=2, client_id=10)
+    assert r.status_code == 201
+    assert r.json()["contract"]["body_html"] == "<p>Sara Bennani</p>"
+
+
+def test_un_role_sans_partie_reste_blanc_plutot_que_prete_a_une_autre(jeu):
+    """Pris au niveau de la fusion : le refus ci-dessus ferme la porte de l'UI, mais la règle
+    « jamais un nom sous le mauvais rôle » reste celle de `party_blocks`, car une partie peut
+    manquer alors qu'une autre est nommée (un compromis sans acquéreur encore identifié)."""
+    blocs = party_blocks([("vendeur", _Client("Sara", "Bennani"))])
+    assert "Sara Bennani" in blocs["parties_vendeurs"]
+    assert "Sara Bennani" not in blocs["parties_acquereurs"]
+    assert "……" in blocs["parties_acquereurs"] and "<strong>" not in blocs["parties_acquereurs"]
 
 
 def test_une_partie_d_une_autre_agence_est_refusee(client, jeu, db_session):

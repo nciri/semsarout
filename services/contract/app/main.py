@@ -24,7 +24,8 @@ from semsar_events import enqueue
 from . import events, users_client
 from .stay import router as stay_router
 from .db import get_db, init_db
-from .merge import ROLE_PLACEHOLDERS, build_context, party_blocks, render
+from .merge import (ROLE_PLACEHOLDERS, build_context, party_blocks, render,
+                    utilise_blocs_de_parties)
 from .models import (
     AgencyRO, ClientRO, Contract, ContractParty, ContractTemplate, PropertyRO, TransactionRO,
 )
@@ -256,6 +257,12 @@ async def create_contract(request: Request, principal: Principal = Depends(get_p
     if parties:
         # Le client unique du contrat est la première partie : les deux ne peuvent pas diverger.
         cli = parties[0][1]
+    elif utilise_blocs_de_parties(tpl.body_html):
+        # Sans partie, un modèle à `{{parties_*}}` produit un acte de 7 à 11 pages où chaque
+        # article d'identification est un blanc, rattaché à aucun client. Aucun des quatre
+        # modèles intégrés n'emploie `{{client_name}}` : le client connu ne compense donc rien.
+        return err("Ce modèle identifie ses parties : ajoutez au moins une partie "
+                   "(client et rôle) avant de générer le contrat.", 400)
 
     agency = db.get(AgencyRO, aid)
     context = build_context(agency, transaction=txn, property=prop, client=cli,
