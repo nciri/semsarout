@@ -80,6 +80,7 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/rental/LeasesList.jsx',
   'src/pages/backoffice/rental/LeaseDetail.jsx',
   'src/pages/backoffice/rental/ApplicationsList.jsx',
+  'src/pages/backoffice/rental/ExpensesList.jsx',
   'src/pages/backoffice/rental/ApplicationDetail.jsx',
   'src/pages/backoffice/rental/InventoryEditor.jsx',
   'src/pages/backoffice/rental/SettlementEditor.jsx',

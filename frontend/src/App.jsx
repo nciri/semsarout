@@ -112,6 +112,7 @@ const StayCleaningPanel = lazy(() => import('./pages/backoffice/sejours/Cleaning
 const StayAccessPanel = lazy(() => import('./pages/backoffice/sejours/AccessPanel'))
 const StayCheckin = lazy(() => import('./pages/StayCheckin'))
 const LeaseDetail = lazy(() => import('./pages/backoffice/rental/LeaseDetail'))
+const ExpensesList = lazy(() => import('./pages/backoffice/rental/ExpensesList'))
 const ApplicationsList = lazy(() => import('./pages/backoffice/rental/ApplicationsList'))
 const ApplicationDetail = lazy(() => import('./pages/backoffice/rental/ApplicationDetail'))
 const InventoryEditor = lazy(() => import('./pages/backoffice/rental/InventoryEditor'))
@@ -289,6 +290,7 @@ function App() {
             <Route index element={<MandatesList />} />
             <Route path="baux" element={<LeasesList />} />
             <Route path="candidatures" element={<ApplicationsList />} />
+            <Route path="depenses" element={<ExpensesList />} />
           </Route>
           <Route path="gestion-locative/mandats/:id" element={<MandateDetail />} />
           <Route path="gestion-locative/baux/:id" element={<LeaseDetail />} />

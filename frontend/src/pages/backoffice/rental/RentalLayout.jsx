@@ -118,6 +118,7 @@ function RentalLayout() {
     { to: 'baux', label: t('backoffice:rental.layout.tabs.leases'), count: counts?.leases },
     { to: '', label: t('backoffice:rental.layout.tabs.mandates'), end: true, count: counts?.mandates },
     { to: 'candidatures', label: t('backoffice:rental.layout.tabs.applications'), count: s?.applications?.total },
+    { to: 'depenses', label: t('backoffice:rental.layout.tabs.expenses') },
   ]
   const create = (to) => navigate(to, { state: { create: Date.now() } })
 

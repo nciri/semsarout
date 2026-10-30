@@ -3985,15 +3985,15 @@
         "conciergerie": "خدمات الكونسيرج",
         "controle": "المراقبة"
       },
-      "add": "إضافة تنظيف",
+      "add": "إضافة مهمة",
       "unassigned": "غير مُسنَد",
-      "start": "بدء التنظيف",
-      "finish": "إنهاء التنظيف",
+      "start": "بدء المهمة",
+      "finish": "إنهاء المهمة",
       "openDetail": "فتح التفاصيل",
       "urgentChip": "{{count}} عاجل",
       "urgentChip_other": "{{count}} عاجلة",
-      "lateAlert": "{{count}} تنظيف متأخر.",
-      "lateAlert_other": "{{count}} عمليات تنظيف متأخرة.",
+      "lateAlert": "{{count}} مهمة متأخرة.",
+      "lateAlert_other": "{{count}} مهام متأخرة.",
       "urgentAlert": "{{count}} إبلاغ عاجل غير مقروء.",
       "urgentAlert_other": "{{count}} إبلاغات عاجلة غير مقروءة.",
       "status": {
@@ -4023,15 +4023,15 @@
         "status": "الحالة"
       },
       "empty": {
-        "title": "لا يوجد تنظيف",
+        "title": "لا توجد مهام",
         "description": "تُنشأ عمليات التنظيف تلقائيًا عند مغادرة كل ضيف."
       },
       "toasts": {
-        "created": "تمت إضافة التنظيف.",
+        "created": "تمت إضافة المهمة.",
         "reported": "تم تسجيل الإبلاغ."
       },
       "detail": {
-        "title": "تفاصيل التنظيف",
+        "title": "تفاصيل المهمة",
         "zones": "المناطق المنجزة",
         "reports": "الإبلاغات",
         "noReport": "لا توجد إبلاغات.",
@@ -4047,8 +4047,9 @@
         "close": "إغلاق"
       },
       "modal": {
-        "title": "إضافة تنظيف",
-        "help": "لتنظيف خارج الإقامة: بعد أشغال أو قبل زيارة.",
+        "title": "إضافة مهمة",
+        "help": "لمهمة خارج الإقامة: تنظيف بعد أشغال أو استقبال قبل زيارة.",
+        "kindLabel": "النوع",
         "propertyLabel": "العقار",
         "propertyPlaceholder": "اختر عقارًا",
         "dateLabel": "التاريخ المقرر",

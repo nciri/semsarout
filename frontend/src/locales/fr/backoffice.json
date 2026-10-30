@@ -3985,15 +3985,15 @@
         "conciergerie": "Conciergerie",
         "controle": "Contrôle"
       },
-      "add": "Ajouter un ménage",
+      "add": "Ajouter une tâche",
       "unassigned": "Non attribué",
-      "start": "Démarrer le ménage",
-      "finish": "Terminer le ménage",
+      "start": "Démarrer la tâche",
+      "finish": "Terminer la tâche",
       "openDetail": "Ouvrir le détail",
       "urgentChip": "{{count}} urgent",
       "urgentChip_other": "{{count}} urgents",
-      "lateAlert": "{{count}} ménage en retard.",
-      "lateAlert_other": "{{count}} ménages en retard.",
+      "lateAlert": "{{count}} tâche en retard.",
+      "lateAlert_other": "{{count}} tâches en retard.",
       "urgentAlert": "{{count}} signalement urgent non lu.",
       "urgentAlert_other": "{{count}} signalements urgents non lus.",
       "status": {
@@ -4023,15 +4023,15 @@
         "status": "Statut"
       },
       "empty": {
-        "title": "Aucun ménage",
+        "title": "Aucune tâche",
         "description": "Les ménages se créent tout seuls au départ de chaque voyageur."
       },
       "toasts": {
-        "created": "Ménage ajouté.",
+        "created": "Tâche ajoutée.",
         "reported": "Signalement enregistré."
       },
       "detail": {
-        "title": "Détail du ménage",
+        "title": "Détail de la tâche",
         "zones": "Zones faites",
         "reports": "Signalements",
         "noReport": "Aucun signalement.",
@@ -4047,8 +4047,9 @@
         "close": "Fermer"
       },
       "modal": {
-        "title": "Ajouter un ménage",
-        "help": "Pour un ménage hors séjour : après travaux, avant une visite.",
+        "title": "Ajouter une tâche",
+        "help": "Pour une tâche hors séjour : ménage après travaux, accueil avant une visite.",
+        "kindLabel": "Type",
         "propertyLabel": "Bien",
         "propertyPlaceholder": "Choisir un bien",
         "dateLabel": "Date prévue",
