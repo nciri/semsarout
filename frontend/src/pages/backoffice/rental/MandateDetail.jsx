@@ -68,9 +68,13 @@ function CrgDraft({ crg, onValidate, busy }) {
   const lines = crg.expense_lines || []
   const toggle = (lineId) => setExcluded((ids) => (ids.includes(lineId) ? ids.filter((i) => i !== lineId) : [...ids, lineId]))
   const kept = lines.filter((l) => !excluded.includes(l.id))
+  const keptTotal = kept.reduce((sum, l) => sum + l.cost_final, 0)
+  // Le plafond retire les dépenses retenues : borné sur le seul loyer encaissé, le bouton restait
+  // actif pour un net négatif, que la décision B de la spec interdit de mettre dans un relevé.
+  const feesCap = Math.round((crg.rent_collected - keptTotal) * 100) / 100
   const feesNum = Number(fees)
-  const feesValid = fees.trim() !== '' && Number.isFinite(feesNum) && feesNum >= 0 && feesNum <= crg.rent_collected
-  const net = crg.rent_collected - (feesValid ? feesNum : crg.fees) - kept.reduce((sum, l) => sum + l.cost_final, 0)
+  const feesValid = fees.trim() !== '' && Number.isFinite(feesNum) && feesNum >= 0 && feesNum <= feesCap
+  const net = crg.rent_collected - (feesValid ? feesNum : crg.fees) - keptTotal
   return (
     <div className="space-y-3 rounded-lg border border-red-100 p-4">
       <Alert tone="crit" icon={FiAlertTriangle}>
@@ -95,13 +99,13 @@ function CrgDraft({ crg, onValidate, busy }) {
       <div className="flex flex-wrap items-end gap-2 text-sm">
         <label className="grid gap-1" htmlFor={`crg-fees-${crg.id}`}>
           <span className="text-gray-700">{t('rental.mandate.crg.feesLabel')}</span>
-          <input id={`crg-fees-${crg.id}`} type="number" min="0" max={crg.rent_collected} step="1"
+          <input id={`crg-fees-${crg.id}`} type="number" min="0" max={feesCap} step="1"
             value={fees} onChange={(e) => setFees(e.target.value)} aria-invalid={!feesValid}
             className="w-36 rounded-lg border border-gray-200 px-2 py-1 tabular-nums" />
         </label>
-        <span className="pb-1 text-xs text-gray-500">{t('rental.mandate.crg.feesHint', { amount: f.dh(crg.rent_collected) })}</span>
+        <span className="pb-1 text-xs text-gray-500">{t('rental.mandate.crg.feesHint', { amount: f.dh(feesCap) })}</span>
       </div>
-      {!feesValid && <p className="text-xs text-redcard-500">{t('rental.mandate.crg.feesInvalid', { amount: f.dh(crg.rent_collected) })}</p>}
+      {!feesValid && <p className="text-xs text-redcard-500">{t('rental.mandate.crg.feesInvalid', { amount: f.dh(feesCap) })}</p>}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="text-sm text-gray-700">
           {t('rental.mandate.crg.netAfter', { amount: f.dh(net) })}

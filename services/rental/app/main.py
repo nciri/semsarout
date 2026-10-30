@@ -1014,16 +1014,21 @@ async def validate_crg(crg_id: int, request: Request,
     # changerait rétroactivement tous les mois à venir.
     collected = float(crg.rent_collected or 0)
     fees = float(crg.fees or 0)
+    lignes = [l for l in _lignes_depenses(crg) if l.get("id") not in exclus]
+    expenses = round(sum(float(l["cost_final"]) for l in lignes), 2)
     if data.get("fees") is not None:
         try:
             fees = round(float(data["fees"]), 2)
         except (TypeError, ValueError):
             return err("Honoraires invalides.", 400)
-        if not 0 <= fees <= collected:
-            return err("Les honoraires doivent être compris entre 0 et les loyers encaissés.", 400)
+        # Le plafond retire les dépenses retenues, pas seulement les loyers : borné sur le seul
+        # `collected`, des honoraires égaux au loyer rendaient le net négatif, et le relevé partait
+        # dire au propriétaire qu'il DOIT de l'argent — ce que la décision B de la spec interdit.
+        plafond = round(collected - expenses, 2)
+        if not 0 <= fees <= plafond:
+            return err(f"Les honoraires doivent être compris entre 0 et {plafond:.2f} "
+                       "(loyers encaissés moins dépenses retenues).", 400)
         crg.fees = fees
-    lignes = [l for l in _lignes_depenses(crg) if l.get("id") not in exclus]
-    expenses = round(sum(float(l["cost_final"]) for l in lignes), 2)
     crg.expense_lines = json.dumps(lignes)
     crg.expenses = expenses
     crg.net = round(collected - fees - expenses, 2)

@@ -256,6 +256,34 @@ def test_la_validation_corrige_les_honoraires_et_les_borne(client, db_session, m
     assert r.json()["fees"] == 200.0 and r.json()["net"] == 4600.0
 
 
+def test_la_validation_refuse_des_honoraires_qui_rendraient_le_net_negatif(client, db_session,
+                                                                            monkeypatch):
+    """Décision B de la spec : pas de net négatif. Le plafond borné sur le seul loyer encaissé
+    laissait valider 6000 d'honoraires sur 6000 de loyer avec 1200 de dépenses retenues, et le
+    relevé partait dire au propriétaire qu'il DOIT 1200 Dh."""
+    crg_id = _brouillon(client, db_session, monkeypatch, loyer=6000, depenses_=[(4, 1200)])
+    r = client.post(f"/backoffice/gestion-locative/crg/{crg_id}/validate", json={"fees": 6000})
+    assert r.status_code == 400
+    crg = db_session.get(CrgReport, crg_id)
+    assert crg.status == "draft" and crg.fees == Decimal("480")
+
+    # Le plafond exact passe, et rend un net nul — jamais négatif.
+    r = client.post(f"/backoffice/gestion-locative/crg/{crg_id}/validate", json={"fees": 4800})
+    assert r.status_code == 200
+    db_session.refresh(crg)
+    assert crg.net == Decimal("0") and crg.status == "validated"
+
+
+def test_ecarter_la_depense_releve_le_plafond_des_honoraires(client, db_session, monkeypatch):
+    """Le plafond suit les dépenses RETENUES : écarter la ligne rend les 6000 disponibles."""
+    crg_id = _brouillon(client, db_session, monkeypatch, loyer=6000, depenses_=[(4, 1200)])
+    r = client.post(f"/backoffice/gestion-locative/crg/{crg_id}/validate",
+                    json={"fees": 6000, "excluded_work_order_ids": [4]})
+    assert r.status_code == 200
+    crg = db_session.get(CrgReport, crg_id)
+    assert (crg.fees, crg.expenses, crg.net) == (Decimal("6000"), Decimal("0"), Decimal("0"))
+
+
 def test_la_validation_sans_honoraires_garde_ceux_du_mandat(client, db_session, monkeypatch):
     crg_id = _brouillon(client, db_session, monkeypatch, loyer=6000, depenses_=[(4, 1200)])
     client.post(f"/backoffice/gestion-locative/crg/{crg_id}/validate", json={})
@@ -514,3 +542,4 @@ def test_le_taux_d_honoraires_du_mandat_est_borne(client, db_session):
                         json={"fee_percent": 6}).status_code == 200
     db_session.expire_all()
     assert db_session.get(Mandate, mid).fee_percent == Decimal("6")
+

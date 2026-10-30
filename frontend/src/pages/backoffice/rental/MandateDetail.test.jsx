@@ -66,11 +66,19 @@ describe('MandateDetail — compte rendu de gérance', () => {
     await userEvent.type(champ, '200')
     expect(screen.getByText(/Net après écarts : 4\s600 Dh/)).toBeInTheDocument()
 
-    // Borne haute : au-delà des loyers encaissés, la validation est refusée côté écran.
+    // Borne haute : les loyers encaissés MOINS les dépenses retenues (6 000 − 1 200). Bornée sur
+    // le seul loyer, l'écran laissait valider un net négatif, que la décision B de la spec
+    // interdit de mettre dans un relevé.
     await userEvent.clear(champ)
-    await userEvent.type(champ, '9000')
-    expect(screen.getByText('Montant invalide : les honoraires vont de 0 à 6 000 Dh.')).toBeInTheDocument()
+    await userEvent.type(champ, '6000')
+    expect(screen.getByText('Montant invalide : les honoraires vont de 0 à 4 800 Dh.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Valider le compte rendu' })).toBeDisabled()
+
+    // Et écarter la dépense relève le plafond : les 6 000 redeviennent disponibles.
+    await userEvent.click(screen.getByRole('button', { name: 'Écarter Chauffe-eau' }))
+    expect(screen.queryByText(/Montant invalide/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Valider le compte rendu' })).toBeEnabled()
+    await userEvent.click(screen.getByRole('button', { name: 'Réintégrer Chauffe-eau' }))
 
     await userEvent.clear(champ)
     await userEvent.type(champ, '200')
@@ -87,7 +95,7 @@ describe('MandateDetail — compte rendu de gérance', () => {
       expense_lines_editable: false,
       expense_lines: [{ id: 4, title: 'Chauffe-eau', cost_final: 1200, artisan_name: 'Plomberie Atlas', completed_at: '2026-07-28T00:00:00' }] }] })
     renderPage()
-    const lignes = await screen.findByRole('list', { name: 'Dépenses imputées au brouillon de Août 2026' })
+    const lignes = await screen.findByRole('list', { name: 'Dépenses imputées à Août 2026' })
     expect(within(lignes).getByText('Chauffe-eau')).toBeInTheDocument()
     expect(within(lignes).getByText(/28 juil\. 2026 · Plomberie Atlas/)).toBeInTheDocument()
     expect(within(lignes).getByText(/1\s200 Dh/)).toBeInTheDocument()
