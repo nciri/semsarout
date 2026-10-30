@@ -232,6 +232,37 @@ def test_la_validation_ecarte_une_ligne_et_recalcule(client, db_session, monkeyp
     assert [(e["crg_id"], e["expenses"], e["net"]) for e in envoyables] == [(crg_id, 1200.0, 4320.0)]
 
 
+def test_la_validation_corrige_les_honoraires_et_les_borne(client, db_session, monkeypatch):
+    """Décision A de la spec : corriger les honoraires avant envoi. Sans cette route, le seul
+    levier d'une remise ponctuelle était `mandate.fee_percent`, qui changerait rétroactivement
+    tous les mois à venir."""
+    crg_id = _brouillon(client, db_session, monkeypatch, loyer=6000, depenses_=[(4, 1200)])
+    assert db_session.get(CrgReport, crg_id).fees == Decimal("480")
+
+    # Au-delà des loyers encaissés : refus, et rien n'est écrit — « un CRG faux est plus
+    # coûteux qu'un CRG absent ».
+    for mauvais in (6000.01, -1, "beaucoup"):
+        r = client.post(f"/backoffice/gestion-locative/crg/{crg_id}/validate",
+                        json={"fees": mauvais})
+        assert r.status_code == 400, mauvais
+    crg = db_session.get(CrgReport, crg_id)
+    assert crg.status == "draft" and crg.fees == Decimal("480")
+
+    r = client.post(f"/backoffice/gestion-locative/crg/{crg_id}/validate", json={"fees": 200})
+    assert r.status_code == 200
+    db_session.refresh(crg)
+    # 6000 − 200 d'honoraires − 1200 de dépenses.
+    assert crg.fees == Decimal("200") and crg.net == Decimal("4600")
+    assert r.json()["fees"] == 200.0 and r.json()["net"] == 4600.0
+
+
+def test_la_validation_sans_honoraires_garde_ceux_du_mandat(client, db_session, monkeypatch):
+    crg_id = _brouillon(client, db_session, monkeypatch, loyer=6000, depenses_=[(4, 1200)])
+    client.post(f"/backoffice/gestion-locative/crg/{crg_id}/validate", json={})
+    crg = db_session.get(CrgReport, crg_id)
+    assert crg.fees == Decimal("480") and crg.net == Decimal("4320")
+
+
 def test_un_second_envoi_n_estampille_pas_une_deuxieme_fois(client, db_session, monkeypatch):
     # Deux appels séquentiels : la fixture sqlite est mono-connexion, la vraie concurrence n'y est
     # pas reproductible. Ce qu'on prouve ici est la garde `status == "sent"` qui la couvre côté

@@ -62,10 +62,15 @@ function CrgDraft({ crg, onValidate, busy }) {
   const f = useRentalFormat()
   const ask = useConfirm()
   const [excluded, setExcluded] = useState([])
+  // Honoraires corrigeables avant envoi (décision A de la spec) : le seul autre levier,
+  // `mandate.fee_percent`, changerait rétroactivement tous les mois à venir.
+  const [fees, setFees] = useState(String(crg.fees ?? ''))
   const lines = crg.expense_lines || []
   const toggle = (lineId) => setExcluded((ids) => (ids.includes(lineId) ? ids.filter((i) => i !== lineId) : [...ids, lineId]))
   const kept = lines.filter((l) => !excluded.includes(l.id))
-  const net = crg.rent_collected - crg.fees - kept.reduce((sum, l) => sum + l.cost_final, 0)
+  const feesNum = Number(fees)
+  const feesValid = fees.trim() !== '' && Number.isFinite(feesNum) && feesNum >= 0 && feesNum <= crg.rent_collected
+  const net = crg.rent_collected - (feesValid ? feesNum : crg.fees) - kept.reduce((sum, l) => sum + l.cost_final, 0)
   return (
     <div className="space-y-3 rounded-lg border border-red-100 p-4">
       <Alert tone="crit" icon={FiAlertTriangle}>
@@ -87,13 +92,23 @@ function CrgDraft({ crg, onValidate, busy }) {
         })}
         {!lines.length && <li className="py-2 text-gray-500">{t('rental.mandate.crg.noLines')}</li>}
       </ul>
+      <div className="flex flex-wrap items-end gap-2 text-sm">
+        <label className="grid gap-1" htmlFor={`crg-fees-${crg.id}`}>
+          <span className="text-gray-700">{t('rental.mandate.crg.feesLabel')}</span>
+          <input id={`crg-fees-${crg.id}`} type="number" min="0" max={crg.rent_collected} step="1"
+            value={fees} onChange={(e) => setFees(e.target.value)} aria-invalid={!feesValid}
+            className="w-36 rounded-lg border border-gray-200 px-2 py-1 tabular-nums" />
+        </label>
+        <span className="pb-1 text-xs text-gray-500">{t('rental.mandate.crg.feesHint', { amount: f.dh(crg.rent_collected) })}</span>
+      </div>
+      {!feesValid && <p className="text-xs text-redcard-500">{t('rental.mandate.crg.feesInvalid', { amount: f.dh(crg.rent_collected) })}</p>}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="text-sm text-gray-700">
           {t('rental.mandate.crg.netAfter', { amount: f.dh(net) })}
-          {excluded.length > 0 && <span className="block text-xs text-gray-500">{t('rental.mandate.crg.unsavedHint')}</span>}
+          {(excluded.length > 0 || feesNum !== Number(crg.fees)) && <span className="block text-xs text-gray-500">{t('rental.mandate.crg.unsavedHint')}</span>}
         </span>
-        <button type="button" className={PRIMARY_BTN} disabled={busy}
-          onClick={() => ask({ message: t('rental.mandate.crg.confirmValidate', { period: crg.period_label, amount: f.dh(net) }), confirmLabel: t('rental.mandate.crg.validate'), onConfirm: () => onValidate(crg.id, excluded) })}>{t('rental.mandate.crg.validate')}</button>
+        <button type="button" className={PRIMARY_BTN} disabled={busy || !feesValid}
+          onClick={() => ask({ message: t('rental.mandate.crg.confirmValidate', { period: crg.period_label, amount: f.dh(net) }), confirmLabel: t('rental.mandate.crg.validate'), onConfirm: () => onValidate(crg.id, excluded, feesNum) })}>{t('rental.mandate.crg.validate')}</button>
       </div>
     </div>
   )
@@ -114,7 +129,7 @@ function MandateDetail() {
     onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
   })
 
-  const validate = useMutation(({ crgId, excluded }) => rentalService.validateCrg(crgId, { excluded_work_order_ids: excluded }), {
+  const validate = useMutation(({ crgId, excluded, fees }) => rentalService.validateCrg(crgId, { excluded_work_order_ids: excluded, fees }), {
     onSuccess: () => { toast.success(t('backoffice:rental.mandate.crg.validatedToast')); qc.invalidateQueries(['rental-crg', id]); qc.invalidateQueries('rental-crg-drafts') },
     onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
   })
@@ -173,7 +188,7 @@ function MandateDetail() {
           <CrgLines key={`lines-${c.id}`} crg={c} />
         ))}
         {crg.filter((c) => c.status === 'draft').map((c) => (
-          <div key={c.id} className="mt-4"><CrgDraft crg={c} busy={validate.isLoading} onValidate={(crgId, excluded) => validate.mutate({ crgId, excluded })} /></div>
+          <div key={c.id} className="mt-4"><CrgDraft crg={c} busy={validate.isLoading} onValidate={(crgId, excluded, fees) => validate.mutate({ crgId, excluded, fees })} /></div>
         ))}
       </Panel>
       <SignaturePanel docType="mandate" docId={id} managerName={managerName} managerEmail={managerEmail} />

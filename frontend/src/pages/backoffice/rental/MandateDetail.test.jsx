@@ -49,7 +49,34 @@ describe('MandateDetail — compte rendu de gérance', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Valider le compte rendu' }))
     expect(ask).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringMatching(/Septembre 2026.*4\s320 Dh/) }))
     await vi.waitFor(() => expect(svc.validateCrg).toHaveBeenCalledWith(12,
-      { excluded_work_order_ids: [5] }))
+      { excluded_work_order_ids: [5], fees: 480 }))
+  })
+
+  it('corrige les honoraires avant envoi, borne la saisie et recalcule le net', async () => {
+    // Décision A de la spec : l'agence qui accorde une remise ponctuelle n'avait aucun levier
+    // hors `mandate.fee_percent`, qui changerait rétroactivement tous les mois à venir.
+    svc.listCrg.mockResolvedValue({ reports: [{ id: 12, period_label: 'Septembre 2026',
+      status: 'draft', rent_collected: 6000, fees: 480, expenses: 1200, net: 4320,
+      created_at: new Date().toISOString(), expense_lines_editable: true,
+      expense_lines: [{ id: 4, title: 'Chauffe-eau', cost_final: 1200 }] }] })
+    renderPage()
+    const champ = await screen.findByLabelText('Honoraires de gestion (Dh)')
+    expect(champ).toHaveValue(480)
+    await userEvent.clear(champ)
+    await userEvent.type(champ, '200')
+    expect(screen.getByText(/Net après écarts : 4\s600 Dh/)).toBeInTheDocument()
+
+    // Borne haute : au-delà des loyers encaissés, la validation est refusée côté écran.
+    await userEvent.clear(champ)
+    await userEvent.type(champ, '9000')
+    expect(screen.getByText('Montant invalide : les honoraires vont de 0 à 6 000 Dh.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Valider le compte rendu' })).toBeDisabled()
+
+    await userEvent.clear(champ)
+    await userEvent.type(champ, '200')
+    await userEvent.click(screen.getByRole('button', { name: 'Valider le compte rendu' }))
+    await vi.waitFor(() => expect(svc.validateCrg).toHaveBeenCalledWith(12,
+      { excluded_work_order_ids: [], fees: 200 }))
   })
 
   it('montre en lecture seule, avec date et artisan, les dépenses d’un compte rendu envoyé', async () => {

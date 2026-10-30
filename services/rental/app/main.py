@@ -987,11 +987,24 @@ async def validate_crg(crg_id: int, request: Request,
         exclus = {int(i) for i in (data.get("excluded_work_order_ids") or [])}
     except (TypeError, ValueError):
         return err("Dépenses à écarter invalides.", 400)
+    # Honoraires corrigeables avant envoi, comme l'exige la décision A de la spec : une agence
+    # qui accorde une remise ponctuelle n'a sinon que `mandate.fee_percent` comme levier, ce qui
+    # changerait rétroactivement tous les mois à venir.
+    collected = float(crg.rent_collected or 0)
+    fees = float(crg.fees or 0)
+    if data.get("fees") is not None:
+        try:
+            fees = round(float(data["fees"]), 2)
+        except (TypeError, ValueError):
+            return err("Honoraires invalides.", 400)
+        if not 0 <= fees <= collected:
+            return err("Les honoraires doivent être compris entre 0 et les loyers encaissés.", 400)
+        crg.fees = fees
     lignes = [l for l in _lignes_depenses(crg) if l.get("id") not in exclus]
     expenses = round(sum(float(l["cost_final"]) for l in lignes), 2)
     crg.expense_lines = json.dumps(lignes)
     crg.expenses = expenses
-    crg.net = round(float(crg.rent_collected or 0) - float(crg.fees or 0) - expenses, 2)
+    crg.net = round(collected - fees - expenses, 2)
     crg.status = "validated"
     db.commit()
     return _crg_dict(crg)
