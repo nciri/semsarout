@@ -57,3 +57,13 @@ def estampiller(ids: list[int], ref: str, agency_id: int) -> int:
     if not isinstance(stamped, int):
         raise DepensesIndisponibles("réponse de directory illisible")
     return stamped
+
+
+def liberer(ids: list[int], ref: str, agency_id: int) -> int:
+    """Défait l'estampille posée sous ce `ref` ; une dépense estampillée par un autre est ignorée."""
+    corps = _appeler("post", "/internal/work-orders/release",
+                     json={"ids": ids, "ref": ref, "agency_id": agency_id})
+    released = corps.get("released")
+    if not isinstance(released, int):
+        raise DepensesIndisponibles("réponse de directory illisible")
+    return released

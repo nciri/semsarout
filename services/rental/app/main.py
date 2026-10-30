@@ -1638,8 +1638,12 @@ def _owned_item(db, item_id: int, principal: Principal):
     return (it, inv) if inv is not None else (None, None)
 
 
-def _owned_settlement(db, sid: int, principal: Principal):
-    s = db.get(DepositSettlement, sid)
+def _owned_settlement(db, sid: int, principal: Principal, verrou: bool = False):
+    """`verrou` : FOR UPDATE jusqu'au commit, pour qu'accept/delete/finalize ne s'entrelacent pas."""
+    if verrou:
+        s = db.query(DepositSettlement).filter(DepositSettlement.id == sid).with_for_update().first()
+    else:
+        s = db.get(DepositSettlement, sid)
     if s is None or s.agency_id != principal.agency_id:
         return None
     return s
@@ -1728,13 +1732,10 @@ async def add_deduction_line(sid: int, request: Request,
     return _settlement_dict(db, s)
 
 
-def _suggestions_decompte(db: Session, s: DepositSettlement) -> list[dict]:
+def _suggestions_decompte(db: Session, s: DepositSettlement, lease: Lease) -> list[dict]:
     """Interventions imputables au locataire de CE bail (pas aux précédents), à poser en retenue.
 
     Lève DepensesIndisponibles : une liste vide à tort ferait restituer toute la caution."""
-    lease = db.get(Lease, s.lease_id)
-    if lease is None:
-        return []
     posees = {wid for (wid,) in db.query(DeductionLine.work_order_id).filter(
         DeductionLine.settlement_id == s.id, DeductionLine.work_order_id.isnot(None))}
     return [w for w in depenses.imputables([lease.property_id], "deposit_deduction",
@@ -1750,8 +1751,11 @@ def list_deduction_suggestions(sid: int, principal: Principal = Depends(get_prin
     s = _owned_settlement(db, sid, principal)
     if s is None:
         return err("Décompte introuvable.", 404)
+    lease = db.get(Lease, s.lease_id)
+    if lease is None:
+        return err("Bail introuvable.", 404)
     try:
-        suggestions = _suggestions_decompte(db, s)
+        suggestions = _suggestions_decompte(db, s, lease)
     except depenses.DepensesIndisponibles:
         logger.warning("Suggestions du décompte %s indisponibles : interventions illisibles", s.id)
         return err("Interventions indisponibles : réessayez dans un instant.", 503)
@@ -1767,16 +1771,19 @@ def accept_deduction_suggestion(sid: int, work_order_id: int,
                                 db: Session = Depends(get_db)):
     if (g := _gate(principal)) is not None:
         return g
-    s = _owned_settlement(db, sid, principal)
+    s = _owned_settlement(db, sid, principal, verrou=True)
     if s is None:
         return err("Décompte introuvable.", 404)
     if s.status != "draft":
         return err("Décompte verrouillé (finalisé).", 403)
+    lease = db.get(Lease, s.lease_id)
+    if lease is None:
+        return err("Bail introuvable.", 404)
     if db.query(DeductionLine).filter(DeductionLine.settlement_id == s.id,
                                       DeductionLine.work_order_id == work_order_id).first():
         return err("Cette intervention est déjà posée en retenue.", 409)
     try:
-        wo = next((w for w in _suggestions_decompte(db, s) if int(w["id"]) == work_order_id), None)
+        wo = next((w for w in _suggestions_decompte(db, s, lease) if int(w["id"]) == work_order_id), None)
         if wo is None:
             return err("Intervention non imputable à ce bail ou déjà imputée.", 404)
         # Ligne flushée avant l'estampillage : l'index unique tranche la course (409) sans rien
@@ -1797,7 +1804,16 @@ def accept_deduction_suggestion(sid: int, work_order_id: int,
         return err("Interventions indisponibles : retenue non posée, réessayez.", 503)
     lines = db.query(DeductionLine).filter(DeductionLine.settlement_id == s.id).all()
     _, s.total_deductions, s.refunded_amount, s.balance_due = _totaux_decompte(lines, s.deposit_amount)
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("Commit de la retenue du décompte %s échoué après estampillage", s.id)
+        try:   # sans cette libération l'intervention sortirait de `chargeable` sans ligne
+            depenses.liberer([work_order_id], f"settlement:{sid}", s.agency_id)
+        except depenses.DepensesIndisponibles:
+            logger.error("Estampille de l'intervention %s non libérée (décompte %s)", work_order_id, sid)
+        return err("Retenue non enregistrée : réessayez.", 503)
     return _settlement_dict(db, s)
 
 
@@ -1807,11 +1823,21 @@ def delete_deduction_line(line_id: int, principal: Principal = Depends(get_princ
     if (g := _gate(principal)) is not None:
         return g
     line = db.get(DeductionLine, line_id)
-    s = _owned_settlement(db, line.settlement_id, principal) if line else None
+    s = _owned_settlement(db, line.settlement_id, principal, verrou=True) if line else None
     if line is None or s is None:
         return err("Ligne introuvable.", 404)
     if s.status != "draft":
         return err("Décompte verrouillé.", 400)
+    if line.work_order_id is not None:
+        # Libérer avant de supprimer : si directory refuse, la ligne reste plutôt que de laisser
+        # une intervention estampillée sans ligne, perdue pour tout relevé.
+        try:
+            libere = depenses.liberer([line.work_order_id], f"settlement:{s.id}", s.agency_id)
+        except depenses.DepensesIndisponibles:
+            libere = None
+        if libere != 1:
+            db.rollback()
+            return err("Estampille de l'intervention non libérée : ligne conservée, réessayez.", 503)
     db.delete(line)
     db.commit()
     return _settlement_dict(db, s)
@@ -1822,7 +1848,7 @@ def finalize_settlement(sid: int, principal: Principal = Depends(get_principal),
                         db: Session = Depends(get_db)):
     if (g := _gate(principal)) is not None:
         return g
-    s = _owned_settlement(db, sid, principal)
+    s = _owned_settlement(db, sid, principal, verrou=True)
     if s is None:
         return err("Décompte introuvable.", 404)
     if s.status != "draft":

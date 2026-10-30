@@ -2,6 +2,7 @@ from decimal import Decimal
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.exc import IntegrityError
 
 from semsar_auth import Principal, get_principal
 
@@ -136,3 +137,80 @@ def test_un_decompte_finalise_n_accepte_plus_rien(client, db_session, monkeypatc
                         lambda ids, mode, agency_id, lease_id=None: [_vitre(4)])
     assert client.post(
         f"/backoffice/gestion-locative/settlements/{dec.id}/suggestions/4/accept").status_code == 403
+
+
+def _poser(client, dec, monkeypatch, liberations):
+    """Accepte la vitre n°4 avec un directory simulé qui enregistre les libérations."""
+    monkeypatch.setattr(depenses, "imputables",
+                        lambda ids, mode, agency_id, lease_id=None: [_vitre(4)])
+    monkeypatch.setattr(depenses, "estampiller", lambda ids, ref, agency_id: len(ids))
+    monkeypatch.setattr(depenses, "liberer",
+                        lambda ids, ref, agency_id: liberations.append((ids, ref, agency_id)) or len(ids))
+    assert client.post(
+        f"/backoffice/gestion-locative/settlements/{dec.id}/suggestions/4/accept").status_code == 201
+
+
+def test_supprimer_une_retenue_liberer_l_estampille(client, db_session, monkeypatch):
+    bail, dec = _bail_et_decompte(db_session, deposit=5000)
+    liberations = []
+    _poser(client, dec, monkeypatch, liberations)
+    ligne = db_session.query(DeductionLine).filter_by(settlement_id=dec.id).one()
+    assert client.delete(
+        f"/backoffice/gestion-locative/deduction-lines/{ligne.id}").status_code == 200
+    assert liberations == [([4], f"settlement:{dec.id}", AGENCY)]
+    assert db_session.query(DeductionLine).filter_by(settlement_id=dec.id).count() == 0
+
+
+@pytest.mark.parametrize("liberer", [lambda ids, ref, agency_id: 0, "tombe"])
+def test_la_ligne_survit_si_l_estampille_ne_se_libere_pas(client, db_session, monkeypatch, liberer):
+    bail, dec = _bail_et_decompte(db_session, deposit=5000)
+    _poser(client, dec, monkeypatch, [])
+
+    def _tombe(ids, ref, agency_id):
+        raise depenses.DepensesIndisponibles("directory muet")
+
+    monkeypatch.setattr(depenses, "liberer", _tombe if liberer == "tombe" else liberer)
+    ligne = db_session.query(DeductionLine).filter_by(settlement_id=dec.id).one()
+    assert client.delete(
+        f"/backoffice/gestion-locative/deduction-lines/{ligne.id}").status_code == 503
+    assert db_session.query(DeductionLine).filter_by(settlement_id=dec.id).count() == 1
+
+
+def test_un_commit_en_echec_libere_l_estampille_posee(client, db_session, monkeypatch):
+    bail, dec = _bail_et_decompte(db_session, deposit=5000)
+    monkeypatch.setattr(depenses, "imputables",
+                        lambda ids, mode, agency_id, lease_id=None: [_vitre(4)])
+    monkeypatch.setattr(depenses, "estampiller", lambda ids, ref, agency_id: len(ids))
+    liberations = []
+    monkeypatch.setattr(depenses, "liberer",
+                        lambda ids, ref, agency_id: liberations.append((ids, ref)) or len(ids))
+
+    def _commit_casse():
+        raise RuntimeError("connexion perdue")
+
+    monkeypatch.setattr(db_session, "commit", _commit_casse)
+    r = client.post(f"/backoffice/gestion-locative/settlements/{dec.id}/suggestions/4/accept")
+    assert r.status_code == 503
+    assert liberations == [([4], f"settlement:{dec.id}")]
+
+
+def test_un_bail_disparu_n_affiche_pas_une_liste_vide(client, db_session, monkeypatch):
+    bail, dec = _bail_et_decompte(db_session, deposit=5000)
+    db_session.delete(bail)
+    db_session.commit()
+    r = client.get(f"/backoffice/gestion-locative/settlements/{dec.id}/suggestions")
+    assert r.status_code == 404
+
+
+def test_l_index_unique_refuse_un_doublon_que_la_precheck_aurait_laisse_passer(db_session):
+    """La pré-vérification de l'accept n'est qu'un confort : c'est l'index qui garantit le 409."""
+    bail, dec = _bail_et_decompte(db_session, deposit=5000)
+    _ligne(db_session, dec, work_order_id=4, amount=600)
+    db_session.add(DeductionLine(settlement_id=dec.id, label="Doublon", amount=600, work_order_id=4))
+    with pytest.raises(IntegrityError):
+        db_session.flush()
+    db_session.rollback()
+    # Les retenues manuelles (work_order_id NULL) restent libres de se répéter.
+    for _ in range(2):
+        db_session.add(DeductionLine(settlement_id=dec.id, label="Manuelle", amount=10))
+    db_session.commit()
