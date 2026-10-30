@@ -168,6 +168,11 @@ pas à ce qui a été fait dans StayManager ».
     métiers deviennent les deux onglets de `/backoffice/tiers`. Les anciennes URL
     (`/backoffice/notaires*`, `/backoffice/artisans*`, `travaux`, `juridique`) redirigent,
     identifiant conservé pour les liens profonds.
+    Chaque onglet porte **un seul filtre**, descendu en prop aux deux sections : un même mot
+    cherche le notaire et ses dossiers, l'artisan et ce qu'on lui a confié. Les compteurs
+    chiffrés de l'annuaire tombent (la liste se suffit), et ceux des interventions deviennent
+    une barre d'avancement empilée par statut, légende chiffrée à côté — la barre est
+    décorative, les nombres restent lisibles sans la couleur.
 
 ## Décisions prises pour éviter les doublons
 

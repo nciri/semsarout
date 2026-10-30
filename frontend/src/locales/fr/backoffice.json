@@ -1167,16 +1167,10 @@
       }
     },
     "directory": {
-      "stats": {
-        "total": "Artisans",
-        "shared": "Partagés",
-        "private": "Mon agence"
-      },
       "filters": {
         "allTrades": "Tous les métiers",
         "cityPlaceholder": "Ville"
       },
-      "searchPlaceholder": "Rechercher un artisan…",
       "addButton": "Ajouter",
       "gated": {
         "message": "Le référentiel artisans est réservé aux plans Pro et Entreprise."
@@ -1227,12 +1221,6 @@
         "title": "Bons de travaux",
         "message": "Le suivi des interventions est réservé aux plans Pro et Entreprise."
       },
-      "stats": {
-        "total": "Total",
-        "scheduled": "Planifiés",
-        "inProgress": "En cours",
-        "done": "Terminés"
-      },
       "form": {
         "titlePlaceholder": "Intitulé de l'intervention",
         "newButton": "Nouveau"
@@ -1270,7 +1258,11 @@
         "costFinal": "Coût final (Đh)",
         "notes": "Notes"
       },
-      "autoSaveNote": "Les modifications sont enregistrées automatiquement."
+      "autoSaveNote": "Les modifications sont enregistrées automatiquement.",
+      "flow": {
+        "label": "intervention au total",
+        "label_other": "interventions au total"
+      }
     }
   },
   "contracts": {
@@ -1428,7 +1420,6 @@
         "title": "Notaires",
         "message": "L'annuaire des notaires est réservé aux plans Pro et Entreprise."
       },
-      "searchPlaceholder": "Rechercher un notaire, une étude, une ville…",
       "addButton": "Ajouter un notaire",
       "columns": {
         "name": "Nom",
@@ -4111,6 +4102,10 @@
     "tabs": {
       "legal": "Notaires & dossiers",
       "artisans": "Artisans & interventions"
+    },
+    "filters": {
+      "searchLegal": "Rechercher un notaire ou un dossier",
+      "searchArtisans": "Rechercher un artisan ou une intervention"
     }
   }
 }

@@ -5,7 +5,7 @@ import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { FiLock, FiPlus, FiClipboard } from 'react-icons/fi'
 import { artisanService } from '../../../services/artisanService'
-import { StatCard, Toolbar, Select, DataTable, StatusBadge, EmptyState, GatedNotice } from '../../../components/backoffice/ui'
+import { Toolbar, Select, DataTable, StatusBadge, EmptyState, GatedNotice } from '../../../components/backoffice/ui'
 
 const STATUS_TONE = {
   requested: 'bg-gray-100 text-gray-700',
@@ -17,7 +17,51 @@ const STATUS_TONE = {
 
 const PRIMARY_BTN = 'inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50'
 
-function WorkOrdersList() {
+// Les cinq états d'une intervention, dans l'ordre où elle les traverse : la barre se lit
+// comme son avancement, pas comme quatre nombres posés côte à côte.
+const FLOW = [
+  { status: 'requested', fill: 'bg-gray-300' },
+  { status: 'scheduled', fill: 'bg-blue-500' },
+  { status: 'in_progress', fill: 'bg-amber-500' },
+  { status: 'done', fill: 'bg-emerald-500' },
+  { status: 'cancelled', fill: 'bg-red-400' },
+]
+
+const NO_FILTER = { trade: '', q: '' }
+
+/**
+ * Avancement du parc d'interventions : barre empilée plus légende chiffrée. La barre est
+ * décorative (`aria-hidden`) — c'est la légende qui porte les nombres, donc la lecture ne
+ * dépend jamais de la seule couleur.
+ */
+function StatusFlow({ counts, total, label }) {
+  const { t } = useTranslation(['backoffice'])
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-4">
+      <div className="flex items-baseline gap-2">
+        <b className="font-display text-2xl font-extrabold leading-none tabular-nums">{total}</b>
+        <span className="text-[13px] text-gray-500">{label}</span>
+      </div>
+      <div aria-hidden="true" className="mt-3 flex h-2.5 gap-[2px] overflow-hidden rounded-full bg-gray-100">
+        {FLOW.filter((f) => counts[f.status]).map((f) => (
+          <span key={f.status} className={`${f.fill} first:rounded-s-full last:rounded-e-full`}
+            style={{ width: `${(counts[f.status] / total) * 100}%` }} />
+        ))}
+      </div>
+      <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+        {FLOW.map((f) => (
+          <li key={f.status} className="flex items-center gap-1.5 text-[12.5px]">
+            <span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-full ${f.fill}`} />
+            <span className="text-gray-600">{t(`backoffice:artisans.workOrder.status.${f.status}`)}</span>
+            <b className="font-semibold tabular-nums text-gray-900">{counts[f.status] || 0}</b>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function WorkOrdersList({ filter = NO_FILTER }) {
   const { t } = useTranslation(['backoffice', 'common'])
   const qc = useQueryClient()
   const { data, isLoading, error } = useQuery('work-orders', () => artisanService.listWorkOrders())
@@ -32,14 +76,19 @@ function WorkOrdersList() {
     onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
   })
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const orders = data?.work_orders || []
-  const stats = useMemo(() => ({
-    total: orders.length,
-    scheduled: orders.filter((w) => w.status === 'scheduled').length,
-    in_progress: orders.filter((w) => w.status === 'in_progress').length,
-    done: orders.filter((w) => w.status === 'done').length,
-  }), [orders])
+  // Le filtre de l'onglet vaut aussi ici : chercher « Benali » doit sortir ses interventions,
+  // pas seulement sa fiche d'artisan.
+  const orders = useMemo(() => {
+    const rows = data?.work_orders || []
+    const known = tradesData?.trades || []
+    const label = (id) => known.find((tr) => tr.id === id)?.label || id
+    const s = (filter.q || '').trim().toLowerCase()
+    return rows.filter((w) => (!filter.trade || w.trade === filter.trade)
+      && (!s || [w.title, w.artisan?.name, label(w.trade)]
+        .filter(Boolean).some((v) => v.toLowerCase().includes(s))))
+  }, [data, tradesData, filter.trade, filter.q])
+  const counts = useMemo(() => orders.reduce((acc, w) => ({ ...acc, [w.status]: (acc[w.status] || 0) + 1 }), {}),
+    [orders])
 
   if (error?.response?.status === 403) {
     return <GatedNotice icon={FiLock} title={t('backoffice:artisans.workOrder.gated.title')} message={t('backoffice:artisans.workOrder.gated.message')} />
@@ -57,12 +106,10 @@ function WorkOrdersList() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label={t('backoffice:artisans.workOrder.stats.total')} value={stats.total} icon={FiClipboard} />
-        <StatCard label={t('backoffice:artisans.workOrder.stats.scheduled')} value={stats.scheduled} tone="blue" />
-        <StatCard label={t('backoffice:artisans.workOrder.stats.inProgress')} value={stats.in_progress} tone="amber" />
-        <StatCard label={t('backoffice:artisans.workOrder.stats.done')} value={stats.done} tone="green" />
-      </div>
+      {orders.length > 0 && (
+        <StatusFlow counts={counts} total={orders.length}
+          label={t('backoffice:artisans.workOrder.flow.label', { count: orders.length })} />
+      )}
 
       <Toolbar>
         <input

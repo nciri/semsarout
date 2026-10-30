@@ -15,7 +15,8 @@ const STATUS_TONE = {
 
 const PRIMARY_BTN = 'inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50'
 
-function LegalCasesList() {
+/** La recherche vient de l'onglet : un même mot cherche le notaire et ses dossiers. */
+function LegalCasesList({ q = '' }) {
   const { t } = useTranslation(['backoffice', 'common'])
   const qc = useQueryClient()
   const { data, isLoading, error } = useQuery('legal-cases', () => legalService.listCases())
@@ -29,7 +30,13 @@ function LegalCasesList() {
   })
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const cases = data?.cases || []
+  const all = data?.cases || []
+  const cases = useMemo(() => {
+    const s = q.trim().toLowerCase()
+    if (!s) return all
+    return all.filter((c) => [c.title, c.notary?.name].filter(Boolean)
+      .some((v) => v.toLowerCase().includes(s)))
+  }, [all, q])
   const notaries = notariesData?.notaries || []
   const noNotary = notaries.length === 0
   const stats = useMemo(() => ({

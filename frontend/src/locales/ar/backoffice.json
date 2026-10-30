@@ -1167,16 +1167,10 @@
       }
     },
     "directory": {
-      "stats": {
-        "total": "الحرفيون",
-        "shared": "مشتركون",
-        "private": "وكالتي"
-      },
       "filters": {
         "allTrades": "جميع المهن",
         "cityPlaceholder": "المدينة"
       },
-      "searchPlaceholder": "البحث عن حرفي…",
       "addButton": "إضافة",
       "gated": {
         "message": "دليل الحرفيين مخصص لخطتي Pro وEntreprise."
@@ -1227,12 +1221,6 @@
         "title": "أوامر العمل",
         "message": "متابعة التدخلات مخصصة لخطتي Pro وEntreprise."
       },
-      "stats": {
-        "total": "المجموع",
-        "scheduled": "مبرمجة",
-        "inProgress": "قيد التنفيذ",
-        "done": "منتهية"
-      },
       "form": {
         "titlePlaceholder": "عنوان التدخل",
         "newButton": "جديد"
@@ -1270,7 +1258,11 @@
         "costFinal": "التكلفة النهائية (Đh)",
         "notes": "ملاحظات"
       },
-      "autoSaveNote": "يتم حفظ التعديلات تلقائياً."
+      "autoSaveNote": "يتم حفظ التعديلات تلقائياً.",
+      "flow": {
+        "label": "تدخّل في المجموع",
+        "label_other": "تدخّلات في المجموع"
+      }
     }
   },
   "contracts": {
@@ -1428,7 +1420,6 @@
         "title": "الموثّقون",
         "message": "دليل الموثّقين متاح لباقتَي Pro وEntreprise فقط."
       },
-      "searchPlaceholder": "ابحث عن موثّق أو مكتب أو مدينة…",
       "addButton": "إضافة موثّق",
       "columns": {
         "name": "الاسم",
@@ -4111,6 +4102,10 @@
     "tabs": {
       "legal": "الموثّقون والملفّات",
       "artisans": "الحرفيّون والتدخّلات"
+    },
+    "filters": {
+      "searchLegal": "ابحث عن موثّق أو ملفّ",
+      "searchArtisans": "ابحث عن حرفي أو تدخّل"
     }
   }
 }
