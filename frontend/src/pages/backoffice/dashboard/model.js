@@ -94,14 +94,18 @@ const sameMonth = (d, ref) => d.getFullYear() === ref.getFullYear() && d.getMont
 export function monthResults(closed = [], now) {
   const prevRef = new Date(now.getFullYear(), now.getMonth() - 1, 1)
   const acc = () => ({ count: 0, amount: 0 })
-  const out = { wonSale: acc(), wonRent: acc(), lostSale: acc(), prevWonSale: acc(), won: 0, lost: 0 }
+  const out = { wonSale: acc(), wonRent: acc(), lostSale: acc(), lostRent: acc(),
+    prevWonSale: acc(), won: 0, lost: 0 }
   for (const c of closed) {
     const d = new Date(c.date)
     if (sameMonth(d, now)) {
       if (c.status === 'won') out.won += 1
       else out.lost += 1
-      const bucket = c.status === 'won' ? (c.type === 'rent' ? out.wonRent : out.wonSale)
-        : c.type === 'sale' ? out.lostSale : null
+      // Une location perdue est une perte aussi : son montant est un loyer, pas un prix,
+      // d'où deux seaux distincts plutôt qu'une somme qui n'aurait pas d'unité.
+      const rent = c.type === 'rent'
+      const bucket = c.status === 'won' ? (rent ? out.wonRent : out.wonSale)
+        : (rent ? out.lostRent : out.lostSale)
       if (bucket) { bucket.count += 1; bucket.amount += c.amount }
     } else if (sameMonth(d, prevRef) && c.status === 'won' && c.type === 'sale') {
       out.prevWonSale.count += 1

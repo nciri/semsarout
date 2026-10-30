@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom'
+import ConfirmProvider from './components/common/ConfirmProvider'
 import { applyDirection } from './i18n/rtl'
 import Layout from './components/layout/Layout'
 import PrivateRoute from './components/auth/PrivateRoute'
@@ -92,22 +93,30 @@ const ContractsList = lazy(() => import('./pages/backoffice/contracts/ContractsL
 const ContractCreate = lazy(() => import('./pages/backoffice/contracts/ContractCreate'))
 const ContractEditor = lazy(() => import('./pages/backoffice/contracts/ContractEditor'))
 const TemplatesManager = lazy(() => import('./pages/backoffice/contracts/TemplatesManager'))
-const NotariesDirectory = lazy(() => import('./pages/backoffice/legal/NotariesDirectory'))
-const NotairesLayout = lazy(() => import('./pages/backoffice/legal/NotairesLayout'))
-const ArtisansLayout = lazy(() => import('./pages/backoffice/artisans/ArtisansLayout'))
-const ArtisansDirectory = lazy(() => import('./pages/backoffice/artisans/ArtisansDirectory'))
-const WorkOrdersList = lazy(() => import('./pages/backoffice/artisans/WorkOrdersList'))
+const TiersLayout = lazy(() => import('./pages/backoffice/tiers/TiersLayout'))
+const NotariesAndCases = lazy(() => import('./pages/backoffice/tiers/NotariesAndCases'))
+const ArtisansAndWorkOrders = lazy(() => import('./pages/backoffice/tiers/ArtisansAndWorkOrders'))
 const WorkOrderDetail = lazy(() => import('./pages/backoffice/artisans/WorkOrderDetail'))
 const RentalLayout = lazy(() => import('./pages/backoffice/rental/RentalLayout'))
 const MandatesList = lazy(() => import('./pages/backoffice/rental/MandatesList'))
 const MandateDetail = lazy(() => import('./pages/backoffice/rental/MandateDetail'))
 const LeasesList = lazy(() => import('./pages/backoffice/rental/LeasesList'))
+const StaysLayout = lazy(() => import('./pages/backoffice/sejours/StaysLayout'))
+const StaysList = lazy(() => import('./pages/backoffice/sejours/StaysList'))
+const CalendarsList = lazy(() => import('./pages/backoffice/sejours/CalendarsList'))
+const StayCalendar = lazy(() => import('./pages/backoffice/sejours/StayCalendar'))
+const StayDetail = lazy(() => import('./pages/backoffice/sejours/StayDetail'))
+const StayOpsTeams = lazy(() => import('./pages/backoffice/sejours/OpsTeamsPanel'))
+const StayMessagesPanel = lazy(() => import('./pages/backoffice/sejours/MessagesPanel'))
+const StayCleaningPanel = lazy(() => import('./pages/backoffice/sejours/CleaningPanel'))
+const StayAccessPanel = lazy(() => import('./pages/backoffice/sejours/AccessPanel'))
+const StayCheckin = lazy(() => import('./pages/StayCheckin'))
 const LeaseDetail = lazy(() => import('./pages/backoffice/rental/LeaseDetail'))
+const ExpensesList = lazy(() => import('./pages/backoffice/rental/ExpensesList'))
 const ApplicationsList = lazy(() => import('./pages/backoffice/rental/ApplicationsList'))
 const ApplicationDetail = lazy(() => import('./pages/backoffice/rental/ApplicationDetail'))
 const InventoryEditor = lazy(() => import('./pages/backoffice/rental/InventoryEditor'))
 const SettlementEditor = lazy(() => import('./pages/backoffice/rental/SettlementEditor'))
-const LegalCasesList = lazy(() => import('./pages/backoffice/legal/LegalCasesList'))
 const LegalCaseDetail = lazy(() => import('./pages/backoffice/legal/LegalCaseDetail'))
 const AnalyticsLayout = lazy(() => import('./pages/backoffice/analytics/AnalyticsLayout'))
 const ShopCatalog = lazy(() => import('./pages/backoffice/shop/ShopCatalog'))
@@ -121,6 +130,12 @@ const PipelineAnalytics = lazy(() => import('./pages/backoffice/analytics/Pipeli
 const TeamAnalytics = lazy(() => import('./pages/backoffice/analytics/TeamAnalytics'))
 const Subscription = lazy(() => import('./pages/dashboard/Subscription'))
 
+/** Un lien profond déjà en circulation garde son identifiant : seule l'adresse a bougé. */
+function RedirectWithId({ to }) {
+  const { id } = useParams()
+  return <Navigate to={`${to}/${id}`} replace />
+}
+
 function App() {
   const { i18n } = useTranslation()
   const location = useLocation()
@@ -132,7 +147,8 @@ function App() {
   }, [i18n])
 
   return (
-    <>
+    // Un seul porteur de la fenêtre de confirmation : les écrans n'appellent que `ask(...)`.
+    <ConfirmProvider>
       <ImpersonationBanner />
       {/* La barriere d'erreur enveloppe le Suspense, jamais l'inverse : le
           Suspense rattrape la SUSPENSION d'un fragment, pas le REJET de son
@@ -161,6 +177,8 @@ function App() {
         <Route path="mot-de-passe-oublie" element={<ForgotPassword />} />
         <Route path="reinitialiser-mot-de-passe" element={<ResetPassword />} />
         <Route path="invitation/:token" element={<AcceptInvitation />} />
+        {/* Enregistrement d'un séjour : le lien privé reçu par le voyageur, sans compte. */}
+        <Route path="sejour/enregistrement/:token" element={<StayCheckin />} />
         <Route path="a-propos" element={<About />} />
         <Route path="mentions-legales" element={<LegalPage type="mentions" />} />
         <Route path="cgu" element={<LegalPage type="cgu" />} />
@@ -260,34 +278,47 @@ function App() {
           <Route path="contrats/nouveau" element={<ContractCreate />} />
           <Route path="contrats/modeles" element={<TemplatesManager />} />
           <Route path="contrats/:id" element={<ContractEditor />} />
-          {/* Artisans : annuaire + interventions en onglets */}
-          <Route path="artisans" element={<ArtisansLayout />}>
-            <Route index element={<ArtisansDirectory />} />
-            <Route path="interventions" element={<WorkOrdersList />} />
+          {/* Tiers : notaires & dossiers d'un côté, artisans & interventions de l'autre */}
+          <Route path="tiers" element={<TiersLayout />}>
+            <Route index element={<NotariesAndCases />} />
+            <Route path="artisans" element={<ArtisansAndWorkOrders />} />
           </Route>
-          <Route path="artisans/interventions/:id" element={<WorkOrderDetail />} />
+          <Route path="tiers/dossiers/:id" element={<LegalCaseDetail />} />
+          <Route path="tiers/interventions/:id" element={<WorkOrderDetail />} />
           {/* Gestion locative : mandats + baux + candidatures en onglets */}
           <Route path="gestion-locative" element={<RentalLayout />}>
             <Route index element={<MandatesList />} />
             <Route path="baux" element={<LeasesList />} />
             <Route path="candidatures" element={<ApplicationsList />} />
+            <Route path="depenses" element={<ExpensesList />} />
           </Route>
           <Route path="gestion-locative/mandats/:id" element={<MandateDetail />} />
           <Route path="gestion-locative/baux/:id" element={<LeaseDetail />} />
           <Route path="gestion-locative/candidatures/:id" element={<ApplicationDetail />} />
           <Route path="gestion-locative/etats-des-lieux/:invId" element={<InventoryEditor />} />
           <Route path="gestion-locative/decompte/:leaseId" element={<SettlementEditor />} />
-          {/* Notaires & juridique : notaires + dossiers en onglets */}
-          <Route path="notaires" element={<NotairesLayout />}>
-            <Route index element={<NotariesDirectory />} />
-            <Route path="dossiers" element={<LegalCasesList />} />
+          {/* Séjours courte durée : planning + calendriers des plateformes en onglets */}
+          <Route path="sejours/:stayId" element={<StayDetail />} />
+          <Route path="sejours" element={<StaysLayout />}>
+            <Route index element={<StaysList />} />
+            <Route path="calendrier" element={<StayCalendar />} />
+            <Route path="menage" element={<StayCleaningPanel />} />
+            <Route path="messages" element={<StayMessagesPanel />} />
+            <Route path="acces" element={<StayAccessPanel />} />
+            <Route path="equipes" element={<StayOpsTeams />} />
+            <Route path="calendriers" element={<CalendarsList />} />
           </Route>
-          <Route path="notaires/dossiers/:id" element={<LegalCaseDetail />} />
-          {/* Rétro-compatibilité anciennes URLs */}
-          <Route path="travaux" element={<Navigate to="/backoffice/artisans/interventions" replace />} />
-          <Route path="travaux/:id" element={<Navigate to="/backoffice/artisans/interventions" replace />} />
-          <Route path="juridique" element={<Navigate to="/backoffice/notaires/dossiers" replace />} />
-          <Route path="juridique/:id" element={<Navigate to="/backoffice/notaires/dossiers" replace />} />
+          {/* Rétro-compatibilité anciennes URLs : les tiers tenaient deux pages séparées */}
+          <Route path="notaires" element={<Navigate to="/backoffice/tiers" replace />} />
+          <Route path="notaires/dossiers" element={<Navigate to="/backoffice/tiers" replace />} />
+          <Route path="notaires/dossiers/:id" element={<RedirectWithId to="/backoffice/tiers/dossiers" />} />
+          <Route path="artisans" element={<Navigate to="/backoffice/tiers/artisans" replace />} />
+          <Route path="artisans/interventions" element={<Navigate to="/backoffice/tiers/artisans" replace />} />
+          <Route path="artisans/interventions/:id" element={<RedirectWithId to="/backoffice/tiers/interventions" />} />
+          <Route path="travaux" element={<Navigate to="/backoffice/tiers/artisans" replace />} />
+          <Route path="travaux/:id" element={<Navigate to="/backoffice/tiers/artisans" replace />} />
+          <Route path="juridique" element={<Navigate to="/backoffice/tiers" replace />} />
+          <Route path="juridique/:id" element={<Navigate to="/backoffice/tiers" replace />} />
           <Route path="boutique" element={<ShopCatalog />} />
           <Route path="boutique/:id" element={<ProductDetail />} />
           <Route path="panier" element={<Cart />} />
@@ -319,7 +350,7 @@ function App() {
       </Routes>
       </Suspense>
       </RouteErrorBoundary>
-    </>
+    </ConfirmProvider>
   )
 }
 

@@ -42,7 +42,9 @@ const DEFAULT_PRIVACY = {
   allow_contact: true,
 }
 
-export default function Settings() {
+export default function Settings({ embedded = false }) {
+  // Monté dans l'onglet « Mon compte » des paramètres, l'écran est déjà encadré et titré.
+  const shell = embedded ? 'w-full' : 'max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8'
   const { t } = useTranslation(['dashboard', 'common'])
   const { user, updateUser, logout } = useAuthStore()
   const navigate = useNavigate()
@@ -426,11 +428,13 @@ export default function Settings() {
   )
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">{t('dashboard:settings.title')}</h1>
-        <p className="text-gray-600 mt-1">{t('dashboard:settings.subtitle')}</p>
-      </div>
+    <div className={shell}>
+      {!embedded && (
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">{t('dashboard:settings.title')}</h1>
+          <p className="text-gray-600 mt-1">{t('dashboard:settings.subtitle')}</p>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         {/* Tabs */}

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'react-toastify'
 import { FiUserPlus, FiTrash2, FiRefreshCw } from 'react-icons/fi'
 import { teamService } from '../../services/teamService'
+import TeamsPanel from './team/TeamsPanel'
 
 function SeatGauge({ used, limit }) {
   const { t } = useTranslation(['backoffice'])
@@ -32,7 +33,6 @@ function Team() {
   const [email, setEmail] = useState('')
   const [roleId] = useState('')
   const [teamId, setTeamId] = useState('')
-  const [newTeam, setNewTeam] = useState('')
 
   const copyLink = (path) => {
     const url = window.location.origin + path
@@ -51,8 +51,6 @@ function Team() {
     onSuccess: (res) => { if (res.invite_path) copyLink(res.invite_path); toast.success(t('backoffice:settings.team.toast.inviteResent')); refresh() }, onError: onErr,
   })
   const revoke = useMutation(teamService.revokeInvite, { onSuccess: () => { toast.success(t('backoffice:settings.team.toast.inviteRevoked')); refresh() }, onError: onErr })
-  const createTeam = useMutation(() => teamService.createTeam(newTeam), { onSuccess: () => { toast.success(t('backoffice:settings.team.toast.teamCreated')); setNewTeam(''); refresh() }, onError: onErr })
-  const deleteTeam = useMutation(teamService.deleteTeam, { onSuccess: () => { toast.success(t('backoffice:settings.team.toast.teamDeleted')); refresh() }, onError: onErr })
   const removeMember = useMutation(teamService.removeMember, { onSuccess: () => { toast.success(t('backoffice:settings.team.toast.memberRemoved')); refresh() }, onError: onErr })
   const assign = useMutation(({ id, body }) => teamService.updateMember(id, body), { onSuccess: () => refresh(), onError: onErr })
 
@@ -113,29 +111,8 @@ function Team() {
       )}
 
       {teamsAllowed && (
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-gray-900">{t('backoffice:settings.team.teams.title')}</h3>
-            {canManage && (
-              <div className="flex gap-2">
-                <input value={newTeam} onChange={(e) => setNewTeam(e.target.value)} placeholder={t('backoffice:settings.team.teams.newPlaceholder')}
-                       className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-900" />
-                <button disabled={!canAddTeam || !newTeam} onClick={() => createTeam.mutate()}
-                        className="btn-secondary disabled:opacity-50">{t('backoffice:settings.team.teams.create')}</button>
-              </div>
-            )}
-          </div>
-          {!canAddTeam && <p className="text-xs text-amber-600 mb-2">{t('backoffice:settings.team.teams.limitReached')}</p>}
-          <div className="flex flex-wrap gap-2">
-            {(d.teams || []).map((tm) => (
-              <span key={tm.id} className="inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1 text-sm">
-                {tm.name} ({tm.members_count})
-                {canManage && <button onClick={() => deleteTeam.mutate(tm.id)} className="text-red-500"><FiTrash2 className="w-3.5 h-3.5" /></button>}
-              </span>
-            ))}
-            {(d.teams || []).length === 0 && <span className="text-gray-400 text-sm">{t('backoffice:settings.team.teams.empty')}</span>}
-          </div>
-        </div>
+        <TeamsPanel teams={d.teams || []} kinds={d.team_kinds || []} members={d.members || []}
+          canManage={canManage} canAddTeam={canAddTeam} />
       )}
 
       <div className="bg-white rounded-lg border border-gray-200 p-4">

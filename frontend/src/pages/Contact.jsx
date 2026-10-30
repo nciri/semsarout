@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { priceWithSymbol } from '../utils/currency'
 import { usePricing } from '../hooks/usePricing'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { Trans, useTranslation } from 'react-i18next'
 import {
   FiCheck, FiCheckCircle, FiMail, FiPhone, FiClock, FiArrowRight,
@@ -13,6 +13,7 @@ import api from '../services/api'
 import StayManagerWordmark from '../components/common/StayManagerWordmark'
 import DirIcon from '../components/common/DirIcon'
 import { SERVICE_OPTIONS, isValidService, STAYMANAGER_REGISTER_URL } from '../constants/services'
+import RichTextarea from '../components/common/RichTextarea'
 import { CONTACT } from '../constants/contact'
 
 function Contact() {
@@ -28,7 +29,7 @@ function Contact() {
   const [submitError, setSubmitError] = useState('')
   const [isSending, setIsSending] = useState(false)
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm({
+  const { control, register, handleSubmit, formState: { errors }, reset } = useForm({
     defaultValues: {
       name: user ? `${user.first_name} ${user.last_name}` : '',
       email: user?.email || '',
@@ -311,16 +312,24 @@ function Contact() {
                   </div>
 
                   <div>
-                    <label className="label">{t('public:contact.messageLabel')}</label>
-                    <textarea
-                      {...register('message')}
-                      rows={5}
-                      className="input resize-none"
-                      placeholder={
-                        serviceMeta
-                          ? t('public:contact.messagePlaceholderWithService', { service: t(`common:services.${selectedService}.label`).toLowerCase() })
-                          : t('public:contact.messagePlaceholder')
-                      }
+                    <label htmlFor="contact-message" className="label">{t('public:contact.messageLabel')}</label>
+                    <Controller
+                      name="message"
+                      control={control}
+                      defaultValue=""
+                      render={({ field }) => (
+                        <RichTextarea
+                          id="contact-message"
+                          rows={5}
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder={
+                            serviceMeta
+                              ? t('public:contact.messagePlaceholderWithService', { service: t(`common:services.${selectedService}.label`).toLowerCase() })
+                              : t('public:contact.messagePlaceholder')
+                          }
+                        />
+                      )}
                     />
                   </div>
 

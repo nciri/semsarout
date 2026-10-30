@@ -5,6 +5,12 @@ import { Alert, Chip, DetailColumns, DetailFrame, Kv, Rich, TD, TH } from '../co
 import { useMoney } from '../components/kitTokens'
 import { monthResults } from './model'
 
+/** Les pertes du mois, chacune dans son unité : un prix de vente et un loyer ne s'additionnent pas. */
+function lostLabel(r, money) {
+  return [r.lostSale.amount > 0 && money(r.lostSale.amount, 'sale'),
+    r.lostRent.amount > 0 && money(r.lostRent.amount, 'rent')].filter(Boolean).join(' + ')
+}
+
 export function ResultsCompact({ closed, now }) {
   const { t } = useTranslation('backoffice')
   const { fmtDate } = useFormat()
@@ -25,8 +31,8 @@ export function ResultsCompact({ closed, now }) {
         />
         <Kv label={t('dashboard.results.rentalsSigned')} value={r.wonRent.count} sub={r.wonRent.count ? `${rentValue} ${rentUnit}` : null} />
       </div>
-      {r.lostSale.amount > 0
-        ? <Alert tone="crit" icon={FiAlertCircle}><Rich i18nKey="dashboard.results.lostAlert" values={{ amount: money(r.lostSale.amount, 'sale') }} /></Alert>
+      {r.lostSale.amount > 0 || r.lostRent.amount > 0
+        ? <Alert tone="crit" icon={FiAlertCircle}><Rich i18nKey="dashboard.results.lostAlert" values={{ amount: lostLabel(r, money) }} /></Alert>
         : <Alert tone="plain" icon={FiCheckCircle}>{t('dashboard.results.noLoss')}</Alert>}
     </>
   )
@@ -42,7 +48,7 @@ export function ResultsDetail({ closed, now, onClose, titleRef }) {
     <DetailFrame
       title={t('dashboard.results.detailTitle')}
       sub={t('dashboard.results.detailSub')}
-      link={{ to: '/backoffice/transactions', label: t('dashboard.results.viewAll') }}
+      link={{ to: '/backoffice/transactions?statut=won', label: t('dashboard.results.viewAll') }}
       onClose={onClose}
       titleRef={titleRef}
     >
@@ -79,7 +85,7 @@ export function ResultsDetail({ closed, now, onClose, titleRef }) {
             <Kv label={t('dashboard.results.wonLabel')} value={r.won} />
             <Kv label={t('dashboard.results.lostLabel')} value={r.lost} />
           </div>
-          {r.lostSale.amount > 0 && <Alert tone="crit" icon={FiAlertCircle}><Rich i18nKey="dashboard.results.lostAlert" values={{ amount: money(r.lostSale.amount, 'sale') }} /></Alert>}
+          {(r.lostSale.amount > 0 || r.lostRent.amount > 0) && <Alert tone="crit" icon={FiAlertCircle}><Rich i18nKey="dashboard.results.lostAlert" values={{ amount: lostLabel(r, money) }} /></Alert>}
         </>}
       />
     </DetailFrame>

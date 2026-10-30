@@ -6,10 +6,11 @@ de doublon d'email : l'utilisateur peut relancer la demande).
 """
 import logging
 import os
+import re
 
 import httpx
 
-from . import email as email_adapter
+from . import agency_client, email as email_adapter
 from . import recipients, render
 from .db import SessionLocal
 from .models import NotificationLog, ProcessedMessage
@@ -68,16 +69,21 @@ def _contact() -> str:
 
 
 def _try_send(db, to: str, template: str, log_name: str, from_email: str | None = None,
-              attachments=None, **ctx) -> None:
+              attachments=None, agency_id: int | None = None, **ctx) -> bool:
+    """`agency_id` : l'e-mail part du SMTP de l'agence si elle en a configuré un.
+    Renvoie False si l'envoi a échoué (déjà journalisé) ; la plupart des appelants l'ignorent."""
     try:
         subject, html, text = render.render_email(template, **ctx)
         email_adapter.send_email(to, subject, text, html=html, from_email=from_email,
-                                  attachments=attachments)
+                                  attachments=attachments,
+                                  smtp=agency_client.smtp_of(agency_id))
         _log(db, "email", to, log_name, "sent")
         logger.info("email envoyé", extra={"template": log_name, "recipient": to})
+        return True
     except Exception as exc:  # noqa: BLE001 — échec SMTP journalisé, pas de boucle DLQ
         _log(db, "email", to, log_name, "failed")
         logger.error("échec envoi %s: %s", log_name, exc)
+        return False
 
 
 def _fetch_receipt_pdf(period_id):
@@ -116,8 +122,15 @@ def _fetch_signed_pdf(signature_id):
         return None
 
 
+# Séparateurs, blancs et caractères de contrôle : une adresse qui en contient n'est pas une
+# adresse mais une liste d'envoi déguisée (« a@x, b@y », « a@x\nbcc: c@y »).
+_NOT_IN_ADDRESS = re.compile(r"[\s,;<>\"\\\x00-\x1f]")
+
+
 def _valid_email(addr) -> bool:
-    return bool(addr) and "@" in addr and addr not in _PLACEHOLDER_EMAILS
+    addr = (addr or "").strip()
+    return (bool(addr) and "@" in addr and len(addr) <= 255
+            and not _NOT_IN_ADDRESS.search(addr) and addr not in _PLACEHOLDER_EMAILS)
 
 
 def _handle_contact(db, payload: dict) -> None:

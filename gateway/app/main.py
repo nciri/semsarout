@@ -177,6 +177,19 @@ def _csrf_required(request: Request) -> bool:
     return bool(request.cookies.get(settings.cookie_access_name))
 
 
+def _client_ip(request: Request) -> str:
+    """Adresse du client, telle que le BFF la voit.
+
+    `X-Real-Ip` est posé par le reverse proxy (Traefik) à partir de la connexion elle-même :
+    il n'est pas falsifiable par l'appelant, contrairement à `X-Forwarded-For`, qu'un client
+    peut préremplir. Sans proxy devant (dev), on retombe sur l'adresse de la connexion.
+    """
+    real = (request.headers.get("x-real-ip") or "").strip()
+    if real:
+        return real[:45]
+    return (request.client.host if request.client else "")[:45]
+
+
 def _inject_identity(headers: dict, ident: dict) -> None:
     if ident.get("user_id") is not None:
         headers["x-semsar-user-id"] = str(ident["user_id"])
@@ -277,6 +290,9 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         return app.state.geo, path.replace("/api/v1", "", 1)
     if settings.agency_url and _agency_match(path, method):
         return app.state.agency, path.replace("/api/v1", "", 1)
+    # Connecteurs ERP/CRM de l'agence (état, connexion, test, déconnexion) → agency.
+    if settings.agency_url and path.startswith("/api/v1/backoffice/integrations"):
+        return app.state.agency, path.replace("/api/v1", "", 1)
     # Paramètres backoffice de l'agence (config commission/notifications/SMTP) → agency.
     if settings.agency_url and path == "/api/v1/backoffice/settings" and method in ("GET", "PUT"):
         return app.state.agency, path.replace("/api/v1", "", 1)
@@ -320,6 +336,10 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
     if settings.identity_url and path == "/api/v1/backoffice/dashboard/config":
         return app.state.identity, path.replace("/api/v1", "", 1)
     # dashboard (KPIs + charts + activity) → analytics ; /config déjà routé vers identity ci-dessus.
+    # Mise en route de l'agence (étapes déduites de l'état réel) → analytics, qui agrège déjà
+    # les compteurs des services propriétaires.
+    if settings.analytics_url and path == "/api/v1/backoffice/onboarding":
+        return app.state.analytics, path.replace("/api/v1/backoffice", "", 1)
     if settings.analytics_url and path.startswith("/api/v1/backoffice/dashboard"):
         return app.state.analytics, path.replace("/api/v1/backoffice", "", 1)
     # analytics : agrégats extraits (financial/pipeline/ping). market/team/overview + stats/dashboard
@@ -417,6 +437,17 @@ def _resolve_upstream(app: FastAPI, path: str, method: str):
         return app.state.buyer, path.replace("/api/v1", "", 1)
     if settings.programs_url and path.startswith("/api/v1/programs"):
         return app.state.programs, path.replace("/api/v1", "", 1)
+    # Séjours courte durée (calendriers iCal, planning) → staymanager.
+    # Suivi plateforme des envois (super-admin) : journal et exécution manuelle des tâches
+    # planifiées, servis par notification — qui n'avait jusqu'ici aucune route publique.
+    if settings.notification_url and (path.startswith("/api/v1/admin/scheduler")
+                                      or path == "/api/v1/admin/notifications"):
+        return app.state.notification, path.replace("/api/v1", "", 1)
+    if settings.staymanager_url and path.startswith("/api/v1/backoffice/sejours"):
+        return app.state.staymanager, path.replace("/api/v1", "", 1)
+    # Enregistrement du voyageur : le lien privé tient lieu d'identification, pas de compte.
+    if settings.staymanager_url and path.startswith("/api/v1/sejours/enregistrement/"):
+        return app.state.staymanager, path.replace("/api/v1", "", 1)
     if settings.staymanager_url and path.startswith("/api/v1/integrations/staymanager"):
         return app.state.staymanager, path.replace("/api/v1", "", 1)
     if settings.trust_safety_url and (
@@ -567,6 +598,7 @@ async def lifespan(app: FastAPI):
     app.state.partner = _client_or_none(settings.partner_url)
     app.state.matching = _client_or_none(settings.matching_url)
     app.state.translation = _client_or_none(settings.translation_url)
+    app.state.notification = _client_or_none(settings.notification_url)
     app.state.design3d = _client_or_none(settings.design3d_url)
     yield
     for client in (
@@ -579,6 +611,7 @@ async def lifespan(app: FastAPI):
         app.state.messaging, app.state.trust_safety, app.state.agency, app.state.audit,
         app.state.commission, app.state.selling, app.state.coloc_listing,
         app.state.coloc_profile, app.state.partner, app.state.matching, app.state.translation,
+        app.state.notification,
         app.state.design3d,
     ):
         if client is not None:
@@ -665,6 +698,7 @@ def _forward_headers(request: Request, ident: dict | None, tenant: str) -> dict:
     if ident:
         _inject_identity(headers, ident)
     headers["x-semsar-tenant"] = tenant
+    headers["x-semsar-client-ip"] = _client_ip(request)
     return headers
 
 
@@ -1266,6 +1300,9 @@ async def proxy(path: str, request: Request) -> Response:
         and not k.lower().startswith("x-semsar-")
         and k.lower() != "x-tenant"
     }
+    # L'adresse du client, que les services ne peuvent pas lire eux-mêmes (ils ne voient
+    # que le BFF). Posée ici, donc dans la famille x-semsar-* filtrée à l'entrée.
+    headers["x-semsar-client-ip"] = _client_ip(request)
     # /auth/refresh : pas d'en-tête Authorization → repli sur le refresh token du cookie
     # httpOnly (rétro-compat : l'en-tête reste prioritaire s'il est fourni).
     if request.url.path == "/api/v1/auth/refresh" and not request.headers.get("authorization"):

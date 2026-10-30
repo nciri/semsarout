@@ -1,33 +1,55 @@
-"""Service staymanager — intégration StayManager.ma (liens biens, réservations, sync).
+"""Service staymanager — séjours courte durée et intégration StayManager.ma.
+
+Deux périmètres, une seule table de réservations :
+
+- `/integrations/staymanager/*` : miroir d'un compte StayManager externe (historique).
+- `/backoffice/sejours/*` : séjours **natifs**, importés des calendriers iCal des
+  plateformes (Airbnb, Booking, VRBO) sans compte tiers. Voir
+  `docs/integration-staymanager.md`.
 
 Reproduit à l'identique `/integrations/staymanager/*` (cf.
 `backend/app/api/v1/integrations/staymanager.py`). Toutes les routes gatées `has_staymanager_sync`
 (billing). Les appels à l'API externe StayManager passent par `app/client.py` (échec propre en dev).
 Cloisonné par agence.
 """
+import logging
 import secrets
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
-from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
+from semsar_common import (
+    get_settings,
+    install_legacy_error_handlers,
+    sanitize_rich_field,
+    setup_logging,
+    setup_tracing,
+)
 
-from . import billing_client
+from . import agency_client, billing_client, booking, ical, messages, stays
+from . import access
+from .access import router as access_router
+from .checkin import router as checkin_router
+from .cleaning import router as cleaning_router
+from .teams import router as teams_router
+from .gate import gate
 from .client import StayManagerClient, StayManagerError
 from .db import get_db, init_db
 from .models import (
-    PropertyRO, StayManagerIntegration, StayManagerPropertyLink, StayManagerReservation,
-    StayManagerSyncLog,
+    IcalSource, PropertyRO, StayManagerIntegration, StayManagerPropertyLink,
+    StayManagerReservation, StayManagerSyncLog, StayMessage, StayMessageTemplate,
 )
 from .util import err, iso, json_body
 
 settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
+logger = logging.getLogger("staymanager")
 WEBHOOK_EVENTS = ["reservation.created", "reservation.updated", "reservation.cancelled",
                   "guest.verified", "property.updated"]
 
@@ -49,19 +71,20 @@ except Exception:  # noqa: BLE001
 
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
+# Ménage de rotation (voir app/cleaning.py) — mêmes routes /backoffice/sejours, gate incluse.
+app.include_router(cleaning_router)
+app.include_router(teams_router)
+# Enregistrement du voyageur (voir app/checkin.py) : côté agence et côté voyageur par lien.
+app.include_router(checkin_router)
+# Codes d'entrée des séjours (voir app/access.py) : mode manuel ou serrure TTLock.
+app.include_router(access_router)
+
 
 def _uid(principal: Principal):
     return int(principal.sub) if principal.sub and principal.sub.isdigit() else None
 
 
-def _gate(principal: Principal):
-    """Parité require_staymanager_feature : agence + plan has_staymanager_sync."""
-    if principal.agency_id is None:
-        return err("Agence requise", 403)
-    sub = billing_client.subscription(principal.agency_id)
-    if not sub or sub.get("status") != "active" or not sub.get("has_staymanager_sync"):
-        return err("Cette fonctionnalite necessite le plan Pro ou superieur", 403, upgrade_required=True)
-    return None
+_gate = gate
 
 
 def _integration(db: Session, agency_id: int):
@@ -411,3 +434,420 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
     # Réception passerelle (signature vérifiée en cible) — no-op tolérant en l'absence d'intégration.
     await json_body(request)
     return {"received": True}
+
+
+# ---- Séjours courte durée : calendriers iCal et planning --------------------------------
+
+def _source_dict(db: Session, src: IcalSource) -> dict:
+    ro = db.get(PropertyRO, src.property_id)
+    return {"id": src.id, "property_id": src.property_id,
+            "property_title": ro.title if ro else None,
+            "platform": src.platform, "ical_url": src.ical_url, "status": src.status,
+            "last_error": src.last_error, "last_synced_at": iso(src.last_synced_at),
+            "reservations_count": src.reservations_count or 0}
+
+
+# La ligne de planning est décrite dans `app/booking.py`, qui porte aussi la fiche : un
+# séjour listé et un séjour ouvert doivent dire la même chose.
+_stay_dict = booking.stay_dict
+
+
+def _own_source(db: Session, source_id: int, principal: Principal):
+    src = db.get(IcalSource, source_id)
+    if src is None or src.agency_id != principal.agency_id:
+        return None, err("Calendrier introuvable", 404)
+    return src, None
+
+
+@app.get("/backoffice/sejours/calendriers")
+def list_ical_sources(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    rows = (db.query(IcalSource).filter(IcalSource.agency_id == principal.agency_id)
+            .order_by(IcalSource.property_id, IcalSource.platform).all())
+    return {"sources": [_source_dict(db, s) for s in rows]}
+
+
+@app.post("/backoffice/sejours/calendriers", status_code=201)
+async def add_ical_source(request: Request, principal: Principal = Depends(get_principal),
+                          db: Session = Depends(get_db)):
+    """Ajoute un calendrier et le synchronise aussitôt : l'agence doit voir s'il répond."""
+    if (g := _gate(principal)) is not None:
+        return g
+    data = await json_body(request)
+    try:
+        property_id = int(data.get("property_id") or 0)
+    except (TypeError, ValueError):
+        return err("Bien invalide", 400)
+    if property_id <= 0:
+        return err("Bien obligatoire", 400)
+    platform = (data.get("platform") or "autre").strip().lower()
+    if platform not in ical.PLATFORMS:
+        return err("Plateforme inconnue", 400)
+    ro = db.get(PropertyRO, property_id)
+    if ro is None or (ro.agency_id and ro.agency_id != principal.agency_id):
+        return err("Bien introuvable dans votre portefeuille", 400)
+    try:
+        url = ical.safe_ical_url(data.get("ical_url") or "")
+    except ical.IcalError as exc:
+        return err(str(exc), 400)
+    if db.query(IcalSource).filter(IcalSource.property_id == property_id,
+                                   IcalSource.platform == platform).first():
+        return err("Ce bien a déjà un calendrier pour cette plateforme", 400)
+
+    src = IcalSource(agency_id=principal.agency_id, property_id=property_id,
+                     platform=platform, ical_url=url)
+    db.add(src)
+    db.flush()
+    try:
+        result = stays.sync_source(db, src)
+    except ical.IcalError as exc:
+        stays.mark_failure(src, str(exc))
+        db.commit()
+        return err(str(exc), 400)
+    db.commit()
+    return {"source": _source_dict(db, src), "sync": result}
+
+
+@app.post("/backoffice/sejours/calendriers/{source_id}/sync")
+def sync_ical_source(source_id: int, principal: Principal = Depends(get_principal),
+                     db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    src, e = _own_source(db, source_id, principal)
+    if e:
+        return e
+    try:
+        result = stays.sync_source(db, src)
+    except ical.IcalError as exc:
+        stays.mark_failure(src, str(exc))
+        db.commit()
+        return err(str(exc), 400)
+    db.commit()
+    return {"source": _source_dict(db, src), "sync": result}
+
+
+@app.delete("/backoffice/sejours/calendriers/{source_id}")
+def delete_ical_source(source_id: int, principal: Principal = Depends(get_principal),
+                       db: Session = Depends(get_db)):
+    """Retire le calendrier ; les séjours déjà importés restent, l'historique a servi."""
+    if (g := _gate(principal)) is not None:
+        return g
+    src, e = _own_source(db, source_id, principal)
+    if e:
+        return e
+    db.query(StayManagerReservation).filter(
+        StayManagerReservation.ical_source_id == src.id).update({"ical_source_id": None})
+    db.delete(src)
+    db.commit()
+    return {"message": "Calendrier retiré"}
+
+
+@app.post("/backoffice/sejours/sync")
+def sync_all_sources(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    """Rejoue tous les calendriers de l'agence ; l'échec d'un canal n'arrête pas les autres."""
+    if (g := _gate(principal)) is not None:
+        return g
+    rows = db.query(IcalSource).filter(IcalSource.agency_id == principal.agency_id).all()
+    totals = {"sources": len(rows), "ok": 0, "failed": 0, "created": 0, "cancelled": 0,
+              "conflicts": 0}
+    for src in rows:
+        try:
+            result = stays.sync_source(db, src)
+        except ical.IcalError as exc:
+            stays.mark_failure(src, str(exc))
+            totals["failed"] += 1
+            continue
+        totals["ok"] += 1
+        totals["created"] += result["created"]
+        totals["cancelled"] += result["cancelled"]
+        totals["conflicts"] += result["conflicts"]
+    db.commit()
+    return totals
+
+
+@app.get("/backoffice/sejours")
+def list_stays(request: Request, principal: Principal = Depends(get_principal),
+               db: Session = Depends(get_db)):
+    """Planning des séjours de l'agence. `from`/`to` en ISO, `property_id`, `status`."""
+    if (g := _gate(principal)) is not None:
+        return g
+    qp = request.query_params
+    q = db.query(StayManagerReservation).filter(
+        StayManagerReservation.agency_id == principal.agency_id)
+    if qp.get("property_id", "").isdigit():
+        q = q.filter(StayManagerReservation.property_id == int(qp["property_id"]))
+    if qp.get("status"):
+        q = q.filter(StayManagerReservation.status == qp["status"])
+    if qp.get("from"):
+        try:
+            q = q.filter(StayManagerReservation.check_out >= datetime.fromisoformat(qp["from"]))
+        except ValueError:
+            return err("Date de début invalide", 400)
+    if qp.get("to"):
+        try:
+            q = q.filter(StayManagerReservation.check_in <= datetime.fromisoformat(qp["to"]))
+        except ValueError:
+            return err("Date de fin invalide", 400)
+    rows = q.order_by(StayManagerReservation.check_in).all()
+    return {"stays": [_stay_dict(db, r) for r in rows],
+            "conflicts": sum(1 for r in rows if r.has_conflict)}
+
+
+@app.get("/backoffice/sejours/apercu")
+def stays_overview(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    """Ce qui demande une action aujourd'hui : arrivées, départs, conflits, canaux en panne."""
+    if (g := _gate(principal)) is not None:
+        return g
+    now = datetime.utcnow()
+    today = datetime(now.year, now.month, now.day)
+    rows = (db.query(StayManagerReservation)
+            .filter(StayManagerReservation.agency_id == principal.agency_id,
+                    StayManagerReservation.status == "confirmed").all())
+    sources = db.query(IcalSource).filter(IcalSource.agency_id == principal.agency_id).all()
+    nights = sum(r.nights or 0 for r in rows if r.check_in >= today)
+    return {
+        # Le front s'en sert pour dire ce qui dépend de quoi : sans séjour, le ménage et les
+        # messages n'ont rien à traiter, et l'écran le montre au lieu de proposer du vide.
+        "stays_total": len(rows),
+        "arrivals_today": sum(1 for r in rows if r.check_in.date() == today.date()),
+        "departures_today": sum(1 for r in rows if r.check_out.date() == today.date()),
+        "in_house": sum(1 for r in rows if r.check_in <= now < r.check_out),
+        "upcoming": sum(1 for r in rows if r.check_in > now),
+        "conflicts": sum(1 for r in rows if r.has_conflict),
+        "nights_booked": nights,
+        "sources": {"total": len(sources),
+                    "in_error": sum(1 for s in sources if s.status == "error")},
+    }
+
+
+# --- Messagerie de séjour ---------------------------------------------------------------
+# Les gabarits appartiennent à l'agence ; l'envoi reste au service notification, qui vient
+# chercher ce qui est dû (`/internal/sejours/messages/due`). Voir app/messages.py.
+
+def _template_dict(tpl: StayMessageTemplate) -> dict:
+    return {"id": tpl.id, "property_id": tpl.property_id, "name": tpl.name,
+            "trigger": tpl.trigger_event, "offset_hours": tpl.offset_hours or 0,
+            "subject": tpl.subject, "body": tpl.body, "active": bool(tpl.active)}
+
+
+def _message_dict(db: Session, m: StayMessage) -> dict:
+    res = db.get(StayManagerReservation, m.reservation_id)
+    ro = db.get(PropertyRO, res.property_id) if res and res.property_id else None
+    return {"id": m.id, "reservation_id": m.reservation_id, "template_id": m.template_id,
+            "property_title": ro.title if ro else None,
+            "guest_name": res.guest_name if res else None,
+            "recipient": m.recipient, "subject": m.subject, "status": m.status,
+            "error": m.error, "due_at": iso(m.due_at), "sent_at": iso(m.sent_at)}
+
+
+def _template_payload(data: dict) -> tuple[dict | None, JSONResponse | None]:
+    name = (data.get("name") or "").strip()
+    subject = (data.get("subject") or "").strip()
+    # Corps saisi en WYSIWYG : du HTML, donc un XSS stocké dans l'email du voyageur tant
+    # qu'il n'est pas réduit à la liste blanche produit.
+    body = sanitize_rich_field(data.get("body")) or ""
+    trigger = (data.get("trigger") or "").strip()
+    if not name or not subject or not body:
+        return None, err("Nom, objet et message sont obligatoires", 400)
+    if trigger not in messages.TRIGGERS:
+        return None, err("Déclencheur inconnu", 400)
+    try:
+        offset = int(data.get("offset_hours") or 0)
+    except (TypeError, ValueError):
+        return None, err("Délai invalide", 400)
+    if not 0 <= offset <= messages.MAX_OFFSET_HOURS:
+        return None, err("Délai hors limites", 400)
+    unknown = messages.unknown_placeholders(f"{subject} {body}")
+    if unknown:
+        return None, err(f"Variables inconnues : {', '.join(unknown)}", 400)
+    property_id = data.get("property_id")
+    try:
+        property_id = int(property_id) if property_id not in (None, "", 0) else None
+    except (TypeError, ValueError):
+        return None, err("Bien invalide", 400)
+    return {"name": name, "subject": subject, "body": body, "trigger_event": trigger,
+            "offset_hours": offset, "property_id": property_id,
+            "active": bool(data.get("active", True))}, None
+
+
+@app.get("/backoffice/sejours/messages/modeles")
+def list_message_templates(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    rows = (db.query(StayMessageTemplate)
+            .filter(StayMessageTemplate.agency_id == principal.agency_id)
+            .order_by(StayMessageTemplate.trigger_event, StayMessageTemplate.name).all())
+    return {"templates": [_template_dict(t) for t in rows],
+            "placeholders": list(messages.PLACEHOLDERS), "triggers": list(messages.TRIGGERS)}
+
+
+@app.post("/backoffice/sejours/messages/modeles", status_code=201)
+async def create_message_template(request: Request, principal: Principal = Depends(get_principal),
+                                  db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    payload, e = _template_payload(await json_body(request))
+    if e:
+        return e
+    tpl = StayMessageTemplate(agency_id=principal.agency_id, **payload)
+    db.add(tpl)
+    db.commit()
+    return {"template": _template_dict(tpl)}
+
+
+@app.put("/backoffice/sejours/messages/modeles/{template_id}")
+async def update_message_template(template_id: int, request: Request,
+                                  principal: Principal = Depends(get_principal),
+                                  db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    tpl = db.get(StayMessageTemplate, template_id)
+    if tpl is None or tpl.agency_id != principal.agency_id:
+        return err("Modèle introuvable", 404)
+    payload, e = _template_payload(await json_body(request))
+    if e:
+        return e
+    for key, value in payload.items():
+        setattr(tpl, key, value)
+    db.commit()
+    return {"template": _template_dict(tpl)}
+
+
+@app.delete("/backoffice/sejours/messages/modeles/{template_id}")
+def delete_message_template(template_id: int, principal: Principal = Depends(get_principal),
+                            db: Session = Depends(get_db)):
+    """Le modèle part, son journal reste : savoir ce qui a été écrit au voyageur a de la valeur."""
+    if (g := _gate(principal)) is not None:
+        return g
+    tpl = db.get(StayMessageTemplate, template_id)
+    if tpl is None or tpl.agency_id != principal.agency_id:
+        return err("Modèle introuvable", 404)
+    tpl.active = False
+    db.commit()
+    return {"message": "Modèle désactivé"}
+
+
+@app.get("/backoffice/sejours/messages")
+def list_messages(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    rows = (db.query(StayMessage).filter(StayMessage.agency_id == principal.agency_id)
+            .order_by(StayMessage.due_at.desc()).limit(200).all())
+    return {"messages": [_message_dict(db, m) for m in rows],
+            "pending": sum(1 for m in rows if m.status == "pending"),
+            "no_recipient": sum(1 for m in rows if m.status == "no_recipient")}
+
+
+@app.patch("/backoffice/sejours/{stay_id}/contact")
+async def update_stay_contact(stay_id: int, request: Request,
+                              principal: Principal = Depends(get_principal),
+                              db: Session = Depends(get_db)):
+    """Complète la fiche du voyageur : Airbnb ne publie pas son email, l'agence le saisit."""
+    if (g := _gate(principal)) is not None:
+        return g
+    res = db.get(StayManagerReservation, stay_id)
+    if res is None or res.agency_id != principal.agency_id:
+        return err("Séjour introuvable", 404)
+    data = await json_body(request)
+    if "guest_email" in data:
+        email = (data.get("guest_email") or "").strip()
+        if email and not messages.valid_address(email):
+            return err("Email invalide", 400)
+        res.guest_email = email or None
+    if "guest_name" in data:
+        res.guest_name = (data.get("guest_name") or "").strip()[:255] or None
+    if "guest_phone" in data:
+        res.guest_phone = (data.get("guest_phone") or "").strip()[:50] or None
+    db.commit()
+    return {"stay": _stay_dict(db, res)}
+
+
+def _prepare_due(db: Session, now: datetime) -> list[StayMessage]:
+    """Crée les lignes des messages devenus dus. Idempotent par (modèle, séjour)."""
+    templates = db.query(StayMessageTemplate).filter(StayMessageTemplate.active.is_(True)).all()
+    if not templates:
+        return []
+    stays_rows = (db.query(StayManagerReservation)
+                  .filter(StayManagerReservation.status == "confirmed",
+                          StayManagerReservation.agency_id.isnot(None)).all())
+    done = {(m.template_id, m.reservation_id) for m in db.query(StayMessage).all()}
+    created: list[StayMessage] = []
+    for res in stays_rows:
+        for tpl in templates:
+            if tpl.agency_id != res.agency_id:
+                continue
+            if tpl.property_id and tpl.property_id != res.property_id:
+                continue
+            # Un gabarit propre au bien remplace le gabarit général du même déclencheur.
+            if not tpl.property_id and any(
+                    o.agency_id == res.agency_id and o.property_id == res.property_id
+                    and o.trigger_event == tpl.trigger_event for o in templates):
+                continue
+            if (tpl.id, res.id) in done or not messages.is_due(tpl, res, now):
+                continue
+            ro = db.get(PropertyRO, res.property_id) if res.property_id else None
+            code = access.active_code(db, res.id)
+            entry = access.access_of(db, res.agency_id, res.property_id) if res.property_id else None
+            values = messages.variables(res, ro.title if ro else None,
+                                        agency_client.name_of(res.agency_id),
+                                        access_code=code.code if code else None,
+                                        access_instructions=entry.instructions if entry else None)
+            # Un message qui annonce le code d'entrée attend que le code existe : mieux vaut
+            # l'envoyer en retard que d'envoyer une phrase à trou.
+            if messages.needs_access(f"{tpl.subject} {tpl.body}") and code is None:
+                continue
+            ready = messages.valid_address(res.guest_email or "")
+            msg = StayMessage(
+                agency_id=res.agency_id, template_id=tpl.id, reservation_id=res.id,
+                recipient=res.guest_email,
+                subject=messages.render(tpl.subject, values)[:messages.SUBJECT_MAX],
+                body=messages.render(tpl.body, values, html=True),
+                due_at=messages.due_at(tpl, res),
+                status="pending" if ready else "no_recipient")
+            done.add((tpl.id, res.id))
+            # Une ligne par transaction : un séjour bancal ne doit pas emporter la fournée
+            # entière, qui porte les messages de toutes les agences.
+            try:
+                with db.begin_nested():
+                    db.add(msg)
+                created.append(msg)
+            except SQLAlchemyError:
+                logger.warning("message de séjour non préparé", extra={"reservation_id": res.id,
+                                                                      "template_id": tpl.id})
+    db.commit()
+    return created
+
+
+@app.get("/internal/sejours/messages/due", include_in_schema=False)
+def internal_due_messages(x_internal_token: str = Header(default=""),
+                          db: Session = Depends(get_db)):
+    """Messages à envoyer maintenant — pour l'ordonnanceur de notification."""
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    _prepare_due(db, datetime.utcnow())
+    rows = db.query(StayMessage).filter(StayMessage.status == "pending").limit(200).all()
+    return {"messages": [{"id": m.id, "agency_id": m.agency_id, "recipient": m.recipient,
+                          "subject": m.subject, "body": m.body} for m in rows]}
+
+
+@app.post("/internal/sejours/messages/{message_id}/sent", include_in_schema=False)
+async def internal_mark_message(message_id: int, request: Request,
+                                x_internal_token: str = Header(default=""),
+                                db: Session = Depends(get_db)):
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    msg = db.get(StayMessage, message_id)
+    if msg is not None:
+        data = await json_body(request)
+        failure = (data.get("error") or "").strip() if isinstance(data, dict) else ""
+        msg.status = "failed" if failure else "sent"
+        msg.error = failure[:255] or None
+        msg.sent_at = datetime.utcnow()
+        db.commit()
+    return {"ok": True}
+
+
+# Enregistré en dernier, volontairement : `/backoffice/sejours/{stay_id}` masquerait
+# `/apercu`, `/calendriers` et `/messages` s'il était déclaré avant elles.
+app.include_router(booking.router)

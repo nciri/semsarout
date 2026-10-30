@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useTranslation } from 'react-i18next'
 import {
@@ -12,6 +13,9 @@ import { SOURCE_COLORS, agingTone, daysSince } from './dashboard/model'
 import { NEXT_STATUS, STATUSES, STATUS_TONES, isOpen } from './leads/model'
 import Summary from './leads/Summary'
 import LeadFiche from './leads/LeadFiche'
+import { useConfirm } from '../../components/common/confirm'
+import RichTextarea from '../../components/common/RichTextarea'
+import { richTextToPlain } from '../../utils/richText'
 
 const K = 'crm.pipeline.leads'
 const PER_PAGE = 20
@@ -70,7 +74,7 @@ function NewLeadForm({ properties, onClose, onCreated }) {
       </div>
       <label className="grid gap-1.5">
         <span className="text-[12.5px] font-semibold text-gray-700">{t(`${K}.create.message`)}</span>
-        <textarea className={inputCls} rows={3} value={values.message} onChange={set('message')}
+        <RichTextarea rows={3} value={values.message} onChange={(html) => setValues((v) => ({ ...v, message: html }))}
           placeholder={t(`${K}.create.messagePlaceholder`)} />
       </label>
       <div className="flex flex-wrap items-center gap-3">
@@ -112,10 +116,13 @@ const selectCls = 'rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-[
 
 export default function BackofficeLeads() {
   const { t } = useTranslation(['backoffice', 'common'])
+  const ask = useConfirm()
   const { fmtDate } = useFormat()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
-  const [filters, setFilters] = useState(EMPTY_FILTERS)
+  // Le statut peut venir d'un lien (tableau de bord) : le filtre s'ouvre déjà posé.
+  const [params] = useSearchParams()
+  const [filters, setFilters] = useState(() => ({ ...EMPTY_FILTERS, status: params.get('statut') || '' }))
   const [sort, setSort] = useState({ field: 'created_at', order: 'desc' })
   const [openId, setOpenId] = useState(null)
   const [creating, setCreating] = useState(false)
@@ -169,16 +176,18 @@ export default function BackofficeLeads() {
     const message = lead.status === 'qualified'
       ? t(`${K}.confirm.convert`, { name: displayName(lead) })
       : t(`${K}.confirm.markStatus`, { name: displayName(lead), status: statusLabel(nextStatus).toLowerCase() })
-    if (!window.confirm(message)) return
-    if (lead.status === 'qualified') convertMutation.mutate(lead.id)
-    else updateMutation.mutate({ id: lead.id, data: { status: nextStatus } })
+    ask({
+      message,
+      onConfirm: () => (lead.status === 'qualified'
+        ? convertMutation.mutate(lead.id)
+        : updateMutation.mutate({ id: lead.id, data: { status: nextStatus } })),
+    })
   }
 
-  const handleMarkLost = (lead) => {
-    if (window.confirm(t(`${K}.confirm.lost`, { name: displayName(lead) }))) {
-      updateMutation.mutate({ id: lead.id, data: { status: 'lost' } })
-    }
-  }
+  const handleMarkLost = (lead) => ask({
+    message: t(`${K}.confirm.lost`, { name: displayName(lead) }),
+    onConfirm: () => updateMutation.mutate({ id: lead.id, data: { status: 'lost' } }),
+  })
 
   const handleSort = (field) => setSort((prev) => ({
     field, order: prev.field === field && prev.order === 'asc' ? 'desc' : 'asc',
@@ -294,7 +303,7 @@ export default function BackofficeLeads() {
                         <tr className={open ? 'bg-primary-50/40' : 'hover:bg-gray-50'}>
                           <td className={`${TD} max-w-[14rem]`}>
                             <b className="block truncate font-semibold">{displayName(lead)}</b>
-                            {lead.message && <span className="hidden truncate text-xs text-gray-500 md:block">{lead.message}</span>}
+                            {lead.message && <span className="hidden truncate text-xs text-gray-500 md:block">{richTextToPlain(lead.message)}</span>}
                             <span className="mt-0.5 block sm:hidden"><Chip tone={STATUS_TONES[lead.status]}>{statusLabel(lead.status)}</Chip></span>
                           </td>
                           <td className={`${TD} hidden 2xl:table-cell`}>

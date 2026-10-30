@@ -12,9 +12,23 @@
   ([("Téléphone", lead_phone)] if lead_phone else []) +
   ([("Bien", property_title)] if property_title else []) +
   ([("Source", source)] if source else [])) }}
+{# `lead_message` est le seul champ riche du produit dont l'auteur est **anonyme** : les
+   formulaires de contact publics (bien, programme, lots, page contact) n'ont aucune
+   authentification. Il est donc projeté en texte et échappé, jamais rendu en HTML.
+
+   La sanitisation ne suffirait pas, et c'est le point : la liste blanche conserve
+   `<a href>`, et un lien d'hameçonnage est du HTML parfaitement valide. Rendu ici, il
+   arriverait dans la boîte de l'agence **dans un email de sa propre plateforme**, cliquable,
+   et des titres ou un tableau laisseraient la même charge imiter la mise en page du produit.
+   Le rôle d'un sanitiseur est d'empêcher l'exécution de script, pas d'empêcher un auteur
+   hostile d'écrire un lien.
+
+   `white-space:pre-line` rend ses sauts de ligne, que le HTML replierait sinon.
+   La valeur stockée reste assainie — c'est la frontière de stockage — et le même champ
+   saisi par un **agent** dans le back-office garde sa mise en forme à l'écran. #}
 {% if lead_message %}
 <p style="font-size:13px; color:{{ brand.muted }};">Message :</p>
-<table role="presentation" width="100%" style="margin:4px 0 22px;"><tr><td style="padding:14px 18px; background:#f4f5f7; border-radius:10px; font-size:14px; line-height:1.6; color:{{ brand.ink }};">« {{ lead_message }} »</td></tr></table>
+<table role="presentation" width="100%" style="margin:4px 0 22px;"><tr><td style="padding:14px 18px; background:#f4f5f7; border-radius:10px; font-size:14px; line-height:1.6; white-space:pre-line; color:{{ brand.ink }};">{{ lead_message | richtext_plain }}</td></tr></table>
 {% endif %}
 <table role="presentation" width="100%"><tr><td align="center">{{ button(lead_url or (app.base_url ~ "/backoffice/leads"), "Ouvrir dans le back-office") }}</td></tr></table>
 <p style="margin-top:20px; font-size:12px; color:{{ brand.muted }}; text-align:left;">Un prospect rappelé rapidement a bien plus de chances de se convertir.</p>

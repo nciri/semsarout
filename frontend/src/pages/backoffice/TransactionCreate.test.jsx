@@ -28,6 +28,7 @@ const calls = () => api.get.mock.calls.map(([url]) => url)
 
 function renderPage(search = '') {
   api.get.mockImplementation(async (url) => {
+    if (url === '/backoffice/settings') return { data: { default_sale_commission_fee: 12000, default_rental_commission_rate: 50 } }
     if (url.startsWith('/backoffice/clients/')) return { data: { client: PINNED } }
     if (url.startsWith('/backoffice/clients')) return { data: { clients: CLIENTS, total: 1, pages: 1 } }
     if (url.startsWith('/backoffice/properties/')) return { data: { property: PROPERTIES[0] } }
@@ -93,7 +94,39 @@ describe('Création d’une transaction', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Créer la transaction' }))
 
     expect(api.post).toHaveBeenCalledWith('/backoffice/transactions', expect.objectContaining({
-      property_id: 4, client_id: 42,
+      property_id: 4, client_id: 42, commission_amount: 12000,
+    }))
+  })
+
+  it('pose le barème de l’agence : forfait en vente, pourcentage du loyer en location', async () => {
+    renderPage()
+    await screen.findByText('Villa Souissi')
+    await userEvent.click(screen.getAllByRole('button', { name: 'Choisir' })[0])   // vente
+
+    expect(await screen.findByDisplayValue('12000')).toBeInTheDocument()
+    expect(screen.getByText(/Tarif fixe de l’agence|Tarif fixe de l'agence/)).toBeInTheDocument()
+
+    await userEvent.selectOptions(screen.getByLabelText('Type'), 'rent')
+    expect(await screen.findByDisplayValue('50')).toBeInTheDocument()
+    // 50 % du loyer repris du bien : l'agent voit le montant avant d'enregistrer.
+    expect(screen.getByText(/soit 3\s?400\s?000 Dh/)).toBeInTheDocument()
+  })
+
+  // Les notes sont saisies en WYSIWYG : ce qui part est du HTML, assaini par le champ.
+  it('envoie les notes du dossier en HTML nettoye', async () => {
+    api.post.mockResolvedValue({ data: { id: 77 } })
+    renderPage('?client_id=42&property_id=4')
+    await screen.findByText('Bien choisi')
+    await screen.findByText('Rachid Kettani')
+
+    const editor = document.getElementById('tx-notes')
+    editor.innerHTML = '<p>Bon de <b>visite</b> signé</p><script>alert(1)</script>'
+    await userEvent.click(editor)
+    await userEvent.tab()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Créer la transaction' }))
+    expect(api.post).toHaveBeenCalledWith('/backoffice/transactions', expect.objectContaining({
+      notes: '<p>Bon de <b>visite</b> signé</p>',
     }))
   })
 

@@ -6,12 +6,14 @@ Boucle de polling (DB-backed, idempotente) plutôt qu'une pile Celery/Redis : ch
 interroge la source (endpoint interne du service propriétaire) pour les éléments dus, envoie
 l'email et marque l'élément traité côté source. Intervalle réglable (SCHEDULER_INTERVAL_SECONDS).
 
-Jobs actuels : rappel de visite J-1, avis post-visite J+1, relance impayé d'abonnement (dunning).
+Jobs actuels : rappel de visite J-1, avis post-visite J+1, relance impayé d'abonnement (dunning),
+messagerie de séjour (modèles de l'agence, courte durée).
 Les futurs (comptes-rendus périodiques, anniversaires — en attente des domaines gestion locative /
 mandat) s'ajoutent comme des fonctions `_job_*` appelées dans `run_once`.
 """
 import logging
 import os
+import threading
 import time
 
 import httpx
@@ -58,6 +60,7 @@ def _job_visit_reminders(db) -> int:
         if _valid_email(to):
             date, tm = _fmt_fr(v.get("scheduled_at"))
             _try_send(db, to, "visit_reminder.html", "visit_reminder", from_email=_contact(),
+                      agency_id=v.get("agency_id"),
                       name=v.get("contact_name"), property_title=v.get("property_title"),
                       date=date, time=tm, address=v.get("property_address"),
                       agent_name=v.get("agent_name"))
@@ -196,30 +199,104 @@ def _job_generate_rent_periods(db) -> int:
         return 0
 
 
-def _job_crg_reports(db) -> int:
-    """CRG mensuel : récapitulatif des loyers encaissés le mois dernier, au propriétaire."""
+def _crg_list(path: str, key: str) -> list[dict] | None:
+    """Liste renvoyée par `rental`, ou None (journalisé) si l'appel ou le contrat est en défaut :
+    un job qui n'envoie rien en silence est exactement le défaut qu'on a corrigé ici."""
     try:
-        r = httpx.get(f"{_rental()}/internal/mandates/due-crg", headers=_headers(), timeout=10.0)
-        reports = r.json().get("reports", []) if r.status_code == 200 else []
-    except (httpx.HTTPError, ValueError):
-        return 0
+        r = httpx.get(f"{_rental()}/internal/mandates/{path}", headers=_headers(), timeout=30.0)
+        payload = r.json() if r.status_code == 200 else None
+    except (httpx.HTTPError, ValueError) as exc:
+        logger.error("CRG : %s injoignable ou illisible (%s)", path, exc)
+        return None
+    if payload is None:
+        logger.error("CRG : %s a répondu HTTP %s", path, r.status_code)
+        return None
+    if not isinstance(payload, dict) or key not in payload:
+        logger.warning("CRG : la réponse de %s n'a pas la clé « %s » (contrat modifié ?)", path, key)
+        return None
+    return payload[key]
+
+
+def _crg_expense_rows(lignes) -> list[dict]:
+    """Lignes de dépense prêtes pour l'e-mail : « date réelle · intitulé · artisan » + montant.
+
+    La spec exige le détail, pas un total : un net amputé de 1 200 Dh sans ligne explicative, et
+    un e-mail qui renvoie à un espace que le propriétaire n'a pas, c'est la plainte d'origine.
+    """
+    rows = []
+    for ligne in lignes or []:
+        iso_d = str(ligne.get("completed_at") or "")
+        parts = [f"{iso_d[8:10]}/{iso_d[5:7]}/{iso_d[0:4]}" if len(iso_d) >= 10 else "—",
+                 str(ligne.get("title") or "—")]
+        if ligne.get("artisan_name"):
+            parts.append(str(ligne["artisan_name"]))
+        try:
+            montant = float(ligne.get("cost_final") or 0)
+        except (TypeError, ValueError):
+            montant = 0.0
+        rows.append({"label": " · ".join(parts), "amount": montant})
+    return rows
+
+
+def _job_crg_reports(db) -> int:
+    """CRG mensuel en deux temps. 1) prépare les brouillons et prévient l'agence de chaque
+    nouveau ; rien ne part au propriétaire. 2) envoie ceux que l'agence a validés. Renvoie le
+    nombre de CRG réellement envoyés."""
+    # `due-crg` relistant tous les brouillons ouverts, seuls les nouveaux déclenchent un avis.
+    for d in (d for d in _crg_list("due-crg", "drafts") or [] if d.get("created")):
+        agency = recipients.agency(d.get("agency_id"))
+        to = (agency.get("email") or "").strip()
+        if not _valid_email(to):
+            logger.warning("CRG %s : agence %s sans e-mail valide, avis de brouillon non envoyé",
+                           d.get("crg_id"), d.get("agency_id"))
+            continue
+        _try_send(db, to, "crg_draft.html", "crg_draft", from_email=_contact(),
+                  agency_name=agency.get("name"), period_label=d.get("period_label"))
+        db.commit()
     sent = 0
-    for rep in reports:
+    for rep in _crg_list("due-crg-send", "reports") or []:
+        crg_id, mandate_id = rep.get("crg_id"), rep.get("mandate_id")
+        if crg_id is None or mandate_id is None:
+            logger.error("CRG : entrée à envoyer incomplète, ignorée : %s", rep)
+            continue
         landlord = recipients.client(rep.get("landlord_client_id"))
         to = (landlord.get("email") or "").strip()
-        if _valid_email(to):
-            _try_send(db, to, "crg_report.html", "crg_report", from_email=_contact(),
-                      name=landlord.get("name"), period_label=rep.get("period_label"),
-                      rent_collected=rep.get("rent_collected"), fees=rep.get("fees"),
-                      net=rep.get("net"))
-            db.commit()
-            sent += 1
+        if not _valid_email(to):
+            # Non marqué envoyé : on ne déclare pas « envoyé » un CRG que personne n'a reçu.
+            logger.warning("CRG %s non envoyé : propriétaire sans e-mail valide", crg_id)
+            continue
+        # `crg-sent` d'abord : s'il échoue, le CRG reste à renvoyer sans qu'aucun e-mail soit
+        # parti ; l'inverse enverrait un second relevé au propriétaire au passage suivant.
         try:
-            httpx.post(f"{_rental()}/internal/mandates/{rep['mandate_id']}/crg-sent",
-                       headers=_headers(), json={k: rep[k] for k in ("rent_collected", "fees", "net")},
-                       timeout=10.0)
-        except httpx.HTTPError:
-            pass
+            ack = httpx.post(f"{_rental()}/internal/mandates/{mandate_id}/crg-sent",
+                             headers=_headers(), json={"crg_id": crg_id}, timeout=15.0)
+        except httpx.HTTPError as exc:
+            logger.error("CRG %s : crg-sent injoignable (%s), reprise au prochain passage", crg_id, exc)
+            continue
+        if ack.status_code != 200:
+            logger.error("CRG %s : crg-sent refusé (HTTP %s), reprise au prochain passage",
+                         crg_id, ack.status_code)
+            continue
+        # L'accusé de `crg-sent` fait foi sur les montants : il a pu retirer une dépense déjà
+        # portée par un autre relevé, et `due-crg-send` a listé l'état d'avant.
+        try:
+            envoye = ack.json()
+        except ValueError:
+            envoye = {}
+        envoye = envoye if isinstance(envoye, dict) else {}
+        ok = _try_send(db, to, "crg_report.html", "crg_report", from_email=_contact(),
+                       name=landlord.get("name"), period_label=rep.get("period_label"),
+                       rent_collected=rep.get("rent_collected"), fees=rep.get("fees"),
+                       expenses=envoye.get("expenses", rep.get("expenses")),
+                       net=envoye.get("net", rep.get("net")),
+                       expense_lines=_crg_expense_rows(
+                           envoye.get("expense_lines", rep.get("expense_lines"))))
+        db.commit()
+        if ok:
+            sent += 1
+        else:
+            logger.error("CRG %s marqué envoyé mais e-mail au propriétaire en échec : "
+                         "à renvoyer à la main (journal des envois, modèle crg_report)", crg_id)
     return sent
 
 
@@ -293,6 +370,57 @@ def _job_signature_poll(db) -> int:
     return updated
 
 
+def _staymanager() -> str:
+    return os.environ.get("STAYMANAGER_URL", "http://localhost:8517")
+
+
+def _job_stay_messages(db) -> int:
+    """Messagerie de séjour : messages dus préparés par `staymanager` (modèles de l'agence).
+
+    Le texte est écrit par l'agence ; ici on ne fait que l'habiller et l'envoyer, puis on
+    rend le verdict au service propriétaire pour qu'il ne le repropose pas.
+    """
+    try:
+        r = httpx.get(f"{_staymanager()}/internal/sejours/messages/due",
+                      headers=_headers(), timeout=10.0)
+        msgs = r.json().get("messages", []) if r.status_code == 200 else []
+    except (httpx.HTTPError, ValueError):
+        return 0
+    sent = 0
+    for m in msgs:
+        to = (m.get("recipient") or "").strip()
+        error = ""
+        if _valid_email(to):
+            _try_send(db, to, "stay_message.html", "stay_message", from_email=_contact(),
+                      agency_id=m.get("agency_id"), subject=m.get("subject"), body=m.get("body"))
+            db.commit()
+            sent += 1
+        else:
+            error = "Adresse du voyageur invalide"
+        try:
+            httpx.post(f"{_staymanager()}/internal/sejours/messages/{m['id']}/sent",
+                       json={"error": error}, headers=_headers(), timeout=10.0)
+        except httpx.HTTPError:
+            pass
+    return sent
+
+
+# Verrou partagé entre la boucle et l'exécution à la demande (route super-admin) : deux
+# passages simultanés liraient la même échéance avant son marquage, donc enverraient deux fois.
+_RUN_LOCK = threading.Lock()
+
+
+def run_once_if_free() -> bool:
+    """Rejoue les jobs si aucun passage n'est en cours. Faux si un autre tourne déjà."""
+    if not _RUN_LOCK.acquire(blocking=False):
+        return False
+    try:
+        run_once()
+    finally:
+        _RUN_LOCK.release()
+    return True
+
+
 def run_once() -> None:
     db = SessionLocal()
     try:
@@ -326,6 +454,9 @@ def run_once() -> None:
         md = _job_application_missing_docs(db)
         if md:
             logger.info("relances pièces manquantes envoyées", extra={"count": md})
+        sm = _job_stay_messages(db)
+        if sm:
+            logger.info("messages de séjour envoyés", extra={"count": sm})
         sp = _job_signature_poll(db)
         if sp:
             logger.info("signatures mises à jour (poll 3a9dSign)", extra={"count": sp})
@@ -341,7 +472,7 @@ def main() -> None:
     interval = int(os.environ.get("SCHEDULER_INTERVAL_SECONDS", "900"))  # 15 min par défaut
     logger.info("ordonnanceur démarré", extra={"interval_s": interval})
     while True:
-        run_once()
+        run_once_if_free()
         time.sleep(interval)
 
 

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from "_components.html" import button, lucide with context %}
+{% block subject %}CRG à valider — {{ period_label }}{% endblock %}
+{% block preheader %}Un compte-rendu de gestion attend votre validation avant d'être envoyé au propriétaire.{% endblock %}
+{% block badge %}{{ lucide("chart-column") }}{% endblock %}
+{% block hero_title %}Un CRG est prêt à être relu{% endblock %}
+{% block hero_subtitle %}<p style="margin-top:8px; font-size:14px; color:{{ brand.muted }};">Bonjour{% if agency_name %} {{ agency_name }}{% endif %}, le brouillon de {{ period_label }} est prêt.</p>{% endblock %}
+{% block content %}
+<p style="text-align:left; color:{{ brand.ink }};">Le compte-rendu de gestion de <strong>{{ period_label }}</strong> a été préparé. Il ne sera envoyé au propriétaire qu'une fois relu et validé par votre agence.</p>
+<table role="presentation" width="100%"><tr><td align="center">{{ button(app.base_url ~ "/backoffice/gestion-locative", "Relire et valider") }}</td></tr></table>
+{% endblock %}

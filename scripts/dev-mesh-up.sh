@@ -65,7 +65,8 @@ for pair in $SVCS; do
     agency)  extra="IDENTITY_URL=http://localhost:8501 LISTING_URL=http://localhost:8012";;
     buyer)   extra="LISTING_URL=http://localhost:8012";;
     programs) extra="BILLING_URL=http://localhost:8508";;
-    staymanager) extra="BILLING_URL=http://localhost:8508";;
+    # staymanager parle à billing (plan), identity (équipes) et contract (contrat de séjour).
+    staymanager) extra="BILLING_URL=http://localhost:8508 IDENTITY_URL=http://localhost:8501 CONTRACT_URL=http://localhost:8505";;
     crm|transactions) extra="IDENTITY_URL=http://localhost:8501";;
     analytics) extra="TRANSACTIONS_URL=http://localhost:8514 CRM_URL=http://localhost:8013 IDENTITY_URL=http://localhost:8501 LISTING_URL=http://localhost:8012 GEO_URL=http://localhost:8509 BILLING_URL=http://localhost:8508 AUDIT_URL=http://localhost:8513 AGENCY_URL=http://localhost:8512";;
     trust-safety) extra="IDENTITY_URL=http://localhost:8501 AGENCY_URL=http://localhost:8512";;
@@ -124,7 +125,7 @@ env UPSTREAM_URL="$MONO" JWT_SECRET_KEY="$JWT" INTERNAL_TOKEN="$ITOK" TENANT_DEV
   RENTAL_URL=http://localhost:8518 COMMISSION_URL=http://localhost:8519 SELLING_URL=http://localhost:8520 \
   COLOC_LISTING_URL=http://localhost:8521 COLOC_PROFILE_URL=http://localhost:8522 \
   MATCHING_URL=http://localhost:8523 TRANSLATION_URL=http://localhost:8524 \
-  PARTNER_URL=http://localhost:8525 \
+  PARTNER_URL=http://localhost:8525 NOTIFICATION_URL=http://localhost:8502 \
   DESIGN3D_URL=http://localhost:8526 \
   nohup python3 -m uvicorn app.main:app --app-dir gateway --host 127.0.0.1 --port "$BFF_PORT" \
   > "$LOG/bff.log" 2>&1 &

@@ -9,7 +9,7 @@ import { FiArrowLeft, FiTrash2, FiPlus, FiLayout } from 'react-icons/fi'
 import { contractService } from '../../../services/contractService'
 import { PageHeader, EmptyState } from '../../../components/backoffice/ui'
 
-const TYPE_VALUES = ['mandate_sale', 'mandate_rental', 'compromise', 'lease', 'other']
+const TYPE_VALUES = ['mandate_sale', 'mandate_rental', 'compromise', 'lease', 'stay', 'other']
 const FIELDS = ['agency_name', 'agent_name', 'client_name', 'property_address', 'property_price',
   'property_surface', 'commission_rate', 'date']
 

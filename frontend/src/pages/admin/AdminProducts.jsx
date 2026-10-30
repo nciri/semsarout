@@ -4,6 +4,8 @@ import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { FiTrash2 } from 'react-icons/fi'
 import { shopService } from '../../services/shopService'
+import { DIRHAM_SYMBOL } from '../../utils/currency'
+import RichTextarea from '../../components/common/RichTextarea'
 
 const CATS = ['lit', 'canape', 'table', 'armoire', 'chaise', 'bureau', 'refrigerateur', 'lave_linge', 'four', 'micro_ondes', 'climatiseur', 'television']
 const EMPTY = { category: 'lit', name: '', price: '', stock: '', image_url: '', description: '' }
@@ -36,7 +38,7 @@ function AdminProducts() {
             <tbody>
               {products.map((p) => (
                 <tr key={p.id} className="border-t border-slate-100">
-                  <td className="px-4 py-3 font-medium">{p.name}</td><td>{p.price} Đh</td><td>{p.stock}</td>
+                  <td className="px-4 py-3 font-medium">{p.name}</td><td>{p.price} {DIRHAM_SYMBOL}</td><td>{p.stock}</td>
                   <td><input type="checkbox" checked={p.is_active} onChange={(e) => toggle.mutate({ id: p.id, is_active: e.target.checked })} /></td>
                   <td className="text-end"><button onClick={() => del.mutate(p.id)} className="text-red-600"><FiTrash2 /></button></td>
                 </tr>
@@ -53,7 +55,9 @@ function AdminProducts() {
           {fields.map(([f, ph]) => (
             <input key={f} value={form[f]} onChange={(e) => setForm({ ...form, [f]: e.target.value })} placeholder={ph} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm mb-2 text-slate-900" />
           ))}
-          <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder={t('admin:products.fields.description')} rows="2" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm mb-2 text-slate-900" />
+          <RichTextarea value={form.description} onChange={(html) => setForm({ ...form, description: html })}
+            aria-label={t('admin:products.fields.description')}
+            placeholder={t('admin:products.fields.description')} rows={2} className="mb-2" />
           <button disabled={!form.name} onClick={() => create.mutate()} className="w-full px-4 py-2 rounded-lg bg-midnight text-ivory text-sm disabled:opacity-50">{t('admin:products.addButton')}</button>
         </div>
       </div>

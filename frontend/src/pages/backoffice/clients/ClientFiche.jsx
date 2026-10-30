@@ -9,6 +9,7 @@ import { useMoney } from '../components/kitTokens'
 import Frise, { ShapesLegend } from './Frise'
 import { P, useBudget, useClientLabels } from './labels'
 import { daysBetween, ficheAlerts, LANES, maskEmail, maskPhone, timelineOf } from './model'
+import { RichText } from '../../../components/common/RichTextarea'
 
 const VISIT_TONE = { scheduled: 'warn', confirmed: 'good', completed: 'good', cancelled: 'neutral', no_show: 'crit' }
 const LEAD_TONE = { new: 'crit', contacted: 'warn', qualified: 'good', converted: 'good', lost: 'neutral' }
@@ -191,7 +192,7 @@ export default function ClientFiche({ d, history, transactions, others, masked =
         </>}
         {c.notes && <>
           <h3 className={h3}>{t('crm.clients.detail.fields.notes')}</h3>
-          <p className="whitespace-pre-wrap text-[13px] text-gray-500">{c.notes}</p>
+          <RichText html={c.notes} className="text-[13px] text-gray-500" />
         </>}
       </>}
     />

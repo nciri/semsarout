@@ -1,17 +1,21 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { FiLock, FiTrash2, FiTool, FiPlus, FiEdit2 } from 'react-icons/fi'
 import { artisanService } from '../../../services/artisanService'
-import { StatCard, Toolbar, Select, SearchInput, DataTable, StatusBadge, EmptyState, Field, Modal, GatedNotice, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
+import { Select, DataTable, StatusBadge, EmptyState, Field, Modal, GatedNotice, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
 
 const EMPTY = { trade: 'plombier', name: '', company: '', city: '', phone: '', email: '' }
+const NO_FILTER = { trade: '', city: '', q: '' }
 
-function ArtisansDirectory() {
+/**
+ * Le filtre vient de la page qui porte l'onglet : la même recherche vaut pour l'annuaire et
+ * pour les interventions qu'on y confie, inutile de la saisir deux fois.
+ */
+function ArtisansDirectory({ filter = NO_FILTER }) {
   const { t } = useTranslation(['backoffice', 'common'])
   const qc = useQueryClient()
-  const [filter, setFilter] = useState({ trade: '', city: '', q: '' })
   const { data: tradesData } = useQuery('artisan-trades', () => artisanService.listTrades(), { staleTime: 3600000 })
   const { data, isLoading, error } = useQuery(['artisans', filter], () => artisanService.listArtisans(filter), { keepPreviousData: true })
   const [modalOpen, setModalOpen] = useState(false)
@@ -41,13 +45,7 @@ function ArtisansDirectory() {
     onError: onErr,
   })
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const artisans = data?.artisans || []
-  const stats = useMemo(() => ({
-    total: artisans.length,
-    shared: artisans.filter((a) => a.is_shared).length,
-    private: artisans.filter((a) => !a.is_shared).length,
-  }), [artisans])
 
   if (error?.response?.status === 403) {
     return <GatedNotice icon={FiLock} title={t('backoffice:artisans.shared.pageTitle')} message={t('backoffice:artisans.directory.gated.message')} />
@@ -93,28 +91,11 @@ function ArtisansDirectory() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-4">
-        <StatCard label={t('backoffice:artisans.directory.stats.total')} value={stats.total} icon={FiTool} />
-        <StatCard label={t('backoffice:artisans.directory.stats.shared')} value={stats.shared} tone="blue" />
-        <StatCard label={t('backoffice:artisans.directory.stats.private')} value={stats.private} tone="primary" />
-      </div>
-
-      <Toolbar>
-        <Select value={filter.trade} onChange={(e) => setFilter({ ...filter, trade: e.target.value })}>
-          <option value="">{t('backoffice:artisans.directory.filters.allTrades')}</option>
-          {trades.map((tr) => <option key={tr.id} value={tr.id}>{tr.label}</option>)}
-        </Select>
-        <input
-          value={filter.city}
-          onChange={(e) => setFilter({ ...filter, city: e.target.value })}
-          placeholder={t('backoffice:artisans.directory.filters.cityPlaceholder')}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 w-40"
-        />
-        <SearchInput value={filter.q} onChange={(e) => setFilter({ ...filter, q: e.target.value })} placeholder={t('backoffice:artisans.directory.searchPlaceholder')} />
+      <div className="flex justify-end">
         <button onClick={openCreate} className={PRIMARY_BTN}>
           <FiPlus className="w-5 h-5" /> {t('backoffice:artisans.directory.addButton')}
         </button>
-      </Toolbar>
+      </div>
 
       <DataTable
         columns={columns}

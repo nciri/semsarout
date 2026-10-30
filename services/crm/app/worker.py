@@ -3,22 +3,31 @@ et maintient `transaction_ro` (via `transaction.*`) pour `transactions_count` pa
 
     python -m app.worker
 """
-from semsar_common import get_settings, setup_logging
+from semsar_common import get_settings, sanitize_rich_field, setup_logging
 from semsar_events import EventConsumer
 
 from .db import SessionLocal, init_db
+from .leads_assign import auto_assign
 from .models import Lead, ProcessedMessage, PropertyRO, TransactionRO
 
 
 def _create_lead(db, payload: dict) -> None:
-    """Un contact sur une annonce (`listing.contacted`) devient un lead crm."""
-    db.add(Lead(
+    """Un contact sur une annonce (`listing.contacted`) devient un lead crm.
+
+    Le message est saisi en WYSIWYG : il est assaini ici, et pas seulement chez l'émetteur,
+    parce que c'est la seule porte commune à `listing.contacted` et `program.contacted` —
+    un émetteur futur qui oublierait la liste blanche n'écrirait pas de HTML non assaini.
+    """
+    lead = Lead(
         name=payload.get("name"), email=payload.get("email"), phone=payload.get("phone"),
-        message=payload.get("message"), source=payload.get("source") or "contact_form",
+        message=sanitize_rich_field(payload.get("message")),
+        source=payload.get("source") or "contact_form",
         service=payload.get("service"), status="new",
         property_id=payload.get("property_id"), agency_id=payload.get("agency_id"),
         owner_id=payload.get("owner_id"),  # bien de particulier → cloisonnement /my-leads
-    ))
+    )
+    auto_assign(db, lead)   # règle « affectation automatique » de l'agence
+    db.add(lead)
 
 
 def _handle(routing_key: str, payload: dict, message_id: str) -> None:

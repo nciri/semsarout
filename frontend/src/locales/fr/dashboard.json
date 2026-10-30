@@ -308,7 +308,7 @@
             "buildingsCount": "Nombre de bâtiments",
             "floorsCount": "Nombre d'étages",
             "hasElevator": "Ascenseur",
-            "monthlyCharges": "Charges/syndic estimées (Đh/mois)"
+            "monthlyCharges": "Charges/syndic estimées (Dh/mois)"
           }
         },
         "villas": {
@@ -362,7 +362,7 @@
         },
         "landUnit": {
           "lotSurface": "Superficie lot (m²)",
-          "pricePerSqm": "Prix/m² (Đh)",
+          "pricePerSqm": "Prix/m² (Dh)",
           "frontage": "Façade (ml)",
           "buildable": "Constructible",
           "shape": "Forme"
@@ -905,6 +905,14 @@
       "footerLegal": "SemsarOut SARL - RC: 123456 - IF: 12345678 - ICE: 001234567000012",
       "footerContact": "Pour toute question concernant cette facture, contactez-nous à {{email}}",
       "defaultPlanName": "Premium"
+    },
+    "cancelledBanner": "Votre abonnement est résilié : l'accès court jusqu'au {{date}}.",
+    "reactivate": "Reprendre l'abonnement",
+    "reactivatedToast": "Abonnement repris.",
+    "pending": {
+      "banner": "Passage au plan {{plan}} programmé le {{date}}.",
+      "cancel": "Annuler le changement",
+      "cancelledToast": "Changement de plan annulé."
     }
   },
   "myApplications": {

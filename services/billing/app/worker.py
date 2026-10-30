@@ -36,7 +36,7 @@ def _handle(routing_key: str, payload: dict, message_id: str) -> None:
         elif purpose == "subscription":
             agency_id = payload.get("agency_id")
             if routing_key == "payment.released":
-                _activate_pending(db, agency_id)
+                _activate_pending(db, agency_id, payload)
             elif routing_key == "payment.completed":
                 _create_or_extend(db, payload, agency_id)
             elif routing_key == "payment.failed":
@@ -72,17 +72,36 @@ def _mark_commission_paid(db, payload) -> None:
         inv.paid_at = datetime.utcnow()
 
 
-def _activate_pending(db, agency_id) -> None:
+def _paid_invoice(db, sub_id, payload) -> Invoice | None:
+    """Facture que ce paiement règle : celle désignée par la passerelle, sinon la plus récente.
+
+    Le choix décide si la période est prolongée (facture de période) ou non (prorata) :
+    prendre « la première impayée trouvée » laissait l'ordre de la base en décider.
+    """
+    q = db.query(Invoice).filter(Invoice.subscription_id == sub_id, Invoice.status == "unpaid")
+    for field, column in (("invoice_id", Invoice.id), ("invoice_ref", Invoice.reference),
+                          ("reference", Invoice.reference)):
+        value = payload.get(field)
+        if value:
+            match = q.filter(column == value).first()
+            if match is not None:
+                return match
+    return q.order_by(Invoice.id.desc()).first()
+
+
+def _activate_pending(db, agency_id, payload=None) -> None:
     sub = (db.query(Subscription)
            .filter(Subscription.agency_id == agency_id,
                    Subscription.status.in_(["pending", "incomplete"]))
            .order_by(Subscription.id.desc()).first())
     if sub is None:
         return
+    invoice = _paid_invoice(db, sub.id, payload or {})
     sub.status = "active"
-    sub.end_date = datetime.now(timezone.utc) + timedelta(days=30)
-    invoice = (db.query(Invoice)
-               .filter(Invoice.subscription_id == sub.id, Invoice.status == "unpaid").first())
+    # Une facture de prorata paie la FIN de la période en cours : la prolonger de 30 jours
+    # offrirait un mois à chaque montée de gamme.
+    if invoice is None or not invoice.prorated:
+        sub.end_date = datetime.now(timezone.utc) + timedelta(days=30)
     if invoice is not None:
         invoice.status = "paid"
     plan = db.get(SubscriptionPlan, sub.plan_id)

@@ -1,13 +1,18 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { FiSave, FiRefreshCw, FiCopy, FiEye, FiEyeOff } from 'react-icons/fi'
 import { agencyService } from '../../services/agencyService'
 import useAuthStore from '../../store/authStore'
+import RichTextarea from '../../components/common/RichTextarea'
 
-function MyAgency() {
+function MyAgency({ embedded = false }) {
+  // Dans l'onglet « Agence » des paramètres, l'écran est déjà encadré : pas de marges de
+  // page ni de second titre.
+  const shell = embedded ? 'w-full' : 'max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8'
+
   const { t } = useTranslation(['dashboard', 'common'])
   const { user, updateUser } = useAuthStore()
   const queryClient = useQueryClient()
@@ -19,7 +24,7 @@ function MyAgency() {
     { enabled: !!user?.agency_id }
   )
 
-  const { register, handleSubmit, formState: { errors } } = useForm()
+  const { control, register, handleSubmit, formState: { errors } } = useForm()
 
   const createMutation = useMutation(
     (data) => agencyService.createAgency(data),
@@ -79,7 +84,7 @@ function MyAgency() {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className={shell}>
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-200 rounded w-1/3"></div>
           <div className="card p-6 space-y-4">
@@ -95,7 +100,7 @@ function MyAgency() {
   // No agency yet - show creation form
   if (!user?.agency_id) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className={shell}>
         <div className="mb-8">
           <h1 className="font-display text-2xl font-bold text-gray-900">
             {t('dashboard:myAgency.create.title')}
@@ -166,12 +171,20 @@ function MyAgency() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="label">{t('dashboard:myAgency.fields.description')}</label>
-                <textarea
-                  {...register('description')}
-                  className="input"
-                  rows="3"
-                  placeholder={t('dashboard:myAgency.placeholders.description')}
+                <label htmlFor="agency-description-create" className="label">{t('dashboard:myAgency.fields.description')}</label>
+                <Controller
+                  name="description"
+                  control={control}
+                  defaultValue=""
+                  render={({ field }) => (
+                    <RichTextarea
+                      id="agency-description-create"
+                      rows={3}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder={t('dashboard:myAgency.placeholders.description')}
+                    />
+                  )}
                 />
               </div>
             </div>
@@ -194,15 +207,17 @@ function MyAgency() {
 
   // Agency exists - show edit form
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="font-display text-2xl font-bold text-gray-900">
-          {t('dashboard:myAgency.edit.title')}
-        </h1>
-        <p className="text-gray-600">
-          {t('dashboard:myAgency.edit.subtitle')}
-        </p>
-      </div>
+    <div className={shell}>
+      {!embedded && (
+        <div className="mb-8">
+          <h1 className="font-display text-2xl font-bold text-gray-900">
+            {t('dashboard:myAgency.edit.title')}
+          </h1>
+          <p className="text-gray-600">
+            {t('dashboard:myAgency.edit.subtitle')}
+          </p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-6">
@@ -266,12 +281,19 @@ function MyAgency() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="label">{t('dashboard:myAgency.fields.description')}</label>
-                <textarea
-                  {...register('description')}
-                  defaultValue={agency?.description}
-                  className="input"
-                  rows="3"
+                <label htmlFor="agency-description" className="label">{t('dashboard:myAgency.fields.description')}</label>
+                <Controller
+                  name="description"
+                  control={control}
+                  defaultValue={agency?.description || ''}
+                  render={({ field }) => (
+                    <RichTextarea
+                      id="agency-description"
+                      rows={3}
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
                 />
               </div>
             </div>

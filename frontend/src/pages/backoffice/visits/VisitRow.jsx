@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import {
   FiArrowUpRight, FiCheck, FiCheckCircle, FiChevronDown, FiEdit2, FiFileText, FiSlash, FiTrash2, FiUserX, FiX,
 } from 'react-icons/fi'
+import RichTextarea, { RichText } from '../../../components/common/RichTextarea'
 import { useFormat } from '../../../utils/format'
 import { Chip, IconAction } from '../components/kit'
 import { actionsFor, isOverdue } from './model'
@@ -35,6 +36,7 @@ function ReportForm({ visit, onSave, onClose, saving }) {
   const { t } = useTranslation('backoffice', { keyPrefix: P })
   const [f, setF] = useState({ report: visit.report || '', client_feedback: visit.client_feedback || '', client_comments: visit.client_comments || '' })
   const set = (k) => (e) => setF((x) => ({ ...x, [k]: e.target.value }))
+  const setHtml = (k) => (html) => setF((x) => ({ ...x, [k]: html }))
   const id = `report-${visit.id}`
   return (
     <form
@@ -46,9 +48,9 @@ function ReportForm({ visit, onSave, onClose, saving }) {
         <h4 id={`${id}-title`} className="font-display text-[13px] font-bold">{t('report.title')}</h4>
         <IconAction icon={FiX} label={t('report.close')} onClick={onClose} tipAlign="end" className="-m-2" />
       </div>
-      <label className="grid gap-1 text-sm font-medium text-gray-700">
+      <label htmlFor={`${id}-report`} className="grid gap-1 text-sm font-medium text-gray-700">
         {t('report.report')}
-        <textarea rows={3} value={f.report} onChange={set('report')} placeholder={t('report.reportPlaceholder')} className={ctrl} />
+        <RichTextarea id={`${id}-report`} rows={3} value={f.report} onChange={setHtml('report')} placeholder={t('report.reportPlaceholder')} />
       </label>
       <div className="grid gap-3 sm:grid-cols-[minmax(0,220px)_1fr]">
         <label className="grid content-start gap-1 text-sm font-medium text-gray-700">
@@ -58,9 +60,9 @@ function ReportForm({ visit, onSave, onClose, saving }) {
             {FEEDBACKS.map((k) => <option key={k} value={k}>{t(`feedback.${k}`)}</option>)}
           </select>
         </label>
-        <label className="grid gap-1 text-sm font-medium text-gray-700">
+        <label htmlFor={`${id}-comments`} className="grid gap-1 text-sm font-medium text-gray-700">
           {t('report.comments')}
-          <textarea rows={2} value={f.client_comments} onChange={set('client_comments')} className={ctrl} />
+          <RichTextarea id={`${id}-comments`} rows={2} value={f.client_comments} onChange={setHtml('client_comments')} />
         </label>
       </div>
       <div className="flex justify-end">
@@ -110,20 +112,20 @@ function Fiche({ visit, now, reporting, setReporting, onAction, saving, id }) {
         </Section>
       </div>
 
-      {visit.notes && <Section title={t('fiche.notes')}><p className="whitespace-pre-line">{visit.notes}</p></Section>}
+      {visit.notes && <Section title={t('fiche.notes')}><RichText html={visit.notes} /></Section>}
 
       {reporting ? (
         <ReportForm visit={visit} saving={saving} onClose={() => setReporting(false)} onSave={(data) => onAction('complete', visit, data).then((ok) => ok && setReporting(false))} />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           <Section title={t('fiche.report')}>
-            <p className={visit.report ? 'whitespace-pre-line' : 'text-gray-500'}>{visit.report || t('fiche.noReport')}</p>
+            <RichText html={visit.report} emptyLabel={t('fiche.noReport')} />
           </Section>
           <Section title={t('fiche.feedback')}>
             {visit.client_feedback
               ? <span><Chip tone={FEEDBACK_TONE[visit.client_feedback] || 'neutral'}>{t(`feedback.${visit.client_feedback}`, { defaultValue: visit.client_feedback })}</Chip></span>
               : !visit.client_comments && <p className="text-gray-500">{t('fiche.noFeedback')}</p>}
-            {visit.client_comments && <p className="whitespace-pre-line">{visit.client_comments}</p>}
+            {visit.client_comments && <RichText html={visit.client_comments} />}
           </Section>
         </div>
       )}

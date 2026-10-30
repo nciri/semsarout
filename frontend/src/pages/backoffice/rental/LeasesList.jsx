@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { useLocation, useOutletContext } from 'react-router-dom'
+import { useLocation, useOutletContext, useSearchParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { FiChevronDown, FiHome, FiLock } from 'react-icons/fi'
@@ -15,6 +15,20 @@ import { useRentalFormat } from './hooks'
 import LeasePanel from './LeasePanel'
 
 const COLS = 'md:grid-cols-[minmax(0,2fr)_110px_minmax(0,1.4fr)_110px_40px] xl:grid-cols-[minmax(0,2.1fr)_120px_minmax(0,1.5fr)_118px_118px_40px]'
+
+// Filtres posés par un lien venu d'ailleurs (bandeau de synthèse, widget du tableau de
+// bord) : le chiffre cliqué doit mener aux lignes qu'il compte, pas à la liste entière.
+const FILTERS = ['impayes', 'echeances', 'edl_manquant']
+const ENDING_SOON_DAYS = 60
+
+function keepFiltered(leases, filtre) {
+  if (filtre === 'impayes') return leases.filter((l) => (l.owed || 0) > 0)
+  if (filtre === 'echeances') {
+    return leases.filter((l) => l.days_to_end != null && l.days_to_end >= 0 && l.days_to_end <= ENDING_SOON_DAYS)
+  }
+  if (filtre === 'edl_manquant') return leases.filter((l) => !l.inventories?.entree)
+  return leases
+}
 
 function PaymentsCell({ l }) {
   const { t } = useTranslation('backoffice')
@@ -72,6 +86,8 @@ function LeasesList() {
   const { t } = useTranslation(['backoffice', 'common'])
   const qc = useQueryClient()
   const location = useLocation()
+  const [params, setParams] = useSearchParams()
+  const filtre = FILTERS.includes(params.get('filtre')) ? params.get('filtre') : ''
   const ctx = useOutletContext()
   const [localOpen, setLocalOpen] = useState(null)
   const openKey = ctx ? ctx.openKey : localOpen
@@ -101,12 +117,21 @@ function LeasesList() {
   if (error) return <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-gray-500">{t('backoffice:rental.shared.loadError')}</div>
 
   const q = ctx?.query || ''
-  const leases = (data?.leases || [])
+  const leases = keepFiltered(data?.leases || [], filtre)
     .filter((l) => matches(q, l.property_title, l.property_city, l.tenant_name, l.reference))
     .sort((a, b) => (b.owed || 0) - (a.owed || 0))
 
   return (
     <div>
+      {filtre && (
+        <div className="mb-2.5 flex flex-wrap items-center gap-2 text-[12.5px]">
+          <Chip tone="neutral">{t(`backoffice:rental.overview.leases.filters.${filtre}`)}</Chip>
+          <button type="button" className="font-medium text-primary-700 hover:underline"
+            onClick={() => setParams({}, { replace: true })}>
+            {t('backoffice:rental.overview.leases.filters.clear')}
+          </button>
+        </div>
+      )}
       {isLoading ? <div className="h-24 animate-pulse rounded-lg bg-gray-50 motion-reduce:animate-none" aria-busy="true" /> : !data?.leases?.length ? (
         <EmptyState icon={FiHome} title={t('backoffice:rental.lease.empty.title')} description={t('backoffice:rental.lease.empty.description')} />
       ) : (

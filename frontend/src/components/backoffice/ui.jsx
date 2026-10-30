@@ -93,15 +93,16 @@ export function Panel({ title, action, children, className = '' }) {
   )
 }
 
+// Le champ est enveloppé par son label : association implicite, sans id a inventer.
 export function Field({ label, className = '', ...props }) {
   return (
-    <div className="mb-3">
-      {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
+    <label className="mb-3 block">
+      {label && <span className="mb-1 block text-sm font-medium text-gray-700">{label}</span>}
       <input
         {...props}
         className={`w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 ${className}`}
       />
-    </div>
+    </label>
   )
 }
 
@@ -204,6 +205,34 @@ export function Modal({ open, onClose, title, children, footer, maxWidth = 'max-
 
 export const PRIMARY_BTN = 'inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
 export const SECONDARY_BTN = 'inline-flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors'
+// Le rouge de la marque (« carton rouge », signature du « Out »), pas le rouge générique.
+export const DANGER_BTN = 'inline-flex items-center justify-center gap-2 px-4 py-2 bg-redcard-500 text-white rounded-lg hover:bg-redcard-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+
+/**
+ * Confirmation d'un geste irréversible, dans une fenêtre du produit plutôt que dans la
+ * boîte du navigateur : le texte reste traduit, la mise en forme reste la nôtre, et la page
+ * garde la main — un `window.confirm` gèle tout son fil d'exécution.
+ */
+export function ConfirmDialog({
+  open, title, message, confirmLabel, cancelLabel, onConfirm, onCancel, busy = false,
+  tone = 'danger',
+}) {
+  const { t } = useTranslation(['common'])
+  return (
+    <Modal open={open} onClose={onCancel} title={title || t('common:confirm.title')} maxWidth="max-w-md"
+      footer={(
+        <>
+          <button onClick={onCancel} className={SECONDARY_BTN}>{cancelLabel || t('common:confirm.cancel')}</button>
+          <button onClick={onConfirm} disabled={busy} className={tone === 'danger' ? DANGER_BTN : PRIMARY_BTN}>
+            {confirmLabel || t('common:confirm.confirm')}
+          </button>
+        </>
+      )}>
+      <p className="text-sm text-gray-600">{message}</p>
+    </Modal>
+  )
+}
+
 
 export function GatedNotice({ icon: Icon, title, message }) {
   const { t } = useTranslation(['backoffice', 'common'])

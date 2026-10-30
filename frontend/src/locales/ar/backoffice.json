@@ -2,9 +2,10 @@
   "nav": {
     "sections": {
       "main": "الرئيسية",
-      "crm": "إدارة العملاء",
-      "finance": "المالية",
-      "admin": "الإدارة"
+      "deals": "البيع والكراء",
+      "operations": "التدبير",
+      "partners": "الشركاء والوثائق",
+      "agency": "الوكالة"
     },
     "dashboard": "لوحة التحكم",
     "properties": "العقارات",
@@ -14,9 +15,8 @@
     "visits": "الزيارات والمواعيد",
     "transactions": "المعاملات",
     "contracts": "العقود",
-    "notaries": "الموثقون",
-    "artisans": "الحرفيون",
     "rental": "التسيير الكرائي",
+    "stays": "الإقامات",
     "shop": "المتجر",
     "team": "الفريق",
     "analytics": "التحليلات",
@@ -24,7 +24,8 @@
     "userMenu": {
       "agencySettings": "إعدادات الوكالة",
       "backToSite": "العودة إلى الموقع"
-    }
+    },
+    "thirdParties": "الأطراف الخارجية"
   },
   "dashboard": {
     "title": "لوحة القيادة",
@@ -169,11 +170,6 @@
         "p30": "30 يومًا",
         "p90": "90 يومًا"
       },
-      "typeLabel": "نوع المعاملة",
-      "type": {
-        "sale": "بيع",
-        "rent": "إيجار"
-      },
       "range": "الطلبات والصفقات الموقّعة من {{from}} إلى {{to}}",
       "kpi": {
         "leads": "الطلبات المستلمة",
@@ -230,7 +226,23 @@
       "sold": "مبيعة",
       "zeroDetail": "<strong>{{count}} إعلانات شوهدت دون أي تواصل</strong>: {{views}} مشاهدة إجمالًا. ينبغي مراجعة السعر أو الصور أو الوصف.",
       "empty": "لا توجد إعلانات منشورة."
-    }
+    },
+    "activity": {
+      "label": "النشاط",
+      "all": "الكل",
+      "sale": "البيع",
+      "rent": "عرض للكراء"
+    },
+    "rental": {
+      "title": "التدبير الكرائي",
+      "headline": "{{count}} نقطة للمعالجة",
+      "arrears": "عقود بمتأخرات",
+      "applications": "ترشيحات في الانتظار",
+      "expiring": "استحقاقات قريبة",
+      "inventories": "حالات مكان ناقصة",
+      "allClear": "لا شيء للمعالجة في الرصيد المدبر."
+    },
+    "openPage": "فتح الصفحة"
   },
   "signature": {
     "title": "التوقيع الإلكتروني",
@@ -262,7 +274,8 @@
       "tabs": {
         "mandates": "عقود التسيير",
         "leases": "عقود الكراء",
-        "applications": "الطلبات"
+        "applications": "الطلبات",
+        "expenses": "المصاريف"
       }
     },
     "mandate": {
@@ -332,6 +345,27 @@
         "collected": "المحصّل",
         "net": "الصافي المحوّل",
         "pdf": "PDF",
+        "expenses": "المصاريف",
+        "status": "الحالة",
+        "statusLabel": {
+          "draft": "مسودة",
+          "validated": "مصادَق عليه",
+          "sent": "مُرسَل"
+        },
+        "draftWarning": "مسودة {{period}} لم تتم المصادقة عليها: لن تُرسل ما لم يراجعها شخص ويصادق عليها. في الانتظار منذ",
+        "linesLabel": "المصاريف المحمّلة على {{period}}",
+        "linesSummary": "المصاريف المحمّلة على {{period}} ({{count}})",
+        "exclude": "استبعاد {{title}}",
+        "restore": "إعادة إدراج {{title}}",
+        "noLines": "لا مصاريف محمّلة على هذه المسودة.",
+        "feesLabel": "أتعاب التسيير (درهم)",
+        "feesHint": "على الأكثر الإيجارات المحصّلة ناقص المصاريف المحمّلة: {{amount}}.",
+        "feesInvalid": "مبلغ غير صالح: الأتعاب بين 0 و{{amount}}.",
+        "netAfter": "الصافي بعد الاستبعادات: {{amount}}",
+        "validate": "المصادقة على التقرير",
+        "validatedToast": "تمت المصادقة على التقرير: سيُرسل في الإصدار القادم.",
+        "unsavedHint": "الاستبعادات غير محفوظة قبل المصادقة",
+        "confirmValidate": "المصادقة على تقرير {{period}} (الصافي {{amount}})؟ سيتم تجميده ولن يمكن إعادة المصاريف المستبعدة.",
         "empty": {
           "title": "لا يوجد تقرير",
           "description": "تظهر التقارير الشهرية هنا بعد تحصيل الإيجارات."
@@ -371,9 +405,9 @@
         "tenantLabel": "العميل المستأجر",
         "tenantPlaceholder": "اختر عميلاً…",
         "tenantSearchPlaceholder": "البحث عن عميل…",
-        "rentLabel": "الإيجار (Đh)",
-        "chargesLabel": "التكاليف (Đh)",
-        "depositLabel": "وديعة الضمان (Đh)",
+        "rentLabel": "الإيجار (درهم)",
+        "chargesLabel": "التكاليف (درهم)",
+        "depositLabel": "وديعة الضمان (درهم)",
         "paymentDayLabel": "يوم الاستحقاق (1-28)",
         "cancel": "إلغاء",
         "create": "إنشاء"
@@ -431,7 +465,7 @@
       },
       "payModal": {
         "title": "تسجيل دفعة — {{period}}",
-        "amountLabel": "المبلغ (Đh)",
+        "amountLabel": "المبلغ (درهم)",
         "methodLabel": "طريقة الدفع",
         "methods": {
           "virement": "تحويل بنكي",
@@ -444,9 +478,16 @@
       },
       "reviseModal": {
         "title": "مراجعة الإيجار",
-        "newRentLabel": "الإيجار الجديد (Đh)",
+        "newRentLabel": "الإيجار الجديد (درهم)",
         "cancel": "إلغاء",
         "apply": "تطبيق"
+      },
+      "interventions": {
+        "title": "التدخلات",
+        "empty": "لا توجد تدخلات على عقد الكراء هذا.",
+        "payer": "المتحمّل: {{payer}}",
+        "withheld": "المخصوم من الضمان: {{amount}}",
+        "unavailable": "التدخلات غير متاحة: تعذّر تحميل القائمة."
       }
     },
     "application": {
@@ -504,9 +545,9 @@
         "title": "إيداع ملف لعميل",
         "propertyIdLabel": "معرّف العقار",
         "clientIdLabel": "معرّف العميل",
-        "monthlyIncomeLabel": "الدخل الشهري (Đh)",
+        "monthlyIncomeLabel": "الدخل الشهري (درهم)",
         "guarantorNameLabel": "اسم الضامن",
-        "guarantorIncomeLabel": "دخل الضامن (Đh)",
+        "guarantorIncomeLabel": "دخل الضامن (درهم)",
         "docsLabel": "الوثائق المثبتة",
         "docType": {
           "cin": "بطاقة التعريف الوطنية (CIN)",
@@ -646,7 +687,7 @@
       "form": {
         "labelLabel": "بيان الاقتطاع",
         "labelPlaceholder": "مثال: طاولة عمل محروقة",
-        "amountLabel": "المبلغ (Đh)",
+        "amountLabel": "المبلغ (درهم)",
         "itemPlaceholder": "عنصر (اختياري)",
         "addButton": "إضافة"
       },
@@ -661,6 +702,18 @@
         "created": "تم إنشاء التصفية",
         "lineAdded": "تمت إضافة الاقتطاع",
         "finalized": "تم إنهاء التصفية — تم إرسال بريد إلكتروني إلى المستأجر"
+      },
+      "suggestions": {
+        "title": "تدخلات قابلة للخصم من الضمان",
+        "hint": "لا يُخصم أي مبلغ ما لم تضغط على «خصم»: هذه التدخلات الخاصة بعقد الكراء لم تُدرج بعد ضمن الخصومات أدناه.",
+        "empty": "لا توجد تدخلات للخصم.",
+        "completedOn": "أُنجزت في {{date}}",
+        "accept": "خصم {{label}}",
+        "acceptShort": "خصم",
+        "error": "تعذّر تحميل التدخلات القابلة للخصم. لا تُنجز كشف الحساب قبل الاطلاع عليها: فقد يُردّ الضمان كاملاً عن طريق الخطأ.",
+        "retry": "إعادة المحاولة",
+        "finalizedTitle": "كشف الحساب مُنجَز",
+        "finalizedBody": "لم يعد ممكناً خصم أي تدخل من هذا الكشف."
       }
     },
     "overview": {
@@ -691,6 +744,13 @@
       "kind": {
         "lease": "عقد كراء",
         "mandate": "وكالة"
+      },
+      "crgDrafts": {
+        "title": "تقارير التسيير المعلّقة: {{count}}",
+        "hint": "في انتظار المصادقة، أو مصادق عليها ولم تُرسل بعد. الأقدم أولًا.",
+        "item": "{{reference}} · {{period}}",
+        "net": "الصافي {{amount}}",
+        "stuck": "مصادق عليه، الإرسال معلّق"
       },
       "widgets": {
         "late": "إيجارات متأخرة",
@@ -801,7 +861,8 @@
         "urgentLease_one": "<strong>ينتهي عقد كراء {{title}} بعد يوم واحد</strong> دون محضر معاينة الخروج: برمجه مع تصفية الضمانة.",
         "urgentLease_other": "<strong>ينتهي عقد كراء {{title}} بعد {{count}} يومًا</strong> دون محضر معاينة الخروج: برمجه مع تصفية الضمانة.",
         "noNoticeAlert": "<strong>وكالة {{title}}: تنتهي في {{date}}.</strong> لم يُرسل بعد إشعار الانتهاء إلى {{name}}.",
-        "note": "يُرسل إشعار انتهاء الوكالات آليًا قبل 60 يومًا من نهايتها."
+        "note": "يُرسل إشعار انتهاء الوكالات آليًا قبل 60 يومًا من نهايتها.",
+        "viewLeases": "عرض العقود المعنية"
       },
       "apps": {
         "none": "لا طلب في انتظار القرار.",
@@ -863,7 +924,8 @@
         "ofLeases_one": "من أصل عقد واحد",
         "ofLeases_other": "من أصل {{count}} عقود",
         "exposed": "ضمانات معرّضة",
-        "note": "يُملأ محضر المعاينة غرفة بغرفة، مع الصور، ثم يوقّعه الطرفان إلكترونيًا."
+        "note": "يُملأ محضر المعاينة غرفة بغرفة، مع الصور، ثم يوقّعه الطرفان إلكترونيًا.",
+        "viewLeases": "عرض العقود المعنية"
       },
       "leases": {
         "columns": {
@@ -875,7 +937,13 @@
         },
         "owed": "{{amount}} مستحقة",
         "upToDate": "لا متأخرات",
-        "noPeriod": "لا استحقاق"
+        "noPeriod": "لا استحقاق",
+        "filters": {
+          "impayes": "عقود بمتأخرات",
+          "echeances": "استحقاقات قريبة",
+          "edl_manquant": "حالة مكان الدخول ناقصة",
+          "clear": "إزالة التصفية"
+        }
       },
       "lease": {
         "scheduleTitle": "جدول استحقاق الإيجارات",
@@ -918,6 +986,43 @@
         "leased": "العقار مكترى",
         "yes": "نعم",
         "vacant": "شاغر"
+      }
+    },
+    "expenses": {
+      "alert": "مصاريف في الانتظار منذ أكثر من 60 يومًا: {{count}}",
+      "alertHint": "أُنجزت وحُدّدت كلفتها، لكنها لم تُحمَّل بعد على أي طرف.",
+      "columns": {
+        "title": "التدخل",
+        "cost": "الكلفة النهائية",
+        "mode": "التسوية",
+        "age": "مدة الانتظار"
+      },
+      "toChoose": "تسوية يجب اختيارها",
+      "choose": "اختيار تسوية {{title}}",
+      "open": "فتح {{title}}",
+      "settle": "تسوية {{title}}",
+      "empty": {
+        "title": "لا مصاريف في الانتظار",
+        "description": "كل التدخلات المنجزة والمحددة الكلفة إما محمّلة أو مسوّاة."
+      },
+      "modal": {
+        "title": "تسوية {{title}}",
+        "how": "كيف",
+        "placeholder": "اختر…",
+        "cancel": "إلغاء",
+        "continue": "متابعة"
+      },
+      "methods": {
+        "encaisse": "تم تحصيله",
+        "impute_commission": "يُحتسب على العمولة",
+        "regularisation": "تمت تسويته",
+        "abandonne": "تم التخلي عنه"
+      },
+      "confirm": "تسوية «{{title}}» ({{amount}}): {{method}}. سيتم قفل هذا المصروف.",
+      "confirmLabel": "تأكيد",
+      "toasts": {
+        "settled": "تمت تسوية المصروف",
+        "forbidden": "إدارة الوكالة وحدها يمكنها التخلي عن المصروف أو احتسابه على العمولة."
       }
     }
   },
@@ -1141,23 +1246,16 @@
       "loadError": "حدث خطأ أثناء التحميل. حاول مرة أخرى لاحقًا."
     },
     "layout": {
-      "subtitle": "سجلّ الحرفيين الخاص بكم ومتابعة التدخلات على عقاراتكم",
       "tabs": {
         "directory": "الدليل",
         "interventions": "التدخلات"
       }
     },
     "directory": {
-      "stats": {
-        "total": "الحرفيون",
-        "shared": "مشتركون",
-        "private": "وكالتي"
-      },
       "filters": {
         "allTrades": "جميع المهن",
         "cityPlaceholder": "المدينة"
       },
-      "searchPlaceholder": "البحث عن حرفي…",
       "addButton": "إضافة",
       "gated": {
         "message": "دليل الحرفيين مخصص لخطتي Pro وEntreprise."
@@ -1208,22 +1306,40 @@
         "title": "أوامر العمل",
         "message": "متابعة التدخلات مخصصة لخطتي Pro وEntreprise."
       },
-      "stats": {
-        "total": "المجموع",
-        "scheduled": "مبرمجة",
-        "inProgress": "قيد التنفيذ",
-        "done": "منتهية"
-      },
       "form": {
         "titlePlaceholder": "عنوان التدخل",
-        "newButton": "جديد"
+        "newButton": "جديد",
+        "modalTitle": "تدخّل جديد",
+        "titleLabel": "العنوان",
+        "tradeLabel": "المهنة",
+        "cancel": "إلغاء",
+        "submit": "إنشاء التدخّل",
+        "propertyLabel": "العقار المعني",
+        "propertyPlaceholder": "اختر عقارًا",
+        "artisanLabel": "الحرفي (اختياري)",
+        "artisanPlaceholder": "يُحدَّد لاحقًا",
+        "scheduledLabel": "التاريخ المقرّر",
+        "costLabel": "التكلفة المقدّرة (د.م.)",
+        "notesLabel": "توضيحات للحرفي",
+        "clientLabel": "العميل المعني",
+        "clientPlaceholder": "اختر عميلاً",
+        "leased_until": "مؤجر لـ {{tenant}} حتى {{date}}",
+        "leased_open": "مؤجر لـ {{tenant}}",
+        "noLease": "لا يوجد عقد إيجار ساري",
+        "natureLabel": "طبيعة الأشغال",
+        "naturePlaceholder": "يحدد لاحقاً",
+        "payerLabel": "من يدفع",
+        "modeLabel": "التسوية",
+        "thirdPartyLabel": "اسم الطرف الثالث الدافع",
+        "thirdPartyPlaceholder": "تأمين، نقابة الملاك، جار…"
       },
       "columns": {
         "title": "العنوان",
         "trade": "المهنة",
         "artisan": "الحرفي",
         "costFinal": "التكلفة النهائية",
-        "status": "الحالة"
+        "status": "الحالة",
+        "property": "العقار"
       },
       "status": {
         "requested": "مطلوب",
@@ -1238,7 +1354,8 @@
       },
       "toasts": {
         "created": "تم إنشاء أمر العمل",
-        "saved": "تم الحفظ"
+        "saved": "تم الحفظ",
+        "deleted": "تمت إزالة التدخّل."
       },
       "backToList": "التدخلات",
       "notFound": "أمر العمل غير موجود.",
@@ -1247,11 +1364,51 @@
         "artisan": "الحرفي",
         "noneOption": "بدون",
         "sharedSuffix": " (مشترك)",
-        "costEstimate": "التكلفة التقديرية (Đh)",
-        "costFinal": "التكلفة النهائية (Đh)",
+        "costEstimate": "التكلفة التقديرية (درهم)",
+        "costFinal": "التكلفة النهائية (درهم)",
         "notes": "ملاحظات"
       },
-      "autoSaveNote": "يتم حفظ التعديلات تلقائياً."
+      "autoSaveNote": "يتم حفظ التعديلات تلقائياً.",
+      "flow": {
+        "label": "تدخّل في المجموع",
+        "label_other": "تدخّلات في المجموع"
+      },
+      "delete": "إزالة التدخّل",
+      "confirmDelete": {
+        "title": "إزالة هذا التدخّل؟",
+        "message": "سيُزال « {{title}} » ({{status}}) من سجلّ الوكالة. هذا الإجراء نهائي.",
+        "confirm": "إزالة"
+      },
+      "nature": {
+        "structurel": "هيكلية",
+        "entretien": "صيانة",
+        "degat_occupant": "ضرر سببه الشاغل"
+      },
+      "payer": {
+        "owner": "المالك",
+        "tenant": "المستأجر",
+        "agency": "الوكالة",
+        "third_party": "طرف ثالث"
+      },
+      "chargeMode": {
+        "crg_expense": "يخصم من تقرير التسيير",
+        "deposit_deduction": "يقتطع من الضمان",
+        "to_rebill": "يعاد فوترته",
+        "direct": "يدفع مباشرة",
+        "absorbed": "تتحمله الوكالة"
+      },
+      "payment": {
+        "title": "التسوية",
+        "client": "العميل المعني",
+        "payer": "من يدفع",
+        "mode": "طريقة التسوية",
+        "amount": "المبلغ",
+        "landedCrg": "عرض التفويض وتقرير التسيير رقم {{id}}",
+        "landedSettlement": "عرض تصفية الضمان الخاصة بعقد الإيجار",
+        "landedElsewhere": "تم تحميل المصروف، والكشف غير متاح من هذه الصفحة.",
+        "notCharged": "لم يحمّل بعد على أي كشف.",
+        "landedCrgUnlinked": "تم تحميل المصروف على تقرير التسيير رقم {{id}} ؛ تعذر تحديد التفويض الخاص به من هذه الصفحة."
+      }
     }
   },
   "contracts": {
@@ -1268,7 +1425,8 @@
       "mandate_rental": "وكالة كراء/تدبير",
       "compromise": "وعد بالبيع",
       "lease": "عقد كراء",
-      "other": "أخرى"
+      "other": "أخرى",
+      "stay": "عقد إقامة"
     },
     "list": {
       "pageTitle": "العقود",
@@ -1327,11 +1485,7 @@
         "property": "العقار",
         "client": "العميل",
         "transaction": "المعاملة المرتبطة",
-        "seller": "البائع / الموكِّل",
-        "sellerPlaceholder": "اسم البائع",
-        "buyer": "المشتري / المكتري",
-        "buyerPlaceholder": "اسم المشتري",
-        "amount": "المبلغ (Đh)",
+        "amount": "المبلغ (درهم)",
         "amountPlaceholder": "مثال: 1500000",
         "signDate": "تاريخ التوقيع",
         "effectDate": "تاريخ السريان",
@@ -1344,6 +1498,7 @@
         "transaction": "ابحث عن معاملة…"
       },
       "select": {
+        "allClientsHint": "لا توجد معاملة لهذا العقار: يتم عرض جميع عملائك.",
         "none": "—",
         "noneTransaction": "— لا شيء"
       },
@@ -1354,6 +1509,24 @@
         "title": "معاينة النموذج",
         "empty": "اختر نموذجًا لعرض معاينته.",
         "noContent": "لا يحتوي هذا النموذج على محتوى للمعاينة."
+      }
+    },
+    "parties": {
+      "section": "أطراف العقد",
+      "role": "الصفة",
+      "rolePlaceholder": "اختر الصفة…",
+      "client": "العميل",
+      "add": "إضافة طرف",
+      "remove": "حذف هذا الطرف",
+      "hint": "عدة بائعين أو عدة مكترين: سطر لكل شخص، بالترتيب الذي سيظهر به في العقد.",
+      "identityHint": "تبقى الجنسية ورقم البطاقة الوطنية والعنوان لكل طرف لتُستكمل في المحرّر.",
+      "requiredHint": "يلزم طرف واحد كامل على الأقل (العميل والدور) لإصدار العقد.",
+      "roles": {
+        "vendeur": "بائع",
+        "acquereur": "مشترٍ",
+        "bailleur": "مُكري",
+        "locataire": "مُكتري",
+        "mandant": "موكِّل"
       }
     },
     "templates": {
@@ -1398,8 +1571,6 @@
       "caseCreatedToast": "تم إنشاء الملف"
     },
     "layout": {
-      "title": "الموثّقون والشؤون القانونية",
-      "subtitle": "موثّقوك الشركاء ومتابعة ملفاتك القانونية",
       "tabs": {
         "notaries": "الموثّقون",
         "cases": "الملفات"
@@ -1410,7 +1581,6 @@
         "title": "الموثّقون",
         "message": "دليل الموثّقين متاح لباقتَي Pro وEntreprise فقط."
       },
-      "searchPlaceholder": "ابحث عن موثّق أو مكتب أو مدينة…",
       "addButton": "إضافة موثّق",
       "columns": {
         "name": "الاسم",
@@ -1466,12 +1636,22 @@
         "type": "النوع",
         "notary": "الموثّق",
         "progress": "التقدّم",
-        "status": "الحالة"
+        "status": "الحالة",
+        "property": "العقار"
       },
       "toolbar": {
         "titlePlaceholder": "عنوان الملف (اختياري)",
         "newButton": "ملف جديد",
-        "noNotaryTooltip": "أعدّ موثّقًا أولًا (تبويب الموثّقون)"
+        "noNotaryTooltip": "أعدّ موثّقًا أولًا (تبويب الموثّقون)",
+        "modalTitle": "ملفّ جديد",
+        "titleLabel": "العنوان",
+        "typeLabel": "نوع الملفّ",
+        "cancel": "إلغاء",
+        "submit": "إنشاء الملفّ",
+        "propertyLabel": "العقار المعني",
+        "propertyPlaceholder": "اختر عقارًا",
+        "notaryLabel": "الموثّق",
+        "notaryPlaceholder": "اختر موثّقًا"
       },
       "empty": {
         "title": "لا يوجد أي ملف",
@@ -2750,12 +2930,13 @@
           "final": "السعر النهائي",
           "probability": "الاحتمال",
           "commission": "العمولة",
-          "commissionRate": "النسبة {{rate}} %",
           "commissionExpected": "منتظرة",
           "commissionSigned": "مكتسبة",
           "milestones": "تواريخ المراحل",
           "notes": "ملاحظات",
-          "none": "—"
+          "none": "—",
+          "commissionRateRent": "{{rate}} % من الكراء الشهري",
+          "commissionFlatFee": "تعريفة ثابتة"
         },
         "milestone": {
           "contact": "أول اتصال",
@@ -2791,7 +2972,7 @@
         "clientSearchPlaceholder": "البحث عن عميل…",
         "sectionDetails": "التفاصيل",
         "typeLabel": "النوع",
-        "priceLabel": "السعر المطلوب (Đh)",
+        "priceLabel": "السعر المطلوب (درهم)",
         "pricePlaceholder": "مثال: 1500000",
         "closingDateLabel": "تاريخ الإغلاق المتوقع",
         "priorityLabel": "الأولوية",
@@ -2834,6 +3015,15 @@
             "price": "السعر",
             "status": "الحالة"
           }
+        },
+        "rentLabel": "الكراء الشهري (درهم)",
+        "commissionPreview": "أي {{amount}}",
+        "currency": "درهم",
+        "commission": {
+          "saleLabel": "العمولة (درهم)",
+          "saleHint": "التعريفة الثابتة للوكالة",
+          "rentLabel": "العمولة (%)",
+          "rentHint": "من الكراء الشهري"
         }
       },
       "detail": {
@@ -3284,7 +3474,30 @@
         "newPlaceholder": "فريق جديد",
         "create": "إنشاء",
         "limitReached": "تم بلوغ الحد الأقصى للفرق — قم بالترقية إلى خطة أعلى.",
-        "empty": "لا يوجد أي فريق."
+        "empty": "لا يوجد أي فريق.",
+        "newTitle": "فريق جديد",
+        "editTitle": "تعديل الفريق",
+        "edit": "تعديل الفريق",
+        "delete": "حذف الفريق",
+        "updated": "تم تعديل الفريق.",
+        "nameLabel": "الاسم",
+        "kindLabel": "المهنة",
+        "kindHelp": "الأدوار المتاحة: {{jobs}}.",
+        "colorLabel": "اللون",
+        "descriptionLabel": "الوصف",
+        "cancel": "إلغاء",
+        "submit": "حفظ",
+        "membersCount": "{{count}} عضو",
+        "membersCount_other": "{{count}} أعضاء",
+        "addMember": "إضافة تعزيز",
+        "addMemberTitle": "تعزيز لفريق {{team}}",
+        "addMemberHelp": "يبقى العضو في فريقه الأصلي. اختر الدور الذي يشغله هنا.",
+        "memberLabel": "العضو",
+        "memberPlaceholder": "اختر عضوا",
+        "jobLabel": "الدور داخل الفريق",
+        "memberAdded": "تمت إضافة التعزيز.",
+        "removeMember": "إزالة",
+        "memberRemoved": "تمت إزالة التعزيز."
       },
       "members": {
         "title": "الأعضاء",
@@ -3305,6 +3518,23 @@
         "teamCreated": "تم إنشاء الفريق",
         "teamDeleted": "تم حذف الفريق",
         "memberRemoved": "تمت إزالة العضو"
+      },
+      "kinds": {
+        "generale": "عامة",
+        "commerciale": "تجارية",
+        "menage": "التنظيف",
+        "maintenance": "الصيانة",
+        "conciergerie": "الاستقبال"
+      },
+      "jobs": {
+        "responsable": "مسؤول",
+        "membre": "عضو",
+        "negociateur": "وسيط",
+        "assistant": "مساعد",
+        "agent": "عون",
+        "blanchisserie": "مغسلة",
+        "technicien": "تقني",
+        "agent_accueil": "عون استقبال"
       }
     },
     "general": {
@@ -3312,44 +3542,21 @@
       "subtitle": "قم بتكوين إعدادات وكالتك",
       "savedNotice": "تم حفظ الإعدادات بنجاح",
       "tabs": {
-        "general": "عام",
-        "notifications": "الإشعارات",
-        "integrations": "التكاملات",
-        "security": "الأمان"
+        "profile": "الملف",
+        "commissions": "العمولات",
+        "rules": "القواعد",
+        "integrations": "التكاملات"
       },
       "fields": {
-        "agencyName": "اسم الوكالة",
-        "website": "الموقع الإلكتروني",
-        "email": "البريد الإلكتروني",
-        "phone": "الهاتف",
-        "address": "العنوان",
-        "city": "المدينة",
         "timezone": "المنطقة الزمنية",
-        "description": "وصف الوكالة",
-        "descriptionPlaceholder": "صف وكالتك..."
+        "rentalCommissionRate": "العمولة على الكراء (%)",
+        "rentalCommissionHint": "تطبق على الكراء الشهري.",
+        "saleCommissionFee": "العمولة على البيع (درهم)",
+        "saleCommissionFeeHint": "تعريفة ثابتة مهما كان ثمن العقار."
       },
       "timezoneOptions": {
         "casablanca": "أفريقيا/الدار البيضاء (GMT+1)",
         "paris": "أوروبا/باريس (GMT+1)"
-      },
-      "notifications": {
-        "email": {
-          "title": "إشعارات البريد الإلكتروني",
-          "description": "تلقي الإشعارات عبر البريد الإلكتروني"
-        },
-        "sms": {
-          "title": "إشعارات الرسائل القصيرة",
-          "description": "تلقي الإشعارات عبر الرسائل القصيرة"
-        },
-        "leadAutoAssign": {
-          "title": "الإسناد التلقائي للعملاء المحتملين",
-          "description": "إسناد العملاء المحتملين الجدد تلقائيًا إلى الوكلاء"
-        },
-        "visitReminder": {
-          "label": "تذكير الزيارة (عدد الساعات قبل)",
-          "hours_one": "ساعة واحدة",
-          "hours_other": "{{count}} ساعات"
-        }
       },
       "integrations": {
         "smtp": {
@@ -3360,79 +3567,104 @@
           "port": "المنفذ",
           "portPlaceholder": "587",
           "user": "المستخدم",
-          "password": "كلمة المرور"
+          "password": "كلمة المرور",
+          "passwordHint": "اتركه فارغا للحفاظ على كلمة السر الحالية."
         },
-        "api": {
-          "title": "واجهة برمجة التطبيقات والـ Webhooks",
-          "description": "مفاتيح API وwebhooks للتكاملات الخارجية",
-          "keyLabel": "مفتاح API",
-          "regenerate": "إعادة التوليد"
+        "apiKeyNote": "مفتاح API الخاص بالوكالة موجود في علامة « الملف ».",
+        "intro": "لا يُسجَّل أي ربط إلا بعد نجاح اتصال فعلي بالمزود: الحالة المعروضة هي الحالة الحقيقية.",
+        "erpTitle": "أنظمة ERP",
+        "crmTitle": "أنظمة CRM",
+        "lastSync": "آخر إرسال في {{date}} · {{count}} جهة اتصال",
+        "noContactSync": "هذا المزود لا يتلقى جهات الاتصال تلقائيا.",
+        "status": {
+          "connected": "مربوط",
+          "error": "خطأ",
+          "not_connected": "غير مربوط"
         },
-        "erp": {
-          "title": "تكاملات ERP",
-          "description": "اربط نظام إدارة المؤسسة الخاص بك",
+        "actions": {
+          "connect": "ربط",
+          "connecting": "جاري الربط…",
+          "test": "اختبار",
+          "disconnect": "فصل",
+          "cancel": "إلغاء",
+          "save": "تسجيل الربط"
+        },
+        "toasts": {
+          "connected": "تم ربط {{provider}}",
+          "tested": "تم التحقق من الربط",
+          "testFailed": "فشل التحقق",
+          "disconnected": "تم حذف الربط"
+        },
+        "fieldLabels": {
+          "url": "عنوان المنصة",
+          "db": "قاعدة البيانات",
+          "login": "المعرف",
+          "password": "كلمة السر",
+          "base_url": "عنوان الواجهة البرمجية",
+          "token": "رمز الوصول",
+          "instance_url": "عنوان المنصة",
+          "access_token": "رمز OAuth",
+          "api_domain": "نطاق الواجهة البرمجية"
+        },
+        "providers": {
           "odoo": {
             "name": "Odoo",
-            "description": "مزامنة جهات الاتصال والفواتير"
+            "description": "جهات الاتصال والفوترة في نظام Odoo.",
+            "help": "معرفات مستعمل Odoo له حق إنشاء جهات الاتصال (res.partner)."
           },
           "sap": {
-            "name": "SAP Business One",
-            "description": "تكامل المحاسبة والإدارة"
-          }
-        },
-        "crm": {
-          "title": "تكاملات CRM",
-          "description": "اربط نظام CRM الخارجي الخاص بك لمزامنة البيانات",
+            "name": "SAP",
+            "description": "الشركاء التجاريون عبر واجهة OData.",
+            "help": "عنوان بوابة SAP ورمز تقني له حق الوصول إلى API_BUSINESS_PARTNER."
+          },
           "salesforce": {
             "name": "Salesforce",
-            "description": "مزامنة ثنائية الاتجاه للعملاء المحتملين وجهات الاتصال"
+            "description": "عملاؤك كجهات اتصال في Salesforce.",
+            "help": "عنوان المنصة (https://…my.salesforce.com) ورمز OAuth صالح."
           },
           "hubspot": {
             "name": "HubSpot",
-            "description": "إدارة جهات الاتصال وأتمتة التسويق"
+            "description": "عملاؤك كجهات اتصال في HubSpot.",
+            "help": "رمز تطبيق خاص في HubSpot، بنطاق crm.objects.contacts.write."
           },
           "zoho": {
             "name": "Zoho CRM",
-            "description": "استيراد وتصدير بيانات العملاء"
+            "description": "عملاؤك كجهات اتصال في Zoho.",
+            "help": "نطاق الواجهة (https://www.zohoapis.com أو .eu) ورمز OAuth صالح."
           }
         },
-        "status": {
-          "notConnected": "غير متصل"
-        },
-        "actions": {
-          "configure": "تكوين",
-          "connect": "ربط"
-        }
-      },
-      "security": {
-        "twoFactor": {
-          "title": "المصادقة الثنائية",
-          "description": "أضف طبقة أمان إضافية إلى حسابك",
-          "button": "تفعيل المصادقة الثنائية"
-        },
-        "sessions": {
-          "title": "الجلسات النشطة",
-          "description": "إدارة الأجهزة المتصلة بحسابك",
-          "chromeMacos": "Chrome على MacOS",
-          "currentSession": "الجلسة الحالية",
-          "active": "نشط"
-        },
-        "dangerZone": {
-          "title": "منطقة الخطر",
-          "description": "هذه الإجراءات لا رجعة فيها",
-          "deleteAccount": "حذف الحساب"
-        }
+        "urlNote": "يجب أن يكون العنوان بـ https وأن يشير إلى خدمة متاحة للعموم."
       },
       "save": {
         "saving": "جارٍ الحفظ...",
         "button": "حفظ"
+      },
+      "commissions": {
+        "intro": "تُطبَّق هذه التعريفات تلقائيا عند إنشاء معاملة، ويمكن للوكيل تعديلها حالة بحالة."
+      },
+      "rules": {
+        "leadAutoAssign": {
+          "title": "الإحالة التلقائية للعملاء المحتملين",
+          "description": "كل عميل محتمل جديد يُحال إلى وكيل بمجرد وصوله."
+        },
+        "sms": {
+          "title": "تنبيهات SMS للوكالة",
+          "description": "إرسال رسالة قصيرة إلى الوكيل المعني، إضافة إلى البريد."
+        },
+        "visitReminder": {
+          "label": "تذكير قبل الزيارة",
+          "hint": "موعد إرسال التذكير إلى العميل.",
+          "hours": "{{count}} ساعة قبل"
+        },
+        "accountNote": "التنبيهات التي تصلك شخصيا تُضبط في علامة « حسابي »."
       }
     },
     "hub": {
       "tabs": {
         "agency": "الوكالة",
         "account": "حسابي"
-      }
+      },
+      "subtitle": "إعدادات الوكالة من جهة، وحسابك من جهة أخرى."
     },
     "shared": {
       "adminOnly": "للمشرفين فقط"
@@ -3509,6 +3741,553 @@
     },
     "comparables": {
       "title": "عقارات مماثلة"
+    }
+  },
+  "stays": {
+    "shared": {
+      "pageTitle": "الإقامات القصيرة",
+      "gated": "الإقامات القصيرة غير متوفرة في عرضك الحالي.",
+      "loadError": "حدث خطأ أثناء التحميل. حاول مرة أخرى لاحقًا."
+    },
+    "overview": {
+      "tabs": {
+        "planning": "المخطط",
+        "tasks": "مهام التشغيل",
+        "messages": "الرسائل",
+        "access": "الدخول",
+        "calendars": "التقويمات",
+        "calendar": "الروزنامة",
+        "teams": "الفرق",
+        "maintenance": "الصيانة"
+      },
+      "arrivals": "وصول اليوم",
+      "departures": "مغادرة اليوم",
+      "inHouse": "مقيمون حاليًا",
+      "upcoming": "قادمة",
+      "nights": "ليالٍ محجوزة",
+      "channels": "القنوات",
+      "channelsInError": "{{count}} بها خطأ",
+      "conflicts": "{{count}} إقامة بحجز مزدوج. تحقق من التقويمات المعنية.",
+      "conflicts_other": "{{count}} إقامات بحجز مزدوج. تحقق من التقويمات المعنية.",
+      "sourcesInError": "{{count}} تقويم لا يستجيب.",
+      "sourcesInError_other": "{{count}} تقويمات لا تستجيب.",
+      "syncAll": "مزامنة جميع التقويمات",
+      "syncDone": "تمت مزامنة {{ok}} تقويم، {{failed}} فشلت.",
+      "seeConflicts": "عرض الإقامات المعنية",
+      "seeChannels": "عرض الروزنامات",
+      "navLabel": "أقسام الإقامات",
+      "groups": {
+        "bookings": "الحجوزات",
+        "operations": "التشغيل",
+        "setup": "إعدادات كل عقار"
+      },
+      "needStays": "لا شيء للمعالجة ما لم تُسجَّل إقامة.",
+      "openCalendars": "التقويمات المرتبطة"
+    },
+    "status": {
+      "confirmed": "مؤكدة",
+      "blocked": "محجوبة",
+      "cancelled": "ملغاة"
+    },
+    "platform": {
+      "airbnb": "Airbnb",
+      "booking": "Booking.com",
+      "vrbo": "VRBO",
+      "autre": "أخرى"
+    },
+    "planning": {
+      "statusLabel": "الحالة",
+      "allStatuses": "الكل",
+      "conflict": "حجز مزدوج",
+      "unknownProperty": "عقار غير مرتبط",
+      "noGuestName": "الاسم غير منشور",
+      "columns": {
+        "property": "العقار",
+        "guest": "الضيف",
+        "dates": "الإقامة",
+        "nights": "ليالٍ",
+        "channel": "القناة",
+        "status": "الحالة",
+        "amount": "المبلغ"
+      },
+      "empty": {
+        "title": "لا توجد إقامات",
+        "description": "أضف تقويم منصة لعرض حجوزاتك هنا."
+      },
+      "contact": {
+        "edit": "إكمال بيانات الضيف",
+        "title": "بيانات الضيف",
+        "help": "المنصات لا تنشر بريد الضيف. بدون بريد لا تُرسل أي رسالة إقامة.",
+        "nameLabel": "الاسم",
+        "emailLabel": "البريد الإلكتروني",
+        "phoneLabel": "الهاتف",
+        "cancel": "إلغاء",
+        "submit": "حفظ",
+        "saved": "تم حفظ البيانات."
+      },
+      "viewLabel": "العرض",
+      "views": {
+        "all": "كل الإقامات",
+        "arrivals": "وصول",
+        "departures": "مغادرة",
+        "in_house": "في المكان",
+        "upcoming": "قادمة",
+        "conflicts": "حجوزات مزدوجة"
+      },
+      "guestCount": "{{count}} مسافر",
+      "guestCount_other": "{{count}} مسافرين",
+      "openStay": "فتح بطاقة الإقامة",
+      "form": {
+        "newButton": "تسجيل إقامة مباشرة",
+        "title": "إقامة مباشرة جديدة",
+        "editTitle": "تعديل الإقامة",
+        "help": "لكراء تم خارج المنصات. الإقامات القادمة من روزنامة لا تُسجَّل هنا.",
+        "propertyLabel": "العقار",
+        "propertyPlaceholder": "اختر عقارا",
+        "checkIn": "الوصول",
+        "checkOut": "المغادرة",
+        "statusLabel": "الحالة",
+        "guestCount": "المسافرون",
+        "totalPrice": "مبلغ الإقامة",
+        "cleaningFee": "مصاريف التنظيف",
+        "notes": "ملاحظات",
+        "requests": "طلبات خاصة",
+        "cancel": "إلغاء",
+        "submit": "حفظ",
+        "created": "تم تسجيل الإقامة.",
+        "updated": "تم تعديل الإقامة."
+      }
+    },
+    "calendars": {
+      "add": "ربط تقويمات",
+      "sync": "مزامنة",
+      "remove": "إزالة التقويم",
+      "state": {
+        "pending": "في الانتظار",
+        "ok": "محدَّث",
+        "error": "به خطأ"
+      },
+      "columns": {
+        "property": "العقار",
+        "channel": "القناة",
+        "state": "الحالة",
+        "lastSync": "آخر مزامنة",
+        "stays": "الإقامات"
+      },
+      "empty": {
+        "title": "لا توجد تقويمات",
+        "description": "انسخ رابط iCal من Airbnb أو Booking.com أو VRBO ثم أضفه هنا."
+      },
+      "toasts": {
+        "synced": "تمت إضافة {{created}} إقامة وإلغاء {{cancelled}}.",
+        "removed": "تم إزالة التقويم.",
+        "connected": "تم ربط {{count}} تقويم، واستيراد {{stays}} إقامة.",
+        "connected_other": "تم ربط {{count}} تقويمات، واستيراد {{stays}} إقامة."
+      },
+      "modal": {
+        "title": "ربط تقويمات عقار",
+        "help": "حقل لكل منصة: الصق رابط iCal العام (https) للمنصات التي نُشر فيها العقار، واترك الباقي فارغًا. يُقرأ كل تقويم فورًا للتحقق من استجابته.",
+        "propertyLabel": "العقار",
+        "propertyPlaceholder": "اختر عقارًا",
+        "cancel": "إلغاء",
+        "submit": "ربط",
+        "urlFor": "رابط تقويم iCal — {{platform}}",
+        "alreadyConnected": "مرتبط مسبقًا",
+        "urlPlaceholder": "{{platform}} — https://…"
+      },
+      "backToPlanning": "العودة إلى مخطط الإقامات"
+    },
+    "messages": {
+      "templatesTitle": "قوالب الرسائل",
+      "journalTitle": "الرسائل المُعدّة",
+      "journalEmpty": "لا توجد رسائل معدّة حاليًا.",
+      "add": "إضافة قالب",
+      "edit": "تعديل القالب",
+      "disable": "تعطيل القالب",
+      "allProperties": "جميع العقارات",
+      "noRecipient": "البريد ناقص",
+      "trigger": {
+        "on_booking": "عند الحجز",
+        "before_check_in": "قبل الوصول",
+        "after_check_out": "بعد المغادرة",
+        "after_check_in": "أثناء الإقامة",
+        "before_check_out": "قبل المغادرة"
+      },
+      "whenWithOffset": {
+        "before_check_in": "{{count}} ساعة قبل الوصول",
+        "after_check_out": "{{count}} ساعة بعد المغادرة",
+        "after_check_in": "{{count}} ساعة بعد الوصول",
+        "before_check_out": "{{count}} ساعة قبل المغادرة"
+      },
+      "status": {
+        "pending": "للإرسال",
+        "sent": "أُرسلت",
+        "failed": "فشل",
+        "no_recipient": "البريد ناقص"
+      },
+      "columns": {
+        "name": "القالب",
+        "when": "الإرسال",
+        "scope": "النطاق",
+        "subject": "الموضوع",
+        "stay": "الإقامة",
+        "recipient": "المرسل إليه",
+        "due": "الاستحقاق",
+        "status": "الحالة"
+      },
+      "empty": {
+        "title": "لا توجد قوالب",
+        "description": "اكتب رسالة نموذجية: تُرسل وحدها قبل كل وصول أو بعد كل مغادرة."
+      },
+      "toasts": {
+        "saved": "تم حفظ القالب.",
+        "disabled": "تم تعطيل القالب."
+      },
+      "modal": {
+        "title": "قالب رسالة جديد",
+        "editTitle": "تعديل القالب",
+        "nameLabel": "الاسم الداخلي",
+        "triggerLabel": "المُحفِّز",
+        "offsetLabel": "المدة بالساعات",
+        "propertyLabel": "العقار المعني",
+        "subjectLabel": "موضوع البريد",
+        "bodyLabel": "الرسالة",
+        "placeholders": "المتغيرات المتاحة:",
+        "cancel": "إلغاء",
+        "submit": "حفظ"
+      },
+      "presetsTitle": "قوالب جاهزة للاستعمال",
+      "presetsHelp": "مأخوذة من StayManager ومُواءَمة مع متغيّرات الإقامة. أضفها ثم أعد صياغتها بأسلوبك.",
+      "presetAdd": "إضافة هذا القالب",
+      "presetAdded": "مُضاف مسبقًا",
+      "presetToast": "تمت إضافة القالب « {{name}} ».",
+      "presets": {
+        "booking_confirmation": {
+          "name": "تأكيد الحجز",
+          "subject": "تم تأكيد حجزك في {{property_title}}",
+          "body": "مرحبًا {{guest_name}},\n\nشكرًا على حجزك وعلى ثقتك: {{nights}} ليلة في {{property_title}}، من {{check_in}} إلى {{check_out}}.\n\nنحن رهن إشارتك لأي سؤال قبل الوصول. ستتلقى قريبًا رابط تسجيل للتصريح بالمقيمين، وفق القانون الجاري به العمل.\n\nنتطلع إلى استقبالك!\n{{agency_name}}"
+        },
+        "welcome": {
+          "name": "رسالة الترحيب",
+          "subject": "أهلًا بك في {{property_title}}",
+          "body": "أهلًا {{guest_name}}!\n\nيسعدنا استقبالك في {{property_title}} من {{check_in}} إلى {{check_out}}.\n\n{{agency_name}}"
+        },
+        "checkin_code": {
+          "name": "تعليمات الوصول (رمز الدخول)",
+          "subject": "وصولك إلى {{property_title}}",
+          "body": "مرحبًا {{guest_name}}، يقترب موعد وصولك إلى {{property_title}}.\n\nرمز الدخول: {{access_code}}\n{{access_instructions}}\n\nاكتب إلينا لأي سؤال. إقامة ممتعة!\n{{agency_name}}"
+        },
+        "checkin_manual": {
+          "name": "تعليمات الوصول (تسليم المفاتيح)",
+          "subject": "وصولك إلى {{property_title}}",
+          "body": "مرحبًا {{guest_name}}، يقترب موعد وصولك إلى {{property_title}}.\n\nطريقة الدخول: {{access_instructions}}\n\nاكتب إلينا لأي سؤال. إقامة ممتعة!\n{{agency_name}}"
+        },
+        "during_stay": {
+          "name": "رسالة أثناء الإقامة",
+          "subject": "هل كل شيء على ما يرام في {{property_title}}؟",
+          "body": "مرحبًا {{guest_name}},\n\nنأمل أن يكون استقرارك قد مرّ بسلاسة وأن تستمتع بإقامتك في {{property_title}}.\nلا تتردد في الكتابة إلينا إن احتجت أي شيء.\n\n{{agency_name}}"
+        },
+        "checkout": {
+          "name": "تذكير المغادرة",
+          "subject": "مغادرتك من {{property_title}}",
+          "body": "مرحبًا {{guest_name}},\n\nنأمل أن تكون قد استمتعت بإقامتك. تذكير بسيط: موعد مغادرتك هو {{check_out}}.\n\nقبل الخروج، يرجى:\n– جمع أمتعتك الشخصية\n– إطفاء المكيّف أو التدفئة\n– إغلاق النوافذ والباب\n– ترك المفاتيح في المكان المتفق عليه\n\nإن أعجبتك الإقامة، فتقييمك يساعدنا كثيرًا؛ وإن كان هناك ما يمكن تحسينه، فأخبرنا به.\n\nرحلة عودة سعيدة،\n{{agency_name}}"
+        },
+        "review": {
+          "name": "طلب تقييم",
+          "subject": "شكرًا على إقامتك في {{property_title}}",
+          "body": "مرحبًا {{guest_name}},\n\nنأمل أن تكون قد استمتعت بإقامتك في {{property_title}}.\n\nإن كانت لديك ملاحظات فشاركنا بها: فهي تساعدنا على التحسّن. وتقييمك على {{platform}} يخدمنا كثيرًا، ويساعد مسافرين آخرين على إيجاد المسكن المناسب لهم.\n\nشكرًا مجددًا وإلى اللقاء!\n{{agency_name}}"
+        }
+      }
+    },
+    "cleaning": {
+      "statusLabel": "الحالة",
+      "allStatuses": "الكل",
+      "kindFilterLabel": "نوع المهمة",
+      "allKinds": "كل الأنواع",
+      "kind": {
+        "menage": "التنظيف",
+        "linge": "الأغطية والمناشف",
+        "accueil": "الاستقبال",
+        "conciergerie": "خدمات الكونسيرج",
+        "controle": "المراقبة"
+      },
+      "add": "إضافة مهمة",
+      "unassigned": "غير مُسنَد",
+      "start": "بدء المهمة",
+      "finish": "إنهاء المهمة",
+      "openDetail": "فتح التفاصيل",
+      "urgentChip": "{{count}} عاجل",
+      "urgentChip_other": "{{count}} عاجلة",
+      "lateAlert": "{{count}} مهمة متأخرة.",
+      "lateAlert_other": "{{count}} مهام متأخرة.",
+      "urgentAlert": "{{count}} إبلاغ عاجل غير مقروء.",
+      "urgentAlert_other": "{{count}} إبلاغات عاجلة غير مقروءة.",
+      "status": {
+        "pending": "للتنفيذ",
+        "in_progress": "جارٍ",
+        "done": "منجز",
+        "cancelled": "ملغى"
+      },
+      "zones": {
+        "chambres": "الغرف",
+        "salle_de_bain": "الحمام",
+        "cuisine": "المطبخ",
+        "sejour": "الصالون",
+        "exterieur": "الخارج",
+        "linge": "الأغطية"
+      },
+      "reportKind": {
+        "issue": "مشكل",
+        "stock": "تزويد",
+        "note": "ملاحظة"
+      },
+      "columns": {
+        "date": "التاريخ",
+        "property": "العقار",
+        "nextArrival": "الوصول القادم",
+        "assignee": "المكلَّف",
+        "status": "الحالة"
+      },
+      "empty": {
+        "title": "لا توجد مهام",
+        "description": "تُنشأ عمليات التنظيف تلقائيًا عند مغادرة كل ضيف."
+      },
+      "toasts": {
+        "created": "تمت إضافة المهمة.",
+        "reported": "تم تسجيل الإبلاغ."
+      },
+      "detail": {
+        "title": "تفاصيل المهمة",
+        "zones": "المناطق المنجزة",
+        "reports": "الإبلاغات",
+        "noReport": "لا توجد إبلاغات.",
+        "addReport": "إبلاغ جديد",
+        "kindLabel": "النوع",
+        "categoryLabel": "الفئة",
+        "noteLabel": "الوصف",
+        "urgentLabel": "عاجل",
+        "urgent": "عاجل",
+        "photoLabel": "صورة (JPEG أو PNG أو WebP)",
+        "submitReport": "إرسال الإبلاغ",
+        "markSeen": "تعليم كمقروء",
+        "close": "إغلاق"
+      },
+      "modal": {
+        "title": "إضافة مهمة",
+        "help": "لمهمة خارج الإقامة: تنظيف بعد أشغال أو استقبال قبل زيارة.",
+        "kindLabel": "النوع",
+        "propertyLabel": "العقار",
+        "propertyPlaceholder": "اختر عقارًا",
+        "dateLabel": "التاريخ المقرر",
+        "notesLabel": "ملاحظة",
+        "cancel": "إلغاء",
+        "submit": "إضافة"
+      }
+    },
+    "checkin": {
+      "open": "ملف التسجيل",
+      "title": "تسجيل الضيف",
+      "close": "إغلاق",
+      "noLink": "لم يُرسل أي رابط تسجيل لهذه الإقامة.",
+      "create": "إنشاء الرابط",
+      "renew": "تجديد الرابط",
+      "shareOnce": "أرسل هذا الرابط إلى الضيف: لن يُعرض مرة أخرى.",
+      "copy": "نسخ الرابط",
+      "expires": "صالح حتى {{date}}",
+      "linkStatus": {
+        "sent": "تم إرسال الرابط",
+        "submitted": "تم إرسال الملف",
+        "expired": "انتهى الرابط"
+      },
+      "guests": "الضيوف المعلَنون: {{declared}} من {{expected}}",
+      "noGuest": "لم يعلن الضيف أي شيء بعد.",
+      "noDocument": "وثيقة الهوية ناقصة.",
+      "lead": "الضيف الرئيسي",
+      "validate": "قبول الضيف",
+      "reject": "رفض الضيف",
+      "guestStatus": {
+        "declared": "للتحقق",
+        "validated": "تم التحقق",
+        "rejected": "مرفوض"
+      },
+      "documentType": {
+        "cin": "البطاقة الوطنية",
+        "passeport": "جواز السفر",
+        "titre_sejour": "بطاقة الإقامة"
+      },
+      "toasts": {
+        "created": "تم إنشاء رابط التسجيل.",
+        "copied": "تم نسخ الرابط.",
+        "copyFailed": "النسخ غير ممكن. حدد الرابط يدويًا."
+      }
+    },
+    "access": {
+      "add": "إعداد عقار",
+      "edit": "تعديل طريقة الدخول",
+      "help": "طريقة الدخول تحدد ما يمكن لرسائل الإقامة إعلانه للضيف.",
+      "alreadySet": "مُعَد سابقًا",
+      "credentialsSet": "تم إدخال البيانات",
+      "columns": {
+        "property": "العقار",
+        "mode": "طريقة الدخول",
+        "instructions": "التعليمات"
+      },
+      "mode": {
+        "traditional": "تسليم المفاتيح يدًا بيد",
+        "manual": "رمز تحدده الوكالة",
+        "ttlock": "قفل ذكي TTLock"
+      },
+      "modeHelp": {
+        "traditional": "بدون رمز: تسلّم المفاتيح للضيف.",
+        "manual": "تُدخل رمز صندوق المفاتيح أو لوحة الأرقام لكل إقامة.",
+        "ttlock": "يُطلب الرمز من القفل لمدة الإقامة ثم يُلغى."
+      },
+      "credentials": {
+        "client_id": "معرّف عميل TTLock",
+        "client_secret": "المفتاح السري TTLock",
+        "access_token": "رمز الوصول TTLock",
+        "lock_id": "معرّف القفل"
+      },
+      "empty": {
+        "title": "لا يوجد عقار مُعَد",
+        "description": "حدد كيف يدخل الضيف كل عقار: مفاتيح أو رمز أو قفل ذكي."
+      },
+      "toasts": {
+        "saved": "تم حفظ طريقة الدخول."
+      },
+      "modal": {
+        "title": "طريقة دخول العقار",
+        "propertyLabel": "العقار",
+        "propertyPlaceholder": "اختر عقارًا",
+        "modeLabel": "طريقة الدخول",
+        "instructionsLabel": "تعليمات للضيف",
+        "credentialsHelp": "تبقى هذه البيانات داخل الخدمة ولا تُعرض مرة أخرى.",
+        "cancel": "إلغاء",
+        "submit": "حفظ"
+      }
+    },
+    "code": {
+      "title": "رمز الدخول",
+      "traditional": "هذا العقار يُسلَّم يدًا بيد: اختر طريقة دخول برمز في علامة «الدخول».",
+      "manualLabel": "الرمز المطلوب إرساله",
+      "issue": "تثبيت الرمز",
+      "askLock": "طلب رمز من القفل",
+      "revoke": "إلغاء الرمز",
+      "validUntil": "صالح حتى {{date}}",
+      "toasts": {
+        "issued": "تم تثبيت الرمز.",
+        "revoked": "تم إلغاء الرمز."
+      }
+    },
+    "calendar": {
+      "previous": "الشهر السابق",
+      "next": "الشهر المقبل",
+      "nights": "{{count}} ليلة",
+      "nights_other": "{{count}} ليال",
+      "empty": {
+        "title": "لا إقامة في هذا الشهر",
+        "description": "غيّر الشهر، أو أضف روزنامة منصة."
+      }
+    },
+    "detail": {
+      "back": "رجوع إلى المخطط",
+      "edit": "تعديل الإقامة",
+      "cancel": "إلغاء الإقامة",
+      "cancelTitle": "إلغاء هذه الإقامة؟",
+      "cancelHelp": "يُلغى رمز الدخول وتُلغى مهمة التنظيف. تبقى الإقامة ظاهرة في السجل.",
+      "cancelConfirm": "تأكيد الإلغاء",
+      "cancelled": "تم إلغاء الإقامة.",
+      "guests": "المسافرون",
+      "cleaningFee": "مصاريف التنظيف",
+      "source": "المصدر",
+      "sources": {
+        "manual": "تسجيل مباشر",
+        "ical": "روزنامة منصة",
+        "staymanager": "حساب StayManager"
+      },
+      "contactTitle": "معطيات المسافر",
+      "accessTitle": "الدخول والتنظيف",
+      "openAccess": "ضبط دخول العقار",
+      "codeWindow": "صالح من {{from}} إلى {{to}}",
+      "noCode": "لا رمز دخول نشط لهذه الإقامة.",
+      "cleaningTitle": "تنظيف ما بين الإقامتين",
+      "noCleaning": "لا تنظيف مبرمج.",
+      "guestsTitle": "النزلاء المصرح بهم",
+      "noGuests": "لا نزيل مصرح به. أرسل رابط التسجيل إلى المسافر.",
+      "guestName": "الاسم",
+      "guestDocument": "الوثيقة",
+      "lead": "(الرئيسي)",
+      "messagesTitle": "رسائل الإقامة",
+      "openMessages": "فتح المراسلة",
+      "noMessages": "لا رسالة محضّرة لهذه الإقامة.",
+      "conflictsTitle": "إقامات متعارضة",
+      "conflictAlert": "تتداخل هذه الإقامة مع {{count}} أخرى في نفس العقار.",
+      "conflictAlert_other": "تتداخل هذه الإقامة مع {{count}} إقامات أخرى في نفس العقار."
+    },
+    "teams": {
+      "performanceTitle": "نشاط الفرق",
+      "performanceSub": "خلال {{count}} يوما الأخيرة",
+      "done": "تنظيفات منجزة",
+      "planned": "تنظيفات مبرمجة",
+      "late": "متأخرة",
+      "avgMinutes": "المدة المتوسطة",
+      "minutes": "د",
+      "urgentReports": "{{count}} إشعار عاجل غير مقروء",
+      "urgentReports_other": "{{count}} إشعارات عاجلة غير مقروءة",
+      "assignTitle": "العقارات والفرق",
+      "assignHelp": "تُسند مهمة التنظيف بعد المغادرة إلى فريق العقار، دون تعيين يدوي.",
+      "team": "الفريق",
+      "teamFor": "فريق عقار {{property}}",
+      "noTeam": "لا فريق",
+      "noProperty": "لا عقار في محفظتك.",
+      "assigned": "تم حفظ الإسناد.",
+      "empty": {
+        "title": "لا فريق",
+        "description": "أنشئ فريق تنظيف أو صيانة لإسناد عقاراتك إليه.",
+        "link": "إدارة الفرق"
+      }
+    },
+    "contract": {
+      "title": "عقد الإقامة",
+      "none": "لا عقد لهذه الإقامة.",
+      "generate": "إنشاء العقد",
+      "generated": "تم إنشاء العقد. يمكن للمسافر توقيعه من رابط التسجيل.",
+      "open": "فتح العقد",
+      "awaitingGuest": "في انتظار توقيع المسافر.",
+      "signedOn": "وُقّع في {{date}}",
+      "status": {
+        "draft": "مسودة",
+        "finalized": "للتوقيع",
+        "signed": "موقّع"
+      }
+    }
+  },
+  "onboarding": {
+    "title": "الانطلاق",
+    "progress": "{{completed}} خطوات من {{total}}",
+    "dismiss": "إخفاء الانطلاق",
+    "steps": {
+      "agency_profile": "إكمال ملف الوكالة",
+      "first_property": "إنشاء أول عقار",
+      "publish_property": "نشر عقار",
+      "commission_settings": "ضبط أسس العمولة",
+      "invite_team": "دعوة زميل",
+      "first_client": "إضافة عميل",
+      "first_visit": "برمجة زيارة",
+      "subscription_active": "تنشيط الاشتراك"
+    }
+  },
+  "tiers": {
+    "title": "الأطراف الخارجية",
+    "subtitle": "موثّقو الوكالة وحرفيّوها، وما يُوكَل إليهم.",
+    "navLabel": "مهن الأطراف الخارجية",
+    "tabs": {
+      "legal": "الموثّقون والملفّات",
+      "artisans": "الحرفيّون والتدخّلات"
+    },
+    "filters": {
+      "searchLegal": "ابحث عن موثّق أو ملفّ",
+      "searchArtisans": "ابحث عن حرفي أو تدخّل"
     }
   }
 }

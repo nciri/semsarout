@@ -6,6 +6,7 @@ import SearchableSelect from '../../../components/common/SearchableSelect'
 import api from '../../../services/api'
 import { IconAction } from '../components/kit'
 import { formPayload, toInputValue } from './model'
+import RichTextarea from '../../../components/common/RichTextarea'
 
 const P = 'crm.pipeline.visits'
 const DURATIONS = [15, 30, 45, 60, 90]
@@ -93,7 +94,7 @@ export default function VisitForm({ visit, onClose, onSubmit, saving }) {
           </div>
           <label className="sm:col-span-2">
             <span className={lbl}>{t('form.notes')}</span>
-            <textarea rows={3} value={f.notes} onChange={set('notes')} placeholder={t('form.notesPlaceholder')} className={ctrl} />
+            <RichTextarea rows={3} value={f.notes} onChange={setVal('notes')} placeholder={t('form.notesPlaceholder')} />
           </label>
         </div>
 

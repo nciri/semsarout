@@ -56,7 +56,9 @@ export function InventoriesDetail({ s, onClose, titleRef }) {
   })
 
   return (
-    <DetailFrame title={t('backoffice:rental.overview.edl.title')} sub={t('backoffice:rental.overview.edl.detailSub')} onClose={onClose} titleRef={titleRef}>
+    <DetailFrame title={t('backoffice:rental.overview.edl.title')} sub={t('backoffice:rental.overview.edl.detailSub')}
+      link={{ to: '/backoffice/gestion-locative/baux?filtre=edl_manquant', label: t('backoffice:rental.overview.edl.viewLeases') }}
+      onClose={onClose} titleRef={titleRef}>
       <DetailColumns
         main={!inv.items.length
           ? <p className="text-sm text-gray-500">{inv.active_leases ? t('backoffice:rental.overview.edl.allSigned') : t('backoffice:rental.overview.edl.noActive')}</p>

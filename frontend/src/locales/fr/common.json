@@ -402,5 +402,21 @@
     "subscription": {
       "description": "Abonnement agence"
     }
+  },
+  "confirm": {
+    "title": "Confirmer l'action",
+    "confirm": "Confirmer",
+    "cancel": "Annuler"
+  },
+  "richText": {
+    "toolbar": "Mise en forme",
+    "bold": "Gras",
+    "italic": "Italique",
+    "underline": "Souligné",
+    "bulletList": "Liste à puces",
+    "numberedList": "Liste numérotée",
+    "link": "Lien",
+    "linkUrl": "Adresse du lien",
+    "linkApply": "Appliquer"
   }
 }

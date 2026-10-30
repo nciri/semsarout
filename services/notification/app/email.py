@@ -15,15 +15,26 @@ def is_configured() -> bool:
 
 
 def send_email(to: str, subject: str, body: str, *, html: str | None = None,
-               from_email: str | None = None, attachments: list[tuple[str, bytes, str]] | None = None) -> None:
+               from_email: str | None = None, attachments: list[tuple[str, bytes, str]] | None = None,
+               smtp: dict | None = None) -> None:
     """Envoie un email via SMTP (STARTTLS sur 587, SSL implicite sur 465). `from_email` permet de
-    choisir l'expéditeur (noreply@ / contact@…) selon le cas. Lève si échec."""
-    host = os.environ["SMTP_HOST"]
-    port = int(os.environ.get("SMTP_PORT", "587"))
-    user = os.environ["SMTP_USER"]
-    password = os.environ["SMTP_PASSWORD"]
-    sender = from_email or os.environ.get("SMTP_FROM", user)
-    sender_name = os.environ.get("SMTP_FROM_NAME", "SemsarOut")
+    choisir l'expéditeur (noreply@ / contact@…) selon le cas. Lève si échec.
+
+    `smtp` : serveur d'envoi de l'agence (host/port/user/password/from_email/from_name). Quand
+    il est fourni, l'e-mail part de chez elle, expéditeur compris — un relais tiers rejetterait
+    de toute façon une adresse d'expéditeur qu'il n'a pas authentifiée.
+    """
+    cfg = smtp or {}
+    host = cfg.get("host") or os.environ["SMTP_HOST"]
+    port = int(cfg.get("port") or os.environ.get("SMTP_PORT", "587"))
+    user = cfg.get("user") or os.environ["SMTP_USER"]
+    password = cfg.get("password") or os.environ["SMTP_PASSWORD"]
+    if smtp:
+        sender = cfg.get("from_email") or user
+        sender_name = cfg.get("from_name") or os.environ.get("SMTP_FROM_NAME", "SemsarOut")
+    else:
+        sender = from_email or os.environ.get("SMTP_FROM", user)
+        sender_name = os.environ.get("SMTP_FROM_NAME", "SemsarOut")
 
     msg = EmailMessage()
     msg["Subject"] = subject

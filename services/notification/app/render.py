@@ -10,6 +10,10 @@ import re
 from datetime import datetime
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from markupsafe import Markup
+
+from semsar_common import html_to_text as _rich_to_text
+from semsar_common import sanitize_html as _sanitize
 
 _TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "templates")
 
@@ -17,6 +21,14 @@ _env = Environment(
     loader=FileSystemLoader(_TEMPLATES_DIR),
     autoescape=select_autoescape(["html", "xml"]),
 )
+
+# Les champs du produit sont saisis en WYSIWYG : un gabarit qui affiche l'un d'eux doit le
+# rendre comme du HTML, sinon le destinataire lit des `<p>`. `richtext` le fait en repassant
+# par la liste blanche produit — l'autoescape reste la règle pour tout le reste, et une
+# donnée écrite avant la bascule WYSIWYG est du texte brut, donc inchangée.
+_env.filters["richtext"] = lambda value: Markup(_sanitize(value))
+# Pour les endroits d'un email qui n'affichent pas de HTML : objet, pré-en-tête.
+_env.filters["richtext_plain"] = _rich_to_text
 
 # Palette de marque (cf. frontend/tailwind.config.js) — accessible dans tous les gabarits.
 _env.globals["brand"] = {
@@ -30,7 +42,7 @@ _env.globals["brand"] = {
     "gold": "#C6923F", "gold_dark": "#A9781F",
     "red": "#C1121F", "red_dark": "#870B15", "dark": "#0B1220", "teal": "#0F766E",
 }
-_env.globals["currency"] = "Đh"  # symbole dirham utilisé sur le site
+_env.globals["currency"] = "Dh"  # symbole dirham utilisé sur le site
 
 
 def _globals() -> dict:

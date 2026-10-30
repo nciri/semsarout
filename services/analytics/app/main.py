@@ -16,7 +16,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from semsar_auth import Principal, get_principal
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 
-from . import compute, dashboard, sources, stats
+from . import compute, dashboard, onboarding, sources, stats
 from .util import err
 
 settings = get_settings()
@@ -91,6 +91,19 @@ async def health() -> dict:
     return {"status": "ok", "service": settings.service_name}
 
 
+@app.get("/backoffice/onboarding")
+def backoffice_onboarding(principal: Principal = Depends(get_principal)):
+    """Mise en route de l'agence : étapes déduites de l'état réel (voir app/onboarding.py)."""
+    if not principal.agency_id:
+        return err("Agence requise", 403)
+    aid = principal.agency_id
+    return onboarding.build(
+        properties=sources.properties(aid), members=sources.members(aid),
+        clients=sources.clients(aid), visits=sources.visits(aid),
+        agency=(sources.agency_detail(aid) or {}).get("agency") or {},
+        settings=sources.agency_settings(aid), subscription=sources.subscription(aid))
+
+
 @app.get("/admin/overview")
 def admin_overview(principal: Principal = Depends(get_principal)):
     """Overview plateforme super-admin (parité `admin/overview.py`) : agrège les compteurs des
@@ -105,6 +118,9 @@ def admin_overview(principal: Principal = Depends(get_principal)):
         "total_agencies": ag.get("total_agencies", 0),
         "active_subscriptions": sub.get("active_subscriptions", {}),
         "mrr_estimate": sub.get("mrr_estimate", 0.0),
+        "arr_estimate": sub.get("arr_estimate", 0.0),
+        # Les incidents, pas seulement leur nombre : un compteur ne se rappelle pas.
+        "payment_incidents": sources.payment_incidents(),
         "unpaid_subscriptions": sub.get("unpaid_subscriptions", {"past_due": 0, "restricted": 0}),
         "signups_last_30d": us.get("signups_last_30d", 0),
         "suspended_count": us.get("suspended_users", 0) + ag.get("suspended_agencies", 0),

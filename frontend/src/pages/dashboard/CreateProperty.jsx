@@ -9,6 +9,7 @@ import { propertyService } from '../../services/propertyService'
 import { DIRHAM_SYMBOL } from '../../utils/currency'
 import { getAmenityIcon } from '../../utils/amenityIcons'
 import { CondoFeesField } from '../../components/property/CondoFeesField'
+import RichTextarea from '../../components/common/RichTextarea'
 
 const PROPERTY_TYPE_VALUES = ['apartment', 'house', 'villa', 'land', 'commercial', 'office']
 
@@ -206,11 +207,16 @@ function CreateProperty() {
               </div>
 
               <div>
-                <label className="label">{t('dashboard:createProperty.fields.description')}</label>
-                <textarea
-                  {...register('description')}
-                  className="input"
-                  rows="5"
+                <label className="label" htmlFor="create-description">
+                  {t('dashboard:createProperty.fields.description')}
+                </label>
+                {/* `register` ne sait relier qu'un contrôle de formulaire : le champ riche
+                    est piloté à la main, comme les autres valeurs non natives du formulaire. */}
+                <RichTextarea
+                  id="create-description"
+                  rows={5}
+                  value={watch('description') || ''}
+                  onChange={(html) => setValue('description', html, { shouldDirty: true })}
                   placeholder={t('dashboard:createProperty.fields.descriptionPlaceholder')}
                 />
               </div>

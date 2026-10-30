@@ -2,9 +2,10 @@
   "nav": {
     "sections": {
       "main": "Principal",
-      "crm": "CRM",
-      "finance": "Finance",
-      "admin": "Administration"
+      "deals": "Vendre & louer",
+      "operations": "Exploitation",
+      "partners": "Tiers & documents",
+      "agency": "Agence"
     },
     "dashboard": "Tableau de bord",
     "properties": "Biens immobiliers",
@@ -14,9 +15,8 @@
     "visits": "Visites & RDV",
     "transactions": "Transactions",
     "contracts": "Contrats",
-    "notaries": "Notaires",
-    "artisans": "Artisans",
     "rental": "Gestion locative",
+    "stays": "Séjours",
     "shop": "Boutique",
     "team": "Équipe",
     "analytics": "Analyses",
@@ -24,7 +24,8 @@
     "userMenu": {
       "agencySettings": "Paramètres agence",
       "backToSite": "Retour au site"
-    }
+    },
+    "thirdParties": "Tiers"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -169,11 +170,6 @@
         "p30": "30 jours",
         "p90": "90 jours"
       },
-      "typeLabel": "Type de transaction",
-      "type": {
-        "sale": "Vente",
-        "rent": "Location"
-      },
       "range": "Leads et affaires signées du {{from}} au {{to}}",
       "kpi": {
         "leads": "Leads reçus",
@@ -230,7 +226,23 @@
       "sold": "Vendus",
       "zeroDetail": "<strong>{{count}} annonces vues sans aucun contact</strong> : {{views}} vues cumulées. Prix, photos ou description sont à revoir.",
       "empty": "Aucune annonce en ligne."
-    }
+    },
+    "activity": {
+      "label": "Activité",
+      "all": "Tout",
+      "sale": "Vente",
+      "rent": "Mise en location"
+    },
+    "rental": {
+      "title": "Gestion locative",
+      "headline": "{{count}} point(s) à traiter",
+      "arrears": "Baux en impayé",
+      "applications": "Candidatures en attente",
+      "expiring": "Échéances proches",
+      "inventories": "États des lieux manquants",
+      "allClear": "Rien à traiter sur le parc géré."
+    },
+    "openPage": "Ouvrir la page"
   },
   "signature": {
     "title": "Signature électronique",
@@ -262,7 +274,8 @@
       "tabs": {
         "mandates": "Mandats",
         "leases": "Baux",
-        "applications": "Candidatures"
+        "applications": "Candidatures",
+        "expenses": "Dépenses"
       }
     },
     "mandate": {
@@ -332,6 +345,27 @@
         "collected": "Encaissé",
         "net": "Net reversé",
         "pdf": "PDF",
+        "expenses": "Dépenses",
+        "status": "Statut",
+        "statusLabel": {
+          "draft": "Brouillon",
+          "validated": "Validé",
+          "sent": "Envoyé"
+        },
+        "draftWarning": "Brouillon de {{period}} jamais validé : il ne part pas tant qu'un humain ne l'a pas relu et validé. En attente depuis",
+        "linesLabel": "Dépenses imputées à {{period}}",
+        "linesSummary": "Dépenses retenues sur {{period}} ({{count}})",
+        "exclude": "Écarter {{title}}",
+        "restore": "Réintégrer {{title}}",
+        "noLines": "Aucune dépense imputée à ce brouillon.",
+        "feesLabel": "Honoraires de gestion (Dh)",
+        "feesHint": "Au maximum les loyers encaissés moins les dépenses retenues : {{amount}}.",
+        "feesInvalid": "Montant invalide : les honoraires vont de 0 à {{amount}}.",
+        "netAfter": "Net après écarts : {{amount}}",
+        "validate": "Valider le compte rendu",
+        "validatedToast": "Compte rendu validé : il partira à la prochaine émission.",
+        "unsavedHint": "Écarts non enregistrés avant validation",
+        "confirmValidate": "Valider le compte rendu de {{period}} (net {{amount}}) ? Il sera figé : les dépenses écartées ne pourront plus être rétablies.",
         "empty": {
           "title": "Aucun CRG",
           "description": "Les comptes-rendus mensuels apparaissent ici une fois les loyers encaissés."
@@ -371,9 +405,9 @@
         "tenantLabel": "Client locataire",
         "tenantPlaceholder": "Choisir un client…",
         "tenantSearchPlaceholder": "Rechercher un client…",
-        "rentLabel": "Loyer (Đh)",
-        "chargesLabel": "Charges (Đh)",
-        "depositLabel": "Dépôt de garantie (Đh)",
+        "rentLabel": "Loyer (Dh)",
+        "chargesLabel": "Charges (Dh)",
+        "depositLabel": "Dépôt de garantie (Dh)",
         "paymentDayLabel": "Jour d'échéance (1-28)",
         "cancel": "Annuler",
         "create": "Créer"
@@ -431,7 +465,7 @@
       },
       "payModal": {
         "title": "Enregistrer un paiement — {{period}}",
-        "amountLabel": "Montant (Đh)",
+        "amountLabel": "Montant (Dh)",
         "methodLabel": "Méthode",
         "methods": {
           "virement": "Virement",
@@ -444,9 +478,16 @@
       },
       "reviseModal": {
         "title": "Réviser le loyer",
-        "newRentLabel": "Nouveau loyer (Đh)",
+        "newRentLabel": "Nouveau loyer (Dh)",
         "cancel": "Annuler",
         "apply": "Appliquer"
+      },
+      "interventions": {
+        "title": "Interventions",
+        "empty": "Aucune intervention sur ce bail.",
+        "payer": "Payeur : {{payer}}",
+        "withheld": "Déjà retenu sur la caution : {{amount}}",
+        "unavailable": "Interventions indisponibles : la liste n’a pas pu être chargée."
       }
     },
     "application": {
@@ -504,9 +545,9 @@
         "title": "Déposer un dossier pour un client",
         "propertyIdLabel": "ID du bien",
         "clientIdLabel": "ID du client",
-        "monthlyIncomeLabel": "Revenu mensuel (Đh)",
+        "monthlyIncomeLabel": "Revenu mensuel (Dh)",
         "guarantorNameLabel": "Nom du garant",
-        "guarantorIncomeLabel": "Revenu du garant (Đh)",
+        "guarantorIncomeLabel": "Revenu du garant (Dh)",
         "docsLabel": "Pièces justificatives",
         "docType": {
           "cin": "Pièce d'identité (CIN)",
@@ -646,7 +687,7 @@
       "form": {
         "labelLabel": "Libellé de la retenue",
         "labelPlaceholder": "ex. Plan de travail brûlé",
-        "amountLabel": "Montant (Đh)",
+        "amountLabel": "Montant (Dh)",
         "itemPlaceholder": "Élément (facultatif)",
         "addButton": "Ajouter"
       },
@@ -661,6 +702,18 @@
         "created": "Décompte créé",
         "lineAdded": "Retenue ajoutée",
         "finalized": "Décompte finalisé — email envoyé au locataire"
+      },
+      "suggestions": {
+        "title": "Interventions à retenir sur la caution",
+        "hint": "Rien n’est retenu tant que vous ne cliquez pas sur « Retenir » : ces interventions du bail ne figurent pas encore dans les retenues ci-dessous.",
+        "empty": "Aucune intervention à retenir.",
+        "completedOn": "terminée le {{date}}",
+        "accept": "Retenir {{label}}",
+        "acceptShort": "Retenir",
+        "error": "Les interventions à retenir n’ont pas pu être chargées. Ne finalisez pas le décompte avant de les avoir consultées : une caution pourrait être restituée en entier à tort.",
+        "retry": "Réessayer",
+        "finalizedTitle": "Décompte finalisé",
+        "finalizedBody": "Plus aucune intervention ne peut être retenue sur ce décompte."
       }
     },
     "overview": {
@@ -691,6 +744,13 @@
       "kind": {
         "lease": "Bail",
         "mandate": "Mandat"
+      },
+      "crgDrafts": {
+        "title": "Comptes rendus de gérance en attente : {{count}}",
+        "hint": "À valider, ou validés mais pas encore partis. Les plus anciens sont en premier.",
+        "item": "{{reference}} · {{period}}",
+        "net": "net {{amount}}",
+        "stuck": "validé, envoi en attente"
       },
       "widgets": {
         "late": "Loyers en retard",
@@ -801,7 +861,8 @@
         "urgentLease_one": "<strong>Le bail de {{title}} se termine dans {{count}} jour</strong>, sans état des lieux de sortie : planifiez-le avec le décompte du dépôt.",
         "urgentLease_other": "<strong>Le bail de {{title}} se termine dans {{count}} jours</strong>, sans état des lieux de sortie : planifiez-le avec le décompte du dépôt.",
         "noNoticeAlert": "<strong>Mandat {{title}} : fin le {{date}}.</strong> L'avis d'échéance n'a pas encore été envoyé à {{name}}.",
-        "note": "L'avis d'échéance des mandats part automatiquement 60 jours avant la fin."
+        "note": "L'avis d'échéance des mandats part automatiquement 60 jours avant la fin.",
+        "viewLeases": "Voir les baux concernés"
       },
       "apps": {
         "none": "Aucune candidature en attente de décision.",
@@ -863,7 +924,8 @@
         "ofLeases_one": "sur {{count}} bail",
         "ofLeases_other": "sur {{count}} baux",
         "exposed": "Dépôts exposés",
-        "note": "Un état des lieux se remplit pièce par pièce, avec photos, puis se signe électroniquement par les deux parties."
+        "note": "Un état des lieux se remplit pièce par pièce, avec photos, puis se signe électroniquement par les deux parties.",
+        "viewLeases": "Voir les baux concernés"
       },
       "leases": {
         "columns": {
@@ -875,7 +937,13 @@
         },
         "owed": "{{amount}} dus",
         "upToDate": "À jour",
-        "noPeriod": "Aucune échéance"
+        "noPeriod": "Aucune échéance",
+        "filters": {
+          "impayes": "Baux en impayé",
+          "echeances": "Échéances proches",
+          "edl_manquant": "État des lieux d'entrée manquant",
+          "clear": "Retirer le filtre"
+        }
       },
       "lease": {
         "scheduleTitle": "Échéancier des loyers",
@@ -918,6 +986,43 @@
         "leased": "Bien loué",
         "yes": "Oui",
         "vacant": "Vacant"
+      }
+    },
+    "expenses": {
+      "alert": "Dépenses en attente depuis plus de 60 jours : {{count}}",
+      "alertHint": "Terminées et chiffrées, elles ne sont encore imputées à personne.",
+      "columns": {
+        "title": "Intervention",
+        "cost": "Coût final",
+        "mode": "Règlement",
+        "age": "En attente"
+      },
+      "toChoose": "Règlement à choisir",
+      "choose": "Choisir le règlement de {{title}}",
+      "open": "Ouvrir {{title}}",
+      "settle": "Solder {{title}}",
+      "empty": {
+        "title": "Aucune dépense en attente",
+        "description": "Toutes les interventions terminées et chiffrées sont imputées ou soldées."
+      },
+      "modal": {
+        "title": "Solder {{title}}",
+        "how": "Comment",
+        "placeholder": "Choisir…",
+        "cancel": "Annuler",
+        "continue": "Continuer"
+      },
+      "methods": {
+        "encaisse": "Encaissé",
+        "impute_commission": "Imputé sur la commission",
+        "regularisation": "Régularisé",
+        "abandonne": "Abandonné"
+      },
+      "confirm": "Solder « {{title}} » ({{amount}}) : {{method}}. Cette dépense sera verrouillée.",
+      "confirmLabel": "Confirmer",
+      "toasts": {
+        "settled": "Dépense soldée",
+        "forbidden": "Seule l'administration de l'agence peut abandonner ou imputer sur la commission."
       }
     }
   },
@@ -1141,23 +1246,16 @@
       "loadError": "Une erreur est survenue lors du chargement. Réessayez plus tard."
     },
     "layout": {
-      "subtitle": "Votre référentiel d'artisans et le suivi des interventions sur vos biens",
       "tabs": {
         "directory": "Annuaire",
         "interventions": "Interventions"
       }
     },
     "directory": {
-      "stats": {
-        "total": "Artisans",
-        "shared": "Partagés",
-        "private": "Mon agence"
-      },
       "filters": {
         "allTrades": "Tous les métiers",
         "cityPlaceholder": "Ville"
       },
-      "searchPlaceholder": "Rechercher un artisan…",
       "addButton": "Ajouter",
       "gated": {
         "message": "Le référentiel artisans est réservé aux plans Pro et Entreprise."
@@ -1208,22 +1306,40 @@
         "title": "Bons de travaux",
         "message": "Le suivi des interventions est réservé aux plans Pro et Entreprise."
       },
-      "stats": {
-        "total": "Total",
-        "scheduled": "Planifiés",
-        "inProgress": "En cours",
-        "done": "Terminés"
-      },
       "form": {
         "titlePlaceholder": "Intitulé de l'intervention",
-        "newButton": "Nouveau"
+        "newButton": "Nouveau",
+        "modalTitle": "Nouvelle intervention",
+        "titleLabel": "Intitulé",
+        "tradeLabel": "Métier",
+        "cancel": "Annuler",
+        "submit": "Créer l'intervention",
+        "propertyLabel": "Bien concerné",
+        "propertyPlaceholder": "Choisir un bien",
+        "artisanLabel": "Artisan (optionnel)",
+        "artisanPlaceholder": "À attribuer plus tard",
+        "scheduledLabel": "Date prévue",
+        "costLabel": "Coût estimé (Dh)",
+        "notesLabel": "Précisions pour l'artisan",
+        "clientLabel": "Client concerné",
+        "clientPlaceholder": "Choisir un client",
+        "leased_until": "Loué à {{tenant}} jusqu'au {{date}}",
+        "leased_open": "Loué à {{tenant}}",
+        "noLease": "Pas de bail en cours",
+        "natureLabel": "Nature des travaux",
+        "naturePlaceholder": "À préciser",
+        "payerLabel": "Qui paie",
+        "modeLabel": "Règlement",
+        "thirdPartyLabel": "Nom du tiers payeur",
+        "thirdPartyPlaceholder": "Assurance, syndic, voisin…"
       },
       "columns": {
         "title": "Intitulé",
         "trade": "Métier",
         "artisan": "Artisan",
         "costFinal": "Coût final",
-        "status": "Statut"
+        "status": "Statut",
+        "property": "Bien"
       },
       "status": {
         "requested": "Demandé",
@@ -1238,7 +1354,8 @@
       },
       "toasts": {
         "created": "Bon de travaux créé",
-        "saved": "Enregistré"
+        "saved": "Enregistré",
+        "deleted": "Intervention retirée."
       },
       "backToList": "Interventions",
       "notFound": "Bon de travaux introuvable.",
@@ -1247,11 +1364,51 @@
         "artisan": "Artisan",
         "noneOption": "Aucun",
         "sharedSuffix": " (partagé)",
-        "costEstimate": "Coût estimé (Đh)",
-        "costFinal": "Coût final (Đh)",
+        "costEstimate": "Coût estimé (Dh)",
+        "costFinal": "Coût final (Dh)",
         "notes": "Notes"
       },
-      "autoSaveNote": "Les modifications sont enregistrées automatiquement."
+      "autoSaveNote": "Les modifications sont enregistrées automatiquement.",
+      "flow": {
+        "label": "intervention au total",
+        "label_other": "interventions au total"
+      },
+      "delete": "Retirer l'intervention",
+      "confirmDelete": {
+        "title": "Retirer cette intervention ?",
+        "message": "« {{title}} » ({{status}}) sera retirée du registre de l'agence. Cette action est définitive.",
+        "confirm": "Retirer"
+      },
+      "nature": {
+        "structurel": "Structurel",
+        "entretien": "Entretien",
+        "degat_occupant": "Dégât causé par l'occupant"
+      },
+      "payer": {
+        "owner": "Propriétaire",
+        "tenant": "Locataire",
+        "agency": "Agence",
+        "third_party": "Tiers"
+      },
+      "chargeMode": {
+        "crg_expense": "Déduit du compte rendu de gérance",
+        "deposit_deduction": "Retenu sur la caution",
+        "to_rebill": "À refacturer",
+        "direct": "Payé directement",
+        "absorbed": "Pris en charge par l'agence"
+      },
+      "payment": {
+        "title": "Règlement",
+        "client": "Client concerné",
+        "payer": "Qui paie",
+        "mode": "Mode de règlement",
+        "amount": "Montant",
+        "landedCrg": "Voir le mandat et son compte rendu n° {{id}}",
+        "landedSettlement": "Voir le décompte de caution du bail",
+        "landedElsewhere": "Dépense imputée, relevé introuvable depuis cette fiche.",
+        "notCharged": "Pas encore imputée sur un relevé.",
+        "landedCrgUnlinked": "Dépense imputée sur le compte rendu n° {{id}} ; son mandat n'est pas identifiable depuis cette fiche."
+      }
     }
   },
   "contracts": {
@@ -1268,7 +1425,8 @@
       "mandate_rental": "Mandat location/gestion",
       "compromise": "Compromis",
       "lease": "Bail",
-      "other": "Autre"
+      "other": "Autre",
+      "stay": "Contrat de séjour"
     },
     "list": {
       "pageTitle": "Contrats",
@@ -1327,11 +1485,7 @@
         "property": "Bien",
         "client": "Client",
         "transaction": "Transaction liée",
-        "seller": "Vendeur / Mandant",
-        "sellerPlaceholder": "Nom du vendeur",
-        "buyer": "Acheteur / Locataire",
-        "buyerPlaceholder": "Nom de l'acheteur",
-        "amount": "Montant (Đh)",
+        "amount": "Montant (Dh)",
         "amountPlaceholder": "Ex. 1500000",
         "signDate": "Date de signature",
         "effectDate": "Prise d'effet",
@@ -1344,6 +1498,7 @@
         "transaction": "Rechercher une transaction…"
       },
       "select": {
+        "allClientsHint": "Aucune transaction pour ce bien : tous vos clients sont proposés.",
         "none": "—",
         "noneTransaction": "— Aucune"
       },
@@ -1354,6 +1509,24 @@
         "title": "Aperçu du modèle",
         "empty": "Sélectionnez un modèle pour afficher son aperçu.",
         "noContent": "Ce modèle n'a pas de contenu de prévisualisation."
+      }
+    },
+    "parties": {
+      "section": "Parties au contrat",
+      "role": "Rôle",
+      "rolePlaceholder": "Choisir un rôle…",
+      "client": "Client",
+      "add": "Ajouter une partie",
+      "remove": "Retirer cette partie",
+      "hint": "Plusieurs vendeurs ou plusieurs locataires : une ligne par personne, dans l'ordre où elles figureront au contrat.",
+      "identityHint": "La nationalité, le numéro de CIN et le domicile de chaque partie restent à compléter dans l'éditeur.",
+      "requiredHint": "Au moins une partie complète (client et rôle) est nécessaire pour générer le contrat.",
+      "roles": {
+        "vendeur": "Vendeur",
+        "acquereur": "Acquéreur",
+        "bailleur": "Bailleur",
+        "locataire": "Locataire",
+        "mandant": "Mandant"
       }
     },
     "templates": {
@@ -1398,8 +1571,6 @@
       "caseCreatedToast": "Dossier créé"
     },
     "layout": {
-      "title": "Notaires & juridique",
-      "subtitle": "Vos notaires partenaires et le suivi de vos dossiers juridiques",
       "tabs": {
         "notaries": "Notaires",
         "cases": "Dossiers"
@@ -1410,7 +1581,6 @@
         "title": "Notaires",
         "message": "L'annuaire des notaires est réservé aux plans Pro et Entreprise."
       },
-      "searchPlaceholder": "Rechercher un notaire, une étude, une ville…",
       "addButton": "Ajouter un notaire",
       "columns": {
         "name": "Nom",
@@ -1466,12 +1636,22 @@
         "type": "Type",
         "notary": "Notaire",
         "progress": "Progression",
-        "status": "Statut"
+        "status": "Statut",
+        "property": "Bien"
       },
       "toolbar": {
         "titlePlaceholder": "Titre du dossier (optionnel)",
         "newButton": "Nouveau dossier",
-        "noNotaryTooltip": "Configurez d'abord un notaire (onglet Notaires)"
+        "noNotaryTooltip": "Configurez d'abord un notaire (onglet Notaires)",
+        "modalTitle": "Nouveau dossier",
+        "titleLabel": "Intitulé",
+        "typeLabel": "Type de dossier",
+        "cancel": "Annuler",
+        "submit": "Créer le dossier",
+        "propertyLabel": "Bien concerné",
+        "propertyPlaceholder": "Choisir un bien",
+        "notaryLabel": "Notaire",
+        "notaryPlaceholder": "Choisir un notaire"
       },
       "empty": {
         "title": "Aucun dossier",
@@ -2750,12 +2930,13 @@
           "final": "Prix final",
           "probability": "Probabilité",
           "commission": "Commission",
-          "commissionRate": "Taux {{rate}} %",
           "commissionExpected": "attendue",
           "commissionSigned": "acquise",
           "milestones": "Dates d'étape",
           "notes": "Notes",
-          "none": "—"
+          "none": "—",
+          "commissionRateRent": "{{rate}} % du loyer mensuel",
+          "commissionFlatFee": "tarif fixe"
         },
         "milestone": {
           "contact": "Premier contact",
@@ -2791,7 +2972,7 @@
         "clientSearchPlaceholder": "Rechercher un client…",
         "sectionDetails": "Détails",
         "typeLabel": "Type",
-        "priceLabel": "Prix demandé (Đh)",
+        "priceLabel": "Prix demandé (Dh)",
         "pricePlaceholder": "Ex. 1500000",
         "closingDateLabel": "Clôture prévue",
         "priorityLabel": "Priorité",
@@ -2834,6 +3015,15 @@
             "price": "Prix",
             "status": "Statut"
           }
+        },
+        "rentLabel": "Loyer mensuel (Dh)",
+        "commissionPreview": "soit {{amount}}",
+        "currency": "Dh",
+        "commission": {
+          "saleLabel": "Commission (Dh)",
+          "saleHint": "Tarif fixe de l'agence",
+          "rentLabel": "Commission (%)",
+          "rentHint": "du loyer mensuel"
         }
       },
       "detail": {
@@ -3284,7 +3474,30 @@
         "newPlaceholder": "Nouvelle équipe",
         "create": "Créer",
         "limitReached": "Limite d'équipes atteinte — passez à un plan supérieur.",
-        "empty": "Aucune équipe."
+        "empty": "Aucune équipe.",
+        "newTitle": "Nouvelle équipe",
+        "editTitle": "Modifier l'équipe",
+        "edit": "Modifier l'équipe",
+        "delete": "Supprimer l'équipe",
+        "updated": "Équipe modifiée.",
+        "nameLabel": "Nom",
+        "kindLabel": "Métier",
+        "kindHelp": "Rôles disponibles : {{jobs}}.",
+        "colorLabel": "Couleur",
+        "descriptionLabel": "Description",
+        "cancel": "Annuler",
+        "submit": "Enregistrer",
+        "membersCount": "{{count}} membre",
+        "membersCount_other": "{{count}} membres",
+        "addMember": "Ajouter un renfort",
+        "addMemberTitle": "Renfort pour {{team}}",
+        "addMemberHelp": "Le renfort garde son équipe de rattachement. Choisissez le rôle qu'il tient ici.",
+        "memberLabel": "Membre",
+        "memberPlaceholder": "Choisir un membre",
+        "jobLabel": "Rôle dans l'équipe",
+        "memberAdded": "Renfort ajouté.",
+        "removeMember": "Retirer",
+        "memberRemoved": "Renfort retiré."
       },
       "members": {
         "title": "Membres",
@@ -3305,6 +3518,23 @@
         "teamCreated": "Équipe créée",
         "teamDeleted": "Équipe supprimée",
         "memberRemoved": "Membre retiré"
+      },
+      "kinds": {
+        "generale": "Générale",
+        "commerciale": "Commerciale",
+        "menage": "Ménage",
+        "maintenance": "Maintenance",
+        "conciergerie": "Conciergerie"
+      },
+      "jobs": {
+        "responsable": "Responsable",
+        "membre": "Membre",
+        "negociateur": "Négociateur",
+        "assistant": "Assistant",
+        "agent": "Agent",
+        "blanchisserie": "Blanchisserie",
+        "technicien": "Technicien",
+        "agent_accueil": "Agent d'accueil"
       }
     },
     "general": {
@@ -3312,44 +3542,21 @@
       "subtitle": "Configurez les paramètres de votre agence",
       "savedNotice": "Paramètres sauvegardés avec succès",
       "tabs": {
-        "general": "Général",
-        "notifications": "Notifications",
-        "integrations": "Intégrations",
-        "security": "Sécurité"
+        "profile": "Profil",
+        "commissions": "Commissions",
+        "rules": "Règles",
+        "integrations": "Intégrations"
       },
       "fields": {
-        "agencyName": "Nom de l'agence",
-        "website": "Site web",
-        "email": "Email",
-        "phone": "Téléphone",
-        "address": "Adresse",
-        "city": "Ville",
         "timezone": "Fuseau horaire",
-        "description": "Description de l'agence",
-        "descriptionPlaceholder": "Décrivez votre agence..."
+        "rentalCommissionRate": "Commission sur une location (%)",
+        "rentalCommissionHint": "Appliquée au loyer mensuel.",
+        "saleCommissionFee": "Commission sur une vente (Dh)",
+        "saleCommissionFeeHint": "Tarif fixe, quel que soit le prix du bien."
       },
       "timezoneOptions": {
         "casablanca": "Africa/Casablanca (GMT+1)",
         "paris": "Europe/Paris (GMT+1)"
-      },
-      "notifications": {
-        "email": {
-          "title": "Notifications par email",
-          "description": "Recevoir les notifications par email"
-        },
-        "sms": {
-          "title": "Notifications SMS",
-          "description": "Recevoir les notifications par SMS"
-        },
-        "leadAutoAssign": {
-          "title": "Assignation auto des leads",
-          "description": "Assigner automatiquement les nouveaux leads aux agents"
-        },
-        "visitReminder": {
-          "label": "Rappel de visite (heures avant)",
-          "hours_one": "{{count}} heure",
-          "hours_other": "{{count}} heures"
-        }
       },
       "integrations": {
         "smtp": {
@@ -3360,79 +3567,104 @@
           "port": "Port",
           "portPlaceholder": "587",
           "user": "Utilisateur",
-          "password": "Mot de passe"
+          "password": "Mot de passe",
+          "passwordHint": "Laissez vide pour conserver le mot de passe existant."
         },
-        "api": {
-          "title": "API & Webhooks",
-          "description": "Clés API et webhooks pour les intégrations externes",
-          "keyLabel": "Clé API",
-          "regenerate": "Régénérer"
+        "apiKeyNote": "La clé API de l'agence se trouve dans l'onglet « Profil ».",
+        "intro": "Une connexion n'est enregistrée qu'après un appel réussi chez le fournisseur : le statut affiché est l'état réel.",
+        "erpTitle": "ERP",
+        "crmTitle": "CRM",
+        "lastSync": "Dernier envoi le {{date}} · {{count}} contact(s)",
+        "noContactSync": "Ce fournisseur ne reçoit pas les contacts automatiquement.",
+        "status": {
+          "connected": "Connecté",
+          "error": "En erreur",
+          "not_connected": "Non connecté"
         },
-        "erp": {
-          "title": "Intégrations ERP",
-          "description": "Connectez votre système de gestion d'entreprise",
+        "actions": {
+          "connect": "Connecter",
+          "connecting": "Connexion…",
+          "test": "Tester",
+          "disconnect": "Déconnecter",
+          "cancel": "Annuler",
+          "save": "Enregistrer la connexion"
+        },
+        "toasts": {
+          "connected": "{{provider}} connecté",
+          "tested": "Connexion vérifiée",
+          "testFailed": "Vérification échouée",
+          "disconnected": "Connexion supprimée"
+        },
+        "fieldLabels": {
+          "url": "URL de l'instance",
+          "db": "Base de données",
+          "login": "Identifiant",
+          "password": "Mot de passe",
+          "base_url": "URL de l'API",
+          "token": "Jeton d'accès",
+          "instance_url": "URL de l'instance",
+          "access_token": "Jeton OAuth",
+          "api_domain": "Domaine d'API"
+        },
+        "providers": {
           "odoo": {
             "name": "Odoo",
-            "description": "Synchronisation des contacts et factures"
+            "description": "Contacts et facturation dans votre ERP Odoo.",
+            "help": "Identifiants d'un utilisateur Odoo ayant le droit de créer des contacts (res.partner)."
           },
           "sap": {
-            "name": "SAP Business One",
-            "description": "Intégration comptable et gestion"
-          }
-        },
-        "crm": {
-          "title": "Intégrations CRM",
-          "description": "Connectez votre CRM externe pour synchroniser les données",
+            "name": "SAP",
+            "description": "Partenaires commerciaux via l'API OData.",
+            "help": "URL de la passerelle SAP et jeton technique ayant accès à API_BUSINESS_PARTNER."
+          },
           "salesforce": {
             "name": "Salesforce",
-            "description": "Synchronisation bidirectionnelle des leads et contacts"
+            "description": "Vos clients en contacts Salesforce.",
+            "help": "URL de l'instance (https://…my.salesforce.com) et jeton OAuth valide."
           },
           "hubspot": {
             "name": "HubSpot",
-            "description": "Gestion des contacts et automatisation marketing"
+            "description": "Vos clients en contacts HubSpot.",
+            "help": "Jeton d'une application privée HubSpot, avec la portée crm.objects.contacts.write."
           },
           "zoho": {
             "name": "Zoho CRM",
-            "description": "Import et export des données clients"
+            "description": "Vos clients en contacts Zoho.",
+            "help": "Domaine d'API (https://www.zohoapis.com ou .eu) et jeton OAuth valide."
           }
         },
-        "status": {
-          "notConnected": "Non connecté"
-        },
-        "actions": {
-          "configure": "Configurer",
-          "connect": "Connecter"
-        }
-      },
-      "security": {
-        "twoFactor": {
-          "title": "Authentification à deux facteurs",
-          "description": "Ajoutez une couche de sécurité supplémentaire à votre compte",
-          "button": "Configurer 2FA"
-        },
-        "sessions": {
-          "title": "Sessions actives",
-          "description": "Gérez les appareils connectés à votre compte",
-          "chromeMacos": "Chrome sur MacOS",
-          "currentSession": "Session actuelle",
-          "active": "Actif"
-        },
-        "dangerZone": {
-          "title": "Zone de danger",
-          "description": "Ces actions sont irréversibles",
-          "deleteAccount": "Supprimer le compte"
-        }
+        "urlNote": "L'URL doit être en https et désigner un service accessible publiquement."
       },
       "save": {
         "saving": "Sauvegarde...",
         "button": "Sauvegarder"
+      },
+      "commissions": {
+        "intro": "Ces barèmes sont posés d'office à la création d'une transaction ; l'agent peut les corriger au cas par cas."
+      },
+      "rules": {
+        "leadAutoAssign": {
+          "title": "Affectation automatique des leads",
+          "description": "Chaque nouveau lead est attribué à un agent dès son arrivée."
+        },
+        "sms": {
+          "title": "Alertes SMS de l'agence",
+          "description": "Envoi d'un SMS à l'agent concerné, en plus de l'e-mail."
+        },
+        "visitReminder": {
+          "label": "Rappel avant une visite",
+          "hint": "Délai d'envoi du rappel au client.",
+          "hours": "{{count}} h avant"
+        },
+        "accountNote": "Les alertes que vous recevez personnellement se règlent dans l'onglet « Mon compte »."
       }
     },
     "hub": {
       "tabs": {
         "agency": "Agence",
         "account": "Mon compte"
-      }
+      },
+      "subtitle": "Les réglages de l'agence d'un côté, votre compte de l'autre."
     },
     "shared": {
       "adminOnly": "Admin uniquement"
@@ -3509,6 +3741,553 @@
     },
     "comparables": {
       "title": "Biens comparables"
+    }
+  },
+  "stays": {
+    "shared": {
+      "pageTitle": "Séjours courte durée",
+      "gated": "Les séjours courte durée ne sont pas inclus dans votre offre.",
+      "loadError": "Une erreur est survenue lors du chargement. Réessayez plus tard."
+    },
+    "overview": {
+      "tabs": {
+        "planning": "Planning",
+        "tasks": "Tâches d'exploitation",
+        "messages": "Messages",
+        "access": "Accès",
+        "calendars": "Calendriers",
+        "calendar": "Calendrier",
+        "teams": "Équipes",
+        "maintenance": "Maintenance"
+      },
+      "arrivals": "Arrivées du jour",
+      "departures": "Départs du jour",
+      "inHouse": "Sur place",
+      "upcoming": "À venir",
+      "nights": "Nuits réservées",
+      "channels": "Canaux",
+      "channelsInError": "{{count}} en erreur",
+      "conflicts": "{{count}} séjour en double réservation. Vérifiez les calendriers concernés.",
+      "conflicts_other": "{{count}} séjours en double réservation. Vérifiez les calendriers concernés.",
+      "sourcesInError": "{{count}} calendrier ne répond plus.",
+      "sourcesInError_other": "{{count}} calendriers ne répondent plus.",
+      "syncAll": "Synchroniser tous les calendriers",
+      "syncDone": "{{ok}} calendrier(s) synchronisé(s), {{failed}} en échec.",
+      "seeConflicts": "Voir les séjours concernés",
+      "seeChannels": "Voir les calendriers",
+      "navLabel": "Rubriques des séjours",
+      "groups": {
+        "bookings": "Réservations",
+        "operations": "Exploitation",
+        "setup": "Réglages par bien"
+      },
+      "needStays": "Rien à traiter tant qu'aucun séjour n'est enregistré.",
+      "openCalendars": "Calendriers connectés"
+    },
+    "status": {
+      "confirmed": "Confirmé",
+      "blocked": "Bloqué",
+      "cancelled": "Annulé"
+    },
+    "platform": {
+      "airbnb": "Airbnb",
+      "booking": "Booking.com",
+      "vrbo": "VRBO",
+      "autre": "Autre"
+    },
+    "planning": {
+      "statusLabel": "Statut",
+      "allStatuses": "Tous",
+      "conflict": "Double réservation",
+      "unknownProperty": "Bien non rattaché",
+      "noGuestName": "Nom non publié",
+      "columns": {
+        "property": "Bien",
+        "guest": "Voyageur",
+        "dates": "Séjour",
+        "nights": "Nuits",
+        "channel": "Canal",
+        "status": "Statut",
+        "amount": "Montant"
+      },
+      "empty": {
+        "title": "Aucun séjour",
+        "description": "Ajoutez le calendrier d'une plateforme pour voir vos réservations ici."
+      },
+      "contact": {
+        "edit": "Compléter le contact du voyageur",
+        "title": "Contact du voyageur",
+        "help": "Les plateformes ne publient pas l'email du voyageur. Sans email, aucun message de séjour ne peut partir.",
+        "nameLabel": "Nom",
+        "emailLabel": "Email",
+        "phoneLabel": "Téléphone",
+        "cancel": "Annuler",
+        "submit": "Enregistrer",
+        "saved": "Contact enregistré."
+      },
+      "viewLabel": "Vue",
+      "views": {
+        "all": "Tous les séjours",
+        "arrivals": "Arrivées",
+        "departures": "Départs",
+        "in_house": "Sur place",
+        "upcoming": "À venir",
+        "conflicts": "Doubles réservations"
+      },
+      "guestCount": "{{count}} voyageur",
+      "guestCount_other": "{{count}} voyageurs",
+      "openStay": "Ouvrir la fiche du séjour",
+      "form": {
+        "newButton": "Saisir un séjour direct",
+        "title": "Nouveau séjour direct",
+        "editTitle": "Modifier le séjour",
+        "help": "Pour une location conclue hors plateforme. Les séjours venus d'un calendrier ne se saisissent pas ici.",
+        "propertyLabel": "Bien",
+        "propertyPlaceholder": "Choisir un bien",
+        "checkIn": "Arrivée",
+        "checkOut": "Départ",
+        "statusLabel": "Statut",
+        "guestCount": "Voyageurs",
+        "totalPrice": "Montant du séjour",
+        "cleaningFee": "Frais de ménage",
+        "notes": "Notes",
+        "requests": "Demandes particulières",
+        "cancel": "Annuler",
+        "submit": "Enregistrer",
+        "created": "Séjour enregistré.",
+        "updated": "Séjour modifié."
+      }
+    },
+    "calendars": {
+      "add": "Connecter des calendriers",
+      "sync": "Synchroniser",
+      "remove": "Retirer le calendrier",
+      "state": {
+        "pending": "En attente",
+        "ok": "À jour",
+        "error": "En erreur"
+      },
+      "columns": {
+        "property": "Bien",
+        "channel": "Canal",
+        "state": "État",
+        "lastSync": "Dernière synchro",
+        "stays": "Séjours"
+      },
+      "empty": {
+        "title": "Aucun calendrier",
+        "description": "Copiez l'URL iCal depuis Airbnb, Booking.com ou VRBO, puis ajoutez-la ici."
+      },
+      "toasts": {
+        "synced": "{{created}} séjour(s) ajouté(s), {{cancelled}} annulé(s).",
+        "removed": "Calendrier retiré.",
+        "connected": "{{count}} calendrier connecté, {{stays}} séjour(s) importé(s).",
+        "connected_other": "{{count}} calendriers connectés, {{stays}} séjour(s) importé(s)."
+      },
+      "modal": {
+        "title": "Connecter les calendriers d'un bien",
+        "help": "Un champ par plateforme : collez l'URL iCal publique (https) de celles où le bien est publié, laissez vide les autres. Chaque calendrier est lu aussitôt pour vérifier qu'il répond.",
+        "propertyLabel": "Bien",
+        "propertyPlaceholder": "Choisir un bien",
+        "cancel": "Annuler",
+        "submit": "Connecter",
+        "urlFor": "URL du calendrier iCal — {{platform}}",
+        "alreadyConnected": "Déjà connecté",
+        "urlPlaceholder": "{{platform}} — https://…"
+      },
+      "backToPlanning": "Revenir au planning des séjours"
+    },
+    "messages": {
+      "templatesTitle": "Modèles de messages",
+      "journalTitle": "Messages préparés",
+      "journalEmpty": "Aucun message préparé pour le moment.",
+      "add": "Ajouter un modèle",
+      "edit": "Modifier le modèle",
+      "disable": "Désactiver le modèle",
+      "allProperties": "Tous les biens",
+      "noRecipient": "Email manquant",
+      "trigger": {
+        "on_booking": "À la réservation",
+        "before_check_in": "Avant l'arrivée",
+        "after_check_out": "Après le départ",
+        "after_check_in": "Pendant le séjour",
+        "before_check_out": "Avant le départ"
+      },
+      "whenWithOffset": {
+        "before_check_in": "{{count}} h avant l'arrivée",
+        "after_check_out": "{{count}} h après le départ",
+        "after_check_in": "{{count}} h après l'arrivée",
+        "before_check_out": "{{count}} h avant le départ"
+      },
+      "status": {
+        "pending": "À envoyer",
+        "sent": "Envoyé",
+        "failed": "Échec",
+        "no_recipient": "Email manquant"
+      },
+      "columns": {
+        "name": "Modèle",
+        "when": "Envoi",
+        "scope": "Portée",
+        "subject": "Objet",
+        "stay": "Séjour",
+        "recipient": "Destinataire",
+        "due": "Échéance",
+        "status": "Statut"
+      },
+      "empty": {
+        "title": "Aucun modèle",
+        "description": "Écrivez un message type : il partira tout seul avant chaque arrivée ou après chaque départ."
+      },
+      "toasts": {
+        "saved": "Modèle enregistré.",
+        "disabled": "Modèle désactivé."
+      },
+      "modal": {
+        "title": "Nouveau modèle de message",
+        "editTitle": "Modifier le modèle",
+        "nameLabel": "Nom interne",
+        "triggerLabel": "Déclencheur",
+        "offsetLabel": "Délai en heures",
+        "propertyLabel": "Bien concerné",
+        "subjectLabel": "Objet de l'email",
+        "bodyLabel": "Message",
+        "placeholders": "Variables disponibles :",
+        "cancel": "Annuler",
+        "submit": "Enregistrer"
+      },
+      "presetsTitle": "Modèles prêts à l'emploi",
+      "presetsHelp": "Repris de StayManager et adaptés aux variables d'un séjour. Ajoutez-les puis récrivez-les à votre main.",
+      "presetAdd": "Ajouter ce modèle",
+      "presetAdded": "Déjà ajouté",
+      "presetToast": "Modèle « {{name}} » ajouté.",
+      "presets": {
+        "booking_confirmation": {
+          "name": "Confirmation de réservation",
+          "subject": "Votre réservation à {{property_title}} est confirmée",
+          "body": "Bonjour {{guest_name}},\n\nMerci pour votre réservation et votre confiance : {{nights}} nuit(s) à {{property_title}}, du {{check_in}} au {{check_out}}.\n\nNous restons à votre disposition pour toute question avant votre arrivée. Vous recevrez prochainement un lien d'enregistrement pour déclarer les voyageurs, conformément à la réglementation en vigueur.\n\nAu plaisir de vous accueillir !\n{{agency_name}}"
+        },
+        "welcome": {
+          "name": "Message de bienvenue",
+          "subject": "Bienvenue à {{property_title}}",
+          "body": "Bienvenue {{guest_name}} !\n\nNous sommes ravis de vous accueillir à {{property_title}} du {{check_in}} au {{check_out}}.\n\n{{agency_name}}"
+        },
+        "checkin_code": {
+          "name": "Instructions d'arrivée (code d'entrée)",
+          "subject": "Votre arrivée à {{property_title}}",
+          "body": "Bonjour {{guest_name}}, votre arrivée à {{property_title}} approche.\n\nCode d'entrée : {{access_code}}\n{{access_instructions}}\n\nÉcrivez-nous pour toute question. Excellent séjour !\n{{agency_name}}"
+        },
+        "checkin_manual": {
+          "name": "Instructions d'arrivée (remise des clés)",
+          "subject": "Votre arrivée à {{property_title}}",
+          "body": "Bonjour {{guest_name}}, votre arrivée à {{property_title}} approche.\n\nAccès : {{access_instructions}}\n\nÉcrivez-nous pour toute question. Excellent séjour !\n{{agency_name}}"
+        },
+        "during_stay": {
+          "name": "Message pendant le séjour",
+          "subject": "Tout va bien à {{property_title}} ?",
+          "body": "Bonjour {{guest_name}},\n\nNous espérons que votre installation s'est bien passée et que vous appréciez votre séjour à {{property_title}}.\nN'hésitez pas à nous écrire si vous avez besoin de quoi que ce soit.\n\n{{agency_name}}"
+        },
+        "checkout": {
+          "name": "Rappel de départ",
+          "subject": "Votre départ de {{property_title}}",
+          "body": "Bonjour {{guest_name}},\n\nNous espérons que vous avez passé un agréable séjour. Petit rappel : votre départ est prévu le {{check_out}}.\n\nAvant de partir, merci de :\n– rassembler vos affaires personnelles\n– éteindre la climatisation ou le chauffage\n– fermer les fenêtres et la porte\n– laisser les clés à l'endroit convenu\n\nSi vous avez apprécié votre séjour, un commentaire nous aiderait beaucoup ; et si quelque chose peut être amélioré, dites-le nous.\n\nBon retour,\n{{agency_name}}"
+        },
+        "review": {
+          "name": "Demande d'avis",
+          "subject": "Merci pour votre séjour à {{property_title}}",
+          "body": "Bonjour {{guest_name}},\n\nNous espérons que vous avez passé un bon séjour à {{property_title}}.\n\nSi vous avez des remarques, faites-nous-en part : cela nous aide à nous améliorer. Et un commentaire sur {{platform}} nous rendrait grand service, il aidera aussi d'autres voyageurs à trouver le logement qui leur convient.\n\nMerci encore et à bientôt !\n{{agency_name}}"
+        }
+      }
+    },
+    "cleaning": {
+      "statusLabel": "Statut",
+      "allStatuses": "Tous",
+      "kindFilterLabel": "Type de tâche",
+      "allKinds": "Tous les types",
+      "kind": {
+        "menage": "Ménage",
+        "linge": "Linge",
+        "accueil": "Accueil",
+        "conciergerie": "Conciergerie",
+        "controle": "Contrôle"
+      },
+      "add": "Ajouter une tâche",
+      "unassigned": "Non attribué",
+      "start": "Démarrer la tâche",
+      "finish": "Terminer la tâche",
+      "openDetail": "Ouvrir le détail",
+      "urgentChip": "{{count}} urgent",
+      "urgentChip_other": "{{count}} urgents",
+      "lateAlert": "{{count}} tâche en retard.",
+      "lateAlert_other": "{{count}} tâches en retard.",
+      "urgentAlert": "{{count}} signalement urgent non lu.",
+      "urgentAlert_other": "{{count}} signalements urgents non lus.",
+      "status": {
+        "pending": "À faire",
+        "in_progress": "En cours",
+        "done": "Fait",
+        "cancelled": "Annulé"
+      },
+      "zones": {
+        "chambres": "Chambres",
+        "salle_de_bain": "Salle de bain",
+        "cuisine": "Cuisine",
+        "sejour": "Séjour",
+        "exterieur": "Extérieur",
+        "linge": "Linge"
+      },
+      "reportKind": {
+        "issue": "Problème",
+        "stock": "Réassort",
+        "note": "Note"
+      },
+      "columns": {
+        "date": "Date",
+        "property": "Bien",
+        "nextArrival": "Prochaine arrivée",
+        "assignee": "Intervenant",
+        "status": "Statut"
+      },
+      "empty": {
+        "title": "Aucune tâche",
+        "description": "Les ménages se créent tout seuls au départ de chaque voyageur."
+      },
+      "toasts": {
+        "created": "Tâche ajoutée.",
+        "reported": "Signalement enregistré."
+      },
+      "detail": {
+        "title": "Détail de la tâche",
+        "zones": "Zones faites",
+        "reports": "Signalements",
+        "noReport": "Aucun signalement.",
+        "addReport": "Nouveau signalement",
+        "kindLabel": "Type",
+        "categoryLabel": "Catégorie",
+        "noteLabel": "Description",
+        "urgentLabel": "Urgent",
+        "urgent": "Urgent",
+        "photoLabel": "Photo (JPEG, PNG ou WebP)",
+        "submitReport": "Envoyer le signalement",
+        "markSeen": "Marquer comme lu",
+        "close": "Fermer"
+      },
+      "modal": {
+        "title": "Ajouter une tâche",
+        "help": "Pour une tâche hors séjour : ménage après travaux, accueil avant une visite.",
+        "kindLabel": "Type",
+        "propertyLabel": "Bien",
+        "propertyPlaceholder": "Choisir un bien",
+        "dateLabel": "Date prévue",
+        "notesLabel": "Note",
+        "cancel": "Annuler",
+        "submit": "Ajouter"
+      }
+    },
+    "checkin": {
+      "open": "Dossier d'enregistrement",
+      "title": "Enregistrement du voyageur",
+      "close": "Fermer",
+      "noLink": "Aucun lien d'enregistrement envoyé pour ce séjour.",
+      "create": "Créer le lien",
+      "renew": "Renouveler le lien",
+      "shareOnce": "Transmettez ce lien au voyageur : il ne sera plus affiché ensuite.",
+      "copy": "Copier le lien",
+      "expires": "Valable jusqu'au {{date}}",
+      "linkStatus": {
+        "sent": "Lien envoyé",
+        "submitted": "Dossier transmis",
+        "expired": "Lien expiré"
+      },
+      "guests": "Occupants déclarés : {{declared}} sur {{expected}}",
+      "noGuest": "Le voyageur n'a encore rien déclaré.",
+      "noDocument": "Pièce d'identité manquante.",
+      "lead": "Voyageur principal",
+      "validate": "Valider l'occupant",
+      "reject": "Refuser l'occupant",
+      "guestStatus": {
+        "declared": "À vérifier",
+        "validated": "Vérifié",
+        "rejected": "Refusé"
+      },
+      "documentType": {
+        "cin": "CIN",
+        "passeport": "Passeport",
+        "titre_sejour": "Titre de séjour"
+      },
+      "toasts": {
+        "created": "Lien d'enregistrement créé.",
+        "copied": "Lien copié.",
+        "copyFailed": "Copie impossible. Sélectionnez le lien à la main."
+      }
+    },
+    "access": {
+      "add": "Configurer un bien",
+      "edit": "Modifier le mode d'entrée",
+      "help": "Le mode d'entrée décide de ce que la messagerie de séjour peut annoncer au voyageur.",
+      "alreadySet": "déjà configuré",
+      "credentialsSet": "Identifiants posés",
+      "columns": {
+        "property": "Bien",
+        "mode": "Mode d'entrée",
+        "instructions": "Consignes"
+      },
+      "mode": {
+        "traditional": "Clés remises en main propre",
+        "manual": "Code posé par l'agence",
+        "ttlock": "Serrure connectée TTLock"
+      },
+      "modeHelp": {
+        "traditional": "Aucun code : vous remettez les clés au voyageur.",
+        "manual": "Vous saisissez le code de la boîte à clés ou du digicode pour chaque séjour.",
+        "ttlock": "Le code est demandé à la serrure pour la durée du séjour, puis révoqué."
+      },
+      "credentials": {
+        "client_id": "Identifiant client TTLock",
+        "client_secret": "Clé secrète TTLock",
+        "access_token": "Jeton d'accès TTLock",
+        "lock_id": "Identifiant de la serrure"
+      },
+      "empty": {
+        "title": "Aucun bien configuré",
+        "description": "Dites comment le voyageur entre dans chaque bien : clés, code, ou serrure connectée."
+      },
+      "toasts": {
+        "saved": "Mode d'entrée enregistré."
+      },
+      "modal": {
+        "title": "Mode d'entrée du bien",
+        "propertyLabel": "Bien",
+        "propertyPlaceholder": "Choisir un bien",
+        "modeLabel": "Mode d'entrée",
+        "instructionsLabel": "Consignes pour le voyageur",
+        "credentialsHelp": "Ces identifiants restent dans le service et ne sont jamais réaffichés.",
+        "cancel": "Annuler",
+        "submit": "Enregistrer"
+      }
+    },
+    "code": {
+      "title": "Code d'entrée",
+      "traditional": "Ce bien se remet en main propre : configurez un mode d'entrée par code dans l'onglet Accès.",
+      "manualLabel": "Code à communiquer",
+      "issue": "Poser le code",
+      "askLock": "Demander un code à la serrure",
+      "revoke": "Révoquer le code",
+      "validUntil": "Valable jusqu'au {{date}}",
+      "toasts": {
+        "issued": "Code posé.",
+        "revoked": "Code révoqué."
+      }
+    },
+    "calendar": {
+      "previous": "Mois précédent",
+      "next": "Mois suivant",
+      "nights": "{{count}} nuit",
+      "nights_other": "{{count}} nuits",
+      "empty": {
+        "title": "Aucun séjour ce mois-ci",
+        "description": "Changez de mois, ou ajoutez un calendrier de plateforme."
+      }
+    },
+    "detail": {
+      "back": "Retour au planning",
+      "edit": "Modifier le séjour",
+      "cancel": "Annuler le séjour",
+      "cancelTitle": "Annuler ce séjour ?",
+      "cancelHelp": "Le code d'entrée est révoqué et le ménage de rotation est annulé. Le séjour reste visible dans l'historique.",
+      "cancelConfirm": "Confirmer l'annulation",
+      "cancelled": "Séjour annulé.",
+      "guests": "Voyageurs",
+      "cleaningFee": "Frais de ménage",
+      "source": "Provenance",
+      "sources": {
+        "manual": "Saisie directe",
+        "ical": "Calendrier de plateforme",
+        "staymanager": "Compte StayManager"
+      },
+      "contactTitle": "Contact du voyageur",
+      "accessTitle": "Entrée et ménage",
+      "openAccess": "Régler l'accès du bien",
+      "codeWindow": "Valable du {{from}} au {{to}}",
+      "noCode": "Aucun code d'entrée actif pour ce séjour.",
+      "cleaningTitle": "Ménage de rotation",
+      "noCleaning": "Aucun ménage planifié.",
+      "guestsTitle": "Occupants déclarés",
+      "noGuests": "Aucun occupant déclaré. Envoyez le lien d'enregistrement au voyageur.",
+      "guestName": "Nom",
+      "guestDocument": "Pièce",
+      "lead": "(principal)",
+      "messagesTitle": "Messages du séjour",
+      "openMessages": "Ouvrir la messagerie",
+      "noMessages": "Aucun message préparé pour ce séjour.",
+      "conflictsTitle": "Séjours en conflit",
+      "conflictAlert": "Ce séjour en chevauche {{count}} autre sur le même bien.",
+      "conflictAlert_other": "Ce séjour en chevauche {{count}} autres sur le même bien."
+    },
+    "teams": {
+      "performanceTitle": "Activité des équipes",
+      "performanceSub": "Sur les {{count}} derniers jours",
+      "done": "Ménages faits",
+      "planned": "Ménages prévus",
+      "late": "En retard",
+      "avgMinutes": "Durée moyenne",
+      "minutes": "min",
+      "urgentReports": "{{count}} signalement urgent non lu",
+      "urgentReports_other": "{{count}} signalements urgents non lus",
+      "assignTitle": "Biens et équipes",
+      "assignHelp": "Le ménage d'un départ est confié à l'équipe du bien, sans désignation manuelle.",
+      "team": "Équipe",
+      "teamFor": "Équipe du bien {{property}}",
+      "noTeam": "Aucune équipe",
+      "noProperty": "Aucun bien dans votre portefeuille.",
+      "assigned": "Affectation enregistrée.",
+      "empty": {
+        "title": "Aucune équipe",
+        "description": "Créez une équipe de ménage ou de maintenance pour lui confier vos biens.",
+        "link": "Gérer les équipes"
+      }
+    },
+    "contract": {
+      "title": "Contrat de séjour",
+      "none": "Aucun contrat établi pour ce séjour.",
+      "generate": "Établir le contrat",
+      "generated": "Contrat établi. Le voyageur peut le signer depuis son lien d'enregistrement.",
+      "open": "Ouvrir le contrat",
+      "awaitingGuest": "En attente de la signature du voyageur.",
+      "signedOn": "Signé le {{date}}",
+      "status": {
+        "draft": "Brouillon",
+        "finalized": "À signer",
+        "signed": "Signé"
+      }
+    }
+  },
+  "onboarding": {
+    "title": "Mise en route",
+    "progress": "{{completed}} étapes sur {{total}}",
+    "dismiss": "Masquer la mise en route",
+    "steps": {
+      "agency_profile": "Compléter le profil de l'agence",
+      "first_property": "Créer votre premier bien",
+      "publish_property": "Publier un bien",
+      "commission_settings": "Régler vos barèmes de commission",
+      "invite_team": "Inviter un collaborateur",
+      "first_client": "Ajouter un client",
+      "first_visit": "Planifier une visite",
+      "subscription_active": "Activer votre abonnement"
+    }
+  },
+  "tiers": {
+    "title": "Tiers",
+    "subtitle": "Les notaires et les artisans de l'agence, et ce qu'on leur confie.",
+    "navLabel": "Métiers des tiers",
+    "tabs": {
+      "legal": "Notaires & dossiers",
+      "artisans": "Artisans & interventions"
+    },
+    "filters": {
+      "searchLegal": "Rechercher un notaire ou un dossier",
+      "searchArtisans": "Rechercher un artisan ou une intervention"
     }
   }
 }

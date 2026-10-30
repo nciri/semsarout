@@ -7,6 +7,7 @@ import i18n from '../../i18n'
 import useAuthStore from '../../store/authStore'
 import api from '../../services/api'
 import Properties from './Properties'
+import ConfirmProvider from '../../components/common/ConfirmProvider'
 
 vi.mock('../../services/api', () => ({
   default: { get: vi.fn(), put: vi.fn(), delete: vi.fn() },
@@ -50,7 +51,11 @@ function mockApi({ fail = false } = {}) {
 function renderPage({ features = [] } = {}) {
   useAuthStore.setState({ user: { id: 1, agency_id: 1, features }, accessToken: null, isAuthenticated: true })
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<QueryClientProvider client={qc}><MemoryRouter><Properties /></MemoryRouter></QueryClientProvider>)
+  return render(
+    <QueryClientProvider client={qc}>
+      <MemoryRouter><ConfirmProvider><Properties /></ConfirmProvider></MemoryRouter>
+    </QueryClientProvider>,
+  )
 }
 
 const rowOf = async (title) => (await screen.findAllByText(title)).map((el) => el.closest('[class*="border-t"]')).find(Boolean)
@@ -131,13 +136,14 @@ describe('Biens immobiliers du back-office', () => {
   })
 
   it('supprime un bien après confirmation', async () => {
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
     renderPage()
     const row = await rowOf('Appartement calme Maarif')
     await userEvent.click(within(row).getByRole('button', { name: 'Supprimer' }))
-    expect(confirm).toHaveBeenCalledWith('Supprimer « Appartement calme Maarif » ? Cette action est définitive.')
+    // La fenêtre dit ce qui va disparaître, et rien ne part avant l'accord.
+    expect(screen.getByText('Supprimer « Appartement calme Maarif » ? Cette action est définitive.')).toBeInTheDocument()
+    expect(api.delete).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmer' }))
     expect(api.delete).toHaveBeenCalledWith('/backoffice/properties/1')
-    confirm.mockRestore()
   })
 })
 

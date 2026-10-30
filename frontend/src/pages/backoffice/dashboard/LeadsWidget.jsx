@@ -10,6 +10,13 @@ function AgeChip({ days }) {
   return <Chip tone={agingTone(days)}>{t('dashboard.units.days', { count: days })}</Chip>
 }
 
+/** Activité du bien rattaché : un mot, pour ne pas confondre un lead de vente et un locatif. */
+function ActivityChip({ type }) {
+  const { t } = useTranslation('backoffice')
+  if (type !== 'sale' && type !== 'rent') return null
+  return <Chip tone="neutral">{t(`dashboard.activity.${type}`)}</Chip>
+}
+
 const sourceLabel = (t, s) => t(`dashboard.sources.${SOURCES.includes(s) ? s : 'other'}`)
 
 export function LeadsCompact({ leads, now }) {
@@ -69,7 +76,7 @@ export function LeadsDetail({ leads, now, onClose, titleRef }) {
     <DetailFrame
       title={t('dashboard.leads.title')}
       sub={t('dashboard.leads.detailSub', { count: leads.length })}
-      link={{ to: '/backoffice/leads', label: t('dashboard.leads.viewAll') }}
+      link={{ to: '/backoffice/leads?statut=new', label: t('dashboard.leads.viewAll') }}
       onClose={onClose}
       titleRef={titleRef}
     >
@@ -88,7 +95,10 @@ export function LeadsDetail({ leads, now, onClose, titleRef }) {
                 {leads.map((l) => (
                   <tr key={l.id} className="hover:bg-gray-50">
                     <td className={TD}><b className="font-semibold">{l.name || t('dashboard.leads.noName')}</b></td>
-                    <td className={TD}>{l.property_title || t('dashboard.leads.noProperty')}</td>
+                    <td className={TD}>
+                      {l.property_title || t('dashboard.leads.noProperty')}
+                      <span className="ms-1.5 align-[1px]"><ActivityChip type={l.transaction_type} /></span>
+                    </td>
                     <td className={`${TD} whitespace-nowrap`}>
                       <span className="me-1.5 inline-block w-2.5 h-2.5 rounded-[3px] align-[-1px]" style={{ background: SOURCE_COLORS[l.source] || '#9AA0AB' }} />
                       {sourceLabel(t, l.source)}

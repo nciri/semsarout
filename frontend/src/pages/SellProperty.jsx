@@ -13,6 +13,7 @@ import DirIcon from '../components/common/DirIcon'
 import { formatPrice, DIRHAM_SYMBOL } from '../utils/currency'
 import { PROPERTY_TYPES, FEATURES, MOROCCAN_CITIES, DOC_TYPES } from '../constants/property'
 import { CondoFeesField } from '../components/property/CondoFeesField'
+import RichTextarea from '../components/common/RichTextarea'
 
 const STORAGE_KEY = 'sell-wizard-v1'
 
@@ -536,12 +537,14 @@ function SellProperty() {
               </div>
 
               <div>
-                <label className="label">{t('public:sellProperty.step1.descriptionLabel')}</label>
-                <textarea
+                <label className="label" htmlFor="sell-description">
+                  {t('public:sellProperty.step1.descriptionLabel')}
+                </label>
+                <RichTextarea
+                  id="sell-description"
                   rows={4}
                   value={form.description}
-                  onChange={(e) => update({ description: e.target.value })}
-                  className="input resize-none"
+                  onChange={(description) => update({ description })}
                   placeholder={t('public:sellProperty.step1.descriptionPlaceholder')}
                 />
               </div>

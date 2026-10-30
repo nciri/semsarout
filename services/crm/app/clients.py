@@ -6,6 +6,8 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
+from semsar_common import sanitize_rich_field
+from semsar_events import enqueue
 
 from . import buyer, users_client
 from .db import get_db
@@ -32,6 +34,10 @@ _FIELDS = [
     "assigned_to_id", "gdpr_consent", "marketing_consent",
     "down_payment", "max_monthly_payment", "has_bank_preapproval",
 ]
+# Champ saisi en WYSIWYG : la fiche du client le rend en HTML. `search_criteria` et les
+# autres entrées de la boucle restent du texte brut — les assainir y échapperait « < » et
+# « & » et ferait apparaître des entités à l'écran.
+_C_RICH = ("notes",)
 
 
 def _client_dict(c: Client, include_interactions: bool = False, db: Session = None,
@@ -262,12 +268,16 @@ async def convert_lead(lead_id: int, request: Request, principal: Principal = De
         first_name=data.get("first_name", parts[0] if parts else ""),
         last_name=data.get("last_name", parts[1] if len(parts) > 1 else ""),
         email=lead.email, phone=lead.phone, client_type=data.get("client_type", "buyer"),
+        # `Lead.message` est déjà du HTML assaini : la colonne `notes` reçoit du riche, comme
+        # quand un agent la saisit. Les deux ne doivent pas diverger de format.
         source=lead.source, notes=lead.message,
         assigned_to_id=data.get("assigned_to_id") or uid, agency_id=principal.agency_id, lead_id=lead.id,
     )
     db.add(c)
     lead.status = "converted"
     lead.converted_at = datetime.utcnow()
+    db.flush()
+    _emit_created(db, c)
     db.commit()
     return _client_dict(c)
 
@@ -324,6 +334,16 @@ def client_history(client_id: int, principal: Principal = Depends(get_principal)
             "last_exchange_at": iso(_last_exchange(db, [c], now).get(c.id))}
 
 
+def _emit_created(db: Session, c: Client) -> None:
+    """`crm.client.created` : consommé par rental (projection) et par agency, qui pousse le
+    contact vers les CRM connectés de l'agence. Outbox : émis avec la transaction."""
+    enqueue(db, "client", c.id, "crm.client.created", {
+        "id": c.id, "agency_id": c.agency_id, "first_name": c.first_name,
+        "last_name": c.last_name, "email": c.email, "phone": c.phone, "city": c.city,
+        "client_type": c.client_type,
+    })
+
+
 @router.post("/backoffice/clients", status_code=201)
 async def create_client(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
     data = await json_body(request)
@@ -332,13 +352,16 @@ async def create_client(request: Request, principal: Principal = Depends(get_pri
         agency_id=principal.agency_id,
         assigned_to_id=data.get("assigned_to_id") or uid,
         gdpr_consent_date=datetime.utcnow() if data.get("gdpr_consent") else None,
-        **{k: data[k] for k in _FIELDS if k in data and k != "assigned_to_id"},
+        **{k: (sanitize_rich_field(data[k]) if k in _C_RICH else data[k])
+           for k in _FIELDS if k in data and k != "assigned_to_id"},
     )
     if not c.first_name:
         c.first_name = data.get("first_name", "")
     if not c.last_name:
         c.last_name = data.get("last_name", "")
     db.add(c)
+    db.flush()
+    _emit_created(db, c)
     db.commit()
     return _client_dict(c)
 
@@ -351,7 +374,7 @@ async def update_client(client_id: int, request: Request, principal: Principal =
     data = await json_body(request)
     for field in _FIELDS:
         if field in data:
-            setattr(c, field, data[field])
+            setattr(c, field, sanitize_rich_field(data[field]) if field in _C_RICH else data[field])
     c.updated_at = datetime.utcnow()
     db.commit()
     return _client_dict(c)

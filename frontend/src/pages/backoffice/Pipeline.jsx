@@ -11,6 +11,7 @@ import { P, useFlagText } from './pipeline/flagText'
 import {
   agentLoad, daysInStage, flatten, isActionable, longestIdle, matches, moveInPipeline, outcomes, todoItems, totals,
 } from './pipeline/model'
+import { useConfirm } from '../../components/common/confirm'
 
 const fetchPipeline = async (type) => (await api.get(`/backoffice/transactions/pipeline?${new URLSearchParams({ type })}`)).data
 const BRUT = '#C3E2DD'
@@ -186,6 +187,7 @@ function Agents({ rows, type, agent, onPick }) {
 
 export default function BackofficePipeline() {
   const { t } = useTranslation('backoffice', { keyPrefix: P })
+  const ask = useConfirm()
   const { fmtDate } = useFormat()
   const queryClient = useQueryClient()
   const [type, setType] = useState(readType)
@@ -258,9 +260,10 @@ export default function BackofficePipeline() {
     })
   }
 
-  const doArchive = (tx) => {
-    if (window.confirm(t('card.archiveConfirm', { ref: tx.reference }))) archive.mutate(tx.id)
-  }
+  const doArchive = (tx) => ask({
+    message: t('card.archiveConfirm', { ref: tx.reference }),
+    onConfirm: () => archive.mutate(tx.id),
+  })
 
   const toggle = (id) => setOpenIds((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
 

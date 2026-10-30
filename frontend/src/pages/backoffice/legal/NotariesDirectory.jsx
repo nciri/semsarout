@@ -10,12 +10,12 @@ import { DataTable, EmptyState, Field, Modal, GatedNotice, PRIMARY_BTN, SECONDAR
 const EMPTY = { name: '', office: '', city: '', phone: '', email: '', license_number: '' }
 const FIELD_KEYS = ['name', 'office', 'city', 'phone', 'email', 'license_number']
 
-function NotariesDirectory() {
+/** La recherche vient de l'onglet : un même mot cherche le notaire et ses dossiers. */
+function NotariesDirectory({ q = '' }) {
   const { t } = useTranslation(['backoffice', 'common'])
   const qc = useQueryClient()
   const navigate = useNavigate()
   const { data, isLoading, error } = useQuery('notaries', () => legalService.listNotaries())
-  const [q, setQ] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState(EMPTY)
@@ -35,7 +35,7 @@ function NotariesDirectory() {
     onError: onErr,
   })
   const createCase = useMutation((notaryId) => legalService.createCase({ case_type: 'sale', notary_id: notaryId }), {
-    onSuccess: (res) => { toast.success(t('backoffice:legal.shared.caseCreatedToast')); qc.invalidateQueries('legal-cases'); navigate(`/backoffice/notaires/dossiers/${res.case.id}`) },
+    onSuccess: (res) => { toast.success(t('backoffice:legal.shared.caseCreatedToast')); qc.invalidateQueries('legal-cases'); navigate(`/backoffice/tiers/dossiers/${res.case.id}`) },
     onError: onErr,
   })
 
@@ -86,13 +86,7 @@ function NotariesDirectory() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder={t('backoffice:legal.notaries.searchPlaceholder')}
-          className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
-        />
+      <div className="flex justify-end">
         <button onClick={openCreate} className={PRIMARY_BTN}>
           <FiPlus className="w-5 h-5" /> {t('backoffice:legal.notaries.addButton')}
         </button>

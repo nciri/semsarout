@@ -91,7 +91,24 @@ marketplace/add_cart_agency.sql
 crm/migrate_property_ro_owner.sql
 rental/migrate_property_ro_price.sql
 crm/migrate_buyer_dossier.sql
+agency/migrate_integrations.sql
+staymanager/migrate_sejours_natifs.sql
+staymanager/migrate_messagerie_sejour.sql
+staymanager/migrate_menage_sejour.sql
+staymanager/migrate_enregistrement_voyageur.sql
+staymanager/migrate_acces_sejour.sql
+billing/migrate_portail_abonnement.sql
+identity/migrate_equipes_metier.sql
+staymanager/migrate_equipes_exploitation.sql
+staymanager/migrate_contrat_sejour.sql
+staymanager/migrate_type_tache_exploitation.sql
 audit/add_tenant.sql
+directory/migrate_payeur_intervention.sql
+rental/migrate_crg_depenses.sql
+rental/migrate_retenue_intervention.sql
+contract/migrate_modeles_builtin.sql
+contract/migrate_contract_parties.sql
+transactions/migrate_notes_text.sql
 "
 
 # psql en tant que rôle postgres (patron roles/postgres d'Ansible : become_user postgres).

@@ -29,27 +29,30 @@ function MiniFunnel({ f }) {
   )
 }
 
-export function PipelineCompact({ pipeline, weekly }) {
+export function PipelineCompact({ pipeline, weekly, activity = 'all' }) {
   const { t } = useTranslation('backoffice')
   const money = useMoney()
-  const sale = pipeline?.sale || []
-  const rent = pipeline?.rent || []
-  const s = stageTotals(sale)
-  const r = stageTotals(rent)
+  // L'activité choisie en haut de page commande ce qui est mis en avant ; en « Tout »,
+  // la vente tient la colonne principale et la location reste résumée en une ligne.
+  const type = activity === 'rent' ? 'rent' : 'sale'
+  const main = pipeline?.[type] || []
+  const other = pipeline?.[type === 'sale' ? 'rent' : 'sale'] || []
+  const s = stageTotals(main)
+  const r = stageTotals(other)
   if (!s.count && !r.count) return <p className="text-sm text-gray-500">{t('dashboard.pipeline.empty')}</p>
 
-  const [v, unit] = money.parts(s.weighted, 'sale')
-  const finalAct = sale.find((x) => x.stage === 'final_act')
+  const [v, unit] = money.parts(s.weighted, type)
+  const finalAct = type === 'sale' ? main.find((x) => x.stage === 'final_act') : null
   const f = funnelOf(periodWeeks(weekly, 30).current)
-  const visible = sale.filter((x) => x.weighted > 0)
+  const visible = main.filter((x) => x.weighted > 0)
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
       <div className="grid content-start gap-3.5">
-        <Figure value={v} unit={unit}>{t('dashboard.pipeline.weightedOf', { amount: money(s.amount, 'sale') })}</Figure>
+        <Figure value={v} unit={unit}>{t('dashboard.pipeline.weightedOf', { amount: money(s.amount, type) })}</Figure>
         <div className="grid gap-2">
           <SegBar tall label={t('dashboard.pipeline.stagesLabel')}
-            parts={sale.map((x, i) => ({ value: x.weighted, color: STAGE_RAMP[i] }))} />
+            parts={main.map((x, i) => ({ value: x.weighted, color: STAGE_RAMP[i] }))} />
           <div className="flex gap-0.5 text-[11.5px] text-gray-500">
             {/* Une étape trop étroite garde son segment mais pas de libellé : tronqué, il devenait illisible. */}
             {visible.map((x) => (
@@ -62,7 +65,7 @@ export function PipelineCompact({ pipeline, weekly }) {
         {finalAct?.count > 0 && (
           <Alert tone="info" icon={FiFileText}>
             <Rich i18nKey="dashboard.pipeline.finalActs" values={{
-              count: finalAct.count, amount: money(finalAct.weighted, 'sale'),
+              count: finalAct.count, amount: money(finalAct.weighted, type),
               share: `${Math.round((finalAct.weighted / (s.weighted || 1)) * 100)} %`,
             }} />
           </Alert>
@@ -71,7 +74,9 @@ export function PipelineCompact({ pipeline, weekly }) {
       <div className="grid content-start gap-2.5">
         <span className="text-[12.5px] text-gray-500">{t('dashboard.pipeline.leadsLast4')}</span>
         <MiniFunnel f={f} />
-        {r.count > 0 && <span className="text-[12.5px] text-gray-500">{t('dashboard.pipeline.rentLine', { count: r.count, amount: money(r.weighted, 'rent') })}</span>}
+        {activity === 'all' && r.count > 0 && (
+          <span className="text-[12.5px] text-gray-500">{t('dashboard.pipeline.rentLine', { count: r.count, amount: money(r.weighted, 'rent') })}</span>
+        )}
       </div>
     </div>
   )
@@ -148,12 +153,13 @@ function WeeklyChart({ weeks }) {
   )
 }
 
-export function PipelineDetail({ pipeline, weekly, closed, onClose, titleRef }) {
+export function PipelineDetail({ pipeline, weekly, closed, activity = 'all', onClose, titleRef }) {
   const { t } = useTranslation('backoffice')
   const { fmtDate } = useFormat()
   const money = useMoney()
   const [period, setPeriod] = useState(30)
-  const [type, setType] = useState('sale')
+  // Plus de sélecteur ici : l'activité se choisit une seule fois, en haut de la page.
+  const type = activity === 'rent' ? 'rent' : 'sale' 
 
   const { current, previous } = periodWeeks(weekly, period)
   const f = funnelOf(current)
@@ -177,12 +183,10 @@ export function PipelineDetail({ pipeline, weekly, closed, onClose, titleRef }) 
       link={{ to: '/backoffice/pipeline', label: t('dashboard.pipeline.title') }}
       onClose={onClose}
       titleRef={titleRef}
-      controls={<>
+      controls={
         <Segmented label={t('dashboard.pipeline.periodLabel')} value={period} onChange={setPeriod}
           options={[7, 30, 90].map((p) => ({ value: p, label: t(`dashboard.pipeline.period.p${p}`) }))} />
-        <Segmented label={t('dashboard.pipeline.typeLabel')} value={type} onChange={setType}
-          options={['sale', 'rent'].map((v) => ({ value: v, label: t(`dashboard.pipeline.type.${v}`) }))} />
-      </>}
+      }
     >
       <div className="mb-5 grid grid-cols-2 rounded-lg border border-gray-200 lg:grid-cols-4 [&>*:nth-child(-n+2)]:border-b lg:[&>*:nth-child(-n+2)]:border-b-0 [&>*]:border-e [&>*:nth-child(2)]:border-e-0 lg:[&>*:nth-child(2)]:border-e [&>*:last-child]:border-e-0">
         <div className={kpi}>

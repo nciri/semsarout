@@ -11,6 +11,7 @@ import { DIRHAM_SYMBOL } from '../../utils/currency'
 import api from '../../services/api'
 import useAuthStore from '../../store/authStore'
 import { CondoFeesField } from '../../components/property/CondoFeesField'
+import RichTextarea from '../../components/common/RichTextarea'
 import { IconAction } from './components/kit'
 
 const backofficeService = {
@@ -220,7 +221,7 @@ export default function BackofficePropertyForm() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto w-full max-w-[1360px]">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <IconAction icon={FiArrowLeft} label={t('backoffice:crm.properties.form.backToList')} onClick={() => navigate('/backoffice/biens')}
@@ -294,14 +295,14 @@ export default function BackofficePropertyForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="property-description">
                 {t('backoffice:crm.properties.form.fields.description')}
               </label>
-              <textarea
+              <RichTextarea
+                id="property-description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(description) => setFormData({ ...formData, description })}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 placeholder={t('backoffice:crm.properties.form.fields.descriptionPlaceholder')}
               />
             </div>

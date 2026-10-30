@@ -6,7 +6,7 @@ projection locale maintenue par listing.* ; ClientRO (nom) sert l'affichage back
 """
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import BigInteger, Column, DateTime, Index, Integer, Numeric, String, Text, UniqueConstraint, text
 
 from .db import Base
 
@@ -100,7 +100,10 @@ class CrgReport(Base):
     month = Column(Integer, nullable=False)
     rent_collected = Column(Numeric(12, 2), default=0)
     fees = Column(Numeric(12, 2), default=0)
+    expenses = Column(Numeric(12, 2), default=0)
     net = Column(Numeric(12, 2), default=0)
+    status = Column(String(10), default="draft")             # draft|validated|sent
+    expense_lines = Column(Text)                              # JSON : [{id,title,cost_final,completed_at}]
     sent_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -191,11 +194,15 @@ class DepositSettlement(Base):
 
 class DeductionLine(Base):
     __tablename__ = "deduction_line"
+    __table_args__ = (Index("uq_deduction_line_wo", "settlement_id", "work_order_id", unique=True,
+                            postgresql_where=text("work_order_id IS NOT NULL"),
+                            sqlite_where=text("work_order_id IS NOT NULL")),)
     id = Column(Integer, primary_key=True, autoincrement=True)
     settlement_id = Column(Integer, index=True, nullable=False)
     label = Column(String(160), nullable=False)
     amount = Column(Numeric(12, 2), nullable=False)
     item_id = Column(Integer)                                 # rattachement facultatif à un élément dégradé
+    work_order_id = Column(BigInteger)                        # intervention (directory) dont la retenue est issue
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
