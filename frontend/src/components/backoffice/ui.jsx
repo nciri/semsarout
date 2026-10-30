@@ -205,7 +205,8 @@ export function Modal({ open, onClose, title, children, footer, maxWidth = 'max-
 
 export const PRIMARY_BTN = 'inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
 export const SECONDARY_BTN = 'inline-flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors'
-export const DANGER_BTN = 'inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+// Le rouge de la marque (« carton rouge », signature du « Out »), pas le rouge générique.
+export const DANGER_BTN = 'inline-flex items-center justify-center gap-2 px-4 py-2 bg-redcard-500 text-white rounded-lg hover:bg-redcard-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
 
 /**
  * Confirmation d'un geste irréversible, dans une fenêtre du produit plutôt que dans la

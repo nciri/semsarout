@@ -125,7 +125,7 @@ function WorkOrdersList({ filter = NO_FILTER }) {
     { header: '', align: 'right', cell: (w) => (w.can_delete ? (
       <button onClick={() => setRemoving(w)} disabled={remove.isLoading}
         title={t('backoffice:artisans.workOrder.delete')}
-        className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors">
+        className="p-1.5 text-gray-400 hover:text-redcard-600 rounded-lg hover:bg-redcard-50 transition-colors">
         <FiTrash2 className="w-4 h-4" />
       </button>
     ) : null) },
