@@ -189,6 +189,9 @@ pas à ce qui a été fait dans StayManager ».
     traces sont scellées à leur tour : `completed_at` ne se pose qu'au passage à « terminé »
     et rien ne l'efface, et le `cost_final` d'un bon clos ne se modifie qu'en administration,
     sans quoi il suffisait d'effacer le coût pour rouvrir le droit de supprimer.
+    Le retrait se confirme dans une fenêtre du produit (`ConfirmDialog`, ajouté au kit
+    back-office) et non dans la boîte du navigateur : le texte reste traduit et la page garde
+    la main, là où un `window.confirm` gèle son fil d'exécution.
 
 ## Décisions prises pour éviter les doublons
 

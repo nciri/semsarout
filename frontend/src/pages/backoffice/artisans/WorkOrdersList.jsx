@@ -5,7 +5,7 @@ import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { FiLock, FiPlus, FiClipboard, FiTrash2 } from 'react-icons/fi'
 import { artisanService } from '../../../services/artisanService'
-import { Modal, Select, DataTable, StatusBadge, EmptyState, GatedNotice, SECONDARY_BTN } from '../../../components/backoffice/ui'
+import { ConfirmDialog, Modal, Select, DataTable, StatusBadge, EmptyState, GatedNotice, SECONDARY_BTN } from '../../../components/backoffice/ui'
 
 const STATUS_TONE = {
   requested: 'bg-gray-100 text-gray-700',
@@ -67,6 +67,8 @@ function WorkOrdersList({ filter = NO_FILTER }) {
   const { data, isLoading, error } = useQuery('work-orders', () => artisanService.listWorkOrders())
   const { data: tradesData } = useQuery('artisan-trades', () => artisanService.listTrades(), { staleTime: 3600000 })
   const [open, setOpen] = useState(false)
+  // Le bon visé par la corbeille, en attente de confirmation ; null = fenêtre fermée.
+  const [removing, setRemoving] = useState(null)
   const [title, setTitle] = useState('')
   const [trade, setTrade] = useState('plombier')
   const trades = tradesData?.trades || []
@@ -85,8 +87,12 @@ function WorkOrdersList({ filter = NO_FILTER }) {
   // Le service décide qui retire quoi (rôle + statut) et renvoie `can_delete` : l'écran
   // n'affiche l'action que là où elle aboutira.
   const remove = useMutation((id) => artisanService.deleteWorkOrder(id), {
-    onSuccess: () => { toast.success(t('backoffice:artisans.workOrder.toasts.deleted')); qc.invalidateQueries('work-orders') },
-    onError: fail,
+    onSuccess: () => {
+      toast.success(t('backoffice:artisans.workOrder.toasts.deleted'))
+      setRemoving(null)
+      qc.invalidateQueries('work-orders')
+    },
+    onError: (e) => { setRemoving(null); fail(e) },
   })
 
   // Le filtre de l'onglet vaut aussi ici : chercher « Benali » doit sortir ses interventions,
@@ -117,7 +123,7 @@ function WorkOrdersList({ filter = NO_FILTER }) {
     { header: t('backoffice:artisans.workOrder.columns.status'), cell: (w) => <StatusBadge label={t(`backoffice:artisans.workOrder.status.${w.status}`, { defaultValue: w.status })} className={STATUS_TONE[w.status]} /> },
     // impeccable-disable-next-line gray-on-color -- icône grise sur fond blanc ; le rouge n'est qu'un état :hover
     { header: '', align: 'right', cell: (w) => (w.can_delete ? (
-      <button onClick={() => remove.mutate(w.id)} disabled={remove.isLoading}
+      <button onClick={() => setRemoving(w)} disabled={remove.isLoading}
         title={t('backoffice:artisans.workOrder.delete')}
         className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors">
         <FiTrash2 className="w-4 h-4" />
@@ -143,6 +149,21 @@ function WorkOrdersList({ filter = NO_FILTER }) {
         rows={orders}
         isLoading={isLoading}
         empty={<EmptyState icon={FiClipboard} title={t('backoffice:artisans.workOrder.empty.title')} description={t('backoffice:artisans.workOrder.empty.description')} />}
+      />
+
+      {/* Un retrait ne se rejoue pas : il se confirme dans une fenêtre du produit. */}
+      <ConfirmDialog
+        open={removing !== null}
+        title={t('backoffice:artisans.workOrder.confirmDelete.title')}
+        message={t('backoffice:artisans.workOrder.confirmDelete.message', {
+          title: removing?.title,
+          status: t(`backoffice:artisans.workOrder.status.${removing?.status}`, { defaultValue: removing?.status }),
+        })}
+        confirmLabel={t('backoffice:artisans.workOrder.confirmDelete.confirm')}
+        cancelLabel={t('backoffice:artisans.workOrder.form.cancel')}
+        busy={remove.isLoading}
+        onCancel={() => setRemoving(null)}
+        onConfirm={() => remove.mutate(removing.id)}
       />
 
       {/* La saisie quitte la page : une intervention se crée dans sa fenêtre, sans pousser

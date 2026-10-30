@@ -205,6 +205,28 @@ export function Modal({ open, onClose, title, children, footer, maxWidth = 'max-
 
 export const PRIMARY_BTN = 'inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
 export const SECONDARY_BTN = 'inline-flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors'
+export const DANGER_BTN = 'inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+
+/**
+ * Confirmation d'un geste irréversible, dans une fenêtre du produit plutôt que dans la
+ * boîte du navigateur : le texte reste traduit, la mise en forme reste la nôtre, et la page
+ * garde la main — un `window.confirm` gèle tout son fil d'exécution.
+ */
+export function ConfirmDialog({
+  open, title, message, confirmLabel, cancelLabel, onConfirm, onCancel, busy = false,
+}) {
+  return (
+    <Modal open={open} onClose={onCancel} title={title} maxWidth="max-w-md"
+      footer={(
+        <>
+          <button onClick={onCancel} className={SECONDARY_BTN}>{cancelLabel}</button>
+          <button onClick={onConfirm} disabled={busy} className={DANGER_BTN}>{confirmLabel}</button>
+        </>
+      )}>
+      <p className="text-sm text-gray-600">{message}</p>
+    </Modal>
+  )
+}
 
 export function GatedNotice({ icon: Icon, title, message }) {
   const { t } = useTranslation(['backoffice', 'common'])

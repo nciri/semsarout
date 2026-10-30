@@ -96,7 +96,21 @@ describe('Artisans & interventions', () => {
     const termine = screen.getByText('Fuite salle de bain').closest('tr')
     expect(within(termine).queryByRole('button', { name: "Retirer l'intervention" })).not.toBeInTheDocument()
     await userEvent.click(within(engage).getByRole('button', { name: "Retirer l'intervention" }))
+    // Le clic ne retire rien : il demande confirmation, dans une fenêtre du produit.
+    expect(svc.deleteWorkOrder).not.toHaveBeenCalled()
+    expect(screen.getByText('Retirer cette intervention ?')).toBeInTheDocument()
+    expect(screen.getByText(/Tableau électrique.*Planifié/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Retirer' }))
     await vi.waitFor(() => expect(svc.deleteWorkOrder).toHaveBeenCalledWith(12))
+  })
+
+  it("laisse l'intervention en place si on renonce", async () => {
+    renderPage()
+    const engage = (await screen.findByText('Tableau électrique')).closest('tr')
+    await userEvent.click(within(engage).getByRole('button', { name: "Retirer l'intervention" }))
+    await userEvent.click(screen.getByRole('button', { name: 'Annuler' }))
+    expect(screen.queryByText('Retirer cette intervention ?')).not.toBeInTheDocument()
+    expect(svc.deleteWorkOrder).not.toHaveBeenCalled()
   })
 
   it('filtre les interventions par métier', async () => {
