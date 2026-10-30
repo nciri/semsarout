@@ -19,6 +19,7 @@ from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
+from semsar_common import sanitize_rich_field
 
 from .db import get_db
 from .gate import gate
@@ -260,7 +261,11 @@ async def add_report(task_id: int, request: Request,
     kind = (data.get("kind") or "").strip()
     if kind not in REPORT_KINDS:
         return err("Type de rapport inconnu", 400)
-    note = (data.get("text_note") or "").strip()[:2000]
+    # Champ saisi en WYSIWYG, comme tous ses voisins : ce qui arrive est du HTML, assaini à
+    # l'écriture. Le plafond s'applique au HTML, qui peut donc être coupé au milieu d'une
+    # balise : on repasse l'assainisseur après la troncature, et il referme l'arbre.
+    note = sanitize_rich_field(data.get("text_note"))
+    note = sanitize_rich_field(note[:2000]) if note else ""
     if not note:
         return err("Le rapport doit dire ce qui se passe", 400)
     report = CleaningReport(task_id=t.id, author_user_id=_uid(principal), kind=kind,

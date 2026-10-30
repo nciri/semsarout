@@ -10,6 +10,8 @@ import api from '../../../services/api'
 import { useFormat } from '../../../utils/format'
 import { Alert, Chip, IconAction, Kv, TD, TH } from '../components/kit'
 import { EmptyState, Field, Modal, PRIMARY_BTN, SECONDARY_BTN, Select } from '../../../components/backoffice/ui'
+import RichTextarea, { RichText } from '../../../components/common/RichTextarea'
+import { isRichTextEmpty } from '../../../utils/richText'
 
 const NEW_TASK = { kind: 'menage', property_id: '', scheduled_date: '', notes: '' }
 const NEW_REPORT = { kind: 'issue', category: '', text_note: '', is_urgent: false }
@@ -229,7 +231,7 @@ function CleaningPanel() {
                       </button>
                     )}
                   </div>
-                  <p className="mt-1.5 whitespace-pre-line text-[13.5px]">{r.text_note}</p>
+                  <RichText html={r.text_note} className="mt-1.5 text-[13.5px]" />
                   {r.photos?.length > 0 && (
                     <ul className="mt-1.5 flex flex-wrap gap-2 text-xs">
                       {r.photos.map((p) => (
@@ -265,9 +267,8 @@ function CleaningPanel() {
                 <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="report-note">
                   {t('backoffice:stays.cleaning.detail.noteLabel')}
                 </label>
-                <textarea id="report-note" rows={3} value={report.text_note}
-                  onChange={(e) => setReport((r) => ({ ...r, text_note: e.target.value }))}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                <RichTextarea id="report-note" rows={3} value={report.text_note}
+                  onChange={(html) => setReport((r) => ({ ...r, text_note: html }))} />
               </div>
               <label className="inline-flex items-center gap-2 text-[13.5px]">
                 <input type="checkbox" checked={report.is_urgent}
@@ -281,7 +282,7 @@ function CleaningPanel() {
                   onChange={(e) => setPhoto(e.target.files?.[0] || null)} className="text-[13px]" />
               </label>
               <div>
-                <button type="button" disabled={!report.text_note.trim() || addReport.isLoading}
+                <button type="button" disabled={isRichTextEmpty(report.text_note) || addReport.isLoading}
                   onClick={() => addReport.mutate()} className={PRIMARY_BTN}>
                   {t('backoffice:stays.cleaning.detail.submitReport')}
                 </button>

@@ -525,6 +525,37 @@ describe('Ménage de rotation', () => {
       kind: 'issue', category: '', text_note: 'Serviettes manquantes', is_urgent: false,
     }))
   })
+
+  // Dernier `<textarea>` du front, converti ici : le champ est saisi en WYSIWYG comme tous
+  // ses voisins, et sa surface d'affichage rend le HTML stocké au lieu de l'afficher en clair.
+  it('envoie le signalement en texte riche assaini', async () => {
+    renderAt('/backoffice/sejours/menage')
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Ouvrir le détail' }))[0])
+    const editeur = await screen.findByRole('textbox', { name: 'Description' })
+    editeur.innerHTML = '<p>Fuite <b>sous l\'évier</b></p><script>alert(1)</script>'
+    await userEvent.click(editeur)
+    await userEvent.tab()
+    await userEvent.click(screen.getByRole('button', { name: 'Envoyer le signalement' }))
+    await vi.waitFor(() => expect(svc.addReport).toHaveBeenCalledWith(51, expect.objectContaining({
+      text_note: '<p>Fuite <b>sous l\'évier</b></p>',
+    })))
+  })
+
+  it('affiche un rapport stocké en HTML comme du balisage, pas en clair', async () => {
+    svc.getCleaning.mockResolvedValue({ task: { ...CLEANING_DETAIL.task, reports: [
+      { ...CLEANING_DETAIL.task.reports[0], text_note: '<p>Fuite <b>urgente</b></p>' },
+    ] } })
+    renderAt('/backoffice/sejours/menage')
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Ouvrir le détail' }))[0])
+    const gras = await vi.waitFor(() => {
+      const el = document.querySelector('.rich-text b')
+      expect(el).not.toBeNull()
+      return el
+    })
+    expect(gras).toHaveTextContent('urgente')
+    // Et jamais la balise affichée en clair.
+    expect(screen.queryByText(/<b>/)).not.toBeInTheDocument()
+  })
 })
 
 const CHECKIN = {

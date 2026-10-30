@@ -138,6 +138,22 @@ def test_rapport_vide_ou_de_type_inconnu_refuse(client, seeded):
                        json={"kind": "ragot", "text_note": "x"}).status_code == 400
 
 
+def test_le_rapport_est_assaini_a_la_saisie_et_vide_par_l_editeur_est_refuse(client, seeded):
+    """Le texte d'un rapport est saisi en WYSIWYG comme tous ses voisins : ce qui est stocké
+    est du HTML, donc un XSS stocké déclenché par la fiche de la tâche s'il n'est pas assaini
+    ici. L'éditeur vidé rend `<p><br></p>` : du HTML valide, mais sans contenu."""
+    _stay(seeded, days=1)
+    task_id = client.get("/backoffice/sejours/menage").json()["tasks"][0]["id"]
+    r = client.post(f"/backoffice/sejours/menage/{task_id}/rapports", json={
+        "kind": "issue",
+        "text_note": '<p class="MsoNormal">Fuite <strong>sous l\'évier</strong></p>'
+                     '<script>alert(1)</script><img src=x onerror="alert(2)">'})
+    assert r.status_code == 201
+    assert r.json()["report"]["text_note"] == "<p>Fuite <strong>sous l'évier</strong></p>"
+
+    assert client.post(f"/backoffice/sejours/menage/{task_id}/rapports",
+                       json={"kind": "issue", "text_note": "<p><br></p>"}).status_code == 400
+
 def test_photo_d_un_rapport_deposee_et_relue(client, seeded, _storage):
     _stay(seeded, days=1)
     task_id = client.get("/backoffice/sejours/menage").json()["tasks"][0]["id"]
