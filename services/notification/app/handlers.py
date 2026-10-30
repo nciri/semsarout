@@ -69,8 +69,9 @@ def _contact() -> str:
 
 
 def _try_send(db, to: str, template: str, log_name: str, from_email: str | None = None,
-              attachments=None, agency_id: int | None = None, **ctx) -> None:
-    """`agency_id` : l'e-mail part du SMTP de l'agence si elle en a configuré un."""
+              attachments=None, agency_id: int | None = None, **ctx) -> bool:
+    """`agency_id` : l'e-mail part du SMTP de l'agence si elle en a configuré un.
+    Renvoie False si l'envoi a échoué (déjà journalisé) ; la plupart des appelants l'ignorent."""
     try:
         subject, html, text = render.render_email(template, **ctx)
         email_adapter.send_email(to, subject, text, html=html, from_email=from_email,
@@ -78,9 +79,11 @@ def _try_send(db, to: str, template: str, log_name: str, from_email: str | None 
                                   smtp=agency_client.smtp_of(agency_id))
         _log(db, "email", to, log_name, "sent")
         logger.info("email envoyé", extra={"template": log_name, "recipient": to})
+        return True
     except Exception as exc:  # noqa: BLE001 — échec SMTP journalisé, pas de boucle DLQ
         _log(db, "email", to, log_name, "failed")
         logger.error("échec envoi %s: %s", log_name, exc)
+        return False
 
 
 def _fetch_receipt_pdf(period_id):

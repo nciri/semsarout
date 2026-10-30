@@ -226,7 +226,7 @@ class _FakeDb:
         pass
 
 
-def _fake_crg(monkeypatch, drafts, reports, ack_status=200):
+def _fake_crg(monkeypatch, drafts, reports, ack_status=200, mail_ok=True, ack_error=None):
     """Fait répondre `rental` (due-crg, due-crg-send, crg-sent) et journalise l'ordre des appels."""
     import httpx
 
@@ -249,6 +249,8 @@ def _fake_crg(monkeypatch, drafts, reports, ack_status=200):
 
     def fake_post(url, **kw):
         events.append(("crg-sent", url, kw.get("json")))
+        if ack_error:
+            raise ack_error
         return _Resp({"ok": True}, ack_status)
 
     monkeypatch.setattr(httpx, "get", fake_get)
@@ -256,7 +258,8 @@ def _fake_crg(monkeypatch, drafts, reports, ack_status=200):
     monkeypatch.setattr(recipients, "agency", lambda i: {"email": "agence@example.com", "name": "Atlas"})
     monkeypatch.setattr(recipients, "client", lambda i: {"email": "proprio@example.com", "name": "Salma"})
     monkeypatch.setattr(scheduler, "_try_send",
-                        lambda db, to, template, log_name, **ctx: events.append(("mail", to, template, ctx)))
+                        lambda db, to, template, log_name, **ctx:
+                        events.append(("mail", to, template, ctx)) or mail_ok)
     return scheduler, events
 
 
@@ -303,5 +306,62 @@ def test_gabarit_crg_affiche_les_depenses_et_reste_lisible_a_zero(expenses):
 
     _, html, _ = render.render_email("crg_report.html", name="Salma", period_label="Septembre 2026",
                                      rent_collected=6000, fees=480, expenses=expenses, net=4320)
-    assert "Dépenses d" in html
+    assert "Dépenses d'intervention" in html.replace("&#39;", "'")
     assert html.index("Honoraires") < html.index("Dépenses") < html.index("Net reversé")
+
+
+def test_crg_dont_le_marquage_est_injoignable_ne_part_pas_et_se_voit_dans_les_logs(monkeypatch, caplog):
+    import httpx
+
+    scheduler, events = _fake_crg(monkeypatch, drafts=[], reports=[_REPORT],
+                                  ack_error=httpx.ConnectError("rental down"))
+    assert scheduler._job_crg_reports(_FakeDb()) == 0
+    assert [e[0] for e in events] == ["crg-sent"]
+    assert "injoignable" in caplog.text
+
+
+def test_crg_dont_l_email_echoue_apres_le_marquage_n_est_pas_compte_et_se_voit(monkeypatch, caplog):
+    scheduler, events = _fake_crg(monkeypatch, drafts=[], reports=[_REPORT], mail_ok=False)
+    assert scheduler._job_crg_reports(_FakeDb()) == 0
+    assert [e[0] for e in events] == ["crg-sent", "mail"]
+    assert "CRG 9" in caplog.text and "échec" in caplog.text
+
+
+def test_crg_une_entree_malformee_n_arrete_pas_le_lot(monkeypatch, caplog):
+    scheduler, events = _fake_crg(monkeypatch, drafts=[], reports=[{"landlord_client_id": 5}, _REPORT])
+    assert scheduler._job_crg_reports(_FakeDb()) == 1
+    assert "incomplète" in caplog.text
+
+
+def test_crg_contrat_de_liste_rompu_est_signale(monkeypatch, caplog):
+    scheduler, events = _fake_crg(monkeypatch, drafts=[], reports=[])
+    monkeypatch.setattr(scheduler.httpx, "get", lambda url, **kw: type(
+        "R", (), {"status_code": 200, "json": lambda self: {"renamed": []}})())
+    assert scheduler._job_crg_reports(_FakeDb()) == 0
+    assert "clé" in caplog.text
+
+
+def test_crg_liste_en_erreur_http_est_signalee(monkeypatch, caplog):
+    scheduler, events = _fake_crg(monkeypatch, drafts=[], reports=[])
+    monkeypatch.setattr(scheduler.httpx, "get", lambda url, **kw: type(
+        "R", (), {"status_code": 500, "json": lambda self: {}})())
+    assert scheduler._job_crg_reports(_FakeDb()) == 0
+    assert "HTTP 500" in caplog.text
+
+
+def test_crg_agence_sans_email_est_signalee(monkeypatch, caplog):
+    from app import recipients
+
+    scheduler, events = _fake_crg(monkeypatch, drafts=[
+        {"mandate_id": 3, "crg_id": 9, "agency_id": 4, "period_label": "Septembre 2026", "created": True}],
+        reports=[])
+    monkeypatch.setattr(recipients, "agency", lambda i: {"email": ""})
+    scheduler._job_crg_reports(_FakeDb())
+    assert events == [] and "agence 4" in caplog.text
+
+
+def test_gabarit_crg_draft_se_rend_avec_son_lien():
+    from app import render
+
+    _, html, _ = render.render_email("crg_draft.html", agency_name="Atlas", period_label="Septembre 2026")
+    assert "Septembre 2026" in html and "/backoffice/gestion-locative" in html
