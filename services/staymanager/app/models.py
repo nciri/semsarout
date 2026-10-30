@@ -11,9 +11,8 @@ pourrait avoir aucun séjour.
 from datetime import datetime
 
 from sqlalchemy import (
-    JSON, BigInteger, Boolean, Column, Date, DateTime, ForeignKey, Integer, Numeric, String,
-    Text,
-    UniqueConstraint,
+    JSON, BigInteger, Boolean, Column, Date, DateTime, ForeignKey, Index, Integer, Numeric, String,
+    Text, UniqueConstraint, text,
 )
 
 from .db import Base
@@ -202,13 +201,21 @@ class CleaningTask(Base):
     membre de l'équipe et close par un rapport.
     """
     __tablename__ = "cleaning_task"
-    __table_args__ = (UniqueConstraint("reservation_id", name="uq_cleaning_task_reservation"),)
+    # Un séjour porte au plus une tâche de chaque type. Index partiel, comme en migration :
+    # les tâches sans séjour (reservation_id nul) ne sont pas contraintes.
+    __table_args__ = (Index("uq_cleaning_task_reservation_kind", "reservation_id", "kind",
+                            unique=True,
+                            postgresql_where=text("reservation_id IS NOT NULL"),
+                            sqlite_where=text("reservation_id IS NOT NULL")),)
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     agency_id = Column(Integer, nullable=False, index=True)
     property_id = Column(Integer, nullable=False, index=True)
     # Nul pour un ménage ajouté à la main (après travaux, avant une visite).
     reservation_id = Column(BigInteger, ForeignKey("staymanager_reservation.id"), index=True)
+    # menage|linge|accueil|conciergerie|controle. Pas de maintenance : une réparation a un
+    # devis, un payeur et un artisan, c'est un `work_order` de `directory`.
+    kind = Column(String(20), default="menage", server_default="menage")
     assigned_to_id = Column(Integer, index=True)
     # Équipe chargée du bien au moment où la tâche est née : gardée sur la ligne pour que
     # l'historique reste lisible après un changement d'affectation.

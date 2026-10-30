@@ -1,8 +1,9 @@
 """Ménage de rotation : génération depuis les départs, avancement, rapports, cloisonnement."""
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 import pytest
 
+from app.cleaning import ensure_tasks
 from app.models import CleaningTask, PropertyRO, StayManagerReservation
 from tests.conftest import AGENCY
 
@@ -217,3 +218,48 @@ def test_nombre_de_photos_borne_par_signalement(client, seeded):
     for _ in range(cleaning.MAX_PHOTOS_PER_REPORT):
         assert client.post(path, content=JPEG, headers={"content-type": "image/jpeg"}).status_code == 201
     assert client.post(path, content=JPEG, headers={"content-type": "image/jpeg"}).status_code == 400
+
+
+def _tache(db, **fields):
+    fields.setdefault("property_id", PROPERTY)
+    task = CleaningTask(agency_id=AGENCY, **fields)
+    db.add(task)
+    db.commit()
+    return task
+
+
+def test_une_tache_sans_type_vaut_un_menage(client, seeded):
+    t = _tache(seeded, scheduled_date=date(2026, 10, 30))
+    assert client.get(f"/backoffice/sejours/menage/{t.id}").json()["task"]["kind"] == "menage"
+
+
+def test_un_sejour_porte_son_menage_et_son_accueil(seeded):
+    sejour = _stay(seeded, days=1)
+    _tache(seeded, reservation_id=sejour.id, kind="accueil",
+           scheduled_date=sejour.check_out.date())
+    # La rotation de ménage reste à créer : l'accueil ne la bloque pas.
+    assert ensure_tasks(seeded, AGENCY) == 1
+    kinds = sorted(t.kind for t in seeded.query(CleaningTask)
+                   .filter(CleaningTask.reservation_id == sejour.id))
+    assert kinds == ["accueil", "menage"]
+    # Et un second passage ne duplique rien.
+    assert ensure_tasks(seeded, AGENCY) == 0
+
+
+def test_le_filtre_de_type(client, seeded):
+    _tache(seeded, kind="menage", scheduled_date=date(2026, 10, 30))
+    _tache(seeded, kind="linge", scheduled_date=date(2026, 10, 30))
+    rows = client.get("/backoffice/sejours/menage?kind=linge").json()["tasks"]
+    assert [t["kind"] for t in rows] == ["linge"]
+
+
+def test_un_type_inconnu_est_refuse(client, seeded):
+    assert client.post("/backoffice/sejours/menage", json={
+        "property_id": PROPERTY, "scheduled_date": "2026-10-30",
+        "kind": "jardinage"}).status_code == 400
+
+
+def test_un_type_connu_est_enregistre_a_la_creation(client, seeded):
+    r = client.post("/backoffice/sejours/menage", json={
+        "property_id": PROPERTY, "scheduled_date": "2026-10-30", "kind": "linge"})
+    assert r.status_code == 201 and r.json()["task"]["kind"] == "linge"

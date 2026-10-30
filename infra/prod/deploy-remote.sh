@@ -101,6 +101,7 @@ billing/migrate_portail_abonnement.sql
 identity/migrate_equipes_metier.sql
 staymanager/migrate_equipes_exploitation.sql
 staymanager/migrate_contrat_sejour.sql
+staymanager/migrate_type_tache_exploitation.sql
 audit/add_tenant.sql
 directory/migrate_payeur_intervention.sql
 rental/migrate_crg_depenses.sql

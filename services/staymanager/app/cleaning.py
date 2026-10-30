@@ -32,6 +32,7 @@ router = APIRouter()
 
 ZONES = ("chambres", "salle_de_bain", "cuisine", "sejour", "exterieur", "linge")
 STATUSES = ("pending", "in_progress", "done", "cancelled")
+KINDS = ("menage", "linge", "accueil", "conciergerie", "controle")
 REPORT_KINDS = ("issue", "stock", "note")
 # Un rapport est relu dans le navigateur de l'agent : seuls des formats inertes.
 ALLOWED_PHOTO_TYPES = ("image/jpeg", "image/png", "image/webp")
@@ -73,8 +74,10 @@ def ensure_tasks(db: Session, agency_id: int, today: date | None = None) -> int:
                      StayManagerReservation.check_out >= floor).all())
     if not stays:
         return 0
+    # Le ménage seul : une tâche d'accueil ou de linge ne dispense pas de la rotation.
     known = {t.reservation_id for t in db.query(CleaningTask)
              .filter(CleaningTask.agency_id == agency_id,
+                     CleaningTask.kind == "menage",
                      CleaningTask.reservation_id.isnot(None)).all()}
     created = 0
     for stay in stays:
@@ -104,7 +107,7 @@ def _task_dict(db: Session, t: CleaningTask, with_reports: bool = False) -> dict
     reports = (db.query(CleaningReport).filter(CleaningReport.task_id == t.id)
                .order_by(CleaningReport.created_at).all())
     out = {"id": t.id, "property_id": t.property_id, "property_title": ro.title if ro else None,
-           "reservation_id": t.reservation_id,
+           "reservation_id": t.reservation_id, "kind": t.kind,
            "guest_name": stay.guest_name if stay else None,
            "next_check_in": iso(_next_arrival(db, t)) if stay else None,
            "assigned_to_id": t.assigned_to_id, "team_id": t.team_id,
@@ -150,6 +153,8 @@ def list_tasks(request: Request, principal: Principal = Depends(get_principal),
     q = db.query(CleaningTask).filter(CleaningTask.agency_id == principal.agency_id)
     if qp.get("status"):
         q = q.filter(CleaningTask.status == qp["status"])
+    if qp.get("kind"):
+        q = q.filter(CleaningTask.kind == qp["kind"])
     if qp.get("property_id", "").isdigit():
         q = q.filter(CleaningTask.property_id == int(qp["property_id"]))
     if qp.get("team_id", "").isdigit():
@@ -173,7 +178,7 @@ def list_tasks(request: Request, principal: Principal = Depends(get_principal),
 @router.post("/backoffice/sejours/menage", status_code=201)
 async def create_task(request: Request, principal: Principal = Depends(get_principal),
                       db: Session = Depends(get_db)):
-    """Ménage hors séjour : après travaux, avant une visite."""
+    """Tâche hors rotation : ménage après travaux, avant une visite, linge, accueil…"""
     if (g := gate(principal)) is not None:
         return g
     data = await json_body(request)
@@ -188,7 +193,10 @@ async def create_task(request: Request, principal: Principal = Depends(get_princ
         day = date.fromisoformat((data.get("scheduled_date") or "").strip())
     except ValueError:
         return err("Date invalide", 400)
-    task = CleaningTask(agency_id=principal.agency_id, property_id=property_id,
+    kind = (data.get("kind") or "menage").strip()
+    if kind not in KINDS:
+        return err("Type de tâche inconnu", 400)
+    task = CleaningTask(agency_id=principal.agency_id, property_id=property_id, kind=kind,
                         scheduled_date=day, notes=(data.get("notes") or "").strip()[:2000] or None)
     db.add(task)
     db.commit()
