@@ -468,22 +468,31 @@ async def update_work_order(wid: int, request: Request, principal: Principal = D
     return {"work_order": _wo_dict(db, wo, principal)}
 
 
+_SETTLE_ADMIN_METHODS = {"abandonne", "impute_commission"}
+
+
 @app.post("/backoffice/work-orders/{wid}/settle")
 async def settle_work_order(wid: int, request: Request, principal: Principal = Depends(_artisans), db: Session = Depends(get_db)):
     """Dit comment une refacturation a été réglée ; pose `settled_at`, qui verrouille la dépense."""
-    wo = db.query(WorkOrder).filter(WorkOrder.id == wid, WorkOrder.agency_id == principal.agency_id).with_for_update().first()
+    wo = db.query(WorkOrder).filter(WorkOrder.id == wid, WorkOrder.agency_id == principal.agency_id).first()
     if wo is None:
         return _err("Bon de travaux introuvable", 404)
-    # Irréversible, et « abandonné » renonce à une créance : même niveau que les autres gestes d'argent.
-    if not _is_wo_admin(principal):
-        return _err("Seule l'administration de l'agence solde une refacturation", 403)
     method = (await _json(request)).get("method")
     if method not in SETTLE_METHODS:
         return _err("Mode de règlement invalide", 400)
+    # Renoncer à une créance ou l'absorber engage l'argent de l'agence ; encaisser ou régulariser
+    # enregistre ce qui s'est déjà passé au guichet, geste courant comme le passage à « terminé ».
+    if method in _SETTLE_ADMIN_METHODS and not _is_wo_admin(principal):
+        return _err("Seule l'administration de l'agence abandonne ou impute une refacturation", 403)
+    # Verrou pris après les refus de rôle : un refusé ne bloque pas la ligne en sortant.
+    db.refresh(wo, with_for_update=True)
     if wo.charge_mode != "to_rebill":
         return _err("Seule une intervention à refacturer se solde à la main", 400)
     if wo.status != "done":
         return _err("Seule une intervention achevée se solde", 400)
+    # Solder verrouille le coût pour tous, administrateurs compris, sans retour possible.
+    if wo.cost_final is None:
+        return _err("Fixez le coût final avant de solder", 400)
     if wo.settled_at is not None:
         return _err("Cette refacturation est déjà soldée", 409)
     wo.settled_at = datetime.utcnow()

@@ -357,32 +357,64 @@ def test_solder_une_refacturation(client, db_session):
                        json={"method": "abandonne"}).status_code == 409
 
 
-def test_on_ne_solde_que_ce_qui_est_a_refacturer(client, db_session):
+def _rien_ecrit(db_session, wo) -> bool:
+    db_session.refresh(wo)
+    return wo.settled_at is None and wo.settled_method is None and wo.settled_by is None
+
+
+def test_on_ne_solde_pas_ce_qui_n_est_pas_a_refacturer(client, db_session):
     wo = _wo_en_base(db_session, status="done", cost_final=Decimal("600"),
                      charge_mode="crg_expense")
     assert client.post(f"/backoffice/work-orders/{wo.id}/settle",
                        json={"method": "encaisse"}).status_code == 400
-    sans_methode = _wo_en_base(db_session, status="done", cost_final=Decimal("600"),
-                               charge_mode="to_rebill")
-    assert client.post(f"/backoffice/work-orders/{sans_methode.id}/settle",
+    assert _rien_ecrit(db_session, wo)
+
+
+def test_une_methode_inconnue_est_refusee(client, db_session):
+    wo = _wo_en_base(db_session, status="done", cost_final=Decimal("600"),
+                     charge_mode="to_rebill")
+    assert client.post(f"/backoffice/work-orders/{wo.id}/settle",
                        json={"method": "troc"}).status_code == 400
+    assert _rien_ecrit(db_session, wo)
 
 
 def test_on_ne_solde_pas_une_intervention_inachevee(client, db_session):
     wo = _wo_en_base(db_session, status="in_progress", charge_mode="to_rebill")
     assert client.post(f"/backoffice/work-orders/{wo.id}/settle",
                        json={"method": "encaisse"}).status_code == 400
-    db_session.refresh(wo)
-    assert wo.settled_at is None
+    assert _rien_ecrit(db_session, wo)
 
 
-def test_solder_est_reserve_a_l_administration(client, db_session):
-    wo = _wo_en_base(db_session, status="done", cost_final=Decimal("600"), charge_mode="to_rebill")
-    app.dependency_overrides[get_principal] = lambda: _principal("agent")
+def test_on_ne_solde_pas_sans_cout_final(client, db_session):
+    wo = _wo_en_base(db_session, status="done", charge_mode="to_rebill")
+    for methode in ("encaisse", "impute_commission", "regularisation", "abandonne"):
+        assert client.post(f"/backoffice/work-orders/{wo.id}/settle",
+                           json={"method": methode}).status_code == 400
+        assert _rien_ecrit(db_session, wo)
+    # Le coût manquant se renseigne tant que le bon n'est pas verrouillé.
+    assert client.put(f"/backoffice/work-orders/{wo.id}", json={"cost_final": 80}).status_code == 200
     assert client.post(f"/backoffice/work-orders/{wo.id}/settle",
-                       json={"method": "abandonne"}).status_code == 403
-    db_session.refresh(wo)
-    assert wo.settled_at is None
+                       json={"method": "encaisse"}).status_code == 200
+
+
+def test_un_agent_encaisse_mais_n_abandonne_pas(client, db_session):
+    app.dependency_overrides[get_principal] = lambda: _principal("agent")
+    for methode in ("abandonne", "impute_commission"):
+        wo = _wo_en_base(db_session, status="done", cost_final=Decimal("600"), charge_mode="to_rebill")
+        assert client.post(f"/backoffice/work-orders/{wo.id}/settle",
+                           json={"method": methode}).status_code == 403
+        assert _rien_ecrit(db_session, wo)
+    for methode in ("encaisse", "regularisation"):
+        wo = _wo_en_base(db_session, status="done", cost_final=Decimal("600"), charge_mode="to_rebill")
+        assert client.post(f"/backoffice/work-orders/{wo.id}/settle",
+                           json={"method": methode}).status_code == 200
+
+
+def test_l_administration_solde_par_toute_methode(client, db_session):
+    for methode in ("abandonne", "impute_commission"):
+        wo = _wo_en_base(db_session, status="done", cost_final=Decimal("600"), charge_mode="to_rebill")
+        assert client.post(f"/backoffice/work-orders/{wo.id}/settle",
+                           json={"method": methode}).status_code == 200
 
 
 def test_solder_ignore_une_intervention_d_une_autre_agence(client, db_session):
@@ -391,6 +423,7 @@ def test_solder_ignore_une_intervention_d_une_autre_agence(client, db_session):
     db_session.commit()
     assert client.post(f"/backoffice/work-orders/{wo.id}/settle",
                        json={"method": "encaisse"}).status_code == 404
+    assert _rien_ecrit(db_session, wo)
 
 
 def test_une_intervention_soldee_ne_se_reecrit_plus(client, db_session):
