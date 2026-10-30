@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { FiAlertTriangle, FiCheckCircle } from 'react-icons/fi'
+import { Link } from 'react-router-dom'
 import { useFormat } from '../../../utils/format'
 import { Alert, Chip, DetailColumns, DetailFrame, Figure, Kv, Legend, Rich, SegBar, TD, TH } from '../components/kit'
 import { useMoney } from '../components/kitTokens'
@@ -57,7 +58,10 @@ export function PortfolioDetail({ listings, onClose, titleRef }) {
             <tbody>
               {ins.ranked.map((l) => (
                 <tr key={l.id} className="hover:bg-gray-50">
-                  <td className={TD}><b className="font-semibold">{l.title}</b><span className="block text-xs text-gray-500">{l.city}</span></td>
+                  <td className={TD}>
+                    <Link to={`/backoffice/biens/${l.id}`} className="font-semibold text-gray-900 underline decoration-gray-300 underline-offset-2 hover:text-primary-700 hover:decoration-primary-400">{l.title}</Link>
+                    <span className="block text-xs text-gray-500">{l.city}</span>
+                  </td>
                   <td className={`${TD} whitespace-nowrap text-end tabular-nums`}>{l.price != null ? money(l.price, l.transaction_type) : '—'}</td>
                   <td className={`${TD} text-end tabular-nums`}>{fmtNumber(l.views)}</td>
                   <td className={`${TD} text-end tabular-nums`}>{l.contacts || <Chip tone="warn">0</Chip>}</td>

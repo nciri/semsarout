@@ -97,6 +97,19 @@ describe('Tableau de bord du back-office', () => {
     await vi.waitFor(() => expect(detail()).toBeNull(), { timeout: 1000 })
     expect(localStorage.getItem('dash-open')).toBe('')
   })
+
+  it('mène du portefeuille à la fiche de chaque bien', async () => {
+    renderDashboard()
+    const card = (await screen.findByRole('heading', { name: 'Portefeuille de biens' })).closest('section')
+    await userEvent.click(within(card).getByRole('button', { name: 'Développer' }))
+    const detail = await vi.waitFor(() => {
+      const el = document.getElementById('dashboard-detail')
+      if (!el) throw new Error('fermé')
+      return el
+    })
+    expect(within(detail).getByRole('link', { name: 'Loft Bir Rami' }))
+      .toHaveAttribute('href', '/backoffice/biens/5')
+  })
 })
 
 describe('Tableau de bord : une activité à la fois', () => {
