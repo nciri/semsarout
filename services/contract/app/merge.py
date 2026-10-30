@@ -59,26 +59,26 @@ def _identification(role: str, client) -> str:
     return f"<span>{', '.join(bits)}.</span>"
 
 
-def party_blocks(parties, *, fallback_client=None) -> dict:
+def party_blocks(parties) -> dict:
     """Un bloc HTML d'identification par rôle, sous les noms de placeholders des modèles.
 
     `parties` : séquence de `(role, client)` déjà ordonnée. `render()` est une simple
     substitution par expression régulière, sans boucle : la liste est donc assemblée ici,
     côté serveur, en une chaîne.
 
-    Sans aucune partie — un contrat créé avant ce chantier, qui n'a qu'un `client_id` — le
-    client unique tient tous les rôles : c'est exact pour un contrat à une partie, et cela
-    évite un article d'identification vide. Dès qu'il y a des parties, un rôle non saisi sort
-    en blanc à compléter plutôt que de prêter un nom à un rôle qu'il ne tient pas.
+    Un rôle sans partie sort en ligne à compléter — jamais vide (`render()` laisserait un
+    article d'identification blanc), et jamais au nom d'une autre partie. Y faire tenir le
+    client unique du contrat, faute de mieux, nommerait la même personne bailleur ET
+    locataire sur un bail d'avant ce chantier : un blanc se lit comme un champ à remplir,
+    un nom sous le mauvais rôle se lit comme une affirmation, dans un acte que l'on signe.
+    Le client connu n'est pas perdu pour autant : `{{client_name}}` le résout, le contrat
+    garde son `client_id`, et l'éditeur permet de nommer les parties en un clic.
     """
     par_role: dict[str, list] = {}
     for role, client in parties:
         par_role.setdefault(role, []).append(client)
-    blocs = {}
-    for role, cle in ROLE_PLACEHOLDERS.items():
-        membres = par_role.get(role) or ([fallback_client] if not parties else [None])
-        blocs[cle] = "<br>".join(_identification(role, c) for c in membres)
-    return blocs
+    return {cle: "<br>".join(_identification(role, c) for c in par_role.get(role) or [None])
+            for role, cle in ROLE_PLACEHOLDERS.items()}
 
 
 def build_context(agency, *, transaction=None, property=None, client=None, agent_name="",
@@ -113,7 +113,7 @@ def build_context(agency, *, transaction=None, property=None, client=None, agent
         "commission_rate": comm_rate,
         "commission_amount": comm_amount,
     }
-    ctx.update(party_blocks(parties or (), fallback_client=cli))
+    ctx.update(party_blocks(parties or ()))
     if stay:
         ctx.update(stay_context(stay))
     return ctx

@@ -141,11 +141,20 @@ def test_un_role_non_saisi_sort_en_blanc_jamais_avec_le_nom_d_un_autre():
     assert "……" in blocs["parties_locataires"]
 
 
-def test_sans_partie_le_client_unique_tient_tous_les_roles():
-    """Contrats créés avant ce chantier : un `client_id`, aucune ligne de partie."""
-    blocs = party_blocks([], fallback_client=_Client("Sara", "Bennani"))
+def test_sans_partie_chaque_role_sort_en_ligne_a_completer():
+    """Contrat créé avant ce chantier : un `client_id`, aucune ligne de partie.
+
+    Le client unique ne doit SURTOUT pas tenir tous les rôles : sur un bail il serait nommé
+    bailleur ET locataire, sur un compromis vendeur ET acquéreur. Un blanc se lit comme un
+    champ à remplir, un nom sous le mauvais rôle comme une affirmation — dans un acte signé.
+    Le client connu reste porté par `{{client_name}}` et par `client_id`, et l'éditeur
+    permet de nommer les parties. Ne pas « réparer » ce blanc en y remettant le client.
+    """
+    blocs = party_blocks([])
     for cle in ROLE_PLACEHOLDERS.values():
-        assert "Sara Bennani" in blocs[cle]
+        assert blocs[cle], f"{cle} vide : render() laisserait un article d'identification blanc"
+        assert "……" in blocs[cle], f"{cle} sans blanc à compléter"
+        assert "<strong>" not in blocs[cle], f"{cle} nomme quelqu'un sans partie saisie"
 
 
 def test_l_identification_laisse_la_cin_et_le_domicile_a_completer():
@@ -174,10 +183,17 @@ def test_le_bloc_survit_a_la_sanitisation(nb):
         assert f"Prénom{i} Nom{i}" in propre
 
 
-def test_le_rendu_ne_laisse_aucun_blanc_pour_les_parties():
-    ctx = build_context(None, client=_Client("Sara", "Bennani"))
-    rendu = render("<p>{{parties_vendeurs}}</p>", ctx)
-    assert "Sara Bennani" in rendu and "{{" not in rendu
+def test_le_rendu_ne_laisse_aucune_accolade_ni_aucun_bloc_vide():
+    ctx = build_context(None, client=_Client("Sara", "Bennani"),
+                        parties=[("vendeur", _Client("Omar", "Tazi"))])
+    rendu = render("<p>{{parties_vendeurs}}</p><p>{{parties_acquereurs}}</p><p>{{client_name}}</p>",
+                   ctx)
+    assert "{{" not in rendu
+    assert "Omar Tazi" in rendu
+    # Le client unique du contrat n'est pas promu acquéreur parce que le rôle est vide.
+    vendeurs, acquereurs = rendu.split("</p><p>")[0], rendu.split("</p><p>")[1]
+    assert "Sara Bennani" not in vendeurs and "Sara Bennani" not in acquereurs
+    assert "……" in acquereurs
 
 
 # ---- API ----
@@ -197,11 +213,17 @@ def test_la_creation_enregistre_les_parties_dans_l_ordre(client, jeu, db_session
     assert "Nadia Idrissi" in corps.split("Article 2")[1]
 
 
-def test_un_contrat_sans_partie_garde_son_client_et_un_bloc_renseigne(client, jeu):
+def test_un_contrat_sans_partie_garde_son_client_sans_lui_preter_de_role(client, jeu):
     contrat = _create(client, client_id=10).json()["contract"]
     assert contrat["parties"] == []
     assert contrat["client_id"] == 10
-    assert "Sara Bennani" in contrat["body_html"]
+    vendeurs, acquereurs, nom = re.findall(r"<p>(.*?)</p>", contrat["body_html"])
+    # `{{client_name}}` reste résolu — le client connu n'est pas perdu…
+    assert nom == "Sara Bennani"
+    # …mais il n'est nommé dans aucun des deux blocs de rôle, et chacun reste à compléter.
+    for bloc in (vendeurs, acquereurs):
+        assert "Sara Bennani" not in bloc and "<strong>" not in bloc
+        assert "……" in bloc
 
 
 def test_une_partie_d_une_autre_agence_est_refusee(client, jeu, db_session):

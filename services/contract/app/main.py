@@ -318,10 +318,7 @@ def _rewrite_parties_in_body(db: Session, c: Contract, parties: list) -> None:
     sans effet si l'agent a supprimé l'article.
     """
     avant = dict(c.merge_context or {})
-    premier = parties[0][1] if parties else (
-        db.query(ClientRO).filter(ClientRO.id == c.client_id,
-                                  ClientRO.agency_id == c.agency_id).first())
-    blocs = party_blocks(parties, fallback_client=premier)
+    blocs = party_blocks(parties)
     corps = c.body_html
     for cle, html in blocs.items():
         ancien = avant.get(cle)
