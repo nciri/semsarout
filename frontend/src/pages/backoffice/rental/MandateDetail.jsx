@@ -9,6 +9,7 @@ import { rentalService } from '../../../services/rentalService'
 import { Panel, DataTable, EmptyState, GatedNotice, StatusBadge, PRIMARY_BTN } from '../../../components/backoffice/ui'
 import SignaturePanel from '../../../components/backoffice/SignaturePanel'
 import DirIcon from '../../../components/common/DirIcon'
+import { useConfirm } from '../../../components/common/confirm'
 import useAuthStore from '../../../store/authStore'
 import { Alert, Chip, IconAction } from '../components/kit'
 import { MANDATE_TONE, daysSince } from './model'
@@ -25,6 +26,7 @@ const CRG_BADGE = {
 function CrgDraft({ crg, onValidate, busy }) {
   const { t } = useTranslation('backoffice')
   const f = useRentalFormat()
+  const ask = useConfirm()
   const [excluded, setExcluded] = useState([])
   const lines = crg.expense_lines || []
   const toggle = (lineId) => setExcluded((ids) => (ids.includes(lineId) ? ids.filter((i) => i !== lineId) : [...ids, lineId]))
@@ -52,8 +54,12 @@ function CrgDraft({ crg, onValidate, busy }) {
         {!lines.length && <li className="py-2 text-gray-500">{t('rental.mandate.crg.noLines')}</li>}
       </ul>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <span className="text-sm text-gray-700">{t('rental.mandate.crg.netAfter', { amount: f.dh(net) })}</span>
-        <button type="button" className={PRIMARY_BTN} disabled={busy} onClick={() => onValidate(crg.id, excluded)}>{t('rental.mandate.crg.validate')}</button>
+        <span className="text-sm text-gray-700">
+          {t('rental.mandate.crg.netAfter', { amount: f.dh(net) })}
+          {excluded.length > 0 && <span className="block text-xs text-gray-500">{t('rental.mandate.crg.unsavedHint')}</span>}
+        </span>
+        <button type="button" className={PRIMARY_BTN} disabled={busy}
+          onClick={() => ask({ message: t('rental.mandate.crg.confirmValidate', { period: crg.period_label, amount: f.dh(net) }), confirmLabel: t('rental.mandate.crg.validate'), onConfirm: () => onValidate(crg.id, excluded) })}>{t('rental.mandate.crg.validate')}</button>
       </div>
     </div>
   )

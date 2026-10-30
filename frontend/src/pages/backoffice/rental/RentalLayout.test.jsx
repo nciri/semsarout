@@ -57,11 +57,22 @@ describe('RentalLayout', () => {
   it('signale en rouge les comptes rendus jamais validés, avec leur âge', async () => {
     listCrgDrafts.mockResolvedValue({ drafts: [
       { crg_id: 12, mandate_id: 3, mandate_reference: 'MND-3', period_label: 'Septembre 2026', net: 4020, waiting_days: 40 },
+      { crg_id: 14, mandate_id: 5, mandate_reference: 'MND-5', period_label: 'Octobre 2026', net: 900, waiting_days: 2 },
     ] })
     renderLayout()
-    expect(await screen.findByText('Comptes rendus de gérance à valider : 1')).toBeInTheDocument()
+    expect(await screen.findByText('Comptes rendus de gérance à valider : 2')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'MND-3 · Septembre 2026' })).toHaveAttribute('href', '/backoffice/gestion-locative/mandats/3')
     expect(screen.getByText('40 j')).toBeInTheDocument()
+    expect(screen.getByText('2 j')).toBeInTheDocument()
+    const links = screen.getAllByRole('link', { name: /^MND-\d · / }).map((a) => a.textContent)
+    expect(links).toEqual(['MND-3 · Septembre 2026', 'MND-5 · Octobre 2026'])
+  })
+
+  it('garde le bandeau visible quand la synthèse est en erreur', async () => {
+    summary.mockRejectedValue(new Error('boom'))
+    listCrgDrafts.mockResolvedValue({ drafts: [{ crg_id: 12, mandate_id: 3, mandate_reference: 'MND-3', period_label: 'Septembre 2026', net: 4020, waiting_days: 40 }] })
+    renderLayout()
+    expect(await screen.findByText('Comptes rendus de gérance à valider : 1')).toBeInTheDocument()
   })
 
   it('n’affiche aucun bandeau quand rien n’attend de validation', async () => {

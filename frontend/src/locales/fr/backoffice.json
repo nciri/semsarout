@@ -359,6 +359,8 @@
         "netAfter": "Net après écarts : {{amount}}",
         "validate": "Valider le compte rendu",
         "validatedToast": "Compte rendu validé : il partira à la prochaine émission.",
+        "unsavedHint": "Écarts non enregistrés avant validation",
+        "confirmValidate": "Valider le compte rendu de {{period}} (net {{amount}}) ? Il sera figé : les dépenses écartées ne pourront plus être rétablies.",
         "empty": {
           "title": "Aucun CRG",
           "description": "Les comptes-rendus mensuels apparaissent ici une fois les loyers encaissés."

@@ -25,8 +25,11 @@ export const STATE_COLOR = { paid: '#1E7F4E', paid_late: '#E3A857', partial: '#B
 
 /** Ancienneté d'un impayé ou d'une attente : vert, orange, rouge. */
 export const ageTone = (days, lo = 15, hi = 45) => (days > hi ? 'crit' : days >= lo ? 'warn' : 'good')
-/** Jours entiers écoulés depuis un horodatage ISO (jamais négatif). */
-export const daysSince = (iso) => Math.max(0, Math.floor((Date.now() - Date.parse(iso)) / 86400000))
+/** Jours entiers écoulés depuis un horodatage ISO naïf UTC (sans `Z`, comme l'émet le service) ; 0 si absent. */
+export const daysSince = (iso) => {
+  const days = Math.floor((Date.now() - Date.parse(/[zZ]|[+-]\d\d:?\d\d$/.test(iso || '') ? iso : `${iso}Z`)) / 86400000)
+  return Number.isFinite(days) ? Math.max(0, days) : 0
+}
 export const dueTone = (days) => (days <= 7 ? 'crit' : days <= 30 ? 'warn' : 'neutral')
 
 export const APP_TONE = { received: 'neutral', reviewing: 'warn', shortlist: 'good', accepted: 'good', rejected: 'crit', withdrawn: 'neutral' }

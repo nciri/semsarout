@@ -3,9 +3,12 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from 'react-query'
+import { ConfirmContext } from '../../../components/common/confirm'
 import i18n from '../../../i18n'
 import MandateDetail from './MandateDetail'
+import { daysSince } from './model'
 
+const ask = vi.hoisted(() => vi.fn((o) => o.onConfirm()))
 const svc = vi.hoisted(() => ({ getMandate: vi.fn(), listCrg: vi.fn(), validateCrg: vi.fn() }))
 vi.mock('../../../services/rentalService', () => ({ rentalService: svc }))
 vi.mock('../../../components/backoffice/SignaturePanel', () => ({ default: () => null }))
@@ -14,9 +17,11 @@ function renderPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={qc}>
+      <ConfirmContext.Provider value={ask}>
       <MemoryRouter initialEntries={['/backoffice/gestion-locative/mandats/3']}>
         <Routes><Route path="/backoffice/gestion-locative/mandats/:id" element={<MandateDetail />} /></Routes>
       </MemoryRouter>
+      </ConfirmContext.Provider>
     </QueryClientProvider>,
   )
 }
@@ -24,6 +29,7 @@ function renderPage() {
 describe('MandateDetail — compte rendu de gérance', () => {
   beforeEach(async () => {
     await i18n.changeLanguage('fr')
+    ask.mockClear()
     Object.values(svc).forEach((m) => m.mockReset())
     svc.getMandate.mockResolvedValue({ id: 3, reference: 'MND-3', status: 'active', mandate_type: 'gestion', property_id: 7, landlord_client_id: 1 })
     svc.validateCrg.mockResolvedValue({})
@@ -39,7 +45,9 @@ describe('MandateDetail — compte rendu de gérance', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Écarter Serrure' }))
     expect(screen.getByText(/Net après écarts : 4\s320 Dh/)).toBeInTheDocument()
     expect(screen.getByText('40 j')).toBeInTheDocument()
+    expect(screen.getByText('Écarts non enregistrés avant validation')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Valider le compte rendu' }))
+    expect(ask).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringMatching(/Septembre 2026.*4\s320 Dh/) }))
     await vi.waitFor(() => expect(svc.validateCrg).toHaveBeenCalledWith(12,
       { excluded_work_order_ids: [5] }))
   })
@@ -58,5 +66,13 @@ describe('MandateDetail — compte rendu de gérance', () => {
     renderPage()
     expect(await screen.findByText('Juillet 2026')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Valider le compte rendu' })).not.toBeInTheDocument()
+  })
+})
+
+describe('daysSince', () => {
+  it('traite l’horodatage naïf comme UTC et tolère une date absente', () => {
+    const naive = new Date(Date.now() - 3 * 86400000 - 3600000).toISOString().replace('Z', '')
+    expect(daysSince(naive)).toBe(3)
+    expect(daysSince(null)).toBe(0)
   })
 })
