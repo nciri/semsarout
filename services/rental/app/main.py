@@ -18,7 +18,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
-from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
+from semsar_common import (
+    get_settings,
+    install_legacy_error_handlers,
+    sanitize_rich_field,
+    setup_logging,
+    setup_tracing,
+)
 from semsar_events import enqueue
 
 import semsar_signing as signing
@@ -2237,7 +2243,10 @@ async def update_inventory(inv_id: int, request: Request,
         return err("État des lieux verrouillé (finalisé).", 400)
     data = await json_body(request)
     if "general_notes" in data:
-        inv.general_notes = data["general_notes"]
+        # Les observations générales suivent la bascule WYSIWYG du reste du produit : la
+        # route accepte donc du HTML, qu'elle assainit. Le PDF de l'état des lieux
+        # (ReportLab) ne sait pas lire ce balisage : `pdf.py` y projette le texte.
+        inv.general_notes = sanitize_rich_field(data["general_notes"])
     db.commit()
     return _inventory_dict(db, inv)
 

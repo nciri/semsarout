@@ -1,5 +1,36 @@
-"""Génération PDF du service rental — quittance de loyer (reportlab)."""
+"""Génération PDF du service rental — quittances, baux, mandats, états des lieux (reportlab).
+
+**Toute valeur interpolée dans un `Paragraph` passe par `_x`.** Le `Paragraph` de ReportLab
+n'affiche pas du texte : il analyse un mini-langage de balisage. Mesuré sur la version
+installée (reportlab 5.1.0), il se comporte de deux façons, toutes les deux mauvaises ici :
+
+- une balise **reconnue mais non fermée** lève un `ValueError` de parsing — il ne dégrade
+  pas. Un nom de locataire « Ben <Ali> & Fils <b> », un libellé de retenue ou un commentaire
+  d'état des lieux finissant par un chevron suffisait donc à transformer « télécharger la
+  quittance » en 500, et c'était déjà vrai **avant** la bascule WYSIWYG ;
+- une balise **inconnue de son mini-langage** (`<p>`, `<ul>`, `<li>`, `<strong>`…) est
+  silencieusement supprimée. Contrairement à ce que supposait l'inventaire de l'étape 1, un
+  `<p>` ne lève donc pas : il efface la structure sans le dire, et des observations saisies
+  en WYSIWYG arriveraient dans le PDF en une seule ligne continue.
+
+D'où les deux outils : `_x` échappe toute valeur, et `general_notes` — qui est du HTML
+depuis la bascule — est d'abord projeté par `html_to_text`, `_lines` rendant ses sauts de
+ligne avec le `<br/>` que ReportLab, lui, comprend.
+"""
 from io import BytesIO
+from xml.sax.saxutils import escape as _escape
+
+from semsar_common import html_to_text
+
+
+def _x(value) -> str:
+    """Valeur prête pour un `Paragraph` : `<`, `>` et `&` échappés, `None` → `-`."""
+    return _escape("-" if value is None or value == "" else str(value))
+
+
+def _lines(text: str) -> str:
+    """Texte multi-ligne échappé, avec les sauts de ligne que ReportLab sait rendre."""
+    return _x(text).replace("\n", "<br/>")
 
 
 def render_receipt_pdf(rp, tenant_name: str, landlord_name: str, property_title: str) -> bytes:
@@ -21,11 +52,11 @@ def render_receipt_pdf(rp, tenant_name: str, landlord_name: str, property_title:
     total = float(rp.total_amount or 0)
     story = [
         Paragraph("SemsarOut", head), Paragraph("www.semsarout.com", styles["Normal"]), Spacer(1, 20),
-        Paragraph(f"<b>QUITTANCE DE LOYER</b> {rp.receipt_number or '-'}", head),
-        Paragraph(f"Période : {rp.period_label or '-'}", info),
-        Paragraph(f"Bien : {property_title or '-'}", info),
-        Paragraph(f"Bailleur : {landlord_name or '-'}", info),
-        Paragraph(f"Locataire : {tenant_name or '-'}", info),
+        Paragraph(f"<b>QUITTANCE DE LOYER</b> {_x(rp.receipt_number)}", head),
+        Paragraph(f"Période : {_x(rp.period_label)}", info),
+        Paragraph(f"Bien : {_x(property_title)}", info),
+        Paragraph(f"Bailleur : {_x(landlord_name)}", info),
+        Paragraph(f"Locataire : {_x(tenant_name)}", info),
         Spacer(1, 12),
         Paragraph(f"Loyer : {rent:,.2f} Đh".replace(",", " "), info),
         Paragraph(f"Charges : {charges:,.2f} Đh".replace(",", " "), info),
@@ -61,10 +92,10 @@ def render_lease_pdf(lease, mandate, tenant_name: str, landlord_name: str, prope
 
     story = [
         Paragraph("SemsarOut", head), Paragraph("www.semsarout.com", styles["Normal"]), Spacer(1, 18),
-        Paragraph(f"<b>CONTRAT DE BAIL</b> {lease.reference or ''}", head),
-        Paragraph(f"Bailleur : {landlord_name or '-'}", info),
-        Paragraph(f"Locataire : {tenant_name or '-'}", info),
-        Paragraph(f"Bien : {property_title or '-'}", info),
+        Paragraph(f"<b>CONTRAT DE BAIL</b> {_x(lease.reference) if lease.reference else ''}", head),
+        Paragraph(f"Bailleur : {_x(landlord_name)}", info),
+        Paragraph(f"Locataire : {_x(tenant_name)}", info),
+        Paragraph(f"Bien : {_x(property_title)}", info),
         Spacer(1, 10),
         Paragraph(f"Loyer mensuel : {money(lease.rent_amount)}", info),
         Paragraph(f"Charges : {money(lease.charges_amount)}", info),
@@ -98,10 +129,10 @@ def render_mandate_pdf(mandate, landlord_name: str, property_title: str) -> byte
 
     story = [
         Paragraph("SemsarOut", head), Paragraph("www.semsarout.com", styles["Normal"]), Spacer(1, 18),
-        Paragraph(f"<b>MANDAT DE {(mandate.mandate_type or 'gestion').upper()}</b> {mandate.reference or ''}", head),
-        Paragraph(f"Mandant (bailleur) : {landlord_name or '-'}", info),
-        Paragraph(f"Bien : {property_title or '-'}", info),
-        Paragraph(f"Type de mandat : {mandate.mandate_type or '-'}", info),
+        Paragraph(f"<b>MANDAT DE {_x((mandate.mandate_type or 'gestion').upper())}</b> {_x(mandate.reference) if mandate.reference else ''}", head),
+        Paragraph(f"Mandant (bailleur) : {_x(landlord_name)}", info),
+        Paragraph(f"Bien : {_x(property_title)}", info),
+        Paragraph(f"Type de mandat : {_x(mandate.mandate_type)}", info),
         Paragraph(f"Honoraires : {float(mandate.fee_percent or 0):.2f} %", info),
         Paragraph(f"Période : du {d(mandate.start_date)} au {d(mandate.end_date)}", info),
         Spacer(1, 14),
@@ -131,22 +162,24 @@ def render_inventory_pdf(inv, rooms, property_title: str, tenant_name: str) -> b
     story = [
         Paragraph("SemsarOut", head), Paragraph("www.semsarout.com", styles["Normal"]), Spacer(1, 14),
         Paragraph(f"<b>ÉTAT DES LIEUX {label}</b>", head),
-        Paragraph(f"Bien : {property_title or '-'}", info),
-        Paragraph(f"Locataire : {tenant_name or '-'}", info),
+        Paragraph(f"Bien : {_x(property_title)}", info),
+        Paragraph(f"Locataire : {_x(tenant_name)}", info),
         Paragraph(f"Date : {inv.conducted_at.strftime('%d/%m/%Y') if inv.conducted_at else '-'}", info),
         Spacer(1, 8),
     ]
     for r in rooms:
-        story.append(Paragraph(r["name"], rh))
+        story.append(Paragraph(_x(r["name"]), rh))
         for it in r["items"]:
             cond = {"bon": "Bon", "moyen": "Moyen", "mauvais": "Mauvais"}.get(it["condition"], it["condition"])
-            line = f"• <b>{it['label']}</b> : {cond}"
+            line = f"• <b>{_x(it['label'])}</b> : {_x(cond)}"
             if it.get("comment"):
-                line += f" — {it['comment']}"
+                line += f" — {_lines(it['comment'])}"
             story.append(Paragraph(line, info))
     if inv.general_notes:
+        # 🔴 `general_notes` est saisi en WYSIWYG : un `<p>` ou un `<ul>` arrivant dans un
+        # `Paragraph` lève, il n'est pas ignoré. On y projette le texte.
         story += [Spacer(1, 10), Paragraph("<b>Observations générales</b>", rh),
-                  Paragraph(inv.general_notes, info)]
+                  Paragraph(_lines(html_to_text(inv.general_notes)), info)]
     story += [Spacer(1, 20), Paragraph("Signatures : bailleur / gestionnaire — locataire", info)]
     doc.build(story)
     return buf.getvalue()
@@ -177,16 +210,16 @@ def render_settlement_pdf(s, lines, tenant_name: str, landlord_name: str, proper
     story = [
         Paragraph("SemsarOut", head), Paragraph("www.semsarout.com", styles["Normal"]), Spacer(1, 20),
         Paragraph("<b>DÉCOMPTE DE CAUTION</b>", head),
-        Paragraph(f"Bien : {property_title or '-'}", info),
-        Paragraph(f"Bailleur : {landlord_name or '-'}", info),
-        Paragraph(f"Locataire : {tenant_name or '-'}", info),
+        Paragraph(f"Bien : {_x(property_title)}", info),
+        Paragraph(f"Bailleur : {_x(landlord_name)}", info),
+        Paragraph(f"Locataire : {_x(tenant_name)}", info),
         Spacer(1, 12),
         Paragraph(f"Dépôt de garantie : {money(deposit)}", info),
         Paragraph("<b>Retenues :</b>", info),
     ]
     if lines:
         for l in lines:
-            story.append(Paragraph(f"• {l.label} : {money(l.amount)}", info))
+            story.append(Paragraph(f"• {_x(l.label)} : {money(l.amount)}", info))
     else:
         story.append(Paragraph("• Aucune retenue", info))
     story += [
@@ -223,9 +256,9 @@ def render_crg_pdf(crg, landlord_name: str, mandate_reference: str) -> bytes:
     story = [
         Paragraph("SemsarOut", head), Paragraph("www.semsarout.com", styles["Normal"]), Spacer(1, 20),
         Paragraph("<b>COMPTE-RENDU DE GESTION</b>", head),
-        Paragraph(f"Mandat : {mandate_reference or '-'}", info),
-        Paragraph(f"Période : {crg.period_label or '-'}", info),
-        Paragraph(f"Propriétaire : {landlord_name or '-'}", info),
+        Paragraph(f"Mandat : {_x(mandate_reference)}", info),
+        Paragraph(f"Période : {_x(crg.period_label)}", info),
+        Paragraph(f"Propriétaire : {_x(landlord_name)}", info),
         Spacer(1, 12),
         Paragraph(f"Loyers encaissés : {collected:,.2f} Đh".replace(",", " "), info),
         Paragraph(f"Honoraires de gestion : {fees:,.2f} Đh".replace(",", " "), info),
