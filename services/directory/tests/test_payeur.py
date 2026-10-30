@@ -188,6 +188,28 @@ def test_une_depense_sans_mandat_reste_visible(client, db_session):
     assert all(isinstance(w["waiting_days"], int) for w in rows)
 
 
+def test_les_modes_terminaux_quittent_la_liste_des_depenses_en_attente(client, db_session):
+    """`direct` et `absorbed` sont terminaux par la spec : personne ne doit rien.
+
+    Ne recevant jamais de `charged_at` ni de `settled_at`, ils s'accumulaient pour toujours et
+    allumaient pour toujours l'alerte à 60 jours de l'écran — une alerte toujours allumée n'est
+    plus lue, et la vraie remise en état de 8 000 Dh se cachait au milieu.
+    """
+    for mode in ("direct", "absorbed"):
+        _wo_en_base(db_session, property_id=99, status="done", cost_final=Decimal("500"),
+                    charge_mode=mode, completed_at=datetime(2026, 1, 1))
+    # Un mode non renseigné reste visible : c'est précisément le garde-fou de l'anti-objectif n° 1.
+    nul = _wo_en_base(db_session, property_id=99, status="done", cost_final=Decimal("120"),
+                      charge_mode=None, completed_at=datetime(2026, 10, 1))
+    rebill = _wo_en_base(db_session, property_id=99, status="done", cost_final=Decimal("300"),
+                         charge_mode="to_rebill", completed_at=datetime(2026, 10, 2))
+    rows = client.get("/backoffice/work-orders?pending=1").json()["work_orders"]
+    assert sorted(w["id"] for w in rows) == sorted([nul.id, rebill.id])
+    # …et ils restent listés hors du filtre « en attente » : l'historique du bien les garde.
+    toutes = client.get("/backoffice/work-orders").json()["work_orders"]
+    assert len(toutes) == 4
+
+
 def test_les_interventions_d_un_bail_se_listent(client, db_session):
     voulu = _wo_en_base(db_session, lease_id=12)
     _wo_en_base(db_session, lease_id=13)

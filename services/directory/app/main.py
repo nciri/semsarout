@@ -11,6 +11,7 @@ from datetime import datetime
 from fastapi import Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, require_feature, require_superadmin
@@ -262,8 +263,20 @@ def list_work_orders(
     if pending:
         # Une dépense non portée reste visible même sans mandat ni mode choisi : c'est
         # justement l'écran qui rattrape ce que les relevés n'ont pas pris.
+        #
+        # `direct` et `absorbed` sont TERMINAUX par la spec — « aucune écriture », « le coût
+        # reste à l'agence » : personne ne doit rien, donc ils ne reçoivent jamais de
+        # `charged_at` ni de `settled_at` et s'accumulaient ici pour toujours, allumant pour
+        # toujours l'alerte à 60 jours de l'écran. Une alerte toujours allumée n'est plus lue, et
+        # la vraie remise en état de 8 000 Dh se cachait au milieu. La spec cadre d'ailleurs
+        # cette liste sur « `to_rebill` non soldées, et surtout `charge_mode` nul ».
+        # Le `is_(None)` explicite n'est pas décoratif : `NULL NOT IN (…)` vaut NULL en SQL,
+        # donc un `notin_` seul EXCLURAIT les modes non renseignés — précisément les lignes que
+        # ce garde-fou existe pour montrer.
         query = query.filter(WorkOrder.status == "done", WorkOrder.cost_final.isnot(None),
-                             WorkOrder.charged_at.is_(None), WorkOrder.settled_at.is_(None))
+                             WorkOrder.charged_at.is_(None), WorkOrder.settled_at.is_(None),
+                             or_(WorkOrder.charge_mode.is_(None),
+                                 WorkOrder.charge_mode.notin_(("direct", "absorbed"))))
     rows = []
     for w in query.order_by(WorkOrder.created_at.desc()).all():
         row = _wo_dict(db, w, principal)
