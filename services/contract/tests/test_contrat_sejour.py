@@ -105,6 +105,23 @@ def test_le_contrat_fusionne_les_variables_du_sejour(client, modele, db_session,
     assert row.document_type == "stay"
 
 
+def test_un_nom_de_voyageur_importe_est_echappe_et_ne_pose_pas_de_lien(client, modele, db_session,
+                                                                      storage):
+    """`guest_name` vient d'un calendrier Airbnb/Booking importé : une source non maîtrisée.
+
+    `sanitize_html` tourne en aval et tue tout script, mais bleach **garde `<a href>`** : sans
+    échappement à la substitution, un nom de voyageur posait un lien cliquable dans un contrat
+    de séjour généré.
+    """
+    hostile = 'Salma <a href="https://evil.example/paie-ici">Virement ici</a> & <b>Idrissi</b>'
+    r = _create(client, guest_name=hostile)
+    assert r.status_code == 201
+    corps = db_session.get(Contract, r.json()["contract"]["id"]).body_html
+    # Plus aucune balise vivante : le lien est du texte, pas un lien.
+    assert "<a " not in corps and "<b>" not in corps
+    # Le nom reste lisible en entier, chevrons compris, plutôt que silencieusement amputé.
+    assert "&lt;a href=" in corps and "Virement ici" in corps and "&amp;" in corps
+
 def test_sans_modele_de_sejour_la_demande_est_refusee(client, db_session):
     db_session.add(AgencyRO(id=AGENCY, name="Agence Atlas"))
     db_session.commit()

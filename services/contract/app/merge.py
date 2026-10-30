@@ -169,6 +169,19 @@ def utilise_blocs_de_parties(body_html) -> bool:
 
 
 def render(body_html, context):
+    """Substitution des `{{placeholders}}`, chaque valeur échappée sauf les blocs de parties.
+
+    `sanitize_html` tourne en aval, donc aucun script ne survivait déjà — mais bleach **garde
+    `<a href>`**, et `guest_name` arrive d'un calendrier Airbnb/Booking importé, c'est-à-dire
+    d'une source réellement non maîtrisée, jusque dans un contrat de séjour généré.
+    `_identification` échappait déjà correctement ; c'est la même règle ici.
+    """
     if not body_html:
         return ""
-    return _PLACEHOLDER.sub(lambda m: str(context.get(m.group(1), "")), body_html)
+
+    def _valeur(m):
+        cle = m.group(1)
+        brut = str(context.get(cle, ""))
+        return brut if cle in _CLES_HTML else escape(brut, quote=False)
+
+    return _PLACEHOLDER.sub(_valeur, body_html)
