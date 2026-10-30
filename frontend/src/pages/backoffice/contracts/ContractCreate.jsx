@@ -9,6 +9,8 @@ import SearchableSelect from '../../../components/common/SearchableSelect'
 import PartiesField from './PartiesField'
 import { emptyParty, toPayload } from './parties'
 import api from '../../../services/api'
+import RichTextarea from '../../../components/common/RichTextarea'
+import { isRichTextEmpty } from '../../../utils/richText'
 
 // Les modèles sont du HTML : on n'en montre qu'une projection texte, jamais injectée en innerHTML.
 const ENTITIES = { '&nbsp;': ' ', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'", '&amp;': '&' }
@@ -106,7 +108,9 @@ function ContractCreate() {
     amount: form.amount ? Number(form.amount) : undefined,
     sign_date: form.sign_date || undefined,
     effect_date: form.effect_date || undefined,
-    notes: form.notes || undefined,
+    // Le champ est en texte riche : un éditeur vidé rend `<p><br></p>`, du HTML valide mais
+    // sans contenu, que le service prendrait pour une note renseignée.
+    notes: isRichTextEmpty(form.notes) ? undefined : form.notes,
   }), {
     onSuccess: (res) => navigate(`/backoffice/contrats/${res.contract.id}`),
     onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
@@ -202,8 +206,10 @@ function ContractCreate() {
               </div>
             </div>
             <div>
-              <label className={labelCls}>{t('backoffice:contracts.create.fields.notes')}</label>
-              <textarea value={form.notes} onChange={set('notes')} rows={2} className={ctrlCls} placeholder={t('backoffice:contracts.create.fields.notesPlaceholder')} />
+              <label htmlFor="contract-notes" className={labelCls}>{t('backoffice:contracts.create.fields.notes')}</label>
+              <RichTextarea id="contract-notes" rows={2} value={form.notes}
+                onChange={(html) => setForm((f) => ({ ...f, notes: html }))}
+                placeholder={t('backoffice:contracts.create.fields.notesPlaceholder')} />
             </div>
           </div>
 

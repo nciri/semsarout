@@ -153,6 +153,7 @@ const MIGRATED_FILES = [
   'src/pages/backoffice/visits/VisitForm.jsx',
   'src/pages/backoffice/Transactions.jsx',
   'src/pages/backoffice/TransactionCreate.jsx',
+  'src/pages/backoffice/transactions/Fiche.jsx',
   'src/pages/backoffice/clients/BuyerDossier.jsx',
   'src/pages/dashboard/MyPurchaseFile.jsx',
   'src/pages/backoffice/dashboard/RentalWidget.jsx',

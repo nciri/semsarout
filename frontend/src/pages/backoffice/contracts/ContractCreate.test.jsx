@@ -248,5 +248,35 @@ describe('Nouveau contrat', () => {
       await choose('Transaction liée', /TX-102/)
       expect(field('Client 1')).toHaveTextContent('Nadia Idrissi')
     })
+
+    // Les notes sont saisies en WYSIWYG : ce qui part est du HTML, assaini par le champ.
+    it('envoie les notes du contrat en HTML nettoye', async () => {
+      renderPage()
+      // Le bouton reste désactivé sans modèle : on en choisit un comme les cas voisins.
+      await userEvent.selectOptions((await screen.findAllByRole('combobox'))[0], '1')
+      const editor = screen.getByRole('textbox', { name: 'Notes / clauses particulières' })
+      editor.innerHTML = '<p>Signature <b>differee</b></p><script>alert(1)</script>'
+      await userEvent.click(editor)
+      await userEvent.tab()
+
+      await submit()
+      expect(svc.create).toHaveBeenCalledWith(expect.objectContaining({
+        notes: '<p>Signature <b>differee</b></p>',
+      }))
+    })
+
+    // Un éditeur vidé rend `<p><br></p>` : du HTML valide, mais sans contenu. Envoyé tel
+    // quel, le service y verrait une note renseignée.
+    it('n\'envoie pas de notes quand l\'editeur est vide', async () => {
+      renderPage()
+      await userEvent.selectOptions((await screen.findAllByRole('combobox'))[0], '1')
+      const editor = screen.getByRole('textbox', { name: 'Notes / clauses particulières' })
+      editor.innerHTML = '<p><br></p>'
+      await userEvent.click(editor)
+      await userEvent.tab()
+
+      await submit()
+      expect(svc.create.mock.calls.at(-1)[0].notes).toBeUndefined()
+    })
   })
 })
