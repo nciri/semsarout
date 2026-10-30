@@ -10,13 +10,14 @@ import { Panel, StatusBadge, Field, EmptyState, GatedNotice, PRIMARY_BTN, SECOND
 import SignaturePanel from '../../../components/backoffice/SignaturePanel'
 import DirIcon from '../../../components/common/DirIcon'
 import useAuthStore from '../../../store/authStore'
+import { Alert } from '../components/kit'
 import { useFormat } from '../../../utils/format'
 
 const COND_TONE = { bon: 'bg-emerald-50 text-emerald-700', moyen: 'bg-amber-100 text-amber-700', mauvais: 'bg-red-100 text-red-700' }
 
 function SettlementEditor() {
   const { t } = useTranslation(['backoffice', 'common'])
-  const { fmtNumber } = useFormat()
+  const { fmtNumber, fmtDate } = useFormat()
   const money = (v) => `${fmtNumber(Number(v || 0))} Đh`
   const { leaseId } = useParams()
   const qc = useQueryClient()
@@ -28,7 +29,10 @@ function SettlementEditor() {
   const [label, setLabel] = useState('')
   const [amount, setAmount] = useState('')
   const [itemId, setItemId] = useState('')
-  const refresh = () => qc.invalidateQueries(['settlement', leaseId])
+  const ro = s?.status === 'finalized'
+  // Un décompte finalisé ne s'enrichit plus : on n'interroge pas le service des interventions.
+  const sugg = useQuery(['settlement-suggestions', s?.id], () => rentalService.listSuggestions(s.id), { enabled: !!s && !ro, retry: false })
+  const refresh = () => { qc.invalidateQueries(['settlement', leaseId]); qc.invalidateQueries(['settlement-suggestions']) }
   const notFound = error?.response?.status === 404
 
   async function openPdf(url) {
@@ -39,6 +43,11 @@ function SettlementEditor() {
   const create = useMutation(() => rentalService.createSettlement(leaseId), { onSuccess: () => { toast.success(t('backoffice:rental.settlement.toasts.created')); refresh() }, onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')) })
   const addLine = useMutation(() => rentalService.addDeductionLine(s.id, { label, amount: Number(amount), item_id: itemId ? Number(itemId) : null }), { onSuccess: () => { toast.success(t('backoffice:rental.settlement.toasts.lineAdded')); setLabel(''); setAmount(''); setItemId(''); refresh() }, onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')) })
   const delLine = useMutation((lineId) => rentalService.deleteDeductionLine(lineId), { onSuccess: refresh, onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')) })
+  const accept = useMutation((workOrderId) => rentalService.acceptSuggestion(s.id, workOrderId), {
+    onSuccess: () => toast.success(t('backoffice:rental.settlement.toasts.lineAdded')),
+    onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
+    onSettled: refresh,
+  })
   const finalize = useMutation(() => rentalService.finalizeSettlement(s.id), { onSuccess: () => { toast.success(t('backoffice:rental.settlement.toasts.finalized')); refresh() }, onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')) })
 
   if (error?.response?.status === 403) return <GatedNotice icon={FiLock} title={t('backoffice:rental.settlement.pageTitle')} message={t('backoffice:rental.mandate.gated.message')} />
@@ -46,7 +55,6 @@ function SettlementEditor() {
 
   const degraded = []
   ;(cmp?.rooms || []).forEach((r) => r.items.forEach((it) => { if (it.degraded && it.sortie_item_id) degraded.push({ ...it, room: r.name }) }))
-  const ro = s && s.status === 'finalized'
 
   return (
     <div className="space-y-6">
@@ -82,13 +90,51 @@ function SettlementEditor() {
         action={s && <div className="flex items-center gap-2">
           <StatusBadge label={ro ? t('backoffice:rental.inventory.status.finalized') : t('backoffice:rental.inventory.status.draft')} className={ro ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-100 text-amber-700'} />
           <button onClick={() => openPdf(rentalService.settlementPdfUrl(s.id))} className={SECONDARY_BTN}><FiDownload className="w-4 h-4" /> {t('backoffice:rental.inventory.pdfButton')}</button>
-          {!ro && <button disabled={finalize.isLoading} onClick={() => finalize.mutate()} className={PRIMARY_BTN}><FiCheckCircle className="w-5 h-5" /> {t('backoffice:rental.inventory.finalizeButton')}</button>}
+          {!ro && <button disabled={finalize.isLoading || sugg.isLoading || sugg.isError} onClick={() => finalize.mutate()} className={PRIMARY_BTN}><FiCheckCircle className="w-5 h-5" /> {t('backoffice:rental.inventory.finalizeButton')}</button>}
         </div>}>
         {notFound || !s ? (
           <EmptyState title={t('backoffice:rental.settlement.empty.title')} description={t('backoffice:rental.settlement.empty.description')}
             action={<button onClick={() => create.mutate()} className={PRIMARY_BTN}><FiPlus className="w-5 h-5" /> {t('backoffice:rental.settlement.createButton')}</button>} />
         ) : (
           <div className="space-y-4">
+            <div className="rounded-lg border border-dashed border-amber-300 bg-amber-50/40 p-3">
+              <h4 className="font-medium text-gray-900">{t('backoffice:rental.settlement.suggestions.title')}</h4>
+              {ro ? (
+                <>
+                  <p className="mt-1 text-sm font-medium text-gray-700">{t('backoffice:rental.settlement.suggestions.finalizedTitle')}</p>
+                  <p className="text-sm text-gray-500">{t('backoffice:rental.settlement.suggestions.finalizedBody')}</p>
+                </>
+              ) : sugg.isError ? (
+                <div role="alert" className="mt-2 space-y-2">
+                  <Alert tone="crit" icon={FiAlertTriangle}>{t('backoffice:rental.settlement.suggestions.error')}</Alert>
+                  <button onClick={() => sugg.refetch()} className={SECONDARY_BTN}>{t('backoffice:rental.settlement.suggestions.retry')}</button>
+                </div>
+              ) : sugg.isLoading ? (
+                <p className="mt-1 text-sm text-gray-500">{t('backoffice:rental.shared.loading')}</p>
+              ) : (
+                <>
+                  <p className="mt-1 text-sm text-gray-600">{t('backoffice:rental.settlement.suggestions.hint')}</p>
+                  {sugg.data.suggestions.length === 0 && <p className="mt-2 text-sm text-gray-400">{t('backoffice:rental.settlement.suggestions.empty')}</p>}
+                  <ul className="mt-2 space-y-1">
+                    {sugg.data.suggestions.map((x) => (
+                      <li key={x.work_order_id} className="flex items-center justify-between gap-3 text-sm">
+                        <span className="text-gray-700">
+                          {x.label}
+                          {x.completed_at && <span className="ms-2 text-xs text-gray-400">{t('backoffice:rental.settlement.suggestions.completedOn', { date: fmtDate(x.completed_at, { day: 'numeric', month: 'short', year: 'numeric' }) })}</span>}
+                        </span>
+                        <span className="flex items-center gap-3">
+                          <span className="font-medium text-gray-900">{money(x.amount)}</span>
+                          <button disabled={accept.isLoading} onClick={() => accept.mutate(x.work_order_id)}
+                            aria-label={t('backoffice:rental.settlement.suggestions.accept', { label: x.label })} className={SECONDARY_BTN}>
+                            {t('backoffice:rental.settlement.suggestions.acceptShort')}
+                          </button>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
             <div className="space-y-1">
               {s.lines.map((l) => (
                 <div key={l.id} className="flex items-center justify-between text-sm border-b border-gray-100 py-1">
