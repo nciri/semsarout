@@ -52,6 +52,11 @@ services:
       - prometheus_data:/prometheus
     ports:
       - "9090:9090"
+    # Sous Docker Linux, `host.docker.internal` n'existe pas : la cible gateway tombait sur
+    # `lookup host.docker.internal on 127.0.0.11:53: no such host`. Cet alias le fait pointer
+    # vers l'hôte, où tourne le mesh natif.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   loki:
