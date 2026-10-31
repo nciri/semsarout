@@ -45,7 +45,9 @@ function ContractCreate() {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const templates = tplData?.templates || []
+  // Les modèles déposés en fichier (Word/PDF) n'ont pas de corps fusionnable : le service
+  // les refuse en génération, donc ils ne figurent pas dans ce sélecteur.
+  const templates = (tplData?.templates || []).filter((tpl) => !tpl.has_file)
   const properties = propsData?.properties || []
   const propertyTx = txData?.transactions || []
   // Un bien sans transaction ne doit pas vider les deux listes : on retombe sur tous les clients.

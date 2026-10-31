@@ -1554,6 +1554,15 @@
       "toasts": {
         "created": "Modèle créé",
         "deleted": "Modèle supprimé"
+      },
+      "upload": {
+        "title": "Déposer un modèle Word ou PDF",
+        "hint": "Votre propre mandat, un bail de votre notaire. Un modèle déposé se télécharge et s'imprime ; il ne passe pas par la fusion.",
+        "file": "Fichier (.doc, .docx ou PDF, 10 Mo max)",
+        "submit": "Déposer le modèle",
+        "download": "Télécharger",
+        "fileBadge": "Fichier",
+        "uploaded": "Modèle déposé"
       }
     }
   },

@@ -5,7 +5,7 @@ import { toast } from 'react-toastify'
 import ReactQuill from 'react-quill-new'
 import 'react-quill-new/dist/quill.snow.css'
 import { useTranslation } from 'react-i18next'
-import { FiArrowLeft, FiTrash2, FiPlus, FiLayout } from 'react-icons/fi'
+import { FiArrowLeft, FiTrash2, FiPlus, FiLayout, FiUpload, FiDownload } from 'react-icons/fi'
 import { contractService } from '../../../services/contractService'
 import { PageHeader, EmptyState } from '../../../components/backoffice/ui'
 
@@ -21,9 +21,16 @@ function TemplatesManager() {
   const [name, setName] = useState('')
   const [docType, setDocType] = useState('other')
   const [body, setBody] = useState('')
+  const [file, setFile] = useState(null)
+  const [fileName, setFileName] = useState('')
+  const [fileType, setFileType] = useState('other')
 
   const create = useMutation(() => contractService.createTemplate({ name, document_type: docType, body_html: body }), {
     onSuccess: () => { toast.success(t('backoffice:contracts.templates.toasts.created')); setName(''); setBody(''); qc.invalidateQueries('contract-templates') },
+    onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
+  })
+  const upload = useMutation(() => contractService.uploadTemplate({ file, name: fileName, document_type: fileType }), {
+    onSuccess: () => { toast.success(t('backoffice:contracts.templates.upload.uploaded')); setFile(null); setFileName(''); qc.invalidateQueries('contract-templates') },
     onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
   })
   const del = useMutation((id) => contractService.deleteTemplate(id), {
@@ -61,10 +68,20 @@ function TemplatesManager() {
             <ul className="divide-y divide-gray-100">
               {custom.map((tpl) => (
                 <li key={tpl.id} className="flex justify-between items-center px-5 py-3">
-                  <span className="text-gray-900">{tpl.name} <span className="text-xs text-gray-400">· {t(`backoffice:contracts.docType.${tpl.document_type}`, { defaultValue: tpl.document_type })}</span></span>
-                  <button onClick={() => del.mutate(tpl.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors" title={t('backoffice:contracts.templates.delete')}>
-                    <FiTrash2 className="w-4 h-4" />
-                  </button>
+                  <span className="text-gray-900">
+                    {tpl.name} <span className="text-xs text-gray-400">· {t(`backoffice:contracts.docType.${tpl.document_type}`, { defaultValue: tpl.document_type })}</span>
+                    {tpl.has_file && <span className="ms-2 px-1.5 py-0.5 text-xs rounded bg-gray-100 text-gray-600">{t('backoffice:contracts.templates.upload.fileBadge')}</span>}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    {tpl.has_file && (
+                      <a href={contractService.templateFileUrl(tpl.id)} className="p-1.5 text-gray-400 hover:text-primary-600 rounded-lg hover:bg-primary-50 transition-colors" title={t('backoffice:contracts.templates.upload.download')}>
+                        <FiDownload className="w-4 h-4" />
+                      </a>
+                    )}
+                    <button onClick={() => del.mutate(tpl.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors" title={t('backoffice:contracts.templates.delete')}>
+                      <FiTrash2 className="w-4 h-4" />
+                    </button>
+                  </span>
                 </li>
               ))}
             </ul>
@@ -94,6 +111,38 @@ function TemplatesManager() {
           >
             <FiPlus className="w-5 h-5" /> {t('backoffice:contracts.templates.submit')}
           </button>
+
+          <div className="mt-6 pt-5 border-t border-gray-100">
+            <h2 className="font-semibold text-gray-900 mb-1">{t('backoffice:contracts.templates.upload.title')}</h2>
+            <p className="text-xs text-gray-500 mb-4">{t('backoffice:contracts.templates.upload.hint')}</p>
+            <div className="mb-3">
+              <label className={labelCls}>{t('backoffice:contracts.templates.fields.name')}</label>
+              <input value={fileName} onChange={(e) => setFileName(e.target.value)} placeholder={t('backoffice:contracts.templates.fields.namePlaceholder')} className={ctrlCls} />
+            </div>
+            <div className="mb-3">
+              <label className={labelCls}>{t('backoffice:contracts.templates.fields.type')}</label>
+              <select value={fileType} onChange={(e) => setFileType(e.target.value)} className={ctrlCls}>
+                {TYPE_VALUES.map((v) => <option key={v} value={v}>{t(`backoffice:contracts.docType.${v}`)}</option>)}
+              </select>
+            </div>
+            <div className="mb-3">
+              <label className={labelCls} htmlFor="modele-fichier">{t('backoffice:contracts.templates.upload.file')}</label>
+              <input
+                id="modele-fichier"
+                type="file"
+                accept=".doc,.docx,.pdf,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                className={ctrlCls}
+              />
+            </div>
+            <button
+              disabled={!file || !fileName || upload.isLoading}
+              onClick={() => upload.mutate()}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
+            >
+              <FiUpload className="w-5 h-5" /> {t('backoffice:contracts.templates.upload.submit')}
+            </button>
+          </div>
         </div>
       </div>
     </div>
