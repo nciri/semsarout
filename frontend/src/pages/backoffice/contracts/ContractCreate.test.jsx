@@ -79,20 +79,6 @@ describe('Nouveau contrat', () => {
     mockApi()
   })
 
-  it("n'offre pas les modèles déposés en fichier", async () => {
-    // Un Word ou un PDF n'expose aucun placeholder : le service refuse de le fusionner.
-    // L'offrir ici menerait l'agence à un refus après coup.
-    svc.listTemplates.mockResolvedValue({
-      templates: [...TEMPLATES.templates,
-        { id: 9, name: 'Mandat Atlas.docx', is_global: false, has_file: true }],
-    })
-    renderPage()
-    const select = (await screen.findAllByRole('combobox'))[0]
-    const noms = within(select).getAllByRole('option').map((o) => o.textContent)
-    expect(noms).toContain('Mandat de vente')
-    expect(noms.some((n) => n.includes('Mandat Atlas'))).toBe(false)
-  })
-
   it("montre le texte du modèle, sans balises HTML", async () => {
     renderPage()
     await userEvent.selectOptions((await screen.findAllByRole('combobox'))[0], '1')

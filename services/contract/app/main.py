@@ -8,13 +8,10 @@ projections locales ; le PDF finalisé est archivé en stockage objet (MinIO/S3)
 les documents de la transaction liée est déléguée via `contract.finalized`/`contract.signed`
 (le service transactions crée/maj le `TransactionDocument`).
 """
-import os.path
-import re
 from contextlib import asynccontextmanager
 from datetime import datetime
-from urllib.parse import quote
 
-from fastapi import Depends, FastAPI, File, Form, Request, Response, UploadFile
+from fastapi import Depends, FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import or_
@@ -34,7 +31,7 @@ from .models import (
 )
 from .pdf import render_pdf_bytes
 from .sanitize import sanitize_html
-from .storage import pdf_storage, template_storage
+from .storage import pdf_storage
 from .util import err, iso, json_body
 
 settings = get_settings()
@@ -62,52 +59,6 @@ Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_sch
 app.include_router(stay_router)
 
 
-@app.middleware("http")
-async def _plafond_depot_modele(request: Request, call_next):
-    """Refuse un dépôt annoncé trop gros AVANT que le multipart soit analysé.
-
-    Starlette analyse tout le formulaire avant d'entrer dans le gestionnaire (mémoire puis
-    fichier temporaire sur disque) : un plafond mesuré sur les octets déjà lus arrive donc
-    après l'écriture, et ne protège rien. Ce middleware tourne avant le routage.
-
-    Le plafond porte sur le corps de la requête, enveloppe multipart comprise : le fichier
-    utile tolérable est donc de quelques centaines d'octets sous les 10 Mo.
-    """
-    if request.method == "POST" and request.url.path.endswith("/contract-templates/upload"):
-        annonce = request.headers.get("content-length", "")
-        if annonce.isdigit() and int(annonce) > _MAX_MODELE:
-            return err("Modèle trop volumineux (10 Mo max)", 413)
-    return await call_next(request)
-
-
-# Formats bureautiques acceptés pour un modèle déposé. Word et PDF seulement : l'agence
-# dépose son propre mandat ou un bail de son notaire, pas un binaire quelconque.
-_MIMES_MODELE = {
-    "application/pdf": "pdf",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
-    "application/msword": "doc",
-}
-_MAX_MODELE = 10 * 1024 * 1024   # 10 Mo : un mandat de 12 pages pèse quelques centaines de Ko
-_MODELE_CHUNK = 256 * 1024
-# Tout ce qui n'est pas lettre, chiffre, espace, point, tiret ou underscore. Le nom arrive du
-# client et finit dans `Content-Disposition` : un guillemet ferme le champ, un CR/LF ajoute un
-# en-tête. Les séparateurs de chemin partent aussi (`os.path.basename` ne coupe pas `\` sous Linux).
-_NOM_INTERDIT = re.compile(r"[^\w .\-]", re.UNICODE)
-
-
-def _nom_de_modele(brut: str | None, ext: str) -> str:
-    """Nom de fichier sûr à renvoyer au téléchargement, extension alignée sur le MIME validé.
-
-    L'extension vient du type reconnu, jamais du nom fourni : un `.docx` annoncé en PDF
-    ressortirait en .docx et s'ouvrirait de travers.
-    """
-    base = os.path.basename((brut or "").replace("\\", "/").rsplit("/", 1)[-1])
-    base = _NOM_INTERDIT.sub("_", base).strip(" .") or "modele"
-    if base.lower().endswith(f".{ext}"):
-        base = base[: -(len(ext) + 1)].strip(" .") or "modele"
-    return f"{base[:200]}.{ext}"
-
-
 def _gate(principal: Principal) -> JSONResponse | None:
     """Miroir de `require_contracts` : agence + plan `has_contracts` (feature `contracts`)."""
     if principal.agency_id is None or "contracts" not in principal.features:
@@ -123,11 +74,7 @@ def _can_manage_templates(principal: Principal) -> bool:
 def _template_dict(t: ContractTemplate, include_body: bool = True) -> dict:
     d = {"id": t.id, "agency_id": t.agency_id, "document_type": t.document_type,
          "name": t.name, "is_builtin": t.is_builtin, "is_global": t.agency_id is None,
-         "created_at": iso(t.created_at),
-         # `has_file` évite au front de déduire la forme du modèle de la nullité de body_html :
-         # un modèle fichier ne s'édite pas dans l'éditeur et ne se fusionne pas.
-         "has_file": t.file_key is not None,
-         "file_name": t.file_name, "file_mime": t.file_mime}
+         "created_at": iso(t.created_at)}
     if include_body:
         d["body_html"] = t.body_html
     return d
@@ -249,79 +196,6 @@ async def update_template(tid: int, request: Request, principal: Principal = Dep
     return {"template": _template_dict(t)}
 
 
-@app.post("/backoffice/contract-templates/upload", status_code=201)
-async def upload_template(
-    request: Request,
-    file: UploadFile = File(...),
-    name: str = Form(""),
-    document_type: str = Form(""),
-    principal: Principal = Depends(get_principal),
-    db: Session = Depends(get_db),
-):
-    """Dépose un modèle bureautique (Word ou PDF) à côté des modèles HTML fusionnables."""
-    if (g := _gate(principal)):
-        return g
-    if not _can_manage_templates(principal):
-        return err("Les modèles personnalisés sont réservés au plan Entreprise.", 403)
-    if not name.strip() or not document_type.strip():
-        return err("name et document_type requis", 400)
-    ext = _MIMES_MODELE.get(file.content_type or "")
-    if ext is None:
-        return err("Modèle au format Word (.doc, .docx) ou PDF requis", 400)
-    # Deuxième plafond, lu APRÈS l'analyse du multipart (cf. `_refus_si_trop_gros`) : il
-    # rattrape un envoi sans `Content-Length` ou dont l'annonce mentait.
-    chunks: list[bytes] = []
-    lu = 0
-    while True:
-        chunk = await file.read(_MODELE_CHUNK)
-        if not chunk:
-            break
-        lu += len(chunk)
-        if lu > _MAX_MODELE:
-            return err("Modèle trop volumineux (10 Mo max)", 413)
-        chunks.append(chunk)
-    data = b"".join(chunks)
-    if not data:
-        return err("Fichier vide", 400)
-
-    t = ContractTemplate(
-        agency_id=principal.agency_id, document_type=document_type.strip(), name=name.strip(),
-        body_html=None, file_name=_nom_de_modele(file.filename, ext),
-        file_mime=file.content_type, is_builtin=False,
-        created_by=int(principal.sub) if principal.sub.isdigit() else None)
-    db.add(t)
-    db.flush()  # l'identifiant entre dans la clé objet, donc il faut l'avoir avant d'écrire
-    t.file_key = f"contract-templates/{principal.agency_id}/{t.id}.{ext}"
-    template_storage().put(t.file_key, data, file.content_type)
-    db.commit()
-    return JSONResponse({"template": _template_dict(t)}, status_code=201)
-
-
-@app.get("/backoffice/contract-templates/{tid}/file")
-def download_template(tid: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
-    if (g := _gate(principal)):
-        return g
-    t = db.query(ContractTemplate).filter(
-        ContractTemplate.id == tid,
-        or_(ContractTemplate.agency_id.is_(None),
-            ContractTemplate.agency_id == principal.agency_id)).first()
-    if t is None or not t.file_key:
-        return err("Modèle introuvable", 404)
-    try:
-        data = template_storage().get(t.file_key)
-    except Exception:  # noqa: BLE001 — objet absent du stockage : la ligne existe, le fichier non
-        return err("Fichier du modèle introuvable", 404)
-    nom = t.file_name or f"modele-{t.id}"
-    # Les noms déposés avant l'assainissement restent en base : on les repasse au filtre ici
-    # plutôt que de faire confiance à la colonne.
-    sur = _NOM_INTERDIT.sub("_", os.path.basename(nom)) or f"modele-{t.id}"
-    ascii_sur = sur.encode("ascii", "replace").decode("ascii").replace("?", "_")
-    return Response(
-        content=data, media_type=t.file_mime or "application/octet-stream",
-        headers={"Content-Disposition":
-                 f"attachment; filename=\"{ascii_sur}\"; filename*=UTF-8''{quote(sur)}"})
-
-
 @app.delete("/backoffice/contract-templates/{tid}")
 def delete_template(tid: int, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
     if (g := _gate(principal)):
@@ -363,11 +237,6 @@ async def create_contract(request: Request, principal: Principal = Depends(get_p
         or_(ContractTemplate.agency_id.is_(None), ContractTemplate.agency_id == aid)).first()
     if not tpl:
         return err("Modèle invalide", 400)
-    if not tpl.body_html:
-        # Modèle déposé en fichier : rien à fusionner. Sans ce refus, `render(None, …)` lève
-        # et l'agence voit une 500 au lieu d'une explication.
-        return err("Ce modèle est un fichier à télécharger : il ne se fusionne pas. "
-                   "Choisissez un modèle rédigé dans l'éditeur.", 400)
 
     txn = db.query(TransactionRO).filter(
         TransactionRO.id == data["transaction_id"], TransactionRO.agency_id == aid).first() if data.get("transaction_id") else None

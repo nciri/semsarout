@@ -15,25 +15,13 @@ from .db import Base
 
 
 class ContractTemplate(Base):
-    """Modèle de contrat, sous l'une de deux formes exclusives.
-
-    Soit un corps HTML fusionnable (`body_html`), soit un fichier bureautique déposé par
-    l'agence (`file_key` dans le stockage objet) : son propre mandat Word, un bail PDF fourni
-    par son notaire. Un fichier ne se fusionne pas — ni Word ni PDF n'exposent de placeholder
-    à `render()` — donc `body_html` est NULL pour ces modèles, et la génération de contrat les
-    refuse explicitement plutôt que de rendre un corps vide.
-    """
-
     __tablename__ = "contract_template"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     agency_id = Column(Integer, index=True)  # NULL = modèle global
     document_type = Column(String(30), nullable=False)
     name = Column(String(150), nullable=False)
-    body_html = Column(Text)                 # NULL pour un modèle déposé en fichier
-    file_key = Column(String(255))           # clé dans le stockage objet
-    file_name = Column(String(255))          # nom d'origine, rendu au téléchargement
-    file_mime = Column(String(120))
+    body_html = Column(Text, nullable=False)
     is_builtin = Column(Boolean, default=False)
     created_by = Column(Integer)
     created_at = Column(DateTime, default=datetime.utcnow)
