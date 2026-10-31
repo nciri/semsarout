@@ -43,6 +43,18 @@ services:
       - "8889:8889"      # Prometheus exporter (métriques des traces)
     restart: unless-stopped
 
+  tempo:
+    image: grafana/tempo:latest
+    container_name: semsar-tempo
+    command: ["-config.file=/etc/tempo/config.yaml"]
+    user: "0:0"             # dev : evite les soucis de droits sur le volume
+    volumes:
+      - ./tempo/tempo-config.yaml:/etc/tempo/config.yaml:ro
+      - tempo_data:/var/tempo
+    ports:
+      - "3200:3200"
+    restart: unless-stopped
+
   prometheus:
     image: prom/prometheus:latest
     container_name: semsar-prometheus
@@ -104,6 +116,7 @@ services:
     depends_on:
       - prometheus
       - loki
+      - tempo
     restart: unless-stopped
 
 volumes:
@@ -111,5 +124,6 @@ volumes:
   minio_data:
   prometheus_data:
   loki_data:
+  tempo_data:
   grafana_data:
   opensearch_data:
