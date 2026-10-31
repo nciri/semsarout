@@ -157,3 +157,41 @@ def test_le_depot_est_reserve_au_plan_entreprise(db_session, stockage):
     with TestClient(app) as c:
         assert _depose(c).status_code == 403
     app.dependency_overrides.clear()
+
+
+def test_le_nom_de_fichier_ne_peut_pas_injecter_d_en_tete(client, stockage):
+    """`Content-Disposition` est construit avec le nom fourni par le client : un guillemet ou
+    un retour chariot y casserait l'en-tête, voire en ajouterait un second."""
+    r = _depose(client, nom='../../evil"\r\nX-Injecte: 1.docx')
+    assert r.status_code == 201, r.text
+    tpl = r.json()["template"]
+    assert '"' not in tpl["file_name"]
+    assert "\r" not in tpl["file_name"] and "\n" not in tpl["file_name"]
+    assert "/" not in tpl["file_name"]          # basename seul, pas de chemin
+    assert tpl["file_name"].endswith(".docx")   # extension alignée sur le MIME validé
+
+    r = client.get(f"/backoffice/contract-templates/{tpl['id']}/file")
+    assert r.status_code == 200
+    cd = r.headers["content-disposition"]
+    assert "x-injecte" not in {k.lower() for k in r.headers}
+    assert "\r" not in cd and "\n" not in cd
+
+
+def test_l_extension_suit_le_mime_valide_pas_le_nom_fourni(client, stockage):
+    """Un `.docx` annoncé en PDF ressortirait en .docx et s'ouvrirait de travers."""
+    r = _depose(client, nom="piege.docx", mime="application/pdf", contenu=b"%PDF-1.7")
+    assert r.json()["template"]["file_name"].endswith(".pdf")
+
+
+def test_un_envoi_annonce_trop_gros_est_refuse_avant_analyse(client, stockage):
+    """Starlette analyse tout le multipart AVANT le gestionnaire, en mémoire puis sur disque :
+    sans refus sur `Content-Length`, un envoi de plusieurs gigaoctets est déjà écrit quand le
+    plafond se mesure. Le plafond lu après coup ne protégeait donc rien."""
+    r = client.post(
+        "/backoffice/contract-templates/upload",
+        data={"name": "Trop gros", "document_type": "other"},
+        files={"file": ("x.pdf", b"%PDF", "application/pdf")},
+        headers={"Content-Length": str(m._MAX_MODELE + 1)},
+    )
+    assert r.status_code == 413
+    assert stockage.objets == {}

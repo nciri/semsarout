@@ -8,8 +8,11 @@ projections locales ; le PDF finalisé est archivé en stockage objet (MinIO/S3)
 les documents de la transaction liée est déléguée via `contract.finalized`/`contract.signed`
 (le service transactions crée/maj le `TransactionDocument`).
 """
+import os.path
+import re
 from contextlib import asynccontextmanager
 from datetime import datetime
+from urllib.parse import quote
 
 from fastapi import Depends, FastAPI, File, Form, Request, Response, UploadFile
 from fastapi.responses import JSONResponse
@@ -59,6 +62,24 @@ Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_sch
 app.include_router(stay_router)
 
 
+@app.middleware("http")
+async def _plafond_depot_modele(request: Request, call_next):
+    """Refuse un dépôt annoncé trop gros AVANT que le multipart soit analysé.
+
+    Starlette analyse tout le formulaire avant d'entrer dans le gestionnaire (mémoire puis
+    fichier temporaire sur disque) : un plafond mesuré sur les octets déjà lus arrive donc
+    après l'écriture, et ne protège rien. Ce middleware tourne avant le routage.
+
+    Le plafond porte sur le corps de la requête, enveloppe multipart comprise : le fichier
+    utile tolérable est donc de quelques centaines d'octets sous les 10 Mo.
+    """
+    if request.method == "POST" and request.url.path.endswith("/contract-templates/upload"):
+        annonce = request.headers.get("content-length", "")
+        if annonce.isdigit() and int(annonce) > _MAX_MODELE:
+            return err("Modèle trop volumineux (10 Mo max)", 413)
+    return await call_next(request)
+
+
 # Formats bureautiques acceptés pour un modèle déposé. Word et PDF seulement : l'agence
 # dépose son propre mandat ou un bail de son notaire, pas un binaire quelconque.
 _MIMES_MODELE = {
@@ -68,6 +89,23 @@ _MIMES_MODELE = {
 }
 _MAX_MODELE = 10 * 1024 * 1024   # 10 Mo : un mandat de 12 pages pèse quelques centaines de Ko
 _MODELE_CHUNK = 256 * 1024
+# Tout ce qui n'est pas lettre, chiffre, espace, point, tiret ou underscore. Le nom arrive du
+# client et finit dans `Content-Disposition` : un guillemet ferme le champ, un CR/LF ajoute un
+# en-tête. Les séparateurs de chemin partent aussi (`os.path.basename` ne coupe pas `\` sous Linux).
+_NOM_INTERDIT = re.compile(r"[^\w .\-]", re.UNICODE)
+
+
+def _nom_de_modele(brut: str | None, ext: str) -> str:
+    """Nom de fichier sûr à renvoyer au téléchargement, extension alignée sur le MIME validé.
+
+    L'extension vient du type reconnu, jamais du nom fourni : un `.docx` annoncé en PDF
+    ressortirait en .docx et s'ouvrirait de travers.
+    """
+    base = os.path.basename((brut or "").replace("\\", "/").rsplit("/", 1)[-1])
+    base = _NOM_INTERDIT.sub("_", base).strip(" .") or "modele"
+    if base.lower().endswith(f".{ext}"):
+        base = base[: -(len(ext) + 1)].strip(" .") or "modele"
+    return f"{base[:200]}.{ext}"
 
 
 def _gate(principal: Principal) -> JSONResponse | None:
@@ -213,6 +251,7 @@ async def update_template(tid: int, request: Request, principal: Principal = Dep
 
 @app.post("/backoffice/contract-templates/upload", status_code=201)
 async def upload_template(
+    request: Request,
     file: UploadFile = File(...),
     name: str = Form(""),
     document_type: str = Form(""),
@@ -229,8 +268,8 @@ async def upload_template(
     ext = _MIMES_MODELE.get(file.content_type or "")
     if ext is None:
         return err("Modèle au format Word (.doc, .docx) ou PDF requis", 400)
-    # Lecture par morceaux, abandonnée au dépassement : un plafond vérifié après un `read()`
-    # intégral aurait déjà tamponné l'envoi entier, donc ne protégerait rien.
+    # Deuxième plafond, lu APRÈS l'analyse du multipart (cf. `_refus_si_trop_gros`) : il
+    # rattrape un envoi sans `Content-Length` ou dont l'annonce mentait.
     chunks: list[bytes] = []
     lu = 0
     while True:
@@ -247,7 +286,7 @@ async def upload_template(
 
     t = ContractTemplate(
         agency_id=principal.agency_id, document_type=document_type.strip(), name=name.strip(),
-        body_html=None, file_name=(file.filename or f"modele.{ext}")[:255],
+        body_html=None, file_name=_nom_de_modele(file.filename, ext),
         file_mime=file.content_type, is_builtin=False,
         created_by=int(principal.sub) if principal.sub.isdigit() else None)
     db.add(t)
@@ -273,8 +312,14 @@ def download_template(tid: int, principal: Principal = Depends(get_principal), d
     except Exception:  # noqa: BLE001 — objet absent du stockage : la ligne existe, le fichier non
         return err("Fichier du modèle introuvable", 404)
     nom = t.file_name or f"modele-{t.id}"
-    return Response(content=data, media_type=t.file_mime or "application/octet-stream",
-                    headers={"Content-Disposition": f'attachment; filename="{nom}"'})
+    # Les noms déposés avant l'assainissement restent en base : on les repasse au filtre ici
+    # plutôt que de faire confiance à la colonne.
+    sur = _NOM_INTERDIT.sub("_", os.path.basename(nom)) or f"modele-{t.id}"
+    ascii_sur = sur.encode("ascii", "replace").decode("ascii").replace("?", "_")
+    return Response(
+        content=data, media_type=t.file_mime or "application/octet-stream",
+        headers={"Content-Disposition":
+                 f"attachment; filename=\"{ascii_sur}\"; filename*=UTF-8''{quote(sur)}"})
 
 
 @app.delete("/backoffice/contract-templates/{tid}")
