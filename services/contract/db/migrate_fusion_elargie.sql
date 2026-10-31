@@ -87,3 +87,12 @@ BEGIN
       FROM public.properties p WHERE p.id = r.id;
   END IF;
 END $$;
+
+-- 6. Unicité du nom parmi les modèles INTÉGRÉS (agency_id NULL). Deux usages :
+--  - la migration des actes marocains s'en sert comme cible d'upsert, de sorte qu'un acte
+--    révisé se propage au déploiement suivant ; sans cela, l'insertion gardée par un
+--    NOT EXISTS laissait éternellement la première version en base ;
+--  - elle interdit deux modèles intégrés de même intitulé, indistinguables à l'écran.
+-- Partielle : deux agences peuvent nommer leur modèle à leur guise.
+CREATE UNIQUE INDEX IF NOT EXISTS ux_contract_template_global_name
+    ON contract.contract_template (name) WHERE agency_id IS NULL;

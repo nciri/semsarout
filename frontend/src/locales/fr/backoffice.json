@@ -1555,6 +1555,16 @@
       "toasts": {
         "created": "Modèle créé",
         "deleted": "Modèle supprimé"
+      },
+      "builtin": {
+        "title": "Modèles intégrés",
+        "description": "Actes fournis avec SemsarOut, disponibles pour toutes les agences. Choisissez-les à la création d'un contrat ; ils ne se modifient pas ici."
+      },
+      "language": {
+        "label": "Langue des modèles",
+        "fr": "Français",
+        "ar": "Arabe",
+        "unavailable": "Pas de version arabe pour ce modèle"
       }
     }
   },

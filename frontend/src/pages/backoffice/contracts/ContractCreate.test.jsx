@@ -79,6 +79,23 @@ describe('Nouveau contrat', () => {
     mockApi()
   })
 
+  it("n'offre qu'une langue à la fois, le français par défaut", async () => {
+    // Un acte existe en deux versions : les offrir ensemble doublait la liste, dont la
+    // moitié illisible pour un francophone.
+    svc.listTemplates.mockResolvedValue({ templates: [
+      ...TEMPLATES.templates,
+      { id: 9, name: 'وكالة البيع — عادية أو حصرية', lang: 'ar', is_global: true },
+    ] })
+    renderPage()
+    const select = (await screen.findAllByRole('combobox'))[0]
+    expect(within(select).getAllByRole('option').map((o) => o.textContent))
+      .not.toContain('وكالة البيع — عادية أو حصرية')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Arabe' }))
+    expect(within((await screen.findAllByRole('combobox'))[0]).getAllByRole('option')
+      .map((o) => o.textContent)).toContain('وكالة البيع — عادية أو حصرية')
+  })
+
   it("montre le texte du modèle, sans balises HTML", async () => {
     renderPage()
     await userEvent.selectOptions((await screen.findAllByRole('combobox'))[0], '1')

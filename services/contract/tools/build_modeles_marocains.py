@@ -146,7 +146,54 @@ CARTES = {
 
 
 # ---- lecture du .docx -------------------------------------------------------------
+# Les actes portent une vraie mise en page : 36 passages en gras, des italiques, des
+# paragraphes justifiés ou centrés, des bandeaux de titre. Tout aplatir rendait un mur de
+# texte. Ce qui est conservé est ce que l'allowlist produit accepte (`semsar_common.
+# html_sanitize`) : `<strong>`, `<em>`, `<u>` et `text-align` — la seule propriété CSS admise.
+# Les couleurs et les fonds de cellule ne passent pas par le contenu : ils sont rendus par la
+# feuille de style du PDF (app/pdf.py), là où la présentation a sa place.
+ALIGNEMENTS = {"center": "center", "right": "right", "both": "justify", "end": "right"}
+
+
+def _runs(p) -> list:
+    """Passages d'un paragraphe : `[(texte, gras, italique, souligné), …]`, voisins fusionnés."""
+    out = []
+    for r in p.findall(f"{W}r"):
+        txt = []
+        for n in r.iter():
+            if n.tag == f"{W}t":
+                txt.append(n.text or "")
+            elif n.tag == f"{W}tab":
+                txt.append(" ")
+            elif n.tag == f"{W}br":
+                txt.append("\n")
+        txt = "".join(txt)
+        if not txt:
+            continue
+        rpr = r.find(f"{W}rPr")
+        def actif(tag):
+            if rpr is None:
+                return False
+            el = rpr.find(f"{W}{tag}")
+            return el is not None and el.get(f"{W}val") not in ("0", "false", "none")
+        style = (actif("b"), actif("i"), actif("u"))
+        if out and out[-1][1:] == style:
+            out[-1] = (out[-1][0] + txt, *style)
+        else:
+            out.append((txt, *style))
+    return out
+
+
+def _alignement(p) -> str | None:
+    pr = p.find(f"{W}pPr")
+    if pr is None:
+        return None
+    jc = pr.find(f"{W}jc")
+    return ALIGNEMENTS.get(jc.get(f"{W}val", "")) if jc is not None else None
+
+
 def _texte(el) -> str:
+    """Texte brut d'un élément — sert au classement des blocs et aux contrôles."""
     out = []
     for n in el.iter():
         if n.tag == f"{W}t":
@@ -158,21 +205,42 @@ def _texte(el) -> str:
     return "".join(out)
 
 
+def _cellule(tc) -> list:
+    """Passages d'une cellule : ses paragraphes, séparés par un saut de ligne."""
+    out = []
+    for i, p in enumerate(tc.findall(f"{W}p")):
+        runs = _runs(p)
+        if not runs:
+            continue
+        if out:
+            out.append(("\n", False, False, False))
+        out.extend(runs)
+    return out
+
+
 def blocs(path: Path) -> list:
-    """Blocs du document, dans l'ordre : `("P", texte)` ou `("T", [[cellule, …], …])`."""
+    """Blocs du document : `("P", runs, alignement)` ou `("T", [[runs, …], …], None)`."""
     with zipfile.ZipFile(path) as z:
         root = ET.fromstring(z.read("word/document.xml"))
     out = []
     for child in root.find(f"{W}body"):
         if child.tag == f"{W}p":
-            t = _texte(child).strip()
-            if t:
-                out.append(("P", t))
+            runs = _runs(child)
+            if any(t.strip() for t, *_ in runs):
+                out.append(("P", runs, _alignement(child)))
         elif child.tag == f"{W}tbl":
-            rows = [[_texte(tc).strip() for tc in tr.findall(f"{W}tc")]
+            rows = [[_cellule(tc) for tc in tr.findall(f"{W}tc")]
                     for tr in child.findall(f"{W}tr")]
-            out.append(("T", rows))
+            out.append(("T", rows, None))
     return out
+
+
+def texte_de(bloc) -> str:
+    """Texte brut d'un bloc, pour le classement et le comptage des pointillés."""
+    kind, contenu, _ = bloc
+    if kind == "P":
+        return "".join(t for t, *_ in contenu)
+    return " ".join("".join(t for t, *_ in cell) for row in contenu for cell in row)
 
 
 # ---- classement des blocs ---------------------------------------------------------
@@ -181,13 +249,15 @@ def blocs(path: Path) -> list:
 # versions du même acte.
 def classe(blocs_fr: list) -> list:
     roles = []
-    for i, (kind, contenu) in enumerate(blocs_fr):
+    for i, bloc in enumerate(blocs_fr):
+        kind, contenu, _ = bloc
+        texte = texte_de(bloc).strip()
         if kind == "T":
-            cellules = [c for row in contenu for c in row]
-            if len(contenu) == 1 and len(cellules) == 1:
-                # Tableau d'une seule cellule : un intitulé d'article, ou un encadré de mode
-                # d'emploi. La longueur les sépare sans ambiguïté sur ces cinq documents.
-                roles.append("h3" if len(cellules[0]) < 120 else "blockquote")
+            if len(contenu) == 1 and len(contenu[0]) == 1:
+                # Tableau d'une seule cellule : un intitulé d'article (bandeau sombre dans le
+                # .docx), ou un encadré de mode d'emploi. La longueur les sépare sans
+                # ambiguïté sur ces cinq documents.
+                roles.append("h3" if len(texte) < 120 else "blockquote")
             else:
                 roles.append("table")
             continue
@@ -195,7 +265,7 @@ def classe(blocs_fr: list) -> list:
             roles.append("h1")
         elif i == 1:
             roles.append("soustitre")
-        elif len(contenu) < 90 and contenu == contenu.upper():
+        elif len(texte) < 90 and texte == texte.upper():
             roles.append("h2")      # « ANNEXE 1 — ÉTAT DES LIEUX… »
         else:
             roles.append("p")
@@ -205,7 +275,7 @@ def classe(blocs_fr: list) -> list:
 # ---- substitution des placeholders ------------------------------------------------
 def pose_placeholders(texte: str, champs: dict, compteur: list) -> str:
     """Remplace les pointillés dont le rang figure dans `champs`. `compteur` porte le rang
-    courant, partagé entre les cellules d'un même tableau."""
+    courant, partagé entre les passages d'un paragraphe et les cellules d'un tableau."""
     def _un(m):
         compteur[0] += 1
         cle = champs.get(compteur[0])
@@ -213,41 +283,73 @@ def pose_placeholders(texte: str, champs: dict, compteur: list) -> str:
     return BLANC.sub(_un, texte)
 
 
-def en_html(blocs_doc: list, roles: list, champs_par_bloc: dict) -> str:
+def _inline(runs: list, champs: dict, compteur: list) -> str:
+    """Passages d'un paragraphe en HTML, mise en forme conservée.
+
+    Un pointillé réparti sur deux passages de formatage différent serait compté deux fois :
+    le bloc est alors rendu sans mise en forme plutôt que mal substitué (`_segments_surs`).
+    """
     morceaux = []
-    for i, ((kind, contenu), role) in enumerate(zip(blocs_doc, roles, strict=True)):
+    for texte, gras, italique, souligne in runs:
+        pose = escape(pose_placeholders(texte, champs, compteur), quote=False)
+        pose = pose.replace("\n", "<br>")
+        for actif, balise in ((gras, "strong"), (italique, "em"), (souligne, "u")):
+            if actif and pose.strip():
+                pose = f"<{balise}>{pose}</{balise}>"
+        morceaux.append(pose)
+    return "".join(morceaux)
+
+
+def _segments_surs(runs: list) -> list:
+    """`runs` tels quels si aucun pointillé n'est coupé entre deux passages, sinon un seul
+    passage sans mise en forme — la substitution correcte primant sur le gras."""
+    entier = "".join(t for t, *_ in runs)
+    if len(BLANC.findall(entier)) == sum(len(BLANC.findall(t)) for t, *_ in runs):
+        return runs
+    return [(entier, False, False, False)]
+
+
+def en_html(blocs_doc: list, roles: list, champs_par_bloc: dict, langue: str = "fr") -> str:
+    # Les actes arabes se lisent de droite à gauche. `text-align` est la seule propriété CSS
+    # que l'allowlist produit admet : elle porte l'essentiel de la mise en page des blocs.
+    defaut = "right" if langue == "ar" else None
+    morceaux = []
+    for i, (bloc, role) in enumerate(zip(blocs_doc, roles, strict=True)):
+        kind, contenu, align = bloc
         champs = champs_par_bloc.get(i, {})
         compteur = [0]
-
-        def prep(t):
-            # `escape` ne touche pas aux accolades : les {{placeholders}} survivent.
-            return escape(pose_placeholders(t, champs, compteur), quote=False).replace("\n", "<br>")
+        style = ""
+        choix = align or defaut
+        if choix and choix != "left":
+            style = f' style="text-align:{choix};"'
 
         if kind == "P":
-            txt = prep(contenu)
+            corps = _inline(_segments_surs(contenu), champs, compteur)
             if role == "h1":
-                morceaux.append(f"<h1>{txt}</h1>")
+                morceaux.append(f'<h1 style="text-align:center;">{corps}</h1>')
             elif role == "soustitre":
-                morceaux.append(f"<p><em>{txt}</em></p>")
+                morceaux.append(f'<p style="text-align:center;"><em>{corps}</em></p>')
             elif role == "h2":
-                morceaux.append(f"<h2>{txt}</h2>")
+                morceaux.append(f"<h2{style}>{corps}</h2>")
             else:
-                morceaux.append(f"<p>{txt}</p>")
+                morceaux.append(f"<p{style}>{corps}</p>")
         elif role in ("h3", "blockquote"):
-            txt = prep(contenu[0][0])
-            morceaux.append(f"<h3>{txt}</h3>" if role == "h3" else f"<blockquote>{txt}</blockquote>")
+            corps = _inline(_segments_surs(contenu[0][0]), champs, compteur)
+            balise = "h3" if role == "h3" else "blockquote"
+            morceaux.append(f"<{balise}{style}>{corps}</{balise}>")
         else:
             lignes = []
             for n, row in enumerate(contenu):
                 balise = "th" if n == 0 and len(contenu) > 1 else "td"
-                cells = "".join(f"<{balise}>{prep(c)}</{balise}>" for c in row)
+                cells = "".join(
+                    f"<{balise}{style}>{_inline(_segments_surs(cell), champs, compteur)}</{balise}>"
+                    for cell in row)
                 lignes.append(f"<tr>{cells}</tr>")
-            corps = "".join(lignes)
             if len(contenu) > 1:
-                morceaux.append(f"<table><thead>{lignes[0]}</thead><tbody>"
-                                f"{''.join(lignes[1:])}</tbody></table>")
+                morceaux.append(f"<table><thead>{lignes[0]}</thead>"
+                                f"<tbody>{''.join(lignes[1:])}</tbody></table>")
             else:
-                morceaux.append(f"<table><tbody>{corps}</tbody></table>")
+                morceaux.append(f"<table><tbody>{''.join(lignes)}</tbody></table>")
     return "\n".join(morceaux)
 
 
@@ -283,6 +385,9 @@ def main() -> int:
     lignes.append(f" WHERE is_builtin IS TRUE AND agency_id IS NULL AND name IN ({noms});")
     lignes.append("")
     lignes.append("-- 2. Les dix modèles (cinq actes × deux langues).")
+    lignes.append("-- Upsert sur l'index unique partiel des modèles intégrés : un acte révisé dans son")
+    lignes.append("-- .docx se propage au déploiement suivant. Une insertion gardée par NOT EXISTS")
+    lignes.append("-- laissait la première version en base pour toujours.")
     lignes.append("INSERT INTO contract.contract_template "
                   "(agency_id, document_type, name, lang, body_html, is_builtin, created_at, updated_at)")
 
@@ -295,15 +400,18 @@ def main() -> int:
             return 1
         roles = classe(fr)
         for langue, doc in (("fr", fr), ("ar", ar)):
-            html = en_html(doc, roles, carte["champs"])
+            html = en_html(doc, roles, carte["champs"], langue)
             valeurs.append((carte["document_type"], carte["noms"][langue], langue, html))
 
     for i, (dtype, titre, langue, html) in enumerate(valeurs):
-        virgule = "," if i < len(valeurs) - 1 else ""
         lignes.append(f"SELECT NULL::int, '{dtype}', $nom${titre}$nom$, '{langue}', $html$\n{html}\n$html$, TRUE, NOW(), NOW()")
-        lignes.append(" WHERE NOT EXISTS (SELECT 1 FROM contract.contract_template t"
-                      f" WHERE t.agency_id IS NULL AND t.name = $nom${titre}$nom$)")
-        lignes.append("UNION ALL" if virgule else ";")
+        lignes.append("UNION ALL" if i < len(valeurs) - 1 else "")
+    lignes.append("ON CONFLICT (name) WHERE agency_id IS NULL DO UPDATE SET")
+    lignes.append("    document_type = EXCLUDED.document_type,")
+    lignes.append("    lang = EXCLUDED.lang,")
+    lignes.append("    body_html = EXCLUDED.body_html,")
+    lignes.append("    is_builtin = TRUE,")
+    lignes.append("    updated_at = NOW();")
 
     SORTIE.write_text("\n".join(lignes) + "\n", encoding="utf-8")
     print(f"{SORTIE.relative_to(RACINE)} — {len(valeurs)} modèles, "

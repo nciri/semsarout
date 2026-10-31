@@ -5,6 +5,7 @@ import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { FiArrowLeft, FiFileText } from 'react-icons/fi'
 import { contractService } from '../../../services/contractService'
+import LanguageToggle from './LanguageToggle'
 import SearchableSelect from '../../../components/common/SearchableSelect'
 import PartiesField from './PartiesField'
 import { emptyParty, toPayload } from './parties'
@@ -29,6 +30,7 @@ function ContractCreate() {
   const { data: clientsData } = useQuery('bo-clients-min', async () => (await api.get('/backoffice/clients?per_page=100')).data)
   // Un contrat peut nommer plusieurs vendeurs ou plusieurs locataires : la liste des parties
   // remplace le client unique, dont le rôle est désormais tenu par la première d'entre elles.
+  const [langue, setLangue] = useState('fr')
   const [form, setForm] = useState({
     template_id: '', title: '', property_id: '', parties: [emptyParty()], transaction_id: '',
     amount: '', sign_date: '', effect_date: '', notes: '',
@@ -43,9 +45,16 @@ function ContractCreate() {
     })).data,
   )
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
+  const changeLangue = (code) => {
+    setLangue(code)
+    setForm((f) => ({ ...f, template_id: '' }))   // l'identifiant choisi appartient à l'autre langue
+  }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const templates = tplData?.templates || []
+  // Un acte existe en français et en arabe : deux versions d'un même document. Les offrir
+  // côte à côte doublait la liste. Le français sort par défaut, l'arabe sur demande, et le
+  // contrat est généré dans la langue choisie (`lang` du modèle pilote la fusion côté serveur).
+  const templates = (tplData?.templates || []).filter((tpl) => (tpl.lang || 'fr') === langue)
   const properties = propsData?.properties || []
   const propertyTx = txData?.transactions || []
   // Un bien sans transaction ne doit pas vider les deux listes : on retombe sur tous les clients.
@@ -138,7 +147,10 @@ function ContractCreate() {
         {/* Formulaire */}
         <div className="lg:col-span-3 space-y-4">
           <div className={cardCls}>
-            <h2 className={sectionTitle}>{t('backoffice:contracts.create.sections.template')}</h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className={sectionTitle}>{t('backoffice:contracts.create.sections.template')}</h2>
+              <LanguageToggle value={langue} onChange={changeLangue} />
+            </div>
             <div>
               <label className={labelCls}>{t('backoffice:contracts.create.fields.template')} <span className="text-red-500">*</span></label>
               <select value={form.template_id} onChange={set('template_id')} className={ctrlCls}>

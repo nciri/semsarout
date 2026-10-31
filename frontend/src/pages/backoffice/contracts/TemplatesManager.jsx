@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { FiArrowLeft, FiTrash2, FiPlus, FiLayout } from 'react-icons/fi'
 import { contractService } from '../../../services/contractService'
 import { PageHeader, EmptyState } from '../../../components/backoffice/ui'
+import LanguageToggle from './LanguageToggle'
 
 const TYPE_VALUES = ['mandate_sale', 'mandate_rental', 'compromise', 'vefa', 'lease', 'stay', 'other']
 const FIELDS = ['agency_name', 'agent_name', 'client_name', 'property_address', 'property_price',
@@ -20,6 +21,7 @@ function TemplatesManager() {
   const canManage = data?.can_manage_templates
   const [name, setName] = useState('')
   const [docType, setDocType] = useState('other')
+  const [langue, setLangue] = useState('fr')
   const [body, setBody] = useState('')
 
   const create = useMutation(() => contractService.createTemplate({ name, document_type: docType, body_html: body }), {
@@ -31,17 +33,21 @@ function TemplatesManager() {
     onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
   })
 
-  if (data && !canManage) {
-    return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center max-w-lg mx-auto">
-        <FiLayout className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-        <h1 className="text-xl font-bold text-gray-900">{t('backoffice:contracts.templates.gated.title')}</h1>
-        <p className="text-gray-500 mt-2 mb-5">{t('backoffice:contracts.templates.gated.message')}</p>
-        <Link to="/dashboard/compte/abonnement" className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">{t('backoffice:contracts.templates.gated.cta')}</Link>
-      </div>
-    )
-  }
-  const custom = (data?.templates || []).filter((t) => !t.is_global)
+  const Mur = () => (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-10 text-center">
+      <FiLayout className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+      <h2 className="text-lg font-bold text-gray-900">{t('backoffice:contracts.templates.gated.title')}</h2>
+      <p className="text-gray-500 mt-2 mb-5">{t('backoffice:contracts.templates.gated.message')}</p>
+      <Link to="/dashboard/compte/abonnement" className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">{t('backoffice:contracts.templates.gated.cta')}</Link>
+    </div>
+  )
+  const tous = data?.templates || []
+  const custom = tous.filter((tpl) => !tpl.is_global)
+  // Les actes fournis avec le produit (agency_id NULL). Cette page ne listait que les modèles
+  // de l'agence : les modèles intégrés y étaient invisibles, alors que c'est la page où on
+  // vient les chercher. Chaque acte existe en français et en arabe — deux versions d'un même
+  // document, pas deux modèles : une seule est affichée, celle de la langue choisie.
+  const integres = tous.filter((tpl) => tpl.is_global && (tpl.lang || 'fr') === langue)
   const labelCls = 'block text-sm font-medium text-gray-700 mb-1'
   const ctrlCls = 'w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500'
 
@@ -53,6 +59,27 @@ function TemplatesManager() {
       <PageHeader title={t('backoffice:contracts.templates.pageTitle')} subtitle={t('backoffice:contracts.templates.subtitle')} />
 
       <div className="grid lg:grid-cols-2 gap-6 items-start">
+        <div className="space-y-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-start justify-between gap-3">
+            <div>
+              <h2 className="font-semibold text-gray-900">{t('backoffice:contracts.templates.builtin.title')}</h2>
+              <p className="text-xs text-gray-500 mt-1">{t('backoffice:contracts.templates.builtin.description')}</p>
+            </div>
+            <LanguageToggle value={langue} onChange={setLangue} className="shrink-0" />
+          </div>
+          <ul className="divide-y divide-gray-100">
+            {integres.map((tpl) => (
+              <li key={tpl.id} className="flex justify-between items-center gap-3 px-5 py-3">
+                <span className="text-gray-900 text-sm">{tpl.name}
+                  <span className="block text-xs text-gray-400">{t(`backoffice:contracts.docType.${tpl.document_type}`, { defaultValue: tpl.document_type })}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {canManage && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="px-5 py-4 border-b border-gray-100"><h2 className="font-semibold text-gray-900">{t('backoffice:contracts.templates.myTemplates')}</h2></div>
           {custom.length === 0 ? (
@@ -70,7 +97,10 @@ function TemplatesManager() {
             </ul>
           )}
         </div>
+        )}
+        </div>
 
+        {!canManage ? <Mur /> : (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <h2 className="font-semibold text-gray-900 mb-4">{t('backoffice:contracts.templates.newTemplate')}</h2>
           <div className="mb-3">
@@ -95,6 +125,7 @@ function TemplatesManager() {
             <FiPlus className="w-5 h-5" /> {t('backoffice:contracts.templates.submit')}
           </button>
         </div>
+        )}
       </div>
     </div>
   )

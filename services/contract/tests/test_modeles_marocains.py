@@ -39,12 +39,26 @@ def _modeles() -> list[tuple[str, str, str, str]]:
     return MODELE.findall(_sql())
 
 
-def test_migration_presente_et_rejouable():
+def test_migration_rejouable_et_propage_une_revision():
+    """Rejouée à chaque déploiement. L'upsert fait les deux : pas de doublon au second
+    passage, et un acte corrigé dans son .docx remplace celui en base — une insertion gardée
+    par un NOT EXISTS aurait laissé la première version pour toujours."""
     sql = _sql()
     assert "contract.contract_template" in sql
-    # Rejouée à chaque déploiement : sans garde, un second passage dupliquerait les dix actes.
-    assert "WHERE NOT EXISTS" in sql
-    assert "t.agency_id IS NULL AND t.name = " in sql
+    assert "ON CONFLICT (name) WHERE agency_id IS NULL DO UPDATE SET" in sql
+    assert "body_html = EXCLUDED.body_html" in sql
+
+
+def test_la_mise_en_page_des_documents_est_conservee():
+    """Les actes portent du gras, des italiques et des alignements. Tout aplatir rendait un
+    mur de texte sans hiérarchie, loin du document fourni."""
+    for dtype, nom, langue, html in _modeles():
+        assert "<strong>" in html, f"{dtype}/{langue} a perdu ses passages en gras"
+        assert "text-align" in html, f"{dtype}/{langue} a perdu ses alignements"
+        assert "<h3" in html, f"{dtype}/{langue} a perdu ses intitulés d'articles"
+    # Les actes arabes se lisent de droite à gauche : leurs blocs sont alignés à droite.
+    arabes = [h for _d, _n, langue, h in _modeles() if langue == "ar"]
+    assert all("text-align:right;" in h for h in arabes)
 
 
 def test_retire_les_modeles_basiques_dorigine():
