@@ -73,8 +73,8 @@ def _can_manage_templates(principal: Principal) -> bool:
 
 def _template_dict(t: ContractTemplate, include_body: bool = True) -> dict:
     d = {"id": t.id, "agency_id": t.agency_id, "document_type": t.document_type,
-         "name": t.name, "is_builtin": t.is_builtin, "is_global": t.agency_id is None,
-         "created_at": iso(t.created_at)}
+         "name": t.name, "lang": t.lang or "fr", "is_builtin": t.is_builtin,
+         "is_global": t.agency_id is None, "created_at": iso(t.created_at)}
     if include_body:
         d["body_html"] = t.body_html
     return d
@@ -168,6 +168,7 @@ async def create_template(request: Request, principal: Principal = Depends(get_p
         return err("name, document_type et body_html requis", 400)
     t = ContractTemplate(agency_id=principal.agency_id, document_type=data["document_type"],
                          name=data["name"], body_html=sanitize_html(data["body_html"]),
+                         lang=data.get("lang") if data.get("lang") in ("fr", "ar") else "fr",
                          is_builtin=False,
                          created_by=int(principal.sub) if principal.sub.isdigit() else None)
     db.add(t)
@@ -192,6 +193,8 @@ async def update_template(tid: int, request: Request, principal: Principal = Dep
         t.body_html = sanitize_html(data["body_html"])
     if "document_type" in data:
         t.document_type = data["document_type"]
+    if data.get("lang") in ("fr", "ar"):
+        t.lang = data["lang"]
     db.commit()
     return {"template": _template_dict(t)}
 
@@ -265,8 +268,11 @@ async def create_contract(request: Request, principal: Principal = Depends(get_p
                    "(client et rôle) avant de générer le contrat.", 400)
 
     agency = db.get(AgencyRO, aid)
+    # La langue du modèle commande celle des quelques valeurs que la fusion rédige elle-même
+    # (type du bien, consistance, liaison « et »/« و ») : un acte arabe aux mentions
+    # françaises n'est pas signable.
     context = build_context(agency, transaction=txn, property=prop, client=cli,
-                            agent_name=agent_name, parties=parties)
+                            agent_name=agent_name, parties=parties, lang=tpl.lang or "fr")
     body = sanitize_html(render(tpl.body_html, context))
     contract = Contract(
         agency_id=aid, title=data.get("title") or tpl.name, document_type=tpl.document_type,

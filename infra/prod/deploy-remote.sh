@@ -106,7 +106,8 @@ audit/add_tenant.sql
 directory/migrate_payeur_intervention.sql
 rental/migrate_crg_depenses.sql
 rental/migrate_retenue_intervention.sql
-contract/migrate_modeles_builtin.sql
+contract/migrate_fusion_elargie.sql
+contract/migrate_modeles_marocains.sql
 contract/migrate_contract_parties.sql
 transactions/migrate_notes_text.sql
 "

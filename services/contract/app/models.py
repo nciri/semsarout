@@ -8,7 +8,7 @@ non maintenues par événements (agences/clients n'en émettent pas encore) — 
 from datetime import datetime
 
 from sqlalchemy import (
-    JSON, BigInteger, Boolean, Column, DateTime, Integer, Numeric, String, Text,
+    JSON, BigInteger, Boolean, Column, DateTime, Float, Integer, Numeric, String, Text,
 )
 
 from .db import Base
@@ -21,6 +21,10 @@ class ContractTemplate(Base):
     agency_id = Column(Integer, index=True)  # NULL = modèle global
     document_type = Column(String(30), nullable=False)
     name = Column(String(150), nullable=False)
+    # Les cinq actes marocains existent en français et en arabe : sans cette colonne, seul
+    # l'intitulé séparait les deux versions du même acte, et la fusion rédigeait en français
+    # les quelques valeurs qu'elle compose elle-même (type du bien, consistance).
+    lang = Column(String(2), default="fr")
     body_html = Column(Text, nullable=False)
     is_builtin = Column(Boolean, default=False)
     created_by = Column(Integer)
@@ -74,6 +78,12 @@ class AgencyRO(Base):
     name = Column(String(150))
     address = Column(String(255))
     license_number = Column(String(50))
+    city = Column(String(100))
+    phone = Column(String(20))
+    email = Column(String(120))
+    # Un mandat marocain identifie l'agence par son registre du commerce et son ICE.
+    rc_number = Column(String(50))
+    ice_number = Column(String(50))
 
 
 class PropertyRO(Base):
@@ -88,6 +98,21 @@ class PropertyRO(Base):
     surface = Column(Numeric(10, 2))
     rooms = Column(Integer)
     reference = Column(String(50))
+    title = Column(String(200))
+    neighborhood = Column(String(100))
+    postal_code = Column(String(10))
+    floor = Column(Integer)
+    bedrooms = Column(Integer)
+    bathrooms = Column(Integer)
+    land_surface = Column(Float)
+    construction_year = Column(Integer)
+    charges = Column(Numeric(10, 2))
+    condo_fees = Column(Numeric(10, 2))
+    # `price` d'un bien en vente est un prix de vente, celui d'un bien en location un loyer.
+    # Sans ces deux colonnes, un bail généré sur un bien en vente écrivait le prix de vente
+    # en « loyer mensuel » — faux, et invisible à la relecture.
+    transaction_type = Column(String(20))
+    price_period = Column(String(10))
 
 
 class ClientRO(Base):
