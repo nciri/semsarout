@@ -8,7 +8,7 @@ import ContractCreate from './ContractCreate'
 
 const { svc, api } = vi.hoisted(() => ({
   svc: { listTemplates: vi.fn(), create: vi.fn() },
-  api: { get: vi.fn() },
+  api: { get: vi.fn(), post: vi.fn() },
 }))
 vi.mock('../../../services/contractService', () => ({ contractService: svc }))
 vi.mock('../../../services/api', () => ({ default: api }))
@@ -310,6 +310,64 @@ describe('Nouveau contrat', () => {
 
       await submit()
       expect(svc.create.mock.calls.at(-1)[0].notes).toBeUndefined()
+    })
+
+    // Deux lignes sur la même personne produisaient un acte où « Vendeur 1 » et « Vendeur 2 »
+    // désignent le même client : le service l'acceptait, l'acte était faux.
+    it('un client déjà partie disparaît des autres lignes', async () => {
+      renderPage()
+      await choose('Client 1', /Sara Bennani/)
+      await userEvent.click(screen.getByRole('button', { name: /Ajouter une partie/ }))
+      expect(await offered('Client 2')).toEqual(['Omar Tazi', 'Nadia Idrissi'])
+      // La ligne qui le porte le garde, sinon elle perdrait sa propre valeur.
+      expect(await offered('Client 1')).toEqual(['Sara Bennani', 'Omar Tazi', 'Nadia Idrissi'])
+    })
+  })
+
+  describe('fichier client vide', () => {
+    const videDeClients = () => api.get.mockImplementation(async (url) => {
+      if (url.includes('/properties')) return { data: PROPERTIES }
+      if (url.includes('/clients')) return { data: { clients: [] } }
+      return { data: { transactions: [] } }
+    })
+    const saisir = (label, valeur) => userEvent.type(
+      within(screen.getByText(label).parentElement).getByRole('textbox'), valeur,
+    )
+
+    it('crée un client à la volée et le porte dans la partie', async () => {
+      videDeClients()
+      api.post.mockResolvedValue({ data: { id: 42, first_name: 'Yassine', last_name: 'Alami', phone: '0600000000' } })
+      renderPage()
+      await userEvent.click(await screen.findByRole('button', { name: 'Créer un client' }))
+      await saisir('Prénom', 'Yassine')
+      await saisir('Nom', 'Alami')
+      await saisir('Téléphone', '0600000000')
+      await userEvent.click(screen.getByRole('button', { name: 'Créer et sélectionner' }))
+
+      await vi.waitFor(() => expect(api.post).toHaveBeenCalledWith('/backoffice/clients', {
+        first_name: 'Yassine', last_name: 'Alami', phone: '0600000000',
+      }))
+      await vi.waitFor(() => expect(within(screen.getByText('Client 1').parentElement)
+        .getAllByRole('button')[0]).toHaveTextContent('Yassine Alami'))
+    })
+
+    it('exige les trois champs avant de créer', async () => {
+      videDeClients()
+      renderPage()
+      await userEvent.click(await screen.findByRole('button', { name: 'Créer un client' }))
+      const valider = screen.getByRole('button', { name: 'Créer et sélectionner' })
+      expect(valider).toBeDisabled()
+      await saisir('Prénom', 'Yassine')
+      await saisir('Nom', 'Alami')
+      expect(valider).toBeDisabled()
+      await saisir('Téléphone', '0600000000')
+      expect(valider).toBeEnabled()
+    })
+
+    it("n'offre pas le raccourci quand des clients existent", async () => {
+      renderPage()
+      await screen.findByText('Client 1')
+      expect(screen.queryByRole('button', { name: 'Créer un client' })).not.toBeInTheDocument()
     })
   })
 })

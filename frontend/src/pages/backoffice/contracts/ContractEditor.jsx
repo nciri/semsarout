@@ -114,6 +114,7 @@ function ContractEditor() {
           parties={parties}
           onChange={setParties}
           clientOptions={clientOptions}
+          allowCreate={!readOnly && Boolean(clientsData)}
           disabled={readOnly}
           hint={t('backoffice:contracts.parties.hint')}
         />

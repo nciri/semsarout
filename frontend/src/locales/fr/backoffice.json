@@ -1539,6 +1539,17 @@
         "bailleur": "Bailleur",
         "locataire": "Locataire",
         "mandant": "Mandant"
+      },
+      "newClient": {
+        "title": "Nouveau client",
+        "open": "Créer un client",
+        "submit": "Créer et sélectionner",
+        "hint": "Le reste de la fiche (email, budget, critères) se complète depuis le fichier clients.",
+        "fields": {
+          "first_name": "Prénom",
+          "last_name": "Nom",
+          "phone": "Téléphone"
+        }
       }
     },
     "templates": {

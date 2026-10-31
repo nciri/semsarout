@@ -200,6 +200,10 @@ function ContractCreate() {
               parties={parties}
               onChange={setParties}
               clientOptions={clientOptions}
+              // En cascade, la liste vient des transactions du bien : un client créé ici
+              // n'en ferait pas partie et retomberait aussitôt hors liste. Et tant que le
+              // fichier n'est pas chargé, il est vide sans être vide : pas de raccourci.
+              allowCreate={!cascaded && Boolean(clientsData)}
               hint={noTransaction
                 ? t('backoffice:contracts.create.select.allClientsHint')
                 : t('backoffice:contracts.parties.hint')}
