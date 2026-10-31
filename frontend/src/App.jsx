@@ -12,7 +12,7 @@ import { RouteFallback } from './components/common/RouteOutlet'
 
 // Chaque page est chargee a la demande (code splitting) : sans cela tout le
 // portail, le backoffice, l'administration et leurs dependances lourdes
-// (leaflet, recharts, quill, jspdf) partent dans un unique bundle de plusieurs
+// (leaflet, recharts, tiptap, jspdf) partent dans un unique bundle de plusieurs
 // Mio, que le service worker de la PWA ne peut pre-cacher qu'en relevant sa
 // limite. Seuls les elements presents sur tout ecran restent statiques :
 // la coquille, les gardes de route et le bandeau d'usurpation.

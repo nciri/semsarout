@@ -2,12 +2,11 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import ReactQuill from 'react-quill-new'
-import 'react-quill-new/dist/quill.snow.css'
 import { useTranslation } from 'react-i18next'
 import { FiArrowLeft, FiTrash2, FiPlus, FiLayout } from 'react-icons/fi'
 import { contractService } from '../../../services/contractService'
 import { PageHeader, EmptyState } from '../../../components/backoffice/ui'
+import EditeurRiche from './EditeurRiche'
 import LanguageToggle from './LanguageToggle'
 
 const TYPE_VALUES = ['mandate_sale', 'mandate_rental', 'compromise', 'vefa', 'lease', 'stay', 'other']
@@ -116,7 +115,9 @@ function TemplatesManager() {
           <div className="mb-3 text-xs text-gray-500 bg-gray-50 rounded-lg p-3">
             <span className="font-medium text-gray-600">{t('backoffice:contracts.templates.mergeFields')}</span> {FIELDS.map((f) => `{{${f}}}`).join(' · ')}
           </div>
-          <ReactQuill theme="snow" value={body} onChange={setBody} />
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <EditeurRiche value={body} onChange={setBody} />
+          </div>
           <button
             disabled={!name || !body || create.isLoading}
             onClick={() => create.mutate()}

@@ -13,7 +13,7 @@ import {
 /**
  * Éditeur du corps d'un contrat.
  *
- * Remplace l'éditeur Quill du produit pour cette surface : mesuré sur les cinq actes,
+ * Éditeur unique du produit, qui a remplacé Quill partout : mesuré sur les cinq actes,
  * Quill fusionnait les cellules de la ligne d'en-tête des tableaux (« Étape » + « % » en une
  * seule cellule), donc un enregistrement abîmait l'échéancier VEFA et les annexes du bail.
  * TipTap les rend à l'identique (9 `th` → 9 `th`, 93 `td` → 93 `td` sur le bail).

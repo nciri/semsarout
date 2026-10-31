@@ -10,7 +10,7 @@ const { svc } = vi.hoisted(() => ({
   svc: { listTemplates: vi.fn(), createTemplate: vi.fn(), deleteTemplate: vi.fn() },
 }))
 vi.mock('../../../services/contractService', () => ({ contractService: svc }))
-// Pas de `vi.mock` sur react-quill-new : `fileParallelism: false` (cf. vitest.config.js) fait
+// Pas de `vi.mock` sur l'éditeur : `fileParallelism: false` (cf. vitest.config.js) fait
 // partager le registre de modules entre tous les fichiers de test, donc un mock posé ici
 // remplacerait l'éditeur dans les fichiers suivants — WorkOrderDetail.test.jsx tombait ainsi.
 
