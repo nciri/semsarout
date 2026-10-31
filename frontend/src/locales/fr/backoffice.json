@@ -1465,6 +1465,17 @@
         "saved": "Enregistré",
         "finalized": "Contrat finalisé",
         "signed": "Marqué signé"
+      },
+      "format": {
+        "bold": "Gras",
+        "italic": "Italique",
+        "underline": "Souligné",
+        "heading": "Titre de niveau {{level}}",
+        "list": "Liste à puces",
+        "alignLeft": "Aligner à gauche",
+        "alignCenter": "Centrer",
+        "alignRight": "Aligner à droite",
+        "alignJustify": "Justifier"
       }
     },
     "create": {
@@ -1566,6 +1577,12 @@
         "ar": "Arabe",
         "unavailable": "Pas de version arabe pour ce modèle"
       }
+    },
+    "builtinAct": {
+      "title": "Acte fourni avec SemsarOut",
+      "hint": "Le texte de cet acte ne se modifie pas : remplissez les champs en pointillés.",
+      "field": "Champ n° {{rang}}",
+      "progress": "{{remplis}} champ(s) rempli(s) sur {{total}}"
     }
   },
   "legal": {

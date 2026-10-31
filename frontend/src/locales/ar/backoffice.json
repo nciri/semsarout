@@ -1465,6 +1465,17 @@
         "saved": "تم الحفظ",
         "finalized": "تم إنهاء العقد",
         "signed": "تم التعليم كموقّع"
+      },
+      "format": {
+        "bold": "عريض",
+        "italic": "مائل",
+        "underline": "تسطير",
+        "heading": "عنوان من المستوى {{level}}",
+        "list": "قائمة نقطية",
+        "alignLeft": "محاذاة لليسار",
+        "alignCenter": "توسيط",
+        "alignRight": "محاذاة لليمين",
+        "alignJustify": "ضبط"
       }
     },
     "create": {
@@ -1566,6 +1577,12 @@
         "ar": "العربية",
         "unavailable": "لا توجد نسخة عربية لهذا النموذج"
       }
+    },
+    "builtinAct": {
+      "title": "عقد مرفق مع SemsarOut",
+      "hint": "لا يمكن تعديل نص هذا العقد: املأ الحقول المنقطة.",
+      "field": "الحقل رقم {{rang}}",
+      "progress": "{{remplis}} حقل معبأ من أصل {{total}}"
     }
   },
   "legal": {

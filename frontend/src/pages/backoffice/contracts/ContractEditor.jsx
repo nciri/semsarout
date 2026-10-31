@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
-import ReactQuill from 'react-quill-new'
-import 'react-quill-new/dist/quill.snow.css'
 import { useTranslation } from 'react-i18next'
 import { FiArrowLeft, FiSave, FiCheck, FiDownload, FiEdit3 } from 'react-icons/fi'
 import { contractService } from '../../../services/contractService'
 import { StatusBadge } from '../../../components/backoffice/ui'
+import ActeAChamps from './ActeAChamps'
+import EditeurRiche from './EditeurRiche'
 import PartiesField from './PartiesField'
 import { emptyParty, toPayload } from './parties'
 import api from '../../../services/api'
@@ -28,6 +28,7 @@ function ContractEditor() {
   const [html, setHtml] = useState('')
   const [title, setTitle] = useState('')
   const [parties, setParties] = useState([emptyParty()])
+  const [champs, setChamps] = useState({})
   const { data: clientsData } = useQuery('bo-clients-min', async () => (await api.get('/backoffice/clients?per_page=100')).data)
 
   useEffect(() => {
@@ -35,6 +36,7 @@ function ContractEditor() {
     const c = data.contract
     setHtml(c.body_html || '')
     setTitle(c.title || '')
+    setChamps(c.filled_fields || {})
     // Un contrat d'avant les parties plurielles n'a qu'un `client_id` : il est présenté comme
     // une première partie dont le rôle reste à choisir, plutôt que d'en deviner un.
     setParties(c.parties?.length
@@ -44,6 +46,12 @@ function ContractEditor() {
 
   const contract = data?.contract
   const readOnly = contract && contract.status !== 'draft'
+  // Acte fourni avec le produit : sa prose ne se modifie pas, seuls ses pointillés se
+  // remplissent. Le serveur refuse d'ailleurs toute écriture de `body_html` pour ces
+  // contrats — l'écran ne fait qu'en tirer les conséquences.
+  const acteIntegre = Boolean(contract?.from_builtin)
+  const total = contract?.fields_count || 0
+  const remplis = Object.values(champs).filter((v) => String(v || '').trim()).length
   const refresh = () => qc.invalidateQueries(['contract', id])
   const onErr = (e) => toast.error(e.response?.data?.error || t('common:errors.short'))
 
@@ -52,7 +60,12 @@ function ContractEditor() {
   )
   // Les parties partent avec l'enregistrement : le service rejoue leurs blocs d'identification
   // dans le corps déjà fusionné, sans écraser les retouches de l'agent.
-  const save = useMutation(() => contractService.update(id, { title, body_html: html, parties: toPayload(parties) }),
+  const save = useMutation(() => contractService.update(id, {
+    title,
+    // Le corps n'est envoyé que s'il est éditable : le serveur refuse de réécrire un acte.
+    ...(acteIntegre ? { filled_fields: champs } : { body_html: html }),
+    parties: toPayload(parties),
+  }),
     { onSuccess: () => { toast.success(t('backoffice:contracts.editor.toasts.saved')); refresh() }, onError: onErr })
   const finalize = useMutation(() => contractService.finalize(id),
     { onSuccess: () => { toast.success(t('backoffice:contracts.editor.toasts.finalized')); refresh() }, onError: onErr })
@@ -108,7 +121,28 @@ function ContractEditor() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <ReactQuill theme="snow" value={html} onChange={setHtml} readOnly={readOnly} />
+        {acteIntegre ? (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-3 border-b border-gray-100 bg-gray-50/60">
+              <div>
+                <h2 className="text-[13px] font-semibold text-gray-900">{t('backoffice:contracts.builtinAct.title')}</h2>
+                <p className="text-xs text-gray-500">{t('backoffice:contracts.builtinAct.hint')}</p>
+              </div>
+              <span className="text-xs font-medium text-gray-500">
+                {t('backoffice:contracts.builtinAct.progress', { remplis, total })}
+              </span>
+            </div>
+            <ActeAChamps
+              html={html}
+              valeurs={champs}
+              disabled={readOnly}
+              libelle={(rang) => t('backoffice:contracts.builtinAct.field', { rang })}
+              onChange={(rang, valeur) => setChamps((c) => ({ ...c, [rang]: valeur }))}
+            />
+          </>
+        ) : (
+          <EditeurRiche value={html} onChange={setHtml} readOnly={readOnly} />
+        )}
       </div>
       {readOnly && (
         <p className="text-xs text-gray-400">{t('backoffice:contracts.editor.locked', { status: t(`backoffice:contracts.status.${contract.status}`, { defaultValue: contract.status }).toLowerCase() })}</p>

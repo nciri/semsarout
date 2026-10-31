@@ -45,6 +45,10 @@ class Contract(Base):
     client_id = Column(Integer)
     body_html = Column(Text, nullable=False)
     merge_context = Column(JSON)
+    # Valeurs des champs à remplir, par rang d'apparition dans le corps ({"1": "TF 45/1234"}).
+    # Stockées à part : le corps de l'acte n'est jamais réécrit, la substitution se fait au
+    # rendu (cf. app/champs.py), et la finalisation seule les y fige.
+    filled_fields = Column(JSON, default=dict)
     status = Column(String(20), default="draft")  # draft|finalized|signed
     pdf_url = Column(String(255))
     created_by = Column(Integer)

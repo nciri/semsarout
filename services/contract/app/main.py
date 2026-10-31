@@ -24,6 +24,7 @@ from semsar_events import enqueue
 from . import events, users_client
 from .stay import router as stay_router
 from .db import get_db, init_db
+from .champs import compte_champs, remplir
 from .merge import (ROLE_PLACEHOLDERS, build_context, party_blocks, render,
                     utilise_blocs_de_parties)
 from .models import (
@@ -121,7 +122,17 @@ def _save_parties(db: Session, contract: Contract, parties: list) -> None:
         contract.client_id = parties[0][1].id
 
 
-def _contract_dict(c: Contract, include_body: bool = True, parties: list | None = None) -> dict:
+def _modele_integre(db: Session, c: Contract) -> bool:
+    """Le contrat vient-il d'un acte fourni avec le produit ? Sa prose est alors en lecture
+    seule : seuls ses champs se remplissent."""
+    if not c.template_id:
+        return False
+    tpl = db.get(ContractTemplate, c.template_id)
+    return bool(tpl and tpl.is_builtin)
+
+
+def _contract_dict(c: Contract, include_body: bool = True, parties: list | None = None,
+                   from_builtin: bool | None = None) -> dict:
     d = {"id": c.id, "agency_id": c.agency_id, "title": c.title,
          "document_type": c.document_type, "template_id": c.template_id,
          "transaction_id": c.transaction_id, "property_id": c.property_id,
@@ -130,8 +141,12 @@ def _contract_dict(c: Contract, include_body: bool = True, parties: list | None 
          "created_at": iso(c.created_at)}
     if include_body:
         d["body_html"] = c.body_html
+        d["filled_fields"] = c.filled_fields or {}
+        d["fields_count"] = compte_champs(c.body_html)
     if parties is not None:
         d["parties"] = parties
+    if from_builtin is not None:
+        d["from_builtin"] = from_builtin
     return d
 
 
@@ -296,7 +311,8 @@ def get_contract(cid: int, principal: Principal = Depends(get_principal), db: Se
     c = _get_contract(db, cid, principal.agency_id)
     if not c:
         return err("Contrat introuvable", 404)
-    return {"contract": _contract_dict(c, parties=_parties_dict(db, c.id))}
+    return {"contract": _contract_dict(c, parties=_parties_dict(db, c.id),
+                                       from_builtin=_modele_integre(db, c))}
 
 
 @app.put("/backoffice/contracts/{cid}")
@@ -309,17 +325,56 @@ async def update_contract(cid: int, request: Request, principal: Principal = Dep
     if c.status != "draft":
         return err("Un contrat finalisé ne peut plus être édité.", 409)
     data = await json_body(request)
+    integre = _modele_integre(db, c)
     if "title" in data:
         c.title = data["title"]
     if "body_html" in data:
+        if integre:
+            # La prose d'un acte fourni avec le produit ne se retouche pas : l'éditeur du
+            # produit détruit la structure des tableaux (ligne d'en-tête de l'échéancier),
+            # et un acte dont on réécrit les clauses n'est plus l'acte vérifié.
+            return err("Cet acte est fourni avec SemsarOut : seuls ses champs se "
+                       "remplissent, son texte ne se modifie pas.", 409)
         c.body_html = sanitize_html(data["body_html"])
+    if "filled_fields" in data:
+        champs, bad = _lire_champs(data["filled_fields"])
+        if bad is not None:
+            return bad
+        c.filled_fields = champs
     parties, bad = _read_parties(data, db, c.agency_id)
     if bad is not None:
         return bad
     if parties is not None:
         _rewrite_parties_in_body(db, c, parties)
     db.commit()
-    return {"contract": _contract_dict(c, parties=_parties_dict(db, c.id))}
+    return {"contract": _contract_dict(c, parties=_parties_dict(db, c.id),
+                                       from_builtin=integre)}
+
+
+_MAX_CHAMPS = 400          # le plus fourni des actes en porte 55
+_MAX_LONGUEUR_CHAMP = 2000
+
+
+def _lire_champs(brut):
+    """`(champs, erreur)`. Les valeurs arrivent d'un formulaire : rangs numériques, chaînes
+    courtes. Sans ces bornes, un client pourrait faire grossir indéfiniment une colonne JSON."""
+    if not isinstance(brut, dict):
+        return None, err("filled_fields doit être un objet", 400)
+    if len(brut) > _MAX_CHAMPS:
+        return None, err("Trop de champs", 400)
+    champs = {}
+    for cle, valeur in brut.items():
+        if not str(cle).isdigit():
+            return None, err(f"Rang de champ invalide : {cle}", 400)
+        if valeur is None or valeur == "":
+            continue
+        if not isinstance(valeur, (str, int, float)):
+            return None, err(f"Valeur de champ invalide au rang {cle}", 400)
+        texte = str(valeur)
+        if len(texte) > _MAX_LONGUEUR_CHAMP:
+            return None, err(f"Champ {cle} trop long", 400)
+        champs[str(cle)] = texte
+    return champs, None
 
 
 def _rewrite_parties_in_body(db: Session, c: Contract, parties: list) -> None:
@@ -369,6 +424,9 @@ def finalize_contract(cid: int, principal: Principal = Depends(get_principal), d
         return err("Contrat introuvable", 404)
     if c.status != "draft":
         return err("Seul un brouillon peut être finalisé.", 409)
+    # Les champs saisis entrent dans le corps : le PDF archivé a valeur probante, le corps
+    # stocké doit dire exactement la même chose que lui.
+    c.body_html = remplir(c.body_html, c.filled_fields or {})
     pdf = render_pdf_bytes(c.body_html)
     key = f"contracts/{c.agency_id}/contract_{c.id}.pdf"
     pdf_storage().put(key, pdf, content_type="application/pdf")

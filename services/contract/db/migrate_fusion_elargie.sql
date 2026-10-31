@@ -96,3 +96,8 @@ END $$;
 -- Partielle : deux agences peuvent nommer leur modèle à leur guise.
 CREATE UNIQUE INDEX IF NOT EXISTS ux_contract_template_global_name
     ON contract.contract_template (name) WHERE agency_id IS NULL;
+
+-- 7. Champs à remplir d'un acte, par rang d'apparition dans le corps ({"1": "TF 45/1234"}).
+-- Les actes marocains sont des formulaires : 22 à 55 pointillés chacun. Les valeurs vivent
+-- à part du corps, qui n'est jamais réécrit ; la finalisation seule les y fige.
+ALTER TABLE contract.contract ADD COLUMN IF NOT EXISTS filled_fields JSONB DEFAULT '{}'::jsonb;
