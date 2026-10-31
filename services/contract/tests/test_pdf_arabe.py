@@ -51,6 +51,35 @@ def test_acte_francais_rendu_sans_regression():
     assert len(pdf) > 1000
 
 
+def test_aucune_ressource_distante_nest_chargee(monkeypatch):
+    """Le corps d'un acte ne doit jamais faire sortir le service pour chercher un fichier.
+
+    L'allowlist produit n'admet aucune balise qui référence une ressource, mais le rendu
+    est la frontière de confiance : si elle venait à s'élargir, le service deviendrait un
+    relais de lecture de fichiers locaux et de requêtes internes (SSRF).
+    """
+    from app import pdf as module
+
+    vus = []
+    garde = module._aucune_ressource_externe
+
+    def _espion(url, **kw):
+        vus.append(url)
+        return garde(url, **kw)
+
+    _espion._fail_on_errors = garde._fail_on_errors
+
+    monkeypatch.setattr(module, "_aucune_ressource_externe", _espion)
+    sortie = module.render_pdf_bytes(
+        '<p>x</p><img src="file:///etc/passwd">'
+        '<img src="http://169.254.169.254/latest/meta-data/">')
+    assert sortie.startswith(b"%PDF")
+    # Les deux URL sont bien passees par le garde — donc aucune n'a ete recuperee — et le
+    # rendu rend quand meme un acte, au lieu de tomber en 500 sur un corps mal colle.
+    assert "file:///etc/passwd" in vus
+    assert any("169.254.169.254" in u for u in vus)
+
+
 def test_corps_vide_ne_leve_pas():
     assert render_pdf_bytes("").startswith(b"%PDF")
     assert render_pdf_bytes(None).startswith(b"%PDF")

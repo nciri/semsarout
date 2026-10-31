@@ -57,6 +57,28 @@ def _sens(texte: str) -> str:
     return "rtl" if len(_ARABE.findall(texte)) > len(_LATIN.findall(texte)) else "ltr"
 
 
+def _aucune_ressource_externe(url, **_):
+    """Refuse toute ressource que le document voudrait aller chercher.
+
+    Le corps d'un acte est du HTML saisi par une agence. WeasyPrint, lui, suit les URL
+    qu'il y trouve : un `file:///etc/passwd` ou un `http://169.254.169.254/` ferait du
+    service un relais de lecture de fichiers et de requêtes internes. L'allowlist produit
+    n'admet aujourd'hui aucune balise qui référence une ressource, mais c'est ici que se
+    joue la frontière de confiance — pas dans une liste qu'un autre service fait évoluer.
+    Le rendu n'a besoin d'aucun fichier distant : tout est dans `FEUILLE`.
+
+    WeasyPrint convertit ce que lève un `url_fetcher` en avertissement, journalise et
+    continue : un acte qui contiendrait malgré tout une référence sort sans elle, au lieu de
+    rendre 500 au moment de la finalisation.
+    """
+    raise ValueError(f"ressource externe refusee dans un acte : {url[:60]}")
+
+
+# Le drapeau que WeasyPrint lit pour décider si une récupération ratée est fatale. Sans lui,
+# sa gestion d'erreur tombe elle-même sur un AttributeError et l'exception remonte.
+_aucune_ressource_externe._fail_on_errors = False
+
+
 def render_pdf_bytes(body_html: str) -> bytes:
     from weasyprint import HTML
 
@@ -64,4 +86,5 @@ def render_pdf_bytes(body_html: str) -> bytes:
     html = (f'<html dir="{_sens(corps)}"><head><meta charset="utf-8">'
             f"<style>{FEUILLE}</style></head>"
             f"<body>{corps}</body></html>")
-    return HTML(string=html).write_pdf()
+    return HTML(string=html, base_url=None,
+                url_fetcher=_aucune_ressource_externe).write_pdf()
