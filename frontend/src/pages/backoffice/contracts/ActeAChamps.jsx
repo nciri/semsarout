@@ -1,4 +1,5 @@
 import { createElement, useMemo } from 'react'
+import { sensDeLecture } from './sens'
 
 /**
  * Un acte fourni avec le produit : texte en lecture seule, pointillés saisissables.
@@ -81,7 +82,7 @@ export default function ActeAChamps({ html, valeurs, onChange, disabled = false,
   }, [html])
   etat.rang = 0
   return (
-    <div className="acte-a-champs px-6 py-5 text-[13.5px] leading-relaxed text-gray-900">
+    <div className="acte px-6 py-5" dir={sensDeLecture(html)}>
       {arbre.map((n, i) => rendre(n, etat, `n${i}`))}
     </div>
   )

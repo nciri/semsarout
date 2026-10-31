@@ -5,6 +5,7 @@ import { Underline } from '@tiptap/extension-underline'
 import { TextAlign } from '@tiptap/extension-text-align'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { sensDeLecture } from './sens'
 import {
   FiAlignCenter, FiAlignJustify, FiAlignLeft, FiAlignRight, FiBold, FiItalic, FiList,
   FiUnderline,
@@ -74,7 +75,12 @@ export default function EditeurRiche({ value, onChange, readOnly = false }) {
     content: value || '',
     editable: !readOnly,
     onUpdate: ({ editor: e }) => onChange(e.getHTML()),
-    editorProps: { attributes: { class: 'prose-contrat px-5 py-4 min-h-[22rem] focus:outline-none' } },
+    editorProps: {
+      attributes: {
+        class: 'acte px-5 py-4 min-h-[22rem] focus:outline-none',
+        dir: sensDeLecture(value),
+      },
+    },
   })
 
   // Le contenu arrive après le chargement du contrat : sans cette synchronisation l'éditeur
@@ -86,6 +92,12 @@ export default function EditeurRiche({ value, onChange, readOnly = false }) {
   }, [value, editor])
 
   useEffect(() => { editor?.setEditable(!readOnly) }, [readOnly, editor])
+
+  // Le corps arrive après la création de l'éditeur, et `editorProps` n'est lu qu'une fois :
+  // sans cette ligne, un acte arabe chargé ensuite resterait affiché de gauche à droite.
+  useEffect(() => {
+    editor?.view?.dom?.setAttribute('dir', sensDeLecture(value))
+  }, [value, editor])
 
   return (
     <div className="bg-white">
