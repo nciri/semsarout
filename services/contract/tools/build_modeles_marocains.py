@@ -218,26 +218,38 @@ def _cellule(tc) -> list:
     return out
 
 
+def _retrait(p) -> bool:
+    """Vrai si le paragraphe porte un retrait gauche (`w:ind`).
+
+    Les actes s'en servent pour leurs énumérations (« – Copie des pièces d'identité ; »),
+    jamais pour autre chose : c'est ce qui permet de les rendre en liste.
+    """
+    pPr = p.find(f"{W}pPr")
+    return pPr is not None and pPr.find(f"{W}ind") is not None
+
+
 def blocs(path: Path) -> list:
-    """Blocs du document : `("P", runs, alignement)` ou `("T", [[runs, …], …], None)`."""
+    """Blocs du document : `("P", runs, alignement, retrait)` ou `("T", rows, None, False)`.
+
+    Les paragraphes vides sont conservés : ils portent le rythme vertical du document Word,
+    et les retirer tassait l'acte d'un bon tiers de page.
+    """
     with zipfile.ZipFile(path) as z:
         root = ET.fromstring(z.read("word/document.xml"))
     out = []
     for child in root.find(f"{W}body"):
         if child.tag == f"{W}p":
-            runs = _runs(child)
-            if any(t.strip() for t, *_ in runs):
-                out.append(("P", runs, _alignement(child)))
+            out.append(("P", _runs(child), _alignement(child), _retrait(child)))
         elif child.tag == f"{W}tbl":
             rows = [[_cellule(tc) for tc in tr.findall(f"{W}tc")]
                     for tr in child.findall(f"{W}tr")]
-            out.append(("T", rows, None))
+            out.append(("T", rows, None, False))
     return out
 
 
 def texte_de(bloc) -> str:
     """Texte brut d'un bloc, pour le classement et le comptage des pointillés."""
-    kind, contenu, _ = bloc
+    kind, contenu, _, _ = bloc
     if kind == "P":
         return "".join(t for t, *_ in contenu)
     return " ".join("".join(t for t, *_ in cell) for row in contenu for cell in row)
@@ -249,9 +261,13 @@ def texte_de(bloc) -> str:
 # versions du même acte.
 def classe(blocs_fr: list) -> list:
     roles = []
-    for i, bloc in enumerate(blocs_fr):
-        kind, contenu, _ = bloc
+    rang_texte = 0   # rang du paragraphe NON vide : les vides ne décalent pas titre et sous-titre
+    for bloc in blocs_fr:
+        kind, contenu, _, retrait = bloc
         texte = texte_de(bloc).strip()
+        if kind == "P" and not texte:
+            roles.append("vide")
+            continue
         if kind == "T":
             if len(contenu) == 1 and len(contenu[0]) == 1:
                 # Tableau d'une seule cellule : un intitulé d'article (bandeau sombre dans le
@@ -261,12 +277,15 @@ def classe(blocs_fr: list) -> list:
             else:
                 roles.append("table")
             continue
-        if i == 0:
+        rang_texte += 1
+        if rang_texte == 1:
             roles.append("h1")
-        elif i == 1:
+        elif rang_texte == 2:
             roles.append("soustitre")
         elif len(texte) < 90 and texte == texte.upper():
             roles.append("h2")      # « ANNEXE 1 — ÉTAT DES LIEUX… »
+        elif retrait:
+            roles.append("liste")   # énumération en retrait dans le .docx
         else:
             roles.append("p")
     return roles
@@ -314,18 +333,27 @@ def en_html(blocs_doc: list, roles: list, champs_par_bloc: dict, langue: str = "
     # que l'allowlist produit admet : elle porte l'essentiel de la mise en page des blocs.
     defaut = "right" if langue == "ar" else None
     morceaux = []
-    for i, (bloc, role) in enumerate(zip(blocs_doc, roles, strict=True)):
-        kind, contenu, align = bloc
-        champs = champs_par_bloc.get(i, {})
+    # `champs_par_bloc` (les CARTES) est numéroté sur les blocs PORTEURS DE TEXTE : les
+    # paragraphes vides, conservés depuis pour le rythme vertical, ne décalent pas ce rang.
+    rang = -1
+    for bloc, role in zip(blocs_doc, roles, strict=True):
+        kind, contenu, align, _ = bloc
+        if role != "vide":
+            rang += 1
+        champs = champs_par_bloc.get(rang, {})
         compteur = [0]
         style = ""
         choix = align or defaut
         if choix and choix != "left":
             style = f' style="text-align:{choix};"'
 
-        if kind == "P":
+        if role == "vide":
+            morceaux.append("<p></p>")
+        elif kind == "P":
             corps = _inline(_segments_surs(contenu), champs, compteur)
-            if role == "h1":
+            if role == "liste":
+                morceaux.append(f"<li{style}>{corps}</li>")
+            elif role == "h1":
                 morceaux.append(f'<h1 style="text-align:center;">{corps}</h1>')
             elif role == "soustitre":
                 morceaux.append(f'<p style="text-align:center;"><em>{corps}</em></p>')
@@ -350,7 +378,33 @@ def en_html(blocs_doc: list, roles: list, champs_par_bloc: dict, langue: str = "
                                 f"<tbody>{''.join(lignes[1:])}</tbody></table>")
             else:
                 morceaux.append(f"<table><tbody>{''.join(lignes)}</tbody></table>")
-    return "\n".join(morceaux)
+    return "\n".join(_en_listes(morceaux, roles))
+
+
+def _en_listes(morceaux: list, roles: list) -> list:
+    """Enveloppe les suites de `<li>` dans un `<ul>`.
+
+    Un `<li>` hors liste serait retiré par l'assainissement produit. Les paragraphes vides
+    qui séparent deux entrées de la même énumération sont absorbés dans la liste : dans le
+    .docx, c'est l'espacement du paragraphe qui les sépare, pas une rupture.
+    """
+    out, courante = [], []
+
+    def _fermer():
+        if courante:
+            out.append(f"<ul>{''.join(courante)}</ul>")
+            courante.clear()
+
+    for i, html in enumerate(morceaux):
+        if roles[i] == "liste":
+            courante.append(html)
+        elif roles[i] == "vide" and courante and "liste" in roles[i + 1:i + 2]:
+            continue
+        else:
+            _fermer()
+            out.append(html)
+    _fermer()
+    return out
 
 
 # ---- génération du SQL ------------------------------------------------------------

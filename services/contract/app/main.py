@@ -427,7 +427,7 @@ def finalize_contract(cid: int, principal: Principal = Depends(get_principal), d
     # Les champs saisis entrent dans le corps : le PDF archivé a valeur probante, le corps
     # stocké doit dire exactement la même chose que lui.
     c.body_html = remplir(c.body_html, c.filled_fields or {})
-    pdf = render_pdf_bytes(c.body_html)
+    pdf = render_pdf_bytes(c.body_html, c.title or "")
     key = f"contracts/{c.agency_id}/contract_{c.id}.pdf"
     pdf_storage().put(key, pdf, content_type="application/pdf")
     c.pdf_url = key

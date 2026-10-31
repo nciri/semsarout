@@ -49,6 +49,58 @@ def test_migration_rejouable_et_propage_une_revision():
     assert "body_html = EXCLUDED.body_html" in sql
 
 
+def _blocs_docx(path: Path) -> dict:
+    """Inventaire des blocs d'un .docx : paragraphes vides, paragraphes en retrait, tableaux.
+
+    Lu directement dans le XML plutôt qu'avec `python-docx`, qui n'est pas une dépendance du
+    service : ce test tourne partout où tourne la suite.
+    """
+    import xml.etree.ElementTree as ET
+    import zipfile
+
+    W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    with zipfile.ZipFile(path) as z:
+        racine = ET.fromstring(z.read("word/document.xml"))
+    vides = retraits = 0
+    for enfant in racine.find(f"{W}body"):
+        if enfant.tag != f"{W}p":
+            continue
+        texte = "".join(t.text or "" for t in enfant.iter(f"{W}t"))
+        pPr = enfant.find(f"{W}pPr")
+        if not texte.strip():
+            vides += 1
+        elif pPr is not None and pPr.find(f"{W}ind") is not None:
+            retraits += 1
+    return {"vides": vides, "retraits": retraits}
+
+
+def test_le_rythme_vertical_du_document_word_est_repris():
+    """Chaque paragraphe vide et chaque énumération du .docx se retrouve dans le HTML.
+
+    Les paragraphes vides portent l'aération du document Word : les retirer tassait l'acte
+    d'un bon tiers de page et décalait toutes les coupures. Les paragraphes en retrait sont
+    ses énumérations, rendues en liste faute d'attribut de retrait dans l'allowlist.
+    """
+    fichiers = sorted(SOURCES.glob("*.docx"))
+    assert len(fichiers) == 10, "les dix .docx source doivent être lisibles"
+    for fichier in fichiers:
+        attendu = _blocs_docx(fichier)
+        # Les modèles sortent dans l'ordre des fichiers, langue par langue : le numéro de
+        # l'acte et sa langue suffisent à retrouver le bon corps.
+        rang = int(fichier.name[:2]) - 1
+        langue = "ar" if "_AR" in fichier.name else "fr"
+        corps = [h for _d, _n, lang, h in _modeles() if lang == langue][rang]
+        assert corps.count("<p></p>") == attendu["vides"], (
+            f"{fichier.name} : {corps.count('<p></p>')} paragraphes vides "
+            f"au lieu de {attendu['vides']}")
+        assert corps.count("<li") == attendu["retraits"], (
+            f"{fichier.name} : {corps.count('<li')} entrées de liste "
+            f"au lieu de {attendu['retraits']}")
+        # Un `<li>` hors liste serait retiré par l'assainissement.
+        if attendu["retraits"]:
+            assert "<ul>" in corps, f"{fichier.name} : des <li> sans <ul>"
+
+
 def test_la_mise_en_page_des_documents_est_conservee():
     """Les actes portent du gras, des italiques et des alignements. Tout aplatir rendait un
     mur de texte sans hiérarchie, loin du document fourni."""

@@ -51,7 +51,7 @@ class _Storage:
 def storage(monkeypatch):
     store = _Storage()
     monkeypatch.setattr(stay_module, "pdf_storage", lambda: store)
-    monkeypatch.setattr(stay_module, "render_pdf_bytes", lambda html: b"%PDF-1.4 test")
+    monkeypatch.setattr(stay_module, "render_pdf_bytes", lambda html, titre="": b"%PDF-1.4 test")
     return store
 
 

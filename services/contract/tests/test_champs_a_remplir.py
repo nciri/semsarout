@@ -163,7 +163,8 @@ def test_la_finalisation_fige_les_champs_dans_le_corps(client, db_session, monke
     """Le PDF archivé a valeur probante : il doit porter les valeurs, et le corps stocké
     doit dire la même chose que lui."""
     vus = {}
-    monkeypatch.setattr(m, "render_pdf_bytes", lambda html: vus.setdefault("html", html) and b"" or b"%PDF")
+    monkeypatch.setattr(m, "render_pdf_bytes",
+                        lambda html, titre="": vus.setdefault("html", html) and b"" or b"%PDF")
     monkeypatch.setattr(m, "pdf_storage",
                         lambda: type("S", (), {"put": lambda *a, **k: None})())
     c = _contrat(db_session)

@@ -129,7 +129,9 @@ FAIL=0
 # rend 500. Les polices sont du même ordre — sans Noto Naskh Arabic, un acte arabe sort en
 # carrés vides, et un PDF signé illisible est pire qu'une erreur.
 echo "== 0. paquets système du rendu PDF =="
-PAQUETS_PDF="libpango-1.0-0 libpangoft2-1.0-0 fonts-dejavu-core fonts-noto-core"
+# Carlito a les mêmes métriques que Calibri, la police des actes source : sans elle, les
+# coupures de page du PDF ne tombent plus là où le document Word les place.
+PAQUETS_PDF="libpango-1.0-0 libpangoft2-1.0-0 fonts-crosextra-carlito fonts-dejavu-core fonts-noto-core"
 MANQUANTS=""
 for p in $PAQUETS_PDF; do
   dpkg -s "$p" >/dev/null 2>&1 || MANQUANTS="$MANQUANTS $p"

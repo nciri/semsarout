@@ -43,7 +43,7 @@ def _dict(c: Contract) -> dict:
 def _finalize(db: Session, contract: Contract) -> None:
     """Un contrat de séjour part tout de suite en PDF : il n'y a pas d'étape de relecture
     entre la génération et l'envoi au voyageur."""
-    pdf = render_pdf_bytes(contract.body_html)
+    pdf = render_pdf_bytes(contract.body_html, contract.title or "")
     key = f"contracts/{contract.agency_id}/stay_{contract.id}.pdf"
     pdf_storage().put(key, pdf, content_type="application/pdf")
     contract.pdf_url = key
