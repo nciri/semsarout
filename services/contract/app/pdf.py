@@ -1,18 +1,29 @@
-"""Rendu HTML → PDF (xhtml2pdf) — port de `_render_pdf_bytes` du monolithe.
+"""Rendu HTML → PDF (WeasyPrint).
 
 La feuille de style reproduit la mise en page des actes marocains fournis : titre centré,
 intitulés d'articles en bandeau sombre, encadrés d'avertissement sur fond crème, tableaux
 bordés. Elle vit ici et non dans le HTML stocké parce que l'allowlist produit n'admet
 qu'une seule propriété CSS en ligne (`text-align`) : couleurs, fonds et bordures
 appartiennent à la présentation, pas au contenu assaini.
+
+WeasyPrint remplace xhtml2pdf parce que les actes existent aussi en arabe. ReportLab, sur
+lequel repose xhtml2pdf, ne sait ni former les ligatures arabes ni inverser le sens de
+lecture : les versions arabes sortaient en carrés vides, dans l'ordre latin. WeasyPrint
+passe par Pango/HarfBuzz, qui font la mise en forme contextuelle et l'algorithme bidi
+(UAX #9) — y compris les nombres, qui restent lus de gauche à droite au milieu d'une
+phrase arabe.
 """
-from io import BytesIO
+import re
 
 # Couleurs des documents source (fonds de cellule du .docx) : bandeau 0B1220, encadré F8F1E6.
+#
+# `Noto Naskh Arabic` est dans la pile de TOUS les documents, pas seulement des actes
+# arabes : un acte français qui cite un nom propre ou une mention cadastrale en arabe doit
+# le rendre lui aussi. Seul le sens de lecture dépend de la langue dominante.
 FEUILLE = """
   @page { margin: 2cm 1.7cm; }
-  body { font-family: Helvetica, Arial, sans-serif; font-size: 10.5pt; color: #111;
-         line-height: 1.45; }
+  body { font-family: "DejaVu Sans", "Noto Sans", Arial, "Noto Naskh Arabic", sans-serif;
+         font-size: 10.5pt; color: #111; line-height: 1.45; }
   h1 { font-size: 15pt; color: #0B1220; text-align: center; margin: 0 0 2px; }
   h2 { font-size: 12pt; color: #0B1220; margin: 16px 0 6px; }
   h3 { background-color: #0B1220; color: #FFFFFF; font-size: 10.5pt;
@@ -20,29 +31,37 @@ FEUILLE = """
   blockquote { background-color: #F8F1E6; border-left: 3px solid #C9A227;
                padding: 8px 10px; margin: 10px 0; font-size: 9.5pt; color: #3F3222; }
   p { margin: 6px 0; }
-  /* `border-collapse` n'est pas implémenté par xhtml2pdf (il le signale) : les bordures
-     sont posées par cellule, sans fusion. */
-  table { width: 100%; margin: 8px 0; }
+  table { width: 100%; margin: 8px 0; border-collapse: collapse; }
   td, th { border: 1px solid #BBBBBB; padding: 4px 6px; font-size: 9.5pt; }
   th { background-color: #F3F4F6; font-weight: bold; }
+  /* Un acte arabe est bordé à droite, pas à gauche : la bordure de l'encadré suit le sens
+     de lecture au lieu de rester accrochée au bord gauche. */
+  [dir="rtl"] blockquote { border-left: 0; border-right: 3px solid #C9A227; }
+  /* DejaVu Sans couvre l'arabe, mais d'un dessin linéaire que personne n'emploie pour un
+     acte : les actes notariés marocains sont composés en naskh. La police ne passe devant
+     que pour un document arabe — un acte français garde sa pile latine. */
+  [dir="rtl"] body { font-family: "Noto Naskh Arabic", "DejaVu Sans", serif; }
 """
 
+_ARABE = re.compile(r"[؀-ۿݐ-ݿ]")
+_LATIN = re.compile(r"[A-Za-zÀ-ÿ]")
 
-# Les actes marocains cochent leurs options avec « ☐ » (U+2610), que Helvetica ne sait pas
-# dessiner : le PDF rendait un carré vide ou rien du tout, donc une option illisible dans un
-# acte signé. Substitué à l'impression seulement — le HTML stocké garde le vrai caractère,
-# que le navigateur affiche correctement.
-_CASES = {"\u2610": "[  ]", "\u2611": "[x]", "\u2612": "[x]"}
+
+def _sens(texte: str) -> str:
+    """Sens de lecture du document, décidé sur la langue qui domine son texte.
+
+    Les actes intégrés existent en deux versions monolingues, mais un modèle rédigé par une
+    agence peut mélanger les deux : compter plutôt que supposer évite de retourner un acte
+    français parce qu'il cite trois mots d'arabe.
+    """
+    return "rtl" if len(_ARABE.findall(texte)) > len(_LATIN.findall(texte)) else "ltr"
 
 
 def render_pdf_bytes(body_html: str) -> bytes:
-    from xhtml2pdf import pisa
+    from weasyprint import HTML
 
     corps = body_html or ""
-    for caractere, remplacement in _CASES.items():
-        corps = corps.replace(caractere, remplacement)
-    html = (f'<html><head><meta charset="utf-8"><style>{FEUILLE}</style></head>'
-            f'<body>{corps}</body></html>')
-    buf = BytesIO()
-    pisa.CreatePDF(src=html, dest=buf, encoding="utf-8")
-    return buf.getvalue()
+    html = (f'<html dir="{_sens(corps)}"><head><meta charset="utf-8">'
+            f"<style>{FEUILLE}</style></head>"
+            f"<body>{corps}</body></html>")
+    return HTML(string=html).write_pdf()

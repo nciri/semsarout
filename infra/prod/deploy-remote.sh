@@ -124,6 +124,25 @@ psql_stdin() {
 # autant échouer *silencieusement*.
 FAIL=0
 
+# WeasyPrint (rendu PDF des actes, service contract) s'appuie sur Pango/HarfBuzz, qui ne
+# sont pas des paquets Python : sans eux l'import échoue et la finalisation d'un contrat
+# rend 500. Les polices sont du même ordre — sans Noto Naskh Arabic, un acte arabe sort en
+# carrés vides, et un PDF signé illisible est pire qu'une erreur.
+echo "== 0. paquets système du rendu PDF =="
+PAQUETS_PDF="libpango-1.0-0 libpangoft2-1.0-0 fonts-dejavu-core fonts-noto-core"
+MANQUANTS=""
+for p in $PAQUETS_PDF; do
+  dpkg -s "$p" >/dev/null 2>&1 || MANQUANTS="$MANQUANTS $p"
+done
+if [ -n "$MANQUANTS" ]; then
+  echo "  installation de :$MANQUANTS"
+  DEBIAN_FRONTEND=noninteractive apt-get update -qq
+  # shellcheck disable=SC2086
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq $MANQUANTS
+else
+  echo "  = déjà présents, inchangés"
+fi
+
 echo "== 1. venv : réinstallation éditable (nouvelles dépendances) =="
 for lib in semsar_common semsar_auth semsar_events semsar_storage semsar_search semsar_signing; do
   [ -d "$APP/libs/$lib" ] && $PIP install -q -e "$APP/libs/$lib"
