@@ -57,6 +57,7 @@ trap 'rm -rf "$TMP"' EXIT
 # --- serveur simulé -----------------------------------------------------------
 BIN="$TMP/bin"; mkdir -p "$BIN"
 export SQL_LOG="$TMP/sql.log" SYSTEMCTL_LOG="$TMP/systemctl.log" CURL_LOG="$TMP/curl.log"
+export APT_LOG="$TMP/apt.log" DPKG_LOG="$TMP/dpkg.log"
 
 cat > "$BIN/runuser" <<'STUB'
 #!/usr/bin/env bash
@@ -113,6 +114,19 @@ STUB
 cat > "$BIN/pip" <<'STUB'
 #!/usr/bin/env bash
 exit 0
+STUB
+# Le banc d'essai n'est pas root : sans ces deux-là, l'étape des paquets du rendu PDF
+# interrogeait le dpkg de la machine et lançait un vrai apt-get, qui échoue et emporte
+# tout le déploiement. Une seule bibliothèque est déclarée manquante, pour que le chemin
+# d'installation soit réellement joué.
+cat > "$BIN/dpkg" <<'STUB'
+#!/usr/bin/env bash
+echo "dpkg $*" >> "$DPKG_LOG"
+[ "${2:-}" != "libpango-1.0-0" ]
+STUB
+cat > "$BIN/apt-get" <<'STUB'
+#!/usr/bin/env bash
+echo "apt-get $*" >> "$APT_LOG"
 STUB
 chmod +x "$BIN"/*
 export PATH="$BIN:$PATH"
@@ -195,6 +209,12 @@ else
   sed 's/^/      /' "$TMP/run1.out"
 fi
 contains "…et le dit explicitement" "DÉPLOIEMENT OK" "$TMP/run1.out"
+
+# Sans Pango ni Carlito, le service contract rend des actes illisibles en arabe et des
+# coupures de page ailleurs que dans le document Word source.
+contains "les paquets manquants du rendu PDF sont installés" \
+  "apt-get install -y -qq libpango-1.0-0" "$APT_LOG"
+absent "…et les paquets déjà présents ne sont pas réinstallés" "fonts-noto-core" "$APT_LOG"
 
 contains "rôle PostgreSQL design3d créé si absent" "CREATE ROLE design3d LOGIN PASSWORD" "$SQL_LOG"
 contains "schéma design3d créé" "CREATE SCHEMA IF NOT EXISTS design3d" "$SQL_LOG"
