@@ -50,7 +50,6 @@ function ContractCreate() {
     setForm((f) => ({ ...f, template_id: '' }))   // l'identifiant choisi appartient à l'autre langue
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   // Un acte existe en français et en arabe : deux versions d'un même document. Les offrir
   // côte à côte doublait la liste. Le français sort par défaut, l'arabe sur demande, et le
   // contrat est généré dans la langue choisie (`lang` du modèle pilote la fusion côté serveur).
