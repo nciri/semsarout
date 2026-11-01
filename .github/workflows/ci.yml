@@ -106,6 +106,17 @@ jobs:
           cache-dependency-path: |
             libs/*/pyproject.toml
             ${{ matrix.dir }}/pyproject.toml
+      # Le service contract rend les actes avec WeasyPrint : sans Noto Naskh, un acte arabe
+      # retombe sur DejaVu et sort en linéaire ; sans Carlito, les coupures de page ne
+      # tombent plus là où le document Word les place. Mêmes paquets que l'étape 0 du
+      # déploiement (infra/prod/deploy-remote.sh).
+      - name: Paquets système du rendu PDF
+        if: matrix.dir == 'services/contract'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libpango-1.0-0 libpangoft2-1.0-0 \
+            fonts-crosextra-carlito fonts-dejavu-core fonts-noto-core
+
       - name: Installer les libs partagées
         run: >
           pip install -e libs/semsar_common -e libs/semsar_auth -e libs/semsar_events
