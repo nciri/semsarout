@@ -33,3 +33,19 @@ if (typeof globalThis.localStorage?.setItem !== 'function') {
 // pendant la fermeture du worker : son console.error arrive trop tard et Vitest compte une
 // erreur « Closing rpc while onUserConsoleLog was pending ». Les tests vérifient l'écran, pas ce log.
 setLogger({ log: console.log, warn: console.warn, error: () => {} })
+
+// ProseMirror (TipTap, utilisé par l'éditeur de contrat) mesure ses sélections avec
+// `getClientRects`, que jsdom n'implémente ni sur Range ni sur Element : sans ces deux
+// bouchons, toute montée de l'éditeur lève « target.getClientRects is not a function ».
+// Les valeurs n'ont pas d'importance — aucun test ne vérifie une géométrie.
+const RECT = { x: 0, y: 0, top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0,
+               toJSON: () => ({}) }
+const LISTE_RECTS = { length: 0, item: () => null, [Symbol.iterator]: function* () {} }
+for (const proto of [globalThis.Range?.prototype, globalThis.Element?.prototype]) {
+  if (proto && typeof proto.getClientRects !== 'function') {
+    proto.getClientRects = () => LISTE_RECTS
+  }
+  if (proto && typeof proto.getBoundingClientRect !== 'function') {
+    proto.getBoundingClientRect = () => RECT
+  }
+}

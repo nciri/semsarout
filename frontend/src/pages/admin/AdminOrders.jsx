@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { shopService } from '../../services/shopService'
+import { DIRHAM_SYMBOL } from '../../utils/currency'
 
 const STATUSES = ['pending', 'paid', 'preparing', 'shipped', 'delivered', 'cancelled']
 
@@ -24,7 +25,7 @@ function AdminOrders() {
           <tbody>
             {orders.map((o) => (
               <tr key={o.id} className="border-t border-slate-100">
-                <td className="px-4 py-3 font-medium">{o.reference}</td><td>{o.agency_id}</td><td>{o.total} Đh</td>
+                <td className="px-4 py-3 font-medium">{o.reference}</td><td>{o.agency_id}</td><td>{o.total} {DIRHAM_SYMBOL}</td>
                 <td>
                   <select value={o.status} onChange={(e) => upd.mutate({ id: o.id, status: e.target.value })} className="border border-slate-300 rounded px-2 py-1 text-slate-900">
                     {STATUSES.map((s) => <option key={s} value={s}>{t(`admin:orders.status.${s}`, { defaultValue: s })}</option>)}

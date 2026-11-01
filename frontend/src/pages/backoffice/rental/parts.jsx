@@ -13,6 +13,12 @@ export function AgeChip({ days, lo, hi }) {
   return <Chip tone={ageTone(days, lo, hi)}>{t('dashboard.units.days', { count: days })}</Chip>
 }
 
+/** Âge d'un brouillon de CRG non validé : une semaine d'attente doit se voir au premier coup d'œil. */
+export function DraftAge({ days }) {
+  const { t } = useTranslation('backoffice')
+  return <Chip tone={days >= 7 ? 'crit' : 'warn'}>{days === 0 ? t('rental.overview.today') : t('dashboard.units.days', { count: days })}</Chip>
+}
+
 export function DueChip({ days }) {
   const { t } = useTranslation('backoffice')
   return <Chip tone={dueTone(days)}>{days === 0 ? t('rental.overview.today') : t('rental.overview.inDays', { count: days })}</Chip>
@@ -33,9 +39,9 @@ export function PayModal({ period, onClose }) {
         <button onClick={onClose} className={SECONDARY_BTN}>{t('backoffice:rental.lease.payModal.cancel')}</button>
         <button disabled={!form.amount || pay.isLoading} onClick={() => pay.mutate()} className={PRIMARY_BTN}>{t('backoffice:rental.lease.payModal.submit')}</button>
       </>}>
-      <Field label={t('backoffice:rental.lease.payModal.amountLabel')} type="number" value={form.amount} onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))} />
+      <Field required label={t('backoffice:rental.lease.payModal.amountLabel')} type="number" value={form.amount} onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))} />
       <div className="mb-3">
-        <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:rental.lease.payModal.methodLabel')}</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:rental.lease.payModal.methodLabel')} <span className="requis" aria-hidden="true" /></label>
         <Select value={form.method} onChange={(e) => setForm((f) => ({ ...f, method: e.target.value }))} className="w-full">
           {['virement', 'cheque', 'especes', 'carte'].map((m) => <option key={m} value={m}>{t(`backoffice:rental.lease.payModal.methods.${m}`)}</option>)}
         </Select>

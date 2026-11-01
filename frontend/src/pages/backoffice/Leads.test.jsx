@@ -6,12 +6,13 @@ import { QueryClient, QueryClientProvider } from 'react-query'
 import i18n from '../../i18n'
 import api from '../../services/api'
 import Leads from './Leads'
+import ConfirmProvider from '../../components/common/ConfirmProvider'
 
 const iso = (days) => new Date(Date.now() + days * 864e5).toISOString()
 
 const LEADS = [
   { id: 1, name: 'Hind Senhaji', phone: '0612345678', email: 'hind@example.ma', status: 'new', source: 'phone_reveal',
-    message: 'Toujours disponible ?', property_id: 4, property_title: 'F4 Rabat', created_at: iso(-33) },
+    message: '<p>Toujours <strong>disponible</strong> ?</p>', property_id: 4, property_title: 'F4 Rabat', created_at: iso(-33) },
   { id: 2, name: 'Omar Alaoui', status: 'converted', source: 'website', created_at: iso(-50),
     contacted_at: iso(-48), converted_at: iso(-40) },
 ]
@@ -35,7 +36,11 @@ vi.mock('../../services/api', () => ({ default: { get: vi.fn(), put: vi.fn(async
 
 function renderLeads() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<QueryClientProvider client={qc}><MemoryRouter><Leads /></MemoryRouter></QueryClientProvider>)
+  return render(
+    <QueryClientProvider client={qc}>
+      <MemoryRouter><ConfirmProvider><Leads /></ConfirmProvider></MemoryRouter>
+    </QueryClientProvider>,
+  )
 }
 
 describe('Page Leads du back-office', () => {
@@ -69,7 +74,7 @@ describe('Page Leads du back-office', () => {
     await screen.findByText('Hind Senhaji')
     await user.click(screen.getAllByRole('button', { name: 'Déplier la fiche' })[0])
     const fiche = within(document.getElementById('lead-fiche-1'))
-    expect(fiche.getByText('Toujours disponible ?')).toBeInTheDocument()
+    expect(fiche.getByText((_, el) => el?.tagName === 'P' && el.textContent === 'Toujours disponible ?')).toBeInTheDocument()
     expect(screen.getByText('Historique du statut')).toBeInTheDocument()
     expect(await screen.findByText('1 autre demande de ce contact : traitez-les ensemble.')).toBeInTheDocument()
     await user.keyboard('{Escape}')
@@ -78,11 +83,11 @@ describe('Page Leads du back-office', () => {
 
   it('fait avancer le statut après confirmation et n\'offre aucune action sur un lead converti', async () => {
     const user = userEvent.setup()
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     renderLeads()
     await screen.findByText('Hind Senhaji')
     expect(screen.getAllByRole('button', { name: 'Marquer comme contacté' })).toHaveLength(1)
     await user.click(screen.getByRole('button', { name: 'Marquer comme contacté' }))
+    await user.click(screen.getByRole('button', { name: 'Confirmer' }))
     expect(api.put).toHaveBeenCalledWith('/backoffice/leads/1', { status: 'contacted' })
   })
 
@@ -116,5 +121,60 @@ describe('Page Leads du back-office', () => {
     expect(api.post).toHaveBeenCalledWith('/backoffice/leads', expect.objectContaining({
       name: 'Karim Idrissi', phone: '0612345678', property_id: '4',
     }))
+  })
+
+  // Le message est saisi en WYSIWYG : ce qui part est du HTML, assaini par le champ.
+  it('envoie le message du nouveau lead en HTML nettoye', async () => {
+    renderLeads()
+    await userEvent.click(await screen.findByRole('button', { name: 'Nouveau lead' }))
+    await userEvent.type(screen.getByLabelText('Nom du contact'), 'Karim Idrissi')
+    await userEvent.type(screen.getByLabelText('Téléphone'), '0612345678')
+
+    const editor = screen.getByRole('textbox', { name: 'Demande' })
+    editor.innerHTML = '<p>Rappeler <b>demain</b></p><script>alert(1)</script>'
+    await userEvent.click(editor)
+    await userEvent.tab()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer le lead' }))
+    expect(api.post).toHaveBeenCalledWith('/backoffice/leads', expect.objectContaining({
+      message: '<p>Rappeler <b>demain</b></p>',
+    }))
+  })
+
+  // 🔴 La cellule du tableau est tronquée sur une ligne : `truncate` ne sait pas couper du
+  // balisage, et un `<p>` y déformerait la ligne. On y projette donc le texte.
+  it('montre le message en texte dans la cellule tronquee, jamais ses balises', async () => {
+    const { container } = renderLeads()
+    await screen.findByText('Hind Senhaji')
+
+    expect(screen.getByText('Toujours disponible ?')).toBeInTheDocument()
+    expect(container.querySelector('td strong')).toBeNull()
+    expect(container.innerHTML).not.toContain('&lt;strong&gt;')
+  })
+
+  // 🔴 La fiche dépliée projette aussi le texte, et c'est une décision de sécurité.
+  // `Lead.message` peut être écrit par un **visiteur anonyme** : les quatre formulaires de
+  // contact publics n'ont aucune authentification. Assainir ne suffit pas — la liste blanche
+  // conserve `<a href>` — donc un lien d'hameçonnage rendu ici serait cliquable dans le
+  // back-office, où un agent lui fait encore plus confiance que dans sa boîte mail.
+  it('ne rend jamais un lien du message d\'un lead dans la fiche depliee', async () => {
+    listPayload = { ...listPayload, leads: [{ ...LEADS[0],
+      message: '<p>Votre <strong>facture</strong></p>'
+               + '<p><a href="https://evil.example">cliquez</a></p>' }] }
+    const { container } = renderLeads()
+    await screen.findByText('Hind Senhaji')
+    await userEvent.click(screen.getAllByRole('button', { name: 'Déplier la fiche' })[0])
+
+    const fiche = within(document.getElementById('lead-fiche-1'))
+    // Ni la balise, ni l'attribut, ni l'URL.
+    expect(container.querySelector('#lead-fiche-1 a[href*="evil"]')).toBeNull()
+    expect(container.innerHTML).not.toContain('evil.example')
+    expect(container.querySelector('#lead-fiche-1 strong')).toBeNull()
+    // Les mots visibles traversent : l'agent lit ce que le prospect a écrit.
+    expect(fiche.getByText(/Votre facture/)).toBeInTheDocument()
+    expect(fiche.getByText(/cliquez/)).toBeInTheDocument()
+    // Et aucune balise en clair non plus.
+    expect(container.innerHTML).not.toContain('&lt;a ')
+    expect(container.innerHTML).not.toContain('&lt;strong&gt;')
   })
 })

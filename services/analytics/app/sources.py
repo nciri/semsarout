@@ -74,6 +74,11 @@ def subscriptions_stats() -> dict:
     return _get(f"{BILLING_URL}/internal/subscriptions/stats", {})
 
 
+def payment_incidents() -> list[dict]:
+    """Abonnements en incident de paiement, avec le motif : billing les possède."""
+    return _get(f"{BILLING_URL}/internal/subscriptions/incidents", {}).get("incidents", [])
+
+
 # --- Comptes admin (super-admin) : `/admin/accounts` (liste + détail) ---
 def users_list(tenant: str | None = None) -> list[dict]:
     params = {"tenant": tenant} if tenant else {}
@@ -90,6 +95,11 @@ def agencies_list() -> list[dict]:
 
 def agency_detail(agency_id: int) -> dict:
     return _get(f"{AGENCY_URL}/internal/agency/{agency_id}", {})
+
+
+def agency_settings(agency_id: int) -> dict:
+    """Réglages d'exploitation de l'agence (barèmes de commission, règles) — chez agency."""
+    return _get(f"{AGENCY_URL}/internal/agency/{agency_id}/settings", {}).get("settings", {})
 
 
 def subscriptions_map() -> dict:

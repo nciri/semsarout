@@ -7,6 +7,7 @@ sont des URL, pas d'upload). `agency_name`/`agency_phone` via projection AgencyR
 """
 from contextlib import asynccontextmanager
 from datetime import datetime
+from xml.sax.saxutils import escape as _escape
 import uuid
 
 from fastapi import Depends, FastAPI, Request
@@ -17,7 +18,13 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
-from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
+from semsar_common import (
+    get_settings,
+    install_legacy_error_handlers,
+    sanitize_rich_field,
+    setup_logging,
+    setup_tracing,
+)
 from semsar_events import enqueue
 
 from . import billing_client, events
@@ -40,6 +47,15 @@ _UNIT_FIELDS = ["name", "unit_type", "surface_min", "surface_max", "rooms", "bed
                 "floor_plan_url"]
 _LOT_EDITABLE = ["reference", "title", "lot_type", "surface", "rooms", "bedrooms", "bathrooms",
                  "floor", "price", "status", "zone", "description", "image_url"]
+# Champs saisis en WYSIWYG : ce qui arrive est du HTML, donc un XSS stocké que la fiche
+# publique du programme déclencherait pour n'importe quel visiteur. Les autres entrées des
+# boucles restent du texte brut — les assainir y échapperait « < » et « & » et ferait
+# apparaître des entités à l'écran (un nom de programme, une référence de lot).
+_RICH = ("description",)
+
+
+def _rich(field: str, value):
+    return sanitize_rich_field(value) if field in _RICH else value
 
 
 @asynccontextmanager
@@ -168,11 +184,17 @@ def _owned(db: Session, program_id: int, agency_id: int):
 
 def _emit_contact(db: Session, program: Program, data: dict, extra_msg: str = "") -> None:
     program.contacts_count = (program.contacts_count or 0) + 1
+    # Le message est saisi en WYSIWYG : assaini ici, et le préfixe du serveur devient son
+    # propre paragraphe au lieu d'être collé devant du balisage. Le nom du programme et les
+    # références de lots sont du texte brut de l'agence : échappés, sinon un nom contenant
+    # « < » casserait le HTML du message.
+    prefix = _escape(f"[Programme: {program.name}{extra_msg}]")
+    message = sanitize_rich_field(data.get("message")) or ""
     enqueue(db, "program", program.id, events.PROGRAM_CONTACTED, {
         "name": data.get("name"),
         "email": data.get("email") or "non-renseigne@semsarout.ma",
         "phone": data.get("phone"),
-        "message": f"[Programme: {program.name}{extra_msg}] {(data.get('message') or '').strip()}".strip(),
+        "message": f"<p>{prefix}</p>{message}",
         "source": "contact_form", "agency_id": program.agency_id,
     })
 
@@ -286,7 +308,8 @@ async def create_program(request: Request, principal: Principal = Depends(get_pr
         return err("Le nom du programme est requis", 400)
     p = Program(
         reference=_reference(), name=data["name"], slug=_slug(db, data["name"]),
-        description=data.get("description"), program_type=data.get("program_type", "residential"),
+        description=sanitize_rich_field(data.get("description")),
+        program_type=data.get("program_type", "residential"),
         address=data.get("address"), city=data.get("city"), neighborhood=data.get("neighborhood"),
         latitude=data.get("latitude"), longitude=data.get("longitude"),
         total_units=data.get("total_units", 0), available_units=data.get("available_units", 0),
@@ -320,7 +343,7 @@ async def update_program(program_id: int, request: Request, principal: Principal
     data = await json_body(request)
     for f in _PROG_UPDATABLE:
         if f in data:
-            setattr(p, f, data[f])
+            setattr(p, f, _rich(f, data[f]))
     if "name" in data:
         p.slug = _slug(db, data["name"], exclude_id=p.id)
     if "delivery_date" in data:
@@ -648,7 +671,8 @@ async def create_lot(program_id: int, request: Request, principal: Principal = D
                      title=data.get("title"), lot_type=data.get("lot_type"), surface=data.get("surface"),
                      rooms=data.get("rooms"), bedrooms=data.get("bedrooms"), bathrooms=data.get("bathrooms"),
                      floor=data.get("floor"), price=data.get("price"), status=status,
-                     zone=data.get("zone", []), description=data.get("description"),
+                     zone=data.get("zone", []),
+                     description=sanitize_rich_field(data.get("description")),
                      image_url=data.get("image_url"))
     db.add(lot)
     db.commit()
@@ -678,7 +702,7 @@ async def update_lot(program_id: int, lot_id: int, request: Request, principal: 
         if f in data:
             if f == "status" and data[f] not in LOT_STATUSES:
                 continue
-            setattr(lot, f, data[f])
+            setattr(lot, f, _rich(f, data[f]))
     db.commit()
     return {"lot": _lot_dict(lot)}
 

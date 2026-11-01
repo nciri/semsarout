@@ -112,6 +112,24 @@ describe('Création d’une transaction', () => {
     expect(screen.getByText(/soit 3\s?400\s?000 Dh/)).toBeInTheDocument()
   })
 
+  // Les notes sont saisies en WYSIWYG : ce qui part est du HTML, assaini par le champ.
+  it('envoie les notes du dossier en HTML nettoye', async () => {
+    api.post.mockResolvedValue({ data: { id: 77 } })
+    renderPage('?client_id=42&property_id=4')
+    await screen.findByText('Bien choisi')
+    await screen.findByText('Rachid Kettani')
+
+    const editor = document.getElementById('tx-notes')
+    editor.innerHTML = '<p>Bon de <b>visite</b> signé</p><script>alert(1)</script>'
+    await userEvent.click(editor)
+    await userEvent.tab()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Créer la transaction' }))
+    expect(api.post).toHaveBeenCalledWith('/backoffice/transactions', expect.objectContaining({
+      notes: '<p>Bon de <b>visite</b> signé</p>',
+    }))
+  })
+
   it('rend l’étape de recherche en arabe', async () => {
     await i18n.changeLanguage('ar')
     renderPage()

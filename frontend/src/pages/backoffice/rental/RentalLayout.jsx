@@ -8,6 +8,7 @@ import { useFormat } from '../../../utils/format'
 import { IconAction, Widget } from '../components/kit'
 import { DetailRegion } from './parts'
 import SummaryBand from './overview/SummaryBand'
+import CrgDraftsAlert from './overview/CrgDraftsAlert'
 import { LateCompact, LateDetail } from './overview/LateWidget'
 import { DueCompact, DueDetail } from './overview/DueWidget'
 import { ApplicationsCompact, ApplicationsDetail } from './overview/ApplicationsWidget'
@@ -117,6 +118,7 @@ function RentalLayout() {
     { to: 'baux', label: t('backoffice:rental.layout.tabs.leases'), count: counts?.leases },
     { to: '', label: t('backoffice:rental.layout.tabs.mandates'), end: true, count: counts?.mandates },
     { to: 'candidatures', label: t('backoffice:rental.layout.tabs.applications'), count: s?.applications?.total },
+    { to: 'depenses', label: t('backoffice:rental.layout.tabs.expenses') },
   ]
   const create = (to) => navigate(to, { state: { create: Date.now() } })
 
@@ -135,6 +137,7 @@ function RentalLayout() {
       </div>
 
       {s && <SummaryBand s={s} />}
+      <CrgDraftsAlert />
       {!s && !error && (
         <div aria-busy="true" aria-label={t('backoffice:rental.shared.loading')} className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {WIDGETS.map((x) => <div key={x.key} className={`h-48 animate-pulse rounded-xl border border-gray-200 bg-white motion-reduce:animate-none ${x.span || ''}`} />)}

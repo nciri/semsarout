@@ -77,6 +77,7 @@ export function DueDetail({ s, onClose, titleRef }) {
   return (
     <DetailFrame title={t('rental.overview.due.title')}
       sub={t('rental.overview.due.detailSub', { count: items.length, date: f.date(horizon, { day: 'numeric', month: 'long', year: 'numeric' }) })}
+      link={{ to: '/backoffice/gestion-locative/baux?filtre=echeances', label: t('rental.overview.due.viewLeases') }}
       onClose={onClose} titleRef={titleRef}>
       <DetailColumns
         main={!items.length ? <p className="text-sm text-gray-500">{t('rental.overview.due.none', { count: days })}</p> : (

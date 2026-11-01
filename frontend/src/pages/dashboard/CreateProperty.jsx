@@ -9,6 +9,7 @@ import { propertyService } from '../../services/propertyService'
 import { DIRHAM_SYMBOL } from '../../utils/currency'
 import { getAmenityIcon } from '../../utils/amenityIcons'
 import { CondoFeesField } from '../../components/property/CondoFeesField'
+import RichTextarea from '../../components/common/RichTextarea'
 
 const PROPERTY_TYPE_VALUES = ['apartment', 'house', 'villa', 'land', 'commercial', 'office']
 
@@ -187,7 +188,7 @@ function CreateProperty() {
             <h2 className="font-semibold mb-4">{t('dashboard:createProperty.sections.generalInfo')}</h2>
             <div className="space-y-4">
               <div>
-                <label className="label">{t('dashboard:createProperty.fields.listingTitle')}</label>
+                <label className="label">{t('dashboard:createProperty.fields.listingTitle')} <span className="requis" aria-hidden="true" /></label>
                 <input
                   {...register('title', { required: t('dashboard:createProperty.validation.titleRequired') })}
                   className="input"
@@ -206,11 +207,16 @@ function CreateProperty() {
               </div>
 
               <div>
-                <label className="label">{t('dashboard:createProperty.fields.description')}</label>
-                <textarea
-                  {...register('description')}
-                  className="input"
-                  rows="5"
+                <label className="label" htmlFor="create-description">
+                  {t('dashboard:createProperty.fields.description')}
+                </label>
+                {/* `register` ne sait relier qu'un contrôle de formulaire : le champ riche
+                    est piloté à la main, comme les autres valeurs non natives du formulaire. */}
+                <RichTextarea
+                  id="create-description"
+                  rows={5}
+                  value={watch('description') || ''}
+                  onChange={(html) => setValue('description', html, { shouldDirty: true })}
                   placeholder={t('dashboard:createProperty.fields.descriptionPlaceholder')}
                 />
               </div>
@@ -223,7 +229,7 @@ function CreateProperty() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="label">
-                  {t('dashboard:createProperty.fields.price', { currency: DIRHAM_SYMBOL })} {transactionType === 'rent' && <span className="text-gray-400">{t('dashboard:createProperty.fields.perMonth')}</span>}
+                  {t('dashboard:createProperty.fields.price', { currency: DIRHAM_SYMBOL })} <span className="requis" aria-hidden="true" /> {transactionType === 'rent' && <span className="text-gray-400">{t('dashboard:createProperty.fields.perMonth')}</span>}
                 </label>
                 <input
                   type="number"
@@ -235,13 +241,14 @@ function CreateProperty() {
               </div>
 
               <div>
-                <label className="label">{t('dashboard:createProperty.fields.surface')}</label>
+                <label className="label">{t('dashboard:createProperty.fields.surface')} <span className="requis" aria-hidden="true" /></label>
                 <input
                   type="number"
-                  {...register('surface')}
+                  {...register('surface', { required: t('dashboard:createProperty.validation.surfaceRequired'), min: 1 })}
                   className="input"
                   placeholder="Ex: 85"
                 />
+                {errors.surface && <p className="text-red-500 text-sm mt-1">{errors.surface.message}</p>}
               </div>
             </div>
 
@@ -328,7 +335,7 @@ function CreateProperty() {
             <h2 className="font-semibold mb-4">{t('dashboard:createProperty.sections.location')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="label">{t('dashboard:createProperty.fields.city')}</label>
+                <label className="label">{t('dashboard:createProperty.fields.city')} <span className="requis" aria-hidden="true" /></label>
                 <input
                   {...register('city', { required: t('dashboard:createProperty.validation.cityRequired') })}
                   className="input"

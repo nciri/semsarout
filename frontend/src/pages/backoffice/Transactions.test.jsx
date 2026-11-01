@@ -90,6 +90,23 @@ describe('Registre des transactions', () => {
     expect(within(other).getByRole('button', { name: 'Déplier la fiche' })).toHaveFocus()
   })
 
+  // 🔴 Les notes sont saisies en WYSIWYG mais rendues **en ligne**, à côté d'une icône, dans
+  // la fiche dépliée : un `<h2>` ou une liste y casserait la mise en page. On y projette donc
+  // le texte — et jamais les balises en clair.
+  it('projette les notes en texte dans la ligne de la fiche', async () => {
+    const user = userEvent.setup()
+    TX[0].notes = '<p>Bon de <b>visite</b> signé</p><p>Relancer lundi</p>'
+    const { container } = renderPage()
+    const row = (await screen.findByText('Villa Souissi')).closest('tr')
+    await user.click(within(row).getByRole('button', { name: 'Déplier la fiche' }))
+
+    const ligne = screen.getByText(/Bon de visite signé/)
+    expect(ligne.textContent).toBe('Bon de visite signé\nRelancer lundi')
+    expect(ligne.querySelector('b')).toBeNull()
+    expect(container.innerHTML).not.toContain('&lt;p&gt;')
+    delete TX[0].notes
+  })
+
   it("transmet les filtres et la période à l'API", async () => {
     const user = userEvent.setup()
     renderPage()

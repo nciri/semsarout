@@ -1,17 +1,122 @@
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useParams, Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
-import { FiArrowLeft, FiCheckCircle, FiDownload, FiExternalLink, FiLock } from 'react-icons/fi'
+import { FiAlertTriangle, FiArrowLeft, FiCheckCircle, FiDownload, FiExternalLink, FiLock, FiRotateCcw, FiX } from 'react-icons/fi'
 import api from '../../../services/api'
 import { rentalService } from '../../../services/rentalService'
-import { Panel, DataTable, EmptyState, GatedNotice } from '../../../components/backoffice/ui'
+import { Panel, DataTable, EmptyState, GatedNotice, StatusBadge, PRIMARY_BTN } from '../../../components/backoffice/ui'
 import SignaturePanel from '../../../components/backoffice/SignaturePanel'
 import DirIcon from '../../../components/common/DirIcon'
+import { useConfirm } from '../../../components/common/confirm'
 import useAuthStore from '../../../store/authStore'
-import { Chip, IconAction } from '../components/kit'
-import { MANDATE_TONE } from './model'
+import { Alert, Chip, IconAction } from '../components/kit'
+import { MANDATE_TONE, daysSince } from './model'
+import { DraftAge } from './parts'
 import { useRentalFormat } from './hooks'
+
+const CRG_BADGE = {
+  draft: 'bg-amber-100 text-amber-800',
+  validated: 'bg-primary-50 text-primary-800',
+  sent: 'bg-green-100 text-green-800',
+}
+
+/** Une ligne de dépense telle que la spec l'exige : date réelle, intitulé, artisan, montant. */
+function CrgLineLabel({ line }) {
+  const f = useRentalFormat()
+  const meta = [line.completed_at ? f.date(line.completed_at) : null, line.artisan_name].filter(Boolean).join(' · ')
+  return (
+    <span className="min-w-0">
+      <span className="block truncate">{line.title}</span>
+      {meta && <span className="block text-xs text-gray-500">{meta}</span>}
+    </span>
+  )
+}
+
+/** Dépenses d'un CRG validé ou envoyé, en lecture seule : l'agence doit pouvoir répondre au
+ * propriétaire qui téléphone pour comprendre son net, et après validation plus rien ne les montrait. */
+function CrgLines({ crg }) {
+  const { t } = useTranslation('backoffice')
+  const f = useRentalFormat()
+  const lines = crg.expense_lines || []
+  if (!lines.length) return null
+  return (
+    <details className="mt-3 rounded-lg border border-gray-100 p-3 text-sm">
+      <summary className="cursor-pointer text-gray-700">{t('rental.mandate.crg.linesSummary', { period: crg.period_label, count: lines.length })}</summary>
+      <ul aria-label={t('rental.mandate.crg.linesLabel', { period: crg.period_label })} className="mt-2 divide-y divide-gray-100">
+        {lines.map((l) => (
+          <li key={l.id} className="flex items-start justify-between gap-3 py-2">
+            <CrgLineLabel line={l} />
+            <span className="tabular-nums text-gray-700">{f.dh(l.cost_final)}</span>
+          </li>
+        ))}
+      </ul>
+    </details>
+  )
+}
+
+/** Relecture d'un brouillon : les écarts restent locaux jusqu'à la validation, seul acte qui les enregistre. */
+function CrgDraft({ crg, onValidate, busy }) {
+  const { t } = useTranslation('backoffice')
+  const f = useRentalFormat()
+  const ask = useConfirm()
+  const [excluded, setExcluded] = useState([])
+  // Honoraires corrigeables avant envoi (décision A de la spec) : le seul autre levier,
+  // `mandate.fee_percent`, changerait rétroactivement tous les mois à venir.
+  const [fees, setFees] = useState(String(crg.fees ?? ''))
+  const lines = crg.expense_lines || []
+  const toggle = (lineId) => setExcluded((ids) => (ids.includes(lineId) ? ids.filter((i) => i !== lineId) : [...ids, lineId]))
+  const kept = lines.filter((l) => !excluded.includes(l.id))
+  const keptTotal = kept.reduce((sum, l) => sum + l.cost_final, 0)
+  // Le plafond retire les dépenses retenues : borné sur le seul loyer encaissé, le bouton restait
+  // actif pour un net négatif, que la décision B de la spec interdit de mettre dans un relevé.
+  const feesCap = Math.round((crg.rent_collected - keptTotal) * 100) / 100
+  const feesNum = Number(fees)
+  const feesValid = fees.trim() !== '' && Number.isFinite(feesNum) && feesNum >= 0 && feesNum <= feesCap
+  const net = crg.rent_collected - (feesValid ? feesNum : crg.fees) - keptTotal
+  return (
+    <div className="space-y-3 rounded-lg border border-red-100 p-4">
+      <Alert tone="crit" icon={FiAlertTriangle}>
+        <span className="font-semibold text-redcard-500">{t('rental.mandate.crg.draftWarning', { period: crg.period_label })}</span>
+        {' '}<DraftAge days={daysSince(crg.created_at)} />
+      </Alert>
+      <ul aria-label={t('rental.mandate.crg.linesLabel', { period: crg.period_label })} className="divide-y divide-gray-100 text-sm">
+        {lines.map((l) => {
+          const out = excluded.includes(l.id)
+          return (
+            <li key={l.id} className="flex items-start justify-between gap-3 py-2">
+              <span className={out ? 'text-gray-400 line-through' : 'text-gray-900'}><CrgLineLabel line={l} /></span>
+              <span className="flex items-center gap-2">
+                <span className={`tabular-nums ${out ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{f.dh(l.cost_final)}</span>
+                <IconAction icon={out ? FiRotateCcw : FiX} label={t(out ? 'rental.mandate.crg.restore' : 'rental.mandate.crg.exclude', { title: l.title })} onClick={() => toggle(l.id)} tipAlign="end" />
+              </span>
+            </li>
+          )
+        })}
+        {!lines.length && <li className="py-2 text-gray-500">{t('rental.mandate.crg.noLines')}</li>}
+      </ul>
+      <div className="flex flex-wrap items-end gap-2 text-sm">
+        <label className="grid gap-1" htmlFor={`crg-fees-${crg.id}`}>
+          <span className="text-gray-700">{t('rental.mandate.crg.feesLabel')}</span>
+          <input id={`crg-fees-${crg.id}`} type="number" min="0" max={feesCap} step="1"
+            value={fees} onChange={(e) => setFees(e.target.value)} aria-invalid={!feesValid}
+            className="w-36 rounded-lg border border-gray-200 px-2 py-1 tabular-nums" />
+        </label>
+        <span className="pb-1 text-xs text-gray-500">{t('rental.mandate.crg.feesHint', { amount: f.dh(feesCap) })}</span>
+      </div>
+      {!feesValid && <p className="text-xs text-redcard-500">{t('rental.mandate.crg.feesInvalid', { amount: f.dh(feesCap) })}</p>}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span className="text-sm text-gray-700">
+          {t('rental.mandate.crg.netAfter', { amount: f.dh(net) })}
+          {(excluded.length > 0 || feesNum !== Number(crg.fees)) && <span className="block text-xs text-gray-500">{t('rental.mandate.crg.unsavedHint')}</span>}
+        </span>
+        <button type="button" className={PRIMARY_BTN} disabled={busy || !feesValid}
+          onClick={() => ask({ message: t('rental.mandate.crg.confirmValidate', { period: crg.period_label, amount: f.dh(net) }), confirmLabel: t('rental.mandate.crg.validate'), onConfirm: () => onValidate(crg.id, excluded, feesNum) })}>{t('rental.mandate.crg.validate')}</button>
+      </div>
+    </div>
+  )
+}
 
 function MandateDetail() {
   const { t } = useTranslation(['backoffice', 'common'])
@@ -25,6 +130,11 @@ function MandateDetail() {
   const { data: crgData } = useQuery(['rental-crg', id], () => rentalService.listCrg(id))
   const sign = useMutation(() => rentalService.signMandate(id), {
     onSuccess: () => { toast.success(t('backoffice:rental.mandate.detail.signedToast')); qc.invalidateQueries(['rental-mandate', id]); qc.invalidateQueries('rental-summary') },
+    onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
+  })
+
+  const validate = useMutation(({ crgId, excluded, fees }) => rentalService.validateCrg(crgId, { excluded_work_order_ids: excluded, fees }), {
+    onSuccess: () => { toast.success(t('backoffice:rental.mandate.crg.validatedToast')); qc.invalidateQueries(['rental-crg', id]); qc.invalidateQueries('rental-crg-drafts') },
     onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
   })
 
@@ -48,7 +158,9 @@ function MandateDetail() {
   const crgColumns = [
     { header: t('backoffice:rental.mandate.crg.period'), cell: (c) => <span className="text-gray-700">{c.period_label}</span> },
     { header: t('backoffice:rental.mandate.crg.collected'), align: 'right', cell: (c) => <span className="text-gray-700 tabular-nums">{f.dh(c.rent_collected)}</span> },
+    { header: t('backoffice:rental.mandate.crg.expenses'), align: 'right', cell: (c) => <span className="text-gray-700 tabular-nums">{f.dh(c.expenses)}</span> },
     { header: t('backoffice:rental.mandate.crg.net'), align: 'right', cell: (c) => <span className="font-medium text-gray-900 tabular-nums">{f.dh(c.net)}</span> },
+    { header: t('backoffice:rental.mandate.crg.status'), cell: (c) => <StatusBadge label={t(`backoffice:rental.mandate.crg.statusLabel.${c.status}`, { defaultValue: c.status })} className={CRG_BADGE[c.status]} /> },
     { header: '', align: 'right', cell: (c) => <IconAction icon={FiDownload} label={t('backoffice:rental.overview.crgPdf', { period: c.period_label })} onClick={() => openPdf(rentalService.crgPdfUrl(id, c.id))} tone="gold" tipAlign="end" /> },
   ]
 
@@ -76,6 +188,12 @@ function MandateDetail() {
       <Panel title={t('backoffice:rental.mandate.crg.panelTitle')}>
         <DataTable columns={crgColumns} rows={crg}
           empty={<EmptyState title={t('backoffice:rental.mandate.crg.empty.title')} description={t('backoffice:rental.mandate.crg.empty.description')} />} />
+        {crg.filter((c) => c.status !== 'draft').map((c) => (
+          <CrgLines key={`lines-${c.id}`} crg={c} />
+        ))}
+        {crg.filter((c) => c.status === 'draft').map((c) => (
+          <div key={c.id} className="mt-4"><CrgDraft crg={c} busy={validate.isLoading} onValidate={(crgId, excluded, fees) => validate.mutate({ crgId, excluded, fees })} /></div>
+        ))}
       </Panel>
       <SignaturePanel docType="mandate" docId={id} managerName={managerName} managerEmail={managerEmail} />
     </div>

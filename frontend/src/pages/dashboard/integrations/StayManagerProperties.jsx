@@ -14,11 +14,13 @@ import {
 import useAuthStore from '../../../store/authStore'
 import DirIcon from '../../../components/common/DirIcon'
 import { useFormat } from '../../../utils/format'
+import { useConfirm } from '../../../components/common/confirm'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
 
 export default function StayManagerProperties() {
   const { t } = useTranslation(['dashboard', 'common'])
+  const ask = useConfirm()
   const { accessToken: token } = useAuthStore()
   const { fmtDate } = useFormat()
   const [loading, setLoading] = useState(true)
@@ -121,11 +123,9 @@ export default function StayManagerProperties() {
     }
   }
 
-  const handleUnlink = async (propertyId) => {
-    if (!confirm(t('dashboard:stayManager.properties.confirmUnlink'))) {
-      return
-    }
-
+  const handleUnlink = (propertyId) => ask({
+    message: t('dashboard:stayManager.properties.confirmUnlink'),
+    onConfirm: async () => {
     try {
       const response = await fetch(`${API_URL}/integrations/staymanager/properties/${propertyId}/unlink`, {
         method: 'POST',
@@ -142,7 +142,8 @@ export default function StayManagerProperties() {
     } catch (err) {
       setError(t('dashboard:stayManager.properties.errors.unlinkFailed'))
     }
-  }
+    },
+  })
 
   const handleSync = async (propertyId) => {
     setSyncing(propertyId)
@@ -251,7 +252,7 @@ export default function StayManagerProperties() {
             <form onSubmit={handleLink} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('dashboard:stayManager.properties.modal.semsarLabel')}
+                  {t('dashboard:stayManager.properties.modal.semsarLabel')} <span className="requis" aria-hidden="true" />
                 </label>
                 <select
                   value={selectedSemsarProperty}
@@ -270,7 +271,7 @@ export default function StayManagerProperties() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('dashboard:stayManager.properties.modal.stayManagerLabel')}
+                  {t('dashboard:stayManager.properties.modal.stayManagerLabel')} <span className="requis" aria-hidden="true" />
                 </label>
                 <select
                   value={selectedStayManagerProperty}

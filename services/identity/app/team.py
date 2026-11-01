@@ -10,19 +10,20 @@ import logging
 import secrets
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Header, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from semsar_auth import Principal, get_principal
+from semsar_common import get_settings
 from semsar_events import enqueue
 
-from . import seats
+from . import seats, teams_catalog
 from .auth import ACCESS_TTL, REFRESH_TTL, _token, _user_event_doc
 from .db import get_db
-from .models import AgencyRO, Invitation, RoleRO, Team, UserRO
+from .models import AgencyRO, Invitation, RoleRO, Team, TeamMembership, UserRO
 
 router = APIRouter()
 _log = logging.getLogger("identity")
@@ -69,10 +70,42 @@ def _inv_dict(db: Session, inv: Invitation) -> dict:
 
 
 def _team_counts(db: Session, team_ids: list[int]) -> dict[int, int]:
+    """Effectif d'une équipe : rattachement principal OU appartenance secondaire, sans
+    compter deux fois celui qui a les deux."""
     if not team_ids:
         return {}
-    return dict(db.query(UserRO.team_id, func.count()).filter(UserRO.team_id.in_(team_ids))
-                .group_by(UserRO.team_id).all())
+    counts: dict[int, set[int]] = {tid: set() for tid in team_ids}
+    for tid, uid in db.query(UserRO.team_id, UserRO.id).filter(UserRO.team_id.in_(team_ids)):
+        counts[tid].add(uid)
+    for tid, uid in db.query(TeamMembership.team_id, TeamMembership.user_id).filter(
+            TeamMembership.team_id.in_(team_ids)):
+        counts[tid].add(uid)
+    return {tid: len(ids) for tid, ids in counts.items()}
+
+
+def _memberships(db: Session, team_ids: list[int]) -> dict[int, list[dict]]:
+    """Appartenances secondaires, groupées par équipe."""
+    if not team_ids:
+        return {}
+    rows = db.query(TeamMembership).filter(TeamMembership.team_id.in_(team_ids)).all()
+    out: dict[int, list[dict]] = {tid: [] for tid in team_ids}
+    for m in rows:
+        out[m.team_id].append({"user_id": m.user_id, "job": m.job})
+    return out
+
+
+def _team_payload(data: dict, current: Team | None = None):
+    """Champs communs à la création et à la modification d'une équipe."""
+    name = (data.get("name") or (current.name if current else "")).strip()
+    if not name:
+        return None, _err("Nom d'équipe requis", 400)
+    kind = (data.get("kind") or (current.kind if current else teams_catalog.DEFAULT_KIND)).strip()
+    if not teams_catalog.valid_kind(kind):
+        return None, _err("Métier d'équipe inconnu", 400)
+    color = (data.get("color") or (current.color if current else None) or "").strip()[:16] or None
+    description = (data.get("description")
+                   or (current.description if current else None) or "").strip()[:255] or None
+    return {"name": name[:80], "kind": kind, "color": color, "description": description}, None
 
 
 def _new_token() -> tuple[str, str]:
@@ -102,10 +135,13 @@ def get_team(principal: Principal = Depends(get_principal), db: Session = Depend
         d["is_owner"] = (u.id == agency.owner_id)
         return d
 
+    mships = _memberships(db, [t.id for t in teams])
     return {
         "owner": owner.to_dict() if owner else None,
         "members": [member_row(u) for u in members],
-        "teams": [t.to_dict(members_count=tcounts.get(t.id, 0)) for t in teams],
+        "teams": [{**t.to_dict(members_count=tcounts.get(t.id, 0)),
+                   "memberships": mships.get(t.id, [])} for t in teams],
+        "team_kinds": teams_catalog.catalogue(),
         "invitations": [_inv_dict(db, i) for i in pending if i.is_active_pending()],
         "seats": {"used": seats.seats_used(db, agency), "limit": seats.seats_limit(agency)},
         "teams_quota": {"used": seats.teams_used(db, agency), "limit": seats.teams_limit(agency)},
@@ -119,17 +155,17 @@ async def create_team(request: Request, principal: Principal = Depends(get_princ
     agency, err = _require_manage(principal, db)
     if err:
         return err
-    name = ((await _json(request)).get("name") or "").strip()
-    if not name:
-        return _err("Nom d'équipe requis", 400)
+    payload, e = _team_payload(await _json(request))
+    if e:
+        return e
     if not seats.can_create_team(db, agency):
         return _err("Limite d'équipes atteinte pour votre plan.", 409)
-    if db.query(Team).filter(Team.agency_id == agency.id, Team.name == name).first():
+    if db.query(Team).filter(Team.agency_id == agency.id, Team.name == payload["name"]).first():
         return _err("Une équipe porte déjà ce nom.", 409)
-    t = Team(agency_id=agency.id, name=name)
+    t = Team(agency_id=agency.id, **payload)
     db.add(t)
     db.commit()
-    return {"team": t.to_dict()}
+    return {"team": {**t.to_dict(), "memberships": []}}
 
 
 @router.put("/backoffice/teams/{team_id}")
@@ -140,12 +176,22 @@ async def rename_team(team_id: int, request: Request, principal: Principal = Dep
     t = db.query(Team).filter(Team.id == team_id, Team.agency_id == agency.id).first()
     if not t:
         return _err("Équipe introuvable", 404)
-    name = ((await _json(request)).get("name") or "").strip()
-    if not name:
-        return _err("Nom d'équipe requis", 400)
-    t.name = name
+    payload, e = _team_payload(await _json(request), current=t)
+    if e:
+        return e
+    if db.query(Team).filter(Team.agency_id == agency.id, Team.name == payload["name"],
+                             Team.id != t.id).first():
+        return _err("Une équipe porte déjà ce nom.", 409)
+    for field, value in payload.items():
+        setattr(t, field, value)
+    # Un changement de métier invalide les rôles tenus dans l'équipe : ils appartiennent au
+    # métier. Les ramener au rôle courant vaut mieux que garder un libellé qui n'existe plus.
+    for m in db.query(TeamMembership).filter(TeamMembership.team_id == t.id):
+        if not teams_catalog.valid_job(t.kind, m.job):
+            m.job = teams_catalog.default_job(t.kind)
     db.commit()
-    return {"team": t.to_dict(members_count=_team_counts(db, [t.id]).get(t.id, 0))}
+    return {"team": {**t.to_dict(members_count=_team_counts(db, [t.id]).get(t.id, 0)),
+                     "memberships": _memberships(db, [t.id]).get(t.id, [])}}
 
 
 @router.delete("/backoffice/teams/{team_id}")
@@ -157,6 +203,7 @@ def delete_team(team_id: int, principal: Principal = Depends(get_principal), db:
     if not t:
         return _err("Équipe introuvable", 404)
     db.query(UserRO).filter(UserRO.team_id == t.id).update({"team_id": None})
+    db.query(TeamMembership).filter(TeamMembership.team_id == t.id).delete()
     db.delete(t)
     db.commit()
     return {"message": "Équipe supprimée"}
@@ -337,3 +384,76 @@ async def accept_invitation(token: str, request: Request, db: Session = Depends(
     return {"user": user.to_dict(),
             "access_token": _token(user.id, ACCESS_TTL, "access"),
             "refresh_token": _token(user.id, REFRESH_TTL, "refresh")}
+
+
+# ---- Appartenances secondaires -----------------------------------------------------------
+# `UserRO.team_id` reste l'équipe de rattachement ; ces routes gèrent les renforts, avec le
+# rôle tenu dans l'équipe d'accueil (le catalogue des métiers le borne).
+
+@router.post("/backoffice/teams/{team_id}/membres", status_code=201)
+async def add_membership(team_id: int, request: Request,
+                         principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    agency, err = _require_manage(principal, db)
+    if err:
+        return err
+    t = db.query(Team).filter(Team.id == team_id, Team.agency_id == agency.id).first()
+    if not t:
+        return _err("Équipe introuvable", 404)
+    data = await _json(request)
+    try:
+        user_id = int(data.get("user_id") or 0)
+    except (TypeError, ValueError):
+        return _err("Membre invalide", 400)
+    u = db.query(UserRO).filter(UserRO.id == user_id, UserRO.agency_id == agency.id,
+                                UserRO.deleted_at.is_(None)).first()
+    if not u:
+        return _err("Membre introuvable", 404)
+    job = (data.get("job") or teams_catalog.default_job(t.kind)).strip()
+    if not teams_catalog.valid_job(t.kind, job):
+        return _err("Rôle inconnu pour ce métier d'équipe", 400)
+    existing = db.query(TeamMembership).filter(TeamMembership.team_id == t.id,
+                                               TeamMembership.user_id == u.id).first()
+    if existing is not None:
+        existing.job = job
+        db.commit()
+        return {"membership": existing.to_dict()}
+    m = TeamMembership(agency_id=agency.id, team_id=t.id, user_id=u.id, job=job)
+    db.add(m)
+    db.commit()
+    return {"membership": m.to_dict()}
+
+
+@router.delete("/backoffice/teams/{team_id}/membres/{user_id}")
+def remove_membership(team_id: int, user_id: int, principal: Principal = Depends(get_principal),
+                      db: Session = Depends(get_db)):
+    agency, err = _require_manage(principal, db)
+    if err:
+        return err
+    m = (db.query(TeamMembership)
+         .filter(TeamMembership.team_id == team_id, TeamMembership.user_id == user_id,
+                 TeamMembership.agency_id == agency.id).first())
+    if m is None:
+        return _err("Appartenance introuvable", 404)
+    db.delete(m)
+    db.commit()
+    return {"message": "Membre retiré de l'équipe"}
+
+
+@router.get("/internal/teams", include_in_schema=False)
+def internal_teams(agency_id: int = 0, x_internal_token: str = Header(default=""),
+                   db: Session = Depends(get_db)):
+    """Équipes d'une agence, pour les services qui leur confient du travail (staymanager).
+
+    Rend aussi les appartenances : l'écran d'exploitation affiche qui peut prendre une tâche
+    sans avoir à interroger deux services.
+    """
+    if x_internal_token != get_settings().internal_token:
+        return _err("Interdit", 403)
+    if agency_id <= 0:
+        return _err("Agence requise", 400)
+    teams = db.query(Team).filter(Team.agency_id == agency_id).order_by(Team.name).all()
+    ids = [t.id for t in teams]
+    counts = _team_counts(db, ids)
+    mships = _memberships(db, ids)
+    return {"teams": [{**t.to_dict(members_count=counts.get(t.id, 0)),
+                       "memberships": mships.get(t.id, [])} for t in teams]}

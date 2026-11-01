@@ -3,6 +3,8 @@ import { format } from 'date-fns'
 import { fr, ar } from 'date-fns/locale'
 import { useTranslation } from 'react-i18next'
 import { FiSend } from 'react-icons/fi'
+import RichTextarea, { RichText } from '../common/RichTextarea'
+import { isRichTextEmpty } from '../../utils/richText'
 
 /**
  * Renders a BuyerMessage thread (original message + replies) and a reply form.
@@ -15,10 +17,14 @@ function MessageThread({ message, viewerRole, onReply, isReplying }) {
 
   if (!message) return null
 
+  // Le champ est en texte riche : un éditeur vidé rend `<p><br></p>`, du HTML valide mais
+  // sans contenu — `trim()` ne le verrait pas vide.
+  const empty = isRichTextEmpty(body)
+
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!body.trim()) return
-    onReply(body.trim())
+    if (empty) return
+    onReply(body)
     setBody('')
   }
 
@@ -44,7 +50,10 @@ function MessageThread({ message, viewerRole, onReply, isReplying }) {
               <div className={`max-w-[75%] rounded-xl px-4 py-3 ${
                 isMine ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-800'
               }`}>
-                <p className="text-sm whitespace-pre-line">{b.body}</p>
+                {/* Les réponses sont saisies en texte riche ; le message d'origine est
+                    antérieur à la bascule, et `RichText` remonte son texte brut en
+                    paragraphes plutôt que d'aplatir ses sauts de ligne. */}
+                <RichText html={b.body} className="text-sm" />
                 <p className={`text-xs mt-1 ${isMine ? 'text-white/70' : 'text-gray-400'}`}>
                   {b.created_at && format(new Date(b.created_at), 'dd MMM à HH:mm', { locale: dateFnsLocale })}
                 </p>
@@ -55,16 +64,17 @@ function MessageThread({ message, viewerRole, onReply, isReplying }) {
       </div>
 
       <form onSubmit={handleSubmit} className="flex gap-2 pt-4 border-t border-gray-100">
-        <textarea
+        <RichTextarea
           value={body}
-          onChange={(e) => setBody(e.target.value)}
+          onChange={setBody}
+          aria-label={t('common:messaging.replyPlaceholder')}
           placeholder={t('common:messaging.replyPlaceholder')}
           rows={2}
-          className="input flex-1 resize-none"
+          className="min-w-0 flex-1"
         />
         <button
           type="submit"
-          disabled={isReplying || !body.trim()}
+          disabled={isReplying || empty}
           className="btn-primary self-end disabled:opacity-50"
         >
           <FiSend className="w-4 h-4" />

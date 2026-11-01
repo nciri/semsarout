@@ -7,7 +7,7 @@ import {
   FiHome, FiUsers, FiFileText, FiCalendar,
   FiSettings, FiMenu, FiX, FiBriefcase,
   FiUserCheck, FiGrid, FiMail, FiLogOut, FiBell, FiSearch,
-  FiChevronDown, FiTrendingUp, FiTool, FiShoppingBag, FiKey
+  FiChevronDown, FiTrendingUp, FiShoppingBag, FiKey, FiSunrise
 } from 'react-icons/fi'
 import useAuthStore from '../../../store/authStore'
 import Wordmark from '../../../components/common/Wordmark'
@@ -15,39 +15,51 @@ import RedCartouche from '../../../components/common/RedCartouche'
 import api from '../../../services/api'
 import LanguageSwitcher from '../../../components/common/LanguageSwitcher'
 
+// Regroupement par métier, pas par type d'objet : l'agent cherche « ce que je viens faire »
+// (prospecter, exploiter, administrer), et non « où est rangé cet écran ». L'ancienne section
+// Finance mélangeait un annuaire d'artisans, la gérance et la boutique.
 const MENU_ITEMS = [
   {
     sectionKey: 'nav.sections.main',
     items: [
       { path: '/backoffice', icon: FiHome, labelKey: 'nav.dashboard', exact: true },
       { path: '/backoffice/biens', icon: FiFileText, labelKey: 'nav.properties' },
-      { path: '/backoffice/pipeline', icon: FiGrid, labelKey: 'nav.pipeline' },
     ]
   },
   {
-    sectionKey: 'nav.sections.crm',
+    // Le flux commercial de bout en bout : un lead devient une visite, puis un dossier, puis
+    // une transaction. Éclaté sur trois sections, il ne se lisait pas comme un flux.
+    sectionKey: 'nav.sections.deals',
     items: [
-      { path: '/backoffice/clients', icon: FiUsers, labelKey: 'nav.clients' },
       { path: '/backoffice/leads', icon: FiMail, labelKey: 'nav.leads', badge: 'newLeads' },
       { path: '/backoffice/visites', icon: FiCalendar, labelKey: 'nav.visits', badge: 'upcomingVisits' },
-    ]
-  },
-  {
-    sectionKey: 'nav.sections.finance',
-    items: [
+      { path: '/backoffice/clients', icon: FiUsers, labelKey: 'nav.clients' },
+      { path: '/backoffice/pipeline', icon: FiGrid, labelKey: 'nav.pipeline' },
       { path: '/backoffice/transactions', icon: FiBriefcase, labelKey: 'nav.transactions' },
-      { path: '/backoffice/contrats', icon: FiFileText, labelKey: 'nav.contracts' },
-      { path: '/backoffice/notaires', icon: FiBriefcase, labelKey: 'nav.notaries' },
-      { path: '/backoffice/artisans', icon: FiTool, labelKey: 'nav.artisans' },
-      { path: '/backoffice/gestion-locative', icon: FiKey, labelKey: 'nav.rental' },
-      { path: '/backoffice/boutique', icon: FiShoppingBag, labelKey: 'nav.shop' },
     ]
   },
   {
-    sectionKey: 'nav.sections.admin',
+    // Après la signature : ce qui se gère dans la durée.
+    sectionKey: 'nav.sections.operations',
+    items: [
+      { path: '/backoffice/gestion-locative', icon: FiKey, labelKey: 'nav.rental' },
+      { path: '/backoffice/sejours', icon: FiSunrise, labelKey: 'nav.stays' },
+    ]
+  },
+  {
+    sectionKey: 'nav.sections.partners',
+    items: [
+      { path: '/backoffice/contrats', icon: FiFileText, labelKey: 'nav.contracts' },
+      // Notaires, dossiers, artisans et interventions tiennent une seule page à onglets.
+      { path: '/backoffice/tiers', icon: FiBriefcase, labelKey: 'nav.thirdParties' },
+    ]
+  },
+  {
+    sectionKey: 'nav.sections.agency',
     items: [
       { path: '/backoffice/equipe', icon: FiUserCheck, labelKey: 'nav.team' },
       { path: '/backoffice/analyses', icon: FiTrendingUp, labelKey: 'nav.analytics' },
+      { path: '/backoffice/boutique', icon: FiShoppingBag, labelKey: 'nav.shop' },
       { path: '/backoffice/parametres', icon: FiSettings, labelKey: 'nav.settings' },
     ]
   }

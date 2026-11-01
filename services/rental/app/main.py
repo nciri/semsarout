@@ -6,6 +6,7 @@ CRUD mandats de gestion + baux (back-office, gating `rental`). Émet rental.mand
 from contextlib import asynccontextmanager
 from datetime import datetime
 import json
+import logging
 import os
 import uuid
 
@@ -13,15 +14,22 @@ import httpx
 from fastapi import Depends, FastAPI, Header, Request, Response
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
-from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
+from semsar_common import (
+    get_settings,
+    install_legacy_error_handlers,
+    sanitize_rich_field,
+    setup_logging,
+    setup_tracing,
+)
 from semsar_events import enqueue
 
 import semsar_signing as signing
 
-from . import commission_client, events, identity_client, overview, qualification
+from . import commission_client, depenses, events, identity_client, overview, qualification
 from .db import get_db, init_db
 from .models import (ApplicationDocument, ChargeRegularization, ClientRO, CrgReport,
                      DeductionLine, DepositSettlement, Inventory, InventoryItem, InventoryPhoto,
@@ -31,6 +39,7 @@ from .util import err, iso, json_body, num
 
 settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -187,6 +196,29 @@ def get_mandate(mandate_id: int, principal: Principal = Depends(get_principal),
                                     _lookup_client)[0]
 
 
+def _refus_fee_percent(data: dict) -> JSONResponse | None:
+    """Borne `0 <= fee_percent <= 100`, aux DEUX routes qui écrivent un mandat.
+
+    Rien ne la bornait : au-delà de 100, les honoraires dépassent le loyer encaissé, le
+    plafond de dépenses du CRG devient négatif et le net l'est aussi, honoraires seuls.
+    « Un CRG faux est plus coûteux qu'un CRG absent » est l'anti-objectif nommé de la spec.
+    """
+    if "fee_percent" not in data:
+        return None
+    if data["fee_percent"] is None:
+        # Un null explicite effaçait la colonne, et tout calcul lit `float(fee_percent or 0)` :
+        # les honoraires tombaient à 0 % sur tous les CRG suivants, sans un mot. Omettre la clé
+        # reste le moyen de laisser le taux vide à la création.
+        return err("Le taux d'honoraires ne peut pas être vidé.", 400)
+    try:
+        pct = float(data["fee_percent"])
+    except (TypeError, ValueError):
+        return err("Taux d'honoraires invalide.", 400)
+    if not 0 <= pct <= 100:
+        return err("Le taux d'honoraires doit être compris entre 0 et 100 %.", 400)
+    return None
+
+
 @app.post("/backoffice/gestion-locative/mandates", status_code=201)
 async def create_mandate(request: Request, principal: Principal = Depends(get_principal),
                          db: Session = Depends(get_db)):
@@ -195,6 +227,8 @@ async def create_mandate(request: Request, principal: Principal = Depends(get_pr
     data = await json_body(request)
     if not data.get("property_id") or not data.get("landlord_client_id"):
         return err("property_id et landlord_client_id sont requis.", 400)
+    if (refus := _refus_fee_percent(data)) is not None:
+        return refus
     m = Mandate(
         reference=_reference("MND"), agency_id=principal.agency_id,
         property_id=data["property_id"], landlord_client_id=data["landlord_client_id"],
@@ -220,6 +254,8 @@ async def update_mandate(mandate_id: int, request: Request,
     if m is None or m.agency_id != principal.agency_id:
         return err("Mandat introuvable.", 404)
     data = await json_body(request)
+    if (refus := _refus_fee_percent(data)) is not None:
+        return refus
     for field in ("mandate_type", "fee_percent", "landlord_iban", "notes"):
         if field in data:
             setattr(m, field, data[field])
@@ -255,14 +291,49 @@ def internal_mandates_due_crg(x_internal_token: str = Header(default=""),
     y, m = _prev_period(datetime.utcnow())
     out = []
     for mnd in db.query(Mandate).filter(Mandate.status == "active").all():
-        if db.query(CrgReport).filter(CrgReport.mandate_id == mnd.id, CrgReport.year == y,
-                                      CrgReport.month == m).first():
+        existant = db.query(CrgReport).filter(CrgReport.mandate_id == mnd.id, CrgReport.year == y,
+                                              CrgReport.month == m).first()
+        # Un brouillon se recalcule : un loyer qui rentre après sa construction changerait sinon
+        # le net annoncé au propriétaire sans que rien ne le rafraîchisse. Validé ou envoyé, il est
+        # figé — un document que l'agence a validé ne bouge pas sous ses pieds.
+        if existant is not None and existant.status != "draft":
             continue
-        agg = _crg_aggregate(db, mnd, y, m)
+        try:
+            agg = _crg_aggregate(db, mnd, y, m)
+        except depenses.DepensesIndisponibles:
+            # Écarté, pas brouillonné avec 0 dépense : repris au prochain passage.
+            logger.warning("CRG du mandat %s différé : dépenses illisibles", mnd.id)
+            continue
         if agg["rent_collected"] <= 0:
             continue
-        out.append({"mandate_id": mnd.id, "landlord_client_id": mnd.landlord_client_id,
-                    "period_label": f"{_MONTHS_FR[m]} {y}", "year": y, "month": m, **agg})
+        created = existant is None
+        crg = existant or CrgReport(mandate_id=mnd.id, agency_id=mnd.agency_id,
+                                    period_label=f"{_MONTHS_FR[m]} {y}", year=y, month=m,
+                                    status="draft")
+        crg.rent_collected, crg.fees = agg["rent_collected"], agg["fees"]
+        crg.expenses, crg.net = agg["expenses"], agg["net"]
+        crg.expense_lines = json.dumps(agg["expense_lines"])
+        db.add(crg)
+        db.commit()
+        out.append({"mandate_id": mnd.id, "crg_id": crg.id, "agency_id": mnd.agency_id,
+                    "period_label": crg.period_label, "created": created})
+    return {"drafts": out}
+
+
+@app.get("/internal/mandates/due-crg-send", include_in_schema=False)
+def internal_mandates_due_crg_send(x_internal_token: str = Header(default=""),
+                                   db: Session = Depends(get_db)):
+    """Brouillons validés par un humain, pas encore envoyés au propriétaire."""
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    out = []
+    for crg in db.query(CrgReport).filter(CrgReport.status == "validated").all():
+        mnd = db.get(Mandate, crg.mandate_id)
+        out.append({"mandate_id": crg.mandate_id, "crg_id": crg.id,
+                    "landlord_client_id": mnd.landlord_client_id if mnd else None,
+                    "period_label": crg.period_label, "rent_collected": num(crg.rent_collected),
+                    "fees": num(crg.fees), "expenses": num(crg.expenses), "net": num(crg.net),
+                    "expense_lines": _lignes_depenses(crg)})
     return {"reports": out}
 
 
@@ -808,7 +879,9 @@ def _prev_period(now: datetime) -> tuple[int, int]:
 
 
 def _crg_aggregate(db, mandate, y: int, m: int) -> dict:
-    """Agrège les loyers encaissés des baux d'un mandat pour un mois donné."""
+    """Agrège loyers encaissés et dépenses imputables d'un mandat pour un mois donné.
+
+    Lève DepensesIndisponibles si directory ne répond pas (jamais de dépenses à 0 par défaut)."""
     lease_ids = [l.id for l in db.query(Lease).filter(Lease.mandate_id == mandate.id).all()]
     collected = 0.0
     if lease_ids:
@@ -818,29 +891,212 @@ def _crg_aggregate(db, mandate, y: int, m: int) -> dict:
         collected = sum(float(rp.paid_amount or rp.total_amount or 0) for rp in rows)
     fee_pct = float(mandate.fee_percent or 0)
     fees = round(collected * fee_pct / 100.0, 2)
-    return {"rent_collected": round(collected, 2), "fees": fees,
-            "net": round(collected - fees, 2)}
+    if collected <= 0:
+        # Sans loyer, pas de CRG (les dépenses attendent le prochain mois avec loyer) : inutile
+        # d'interroger directory pour un mandat qui sera écarté.
+        return {"rent_collected": 0.0, "fees": 0.0, "expenses": 0.0, "expense_lines": [], "net": 0.0}
+    lignes, expenses = _retenir_depenses(
+        depenses.imputables([mandate.property_id], "crg_expense", mandate.agency_id),
+        round(collected - fees, 2))
+    return {"rent_collected": round(collected, 2), "fees": fees, "expenses": expenses,
+            "expense_lines": lignes, "net": round(collected - fees - expenses, 2)}
+
+
+def _retenir_depenses(lignes: list[dict], plafond: float) -> tuple[list[dict], float]:
+    """Retient, de la plus ancienne à la plus récente, les dépenses qui tiennent dans `plafond`.
+
+    Décision B de la spec : pas de net négatif. Une dépense qui ne tient pas est simplement
+    absente de ce CRG — non estampillée, elle reparaît au prochain CRG où un loyer rentre.
+    """
+    retenues: list[dict] = []
+    total = 0.0
+    for ligne in sorted(lignes, key=lambda l: l.get("completed_at") or ""):
+        cout = round(float(ligne["cost_final"]), 2)
+        if round(total + cout, 2) > plafond:
+            # `continue`, pas `break` : une dépense plus récente mais moins chère tient encore
+            # dans le solde et doit passer. On récupère ainsi le maximum ce mois-ci, et la grosse
+            # dépense écartée garde son rang d'ancienneté au prochain CRG.
+            continue
+        total = round(total + cout, 2)
+        # `artisan_name` est porté jusqu'ici : la spec veut « date, intitulé, artisan, montant »
+        # au PDF, et le propriétaire qui téléphone demande d'abord qui est passé chez lui.
+        retenues.append({cle: ligne.get(cle)
+                         for cle in ("id", "title", "cost_final", "completed_at", "artisan_name")})
+    return retenues, total
+
+
+def _lignes_depenses(crg: CrgReport) -> list[dict]:
+    return json.loads(crg.expense_lines or "[]")
 
 
 @app.post("/internal/mandates/{mandate_id}/crg-sent", include_in_schema=False)
 async def internal_mandate_crg_sent(mandate_id: int, request: Request,
                                     x_internal_token: str = Header(default=""),
                                     db: Session = Depends(get_db)):
+    """Marque `sent` un CRG validé — après avoir estampillé ses dépenses chez directory.
+
+    L'ordre est la garantie d'argent : une dépense non estampillée resterait imputable et
+    serait portée une seconde fois le mois suivant. Si l'estampille échoue, le CRG reste
+    `validated` et repasse au prochain tour.
+    """
     if x_internal_token != settings.internal_token:
         return err("Forbidden", 403)
-    mnd = db.get(Mandate, mandate_id)
-    if mnd is None:
-        return {"ok": True}
     data = await json_body(request)
-    y, m = _prev_period(datetime.utcnow())
-    if not db.query(CrgReport).filter(CrgReport.mandate_id == mnd.id, CrgReport.year == y,
-                                      CrgReport.month == m).first():
-        db.add(CrgReport(mandate_id=mnd.id, agency_id=mnd.agency_id,
-                         period_label=f"{_MONTHS_FR[m]} {y}", year=y, month=m,
-                         rent_collected=data.get("rent_collected", 0), fees=data.get("fees", 0),
-                         net=data.get("net", 0), sent_at=datetime.utcnow()))
-        db.commit()
-    return {"ok": True}
+    crg_id = data.get("crg_id")
+    # `True` est un int en Python : sans ce garde, {"crg_id": true} désignerait le CRG n° 1.
+    crg = db.get(CrgReport, crg_id) if type(crg_id) is int else None
+    if crg is None or crg.mandate_id != mandate_id:
+        return err("CRG introuvable.", 404)
+    if crg.status == "sent":
+        return {"ok": True}
+    if crg.status != "validated":
+        return err("Ce CRG n'est pas validé.", 409)
+    ids = [l["id"] for l in _lignes_depenses(crg) if l.get("id") is not None]
+    if ids:
+        try:
+            estampillees, etrangeres = depenses.estampiller_detail(ids, f"crg:{crg.id}", crg.agency_id)
+        except depenses.DepensesIndisponibles:
+            logger.warning("CRG %s non envoyé : estampillage des dépenses impossible", crg.id)
+            return err("Dépenses non estampillées, CRG non envoyé.", 503)
+        if estampillees != len(ids):
+            # `directory` est idempotent par ref : un compte court ne vient pas d'une reprise
+            # après un estampillage réussi. Deux causes, deux issues.
+            #
+            # Cause réparable, et elle arrive sans concurrence : le CRG de M−1 a été validé mais
+            # pas envoyé (propriétaire sans e-mail valide), le brouillon de M a revu la même
+            # dépense — toujours `charged_at IS NULL` — et l'a emportée. M−1 restait alors
+            # refusé à chaque tour du planificateur, invisible et jamais reçu par le
+            # propriétaire. On retire les lignes parties ailleurs, on recalcule, et le relevé
+            # part pour ce qui est réellement dû.
+            restants = [i for i in ids if i not in etrangeres]
+            if len(restants) != estampillees:
+                # Cause non réparable : identifiant inconnu de directory, ou autre agence.
+                logger.error("CRG %s non envoyé : %s dépenses estampillées sur %s (ref crg:%s, ids %s)",
+                             crg.id, estampillees, len(ids), crg.id, ids)
+                return err("Dépenses non estampillées, CRG non envoyé.", 503)
+            lignes = [l for l in _lignes_depenses(crg) if l.get("id") not in etrangeres]
+            expenses = round(sum(float(l["cost_final"]) for l in lignes), 2)
+            logger.warning("CRG %s corrigé avant envoi : %s dépense(s) déjà portée(s) par un autre "
+                           "relevé (%s), dépenses %s → %s", crg.id, len(etrangeres), etrangeres,
+                           num(crg.expenses), expenses)
+            crg.expense_lines = json.dumps(lignes)
+            crg.expenses = expenses
+            crg.net = round(float(crg.rent_collected or 0) - float(crg.fees or 0) - expenses, 2)
+    # Transition atomique : deux appels simultanés ont tous deux estampillé (directory est
+    # idempotent, un seul a marqué des lignes), un seul pose `sent_at`.
+    envoye = (db.query(CrgReport)
+              .filter(CrgReport.id == crg.id, CrgReport.status == "validated")
+              .update({"status": "sent", "sent_at": datetime.utcnow()},
+                      synchronize_session="fetch"))
+    db.commit()
+    if envoye != 1:
+        logger.info("CRG %s déjà envoyé par un autre appel", crg.id)
+    # Les montants de l'accusé font foi pour l'e-mail : `due-crg-send` a listé l'état d'AVANT,
+    # et cet appel a pu retirer une dépense déjà portée par un autre relevé.
+    return {"ok": True, "expenses": num(crg.expenses), "net": num(crg.net),
+            "expense_lines": _lignes_depenses(crg)}
+
+
+@app.post("/backoffice/gestion-locative/crg/{crg_id}/validate")
+async def validate_crg(crg_id: int, request: Request,
+                       principal: Principal = Depends(get_principal),
+                       db: Session = Depends(get_db)):
+    """Validation humaine du brouillon : le CRG ne part jamais sans ce passage."""
+    if (g := _gate(principal)) is not None:
+        return g
+    crg = db.get(CrgReport, crg_id)
+    if crg is None or crg.agency_id != principal.agency_id:
+        return err("CRG introuvable.", 404)
+    if crg.status != "draft":
+        return err("Ce CRG n'est plus un brouillon.", 409)
+    data = await json_body(request)
+    try:
+        exclus = {int(i) for i in (data.get("excluded_work_order_ids") or [])}
+    except (TypeError, ValueError):
+        return err("Dépenses à écarter invalides.", 400)
+    # Honoraires corrigeables avant envoi, comme l'exige la décision A de la spec : une agence
+    # qui accorde une remise ponctuelle n'a sinon que `mandate.fee_percent` comme levier, ce qui
+    # changerait rétroactivement tous les mois à venir.
+    collected = float(crg.rent_collected or 0)
+    fees = float(crg.fees or 0)
+    lignes = [l for l in _lignes_depenses(crg) if l.get("id") not in exclus]
+    expenses = round(sum(float(l["cost_final"]) for l in lignes), 2)
+    if data.get("fees") is not None:
+        try:
+            fees = round(float(data["fees"]), 2)
+        except (TypeError, ValueError):
+            return err("Honoraires invalides.", 400)
+        # Le plafond retire les dépenses retenues, pas seulement les loyers : borné sur le seul
+        # `collected`, des honoraires égaux au loyer rendaient le net négatif, et le relevé partait
+        # dire au propriétaire qu'il DOIT de l'argent — ce que la décision B de la spec interdit.
+        plafond = round(collected - expenses, 2)
+        if not 0 <= fees <= plafond:
+            return err(f"Les honoraires doivent être compris entre 0 et {plafond:.2f} "
+                       "(loyers encaissés moins dépenses retenues).", 400)
+        crg.fees = fees
+    crg.expense_lines = json.dumps(lignes)
+    crg.expenses = expenses
+    crg.net = round(collected - fees - expenses, 2)
+    crg.status = "validated"
+    db.commit()
+    return _crg_dict(crg)
+
+
+def _crg_dict(c: CrgReport) -> dict:
+    out = {"id": c.id, "period_label": c.period_label, "year": c.year, "month": c.month,
+           "rent_collected": num(c.rent_collected), "fees": num(c.fees),
+           "expenses": num(c.expenses), "net": num(c.net), "status": c.status,
+           "sent_at": iso(c.sent_at), "created_at": iso(c.created_at),
+           # Les lignes sont rendues à tous les états. Seul un brouillon se MODIFIE, mais un net
+           # amputé de 1 200 Dh sans ligne explicative est la plainte d'origine de la spec : après
+           # validation l'agence doit pouvoir répondre au propriétaire qui téléphone.
+           "expense_lines": _lignes_depenses(c),
+           # Le front cache l'action d'exclusion plutôt que de laisser cliquer vers un 409.
+           "expense_lines_editable": c.status == "draft"}
+    return out
+
+
+@app.get("/backoffice/gestion-locative/crg/drafts")
+def list_crg_drafts(principal: Principal = Depends(get_principal),
+                    db: Session = Depends(get_db)):
+    """CRG en attente — brouillons à valider ET validés pas encore partis, du plus vieux au plus récent.
+
+    Ne lit que des lignes persistées : une panne de directory ne doit pas aveugler l'agence sur
+    les relevés qu'elle n'a pas encore validés.
+
+    Les `validated` y figurent parce qu'ils peuvent rester bloqués (propriétaire sans e-mail
+    valide, estampillage refusé) et qu'ils n'apparaissaient alors sur AUCUN écran : ni ici, qui
+    ne listait que `draft`, ni dans ce que le planificateur envoie.
+    """
+    if (g := _gate(principal)) is not None:
+        return g
+    maintenant = datetime.utcnow()
+    rows = (db.query(CrgReport)
+            .filter(CrgReport.agency_id == principal.agency_id,
+                    CrgReport.status.in_(("draft", "validated")))
+            .order_by(CrgReport.created_at.asc()).all())
+    out = []
+    for c in rows:
+        mnd = db.get(Mandate, c.mandate_id)
+        out.append({"crg_id": c.id, "mandate_id": c.mandate_id,
+                    "mandate_reference": mnd.reference if mnd else None,
+                    "period_label": c.period_label, "rent_collected": num(c.rent_collected),
+                    "expenses": num(c.expenses), "net": num(c.net), "status": c.status,
+                    "created_at": iso(c.created_at),
+                    "waiting_days": (maintenant - (c.created_at or maintenant)).days})
+    return {"drafts": out}
+
+
+@app.get("/backoffice/gestion-locative/crg/{crg_id}")
+def get_crg(crg_id: int, principal: Principal = Depends(get_principal),
+            db: Session = Depends(get_db)):
+    """Un CRG avec son mandat : `charged_ref` (`crg:<id>`) ne dit pas à quel mandat il appartient."""
+    if (g := _gate(principal)) is not None:
+        return g
+    crg = db.get(CrgReport, crg_id)
+    if crg is None or crg.agency_id != principal.agency_id:
+        return err("CRG introuvable.", 404)
+    return {**_crg_dict(crg), "mandate_id": crg.mandate_id}
 
 
 @app.get("/backoffice/gestion-locative/mandates/{mandate_id}/crg")
@@ -853,10 +1109,7 @@ def list_crg(mandate_id: int, principal: Principal = Depends(get_principal),
         return err("Mandat introuvable.", 404)
     q = (db.query(CrgReport).filter(CrgReport.mandate_id == mandate_id)
          .order_by(CrgReport.year.desc(), CrgReport.month.desc()))
-    return {"reports": [{"id": c.id, "period_label": c.period_label, "year": c.year,
-                         "month": c.month, "rent_collected": num(c.rent_collected),
-                         "fees": num(c.fees), "net": num(c.net), "sent_at": iso(c.sent_at)}
-                        for c in q.all()]}
+    return {"reports": [_crg_dict(c) for c in q.all()]}
 
 
 @app.get("/backoffice/gestion-locative/mandates/{mandate_id}/crg/{crg_id}.pdf")
@@ -872,7 +1125,8 @@ def crg_pdf(mandate_id: int, crg_id: int, principal: Principal = Depends(get_pri
     from . import pdf as pdf_mod
     data = pdf_mod.render_crg_pdf(
         crg, landlord_name=(f"{landlord.first_name} {landlord.last_name}" if landlord else None),
-        mandate_reference=mnd.reference if mnd else None)
+        mandate_reference=mnd.reference if mnd else None,
+        expense_lines=_lignes_depenses(crg))
     return Response(data, media_type="application/pdf",
                     headers={"Content-Disposition": f"attachment; filename=CRG-{crg.year}-{crg.month:02d}.pdf"})
 
@@ -1479,20 +1733,29 @@ def _owned_item(db, item_id: int, principal: Principal):
     return (it, inv) if inv is not None else (None, None)
 
 
-def _owned_settlement(db, sid: int, principal: Principal):
-    s = db.get(DepositSettlement, sid)
+def _owned_settlement(db, sid: int, principal: Principal, verrou: bool = False):
+    """`verrou` : FOR UPDATE jusqu'au commit, pour qu'accept/delete/finalize ne s'entrelacent pas."""
+    if verrou:
+        s = db.query(DepositSettlement).filter(DepositSettlement.id == sid).with_for_update().first()
+    else:
+        s = db.get(DepositSettlement, sid)
     if s is None or s.agency_id != principal.agency_id:
         return None
     return s
 
 
+def _totaux_decompte(lines: list[DeductionLine], deposit_amount) -> tuple[float, float, float, float]:
+    """(caution, total retenu, à restituer, solde à réclamer) — seule source de la formule."""
+    total = sum(float(l.amount or 0) for l in lines)
+    deposit = float(deposit_amount or 0)
+    return (deposit, total, deposit - total if deposit > total else 0,
+            total - deposit if total > deposit else 0)
+
+
 def _settlement_dict(db: Session, s: DepositSettlement) -> dict:
     lines = (db.query(DeductionLine).filter(DeductionLine.settlement_id == s.id)
              .order_by(DeductionLine.id).all())
-    total = sum(float(l.amount or 0) for l in lines)
-    deposit = float(s.deposit_amount or 0)
-    refunded = deposit - total if deposit > total else 0
-    balance = total - deposit if total > deposit else 0
+    deposit, total, refunded, balance = _totaux_decompte(lines, s.deposit_amount)
     return {"id": s.id, "lease_id": s.lease_id, "status": s.status,
             "deposit_amount": num(deposit), "total_deductions": num(total),
             "refunded_amount": num(refunded), "balance_due": num(balance),
@@ -1564,17 +1827,115 @@ async def add_deduction_line(sid: int, request: Request,
     return _settlement_dict(db, s)
 
 
+def _suggestions_decompte(db: Session, s: DepositSettlement, lease: Lease) -> list[dict]:
+    """Interventions imputables au locataire de CE bail (pas aux précédents), à poser en retenue.
+
+    Lève DepensesIndisponibles : une liste vide à tort ferait restituer toute la caution."""
+    posees = {wid for (wid,) in db.query(DeductionLine.work_order_id).filter(
+        DeductionLine.settlement_id == s.id, DeductionLine.work_order_id.isnot(None))}
+    return [w for w in depenses.imputables([lease.property_id], "deposit_deduction",
+                                           s.agency_id, lease.id)
+            if int(w["id"]) not in posees]
+
+
+@app.get("/backoffice/gestion-locative/settlements/{sid}/suggestions")
+def list_deduction_suggestions(sid: int, principal: Principal = Depends(get_principal),
+                               db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    s = _owned_settlement(db, sid, principal)
+    if s is None:
+        return err("Décompte introuvable.", 404)
+    lease = db.get(Lease, s.lease_id)
+    if lease is None:
+        return err("Bail introuvable.", 404)
+    try:
+        suggestions = _suggestions_decompte(db, s, lease)
+    except depenses.DepensesIndisponibles:
+        logger.warning("Suggestions du décompte %s indisponibles : interventions illisibles", s.id)
+        return err("Interventions indisponibles : réessayez dans un instant.", 503)
+    return {"suggestions": [{"work_order_id": int(w["id"]), "label": w["title"],
+                             "amount": num(w["cost_final"]), "completed_at": w.get("completed_at")}
+                            for w in suggestions]}
+
+
+@app.post("/backoffice/gestion-locative/settlements/{sid}/suggestions/{work_order_id}/accept",
+          status_code=201)
+def accept_deduction_suggestion(sid: int, work_order_id: int,
+                                principal: Principal = Depends(get_principal),
+                                db: Session = Depends(get_db)):
+    if (g := _gate(principal)) is not None:
+        return g
+    s = _owned_settlement(db, sid, principal, verrou=True)
+    if s is None:
+        return err("Décompte introuvable.", 404)
+    if s.status != "draft":
+        return err("Décompte verrouillé (finalisé).", 403)
+    lease = db.get(Lease, s.lease_id)
+    if lease is None:
+        return err("Bail introuvable.", 404)
+    if db.query(DeductionLine).filter(DeductionLine.settlement_id == s.id,
+                                      DeductionLine.work_order_id == work_order_id).first():
+        return err("Cette intervention est déjà posée en retenue.", 409)
+    try:
+        wo = next((w for w in _suggestions_decompte(db, s, lease) if int(w["id"]) == work_order_id), None)
+        if wo is None:
+            return err("Intervention non imputable à ce bail ou déjà imputée.", 404)
+        # Ligne flushée avant l'estampillage : l'index unique tranche la course (409) sans rien
+        # estampiller, et un échec de directory annule la ligne — jamais de ligne non estampillée.
+        db.add(DeductionLine(settlement_id=s.id, label=wo["title"], amount=wo["cost_final"],
+                             work_order_id=work_order_id))
+        try:
+            db.flush()
+        except IntegrityError:
+            db.rollback()
+            return err("Cette intervention est déjà posée en retenue.", 409)
+        if depenses.estampiller([work_order_id], f"settlement:{s.id}", s.agency_id) != 1:
+            db.rollback()
+            return err("Intervention déjà imputée ailleurs.", 409)
+    except depenses.DepensesIndisponibles:
+        db.rollback()
+        logger.warning("Retenue du décompte %s non posée : interventions injoignables", s.id)
+        return err("Interventions indisponibles : retenue non posée, réessayez.", 503)
+    lines = db.query(DeductionLine).filter(DeductionLine.settlement_id == s.id).all()
+    _, s.total_deductions, s.refunded_amount, s.balance_due = _totaux_decompte(lines, s.deposit_amount)
+    agency_id, ref = s.agency_id, f"settlement:{sid}"   # lus avant le commit : après rollback `s` est expiré
+    try:
+        db.commit()
+    except Exception:   # noqa: BLE001
+        # Choix assumé : on ne distingue pas un commit échoué d'un commit dont l'accusé est perdu ;
+        # dans ce second cas la ligne existe et on libère son estampille (rare, accepté).
+        db.rollback()
+        logger.exception("Commit de la retenue du décompte %s échoué après estampillage", sid)
+        try:   # sans cette libération l'intervention sortirait de `chargeable` sans ligne
+            depenses.liberer([work_order_id], ref, agency_id)
+        except depenses.DepensesIndisponibles:
+            logger.error("Estampille de l'intervention %s non libérée (décompte %s)", work_order_id, sid)
+        return err("Retenue non enregistrée : réessayez.", 503)
+    return _settlement_dict(db, s)
+
+
 @app.delete("/backoffice/gestion-locative/deduction-lines/{line_id}")
 def delete_deduction_line(line_id: int, principal: Principal = Depends(get_principal),
                           db: Session = Depends(get_db)):
     if (g := _gate(principal)) is not None:
         return g
     line = db.get(DeductionLine, line_id)
-    s = _owned_settlement(db, line.settlement_id, principal) if line else None
+    s = _owned_settlement(db, line.settlement_id, principal, verrou=True) if line else None
     if line is None or s is None:
         return err("Ligne introuvable.", 404)
     if s.status != "draft":
         return err("Décompte verrouillé.", 400)
+    if line.work_order_id is not None:
+        # Libérer avant de supprimer : si directory refuse, la ligne reste plutôt que de laisser
+        # une intervention estampillée sans ligne, perdue pour tout relevé.
+        try:
+            libere = depenses.liberer([line.work_order_id], f"settlement:{s.id}", s.agency_id)
+        except depenses.DepensesIndisponibles:
+            libere = None
+        if libere != 1:
+            db.rollback()
+            return err("Estampille de l'intervention non libérée : ligne conservée, réessayez.", 503)
     db.delete(line)
     db.commit()
     return _settlement_dict(db, s)
@@ -1585,7 +1946,7 @@ def finalize_settlement(sid: int, principal: Principal = Depends(get_principal),
                         db: Session = Depends(get_db)):
     if (g := _gate(principal)) is not None:
         return g
-    s = _owned_settlement(db, sid, principal)
+    s = _owned_settlement(db, sid, principal, verrou=True)
     if s is None:
         return err("Décompte introuvable.", 404)
     if s.status != "draft":
@@ -1596,10 +1957,7 @@ def finalize_settlement(sid: int, principal: Principal = Depends(get_principal),
     if lease.deposit_returned_at is not None:
         return err("Dépôt déjà restitué pour ce bail.", 400)
     lines = db.query(DeductionLine).filter(DeductionLine.settlement_id == s.id).all()
-    total = sum(float(l.amount or 0) for l in lines)
-    deposit = float(s.deposit_amount or 0)
-    refunded = deposit - total if deposit > total else 0
-    balance = total - deposit if total > deposit else 0
+    deposit, total, refunded, balance = _totaux_decompte(lines, s.deposit_amount)
     s.total_deductions = total
     s.refunded_amount = refunded
     s.balance_due = balance
@@ -1962,7 +2320,10 @@ async def update_inventory(inv_id: int, request: Request,
         return err("État des lieux verrouillé (finalisé).", 400)
     data = await json_body(request)
     if "general_notes" in data:
-        inv.general_notes = data["general_notes"]
+        # Les observations générales suivent la bascule WYSIWYG du reste du produit : la
+        # route accepte donc du HTML, qu'elle assainit. Le PDF de l'état des lieux
+        # (ReportLab) ne sait pas lire ce balisage : `pdf.py` y projette le texte.
+        inv.general_notes = sanitize_rich_field(data["general_notes"])
     db.commit()
     return _inventory_dict(db, inv)
 

@@ -10,6 +10,7 @@ import { MOROCCAN_CITIES } from '../../constants/property'
 import { useFormat } from '../../utils/format'
 import { PROPERTY_TYPES, STATUSES } from './biens/model'
 import { Chip, IconAction, TD, TH } from './components/kit'
+import RichTextarea from '../../components/common/RichTextarea'
 
 const PRIORITY_KEYS = ['low', 'medium', 'high']
 const PER_PAGE = 10
@@ -22,8 +23,13 @@ const labelCls = 'block text-sm font-medium text-gray-700 mb-1'
 const ctrlCls = 'w-full px-3 py-2 border border-gray-200 rounded-lg text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500'
 
 // Le libellé enveloppe le champ : pas de htmlFor à inventer, et le clic porte sur l'ensemble.
-function Field({ label, children }) {
-  return <label className="block"><span className={labelCls}>{label}</span>{children}</label>
+function Field({ label, required = false, children }) {
+  return (
+    <label className="block">
+      <span className={labelCls}>{label} {required && <span className="requis" aria-hidden="true" />}</span>
+      {children}
+    </label>
+  )
 }
 
 /** En-tête triable : un clic trie, un second inverse le sens. Le tri est fait par le service. */
@@ -85,7 +91,14 @@ function TransactionCreate() {
   useQuery(['bo-property', preselectedProperty],
     async () => (await api.get(`/backoffice/properties/${preselectedProperty}`)).data, {
       enabled: Boolean(preselectedProperty) && !property,
-      onSuccess: (data) => setProperty(data?.property || data),
+      // Le prix du bien devient le prix demandé, comme au choix à la main. Sans cette
+      // reprise, arriver depuis la fiche d'un bien laissait le montant vide. Le type de
+      // transaction, lui, reste celui de l'URL : c'est l'écran d'origine qui le sait.
+      onSuccess: (data) => {
+        const p = data?.property || data
+        setProperty(p)
+        setForm((f) => ({ ...f, asking_price: f.asking_price || (p?.price != null ? String(p.price) : '') }))
+      },
     })
 
   // Clients de l'agence de l'agent connecté : le cloisonnement est fait par le service.
@@ -152,7 +165,10 @@ function TransactionCreate() {
   const pinned = pinnedClient?.client || pinnedClient
   const clients = pinned?.id && !raw.some((c) => String(c.id) === String(pinned.id)) ? [pinned, ...raw] : raw
   const pages = results?.pages || 1
-  const canSubmit = Boolean(property?.id) && Boolean(form.client_id) && !create.isLoading
+  // Prix ou loyer demandé : c'est lui qui porte les honoraires et l'échéancier. Une
+  // transaction à zéro dirham n'est pas une transaction en cours de saisie, c'est un trou.
+  const canSubmit = Boolean(property?.id) && Boolean(form.client_id)
+    && Number(form.asking_price) > 0 && !create.isLoading
   const place = (p) => [p?.city, p?.neighborhood].filter(Boolean).join(', ')
   // Honoraires attendus : en location seulement, le forfait de vente se lit déjà tel quel.
   const commissionPreview = form.transaction_type === 'rent' && form.asking_price && form.commission
@@ -325,7 +341,9 @@ function TransactionCreate() {
           </div>
 
           <div>
-            <h2 className="mb-3 text-sm font-semibold text-gray-900">{t('backoffice:crm.transactions.create.clientLabel')}</h2>
+            <h2 className="mb-3 text-sm font-semibold text-gray-900">
+              {t('backoffice:crm.transactions.create.clientLabel')} <span className="requis" aria-hidden="true" />
+            </h2>
             <div className="max-w-xl">
               <SearchableSelect
                 value={form.client_id}
@@ -346,7 +364,7 @@ function TransactionCreate() {
                   <option value="rent">{t('backoffice:crm.transactions.type.rent')}</option>
                 </select>
               </Field>
-              <Field label={t(`backoffice:crm.transactions.create.${form.transaction_type === 'rent' ? 'rentLabel' : 'priceLabel'}`)}>
+              <Field required label={t(`backoffice:crm.transactions.create.${form.transaction_type === 'rent' ? 'rentLabel' : 'priceLabel'}`)}>
                 <input type="number" min="0" value={form.asking_price} onChange={set('asking_price')} className={ctrlCls}
                   placeholder={t('backoffice:crm.transactions.create.pricePlaceholder')} />
               </Field>
@@ -369,8 +387,9 @@ function TransactionCreate() {
               </Field>
             </div>
             <div className="mt-4">
-              <label className={labelCls}>{t('backoffice:crm.transactions.create.notesLabel')}</label>
-              <textarea value={form.notes} onChange={set('notes')} rows={3} className={ctrlCls}
+              <label htmlFor="tx-notes" className={labelCls}>{t('backoffice:crm.transactions.create.notesLabel')}</label>
+              <RichTextarea id="tx-notes" value={form.notes} rows={3}
+                onChange={(html) => setForm((f) => ({ ...f, notes: html }))}
                 placeholder={t('backoffice:crm.transactions.create.notesPlaceholder')} />
             </div>
           </div>

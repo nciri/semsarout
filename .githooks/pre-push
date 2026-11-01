@@ -28,6 +28,11 @@ step() { # step <libellé> <commande…>
 
 echo "pre-push : vérifications locales"
 
+# Sans condition de chemin : la divergence que ce garde-fou attrape se crée en ajoutant un
+# `services/<svc>/db/migrate_*.sql` SANS toucher infra/prod/ — exactement le diff qui ne
+# déclenche aucun autre contrôle. Instantané (une lecture de fichiers), donc toujours joué.
+step "migrations déclarées" python3 tools/check_migrations.py
+
 if grep -q '^frontend/' <<<"$CHANGED"; then
   step "frontend lint" npm --prefix frontend run lint
   step "frontend tests" npm --prefix frontend test -- --run

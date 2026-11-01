@@ -15,7 +15,13 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
-from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
+from semsar_common import (
+    get_settings,
+    install_legacy_error_handlers,
+    sanitize_rich_field,
+    setup_logging,
+    setup_tracing,
+)
 from semsar_events import enqueue
 
 from . import events, integrations, listing_client, members_client, trust_client
@@ -73,6 +79,15 @@ def _gen_api_key() -> str:
 
 _AGENCY_WRITABLE = ["name", "description", "email", "phone", "website", "address", "city",
                     "postal_code", "license_number", "rc_number", "ice_number"]
+# Champ saisi en WYSIWYG : il est affiché sur la fiche publique de l'agence, donc un XSS
+# stocké pour n'importe quel visiteur tant qu'il n'est pas assaini. Les autres entrées de la
+# liste restent du texte brut — les assainir échapperait « < » et « & » d'un nom ou d'une
+# adresse et ferait apparaître des entités à l'écran.
+_RICH = ("description",)
+
+
+def _rich(field: str, value):
+    return sanitize_rich_field(value) if field in _RICH else value
 
 
 def _counts(db: Session, agency_ids: list[int]) -> dict[int, int]:
@@ -512,7 +527,8 @@ async def create_agency(request: Request, principal: Principal = Depends(get_pri
             return _err(f"{f} is required", 400)
     a = Agency(name=data["name"], slug=_gen_slug(db, data["name"]), email=data["email"],
                api_key=_gen_api_key(), owner_id=uid,
-               **{k: data.get(k) for k in _AGENCY_WRITABLE if k not in ("name", "email")})
+               **{k: _rich(k, data.get(k)) for k in _AGENCY_WRITABLE
+                  if k not in ("name", "email")})
     db.add(a)
     db.flush()
     # identity consomme agency.created → crée agency_ro + associe l'utilisateur (agency_id + pro).
@@ -534,7 +550,7 @@ async def update_agency(slug: str, request: Request, principal: Principal = Depe
     old_name = a.name
     for field in _AGENCY_WRITABLE:
         if field in data:
-            setattr(a, field, data[field])
+            setattr(a, field, _rich(field, data[field]))
     if "name" in data and old_name != data["name"]:  # slug regénéré si le nom change
         a.slug = _gen_slug(db, data["name"])
     _emit_agency(db, a, events.AGENCY_UPDATED)

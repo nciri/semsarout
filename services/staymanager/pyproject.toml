@@ -1,11 +1,11 @@
 [project]
 name = "semsar-staymanager"
 version = "0.1.0"
-description = "SemsarOut — service staymanager (intégration StayManager.ma : liens biens, réservations, sync)."
+description = "SemsarOut — service staymanager (séjours courte durée : calendriers iCal, réservations ; intégration StayManager.ma)."
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.110", "uvicorn[standard]>=0.29", "prometheus-fastapi-instrumentator>=7.0",
-    "SQLAlchemy>=2.0", "psycopg[binary]>=3.1", "httpx>=0.27",
+    "SQLAlchemy>=2.0", "psycopg[binary]>=3.1", "httpx>=0.27", "icalendar>=6.0",
     "semsar-common", "semsar-auth", "semsar-events",
 ]
 [project.optional-dependencies]

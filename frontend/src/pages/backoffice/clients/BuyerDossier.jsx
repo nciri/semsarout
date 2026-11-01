@@ -88,12 +88,12 @@ export default function BuyerDossier({ client }) {
       {editing ? (
         <div className="grid gap-3 sm:grid-cols-3">
           <label className="grid gap-1.5">
-            <span className="text-[12.5px] font-semibold text-gray-700">{t(`${P}.fields.downPayment`)}</span>
+            <span className="text-[12.5px] font-semibold text-gray-700">{t(`${P}.fields.downPayment`)} <span className="requis" aria-hidden="true" /></span>
             <input type="number" min="0" className={field} value={form.down_payment}
               onChange={(e) => setForm((v) => ({ ...v, down_payment: e.target.value }))} />
           </label>
           <label className="grid gap-1.5">
-            <span className="text-[12.5px] font-semibold text-gray-700">{t(`${P}.fields.maxMonthlyPayment`)}</span>
+            <span className="text-[12.5px] font-semibold text-gray-700">{t(`${P}.fields.maxMonthlyPayment`)} <span className="requis" aria-hidden="true" /></span>
             <input type="number" min="0" className={field} value={form.max_monthly_payment}
               onChange={(e) => setForm((v) => ({ ...v, max_monthly_payment: e.target.value }))} />
           </label>
@@ -103,7 +103,7 @@ export default function BuyerDossier({ client }) {
             {t(`${P}.fields.preapproval`)}
           </label>
           <div className="sm:col-span-3">
-            <button type="button" disabled={save.isLoading} onClick={() => save.mutate()}
+            <button type="button" disabled={save.isLoading || form.down_payment === '' || form.max_monthly_payment === ''} onClick={() => save.mutate()}
               className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50">
               {t(`${P}.save`)}
             </button>

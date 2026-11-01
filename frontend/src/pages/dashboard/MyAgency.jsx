@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { FiSave, FiRefreshCw, FiCopy, FiEye, FiEyeOff } from 'react-icons/fi'
 import { agencyService } from '../../services/agencyService'
 import useAuthStore from '../../store/authStore'
+import RichTextarea from '../../components/common/RichTextarea'
 
 function MyAgency({ embedded = false }) {
   // Dans l'onglet « Agence » des paramètres, l'écran est déjà encadré : pas de marges de
@@ -23,7 +24,7 @@ function MyAgency({ embedded = false }) {
     { enabled: !!user?.agency_id }
   )
 
-  const { register, handleSubmit, formState: { errors } } = useForm()
+  const { control, register, handleSubmit, formState: { errors } } = useForm()
 
   const createMutation = useMutation(
     (data) => agencyService.createAgency(data),
@@ -113,7 +114,7 @@ function MyAgency({ embedded = false }) {
           <div className="card p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="label">{t('dashboard:myAgency.fields.name')} *</label>
+                <label className="label">{t('dashboard:myAgency.fields.name')} <span className="requis" aria-hidden="true" /></label>
                 <input
                   {...register('name', { required: t('dashboard:myAgency.validation.nameRequired') })}
                   className="input"
@@ -123,7 +124,7 @@ function MyAgency({ embedded = false }) {
               </div>
 
               <div>
-                <label className="label">{t('dashboard:myAgency.fields.email')} *</label>
+                <label className="label">{t('dashboard:myAgency.fields.email')} <span className="requis" aria-hidden="true" /></label>
                 <input
                   type="email"
                   {...register('email', { required: t('dashboard:myAgency.validation.emailRequired') })}
@@ -134,21 +135,23 @@ function MyAgency({ embedded = false }) {
               </div>
 
               <div>
-                <label className="label">{t('dashboard:myAgency.fields.phone')}</label>
+                <label className="label">{t('dashboard:myAgency.fields.phone')} <span className="requis" aria-hidden="true" /></label>
                 <input
-                  {...register('phone')}
+                  {...register('phone', { required: t('dashboard:myAgency.validation.phoneRequired') })}
                   className="input"
                   placeholder={t('dashboard:myAgency.placeholders.phone')}
                 />
+                {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>}
               </div>
 
               <div>
-                <label className="label">{t('dashboard:myAgency.fields.city')}</label>
+                <label className="label">{t('dashboard:myAgency.fields.city')} <span className="requis" aria-hidden="true" /></label>
                 <input
-                  {...register('city')}
+                  {...register('city', { required: t('dashboard:myAgency.validation.cityRequired') })}
                   className="input"
                   placeholder={t('dashboard:myAgency.placeholders.city')}
                 />
+                {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>}
               </div>
 
               <div>
@@ -161,21 +164,30 @@ function MyAgency({ embedded = false }) {
               </div>
 
               <div className="md:col-span-2">
-                <label className="label">{t('dashboard:myAgency.fields.address')}</label>
+                <label className="label">{t('dashboard:myAgency.fields.address')} <span className="requis" aria-hidden="true" /></label>
                 <input
-                  {...register('address')}
+                  {...register('address', { required: t('dashboard:myAgency.validation.addressRequired') })}
                   className="input"
                   placeholder={t('dashboard:myAgency.placeholders.address')}
                 />
+                {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>}
               </div>
 
               <div className="md:col-span-2">
-                <label className="label">{t('dashboard:myAgency.fields.description')}</label>
-                <textarea
-                  {...register('description')}
-                  className="input"
-                  rows="3"
-                  placeholder={t('dashboard:myAgency.placeholders.description')}
+                <label htmlFor="agency-description-create" className="label">{t('dashboard:myAgency.fields.description')}</label>
+                <Controller
+                  name="description"
+                  control={control}
+                  defaultValue=""
+                  render={({ field }) => (
+                    <RichTextarea
+                      id="agency-description-create"
+                      rows={3}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder={t('dashboard:myAgency.placeholders.description')}
+                    />
+                  )}
                 />
               </div>
             </div>
@@ -217,31 +229,34 @@ function MyAgency({ embedded = false }) {
             <h2 className="font-semibold mb-4">{t('dashboard:myAgency.edit.generalInfo')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="label">{t('dashboard:myAgency.fields.name')}</label>
+                <label className="label">{t('dashboard:myAgency.fields.name')} <span className="requis" aria-hidden="true" /></label>
                 <input
-                  {...register('name')}
+                  {...register('name', { required: t('dashboard:myAgency.validation.nameRequired') })}
                   defaultValue={agency?.name}
                   className="input"
                 />
+                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
               </div>
 
               <div>
-                <label className="label">{t('dashboard:myAgency.fields.emailShort')}</label>
+                <label className="label">{t('dashboard:myAgency.fields.emailShort')} <span className="requis" aria-hidden="true" /></label>
                 <input
                   type="email"
-                  {...register('email')}
+                  {...register('email', { required: t('dashboard:myAgency.validation.emailRequired') })}
                   defaultValue={agency?.email}
                   className="input"
                 />
+                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
               </div>
 
               <div>
-                <label className="label">{t('dashboard:myAgency.fields.phone')}</label>
+                <label className="label">{t('dashboard:myAgency.fields.phone')} <span className="requis" aria-hidden="true" /></label>
                 <input
-                  {...register('phone')}
+                  {...register('phone', { required: t('dashboard:myAgency.validation.phoneRequired') })}
                   defaultValue={agency?.phone}
                   className="input"
                 />
+                {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>}
               </div>
 
               <div>
@@ -254,30 +269,39 @@ function MyAgency({ embedded = false }) {
               </div>
 
               <div>
-                <label className="label">{t('dashboard:myAgency.fields.city')}</label>
+                <label className="label">{t('dashboard:myAgency.fields.city')} <span className="requis" aria-hidden="true" /></label>
                 <input
-                  {...register('city')}
+                  {...register('city', { required: t('dashboard:myAgency.validation.cityRequired') })}
                   defaultValue={agency?.city}
                   className="input"
                 />
+                {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>}
               </div>
 
               <div className="md:col-span-2">
-                <label className="label">{t('dashboard:myAgency.fields.address')}</label>
+                <label className="label">{t('dashboard:myAgency.fields.address')} <span className="requis" aria-hidden="true" /></label>
                 <input
-                  {...register('address')}
+                  {...register('address', { required: t('dashboard:myAgency.validation.addressRequired') })}
                   defaultValue={agency?.address}
                   className="input"
                 />
+                {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>}
               </div>
 
               <div className="md:col-span-2">
-                <label className="label">{t('dashboard:myAgency.fields.description')}</label>
-                <textarea
-                  {...register('description')}
-                  defaultValue={agency?.description}
-                  className="input"
-                  rows="3"
+                <label htmlFor="agency-description" className="label">{t('dashboard:myAgency.fields.description')}</label>
+                <Controller
+                  name="description"
+                  control={control}
+                  defaultValue={agency?.description || ''}
+                  render={({ field }) => (
+                    <RichTextarea
+                      id="agency-description"
+                      rows={3}
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
                 />
               </div>
             </div>

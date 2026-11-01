@@ -46,7 +46,7 @@ export function LateDetail({ s, onClose, titleRef }) {
   return (
     <DetailFrame title={t('rental.overview.late.title')}
       sub={a.periods ? t('rental.overview.late.detailSub', { count: a.periods }) : t('rental.overview.late.none')}
-      link={{ to: '/backoffice/gestion-locative/baux', label: t('rental.overview.late.viewLeases') }}
+      link={{ to: '/backoffice/gestion-locative/baux?filtre=impayes', label: t('rental.overview.late.viewLeases') }}
       onClose={onClose} titleRef={titleRef}>
       {!a.periods ? <p className="text-sm text-gray-500">{t('rental.overview.late.none')}</p> : (
         <DetailColumns

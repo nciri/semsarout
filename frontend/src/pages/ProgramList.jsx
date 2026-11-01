@@ -9,6 +9,7 @@ import {
 import { DIRHAM_SYMBOL, formatPrice } from '../utils/currency'
 import DirIcon from '../components/common/DirIcon'
 import { useFormat } from '../utils/format'
+import { richTextToPlain } from '../utils/richText'
 
 const programsService = {
   getPrograms: async (params) => {
@@ -85,7 +86,9 @@ function ProgramCard({ program, t, fmtDate }) {
 
         {program.description && (
           <p className="text-sm text-gray-600 mt-3 line-clamp-2">
-            {program.description}
+            {/* 🔴 `line-clamp-2` ne sait pas couper du balisage, et un `<h2>` au milieu
+                d'une carte la déformerait : on y projette le texte. */}
+            {richTextToPlain(program.description)}
           </p>
         )}
 

@@ -202,6 +202,76 @@ html[lang='ar'] {
   background-clip: text;
 }
 
+/* Étoile rouge d'un champ obligatoire.
+   Elle est dessinée par la feuille de style et non écrite dans le libellé : le nom
+   accessible du champ reste « Surface (m²) » au lieu de « Surface (m²) * », l'obligation
+   étant portée par l'attribut `required` de la commande, que le lecteur d'écran annonce. */
+.requis::after {
+  content: "*";
+  margin-inline-start: 2px;
+  color: #ef4444;
+}
+
+/* Mise en page d'un acte, à l'écran.
+   Mêmes valeurs que la feuille d'impression du service contract (`app/pdf.py`), relevées
+   dans les .docx source : couleurs, épaisseurs de filet, retraits, interligne. À l'écran
+   elles sont converties à l'échelle 10 pt = 13,5 px, pour que l'éditeur montre l'acte tel
+   qu'il sortira en PDF.
+   Les marges des blocs issus de tableaux Word (bandeaux, encadré, tableaux) sont nulles :
+   ce sont les paragraphes vides du document qui aèrent, comme dans le .docx. */
+.acte {
+  font-family: Calibri, Carlito, ui-sans-serif, system-ui, sans-serif;
+  font-size: 13.5px;
+  line-height: 1.25;
+  color: #334155;
+}
+.acte p { margin: 0 0 7px; }
+.acte p:empty::before { content: "\00a0"; }
+.acte h1 {
+  font-size: 23px; font-weight: 700; color: #0B1220; text-align: center;
+  margin: 0 0 5px; line-height: 1.2;
+}
+.acte h1 + p { font-size: 11.5px; color: #0F766E; text-align: center; }
+.acte h1 + p + p:empty { border-bottom: 3px solid #C1121F; }
+.acte h2 { font-size: 15px; font-weight: 700; color: #0B1220; margin: 0 0 7px; }
+.acte h3,
+.acte h4 {
+  background-color: #0B1220; color: #fff; font-size: 13.5px; font-weight: 700;
+  border-left: 4px solid #C6923F; padding: 5px 11px; margin: 0;
+}
+.acte blockquote {
+  background-color: #F8F1E6; border-left: 3px solid #C6923F;
+  padding: 8px 11px; margin: 0; text-align: justify;
+}
+.acte blockquote p:last-child { margin-bottom: 0; }
+/* Énumérations : de simples paragraphes en retrait dans le .docx, déjà préfixés d'un
+   tiret — pas de puce à ajouter par-dessus. */
+.acte ul,
+.acte ol { margin: 0 0 7px; padding-left: 19px; list-style: none; }
+.acte li { margin: 0 0 7px; }
+.acte table { width: 100%; margin: 0; border-collapse: collapse; }
+.acte td,
+.acte th {
+  border: 1px solid #E5E7EB; padding: 4px 7px; font-size: 12px; vertical-align: top;
+}
+.acte th { background-color: #0B1220; color: #fff; font-weight: 700; }
+/* Bloc de signatures : le dernier tableau de l'acte dans les dix documents source. */
+.acte > table:last-of-type td {
+  background-color: #FAF9F7; border-top: 2px solid #C6923F;
+  text-align: center; height: 84px; padding: 8px 11px 5px;
+}
+.acte strong, .acte b { font-weight: 700; }
+.acte em, .acte i { font-style: italic; }
+.acte u { text-decoration: underline; }
+/* Un acte arabe se lit de droite à gauche : barres et retraits suivent le sens de lecture. */
+.acte[dir="rtl"] h3,
+.acte[dir="rtl"] h4,
+.acte[dir="rtl"] blockquote { border-left: 0; border-right: 4px solid #C6923F; }
+.acte[dir="rtl"] blockquote { border-right-width: 3px; }
+.acte[dir="rtl"] ul,
+.acte[dir="rtl"] ol { padding-left: 0; padding-right: 19px; }
+.acte[dir="rtl"] { font-family: "Noto Naskh Arabic", "Segoe UI", serif; }
+
 @layer utilities {
   /* Zones sûres (encoche, coins arrondis, barre d'accueil). Le <body> les
      applique déjà pour le flux normal (voir @layer base), mais un élément

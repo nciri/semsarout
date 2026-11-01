@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery } from 'react-query'
 import { useTranslation } from 'react-i18next'
 import {
@@ -27,7 +28,10 @@ export default function BackofficeTransactions() {
   const l = (key, opts) => t(`crm.transactions.list.${key}`, opts)
   const [now] = useState(() => new Date())
   const [period, setPeriod] = useState(DEFAULT_PERIOD)
-  const [filters, setFilters] = useState(EMPTY)
+  // Statut et étape peuvent venir d'un lien du tableau de bord.
+  const [params] = useSearchParams()
+  const [filters, setFilters] = useState(() => ({
+    ...EMPTY, status: params.get('statut') || '', stage: params.get('etape') || '' }))
   const [search, setSearch] = useState('')
   const [openId, setOpenId] = useState(null)
   const since = sinceFor(period, now)

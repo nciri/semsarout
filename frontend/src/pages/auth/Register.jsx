@@ -198,7 +198,7 @@ function Register() {
             {/* Name */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="label">{t('auth:register.firstNameLabel')}</label>
+                <label className="label">{t('auth:register.firstNameLabel')} <span className="requis" aria-hidden="true" /></label>
                 <div className="relative">
                   <FiUser className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
@@ -212,7 +212,7 @@ function Register() {
                 )}
               </div>
               <div>
-                <label className="label">{t('auth:register.lastNameLabel')}</label>
+                <label className="label">{t('auth:register.lastNameLabel')} <span className="requis" aria-hidden="true" /></label>
                 <input
                   {...register('last_name', { required: t('common:validation.lastNameRequired') })}
                   className="input"
@@ -227,7 +227,7 @@ function Register() {
             {/* Email + Phone */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="label">{t('auth:register.emailLabel')}</label>
+                <label className="label">{t('auth:register.emailLabel')} <span className="requis" aria-hidden="true" /></label>
                 <div className="relative">
                   <FiMail className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
@@ -248,21 +248,24 @@ function Register() {
                 )}
               </div>
               <div>
-                <label className="label">{t('auth:register.phoneLabel')}</label>
+                <label className="label">{t('auth:register.phoneLabel')} <span className="requis" aria-hidden="true" /></label>
                 <div className="relative">
                   <FiPhone className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
-                    {...register('phone')}
+                    {...register('phone', { required: t('common:validation.phoneRequired') })}
                     className="input ps-10"
                     placeholder={t('auth:register.phonePlaceholder')}
                   />
                 </div>
+                {errors.phone && (
+                  <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
+                )}
               </div>
             </div>
 
             {/* Password */}
             <div>
-              <label className="label">{t('auth:register.passwordLabel')}</label>
+              <label className="label">{t('auth:register.passwordLabel')} <span className="requis" aria-hidden="true" /></label>
               <div className="relative">
                 <FiLock className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input

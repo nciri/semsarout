@@ -9,6 +9,7 @@ import { PurchaseHistory, StockChip } from './Catalog'
 import ProductArt from './ProductArt'
 import { purchaseIndex, stockSignal } from './model'
 import { useCart, useDh, useShopActions, useSpending } from './useShop'
+import { RichText } from '../../../components/common/RichTextarea'
 
 function ProductDetail() {
   const { t } = useTranslation('backoffice')
@@ -54,7 +55,7 @@ function ProductDetail() {
             {inCart > 0 && ` · ${t('shop.product.inCart', { count: inCart })}`}
           </p>
           <p className="m-0 text-[13px] text-gray-500"><PurchaseHistory history={purchaseIndex(summary?.by_product).get(p.id)} price={p.price} /></p>
-          {p.description && <p className="m-0 whitespace-pre-line leading-relaxed text-gray-700">{p.description}</p>}
+          <RichText html={p.description} className="leading-relaxed text-gray-700" />
           <div className="mt-2 flex flex-wrap items-center gap-3">
             <span className="inline-flex items-center overflow-hidden rounded-lg border border-gray-200">
               <button type="button" aria-label={t('shop.cart.less')} disabled={n <= 1} onClick={() => setQty(n - 1)}

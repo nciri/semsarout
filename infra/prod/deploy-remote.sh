@@ -92,7 +92,24 @@ crm/migrate_property_ro_owner.sql
 rental/migrate_property_ro_price.sql
 crm/migrate_buyer_dossier.sql
 agency/migrate_integrations.sql
+staymanager/migrate_sejours_natifs.sql
+staymanager/migrate_messagerie_sejour.sql
+staymanager/migrate_menage_sejour.sql
+staymanager/migrate_enregistrement_voyageur.sql
+staymanager/migrate_acces_sejour.sql
+billing/migrate_portail_abonnement.sql
+identity/migrate_equipes_metier.sql
+staymanager/migrate_equipes_exploitation.sql
+staymanager/migrate_contrat_sejour.sql
+staymanager/migrate_type_tache_exploitation.sql
 audit/add_tenant.sql
+directory/migrate_payeur_intervention.sql
+rental/migrate_crg_depenses.sql
+rental/migrate_retenue_intervention.sql
+contract/migrate_fusion_elargie.sql
+contract/migrate_modeles_marocains.sql
+contract/migrate_contract_parties.sql
+transactions/migrate_notes_text.sql
 "
 
 # psql en tant que rôle postgres (patron roles/postgres d'Ansible : become_user postgres).
@@ -106,6 +123,27 @@ psql_stdin() {
 # désormais échouer sans arrêter le script (cf. plus bas) : ils ne doivent pas pour
 # autant échouer *silencieusement*.
 FAIL=0
+
+# WeasyPrint (rendu PDF des actes, service contract) s'appuie sur Pango/HarfBuzz, qui ne
+# sont pas des paquets Python : sans eux l'import échoue et la finalisation d'un contrat
+# rend 500. Les polices sont du même ordre — sans Noto Naskh Arabic, un acte arabe sort en
+# carrés vides, et un PDF signé illisible est pire qu'une erreur.
+echo "== 0. paquets système du rendu PDF =="
+# Carlito a les mêmes métriques que Calibri, la police des actes source : sans elle, les
+# coupures de page du PDF ne tombent plus là où le document Word les place.
+PAQUETS_PDF="libpango-1.0-0 libpangoft2-1.0-0 fonts-crosextra-carlito fonts-dejavu-core fonts-noto-core"
+MANQUANTS=""
+for p in $PAQUETS_PDF; do
+  dpkg -s "$p" >/dev/null 2>&1 || MANQUANTS="$MANQUANTS $p"
+done
+if [ -n "$MANQUANTS" ]; then
+  echo "  installation de :$MANQUANTS"
+  DEBIAN_FRONTEND=noninteractive apt-get update -qq
+  # shellcheck disable=SC2086
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq $MANQUANTS
+else
+  echo "  = déjà présents, inchangés"
+fi
 
 echo "== 1. venv : réinstallation éditable (nouvelles dépendances) =="
 for lib in semsar_common semsar_auth semsar_events semsar_storage semsar_search semsar_signing; do

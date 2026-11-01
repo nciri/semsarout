@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_components.html" import lucide with context %}
+{# Message écrit par l'agence (messagerie de séjour) : l'objet et le corps viennent d'elle,
+   la charte vient d'ici. Le corps est saisi en WYSIWYG : il est rendu comme du HTML, réduit
+   à la liste blanche produit par le filtre `richtext`. Les variables du séjour y ont été
+   échappées à la substitution (`app/messages.py`). Le pré-en-tête n'affiche pas de HTML. #}
+{% block subject %}{{ subject }}{% endblock %}
+{% block preheader %}{{ (body | richtext_plain)[:120] }}{% endblock %}
+{% block badge %}{{ lucide("mail") }}{% endblock %}
+{% block hero_title %}{{ subject }}{% endblock %}
+{% block content %}
+<div style="text-align:left; color:{{ brand.ink }};">{{ body | richtext }}</div>
+{% if agency_name %}<p style="margin-top:20px; font-size:13px; color:{{ brand.muted }}; text-align:left;">{{ agency_name }}</p>{% endif %}
+{% endblock %}

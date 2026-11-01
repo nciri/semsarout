@@ -52,6 +52,13 @@ class Transaction(Base):
     expected_closing_date = Column(DateTime)
 
     notes = Column(Text)
+    # Projection texte de `notes`, qui est saisi en WYSIWYG. Elle existe pour **la
+    # recherche** : `?q=` filtre en SQL `ILIKE`, et sur du HTML une recherche sur « p »
+    # remonterait toutes les transactions annotees tandis qu'une recherche sur
+    # « bon de visite » ne trouverait plus « bon de <b>visite</b> ». Une projection a la
+    # volee n'est pas portable en SQL (pas de `regexp_replace` en SQLite), et filtrer en
+    # Python casserait le `count()` et la pagination, qui sont faits en base.
+    notes_text = Column(Text)
     probability = Column(Integer, default=50)
     priority = Column(String(20), default="medium")
 

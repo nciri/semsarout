@@ -65,7 +65,8 @@
     "passwordsMismatch": "كلمتا المرور غير متطابقتين",
     "firstNameRequired": "الاسم الأول مطلوب",
     "lastNameRequired": "اسم العائلة مطلوب",
-    "confirmationRequired": "التأكيد مطلوب"
+    "confirmationRequired": "التأكيد مطلوب",
+    "phoneRequired": "الهاتف مطلوب"
   },
   "errors": {
     "generic": "حدث خطأ ما",
@@ -402,5 +403,21 @@
     "subscription": {
       "description": "اشتراك وكالة"
     }
+  },
+  "confirm": {
+    "title": "تأكيد الإجراء",
+    "confirm": "تأكيد",
+    "cancel": "إلغاء"
+  },
+  "richText": {
+    "toolbar": "التنسيق",
+    "bold": "عريض",
+    "italic": "مائل",
+    "underline": "تحته خط",
+    "bulletList": "قائمة نقطية",
+    "numberedList": "قائمة مرقّمة",
+    "link": "رابط",
+    "linkUrl": "عنوان الرابط",
+    "linkApply": "تطبيق"
   }
 }

@@ -6,6 +6,7 @@ import * as local from '../../services/design3dLocal'
 import * as api from '../../services/design3dApi'
 import useAuthStore from '../../store/authStore'
 import DesignEditor from './DesignEditor'
+import ConfirmProvider from '../../components/common/ConfirmProvider'
 
 // Le serveur est injoignable pendant les tests : le client HTTP échoue comme
 // hors-ligne, ce qui est justement le mode nominal de l'éditeur — rien de ce
@@ -104,11 +105,13 @@ async function pickTool(name) {
 
 function renderEditor() {
   return render(
-    <MemoryRouter initialEntries={[`/dashboard/conception/${PROJECT_ID}`]}>
-      <Routes>
-        <Route path="/dashboard/conception/:projectId" element={<DesignEditor />} />
-      </Routes>
-    </MemoryRouter>,
+    <ConfirmProvider>
+      <MemoryRouter initialEntries={[`/dashboard/conception/${PROJECT_ID}`]}>
+        <Routes>
+          <Route path="/dashboard/conception/:projectId" element={<DesignEditor />} />
+        </Routes>
+      </MemoryRouter>
+    </ConfirmProvider>,
   )
 }
 
@@ -769,15 +772,17 @@ describe('DesignEditor', () => {
 
     // Avant que le débounce n'ait écrit ce trait en IndexedDB (`local.getLevel`
     // reste vide à cet instant) : la confirmation doit quand même être demandée.
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
     openActionsMenu()
     fireEvent.click(screen.getByRole('button', { name: 'Reprendre un plan existant' }))
     fireEvent.click(await screen.findByText(/Autre niveau/i))
 
-    expect(confirmSpy).toHaveBeenCalled()
+    // La demande passe par la fenêtre du produit, pas par la boîte du navigateur.
+    // Le dialogue de reprise porte aussi un « Annuler » : on vise celui de la
+    // fenêtre de confirmation, voisin immédiat de son bouton d'accord.
+    const accord = screen.getByRole('button', { name: 'Confirmer' })
+    fireEvent.click(accord.previousElementSibling)
     // Refusée : le trait tout juste tracé n'a pas été écrasé.
     expect(screen.getByTestId('floorplan-canvas').querySelectorAll('line')).toHaveLength(1)
-    confirmSpy.mockRestore()
   })
 
   it('demande confirmation avant de reprendre un plan quand un brouillon de pièce est en cours (aucun mur committé)', async () => {
@@ -806,12 +811,13 @@ describe('DesignEditor', () => {
     fireEvent.pointerUp(canvas, { pointerId: 1, clientX: 250, clientY: 100 })
     expect(screen.getByTestId('floorplan-canvas').querySelectorAll('line')).toHaveLength(0)
 
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
     openActionsMenu()
     fireEvent.click(screen.getByRole('button', { name: 'Reprendre un plan existant' }))
     fireEvent.click(await screen.findByText(/Autre niveau/i))
 
-    expect(confirmSpy).toHaveBeenCalled()
-    confirmSpy.mockRestore()
+    const accord = screen.getByRole('button', { name: 'Confirmer' })
+    fireEvent.click(accord.previousElementSibling)
+    // Refusé : le brouillon de pièce est encore là, rien n'a été écrasé.
+    expect(screen.getByTestId('floorplan-canvas').querySelectorAll('line')).toHaveLength(0)
   })
 })

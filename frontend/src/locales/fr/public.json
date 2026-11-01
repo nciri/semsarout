@@ -584,7 +584,7 @@
       "title": "Gestion Locative Complète",
       "subtitle": "Location longue durée - Sérénité totale",
       "pricePrefix": "À partir de",
-      "priceNote": "du loyer mensuel (tarif minimum 500 Đh/mois)",
+      "priceNote": "du loyer mensuel (tarif minimum 500 Dh/mois)",
       "description": "Déléguez entièrement la gestion de votre bien locatif. De la recherche du locataire idéal jusqu'à son départ, nous gérons tout pour vous. Plusieurs formules adaptées à vos besoins.",
       "features": [
         "Recherche et sélection rigoureuse des locataires",
@@ -604,15 +604,15 @@
       "options": [
         {
           "name": "Gestion Essentielle",
-          "price": "3% du loyer / min. 300 Đh"
+          "price": "3% du loyer / min. 300 Dh"
         },
         {
           "name": "Gestion Complète",
-          "price": "5% du loyer / min. 500 Đh"
+          "price": "5% du loyer / min. 500 Dh"
         },
         {
           "name": "Gestion Premium",
-          "price": "7% du loyer / min. 700 Đh"
+          "price": "7% du loyer / min. 700 Dh"
         }
       ],
       "phases": [
@@ -810,10 +810,10 @@
     "inFavoritesLabel": "En favori",
     "addToFavoritesButton": "Ajouter aux favoris",
     "shareButton": "Partager",
-    "monthlyIncomeLabel": "Revenu mensuel (Đh)",
+    "monthlyIncomeLabel": "Revenu mensuel (Dh)",
     "guarantorNameLabel": "Nom du garant",
     "guarantorNamePlaceholder": "Nom du garant (facultatif)",
-    "guarantorIncomeLabel": "Revenu du garant (Đh)",
+    "guarantorIncomeLabel": "Revenu du garant (Dh)",
     "optionalPlaceholder": "Facultatif",
     "attachmentsLabel": "Pièces jointes",
     "addFileButton": "Ajouter un fichier",
@@ -1021,6 +1021,51 @@
       "time": "10 minutes suffisent",
       "validation": "Validation par un expert sous 24h",
       "free": "Rien à payer avant validation"
+    }
+  },
+  "stayCheckin": {
+    "title": "Enregistrement de votre séjour",
+    "why": "Votre hôte doit déclarer les occupants et conserver une pièce d'identité du voyageur principal.",
+    "declared": "{{count}} occupant déclaré sur {{expected}}",
+    "declared_other": "{{count}} occupants déclarés sur {{expected}}",
+    "noGuest": "Commencez par vous déclarer, puis ajoutez vos accompagnants.",
+    "lead": "Voyageur principal",
+    "documentLabel": "Pièce d'identité (JPEG, PNG, WebP ou PDF)",
+    "documentReceived": "{{count}} pièce reçue",
+    "documentReceived_other": "{{count}} pièces reçues",
+    "upload": "Envoyer la pièce",
+    "rejected": "Votre hôte n'a pas pu lire cette pièce. Déposez-en une autre.",
+    "addTitle": "Ajouter un occupant",
+    "nameLabel": "Nom complet",
+    "docTypeLabel": "Type de pièce",
+    "docNumberLabel": "Numéro de la pièce",
+    "nationalityLabel": "Nationalité",
+    "birthLabel": "Date de naissance",
+    "documentType": {
+      "cin": "CIN",
+      "passeport": "Passeport",
+      "titre_sejour": "Titre de séjour"
+    },
+    "add": "Ajouter",
+    "submit": "J'ai terminé",
+    "submitHelp": "Votre hôte sera averti et vérifiera les pièces déposées.",
+    "submitted": "Votre dossier a été transmis à votre hôte.",
+    "toasts": {
+      "added": "Occupant ajouté.",
+      "uploaded": "Pièce envoyée.",
+      "submitted": "Dossier transmis."
+    },
+    "invalid": {
+      "title": "Lien indisponible",
+      "description": "Ce lien d'enregistrement n'est plus valable. Demandez-en un nouveau à votre hôte."
+    },
+    "contract": {
+      "title": "Contrat de séjour",
+      "help": "Lisez le contrat remis par l'agence, puis indiquez le nom qui l'accepte. La date et votre adresse IP sont enregistrées avec votre accord.",
+      "nameLabel": "Nom du signataire",
+      "sign": "J'accepte le contrat",
+      "signed": "Contrat signé. Merci.",
+      "done": "Vous avez signé le contrat de séjour."
     }
   }
 }

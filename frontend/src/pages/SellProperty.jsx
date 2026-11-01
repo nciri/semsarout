@@ -13,6 +13,7 @@ import DirIcon from '../components/common/DirIcon'
 import { formatPrice, DIRHAM_SYMBOL } from '../utils/currency'
 import { PROPERTY_TYPES, FEATURES, MOROCCAN_CITIES, DOC_TYPES } from '../constants/property'
 import { CondoFeesField } from '../components/property/CondoFeesField'
+import RichTextarea from '../components/common/RichTextarea'
 
 const STORAGE_KEY = 'sell-wizard-v1'
 
@@ -416,7 +417,7 @@ function SellProperty() {
           {step === 0 && (
             <div className="card p-6 sm:p-8 space-y-6">
               <div>
-                <label className="label">{t('public:sellProperty.step1.propertyTypeLabel')} <span className="text-red-500">*</span></label>
+                <label className="label">{t('public:sellProperty.step1.propertyTypeLabel')} <span className="requis" aria-hidden="true" /></label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {PROPERTY_TYPES.map((pt) => (
                     <button
@@ -437,7 +438,7 @@ function SellProperty() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="label">{t('public:sellProperty.step1.cityLabel')} <span className="text-red-500">*</span></label>
+                  <label className="label">{t('public:sellProperty.step1.cityLabel')} <span className="requis" aria-hidden="true" /></label>
                   <input
                     list="cities"
                     value={form.city}
@@ -471,7 +472,7 @@ function SellProperty() {
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div>
-                  <label className="label">{t('public:sellProperty.step1.surfaceLabel')} <span className="text-red-500">*</span></label>
+                  <label className="label">{t('public:sellProperty.step1.surfaceLabel')} <span className="requis" aria-hidden="true" /></label>
                   <input
                     type="number" min="1"
                     value={form.surface}
@@ -536,12 +537,14 @@ function SellProperty() {
               </div>
 
               <div>
-                <label className="label">{t('public:sellProperty.step1.descriptionLabel')}</label>
-                <textarea
+                <label className="label" htmlFor="sell-description">
+                  {t('public:sellProperty.step1.descriptionLabel')}
+                </label>
+                <RichTextarea
+                  id="sell-description"
                   rows={4}
                   value={form.description}
-                  onChange={(e) => update({ description: e.target.value })}
-                  className="input resize-none"
+                  onChange={(description) => update({ description })}
                   placeholder={t('public:sellProperty.step1.descriptionPlaceholder')}
                 />
               </div>
@@ -613,7 +616,7 @@ function SellProperty() {
               <div className="card p-6 sm:p-8">
                 <h2 className="font-semibold text-lg mb-4">{t('public:sellProperty.step2.priceTitle')}</h2>
                 <div className="max-w-xs">
-                  <label className="label">{t('public:sellProperty.step2.priceLabel', { currency: DIRHAM_SYMBOL })} <span className="text-red-500">*</span></label>
+                  <label className="label">{t('public:sellProperty.step2.priceLabel', { currency: DIRHAM_SYMBOL })} <span className="requis" aria-hidden="true" /></label>
                   <input
                     type="number" min="1"
                     value={form.desired_price}

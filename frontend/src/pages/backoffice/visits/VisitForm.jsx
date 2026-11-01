@@ -6,12 +6,13 @@ import SearchableSelect from '../../../components/common/SearchableSelect'
 import api from '../../../services/api'
 import { IconAction } from '../components/kit'
 import { formPayload, toInputValue } from './model'
+import RichTextarea from '../../../components/common/RichTextarea'
 
 const P = 'crm.pipeline.visits'
 const DURATIONS = [15, 30, 45, 60, 90]
 const ctrl = 'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500'
 const lbl = 'mb-1 block text-sm font-medium text-gray-700'
-const Star = () => <span className="text-red-500"> *</span>
+const Star = () => <span className="requis" aria-hidden="true" />
 
 // Mêmes clés et mêmes formes de réponse que les autres écrans du back-office : cache partagé.
 const useOptions = () => ({
@@ -36,7 +37,9 @@ export default function VisitForm({ visit, onClose, onSubmit, saving }) {
   const first = useRef(null)
   useEffect(() => { first.current?.focus() }, [])
 
-  const nameRequired = !f.client_id
+  // Sans client au fichier, la visite n'a d'autre trace que ce que l'agent saisit ici :
+  // un nom et un numéro pour confirmer le rendez-vous. Avec un client, sa fiche les porte.
+  const sansClient = !f.client_id
   return (
     <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/40 p-4" onClick={onClose}>
       <form
@@ -54,7 +57,7 @@ export default function VisitForm({ visit, onClose, onSubmit, saving }) {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <span className={lbl}>{t('form.property')}</span>
+            <span className={lbl}>{t('form.property')}<Star /></span>
             <SearchableSelect value={f.property_id} onChange={setVal('property_id')} clearable placeholder={t('form.propertyPlaceholder')}
               options={properties.map((p) => ({ value: p.id, label: p.title || p.reference, description: p.city }))} />
           </div>
@@ -64,17 +67,17 @@ export default function VisitForm({ visit, onClose, onSubmit, saving }) {
               options={clients.map((c) => ({ value: c.id, label: `${c.first_name || ''} ${c.last_name || ''}`.trim(), description: c.email || c.phone }))} />
           </div>
           <label className="sm:col-span-2">
-            <span className={lbl}>{t('form.visitorName')}{nameRequired && <Star />}</span>
-            <input ref={first} type="text" required={nameRequired} value={f.visitor_name} onChange={set('visitor_name')} className={ctrl} />
-            {nameRequired && <span className="mt-1 block text-xs text-gray-500">{t('form.visitorHint')}</span>}
+            <span className={lbl}>{t('form.visitorName')}{sansClient && <Star />}</span>
+            <input ref={first} type="text" required={sansClient} value={f.visitor_name} onChange={set('visitor_name')} className={ctrl} />
+            {sansClient && <span className="mt-1 block text-xs text-gray-500">{t('form.visitorHint')}</span>}
           </label>
           <label>
             <span className={lbl}>{t('form.email')}</span>
             <input type="email" value={f.visitor_email} onChange={set('visitor_email')} className={ctrl} />
           </label>
           <label>
-            <span className={lbl}>{t('form.phone')}</span>
-            <input type="tel" dir="ltr" value={f.visitor_phone} onChange={set('visitor_phone')} className={ctrl} />
+            <span className={lbl}>{t('form.phone')}{sansClient && <Star />}</span>
+            <input type="tel" dir="ltr" required={sansClient} value={f.visitor_phone} onChange={set('visitor_phone')} className={ctrl} />
           </label>
           <label>
             <span className={lbl}>{t('form.dateTime')}<Star /></span>
@@ -93,12 +96,12 @@ export default function VisitForm({ visit, onClose, onSubmit, saving }) {
           </div>
           <label className="sm:col-span-2">
             <span className={lbl}>{t('form.notes')}</span>
-            <textarea rows={3} value={f.notes} onChange={set('notes')} placeholder={t('form.notesPlaceholder')} className={ctrl} />
+            <RichTextarea rows={3} value={f.notes} onChange={setVal('notes')} placeholder={t('form.notesPlaceholder')} />
           </label>
         </div>
 
         <div className="flex justify-end">
-          <button type="submit" disabled={saving} className="rounded-lg bg-primary-400 px-5 py-2 text-sm font-semibold text-[#241906] hover:bg-primary-600 disabled:opacity-60">
+          <button type="submit" disabled={saving || !f.property_id} className="rounded-lg bg-primary-400 px-5 py-2 text-sm font-semibold text-[#241906] hover:bg-primary-600 disabled:opacity-60">
             {t('form.save')}
           </button>
         </div>

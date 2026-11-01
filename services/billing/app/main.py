@@ -19,16 +19,18 @@ from datetime import datetime, timedelta
 
 from fastapi import Depends, FastAPI, Header, Query, Request, Response
 from prometheus_fastapi_instrumentator import Instrumentator
-from sqlalchemy import extract
+from sqlalchemy import extract, func
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal, require_superadmin
 from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
 from semsar_events import enqueue
 
-from . import events, seats_client
+from . import events, proration, seats_client
 from .db import get_db, init_db
-from .models import Invoice, PriceChange, ServicePrice, Subscription, SubscriptionPlan
+from .models import (
+    Invoice, PriceChange, ServicePrice, Subscription, SubscriptionEvent, SubscriptionPlan,
+)
 from .plans import plan_features
 from .util import err, iso, json_body
 
@@ -55,6 +57,23 @@ except Exception:  # noqa: BLE001
     pass
 
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
+
+
+def _log_event(db: Session, sub: Subscription, kind: str, **detail) -> None:
+    """Trace un mouvement d'abonnement. Lu par le portail de l'agence et le suivi plateforme."""
+    db.add(SubscriptionEvent(subscription_id=sub.id, agency_id=sub.agency_id, kind=kind,
+                             detail=detail or None))
+
+
+def _pending_dict(db: Session, sub: Subscription) -> dict | None:
+    if not sub.pending_plan_id:
+        return None
+    plan = db.get(SubscriptionPlan, sub.pending_plan_id)
+    return {"plan_id": sub.pending_plan_id, "plan_slug": plan.slug if plan else None,
+            "plan_name": plan.name if plan else None,
+            "billing_cycle": sub.pending_billing_cycle,
+            "amount": float(sub.pending_amount or 0),
+            "effective_at": iso(sub.pending_effective_at)}
 
 
 def _plan_dict(p: SubscriptionPlan) -> dict:
@@ -89,6 +108,8 @@ def _sub_dict(db: Session, s: Subscription) -> dict:
         "grace_until": iso(s.grace_until), "features_until": iso(_features_until(s)),
         "last_payment_failure_at": iso(s.last_payment_failure_at),
         "last_payment_failure_reason": s.last_payment_failure_reason,
+        "cancelled_at": iso(s.cancelled_at),
+        "pending_change": _pending_dict(db, s),
     }
 
 
@@ -254,8 +275,38 @@ def internal_subscriptions_stats(x_internal_token: str = Header(default=""),
         mrr += amt / 12.0 if s.billing_cycle == "yearly" else amt
     unpaid = {st: db.query(Subscription).filter(Subscription.status == st).count()
               for st in ("past_due", "restricted")}
+    # L'ARR est le MRR annualisé : c'est la même mesure, pas une somme des encaissements.
     return {"active_subscriptions": by_plan, "mrr_estimate": round(mrr, 2),
-            "unpaid_subscriptions": unpaid}
+            "arr_estimate": round(mrr * 12, 2), "unpaid_subscriptions": unpaid}
+
+
+@app.get("/internal/subscriptions/incidents", include_in_schema=False)
+def internal_payment_incidents(x_internal_token: str = Header(default=""),
+                               db: Session = Depends(get_db)):
+    """Abonnements en incident de paiement, avec le motif renvoyé par la passerelle.
+
+    Un compteur dit qu'il y a des impayés ; cette liste dit lesquels et pourquoi, seule
+    façon de rappeler l'agence avant que ses droits tombent.
+    """
+    if x_internal_token != settings.internal_token:
+        return err("Forbidden", 403)
+    plans = {p.id: p.slug for p in db.query(SubscriptionPlan).all()}
+    rows = (db.query(Subscription)
+            .filter(Subscription.status.in_(("past_due", "restricted", "incomplete")))
+            .order_by(Subscription.grace_until.is_(None), Subscription.grace_until).all())
+    unpaid_counts = {}
+    for sid, count in db.query(Invoice.subscription_id, func.count(Invoice.id)).filter(
+            Invoice.status == "unpaid", Invoice.invoice_type == "subscription").group_by(
+            Invoice.subscription_id).all():
+        unpaid_counts[sid] = count
+    return {"incidents": [{
+        "subscription_id": s.id, "agency_id": s.agency_id, "plan": plans.get(s.plan_id),
+        "status": s.status, "amount": float(s.amount or 0),
+        "grace_until": iso(s.grace_until), "end_date": iso(s.end_date),
+        "unpaid_invoices": unpaid_counts.get(s.id, 0),
+        "last_failure_at": iso(s.last_payment_failure_at),
+        "last_failure_reason": s.last_payment_failure_reason,
+    } for s in rows]}
 
 
 # Cadence de relance impayé (dunning) : 1re relance J+3 après émission, puis toutes les 7 j,
@@ -329,6 +380,18 @@ def internal_issue_renewals(x_internal_token: str = Header(default=""), db: Sess
                                               Subscription.end_date <= now).all():
         if sub.id in open_subs:
             continue
+        # Le changement programmé s'applique ici : la nouvelle période est facturée au
+        # nouveau plan, pas à l'ancien.
+        if sub.pending_plan_id and sub.pending_effective_at and sub.pending_effective_at <= now:
+            sub.plan_id = sub.pending_plan_id
+            sub.billing_cycle = sub.pending_billing_cycle or sub.billing_cycle
+            sub.amount = sub.pending_amount or sub.amount
+            _log_event(db, sub, "plan_change_applied", plan_id=sub.plan_id,
+                       amount=float(sub.amount))
+            sub.pending_plan_id = None
+            sub.pending_billing_cycle = None
+            sub.pending_amount = None
+            sub.pending_effective_at = None
         plan = db.get(SubscriptionPlan, sub.plan_id)
         invoice = Invoice(reference=_next_invoice_reference(db, now), subscription_id=sub.id,
                           agency_id=sub.agency_id, amount=sub.amount, status="unpaid",
@@ -614,7 +677,7 @@ def _render_invoice_pdf(inv: Invoice) -> bytes:
         Paragraph(f"<b>FACTURE</b> {inv.reference}", head),
         Paragraph(f"Date : {inv.issued_at.strftime('%d/%m/%Y') if inv.issued_at else '-'}", info),
         Paragraph(f"Période : {inv.period_label or '-'}", info),
-        Paragraph(f"Montant : {float(inv.amount):.2f} Đh", info),
+        Paragraph(f"Montant : {float(inv.amount):.2f} Dh", info),
         Paragraph(f"Statut : {inv.status}", info),
     ]
     doc.build(story)
@@ -642,6 +705,7 @@ def cancel_subscription(principal: Principal = Depends(get_principal), db: Sessi
              # Le terme de la période payée EST l'échéance des droits : sans lui,
              # cette projection resterait vraie pour toujours.
              "features_until": iso(_features_until(sub))})
+    _log_event(db, sub, "cancelled", end_date=iso(sub.end_date))
     db.commit()
     return {"message": "Subscription cancelled. Access continues until end of billing period.",
             "subscription": _sub_dict(db, sub)}
@@ -678,17 +742,52 @@ async def change_plan(request: Request, principal: Principal = Depends(get_princ
     now = datetime.utcnow()
     billing_cycle = data.get("billing_cycle", "monthly")
     if billing_cycle == "yearly" and plan.price_yearly:
-        amount, end_date = plan.price_yearly, now + timedelta(days=365)
+        amount, period = plan.price_yearly, timedelta(days=365)
     else:
-        amount, end_date, billing_cycle = plan.price_monthly, now + timedelta(days=30), "monthly"
+        amount, period, billing_cycle = plan.price_monthly, timedelta(days=30), "monthly"
 
     sub = _agency_sub(db, principal.agency_id)
+
+    # Rétrograder est programmé au terme : la période est payée, les droits courent jusqu'au
+    # bout, et le plan change à l'échéance. Voir app/proration.py.
+    if (sub is not None and sub.status in ("active", "past_due") and sub.end_date
+            and sub.end_date > now and not proration.is_upgrade(sub.amount, amount)
+            and (plan.id != sub.plan_id or billing_cycle != sub.billing_cycle)):
+        sub.pending_plan_id = plan.id
+        sub.pending_billing_cycle = billing_cycle
+        sub.pending_amount = amount
+        sub.pending_effective_at = sub.end_date
+        sub.updated_at = now
+        _log_event(db, sub, "downgrade_scheduled", plan=plan.slug, amount=float(amount),
+                   effective_at=iso(sub.end_date))
+        db.commit()
+        return {"message": "Plan change scheduled at the end of the current period.",
+                "subscription": _sub_dict(db, sub)}
+
+    prorated = None
+    if sub is not None and sub.status == "active" and sub.end_date and sub.end_date > now:
+        # Montée de gamme en cours de période : on ne facture que la différence restante et
+        # on NE décale PAS l'échéance, sinon l'agence paierait deux fois le même temps.
+        prorated = proration.upgrade_amount(sub.amount, amount, sub.end_date, now,
+                                            sub.billing_cycle)
+        end_date = sub.end_date
+    else:
+        end_date = now + period
+
+    charged = prorated if prorated is not None else amount
     if sub is not None:
         sub.plan_id = plan.id
         sub.billing_cycle = billing_cycle
         sub.amount = amount
-        sub.status = "incomplete"  # en attente de confirmation du paiement
+        # Rien à payer (différence inférieure au seuil) : la bascule est immédiate.
+        sub.status = "active" if charged == 0 else "incomplete"
         sub.end_date = end_date
+        sub.pending_plan_id = None
+        sub.pending_billing_cycle = None
+        sub.pending_amount = None
+        sub.pending_effective_at = None
+        # Changer de plan vaut reprise : une résiliation en attente n'a plus de sens.
+        sub.cancelled_at = None
         sub.updated_at = now
     else:
         sub = Subscription(agency_id=principal.agency_id, plan_id=plan.id, billing_cycle=billing_cycle,
@@ -696,16 +795,102 @@ async def change_plan(request: Request, principal: Principal = Depends(get_princ
         db.add(sub)
         db.flush()
 
+    _log_event(db, sub, "plan_changed", plan=plan.slug, amount=float(amount),
+               charged=float(charged), prorated=prorated is not None)
+
+    if charged == 0:
+        # Bascule immédiate et gratuite : les droits du nouveau plan doivent suivre.
+        enqueue(db, "subscription", sub.id, events.SUBSCRIPTION_ACTIVATED, {
+            "subscription_id": sub.id, "agency_id": sub.agency_id,
+            "features": plan_features(plan), "features_until": iso(_features_until(sub))})
+        db.commit()
+        return {"message": "Subscription updated successfully",
+                "subscription": _sub_dict(db, sub)}
+
     invoice = Invoice(reference=_next_invoice_reference(db, now),
-                      subscription_id=sub.id, agency_id=principal.agency_id, amount=amount,
-                      status="unpaid", period_label=f"{_MONTHS[now.month - 1]} {now.year}")
+                      subscription_id=sub.id, agency_id=principal.agency_id, amount=charged,
+                      status="unpaid", period_label=f"{_MONTHS[now.month - 1]} {now.year}",
+                      # Une facture de prorata paie la FIN de la période en cours : son
+                      # règlement ne doit pas rallonger l'abonnement de 30 jours.
+                      prorated=prorated is not None)
     db.add(invoice)
     db.flush()
     enqueue(db, "invoice", invoice.id, events.INVOICE_CREATED, {
-        "invoice_id": invoice.id, "agency_id": principal.agency_id, "amount": float(amount),
+        "invoice_id": invoice.id, "agency_id": principal.agency_id, "amount": float(charged),
         "plan": plan.slug, "purpose": "subscription", "reference": invoice.reference,
         "period_label": invoice.period_label, "renewal": False, "grace_until": None,
+        "prorated": prorated is not None,
     })
     db.commit()
     return {"message": "Subscription updated successfully",
             "subscription": _sub_dict(db, sub), "invoice": _invoice_dict(invoice)}
+
+
+@app.post("/subscription/plan-change/cancel")
+def cancel_plan_change(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)):
+    """Annule une rétrogradation programmée tant que l'échéance n'est pas passée."""
+    sub = _agency_sub(db, principal.agency_id) if principal.agency_id else None
+    if sub is None:
+        return err("Aucun abonnement", 404)
+    if not sub.pending_plan_id:
+        return err("Aucun changement programmé", 404)
+    sub.pending_plan_id = None
+    sub.pending_billing_cycle = None
+    sub.pending_amount = None
+    sub.pending_effective_at = None
+    sub.updated_at = datetime.utcnow()
+    _log_event(db, sub, "plan_change_cancelled")
+    db.commit()
+    return {"message": "Plan change cancelled", "subscription": _sub_dict(db, sub)}
+
+
+@app.post("/subscription/reactivate")
+def reactivate_subscription(principal: Principal = Depends(get_principal),
+                            db: Session = Depends(get_db)):
+    """Reprend un abonnement résilié dont la période payée court encore.
+
+    Sans cette porte, une agence qui se rétracte devait repasser par un changement de plan,
+    donc par une nouvelle facture, alors que la période est déjà payée.
+    """
+    sub = _agency_sub(db, principal.agency_id) if principal.agency_id else None
+    if sub is None:
+        return err("Aucun abonnement", 404)
+    # Passé le terme, la lecture a déjà requalifié l'abonnement en `expired` (cf.
+    # `_reconcile_expired`) : il n'y a plus de période payée à reprendre.
+    if sub.status == "expired" or (sub.cancelled_at and sub.end_date
+                                   and sub.end_date <= datetime.utcnow()):
+        return err("La période payée est écoulée : souscrivez un plan.", 409)
+    if sub.status != "cancelled" or sub.cancelled_at is None:
+        return err("Cet abonnement n'est pas résilié", 400)
+    unpaid = (db.query(Invoice)
+              .filter(Invoice.subscription_id == sub.id, Invoice.status == "unpaid",
+                      Invoice.invoice_type == "subscription").first())
+    if unpaid is not None:
+        return err("Réglez la facture en attente avant de reprendre l'abonnement.", 409)
+    now = datetime.utcnow()
+    if not sub.end_date or sub.end_date <= now:
+        return err("La période payée est écoulée : souscrivez un plan.", 409)
+    sub.cancelled_at = None
+    sub.status = "active"
+    sub.updated_at = now
+    plan = db.get(SubscriptionPlan, sub.plan_id)
+    _log_event(db, sub, "reactivated")
+    enqueue(db, "subscription", sub.id, events.SUBSCRIPTION_ACTIVATED, {
+        "subscription_id": sub.id, "agency_id": sub.agency_id,
+        "features": plan_features(plan) if plan else [],
+        "features_until": iso(_features_until(sub))})
+    db.commit()
+    return {"message": "Subscription reactivated", "subscription": _sub_dict(db, sub)}
+
+
+@app.get("/subscription/events")
+def subscription_events(principal: Principal = Depends(get_principal),
+                        db: Session = Depends(get_db)):
+    """Mouvements de l'abonnement de l'agence : ce qui a changé, et quand."""
+    if not principal.agency_id:
+        return {"events": []}
+    rows = (db.query(SubscriptionEvent)
+            .filter(SubscriptionEvent.agency_id == principal.agency_id)
+            .order_by(SubscriptionEvent.id.desc()).limit(50).all())
+    return {"events": [{"id": e.id, "kind": e.kind, "detail": e.detail or {},
+                        "created_at": iso(e.created_at)} for e in rows]}

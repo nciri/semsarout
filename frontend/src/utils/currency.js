@@ -3,9 +3,15 @@
  */
 
 /**
- * The Dirham symbol - single source of truth for the whole site
+ * Le symbole du dirham — source unique pour tout le site.
+ *
+ * Orthographe `Dh`, celle que rend le formateur i18n (`dashboard.units.dirham`) sur ses
+ * 26 appels. Le `Đh` qui vivait ici donnait deux orthographes du dirham sur le même produit,
+ * et chaque littéral qui le recopiait contournait en plus la locale arabe. Les surfaces
+ * traduites passent par `t('dashboard.units.dirham')` ; cette constante sert les surfaces
+ * qui n'ont pas de contexte i18n (annuaire public, écrans d'administration).
  */
-export const DIRHAM_SYMBOL = 'Đh'
+export const DIRHAM_SYMBOL = 'Dh'
 
 /**
  * Format a number as currency (without symbol)
@@ -20,7 +26,11 @@ export function formatNumber(amount, showDecimals = false) {
 
   if (isNaN(num)) return '-'
 
-  return num.toLocaleString('fr-MA', {
+  // `fr-MA` groupe les milliers avec un POINT (1.500.000), `fr-FR` avec l'espace fine
+  // insécable (1 500 000). Les deux cohabitaient : ce formateur et ses 70 appels rendaient des
+  // points, `priceLabel` juste en dessous rendait des espaces. Une seule convention, celle que
+  // le reste du produit affiche déjà.
+  return num.toLocaleString('fr-FR', {
     minimumFractionDigits: showDecimals ? 2 : 0,
     maximumFractionDigits: showDecimals ? 2 : 0
   })

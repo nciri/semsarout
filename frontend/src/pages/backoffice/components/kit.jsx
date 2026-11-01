@@ -83,7 +83,10 @@ export function Alert({ tone = 'warn', icon: Icon, children }) {
   return (
     <div className={`flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-[13px] ${ALERT_TONES[tone]}`}>
       {Icon && <Icon className="w-4 h-4 mt-0.5 flex-none" aria-hidden="true" />}
-      <span>{children}</span>
+      {/* `div` et non `span` : plusieurs appelants y posent une `<ul>` ou un `<p>`, et un
+          élément de bloc dans un `<span>` est une imbrication invalide — le navigateur
+          referme le `span`, dans le seul élément qu'on a demandé de toujours voir. */}
+      <div className="min-w-0">{children}</div>
     </div>
   )
 }
@@ -93,16 +96,25 @@ export function Rich({ i18nKey, values }) {
   return <Trans ns="backoffice" i18nKey={i18nKey} values={values} components={{ strong: <strong className="font-semibold" /> }} />
 }
 
-export function Kv({ label, value, unit, sub }) {
-  return (
-    <div className="grid gap-0.5">
+// `to` fait du chiffre un lien vers la liste qui le justifie : un indicateur qu'on ne peut
+// pas ouvrir oblige à retrouver à la main les lignes qu'il compte.
+export function Kv({ label, value, unit, sub, to }) {
+  const body = (
+    <>
       <span className="text-xs text-gray-500">{label}</span>
       <span className="font-display text-xl font-extrabold tabular-nums">
         {value}{unit && <small className="ms-1 text-[12.5px] font-bold text-gray-600">{unit}</small>}
       </span>
       {sub && <span className="text-xs text-gray-500">{sub}</span>}
-    </div>
+    </>
   )
+  return to
+    ? (
+      <Link to={to} className="grid gap-0.5 rounded-lg transition-colors hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
+        {body}
+      </Link>
+    )
+    : <div className="grid gap-0.5">{body}</div>
 }
 
 /** Chiffre principal d'un widget, suivi de sa phrase de contexte. */
@@ -117,7 +129,9 @@ export function Figure({ value, unit, children }) {
   )
 }
 
-export function Widget({ id, title, icon: Icon, open, onToggle, className = '', children, cardRef }) {
+// `to` remplace le dépliage par un lien : un widget dont le détail vit sur une page dédiée
+// ne doit pas en rejouer une copie ici, sinon les mêmes chiffres se lisent à deux endroits.
+export function Widget({ id, title, icon: Icon, open, onToggle, to, className = '', children, cardRef }) {
   const { t } = useTranslation('backoffice')
   return (
     <section
@@ -131,16 +145,20 @@ export function Widget({ id, title, icon: Icon, open, onToggle, className = '', 
         <h2 id={`w-${id}`} className="flex items-center gap-2 font-display text-[14.5px] font-bold">
           <Icon className="w-[17px] h-[17px] text-gray-400" aria-hidden="true" />{title}
         </h2>
-        <IconAction
-          icon={FiChevronDown}
-          label={open ? t('dashboard.collapse') : t('dashboard.expand')}
-          onClick={onToggle}
-          tone="gold"
-          tipAlign="end"
-          aria-expanded={open}
-          aria-controls="dashboard-detail"
-          className={`-m-2 [&>svg]:transition-transform [&>svg]:duration-200 motion-reduce:[&>svg]:transition-none ${open ? '[&>svg]:rotate-180' : ''}`}
-        />
+        {to ? (
+          <IconAction icon={FiArrowUpRight} label={t('dashboard.openPage')} to={to} tone="gold" tipAlign="end" className="-m-2" />
+        ) : (
+          <IconAction
+            icon={FiChevronDown}
+            label={open ? t('dashboard.collapse') : t('dashboard.expand')}
+            onClick={onToggle}
+            tone="gold"
+            tipAlign="end"
+            aria-expanded={open}
+            aria-controls="dashboard-detail"
+            className={`-m-2 [&>svg]:transition-transform [&>svg]:duration-200 motion-reduce:[&>svg]:transition-none ${open ? '[&>svg]:rotate-180' : ''}`}
+          />
+        )}
       </div>
       {children}
     </section>

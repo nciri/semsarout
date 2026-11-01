@@ -13,6 +13,7 @@ import {
   hotProperties, matches, STAGES, visitsWithoutOffer,
 } from './clients/model'
 import { useFormat } from '../../utils/format'
+import { useConfirm } from '../../components/common/confirm'
 
 const get = async (url) => (await api.get(url)).data
 
@@ -99,6 +100,7 @@ function ClientDetailView({ d, others, now, onClose, onDelete, titleRef }) {
 
 export default function BackofficeClients() {
   const { t } = useTranslation('backoffice')
+  const ask = useConfirm()
   const { fmtDate } = useFormat()
   const qc = useQueryClient()
   const { type: typeLabel } = useClientLabels()
@@ -130,9 +132,10 @@ export default function BackofficeClients() {
   const deleteMutation = useMutation((id) => api.delete(`/backoffice/clients/${id}`), {
     onSuccess: () => { qc.invalidateQueries('backoffice-clients-all'); qc.invalidateQueries('backoffice-clients-summary') },
   })
-  const handleDelete = (client) => {
-    if (window.confirm(t(`${P}.confirmDelete`, { name: `${client.first_name || ''} ${client.last_name || ''}`.trim() }))) deleteMutation.mutate(client.id)
-  }
+  const handleDelete = (client) => ask({
+    message: t(`${P}.confirmDelete`, { name: `${client.first_name || ''} ${client.last_name || ''}`.trim() }),
+    onConfirm: () => deleteMutation.mutate(client.id),
+  })
 
   /* ---- Divulgation progressive : un seul détail ouvert, carte de synthèse ou client. ---- */
   const [openKey, setOpenKey] = useState(readOpen)

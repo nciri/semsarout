@@ -14,10 +14,13 @@ scrape_configs:
 
   # BFF / gateway (métriques RED via /metrics)
   # host.docker.internal permet d'atteindre un process natif sur l'hôte.
+  # Port 8099 : celui du BFF en dev (scripts/dev-mesh-up.sh) comme en prod
+  # (infra/prod/deploy-remote.sh). Le 8080 qui était écrit ici vient d'un doc de
+  # démarrage périmé, donc cette cible n'a jamais rien scrapé.
   - job_name: gateway
     metrics_path: /metrics
     static_configs:
-      - targets: ["host.docker.internal:8080"]
+      - targets: ["host.docker.internal:8099"]
 
   # Gabarit pour chaque service FastAPI (à dupliquer lors des extractions)
   # - job_name: identity

@@ -11,6 +11,8 @@ import { DIRHAM_SYMBOL } from '../../utils/currency'
 import api from '../../services/api'
 import useAuthStore from '../../store/authStore'
 import { CondoFeesField } from '../../components/property/CondoFeesField'
+import RichTextarea from '../../components/common/RichTextarea'
+import { isRichTextEmpty } from '../../utils/richText'
 import { IconAction } from './components/kit'
 
 const backofficeService = {
@@ -167,6 +169,12 @@ export default function BackofficePropertyForm() {
     if (!formData.price) newErrors.price = t('backoffice:crm.properties.form.validation.priceRequired')
     if (!formData.city) newErrors.city = t('backoffice:crm.properties.form.validation.cityRequired')
     if (!formData.surface) newErrors.surface = t('backoffice:crm.properties.form.validation.surfaceRequired')
+    // L'adresse ressort dans les actes (`{{property_address}}`) : un bien sans elle produit
+    // un compromis à trou. La description est ce que lit l'acheteur sur l'annonce.
+    if (!formData.address) newErrors.address = t('backoffice:crm.properties.form.validation.addressRequired')
+    if (isRichTextEmpty(formData.description)) {
+      newErrors.description = t('backoffice:crm.properties.form.validation.descriptionRequired')
+    }
     if (images.length === 0) newErrors.images = t('backoffice:crm.properties.form.validation.imagesRequired')
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -247,7 +255,7 @@ export default function BackofficePropertyForm() {
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('backoffice:crm.properties.form.fields.title')} <span className="text-red-500">*</span>
+                  {t('backoffice:crm.properties.form.fields.title')} <span className="requis" aria-hidden="true" />
                 </label>
                 <input
                   type="text"
@@ -294,16 +302,17 @@ export default function BackofficePropertyForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('backoffice:crm.properties.form.fields.description')}
+              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="property-description">
+                {t('backoffice:crm.properties.form.fields.description')} <span className="requis" aria-hidden="true" />
               </label>
-              <textarea
+              <RichTextarea
+                id="property-description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(description) => setFormData({ ...formData, description })}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 placeholder={t('backoffice:crm.properties.form.fields.descriptionPlaceholder')}
               />
+              {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -365,7 +374,7 @@ export default function BackofficePropertyForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('backoffice:crm.properties.form.fields.price', { currency: DIRHAM_SYMBOL })} <span className="text-red-500">*</span>
+                {t('backoffice:crm.properties.form.fields.price', { currency: DIRHAM_SYMBOL })} <span className="requis" aria-hidden="true" />
               </label>
               <input
                 type="number"
@@ -399,7 +408,7 @@ export default function BackofficePropertyForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('backoffice:crm.properties.form.fields.surface')} <span className="text-red-500">*</span>
+                {t('backoffice:crm.properties.form.fields.surface')} <span className="requis" aria-hidden="true" />
               </label>
               <input
                 type="number"
@@ -518,17 +527,22 @@ export default function BackofficePropertyForm() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:crm.properties.form.fields.address')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t('backoffice:crm.properties.form.fields.address')} <span className="requis" aria-hidden="true" />
+              </label>
               <input
                 type="text"
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                  errors.address ? 'border-red-500' : 'border-gray-200'
+                }`}
               />
+              {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('backoffice:crm.properties.form.fields.city')} <span className="text-red-500">*</span>
+                {t('backoffice:crm.properties.form.fields.city')} <span className="requis" aria-hidden="true" />
               </label>
               <select
                 value={formData.city}
@@ -580,7 +594,7 @@ export default function BackofficePropertyForm() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
             <FiImage className="w-5 h-5 text-gray-400" />
-            {t('backoffice:crm.properties.form.sections.photos')} <span className="text-red-500">*</span>
+            {t('backoffice:crm.properties.form.sections.photos')} <span className="requis" aria-hidden="true" />
           </h2>
           <p className="text-xs text-gray-400 mb-4">{t('backoffice:crm.properties.form.fields.photosHint')}</p>
           {errors.images && <p className="text-red-500 text-xs mb-4">{errors.images}</p>}

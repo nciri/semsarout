@@ -18,15 +18,54 @@
     "kpi": {
       "users": "Utilisateurs",
       "agencies": "Agences",
-      "mrrEstimate": "MRR estimé (Đh)",
+      "mrrEstimate": "MRR estimé (Dh)",
       "signups30d": "Inscriptions 30j",
       "suspended": "Comptes suspendus",
       "pendingPurge": "En attente de purge",
       "pastDue": "Impayés en grâce",
-      "restricted": "Accès réduits"
+      "restricted": "Accès réduits",
+      "arrEstimate": "ARR estimé"
     },
     "activeSubscriptions": "Abonnements actifs",
-    "none": "Aucun."
+    "none": "Aucun.",
+    "incidents": {
+      "title": "Incidents de paiement",
+      "none": "Aucun incident de paiement.",
+      "columns": {
+        "agency": "Agence",
+        "plan": "Plan",
+        "status": "Statut",
+        "amount": "Montant",
+        "grace": "Fin de grâce",
+        "reason": "Motif"
+      },
+      "status": {
+        "past_due": "Impayé",
+        "restricted": "Accès réduit",
+        "incomplete": "Paiement en attente"
+      }
+    },
+    "scheduler": {
+      "title": "Tâches planifiées",
+      "run": "Lancer maintenant",
+      "help": "Rejoue les rappels, relances et messages de séjour dus. Chaque tâche est idempotente : rien n'est envoyé deux fois.",
+      "done": "Tâches planifiées exécutées."
+    },
+    "journal": {
+      "title": "Derniers envois ({{failed}} en échec)",
+      "none": "Aucun envoi journalisé.",
+      "columns": {
+        "date": "Date",
+        "channel": "Canal",
+        "recipient": "Destinataire",
+        "template": "Gabarit",
+        "status": "Statut"
+      },
+      "status": {
+        "sent": "Envoyé",
+        "failed": "Échec"
+      }
+    }
   },
   "accounts": {
     "title": "Comptes",
@@ -124,7 +163,7 @@
     "addTitle": "Ajouter un produit",
     "fields": {
       "name": "Nom *",
-      "price": "Prix (Đh)",
+      "price": "Prix (Dh)",
       "stock": "Stock",
       "imageUrl": "URL image",
       "description": "Description"

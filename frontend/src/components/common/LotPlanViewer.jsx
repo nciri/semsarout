@@ -6,6 +6,7 @@ import { lotPlanService, LOT_STATUS } from '../../services/lotPlanService'
 import { formatPrice } from '../../utils/currency'
 import { getPublishedByTarget } from '../../services/design3dPublic'
 import DesignViewer from '../design/DesignViewer'
+import RichTextarea from './RichTextarea'
 import useAuthStore from '../../store/authStore'
 
 const svgPoints = (zone) => (zone || []).map(p => `${p.x * 1000},${p.y * 1000}`).join(' ')
@@ -250,8 +251,9 @@ export default function LotPlanViewer({ programId }) {
               <input className="input" placeholder={t('common:lotPlan.namePlaceholder')} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
               <input className="input" placeholder={t('common:lotPlan.phonePlaceholder')} value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} required />
               <input className="input" type="email" placeholder={t('common:lotPlan.emailPlaceholder')} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-              <textarea className="input" rows={3} placeholder={t('common:lotPlan.messagePlaceholder')}
-                value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} />
+              <RichTextarea rows={3} placeholder={t('common:lotPlan.messagePlaceholder')}
+                aria-label={t('common:lotPlan.messagePlaceholder')}
+                value={form.message} onChange={html => setForm({ ...form, message: html })} />
             </div>
             <button type="submit" disabled={sending} className="btn-primary w-full justify-center mt-4">
               {sending ? t('common:lotPlan.sendingButton') : t('common:lotPlan.sendButton')}

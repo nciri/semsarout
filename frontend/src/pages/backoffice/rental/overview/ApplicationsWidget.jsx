@@ -1,4 +1,5 @@
 import { useMutation } from 'react-query'
+import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { FiCheckCircle, FiClock, FiExternalLink, FiHome, FiStar } from 'react-icons/fi'
@@ -34,7 +35,12 @@ export function ApplicationsCompact({ s }) {
       <ul className="grid">
         {pending.slice(0, 4).map((a) => (
           <li key={a.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2.5 border-t border-gray-100 py-2 first:border-t-0 first:pt-0">
-            <b className="truncate font-semibold">{a.applicant_name || `#${a.id}`}</b>
+            {/* Une candidature sans réponse se répond depuis sa fiche : le nom y mène directement,
+                sinon le tableau de bord ne sert qu'à constater l'attente. */}
+            <Link to={`/backoffice/gestion-locative/candidatures/${a.id}`}
+              className="truncate font-semibold text-gray-900 hover:text-primary-700 hover:underline">
+              {a.applicant_name || `#${a.id}`}
+            </Link>
             <span className="row-span-2 self-center"><AgeChip days={a.age_days || 0} lo={APP_LO} hi={APP_HI} /></span>
             <span className="truncate text-[12.5px] text-gray-500">
               {a.property_title || t('rental.application.propertyFallback', { id: a.property_id })} · {t(`rental.application.status.${a.status}`).toLowerCase()}
@@ -42,6 +48,12 @@ export function ApplicationsCompact({ s }) {
           </li>
         ))}
       </ul>
+      {pending.length > 4 && (
+        <Link to="/backoffice/gestion-locative/candidatures?statut=pending"
+          className="text-[12.5px] font-medium text-primary-700 hover:underline">
+          {t('rental.overview.apps.viewAll')}
+        </Link>
+      )}
       <VacantAlert vacant={s.vacant} />
     </>
   )
@@ -63,7 +75,7 @@ export function ApplicationsDetail({ s, onClose, titleRef }) {
   return (
     <DetailFrame title={t('backoffice:rental.overview.apps.detailTitle')}
       sub={t('backoffice:rental.overview.apps.detailSub', { count: pending.length, total })}
-      link={{ to: '/backoffice/gestion-locative/candidatures', label: t('backoffice:rental.overview.apps.viewAll') }}
+      link={{ to: '/backoffice/gestion-locative/candidatures?statut=pending', label: t('backoffice:rental.overview.apps.viewAll') }}
       onClose={onClose} titleRef={titleRef}>
       <DetailColumns
         main={!pending.length ? <p className="text-sm text-gray-500">{t('backoffice:rental.overview.apps.none')}</p> : (

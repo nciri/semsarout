@@ -11,7 +11,7 @@ vi.mock('../../services/api', () => ({ default: { get: vi.fn(), post: vi.fn(), p
 const past = {
   id: 7, scheduled_at: '2026-07-30T09:30:00', status: 'confirmed', contact_name: 'Karim Alaoui',
   property_title: 'Appartement Maârif', property_id: 3, client_id: 11, agent_name: 'Sara Idrissi',
-  contact_phone: '0612345678', report: 'Visite rapide, cuisine à refaire', client_feedback: 'interested',
+  contact_phone: '0612345678', report: '<p>Visite rapide, <strong>cuisine à refaire</strong></p>', client_feedback: 'interested',
   duration_minutes: 30, confirmed_at: '2026-07-29T10:00:00',
 }
 const SUMMARY = {
@@ -56,12 +56,14 @@ describe('Visites & RDV', () => {
     renderAt()
     fireEvent.click(await screen.findByRole('button', { name: 'Voir la fiche' }))
     const fiche = document.getElementById('visit-fiche-7')
-    expect(within(fiche).getByText('Visite rapide, cuisine à refaire')).toBeInTheDocument()
+    // Le compte rendu est en WYSIWYG : la fiche montre la mise en forme, jamais les balises.
+    expect(within(fiche).getByText('cuisine à refaire').tagName).toBe('STRONG')
+    expect(fiche.textContent).not.toContain('<strong>')
     expect(within(fiche).getByText('Intéressé')).toBeInTheDocument()
     expect(within(fiche).getByRole('link', { name: 'Ouvrir la fiche client' })).toHaveAttribute('href', '/backoffice/clients/11')
     fireEvent.click(within(fiche).getByRole('button', { name: 'Marquer honorée et rédiger le compte rendu' }))
     fireEvent.click(within(fiche).getByRole('button', { name: 'Enregistrer' }))
-    await waitFor(() => expect(api.put).toHaveBeenCalledWith('/backoffice/visits/7', expect.objectContaining({ status: 'completed', report: 'Visite rapide, cuisine à refaire' })))
+    await waitFor(() => expect(api.put).toHaveBeenCalledWith('/backoffice/visits/7', expect.objectContaining({ status: 'completed', report: '<p>Visite rapide, <strong>cuisine à refaire</strong></p>' })))
   })
 
   it('ouvre le formulaire de création sur /visites/nouvelle', async () => {
@@ -84,4 +86,21 @@ describe('Visites & RDV', () => {
     expect(screen.getByRole('link', { name: 'Définir mes disponibilités' }))
       .toHaveAttribute('href', '/backoffice/visites/disponibilites')
   })
+})
+
+// Le compte rendu de visite est saisi en WYSIWYG : la mise en forme doit survivre à
+// l'aller-retour vers le service, et un collage sale ne doit pas repartir tel quel.
+it('conserve la mise en forme du compte rendu et nettoie un collage sale', async () => {
+  renderAt()
+  fireEvent.click(await screen.findByRole('button', { name: 'Voir la fiche' }))
+  const fiche = document.getElementById('visit-fiche-7')
+  fireEvent.click(within(fiche).getByRole('button', { name: 'Marquer honorée et rédiger le compte rendu' }))
+  const champ = within(fiche).getByRole('textbox', { name: 'Compte rendu' })
+  expect(champ.querySelector('strong')).not.toBeNull()
+  champ.innerHTML = '<p class="MsoNormal">Portail <em>bloqué</em></p><script>alert(1)</script>'
+  fireEvent.input(champ)
+  fireEvent.click(within(fiche).getByRole('button', { name: 'Enregistrer' }))
+  await waitFor(() => expect(api.put).toHaveBeenCalledWith('/backoffice/visits/7', expect.objectContaining({
+    status: 'completed', report: '<p>Portail <em>bloqué</em></p>',
+  })))
 })

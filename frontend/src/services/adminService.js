@@ -2,6 +2,9 @@ import api from './api'
 
 export const adminService = {
   getOverview: async () => (await api.get('/admin/overview')).data,
+  // Suivi des envois : journal et exécution manuelle des tâches planifiées (notification).
+  getNotifications: async (limit = 100) => (await api.get('/admin/notifications', { params: { limit } })).data,
+  runScheduler: async () => (await api.post('/admin/scheduler/run')).data,
   getPricing: async () => (await api.get('/admin/pricing')).data,
   getPriceChanges: async () => (await api.get('/admin/price-changes')).data,
   setServicePrice: async (code, amount) => (await api.put(`/admin/service-prices/${code}`, { amount })).data,

@@ -13,7 +13,13 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal, require_superadmin
-from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
+from semsar_common import (
+    get_settings,
+    install_legacy_error_handlers,
+    sanitize_rich_field,
+    setup_logging,
+    setup_tracing,
+)
 from semsar_events import enqueue
 
 from . import events
@@ -25,6 +31,14 @@ settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
 
 _FIELDS = ["name", "description", "price", "stock", "image_url", "is_active"]
+# Champ saisi en WYSIWYG : il est affiche sur la fiche du produit dans la boutique des
+# agences. Les autres entrees de la liste restent du texte brut — les assainir echapperait
+# les « < » et « & » d'un nom de produit et ferait apparaitre des entites a l'ecran.
+_RICH = ("description",)
+
+
+def _rich(field: str, value):
+    return sanitize_rich_field(value) if field in _RICH else value
 
 
 @asynccontextmanager
@@ -116,7 +130,7 @@ async def admin_create_product(request: Request, principal: Principal = Depends(
     p = Product(
         category=data["category"], group=group_of(data["category"]),
         created_by=int(principal.sub) if principal.sub.isdigit() else None,
-        **{k: data[k] for k in _FIELDS if k in data},
+        **{k: _rich(k, data[k]) for k in _FIELDS if k in data},
     )
     db.add(p)
     db.flush()
@@ -138,7 +152,7 @@ async def admin_update_product(pid: int, request: Request, _p: Principal = Depen
         p.group = group_of(data["category"])
     for k in _FIELDS:
         if k in data:
-            setattr(p, k, data[k])
+            setattr(p, k, _rich(k, data[k]))
     enqueue(db, "product", p.id, events.PRODUCT_UPDATED, p.to_dict())
     db.commit()
     return {"product": p.to_dict()}

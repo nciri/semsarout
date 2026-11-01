@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { DIRHAM_SYMBOL } from '../../../utils/currency'
 import {
   FiArrowLeft,
   FiCalendar,
@@ -18,6 +19,7 @@ import {
 import useAuthStore from '../../../store/authStore'
 import DirIcon from '../../../components/common/DirIcon'
 import { useFormat } from '../../../utils/format'
+import { RichText } from '../../../components/common/RichTextarea'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
 
@@ -269,7 +271,7 @@ export default function StayManagerReservations() {
                     <div className="text-end">
                       {reservation.total_price && (
                         <p className="font-semibold text-gray-900">
-                          {fmtNumber(parseFloat(reservation.total_price))} {reservation.currency || 'Đh'}
+                          {fmtNumber(parseFloat(reservation.total_price))} {reservation.currency || DIRHAM_SYMBOL}
                         </p>
                       )}
                       {reservation.guest?.count && (
@@ -389,7 +391,7 @@ export default function StayManagerReservations() {
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-3">{t('dashboard:stayManager.reservations.detail.price')}</h4>
                   <p className="text-2xl font-bold text-gray-900">
-                    {fmtNumber(parseFloat(selectedReservation.total_price))} {selectedReservation.currency || 'Đh'}
+                    {fmtNumber(parseFloat(selectedReservation.total_price))} {selectedReservation.currency || DIRHAM_SYMBOL}
                   </p>
                 </div>
               )}
@@ -430,12 +432,8 @@ export default function StayManagerReservations() {
               {(selectedReservation.guest_notes || selectedReservation.special_requests) && (
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-3">{t('dashboard:stayManager.reservations.detail.notes')}</h4>
-                  {selectedReservation.guest_notes && (
-                    <p className="text-sm text-gray-600 mb-2">{selectedReservation.guest_notes}</p>
-                  )}
-                  {selectedReservation.special_requests && (
-                    <p className="text-sm text-gray-600 italic">{selectedReservation.special_requests}</p>
-                  )}
+                  <RichText html={selectedReservation.guest_notes} className="text-sm text-gray-600 mb-2" />
+                  <RichText html={selectedReservation.special_requests} className="text-sm text-gray-600 italic" />
                 </div>
               )}
 

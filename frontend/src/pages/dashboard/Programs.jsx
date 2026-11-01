@@ -12,6 +12,7 @@ import { formatPrice } from '../../utils/currency'
 import { useFormat } from '../../utils/format'
 import MesBiensTabs from '../../components/dashboard/MesBiensTabs'
 import api from '../../services/api'
+import { useConfirm } from '../../components/common/confirm'
 
 const programsService = {
   getMyPrograms: async (params) => {
@@ -319,6 +320,7 @@ function UpgradePrompt() {
 
 export default function DashboardPrograms() {
   const { t } = useTranslation(['dashboard', 'common'])
+  const ask = useConfirm()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [viewMode, setViewMode] = useState('grid')
@@ -352,11 +354,10 @@ export default function DashboardPrograms() {
     }
   })
 
-  const handleDelete = (id) => {
-    if (window.confirm(t('dashboard:programs.archiveConfirm'))) {
-      deleteMutation.mutate(id)
-    }
-  }
+  const handleDelete = (id) => ask({
+    message: t('dashboard:programs.archiveConfirm'),
+    onConfirm: () => deleteMutation.mutate(id),
+  })
 
   const handlePublish = (id) => {
     publishMutation.mutate(id)

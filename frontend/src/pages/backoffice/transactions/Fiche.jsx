@@ -5,6 +5,7 @@ import { useFormat } from '../../../utils/format'
 import { Alert, Chip, SegBar } from '../components/kit'
 import { TONE_COLORS, useMoney } from '../components/kitTokens'
 import { milestones, probabilityTone } from './model'
+import { richTextToPlain } from '../../../utils/richText'
 
 function Block({ title, children }) {
   return (
@@ -110,7 +111,11 @@ export default function Fiche({ tx, overdue }) {
       {tx.notes && (
         <p className="flex items-start gap-2 text-[13px] text-gray-600">
           <FiFileText className="mt-0.5 h-4 w-4 flex-none text-gray-400" aria-hidden="true" />
-          <span className="sr-only">{f('notes')}</span>{tx.notes}
+          {/* 🔴 Rendu **en ligne** à côté d'une icône : un `<h2>` ou une liste y casserait
+              la mise en page. On y projette donc le texte des notes WYSIWYG, dont les sauts
+              de ligne sont rendus par `whitespace-pre-line`. */}
+          <span className="sr-only">{f('notes')}</span>
+          <span className="whitespace-pre-line">{richTextToPlain(tx.notes)}</span>
         </p>
       )}
     </div>

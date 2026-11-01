@@ -28,7 +28,7 @@ function LegalCaseDetail() {
   if (isError || !data?.case) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center text-gray-500">
-        {t('backoffice:legal.caseDetail.notFound.text')} <Link to="/backoffice/notaires/dossiers" className="text-primary-600 hover:underline">{t('backoffice:legal.caseDetail.notFound.link')}</Link>
+        {t('backoffice:legal.caseDetail.notFound.text')} <Link to="/backoffice/tiers" className="text-primary-600 hover:underline">{t('backoffice:legal.caseDetail.notFound.link')}</Link>
       </div>
     )
   }
@@ -38,7 +38,7 @@ function LegalCaseDetail() {
 
   return (
     <div className="space-y-4 max-w-3xl">
-      <Link to="/backoffice/notaires/dossiers" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
+      <Link to="/backoffice/tiers" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
         <FiArrowLeft className="w-4 h-4" /> {t('backoffice:legal.caseDetail.back')}
       </Link>
 

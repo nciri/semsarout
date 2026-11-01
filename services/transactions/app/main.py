@@ -22,7 +22,14 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from semsar_auth import Principal, get_principal
-from semsar_common import get_settings, install_legacy_error_handlers, setup_logging, setup_tracing
+from semsar_common import (
+    get_settings,
+    html_to_text,
+    install_legacy_error_handlers,
+    sanitize_rich_field,
+    setup_logging,
+    setup_tracing,
+)
 from semsar_events import enqueue
 
 from . import events, insights, users_client
@@ -34,6 +41,18 @@ from .util import err, iso, json_body, num
 
 settings = get_settings()
 setup_logging(settings.service_name, settings.log_level)
+
+
+def _set_notes(t: Transaction, value) -> None:
+    """`notes` est saisi en WYSIWYG : on stocke le HTML assaini **et** sa projection texte.
+
+    La projection n'est pas un doublon de confort : `?q=` filtre en SQL `ILIKE`, et sur du
+    HTML une recherche sur « p » remonterait toutes les transactions annotées, tandis qu'une
+    recherche sur « bon de visite » ne trouverait plus « bon de <b>visite</b> ». Les deux
+    colonnes ne s'écrivent que par ici, pour qu'elles ne puissent pas diverger.
+    """
+    t.notes = sanitize_rich_field(value)
+    t.notes_text = html_to_text(t.notes) or None
 
 
 @asynccontextmanager
@@ -239,7 +258,10 @@ def get_transactions(request: Request, principal: Principal = Depends(get_princi
     query = _since(query, qp.get("since"))
     if qp.get("q"):
         term = f"%{qp.get('q')}%"
-        query = query.filter(or_(Transaction.reference.ilike(term), Transaction.notes.ilike(term)))
+        # La recherche porte sur la **projection texte** des notes, jamais sur leur HTML :
+        # sinon « p » ou « li » remonteraient toutes les transactions annotées.
+        query = query.filter(or_(Transaction.reference.ilike(term),
+                                 Transaction.notes_text.ilike(term)))
     sort_by = qp.get("sort_by") or "created_at"
     if hasattr(Transaction, sort_by):
         col = getattr(Transaction, sort_by)
@@ -394,8 +416,9 @@ async def create_transaction(request: Request, principal: Principal = Depends(ge
         commission_rate=data.get("commission_rate"), priority=data.get("priority", "medium"),
         probability=data.get("probability", 50),
         expected_closing_date=_parse_dt(data.get("expected_closing_date")),
-        notes=data.get("notes"), agency_id=principal.agency_id,
+        agency_id=principal.agency_id,
     )
+    _set_notes(t, data.get("notes"))
     db.add(t)
     db.flush()
     _emit(db, t, events.TRANSACTION_CREATED)
@@ -414,9 +437,11 @@ async def update_transaction(tx_id: int, request: Request, principal: Principal 
     for field in ["property_id", "client_id", "seller_id", "agent_id", "transaction_type",
                   "stage_order", "asking_price", "offer_price", "final_price",
                   "commission_rate", "commission_amount", "commission_split", "status",
-                  "lost_reason", "probability", "priority", "notes"]:
+                  "lost_reason", "probability", "priority"]:
         if field in data:
             setattr(t, field, data[field])
+    if "notes" in data:
+        _set_notes(t, data["notes"])
     for date_field in ["expected_closing_date", "visit_date", "offer_date",
                        "acceptance_date", "compromise_date", "closing_date"]:
         if date_field in data:

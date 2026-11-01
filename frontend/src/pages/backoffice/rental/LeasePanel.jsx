@@ -5,6 +5,7 @@ import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { FiAlertCircle, FiCheckCircle, FiClock, FiDollarSign, FiDownload, FiEdit3, FiExternalLink, FiFileText, FiPlus, FiRotateCcw, FiTrendingUp } from 'react-icons/fi'
 import { rentalService } from '../../../services/rentalService'
+import { artisanService } from '../../../services/artisanService'
 import { Field, Modal, PRIMARY_BTN, SECONDARY_BTN } from '../../../components/backoffice/ui'
 import { Alert, Chip, DetailColumns, IconAction, Kv, Legend, Rich, TD, TH } from '../components/kit'
 import { INVENTORY_TONE, STATE_TONE, dayDiff, leaseFindings, periodState } from './model'
@@ -68,6 +69,7 @@ export default function LeasePanel({ lease: l, now = new Date() }) {
   const id = l.id
   const { data: rpData } = useQuery(['rental-rent-periods', String(id)], () => rentalService.listRentPeriods(id))
   const { data: invData } = useQuery(['rental-inventories', String(id)], () => rentalService.listInventories(id))
+  const { data: woData, isError: woError } = useQuery(['rental-lease-work-orders', String(id)], () => artisanService.listWorkOrders({ lease_id: id }))
   const [payFor, setPayFor] = useState(null)
   const [reviseOpen, setReviseOpen] = useState(false)
   const [newRent, setNewRent] = useState('')
@@ -85,6 +87,9 @@ export default function LeasePanel({ lease: l, now = new Date() }) {
   const inventories = invData?.inventories || []
   const invOf = (type) => inventories.find((i) => i.type === type)
   const findings = leaseFindings({ ...l, inventories: { entree: invOf('entree') || null } }, periods, now)
+  const workOrders = woData?.work_orders || []
+  // Toute la vie du bail, tous décomptes confondus : c'est ce qui a réellement quitté la caution.
+  const withheld = workOrders.filter((w) => (w.charged_ref || '').startsWith('settlement:')).reduce((sum, w) => sum + Number(w.cost_final || 0), 0)
   const toEnd = l.end_date ? dayDiff(now, l.end_date) : null
 
   const main = (
@@ -177,6 +182,26 @@ export default function LeasePanel({ lease: l, now = new Date() }) {
           )
         })}
       </div>
+      <H3>{t('backoffice:rental.lease.interventions.title')}</H3>
+      {woError ? <p className="m-0 text-[12.5px] text-red-700">{t('backoffice:rental.lease.interventions.unavailable')}</p>
+        : workOrders.length === 0 ? <p className="m-0 text-[12.5px] text-gray-500">{t('backoffice:rental.lease.interventions.empty')}</p>
+          : (
+            <div className="grid gap-2">
+              {workOrders.map((w) => (
+                <div key={w.id} className="grid gap-0.5 text-[13px]">
+                  <span className="flex items-baseline justify-between gap-2.5">
+                    <span className="font-semibold">{w.title}</span>
+                    <span className="tabular-nums">{f.dh(w.cost_final)}</span>
+                  </span>
+                  <span className="text-[12.5px] text-gray-500">
+                    {[w.payer && t('backoffice:rental.lease.interventions.payer', { payer: t(`backoffice:artisans.workOrder.payer.${w.payer}`) }),
+                      w.charge_mode && t(`backoffice:artisans.workOrder.chargeMode.${w.charge_mode}`)].filter(Boolean).join(' · ')}
+                  </span>
+                </div>
+              ))}
+              {withheld > 0 && <p className="m-0 text-[13px] font-semibold">{t('backoffice:rental.lease.interventions.withheld', { amount: f.dh(withheld) })}</p>}
+            </div>
+          )}
       <H3>{t('backoffice:rental.overview.lease.leaseTitle')}</H3>
       <p className="m-0 text-[12.5px] text-gray-500">
         {[l.mandate_reference && t('backoffice:rental.overview.lease.mandate', { reference: l.mandate_reference }),

@@ -61,8 +61,11 @@ function ConnectForm({ integration, onDone, onCancel }) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {integration.fields.map((field) => (
           <label key={field} className="block">
-            <span className="mb-1 block text-sm font-medium text-gray-700">{t(`${P}.fieldLabels.${field}`)}</span>
+            <span className="mb-1 block text-sm font-medium text-gray-700">
+              {t(`${P}.fieldLabels.${field}`)} <span className="requis" aria-hidden="true" />
+            </span>
             <input
+              required
               className={INPUT}
               type={SECRET_INPUTS[field] || 'text'}
               autoComplete={SECRET_INPUTS[field] ? 'new-password' : 'off'}

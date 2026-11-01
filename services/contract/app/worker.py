@@ -34,6 +34,20 @@ def _handle(routing_key: str, payload: dict, message_id: str) -> None:
             ro.surface = payload.get("surface")
             ro.rooms = payload.get("rooms")
             ro.reference = payload.get("reference")
+            # Désignation du bien telle que les actes la demandent : étage, composition,
+            # charges. Le payload `listing.*` porte le bien COMPLET (cf. `_event_doc`).
+            ro.title = payload.get("title")
+            ro.neighborhood = payload.get("neighborhood")
+            ro.postal_code = payload.get("postal_code")
+            ro.floor = payload.get("floor")
+            ro.bedrooms = payload.get("bedrooms")
+            ro.bathrooms = payload.get("bathrooms")
+            ro.land_surface = payload.get("land_surface")
+            ro.construction_year = payload.get("construction_year")
+            ro.charges = payload.get("charges")
+            ro.condo_fees = payload.get("condo_fees")
+            ro.transaction_type = payload.get("transaction_type")
+            ro.price_period = payload.get("price_period")
         elif routing_key == "transaction.deleted":
             ro = db.get(TransactionRO, payload.get("id"))
             if ro is not None:

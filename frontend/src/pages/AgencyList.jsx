@@ -7,6 +7,7 @@ import { agencyService } from '../services/agencyService'
 import AgencyMap from '../components/map/AgencyMap'
 import DirIcon from '../components/common/DirIcon'
 import TrustBadge from '../components/common/TrustBadge'
+import { richTextToPlain } from '../utils/richText'
 
 const MOROCCAN_CITIES = [
   'Casablanca', 'Rabat', 'Marrakech', 'Fès', 'Tanger',
@@ -309,7 +310,9 @@ function AgencyList() {
 
                           {agency.description && (
                             <p className="text-gray-600 text-sm line-clamp-2 mb-4">
-                              {agency.description}
+                              {/* 🔴 `line-clamp-2` ne sait pas couper du balisage : on y
+                                  projette le texte de la description WYSIWYG. */}
+                              {richTextToPlain(agency.description)}
                             </p>
                           )}
 

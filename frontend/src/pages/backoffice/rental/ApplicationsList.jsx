@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { Link, useLocation, useOutletContext } from 'react-router-dom'
+import { Link, useLocation, useOutletContext, useSearchParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 import { FiExternalLink, FiHome, FiInbox, FiLock, FiPlus, FiStar, FiX } from 'react-icons/fi'
@@ -25,7 +25,8 @@ function ApplicationsList() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [docs, setDocs] = useState([])
   const [pendingDocType, setPendingDocType] = useState(DOC_TYPES[0][0])
-  const [statusFilter, setStatusFilter] = useState('')
+  const [params] = useSearchParams()
+  const [statusFilter, setStatusFilter] = useState(() => params.get('statut') || '')
   const [propertyFilter, setPropertyFilter] = useState('')
   const set = (k) => (e) => setForm((v) => ({ ...v, [k]: e.target.value }))
 
@@ -205,11 +206,11 @@ function ApplicationsList() {
       <Modal open={open} onClose={() => setOpen(false)} title={t('backoffice:rental.application.modal.title')}
         footer={<>
           <button onClick={() => setOpen(false)} className={SECONDARY_BTN}>{t('backoffice:rental.application.modal.cancel')}</button>
-          <button disabled={!form.property_id || !form.client_id || create.isLoading} onClick={() => create.mutate()} className={PRIMARY_BTN}>{t('backoffice:rental.application.modal.submit')}</button>
+          <button disabled={!form.property_id || !form.client_id || form.monthly_income === '' || create.isLoading} onClick={() => create.mutate()} className={PRIMARY_BTN}>{t('backoffice:rental.application.modal.submit')}</button>
         </>}>
-        <Field label={t('backoffice:rental.application.modal.propertyIdLabel')} type="number" value={form.property_id} onChange={set('property_id')} />
-        <Field label={t('backoffice:rental.application.modal.clientIdLabel')} type="number" value={form.client_id} onChange={set('client_id')} />
-        <Field label={t('backoffice:rental.application.modal.monthlyIncomeLabel')} type="number" value={form.monthly_income} onChange={set('monthly_income')} />
+        <Field required label={t('backoffice:rental.application.modal.propertyIdLabel')} type="number" value={form.property_id} onChange={set('property_id')} />
+        <Field required label={t('backoffice:rental.application.modal.clientIdLabel')} type="number" value={form.client_id} onChange={set('client_id')} />
+        <Field required label={t('backoffice:rental.application.modal.monthlyIncomeLabel')} type="number" value={form.monthly_income} onChange={set('monthly_income')} />
         <Field label={t('backoffice:rental.application.modal.guarantorNameLabel')} value={form.guarantor_name} onChange={set('guarantor_name')} />
         <Field label={t('backoffice:rental.application.modal.guarantorIncomeLabel')} type="number" value={form.guarantor_income} onChange={set('guarantor_income')} />
 

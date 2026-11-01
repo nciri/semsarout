@@ -9,6 +9,7 @@ du bien (renvoyé tel quel → parité des réponses). Ce n'est jamais la source
 **documentés** à vérifier par tests de contrat.
 """
 import math
+import re
 from typing import Any
 
 from opensearchpy import OpenSearch
@@ -101,6 +102,22 @@ def _resolve_sort(criteria: dict) -> list[dict]:
     return sort
 
 
+# Projection d'indexation, pas une frontière de confiance : le HTML a déjà été assaini par
+# le service qui l'a écrit (`semsar_common.sanitize_html`).
+_BLOCK_END = re.compile(r"</(?:p|div|li|tr|h[1-4]|blockquote|table|ul|ol)\s*>|<br\s*/?>",
+                        re.IGNORECASE)
+_TAG = re.compile(r"<[^>]+>")
+_ENTITIES = (("&nbsp;", " "), ("&amp;", "&"), ("&lt;", "<"), ("&gt;", ">"),
+             ("&quot;", '"'), ("&#x27;", "'"), ("&#39;", "'"))
+
+
+def _strip_tags(html: str) -> str:
+    text = _TAG.sub("", _BLOCK_END.sub(" ", str(html)))
+    for entity, char in _ENTITIES:
+        text = text.replace(entity, char)
+    return re.sub(r"\s+", " ", text).strip()
+
+
 def os_client(url: str) -> OpenSearch:
     return OpenSearch(hosts=[url], http_compress=True)
 
@@ -113,6 +130,12 @@ def ensure_index(client: OpenSearch) -> None:
 def _index_doc(doc: dict) -> dict:
     """Enrichit le doc à indexer avec les champs dérivés utiles aux filtres."""
     d = dict(doc)
+    # La description est saisie en WYSIWYG. Indexée telle quelle, ses balises deviendraient
+    # des termes de recherche (« strong », « li ») et les listes de biens, qui sont servies
+    # depuis cet index, afficheraient du balisage dans leur extrait. La fiche d'un bien vient
+    # du service `listing`, pas d'ici : elle garde sa mise en forme.
+    if d.get("description"):
+        d["description"] = _strip_tags(d["description"])
     loc = doc.get("location")
     if loc and loc.get("lat") is not None and loc.get("lon") is not None:
         d["latitude"] = loc["lat"]
