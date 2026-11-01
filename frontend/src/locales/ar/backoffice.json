@@ -1569,7 +1569,8 @@
       "fields": {
         "name": "اسم النموذج",
         "namePlaceholder": "مثال: وكالة بيع نموذجية",
-        "type": "نوع الوثيقة"
+        "type": "نوع الوثيقة",
+        "body": "مضمون النموذج"
       },
       "mergeFields": "حقول الدمج:",
       "submit": "إنشاء النموذج",
@@ -2301,9 +2302,6 @@
           "partner": "شريك"
         },
         "tagsPlaceholder": "إضافة وسم...",
-        "validation": {
-          "contactRequired": "البريد الإلكتروني أو الهاتف مطلوب"
-        },
         "cancelButton": "إلغاء",
         "createButton": "إنشاء العميل",
         "updateButton": "تحديث"
@@ -2433,8 +2431,8 @@
           "messagePlaceholder": "ما يبحث عنه العميل، الميزانية، الأجل…",
           "submit": "تسجيل العميل المحتمل",
           "saving": "جارٍ التسجيل…",
-          "contactRequired": "أدخلوا على الأقل رقم هاتف أو بريدًا إلكترونيًا.",
-          "error": "تعذّر تسجيل العميل المحتمل."
+          "error": "تعذّر تسجيل العميل المحتمل.",
+          "phoneRequired": "الهاتف مطلوب للاتصال بالعميل المحتمل"
         },
         "summary": {
           "pending": {
@@ -3472,7 +3470,9 @@
           "priceRequired": "السعر مطلوب",
           "cityRequired": "المدينة مطلوبة",
           "surfaceRequired": "المساحة مطلوبة",
-          "imagesRequired": "أضف صورة واحدة على الأقل"
+          "imagesRequired": "أضف صورة واحدة على الأقل",
+          "addressRequired": "العنوان مطلوب",
+          "descriptionRequired": "الوصف مطلوب"
         },
         "toastImagesRequired": "أضف صورة واحدة على الأقل.",
         "cancelButton": "إلغاء",
@@ -3501,7 +3501,9 @@
         "title": "دعوة عضو",
         "emailPlaceholder": "email@exemple.com",
         "noTeam": "بدون فريق",
-        "button": "دعوة"
+        "button": "دعوة",
+        "emailLabel": "البريد الإلكتروني للعضو",
+        "teamLabel": "الفريق"
       },
       "pendingInvitations": {
         "title": "دعوات قيد الانتظار",

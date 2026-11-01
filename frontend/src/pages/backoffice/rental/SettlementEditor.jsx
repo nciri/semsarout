@@ -150,8 +150,8 @@ function SettlementEditor() {
 
             {!ro && (
               <div className="flex flex-wrap items-end gap-2 border-t border-gray-100 pt-3">
-                <div className="flex-1 min-w-[160px]"><Field label={t('backoffice:rental.settlement.form.labelLabel')} value={label} onChange={(e) => setLabel(e.target.value)} placeholder={t('backoffice:rental.settlement.form.labelPlaceholder')} /></div>
-                <div className="w-32"><Field label={t('backoffice:rental.settlement.form.amountLabel')} type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
+                <div className="flex-1 min-w-[160px]"><Field required label={t('backoffice:rental.settlement.form.labelLabel')} value={label} onChange={(e) => setLabel(e.target.value)} placeholder={t('backoffice:rental.settlement.form.labelPlaceholder')} /></div>
+                <div className="w-32"><Field required label={t('backoffice:rental.settlement.form.amountLabel')} type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
                 <select value={itemId} onChange={(e) => setItemId(e.target.value)} className="px-2 py-2 border border-gray-200 rounded-lg text-sm">
                   <option value="">{t('backoffice:rental.settlement.form.itemPlaceholder')}</option>
                   {degraded.map((d) => <option key={d.sortie_item_id} value={d.sortie_item_id}>{d.room} — {d.label}</option>)}

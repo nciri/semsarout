@@ -152,7 +152,7 @@ function ContractCreate() {
               <LanguageToggle value={langue} onChange={changeLangue} />
             </div>
             <div>
-              <label className={labelCls}>{t('backoffice:contracts.create.fields.template')} <span className="text-red-500">*</span></label>
+              <label className={labelCls}>{t('backoffice:contracts.create.fields.template')} <span className="requis" aria-hidden="true" /></label>
               <select value={form.template_id} onChange={set('template_id')} className={ctrlCls}>
                 <option value="">{t('backoffice:contracts.create.fields.templatePlaceholder')}</option>
                 {templates.map((tpl) => <option key={tpl.id} value={tpl.id}>{tpl.name}{tpl.is_global ? '' : t('backoffice:contracts.create.fields.customSuffix')}</option>)}

@@ -177,7 +177,7 @@ function CalendarsList() {
         <p className="mb-3 text-[13px] text-gray-500">{t('backoffice:stays.calendars.modal.help')}</p>
         <div className="mb-4">
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="ical-property">
-            {t('backoffice:stays.calendars.modal.propertyLabel')}
+            {t('backoffice:stays.calendars.modal.propertyLabel')} <span className="requis" aria-hidden="true" />
           </label>
           <Select id="ical-property" value={form.property_id} onChange={setProperty}>
             <option value="">{t('backoffice:stays.calendars.modal.propertyPlaceholder')}</option>

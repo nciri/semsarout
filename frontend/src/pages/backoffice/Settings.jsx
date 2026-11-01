@@ -44,10 +44,12 @@ const backofficeService = {
   updateSettings: async (data) => (await api.put('/backoffice/settings', data)).data,
 }
 
-function Field({ id, label, hint, children }) {
+function Field({ id, label, hint, required = false, children }) {
   return (
     <div>
-      <label className={LABEL} htmlFor={id}>{label}</label>
+      <label className={LABEL} htmlFor={id}>
+        {label} {required && <span className="requis" aria-hidden="true" />}
+      </label>
       {children}
       {hint && <p className="mt-1 text-xs text-gray-500">{hint}</p>}
     </div>
@@ -148,12 +150,12 @@ export default function BackofficeSettings({ embedded = false }) {
               <div className="space-y-6">
                 <p className="text-sm text-gray-500">{g('commissions.intro')}</p>
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <Field id="default_sale_commission_fee" label={g('fields.saleCommissionFee')} hint={g('fields.saleCommissionFeeHint')}>
-                    <input id="default_sale_commission_fee" type="number" min="0" step="100" className={INPUT}
+                  <Field required id="default_sale_commission_fee" label={g('fields.saleCommissionFee')} hint={g('fields.saleCommissionFeeHint')}>
+                    <input id="default_sale_commission_fee" required type="number" min="0" step="100" className={INPUT}
                       value={formData.default_sale_commission_fee} onChange={field('default_sale_commission_fee')} />
                   </Field>
-                  <Field id="default_rental_commission_rate" label={g('fields.rentalCommissionRate')} hint={g('fields.rentalCommissionHint')}>
-                    <input id="default_rental_commission_rate" type="number" min="0" max="100" step="0.1" className={INPUT}
+                  <Field required id="default_rental_commission_rate" label={g('fields.rentalCommissionRate')} hint={g('fields.rentalCommissionHint')}>
+                    <input id="default_rental_commission_rate" required type="number" min="0" max="100" step="0.1" className={INPUT}
                       value={formData.default_rental_commission_rate} onChange={field('default_rental_commission_rate')} />
                   </Field>
                 </div>

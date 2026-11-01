@@ -73,15 +73,25 @@ function Team() {
       {canManage && (
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <h3 className="font-semibold text-gray-900 mb-3">{t('backoffice:settings.team.invite.title')}</h3>
-          <div className="flex flex-wrap gap-2">
-            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                   placeholder={t('backoffice:settings.team.invite.emailPlaceholder')}
-                   className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 min-w-[220px] text-gray-900" />
-            <select value={teamId} onChange={(e) => setTeamId(e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900">
-              <option value="">{t('backoffice:settings.team.invite.noTeam')}</option>
-              {(d.teams || []).map((tm) => <option key={tm.id} value={tm.id}>{tm.name}</option>)}
-            </select>
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="flex-1 min-w-[220px]">
+              <span className="mb-1 block text-sm font-medium text-gray-700">
+                {t('backoffice:settings.team.invite.emailLabel')} <span className="requis" aria-hidden="true" />
+              </span>
+              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+                     placeholder={t('backoffice:settings.team.invite.emailPlaceholder')}
+                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900" />
+            </label>
+            <label>
+              <span className="mb-1 block text-sm font-medium text-gray-700">
+                {t('backoffice:settings.team.invite.teamLabel')}
+              </span>
+              <select value={teamId} onChange={(e) => setTeamId(e.target.value)}
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900">
+                <option value="">{t('backoffice:settings.team.invite.noTeam')}</option>
+                {(d.teams || []).map((tm) => <option key={tm.id} value={tm.id}>{tm.name}</option>)}
+              </select>
+            </label>
             <button
               onClick={() => email && invite.mutate({ email, role_id: roleId || null, team_id: teamId || null })}
               className="btn-primary inline-flex items-center gap-2">

@@ -101,11 +101,14 @@ describe('Artisans & interventions', () => {
     await userEvent.selectOptions(await screen.findByLabelText('Bien concerné'), '5')
     await userEvent.selectOptions(screen.getByLabelText('Métier'), 'electricien')
     await userEvent.selectOptions(await screen.findByRole('option', { name: 'Samira Alaoui' }).then((o) => o.closest('select')), '3')
+    // La nature est exigée : c'est elle qui décide du payeur et du règlement.
+    expect(screen.getByRole('button', { name: "Créer l'intervention" })).toBeDisabled()
+    await userEvent.selectOptions(screen.getByLabelText('Nature des travaux'), 'structurel')
     await userEvent.click(screen.getByRole('button', { name: "Créer l'intervention" }))
-    // Sans nature, aucun des trois champs du payeur ne part : le service les valide ensemble.
     await vi.waitFor(() => expect(svc.createWorkOrder).toHaveBeenCalledWith({
       title: 'Volet bloqué', trade: 'electricien', property_id: 5, client_id: 3, lease_id: 70, artisan_id: null,
       scheduled_date: null, cost_estimate: null, notes: null,
+      nature: 'structurel', payer: 'owner', charge_mode: 'crg_expense', third_party_label: null,
     }))
   })
 

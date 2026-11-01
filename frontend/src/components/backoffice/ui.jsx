@@ -94,11 +94,16 @@ export function Panel({ title, action, children, className = '' }) {
 }
 
 // Le champ est enveloppé par son label : association implicite, sans id a inventer.
-export function Field({ label, className = '', ...props }) {
+export function Field({ label, required = false, className = '', ...props }) {
   return (
     <label className="mb-3 block">
-      {label && <span className="mb-1 block text-sm font-medium text-gray-700">{label}</span>}
+      {label && (
+        <span className="mb-1 block text-sm font-medium text-gray-700">
+          {label} {required && <span className="requis" aria-hidden="true" />}
+        </span>
+      )}
       <input
+        required={required}
         {...props}
         className={`w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 ${className}`}
       />

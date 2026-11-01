@@ -705,6 +705,10 @@ describe('Fiche de séjour, saisie directe et calendrier', () => {
     await userEvent.type(screen.getByLabelText('Arrivée'), '2026-12-10')
     await userEvent.type(screen.getByLabelText('Départ'), '2026-12-14')
     await userEvent.type(screen.getByLabelText('Nom'), 'Yasmine Alaoui')
+    // Un séjour confirmé se facture et se confirme : les trois champs sont exigés.
+    expect(screen.getByRole('button', { name: 'Enregistrer' })).toBeDisabled()
+    await userEvent.type(screen.getByLabelText('Téléphone'), '0600000000')
+    await userEvent.type(screen.getByLabelText('Montant du séjour'), '3200')
     await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
     await vi.waitFor(() => expect(svc.createStay).toHaveBeenCalled())
     expect(svc.createStay.mock.calls[0][0]).toMatchObject({
@@ -747,6 +751,9 @@ describe('Fiche de séjour, saisie directe et calendrier', () => {
     await userEvent.selectOptions(await screen.findByLabelText('Bien'), '5')
     await userEvent.type(screen.getByLabelText('Arrivée'), '2026-12-10')
     await userEvent.type(screen.getByLabelText('Départ'), '2026-12-14')
+    await userEvent.type(screen.getByLabelText('Nom'), 'Yasmine Alaoui')
+    await userEvent.type(screen.getByLabelText('Téléphone'), '0600000000')
+    await userEvent.type(screen.getByLabelText('Montant du séjour'), '3200')
 
     const editor = document.getElementById('stay-notes')
     editor.innerHTML = '<p>Arrivée <b>tardive</b></p><script>alert(1)</script>'

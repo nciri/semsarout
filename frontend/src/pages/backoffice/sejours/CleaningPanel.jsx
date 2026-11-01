@@ -301,7 +301,7 @@ function CleaningPanel() {
         <p className="mb-3 text-[13px] text-gray-500">{t('backoffice:stays.cleaning.modal.help')}</p>
         <div className="mb-3">
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="cleaning-new-kind">
-            {t('backoffice:stays.cleaning.modal.kindLabel')}
+            {t('backoffice:stays.cleaning.modal.kindLabel')} <span className="requis" aria-hidden="true" />
           </label>
           <Select id="cleaning-new-kind" value={task.kind} onChange={(e) => setTask((x) => ({ ...x, kind: e.target.value }))}>
             {CLEANING_KINDS.map((k) => (
@@ -311,14 +311,14 @@ function CleaningPanel() {
         </div>
         <div className="mb-3">
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="cleaning-property">
-            {t('backoffice:stays.cleaning.modal.propertyLabel')}
+            {t('backoffice:stays.cleaning.modal.propertyLabel')} <span className="requis" aria-hidden="true" />
           </label>
           <Select id="cleaning-property" value={task.property_id} onChange={(e) => setTask((x) => ({ ...x, property_id: e.target.value }))}>
             <option value="">{t('backoffice:stays.cleaning.modal.propertyPlaceholder')}</option>
             {properties.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
           </Select>
         </div>
-        <Field label={t('backoffice:stays.cleaning.modal.dateLabel')} type="date" value={task.scheduled_date}
+        <Field required label={t('backoffice:stays.cleaning.modal.dateLabel')} type="date" value={task.scheduled_date}
           onChange={(e) => setTask((x) => ({ ...x, scheduled_date: e.target.value }))} />
         <Field label={t('backoffice:stays.cleaning.modal.notesLabel')} value={task.notes}
           onChange={(e) => setTask((x) => ({ ...x, notes: e.target.value }))} />

@@ -242,8 +242,8 @@ function WorkOrdersList({ filter = NO_FILTER }) {
         footer={(
           <>
             <button onClick={() => setOpen(false)} className={SECONDARY_BTN}>{t('backoffice:artisans.workOrder.form.cancel')}</button>
-            <button disabled={!form.title.trim() || !form.property_id || !form.client_id
-              || (form.nature && needsThirdParty && !form.third_party_label.trim()) || create.isLoading}
+            <button disabled={!form.title.trim() || !form.property_id || !form.client_id || !form.nature
+              || (needsThirdParty && !form.third_party_label.trim()) || create.isLoading}
               onClick={() => create.mutate()} className={PRIMARY_BTN}>
               {t('backoffice:artisans.workOrder.form.submit')}
             </button>
@@ -252,7 +252,7 @@ function WorkOrdersList({ filter = NO_FILTER }) {
       >
         <div className="mb-3">
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="wo-property">
-            {t('backoffice:artisans.workOrder.form.propertyLabel')}
+            {t('backoffice:artisans.workOrder.form.propertyLabel')} <span className="requis" aria-hidden="true" />
           </label>
           <Select id="wo-property" value={form.property_id} onChange={set('property_id')} className="w-full">
             <option value="">{t('backoffice:artisans.workOrder.form.propertyPlaceholder')}</option>
@@ -261,7 +261,7 @@ function WorkOrdersList({ filter = NO_FILTER }) {
         </div>
         <div className="mb-3">
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="wo-client">
-            {t('backoffice:artisans.workOrder.form.clientLabel')}
+            {t('backoffice:artisans.workOrder.form.clientLabel')} <span className="requis" aria-hidden="true" />
           </label>
           <Select id="wo-client" value={form.client_id} onChange={set('client_id')} className="w-full">
             <option value="">{t('backoffice:artisans.workOrder.form.clientPlaceholder')}</option>
@@ -278,7 +278,7 @@ function WorkOrdersList({ filter = NO_FILTER }) {
         </div>
         <div className="mb-3">
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="wo-title">
-            {t('backoffice:artisans.workOrder.form.titleLabel')}
+            {t('backoffice:artisans.workOrder.form.titleLabel')} <span className="requis" aria-hidden="true" />
           </label>
           <input
             id="wo-title"
@@ -327,7 +327,7 @@ function WorkOrdersList({ filter = NO_FILTER }) {
         <div className="mb-3 grid gap-3 sm:grid-cols-3">
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="wo-nature">
-              {t('backoffice:artisans.workOrder.form.natureLabel')}
+              {t('backoffice:artisans.workOrder.form.natureLabel')} <span className="requis" aria-hidden="true" />
             </label>
             <Select id="wo-nature" value={form.nature} onChange={set('nature')} className="w-full">
               <option value="">{t('backoffice:artisans.workOrder.form.naturePlaceholder')}</option>
@@ -360,7 +360,7 @@ function WorkOrdersList({ filter = NO_FILTER }) {
         {form.nature && needsThirdParty && (
           <div className="mb-3">
             <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="wo-third-party">
-              {t('backoffice:artisans.workOrder.form.thirdPartyLabel')}
+              {t('backoffice:artisans.workOrder.form.thirdPartyLabel')} <span className="requis" aria-hidden="true" />
             </label>
             <input id="wo-third-party" value={form.third_party_label} onChange={set('third_party_label')}
               placeholder={t('backoffice:artisans.workOrder.form.thirdPartyPlaceholder')}

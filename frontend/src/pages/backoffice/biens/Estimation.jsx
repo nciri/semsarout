@@ -15,10 +15,12 @@ const CONFIDENCE_TONE = { high: 'good', medium: 'warn', low: 'crit' }
 
 const FIELD = 'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none'
 
-function Field({ label, children }) {
+function Field({ label, required = false, children }) {
   return (
     <label className="grid gap-1.5">
-      <span className="text-[12.5px] font-semibold text-gray-700">{label}</span>
+      <span className="text-[12.5px] font-semibold text-gray-700">
+        {label} {required && <span className="requis" aria-hidden="true" />}
+      </span>
       {children}
     </label>
   )
@@ -102,7 +104,7 @@ export default function Estimation() {
                 <option value="rent">{t('transaction.rent')}</option>
               </select>
             </Field>
-            <Field label={t('fields.surface')}>
+            <Field required label={t('fields.surface')}>
               <input className={FIELD} type="number" min="5" value={form.surface} onChange={set('surface')} required />
             </Field>
             <Field label={t('fields.condition')}>

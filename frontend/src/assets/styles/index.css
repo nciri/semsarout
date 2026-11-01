@@ -202,6 +202,16 @@ html[lang='ar'] {
   background-clip: text;
 }
 
+/* Étoile rouge d'un champ obligatoire.
+   Elle est dessinée par la feuille de style et non écrite dans le libellé : le nom
+   accessible du champ reste « Surface (m²) » au lieu de « Surface (m²) * », l'obligation
+   étant portée par l'attribut `required` de la commande, que le lecteur d'écran annonce. */
+.requis::after {
+  content: "*";
+  margin-inline-start: 2px;
+  color: #ef4444;
+}
+
 /* Mise en page d'un acte, à l'écran.
    Mêmes valeurs que la feuille d'impression du service contract (`app/pdf.py`), relevées
    dans les .docx source : couleurs, épaisseurs de filet, retraits, interligne. À l'écran

@@ -104,13 +104,14 @@ function AccessPanel() {
       <Modal open={form !== null} onClose={() => setForm(null)} title={t('backoffice:stays.access.modal.title')}
         footer={<>
           <button onClick={() => setForm(null)} className={SECONDARY_BTN}>{t('backoffice:stays.access.modal.cancel')}</button>
-          <button disabled={!form?.property_id || save.isLoading} onClick={() => save.mutate()} className={PRIMARY_BTN}>
+          <button disabled={!form?.property_id || save.isLoading
+            || ((form?.mode || 'manual') === 'manual' && !String(form?.instructions || '').trim())} onClick={() => save.mutate()} className={PRIMARY_BTN}>
             {t('backoffice:stays.access.modal.submit')}
           </button>
         </>}>
         <div className="mb-3">
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="access-property">
-            {t('backoffice:stays.access.modal.propertyLabel')}
+            {t('backoffice:stays.access.modal.propertyLabel')} <span className="requis" aria-hidden="true" />
           </label>
           <Select id="access-property" value={form?.property_id || ''} onChange={set('property_id')}>
             <option value="">{t('backoffice:stays.access.modal.propertyPlaceholder')}</option>
@@ -123,7 +124,7 @@ function AccessPanel() {
         </div>
         <div className="mb-3">
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="access-mode">
-            {t('backoffice:stays.access.modal.modeLabel')}
+            {t('backoffice:stays.access.modal.modeLabel')} <span className="requis" aria-hidden="true" />
           </label>
           <Select id="access-mode" value={form?.mode || 'manual'} onChange={set('mode')}>
             {ACCESS_MODES.map((m) => <option key={m} value={m}>{t(`backoffice:stays.access.mode.${m}`)}</option>)}
@@ -132,7 +133,8 @@ function AccessPanel() {
             {t(`backoffice:stays.access.modeHelp.${form?.mode || 'manual'}`)}
           </p>
         </div>
-        <Field label={t('backoffice:stays.access.modal.instructionsLabel')} value={form?.instructions || ''}
+        <Field required={(form?.mode || 'manual') === 'manual'}
+          label={t('backoffice:stays.access.modal.instructionsLabel')} value={form?.instructions || ''}
           onChange={set('instructions')} />
         {form?.mode === 'ttlock' && (
           <>

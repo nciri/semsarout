@@ -137,7 +137,7 @@ function LegalCasesList({ q = '' }) {
           <>
             <button onClick={() => setOpen(false)} className={SECONDARY_BTN}>{t('backoffice:legal.cases.toolbar.cancel')}</button>
             <button onClick={() => create.mutate()}
-              disabled={create.isLoading || noNotary || !form.property_id || !form.notary_id}
+              disabled={create.isLoading || noNotary || !form.property_id || !form.notary_id || !form.title.trim()}
               className={PRIMARY_BTN}>
               {t('backoffice:legal.cases.toolbar.submit')}
             </button>
@@ -146,7 +146,7 @@ function LegalCasesList({ q = '' }) {
       >
         <div className="mb-3">
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="case-property">
-            {t('backoffice:legal.cases.toolbar.propertyLabel')}
+            {t('backoffice:legal.cases.toolbar.propertyLabel')} <span className="requis" aria-hidden="true" />
           </label>
           <Select id="case-property" value={form.property_id} onChange={set('property_id')} className="w-full">
             <option value="">{t('backoffice:legal.cases.toolbar.propertyPlaceholder')}</option>
@@ -155,7 +155,7 @@ function LegalCasesList({ q = '' }) {
         </div>
         <div className="mb-3">
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="case-notary">
-            {t('backoffice:legal.cases.toolbar.notaryLabel')}
+            {t('backoffice:legal.cases.toolbar.notaryLabel')} <span className="requis" aria-hidden="true" />
           </label>
           <Select id="case-notary" value={form.notary_id} onChange={set('notary_id')} className="w-full">
             <option value="">{t('backoffice:legal.cases.toolbar.notaryPlaceholder')}</option>
@@ -164,7 +164,7 @@ function LegalCasesList({ q = '' }) {
         </div>
         <div className="mb-3">
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="case-title">
-            {t('backoffice:legal.cases.toolbar.titleLabel')}
+            {t('backoffice:legal.cases.toolbar.titleLabel')} <span className="requis" aria-hidden="true" />
           </label>
           <input
             id="case-title"
@@ -176,7 +176,7 @@ function LegalCasesList({ q = '' }) {
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="case-type">
-            {t('backoffice:legal.cases.toolbar.typeLabel')}
+            {t('backoffice:legal.cases.toolbar.typeLabel')} <span className="requis" aria-hidden="true" />
           </label>
           <Select id="case-type" value={form.case_type} onChange={set('case_type')} className="w-full">
             <option value="sale">{t('backoffice:legal.shared.caseType.sale')}</option>

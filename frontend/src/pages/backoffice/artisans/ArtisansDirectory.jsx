@@ -23,11 +23,13 @@ function ArtisansDirectory({ filter = NO_FILTER }) {
   const [form, setForm] = useState(EMPTY)
   const trades = tradesData?.trades || []
   const tradeLabel = (id) => trades.find((tr) => tr.id === id)?.label || id
+  // [clé, libellé, obligatoire] — un artisan qu'on ne peut pas appeler ne sert pas à
+  // commander une intervention : le nom et le numéro sont exigés, le reste complète.
   const FORM_FIELDS = [
-    ['name', t('backoffice:artisans.directory.modal.fields.name')],
+    ['name', t('backoffice:artisans.directory.modal.fields.name'), true],
     ['company', t('backoffice:artisans.directory.modal.fields.company')],
     ['city', t('backoffice:artisans.directory.modal.fields.city')],
-    ['phone', t('backoffice:artisans.directory.modal.fields.phone')],
+    ['phone', t('backoffice:artisans.directory.modal.fields.phone'), true],
     ['email', t('backoffice:artisans.directory.modal.fields.email')],
   ]
 
@@ -118,20 +120,23 @@ function ArtisansDirectory({ filter = NO_FILTER }) {
         footer={(
           <>
             <button onClick={closeModal} className={SECONDARY_BTN}>{t('backoffice:artisans.directory.modal.cancel')}</button>
-            <button disabled={!form.name || save.isLoading} onClick={() => save.mutate()} className={PRIMARY_BTN}>
+            <button disabled={!form.name.trim() || !form.phone.trim() || save.isLoading} onClick={() => save.mutate()} className={PRIMARY_BTN}>
               {editingId ? t('backoffice:artisans.directory.modal.save') : t('backoffice:artisans.directory.modal.create')}
             </button>
           </>
         )}
       >
         <div className="mb-3">
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:artisans.directory.modal.tradeLabel')}</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {t('backoffice:artisans.directory.modal.tradeLabel')} <span className="requis" aria-hidden="true" />
+          </label>
           <Select value={form.trade} onChange={(e) => setForm({ ...form, trade: e.target.value })} className="w-full">
             {trades.map((tr) => <option key={tr.id} value={tr.id}>{tr.label}</option>)}
           </Select>
         </div>
-        {FORM_FIELDS.map(([f, ph]) => (
-          <Field key={f} value={form[f]} onChange={(e) => setForm({ ...form, [f]: e.target.value })} placeholder={ph} />
+        {FORM_FIELDS.map(([f, libelle, obligatoire]) => (
+          <Field key={f} label={libelle} required={Boolean(obligatoire)} value={form[f]}
+            onChange={(e) => setForm({ ...form, [f]: e.target.value })} />
         ))}
       </Modal>
     </div>

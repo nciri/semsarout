@@ -114,7 +114,7 @@ function MyAgency({ embedded = false }) {
           <div className="card p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="label">{t('dashboard:myAgency.fields.name')} *</label>
+                <label className="label">{t('dashboard:myAgency.fields.name')} <span className="requis" aria-hidden="true" /></label>
                 <input
                   {...register('name', { required: t('dashboard:myAgency.validation.nameRequired') })}
                   className="input"
@@ -124,7 +124,7 @@ function MyAgency({ embedded = false }) {
               </div>
 
               <div>
-                <label className="label">{t('dashboard:myAgency.fields.email')} *</label>
+                <label className="label">{t('dashboard:myAgency.fields.email')} <span className="requis" aria-hidden="true" /></label>
                 <input
                   type="email"
                   {...register('email', { required: t('dashboard:myAgency.validation.emailRequired') })}
@@ -135,21 +135,23 @@ function MyAgency({ embedded = false }) {
               </div>
 
               <div>
-                <label className="label">{t('dashboard:myAgency.fields.phone')}</label>
+                <label className="label">{t('dashboard:myAgency.fields.phone')} <span className="requis" aria-hidden="true" /></label>
                 <input
-                  {...register('phone')}
+                  {...register('phone', { required: t('dashboard:myAgency.validation.phoneRequired') })}
                   className="input"
                   placeholder={t('dashboard:myAgency.placeholders.phone')}
                 />
+                {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>}
               </div>
 
               <div>
-                <label className="label">{t('dashboard:myAgency.fields.city')}</label>
+                <label className="label">{t('dashboard:myAgency.fields.city')} <span className="requis" aria-hidden="true" /></label>
                 <input
-                  {...register('city')}
+                  {...register('city', { required: t('dashboard:myAgency.validation.cityRequired') })}
                   className="input"
                   placeholder={t('dashboard:myAgency.placeholders.city')}
                 />
+                {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>}
               </div>
 
               <div>
@@ -162,12 +164,13 @@ function MyAgency({ embedded = false }) {
               </div>
 
               <div className="md:col-span-2">
-                <label className="label">{t('dashboard:myAgency.fields.address')}</label>
+                <label className="label">{t('dashboard:myAgency.fields.address')} <span className="requis" aria-hidden="true" /></label>
                 <input
-                  {...register('address')}
+                  {...register('address', { required: t('dashboard:myAgency.validation.addressRequired') })}
                   className="input"
                   placeholder={t('dashboard:myAgency.placeholders.address')}
                 />
+                {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>}
               </div>
 
               <div className="md:col-span-2">
@@ -226,31 +229,34 @@ function MyAgency({ embedded = false }) {
             <h2 className="font-semibold mb-4">{t('dashboard:myAgency.edit.generalInfo')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="label">{t('dashboard:myAgency.fields.name')}</label>
+                <label className="label">{t('dashboard:myAgency.fields.name')} <span className="requis" aria-hidden="true" /></label>
                 <input
-                  {...register('name')}
+                  {...register('name', { required: t('dashboard:myAgency.validation.nameRequired') })}
                   defaultValue={agency?.name}
                   className="input"
                 />
+                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
               </div>
 
               <div>
-                <label className="label">{t('dashboard:myAgency.fields.emailShort')}</label>
+                <label className="label">{t('dashboard:myAgency.fields.emailShort')} <span className="requis" aria-hidden="true" /></label>
                 <input
                   type="email"
-                  {...register('email')}
+                  {...register('email', { required: t('dashboard:myAgency.validation.emailRequired') })}
                   defaultValue={agency?.email}
                   className="input"
                 />
+                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
               </div>
 
               <div>
-                <label className="label">{t('dashboard:myAgency.fields.phone')}</label>
+                <label className="label">{t('dashboard:myAgency.fields.phone')} <span className="requis" aria-hidden="true" /></label>
                 <input
-                  {...register('phone')}
+                  {...register('phone', { required: t('dashboard:myAgency.validation.phoneRequired') })}
                   defaultValue={agency?.phone}
                   className="input"
                 />
+                {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>}
               </div>
 
               <div>
@@ -263,21 +269,23 @@ function MyAgency({ embedded = false }) {
               </div>
 
               <div>
-                <label className="label">{t('dashboard:myAgency.fields.city')}</label>
+                <label className="label">{t('dashboard:myAgency.fields.city')} <span className="requis" aria-hidden="true" /></label>
                 <input
-                  {...register('city')}
+                  {...register('city', { required: t('dashboard:myAgency.validation.cityRequired') })}
                   defaultValue={agency?.city}
                   className="input"
                 />
+                {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>}
               </div>
 
               <div className="md:col-span-2">
-                <label className="label">{t('dashboard:myAgency.fields.address')}</label>
+                <label className="label">{t('dashboard:myAgency.fields.address')} <span className="requis" aria-hidden="true" /></label>
                 <input
-                  {...register('address')}
+                  {...register('address', { required: t('dashboard:myAgency.validation.addressRequired') })}
                   defaultValue={agency?.address}
                   className="input"
                 />
+                {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>}
               </div>
 
               <div className="md:col-span-2">

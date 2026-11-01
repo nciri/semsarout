@@ -252,7 +252,7 @@ export default function StayManagerProperties() {
             <form onSubmit={handleLink} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('dashboard:stayManager.properties.modal.semsarLabel')}
+                  {t('dashboard:stayManager.properties.modal.semsarLabel')} <span className="requis" aria-hidden="true" />
                 </label>
                 <select
                   value={selectedSemsarProperty}
@@ -271,7 +271,7 @@ export default function StayManagerProperties() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('dashboard:stayManager.properties.modal.stayManagerLabel')}
+                  {t('dashboard:stayManager.properties.modal.stayManagerLabel')} <span className="requis" aria-hidden="true" />
                 </label>
                 <select
                   value={selectedStayManagerProperty}

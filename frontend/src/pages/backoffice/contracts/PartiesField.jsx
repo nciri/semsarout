@@ -10,7 +10,7 @@ import { PARTY_ROLES, emptyParty } from './parties'
 
 const labelCls = 'block text-[12.5px] font-medium text-gray-700 mb-0.5'
 const ctrlCls = 'w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500'
-const etoile = <span className="text-red-500">*</span>
+const etoile = <span className="requis" aria-hidden="true" />
 
 export default function PartiesField({ parties, onChange, clientOptions, disabled = false, hint,
   allowCreate = false }) {

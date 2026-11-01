@@ -15,10 +15,12 @@ const EMPTY = {
 
 const day = (iso) => (iso ? String(iso).slice(0, 10) : '')
 
-function Labelled({ id, label, children }) {
+function Labelled({ id, label, required = false, children }) {
   return (
     <div className="mb-3">
-      <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor={id}>{label}</label>
+      <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor={id}>
+        {label} {required && <span className="requis" aria-hidden="true" />}
+      </label>
       {children}
     </div>
   )
@@ -84,7 +86,11 @@ function StayForm({ stay, onClose, onSaved }) {
     onError: (e) => toast.error(e.response?.data?.error || t('common:errors.short')),
   })
 
+  // Une période bloquée n'a pas de voyageur : seules les dates comptent. Une réservation
+  // confirmée, elle, se facture et se confirme — il lui faut un nom, un numéro et un prix.
+  const reservation = form.status === 'confirmed'
   const incomplete = !form.check_in || !form.check_out || (!editing && !form.property_id)
+    || (reservation && (!form.guest_name.trim() || !form.guest_phone.trim() || form.total_price === ''))
 
   return (
     <Modal open onClose={onClose}
@@ -98,7 +104,7 @@ function StayForm({ stay, onClose, onSaved }) {
       <p className="mb-3 text-[13px] text-gray-500">{t('backoffice:stays.planning.form.help')}</p>
 
       {!editing && (
-        <Labelled id="stay-property" label={t('backoffice:stays.planning.form.propertyLabel')}>
+        <Labelled id="stay-property" required label={t('backoffice:stays.planning.form.propertyLabel')}>
           <Select id="stay-property" value={form.property_id} onChange={set('property_id')} className="w-full">
             <option value="">{t('backoffice:stays.planning.form.propertyPlaceholder')}</option>
             {(props?.properties || []).map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
@@ -107,8 +113,8 @@ function StayForm({ stay, onClose, onSaved }) {
       )}
 
       <div className="grid gap-x-3 sm:grid-cols-2">
-        <Field type="date" label={t('backoffice:stays.planning.form.checkIn')} value={form.check_in} onChange={set('check_in')} />
-        <Field type="date" label={t('backoffice:stays.planning.form.checkOut')} value={form.check_out} onChange={set('check_out')} />
+        <Field required type="date" label={t('backoffice:stays.planning.form.checkIn')} value={form.check_in} onChange={set('check_in')} />
+        <Field required type="date" label={t('backoffice:stays.planning.form.checkOut')} value={form.check_out} onChange={set('check_out')} />
       </div>
 
       <Labelled id="stay-status" label={t('backoffice:stays.planning.form.statusLabel')}>
@@ -118,14 +124,14 @@ function StayForm({ stay, onClose, onSaved }) {
         </Select>
       </Labelled>
 
-      <Field label={t('backoffice:stays.planning.contact.nameLabel')} value={form.guest_name} onChange={set('guest_name')} />
+      <Field required={reservation} label={t('backoffice:stays.planning.contact.nameLabel')} value={form.guest_name} onChange={set('guest_name')} />
       <div className="grid gap-x-3 sm:grid-cols-2">
         <Field type="email" label={t('backoffice:stays.planning.contact.emailLabel')} value={form.guest_email} onChange={set('guest_email')} />
-        <Field label={t('backoffice:stays.planning.contact.phoneLabel')} value={form.guest_phone} onChange={set('guest_phone')} />
+        <Field required={reservation} label={t('backoffice:stays.planning.contact.phoneLabel')} value={form.guest_phone} onChange={set('guest_phone')} />
       </div>
       <div className="grid gap-x-3 sm:grid-cols-3">
         <Field type="number" min="1" label={t('backoffice:stays.planning.form.guestCount')} value={form.guest_count} onChange={set('guest_count')} />
-        <Field type="number" min="0" label={t('backoffice:stays.planning.form.totalPrice')} value={form.total_price} onChange={set('total_price')} />
+        <Field required={reservation} type="number" min="0" label={t('backoffice:stays.planning.form.totalPrice')} value={form.total_price} onChange={set('total_price')} />
         <Field type="number" min="0" label={t('backoffice:stays.planning.form.cleaningFee')} value={form.cleaning_fee} onChange={set('cleaning_fee')} />
       </div>
 

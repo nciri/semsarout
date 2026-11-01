@@ -40,7 +40,9 @@ function NewLeadForm({ properties, onClose, onCreated }) {
   const [values, setValues] = useState({ name: '', phone: '', email: '', property_id: '', message: '' })
   const set = (key) => (e) => setValues((v) => ({ ...v, [key]: e.target.value }))
   const create = useMutation(backofficeService.createLead, { onSuccess: onCreated })
-  const missingContact = !values.phone.trim() && !values.email.trim()
+  // Un lead se rappelle au téléphone : l'adresse courriel ne remplace pas le numéro, et un
+  // lead qu'on ne peut pas rappeler ne vaut rien.
+  const sansTelephone = !values.phone.trim()
 
   return (
     <form
@@ -53,12 +55,12 @@ function NewLeadForm({ properties, onClose, onCreated }) {
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="grid gap-1.5">
-          <span className="text-[12.5px] font-semibold text-gray-700">{t(`${K}.create.name`)}</span>
+          <span className="text-[12.5px] font-semibold text-gray-700">{t(`${K}.create.name`)} <span className="requis" aria-hidden="true" /></span>
           <input className={inputCls} value={values.name} onChange={set('name')} required />
         </label>
         <label className="grid gap-1.5">
-          <span className="text-[12.5px] font-semibold text-gray-700">{t(`${K}.create.phone`)}</span>
-          <input className={inputCls} value={values.phone} onChange={set('phone')} inputMode="tel" />
+          <span className="text-[12.5px] font-semibold text-gray-700">{t(`${K}.create.phone`)} <span className="requis" aria-hidden="true" /></span>
+          <input className={inputCls} value={values.phone} onChange={set('phone')} inputMode="tel" required />
         </label>
         <label className="grid gap-1.5">
           <span className="text-[12.5px] font-semibold text-gray-700">{t(`${K}.create.email`)}</span>
@@ -78,12 +80,12 @@ function NewLeadForm({ properties, onClose, onCreated }) {
           placeholder={t(`${K}.create.messagePlaceholder`)} />
       </label>
       <div className="flex flex-wrap items-center gap-3">
-        <button type="submit" disabled={create.isLoading || missingContact}
+        <button type="submit" disabled={create.isLoading || sansTelephone}
           className="rounded-lg bg-primary-400 px-4 py-2 text-sm font-semibold text-[#241906] transition-colors hover:bg-primary-600 disabled:opacity-60">
           {create.isLoading ? t(`${K}.create.saving`) : t(`${K}.create.submit`)}
         </button>
-        {/* Un lead sans moyen de rappel ne sert à rien : on le dit avant l'envoi. */}
-        {missingContact && <span className="text-[12.5px] text-gray-500">{t(`${K}.create.contactRequired`)}</span>}
+        {/* On le dit avant l'envoi plutôt qu'après un refus du serveur. */}
+        {sansTelephone && <span className="text-[12.5px] text-gray-500">{t(`${K}.create.phoneRequired`)}</span>}
         {create.isError && (
           <span className="text-[12.5px] font-semibold text-red-700">
             {create.error?.response?.data?.error || t(`${K}.create.error`)}

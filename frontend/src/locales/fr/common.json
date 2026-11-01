@@ -65,7 +65,8 @@
     "passwordsMismatch": "Les mots de passe ne correspondent pas",
     "firstNameRequired": "Prénom requis",
     "lastNameRequired": "Nom requis",
-    "confirmationRequired": "Confirmation requise"
+    "confirmationRequired": "Confirmation requise",
+    "phoneRequired": "Téléphone requis"
   },
   "errors": {
     "generic": "Une erreur est survenue",

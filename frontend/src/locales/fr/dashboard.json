@@ -100,7 +100,8 @@
     "validation": {
       "titleRequired": "Titre requis",
       "priceRequired": "Prix requis",
-      "cityRequired": "Ville requise"
+      "cityRequired": "Ville requise",
+      "surfaceRequired": "Surface requise"
     },
     "toasts": {
       "created": "Annonce créée avec succès",
@@ -1025,7 +1026,10 @@
     },
     "validation": {
       "nameRequired": "Nom requis",
-      "emailRequired": "Email requis"
+      "emailRequired": "Email requis",
+      "phoneRequired": "Téléphone requis",
+      "cityRequired": "Ville requise",
+      "addressRequired": "Adresse requise"
     },
     "api": {
       "title": "Accès API",

@@ -1569,7 +1569,8 @@
       "fields": {
         "name": "Nom du modèle",
         "namePlaceholder": "Ex. Mandat de vente standard",
-        "type": "Type de document"
+        "type": "Type de document",
+        "body": "Contenu du modèle"
       },
       "mergeFields": "Champs de fusion :",
       "submit": "Créer le modèle",
@@ -2301,9 +2302,6 @@
           "partner": "Partenaire"
         },
         "tagsPlaceholder": "Ajouter un tag...",
-        "validation": {
-          "contactRequired": "Email ou téléphone requis"
-        },
         "cancelButton": "Annuler",
         "createButton": "Créer le client",
         "updateButton": "Mettre à jour"
@@ -2433,8 +2431,8 @@
           "messagePlaceholder": "Ce que recherche le contact, budget, délai…",
           "submit": "Enregistrer le lead",
           "saving": "Enregistrement…",
-          "contactRequired": "Renseignez au moins un téléphone ou un e-mail.",
-          "error": "Le lead n'a pas pu être enregistré."
+          "error": "Le lead n'a pas pu être enregistré.",
+          "phoneRequired": "Téléphone requis pour rappeler le lead"
         },
         "summary": {
           "pending": {
@@ -3472,7 +3470,9 @@
           "priceRequired": "Le prix est requis",
           "cityRequired": "La ville est requise",
           "surfaceRequired": "La surface est requise",
-          "imagesRequired": "Ajoutez au moins une photo"
+          "imagesRequired": "Ajoutez au moins une photo",
+          "addressRequired": "Adresse requise",
+          "descriptionRequired": "Description requise"
         },
         "toastImagesRequired": "Ajoutez au moins une photo.",
         "cancelButton": "Annuler",
@@ -3501,7 +3501,9 @@
         "title": "Inviter un membre",
         "emailPlaceholder": "email@exemple.com",
         "noTeam": "Sans équipe",
-        "button": "Inviter"
+        "button": "Inviter",
+        "emailLabel": "Email du membre",
+        "teamLabel": "Équipe"
       },
       "pendingInvitations": {
         "title": "Invitations en attente",

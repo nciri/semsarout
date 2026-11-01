@@ -100,7 +100,8 @@
     "validation": {
       "titleRequired": "العنوان مطلوب",
       "priceRequired": "السعر مطلوب",
-      "cityRequired": "المدينة مطلوبة"
+      "cityRequired": "المدينة مطلوبة",
+      "surfaceRequired": "المساحة مطلوبة"
     },
     "toasts": {
       "created": "تم إنشاء الإعلان بنجاح",
@@ -1025,7 +1026,10 @@
     },
     "validation": {
       "nameRequired": "الاسم مطلوب",
-      "emailRequired": "البريد الإلكتروني مطلوب"
+      "emailRequired": "البريد الإلكتروني مطلوب",
+      "phoneRequired": "الهاتف مطلوب",
+      "cityRequired": "المدينة مطلوبة",
+      "addressRequired": "العنوان مطلوب"
     },
     "api": {
       "title": "الوصول إلى API",

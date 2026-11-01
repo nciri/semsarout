@@ -133,10 +133,10 @@ function TeamsPanel({ teams, kinds, members, canManage, canAddTeam, onChanged })
             {t('backoffice:settings.team.teams.submit')}
           </button>
         </>}>
-        <Field label={t('backoffice:settings.team.teams.nameLabel')} value={form?.name || ''} onChange={set('name')} />
+        <Field required label={t('backoffice:settings.team.teams.nameLabel')} value={form?.name || ''} onChange={set('name')} />
         <div className="mb-3">
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="team-kind">
-            {t('backoffice:settings.team.teams.kindLabel')}
+            {t('backoffice:settings.team.teams.kindLabel')} <span className="requis" aria-hidden="true" />
           </label>
           <Select id="team-kind" value={form?.kind || 'generale'} onChange={set('kind')} className="w-full">
             {kinds.map((k) => (

@@ -8,6 +8,7 @@ import { contractService } from '../../../services/contractService'
 import { PageHeader, EmptyState } from '../../../components/backoffice/ui'
 import EditeurRiche from './EditeurRiche'
 import LanguageToggle from './LanguageToggle'
+import { isRichTextEmpty } from '../../../utils/richText'
 
 const TYPE_VALUES = ['mandate_sale', 'mandate_rental', 'compromise', 'vefa', 'lease', 'stay', 'other']
 const FIELDS = ['agency_name', 'agent_name', 'client_name', 'property_address', 'property_price',
@@ -103,7 +104,7 @@ function TemplatesManager() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <h2 className="font-semibold text-gray-900 mb-4">{t('backoffice:contracts.templates.newTemplate')}</h2>
           <div className="mb-3">
-            <label className={labelCls}>{t('backoffice:contracts.templates.fields.name')}</label>
+            <label className={labelCls}>{t('backoffice:contracts.templates.fields.name')} <span className="requis" aria-hidden="true" /></label>
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('backoffice:contracts.templates.fields.namePlaceholder')} className={ctrlCls} />
           </div>
           <div className="mb-3">
@@ -115,11 +116,12 @@ function TemplatesManager() {
           <div className="mb-3 text-xs text-gray-500 bg-gray-50 rounded-lg p-3">
             <span className="font-medium text-gray-600">{t('backoffice:contracts.templates.mergeFields')}</span> {FIELDS.map((f) => `{{${f}}}`).join(' · ')}
           </div>
+          <label className={labelCls}>{t('backoffice:contracts.templates.fields.body')} <span className="requis" aria-hidden="true" /></label>
           <div className="border border-gray-200 rounded-lg overflow-hidden">
             <EditeurRiche value={body} onChange={setBody} />
           </div>
           <button
-            disabled={!name || !body || create.isLoading}
+            disabled={!name.trim() || isRichTextEmpty(body) || create.isLoading}
             onClick={() => create.mutate()}
             className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
           >

@@ -128,9 +128,9 @@ export default function BackofficeClientForm() {
     const newErrors = {}
     if (!formData.first_name) newErrors.first_name = t('common:validation.firstNameRequired')
     if (!formData.last_name) newErrors.last_name = t('common:validation.lastNameRequired')
-    if (!formData.email && !formData.phone) {
-      newErrors.contact = t('backoffice:crm.clients.form.validation.contactRequired')
-    }
+    // Le téléphone est le seul canal sûr d'un client marocain : beaucoup n'ont pas d'adresse
+    // courriel, et une fiche sans numéro ne sert ni au rappel ni à la visite.
+    if (!formData.phone) newErrors.phone = t('common:validation.phoneRequired')
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = t('common:validation.emailInvalid')
     }
@@ -223,7 +223,7 @@ export default function BackofficeClientForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('backoffice:crm.clients.form.fields.firstName')} <span className="text-red-500">*</span>
+                {t('backoffice:crm.clients.form.fields.firstName')} <span className="requis" aria-hidden="true" />
               </label>
               <input
                 type="text"
@@ -238,7 +238,7 @@ export default function BackofficeClientForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('backoffice:crm.clients.form.fields.lastName')} <span className="text-red-500">*</span>
+                {t('backoffice:crm.clients.form.fields.lastName')} <span className="requis" aria-hidden="true" />
               </label>
               <input
                 type="text"
@@ -271,7 +271,7 @@ export default function BackofficeClientForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('backoffice:crm.clients.form.fields.phonePrimary')}
+                {t('backoffice:crm.clients.form.fields.phonePrimary')} <span className="requis" aria-hidden="true" />
               </label>
               <div className="relative">
                 <FiPhone className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -279,9 +279,12 @@ export default function BackofficeClientForm() {
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full ps-10 pe-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className={`w-full ps-10 pe-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                    errors.phone ? 'border-red-500' : 'border-gray-200'
+                  }`}
                 />
               </div>
+              {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
             </div>
 
             <div>
@@ -350,9 +353,6 @@ export default function BackofficeClientForm() {
             </div>
           </div>
 
-          {errors.contact && (
-            <p className="text-red-500 text-sm mt-2">{errors.contact}</p>
-          )}
         </div>
 
         {/* Address */}

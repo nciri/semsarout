@@ -11,6 +11,7 @@ import {
 import { useFormat } from '../../../utils/format'
 import { EmptyState, Field, Modal, PRIMARY_BTN, SECONDARY_BTN, Select } from '../../../components/backoffice/ui'
 import RichTextarea from '../../../components/common/RichTextarea'
+import { isRichTextEmpty } from '../../../utils/richText'
 import { ensureRichText, plainToRichText } from '../../../utils/richText'
 import { Chip, IconAction, TD, TH } from '../components/kit'
 
@@ -223,13 +224,13 @@ function MessagesPanel() {
         title={editing?.id ? t('backoffice:stays.messages.modal.editTitle') : t('backoffice:stays.messages.modal.title')}
         footer={<>
           <button onClick={() => setEditing(null)} className={SECONDARY_BTN}>{t('backoffice:stays.messages.modal.cancel')}</button>
-          <button disabled={!form.name || !form.subject || !form.body || save.isLoading}
+          <button disabled={!form.name.trim() || !form.subject.trim() || isRichTextEmpty(form.body) || save.isLoading}
             onClick={() => save.mutate()} className={PRIMARY_BTN}>{t('backoffice:stays.messages.modal.submit')}</button>
         </>}>
-        <Field label={t('backoffice:stays.messages.modal.nameLabel')} value={form.name} onChange={set('name')} />
+        <Field required label={t('backoffice:stays.messages.modal.nameLabel')} value={form.name} onChange={set('name')} />
         <div className="mb-3">
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="tpl-trigger">
-            {t('backoffice:stays.messages.modal.triggerLabel')}
+            {t('backoffice:stays.messages.modal.triggerLabel')} <span className="requis" aria-hidden="true" />
           </label>
           <Select id="tpl-trigger" value={form.trigger} onChange={set('trigger')}>
             {STAY_TRIGGERS.map((x) => <option key={x} value={x}>{t(`backoffice:stays.messages.trigger.${x}`)}</option>)}
@@ -248,10 +249,10 @@ function MessagesPanel() {
             {properties.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
           </Select>
         </div>
-        <Field label={t('backoffice:stays.messages.modal.subjectLabel')} value={form.subject} onChange={set('subject')} />
+        <Field required label={t('backoffice:stays.messages.modal.subjectLabel')} value={form.subject} onChange={set('subject')} />
         <div className="mb-3">
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="tpl-body">
-            {t('backoffice:stays.messages.modal.bodyLabel')}
+            {t('backoffice:stays.messages.modal.bodyLabel')} <span className="requis" aria-hidden="true" />
           </label>
           <RichTextarea id="tpl-body" rows={7} value={form.body}
             onChange={(html) => setForm((f) => ({ ...f, body: html }))} />

@@ -98,10 +98,10 @@ function MandatesList() {
       <Modal open={open} onClose={() => setOpen(false)} title={t('backoffice:rental.mandate.modal.title')}
         footer={<>
           <button onClick={() => setOpen(false)} className={SECONDARY_BTN}>{t('backoffice:rental.mandate.modal.cancel')}</button>
-          <button disabled={!form.property_id || !form.landlord_client_id || create.isLoading} onClick={() => create.mutate()} className={PRIMARY_BTN}>{t('backoffice:rental.mandate.modal.create')}</button>
+          <button disabled={!form.property_id || !form.landlord_client_id || form.fee_percent === '' || create.isLoading} onClick={() => create.mutate()} className={PRIMARY_BTN}>{t('backoffice:rental.mandate.modal.create')}</button>
         </>}>
         <div className="mb-3">
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:rental.mandate.modal.propertyLabel')}</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:rental.mandate.modal.propertyLabel')} <span className="requis" aria-hidden="true" /></label>
           <SearchableSelect
             value={form.property_id}
             onChange={setVal('property_id')}
@@ -111,7 +111,7 @@ function MandatesList() {
           />
         </div>
         <div className="mb-3">
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:rental.mandate.modal.landlordLabel')}</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:rental.mandate.modal.landlordLabel')} <span className="requis" aria-hidden="true" /></label>
           <SearchableSelect
             value={form.landlord_client_id}
             onChange={setVal('landlord_client_id')}
@@ -121,13 +121,13 @@ function MandatesList() {
           />
         </div>
         <div className="mb-3">
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:rental.mandate.modal.typeLabel')}</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:rental.mandate.modal.typeLabel')} <span className="requis" aria-hidden="true" /></label>
           <Select value={form.mandate_type} onChange={set('mandate_type')} className="w-full">
             <option value="gestion">{t('backoffice:rental.mandate.type.gestion')}</option>
             <option value="location">{t('backoffice:rental.mandate.type.location')}</option>
           </Select>
         </div>
-        <Field label={t('backoffice:rental.mandate.modal.feesLabel')} type="number" value={form.fee_percent} onChange={set('fee_percent')} placeholder={t('backoffice:rental.mandate.modal.feesPlaceholder')} />
+        <Field required label={t('backoffice:rental.mandate.modal.feesLabel')} type="number" value={form.fee_percent} onChange={set('fee_percent')} placeholder={t('backoffice:rental.mandate.modal.feesPlaceholder')} />
       </Modal>
     </div>
   )

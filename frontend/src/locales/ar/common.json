@@ -65,7 +65,8 @@
     "passwordsMismatch": "كلمتا المرور غير متطابقتين",
     "firstNameRequired": "الاسم الأول مطلوب",
     "lastNameRequired": "اسم العائلة مطلوب",
-    "confirmationRequired": "التأكيد مطلوب"
+    "confirmationRequired": "التأكيد مطلوب",
+    "phoneRequired": "الهاتف مطلوب"
   },
   "errors": {
     "generic": "حدث خطأ ما",

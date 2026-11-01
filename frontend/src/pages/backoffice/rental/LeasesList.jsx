@@ -173,10 +173,11 @@ function LeasesList() {
       <Modal open={open} onClose={() => setOpen(false)} title={t('backoffice:rental.lease.modal.title')}
         footer={<>
           <button onClick={() => setOpen(false)} className={SECONDARY_BTN}>{t('backoffice:rental.lease.modal.cancel')}</button>
-          <button disabled={!form.mandate_id || !form.tenant_client_id || !form.rent_amount || create.isLoading} onClick={() => create.mutate()} className={PRIMARY_BTN}>{t('backoffice:rental.lease.modal.create')}</button>
+          <button disabled={!form.mandate_id || !form.tenant_client_id || !form.rent_amount
+            || form.deposit_amount === '' || !form.payment_day || create.isLoading} onClick={() => create.mutate()} className={PRIMARY_BTN}>{t('backoffice:rental.lease.modal.create')}</button>
         </>}>
         <div className="mb-3">
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:rental.lease.modal.mandateLabel')}</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:rental.lease.modal.mandateLabel')} <span className="requis" aria-hidden="true" /></label>
           <SearchableSelect
             value={form.mandate_id}
             onChange={setVal('mandate_id')}
@@ -186,7 +187,7 @@ function LeasesList() {
           />
         </div>
         <div className="mb-3">
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:rental.lease.modal.tenantLabel')}</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('backoffice:rental.lease.modal.tenantLabel')} <span className="requis" aria-hidden="true" /></label>
           <SearchableSelect
             value={form.tenant_client_id}
             onChange={setVal('tenant_client_id')}
@@ -195,10 +196,10 @@ function LeasesList() {
             searchPlaceholder={t('backoffice:rental.lease.modal.tenantSearchPlaceholder')}
           />
         </div>
-        <Field label={t('backoffice:rental.lease.modal.rentLabel')} type="number" value={form.rent_amount} onChange={set('rent_amount')} />
+        <Field required label={t('backoffice:rental.lease.modal.rentLabel')} type="number" value={form.rent_amount} onChange={set('rent_amount')} />
         <Field label={t('backoffice:rental.lease.modal.chargesLabel')} type="number" value={form.charges_amount} onChange={set('charges_amount')} />
-        <Field label={t('backoffice:rental.lease.modal.depositLabel')} type="number" value={form.deposit_amount} onChange={set('deposit_amount')} />
-        <Field label={t('backoffice:rental.lease.modal.paymentDayLabel')} type="number" value={form.payment_day} onChange={set('payment_day')} />
+        <Field required label={t('backoffice:rental.lease.modal.depositLabel')} type="number" value={form.deposit_amount} onChange={set('deposit_amount')} />
+        <Field required label={t('backoffice:rental.lease.modal.paymentDayLabel')} type="number" value={form.payment_day} onChange={set('payment_day')} />
       </Modal>
     </div>
   )

@@ -81,7 +81,7 @@ function ResetPassword() {
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <div>
-                  <label className="label">{t('auth:reset.newPasswordLabel')}</label>
+                  <label className="label">{t('auth:reset.newPasswordLabel')} <span className="requis" aria-hidden="true" /></label>
                   <div className="relative">
                     <FiLock className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
@@ -107,7 +107,7 @@ function ResetPassword() {
                 </div>
 
                 <div>
-                  <label className="label">{t('auth:reset.confirmLabel')}</label>
+                  <label className="label">{t('auth:reset.confirmLabel')} <span className="requis" aria-hidden="true" /></label>
                   <input
                     type={showPassword ? 'text' : 'password'}
                     {...register('confirm_password', {

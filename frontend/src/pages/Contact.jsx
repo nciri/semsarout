@@ -263,7 +263,7 @@ function Contact() {
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="label">{t('public:contact.nameLabel')}</label>
+                      <label className="label">{t('public:contact.nameLabel')} <span className="requis" aria-hidden="true" /></label>
                       <div className="relative">
                         <FiUser className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
@@ -277,20 +277,23 @@ function Contact() {
                       )}
                     </div>
                     <div>
-                      <label className="label">{t('public:contact.phoneLabel')}</label>
+                      <label className="label">{t('public:contact.phoneLabel')} <span className="requis" aria-hidden="true" /></label>
                       <div className="relative">
                         <FiPhone className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
-                          {...register('phone')}
+                          {...register('phone', { required: t('common:validation.phoneRequired') })}
                           className="input ps-10"
                           placeholder={t('public:contact.phonePlaceholder')}
                         />
                       </div>
+                      {errors.phone && (
+                        <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
+                      )}
                     </div>
                   </div>
 
                   <div>
-                    <label className="label">{t('public:contact.emailLabel')}</label>
+                    <label className="label">{t('public:contact.emailLabel')} <span className="requis" aria-hidden="true" /></label>
                     <div className="relative">
                       <FiMail className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                       <input

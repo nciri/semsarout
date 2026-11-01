@@ -9,6 +9,7 @@ import { DataTable, EmptyState, Field, Modal, GatedNotice, PRIMARY_BTN, SECONDAR
 
 const EMPTY = { name: '', office: '', city: '', phone: '', email: '', license_number: '' }
 const FIELD_KEYS = ['name', 'office', 'city', 'phone', 'email', 'license_number']
+const OBLIGATOIRES = ['name', 'phone', 'license_number']
 
 /** La recherche vient de l'onglet : un même mot cherche le notaire et ses dossiers. */
 function NotariesDirectory({ q = '' }) {
@@ -113,14 +114,18 @@ function NotariesDirectory({ q = '' }) {
         footer={(
           <>
             <button onClick={closeModal} className={SECONDARY_BTN}>{t('backoffice:legal.notaries.modal.cancel')}</button>
-            <button disabled={!form.name || save.isLoading} onClick={() => save.mutate()} className={PRIMARY_BTN}>
+            <button disabled={OBLIGATOIRES.some((f) => !String(form[f] || '').trim()) || save.isLoading} onClick={() => save.mutate()} className={PRIMARY_BTN}>
               {editingId ? t('backoffice:legal.notaries.modal.save') : t('backoffice:legal.notaries.modal.create')}
             </button>
           </>
         )}
       >
+        {/* Un notaire se joint par téléphone, et c'est son numéro de licence qui l'identifie
+            dans un acte : les trois sont exigés, le reste complète la fiche. */}
         {FIELD_KEYS.map((f) => (
-          <Field key={f} value={form[f]} onChange={(e) => setForm({ ...form, [f]: e.target.value })} placeholder={t(`backoffice:legal.notaries.fields.${f}`)} />
+          <Field key={f} label={t(`backoffice:legal.notaries.fields.${f}`)}
+            required={OBLIGATOIRES.includes(f)} value={form[f]}
+            onChange={(e) => setForm({ ...form, [f]: e.target.value })} />
         ))}
       </Modal>
     </div>
